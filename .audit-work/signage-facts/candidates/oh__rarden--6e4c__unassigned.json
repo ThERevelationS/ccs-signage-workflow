@@ -1,0 +1,39 @@
+{
+ "jurisdiction_id": "6adf7d4b23499b3089d46e4c",
+ "jurisdiction_name": "Rarden",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "Revised 06/27/2019 Page 2 of 2 PRIVATE GENERAL SPECIFICATIONS: 1. All construction must comply with the Scioto County Engineer Standards and the specifications set forth by the Scioto County Engineer. 2. Trenches and bore pits shall be backfilled per trench restoration standards of the Scioto County Engineer. Trenches and bore pits closer than five (5) feet from the edge of any road surface will not be permitted without special permission and conditions from the County Engineer. All trenches and bore pits shall be backfilled and restored as closely as possible to completion of excavation and safe protection of trench and pit shall be maintained. 3. The distance from the edge of the pavement to the near edge of the trench shall be equal to or greater than the depth of the trench. If the distance from the edge of the pavement to the edge of the trench is less than the depth of the trench o",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "b7305733dc635d9c7ea9ca74bf33792387c9ce2766c31b1547c4421dd7a3febd",
+   "source_document_id": null,
+   "source_title": "b7305733dc635d9c7ea9ca74bf33792387c9ce2766c31b1547c4421dd7a3febd.pdf",
+   "official_url": "http://www.sciotocountyengineer.org/PrivateRightOfWayPermit.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Page 1 of 2 PRIVATE SCIOTO COUNTY ENGINEER 602 Seventh St., Room 401 Courthouse RIGHT-OF-WAY PERMIT APPLICATION (Private) Portsmouth, Ohio 45662 Application is hereby made to work within the county or township roadway right-of-way limits by: APPLICANT INFORMATION CONTRACTOR NAME ______________________________________ NAME _______________________________________ STREET_____________________________________ STREET______________________________________ CITY______________________ STATE___________ CITY_______________________ STATE___________ ZIP____________PHONE (____)_________________ ZIP____________PHONE (____)__________________ FAX (____)______________ EMERGENCY PHONE (____)____________________ Road____________________________________________ Address Number______________ Township_____________________ \u0001 North \u0001 South \u0001 East \u0001 West Side of Road Between________________________ Road and________",
+   "tags": [
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "b7305733dc635d9c7ea9ca74bf33792387c9ce2766c31b1547c4421dd7a3febd",
+   "source_document_id": null,
+   "source_title": "b7305733dc635d9c7ea9ca74bf33792387c9ce2766c31b1547c4421dd7a3febd.pdf",
+   "official_url": "http://www.sciotocountyengineer.org/PrivateRightOfWayPermit.pdf"
+  }
+ ]
+}

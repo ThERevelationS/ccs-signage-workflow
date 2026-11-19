@@ -1,0 +1,65 @@
+diff --git a/.audit-work/foundation-reinforcement18/active-before-remote-foundationInputValidation.js b/src/components/estimator/foundation/foundationInputValidation.js
+index 823d7ae9c..a54fc6e99 100644
+--- a/.audit-work/foundation-reinforcement18/active-before-remote-foundationInputValidation.js
++++ b/src/components/estimator/foundation/foundationInputValidation.js
+@@ -1,54 +1,16 @@
+-const inputNumber = value => {
+-  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+-  if (typeof value !== "string" || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim())) return null;
+-  const number = Number(value);
+-  return Number.isFinite(number) ? number : null;
+-};
+-
+-const positiveWholeNumber = value => {
+-  const number = inputNumber(value);
+-  const whole = typeof value !== "string" || /^[+-]?\d+(?:\.0*)?$/.test(value.trim());
+-  return whole && Number.isSafeInteger(number) && number > 0;
+-};
++import {
++  foundationInputNumber as inputNumber,
++  foundationPositiveWholeNumber as positiveWholeNumber,
++  foundationGeometryValidation,
++} from './foundationGeometryInputs';
+ 
+ export function foundationItemInputIssues(item, index = 0) {
+   const record = item ?? {};
+-  const issues = [];
++  const { issues, type, dimensions } = foundationGeometryValidation(record, index);
+   const add = (field, code, message) => issues.push({
+     kind: "foundation", index, componentId: record.component_id ?? null, field, code,
+     message: `Foundation ${index + 1}: ${message}`,
+   });
+-  const type = record.foundation_type;
+-  if (type !== "spread_foot" && type !== "pillar") {
+-    add("foundation_type", "foundation_type_invalid", "select Spread Footing or Pillar / Caisson.");
+-  }
+-  const count = record.quantity ?? 1;
+-  const quantity = inputNumber(count);
+-  if (!positiveWholeNumber(count)) {
+-    add("quantity", "foundation_quantity_invalid", "quantity must be a positive whole number within the supported range.");
+-  }
+-  const fields = type === "spread_foot"
+-    ? [["length_inches", "length"], ["width_inches", "width"], ["depth_inches", "depth"]]
+-    : type === "pillar" ? [["diameter", "diameter"], ["depth_inches", "depth"]] : [];
+-  const dimensions = {};
+-  for (const [field, label] of fields) {
+-    const value = inputNumber(record[field]);
+-    dimensions[field] = value;
+-    if (value === null || value <= 0) {
+-      add(field, "foundation_dimension_invalid", `${label} (inches) must be a finite positive number.`);
+-    }
+-  }
+-  if (!issues.length) {
+-    const depth = dimensions.depth_inches / 12;
+-    const radius = dimensions.diameter / 24;
+-    const volume = type === "spread_foot"
+-      ? ((dimensions.length_inches / 12) * (dimensions.width_inches / 12) * depth) / 27 * quantity
+-      : (Math.PI * radius * radius * depth) / 27 * quantity;
+-    // This is numeric-range validation, not a structural design or engineering minimum.
+-    if (!Number.isFinite(volume) || volume <= 0) {
+-      add("dimensions", "foundation_volume_out_of_range", "dimensions and quantity cannot produce a finite positive volume in the supported calculation range.");
+-    }
+-  }
+   if (record.include_rebar) {
+     const optional = (field, code, label, valid) => {
+       const value = record[field];

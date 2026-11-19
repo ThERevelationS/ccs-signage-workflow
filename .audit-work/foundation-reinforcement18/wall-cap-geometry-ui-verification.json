@@ -1,0 +1,66 @@
+{
+  "results": [
+    {
+      "name": "material replacement keeps the authored cut and all raw snapshot fields",
+      "ok": true
+    },
+    {
+      "name": "shorter stock does not silently shorten a requested cut",
+      "ok": false,
+      "error": "Error: Expected 1 but found 10 instances with node type: \"input\"\n    at expectOne (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18499:9)\n    at ReactTestInstance.findByType (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18389:12)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:57:23\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:40:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:52:1"
+    },
+    {
+      "name": "clearing a cut stays blank and cannot revert to an explicit legacy hint",
+      "ok": false,
+      "error": "Error: Expected 1 but found 10 instances with node type: \"input\"\n    at expectOne (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18499:9)\n    at ReactTestInstance.findByType (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18389:12)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:63:34\n    at act (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react\\cjs\\react.development.js:2512:16)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:63:9\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:40:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:61:1"
+    },
+    {
+      "name": "a negative cut is not changed into a one-inch cut",
+      "ok": false,
+      "error": "Error: Expected 1 but found 10 instances with node type: \"input\"\n    at expectOne (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18499:9)\n    at ReactTestInstance.findByType (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18389:12)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:73:34\n    at act (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react\\cjs\\react.development.js:2512:16)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:73:9\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:40:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:71:1"
+    },
+    {
+      "name": "valid decimal input keeps numeric storage and source identity",
+      "ok": false,
+      "error": "Error: Expected 1 but found 10 instances with node type: \"input\"\n    at expectOne (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18499:9)\n    at ReactTestInstance.findByType (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18389:12)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:79:34\n    at act (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react\\cjs\\react.development.js:2512:16)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:79:9\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:40:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:77:1"
+    },
+    {
+      "name": "adding with unrecorded stock dimensions does not invent a 48-inch cut",
+      "ok": false,
+      "error": "Error: Expected 1 but found 5 instances with node type: \"button\"\n    at expectOne (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18499:9)\n    at ReactTestInstance.findByType (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18389:12)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:85:34\n    at act (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react\\cjs\\react.development.js:2512:16)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:85:9\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:40:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:83:1"
+    },
+    {
+      "name": "explicit Add may initialize a full cut from a genuinely recorded stock length",
+      "ok": false,
+      "error": "Error: Expected 1 but found 5 instances with node type: \"button\"\n    at expectOne (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18499:9)\n    at ReactTestInstance.findByType (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18389:12)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:90:34\n    at act (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react\\cjs\\react.development.js:2512:16)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:90:9\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:40:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:88:1"
+    },
+    {
+      "name": "a recorded legacy-only cut is displayed without auto-migration or a change on mount",
+      "ok": false,
+      "error": "Error: Expected 1 but found 10 instances with node type: \"input\"\n    at expectOne (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18499:9)\n    at ReactTestInstance.findByType (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18389:12)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:96:23\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:40:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:93:1"
+    },
+    {
+      "name": "an unrecorded saved cut stays blank rather than displaying a fabricated full-stock cut",
+      "ok": false,
+      "error": "Error: Expected 1 but found 10 instances with node type: \"input\"\n    at expectOne (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18499:9)\n    at ReactTestInstance.findByType (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18389:12)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:103:23\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:40:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:100:1"
+    },
+    {
+      "name": "a malformed stored cut is not passed as an object into a number control",
+      "ok": false,
+      "error": "Error: Expected 1 but found 10 instances with node type: \"input\"\n    at expectOne (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18499:9)\n    at ReactTestInstance.findByType (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18389:12)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:108:23\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:40:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:106:1"
+    },
+    {
+      "name": "oversized input remains visible with an accessible stock-fit diagnostic",
+      "ok": false,
+      "error": "Error: Expected 1 but found 10 instances with node type: \"input\"\n    at expectOne (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18499:9)\n    at ReactTestInstance.findByType (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18389:12)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:112:24\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:40:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:110:1"
+    },
+    {
+      "name": "unknown live stock is clearly distinct from a saved 48-inch snapshot",
+      "ok": false,
+      "error": "Error: Expected 1 but found 10 instances with node type: \"input\"\n    at expectOne (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18499:9)\n    at ReactTestInstance.findByType (D:\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\react-test-renderer\\cjs\\react-test-renderer.development.js:18389:12)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:120:23\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:40:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs:118:1"
+    }
+  ],
+  "syntheticOnly": true,
+  "actualBusinessWrites": 0,
+  "reinforcementV2Activated": false
+}

@@ -1,0 +1,75 @@
+{
+  "mode": "valid",
+  "width": 390,
+  "before": {
+    "walls": [
+      {
+        "component_id": "synthetic-wall",
+        "calculatedCosts": {
+          "totalBricks": 6,
+          "materialCost": 12,
+          "mortarCost": 0,
+          "laborHours": 0.12,
+          "laborCost": 45,
+          "totalCost": 57,
+          "totalLinearInches": 16,
+          "numCourses": 2.25,
+          "internalTotalBricks": 0,
+          "internalMaterialCost": 0,
+          "internalMortarCost": 0,
+          "internalLaborCost": 0,
+          "internalLaborHours": 0
+        }
+      }
+    ],
+    "totals": {
+      "total_concrete_cost": 0,
+      "concrete_delivery_cost": 0,
+      "concrete_delivered_yards": 0,
+      "concrete_rate_per_yard": 201,
+      "concrete_trucks": [],
+      "additional_stops_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_labor_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 12,
+      "total_fill_cost": 0,
+      "total_equipment_cost": 0,
+      "total_wall_cost": 57,
+      "total_wall_cap_cost": 0,
+      "wall_caps_by_material": [],
+      "total_concrete_volume_cy": 0,
+      "total_excavation_volume_cy": 0,
+      "total_labor_hours": 0,
+      "grand_total": 57
+    },
+    "pricingUnavailable": false,
+    "catalogIssues": []
+  },
+  "after": {
+    "walls": [
+      {
+        "component_id": "synthetic-wall",
+        "calculatedCosts": {
+          "totalBricks": 6,
+          "materialCost": 12,
+          "mortarCost": 0,
+          "laborHours": 0.12,
+          "laborCost": 45,
+          "totalCost": 57,
+          "totalLinearInches": 16,
+          "numCourses": 2.25,
+          "internalTotalBricks": 0,
+          "internalMaterialCost": 0,
+          "internalMortarCost": 0,
+          "internalLaborCost": 0,
+          "internalLaborHours": 0
+        }
+      }
+    ]
+  },
+  "writes": 0
+}

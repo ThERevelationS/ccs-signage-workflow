@@ -1,0 +1,29 @@
+{
+ "jurisdiction_id": "6adf9582670281b6b931a653",
+ "jurisdiction_name": "Troy",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Troy Development Department www.troyohio.gov 937.339.9481 100 South Market Street, Troy, OH 45373-7303 APPLICATION FOR SIGN PERMIT: A separate application must be filed for each type of sign. Type of Project : ☐ -New Industrial ☐ -New Commercial ☐ -New Residential ☐ -Temporary ☐ - Reface of Existing Address of Project: Applicant/ Business Name: Address: Phone: Email: Contractor Name: Address: Phone: Email: Property Owner Name: Address: Phone: Email: New tenant? ☐ -Yes ☐ -No Building setback: Height & Stories of Building: _____ Building/Tenant Frontage (linear feet): Top of New Sign from Grade: Number of Faces: Cost of Sign(s): Type of Proposed Sign : ☐ - Awning ☐ - Billboard ☐ - Building ☐ - Canopy ☐ - Development I.D. ☐ - Freeway Oriented ☐ - Ground ☐ - Projecting ☐ - Window ☐ - Other ☐ - Temporary Banner: 28 days or 4, 7-day increments total: Dates for display: ☐ - Temporary Const. Sig",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "billboard",
+    "temporary",
+    "process"
+   ],
+   "weight": 16,
+   "source_sha256": "bc1984a9b42f4a5f59a9f2370b22a3feb0687c826c5982b948a9088d050dd84e",
+   "source_document_id": null,
+   "source_title": "bc1984a9b42f4a5f59a9f2370b22a3feb0687c826c5982b948a9088d050dd84e.pdf",
+   "official_url": "https://troyohio.gov/Documents/Development/Forms%20and%20Documents/Sign%20Permit.pdf"
+  }
+ ]
+}

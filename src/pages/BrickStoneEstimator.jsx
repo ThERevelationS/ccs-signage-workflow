@@ -1,15 +1,17 @@
-import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Save } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Save } from "lucide-react";
 import BrickGeometryPanel from "@/components/estimator/brick/BrickGeometryPanel";
 import BrickTotals from "@/components/estimator/brick/BrickTotals";
-import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
+import { calcBrickStoneAvailability } from "@/components/estimator/brick/brickPricingAvailability";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
+import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
+import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
+import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeBrickStoneProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
@@ -25,8 +27,13 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [templateMode, setTemplateMode] = useState(null);
+  const saveRef = useRef(null);
+  const copyAttemptRef = useRef({ signature: "", key: "" });
+  const navigate = useNavigate();
 
   useEffect(() => {
+    copyAttemptRef.current = { signature: "", key: "" };
     const load = async () => {
       setLoading(true);
       setLoadError("");
@@ -79,23 +86,25 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
     () => materials.find((m) => m.id === project?.selected_material_id),
     [materials, project]
   );
-  const totals = useMemo(
-    () => (project ? calcBrickStoneProject(project, material) : null),
+  // Pricing-availability: one strict calc pass shared by the banner, the
+  // totals panel, the per-field diagnostics, and every save path.
+  const priced = useMemo(
+    () => (project ? calcBrickStoneAvailability(project, material) : null),
     [project, material]
   );
-
-  if (loading) return <div className="p-10 text-center text-gray-400">Loading sectionâ€¦</div>;
-  if (loadError) return <div className="p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded">Brick & Stone Builder unavailable. Required project data or the primary masonry catalog could not be verified. {loadError}</div>;
-  if (!project) return <div className="p-10 text-center text-gray-500">Section not found.</div>;
-
-  const patch = (changes) => setProject((prev) => ({ ...prev, ...changes }));
+  const totals = priced?.calc || null;
+  const allIssues = priced?.issues || [];
+  // A catalog-side hold (the selected material record) gets the stronger
+  // save message; any issue at all blocks every write path.
+  const catalogBlocked = allIssues.some((i) => i.kind === "brick_catalog");
+  const pricingBlocked = allIssues.length > 0;
 
   // Ctrl+S / Cmd+S saves the section without leaving the editor.
   useEffect(() => {
     const handler = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        if (!saving) handleSave();
+        if (!saving) saveRef.current?.();
       }
     };
     window.addEventListener("keydown", handler);
@@ -108,7 +117,23 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [saving]);
+
+  if (loading) return <div className="p-10 text-center text-gray-400">Loading section…</div>;
+  if (loadError) return <div className="p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded">Brick & Stone Builder unavailable. Required project data or the primary masonry catalog could not be verified. {loadError}</div>;
+  if (!project) return <div className="p-10 text-center text-gray-500">Section not found.</div>;
+
+  const patch = (changes) => setProject((prev) => ({ ...prev, ...changes }));
+
   const handleSave = async () => {
+    // Pricing-availability guard: a malformed or unavailable pricing input
+    // must never be persisted as $0 or an inferred default. Block the write
+    // and point the user at the flagged values.
+    if (pricingBlocked) {
+      window.alert(catalogBlocked
+        ? "Save paused: the selected material record is missing or unusable — fix it in the masonry catalog, then save."
+        : "Save paused: fix the flagged pricing values before saving — unavailable pricing is never written as $0.");
+      return;
+    }
     if (!(Number(totals?.calculated_surface_area) > 0)) {
       window.alert("Wall area must be greater than zero before this section can be saved. Check the wall dimensions and material selection.");
       return;
@@ -188,6 +213,93 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
       setSaving(false);
     }
   };
+  saveRef.current = handleSave;
+
+  // #78 — clone the current save payload into a brand-new Brick & Stone project.
+  const handleSaveAsCopy = async () => {
+    // Same availability gate as the save path — a copy must never clone $0 or
+    // inferred pricing into a new record (the mop-up guard gap).
+    if (pricingBlocked) {
+      window.alert(catalogBlocked
+        ? "Save paused: the selected material record is missing or unusable — fix it in the masonry catalog, then save a copy."
+        : "Save paused: fix the flagged pricing values before saving a copy — unavailable pricing is never written as $0.");
+      return;
+    }
+    if (!(Number(totals?.calculated_surface_area) > 0)) {
+      window.alert("Wall area must be greater than zero before this section can be copied. Check the wall dimensions and material selection.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const copy = await saveModuleProjectCopy({
+        entity: staffEntities.BrickStoneProject,
+        payload: {
+          project_name: project.project_name,
+          client_name: project.client_name,
+          customer_id: project.customer_id,
+          estimate_number: project.estimate_number,
+          hyperlink: project.hyperlink,
+          notes: project.notes,
+          status: "calculated",
+          selected_material_id: project.selected_material_id,
+          material_name: project.material_name,
+          material_dimensions: project.material_dimensions,
+          bricks_along_length: project.bricks_along_length,
+          bricks_along_width: project.bricks_along_width,
+          courses_high: project.courses_high,
+          layers: project.layers,
+          mortar_gap: project.mortar_gap,
+          waste_factor: project.waste_factor,
+          mortar_bag_cost: project.mortar_bag_cost,
+          bricks_per_hour: project.bricks_per_hour,
+          labor_rate_per_hour: project.labor_rate_per_hour,
+          markup_percent: project.markup_percent,
+          base_length: totals.derived_length,
+          base_width: totals.derived_width,
+          base_height: totals.derived_height,
+          calculated_bricks: totals.calculated_bricks,
+          calculated_surface_area: totals.calculated_surface_area,
+          mortar_bags_needed: totals.mortar_bags_needed,
+          material_cost: totals.material_cost,
+          mortar_cost: totals.mortar_cost,
+          labor_hours: totals.labor_hours,
+          labor_cost: totals.labor_cost,
+          subtotal: totals.subtotal,
+          markup_amount: totals.markup_amount,
+          total_cost: totals.total_cost,
+          customer_pricing: project.customer_pricing,
+        },
+        attemptRef: copyAttemptRef,
+        keyPrefix: "brick_stone_project_copy",
+        baseName: project.project_name || "Brick & Stone",
+        label: "Brick & Stone project copy",
+      });
+      if (embedded) onSaved?.();
+      else navigate(`/BrickStoneEstimator?id=${copy.id}`);
+    } catch (e) {
+      console.error(e); alert("Save copy failed: " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // #79 — template payload = the editable masonry setup a user would reuse.
+  const buildBrickStoneTemplateData = (p) => ({
+    selected_material_id: p.selected_material_id,
+    material_name: p.material_name,
+    material_dimensions: p.material_dimensions,
+    bricks_along_length: p.bricks_along_length,
+    bricks_along_width: p.bricks_along_width,
+    courses_high: p.courses_high,
+    layers: p.layers,
+    mortar_gap: p.mortar_gap,
+    waste_factor: p.waste_factor,
+    mortar_bag_cost: p.mortar_bag_cost,
+    bricks_per_hour: p.bricks_per_hour,
+    labor_rate_per_hour: p.labor_rate_per_hour,
+    markup_percent: p.markup_percent,
+    notes: p.notes,
+  });
 
   return (
     <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
@@ -211,14 +323,42 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
           )}
           {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
           <Button onClick={handleSave} disabled={saving || !project.selected_material_id} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
-            <Save className="w-4 h-4" /> {saving ? "Savingâ€¦" : "Save Section"}
+            <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save Section"}
           </Button>
+          <ModuleActionBar
+            onTemplates={() => setTemplateMode("load")}
+            onSaveAsTemplate={() => setTemplateMode("save")}
+            onSaveAsCopy={handleSaveAsCopy}
+            estimateId={estimateId}
+            saving={saving}
+          />
         </div>
 
         <div className="mb-4">
           <h1 className="text-2xl font-bold text-gray-900">Brick &amp; Stone</h1>
           <p className="text-sm text-gray-500">{project.client_name}</p>
         </div>
+
+        {/* Pricing-availability banner — visible on every state so a blocked
+            save always shows why. */}
+        {allIssues.length > 0 && (
+          <div
+            role="status"
+            id="brick-pricing-issues"
+            className="mb-4 flex items-start gap-2 text-xs text-amber-900 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2"
+          >
+            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600" />
+            <div className="min-w-0">
+              <div className="font-semibold">
+                Pricing unavailable — {allIssues.length} value{allIssues.length === 1 ? "" : "s"} need{allIssues.length === 1 ? "s" : ""} attention before this section can be priced or saved.
+              </div>
+              <ul className="mt-1 space-y-0.5 list-disc list-inside">
+                {allIssues.slice(0, 5).map((it, i) => <li key={i}>{it.message}</li>)}
+                {allIssues.length > 5 && <li>…and {allIssues.length - 5} more</li>}
+              </ul>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 space-y-4">
@@ -236,6 +376,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
               project={project}
               materials={materials}
               derived={totals}
+              issues={allIssues}
               onChange={patch}
             />
 
@@ -243,7 +384,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-700">
                 No masonry materials in the catalog yet.{" "}
                 <Link to="/FoundationCatalog" className="font-semibold underline hover:text-amber-900">
-                  Add brick or stone in the foundation catalog â†’
+                  Add brick or stone in the foundation catalog →
                 </Link>
               </div>
             )}
@@ -253,6 +394,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
             <BrickTotals
               project={project}
               totals={totals}
+              issues={allIssues}
               onChange={(changes) => patch({
                 ...changes,
                 ...(Object.prototype.hasOwnProperty.call(changes, "markup_percent")
@@ -279,6 +421,18 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
             })}
           />
         </div>
+
+        <ModuleTemplateDialog
+          open={!!templateMode}
+          mode={templateMode}
+          onClose={() => setTemplateMode(null)}
+          project={project}
+          onApply={(data) => patch(data)}
+          moduleKey="brick_stone"
+          title="Brick & Stone"
+          buildTemplateData={buildBrickStoneTemplateData}
+          describeTemplate={(t) => (t.project_data?.material_name || "Saved wall setup")}
+        />
       </div>
     </div>
   );

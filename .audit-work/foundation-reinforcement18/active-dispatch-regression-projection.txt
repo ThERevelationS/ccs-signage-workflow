@@ -1,0 +1,26 @@
+ok independent1CY common costs176.25 plus112steel =288.25
+ok three instances common528.75 andsteel336 =864.75, no double scaling
+ok bagged/forming keep common legacy economics independent of new steel
+ok stale/invalid legacy rebar settings do not leak into version2 costing
+ok zero aggregate quantity is0ft plus48connectionlabor, not1ft
+ok explicit0 price is0material plus72labor, not a catalog fallback
+ok unknown weight remains null and gates application, known price remains visible
+ok unconfigured supports retain preliminary price but block replacement
+ok missing manual basis reason blocks replacement despite calculable money
+ok missing selected bagged material never becomes a replacement ready-mix amount
+ok missing active forming row blocks total, disabled forming selection is ignored
+ok duplicate concrete/forming IDs fail closed
+ok failed catalog/settings reads and malformed records don't infer defaults
+ok active invalid/negative common overrides block; no partial parse or plausible total
+ok inactive malformed forming/finishing override text stays preserved and ignored
+ok strict common numeric override text is typed without changing the raw item
+ok legacy common zero-rate finishing Infinity is unavailable, never silently repaired
+ok numeric0 labor settings match explicit textual0; no false default60
+ok active common settings reject partial parsing and null instead of inventing defaults
+ok negative/nonfinite catalog costs don't produce a replacement price
+ok rebaroff preserves common price176.25 with0steel and no inactive design/material
+ok invalid foundation geometry cannot gain a price from stored totals
+ok project excavation fallback is explicit; item method takes precedence
+ok all frozen raw inputs and outputs remain isolated across fresh calculations
+Item projection: 24/24 passed; failed=0
+exit=0

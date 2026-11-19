@@ -1,0 +1,12 @@
+{
+ "src/components/estimator/laser/laserPricingAvailability.js": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/pages/LaserEstimator.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ }
+}

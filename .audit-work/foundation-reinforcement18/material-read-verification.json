@@ -1,0 +1,157 @@
+{
+  "synthetic": true,
+  "results": [
+    {
+      "name": "missing estimate id performs no read",
+      "ok": true,
+      "reads": [],
+      "writes": []
+    },
+    {
+      "name": "explicit frozen inputs preserve exact zero, split, provenance and inactive filtering",
+      "ok": true,
+      "reads": [],
+      "writes": []
+    },
+    {
+      "name": "primary read errors remain errors, never an empty manifest",
+      "ok": true,
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "linked product read errors remain errors",
+      "ok": true,
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        },
+        {
+          "via": "paged",
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          }
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "mixed stamped and legacy parts on one product are both included",
+      "ok": true,
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        },
+        {
+          "via": "paged",
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          }
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "legacy product loading is paged rather than silently capped at500",
+      "ok": true,
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        },
+        {
+          "via": "paged",
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          }
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "duplicate rows from both read paths count only once",
+      "ok": true,
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        },
+        {
+          "via": "paged",
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          }
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "malformed explicit inputs do not fall through into live reads",
+      "ok": true,
+      "reads": [],
+      "writes": []
+    },
+    {
+      "name": "failed material read blocks create before any Work Order write",
+      "ok": true,
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "failed material read blocks update before any Work Order write",
+      "ok": true,
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "a mapper validation error is not converted into an empty successful handoff",
+      "ok": true,
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        },
+        {
+          "via": "paged",
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          }
+        }
+      ],
+      "writes": []
+    }
+  ]
+}

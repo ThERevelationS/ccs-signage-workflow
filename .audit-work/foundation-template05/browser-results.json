@@ -1,0 +1,37 @@
+{
+ "synthetic": true,
+ "note": "no Base44 SDK/services/records; stub entity fakes",
+ "results": [
+  {
+   "case": "orphan cabinet visible + reassignment offered",
+   "ok": true,
+   "orphanMarkers": 2,
+   "hasPortalText": false
+  },
+  {
+   "case": "cap wall change clears segment",
+   "ok": true,
+   "options": [
+    "Select cap…",
+    "Cap"
+   ],
+   "segAfter": "s0",
+   "wallAfter": "w1",
+   "changeFired": 1
+  },
+  {
+   "case": "template save dialog builds full snapshot via stub",
+   "ok": true,
+   "listed": 2,
+   "appliedLandscape": false,
+   "closedCount": 0
+  },
+  {
+   "case": "rejected apply keeps dialog open",
+   "ok": true,
+   "alerts": 1,
+   "closedCount": 0
+  }
+ ],
+ "requests": []
+}

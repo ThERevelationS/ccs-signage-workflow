@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "total 43\ndrwxr-xr-x 2 root root    38 Oct 31 17:46 .\ndrwxr-xr-x 1 root root   147 Oct 31 20:54 ..\n-rw-r--r-- 1 root root 34108 Nov  1 01:20 JobWorkspace.jsx\n-rw-r--r-- 1 root root  7996 Oct 31 12:24 jobWorkspaceModel.js\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 878
+}

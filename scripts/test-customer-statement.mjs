@@ -13,7 +13,7 @@ assert.match(ui, /w\.document\.write\(statementHtml\(data\)\)/, "Statement actio
 assert.match(ui, /const escHtml =/, "statement escapes customer-provided fields");
 assert.match(workspace, /if \(action === "get_customer_360"\)/, "statement uses Customer 360");
 assert.match(workspace, /invoices: inv/, "Customer 360 returns invoices");
-assert.match(workspace, /payments: \(Array\.isArray\(payments\)/, "Customer 360 returns payments");
+assert.match(workspace, /payments: custPayments|payments: \(Array\.isArray\(payments\)/, "Customer 360 returns payments");
 assert.match(workspace, /ar_aging: \{ \.\.\.aging, as_of: asOf \}/, "Customer 360 returns statement aging");
 
 console.log("PASS Customer 360 customer-statement contract (11 assertions)");

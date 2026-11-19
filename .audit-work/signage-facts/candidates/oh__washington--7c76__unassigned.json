@@ -1,0 +1,67 @@
+{
+ "jurisdiction_id": "6aea5ce855c19d4c0baa7c76",
+ "jurisdiction_name": "Washington",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "1496398v2 APPLICATION FOR ZONING CERTIFICATE WASHINGTON TOWNSHIP FRANKLIN COUNTY, OHIO Application No. Name of Applicant Date Address Phone Name of Lot Owner Phone Address Address of Premises Application is hereby made to (description of work) DESCRIPTION 1. Size of proposed building or structure: Length Feet Depth Feet Height Feet Height Stories 2. Square Feet of Living Area 3. Character of Construction 4. Size of Lot: Front Ft., Rear Ft., Side Ft. Side Ft. Area Sq. Ft. and/or Acres. 5. Location of structure on property: Front Feet from Property Line to Building or Structure Side Feet from Property Line to Building or Structure Side Feet from Property Line to Building or Structure Rear Feet from Property Line to Building or Structure 6. Use of Proposed Building or Structure: No. Families (Residence, Garage, Storage Shed, Etc.) 7. This application for a zoning certificate submitted to th",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "dab54a51400a83d111a015a70d83f749f65b8758f4a148bf7742c656b988a4ba",
+   "source_document_id": null,
+   "source_title": "dab54a51400a83d111a015a70d83f749f65b8758f4a148bf7742c656b988a4ba.pdf",
+   "official_url": "https://wtwpdublinoh.gov/cdn/Application-for-Zoning-Certificate-Jan-07.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "WASHINGTON TOWNSHIP BOARD OF ZONING APPEALS APPEAL, VARIANCE, SPECIAL PERMIT OR SPECIAL ZONING CERTIFICATE REQUEST Name(s) of Person(s) Appealing Or Making the Request Address of Above Person(s) Name(s) of Owner(s) of the Subject Property, if Different From Above-Listed Person(s) Address of Owner(s) Description of Property involved (address—if any, on which side of a particular street or roadway it is located, frontage and depth in feet, acreage, etc./please attach a copy of a legal description such as would appear in a deed and a drawing showing the property's location and dimensions): If this is an APPEAL , describe the action of the township's administrative official which you appeal (such as the refusal of a zoning certificate or the issuance of a cease and desist order as to property usage): If this is a REQUEST FOR A VARIANCE OR REQUEST FOR A SPECIAL PERMIT OR ZONING CERTIFICATE , ",
+   "tags": [
+    "fee",
+    "dimension",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "32021b9914cb03ddb9b41b7dc94aa439986a01ba33ce2fb625b61bf85068d998",
+   "source_document_id": null,
+   "source_title": "32021b9914cb03ddb9b41b7dc94aa439986a01ba33ce2fb625b61bf85068d998.pdf",
+   "official_url": "https://wtwpdublinoh.gov/cdn/Appeal-or-Variance-Request-Jan-07.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "608565v1 WASHINGTON TOWNSHIP ZONING COMMISSION APPLICATION FOR ZONING AMENDMENT Name(s) of Applicant(s) Address of Applicant(s) Name(s) of Owner(s) of the Subject Property, If Different From Applicant Description of Property involved (address—if any, on which side of particular street or roadway it is located, frontage and depth in feet, acreage, etc./please attach a copy of a legal description such as would appear in a deed and a drawing showing the property's location and dimensions): Present Zoning Category Applicable to the Property: Proposed Different Use of the Property/Describe: List of Property Owners (include the names and mailing addresses of all persons and entities owning property adjacent to the sides and rear of the subject property and all property across any streets that border it. If not known, check the real estate tax records at the Franklin County Courthouse.): Names ",
+   "tags": [
+    "fee",
+    "dimension",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "61004ee001d7e0fca67d2fd3143d3a43e9751e8dc56b3a15449bd54a934db836",
+   "source_document_id": null,
+   "source_title": "61004ee001d7e0fca67d2fd3143d3a43e9751e8dc56b3a15449bd54a934db836.pdf",
+   "official_url": "https://wtwpdublinoh.gov/cdn/Application-for-Zoning-Amendment-Jan-07.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "General Application Requirements in Designated A Zones • Submission of materials required in a designated AE or AH zone. • Designation of the floodway boundaries • Designation of the base flood elevations • Computer model input and output used to determine the existing base flood elevation and floodway limits. • Computer model input and output used to determine the base flood elevation and floodway elevation using the existing floodway limits with the proposed development completed. • Any additional information or exhibits deemed necessary for property consideration of the application. Note – In designated flood hazard areas for which the Federal Emergency Management Agency has not determined detailed flood elevations and Floodway boundaries, the applicant shall be required to furnish such information prepared by qualified personnel to enable the administration of Franklin County’s Natio",
+   "tags": [
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "ceff07c9f559dbfcc8773df6da3eba331f09c5c1407b8d790c98f1391c9cb8f4",
+   "source_document_id": null,
+   "source_title": "ceff07c9f559dbfcc8773df6da3eba331f09c5c1407b8d790c98f1391c9cb8f4.pdf",
+   "official_url": "https://wtwpdublinoh.gov/cdn/flood-plain-permit-application.pdf"
+  }
+ ]
+}

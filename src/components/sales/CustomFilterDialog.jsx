@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useReducer, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 
-const GlobalSettings = base44.entities.GlobalSettings;
+const GlobalSettings = staffEntities.GlobalSettings;
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Save, Pencil, Copy, Users, X, Undo2, Redo2, GripVertical } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { createSalesFilterIfAbsent, createUniqueSalesFilterCopy, deleteSalesFilterIfUnchanged, loadSalesPersonRosterSafely, setSalesFilterSelectionSafely, updateSalesFilterIfUnchanged } from "@/components/sales/salesFilterPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { SALES_TABLE_COLUMNS, getSalesColumnLayout, normalizeSalesColumnSettings, preserveLegacySalesColumnEntries } from "@/components/sales/salesColumnCatalog.mjs";
 import { newSalesColumnDraft, salesColumnDraftReducer, salesEditorSnapshot, salesEditorHasChanges, salesColumnSettingsEqual } from "@/components/sales/salesColumnEditorDraft.mjs";
 import { salesPersonUsersForRole } from "@/components/sales/salesPersonIdentity.mjs";
 import { hasRetiredSalesStageCondition } from "@/components/sales/salesStageTrust.mjs";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const FILTER_FIELDS = [
   { value: "client_name", label: "Customer", type: "text" },
@@ -122,7 +123,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   const [selectingIds, setSelectingIds] = useState(() => new Set());
   const [isCopying, setIsCopying] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [activeTab, setActiveTab] = useState(mode);
+  const [activeTab] = useState(mode);
   const [activeSubTab, setActiveSubTab] = useState("pool");
   const [users, setUsers] = useState([]);
   const [persistenceError, setPersistenceError] = useState("");

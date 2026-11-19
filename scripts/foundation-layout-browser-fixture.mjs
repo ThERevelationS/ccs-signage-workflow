@@ -1,0 +1,260 @@
+// O-032/O-040 layout canvas browser fixture: REAL FoundationLayoutCanvas +
+// real model, lucide-only stub, no SDK/external. 127.0.0.1:5172, self-stops.
+import esbuild from 'esbuild';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import http from 'node:http';
+import path from 'node:path';
+import { chromium } from 'playwright-core';
+
+const OUT = '.audit-work/foundation-layout10';
+fs.mkdirSync(OUT, { recursive: true });
+const STUBS = { 'lucide-react': `export const Move=()=>null;export const ZoomIn=()=>null;export const ZoomOut=()=>null;` };
+
+const harness = `
+import React, { useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import FoundationLayoutCanvas from '@/components/estimator/foundation/FoundationLayoutCanvas';
+
+let seq = 0;
+const baseItems = () => ([
+  { component_id: 'i0', x_inches: 10, z_inches: 10, length_inches: 24, width_inches: 24 },
+  { component_id: 'i1', x_inches: 120, z_inches: 80, length_inches: 48, width_inches: 36 },
+]);
+function App(){
+  const [items,setItems]=useState(baseItems());
+  const [moves,setMoves]=useState([]);
+  window.__items=items; window.__moves=moves;
+  window.__ctl=(cmd)=>{
+    if(cmd==='reorder')setItems(prev=>[prev[1],prev[0]]);
+    if(cmd==='delete')setItems(prev=>[prev[0]]);
+    if(cmd==='reset'){setItems(baseItems());setMoves([]);}
+  };
+  window.__pl=window.__pl||[];
+  const log=(phase)=>(e)=>{window.__pl.push({phase,id:e.pointerId,btn:e.button,x:Math.round(e.clientX),y:Math.round(e.clientY),target:e.target.tagName+':'+(e.target.getAttribute&&e.target.getAttribute('aria-label'))+':'+String(e.target.className).slice(0,40)});};
+  return React.createElement('div',{onPointerDownCapture:log('down'),onPointerMoveCapture:log('move'),onPointerUpCapture:log('up'),onPointerCancelCapture:log('cancel'),onLostPointerCaptureCapture:log('lostcap')},
+    React.createElement('h1',{id:'fx'},'SYNTHETIC layout fixture - not Base44'),
+    React.createElement(FoundationLayoutCanvas,{items,onMoveItem:(i,p)=>{setMoves(m=>[...m,{i,p}]);setItems(prev=>prev.map((it,j)=>j===i?{...it,...p}:it));}}));
+}
+createRoot(document.getElementById('root')).render(React.createElement(React.StrictMode, null, React.createElement(App)));
+`;
+
+const plugin = { name: 's', setup(b) {
+  b.onResolve({ filter: /^harness$/ }, () => ({ path: 'harness', namespace: 'h' }));
+  b.onResolve({ filter: /.*/ }, a => (STUBS[a.path] ? { path: path.resolve('s-' + a.path.replace(/[^a-z0-9]/gi, '_')), namespace: 's' } : undefined));
+  b.onLoad({ filter: /.*/, namespace: 'h' }, () => ({ contents: harness, loader: 'jsx', resolveDir: path.resolve('.') }));
+  b.onLoad({ filter: /.*/, namespace: 's' }, a => { const key = Object.keys(STUBS).find(k => path.resolve('s-' + k.replace(/[^a-z0-9]/gi, '_')) === a.path); return { contents: STUBS[key], loader: 'js', resolveDir: path.resolve('.') }; });
+}};
+const built = await esbuild.build({ entryPoints: ['harness'], bundle: true, format: 'iife', platform: 'browser', write: false, plugins: [plugin], loader: { '.js': 'jsx', '.jsx': 'jsx' }, jsx: 'automatic', alias: { '@': path.resolve('src') }, metafile: true });
+const bad = Object.keys(built.metafile.inputs).filter(i => /node_modules.*base44|@base44|api\/base44Client/i.test(i));
+fs.writeFileSync(`${OUT}/metafile.json`, JSON.stringify({ inputs: Object.keys(built.metafile.inputs) }, null, 1));
+if (bad.length) { console.error('SDK IN BUNDLE:', bad); process.exit(1); }
+
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end(`<!doctype html><meta charset=utf-8><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+    *,*::before,*::after{box-sizing:border-box}
+    .relative{position:relative}.absolute{position:absolute}
+    [class*="aspect-"]{aspect-ratio:3/2}
+    .overflow-auto{overflow:auto}.flex-wrap{flex-wrap:wrap}.gap-2{gap:8px}.select-none{user-select:none}
+    .rounded-sm{border-radius:2px}.rounded-full{border-radius:9999px}
+    .flex{display:flex}.items-center{align-items:center}.justify-center{justify-content:center}
+    .border-2{border-width:2px;border-style:dashed;border-color:#d97706}
+    .bg-amber-100\/70{background:rgba(254,243,199,.7)}
+    .cursor-move{cursor:move}
+    .w-2{position:absolute;width:10px;height:10px}.w-2\.5{width:10px}.h-2\.5{height:10px}
+    .bg-slate-700{background:#334155}.border-white{border-color:#fff}
+    body{margin:8px;font-family:sans-serif}
+  </style><body><div id=root></div><script>${built.outputFiles[0].text}</script>`);
+});
+await new Promise(r => server.listen(5172, '127.0.0.1', r));
+
+const results = [];
+const telemetry = { foreignRequests: [], consoleErrors: [], pageErrors: [] };
+const ORIGIN = 'http://127.0.0.1:5172';
+const guard = (page, tag) => {
+  page.on('request', (r) => { if ((() => { try { return new URL(r.url()).origin !== ORIGIN; } catch { return true; } })()) telemetry.foreignRequests.push({ tag, url: r.url() }); });
+  page.on('pageerror', (e) => telemetry.pageErrors.push({ tag, error: String(e) }));
+  page.on('console', (m) => { if (m.type() === 'error') telemetry.consoleErrors.push({ tag, text: m.text().slice(0, 200) }); });
+  page.on('requestfailed', (r) => { if ((() => { try { return new URL(r.url()).origin !== ORIGIN; } catch { return true; } })()) telemetry.foreignRequests.push({ tag, url: r.url(), failed: true }); });
+};
+const browser = await chromium.launch({ channel: 'chrome', headless: true });
+const S = async (name, fn) => { try { const out = await fn() || {}; results.push({ case: name, ok: true, ...out }); } catch (e) { results.push({ case: name, ok: false, error: String(e) }); } };
+
+// Desktop context: real mouse drags at 3 zooms
+await S('mouse drag zoom 1/2/0.5 -> corner 216,142, one commit each', async () => {
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  guard(page, 'mouse');
+  await page.route('**/*', (r) => { if ((() => { try { return new URL(r.request().url()).origin === ORIGIN; } catch { return false; } })()) r.continue(); else r.abort(); });
+  await page.goto('http://127.0.0.1:5172/');
+  await page.locator('[aria-label="Move Foundation 2"]').waitFor();
+  for (const zoomPct of [100, 200, 50]) {
+    // set zoom via buttons
+    const cur = await page.locator('button:has-text("%")').count();
+    const zoomLabel = page.locator('span.w-10');
+    while ((await zoomLabel.textContent()) !== zoomPct + '%') {
+      const t = await zoomLabel.textContent();
+      const target = parseInt(t) < zoomPct ? 'in' : 'out';
+      await page.locator(`[aria-label="${target === 'in' ? 'Zoom layout in' : 'Zoom layout out'}"]`).click();
+    }
+    await page.evaluate(() => { window.__ctl('reset'); });
+    await page.waitForFunction(() => {
+      const it = window.__items[1];
+      const el = document.querySelector('[aria-label="Move Foundation 2"]');
+      if (!it || it.x_inches !== 120 || !el) return false;
+      const cv = el.parentElement.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      return cv.width > 10 && Math.abs(r.left - (cv.left + 120 * cv.width / 480)) < 2;
+    }, null, { timeout: 8000 });
+    const box = await page.locator('.aspect-\\[3\\/2\\]').boundingBox();
+    const w2c = (wx, wz) => ({ x: box.x + wx * box.width / 480, y: box.y + wz * box.height / 320 });
+    const g = w2c(144, 98), t = w2c(240, 160);
+    const probe = await page.evaluate(([x, y]) => { const el = document.elementFromPoint(x, y); return el?.tagName + ':' + (el?.getAttribute('aria-label') || el?.className?.toString().slice(0, 30)); }, [g.x, g.y]);
+    await page.mouse.move(g.x, g.y); await page.mouse.down();
+    for (const [wx, wz] of [[200, 140], [220, 150], [240, 160]]) { const p = w2c(wx, wz); await page.mouse.move(p.x, p.y); }
+    await page.mouse.up();
+    const mv = await page.evaluate(() => window.__moves);
+    const pl = await page.evaluate(() => window.__pl);
+    assert.equal(mv.length, 1, `zoom ${zoomPct}%: one commit ` + JSON.stringify({probe, box, g, pl: pl.slice(-8)}));
+    assert.deepEqual(mv[0].p, { x_inches: 216, z_inches: 142 }, `zoom ${zoomPct}% corner`);
+    const domBox = await page.locator('[aria-label="Move Foundation 2"]').boundingBox();
+    const expected = w2c(216, 142);
+    assert.ok(Math.abs(domBox.x - expected.x) < 1.5 && Math.abs(domBox.y - expected.y) < 1.5, 'DOM corner matches committed');
+    const domW = await page.locator('[aria-label="Move Foundation 2"]').boundingBox();
+    assert.ok(Math.abs(domW.width - box.width * 48 / 480) < 1.5, `footprint width ${domW.width} vs ${box.width * 48 / 480}`);
+    assert.ok(Math.abs(domW.height - box.height * 36 / 320) < 1.5, `footprint height ${domW.height} vs ${box.height * 36 / 320}`);
+  }
+  await page.screenshot({ path: `${OUT}/fixture-drag.png` });
+  await ctx.close();
+  return { zooms: 3 };
+});
+
+// Touch drag via real CDP touch events in mobile context
+await S('touch drag: pointer-capture path commits once; touch cancel -> none', async () => {
+  const ctx = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
+  guard(page, 'touch');
+  await page.route('**/*', (r) => { if ((() => { try { return new URL(r.request().url()).origin === ORIGIN; } catch { return false; } })()) r.continue(); else r.abort(); });
+  await page.goto('http://127.0.0.1:5172/');
+  await page.locator('[aria-label="Move Foundation 2"]').waitFor();
+  const cdp = await ctx.newCDPSession(page);
+  const box = await page.locator('.aspect-\\[3\\/2\\]').boundingBox();
+  const w2c = (wx, wz) => ({ x: box.x + wx * box.width / 480, y: box.y + wz * box.height / 320 });
+  const g = w2c(144, 98), t = w2c(240, 160);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: g.x, y: g.y, id: 1 }] });
+  for (const [wx, wz] of [[200, 140], [240, 160]]) { const p = w2c(wx, wz); await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: p.x, y: p.y, id: 1 }] }); }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  const mv = await page.evaluate(() => window.__moves);
+  assert.equal(mv.length, 1, 'touch drag commits once');
+  assert.deepEqual(mv[0].p, { x_inches: 216, z_inches: 142 });
+  // cancel path
+  await page.evaluate(() => { window.__ctl('reset'); });
+  await page.waitForFunction(() => {
+      const it = window.__items[1];
+      const el = document.querySelector('[aria-label="Move Foundation 2"]');
+      if (!it || it.x_inches !== 120 || !el) return false;
+      const cv = el.parentElement.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      return cv.width > 10 && Math.abs(r.left - (cv.left + 120 * cv.width / 480)) < 2;
+    }, null, { timeout: 8000 });;
+  const g2 = w2c(144, 98);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: g2.x, y: g2.y, id: 1 }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: w2c(200, 140).x, y: w2c(200, 140).y, id: 1 }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+  const mv2 = await page.evaluate(() => window.__moves);
+  assert.equal(mv2.length, 0, 'touch cancel commits nothing');
+  // secondary touch while primary continues
+  await page.evaluate(() => { window.__ctl('reset'); });
+  await page.waitForFunction(() => {
+      const it = window.__items[1];
+      const el = document.querySelector('[aria-label="Move Foundation 2"]');
+      if (!it || it.x_inches !== 120 || !el) return false;
+      const cv = el.parentElement.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      return cv.width > 10 && Math.abs(r.left - (cv.left + 120 * cv.width / 480)) < 2;
+    }, null, { timeout: 8000 });;
+  const g3 = w2c(144, 98), t3 = w2c(240, 160);
+  const sec = { x: 40, y: 40 };
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: g3.x, y: g3.y, id: 1 }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: g3.x, y: g3.y, id: 1 }, { x: sec.x, y: sec.y, id: 2 }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: t3.x, y: t3.y, id: 1 }, { x: sec.x, y: sec.y, id: 2 }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [{ x: t3.x, y: t3.y, id: 1 }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  const mv3 = await page.evaluate(() => window.__moves);
+  assert.equal(mv3.length, 1, 'primary drag commits once despite secondary touch');
+  assert.deepEqual(mv3[0].p, { x_inches: 216, z_inches: 142 }, 'secondary touch did not alter committed corner');
+  await ctx.close();
+  return { touch: true };
+});
+
+// Keyboard + reorder + delete with fixture controls
+await S('keyboard arrows + reorder mid-drag resolves index + delete cancels', async () => {
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  guard(page, 'kb');
+  await page.route('**/*', (r) => { if ((() => { try { return new URL(r.request().url()).origin === ORIGIN; } catch { return false; } })()) r.continue(); else r.abort(); });
+  await page.goto('http://127.0.0.1:5172/');
+  const f2 = page.locator('[aria-label="Move Foundation 2"]');
+  await f2.focus();
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('Shift+ArrowDown');
+  const mv = await page.evaluate(() => window.__moves);
+  assert.deepEqual(mv.map(m => m.p), [{ x_inches: 121, z_inches: 80 }, { x_inches: 121, z_inches: 92 }]);
+  // reorder mid-drag
+  await page.evaluate(() => { window.__ctl('reset'); });
+  await page.waitForFunction(() => {
+    const item = window.__items[1];
+    const element = document.querySelector('[aria-label="Move Foundation 2"]');
+    if (!item || item.component_id !== 'i1' || item.x_inches !== 120 || !element) return false;
+    const canvas = element.parentElement.getBoundingClientRect();
+    return Math.abs(element.getBoundingClientRect().left - canvas.left - 120 * canvas.width / 480) < 1.5;
+  });
+  const box = await page.locator('.aspect-\\[3\\/2\\]').boundingBox();
+  const w2c = (wx, wz) => ({ x: box.x + wx * box.width / 480, y: box.y + wz * box.height / 320 });
+  const g = w2c(144, 98);
+  await page.mouse.move(g.x, g.y); await page.mouse.down();
+  const dragStart = await page.evaluate(() => ({ count: window.__pl.length, event: window.__pl.filter(e => e.phase === 'down').at(-1), items: window.__items }));
+  assert.ok(dragStart.event?.target.includes('Move Foundation 2'), 'gesture starts on intended foundation after reset');
+  await page.evaluate(() => { window.__ctl('reorder'); });
+  await page.waitForFunction(() => window.__items[0]?.component_id === 'i1', null, { timeout: 5000 });
+  const t = w2c(240, 160);
+  await page.mouse.move(t.x, t.y);
+  const lossBeforeDrop = await page.evaluate(start => window.__pl.slice(start).filter(e => e.phase === 'lostcap'), dragStart.count);
+  await page.mouse.up();
+  const mv2 = await page.evaluate(() => window.__moves);
+  const pl2 = await page.evaluate(() => (window.__pl || []).slice(-8));
+  const itemsAfter = await page.evaluate(() => window.__items);
+  // Loss of capture is a safe cancellation only when observed before release.
+  if (mv2.length === 1) {
+    assert.equal(mv2[0].i, 0, 'reorder committed current index 0');
+    assert.deepEqual(mv2[0].p, { x_inches: 216, z_inches: 142 });
+  } else {
+    assert.equal(mv2.length, 0, 'reorder mid-drag safe discard ' + JSON.stringify(pl2));
+    assert.ok(lossBeforeDrop.some(e => e.id === dragStart.event.id), 'discard requires observed loss of the active pointer before drop');
+    assert.deepEqual(itemsAfter, [dragStart.items[1], dragStart.items[0]], 'discard cannot mutate either reordered design');
+  }
+  // delete mid-drag cancels
+  await page.evaluate(() => { window.__ctl('reset'); });
+  await page.waitForFunction(() => window.__items[1]?.component_id === 'i1' && window.__items[1]?.x_inches === 120);
+  await page.mouse.move(g.x, g.y); await page.mouse.down();
+  await page.evaluate(() => { window.__ctl('delete'); });
+  await page.waitForFunction(() => window.__items.length === 1, null, { timeout: 5000 });
+  await page.mouse.move(t.x, t.y); await page.mouse.up();
+  const mv3 = await page.evaluate(() => window.__moves);
+  assert.equal(mv3.length, 0, 'delete cancels commit');
+  await page.screenshot({ path: `${OUT}/fixture-keyboard.png` });
+  await ctx.close();
+  return { done: true, reorderOutcome: mv2.length ? 'committed-current-index' : 'cancelled-after-capture-loss', lossBeforeDrop, pointerLog: pl2 };
+});
+
+if (telemetry.foreignRequests.length) results.push({ case: 'external-request-attempt', ok: false, detail: telemetry.foreignRequests });
+if (telemetry.pageErrors.length) results.push({ case: 'pageerror', ok: false, detail: telemetry.pageErrors });
+if (telemetry.consoleErrors.length) results.push({ case: 'console-error', ok: false, detail: telemetry.consoleErrors });
+fs.writeFileSync(`${OUT}/browser-results.json`, JSON.stringify({ synthetic: true, note: 'real panel+model; lucide-only stub; no SDK/network', telemetry, results }, null, 1));
+await browser.close();
+server.close();
+const fails = results.filter(r => r.ok === false);
+console.log(`layout-browser scenarios=3 failed=${fails.length}`);
+results.forEach(r => console.log(r.ok === false ? 'FAIL' : 'ok', r.case));
+process.exit(fails.length ? 1 : 0);

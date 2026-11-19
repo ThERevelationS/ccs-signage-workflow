@@ -1,0 +1,246 @@
+{
+  "synthetic": true,
+  "staticFrozenHtml": true,
+  "results": [
+    {
+      "name": "local-zero",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "baselineWidth": 1280,
+      "actualWidth": 1280,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:65303/print-before-local-zero.html",
+          "http://127.0.0.1:65303/print-frozen-local-zero.html"
+        ]
+      }
+    },
+    {
+      "name": "local-zero",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "baselineWidth": 540,
+      "actualWidth": 390,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:65303/print-before-local-zero.html",
+          "http://127.0.0.1:65303/print-frozen-local-zero.html"
+        ]
+      }
+    },
+    {
+      "name": "local-unknown-labor",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "baselineWidth": 1280,
+      "actualWidth": 1280,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:65303/print-before-local-unknown-labor.html",
+          "http://127.0.0.1:65303/print-frozen-local-unknown-labor.html"
+        ]
+      }
+    },
+    {
+      "name": "local-unknown-labor",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "baselineWidth": 540,
+      "actualWidth": 390,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:65303/print-before-local-unknown-labor.html",
+          "http://127.0.0.1:65303/print-frozen-local-unknown-labor.html"
+        ]
+      }
+    },
+    {
+      "name": "local-ordinary",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "baselineWidth": 1280,
+      "actualWidth": 1280,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:65303/print-before-local-ordinary.html",
+          "http://127.0.0.1:65303/print-frozen-local-ordinary.html"
+        ]
+      }
+    },
+    {
+      "name": "local-ordinary",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "baselineWidth": 540,
+      "actualWidth": 390,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:65303/print-before-local-ordinary.html",
+          "http://127.0.0.1:65303/print-frozen-local-ordinary.html"
+        ]
+      }
+    },
+    {
+      "name": "sandbox-candidate-zero",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "baselineWidth": 1280,
+      "actualWidth": 1280,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:65303/print-before-sandbox-candidate-zero.html",
+          "http://127.0.0.1:65303/print-frozen-sandbox-candidate-zero.html"
+        ]
+      }
+    },
+    {
+      "name": "sandbox-candidate-zero",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "baselineWidth": 540,
+      "actualWidth": 390,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:65303/print-before-sandbox-candidate-zero.html",
+          "http://127.0.0.1:65303/print-frozen-sandbox-candidate-zero.html"
+        ]
+      }
+    },
+    {
+      "name": "sandbox-candidate-unknown-labor",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "baselineWidth": 1280,
+      "actualWidth": 1280,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:65303/print-before-sandbox-candidate-unknown-labor.html",
+          "http://127.0.0.1:65303/print-frozen-sandbox-candidate-unknown-labor.html"
+        ]
+      }
+    },
+    {
+      "name": "sandbox-candidate-unknown-labor",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "baselineWidth": 540,
+      "actualWidth": 390,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:65303/print-before-sandbox-candidate-unknown-labor.html",
+          "http://127.0.0.1:65303/print-frozen-sandbox-candidate-unknown-labor.html"
+        ]
+      }
+    },
+    {
+      "name": "sandbox-candidate-ordinary",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "baselineWidth": 1280,
+      "actualWidth": 1280,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:65303/print-before-sandbox-candidate-ordinary.html",
+          "http://127.0.0.1:65303/print-frozen-sandbox-candidate-ordinary.html"
+        ]
+      }
+    },
+    {
+      "name": "sandbox-candidate-ordinary",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "baselineWidth": 540,
+      "actualWidth": 390,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:65303/print-before-sandbox-candidate-ordinary.html",
+          "http://127.0.0.1:65303/print-frozen-sandbox-candidate-ordinary.html"
+        ]
+      }
+    }
+  ]
+}

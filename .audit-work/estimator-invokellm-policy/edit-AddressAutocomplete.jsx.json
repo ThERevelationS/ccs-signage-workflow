@@ -1,0 +1,5 @@
+{
+  "path": "src/components/channelLetterInstall/AddressAutocomplete.jsx",
+  "diff": "--- a/src/components/channelLetterInstall/AddressAutocomplete.jsx\n+++ b/src/components/channelLetterInstall/AddressAutocomplete.jsx\n@@ -1,7 +1,8 @@\n-import React, { useState, useEffect, useRef } from \"react\";\r\n+import { useState, useEffect, useRef } from \"react\";\r\n import { Input } from \"@/components/ui/input\";\r\n import { MapPin, Loader2 } from \"lucide-react\";\r\n import { base44 } from \"@/api/base44Client\";\r\n+import { ESTIMATOR_AI_MODEL } from \"../../../base44/shared/estimatorAiModelPolicy.js\";\r\n import { getSessionToken } from \"@/components/auth/EmailGate\";\r\n \r\n const SCHEMA = {\r\n@@ -61,7 +62,7 @@\n Each must look like a real mailing address (street number + street, city, state abbr, ZIP).\r\n Prefer well-known streets/cities. Be FAST — do not search the web. JSON only.`,\r\n         response_json_schema: SCHEMA,\r\n-        model: \"gemini_3_flash\"\r\n+        model: ESTIMATOR_AI_MODEL\r\n       });\r\n       return llm?.suggestions || [];\r\n     };\r\n",
+  "applied": true
+}

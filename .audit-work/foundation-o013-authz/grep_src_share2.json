@@ -1,0 +1,1506 @@
+{
+  "matches": [
+    {
+      "path": "src/api/requestGovernor.mjs",
+      "line": 181,
+      "text": "  // Share one in-flight promise between identical reads. Followers get their"
+    },
+    {
+      "path": "src/api/rateLimitCooldown.js",
+      "line": 1,
+      "text": "// Shared app-wide 429 circuit breaker consulted by pollers and invoke paths —"
+    },
+    {
+      "path": "src/api/base44Client.js",
+      "line": 17,
+      "text": "// Read-only backend functions share their own concurrency pool so a page\r"
+    },
+    {
+      "path": "src/api/base44Client.js",
+      "line": 40,
+      "text": "// TTL share one response instead of one in-flight call, which collapses the\r"
+    },
+    {
+      "path": "src/api/base44Client.js",
+      "line": 125,
+      "text": "// failure (5xx), a request that never got a response, or a shared-budget 429.\r"
+    },
+    {
+      "path": "src/api/base44Client.js",
+      "line": 128,
+      "text": "// other 429 (platform invoke cap or the function's shared-budget pass-through)\r"
+    },
+    {
+      "path": "src/api/base44Client.js",
+      "line": 278,
+      "text": "        // One rate-limit note per invocation: dedupe followers share exec, so\r"
+    },
+    {
+      "path": "src/pages/Customer360.jsx",
+      "line": 46,
+      "text": "// shared opportunity workspace function. Invoice/Payment/PurchaseOrder/"
+    },
+    {
+      "path": "src/pages/PurchaseOrders.jsx",
+      "line": 45,
+      "text": "// Shared kit input vocabulary (adds placeholder styling over the old copy)."
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 22,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";\r"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 543,
+      "text": "    // Share the date-edit guard with calendar saves. The confirmation keeps\r"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 764,
+      "text": "  // Role-filtered pick lists are shared by every row; build them once.\r"
+    },
+    {
+      "path": "src/pages/VinylInventory.jsx",
+      "line": 17,
+      "text": "              <p className=\"text-[10px] text-gray-500\">Shared VinylInventory catalog used by Vinyl, Channel Letters, Maintenance and Master Inventory.</p>"
+    },
+    {
+      "path": "src/pages/PaintingEstimator.jsx",
+      "line": 13,
+      "text": "import ModuleActionBar from \"@/components/estimator/moduleShared/ModuleActionBar\";"
+    },
+    {
+      "path": "src/pages/PaintingEstimator.jsx",
+      "line": 14,
+      "text": "import ModuleTemplateDialog from \"@/components/estimator/moduleShared/ModuleTemplateDialog\";"
+    },
+    {
+      "path": "src/pages/PaintingEstimator.jsx",
+      "line": 15,
+      "text": "import { saveModuleProjectCopy } from \"@/components/estimator/moduleShared/moduleProjectActions\";"
+    },
+    {
+      "path": "src/pages/PaintingEstimator.jsx",
+      "line": 118,
+      "text": "  // Pricing-availability: one strict calc pass shared by the banner, the"
+    },
+    {
+      "path": "src/pages/FleetEquipment.jsx",
+      "line": 2,
+      "text": "import { HostedImg } from \"@/shared/hostedAssetUrl\";"
+    },
+    {
+      "path": "src/pages/ProductQueues.jsx",
+      "line": 14,
+      "text": "// CoreBridge-style module queues over the shared product operational model."
+    },
+    {
+      "path": "src/pages/ProductQueues.jsx",
+      "line": 26,
+      "text": "  // function is unavailable the hook fails open to the shared board feed."
+    },
+    {
+      "path": "src/pages/ProductQueues.jsx",
+      "line": 75,
+      "text": "        subtitle=\"Design, production and fulfillment lenses over the shared product operational model.\""
+    },
+    {
+      "path": "src/pages/InstallRouteMap.jsx",
+      "line": 28,
+      "text": "  // Keep ?date= in the address bar so a day's route can be linked/shared."
+    },
+    {
+      "path": "src/pages/EstimatorSettings.jsx",
+      "line": 6,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";\r"
+    },
+    {
+      "path": "src/pages/EstimatorSettings.jsx",
+      "line": 24,
+      "text": "  { label: \"Vinyl Inventory\", desc: \"Shared vinyl, laminate and transfer-tape catalog\", to: \"/VinylInventory\" },\r"
+    },
+    {
+      "path": "src/pages/EstimatorSettings.jsx",
+      "line": 28,
+      "text": "  { label: \"Pricing Registries\", desc: \"Admin-only CRUD for the shared pricing registries — tiers, templates, variables, modifiers, machines, labor, part groups, import history\", to: \"/EstimatorSettings?tab=pricing_registries\" },\r"
+    },
+    {
+      "path": "src/pages/TimeClock.jsx",
+      "line": 730,
+      "text": "          key={`${loggedInUser?.email || \"guest\"}:${timeClockSessionToken ? \"employee-session\" : \"shared-session\"}`}"
+    },
+    {
+      "path": "src/pages/OpsReports.jsx",
+      "line": 7,
+      "text": "// rides on the ?report= URL param so report links are shareable."
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 63,
+      "text": "// Shared kit input vocabulary (adds placeholder styling over the old copy)."
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 81,
+      "text": "function PortalLinks({ sessionToken, invoiceId }) {"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 131,
+      "text": "            {busy === \"create\" ? <Loader2 className=\"h-3.5 w-3.5 animate-spin\" /> : <Plus className=\"h-3.5 w-3.5\" />}Create share link"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 555,
+      "text": "            <PortalLinks sessionToken={sessionToken} invoiceId={invoiceId} />"
+    },
+    {
+      "path": "src/pages/ServerFiles.jsx",
+      "line": 322,
+      "text": "          (see <code>docs/unraid-filebridge-setup.md</code>) — once it handshakes, shares appear here."
+    },
+    {
+      "path": "src/pages/Fabrication.jsx",
+      "line": 23,
+      "text": "// C-01 — shared CoreBridge queue filter bar on this board. The bar is"
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 731,
+      "text": "  // payments_by_invoice, so the statement builds inline via the shared pure"
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 924,
+      "text": "                  <span className=\"font-semibold\">Shared read-only view</span> — this link opens one quote, view-only. Contact CCS Signage with any questions or change requests."
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 1093,
+      "text": "                  <div className=\"rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-400\">No quotes shared with you yet.</div>"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 29,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";\r"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 30,
+      "text": "import { useCellHistoryTracker } from \"@/components/shared/CellContextMenu\";\r"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 35,
+      "text": "import { legacyOfficeLinkOptions, assessOfficeRepairFreshness } from \"@/shared/permittingAddressLocality.js\";\r"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 1013,
+      "text": "  // Same-town cluster — how many distinct jobs share each locality's permit office.\r"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 1014,
+      "text": "  const sharedLocalities = useMemo(() => {\r"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 1224,
+      "text": "                  sharedOfficeCount={(() => {\r"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 1227,
+      "text": "                    for (const n of names) count = Math.max(count, sharedLocalities[n]?.size || 0);\r"
+    },
+    {
+      "path": "src/pages/FleetMaintenance.jsx",
+      "line": 2,
+      "text": "import { HostedImg } from \"@/shared/hostedAssetUrl\";"
+    },
+    {
+      "path": "src/pages/Reconciliation.jsx",
+      "line": 72,
+      "text": "  // list_batches call instead of two (the app's shared read budget is thin)."
+    },
+    {
+      "path": "src/pages/Estimating.jsx",
+      "line": 27,
+      "text": "// C-01 — shared CoreBridge queue filter bar on this board. The bar is"
+    },
+    {
+      "path": "src/pages/Estimating.jsx",
+      "line": 110,
+      "text": "  // C-01 — the shared queue filter bar owns the search box now; its `search`"
+    },
+    {
+      "path": "src/pages/Estimating.jsx",
+      "line": 117,
+      "text": "  // Write-back: keep ?q= in the URL in sync so searches survive reload/share."
+    },
+    {
+      "path": "src/pages/VinylSettings.jsx",
+      "line": 216,
+      "text": "          Vinyl material prices, roll sizes, waste, laminate and transfer-tape settings remain in the shared Vinyl Inventory. This page does not duplicate them. Existing machines are never deleted here; deactivate a machine to preserve historical references."
+    },
+    {
+      "path": "src/pages/OrderForm.jsx",
+      "line": 23,
+      "text": "import { canUseOrderExport } from \"@/shared/orderExportAccess.mjs\";\r"
+    },
+    {
+      "path": "src/pages/MetalEstimator.jsx",
+      "line": 21,
+      "text": "import ModuleActionBar from \"@/components/estimator/moduleShared/ModuleActionBar\";"
+    },
+    {
+      "path": "src/pages/MetalEstimator.jsx",
+      "line": 22,
+      "text": "import ModuleTemplateDialog from \"@/components/estimator/moduleShared/ModuleTemplateDialog\";"
+    },
+    {
+      "path": "src/pages/MetalEstimator.jsx",
+      "line": 23,
+      "text": "import { saveModuleProjectCopy } from \"@/components/estimator/moduleShared/moduleProjectActions\";"
+    },
+    {
+      "path": "src/pages/MetalEstimator.jsx",
+      "line": 181,
+      "text": "  // Pricing-availability: one strict calc pass shared by the banner, the"
+    },
+    {
+      "path": "src/pages/FleetParts.jsx",
+      "line": 2,
+      "text": "import { HostedImg } from \"@/shared/hostedAssetUrl\";"
+    },
+    {
+      "path": "src/pages/FleetPublicReport.jsx",
+      "line": 2,
+      "text": "import { HostedImg } from \"@/shared/hostedAssetUrl\";"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 53,
+      "text": "import { createEstimateReadOnlyShareLink } from \"@/components/estimator/moduleShared/moduleProjectActions\";"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 977,
+      "text": "  // #77 — create a fresh Brick & Stone draft carrying the shared identity"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 999,
+      "text": "  const handleShareLink = async () => {"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 1002,
+      "text": "      const url = await createEstimateReadOnlyShareLink({ estimateId });"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 1006,
+      "text": "      console.error(e); alert(\"Share link failed: \" + e.message);"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 1143,
+      "text": "          onShareLink={estimateId ? handleShareLink : undefined}"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 21,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 111,
+      "text": "// writes to the shared Work Order notes feed."
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 626,
+      "text": "  // Meeting notes go to the shared work_notes feed so the same update is"
+    },
+    {
+      "path": "src/pages/InstallationSettings.jsx",
+      "line": 221,
+      "text": "          <div className=\"min-w-0 flex-1\"><h1 className=\"text-[18px] font-bold text-gray-900\">Installation Settings</h1><p className=\"text-[10px] text-gray-500\">Shop-wide labor, installation times, conditions, travel and purchased-letter pricing used by Channel Letter and shared installation workflows.</p></div>"
+    },
+    {
+      "path": "src/pages/InstallationSettings.jsx",
+      "line": 268,
+      "text": "          <TabsContent value=\"travel\"><SettingsCard title=\"Installation Travel\" icon={Building2} description=\"These are the settings the shared Travel & Fuel calculator currently consumes.\"><FieldGrid keys={TRAVEL_KEYS} values={values} rowByName={rowByName} onChange={updateSetting} disabled={!isAdmin} /></SettingsCard></TabsContent>"
+    },
+    {
+      "path": "src/pages/PrivacyPolicy.jsx",
+      "line": 37,
+      "text": "              <li>We do not download, modify, or share your Google Drive files</li>"
+    },
+    {
+      "path": "src/pages/PrivacyPolicy.jsx",
+      "line": 49,
+      "text": "            <p>We do not sell, trade, or share your personal information with third parties except:</p>"
+    },
+    {
+      "path": "src/pages/JobCosting.jsx",
+      "line": 6,
+      "text": "import { downloadCsv } from \"@/components/shared/exportCsv\";"
+    },
+    {
+      "path": "src/pages/CommsFollowups.jsx",
+      "line": 16,
+      "text": "} from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/pages/CommsFollowups.jsx",
+      "line": 32,
+      "text": "// thresholds to GlobalSettings through the shared"
+    },
+    {
+      "path": "src/pages/Design.jsx",
+      "line": 23,
+      "text": "// C-01 — shared CoreBridge queue filter bar on this board. The bar is"
+    },
+    {
+      "path": "src/pages/FleetEquipmentDetail.jsx",
+      "line": 2,
+      "text": "import { HostedImg } from \"@/shared/hostedAssetUrl\";"
+    },
+    {
+      "path": "src/pages/BrickStoneEstimator.jsx",
+      "line": 12,
+      "text": "import ModuleActionBar from \"@/components/estimator/moduleShared/ModuleActionBar\";"
+    },
+    {
+      "path": "src/pages/BrickStoneEstimator.jsx",
+      "line": 13,
+      "text": "import ModuleTemplateDialog from \"@/components/estimator/moduleShared/ModuleTemplateDialog\";"
+    },
+    {
+      "path": "src/pages/BrickStoneEstimator.jsx",
+      "line": 14,
+      "text": "import { saveModuleProjectCopy } from \"@/components/estimator/moduleShared/moduleProjectActions\";"
+    },
+    {
+      "path": "src/pages/BrickStoneEstimator.jsx",
+      "line": 89,
+      "text": "  // Pricing-availability: one strict calc pass shared by the banner, the"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 48,
+      "text": "import ModuleActionBar from \"@/components/estimator/moduleShared/ModuleActionBar\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 49,
+      "text": "import ModuleTemplateDialog from \"@/components/estimator/moduleShared/ModuleTemplateDialog\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 50,
+      "text": "import { saveModuleProjectCopy } from \"@/components/estimator/moduleShared/moduleProjectActions\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 448,
+      "text": "  // Pricing-availability guard — shared by save, Save-As-Copy, and the"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 17,
+      "text": "import MultiUserSelectInline from \"@/components/shared/MultiUserSelectInline\";\r"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 178,
+      "text": "  // The work-order half stays on the shared board snapshot — its heavy task\r"
+    },
+    {
+      "path": "src/pages/FleetReservations.jsx",
+      "line": 70,
+      "text": "    <div className=\"flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3\"><div><h1 className=\"text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2\"><CalendarClock className=\"w-6 h-6\"/>Fleet Reservations & Assignments</h1><p className=\"text-sm text-gray-500 dark:text-slate-400 mt-1\">Reserve shared vehicles and equipment, see who has them, and preserve checkout/return history.</p></div><button type=\"button\" onClick={openCreate} className=\"min-h-11 px-4 rounded-lg bg-indigo-600 text-white font-semibold inline-flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950\"><Plus className=\"w-4 h-4\"/>Reserve Equipment</button></div>"
+    },
+    {
+      "path": "src/pages/Financials.jsx",
+      "line": 49,
+      "text": "    // Shares the boardFeed snapshot every other surface reads — snapshot-first\r"
+    },
+    {
+      "path": "src/pages/LaserSettings.jsx",
+      "line": 15,
+      "text": "const SHARED_KEYS = [\"electricity_cost_per_kwh\", \"operator_cost_per_hour\", \"facility_overhead_per_hour\"];\r"
+    },
+    {
+      "path": "src/pages/LaserSettings.jsx",
+      "line": 23,
+      "text": "  ...SHARED_KEYS,\r"
+    },
+    {
+      "path": "src/pages/LaserSettings.jsx",
+      "line": 136,
+      "text": "            <TabsTrigger value=\"shared\" className=\"text-[11px] py-2\"><Clock className=\"w-3.5 h-3.5 mr-1.5\" /> Speeds & Shared</TabsTrigger>\r"
+    },
+    {
+      "path": "src/pages/LaserSettings.jsx",
+      "line": 153,
+      "text": "          <TabsContent value=\"shared\" className=\"space-y-4 mt-4\">\r"
+    },
+    {
+      "path": "src/pages/LaserSettings.jsx",
+      "line": 155,
+      "text": "            <section className=\"bg-white border border-gray-200 rounded-md overflow-hidden\"><SectionHeader icon={DollarSign} title=\"Shared Operating Costs\" subtitle=\"Used by both laser machine-cost calculators. Operator labor remains separate from machine cost.\" /><div className=\"p-4 grid sm:grid-cols-3 gap-3\"><Field label=\"Electricity\" suffix=\"$/kWh\" value={values.electricity_cost_per_kwh} onChange={(v) => patch(\"electricity_cost_per_kwh\", v)} /><Field label=\"Operator labor reference\" suffix=\"$/hr\" value={values.operator_cost_per_hour} onChange={(v) => patch(\"operator_cost_per_hour\", v)} /><Field label=\"Facility overhead\" suffix=\"$/hr\" value={values.facility_overhead_per_hour} onChange={(v) => patch(\"facility_overhead_per_hour\", v)} /></div></section>\r"
+    },
+    {
+      "path": "src/pages/LaserSettings.jsx",
+      "line": 160,
+      "text": "            <div className=\"text-[10px] text-gray-400\">Shared company/notes defaults remain preserved in their existing general settings and are intentionally not duplicated here.</div>\r"
+    },
+    {
+      "path": "src/pages/LaserSettings.jsx",
+      "line": 164,
+      "text": "        <div className=\"text-[10px] text-gray-400 pb-3\">Loaded {rows.length} existing Laser/shared Settings records. The page updates values in place and does not create a second configuration store.</div>\r"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 28,
+      "text": "import ModuleActionBar from \"@/components/estimator/moduleShared/ModuleActionBar\";\r"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 29,
+      "text": "import ModuleTemplateDialog from \"@/components/estimator/moduleShared/ModuleTemplateDialog\";\r"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 30,
+      "text": "import { saveModuleProjectCopy } from \"@/components/estimator/moduleShared/moduleProjectActions\";\r"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 15,
+      "text": "import { downloadCsv } from \"@/components/shared/exportCsv\";"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 341,
+      "text": "    if (!window.confirm(\"Create shared Customer records for workflow/Sales Pipeline client names that do not already have an exact Customer or legacy-name match? Existing Customer records will not be merged or overwritten.\")) return;"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 557,
+      "text": "              title=\"Explicitly add workflow/Sales Pipeline client names that do not already have a shared Customer record\""
+    },
+    {
+      "path": "src/pages/FleetMechanic.jsx",
+      "line": 2,
+      "text": "import { HostedImg } from \"@/shared/hostedAssetUrl\";"
+    },
+    {
+      "path": "src/pages/Production.jsx",
+      "line": 23,
+      "text": "// C-01 — shared CoreBridge queue filter bar on this board. The bar is"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 22,
+      "text": "import ModuleActionBar from \"@/components/estimator/moduleShared/ModuleActionBar\";"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 23,
+      "text": "import ModuleTemplateDialog from \"@/components/estimator/moduleShared/ModuleTemplateDialog\";"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 24,
+      "text": "import { saveModuleProjectCopy } from \"@/components/estimator/moduleShared/moduleProjectActions\";"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 346,
+      "text": "  // Pricing-availability: one strict calc pass shared by the banner, the"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 425,
+      "text": "      // `calculated` is the shared pricing result — all finite under a clean"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 26,
+      "text": "import ModuleActionBar from \"@/components/estimator/moduleShared/ModuleActionBar\";"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 27,
+      "text": "import ModuleTemplateDialog from \"@/components/estimator/moduleShared/ModuleTemplateDialog\";"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 28,
+      "text": "import { saveModuleProjectCopy } from \"@/components/estimator/moduleShared/moduleProjectActions\";"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 205,
+      "text": "  // Pricing-availability: one strict calc pass per workflow, shared with the"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 817,
+      "text": "                    Travel rates (shop address, fuel prices, labor rate, overhead, minimum charge) are shared with the"
+    },
+    {
+      "path": "src/pages/Imports.jsx",
+      "line": 108,
+      "text": "        message=\"Bulk imports change shared catalog and customer data. Ask an administrator to run them.\""
+    },
+    {
+      "path": "src/pages/InstallationDeliver.jsx",
+      "line": 23,
+      "text": "// C-01 — shared CoreBridge queue filter bar on this board. The bar is"
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 23,
+      "text": "import ModuleActionBar from \"@/components/estimator/moduleShared/ModuleActionBar\";"
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 24,
+      "text": "import ModuleTemplateDialog from \"@/components/estimator/moduleShared/ModuleTemplateDialog\";"
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 25,
+      "text": "import { saveModuleProjectCopy } from \"@/components/estimator/moduleShared/moduleProjectActions\";"
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 256,
+      "text": "  // Pricing-availability: one strict derived pass shared by the banner, the"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 124,
+      "text": "import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 637,
+      "text": "// K-08 — page-local registration of the Integrations status tab. The shared"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 642,
+      "text": "// though the shared registry does not list the value."
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 690,
+      "text": "  // K-08: the Integrations tab value is unknown to the shared registry, so a"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 725,
+      "text": "  // The page-local Integrations tab is absent from the shared registry, so"
+    },
+    {
+      "path": "src/pages/CustomerStatements.jsx",
+      "line": 42,
+      "text": "// Shared kit input vocabulary (adds placeholder styling over the old copy)."
+    },
+    {
+      "path": "src/pages/CustomerStatements.jsx",
+      "line": 134,
+      "text": "   * call shared by every target; when the cap is hit, refetch per customer"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 5,
+      "text": "import { convertEstimateToWorkOrder, convertEstimatesToSharedWorkOrder } from \"@/components/estimator/estimateConversionService\";"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 72,
+      "text": "  // quote_issue_date is date-only; the shared helper parses it as local"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 113,
+      "text": "  // C-01 — the shared queue filter bar owns the search box + filter selects"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 209,
+      "text": "  // (#192 / #180) Queue-level conversion through the same shared pipeline as"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 231,
+      "text": "      `Combine ${eligible.length} approved estimates into ONE shared Work Order?\\n\\n` +"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 241,
+      "text": "      // Feed rows are projected — the shared conversion consumes full docs."
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 244,
+      "text": "        const res = await convertEstimatesToSharedWorkOrder({"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 520,
+      "text": "  // C-01 — estimates mapped onto the product-queue row contract so the shared"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 784,
+      "text": "                  <button type=\"button\" onClick={() => runBulkConvert(true)} disabled={bulkBusy || !!convertBusy} title=\"Merge all selected Approved estimates (same customer) into one shared Work Order\" className=\"h-7 px-3 rounded border border-sky-300 bg-sky-50 text-sky-700 text-[11px] font-bold hover:bg-sky-100 disabled:opacity-50 inline-flex items-center gap-1\"><Layers className=\"w-3 h-3\" aria-hidden=\"true\" />{convertBusy === \"combine\" ? \"Combining…\" : \"Combine into one WO\"}</button>"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 794,
+      "text": "                      {convertResults.workOrderId ? ` · shared WO ${String(convertResults.workOrderId).slice(0, 8)}` : \"\"}"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 808,
+      "text": "                          {r.status === \"converted\" ? \"→ Work Order created/linked\" : r.status === \"linked\" ? \"→ linked to shared Work Order\" : r.status}"
+    },
+    {
+      "path": "src/pages/CNCSettings.jsx",
+      "line": 183,
+      "text": "        <div className=\"text-[10px] text-gray-400 pb-3\">Loaded {rows.length} existing CNC/shared Settings records. Unused compatibility settings remain preserved and are not modified by this page.</div>\r"
+    },
+    {
+      "path": "src/components/markup/markupEngine.jsx",
+      "line": 119,
+      "text": "  // Same-category lines always share markup multiplier + discount eligibility,\r"
+    },
+    {
+      "path": "src/components/markup/markupEngine.jsx",
+      "line": 218,
+      "text": " * margin% is the share of the SALE that is profit: price = cost / (1 - margin).\r"
+    },
+    {
+      "path": "src/components/account/MyAccountPreferences.jsx",
+      "line": 15,
+      "text": "// through notificationClient's shared 30s cache (one get_preferences invoke"
+    },
+    {
+      "path": "src/components/account/MyAccountPreferences.jsx",
+      "line": 38,
+      "text": "} from \"../../../base44/shared/alertSubscriptionsModel.ts\";"
+    },
+    {
+      "path": "src/components/account/MyAccountPreferences.jsx",
+      "line": 103,
+      "text": "  // --- Notification prefs: shared client cache (same store the bell/feed"
+    },
+    {
+      "path": "src/components/account/MyAccountPreferences.jsx",
+      "line": 264,
+      "text": "        hint=\"How the Product Queues page opens for you. A shared or bookmarked queue link always wins over these defaults.\""
+    },
+    {
+      "path": "src/components/account/userPrefsModel.js",
+      "line": 28,
+      "text": "// base44/shared/alertSubscriptionsModel.ts (event-key casing, delivery"
+    },
+    {
+      "path": "src/components/account/userPrefsModel.js",
+      "line": 41,
+      "text": "// The suggestion list the account + estimator datalists share."
+    },
+    {
+      "path": "src/components/account/userPrefsModel.js",
+      "line": 188,
+      "text": "// --- subscriptions: PARITY COPY of base44/shared/alertSubscriptionsModel.ts"
+    },
+    {
+      "path": "src/components/migration/migrationModel.js",
+      "line": 6,
+      "text": "//   - step order + the 500-row chunking contract shared with the backend"
+    },
+    {
+      "path": "src/components/migration/migrationModel.js",
+      "line": 15,
+      "text": "// Mirrors MAX_ROWS_PER_CALL in base44/shared/migrationMappers.ts -- the backend"
+    },
+    {
+      "path": "src/components/migration/migrationModel.js",
+      "line": 321,
+      "text": "// Small display helpers shared by the panels."
+    },
+    {
+      "path": "src/components/customer360/masterAccountModel.js",
+      "line": 23,
+      "text": "// Active-job taxonomy mirrors the shared workflow queues (MainWorkflow.jsx,"
+    },
+    {
+      "path": "src/components/customer360/Sections.jsx",
+      "line": 42,
+      "text": "// Shared kit chip: one status -> tone vocabulary app-wide. Blank values still"
+    },
+    {
+      "path": "src/components/customer360/customerLifecycleModel.js",
+      "line": 3,
+      "text": "// The canonical pure rules live in base44/shared/customerLifecycleRules.ts so"
+    },
+    {
+      "path": "src/components/customer360/customerLifecycleModel.js",
+      "line": 6,
+      "text": "// other shared-module wrappers (see components/jobs/productStageModel.js,"
+    },
+    {
+      "path": "src/components/customer360/customerLifecycleModel.js",
+      "line": 9,
+      "text": "// NOTE: the shared file must be named in the frontend-shared-modules Vite"
+    },
+    {
+      "path": "src/components/customer360/customerLifecycleModel.js",
+      "line": 10,
+      "text": "// allowlist (scripts/frontend-shared-modules.mjs) before this import resolves"
+    },
+    {
+      "path": "src/components/customer360/customerLifecycleModel.js",
+      "line": 31,
+      "text": "} from '../../../base44/shared/customerLifecycleRules.ts';"
+    },
+    {
+      "path": "src/components/customer360/KpiStrip.jsx",
+      "line": 4,
+      "text": "// Thin adapter over the shared kit KpiStrip. The page still speaks the"
+    },
+    {
+      "path": "src/components/customer360/ContactRoleBadges.jsx",
+      "line": 11,
+      "text": "} from \"../../../base44/shared/contactRolesModel.ts\";"
+    },
+    {
+      "path": "src/components/signMaintenance/maintenancePricingAvailability.js",
+      "line": 69,
+      "text": "// ---------- shared lookups (mirror the calculators exactly) ----------\r"
+    },
+    {
+      "path": "src/components/signMaintenance/maintenancePricingAvailability.js",
+      "line": 112,
+      "text": "// wins, an absent one falls through to the shared install_* row. Whichever\r"
+    },
+    {
+      "path": "src/components/signMaintenance/maintenancePricingAvailability.js",
+      "line": 453,
+      "text": "  // Dim-letter paint settings — only while enabled; shared Paint Estimator keys.\r"
+    },
+    {
+      "path": "src/components/walkin/walkInModel.js",
+      "line": 16,
+      "text": "// Deterministic creation key for the shared counter customer: ensureNewCustomer"
+    },
+    {
+      "path": "src/components/walkin/walkInModel.js",
+      "line": 99,
+      "text": "// the invoice share so record_payment never exceeds the open balance."
+    },
+    {
+      "path": "src/components/proofs/proofModel.js",
+      "line": 147,
+      "text": "      // Due-date recalc runs through the B-07 shared engine inside the"
+    },
+    {
+      "path": "src/components/queues/useQueueAutoRefresh.js",
+      "line": 8,
+      "text": "// still burns the shared `entity_list` budget (140 req/60s per caller, shared"
+    },
+    {
+      "path": "src/components/queues/ProductQueue.jsx",
+      "line": 85,
+      "text": "// Status pills come from the shared kit (StatusChip + statusTones) -- one"
+    },
+    {
+      "path": "src/components/queues/ProductQueue.jsx",
+      "line": 160,
+      "text": "// C-05 — compact proof-lookup chip for each queue row. Wraps the shared"
+    },
+    {
+      "path": "src/components/queues/ProductQueue.jsx",
+      "line": 322,
+      "text": "  // single call); fails open to the shared board feed when unavailable."
+    },
+    {
+      "path": "src/components/queues/ProductQueue.jsx",
+      "line": 340,
+      "text": "  // Filters live in the URL so a queue view can be shared or bookmarked."
+    },
+    {
+      "path": "src/components/queues/ProductQueue.jsx",
+      "line": 430,
+      "text": "    // setFilters writes the URL params too — applied views stay shareable."
+    },
+    {
+      "path": "src/components/queues/ProductQueue.jsx",
+      "line": 611,
+      "text": "                <option key={v.id} value={v.id}>{v.name}{isOwnView(v, actor) ? \"\" : \" (shared)\"}</option>"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 178,
+      "text": "// The entity declares alias pairs (owner_email ↔ user_email, is_shared ↔"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 179,
+      "text": "// shared, page ↔ queue_lens); writes emit both sides of a pair so either"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 187,
+      "text": "export function isViewShared(view = {}) {"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 188,
+      "text": "  return view?.is_shared === true || view?.shared === true;"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 213,
+      "text": "// Staff see their own views plus anything marked shared."
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 215,
+      "text": "  return isViewShared(view) || isOwnView(view, ownerEmail);"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 227,
+      "text": "// Optional fields (shared, pinned, is_default, sort) are emitted only when"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 236,
+      "text": "  shared = undefined,"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 252,
+      "text": "  if (shared !== undefined) {"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 253,
+      "text": "    data.is_shared = shared === true;"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 254,
+      "text": "    data.shared = shared === true;"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 268,
+      "text": "// Dropdown order, fully deterministic: own views before shared (others')"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 572,
+      "text": "  const listScoped = async ({ scope, query, matchScope, ownerEmail, includeShared }) => {"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 591,
+      "text": "          ((me !== \"\" && viewOwnerEmail(r) === me) || (includeShared === true && isViewShared(r)))"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 609,
+      "text": "  // sort\". Shared rows are included for visibility; the UI gates mutations"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 611,
+      "text": "  store.listViews = ({ pageKey = \"all\", ownerEmail = \"\", includeShared = true } = {}) =>"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 617,
+      "text": "      includeShared,"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 621,
+      "text": "  store.loadLensViews = ({ lens = \"all\", ownerEmail = \"\", includeShared = true } = {}) =>"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 627,
+      "text": "      includeShared,"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 640,
+      "text": "    shared,"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 649,
+      "text": "      name: cleanName, pageKey, lens, filters, ownerEmail, shared, pinned, sort, isDefault,"
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 672,
+      "text": "  // record. `is_shared:false` is always emitted as before."
+    },
+    {
+      "path": "src/components/queues/savedViewsModel.js",
+      "line": 677,
+      "text": "    const data = buildViewRecord({ name: cleanName, lens, filters, ownerEmail, shared: false });"
+    },
+    {
+      "path": "src/components/queues/queueFeedClient.js",
+      "line": 8,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/queues/queueFeedClient.js",
+      "line": 148,
+      "text": "// pull is a cheap delta) and keep the shared board cache warm for any board"
+    },
+    {
+      "path": "src/components/queues/queueFeedClient.js",
+      "line": 320,
+      "text": "// still comes from the shared board snapshot — folding it in would duplicate"
+    },
+    {
+      "path": "src/components/queues/queueFeedClient.js",
+      "line": 342,
+      "text": "// mount call) share one invoke. queueFeed is not governor-deduped, so the"
+    },
+    {
+      "path": "src/components/queues/myQueueModel.js",
+      "line": 151,
+      "text": "//   2. `shared_default === true` — the team default; applies only when the"
+    },
+    {
+      "path": "src/components/queues/myQueueModel.js",
+      "line": 160,
+      "text": "// visibility-filtered (own + shared rows)."
+    },
+    {
+      "path": "src/components/queues/myQueueModel.js",
+      "line": 178,
+      "text": "  const teamDefault = pool.filter((v) => v?.shared_default === true);"
+    },
+    {
+      "path": "src/components/queues/savedViewsPersistence.js",
+      "line": 38,
+      "text": "// listViews({pageKey, ownerEmail, includeShared})"
+    },
+    {
+      "path": "src/components/queues/savedViewsPersistence.js",
+      "line": 40,
+      "text": "//   views = own + shared rows for the page, sorted: own first, pinned before"
+    },
+    {
+      "path": "src/components/queues/savedViewsPersistence.js",
+      "line": 44,
+      "text": "// saveView({name, pageKey, filters, ownerEmail, existing?, lens?, shared?,"
+    },
+    {
+      "path": "src/components/sop/sopModel.js",
+      "line": 3,
+      "text": "// Shared SOP helpers: default categories, step/record factories, and external"
+    },
+    {
+      "path": "src/components/sop/SopPrint.jsx",
+      "line": 41,
+      "text": "        <span className=\"text-xs text-slate-400 ml-2\">Tip: choose \"Save as PDF\" in the print dialog to share it.</span>"
+    },
+    {
+      "path": "src/components/timeclock/AdminRosterPanels.jsx",
+      "line": 49,
+      "text": "      // Cached read path — stable payload (no request_id) so the 15s shared"
+    },
+    {
+      "path": "src/components/timeclock/timeClockReadCache.js",
+      "line": 3,
+      "text": "// Shared short-TTL read cache for timeClockAction. Page mounts fan out several"
+    },
+    {
+      "path": "src/components/timeclock/timeClockReadCache.js",
+      "line": 15,
+      "text": "  // the shared TTL keeps concurrent consumers on one call per window."
+    },
+    {
+      "path": "src/components/timeclock/timeClockReadCache.js",
+      "line": 48,
+      "text": "// Read allowlist actions share the cache; anything else invokes directly and"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAuditTrail.jsx",
+      "line": 8,
+      "text": "import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, classifyAuthoritativePayrollAuditIntegrity, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from \"@/shared/timeClockPayrollMembershipEvidence.mjs\";"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAuditTrail.jsx",
+      "line": 9,
+      "text": "import { validateAuthoritativeAuditPage } from \"@/shared/timeClockAuditPagination.mjs\";"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAuditTrail.jsx",
+      "line": 425,
+      "text": "                        {integrityDiagnostic.validation ? \"This authoritative audit record failed the shared payroll-membership evidence contract. \" : \"\"}"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAuditTrail.jsx",
+      "line": 426,
+      "text": "                        {integrityDiagnostic.duplicate_immutable_audit_id ? \"This immutable Audit ID is shared by multiple authoritative records, so none of those records can be treated as uniquely identified payroll evidence. \" : \"\"}"
+    },
+    {
+      "path": "src/components/timeclock/TimeTrackerSettings.jsx",
+      "line": 794,
+      "text": "                [\"privacy_blur\", \"Privacy blur\", \"Digits blur until hover — for shared screens\"],\r"
+    },
+    {
+      "path": "src/components/timeclock/EmployeeTodayCard.jsx",
+      "line": 43,
+      "text": "      // Read-cache path shares the 15s dedupe slot with the provider's status\r"
+    },
+    {
+      "path": "src/components/timeclock/WorkPauseOverlay.jsx",
+      "line": 43,
+      "text": "  // Default-session path shares the app-wide provider (status_lite with a\r"
+    },
+    {
+      "path": "src/components/timeclock/WorkPauseOverlay.jsx",
+      "line": 143,
+      "text": "  // Provider path: the shared context's poll + event listeners deliver fresh\r"
+    },
+    {
+      "path": "src/components/timeclock/WorkPauseOverlay.jsx",
+      "line": 172,
+      "text": "    // handler refreshes on return. On the provider path the shared context\r"
+    },
+    {
+      "path": "src/components/timeclock/UserQRCode.jsx",
+      "line": 247,
+      "text": "              Print this badge or save it on your phone. Do not share it; anyone holding a valid badge can identify you at Quick Clock.\r"
+    },
+    {
+      "path": "src/components/timeclock/UserQRCode.jsx",
+      "line": 258,
+      "text": "              Your current printed or saved QR badge will stop working immediately. Replace it only if the old badge was lost, shared, or you are ready to update every copy.\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeQuickPick.jsx",
+      "line": 4,
+      "text": "// Kiosk-friendly picker shared by every Time Clock date/time entry point."
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAdmin.jsx",
+      "line": 64,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/timeclock/TimeTracker.jsx",
+      "line": 236,
+      "text": "  // every open Time Tracker tab shares the app's function rate budget)."
+    },
+    {
+      "path": "src/components/timeclock/TimeTracker.jsx",
+      "line": 259,
+      "text": "  // Nothing refreshes while the shared 429 breaker is open."
+    },
+    {
+      "path": "src/components/timeclock/QuickClockSection.jsx",
+      "line": 277,
+      "text": "        // One dismissed shift at a time keeps storage bounded on shared kiosks."
+    },
+    {
+      "path": "src/components/timeclock/QuickClockSection.jsx",
+      "line": 1059,
+      "text": "      // Same shared scan session as the reusable FaceRecognition component -"
+    },
+    {
+      "path": "src/components/timeclock/faceScanRuntime.js",
+      "line": 79,
+      "text": "// Shared scan cadence. The loop self-schedules: the next frame is captured this"
+    },
+    {
+      "path": "src/components/timeclock/faceScanRuntime.js",
+      "line": 87,
+      "text": "// shared session (.withFaceLandmarks in detectAt), so this costs no extra model."
+    },
+    {
+      "path": "src/components/timeclock/faceScanRuntime.js",
+      "line": 215,
+      "text": "// One shared scan loop for every recognition surface (admin login, kiosk quick"
+    },
+    {
+      "path": "src/components/timeclock/CorrectionRequestAdminPanel.jsx",
+      "line": 135,
+      "text": "  /* Kept as a named callback so list review and Needs Attention routing share one path. */\r"
+    },
+    {
+      "path": "src/components/timeclock/CorrectionRequestAdminPanel.jsx",
+      "line": 241,
+      "text": "      if (bulkReason.trim().length < 3) setError(\"Enter a shared manager review reason (3+ characters) for the bulk decision.\");\r"
+    },
+    {
+      "path": "src/components/timeclock/CorrectionRequestAdminPanel.jsx",
+      "line": 323,
+      "text": "              placeholder=\"Shared review reason (required)\"\r"
+    },
+    {
+      "path": "src/components/kit/FilterBar.jsx",
+      "line": 13,
+      "text": "// the shared input vocabulary so callers don't re-type the class string."
+    },
+    {
+      "path": "src/components/kit/FilterBar.jsx",
+      "line": 35,
+      "text": "// Shared input styles -- the PurchaseOrders/Invoices `inputCls` vocabulary."
+    },
+    {
+      "path": "src/components/kit/KpiStrip.jsx",
+      "line": 9,
+      "text": "// shared tone text classes (statusTones.js). Responsive 2 -> 5 columns."
+    },
+    {
+      "path": "src/components/kit/StatusChip.jsx",
+      "line": 12,
+      "text": "// One status pill for the whole app. `status` resolves through the shared"
+    },
+    {
+      "path": "src/components/kit/DataTable.jsx",
+      "line": 96,
+      "text": "// Row with the shared border + hover defaults baked in -- callers can still"
+    },
+    {
+      "path": "src/components/kit/statusTones.js",
+      "line": 1,
+      "text": "// Shared status -> tone model for the kit primitives."
+    },
+    {
+      "path": "src/components/kit/statusTones.js",
+      "line": 35,
+      "text": "  // Proof statuses -- PROOF_STATUS_VALUES (none/draft/sent shared with docs)."
+    },
+    {
+      "path": "src/components/kit/index.js",
+      "line": 1,
+      "text": "// Shared page-level UI kit. Pure presentation -- no business logic, no data"
+    },
+    {
+      "path": "src/components/motion/motion.js",
+      "line": 1,
+      "text": "// Shared motion vocabulary. Every animation in the app should pull durations,"
+    },
+    {
+      "path": "src/components/portal/productPortalModel.js",
+      "line": 4,
+      "text": "// label vocabulary from base44/shared/productStatusModel.ts, fulfillment"
+    },
+    {
+      "path": "src/components/portal/productPortalModel.js",
+      "line": 7,
+      "text": "// Import-free apart from the shared status model so it bundles cleanly for"
+    },
+    {
+      "path": "src/components/portal/productPortalModel.js",
+      "line": 14,
+      "text": "} from \"../../../base44/shared/productStatusModel.ts\";"
+    },
+    {
+      "path": "src/components/vinylInventory/vinylConstants.jsx",
+      "line": 2,
+      "text": "// and visibility / cost helpers shared across the master view and the"
+    },
+    {
+      "path": "src/components/permitting/ohioMunicipalResearch.json",
+      "line": 1120,
+      "text": "      \"Electrical routing is unresolved: the Village contact table points to Hamilton County, while publisher Section 1305.01(e), originating in Ord.15-2011, names Inspection Bureau Inc. Electrical permit issuance and electrical inspection remain separately unapproved; a shared portal does not establish delegation.\","
+    },
+    {
+      "path": "src/components/permitting/jurisdictionPermitBridge.js",
+      "line": 1,
+      "text": "import {normalizeAddressState} from '../../shared/permittingAddressState.js';\r"
+    },
+    {
+      "path": "src/components/permitting/jurisdictionPermitBridge.js",
+      "line": 177,
+      "text": "  // merge onto that office (sign permit + zoning often share one counter).\r"
+    },
+    {
+      "path": "src/components/permitting/jurisdictionTrust.js",
+      "line": 51,
+      "text": "  if (duplicateCount > 1) issues.push(`${duplicateCount} profiles share this jurisdiction identity`);"
+    },
+    {
+      "path": "src/components/permitting/jurisdictionTrust.js",
+      "line": 72,
+      "text": "      description: 'Two records share this name — someone needs to fix them before this one is used.',"
+    },
+    {
+      "path": "src/components/permitting/CoverageMap.jsx",
+      "line": 5,
+      "text": "// the share of its jurisdiction profiles carrying researched office answers"
+    },
+    {
+      "path": "src/components/permitting/CoverageMap.jsx",
+      "line": 77,
+      "text": "        <p className=\"text-[11px] text-slate-500\">share of profiles with researched office answers · gray = no profiles</p>"
+    },
+    {
+      "path": "src/components/permitting/CoverageMap.jsx",
+      "line": 81,
+      "text": "          const share = p.stats.n ? p.stats.r / p.stats.n : null;"
+    },
+    {
+      "path": "src/components/permitting/CoverageMap.jsx",
+      "line": 82,
+      "text": "          const fill = share == null ? \"#e5e7eb\" : STOP(share);"
+    },
+    {
+      "path": "src/components/permitting/CoverageMap.jsx",
+      "line": 94,
+      "text": "              <title>{`${p.name}, ${p.state} — ${p.stats.n} profiles, ${p.stats.r} researched (${share == null ? \"0\" : Math.round(share * 100)}%)`}</title>"
+    },
+    {
+      "path": "src/components/permitting/CoverageMap.jsx",
+      "line": 101,
+      "text": "        const share = p?.stats.n ? Math.round((p.stats.r / p.stats.n) * 100) : 0;"
+    },
+    {
+      "path": "src/components/permitting/CoverageMap.jsx",
+      "line": 104,
+      "text": "            <span className=\"font-medium\">{p?.name}, {p?.state}</span> — {p?.stats.n ?? 0} profiles · {p?.stats.r ?? 0} researched ({share}%)"
+    },
+    {
+      "path": "src/components/permitting/officeResearchResponses.mjs",
+      "line": 1,
+      "text": "import { OFFICE_RESEARCH_METHOD } from '../../../base44/shared/permittingOfficeResearch.mjs';"
+    },
+    {
+      "path": "src/components/permitting/LocalityOfficeReviewEvidence.jsx",
+      "line": 13,
+      "text": "      {evidence.sharedNotes && <p className=\"whitespace-pre-wrap break-words\">Shared office identity notes: {evidence.sharedNotes}</p>}"
+    },
+    {
+      "path": "src/components/permitting/LocalityOfficeReviewEvidence.jsx",
+      "line": 15,
+      "text": "        {evidence.sharedSource && <a href={evidence.sharedSource} target=\"_blank\" rel=\"noopener noreferrer\" className=\"underline text-blue-700\">Open shared office source</a>}"
+    },
+    {
+      "path": "src/components/permitting/LocalityOfficeReviewEvidence.jsx",
+      "line": 18,
+      "text": "      <p className=\"text-gray-600\">Shared sources and websites are reference material. Confirm each responsibility for this locality before marking authority verified. Issuance and inspection may belong to different offices.</p>"
+    },
+    {
+      "path": "src/components/permitting/electricalOfficeInquiry.mjs",
+      "line": 1,
+      "text": "import { OFFICE_RESEARCH_METHOD, officeResearchFieldLabels } from '../../../base44/shared/permittingOfficeResearch.mjs';"
+    },
+    {
+      "path": "src/components/permitting/OhioMunicipalResearchResources.jsx",
+      "line": 2,
+      "text": "import { HostedAssetLink } from \"@/shared/hostedAssetUrl\";"
+    },
+    {
+      "path": "src/components/permitting/localityOfficeCatalogBridge.js",
+      "line": 14,
+      "text": " * Resolve shared office provenance by stable IDs only. Duplicate or stale"
+    },
+    {
+      "path": "src/components/permitting/PermitLineLifecycleDetails.jsx",
+      "line": 419,
+      "text": "              const text = `Hi,\\n\\nFollowing up on ${ref} for ${lineItem.work_order_title || \"our job\"} in ${lineItem.locality_name || \"your jurisdiction\"} — could you share an update on its status?${lineItem.expected_response_date ? ` We were hoping to hear back by ${lineItem.expected_response_date}.` : \"\"}\\n\\nThank you!`;"
+    },
+    {
+      "path": "src/components/permitting/permittingReviewedOfficeMirror.mjs",
+      "line": 50,
+      "text": "    shared_locality_reference:0, locality_state_conflict:0, revoked:0,"
+    },
+    {
+      "path": "src/components/permitting/permittingReviewedOfficeMirror.mjs",
+      "line": 95,
+      "text": "      else if (exact.length>1) status='shared_locality_reference';"
+    },
+    {
+      "path": "src/components/permitting/governmentOfficeCatalog.js",
+      "line": 60,
+      "text": "  // Changing the identity/contact details invalidates only this shared office's"
+    },
+    {
+      "path": "src/components/permitting/officeResearchCompleteness.mjs",
+      "line": 1,
+      "text": "import { officeResearchChecklist } from '../../../base44/shared/permittingOfficeResearch.mjs';"
+    },
+    {
+      "path": "src/components/permitting/LocalityProfileLinkEditor.jsx",
+      "line": 3,
+      "text": "import { normalizeAddressState } from '../../shared/permittingAddressState.js';"
+    },
+    {
+      "path": "src/components/permitting/permittingRetainedElectricalPageCheck.mjs",
+      "line": 1,
+      "text": "import {readSourceEvidencePages} from '../../../base44/shared/jurisdictionSourceTextSegments.mjs';"
+    },
+    {
+      "path": "src/components/permitting/permittingRetainedElectricalPageCheck.mjs",
+      "line": 45,
+      "text": "  // This adapter preserves the shared validator's six-row bound; it may read"
+    },
+    {
+      "path": "src/components/permitting/PermittingRetainedPageReview.jsx",
+      "line": 34,
+      "text": "    <p className=\"text-xs\">These are recorded office and locality labels, not verified address matches. A shared office name or parent county never establishes where the authority applies.</p>"
+    },
+    {
+      "path": "src/components/permitting/OfficeRoleOverview.jsx",
+      "line": 3,
+      "text": "import { officeResearchChecklist, officeResearchFieldLabels } from '../../../base44/shared/permittingOfficeResearch.mjs';"
+    },
+    {
+      "path": "src/components/permitting/ElectricalResearchResources.jsx",
+      "line": 2,
+      "text": "import { HostedAssetLink } from \"@/shared/hostedAssetUrl\";"
+    },
+    {
+      "path": "src/components/permitting/permitGlobalSettingsPersistence.js",
+      "line": 1,
+      "text": "// Backward-compatible re-export. GlobalSettings persistence is shared across"
+    },
+    {
+      "path": "src/components/permitting/permitGlobalSettingsPersistence.js",
+      "line": 6,
+      "text": "} from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/permitting/PermitSetupWizard.jsx",
+      "line": 14,
+      "text": "import { summarizeMatchedLocalityAuthority } from \"@/shared/permittingAddressLocality.js\";\r"
+    },
+    {
+      "path": "src/components/permitting/documentSearchSnippet.js",
+      "line": 81,
+      "text": "// Keyboard and button navigation share the same bounds; do not wrap unexpectedly."
+    },
+    {
+      "path": "src/components/permitting/selectorSourceOfficeReviewReferences.mjs",
+      "line": 112,
+      "text": "   throw Error('Conflicting roles share a historical relationship key. Resolve identity before reviewing');"
+    },
+    {
+      "path": "src/components/permitting/selectorSourceOfficeReviewReferences.mjs",
+      "line": 117,
+      "text": "     throw Error('Conflicting or missing recorded service areas share a historical relationship key. Ask authorized staff to inspect exact review event IDs: '+history.map(e=>e.id).join(' · ')+'. Verify the service area and jurisdiction boundary; do not infer coverage from an office name, ZIP code or parent county.');"
+    },
+    {
+      "path": "src/components/permitting/selectorSourceOfficeReviewReferences.mjs",
+      "line": 120,
+      "text": "     throw Error('Conflicting or missing canonical office IDs share a historical relationship key. Ask authorized staff to resolve source/office identity and inspect exact review event IDs: '+history.map(e=>e.id).join(' · ')+'. Do not select an office by its name.');"
+    },
+    {
+      "path": "src/components/permitting/permittingCoverageReader.mjs",
+      "line": 1,
+      "text": "import { summarizeMatchedLocalityAuthority } from '../../../base44/shared/permittingAddressLocality.js';"
+    },
+    {
+      "path": "src/components/permitting/permittingCoverageReader.mjs",
+      "line": 95,
+      "text": "      if (row.overlapping_record_ids.length) row.review_flags.push('shared_geographic_candidate');"
+    },
+    {
+      "path": "src/components/permitting/permittingCoverageReader.mjs",
+      "line": 150,
+      "text": "  const counts = () => ({saved:0,unlinked:0,missing_target:0,shared_link:0,state_review:0,name_review:0,linked_reference_only:0,invalid_link:0});"
+    },
+    {
+      "path": "src/components/permitting/permittingCoverageReader.mjs",
+      "line": 164,
+      "text": "    if (otherIds.length) flags.push('shared_link');"
+    },
+    {
+      "path": "src/components/permitting/permittingCoverageReader.mjs",
+      "line": 174,
+      "text": "      shared_locality_ids:otherIds,flags});"
+    },
+    {
+      "path": "src/components/permitting/permittingOfficeEvidenceReader.mjs",
+      "line": 10,
+      "text": " * Shares the exact-ID-only profile-link assessment; no namesake fallback or source approval."
+    },
+    {
+      "path": "src/components/permitting/permittingOfficeEvidenceReader.mjs",
+      "line": 42,
+      "text": "    // A shared provider across different roles or localities is not a duplicate-copy finding."
+    },
+    {
+      "path": "src/components/permitting/permittingOfficeEvidenceReader.mjs",
+      "line": 109,
+      "text": "    notice:'Read-only saved office relationship audit. Staff-verified is a recorded flag, not independently corroborated evidence. Missing notes, canonical IDs, repeated canonical copies for the same electrical role and profile links require review; existing office review status is never changed. Contact websites and shared office IDs do not establish permitting authority, legal applicability or exact address boundaries.'};"
+    },
+    {
+      "path": "src/components/permitting/LocalityPickerDialog.jsx",
+      "line": 38,
+      "text": "import { summarizeMatchedLocalityAuthority, officeResearchStatusLine } from \"@/shared/permittingAddressLocality.js\";"
+    },
+    {
+      "path": "src/components/permitting/LocalityPickerDialog.jsx",
+      "line": 68,
+      "text": "// Browser-side geocode → census_hint payload for the resolver. Shared by the"
+    },
+    {
+      "path": "src/components/permitting/LocalityPickerDialog.jsx",
+      "line": 230,
+      "text": "      // The shared entity-read budget refills on a rolling window — spaced"
+    },
+    {
+      "path": "src/components/permitting/LocalityPickerDialog.jsx",
+      "line": 303,
+      "text": "      // Patient retry: the app shares one function budget, so 429s come in"
+    },
+    {
+      "path": "src/components/permitting/LocalityPickerDialog.jsx",
+      "line": 830,
+      "text": "              if (!navigator.geolocation) { setError(\"This device can't share its location — type the address instead.\"); return; }"
+    },
+    {
+      "path": "src/components/permitting/localityOfficeReviewEvidence.js",
+      "line": 11,
+      "text": "/** Read-only evidence: shared identity never establishes locality responsibility. */"
+    },
+    {
+      "path": "src/components/permitting/localityOfficeReviewEvidence.js",
+      "line": 26,
+      "text": "    sharedSource: safeOfficeEvidenceUrl(provenance?.metadata?.source_url),"
+    },
+    {
+      "path": "src/components/permitting/localityOfficeReviewEvidence.js",
+      "line": 27,
+      "text": "    sharedNotes: clean(provenance?.metadata?.verification_notes),"
+    },
+    {
+      "path": "src/components/permitting/ElectricalAuthorityCoverage.jsx",
+      "line": 1,
+      "text": "import { summarizeElectricalRoleCoverage } from '../../../base44/shared/permittingAddressLocality.js';"
+    },
+    {
+      "path": "src/components/permitting/PermittingRecordedCoverage.jsx",
+      "line": 119,
+      "text": "            {!!row.overlapping_record_ids?.length && <span> Shares geographic candidates with record IDs: {row.overlapping_record_ids.join(', ')}. Review separately; this does not prove duplicate authority.</span>}"
+    }
+  ],
+  "truncated": true,
+  "returnedMatches": 300
+}

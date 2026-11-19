@@ -1,0 +1,1517 @@
+{
+  "entries": [
+    {
+      "name": "__do_not_create__.jsonc",
+      "path": "base44/entities/__do_not_create__.jsonc",
+      "type": "file",
+      "size": 606
+    },
+    {
+      "name": "Invoice.jsonc",
+      "path": "base44/entities/Invoice.jsonc",
+      "type": "file",
+      "size": 8733
+    },
+    {
+      "name": "ChecklistTemplate.jsonc",
+      "path": "base44/entities/ChecklistTemplate.jsonc",
+      "type": "file",
+      "size": 1681
+    },
+    {
+      "name": "FleetMigrationAudit.jsonc",
+      "path": "base44/entities/FleetMigrationAudit.jsonc",
+      "type": "file",
+      "size": 2055
+    },
+    {
+      "name": "LaborServiceInventory.jsonc",
+      "path": "base44/entities/LaborServiceInventory.jsonc",
+      "type": "file",
+      "size": 14912
+    },
+    {
+      "name": "__noop__.jsonc",
+      "path": "base44/entities/__noop__.jsonc",
+      "type": "file",
+      "size": 403
+    },
+    {
+      "name": "SalesFilter.jsonc",
+      "path": "base44/entities/SalesFilter.jsonc",
+      "type": "file",
+      "size": 1833
+    },
+    {
+      "name": "FleetAlertSetting.jsonc",
+      "path": "base44/entities/FleetAlertSetting.jsonc",
+      "type": "file",
+      "size": 2182
+    },
+    {
+      "name": "CustomerPortalLink.jsonc",
+      "path": "base44/entities/CustomerPortalLink.jsonc",
+      "type": "file",
+      "size": 1843
+    },
+    {
+      "name": "Order.jsonc",
+      "path": "base44/entities/Order.jsonc",
+      "type": "file",
+      "size": 5182
+    },
+    {
+      "name": "SignageFactIndex.jsonc",
+      "path": "base44/entities/SignageFactIndex.jsonc",
+      "type": "file",
+      "size": 1303
+    },
+    {
+      "name": "TempIgnore.jsonc",
+      "path": "base44/entities/TempIgnore.jsonc",
+      "type": "file",
+      "size": 413
+    },
+    {
+      "name": "TaskTemplate.jsonc",
+      "path": "base44/entities/TaskTemplate.jsonc",
+      "type": "file",
+      "size": 1280
+    },
+    {
+      "name": "Machine.jsonc",
+      "path": "base44/entities/Machine.jsonc",
+      "type": "file",
+      "size": 3813
+    },
+    {
+      "name": "ScheduledReport.jsonc",
+      "path": "base44/entities/ScheduledReport.jsonc",
+      "type": "file",
+      "size": 1749
+    },
+    {
+      "name": "ProofShareLink.jsonc",
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "type": "file",
+      "size": 2722
+    },
+    {
+      "name": "TimeClockPayPeriod.jsonc",
+      "path": "base44/entities/TimeClockPayPeriod.jsonc",
+      "type": "file",
+      "size": 2979
+    },
+    {
+      "name": "TimeClockEmployeeState.jsonc",
+      "path": "base44/entities/TimeClockEmployeeState.jsonc",
+      "type": "file",
+      "size": 6322
+    },
+    {
+      "name": "TimeEntry.jsonc",
+      "path": "base44/entities/TimeEntry.jsonc",
+      "type": "file",
+      "size": 11411
+    },
+    {
+      "name": "FailedAdminAttempt.jsonc",
+      "path": "base44/entities/FailedAdminAttempt.jsonc",
+      "type": "file",
+      "size": 711
+    },
+    {
+      "name": "FleetReservation.jsonc",
+      "path": "base44/entities/FleetReservation.jsonc",
+      "type": "file",
+      "size": 1848
+    },
+    {
+      "name": "ActivityLog.jsonc",
+      "path": "base44/entities/ActivityLog.jsonc",
+      "type": "file",
+      "size": 1921
+    },
+    {
+      "name": "PendingImport.jsonc",
+      "path": "base44/entities/PendingImport.jsonc",
+      "type": "file",
+      "size": 2481
+    },
+    {
+      "name": "VinylInventory.jsonc",
+      "path": "base44/entities/VinylInventory.jsonc",
+      "type": "file",
+      "size": 6385
+    },
+    {
+      "name": "MaintenanceActionRate.jsonc",
+      "path": "base44/entities/MaintenanceActionRate.jsonc",
+      "type": "file",
+      "size": 3469
+    },
+    {
+      "name": "SalesLocation.jsonc",
+      "path": "base44/entities/SalesLocation.jsonc",
+      "type": "file",
+      "size": 1559
+    },
+    {
+      "name": "PTOPolicy.jsonc",
+      "path": "base44/entities/PTOPolicy.jsonc",
+      "type": "file",
+      "size": 3663
+    },
+    {
+      "name": "FleetNotificationQueue.jsonc",
+      "path": "base44/entities/FleetNotificationQueue.jsonc",
+      "type": "file",
+      "size": 1844
+    },
+    {
+      "name": "MetalProject.jsonc",
+      "path": "base44/entities/MetalProject.jsonc",
+      "type": "file",
+      "size": 4954
+    },
+    {
+      "name": "FleetFuelEntry.jsonc",
+      "path": "base44/entities/FleetFuelEntry.jsonc",
+      "type": "file",
+      "size": 1610
+    },
+    {
+      "name": "FleetLifecycleProfile.jsonc",
+      "path": "base44/entities/FleetLifecycleProfile.jsonc",
+      "type": "file",
+      "size": 1583
+    },
+    {
+      "name": "Temp5.jsonc",
+      "path": "base44/entities/Temp5.jsonc",
+      "type": "file",
+      "size": 388
+    },
+    {
+      "name": "GlobalPricingTier.jsonc",
+      "path": "base44/entities/GlobalPricingTier.jsonc",
+      "type": "file",
+      "size": 2430
+    },
+    {
+      "name": "FileBridgeUpload.jsonc",
+      "path": "base44/entities/FileBridgeUpload.jsonc",
+      "type": "file",
+      "size": 2405
+    },
+    {
+      "name": "BuilderPriceRevision.jsonc",
+      "path": "base44/entities/BuilderPriceRevision.jsonc",
+      "type": "file",
+      "size": 2561
+    },
+    {
+      "name": "FileIndex.jsonc",
+      "path": "base44/entities/FileIndex.jsonc",
+      "type": "file",
+      "size": 3947
+    },
+    {
+      "name": "CorebridgeLog.jsonc",
+      "path": "base44/entities/CorebridgeLog.jsonc",
+      "type": "file",
+      "size": 2201
+    },
+    {
+      "name": "AccountDeletionRequest.jsonc",
+      "path": "base44/entities/AccountDeletionRequest.jsonc",
+      "type": "file",
+      "size": 2398
+    },
+    {
+      "name": "CustomerContact.jsonc",
+      "path": "base44/entities/CustomerContact.jsonc",
+      "type": "file",
+      "size": 4384
+    },
+    {
+      "name": "TimeClockDevice.jsonc",
+      "path": "base44/entities/TimeClockDevice.jsonc",
+      "type": "file",
+      "size": 1943
+    },
+    {
+      "name": "CustomerFolderLink.jsonc",
+      "path": "base44/entities/CustomerFolderLink.jsonc",
+      "type": "file",
+      "size": 2238
+    },
+    {
+      "name": "SignHardwareInventory.jsonc",
+      "path": "base44/entities/SignHardwareInventory.jsonc",
+      "type": "file",
+      "size": 3026
+    },
+    {
+      "name": "PermitLookupIndex.jsonc",
+      "path": "base44/entities/PermitLookupIndex.jsonc",
+      "type": "file",
+      "size": 6629
+    },
+    {
+      "name": "Project.jsonc",
+      "path": "base44/entities/Project.jsonc",
+      "type": "file",
+      "size": 5244
+    },
+    {
+      "name": "WorkOrder.jsonc",
+      "path": "base44/entities/WorkOrder.jsonc",
+      "type": "file",
+      "size": 34650
+    },
+    {
+      "name": "PermittingWorkflowDraft.jsonc",
+      "path": "base44/entities/PermittingWorkflowDraft.jsonc",
+      "type": "file",
+      "size": 1240
+    },
+    {
+      "name": "Report.jsonc",
+      "path": "base44/entities/Report.jsonc",
+      "type": "file",
+      "size": 2393
+    },
+    {
+      "name": "FleetPart.jsonc",
+      "path": "base44/entities/FleetPart.jsonc",
+      "type": "file",
+      "size": 5181
+    },
+    {
+      "name": "BuilderProduct.jsonc",
+      "path": "base44/entities/BuilderProduct.jsonc",
+      "type": "file",
+      "size": 10082
+    },
+    {
+      "name": "TimeClockBadge.jsonc",
+      "path": "base44/entities/TimeClockBadge.jsonc",
+      "type": "file",
+      "size": 1121
+    },
+    {
+      "name": "BuilderPart.jsonc",
+      "path": "base44/entities/BuilderPart.jsonc",
+      "type": "file",
+      "size": 13562
+    },
+    {
+      "name": "UserCalendarSettings.jsonc",
+      "path": "base44/entities/UserCalendarSettings.jsonc",
+      "type": "file",
+      "size": 2139
+    },
+    {
+      "name": "FleetMaintenanceWorkOrder.jsonc",
+      "path": "base44/entities/FleetMaintenanceWorkOrder.jsonc",
+      "type": "file",
+      "size": 6821
+    },
+    {
+      "name": "Payment.jsonc",
+      "path": "base44/entities/Payment.jsonc",
+      "type": "file",
+      "size": 4287
+    },
+    {
+      "name": "LaborLevel.jsonc",
+      "path": "base44/entities/LaborLevel.jsonc",
+      "type": "file",
+      "size": 2264
+    },
+    {
+      "name": "CustomerLocation.jsonc",
+      "path": "base44/entities/CustomerLocation.jsonc",
+      "type": "file",
+      "size": 3009
+    },
+    {
+      "name": "PermitLineItem.jsonc",
+      "path": "base44/entities/PermitLineItem.jsonc",
+      "type": "file",
+      "size": 12251
+    },
+    {
+      "name": "PermittingOfficeAuthorityReview.jsonc",
+      "path": "base44/entities/PermittingOfficeAuthorityReview.jsonc",
+      "type": "file",
+      "size": 3049
+    },
+    {
+      "name": "CalendarEvent.jsonc",
+      "path": "base44/entities/CalendarEvent.jsonc",
+      "type": "file",
+      "size": 3108
+    },
+    {
+      "name": "FoundationProject.jsonc",
+      "path": "base44/entities/FoundationProject.jsonc",
+      "type": "file",
+      "size": 21595
+    },
+    {
+      "name": "WorkOrderTimeEntry.jsonc",
+      "path": "base44/entities/WorkOrderTimeEntry.jsonc",
+      "type": "file",
+      "size": 3566
+    },
+    {
+      "name": "PricingModifier.jsonc",
+      "path": "base44/entities/PricingModifier.jsonc",
+      "type": "file",
+      "size": 3589
+    },
+    {
+      "name": "MaintenanceInventory.jsonc",
+      "path": "base44/entities/MaintenanceInventory.jsonc",
+      "type": "file",
+      "size": 5522
+    },
+    {
+      "name": "FieldAudit.jsonc",
+      "path": "base44/entities/FieldAudit.jsonc",
+      "type": "file",
+      "size": 1784
+    },
+    {
+      "name": "BackupLog.jsonc",
+      "path": "base44/entities/BackupLog.jsonc",
+      "type": "file",
+      "size": 1699
+    },
+    {
+      "name": "NotificationPreference.jsonc",
+      "path": "base44/entities/NotificationPreference.jsonc",
+      "type": "file",
+      "size": 2982
+    },
+    {
+      "name": "ChannelLetterInstallation.jsonc",
+      "path": "base44/entities/ChannelLetterInstallation.jsonc",
+      "type": "file",
+      "size": 7412
+    },
+    {
+      "name": "Nope.jsonc",
+      "path": "base44/entities/Nope.jsonc",
+      "type": "file",
+      "size": 383
+    },
+    {
+      "name": "OpportunityIntake.jsonc",
+      "path": "base44/entities/OpportunityIntake.jsonc",
+      "type": "file",
+      "size": 3450
+    },
+    {
+      "name": "InventoryMovement.jsonc",
+      "path": "base44/entities/InventoryMovement.jsonc",
+      "type": "file",
+      "size": 2400
+    },
+    {
+      "name": "CustomerSummary.jsonc",
+      "path": "base44/entities/CustomerSummary.jsonc",
+      "type": "file",
+      "size": 2332
+    },
+    {
+      "name": "BouncieConnection.jsonc",
+      "path": "base44/entities/BouncieConnection.jsonc",
+      "type": "file",
+      "size": 3982
+    },
+    {
+      "name": "PricingTierMatrix.jsonc",
+      "path": "base44/entities/PricingTierMatrix.jsonc",
+      "type": "file",
+      "size": 4604
+    },
+    {
+      "name": "Inventory.jsonc",
+      "path": "base44/entities/Inventory.jsonc",
+      "type": "file",
+      "size": 5158
+    },
+    {
+      "name": "ChecklistSubItem.jsonc",
+      "path": "base44/entities/ChecklistSubItem.jsonc",
+      "type": "file",
+      "size": 826
+    },
+    {
+      "name": "CellHistory.jsonc",
+      "path": "base44/entities/CellHistory.jsonc",
+      "type": "file",
+      "size": 1279
+    },
+    {
+      "name": "EstimatingRequest.jsonc",
+      "path": "base44/entities/EstimatingRequest.jsonc",
+      "type": "file",
+      "size": 5015
+    },
+    {
+      "name": "FileBridgeCommand.jsonc",
+      "path": "base44/entities/FileBridgeCommand.jsonc",
+      "type": "file",
+      "size": 2841
+    },
+    {
+      "name": "MarkupTier.jsonc",
+      "path": "base44/entities/MarkupTier.jsonc",
+      "type": "file",
+      "size": 1205
+    },
+    {
+      "name": "WorkflowScheduleChange.jsonc",
+      "path": "base44/entities/WorkflowScheduleChange.jsonc",
+      "type": "file",
+      "size": 1524
+    },
+    {
+      "name": "MachineRate.jsonc",
+      "path": "base44/entities/MachineRate.jsonc",
+      "type": "file",
+      "size": 1964
+    },
+    {
+      "name": "FoundationInventory.jsonc",
+      "path": "base44/entities/FoundationInventory.jsonc",
+      "type": "file",
+      "size": 8785
+    },
+    {
+      "name": "TimeClockCorrectionRequest.jsonc",
+      "path": "base44/entities/TimeClockCorrectionRequest.jsonc",
+      "type": "file",
+      "size": 3952
+    },
+    {
+      "name": "Sop.jsonc",
+      "path": "base44/entities/Sop.jsonc",
+      "type": "file",
+      "size": 5900
+    },
+    {
+      "name": "TimeClockBreak.jsonc",
+      "path": "base44/entities/TimeClockBreak.jsonc",
+      "type": "file",
+      "size": 2241
+    },
+    {
+      "name": "TimeClockAdminNote.jsonc",
+      "path": "base44/entities/TimeClockAdminNote.jsonc",
+      "type": "file",
+      "size": 1774
+    },
+    {
+      "name": "FleetPartFluidRequest.jsonc",
+      "path": "base44/entities/FleetPartFluidRequest.jsonc",
+      "type": "file",
+      "size": 3149
+    },
+    {
+      "name": "PricingMode.jsonc",
+      "path": "base44/entities/PricingMode.jsonc",
+      "type": "file",
+      "size": 749
+    },
+    {
+      "name": "PartTemplate.jsonc",
+      "path": "base44/entities/PartTemplate.jsonc",
+      "type": "file",
+      "size": 6898
+    },
+    {
+      "name": "AutomationRule.jsonc",
+      "path": "base44/entities/AutomationRule.jsonc",
+      "type": "file",
+      "size": 3715
+    },
+    {
+      "name": "TaxAgency.jsonc",
+      "path": "base44/entities/TaxAgency.jsonc",
+      "type": "file",
+      "size": 1729
+    },
+    {
+      "name": "FleetVehicleMetadata.jsonc",
+      "path": "base44/entities/FleetVehicleMetadata.jsonc",
+      "type": "file",
+      "size": 1824
+    },
+    {
+      "name": "EstimateQuoteDelivery.jsonc",
+      "path": "base44/entities/EstimateQuoteDelivery.jsonc",
+      "type": "file",
+      "size": 5295
+    },
+    {
+      "name": "DimensionalLetterMaterial.jsonc",
+      "path": "base44/entities/DimensionalLetterMaterial.jsonc",
+      "type": "file",
+      "size": 3713
+    },
+    {
+      "name": "_Noop.jsonc",
+      "path": "base44/entities/_Noop.jsonc",
+      "type": "file",
+      "size": 431
+    },
+    {
+      "name": "ChangeOrder.jsonc",
+      "path": "base44/entities/ChangeOrder.jsonc",
+      "type": "file",
+      "size": 3632
+    },
+    {
+      "name": "FleetEquipmentDocument.jsonc",
+      "path": "base44/entities/FleetEquipmentDocument.jsonc",
+      "type": "file",
+      "size": 2391
+    },
+    {
+      "name": "AuthorizedEmail.jsonc",
+      "path": "base44/entities/AuthorizedEmail.jsonc",
+      "type": "file",
+      "size": 11086
+    },
+    {
+      "name": "TimeClockPayPeriodCreateGate.jsonc",
+      "path": "base44/entities/TimeClockPayPeriodCreateGate.jsonc",
+      "type": "file",
+      "size": 1148
+    },
+    {
+      "name": "BrickStoneProject.jsonc",
+      "path": "base44/entities/BrickStoneProject.jsonc",
+      "type": "file",
+      "size": 4823
+    },
+    {
+      "name": "QuoteDefaults.jsonc",
+      "path": "base44/entities/QuoteDefaults.jsonc",
+      "type": "file",
+      "size": 7056
+    },
+    {
+      "name": "BrickStoneInventory.jsonc",
+      "path": "base44/entities/BrickStoneInventory.jsonc",
+      "type": "file",
+      "size": 1667
+    },
+    {
+      "name": "Announcement.jsonc",
+      "path": "base44/entities/Announcement.jsonc",
+      "type": "file",
+      "size": 4009
+    },
+    {
+      "name": "FleetEquipmentLog.jsonc",
+      "path": "base44/entities/FleetEquipmentLog.jsonc",
+      "type": "file",
+      "size": 2519
+    },
+    {
+      "name": "Notification.jsonc",
+      "path": "base44/entities/Notification.jsonc",
+      "type": "file",
+      "size": 4065
+    },
+    {
+      "name": "MaintenanceProject.jsonc",
+      "path": "base44/entities/MaintenanceProject.jsonc",
+      "type": "file",
+      "size": 4583
+    },
+    {
+      "name": "__invalid_placeholder.jsonc",
+      "path": "base44/entities/__invalid_placeholder.jsonc",
+      "type": "file",
+      "size": 468
+    },
+    {
+      "name": "TimeClockWorkPause.jsonc",
+      "path": "base44/entities/TimeClockWorkPause.jsonc",
+      "type": "file",
+      "size": 1985
+    },
+    {
+      "name": "FleetSystemLog.jsonc",
+      "path": "base44/entities/FleetSystemLog.jsonc",
+      "type": "file",
+      "size": 1296
+    },
+    {
+      "name": "_never_use_checkpoint_probe.jsonc",
+      "path": "base44/entities/_never_use_checkpoint_probe.jsonc",
+      "type": "file",
+      "size": 587
+    },
+    {
+      "name": "EstimateSectionAcceptance.jsonc",
+      "path": "base44/entities/EstimateSectionAcceptance.jsonc",
+      "type": "file",
+      "size": 2894
+    },
+    {
+      "name": "FleetOperationReceipt.jsonc",
+      "path": "base44/entities/FleetOperationReceipt.jsonc",
+      "type": "file",
+      "size": 2067
+    },
+    {
+      "name": "OopsShouldNotCreate.jsonc",
+      "path": "base44/entities/OopsShouldNotCreate.jsonc",
+      "type": "file",
+      "size": 458
+    },
+    {
+      "name": "FleetMigrationMap.jsonc",
+      "path": "base44/entities/FleetMigrationMap.jsonc",
+      "type": "file",
+      "size": 1455
+    },
+    {
+      "name": "UserCredential.jsonc",
+      "path": "base44/entities/UserCredential.jsonc",
+      "type": "file",
+      "size": 878
+    },
+    {
+      "name": "ChannelLetterInstallInventory.jsonc",
+      "path": "base44/entities/ChannelLetterInstallInventory.jsonc",
+      "type": "file",
+      "size": 4116
+    },
+    {
+      "name": "User.jsonc",
+      "path": "base44/entities/User.jsonc",
+      "type": "file",
+      "size": 1573
+    },
+    {
+      "name": "PermittingSourceTextSegment.jsonc",
+      "path": "base44/entities/PermittingSourceTextSegment.jsonc",
+      "type": "file",
+      "size": 2710
+    },
+    {
+      "name": "SourceMonitorState.jsonc",
+      "path": "base44/entities/SourceMonitorState.jsonc",
+      "type": "file",
+      "size": 4629
+    },
+    {
+      "name": "ProductSubstatus.jsonc",
+      "path": "base44/entities/ProductSubstatus.jsonc",
+      "type": "file",
+      "size": 1727
+    },
+    {
+      "name": "UserWorkspacePreferences.jsonc",
+      "path": "base44/entities/UserWorkspacePreferences.jsonc",
+      "type": "file",
+      "size": 1640
+    },
+    {
+      "name": "LaserProject.jsonc",
+      "path": "base44/entities/LaserProject.jsonc",
+      "type": "file",
+      "size": 5859
+    },
+    {
+      "name": "ProductActivity.jsonc",
+      "path": "base44/entities/ProductActivity.jsonc",
+      "type": "file",
+      "size": 3467
+    },
+    {
+      "name": "FileBridgeSpikeRow.jsonc",
+      "path": "base44/entities/FileBridgeSpikeRow.jsonc",
+      "type": "file",
+      "size": 759
+    },
+    {
+      "name": "FleetSystemReport.jsonc",
+      "path": "base44/entities/FleetSystemReport.jsonc",
+      "type": "file",
+      "size": 2013
+    },
+    {
+      "name": "PricingTemplate.jsonc",
+      "path": "base44/entities/PricingTemplate.jsonc",
+      "type": "file",
+      "size": 2938
+    },
+    {
+      "name": "ReportRun.jsonc",
+      "path": "base44/entities/ReportRun.jsonc",
+      "type": "file",
+      "size": 1444
+    },
+    {
+      "name": "EstimateRevision.jsonc",
+      "path": "base44/entities/EstimateRevision.jsonc",
+      "type": "file",
+      "size": 3595
+    },
+    {
+      "name": "CatalogPartGroup.jsonc",
+      "path": "base44/entities/CatalogPartGroup.jsonc",
+      "type": "file",
+      "size": 1847
+    },
+    {
+      "name": "SignLightingInventory.jsonc",
+      "path": "base44/entities/SignLightingInventory.jsonc",
+      "type": "file",
+      "size": 3422
+    },
+    {
+      "name": "UserSession.jsonc",
+      "path": "base44/entities/UserSession.jsonc",
+      "type": "file",
+      "size": 1170
+    },
+    {
+      "name": "FileShareRoot.jsonc",
+      "path": "base44/entities/FileShareRoot.jsonc",
+      "type": "file",
+      "size": 2324
+    },
+    {
+      "name": "UserCapacity.jsonc",
+      "path": "base44/entities/UserCapacity.jsonc",
+      "type": "file",
+      "size": 1828
+    },
+    {
+      "name": "ModuleStatus.jsonc",
+      "path": "base44/entities/ModuleStatus.jsonc",
+      "type": "file",
+      "size": 941
+    },
+    {
+      "name": "Vendor.jsonc",
+      "path": "base44/entities/Vendor.jsonc",
+      "type": "file",
+      "size": 3031
+    },
+    {
+      "name": "PermitResolutionRule.jsonc",
+      "path": "base44/entities/PermitResolutionRule.jsonc",
+      "type": "file",
+      "size": 3073
+    },
+    {
+      "name": "FleetWarranty.jsonc",
+      "path": "base44/entities/FleetWarranty.jsonc",
+      "type": "file",
+      "size": 1977
+    },
+    {
+      "name": "CustomerInfo.jsonc",
+      "path": "base44/entities/CustomerInfo.jsonc",
+      "type": "file",
+      "size": 7832
+    },
+    {
+      "name": "JurisdictionProfile.jsonc",
+      "path": "base44/entities/JurisdictionProfile.jsonc",
+      "type": "file",
+      "size": 15302
+    },
+    {
+      "name": "VinylMachine.jsonc",
+      "path": "base44/entities/VinylMachine.jsonc",
+      "type": "file",
+      "size": 4209
+    },
+    {
+      "name": "CorebridgeApiAudit.jsonc",
+      "path": "base44/entities/CorebridgeApiAudit.jsonc",
+      "type": "file",
+      "size": 1239
+    },
+    {
+      "name": "CrmSuggestion.jsonc",
+      "path": "base44/entities/CrmSuggestion.jsonc",
+      "type": "file",
+      "size": 3142
+    },
+    {
+      "name": "TrainingAssignment.jsonc",
+      "path": "base44/entities/TrainingAssignment.jsonc",
+      "type": "file",
+      "size": 2859
+    },
+    {
+      "name": "ShiftSwapRequest.jsonc",
+      "path": "base44/entities/ShiftSwapRequest.jsonc",
+      "type": "file",
+      "size": 1114
+    },
+    {
+      "name": "SavedQueueView.jsonc",
+      "path": "base44/entities/SavedQueueView.jsonc",
+      "type": "file",
+      "size": 3126
+    },
+    {
+      "name": "COGSAccount.jsonc",
+      "path": "base44/entities/COGSAccount.jsonc",
+      "type": "file",
+      "size": 1829
+    },
+    {
+      "name": "DocNumberCounter.jsonc",
+      "path": "base44/entities/DocNumberCounter.jsonc",
+      "type": "file",
+      "size": 1060
+    },
+    {
+      "name": "RegulationAlert.jsonc",
+      "path": "base44/entities/RegulationAlert.jsonc",
+      "type": "file",
+      "size": 2997
+    },
+    {
+      "name": "IncomeAccount.jsonc",
+      "path": "base44/entities/IncomeAccount.jsonc",
+      "type": "file",
+      "size": 1818
+    },
+    {
+      "name": "SourceCollectionQueue.jsonc",
+      "path": "base44/entities/SourceCollectionQueue.jsonc",
+      "type": "file",
+      "size": 4253
+    },
+    {
+      "name": "InventoryCostHistory.jsonc",
+      "path": "base44/entities/InventoryCostHistory.jsonc",
+      "type": "file",
+      "size": 1482
+    },
+    {
+      "name": "FleetPublicReportThrottle.jsonc",
+      "path": "base44/entities/FleetPublicReportThrottle.jsonc",
+      "type": "file",
+      "size": 1197
+    },
+    {
+      "name": "AllInOneEstimate.jsonc",
+      "path": "base44/entities/AllInOneEstimate.jsonc",
+      "type": "file",
+      "size": 30057
+    },
+    {
+      "name": "EstimateOption.jsonc",
+      "path": "base44/entities/EstimateOption.jsonc",
+      "type": "file",
+      "size": 1431
+    },
+    {
+      "name": "_noop_should_not_create.jsonc",
+      "path": "base44/entities/_noop_should_not_create.jsonc",
+      "type": "file",
+      "size": 478
+    },
+    {
+      "name": "FleetDashboardPreference.jsonc",
+      "path": "base44/entities/FleetDashboardPreference.jsonc",
+      "type": "file",
+      "size": 1277
+    },
+    {
+      "name": "SipChecklistTemplate.jsonc",
+      "path": "base44/entities/SipChecklistTemplate.jsonc",
+      "type": "file",
+      "size": 1002
+    },
+    {
+      "name": "PermittingHtmlEvidence.jsonc",
+      "path": "base44/entities/PermittingHtmlEvidence.jsonc",
+      "type": "file",
+      "size": 2441
+    },
+    {
+      "name": "EmailGroup.jsonc",
+      "path": "base44/entities/EmailGroup.jsonc",
+      "type": "file",
+      "size": 1271
+    },
+    {
+      "name": "DefaultModuleSettings.jsonc",
+      "path": "base44/entities/DefaultModuleSettings.jsonc",
+      "type": "file",
+      "size": 1005
+    },
+    {
+      "name": "Settings.jsonc",
+      "path": "base44/entities/Settings.jsonc",
+      "type": "file",
+      "size": 2143
+    },
+    {
+      "name": "PermittingSourceDocument.jsonc",
+      "path": "base44/entities/PermittingSourceDocument.jsonc",
+      "type": "file",
+      "size": 15009
+    },
+    {
+      "name": "FileBridgeRecent.jsonc",
+      "path": "base44/entities/FileBridgeRecent.jsonc",
+      "type": "file",
+      "size": 1565
+    },
+    {
+      "name": "FleetInspectionTemplate.jsonc",
+      "path": "base44/entities/FleetInspectionTemplate.jsonc",
+      "type": "file",
+      "size": 2303
+    },
+    {
+      "name": "CustomerNote.jsonc",
+      "path": "base44/entities/CustomerNote.jsonc",
+      "type": "file",
+      "size": 1225
+    },
+    {
+      "name": "VinylProject.jsonc",
+      "path": "base44/entities/VinylProject.jsonc",
+      "type": "file",
+      "size": 4425
+    },
+    {
+      "name": "FleetCutoverState.jsonc",
+      "path": "base44/entities/FleetCutoverState.jsonc",
+      "type": "file",
+      "size": 1712
+    },
+    {
+      "name": "TimeClockPunchException.jsonc",
+      "path": "base44/entities/TimeClockPunchException.jsonc",
+      "type": "file",
+      "size": 3814
+    },
+    {
+      "name": "GeneralTask.jsonc",
+      "path": "base44/entities/GeneralTask.jsonc",
+      "type": "file",
+      "size": 3186
+    },
+    {
+      "name": "FleetMaintenanceTask.jsonc",
+      "path": "base44/entities/FleetMaintenanceTask.jsonc",
+      "type": "file",
+      "size": 3775
+    },
+    {
+      "name": "TaxGroup.jsonc",
+      "path": "base44/entities/TaxGroup.jsonc",
+      "type": "file",
+      "size": 1325
+    },
+    {
+      "name": "PermittingScanRun.jsonc",
+      "path": "base44/entities/PermittingScanRun.jsonc",
+      "type": "file",
+      "size": 1191
+    },
+    {
+      "name": "SmartsheetSyncTrace.jsonc",
+      "path": "base44/entities/SmartsheetSyncTrace.jsonc",
+      "type": "file",
+      "size": 1564
+    },
+    {
+      "name": "_CheckpointMistake.jsonc",
+      "path": "base44/entities/_CheckpointMistake.jsonc",
+      "type": "file",
+      "size": 744
+    },
+    {
+      "name": "EstimateClipboardItem.jsonc",
+      "path": "base44/entities/EstimateClipboardItem.jsonc",
+      "type": "file",
+      "size": 2339
+    },
+    {
+      "name": "QuoteScopeLine.jsonc",
+      "path": "base44/entities/QuoteScopeLine.jsonc",
+      "type": "file",
+      "size": 1849
+    },
+    {
+      "name": "Customer.jsonc",
+      "path": "base44/entities/Customer.jsonc",
+      "type": "file",
+      "size": 14611
+    },
+    {
+      "name": "FleetRepairApprovalPolicyCreateGate.jsonc",
+      "path": "base44/entities/FleetRepairApprovalPolicyCreateGate.jsonc",
+      "type": "file",
+      "size": 1285
+    },
+    {
+      "name": "EstimateAcceptance.jsonc",
+      "path": "base44/entities/EstimateAcceptance.jsonc",
+      "type": "file",
+      "size": 3886
+    },
+    {
+      "name": "BouncieOAuthState.jsonc",
+      "path": "base44/entities/BouncieOAuthState.jsonc",
+      "type": "file",
+      "size": 1438
+    },
+    {
+      "name": "FleetPartIdentification.jsonc",
+      "path": "base44/entities/FleetPartIdentification.jsonc",
+      "type": "file",
+      "size": 3926
+    },
+    {
+      "name": "TimeOffRequest.jsonc",
+      "path": "base44/entities/TimeOffRequest.jsonc",
+      "type": "file",
+      "size": 2691
+    },
+    {
+      "name": "FleetRepairEstimate.jsonc",
+      "path": "base44/entities/FleetRepairEstimate.jsonc",
+      "type": "file",
+      "size": 3134
+    },
+    {
+      "name": "ImportJob.jsonc",
+      "path": "base44/entities/ImportJob.jsonc",
+      "type": "file",
+      "size": 3564
+    },
+    {
+      "name": "OpportunityActivity.jsonc",
+      "path": "base44/entities/OpportunityActivity.jsonc",
+      "type": "file",
+      "size": 4856
+    },
+    {
+      "name": "ChannelLetterInstallEquipment.jsonc",
+      "path": "base44/entities/ChannelLetterInstallEquipment.jsonc",
+      "type": "file",
+      "size": 4731
+    },
+    {
+      "name": "Nope2.jsonc",
+      "path": "base44/entities/Nope2.jsonc",
+      "type": "file",
+      "size": 388
+    },
+    {
+      "name": "SignPartsSuppliesInventory.jsonc",
+      "path": "base44/entities/SignPartsSuppliesInventory.jsonc",
+      "type": "file",
+      "size": 2581
+    },
+    {
+      "name": "LegacyMigrationMap.jsonc",
+      "path": "base44/entities/LegacyMigrationMap.jsonc",
+      "type": "file",
+      "size": 1213
+    },
+    {
+      "name": "ProjectTemplate.jsonc",
+      "path": "base44/entities/ProjectTemplate.jsonc",
+      "type": "file",
+      "size": 1532
+    },
+    {
+      "name": "BouncieVehicleLiveState.jsonc",
+      "path": "base44/entities/BouncieVehicleLiveState.jsonc",
+      "type": "file",
+      "size": 2265
+    },
+    {
+      "name": "UserPTOBalance.jsonc",
+      "path": "base44/entities/UserPTOBalance.jsonc",
+      "type": "file",
+      "size": 2340
+    },
+    {
+      "name": "FleetEquipment.jsonc",
+      "path": "base44/entities/FleetEquipment.jsonc",
+      "type": "file",
+      "size": 3048
+    },
+    {
+      "name": "MaintenanceEquipment.jsonc",
+      "path": "base44/entities/MaintenanceEquipment.jsonc",
+      "type": "file",
+      "size": 3159
+    },
+    {
+      "name": "FileBridgeChunk.jsonc",
+      "path": "base44/entities/FileBridgeChunk.jsonc",
+      "type": "file",
+      "size": 1009
+    },
+    {
+      "name": "CustomItemsProject.jsonc",
+      "path": "base44/entities/CustomItemsProject.jsonc",
+      "type": "file",
+      "size": 2868
+    },
+    {
+      "name": "TimeClockEmployeePreference.jsonc",
+      "path": "base44/entities/TimeClockEmployeePreference.jsonc",
+      "type": "file",
+      "size": 6178
+    },
+    {
+      "name": "FileBridgeEvent.jsonc",
+      "path": "base44/entities/FileBridgeEvent.jsonc",
+      "type": "file",
+      "size": 1582
+    },
+    {
+      "name": "FleetRepairEstimateCreateGate.jsonc",
+      "path": "base44/entities/FleetRepairEstimateCreateGate.jsonc",
+      "type": "file",
+      "size": 1547
+    },
+    {
+      "name": "FleetMechanicAccess.jsonc",
+      "path": "base44/entities/FleetMechanicAccess.jsonc",
+      "type": "file",
+      "size": 1885
+    },
+    {
+      "name": "VinylPartTemplate.jsonc",
+      "path": "base44/entities/VinylPartTemplate.jsonc",
+      "type": "file",
+      "size": 1322
+    },
+    {
+      "name": "PermittingSourceAuthorityReview.jsonc",
+      "path": "base44/entities/PermittingSourceAuthorityReview.jsonc",
+      "type": "file",
+      "size": 1539
+    },
+    {
+      "name": "TrainingItem.jsonc",
+      "path": "base44/entities/TrainingItem.jsonc",
+      "type": "file",
+      "size": 2293
+    },
+    {
+      "name": "Temp3.jsonc",
+      "path": "base44/entities/Temp3.jsonc",
+      "type": "file",
+      "size": 388
+    },
+    {
+      "name": "BuilderPartGroup.jsonc",
+      "path": "base44/entities/BuilderPartGroup.jsonc",
+      "type": "file",
+      "size": 1937
+    },
+    {
+      "name": "BroadcastMessage.jsonc",
+      "path": "base44/entities/BroadcastMessage.jsonc",
+      "type": "file",
+      "size": 5058
+    },
+    {
+      "name": "FleetAlertRuntimeState.jsonc",
+      "path": "base44/entities/FleetAlertRuntimeState.jsonc",
+      "type": "file",
+      "size": 1602
+    },
+    {
+      "name": "FleetSettings.jsonc",
+      "path": "base44/entities/FleetSettings.jsonc",
+      "type": "file",
+      "size": 7442
+    },
+    {
+      "name": "PermittingAddressArchive.jsonc",
+      "path": "base44/entities/PermittingAddressArchive.jsonc",
+      "type": "file",
+      "size": 1848
+    },
+    {
+      "name": "SignageFact.jsonc",
+      "path": "base44/entities/SignageFact.jsonc",
+      "type": "file",
+      "size": 3422
+    },
+    {
+      "name": "TimeClockAdminCorrectionGate.jsonc",
+      "path": "base44/entities/TimeClockAdminCorrectionGate.jsonc",
+      "type": "file",
+      "size": 1225
+    },
+    {
+      "name": "CrmEventType.jsonc",
+      "path": "base44/entities/CrmEventType.jsonc",
+      "type": "file",
+      "size": 1766
+    },
+    {
+      "name": "PermittingRuleExtractionRun.jsonc",
+      "path": "base44/entities/PermittingRuleExtractionRun.jsonc",
+      "type": "file",
+      "size": 2514
+    },
+    {
+      "name": "FleetMaintenanceMeterRule.jsonc",
+      "path": "base44/entities/FleetMaintenanceMeterRule.jsonc",
+      "type": "file",
+      "size": 1920
+    },
+    {
+      "name": "Responsibility.jsonc",
+      "path": "base44/entities/Responsibility.jsonc",
+      "type": "file",
+      "size": 2045
+    },
+    {
+      "name": "MarkupCategory.jsonc",
+      "path": "base44/entities/MarkupCategory.jsonc",
+      "type": "file",
+      "size": 1750
+    },
+    {
+      "name": "TimeClockLaborSegment.jsonc",
+      "path": "base44/entities/TimeClockLaborSegment.jsonc",
+      "type": "file",
+      "size": 3046
+    },
+    {
+      "name": "AdminAuditLog.jsonc",
+      "path": "base44/entities/AdminAuditLog.jsonc",
+      "type": "file",
+      "size": 718
+    },
+    {
+      "name": "SaveColor.jsonc",
+      "path": "base44/entities/SaveColor.jsonc",
+      "type": "file",
+      "size": 1100
+    },
+    {
+      "name": "BouncieNotification.jsonc",
+      "path": "base44/entities/BouncieNotification.jsonc",
+      "type": "file",
+      "size": 3025
+    },
+    {
+      "name": "__noop.jsonc",
+      "path": "base44/entities/__noop.jsonc",
+      "type": "file",
+      "size": 393
+    },
+    {
+      "name": "EmailNotificationSettings.jsonc",
+      "path": "base44/entities/EmailNotificationSettings.jsonc",
+      "type": "file",
+      "size": 3586
+    },
+    {
+      "name": "OriginationNode.jsonc",
+      "path": "base44/entities/OriginationNode.jsonc",
+      "type": "file",
+      "size": 1782
+    },
+    {
+      "name": "AccessRequest.jsonc",
+      "path": "base44/entities/AccessRequest.jsonc",
+      "type": "file",
+      "size": 1415
+    },
+    {
+      "name": "PortalMessage.jsonc",
+      "path": "base44/entities/PortalMessage.jsonc",
+      "type": "file",
+      "size": 2327
+    },
+    {
+      "name": "VinylWorkflowTemplate.jsonc",
+      "path": "base44/entities/VinylWorkflowTemplate.jsonc",
+      "type": "file",
+      "size": 1483
+    },
+    {
+      "name": "FleetFluid.jsonc",
+      "path": "base44/entities/FleetFluid.jsonc",
+      "type": "file",
+      "size": 2929
+    },
+    {
+      "name": "FleetInspection.jsonc",
+      "path": "base44/entities/FleetInspection.jsonc",
+      "type": "file",
+      "size": 3144
+    },
+    {
+      "name": "FileBridgeHealth.jsonc",
+      "path": "base44/entities/FileBridgeHealth.jsonc",
+      "type": "file",
+      "size": 2033
+    },
+    {
+      "name": "Temp6.jsonc",
+      "path": "base44/entities/Temp6.jsonc",
+      "type": "file",
+      "size": 388
+    },
+    {
+      "name": "_noop.jsonc",
+      "path": "base44/entities/_noop.jsonc",
+      "type": "file",
+      "size": 431
+    },
+    {
+      "name": "GlobalSettings.jsonc",
+      "path": "base44/entities/GlobalSettings.jsonc",
+      "type": "file",
+      "size": 6235
+    },
+    {
+      "name": "ReconciliationBatch.jsonc",
+      "path": "base44/entities/ReconciliationBatch.jsonc",
+      "type": "file",
+      "size": 5914
+    },
+    {
+      "name": "SyncConflict.jsonc",
+      "path": "base44/entities/SyncConflict.jsonc",
+      "type": "file",
+      "size": 1798
+    },
+    {
+      "name": "TimeClockShiftTemplate.jsonc",
+      "path": "base44/entities/TimeClockShiftTemplate.jsonc",
+      "type": "file",
+      "size": 1686
+    },
+    {
+      "name": "FleetRepairApprovalPolicy.jsonc",
+      "path": "base44/entities/FleetRepairApprovalPolicy.jsonc",
+      "type": "file",
+      "size": 1359
+    },
+    {
+      "name": "TimeClockAudit.jsonc",
+      "path": "base44/entities/TimeClockAudit.jsonc",
+      "type": "file",
+      "size": 2343
+    },
+    {
+      "name": "DO_NOT_USE.jsonc",
+      "path": "base44/entities/DO_NOT_USE.jsonc",
+      "type": "file",
+      "size": 613
+    },
+    {
+      "name": "OpportunityBridgeOperationReceipt.jsonc",
+      "path": "base44/entities/OpportunityBridgeOperationReceipt.jsonc",
+      "type": "file",
+      "size": 4890
+    },
+    {
+      "name": "Opportunity.jsonc",
+      "path": "base44/entities/Opportunity.jsonc",
+      "type": "file",
+      "size": 6452
+    },
+    {
+      "name": "QuickProduct.jsonc",
+      "path": "base44/entities/QuickProduct.jsonc",
+      "type": "file",
+      "size": 6607
+    },
+    {
+      "name": "FileBridgeInventory.jsonc",
+      "path": "base44/entities/FileBridgeInventory.jsonc",
+      "type": "file",
+      "size": 1971
+    },
+    {
+      "name": "CostPlusConfig.jsonc",
+      "path": "base44/entities/CostPlusConfig.jsonc",
+      "type": "file",
+      "size": 1602
+    },
+    {
+      "name": "StoreCreditLedger.jsonc",
+      "path": "base44/entities/StoreCreditLedger.jsonc",
+      "type": "file",
+      "size": 2900
+    },
+    {
+      "name": "PermitLocality.jsonc",
+      "path": "base44/entities/PermitLocality.jsonc",
+      "type": "file",
+      "size": 10506
+    },
+    {
+      "name": "CNCProject.jsonc",
+      "path": "base44/entities/CNCProject.jsonc",
+      "type": "file",
+      "size": 6261
+    },
+    {
+      "name": "ModifierOption.jsonc",
+      "path": "base44/entities/ModifierOption.jsonc",
+      "type": "file",
+      "size": 1856
+    },
+    {
+      "name": "PurchaseOrder.jsonc",
+      "path": "base44/entities/PurchaseOrder.jsonc",
+      "type": "file",
+      "size": 3823
+    },
+    {
+      "name": "QuickProductCategory.jsonc",
+      "path": "base44/entities/QuickProductCategory.jsonc",
+      "type": "file",
+      "size": 1367
+    },
+    {
+      "name": "FeatureReport.jsonc",
+      "path": "base44/entities/FeatureReport.jsonc",
+      "type": "file",
+      "size": 2874
+    },
+    {
+      "name": "PermittingRule.jsonc",
+      "path": "base44/entities/PermittingRule.jsonc",
+      "type": "file",
+      "size": 9519
+    },
+    {
+      "name": "NotificationTemplate.jsonc",
+      "path": "base44/entities/NotificationTemplate.jsonc",
+      "type": "file",
+      "size": 4569
+    }
+  ],
+  "truncated": false
+}

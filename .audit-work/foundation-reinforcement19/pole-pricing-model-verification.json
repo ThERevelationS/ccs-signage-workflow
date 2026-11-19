@@ -1,0 +1,176 @@
+{
+  "results": [
+    {
+      "name": "valid legacy poles price identically to ported formulas",
+      "ok": true
+    },
+    {
+      "name": "numeric-string dimensions normalize on the calculation copy, never concatenated",
+      "ok": true
+    },
+    {
+      "name": "explicit-zero catalog prices are valid free poles, not unavailable",
+      "ok": true
+    },
+    {
+      "name": "zero depth is legitimate surface mount; string zero normalizes",
+      "ok": true
+    },
+    {
+      "name": "custom_cost_per_unit override prices and explicit zero override is honored",
+      "ok": true
+    },
+    {
+      "name": "explicit-zero paint settings are honored, not defaulted",
+      "ok": true
+    },
+    {
+      "name": "missing paint settings fall back to module defaults",
+      "ok": true
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (blank)",
+      "ok": true
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (whitespace)",
+      "ok": true
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (zero)",
+      "ok": true
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (negative)",
+      "ok": true
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (NaN)",
+      "ok": true
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (Infinity)",
+      "ok": true
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (malformed)",
+      "ok": true
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (record)",
+      "ok": true
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (array)",
+      "ok": true
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (blank)",
+      "ok": true
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (whitespace)",
+      "ok": true
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (negative)",
+      "ok": true
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (NaN)",
+      "ok": true
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (Infinity)",
+      "ok": true
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (malformed)",
+      "ok": true
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (record)",
+      "ok": true
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (array)",
+      "ok": true
+    },
+    {
+      "name": "missing pole_stock_price is unavailable, never $0",
+      "ok": true
+    },
+    {
+      "name": "missing cost_per_unit is unavailable, never $0",
+      "ok": true
+    },
+    {
+      "name": "malformed and negative catalog prices hold",
+      "ok": true
+    },
+    {
+      "name": "NaN and negative custom_cost_per_unit hold",
+      "ok": true
+    },
+    {
+      "name": "unassigned pole_id holds",
+      "ok": true
+    },
+    {
+      "name": "unavailable catalog pole holds",
+      "ok": true
+    },
+    {
+      "name": "ambiguous catalog id holds",
+      "ok": true
+    },
+    {
+      "name": "type-mismatched catalog row holds",
+      "ok": true
+    },
+    {
+      "name": "missing stock length defaults to 20ft; malformed/zero stock length holds",
+      "ok": true
+    },
+    {
+      "name": "malformed catalog pole width holds when painting; missing width defaults",
+      "ok": true
+    },
+    {
+      "name": "malformed/negative paint settings hold; ignored when painting off",
+      "ok": true
+    },
+    {
+      "name": "new held pole has no acknowledged amounts — snapshot fields removed",
+      "ok": true
+    },
+    {
+      "name": "non-explicit snapshot keeps stored amounts on held poles",
+      "ok": true
+    },
+    {
+      "name": "held pole keeps saved name and amounts on all issue paths",
+      "ok": true
+    },
+    {
+      "name": "foundationPoleCatalogIssues and foundationPolePricingIssues exports",
+      "ok": true
+    },
+    {
+      "name": "calcProject wires pole issues once, holds totals, nulls grand total",
+      "ok": true
+    },
+    {
+      "name": "calcProject valid poles produce current totals, not saved",
+      "ok": true
+    },
+    {
+      "name": "calcProject held pole without saved project falls null",
+      "ok": true
+    },
+    {
+      "name": "calcPolePaintingCost export still prices valid inputs identically",
+      "ok": true
+    }
+  ]
+}

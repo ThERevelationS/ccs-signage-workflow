@@ -103,6 +103,12 @@ Deno.serve(async (req) => {
         nextFields.login_locked_until = new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000).toISOString();
       }
       await persistLoginSecurityFields(authorized, user, nextFields);
+      try {
+        await base44.asServiceRole.entities.FailedAdminAttempt.create({
+          email: user.email, reason: 'bad_password',
+          at: new Date().toISOString(),
+        });
+      } catch { /* attempt logging is best-effort */ }
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
     }
 
@@ -130,12 +136,26 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (Number(user.failed_login_count) > 0 || user.login_locked_until) {
-      await persistLoginSecurityFields(authorized, user, {
-        failed_login_count: 0,
-        login_locked_until: null,
-      });
+    if (user.is_deactivated === true) {
+      return Response.json({ success: false, error: 'This account has been deactivated. Please see an administrator.' }, { status: 403 });
     }
+    // access_expires_on is a "valid through" date — the account lapses the day
+    // after (matches the admin UI's expired badge and the session check in
+    // signShopSession). End-of-UTC-day parse keeps the boundary timezone-safe.
+    const accessExpiry = Date.parse(`${String(user.access_expires_on || '').trim()}T23:59:59.999Z`);
+    if (Number.isFinite(accessExpiry) && accessExpiry > 0 && accessExpiry <= Date.now()) {
+      return Response.json({ success: false, error: 'This account\'s access has expired. Please see an administrator.' }, { status: 403 });
+    }
+    if (user.force_password_reset === true) {
+      return Response.json({ success: false, requires_password_reset: true, error: 'Password reset required. Please see an administrator for a new password.' }, { status: 403 });
+    }
+
+    const loginSecurityFields: Record<string, unknown> = { last_login_at: new Date().toISOString() };
+    if (Number(user.failed_login_count) > 0 || user.login_locked_until) {
+      loginSecurityFields.failed_login_count = 0;
+      loginSecurityFields.login_locked_until = null;
+    }
+    await persistLoginSecurityFields(authorized, user, loginSecurityFields);
 
     // Build signed session token with the shared sign-shop signing primitive.
     const payload = {
@@ -155,6 +175,15 @@ Deno.serve(async (req) => {
       }
       throw signError;
     }
+
+    try {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+      const tokenHash = btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      await base44.asServiceRole.entities.UserSession.create({
+        user_email: user.email, token_hash: tokenHash,
+        created_at: new Date().toISOString(), expires_at: new Date(payload.exp).toISOString(),
+      });
+    } catch { /* session stamping is best-effort — never block sign-in */ }
 
     return Response.json({
       success: true,

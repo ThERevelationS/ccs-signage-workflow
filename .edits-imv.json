@@ -1,0 +1,6 @@
+[
+  {
+    "old_text": "    \"reason\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"receive\",\n        \"issue\",\n        \"adjust\",\n        \"return\"\n      ],\n      \"description\": \"receive = stock received in; issue = consumed on a job; adjust = manual correction; return = job stock returned.\"\n    },",
+    "new_text": "    \"reason\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"receive\",\n        \"issue\",\n        \"adjust\",\n        \"return\",\n        \"reserve\"\n      ],\n      \"description\": \"receive = stock received in; issue = consumed on a job; adjust = manual correction; return = job stock returned; reserve = stock committed to an approved estimate.\"\n    },\n    \"estimate_id\": {\n      \"type\": \"string\",\n      \"description\": \"AllInOneEstimate this movement reserved or issued stock for, when applicable.\"\n    },"
+  }
+]

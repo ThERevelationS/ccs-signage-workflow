@@ -2,19 +2,31 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import { useAuth } from "@/components/auth/EmailGate";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, ArrowLeft, ChevronsDown, ChevronsUp, Loader2, MapPin, Settings, Search, Sparkles, UserRoundCheck, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ChevronsDown, ChevronsUp, FileDown, Loader2, MapPin, MoreHorizontal, Settings, Search, Sparkles, UserRoundCheck, X } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import PermitClientGroup from "@/components/permitting/PermitClientGroup";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
 import JurisdictionsView from "@/components/permitting/JurisdictionsView";
 import PermittingDraftLibrary from "@/components/permitting/PermittingDraftLibrary";
-import PermitWorkflowDesigner from "@/components/permitting/PermitWorkflowDesigner";
+import PermitWorkflowDesigner from "@/components/permitting/PermitWorkflowDesigner.jsx";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import SavedViews from "@/components/workflow/SavedViews";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import { mutateWorkOrderArrayField, replaceWorkOrderFieldsIfUnchanged, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
@@ -22,11 +34,15 @@ import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { getPermitGroupReadiness, isPermitGroupAssignedToUser, isPermitLineEffectivelyComplete, PERMIT_QUEUE_META, PERMIT_QUEUE_ORDER, summarizePermitQueue } from "@/components/permitting/permitQueue";
 import { legacyOfficeLinkOptions, assessOfficeRepairFreshness } from "@/shared/permittingAddressLocality.js";
-import { staffEntities } from "@/components/staff/staffEntities";
+import { staffEntities, loadEntitiesBatch } from "@/components/staff/staffEntities";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
+import { primeEntityRowsCache } from "@/lib/loadAllEntityRows";
 
-const WorkOrder = base44.entities.WorkOrder;
-const PermitLineItem = base44.entities.PermitLineItem;
-const PermitLocality = base44.entities.PermitLocality;
+const primeAndReturn = (entity, query, sort, rows) => { primeEntityRowsCache(entity, query, sort, rows); return rows; };
+
+const WorkOrder = staffEntities.WorkOrder;
+const PermitLineItem = staffEntities.PermitLineItem;
+const PermitLocality = staffEntities.PermitLocality;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 function localDateKey(date = new Date()) {
@@ -78,6 +94,7 @@ export default function Permitting() {
   const [showWorkflowDesigner, setShowWorkflowDesigner] = useState(false);
   const [localityInfoId, setLocalityInfoId] = useState(null);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
+  const [designerJurisdiction, setDesignerJurisdiction] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   // Deep links: /Permitting?queue=<queueKey>&wo=<workOrderId>&line=<permitLineItemId>
   // URL params win on initial load only; SavedViews and manual filters still apply afterwards.
@@ -93,8 +110,24 @@ export default function Permitting() {
   const [collapsedGroupIds, setCollapsedGroupIds] = useState(() => new Set());
   const [workOrderEditError, setWorkOrderEditError] = useState("");
   const [permitLineEditError, setPermitLineEditError] = useState("");
-  const [activeView, setActiveView] = useState(() => new URLSearchParams(window.location.search).get("view") === "jurisdictions" ? "jurisdictions" : "work");
-  const [jurisdictionFocus, setJurisdictionFocus] = useState(null);
+  // Page-level styled confirm — replaces window.confirm for the send-stamp
+  // prompt. Resolves true/false; honors the same skip flag as the picker.
+  const [confirmAsk, setConfirmAsk] = useState(null);
+  const confirmResolveRef = useRef(null);
+  const askPageConfirm = (ui) => {
+    try { if (localStorage.getItem("permitting_skip_confirms") === "1") return Promise.resolve(true); } catch {}
+    return new Promise((resolve) => { confirmResolveRef.current = resolve; setConfirmAsk(ui); });
+  };
+  const answerPageConfirm = (v) => { const r = confirmResolveRef.current; confirmResolveRef.current = null; setConfirmAsk(null); r?.(v); };
+  const [loadError, setLoadError] = useState("");
+  const [activeView, setActiveView] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return (params.get("view") === "jurisdictions" || params.get("jurisdiction")) ? "jurisdictions" : "work";
+  });
+  const [jurisdictionFocus, setJurisdictionFocus] = useState(() => {
+    const name = new URLSearchParams(window.location.search).get("jurisdiction");
+    return name ? { name } : null;
+  });
   const lineItemBaselinesRef = useRef(new Map());
   const lineItemMutationQueuesRef = useRef(new Map());
   const lineItemMutationCountRef = useRef(0);
@@ -102,11 +135,14 @@ export default function Permitting() {
   const workScrollRef = useRef(null);
   const workScrollTopRef = useRef(0);
   const highlightScrolledRef = useRef(false);
+  // One automatic retry per failure streak — the 60s poller still runs, but a
+  // fast second try bridges the common transient rate-limit blip.
+  const autoRetriedRef = useRef(false);
 
   useEffect(() => {
     document.title = "Permitting - Workflow Manager";
     loadData();
-    const interval = setInterval(() => loadData(false), 60000);
+    const interval = setInterval(() => { if (!document.hidden && !isFleetCoolingDown()) loadData(false); }, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -114,27 +150,54 @@ export default function Permitting() {
     if (!showLoading && lineItemMutationCountRef.current > 0) return;
     if (showLoading) setIsLoading(true);
     try {
-      const [items, locs, wos, usersData, officeTypesSetting, taskDescSetting] = await Promise.all([
-        loadAllEntityRows({ entity: PermitLineItem, sort: '-updated_date', label: "Permitting line items" }),
-        loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities" }),
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Permitting Work Orders",
-        }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users" }),
-        loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
-          settingKey: "permitOfficeTypes",
-          label: "Permitting office types",
-        }),
-        loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
-          settingKey: "salesTaskDescriptions",
-          label: "Permitting sales task descriptions",
-        })
+      // Batch the four catalog reads into one gateway call, then prime the
+      // short-TTL cache so these loaders return instantly on remount.
+      const batched = await loadEntitiesBatch([
+        { entity: "PermitLineItem", sort: "-updated_date" },
+        { entity: "PermitLocality" },
+        { entity: "AuthorizedEmail" },
+      ]).catch(() => null);
+      // The board itself only needs lines + work orders — if a helper list
+      // (offices, users, settings) fails, degrade that piece and say so
+      // instead of blanking the whole board on one slow read.
+      const [items, wos] = await Promise.all([
+        batched?.PermitLineItem
+          ? Promise.resolve(primeAndReturn(PermitLineItem, null, "-updated_date", batched.PermitLineItem))
+          : loadAllEntityRows({ entity: PermitLineItem, sort: "-updated_date", label: "Permitting line items", cacheTtlMs: 30000 }),
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
       ]);
+      const missing = [];
+      const degrade = (promise, fallback, name) => promise.catch(() => { missing.push(name); return fallback; });
+      const [locs, usersData, officeTypesSetting, taskDescSetting] = await Promise.all([
+        degrade(
+          batched?.PermitLocality
+            ? Promise.resolve(primeAndReturn(PermitLocality, null, null, batched.PermitLocality))
+            : loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities", cacheTtlMs: 15000 }),
+          [], "the saved offices list"),
+        degrade(
+          batched?.AuthorizedEmail
+            ? Promise.resolve(primeAndReturn(AuthorizedEmail, null, null, batched.AuthorizedEmail))
+            : loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users", cacheTtlMs: 60000 }),
+          [], "the team list"),
+        degrade(
+          loadSingleGlobalSetting({
+            entity: staffEntities.GlobalSettings,
+            settingKey: "permitOfficeTypes",
+            label: "Permitting office types",
+          }),
+          null, "office type settings"),
+        degrade(
+          loadSingleGlobalSetting({
+            entity: staffEntities.GlobalSettings,
+            settingKey: "salesTaskDescriptions",
+            label: "Permitting sales task descriptions",
+          }),
+          null, "task settings"),
+      ]);
+      if (missing.length) setLoadError(`Some helper info could not be loaded (${missing.join(", ")}). The board still works — press Try again to fill it in.`);
       setLocalities(locs);
       setUsers(usersData);
 
@@ -183,8 +246,17 @@ export default function Permitting() {
       setWorkOrders(permittingWOs);
       lineItemBaselinesRef.current = new Map(visibleItems.map((item) => [item.id, item]));
       setLineItems(visibleItems);
+      autoRetriedRef.current = false;
+      if (!missing.length) setLoadError("");
     } catch (error) {
       console.error("Error loading data:", error);
+      // A failed mount read must not masquerade as "0 permit lines" — surface
+      // the failure with a retry instead of an empty board.
+      setLoadError(error?.message || "Permits could not be loaded.");
+      if (!autoRetriedRef.current) {
+        autoRetriedRef.current = true;
+        setTimeout(() => { if (!document.hidden) loadData(false); }, 5000);
+      }
     }
     if (showLoading) setIsLoading(false);
   };
@@ -302,6 +374,16 @@ export default function Permitting() {
 
     const newSteps = (item.steps || []).map(s => s.id === stepId ? { ...s, ...updates } : s);
     const updatedStep = newSteps.find(s => s.id === stepId);
+
+    // Plain-language confirm before recording a filing — this step fires the
+    // permit_submitted automation, so it should never be a silent click.
+    if (updatedStep?.type === 'submitted_date' && updates.value && !item.submitted_date) {
+      const ok = await askPageConfirm({
+        title: `Application sent to ${item.locality_name || "the office"}?`,
+        body: "This stamps today as the sent date and starts the follow-up clock. Only confirm if the application actually went out.",
+      });
+      if (!ok) return;
+    }
 
     if (updatedStep?.type === 'checkbox' && updates.checked === true) {
       updatedStep.checked_date = new Date().toISOString().split('T')[0];
@@ -428,43 +510,52 @@ export default function Permitting() {
     if (!wo) return;
 
     // Prefer new offices[] model; fall back to legacy workflow_steps/categories
-    // Each office can have multiple office_types (new) or a single office_type (legacy)
+    // office_types must hold canonical role codes (staffEntityWrite validates
+    // the array) — display labels like "Permitting"/"Building" belong on
+    // office_type only. authority_roles is the canonical source.
+    const KNOWN_ROLES = new Set(["sign_permit", "zoning", "building", "electrical", "electrical_permit", "electrical_inspection", "right_of_way", "historic_review", "planning", "transportation", "other"]);
     const normalizeTypes = (o) => {
-      if (Array.isArray(o?.office_types) && o.office_types.length) return o.office_types;
-      if (o?.office_type) return [o.office_type];
-      return [];
+      const roles = (Array.isArray(o?.authority_roles) ? o.authority_roles : []).filter(r => KNOWN_ROLES.has(r));
+      if (roles.length) return roles;
+      const declared = Array.isArray(o?.office_types) && o.office_types.length ? o.office_types : o?.office_type ? [o.office_type] : [];
+      return declared.filter(t => KNOWN_ROLES.has(t));
     };
+    const displayType = (o, types) => o?.office_type || (Array.isArray(o?.office_types) && o.office_types[0]) || types[0] || "";
 
     const isElectrical = (types) => types.some(t => /electrical/i.test(t));
 
+    const skipKeys = new Set(Array.isArray(opts.skip_office_keys) ? opts.skip_office_keys : []);
     let officesToCreate = [];
     if (locality.offices && locality.offices.length > 0) {
-      officesToCreate = locality.offices.map(o => {
+      officesToCreate = locality.offices.filter((o, i) => !skipKeys.has(o.id || `office-${i}`)).map(o => {
         const types = normalizeTypes(o);
         return {
           name: o.name || types[0] || "Office",
           office_types: types,
-          office_type: types[0] || "",
+          office_type: displayType(o, types),
           office_id: o.id,
           steps: (o.workflow_steps || []).map(s => ({ ...s, value: "", checked: false }))
         };
       });
       if (excludeElectrical) {
-        officesToCreate = officesToCreate.filter(o => !isElectrical(o.office_types));
+        officesToCreate = officesToCreate.filter(o => !isElectrical(o.office_types) && !/electrical/i.test(o.office_type));
       }
     } else if (locality.workflow_steps?.length > 0) {
-      // Legacy data
+      // Legacy data — cats are display labels, so office_types stays empty
       const cats = locality.categories?.length > 0 ? locality.categories : [locality.office_type || "General"];
-      officesToCreate = cats.map(cat => ({
+      officesToCreate = cats.filter((cat, i) => !skipKeys.has(`cat-${i}`)).map(cat => ({
         name: cat,
-        office_types: [cat],
+        office_types: [],
         office_type: cat,
         steps: (locality.workflow_steps || []).map(s => ({ ...s, value: "", checked: false }))
       }));
+      if (excludeElectrical) {
+        officesToCreate = officesToCreate.filter(o => !/electrical/i.test(o.office_type));
+      }
     } else {
       officesToCreate = [{
         name: locality.name || "Office",
-        office_types: locality.office_type ? [locality.office_type] : [],
+        office_types: [],
         office_type: locality.office_type || "",
         steps: []
       }];
@@ -481,16 +572,32 @@ export default function Permitting() {
         sort: "created_date",
         label: `Permit lines for ${wo.title || wo.client_name || wo.id}`,
       });
-      if (existingLines.length > 0) {
-        for (const existingLine of existingLines) lineItemBaselinesRef.current.set(existingLine.id, existingLine);
-        setLineItems(prev => {
-          const byId = new Map(prev.map(line => [line.id, line]));
-          existingLines.forEach(line => byId.set(line.id, line));
-          return [...byId.values()];
-        });
+      for (const existingLine of existingLines) lineItemBaselinesRef.current.set(existingLine.id, existingLine);
+      setLineItems(prev => {
+        const byId = new Map(prev.map(line => [line.id, line]));
+        existingLines.forEach(line => byId.set(line.id, line));
+        return [...byId.values()];
+      });
+      const sameLocality = existingLines.filter(line => String(line.locality_id || "") === String(locality.id));
+      if (!opts.add_missing_only && sameLocality.length > 0) {
         setPermitLineEditError("Permit lines already exist for this Work Order, likely from another session or an earlier partial create. The existing lines were loaded instead of creating duplicates.");
         return;
       }
+      if (opts.add_missing_only) {
+        const existingOfficeIds = new Set(sameLocality.map(line => String(line.locality_office_id || "").trim()));
+        officesToCreate = officesToCreate.filter(office => !existingOfficeIds.has(String(office.office_id || "").trim()));
+        if (!officesToCreate.length) return;
+      }
+
+      // Lines created before the jurisdiction's sign + zoning offices are
+      // evidence-verified must stay visibly marked — this is the same gate
+      // the picker uses for apply_allowed, so a "use anyway" apply always
+      // carries the review note instead of looking identical to a clean one.
+      const localityVerifiedOffices = (() => {
+        const has = (role) => (Array.isArray(locality.offices) ? locality.offices : [])
+          .some(o => o?.authority_verification_status === 'staff_verified' && (Array.isArray(o?.authority_roles) ? o.authority_roles : []).includes(role));
+        return has('sign_permit') && has('zoning');
+      })();
 
       for (const office of officesToCreate) {
         const newItem = await PermitLineItem.create({
@@ -505,6 +612,11 @@ export default function Permitting() {
           locality_office_id: String(office.office_id || "").trim(),
           status: "active",
           assigned_to: wo.current_task_assigned_to || wo.assigned_to || "",
+          applied_by: currentUser?.full_name || currentUser?.email || "staff",
+          applied_date: new Date().toISOString().slice(0, 10),
+          ...(!localityVerifiedOffices ? {
+            notes: `Applied before office verification — ${locality.name || "this office"} does not have verified sign and zoning offices on file yet. Review this line when verification completes. Applied by ${currentUser?.full_name || currentUser?.email || "staff"} on ${new Date().toISOString().slice(0, 10)}.`,
+          } : {}),
           steps: office.steps,
           priority: 0
         });
@@ -687,6 +799,63 @@ export default function Permitting() {
     }
   }, [workOrders, selectedWorkOrder]);
 
+  // "Apply when verified" — the durable request lives on the PermitLocality
+  // (pending_applies[]) where the research/verification workers already write,
+  // so they consume it the moment offices flip apply-ready. The two WorkOrder
+  // fields are just the UI marker the client group renders.
+  const queueLocalityApply = useCallback(async (workOrderId, localityId, opts = {}) => {
+    const locality = opts.locality?.id === localityId ? opts.locality : localities.find(l => l.id === localityId);
+    if (!locality || !isRegistered) return;
+    const wo = workOrders.find(w => w.id === workOrderId);
+    if (!wo) return;
+    const entry = {
+      work_order_id: workOrderId,
+      requested_by: currentUser?.full_name || currentUser?.email || "staff",
+      requested_at: new Date().toISOString(),
+      exclude_electrical: !!opts.excludeElectrical,
+      ...(Array.isArray(opts.skip_office_keys) && opts.skip_office_keys.length
+        ? { skip_office_keys: opts.skip_office_keys.slice(0, 50) } : {}),
+    };
+    try {
+      const live = await PermitLocality.get(localityId).catch(() => null);
+      const pend = (Array.isArray(live?.pending_applies) ? live.pending_applies : [])
+        .filter(p => String(p?.work_order_id || "") !== String(workOrderId));
+      const saved = await PermitLocality.update(localityId, { pending_applies: [...pend, entry] });
+      setLocalities(prev => prev.map(l => l.id === localityId ? { ...l, ...(saved?.id ? saved : { pending_applies: [...pend, entry] }) } : l));
+    } catch (e) {
+      setPermitLineEditError(e?.message || "Could not queue the office apply — nothing was saved.");
+      return;
+    }
+    updateWorkOrderField(workOrderId, "pending_permit_locality_id", localityId);
+    updateWorkOrderField(workOrderId, "pending_permit_locality_name", locality.name || "");
+  }, [localities, workOrders, currentUser, isRegistered, updateWorkOrderField]);
+
+  // Remove a locality's lines from one job — the office record itself is never
+  // touched, so a later address search re-suggests it when it is still correct.
+  const removeLocalityFromWorkOrder = useCallback(async (workOrderId, localityId) => {
+    const doomed = lineItems.filter(li => li.work_order_id === workOrderId && String(li.locality_id || "") === String(localityId));
+    for (const li of doomed) await deletePermitLineItemSafely(li.id);
+    const wo = workOrders.find(w => w.id === workOrderId);
+    if (String(wo?.pending_permit_locality_id || "") === String(localityId)) {
+      updateWorkOrderField(workOrderId, "pending_permit_locality_id", "");
+      updateWorkOrderField(workOrderId, "pending_permit_locality_name", "");
+      try {
+        const live = await PermitLocality.get(localityId);
+        if (Array.isArray(live?.pending_applies)) {
+          await PermitLocality.update(localityId, { pending_applies: live.pending_applies.filter(p => String(p?.work_order_id || "") !== String(workOrderId)) });
+        }
+      } catch (e1) {
+        console.warn("pending_applies cleanup failed, retrying once:", e1?.message || e1);
+        try {
+          const live = await PermitLocality.get(localityId);
+          if (Array.isArray(live?.pending_applies)) {
+            await PermitLocality.update(localityId, { pending_applies: live.pending_applies.filter(p => String(p?.work_order_id || "") !== String(workOrderId)) });
+          }
+        } catch (e2) { console.warn("pending_applies cleanup still failing (phantom poller may persist):", e2?.message || e2); }
+      }
+    }
+  }, [lineItems, workOrders, deletePermitLineItemSafely, updateWorkOrderField]);
+
   const fixPermittingStage = useCallback(async (workOrderId) => {
     const wo = workOrders.find((row) => row.id === workOrderId);
     if (!wo?._permittingStageFixAvailable || wo.current_stage === "permitting") return false;
@@ -728,7 +897,13 @@ export default function Permitting() {
 
   const openWorkOrder = (workOrderId) => {
     const wo = workOrders.find(w => w.id === workOrderId);
-    if (wo) setSelectedWorkOrder(wo);
+    if (!wo) return;
+    setSelectedWorkOrder(wo);
+    // List rows are slim (board feed strips work_notes + smartsheet blobs).
+    // The details dialog needs the full record, so hydrate it on open.
+    WorkOrder.get(wo.id).then((full) => {
+      if (full?.id) setSelectedWorkOrder((prev) => prev?.id === wo.id ? { ...prev, ...full } : prev);
+    }).catch(() => {});
   };
 
   // Group by work order
@@ -841,6 +1016,24 @@ export default function Permitting() {
   const visibleQueueKeys = queueFilter === "all"
     ? PERMIT_QUEUE_ORDER
     : [queueFilter];
+  // Per-person workload board — "you have N offices to chase" — the day's calls, distributed.
+  // Same-town cluster — how many distinct jobs share each locality's permit office.
+  const sharedLocalities = useMemo(() => {
+    const counts = {};
+    for (const group of filteredGroups || []) {
+      const names = new Set((group.lines || []).map(li => String(li.locality_name || "").trim().toLowerCase()).filter(Boolean));
+      for (const n of names) counts[n] = (counts[n] || new Set()).add(group.work_order_id);
+    }
+    return counts;
+  }, [filteredGroups]);
+  const workloadByAssignee = useMemo(() => {
+    const counts = {};
+    for (const li of lineItems || []) {
+      const who = String(li.assigned_to || "").trim();
+      if (who) counts[who] = (counts[who] || 0) + 1;
+    }
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  }, [lineItems]);
   const visibleGroups = queueFilter === "all"
     ? filteredGroups
     : (queueSummary[queueFilter] || []);
@@ -966,6 +1159,7 @@ export default function Permitting() {
 
   const totalLines = lineItems.length;
   const activeLinesCount = lineItems.filter(li => !isPermitLineEffectivelyComplete(li)).length;
+  const unassignedCount = lineItems.filter(li => !isPermitLineEffectivelyComplete(li) && !String(li.locality_id || "").trim()).length;
   const completedLinesCount = lineItems.filter(li => isPermitLineEffectivelyComplete(li)).length;
   const routingMismatchCount = workOrders.filter((wo) => wo._permittingRoutingMismatch).length;
 
@@ -1005,6 +1199,9 @@ export default function Permitting() {
                   onUpdateNotes={updateNotesAndSync}
                   onUpdateLocality={updateLocality}
                   onSelectLocalityForWorkOrder={selectLocalityForWorkOrder}
+                  onQueueLocalityApply={queueLocalityApply}
+                  onRemoveLocality={removeLocalityFromWorkOrder}
+                  onRefreshLines={() => loadData(false)}
                   onLinkLegacyOffice={linkLegacyPermitLineOffice}
                   onOpenWorkOrder={openWorkOrder}
                   onShowLocalityInfo={setLocalityInfoId}
@@ -1013,12 +1210,30 @@ export default function Permitting() {
                   onUpdateWorkOrderField={updateWorkOrderField}
                   onWorkNotesChanged={() => loadData(false)}
                   onFixPermittingStage={fixPermittingStage}
+                  onBuildPlan={(wo, locality) => {
+                    setSelectedWorkOrder(wo);
+                    setDesignerJurisdiction(locality ? {
+                      jurisdiction_id: locality.jurisdiction_profile_id || '',
+                      jurisdiction_name: locality.name || '',
+                      state: locality.state || '',
+                      locality_id: locality.id || '',
+                      locality_name: locality.name || '',
+                    } : null);
+                    setShowWorkflowDesigner(true);
+                  }}
                   currentUser={currentUser}
                   isRegistered={isRegistered}
                   localities={localities}
                   users={users}
                   taskDescriptions={taskDescriptions}
                   today={today}
+                  onSearchLocality={(name) => setSearchTerm(name)}
+                  sharedOfficeCount={(() => {
+                    const names = new Set((group.lines || []).map(li => String(li.locality_name || "").trim().toLowerCase()).filter(Boolean));
+                    let count = 0;
+                    for (const n of names) count = Math.max(count, sharedLocalities[n]?.size || 0);
+                    return count;
+                  })()}
                   expanded={!collapsedGroupIds.has(group.work_order_id)}
                   onExpandedChange={(expanded) => setGroupExpanded(group.work_order_id, expanded)}
                 />
@@ -1048,7 +1263,7 @@ export default function Permitting() {
           </div>
         </div>
         <div className="min-h-0 flex-1">
-          <JurisdictionsView focusJurisdiction={jurisdictionFocus} />
+          <JurisdictionsView focusJurisdiction={jurisdictionFocus} onOpenJob={(title) => { returnToPermitWork(); setSearchTerm(title); }} />
           {showDraftLibrary && <PermittingDraftLibrary onClose={() => setShowDraftLibrary(false)} />}
         </div>
       </div>
@@ -1064,11 +1279,21 @@ export default function Permitting() {
             <div>
               <h1 className="text-xl font-bold text-gray-800 sm:text-2xl">Permitting Tracker</h1>
               <p className="mt-0.5 text-xs text-gray-500 sm:text-sm">
-                {totalLines} total lines · {activeLinesCount} active · {completedLinesCount} completed
+                {totalLines} permit lines · {activeLinesCount} still being worked · {completedLinesCount} done{unassignedCount ? " · " + unassignedCount + " need an office picked" : ""}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-              <Button variant="outline" className="min-h-11" onClick={() => setShowDraftLibrary(true)}>Workflow drafts</Button>
+              <details className="relative">
+                <summary className="min-h-11 inline-flex items-center gap-1 rounded-md border px-3 text-sm cursor-pointer select-none hover:bg-gray-50">Need help?</summary>
+                <div className="absolute right-0 z-50 mt-1 w-72 rounded-lg border bg-white p-3 text-xs text-gray-700 shadow-lg space-y-2">
+                  <p className="font-semibold">How permitting works here</p>
+                  <p>1. Open a job card → <strong>New permit setup…</strong></p>
+                  <p>2. Confirm the job-site address — we find the governing jurisdiction (counties, cities, villages and townships stay separate even when names match).</p>
+                  <p>3. Check the jurisdiction and tick the offices that need a permit line — verified means our team confirmed the office.</p>
+                  <p>4. Optionally build an AI plan, then <strong>Create lines</strong>. Use <strong>Edit permit setup…</strong> on the job card to change offices later.</p>
+                  <p className="text-gray-500">Nothing gets sent anywhere — this only links the permit office to the job.</p>
+                </div>
+              </details>
               <div
                 className="relative w-full sm:w-56"
                 title="Search client, job, Est/Inv, assignee, project manager, task, locality, permit number, dates, fees, status, or notes"
@@ -1138,31 +1363,52 @@ export default function Permitting() {
                   setViewName(name || "");
                 }}
               />
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => openJurisdictions(null)}
-                className="gap-1 border-purple-200 text-purple-800 hover:bg-purple-50"
-                title="Browse and manage reusable jurisdiction permitting knowledge without leaving Permitting"
-              >
-                <MapPin className="w-4 h-4" /> Jurisdictions
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => setShowWorkflowDesigner(true)}
-                className="gap-1 border-violet-300 text-violet-800 hover:bg-violet-50"
-                title="AI-generate a reviewable permit workflow from approved rules"
-              >
-                <Sparkles className="w-4 h-4" /> Designer
-              </Button>
-              {isRegistered && currentUser?.role === 'admin' && (
-                <Button onClick={() => setShowSettings(true)} size="sm" variant="outline" className="gap-1">
-                  <Settings className="w-4 h-4" /> Settings
-                </Button>
-              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" size="sm" variant="outline" className="gap-1" title="More permitting tools">
+                    <MoreHorizontal className="w-4 h-4" /> More
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => openJurisdictions(null)} className="gap-2">
+                    <MapPin className="w-4 h-4 text-purple-700" /> Jurisdictions
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowWorkflowDesigner(true)} className="gap-2">
+                    <Sparkles className="w-4 h-4 text-violet-700" /> AI designer
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowDraftLibrary(true)} className="gap-2">
+                    <FileDown className="w-4 h-4 text-slate-600 rotate-180" /> Workflow drafts
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="gap-2"
+                    onClick={() => {
+                      const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+                      const rows = [
+                        ["Job", "Office", "Permit #", "Fee", "Fee status", "Paid date", "Payment link"],
+                        ...(lineItems || []).map((li) => [
+                          li.work_order_title || "", li.locality_name || "", li.permit_number || "",
+                          li.jurisdiction_fee_amount || "", li.jurisdiction_fee_status || "",
+                          li.jurisdiction_fee_paid_date || "", li.fee_payment_link || "",
+                        ]),
+                      ].map((r) => r.map(esc).join(",")).join("\r\n");
+                      const url = URL.createObjectURL(new Blob([rows], { type: "text/csv" }));
+                      const a = document.createElement("a");
+                      a.href = url; a.download = `permit-fees-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                  >
+                    <FileDown className="w-4 h-4 text-emerald-700" /> Fees CSV
+                  </DropdownMenuItem>
+                  {isRegistered && currentUser?.role === 'admin' && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setShowSettings(true)} className="gap-2">
+                        <Settings className="w-4 h-4 text-slate-600" /> Settings
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           {hasActiveFilters && (
@@ -1180,6 +1426,24 @@ export default function Permitting() {
             </div>
           )}
         </div>
+
+        {loadError && (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900 flex-wrap">
+            <div className="flex items-center gap-2 min-w-0">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span className="break-words">{loadError} — the board may be incomplete.</span>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => loadData()}
+              className="shrink-0 gap-1 border-red-300 bg-white text-red-800"
+            >
+              Retry
+            </Button>
+          </div>
+        )}
 
         {woFilter && (
           <div className="mb-4 rounded-lg border border-purple-200 bg-purple-50 p-3 text-sm text-purple-900 flex items-center justify-between gap-3 flex-wrap">
@@ -1233,6 +1497,22 @@ export default function Permitting() {
           })}
         </div>
 
+        {queueFilter !== "all" && PERMIT_QUEUE_META[queueFilter] && (
+          <p className="mt-1.5 text-xs text-gray-600" role="status">
+            Showing only jobs that are <strong>{PERMIT_QUEUE_META[queueFilter].label.toLowerCase()}</strong> — {PERMIT_QUEUE_META[queueFilter].description}.{" "}
+            <button type="button" className="font-semibold text-purple-700 underline" onClick={() => setQueueFilter("all")}>Show all</button>
+          </p>
+        )}
+
+        {workloadByAssignee.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-indigo-100 bg-indigo-50/50 px-3 py-2 text-[11px] text-slate-600" title="The day's calls, distributed — permit lines per assignee">
+            <span className="font-semibold text-slate-700">Offices to chase:</span>
+            {workloadByAssignee.slice(0, 8).map(([who, n]) => (
+              <span key={who} className="font-medium">{who} <span className="text-indigo-600">({n})</span></span>
+            ))}
+          </div>
+        )}
+
         {routingMismatchCount > 0 && (
           <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
             <div className="font-semibold">Workflow routing needs review</div>
@@ -1268,9 +1548,17 @@ export default function Permitting() {
 
         <StageTasksPanel stage="permitting" />
 
-        {visibleQueueKeys.map((key) => (
-          <React.Fragment key={key}>{renderSection(key)}</React.Fragment>
-        ))}
+        {searchTerm && filteredGroups.length === 0 ? (
+          <div className="clay-card p-8 w-full mb-5 text-center">
+            <p className="text-lg font-semibold text-gray-700">Nothing found for “{searchTerm}”</p>
+            <p className="mt-1 text-sm text-gray-500">Try a client name, job number, town, or permit number — or clear the search.</p>
+            <Button type="button" variant="outline" className="mt-3" onClick={() => setSearchTerm("")}>Clear search</Button>
+          </div>
+        ) : (
+          visibleQueueKeys.map((key) => (
+            <React.Fragment key={key}>{renderSection(key)}</React.Fragment>
+          ))
+        )}
       </div>
 
       <LocalityInfoPopup
@@ -1301,11 +1589,27 @@ export default function Permitting() {
       {showWorkflowDesigner && (
         <PermitWorkflowDesigner
           isOpen={showWorkflowDesigner}
-          onClose={() => { setShowWorkflowDesigner(false); loadData(false); }}
+          onClose={() => { setShowWorkflowDesigner(false); setDesignerJurisdiction(null); loadData(false); }}
           workOrder={selectedWorkOrder}
+          preselectedJurisdiction={designerJurisdiction}
           onLinesCreated={() => loadData(false)}
         />
       )}
+
+      {/* Page-level styled confirm — the send-stamp prompt resolves through
+          this instead of window.confirm so the UI stays consistent. */}
+      <AlertDialog open={!!confirmAsk} onOpenChange={(o) => { if (!o) answerPageConfirm(false); }}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmAsk?.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmAsk?.body}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => answerPageConfirm(false)}>Not yet</AlertDialogCancel>
+            <AlertDialogAction onClick={() => answerPageConfirm(true)}>Yes — I sent it</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

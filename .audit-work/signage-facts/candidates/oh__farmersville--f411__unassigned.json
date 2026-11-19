@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6add8debacf929552cd7f411",
+ "jurisdiction_name": "Farmersville",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "VILLAGE OF FARMERSVILLE APPLICATION FOR ZONING VARIANCE Application No. _____________ The undersigned owner(s) of the following legally described property hereby request the consideration of change in zoning district as specified below: 1. Name of Applicant: _______________________ Phone No. _______________ Mailing Address: ___________________________________________________ 2. Location Description: Subdivision Name ________________________________ Street Address: ____________________________________________________ 3. Existing Use: ______________________________________________________ Proposed Use: _____________________________________________________ 4. Present Zoning District Proposed Zoning District: _________________________ 5. Supporting Information: Attach the following items to this application: A. A vicinity map showing property lines, streets, and existing and proposed zoning.",
+   "tags": [
+    "fee",
+    "process",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "3268d3c0b01e22a7ad106faf1f54387ae2382270b338297aa7e1282dd9abbe9d",
+   "source_document_id": null,
+   "source_title": "3268d3c0b01e22a7ad106faf1f54387ae2382270b338297aa7e1282dd9abbe9d.pdf",
+   "official_url": "https://www.farmersville.us/wp-content/uploads/2015/07/zoning-application.pdf"
+  }
+ ]
+}

@@ -1,0 +1,28 @@
+{
+ "jurisdiction_id": "6aea0fb27ea5e83a53edd06c",
+ "jurisdiction_name": "Claridon",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Date of Application _______________ CLARIDON TOWNSHIP, MARION COUNT Y , OHIO, ZONING APPLICATION Application is hereby made by___________________________________________________ ___ ___________ (Name of Owner of Owner Agent) for zoning permit to occupy, use, erect and/or alter the premises described on the reverse side hereof, The plot plan on the revere side hereof and the representation therein contained are made a part of this application, in reliance upon which, and induce ment therefore the Township of Claridon is requested to issue a zoning permit in accordance with the following fee schedule: MINIMUM PERMIT FEES: OTHER FEES: Agricultural/Residential - $100 plus $.25 per sq ft Residential Signs - $125 plus $.25 per sq ft Commercial/Industrial for buildings <$1,000,00 - $500 plus $.25 per sq ft. Commercial/Industrial Signs - $250 plus $.25 per sq ft Commercial/Industrial for buildin",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "process",
+    "temporary",
+    "authority"
+   ],
+   "weight": 15,
+   "source_sha256": "20dca118deb31fe375c57b0cfc15404351d9d75b047ad0a518fef6e326c6cd2d",
+   "source_document_id": null,
+   "source_title": "20dca118deb31fe375c57b0cfc15404351d9d75b047ad0a518fef6e326c6cd2d.pdf",
+   "official_url": "https://www.claridontwp.com/uploads/7/1/5/1/71512601/claridon_township%5Ej_marion_county%5Ej_ohio%5Ej_zoning_application.pdf"
+  }
+ ]
+}

@@ -1,0 +1,640 @@
+{
+  "synthetic": true,
+  "acceptedHead": "0727ffe5a7e7c9fdccbfd9998b61a6094ae2b2af",
+  "sourceHashes": {
+    "src/components/estimator/foundation/legacyFoundationCalc.js": "d7b60db418f41663bc74f24d04fd65937b08b1156e2c322a577fae38156a21ff",
+    "src/components/estimator/foundation/Foundation3DPreview.jsx": "364cfd30c32c4abd19011250516a1cc0801830d5bf45688eb8dfc9e3e24fd53d",
+    "src/components/estimator/foundation/FoundationItemCard.jsx": "4807e9d816fdd75547e85285b7ad0b6015858f7f56bd1777acf8c30faed9de98",
+    "src/components/estimator/foundation/foundationCalc.js": "2122ac7088ff291c4421e5f61dab375223cb54c777a27bdfb6a0f686098ca972",
+    "base44/entities/FoundationProject.jsonc": "1afcc6b33c74c6ceb9743873b1d652baa457afb1ecef8a26c586a64f2e77e0b1",
+    "base44/entities/FoundationInventory.jsonc": "00f5645d9044851fd316aa863f75a4ca08a8c1b8000392a8258eb9d7aa681389"
+  },
+  "independentLegacyDecomposition": {
+    "spread": {
+      "horizontalFeet": 24,
+      "assumedVerticalFeet": 40
+    },
+    "pillar": {
+      "hoopFeet": 5.235987755982989,
+      "longitudinalFeet": 10
+    }
+  },
+  "observations": [
+    {
+      "name": "single spread mat",
+      "frozenCase": "bag spread all options single layer",
+      "authoredPatch": {},
+      "project": {
+        "id": "synthetic-1",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": 12,
+            "rebar_layers": 1,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": true
+          }
+        ]
+      },
+      "rebarFeet": 64,
+      "rebarCost": 252.8,
+      "itemTotal": 866.55,
+      "concreteVolume": 1,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "two spread mats, separation 1 inch",
+      "frozenCase": "bag spread multilayer",
+      "authoredPatch": {
+        "rebar_layer_separation_inches": 1
+      },
+      "project": {
+        "id": "synthetic-2",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": 12,
+            "rebar_layers": 2,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": false,
+            "rebar_layer_separation_inches": 1
+          }
+        ]
+      },
+      "rebarFeet": 128,
+      "rebarCost": 505.6,
+      "itemTotal": 1108.1,
+      "concreteVolume": 1,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "two spread mats, separation 30 inches",
+      "frozenCase": "bag spread multilayer",
+      "authoredPatch": {
+        "rebar_layer_separation_inches": 30
+      },
+      "project": {
+        "id": "synthetic-2",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": 12,
+            "rebar_layers": 2,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": false,
+            "rebar_layer_separation_inches": 30
+          }
+        ]
+      },
+      "rebarFeet": 128,
+      "rebarCost": 505.6,
+      "itemTotal": 1108.1,
+      "concreteVolume": 1,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "negative spread spacing",
+      "frozenCase": "bag spread all options single layer",
+      "authoredPatch": {
+        "rebar_spacing_width": -12
+      },
+      "project": {
+        "id": "synthetic-1",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": -12,
+            "rebar_layers": 1,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": true
+          }
+        ]
+      },
+      "rebarFeet": -14,
+      "rebarCost": -68.80000000000001,
+      "itemTotal": 544.95,
+      "concreteVolume": 1,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "zero spread spacing",
+      "frozenCase": "bag spread all options single layer",
+      "authoredPatch": {
+        "rebar_spacing_width": 0
+      },
+      "project": {
+        "id": "synthetic-1",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": 0,
+            "rebar_layers": 1,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": true
+          }
+        ]
+      },
+      "rebarFeet": 64,
+      "rebarCost": 252.8,
+      "itemTotal": 866.55,
+      "concreteVolume": 1,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "fractional spread mat count",
+      "frozenCase": "bag spread all options single layer",
+      "authoredPatch": {
+        "rebar_layers": 1.5
+      },
+      "project": {
+        "id": "synthetic-1",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": 12,
+            "rebar_layers": 1.5,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": true
+          }
+        ]
+      },
+      "rebarFeet": 64,
+      "rebarCost": 252.8,
+      "itemTotal": 866.55,
+      "concreteVolume": 1,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "negative spread mat count",
+      "frozenCase": "bag spread all options single layer",
+      "authoredPatch": {
+        "rebar_layers": -2
+      },
+      "project": {
+        "id": "synthetic-1",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": 12,
+            "rebar_layers": -2,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": true
+          }
+        ]
+      },
+      "rebarFeet": -128,
+      "rebarCost": -505.6,
+      "itemTotal": 108.14999999999998,
+      "concreteVolume": 1,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "partial spacing string",
+      "frozenCase": "bag spread all options single layer",
+      "authoredPatch": {
+        "rebar_spacing_length": "12oops"
+      },
+      "project": {
+        "id": "synthetic-1",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": "12oops",
+            "rebar_spacing_width": 12,
+            "rebar_layers": 1,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": true
+          }
+        ]
+      },
+      "rebarFeet": 64,
+      "rebarCost": 252.8,
+      "itemTotal": 866.55,
+      "concreteVolume": 1,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "pillar one hoop, four longitudinal bars",
+      "frozenCase": "bag pillar default size",
+      "authoredPatch": {
+        "pillar_rebar_layers": 1,
+        "pillar_vertical_rebar_count": 4
+      },
+      "project": {
+        "id": "synthetic-3",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "pillar",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": 12,
+            "rebar_layers": 1,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": true,
+            "diameter": 24,
+            "pillar_rebar_layers": 1,
+            "pillar_vertical_rebar_count": 4
+          }
+        ]
+      },
+      "rebarFeet": 15.23598775598299,
+      "rebarCost": 60.75516081914557,
+      "itemTotal": 319.4019067557926,
+      "concreteVolume": 0.3490658503988659,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "pillar three hoops, four longitudinal bars",
+      "frozenCase": "bag pillar default size",
+      "authoredPatch": {
+        "pillar_rebar_layers": 3,
+        "pillar_vertical_rebar_count": 4
+      },
+      "project": {
+        "id": "synthetic-3",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "pillar",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": 12,
+            "rebar_layers": 1,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": true,
+            "diameter": 24,
+            "pillar_rebar_layers": 3,
+            "pillar_vertical_rebar_count": 4
+          }
+        ]
+      },
+      "rebarFeet": 25.707963267948966,
+      "rebarCost": 118.26548245743669,
+      "itemTotal": 376.91222839408374,
+      "concreteVolume": 0.3490658503988659,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "pillar explicit zero longitudinal bars",
+      "frozenCase": "bag pillar default size",
+      "authoredPatch": {
+        "pillar_rebar_layers": 1,
+        "pillar_vertical_rebar_count": 0
+      },
+      "project": {
+        "id": "synthetic-3",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "pillar",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": 12,
+            "rebar_layers": 1,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": true,
+            "diameter": 24,
+            "pillar_rebar_layers": 1,
+            "pillar_vertical_rebar_count": 0
+          }
+        ]
+      },
+      "rebarFeet": 15.23598775598299,
+      "rebarCost": 60.75516081914557,
+      "itemTotal": 319.4019067557926,
+      "concreteVolume": 0.3490658503988659,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "pillar negative longitudinal bars",
+      "frozenCase": "bag pillar default size",
+      "authoredPatch": {
+        "pillar_rebar_layers": 1,
+        "pillar_vertical_rebar_count": -2
+      },
+      "project": {
+        "id": "synthetic-3",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "pillar",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": 12,
+            "rebar_layers": 1,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": true,
+            "diameter": 24,
+            "pillar_rebar_layers": 1,
+            "pillar_vertical_rebar_count": -2
+          }
+        ]
+      },
+      "rebarFeet": 0.23598775598298882,
+      "rebarCost": -5.244839180854436,
+      "itemTotal": 253.40190675579254,
+      "concreteVolume": 0.3490658503988659,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "pillar fractional hoop count",
+      "frozenCase": "bag pillar default size",
+      "authoredPatch": {
+        "pillar_rebar_layers": 1.5
+      },
+      "project": {
+        "id": "synthetic-3",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "pillar",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": 12,
+            "rebar_layers": 1,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": true,
+            "diameter": 24,
+            "pillar_rebar_layers": 1.5
+          }
+        ]
+      },
+      "rebarFeet": 15.23598775598299,
+      "rebarCost": 60.75516081914557,
+      "itemTotal": 319.4019067557926,
+      "concreteVolume": 0.3490658503988659,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "pillar oversized hoop",
+      "frozenCase": "bag pillar default size",
+      "authoredPatch": {
+        "pillar_rebar_hoop_diameter": 40
+      },
+      "project": {
+        "id": "synthetic-3",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "pillar",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": 12,
+            "rebar_layers": 1,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": true,
+            "diameter": 24,
+            "pillar_rebar_hoop_diameter": 40
+          }
+        ]
+      },
+      "rebarFeet": 15.23598775598299,
+      "rebarCost": 60.75516081914557,
+      "itemTotal": 319.4019067557926,
+      "concreteVolume": 0.3490658503988659,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "pillar negative hoop diameter",
+      "frozenCase": "bag pillar default size",
+      "authoredPatch": {
+        "pillar_rebar_hoop_diameter": -20
+      },
+      "project": {
+        "id": "synthetic-3",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "pillar",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": 12,
+            "rebar_layers": 1,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": true,
+            "diameter": 24,
+            "pillar_rebar_hoop_diameter": -20
+          }
+        ]
+      },
+      "rebarFeet": 4.764012244017011,
+      "rebarCost": 27.244839180854434,
+      "itemTotal": 285.8915851175014,
+      "concreteVolume": 0.3490658503988659,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    },
+    {
+      "name": "no rebar with unused invalid steel fields",
+      "frozenCase": "bag spread all options single layer",
+      "authoredPatch": {
+        "include_rebar": false,
+        "rebar_spacing_width": -12,
+        "rebar_layers": -2
+      },
+      "project": {
+        "id": "synthetic-1",
+        "updated_date": "v1",
+        "items": [
+          {
+            "component_id": "f1",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": false,
+            "rebar_size": "#4",
+            "rebar_spacing_length": 12,
+            "rebar_spacing_width": -12,
+            "rebar_layers": -2,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "include_finishing": true
+          }
+        ]
+      },
+      "rebarFeet": 0,
+      "rebarCost": 0,
+      "itemTotal": 613.75,
+      "concreteVolume": 1,
+      "inputIssues": [],
+      "catalogIssues": [],
+      "currentPricingAvailable": true
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+ok recorded material shows exact frozen and last-calculated basis with physical quantity
+ok recorded labor uses hours and60per-hour, not72per-hour
+ok unrecorded legacy labor retains72amount without inventing a frozen hourly rate
+ok zero priced footage remains distinct from20physical feet
+ok invalid frozen context never displays an asserted per-unit rate
+ok missing current values display unavailable rather than zero or copied frozen rates
+ok pending removal displays proposed zero amount without a fake zero-rate recipe
+ok stale catalog is identified without replacing saved projection amounts
+ok independent origin metadata does not render as a live reinforcement definition
+Pricing UI: 9/9; failed=0
+exit=0

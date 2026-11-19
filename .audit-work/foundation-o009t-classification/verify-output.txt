@@ -1,0 +1,48 @@
+ok rowAvailability: active default
+ok rowAvailability: inactive markers
+ok rowAvailability: deleted tombstones win
+ok priceClass: free vs unpriced vs priced
+ok item: unselected concrete now flags unassigned
+ok item: missing concrete row -> unavailable w/ deleted-or-deactivated msg
+ok item: inactive concrete row -> catalog_item_inactive
+ok item: tombstoned concrete row -> catalog_item_deleted
+ok item: wrong-type row still type_mismatch (parity)
+ok item: unpriced bagged concrete -> catalog_item_unpriced
+ok item: deliberate $0 bagged concrete is NOT unpriced (free distinct)
+ok item: unpriced bagged + authored custom cost -> no flag (override wins)
+ok item: ready-mix service row never item-level unpriced (delivery owns mixes)
+ok item: unassigned forming + include_forming -> unassigned
+ok item: unassigned forming + authored custom rate -> silent (not consumed)
+ok item: unpriced forming row -> unpriced; free forming row ok
+ok item: inactive forming row -> inactive flag
+ok item: spread_foot rebar unassigned stays unassigned (parity)
+ok item: spread_foot rebar missing size row -> unavailable (parity)
+ok item: rebar row resolved but inactive -> inactive flag
+ok item: rebar row resolved, unpriced -> unpriced
+ok item: rebar unpriced + authored custom rate -> silent
+ok item: pillar empty size + #4 exists -> catalog_item_unassigned_default
+ok item: pillar empty size + inactive #4 row -> unassigned_default names the inactive default
+ok item: pillar empty size + no #4 row -> unassigned_default (missing default)
+ok item: pillar explicit size resolves -> clean
+ok item: manual rebar snapshot suppresses all rebar catalog flags (parity)
+ok item v2: catalog reinforcement inactive -> inactive flag
+ok item v2: catalog reinforcement resolves active -> clean (parity)
+ok item v2: missing catalog basis -> unavailable (parity)
+ok item v2: unassigned basis -> unassigned (parity)
+ok assembly: pole unassigned/unavailable/inactive classify distinctly
+ok assembly: unassigned mix + service supplier -> unassigned_default on project_concrete_type
+ok assembly: unassigned mix + NO service supplier -> no default flag
+ok assembly: authored mix -> no default flag
+ok assembly: unassigned mix + inactive service supplier -> flag still fires (delivery consumes it)
+ok audit: free vs unpriced vs priced vs override vs deferred
+ok audit: pillar default marks selection defaulted
+ok calcProject: inactive supplier row blocks item pricing + holds delivery
+ok calcProject: unpriced bagged row blocks pricing (was silent $0)
+ok calcProject: free ($0) bagged row stays priceable
+ok calcProject: unassigned concrete blocks + delivery rides flagged supplier
+ok calcProject: saved snapshot retained under new classifications
+ok calcProject: mix default flag reaches catalogIssues through assembly scan
+ok calcProject: fully-priced project parity — no catalog issues
+ok calcProject: pillar implicit #4 default flags and blocks
+
+46 passed, 0 failed

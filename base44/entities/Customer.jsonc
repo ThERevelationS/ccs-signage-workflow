@@ -38,24 +38,26 @@
       ],
       "default": ""
     },
-    "volume_discount_tiers": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "min_subtotal": { "type": "number" },
-          "discount_percent": { "type": "number" }
-        }
-      },
-      "description": "Per-customer volume discount tiers — when an estimate's adjusted subtotal reaches min_subtotal, discount_percent applies on top of the estimate's manual discount."
-    },
     "last_contacted_at": {
       "type": "string",
       "description": "UTC timestamp of the most recent real customer contact (quote sent, portal message)."
     },
     "merged_into_customer_id": {
       "type": "string",
-      "description": "Set when this Customer was merged into another canonical Customer — linked records were relinked and this row is kept for audit."
+      "description": "Set when this Customer was merged into another canonical Customer \u2014 linked records were relinked and this row is kept for audit."
+    },
+    "merged_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when this Customer was merged (tombstoned) into merged_into_customer_id. Written by manageCustomerLifecycle merge_customers (G-14)."
+    },
+    "merged_by": {
+      "type": "string",
+      "description": "Staff email/id who performed the customer merge."
+    },
+    "merge_run": {
+      "type": "object",
+      "description": "Durable merge progress for an in-flight/partial merge_customers run: {run_key, keep_id, status, started_at, updated_at, finished_at, actor, entities{<Entity>: {status, scanned, relinked, skipped, failed_count, failures[]}}}. A run_key matching a retried call resumes instead of restarting (G-14 D6)."
     },
     "customer_status": {
       "type": "string",
@@ -66,6 +68,28 @@
       ],
       "default": "prospect",
       "description": "Account status shown in the customer header."
+    },
+    "status": {
+      "type": "string",
+      "description": "CRM lifecycle status string \u2014 Lead | Prospect | Active | Inactive (CoreBridge 'Status'). Parallel to the legacy customer_status enum; kept as a free string for import fidelity."
+    },
+    "customer_type": {
+      "type": "string",
+      "description": "Customer classification (CoreBridge 'Customer Type', e.g. retail, wholesale, contractor)."
+    },
+    "warning_flags": {
+      "type": "array",
+      "description": "Warning flags raised on this account (e.g. credit_hold, do_not_mail, tax_expired) \u2014 surfaced as badges on customer views.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "warning_flag_details": {
+      "type": "object",
+      "description": "Per-flag audit sidecar (G-11): {flag: {note, set_by, set_at}} written by customerWarningModel.setFlagPatch — keeps warning_flags[] a clean string list while persisting badge detail.",
+      "additionalProperties": {
+        "type": "object"
+      }
     },
     "tags": {
       "type": "array",
@@ -228,18 +252,31 @@
     "customer_origination": {
       "type": "string"
     },
+    "origination_path": {
+      "type": "string",
+      "description": "Hierarchical origination path (CoreBridge 'Origination', e.g. \"Networking Group : BNI - Carl - Tier 1\"). Complements the flat customer_origination label."
+    },
     "industry_type": {
       "type": "string"
     },
     "master_account": {
       "type": "string"
     },
+    "master_account_id": {
+      "type": "string",
+      "description": "Customer id of the master/parent account this record rolls up to (CoreBridge 'Master Account' link). master_account holds the display label."
+    },
     "terms": {
       "type": "string"
     },
+    "credit_terms_days": {
+      "type": "number",
+      "description": "Net credit terms in days for invoicing (e.g. 30 = Net 30). Complements the free-text terms field."
+    },
     "tax_exempt": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "description": "Legacy tax-exempt flag (CoreBridge 'Tax Exempt'). The canonical exemption registry record is tax_exemption; this boolean stays for import fidelity and is read as a legacy alias by taxExemptModel."
     },
     "tax_id_number": {
       "type": "string"
@@ -251,9 +288,57 @@
     "tax_exempt_reason": {
       "type": "string"
     },
+    "tax_exempt_id": {
+      "type": "string",
+      "description": "Tax-exempt certificate / exemption id number (CoreBridge 'Tax Exempt ID'). Complements tax_id_number."
+    },
+    "tax_exempt_expires": {
+      "type": "string",
+      "description": "Tax-exempt certificate expiry date (YYYY-MM-DD). Complements tax_exempt_expiration."
+    },
+    "tax_exemption": {
+      "type": "object",
+      "description": "Canonical tax-exemption registry record for this customer. The flat tax_exempt*/tax_id_number fields above are legacy import aliases — taxExemptModel normalizes object-first, then flats. A blank expires_on means the certificate does not auto-expire (perpetual).",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "description": "Exemption reason (e.g. resale, nonprofit, government)."
+        },
+        "certificate_id": {
+          "type": "string",
+          "description": "Exemption certificate / permit number on file."
+        },
+        "expires_on": {
+          "type": "string",
+          "description": "Certificate expiry date (YYYY-MM-DD). Blank = no auto-expire."
+        },
+        "issued_by": {
+          "type": "string",
+          "description": "Issuing authority (e.g. state / agency that granted the certificate)."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "expired",
+            "revoked"
+          ],
+          "description": "Registry status. 'revoked' always wins; 'expired' is also derived automatically from expires_on."
+        }
+      }
+    },
     "require_purchase_order": {
       "type": "boolean",
       "default": false
+    },
+    "po_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, orders for this customer require a purchase order number (CoreBridge 'PO Required'). Parallel to require_purchase_order."
+    },
+    "po_required_note": {
+      "type": "string",
+      "description": "Free-text detail about this customer's PO requirement (e.g. \"PO required on all orders\") — surfaced to estimators when the PO gate blocks quote send or approval."
     },
     "shipping_account": {
       "type": "string"
@@ -266,10 +351,29 @@
       "type": "boolean",
       "description": "When true, new estimates warn that the customer is on credit hold \u2014 a visible badge on the new-estimate and detail views."
     },
+    "in_store_credit": {
+      "type": "number",
+      "default": 0,
+      "description": "Unapplied in-store credit balance owed to this customer (CoreBridge 'In-Store Credit'). Distinct from credit_limit, which caps open account charges."
+    },
+    "in_store_credit_balance": {
+      "type": "number",
+      "default": 0,
+      "description": "Current in-store credit balance owed to this customer (CoreBridge 'In-Store Credit' balance). Parallel to in_store_credit."
+    },
     "pricing_tier": {
       "type": "number",
       "default": 1,
       "description": "Overall markup pricing tier applied to this customer's estimates."
+    },
+    "pricing_tier_set_by": {
+      "type": "string",
+      "description": "Staff user/email who last assigned the pricing tier (F-22 audit)."
+    },
+    "pricing_tier_set_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the pricing tier was last assigned (F-22 audit)."
     },
     "send_monthly_statements": {
       "type": "boolean",
@@ -278,6 +382,38 @@
     "is_active": {
       "type": "boolean",
       "default": true
+    },
+    "auto_inactive_after_months": {
+      "type": "number",
+      "default": 0,
+      "description": "Months without activity after which this customer auto-marks inactive (CoreBridge 'auto-inactive'). 0 falls through to the shop default — per-customer opt-out is auto_inactive_disabled, NOT zero (N-07.3)."
+    },
+    "auto_inactive_months": {
+      "type": "number",
+      "default": 0,
+      "description": "Months without activity before this customer auto-marks inactive (CoreBridge 'Auto Inactive' months). 0 falls through to the shop default — opt-out is auto_inactive_disabled. Parallel to auto_inactive_after_months."
+    },
+    "auto_inactive_disabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Per-customer opt-out of the auto-inactive sweep. Set true to exempt this customer regardless of month thresholds."
+    },
+    "lifecycle_status": {
+      "type": "string",
+      "description": "Denormalized lifecycle status mirror written by manageCustomerLifecycle (lead/prospect/active/inactive + merged). Declared for schema completeness — previously stored undeclared (N-07)."
+    },
+    "tax_exempt_issued_by": {
+      "type": "string",
+      "description": "Legacy flat alias: issuer of the tax-exempt certificate. Read by taxExemptModel after the tax_exemption object."
+    },
+    "tax_exempt_status": {
+      "type": "string",
+      "description": "Legacy flat alias: exemption status (active|expired|revoked). Read by taxExemptModel after tax_exemption.status."
+    },
+    "tax_exempt_revoked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Legacy flat alias: certificate revoked flag. Read by taxExemptModel alongside tax_exemption.revoked."
     },
     "notes": {
       "type": "string"

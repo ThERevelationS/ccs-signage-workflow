@@ -1,0 +1,633 @@
+{
+  "fixtures": [
+    {
+      "name": "zero-mixed",
+      "props": {
+        "items": [
+          {
+            "component_id": "synthetic",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "include_rebar": true,
+            "include_finishing": true,
+            "reinforcement_calculation_version": 2,
+            "custom_rebar_qty": 0,
+            "custom_rebar_cost_per_ft": 2,
+            "reinforcement_design": {
+              "version": 2,
+              "bar_diameter_inches": 0.5,
+              "cover_inches": {
+                "side": 3,
+                "top": 3,
+                "bottom": 3
+              },
+              "supports": {
+                "mode": "off",
+                "reason": "Synthetic explicit exclusion, not structural advice."
+              },
+              "spread": {
+                "mats": [
+                  {
+                    "id": "top",
+                    "bearing_elevation_inches": 32,
+                    "max_spacing_x_inches": 12,
+                    "max_spacing_z_inches": 12
+                  }
+                ],
+                "inter_mat_ties": []
+              }
+            },
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Synthetic",
+              "reason": "Synthetic explicit per-foot basis",
+              "unit": "ft",
+              "bar_diameter_inches": 0.5,
+              "weight_lb_per_ft": 0.668,
+              "cost_per_ft": 2
+            },
+            "concrete_volume_cy": 1,
+            "excavation_volume_cy": 1.25,
+            "concrete_bags": null,
+            "concrete_cost": 0,
+            "concrete_rate": 0,
+            "rebar_feet": 0,
+            "rebar_rate": 2,
+            "rebar_weight_lbs": 0,
+            "rebar_geometry_feet": 20,
+            "rebar_geometry_weight_lbs": 13.36,
+            "rebar_material_cost": 0,
+            "rebar_labor_cost": 48,
+            "rebar_labor_hours": 0.8,
+            "rebar_connection_count": 16,
+            "rebar_cost": 48,
+            "pouring_cost": 15,
+            "finishing_cost": 11.25,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "excavation_cost": 150,
+            "excavation_hours": 2.5,
+            "finishing_hours": 0.1875,
+            "item_total_cost": 288.25,
+            "reinforcement_cost_snapshot": {
+              "version": 1,
+              "calculation_version": 2,
+              "engineering_approved": false,
+              "amounts": {
+                "geometry_feet": 20,
+                "priced_feet": 0,
+                "geometry_weight_lbs": 13.36,
+                "priced_weight_lbs": 0,
+                "material_cost": 0,
+                "labor_cost": 48,
+                "labor_hours": 0.8,
+                "connection_count": 16,
+                "steel_cost": 48
+              },
+              "material": {
+                "kind": "manual",
+                "name": "Synthetic",
+                "reason": "Synthetic explicit per-foot basis",
+                "inventory_id": null,
+                "inventory_updated_date": null,
+                "pricing_unit": "ft",
+                "original_unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "rate_source": "custom_rebar_cost_per_ft"
+              },
+              "basis": {
+                "unit": "ft",
+                "cost_per_ft": 2,
+                "labor_rate_per_hour": 60
+              },
+              "rate_sources": []
+            }
+          },
+          {
+            "component_id": "legacy",
+            "include_rebar": true,
+            "rebar_feet": 10,
+            "rebar_weight_lbs": 6.68,
+            "rebar_cost": 20
+          }
+        ],
+        "itemPricing": [
+          {
+            "available": true
+          },
+          {
+            "available": true
+          }
+        ]
+      },
+      "expected": [
+        {
+          "name": "Rebar (6.68 lbs)",
+          "quantity": "10 LF",
+          "cost": "$20.00",
+          "note": []
+        },
+        {
+          "name": "Foundation synthetic - Synthetic (material)",
+          "quantity": "20 LF physical / 0 LF priced",
+          "cost": "$0.00",
+          "note": [
+            "Physical weight: 13.36 lb. Priced weight: 0 lb.",
+            "Not a purchasing plan."
+          ]
+        },
+        {
+          "name": "Foundation synthetic - reinforcement labor",
+          "quantity": "0.8 hr",
+          "cost": "$48.00",
+          "note": [
+            "Internal reinforcement labor cost, separate from steel material."
+          ]
+        }
+      ],
+      "subtotal": "$68.00",
+      "pricingUnavailable": false,
+      "file": "bom-frozen-zero-mixed.html"
+    },
+    {
+      "name": "blocked-unrecorded-split",
+      "props": {
+        "items": [
+          {
+            "component_id": "synthetic",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "include_rebar": true,
+            "include_finishing": true,
+            "reinforcement_calculation_version": 2,
+            "custom_rebar_qty": null,
+            "custom_rebar_cost_per_ft": 2,
+            "reinforcement_design": {
+              "version": 2,
+              "bar_diameter_inches": 0.5,
+              "cover_inches": {
+                "side": 3,
+                "top": 3,
+                "bottom": 3
+              },
+              "supports": {
+                "mode": "off",
+                "reason": "Synthetic explicit exclusion, not structural advice."
+              },
+              "spread": {
+                "mats": [
+                  {
+                    "id": "top",
+                    "bearing_elevation_inches": 32,
+                    "max_spacing_x_inches": 12,
+                    "max_spacing_z_inches": 12
+                  }
+                ],
+                "inter_mat_ties": []
+              }
+            },
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Synthetic",
+              "reason": "Synthetic explicit per-foot basis",
+              "unit": "ft",
+              "bar_diameter_inches": 0.5,
+              "weight_lb_per_ft": 0.668,
+              "cost_per_ft": 2
+            },
+            "concrete_volume_cy": 1,
+            "excavation_volume_cy": 1.25,
+            "concrete_bags": null,
+            "concrete_cost": 0,
+            "concrete_rate": 0,
+            "rebar_feet": 20,
+            "rebar_rate": 2,
+            "rebar_weight_lbs": 13.36,
+            "rebar_geometry_feet": 20,
+            "rebar_geometry_weight_lbs": 13.36,
+            "rebar_labor_hours": 1.2,
+            "rebar_connection_count": 16,
+            "rebar_cost": 112,
+            "pouring_cost": 15,
+            "finishing_cost": 11.25,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "excavation_cost": 150,
+            "excavation_hours": 2.5,
+            "finishing_hours": 0.1875,
+            "item_total_cost": 288.25,
+            "reinforcement_cost_snapshot": {
+              "version": 1,
+              "calculation_version": 2,
+              "engineering_approved": false,
+              "amounts": {
+                "geometry_feet": 20,
+                "priced_feet": 20,
+                "geometry_weight_lbs": 13.36,
+                "priced_weight_lbs": 13.36,
+                "material_cost": 40,
+                "labor_cost": 72,
+                "labor_hours": 1.2,
+                "connection_count": 16,
+                "steel_cost": 112
+              },
+              "material": {
+                "kind": "manual",
+                "name": "Synthetic",
+                "reason": "Synthetic explicit per-foot basis",
+                "inventory_id": null,
+                "inventory_updated_date": null,
+                "pricing_unit": "ft",
+                "original_unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "rate_source": "custom_rebar_cost_per_ft"
+              },
+              "basis": {
+                "unit": "ft",
+                "cost_per_ft": 2,
+                "labor_rate_per_hour": 60
+              },
+              "rate_sources": []
+            }
+          }
+        ],
+        "itemPricing": [
+          {
+            "available": false,
+            "issues": [
+              {
+                "message": "Synthetic pricing block; saved costs retained."
+              }
+            ]
+          }
+        ],
+        "pricingUnavailable": true
+      },
+      "expected": [
+        {
+          "name": "Foundation synthetic (saved) — concrete",
+          "quantity": "Not saved",
+          "cost": "$0.00",
+          "note": []
+        },
+        {
+          "name": "Foundation synthetic - reinforcement (combined saved amount)",
+          "quantity": "20 LF physical / 20 LF priced",
+          "cost": "$112.00",
+          "note": [
+            "Acknowledged saved quantities and amounts",
+            "Material/labor split: Not saved.",
+            "without an invented breakdown"
+          ]
+        }
+      ],
+      "subtotal": "Pricing unavailable",
+      "pricingUnavailable": true,
+      "file": "bom-frozen-blocked-unrecorded-split.html"
+    },
+    {
+      "name": "blocked-removal",
+      "props": {
+        "items": [
+          {
+            "component_id": "synthetic",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "include_rebar": false,
+            "include_finishing": true,
+            "reinforcement_calculation_version": 2,
+            "custom_rebar_qty": null,
+            "custom_rebar_cost_per_ft": 2,
+            "reinforcement_design": {
+              "version": 2,
+              "bar_diameter_inches": 0.5,
+              "cover_inches": {
+                "side": 3,
+                "top": 3,
+                "bottom": 3
+              },
+              "supports": {
+                "mode": "off",
+                "reason": "Synthetic explicit exclusion, not structural advice."
+              },
+              "spread": {
+                "mats": [
+                  {
+                    "id": "top",
+                    "bearing_elevation_inches": 32,
+                    "max_spacing_x_inches": 12,
+                    "max_spacing_z_inches": 12
+                  }
+                ],
+                "inter_mat_ties": []
+              }
+            },
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Synthetic",
+              "reason": "Synthetic explicit per-foot basis",
+              "unit": "ft",
+              "bar_diameter_inches": 0.5,
+              "weight_lb_per_ft": 0.668,
+              "cost_per_ft": 2
+            },
+            "concrete_volume_cy": 1,
+            "excavation_volume_cy": 1.25,
+            "concrete_bags": null,
+            "concrete_cost": 0,
+            "concrete_rate": 0,
+            "rebar_feet": 20,
+            "rebar_rate": 2,
+            "rebar_weight_lbs": 13.36,
+            "rebar_geometry_feet": 20,
+            "rebar_geometry_weight_lbs": 13.36,
+            "rebar_material_cost": 40,
+            "rebar_labor_cost": 72,
+            "rebar_labor_hours": 1.2,
+            "rebar_connection_count": 16,
+            "rebar_cost": 112,
+            "pouring_cost": 15,
+            "finishing_cost": 11.25,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "excavation_cost": 150,
+            "excavation_hours": 2.5,
+            "finishing_hours": 0.1875,
+            "item_total_cost": 288.25,
+            "reinforcement_cost_snapshot": {
+              "version": 1,
+              "calculation_version": 2,
+              "engineering_approved": false,
+              "amounts": {
+                "geometry_feet": 20,
+                "priced_feet": 20,
+                "geometry_weight_lbs": 13.36,
+                "priced_weight_lbs": 13.36,
+                "material_cost": 40,
+                "labor_cost": 72,
+                "labor_hours": 1.2,
+                "connection_count": 16,
+                "steel_cost": 112
+              },
+              "material": {
+                "kind": "manual",
+                "name": "Synthetic",
+                "reason": "Synthetic explicit per-foot basis",
+                "inventory_id": null,
+                "inventory_updated_date": null,
+                "pricing_unit": "ft",
+                "original_unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "rate_source": "custom_rebar_cost_per_ft"
+              },
+              "basis": {
+                "unit": "ft",
+                "cost_per_ft": 2,
+                "labor_rate_per_hour": 60
+              },
+              "rate_sources": []
+            }
+          }
+        ],
+        "itemPricing": [
+          {
+            "available": false,
+            "issues": [
+              {
+                "message": "Synthetic pricing block; saved costs retained."
+              }
+            ]
+          }
+        ],
+        "pricingUnavailable": true
+      },
+      "expected": [
+        {
+          "name": "Foundation synthetic (saved) — concrete",
+          "quantity": "Not saved",
+          "cost": "$0.00",
+          "note": []
+        },
+        {
+          "name": "Foundation synthetic - Synthetic (material)",
+          "quantity": "20 LF physical / 20 LF priced",
+          "cost": "$40.00",
+          "note": [
+            "Acknowledged saved quantities and amounts"
+          ]
+        },
+        {
+          "name": "Foundation synthetic - reinforcement labor",
+          "quantity": "1.2 hr",
+          "cost": "$72.00",
+          "note": [
+            "Acknowledged saved quantities and amounts"
+          ]
+        }
+      ],
+      "subtotal": "Pricing unavailable",
+      "pricingUnavailable": true,
+      "file": "bom-frozen-blocked-removal.html"
+    },
+    {
+      "name": "unknown-basis",
+      "props": {
+        "items": [
+          {
+            "component_id": "unknown",
+            "reinforcement_calculation_version": 2,
+            "include_rebar": true
+          }
+        ]
+      },
+      "expected": [
+        {
+          "name": "Foundation unknown - Reinforcing steel (material)",
+          "quantity": "Not saved LF physical / Not saved LF priced",
+          "cost": "Not saved",
+          "note": [
+            "Physical weight: Not saved lb.",
+            "Not a purchasing plan."
+          ]
+        },
+        {
+          "name": "Foundation unknown - reinforcement labor",
+          "quantity": "Not saved hr",
+          "cost": "Not saved",
+          "note": [
+            "Internal reinforcement labor cost, separate from steel material."
+          ]
+        }
+      ],
+      "subtotal": "Pricing unavailable",
+      "pricingUnavailable": true,
+      "file": "bom-frozen-unknown-basis.html"
+    },
+    {
+      "name": "inconsistent-split",
+      "props": {
+        "items": [
+          {
+            "component_id": "synthetic",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "include_rebar": true,
+            "include_finishing": true,
+            "reinforcement_calculation_version": 2,
+            "custom_rebar_qty": null,
+            "custom_rebar_cost_per_ft": 2,
+            "reinforcement_design": {
+              "version": 2,
+              "bar_diameter_inches": 0.5,
+              "cover_inches": {
+                "side": 3,
+                "top": 3,
+                "bottom": 3
+              },
+              "supports": {
+                "mode": "off",
+                "reason": "Synthetic explicit exclusion, not structural advice."
+              },
+              "spread": {
+                "mats": [
+                  {
+                    "id": "top",
+                    "bearing_elevation_inches": 32,
+                    "max_spacing_x_inches": 12,
+                    "max_spacing_z_inches": 12
+                  }
+                ],
+                "inter_mat_ties": []
+              }
+            },
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Synthetic",
+              "reason": "Synthetic explicit per-foot basis",
+              "unit": "ft",
+              "bar_diameter_inches": 0.5,
+              "weight_lb_per_ft": 0.668,
+              "cost_per_ft": 2
+            },
+            "concrete_volume_cy": 1,
+            "excavation_volume_cy": 1.25,
+            "concrete_bags": null,
+            "concrete_cost": 0,
+            "concrete_rate": 0,
+            "rebar_feet": 20,
+            "rebar_rate": 2,
+            "rebar_weight_lbs": 13.36,
+            "rebar_geometry_feet": 20,
+            "rebar_geometry_weight_lbs": 13.36,
+            "rebar_material_cost": 40,
+            "rebar_labor_cost": 73,
+            "rebar_labor_hours": 1.2,
+            "rebar_connection_count": 16,
+            "rebar_cost": 112,
+            "pouring_cost": 15,
+            "finishing_cost": 11.25,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "excavation_cost": 150,
+            "excavation_hours": 2.5,
+            "finishing_hours": 0.1875,
+            "item_total_cost": 288.25,
+            "reinforcement_cost_snapshot": {
+              "version": 1,
+              "calculation_version": 2,
+              "engineering_approved": false,
+              "amounts": {
+                "geometry_feet": 20,
+                "priced_feet": 20,
+                "geometry_weight_lbs": 13.36,
+                "priced_weight_lbs": 13.36,
+                "material_cost": 40,
+                "labor_cost": 72,
+                "labor_hours": 1.2,
+                "connection_count": 16,
+                "steel_cost": 112
+              },
+              "material": {
+                "kind": "manual",
+                "name": "Synthetic",
+                "reason": "Synthetic explicit per-foot basis",
+                "inventory_id": null,
+                "inventory_updated_date": null,
+                "pricing_unit": "ft",
+                "original_unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "rate_source": "custom_rebar_cost_per_ft"
+              },
+              "basis": {
+                "unit": "ft",
+                "cost_per_ft": 2,
+                "labor_rate_per_hour": 60
+              },
+              "rate_sources": []
+            }
+          }
+        ]
+      },
+      "expected": [
+        {
+          "name": "Foundation synthetic - reinforcement (combined saved amount)",
+          "quantity": "20 LF physical / 20 LF priced",
+          "cost": "$112.00",
+          "note": [
+            "Stored material/labor split does not reconcile.",
+            "without an invented breakdown"
+          ]
+        }
+      ],
+      "subtotal": "Pricing unavailable",
+      "pricingUnavailable": true,
+      "file": "bom-frozen-inconsistent-split.html"
+    },
+    {
+      "name": "ordinary",
+      "props": {
+        "items": [
+          {
+            "component_id": "legacy",
+            "include_rebar": true,
+            "rebar_feet": 10,
+            "rebar_weight_lbs": 6.68,
+            "rebar_cost": 20
+          }
+        ]
+      },
+      "expected": [
+        {
+          "name": "Rebar (6.68 lbs)",
+          "quantity": "10 LF",
+          "cost": "$20.00",
+          "note": []
+        }
+      ],
+      "subtotal": "$20.00",
+      "pricingUnavailable": false,
+      "exactLegacyHtml": true,
+      "file": "bom-frozen-ordinary.html"
+    }
+  ]
+}

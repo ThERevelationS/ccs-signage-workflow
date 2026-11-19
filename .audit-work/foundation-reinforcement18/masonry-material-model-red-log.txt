@@ -1,0 +1,639 @@
+ok legacy: concrete material, positive settings
+ok legacy: genuine zero material price
+ok legacy: brick, explicit dry joint
+ok legacy: brick_stone type and mortar joint
+ok legacy: stone units, two unequal segments
+ok legacy: closed outline with internal brick
+ok legacy: open outline with internal brick
+ok legacy: internal concrete units
+ok legacy: outer explicit price override
+ok legacy: outer explicit free override
+ok legacy: internal explicit price override
+ok legacy: internal explicit free override
+ok legacy: outer explicit quantity override
+ok legacy: outer explicit zero quantity
+ok legacy: internal explicit quantity override
+ok legacy: internal explicit zero quantity
+ok legacy: fractional explicit material price
+ok legacy: numeric-string material price
+ok legacy: numeric-string free price
+ok legacy: irrelevant catalog row cannot change wall calculation
+ok legacy: zero labor setting behavior deliberately unchanged in this unit
+ok legacy: zero minimum setting behavior deliberately unchanged in this unit
+ok legacy: zero mortar setting behavior deliberately unchanged in this unit
+FAIL all frozen valid material cases remain available: api.foundationWallCatalogIssues is not a function
+FAIL unknown price: absent: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL unknown price: null: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL unknown price: empty: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL unknown price: whitespace: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL unknown price: malformed: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 0,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL unknown price: true: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 6,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 51,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL unknown price: false: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL unknown price: array: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL unknown price: object: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 0,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL unknown price: NaN: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL unknown price: Infinity: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: Infinity,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: Infinity,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL unknown price: negative: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: -6,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 39,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL unknown price: negative string: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: -12,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 33,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL missing price cannot mutate source or acknowledged history: api.foundationWallCatalogIssues is not a function
+FAIL base price zero is current, not held history: api.foundationWallCatalogIssues is not a function
+FAIL outer override zero is sufficient even without base price: api.foundationWallCatalogIssues is not a function
+FAIL explicit invalid outer override cannot borrow valid base price: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL null override keeps legacy base-price precedence: api.foundationWallCatalogIssues is not a function
+FAIL catalog unassigned holds one acknowledged vector: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   laborCost: 45,
++   materialCost: 12,
++   mortarCost: 0,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 57
+-   totalCost: 408
+  }
+
+FAIL catalog deleted holds one acknowledged vector: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   laborCost: 45,
++   materialCost: 12,
++   mortarCost: 0,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 57
+-   totalCost: 408
+  }
+
+FAIL catalog ambiguous holds one acknowledged vector: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 12,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 57,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL catalog wrong type holds one acknowledged vector: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 12,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 57,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL missing inner price cannot mix new outer and old inner amounts: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 60,
++   internalLaborHours: 0.12,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 6,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 12,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 117,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL wall-owned internal zero override survives absent catalog rate: api.foundationWallCatalogIssues is not a function
+FAIL invalid wall-owned internal override cannot borrow catalog rate: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 60,
++   internalLaborHours: 0.12,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 6,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 12,
++   mortarCost: 0,
++   numCourses: 2.25,
+-   laborCost: 70,
+-   materialCost: 321,
+-   mortarCost: 17,
+    totalBricks: 6,
++   totalCost: 0,
++   totalLinearInches: 16
+-   totalCost: 408
+  }
+
+FAIL unmatched history remains unknown: new identity: Expected values to be strictly deep-equal:
++ actual - expected
+
++ {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
++   totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
++ }
+- {}
+
+FAIL unmatched history remains unknown: missing identity: Expected values to be strictly deep-equal:
++ actual - expected
+
++ {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
++   totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
++ }
+- {}
+
+FAIL unmatched history remains unknown: duplicate current identity: Expected values to be strictly deep-equal:
++ actual - expected
+
++ {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
++   totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
++ }
+- {}
+
+FAIL unmatched history remains unknown: duplicate saved identity: Expected values to be strictly deep-equal:
++ actual - expected
+
++ {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
++   totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
++ }
+- {}
+
+FAIL unmatched history remains unknown: no saved row: Expected values to be strictly deep-equal:
++ actual - expected
+
++ {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
++   totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
++ }
+- {}
+
+FAIL unmatched history remains unknown: explicit null saved rows: Expected values to be strictly deep-equal:
++ actual - expected
+
++ {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
++   totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
++ }
+- {}
+
+FAIL missing acknowledged cost field cannot inherit a draft preview: Expected values to be strictly equal:
+
+true !== false
+
+ok acknowledged genuine zero is not discarded
+FAIL saved identity matching is independent of row order: Expected values to be strictly equal:
+
+45 !== 408
+
+FAIL legacy standalone caller retains its own snapshot when option omitted: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
+    laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 0,
+-   materialCost: 12,
+    mortarCost: 0,
++   numCourses: 2.25,
+    totalBricks: 6,
++   totalCost: 45,
++   totalLinearInches: 16
+-   totalCost: 57
+  }
+
+24/59 material model cases
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: masonry material model checks failed
+    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-masonry-material-model.mjs:133:8 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.13.0

@@ -1,0 +1,15 @@
+Reading file
+Reading file
+Read file
+{
+  "files": [
+    {
+      "path": "src/components/estimator/foundation/FoundationTotals.jsx",
+      "content": "import { money } from \"./foundationCalc\";\n\nconst amt = (v) => (Number.isFinite(v) ? money(v) : \"Not saved\");\nconst known = (v, d, u) => (Number.isFinite(v) ? `${v.toFixed(d)} ${u}` : \"Not saved\");\n\nexport default function FoundationTotals({ totals, pricingUnavailable = false }) {\n  const wallMortar = [totals.total_wall_cost, totals.total_brick_cost, totals.total_fill_cost].every(Number.isFinite)\n    ? totals.total_wall_cost - totals.total_brick_cost - totals.total_fill_cost\n    : null;\n  const lines = [\n    [\"Concrete\", totals.total_concrete_cost],\n    [\"Rebar\", totals.total_rebar_cost],\n    [\"Excavation\", totals.total_excavation_cost],\n    [\"Forming materials\", totals.total_forming_materials_cost],\n    [\"Labor\", totals.total_labor_cost],\n    [\"Poles\", totals.total_pole_cost],\n    [\"Pole painting\", totals.total_pole_painting_cost],\n    [\"Wall material\", totals.total_brick_cost],\n    [\"Internal fill wall\", totals.total_fill_cost],\n    [\"Wall mortar + labor\", wallMortar],\n    [\"Wall caps\", totals.total_wall_cap_cost],\n    [\"Equipment\", totals.total_equipment_cost],\n  ];\n\n  return (\n    <div className=\"bg-white rounded-xl border border-gray-200 p-4 sticky top-4\">\n      <h2 className=\"font-semibold text-gray-900 mb-3\">Section Total</h2>\n      {pricingUnavailable && <p className=\"mb-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800\">Saved/known amounts only; current pricing is incomplete.</p>}\n\n      <div className=\"grid grid-cols-3 gap-2 mb-3 text-center\">\n        {[\n          [\"Concrete\", known(totals.total_concrete_volume_cy, 2, \"CY\")],\n          [\"Excavation\", known(totals.total_excavation_volume_cy, 2, \"CY\")],\n          [\"Labor\", known(totals.total_labor_hours, 1, \"hr\")],\n        ].map(([label, value]) => (\n          <div key={label} className=\"bg-slate-50 rounded-lg py-2\">\n            <div className=\"text-[10px] uppercase tracking-wide text-gray-400\">{label}</div>\n            <div className=\"text-sm font-semibold text-gray-800\">{value}</div>\n          </div>\n        ))}\n      </div>\n\n      <div className=\"space-y-1.5 text-sm border-t border-gray-100 pt-3\">\n        {lines.map(([label, value]) => (\n          <div key={label} className=\"flex justify-between text-gray-600\">\n            <span>{label}</span>\n            <span>{amt(value)}</span>\n          </div>\n        ))}\n        <div className=\"flex justify-between font-bold text-gray-900 text-base border-t border-gray-200 pt-2\">\n          <span>Total</span>\n          <span className=\"text-red-600\">{pricingUnavailable ? <span className=\"text-amber-700\">Pricing unavailable</span> : money(totals.grand_total)}</span>\n        </div>\n      </div>\n    </div>\n  );\n}",
+      "startLine": 1,
+      "endLine": 57,
+      "totalLines": 57,
+      "truncated": false
+    }
+  ]
+}

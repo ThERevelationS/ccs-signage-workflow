@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { VinylWorkflowTemplate } from "@/entities/all";
 import { Bookmark, Plus, Trash2 } from "lucide-react";
 import { createVinylTemplateWithRecovery, deleteVinylTemplateIfUnchanged } from "./vinylTemplatePersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 
 export default function VinylWorkflowTemplatesDialog({
   open, onClose, mode = "apply", currentWorkflow, onApply,
@@ -105,7 +105,7 @@ export default function VinylWorkflowTemplatesDialog({
               {templates.map(t => (
                 <div key={t.id} className="flex items-center gap-2 p-2 hover:bg-slate-50">
                   {t.color_tag && <span className="w-3 h-3 rounded-full" style={{ background: t.color_tag }} />}
-                  <button onClick={() => handleApply(t)} className="flex-1 text-left text-sm">
+                  <button type="button" onClick={() => handleApply(t)} className="flex-1 text-left text-sm">
                     <div className="font-medium">{t.name}</div>
                     <div className="text-[10px] text-slate-500">
                       {t.preset_key || "custom"} · {[t.apply_print && "print", t.apply_cut && "cut", t.apply_laminate && "lam"].filter(Boolean).join(" + ")}

@@ -1,0 +1,36 @@
+{
+  "matches": [
+    {
+      "path": "src/components/CommandPalette.jsx",
+      "line": 43,
+      "text": "  \"MetalEstimator\", \"BrickStoneEstimator\", \"PaintingEstimator\", \"FoundationSettings\", \"PaintingSettings\","
+    },
+    {
+      "path": "src/components/estimator/navConfig.js",
+      "line": 98,
+      "text": "      { label: \"Foundation Settings\", to: \"/FoundationSettings\" },"
+    },
+    {
+      "path": "src/pages/FoundationSettings.jsx",
+      "line": 61,
+      "text": "export default function FoundationSettings() {\r"
+    },
+    {
+      "path": "src/pages/EstimatorSettings.jsx",
+      "line": 17,
+      "text": "  { label: \"Foundation Settings\", desc: \"Labor, timing, masonry and pole-paint calculation defaults\", to: \"/FoundationSettings\" },\r"
+    },
+    {
+      "path": "src/App.jsx",
+      "line": 32,
+      "text": "const FoundationSettings = lazyPage(() => import('./pages/FoundationSettings'));"
+    },
+    {
+      "path": "src/App.jsx",
+      "line": 106,
+      "text": "  FoundationSettings,"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 6
+}

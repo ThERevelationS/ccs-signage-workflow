@@ -18,7 +18,7 @@ async function deleteBuilderEntityIfUnchanged({
   if (!id || !updatedDate || typeof entity?.deleteMany !== "function" || typeof entity?.get !== "function") {
     throw new Error(`${label} could not initialize its concurrency-safe delete.`);
   }
-  const query = { id, updated_date: updatedDate, ...guardFields };
+  const query = { ...guardFields, id, updated_date: updatedDate };
   let result;
   try {
     result = await entity.deleteMany(query);
@@ -59,6 +59,10 @@ async function deleteBuilderEntityIfUnchanged({
   throw new Error(`${label} changed in another session. It was not deleted.`);
 }
 var deleteEntityIfUnchanged = deleteBuilderEntityIfUnchanged;
+
+// scripts/.tmp-inv-b44-stub.mjs
+var base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => ({}) }) }), functions: { invoke: async () => ({}) }, auth: { me: async () => null } };
+var staffEntities = base44.entities;
 
 // src/components/masterInventory/inventoryPersistence.js
 function normalize(value) {
@@ -138,7 +142,69 @@ async function deleteInventoryRecordIfUnchanged({
     label
   });
 }
+async function findInventoryPartReferences(recordId) {
+  const id = String(recordId || "");
+  if (!id || typeof base44?.entities?.BuilderPart?.filter !== "function") {
+    throw new Error("Estimate Part references could not be verified.");
+  }
+  const rows = await base44.entities.BuilderPart.filter({ inventory_item_id: id });
+  const list = Array.isArray(rows) ? rows : [];
+  return {
+    count: list.length,
+    names: list.map((p) => p.part_name || p.part_key || "Part").slice(0, 5)
+  };
+}
+async function findInventoryEstimateUsage(recordId) {
+  const id = String(recordId || "");
+  if (!id || typeof base44?.entities?.BuilderPart?.filter !== "function" || typeof base44?.entities?.BuilderProduct?.get !== "function") {
+    throw new Error("Estimate usage could not be verified.");
+  }
+  const rows = await base44.entities.BuilderPart.filter({ inventory_item_id: id });
+  const parts = Array.isArray(rows) ? rows : [];
+  const productIds = [...new Set(parts.map((p) => p?.builder_product_id).filter(Boolean))];
+  const estimateIds = /* @__PURE__ */ new Set();
+  for (const productId of productIds) {
+    const product = await base44.entities.BuilderProduct.get(productId).catch(() => null);
+    if (product?.estimate_id) estimateIds.add(product.estimate_id);
+  }
+  return { parts: parts.length, products: productIds.length, estimates: estimateIds.size, estimateIds: [...estimateIds].slice(0, 25) };
+}
+var COST_FIELD_RX = /cost|rate|price/i;
+async function recordInventoryCostChanges({ itemId, entityKey, before = {}, after = {}, fields = [], note = "Inventory edit", changedBy = "" } = {}) {
+  if (!itemId || typeof base44?.entities?.InventoryCostHistory?.create !== "function") return 0;
+  const costFields = new Set((fields || []).filter((f) => f?.name && COST_FIELD_RX.test(f.name)).map((f) => f.name));
+  const candidates = /* @__PURE__ */ new Set([...costFields, ...Object.keys(after).filter((k) => COST_FIELD_RX.test(k))]);
+  let written = 0;
+  for (const field of candidates) {
+    const oldVal = Number(before[field]);
+    const newVal = Number(after[field]);
+    if (!Number.isFinite(oldVal) || !Number.isFinite(newVal) || Math.abs(oldVal - newVal) <= 1e-6) continue;
+    await base44.entities.InventoryCostHistory.create({
+      inventory_item_id: String(itemId),
+      entity_key: String(entityKey || ""),
+      cost_field: String(field),
+      old_cost: oldVal,
+      new_cost: newVal,
+      changed_by: String(changedBy || ""),
+      note: String(note || "")
+    }).catch(() => {
+    });
+    written += 1;
+  }
+  return written;
+}
+async function loadInventoryCostHistory({ itemId, entityKey = "", limit = 5 } = {}) {
+  if (!itemId || typeof base44?.entities?.InventoryCostHistory?.filter !== "function") return [];
+  const query = entityKey ? { inventory_item_id: String(itemId), entity_key: String(entityKey) } : { inventory_item_id: String(itemId) };
+  const rows = await base44.entities.InventoryCostHistory.filter(query).catch(() => []);
+  const list = Array.isArray(rows) ? rows : [];
+  return list.sort((a, b) => String(b?.created_date || "").localeCompare(String(a?.created_date || ""))).slice(0, limit);
+}
 export {
   createInventoryRecordWithRecovery,
-  deleteInventoryRecordIfUnchanged
+  deleteInventoryRecordIfUnchanged,
+  findInventoryEstimateUsage,
+  findInventoryPartReferences,
+  loadInventoryCostHistory,
+  recordInventoryCostChanges
 };

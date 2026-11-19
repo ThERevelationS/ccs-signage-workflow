@@ -1,0 +1,18 @@
+[
+  {
+    "old_text": "import { ArrowLeft, Hammer, Save } from \"lucide-react\";",
+    "new_text": "import { ArrowLeft, Hammer, RotateCcw, Save } from \"lucide-react\";"
+  },
+  {
+    "old_text": "import SettingsTransferBar from \"@/components/estimator/settings/SettingsTransferBar\";",
+    "new_text": "import SettingsTransferBar from \"@/components/estimator/settings/SettingsTransferBar\";\r\nimport { METAL_SETTINGS_DEFAULTS, resetValuesToDefaults } from \"@/components/estimator/settings/moduleSettingDefaults\";"
+  },
+  {
+    "old_text": "  const save = async () => {\r\n    if (settingsSaveRef.current) return;",
+    "new_text": "  // #83 — stage every managed key back to the calculator's documented fallback.\r\n  const handleResetDefaults = () => {\r\n    setValues((prev) => resetValuesToDefaults(prev, METAL_SETTINGS_DEFAULTS, [...ACTIVE_KEYS]));\r\n    setMessage(\"Defaults staged — click Save to persist them.\");\r\n  };\r\n\r\n  const save = async () => {\r\n    if (settingsSaveRef.current) return;"
+  },
+  {
+    "old_text": "<Button onClick={save} disabled={saving || dirtyCount === 0} className=\"h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50\">",
+    "new_text": "<Button variant=\"outline\" onClick={handleResetDefaults} disabled={saving} className=\"h-[32px] text-[12px] font-semibold\" title=\"Stage calculator fallback defaults — Save to persist\"><RotateCcw className=\"w-4 h-4 mr-1.5\" /> Reset to defaults</Button><Button onClick={save} disabled={saving || dirtyCount === 0} className=\"h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50\">"
+  }
+]

@@ -1,0 +1,17 @@
+{
+ "authorized": true,
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "d4e979d30b9885f7506c1e11d083eed38b6a0ddc",
+ "restoreCheckpointId": "6aef9258eaa8babd67a16bfd",
+ "candidateHashes": {
+  "cncPricingAvailability.js": "7ff2091c118b7d5a470e2f4288c0dfab001160fc32f8618d5c00b7a1c431f484",
+  "CNCEstimator.jsx": "cad8d0c80544d7aced15b91a050e24178b497ef327391ef2301f8742eeff9be7"
+ },
+ "reviewedProtocolHash": "7e1b29e4297f2a103b5ba3b041766a093bb0bfc4159e76c16c61304376ca5a79",
+ "reviewedProtocolFile": "cnc-pricing-sandbox-unit.mjs",
+ "dryRunEvidence": "cnc-pricing-sandbox-dry-run-diffs.json + cnc-pricing-sandbox-staged-build-meta.json (2 previews applied=false; 2 bundles 0 warnings)",
+ "driftDecision": "cnc-pricing-baseline-v2-drift-decision.json (EOL-only drift on CNCEstimator.jsx accepted; laser foreign commits absorbed as guards — see file)",
+ "createdAt": "2026-11-07T21:04:29.574Z",
+ "authority": "standing autonomous grant (Brett) — remote transport for CNC pricing-availability hardening"
+}

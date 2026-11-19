@@ -1,0 +1,79 @@
+{
+  "unit": "foundation-o007-templates",
+  "item": "O-007 (CMP-A07) - full-project save/copy/template round-trip remainder: links/hyperlink, customer_pricing snapshot semantics, AI brief (beautify_data_url), accepted-design round-trip, O-014 gate page wiring",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remote_head_verified": "cbee8813d (git log -1 via sandbox run, clean porcelain status)",
+  "mode": "LOCAL candidates only - no remote write, no checkpoint, no deploy, no business-record or paid-AI calls. Baselines are fresh `sandbox read` pulls; local worktree src/ was confirmed DIFFERENT from remote on all five files and never read for content.",
+  "targets": [
+    {
+      "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+      "baseline": "baseline/foundationTemplateModel.js (fresh sandbox read, sha256 3c7e383d...)",
+      "candidate": "candidates/src/components/estimator/foundation/foundationTemplateModel.js (sha256 e64c886d...)",
+      "diff": "verify/diff-foundationTemplateModel.patch",
+      "changes": [
+        "FOUNDATION_TEMPLATE_FIELDS extended +17: hyperlink, beautify_data_url, customer_markup_percent, customer_price_override, customer_pricing, and the 12 user-authored rate inputs (concrete_cost_per_cy, rebar_cost_per_ft, forming_materials_cost_spread_foot/pillar, min_excavation_time_hours, hand_dig/equipment excavation cost+cy, forming/pouring/finishing/hand_dig/equipment labor rates) - matching the payload()/FOUNDATION_DRAFT_FIELDS field set so save-as-copy and templates carry the same design definition",
+        "new sanitizeTemplateCustomerPricing(v): null passes; non-record (incl. arrays/strings/numbers) throws -> malformed template content fails closed; records with applied !== true travel verbatim (no computed numbers); applied === true records reduce to {applied:true, tier_number} - the SELECTION travels, never the computed sell snapshot (total/lines/subtotals derived from source costs would display a stale price on a different design; the save path recomputes whenever applied === true)",
+        "sanitize runs in BOTH createFoundationTemplateSnapshot (lean stored payloads) and prepareFoundationTemplatePatch (fail-closed gate covering pre-change stored templates and externally-authored data)",
+        "extended field-semantics comment documents the deliberate carry/strip choices"
+      ]
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "baseline": "baseline/FoundationEstimator.jsx (fresh sandbox read, sha256 3cdd69e3...)",
+      "candidate": "candidates/src/pages/FoundationEstimator.jsx (sha256 8fc53be5...)",
+      "diff": "verify/diff-FoundationEstimator.patch (+10 lines, two hunks)",
+      "changes": [
+        "handleSaveAsCopy baseData +4 fields the save payload does not own but a same-job copy must keep: estimate_number (lineage, mirrors convertFoundationToBrickStone), hyperlink (document link - previously dropped), beautify_data_url (persisted AI/beautify brief - previously dropped), pricing_engine (externally-set engine context - previously dropped, silently downgrading an engine-priced copy to legacy pricing)",
+        "FoundationTemplateDialog mount gains saveDisabled={pricingBlocked || catalogReloading} + saveDisabledReason - completes the O-014 deferred page wiring so template save is gated exactly like Save/Save-as-Copy (catalogBlocked||inputBlocked, plus the in-flight catalog reload)"
+      ]
+    }
+  ],
+  "field_semantics_decisions": {
+    "hyperlink": "carried in template + copy: design-associated document link; template apply explicitly overwrites the target's link, identity fields stay protected",
+    "client_name/customer_id/estimate_number": "template: excluded forever (a template must never relink a project to another customer or quote). copy: carried (same job; estimate_number mirrors the convertToBrickStone lineage carry)",
+    "beautify_data_url": "carried verbatim in template + copy: persisted brief image depicting the design it travels with; replace-whole-design apply keeps image consistent with design",
+    "customer_markup_percent/customer_price_override": "verbatim in template + copy (user pricing settings, same as copy today)",
+    "customer_pricing": "template: applied-tier SELECTION only ({applied:true,tier_number}); computed snapshot stripped at store AND apply time (fail-closed). copy: verbatim via payload() - identical design makes the snapshot correct. Save path recomputes applied snapshots on every save.",
+    "rate inputs (12 fields)": "carried in template (match payload/draft-field set - authored design inputs; dropping them silently repriced applied designs)",
+    "pricing_engine": "copy: carried verbatim (same customer/job). template: excluded - external per-project engine context with customer-tier config must not transplant across projects",
+    "concrete_delivery_snapshot/totals/status/receipts/creation keys": "never carried - derived or record-scoped (unchanged exclusions)",
+    "accepted_design (item.reinforcement_design + reinforcement_calculation_version)": "no code change - item rows are deep-cloned with only component_ids remapped; design-internal ids (mats/ties) are item-scoped data preserved verbatim. Verified deep-equal round-trip.",
+    "clone remapping": "unchanged - cloneFoundationComponents already remaps all five arrays + nested wall segments/pole signs/parent refs (O-006 verified); no new component-id-bearing fields were introduced"
+  },
+  "protected_not_touched": [
+    "src/components/estimator/foundation/FoundationTemplateDialog.jsx (O-014 props already at HEAD - baseline sha 4fd2231d matches O-014 landed candidate)",
+    "src/components/estimator/foundation/foundationTemplateService.js (O-014 landed)",
+    "src/components/estimator/foundation/foundationAssemblyModel.js (clone covers all needed remaps; verified by round-trip cases)",
+    "src/components/estimator/foundation/foundationDraftRecovery.js, foundationAiReview.js, convertToBrickStone.js, base44/entities/*.jsonc (read-only reference pulls)",
+    "payload() save contract untouched - page-owned fields only; server-held fields persist via patch-update semantics and CAS"
+  ],
+  "verification": {
+    "unit_harness": "verify/test-o007-templates.mjs - esbuild-bundles CANDIDATE model (assembly dep -> fresh baseline) + BASELINE dialog with model dep redirected to CANDIDATE (real save path exercises new allowlist); react-test-renderer for dialog cases; 16/16 PASS (verify/test-output.txt)",
+    "cases": [
+      "snapshot captures all 31 allowlisted fields incl. hyperlink, beautify_data_url, pricing settings, all 12 rates",
+      "forbidden fields excluded: id/updated_date/created_date/status/creation_request_key/builder_sync_attempt/client_name/customer_id/estimate_number/pricing_engine/concrete_delivery_snapshot/all total_*/project_name",
+      "customer_pricing applied record -> {applied:true,tier_number} at snapshot AND patch (legacy verbatim stored templates also sanitized on apply)",
+      "non-applied customer_pricing and null verbatim; malformed (string/array/number) throws - fail closed",
+      "snapshot->patch->merge over a different-shape target: every covered field deep-equal source; client_name/customer_id/estimate_number of TARGET preserved",
+      "fresh component_ids on all five arrays + nested segments/signs; pole->item, cap->wall->segment, cabinet->pole refs all consistently remapped; indexes rebuilt",
+      "item reinforcement_design + reinforcement_calculation_version round-trip deep-equal; internal mat/tie ids preserved (never minted)",
+      "omitted template keys absent from patch -> target keeps own values",
+      "malformed content fails closed: non-record data, unsupported assembly_schema_version, non-array assembly",
+      "dialog save (baseline dialog + candidate model): stored project_data carries links/pricing-selection/rates/AI brief; forbidden absent",
+      "dialog saveDisabled gate: disabled button + amber reason note + zero service calls on forced click",
+      "dialog apply hands stored project_data to onApply verbatim (page does the remap)",
+      "page candidate: JSX parse clean, saveDisabled={pricingBlocked || catalogReloading} + reason wired at the single mount, copy baseData carries all 4 new fields"
+    ],
+    "browser_fixture": "verify/browser-fixture.mjs - real bundled baseline dialog + candidate model in headless Chrome (playwright-core, system chrome), stub entities, zero external requests; 6/6 PASS at 1280x800 and 390x844: save stores extended allowlist, page-wired gate renders note+disabled+no service call, full save->stored->apply->merge round-trip with remapped ids and preserved target identity (verify/browser-results.json, screenshots)",
+    "syntax": "npx esbuild clean on both candidates (jsx loader for page)"
+  },
+  "followups_noted": [
+    "scripts/test-foundation-template.mjs (repo-local, not remote) asserts the EXACT 14-field allowlist - on landing this candidate, extend its sorted-list assertion to the 31-field set or the contract check will false-fail",
+    "ai_engineering_data.source_key provenance: an applied template carries a review whose source_key references the SOURCE project's revision; display-only staleness, pre-existing since template05, consistent with save-as-copy verbatim carry",
+    "beautify_data_url is schema-persisted but currently has no src/ writer (vestigial SignEstimate Pro field); carrying it is additive-safe round-trip, not a new write path",
+    "quote lineage remains OPEN (O-012): estimate linkage lives on Estimate.line_items + builder_sync_attempt; copy correctly deletes the sync receipt and mints a fresh project; templates carry no linkage by design",
+    "accepted-design v2 semantics remain OPEN (O-011 Phase B): reinforcement_design v2 round-trips verbatim as per-item data; v2 rebar-mat part extraction is a separate workstream"
+  ],
+  "ledger_paragraph": "O-007 remainder subunit LOCAL-ONLY at remote HEAD cbee8813d (clean worktree; all five baselines fresh sandbox reads, local src/ confirmed divergent and untouched). Two surgical candidates: foundationTemplateModel allowlist +17 fields (hyperlink, beautify_data_url, pricing settings, 12 authored rate inputs) with a sanitizeTemplateCustomerPricing gate at BOTH snapshot and apply time - the applied-tier SELECTION round-trips ({applied,tier_number}) while the computed sell snapshot is stripped (verbatim carry would show a stale source price on a different design; save recomputes when applied===true); malformed customer_pricing and non-record/assemblies still fail closed. FoundationEstimator: save-as-copy baseData gains estimate_number/hyperlink/beautify_data_url/pricing_engine (same-job metadata payload() does not own - copy previously dropped them silently) and the O-014 dialog mount is finally wired saveDisabled={pricingBlocked||catalogReloading}+reason (completes O-014's deferred page gate). Deliberate exclusions documented: client_name/customer_id/estimate_number/pricing_engine never enter templates (customer/quote identity + engine context must not transplant), totals/delivery snapshot/receipts stay record-scoped. Accepted-design round-trip needs no code: item reinforcement_design+calculation_version are deep-cloned verbatim (internal mat/tie ids are item data, not component ids) - proven deep-equal with fresh component ids. Evidence: 16/16 esbuild+react-test-renderer cases, 6/6 real-DOM Chrome cases at 1280/390 with stub entities and zero external requests, diffs +10 page/+74 model lines, syntax clean. No remote write/checkpoint/deploy/business records/paid AI. Still OPEN: quote lineage (O-012), accepted-design v2 part model (O-011-B), ai_engineering source_key provenance staleness; scripts/test-foundation-template.mjs exact-allowlist assertion needs the 31-field set on landing."
+}

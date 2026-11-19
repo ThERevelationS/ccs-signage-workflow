@@ -1,0 +1,37 @@
+{
+  "ok": true,
+  "targets": [
+    "src/components/estimator/foundation/foundationAiReview.js",
+    "src/components/estimator/foundation/AiEngineeringAssistant.jsx"
+  ],
+  "sourceHead": "509de5f66dee6c34f0e044efce0338558243e53d",
+  "verifiedHead": "5e3c2dbcca3757a4cce16e9c42b3950fed2029bc",
+  "exactUiHash": "92bb6bae5d280a3a9c484abbcd243f8f6ec76b8b2753f3fd51d25e5986be6503",
+  "exactHelperHash": "3a8339fb498a91475bd7e4783fd10f657cd3ebdeea7545eefffae63e096c6657",
+  "protectedSourcesUnchanged": [
+    "base44/shared/estimatorAiModelPolicy.js",
+    "base44/entities/FoundationProject.jsonc",
+    "base44/entities/FoundationInventory.jsonc",
+    "base44/entities/WorkOrder.jsonc",
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/components/estimator/foundation/legacyFoundationCalc.js",
+    "src/pages/FoundationEstimator.jsx",
+    "src/components/estimator/workOrderConversion.js",
+    "base44/functions/staffEntityWrite/entry.ts",
+    "base44/functions/staffDataRead/entry.ts",
+    "src/components/estimator/builder/builderEntityPersistence.js",
+    "src/components/estimator/foundation/Foundation3DPreview.jsx"
+  ],
+  "clean": true,
+  "remoteConsumerDependencyBuild": true,
+  "offlineProofsFrozen": [
+    14,
+    15,
+    10
+  ],
+  "schemaChanged": false,
+  "reinforcementV2Activated": false,
+  "realAiCallVerified": false,
+  "realStorageVerified": false,
+  "realAuthenticationVerified": false
+}

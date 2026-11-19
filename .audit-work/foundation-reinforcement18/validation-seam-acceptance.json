@@ -1,0 +1,15 @@
+{
+  "verified": true,
+  "localOnly": true,
+  "integrated": false,
+  "remoteWrites": false,
+  "coreSourceSha256": "439dd9dd3873bf632af505884547b86372b04334d0911059abb9ba714ef63041",
+  "modelSourceSha256": "d8ef03fbb2083489174d841eee7c92b2c65c0578fb977eabf37bc37bf2cbc1a1",
+  "geometrySourceSha256": "6fc01d657c28f786d82f554148276c29ff358a4d5498408e598473e687fe7cf0",
+  "validatorSourceSha256": "97a491e6ebb1c7a3e431ade90e6723a039de0d955ab5127fbe049ad43b7b3629",
+  "basicCases": 83,
+  "legacyCases": 111,
+  "modelCases": 39,
+  "modelChange": "one-import-only",
+  "checkedAt": "2026-11-06T10:26:52.616Z"
+}

@@ -1,0 +1,178 @@
+{
+  "inputs": {
+    "synthetic:@/api/base44Client": {
+      "bytes": 88,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:@/components/estimator/moduleRegistry": {
+      "bytes": 183,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:./partSync": {
+      "bytes": 1008,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:../customerPricing": {
+      "bytes": 386,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:@/components/estimator/estimateMutationGuard": {
+      "bytes": 194,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:./builderMutationRecovery": {
+      "bytes": 225,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:@/components/estimator/loadAllEntityRows": {
+      "bytes": 193,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:@/components/estimator/estimatePersistence": {
+      "bytes": 260,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:./builderEntityPersistence": {
+      "bytes": 391,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:./builderProductPersistence": {
+      "bytes": 121,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:@/components/staff/staffEntities": {
+      "bytes": 166,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/builderService.js": {
+      "bytes": 57838,
+      "imports": [
+        {
+          "path": "synthetic:@/api/base44Client",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "synthetic:@/components/estimator/moduleRegistry",
+          "kind": "import-statement",
+          "original": "@/components/estimator/moduleRegistry"
+        },
+        {
+          "path": "synthetic:./partSync",
+          "kind": "import-statement",
+          "original": "./partSync"
+        },
+        {
+          "path": "synthetic:../customerPricing",
+          "kind": "import-statement",
+          "original": "../customerPricing"
+        },
+        {
+          "path": "synthetic:@/components/estimator/estimateMutationGuard",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimateMutationGuard"
+        },
+        {
+          "path": "synthetic:./builderMutationRecovery",
+          "kind": "import-statement",
+          "original": "./builderMutationRecovery"
+        },
+        {
+          "path": "synthetic:@/components/estimator/loadAllEntityRows",
+          "kind": "import-statement",
+          "original": "@/components/estimator/loadAllEntityRows"
+        },
+        {
+          "path": "synthetic:@/components/estimator/estimatePersistence",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimatePersistence"
+        },
+        {
+          "path": "synthetic:./builderEntityPersistence",
+          "kind": "import-statement",
+          "original": "./builderEntityPersistence"
+        },
+        {
+          "path": "synthetic:./builderProductPersistence",
+          "kind": "import-statement",
+          "original": "./builderProductPersistence"
+        },
+        {
+          "path": "synthetic:@/components/staff/staffEntities",
+          "kind": "import-statement",
+          "original": "@/components/staff/staffEntities"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    ".audit-work/foundation-reinforcement18/builder-identity-io-bundle.mjs": {
+      "imports": [],
+      "exports": [
+        "acceptBuilderPrice",
+        "canReuseReconciledLegacyBuilder",
+        "deleteBuilderProductCascade",
+        "ensureBuilderProductForLine",
+        "ensureEstimateBuilderProducts",
+        "getSourceProject",
+        "makeStableId",
+        "recordBuilderSave",
+        "snapshotHash",
+        "sourceProjectTotal",
+        "stableStringify"
+      ],
+      "entryPoint": "src/components/estimator/builder/builderService.js",
+      "inputs": {
+        "synthetic:@/api/base44Client": {
+          "bytesInOutput": 90
+        },
+        "synthetic:@/components/estimator/moduleRegistry": {
+          "bytesInOutput": 167
+        },
+        "synthetic:./partSync": {
+          "bytesInOutput": 993
+        },
+        "synthetic:../customerPricing": {
+          "bytesInOutput": 363
+        },
+        "synthetic:@/components/estimator/estimateMutationGuard": {
+          "bytesInOutput": 182
+        },
+        "synthetic:./builderMutationRecovery": {
+          "bytesInOutput": 216
+        },
+        "synthetic:@/components/estimator/loadAllEntityRows": {
+          "bytesInOutput": 178
+        },
+        "synthetic:@/components/estimator/estimatePersistence": {
+          "bytesInOutput": 251
+        },
+        "synthetic:./builderEntityPersistence": {
+          "bytesInOutput": 376
+        },
+        "synthetic:./builderProductPersistence": {
+          "bytesInOutput": 120
+        },
+        "synthetic:@/components/staff/staffEntities": {
+          "bytesInOutput": 183
+        },
+        "src/components/estimator/builder/builderService.js": {
+          "bytesInOutput": 51405
+        }
+      },
+      "bytes": 55339
+    }
+  }
+}

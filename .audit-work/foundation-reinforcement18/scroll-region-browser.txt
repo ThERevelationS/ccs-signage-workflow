@@ -1,0 +1,5 @@
+ok historical-unknown 1280
+ok historical-unknown 390
+ok new-accepted-costs 1280
+ok new-accepted-costs 390
+exit=0

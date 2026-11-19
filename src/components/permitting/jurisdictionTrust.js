@@ -69,32 +69,32 @@ export function assessJurisdictionTrust(jurisdiction, duplicateCount = 1) {
     blocked: {
       label: 'Duplicate — blocked',
       className: 'border-red-300 bg-red-50 text-red-700',
-      description: 'Resolve duplicate profiles before relying on or applying this record.',
+      description: 'Two records share this name — someone needs to fix them before this one is used.',
     },
     needs_review: {
       label: 'Needs verification',
       className: 'border-amber-300 bg-amber-50 text-amber-800',
-      description: 'Some repository data is incomplete, low quality, or explicitly awaiting staff review. Verify against official sources before use.',
+      description: 'Some info here is missing or unchecked — confirm it on the office\'s real website before using it.',
     },
     verified: {
       label: 'Verified by staff',
       className: 'border-green-300 bg-green-50 text-green-800',
-      description: 'A staff member marked this profile verified against official/current sources. Re-verify after meaningful jurisdiction changes.',
+      description: 'A teammate checked this against the office\'s real website. Check again if the office changed things.',
     },
     historical: {
       label: 'Historical reference',
       className: 'border-slate-300 bg-slate-100 text-slate-700',
-      description: 'Keep this information for prior-job reference, but verify current requirements before using it on a new permit.',
+      description: 'Old info — fine for looking back at past jobs, but check what\'s current before filing a new permit.',
     },
     manual_protected: {
       label: 'Manual data protected',
       className: 'border-blue-300 bg-blue-50 text-blue-700',
-      description: 'At least one field is protected from AI overwrite. Protection does not by itself mean the data is verified.',
+      description: 'Someone locked some fields so the AI can\'t change them — locked doesn\'t mean checked.',
     },
     ai_researched: {
       label: 'AI researched — verify',
       className: 'border-purple-300 bg-purple-50 text-purple-700',
-      description: 'Research appears structurally complete, but staff should verify important requirements against official sources.',
+      description: 'The AI filled this in — someone should still check it against the office\'s real website.',
     },
   }[key];
 

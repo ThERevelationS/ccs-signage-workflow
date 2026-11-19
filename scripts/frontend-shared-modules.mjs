@@ -10,11 +10,34 @@ const names = new Set([
   'salesTaskStatusAudit.mjs', 'salesTaskStageCatalog.mjs',
   'smartsheetSalesSafety.mjs', 'smartsheetSalesAssigneeTranslation.mjs',
   'smartsheetSalesImportEligibility.mjs', 'historicalSalesOutcomeReconciliation.mjs',
+  'dueDateEngine.ts', 'customerLifecycleRules.ts',
+  'productStatusModel.ts', 'fulfillmentModel.ts',
+  'salesOpportunityHistory.mjs', 'salesSaveAcknowledgmentGuard.mjs',
+  'pricingEngine.ts', 'modifierPricing.ts', 'pricingVariables.ts', 'formulaEval.ts',
+  'templateRender.ts', 'followUpMachine.ts', 'delivery.ts', 'setupFeeCompose.ts',
+  'proofTransitionModel.ts', 'proofChangeRequestModel.ts', 'proofShareLinkModel.ts',
+  'proofDueRecalcModel.ts', 'glSplitModel.ts', 'taxLiabilityModel.ts',
+  'arAgingReports.ts', 'customerReports.ts', 'paymentRegisterModel.ts',
+  'accountingExportModel.ts', 'customerTierModel.ts', 'catalogImportModel.ts',
+  'customerImportModel.ts', 'vendorNotifyModel.ts', 'readyTriggerModel.ts',
+  'alertSubscriptionsModel.ts', 'salesReports.ts', 'productionReports.ts',
+  'estimateReports.ts', 'financialReports.ts', 'customerAnalyticsModel.ts',
+  'customerWarningModel.ts', 'deliveryTelemetryModel.ts', 'digestBatchModel.ts',
+  'glAccountAdminModel.ts', 'portalPaymentModel.ts', 'accountingAlertsModel.ts',
+  'savedReportRunsModel.ts', 'reportDrilldownModel.ts', 'salesFunnelModel.ts',
+  'crmSuggestionModel.ts', 'auditLogModel.ts', 'dataExportModel.ts',
+  'vendorCostModel.ts', 'reportCatalogModel.ts', 'contactRolesModel.ts',
+  'integrationsStatusModel.ts', 'marginModel.ts',
+  'channelPricingWire.ts', 'vinylPricingWire.ts', 'pricingTemplateModel.ts',
+  'cncPricingWire.ts', 'brickPricingWire.ts',
+  'laserPricingWire.ts', 'metalPricingWire.ts',
+  'paintPricingWire.ts', 'foundationPricingWire.ts',
+  'maintenancePricingWire.ts', 'customItemsPricingWire.ts',
 ]);
 const prefix = '\0ccs-frontend-shared:';
 export function frontendSharedModules(root = process.cwd()) {
   const shared = path.resolve(root, 'base44/shared');
-  const allowed = (file) => path.dirname(file) === shared && names.has(path.basename(file));
+  const allowed = (file) => path.dirname(path.resolve(file)) === shared && names.has(path.basename(file));
   return {
     name: 'ccs-frontend-shared-modules', enforce: 'pre',
     resolveId(source, importer) {

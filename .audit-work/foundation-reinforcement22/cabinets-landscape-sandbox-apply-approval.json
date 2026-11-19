@@ -1,0 +1,18 @@
+{
+  "authorized": true,
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "58755f09c4b5aee1a22235245d50d5047d663fcb",
+  "restoreCheckpointId": "6aeef96803acd8412c3035b4",
+  "candidateHashes": {
+    "landscapeMaterials.js": "ba13081706de2a5e2e1f6429c1e8a058ecb11f72535ed2fefd40b31927ab906a",
+    "foundationInputValidation.js": "593ee4bcb6475331aca1468f618e0ac5b4cf183b35958ebcff58d1897db026df",
+    "foundationCalc.js": "88f9e4a77a5461d2036e35aabfbae4c73918e98042a7799500baa17e1abfc185",
+    "SignageCabinetsPanel.jsx": "7cc8d401338d284fd0e24483eebf79cd75c31930aed6d91d476d60cb21d73ff5",
+    "LandscapeDesigner.jsx": "4956450d189584ffdfcaf190aeef79c03953e8678840657c4a346c7915f0fd23",
+    "foundationAssemblyModel.js": "8e197f9559b4bfbc4861040ee323ea526fb0fcfd84341ca9c7ece78efd57ac79",
+    "FoundationEstimator.jsx": "680c4a45e3db7af339dd5e3a775c7322e4dbf8277aea5d97b3c8c1a74f1375d6"
+  },
+  "reviewedProtocolHash": "9020a69209e108e6006e481b25e68177f30ad1582f2893cfb2ca3307584f07ef",
+  "createdAt": "2026-11-07T10:11:56.867Z"
+}

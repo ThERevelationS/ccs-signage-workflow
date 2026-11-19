@@ -1,0 +1,7 @@
+{
+  "stdout": "106 equipmentPersistence.js\n133 foundationFieldSchema.js\n111 inventoryImportPersistence.js\n357 inventoryNormalization.js\n168 inventoryPersistence.js\n560 ExcelImporterDialog.jsx\n173 FoundationMaterialDialog.jsx\n356 InventoryFormModal.jsx\n279 InventoryTable.jsx\n27 MasterConcreteStoneTab.jsx\n1140 MasterEquipmentTab.jsx\n439 MasterExtrudedMetalsPolesTab.jsx\n543 MasterSuppliesTab.jsx\n563 importMappers.jsx\n305 inventorySources.jsx\n242 laborServiceCategorySchema.jsx\n328 legacyInventoryMigrator.jsx\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 854
+}

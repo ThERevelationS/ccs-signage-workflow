@@ -1,0 +1,54 @@
+{
+ "jurisdiction_id": "6acdacdb709b69ce84b8beb5",
+ "jurisdiction_name": "University Heights",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 3,
+   "snippet": "Page 3 of 3 COMMERCIAL MISC. FEES & PERMITS BASE FEE SQUARE FOOT FEE GRADING 125.00 ________ PARKING LOTS, PER 5000 SQ. FT. OR PORTION THEREOF 125.00 X ________ = ________ DRIVEWAY/APRON 100.00 X ________ = ________ SIDEWALKS/PATIOS 50.00 X ________ = ________ SWIMMING POOL 350.00 X ________ = ________ HOT TUB 150.00 X ________ = ________ WATER FEATURE 100.00 X ________ = ________ FENCE 100.00 ________ ELEVATORS 250.00 ________ ….EACH FLOOR SERVED 30.00 X ________ = ________ FIRE ALARM SYSTEM 150.00 ________ ….EACH DEVICE 2.00 X ________ = ________ FIRE SUPPRESSION 150.00 ________ ….EACH HEAD 2.00 X ________ = ________ HOOD & HOOD SUPPRESSION 175.00 ________ EACH FIREPLACE 75.00 X ________ = ________ SIGN <24 SQ. FT. 75.00 ________ SIGN BETWEEN 24 & 48 SQ. FT. 100.00 ________ SIGNS >48 SQ. FT. 150.00 ________ FIRE INSPECTION 150.00 ________ SPECIAL EVENTS 150.00 ________ RE-INSPECTION FE",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "08a93f64baf5aa4b18214350a69127dde72d4248a60e89e0053575115236b312",
+   "source_document_id": null,
+   "source_title": "08a93f64baf5aa4b18214350a69127dde72d4248a60e89e0053575115236b312.pdf",
+   "official_url": "https://universityheightsoh.gov/wp-content/uploads/2024/07/University-Heights-Commercial-Fee-Schedule.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Page 1 of 3 UNIVERSITY HEIGHTS COMMERCIAL PERMIT FEE SCHEDULE (Per Chapter 1424 of University Heights Codified Ordinances) ADDRESS OF PROJECT: ____________________________ COMMERCIAL BUILDING PERMITS BASE FEE VALUATION FEE NEW CONSTRUCTION 450.00 ________ ________ X .02 = ________ ADDITIONS 250.00 ________ ________ X .02 = ________ ALTERATIONS 175.00 ________ ________ X .02 = ________ DEMOLITION BUILDING 250.00 ________ INTERIOR DEMOLITION 100.00 ________ OCCUPANCY & USE 150.00 ________ EACH EXTERIOR STORM WATER BASIN 50.00 X ________ = ________ SUB-TOTAL ________ 3% BBS FEE ________ TOTAL ________ COMMERCIAL ELECTRICAL PERMITS BASE FEE SQUARE FOOT FEE NEW CONSTRUCTION 250.00 ________ ________ X .10 = ________ ADDITIONS 175.00 ________ ________ X .10 = ________ ALTERATIONS 125.00 ________ ________ X .10 = ________ EACH TRANSFORMERS, HEATERS 50.00 X ________ = ________ COMMUNICATION SYSTE",
+   "tags": [
+    "area",
+    "dimension",
+    "temporary"
+   ],
+   "weight": 6,
+   "source_sha256": "08a93f64baf5aa4b18214350a69127dde72d4248a60e89e0053575115236b312",
+   "source_document_id": null,
+   "source_title": "08a93f64baf5aa4b18214350a69127dde72d4248a60e89e0053575115236b312.pdf",
+   "official_url": "https://universityheightsoh.gov/wp-content/uploads/2024/07/University-Heights-Commercial-Fee-Schedule.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Page 2 of 3 COMMERCIAL HVAC PERMITS BASE FEE SQUARE FOOT FEE NEW CONSTRUCTION 250.00 ________ ________ X .10 = ________ ADDITIONS 175.00 ________ ________ X .10 = ________ ALTERATIONS 125.00 ________ ________ X .10 = ________ EACH HEATING UNIT OR AC UNIT 125.00 X ________ = ________ EACH CONVERSION OR REPLACEMENT 125.00 X ________ = ________ SOLAR OR GEOTHERMAL 250.00 ________ SUB-TOTAL ________ 3% BBS FEE ________ TOTAL ________ COMMERCIAL DEPOSITS AND FEES DEMOLITION OF COMMERCIAL BUILDING DEPOSIT 1000.00 ________ ENGINEERING DEPOSIT (NEW STRUCTURE) 2000.00 ________ SITE WORK ONLY 1000.00 ________ PARK FEE 500.00 ________ RIGHT OF WAY 2000.00 ________ OTHER OPENINGS (ADJACENT TO STREET/SIDEWALK) 500.00 ________ SIDEWALK EXCAVATION 225.00 ________ SEWER SERVICE LINE DEPOSIT 500.00 ________ TOTAL ________ COMMERCIAL PLAN REVIEW FEES BASE FEE SQUARE FOOT FEE STRUCTURAL 200.00 ________ ___",
+   "tags": [
+    "area",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "08a93f64baf5aa4b18214350a69127dde72d4248a60e89e0053575115236b312",
+   "source_document_id": null,
+   "source_title": "08a93f64baf5aa4b18214350a69127dde72d4248a60e89e0053575115236b312.pdf",
+   "official_url": "https://universityheightsoh.gov/wp-content/uploads/2024/07/University-Heights-Commercial-Fee-Schedule.pdf"
+  }
+ ]
+}

@@ -1,0 +1,3700 @@
+{
+ "plan": [
+  {
+   "id": "6ab444714ded712afc3fea95",
+   "updated_date": "2026-11-17T10:42:33.290000",
+   "client_name": "Moss & Ivey",
+   "est_inv_at": "11227",
+   "estimate_id": "6afc2d7718f940f7d3b0903f",
+   "estimate_number": "INV-11227",
+   "customer_id": "6afbe6ca4e1274083d567599",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3fea7e",
+   "updated_date": "2026-11-17T10:42:34.742000",
+   "client_name": "Tindall Capitol",
+   "est_inv_at": "11864",
+   "estimate_id": "6afc1a4bf0b3c1d13178e8f0",
+   "estimate_number": "INV-11864",
+   "customer_id": "6a958582ba45a19e9344000c",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3fea99",
+   "updated_date": "2026-11-17T10:42:35.313000",
+   "client_name": "IMC Management",
+   "est_inv_at": "12195",
+   "estimate_id": "6afc1ce014bf1c8379165fba",
+   "estimate_number": "INV-12195",
+   "customer_id": "6a958582ba45a19e93440130",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3fea6f",
+   "updated_date": "2026-11-17T10:42:37.842000",
+   "client_name": "Veelo",
+   "est_inv_at": "11816",
+   "estimate_id": "6afc19fb8018ed537a5b4f6d",
+   "estimate_number": "INV-11816",
+   "customer_id": "6afbeae7833195ca78a8dcf2",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3fea86",
+   "updated_date": "2026-11-17T10:42:42.719000",
+   "client_name": "Quinn Chapel AME Church",
+   "est_inv_at": "11860",
+   "estimate_id": "6afc1a4bbc6a5072fbb57606",
+   "estimate_number": "INV-11860",
+   "customer_id": "6a958582ba45a19e9344014c",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3fea9c",
+   "updated_date": "2026-11-17T10:42:43.499000",
+   "client_name": "BASIS",
+   "est_inv_at": "12233",
+   "estimate_id": "6afc1d262ea230a1653d2127",
+   "estimate_number": "INV-12233",
+   "customer_id": "6afbea69d9c7046b595526c1",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3fea8d",
+   "updated_date": "2026-11-17T10:42:45.314000",
+   "client_name": "Church of Hebron",
+   "est_inv_at": "11803",
+   "estimate_id": "6afc19c9e139488fa47994f4",
+   "estimate_number": "INV-11803",
+   "customer_id": "6afbe40eb6f4d4a8d45ac206",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3fea8e",
+   "updated_date": "2026-11-17T10:42:45.897000",
+   "client_name": "Cincy Book Bus / Moon Coffee Collective",
+   "est_inv_at": "12039",
+   "estimate_id": "6afc1babca5fe3b45707b7ba",
+   "estimate_number": "INV-12039",
+   "customer_id": "6afbeb1fd43e520bf1aee429",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3fea84",
+   "updated_date": "2026-11-17T10:43:40.967000",
+   "client_name": "Skidmore",
+   "est_inv_at": "11636",
+   "estimate_id": "6afc187e3280d62b82ba23d6",
+   "estimate_number": "INV-11636",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3fea6e",
+   "updated_date": "2026-11-17T10:43:47.794000",
+   "client_name": "Mr",
+   "est_inv_at": "11503",
+   "estimate_id": "6afc2e91dbade9f0b0c94032",
+   "estimate_number": "INV-11503",
+   "customer_id": "6afbe456fdd4e804b4f9ddcb",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3fea9f",
+   "updated_date": "2026-11-17T10:46:39.450000",
+   "client_name": "F45 - Interior Vinyl Install",
+   "est_inv_at": "12145",
+   "estimate_id": "6afc1c72d1e6a50f34f4decc",
+   "estimate_number": "INV-12145",
+   "customer_id": "6afbe4065bcc830154070c2b",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3feabe",
+   "updated_date": "2026-11-17T10:46:44.125000",
+   "client_name": "Lyons & Lyons",
+   "est_inv_at": "12428",
+   "estimate_id": "6afc1e6bdcd0f3e3d624ecca",
+   "estimate_number": "INV-12428",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3fea9e",
+   "updated_date": "2026-11-17T10:46:57.736000",
+   "client_name": "Dale Travis / UBS Financial 2nd Fl",
+   "est_inv_at": "12004",
+   "estimate_id": "6afc1b77fe02e135d308dbff",
+   "estimate_number": "INV-12004",
+   "customer_id": "6afbeac1bb20e485bc93a3a7",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3feab1",
+   "updated_date": "2026-11-17T10:47:47.590000",
+   "client_name": "Skidmore",
+   "est_inv_at": "11852",
+   "estimate_id": "6afc1ea4f24ee123c9c53ae4",
+   "estimate_number": "INV-11852",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3feaaf",
+   "updated_date": "2026-11-17T10:48:00.084000",
+   "client_name": "Acuity",
+   "est_inv_at": "12008",
+   "estimate_id": "6afc1b78b3fd564f99eafa38",
+   "estimate_number": "INV-12008",
+   "customer_id": "6a958582ba45a19e93440152",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444714ded712afc3feac9",
+   "updated_date": "2026-11-17T10:48:00.840000",
+   "client_name": "Cincinnati Metro/SORTA",
+   "est_inv_at": "12462",
+   "estimate_id": "6afc1ea4defa33e787123775",
+   "estimate_number": "INV-12462",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447458e875a0619da311",
+   "updated_date": "2026-11-17T10:48:54.420000",
+   "client_name": "Temp Flex Industrial Solutions, LLC",
+   "est_inv_at": "12006",
+   "estimate_id": "6afc1b77d847c09b68fcd94e",
+   "estimate_number": "INV-12006",
+   "customer_id": "6afbeb08334e6d2cca62cb7d",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447458e875a0619da320",
+   "updated_date": "2026-11-17T10:49:53.668000",
+   "client_name": "Dale Travis/UBS - Cube",
+   "est_inv_at": "12341",
+   "estimate_id": "6afc1ddd8bbf895c95e115ac",
+   "estimate_number": "INV-12341",
+   "customer_id": "6afbeac1bb20e485bc93a3a7",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447458e875a0619da31b",
+   "updated_date": "2026-11-17T10:49:55.741000",
+   "client_name": "Spirituality Transfiguration Center",
+   "est_inv_at": "12303",
+   "estimate_id": "6afc1edca6d60f3bffc9a786",
+   "estimate_number": "INV-12303",
+   "customer_id": "6afbe7f9dc89d51336224ee1",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447458e875a0619da322",
+   "updated_date": "2026-11-17T10:49:56.348000",
+   "client_name": "Persona - Service Call - Swarovski",
+   "est_inv_at": "14578",
+   "estimate_id": "6afc2c43db39d2b93f7c54f5",
+   "estimate_number": "INV-14578",
+   "customer_id": "6afbe7de9a9ccbe6a2c89b54",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447458e875a0619da315",
+   "updated_date": "2026-11-17T10:50:49.834000",
+   "client_name": "March First / Cincinnati Distilling",
+   "est_inv_at": "12431",
+   "estimate_id": "6afc1e6b1246a8fbe62bfc24",
+   "estimate_number": "INV-12431",
+   "customer_id": "6afbeb5d4d69c56f876a4e9e",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447458e875a0619da338",
+   "updated_date": "2026-11-17T10:51:01.186000",
+   "client_name": "Drunken Academy",
+   "est_inv_at": "12404",
+   "estimate_id": "6afc1e5771f8e1a2e62b069b",
+   "estimate_number": "INV-12404",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447458e875a0619da35e",
+   "updated_date": "2026-11-17T10:51:56.815000",
+   "client_name": "Drunken Academy",
+   "est_inv_at": "12786",
+   "estimate_id": "6afc2032940d21b72e3698a9",
+   "estimate_number": "INV-12786",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447458e875a0619da359",
+   "updated_date": "2026-11-17T10:52:01.683000",
+   "client_name": "RPS America Riello UPS",
+   "est_inv_at": "12759",
+   "estimate_id": "6afc202168d4adc1ae2c4945",
+   "estimate_number": "INV-12759",
+   "customer_id": "6a958582ba45a19e9344023b",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447458e875a0619da352",
+   "updated_date": "2026-11-17T10:53:01.716000",
+   "client_name": "Diamond Printing/ Waverly",
+   "est_inv_at": "12740",
+   "estimate_id": "6afc1fffdc797a20956020ec",
+   "estimate_number": "INV-12740",
+   "customer_id": "6afbe450e8beebc44faca5ed",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44478db3d0ca80c708016",
+   "updated_date": "2026-11-17T10:55:56.897000",
+   "client_name": "Cincinnati Metro/SORTA",
+   "est_inv_at": "12896",
+   "estimate_id": "6afc20bd85d8bf3b999bc62f",
+   "estimate_number": "INV-12896",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44478db3d0ca80c708039",
+   "updated_date": "2026-11-17T10:57:57.598000",
+   "client_name": "AFSCME Care Plan",
+   "est_inv_at": "12904",
+   "estimate_id": "6afc20bf69f7e18f33a7e934",
+   "estimate_number": "INV-12904",
+   "customer_id": "6a958582ba45a19e9343ffe2",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44478db3d0ca80c708035",
+   "updated_date": "2026-11-17T10:57:59.432000",
+   "client_name": "Sharonville Police Department",
+   "est_inv_at": "12988",
+   "estimate_id": "6afc216d6a0de94b64c0f8aa",
+   "estimate_number": "INV-12988",
+   "customer_id": "6afbeaa2c50294c2d3eeaace",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44478db3d0ca80c708042",
+   "updated_date": "2026-11-17T10:58:02.767000",
+   "client_name": "Church of Hebron",
+   "est_inv_at": "12732",
+   "estimate_id": "6afc1ffdaf53419705c55b82",
+   "estimate_number": "INV-12732",
+   "customer_id": "6afbe40eb6f4d4a8d45ac206",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44478db3d0ca80c708053",
+   "updated_date": "2026-11-17T10:59:04.465000",
+   "client_name": "Building Craft",
+   "est_inv_at": "13082",
+   "estimate_id": "6afc21fc05b6bd6d3a1ce854",
+   "estimate_number": "INV-13082",
+   "customer_id": "6afbeb9b63297d712e79a2fa",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44478db3d0ca80c708058",
+   "updated_date": "2026-11-17T11:00:01.055000",
+   "client_name": "St. Michael's Church - 9mm EMC",
+   "est_inv_at": "12607",
+   "estimate_id": "6afc1f99c58e567b3a3aefd6",
+   "estimate_number": "INV-12607",
+   "customer_id": "6afbeb6364c3c5a085baa23b",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44478db3d0ca80c708059",
+   "updated_date": "2026-11-17T11:00:03.047000",
+   "client_name": "St. Michael's Church - Topper to Monument",
+   "est_inv_at": "12989",
+   "estimate_id": "6afc216dec92bba02b273115",
+   "estimate_number": "INV-12989",
+   "customer_id": "6afbeb6364c3c5a085baa23b",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44478db3d0ca80c708054",
+   "updated_date": "2026-11-17T11:00:06.420000",
+   "client_name": "Building Craft",
+   "est_inv_at": "13088",
+   "estimate_id": "6afc2233a67c7a1d9e624141",
+   "estimate_number": "INV-13088",
+   "customer_id": "6afbeb9b63297d712e79a2fa",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447bdcd4c410424f43dd",
+   "updated_date": "2026-11-17T11:01:05.382000",
+   "client_name": "NeyerManagement - AWilloughby@",
+   "est_inv_at": "13207",
+   "estimate_id": "6afc22bff36009e1a9497fb8",
+   "estimate_number": "INV-13207",
+   "customer_id": "6a958582ba45a19e9343feef",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447bdcd4c410424f43e5",
+   "updated_date": "2026-11-17T11:01:07.657000",
+   "client_name": "Cincinnati Metro / SORTA",
+   "est_inv_at": "13182",
+   "estimate_id": "6afc25179aba02f8d26b4b48",
+   "estimate_number": "INV-13182",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447bdcd4c410424f43fc",
+   "updated_date": "2026-11-17T11:02:05.249000",
+   "client_name": "CBRE/Corporate Woods",
+   "est_inv_at": "13321",
+   "estimate_id": "6afc2472a84ae1ed56dbd1b4",
+   "estimate_number": "INV-13321",
+   "customer_id": "6afbe7e00c5d36db0e4b5ec1",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447bdcd4c410424f43f8",
+   "updated_date": "2026-11-17T11:02:07.242000",
+   "client_name": "AFSCME Care Plan",
+   "est_inv_at": "13244",
+   "estimate_id": "6afc2312a7bb5b7d6cc20e53",
+   "estimate_number": "INV-13244",
+   "customer_id": "6a958582ba45a19e9343ffe2",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447bdcd4c410424f440a",
+   "updated_date": "2026-11-17T11:03:11.004000",
+   "client_name": "Skidmore (47 Magnet Names)",
+   "est_inv_at": "13380",
+   "estimate_id": "6afc23f816bb899b56eb4db0",
+   "estimate_number": "INV-13380",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447bdcd4c410424f4410",
+   "updated_date": "2026-11-17T11:04:06.864000",
+   "client_name": "Skidmore (96 x 48 Tenure Wall)",
+   "est_inv_at": "13381",
+   "estimate_id": "6afc242ebdb9eb0116d5da45",
+   "estimate_number": "INV-13381",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447bdcd4c410424f440f",
+   "updated_date": "2026-11-17T11:04:07.508000",
+   "client_name": "CRG Retail - Channel Letters/ Build and Ship",
+   "est_inv_at": "13337",
+   "estimate_id": "6afc23c426584425838926bc",
+   "estimate_number": "INV-13337",
+   "customer_id": "6a958582ba45a19e934400a8",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4447bdcd4c410424f4436",
+   "updated_date": "2026-11-17T11:07:08.689000",
+   "client_name": "M Work Auto Body Site - Signs",
+   "est_inv_at": "13427",
+   "estimate_id": "6afc2456893adce9b1de62cb",
+   "estimate_number": "INV-13427",
+   "customer_id": "6afbebc0e614961aefe3fc13",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601b5",
+   "updated_date": "2026-11-17T11:07:16.941000",
+   "client_name": "GPAA/FHS (Cabinet and Pylon Faces)",
+   "est_inv_at": "13616",
+   "estimate_id": "6afc2573563fa2fe10d867a4",
+   "estimate_number": "INV-13616",
+   "customer_id": "6afbebf78e039415e52c82de",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601a5",
+   "updated_date": "2026-11-17T11:07:17.678000",
+   "client_name": "Weiss Technik",
+   "est_inv_at": "13549",
+   "estimate_id": "6afc2502b62e54576d56f3de",
+   "estimate_number": "INV-13549",
+   "customer_id": "6afbe7a3b81dacbe1a943d72",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601a1",
+   "updated_date": "2026-11-17T11:08:06.625000",
+   "client_name": "Modern Office Method (Aluminum Box, Acrylic Letters, Clear Backer)",
+   "est_inv_at": "13561",
+   "estimate_id": "6afc25179e52904664db858c",
+   "estimate_number": "INV-13561",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601a4",
+   "updated_date": "2026-11-17T11:08:18.228000",
+   "client_name": "Monarch Investment and Management - Group Highlands of West Chester ( 4 Signs Only )",
+   "est_inv_at": "13326",
+   "estimate_id": "6afc23a0b02fcdf8338afb5d",
+   "estimate_number": "INV-13326",
+   "customer_id": "6afbebbc5d04aab129adaae3",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601a0",
+   "updated_date": "2026-11-17T11:09:08.903000",
+   "client_name": "Best Sanitizers (3 Registered Marks)",
+   "est_inv_at": "13502",
+   "estimate_id": "6afc24ba2f0844b1eef80aa6",
+   "estimate_number": "INV-13502",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601f2",
+   "updated_date": "2026-11-17T11:09:13.265000",
+   "client_name": "Skidmore (10 blank Name Plaques w/ 3/8\" Holes)",
+   "est_inv_at": "13997",
+   "estimate_id": "6afc27d647e50bcbd145cc9e",
+   "estimate_number": "INV-13997",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601eb",
+   "updated_date": "2026-11-17T11:09:16.127000",
+   "client_name": "West Chester Family Dentistry Door Vinyl",
+   "est_inv_at": "13904",
+   "estimate_id": "6afc275709c3cbed0016bca7",
+   "estimate_number": "INV-13904",
+   "customer_id": "6a958582ba45a19e934400aa",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601f3",
+   "updated_date": "2026-11-17T11:10:07.758000",
+   "client_name": "Thrive Medical Spa (Exterior Wood Wall Sign) - Cancelled",
+   "est_inv_at": "13671",
+   "estimate_id": "6afc25c9bfac9885182fe311",
+   "estimate_number": "INV-13671",
+   "customer_id": "6afbebfc0e5c11c34f6ebd70",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601e4",
+   "updated_date": "2026-11-17T11:10:08.373000",
+   "client_name": "Bricks and Mini Figures",
+   "est_inv_at": "13627",
+   "estimate_id": "6afc2574557654063882a66c",
+   "estimate_number": "INV-13627",
+   "customer_id": "6afbebdfbf322028a58a3d22",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601f6",
+   "updated_date": "2026-11-17T11:10:15.424000",
+   "client_name": "Gator Investments - Northland V-Shape Signs",
+   "est_inv_at": "14655",
+   "estimate_id": "6afc2c4581198e5728e0a752",
+   "estimate_number": "INV-14655",
+   "customer_id": "6afbe9144fb2234769e6e5a7",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601cc",
+   "updated_date": "2026-11-17T11:10:16.005000",
+   "client_name": "GPAA/FHS (Cabinet and Pylon Faces) - Firehouse Subs",
+   "est_inv_at": "13694",
+   "estimate_id": "6afc25ed909c85c78b2ca9fd",
+   "estimate_number": "INV-13694",
+   "customer_id": "6afbebf78e039415e52c82de",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601bf",
+   "updated_date": "2026-11-17T11:10:16.896000",
+   "client_name": "Allervie",
+   "est_inv_at": "13435",
+   "estimate_id": "6afc246fd82e43e4a8ce8d8f",
+   "estimate_number": "INV-13435",
+   "customer_id": "6afbebd810abb40ada2b2bc6",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601c7",
+   "updated_date": "2026-11-17T11:10:19.535000",
+   "client_name": "Miami Univ. Advanced Manufacturing / Lobby Sign Option 1 Dim Letters",
+   "est_inv_at": "13747",
+   "estimate_id": "6afc264e9dc662a2d0b1b339",
+   "estimate_number": "INV-13747",
+   "customer_id": "6afbe9710dd4dbd5342171ea",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601f1",
+   "updated_date": "2026-11-17T11:10:20.502000",
+   "client_name": "3CDC Projecting and Hanging Sign",
+   "est_inv_at": "13962",
+   "estimate_id": "6afc27a55d1beb4cc977c533",
+   "estimate_number": "EST-13962",
+   "customer_id": "6afbebdd130a1b33ff3b67d0",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601f4",
+   "updated_date": "2026-11-17T11:11:19.022000",
+   "client_name": "Thrive Medical Spa (Exterior Wood Wall Sign) - Cancelled",
+   "est_inv_at": "13818",
+   "estimate_id": "6afc26c22164daf9d62a1338",
+   "estimate_number": "INV-13818",
+   "customer_id": "6afbebfc0e5c11c34f6ebd70",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601cb",
+   "updated_date": "2026-11-17T11:12:15.415000",
+   "client_name": "Origin (Channel Letters)",
+   "est_inv_at": "13633",
+   "estimate_id": "6afc259d28ed0e210aef92ed",
+   "estimate_number": "INV-13633",
+   "customer_id": "6afbebda92fe960bd566ac89",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444807c6b3cfaffd601c6",
+   "updated_date": "2026-11-17T11:12:20.838000",
+   "client_name": "CRG Retail - Senor's Chile | Annapolis, Maryland",
+   "est_inv_at": "13445",
+   "estimate_id": "6afc2471e0eccfc392bda9cc",
+   "estimate_number": "INV-13445",
+   "customer_id": "6a958582ba45a19e934400a8",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d068e5",
+   "updated_date": "2026-11-17T11:12:23.944000",
+   "client_name": "PRPI / Chimney Hill Apartments",
+   "est_inv_at": "13864",
+   "estimate_id": "6afc270f13875f6f497df809",
+   "estimate_number": "INV-13864",
+   "customer_id": "6afbebda6a0f63bdb4c5cef0",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d068e3",
+   "updated_date": "2026-11-17T11:13:18.666000",
+   "client_name": "Cabling Specialist Inc ( vehicle graphics)",
+   "est_inv_at": "13900",
+   "estimate_id": "6afc274563ea079ac46428de",
+   "estimate_number": "INV-13900",
+   "customer_id": "6afbec392141103a00e99298",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d068fd",
+   "updated_date": "2026-11-17T11:13:24.696000",
+   "client_name": "Air Handling Equipment Monument and wall sign",
+   "est_inv_at": "13872",
+   "estimate_id": "6afc2984afb4ac4bdbf0ef5b",
+   "estimate_number": "INV-13872",
+   "customer_id": "6afbeae1ab1e1a3b3614bcb5",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d06903",
+   "updated_date": "2026-11-17T11:14:16.100000",
+   "client_name": "Tristate Childrens Surgery Center - Refurb and Face Change",
+   "est_inv_at": "14130",
+   "estimate_id": "6afc289cd00b7411901e04ff",
+   "estimate_number": "INV-14130",
+   "customer_id": "6afbec74f3ab5df3f82bbe72",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d068fb",
+   "updated_date": "2026-11-17T11:14:17.378000",
+   "client_name": "Gator Investments",
+   "est_inv_at": "14154",
+   "estimate_id": "6afc28cd74b71820965c0d65",
+   "estimate_number": "INV-14154",
+   "customer_id": "6afbe9144fb2234769e6e5a7",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d06912",
+   "updated_date": "2026-11-17T11:14:18.641000",
+   "client_name": "PRPI / Chimney Hill Apartments",
+   "est_inv_at": "13861",
+   "estimate_id": "6afc2a9f11917f7905ed6cd0",
+   "estimate_number": "INV-13861",
+   "customer_id": "6afbebda6a0f63bdb4c5cef0",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d06919",
+   "updated_date": "2026-11-17T11:14:20.700000",
+   "client_name": "Best Point / Main Campus Wall Sign",
+   "est_inv_at": "14169",
+   "estimate_id": "6afc28d3f7bae2d17aa15a90",
+   "estimate_number": "INV-14169",
+   "customer_id": "6a958582ba45a19e93440082",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d068ec",
+   "updated_date": "2026-11-17T11:14:21.329000",
+   "client_name": "Gator Investments",
+   "est_inv_at": "14075",
+   "estimate_id": "6afc2a5680cd65cee09c0ff2",
+   "estimate_number": "INV-14075",
+   "customer_id": "6afbe9144fb2234769e6e5a7",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d0690f",
+   "updated_date": "2026-11-17T11:14:23.861000",
+   "client_name": "Braxton Cann Health Center - Vinyl letters",
+   "est_inv_at": "14279",
+   "estimate_id": "6afc29b68ac77ce26cd667b0",
+   "estimate_number": "INV-14279",
+   "customer_id": "6afbec9eea55f0ef8a11e295",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d0691c",
+   "updated_date": "2026-11-17T11:15:18.272000",
+   "client_name": "Midwest Construction Builds",
+   "est_inv_at": "14137",
+   "estimate_id": "6afc2aa0432cf660e67b0a7e",
+   "estimate_number": "INV-14137",
+   "customer_id": "6a958582ba45a19e9343feca",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d0691b",
+   "updated_date": "2026-11-17T11:15:18.882000",
+   "client_name": "Best Point / Westwood location Phase 2",
+   "est_inv_at": "14233",
+   "estimate_id": "6afc29468be68cceaba4e399",
+   "estimate_number": "INV-14233",
+   "customer_id": "6a958582ba45a19e93440082",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d068f3",
+   "updated_date": "2026-11-17T11:15:21.382000",
+   "client_name": "Minnilo Law (Refurbish Aluminum Pole Cover)",
+   "est_inv_at": "14026",
+   "estimate_id": "6afc2819e16a1c8171aa99c4",
+   "estimate_number": "INV-14026",
+   "customer_id": "6afbe5e86688a8028ec8d82a",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d0690c",
+   "updated_date": "2026-11-17T11:16:27.217000",
+   "client_name": "Dale Travis - UBS Financial Services",
+   "est_inv_at": "14266",
+   "estimate_id": "6afc2988ca76ab206d3c2244",
+   "estimate_number": "INV-14266",
+   "customer_id": "6afbeac1bb20e485bc93a3a7",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d068fa",
+   "updated_date": "2026-11-17T11:16:27.818000",
+   "client_name": "Lyons & Lyons Law",
+   "est_inv_at": "14171",
+   "estimate_id": "6afc28f35ad7e4d464baab5e",
+   "estimate_number": "INV-14171",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d06917",
+   "updated_date": "2026-11-17T11:16:29.671000",
+   "client_name": "Sharonville Police Department (OOY, 4by6s, and Plaques)",
+   "est_inv_at": "14034",
+   "estimate_id": "6afc281b47e4057f4f76eda1",
+   "estimate_number": "INV-14034",
+   "customer_id": "6afbeaa2c50294c2d3eeaace",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d0692e",
+   "updated_date": "2026-11-17T11:17:28.929000",
+   "client_name": "Hope Ignites (post and panel)",
+   "est_inv_at": "14556",
+   "estimate_id": "6afc2ba41b509d51bdfd17b0",
+   "estimate_number": "EST-14556",
+   "customer_id": "6afbecd43202bc5d0c12d9a3",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d0691e",
+   "updated_date": "2026-11-17T11:17:30.183000",
+   "client_name": "NBC (Nothing Bundt Cakes) Newport",
+   "est_inv_at": "13203",
+   "estimate_id": "6afc22be1b0d9e7e02103fae",
+   "estimate_number": "INV-13203",
+   "customer_id": "6afbeba69c2177b846ac4655",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448306a95eb474d06922",
+   "updated_date": "2026-11-17T11:17:32.723000",
+   "client_name": "Gator Newport Partners, LTD - Jet's Pizza Repair",
+   "est_inv_at": "14367",
+   "estimate_id": "6afc2a3d7a5d0bce862b64e0",
+   "estimate_number": "INV-14367",
+   "customer_id": "6afbe9144fb2234769e6e5a7",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44487de80f1e43484b7b0",
+   "updated_date": "2026-11-17T11:17:36.393000",
+   "client_name": "MADE CDC (signs)",
+   "est_inv_at": "14056",
+   "estimate_id": "6afc2852f1a2df1d8ef6300b",
+   "estimate_number": "EST-14056",
+   "customer_id": "6afbec59cf8c44cb65e6d6d1",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44487de80f1e43484b7b4",
+   "updated_date": "2026-11-17T11:18:24.939000",
+   "client_name": "Bergman",
+   "est_inv_at": "14360",
+   "estimate_id": "6afc2a3cef762d4e8fcdf713",
+   "estimate_number": "INV-14360",
+   "customer_id": "6afbe416f8ec75bfc08315ec",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44487de80f1e43484b7bd",
+   "updated_date": "2026-11-17T11:18:28.663000",
+   "client_name": "B & G Club of West Chester (Signcomp)",
+   "est_inv_at": "14268",
+   "estimate_id": "6afc29883670de8e1e810357",
+   "estimate_number": "INV-14268",
+   "customer_id": "6afbeb807a30576726211796",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44487de80f1e43484b7ba",
+   "updated_date": "2026-11-17T11:18:31.784000",
+   "client_name": "DBL Law (Ext wall sign) SS 9/16/26",
+   "est_inv_at": "14122",
+   "estimate_id": "6afc287e4aefdb21fc65cb01",
+   "estimate_number": "INV-14122",
+   "customer_id": "6afbec1618abec5708e3d0c3",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44487de80f1e43484b7be",
+   "updated_date": "2026-11-17T11:18:32.385000",
+   "client_name": "Gator Newport Partners, LTD - Nothing Bundt Cakes",
+   "est_inv_at": "14494",
+   "estimate_id": "6afc2b4ddc8e46e5baec0fa0",
+   "estimate_number": "INV-14494",
+   "customer_id": "6afbe9144fb2234769e6e5a7",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44487de80f1e43484b7af",
+   "updated_date": "2026-11-17T11:18:33.278000",
+   "client_name": "All In One Collision",
+   "est_inv_at": "14414",
+   "estimate_id": "6afc2aa2743c08cd6fc3a38f",
+   "estimate_number": "EST-14414",
+   "customer_id": "6afbecb94e22043c2f9d96b6",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44487de80f1e43484b7d1",
+   "updated_date": "2026-11-17T11:19:25.943000",
+   "client_name": "Best Point (2)  Braille Signs (Vista)",
+   "est_inv_at": "14516",
+   "estimate_id": "6afc2b7a7e613f7bfc720024",
+   "estimate_number": "INV-14516",
+   "customer_id": "6a958582ba45a19e93440082",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44487de80f1e43484b7d5",
+   "updated_date": "2026-11-17T11:19:29.100000",
+   "client_name": "Loveland Presbyterian (Hanson)",
+   "est_inv_at": "13930",
+   "estimate_id": "6afc2783d7e3fd4d936029f9",
+   "estimate_number": "INV-13930",
+   "customer_id": "6a958582ba45a19e9344017f",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44487de80f1e43484b7c8",
+   "updated_date": "2026-11-17T11:19:29.804000",
+   "client_name": "Keller Custom Signs  -Beavercreek - Gatorfoam ETC",
+   "est_inv_at": "14452",
+   "estimate_id": "6afc2af89485891cb033b3db",
+   "estimate_number": "INV-14452",
+   "customer_id": "6afbecd0b034b371a9ed0534",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44487de80f1e43484b7f1",
+   "updated_date": "2026-11-17T11:20:35.224000",
+   "client_name": "Associa / Heritage Green HOA",
+   "est_inv_at": "10446",
+   "estimate_id": "6afc279442aff16d8df942de",
+   "estimate_number": "EST-10446",
+   "customer_id": "6afbe9eb9b120f1e2d70d830",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44487de80f1e43484b7e2",
+   "updated_date": "2026-11-17T11:20:37.326000",
+   "client_name": "RPS America Riello UPS",
+   "est_inv_at": "14364",
+   "estimate_id": "6afc2a3d624f7d502c01b6e5",
+   "estimate_number": "INV-14364",
+   "customer_id": "6a958582ba45a19e9344023b",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44487de80f1e43484b809",
+   "updated_date": "2026-11-17T11:22:30.115000",
+   "client_name": "BAM Realty Guardian Alarm",
+   "est_inv_at": "11023",
+   "estimate_id": "6afc2b2fe78425c9d106a440",
+   "estimate_number": "EST-11023",
+   "customer_id": "6afbea47487af7adaff876e6",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab44487de80f1e43484b80c",
+   "updated_date": "2026-11-17T11:23:32.356000",
+   "client_name": "Beech Creek Golf Carts",
+   "est_inv_at": "11050",
+   "estimate_id": "6afc2b569564df16994542eb",
+   "estimate_number": "INV-11050",
+   "customer_id": "6afbea48a5872287882395e0",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70c8",
+   "updated_date": "2026-11-17T11:23:40.813000",
+   "client_name": "Dohn Community HS",
+   "est_inv_at": "11539",
+   "estimate_id": "6afc2ea4a42563a95e8302ed",
+   "estimate_number": "EST-11539",
+   "customer_id": "6afbe9ace50abc9b96237490",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70bb",
+   "updated_date": "2026-11-17T11:24:31.746000",
+   "client_name": "Weiss Technik",
+   "est_inv_at": "11457",
+   "estimate_id": "6afc2e664748cd1c31f9e660",
+   "estimate_number": "INV-11457",
+   "customer_id": "6afbe7a3b81dacbe1a943d72",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70b1",
+   "updated_date": "2026-11-17T11:24:42.084000",
+   "client_name": "Wildcats Flooring",
+   "est_inv_at": "11419",
+   "estimate_id": "6afc2e536b3908d818a73586",
+   "estimate_number": "EST-11419",
+   "customer_id": "6afbeaab4cdecfac62de58f8",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70a5",
+   "updated_date": "2026-11-17T11:25:39.548000",
+   "client_name": "Your Mom's Pizzeria",
+   "est_inv_at": "11322",
+   "estimate_id": "6afc2de1adf6500526b87237",
+   "estimate_number": "INV-11322",
+   "customer_id": "6afbea89a6e6e91b65d617b5",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70be",
+   "updated_date": "2026-11-17T11:25:40.895000",
+   "client_name": "Cummings/Cinnabon",
+   "est_inv_at": "11482",
+   "estimate_id": "6afc2e7e659cf9c6f5a6ba4d",
+   "estimate_number": "EST-11482",
+   "customer_id": "6afbe9cc2ddde14fe328792f",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70a6",
+   "updated_date": "2026-11-17T11:26:33.469000",
+   "client_name": "Pet Bakery/Spa",
+   "est_inv_at": "11323",
+   "estimate_id": "6afc2de12ab26d9b02926189",
+   "estimate_number": "EST-11323",
+   "customer_id": "6afbea89a6e6e91b65d617b5",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70d5",
+   "updated_date": "2026-11-17T11:26:35.022000",
+   "client_name": "Dale Travis/UBS Viking Partners (onsite)",
+   "est_inv_at": "11589",
+   "estimate_id": "6afc1811302c2ac0819845a3",
+   "estimate_number": "EST-11589",
+   "customer_id": "6afbeac1bb20e485bc93a3a7",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70e2",
+   "updated_date": "2026-11-17T11:27:36.657000",
+   "client_name": "Tuff Shed Of Cincinnati",
+   "est_inv_at": "11616",
+   "estimate_id": "6afc187aea792bf34d3f2874",
+   "estimate_number": "EST-11616",
+   "customer_id": "6afbea8a63297d712e799ec9",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70d0",
+   "updated_date": "2026-11-17T11:27:43.609000",
+   "client_name": "Easy Grooming Pet Soluntin LLC",
+   "est_inv_at": "11565",
+   "estimate_id": "6afc17d5c8b2abb0ab84b8ba",
+   "estimate_number": "EST-11565",
+   "customer_id": "6afbeac8bd360fe443226a07",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70f2",
+   "updated_date": "2026-11-17T11:27:44.253000",
+   "client_name": "Brumfield & Weisbrot Family Dentistry",
+   "est_inv_at": "11654",
+   "estimate_id": "6afc189732c776965e55da99",
+   "estimate_number": "EST-11654",
+   "customer_id": "6afbeae3f4f066c84c853852",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70ec",
+   "updated_date": "2026-11-17T11:28:37.969000",
+   "client_name": "Glockner Oil",
+   "est_inv_at": "11640",
+   "estimate_id": "6afc18940c84df564cc9be45",
+   "estimate_number": "EST-11640",
+   "customer_id": "6afbeae14c3cc55aca561a6d",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70cb",
+   "updated_date": "2026-11-17T11:28:38.528000",
+   "client_name": "Easy Grooming Pet Soluntin LLC",
+   "est_inv_at": "11554",
+   "estimate_id": "6afc17d3ba83214887fea27b",
+   "estimate_number": "EST-11554",
+   "customer_id": "6afbeac8bd360fe443226a07",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70fe",
+   "updated_date": "2026-11-17T11:29:35.600000",
+   "client_name": "SPS Properties/ Cadence of Newport",
+   "est_inv_at": "11684",
+   "estimate_id": "6afc18ce7ed1bf9513feb8eb",
+   "estimate_number": "EST-11684",
+   "customer_id": "6a958582ba45a19e9343ffdc",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70fb",
+   "updated_date": "2026-11-17T11:29:36.284000",
+   "client_name": "So Low Environment Equipment",
+   "est_inv_at": "11674",
+   "estimate_id": "6afc18ccd637518af6388d05",
+   "estimate_number": "INV-11674",
+   "customer_id": "6afbeae1fb1d8730aab6327a",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70fc",
+   "updated_date": "2026-11-17T11:29:38.445000",
+   "client_name": "Towne Properties (Cheltenham)",
+   "est_inv_at": "11681",
+   "estimate_id": "6afc18cdd250bbfa8a2770ad",
+   "estimate_number": "EST-11681",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448b51e5815ebe6e70fd",
+   "updated_date": "2026-11-17T11:29:40.295000",
+   "client_name": "Towne Properties (Kable's Mill)",
+   "est_inv_at": "11682",
+   "estimate_id": "6afc18ce034004aeab6e614d",
+   "estimate_number": "EST-11682",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448e2f365052a7fbe9a0",
+   "updated_date": "2026-11-17T11:29:42.189000",
+   "client_name": "Frost Haus",
+   "est_inv_at": "11729",
+   "estimate_id": "6afc194d62f867afbe6f65b1",
+   "estimate_number": "EST-11729",
+   "customer_id": "6a958582ba45a19e9344009c",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448e2f365052a7fbe9a7",
+   "updated_date": "2026-11-17T11:30:48.230000",
+   "client_name": "TREA",
+   "est_inv_at": "11754",
+   "estimate_id": "6afc197061e098a75a52eb2a",
+   "estimate_number": "INV-11754",
+   "customer_id": "6afbe8bab5e5e218810fe0c3",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448e2f365052a7fbe9c0",
+   "updated_date": "2026-11-17T11:31:51.098000",
+   "client_name": "Lone Mountain",
+   "est_inv_at": "11821",
+   "estimate_id": "6afc19fd2064509c2b357b23",
+   "estimate_number": "EST-11821",
+   "customer_id": "6afbeb009029c3923eb5278f",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448e2f365052a7fbe9e1",
+   "updated_date": "2026-11-17T11:34:46.945000",
+   "client_name": "First Star LLC",
+   "est_inv_at": "11907",
+   "estimate_id": "6afc1ab4b75bd2added72770",
+   "estimate_number": "EST-11907",
+   "customer_id": "6afbeb0399ec104be7fad272",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4448e2f365052a7fbe9e7",
+   "updated_date": "2026-11-17T11:34:54.767000",
+   "client_name": "O&M Surgery",
+   "est_inv_at": "11918",
+   "estimate_id": "6afc1ab74f50f1ef1a41c24e",
+   "estimate_number": "EST-11918",
+   "customer_id": "6afbeb03481bb652a9dc2581",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2b7",
+   "updated_date": "2026-11-17T11:34:57.092000",
+   "client_name": "Our Lady of Lourdes",
+   "est_inv_at": "11965",
+   "estimate_id": "6afc1b2edf45a38ce75af4fb",
+   "estimate_number": "INV-11965",
+   "customer_id": "6afbeae8484bbc3bac3e7644",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2ca",
+   "updated_date": "2026-11-17T11:35:52.463000",
+   "client_name": "Ted Marty & Assoc. / MBIA",
+   "est_inv_at": "12020",
+   "estimate_id": "6afc1b7b958375da831d1c70",
+   "estimate_number": "EST-12020",
+   "customer_id": "6afbeae3e8c56da4e47e3e80",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2e0",
+   "updated_date": "2026-11-17T11:35:55.706000",
+   "client_name": "Goosehead Ins",
+   "est_inv_at": "12066",
+   "estimate_id": "6afc1bec2d7a2f8e116a4f5b",
+   "estimate_number": "INV-12066",
+   "customer_id": "6afbeb2288045f0d214610be",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2c7",
+   "updated_date": "2026-11-17T11:35:57.178000",
+   "client_name": "CIP Retail",
+   "est_inv_at": "12013",
+   "estimate_id": "6afc1b79e2efd948ff317f0f",
+   "estimate_number": "EST-12013",
+   "customer_id": "6afbeb08e7e0f5305ffaf9a0",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2ba",
+   "updated_date": "2026-11-17T11:35:58.378000",
+   "client_name": "Veelo",
+   "est_inv_at": "11974",
+   "estimate_id": "6afc1b3135f0a1596b648253",
+   "estimate_number": "INV-11974",
+   "customer_id": "6afbeae7833195ca78a8dcf2",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2c6",
+   "updated_date": "2026-11-17T11:35:59.065000",
+   "client_name": "SkyZone",
+   "est_inv_at": "12007",
+   "estimate_id": "6afc1b78d97d01a0bc097c51",
+   "estimate_number": "INV-12007",
+   "customer_id": "6afbeb04f07b46b0f9da761e",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2d5",
+   "updated_date": "2026-11-17T11:36:48.276000",
+   "client_name": "IMC Management - Replacement Panels",
+   "est_inv_at": "12037",
+   "estimate_id": "6afc1baa125c3772ba0cc58d",
+   "estimate_number": "INV-12037",
+   "customer_id": "6a958582ba45a19e93440130",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2b9",
+   "updated_date": "2026-11-17T11:36:50.156000",
+   "client_name": "Veelo - Recut due to their mistake",
+   "est_inv_at": "11974",
+   "estimate_id": "6afc1b3135f0a1596b648253",
+   "estimate_number": "INV-11974",
+   "customer_id": "6afbeae7833195ca78a8dcf2",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2c8",
+   "updated_date": "2026-11-17T11:36:52.519000",
+   "client_name": "Traditions at Camargo",
+   "est_inv_at": "12017",
+   "estimate_id": "6afc1b7af718f77dd26d1b44",
+   "estimate_number": "EST-12017",
+   "customer_id": "6afbeac742ec5625d1279694",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2d6",
+   "updated_date": "2026-11-17T11:36:53.121000",
+   "client_name": "Veelo",
+   "est_inv_at": "12038",
+   "estimate_id": "6afc1baa05999568a7f8e8b6",
+   "estimate_number": "INV-12038",
+   "customer_id": "6afbeae7833195ca78a8dcf2",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2df",
+   "updated_date": "2026-11-17T11:36:56.929000",
+   "client_name": "Diamond Printing",
+   "est_inv_at": "12059",
+   "estimate_id": "6afc1beb7d8247ddca93cbf7",
+   "estimate_number": "EST-12059",
+   "customer_id": "6afbe450e8beebc44faca5ed",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2c2",
+   "updated_date": "2026-11-17T11:36:59.014000",
+   "client_name": "Cummings / Cinnabon (Beavercreek)",
+   "est_inv_at": "11995",
+   "estimate_id": "6afc1b46df15f05325e6e188",
+   "estimate_number": "EST-11995",
+   "customer_id": "6afbe9cc2ddde14fe328792f",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2db",
+   "updated_date": "2026-11-17T11:37:48.045000",
+   "client_name": "Blue Compass RV",
+   "est_inv_at": "12054",
+   "estimate_id": "6afc1beaf82eb736ceb38ad1",
+   "estimate_number": "INV-12054",
+   "customer_id": "6afbeb1ffbd9fba3563c7e5b",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2d4",
+   "updated_date": "2026-11-17T11:37:49.941000",
+   "client_name": "CURO",
+   "est_inv_at": "12036",
+   "estimate_id": "6afc1ba9c871a8b465d0d897",
+   "estimate_number": "EST-12036",
+   "customer_id": "6afbeb2131261bacb7a05186",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2de",
+   "updated_date": "2026-11-17T11:37:53.863000",
+   "client_name": "ICR Team",
+   "est_inv_at": "12058",
+   "estimate_id": "6afc1beb709cfa3c9145c81d",
+   "estimate_number": "EST-12058",
+   "customer_id": "6afbeb204a1140ae4fbbc0e8",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2cb",
+   "updated_date": "2026-11-17T11:37:56.138000",
+   "client_name": "SW Ohio Development Ctr",
+   "est_inv_at": "12021",
+   "estimate_id": "6afc1b7b4b45ceafff488edb",
+   "estimate_number": "EST-12021",
+   "customer_id": "6afbeb1f1ae6e536819d091a",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2eb",
+   "updated_date": "2026-11-17T11:37:58.034000",
+   "client_name": "Chick-Fil-A",
+   "est_inv_at": "12105",
+   "estimate_id": "6afc1c017e7c99d749b6e5f0",
+   "estimate_number": "INV-12105",
+   "customer_id": "6afbeb25968ff38cf83415e6",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2fa",
+   "updated_date": "2026-11-17T11:38:00.668000",
+   "client_name": "Our Lady of Lourdes - Building Signage",
+   "est_inv_at": "12131",
+   "estimate_id": "6afc1c6c0f8928a381ce3f5c",
+   "estimate_number": "EST-12131",
+   "customer_id": "6afbeae8484bbc3bac3e7644",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab305",
+   "updated_date": "2026-11-17T11:38:49.668000",
+   "client_name": "Northern KY Health Dept - Option 1",
+   "est_inv_at": "12155",
+   "estimate_id": "6afc1cacb81984c07cdbf4ed",
+   "estimate_number": "EST-12155",
+   "customer_id": "6afbeb27597ab8796d8f4cbc",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2f1",
+   "updated_date": "2026-11-17T11:38:51.347000",
+   "client_name": "Karen Montgomery",
+   "est_inv_at": "12118",
+   "estimate_id": "6afc1c3e96dcc2a8724299f7",
+   "estimate_number": "INV-12118",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab307",
+   "updated_date": "2026-11-17T11:38:54.796000",
+   "client_name": "Better Blend / Corporate",
+   "est_inv_at": "12160",
+   "estimate_id": "6afc1cad7bb8cce8e6c1e5fb",
+   "estimate_number": "EST-12160",
+   "customer_id": "6afbe897ad1533ce93d5a041",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449271300d8efe7ab2e6",
+   "updated_date": "2026-11-17T11:39:02.406000",
+   "client_name": "Skidmore",
+   "est_inv_at": "12079",
+   "estimate_id": "6afc1bfcba96946953ed4e54",
+   "estimate_number": "INV-12079",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444951695f56fc83e0eb8",
+   "updated_date": "2026-11-17T11:43:03.678000",
+   "client_name": "Donovan's Auto4N",
+   "est_inv_at": "12320",
+   "estimate_id": "6afc1dab56d076bd9faf2cfe",
+   "estimate_number": "EST-12320",
+   "customer_id": "6afbeb45893eb866155d48ac",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444951695f56fc83e0ec3",
+   "updated_date": "2026-11-17T11:45:09.544000",
+   "client_name": "Cincinnati Metro/Sorta",
+   "est_inv_at": "12336",
+   "estimate_id": "6afc1ddb67cfd19c2b443dd7",
+   "estimate_number": "INV-12336",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444951695f56fc83e0ec2",
+   "updated_date": "2026-11-17T11:46:04.831000",
+   "client_name": "Cincinnati Metro/Sorta",
+   "est_inv_at": "12335",
+   "estimate_id": "6afc1ddb23c2a02678bc714c",
+   "estimate_number": "INV-12335",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444951695f56fc83e0edf",
+   "updated_date": "2026-11-17T11:46:06.226000",
+   "client_name": "Best Sanitizers",
+   "est_inv_at": "12378",
+   "estimate_id": "6afc1e24d58ad4fb49559d30",
+   "estimate_number": "EST-12378",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449b638e21944fe3bbf4",
+   "updated_date": "2026-11-17T11:47:10.899000",
+   "client_name": "Drunken Academy",
+   "est_inv_at": "12401",
+   "estimate_id": "6afc1e575b3ba08939bcc0cc",
+   "estimate_number": "EST-12401",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449b638e21944fe3bbec",
+   "updated_date": "2026-11-17T11:48:02.035000",
+   "client_name": "Best Sanitizers",
+   "est_inv_at": "12391",
+   "estimate_id": "6afc1e2686282bd449f45b24",
+   "estimate_number": "INV-12391",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449b638e21944fe3bc38",
+   "updated_date": "2026-11-17T11:49:06.115000",
+   "client_name": "Metro Prototype Reface",
+   "est_inv_at": "12513",
+   "estimate_id": "6afc1ef7629df3addbb3427f",
+   "estimate_number": "INV-12513",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449b638e21944fe3bc2b",
+   "updated_date": "2026-11-17T11:49:12.167000",
+   "client_name": "CBRE- Corporate Woods (Zakira's Parking)",
+   "est_inv_at": "12498",
+   "estimate_id": "6afc1ef354d478e1ed9f899e",
+   "estimate_number": "INV-12498",
+   "customer_id": "6afbe7e00c5d36db0e4b5ec1",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449b638e21944fe3bc33",
+   "updated_date": "2026-11-17T11:49:15.302000",
+   "client_name": "CBRE- Corporate Woods (Cincinnati Landscaping)",
+   "est_inv_at": "12508",
+   "estimate_id": "6afc1ef5480ffa6f424d8a9a",
+   "estimate_number": "INV-12508",
+   "customer_id": "6afbe7e00c5d36db0e4b5ec1",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449b638e21944fe3bc1b",
+   "updated_date": "2026-11-17T11:50:05.756000",
+   "client_name": "Cincinnati Metro/SORTA",
+   "est_inv_at": "12477",
+   "estimate_id": "6afc1edec4168c430df83d0b",
+   "estimate_number": "EST-12477",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449b638e21944fe3bc09",
+   "updated_date": "2026-11-17T11:50:16.644000",
+   "client_name": "Drunken Academy",
+   "est_inv_at": "12440",
+   "estimate_id": "6afc1e6df10aff064e2f4415",
+   "estimate_number": "EST-12440",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449b638e21944fe3bc3b",
+   "updated_date": "2026-11-17T11:51:09.599000",
+   "client_name": "CBRE- Corporate Woods (Fleet Feet- Girls on the Run)",
+   "est_inv_at": "12517",
+   "estimate_id": "6afc1ef70e2bf0f729f5a3f2",
+   "estimate_number": "INV-12517",
+   "customer_id": "6afbe7e00c5d36db0e4b5ec1",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449b638e21944fe3bc41",
+   "updated_date": "2026-11-17T11:51:19.219000",
+   "client_name": "Veelo - Double Sided Plastic Vacuum Plate",
+   "est_inv_at": "12529",
+   "estimate_id": "6afc1f1c81ffd1949e9e40d6",
+   "estimate_number": "INV-12529",
+   "customer_id": "6afbeae7833195ca78a8dcf2",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449f222adf7c4ecfc90c",
+   "updated_date": "2026-11-17T11:53:19.014000",
+   "client_name": "St. Michael's Church - 6mm EMC",
+   "est_inv_at": "12609",
+   "estimate_id": "6afc1f9ce8836b4a6d2c46cb",
+   "estimate_number": "EST-12609",
+   "customer_id": "6afbeb6364c3c5a085baa23b",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449f222adf7c4ecfc912",
+   "updated_date": "2026-11-17T11:53:22.500000",
+   "client_name": "Greater Cincinnati Auto Dealers Assoc",
+   "est_inv_at": "12622",
+   "estimate_id": "6afc1fa88a48083bf8ca7183",
+   "estimate_number": "EST-12622",
+   "customer_id": "6afbe77ce9e28efbc3614e91",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449f222adf7c4ecfc905",
+   "updated_date": "2026-11-17T11:54:15.884000",
+   "client_name": "Egan- The Little Gym",
+   "est_inv_at": "12589",
+   "estimate_id": "6afc1f684937c2836db5d7af",
+   "estimate_number": "INV-12589",
+   "customer_id": "6afbe4c9afc5fc3257c44dcc",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449f222adf7c4ecfc916",
+   "updated_date": "2026-11-17T11:55:15.650000",
+   "client_name": "Asterino Sposa Bridal",
+   "est_inv_at": "12633",
+   "estimate_id": "6afc1faaf058a933833c150f",
+   "estimate_number": "EST-12633",
+   "customer_id": "6afbe761861beb37d4fc270e",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449f222adf7c4ecfc928",
+   "updated_date": "2026-11-17T11:55:25.394000",
+   "client_name": "Paul's Auto Services",
+   "est_inv_at": "12673",
+   "estimate_id": "6afc1fde607ecfd89f7b85fa",
+   "estimate_number": "EST-12673",
+   "customer_id": "6afbeb7c7bc43468e5e7bc37",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449f222adf7c4ecfc91a",
+   "updated_date": "2026-11-17T11:55:26.115000",
+   "client_name": "The Drunken Academy",
+   "est_inv_at": "12644",
+   "estimate_id": "6afc1fb730bcf704d98ecefe",
+   "estimate_number": "EST-12644",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449f222adf7c4ecfc92d",
+   "updated_date": "2026-11-17T11:55:27.352000",
+   "client_name": "Asterino Sposa Bridal",
+   "est_inv_at": "12680",
+   "estimate_id": "6afc1fe09529bc88d2782999",
+   "estimate_number": "EST-12680",
+   "customer_id": "6afbe761861beb37d4fc270e",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449f222adf7c4ecfc934",
+   "updated_date": "2026-11-17T11:55:29.494000",
+   "client_name": "Cincinnati Metro/SORTA",
+   "est_inv_at": "12695",
+   "estimate_id": "6afc1febe08276bdc2386ac8",
+   "estimate_number": "EST-12695",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449f222adf7c4ecfc932",
+   "updated_date": "2026-11-17T11:56:26.916000",
+   "client_name": "Cincinnati Metro/SORTA",
+   "est_inv_at": "12691",
+   "estimate_id": "6afc1fea754a9915f3bf6eeb",
+   "estimate_number": "EST-12691",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449f222adf7c4ecfc931",
+   "updated_date": "2026-11-17T11:56:30.651000",
+   "client_name": "Asterino Sposa Bridal",
+   "est_inv_at": "12688",
+   "estimate_id": "6afc1fe42d436be1b1c3f1a1",
+   "estimate_number": "EST-12688",
+   "customer_id": "6afbe761861beb37d4fc270e",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab4449f222adf7c4ecfc948",
+   "updated_date": "2026-11-17T11:57:22.298000",
+   "client_name": "Cincinnati Metro/SORTA",
+   "est_inv_at": "12772",
+   "estimate_id": "6afc202fc3335ffb5b81347d",
+   "estimate_number": "EST-12772",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444a395bf991f356bff87",
+   "updated_date": "2026-11-17T11:59:25.923000",
+   "client_name": "Triangle Signs / Lens Crafters",
+   "est_inv_at": "12878",
+   "estimate_id": "6afc2090b5f7a84801569a29",
+   "estimate_number": "EST-12878",
+   "customer_id": "6afbe7de9a9ccbe6a2c89b54",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444a395bf991f356bffad",
+   "updated_date": "2026-11-17T11:59:33.557000",
+   "client_name": "Building Co-op Inc",
+   "est_inv_at": "13029",
+   "estimate_id": "6afc218053cf0877e31cf3b7",
+   "estimate_number": "EST-13029",
+   "customer_id": "6afbeb9b63297d712e79a2fa",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444a395bf991f356bffa7",
+   "updated_date": "2026-11-17T12:00:30.857000",
+   "client_name": "Building Co-op Inc",
+   "est_inv_at": "13006",
+   "estimate_id": "6afc2171aad7638b0ca7a24d",
+   "estimate_number": "EST-13006",
+   "customer_id": "6afbeb9b63297d712e79a2fa",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444a395bf991f356bffab",
+   "updated_date": "2026-11-17T12:01:32.082000",
+   "client_name": "March first",
+   "est_inv_at": "13017",
+   "estimate_id": "6afc217e44b3aa75daed8c29",
+   "estimate_number": "EST-13017",
+   "customer_id": "6afbeb5d4d69c56f876a4e9e",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444a395bf991f356bffa1",
+   "updated_date": "2026-11-17T12:01:32.731000",
+   "client_name": "Oozy's Pizza",
+   "est_inv_at": "12964",
+   "estimate_id": "6afc213b8e5e37d4d187d4f5",
+   "estimate_number": "EST-12964",
+   "customer_id": "6afbeb87c3b0df1653ee320c",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444a395bf991f356bffc7",
+   "updated_date": "2026-11-17T12:02:28.927000",
+   "client_name": "Greg Boglin: Pike 2 Grill and Bar",
+   "est_inv_at": "13125",
+   "estimate_id": "6afc22587b8c4578e3e6db08",
+   "estimate_number": "EST-13125",
+   "customer_id": "6a958582ba45a19e9343ffc6",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444a395bf991f356bffc2",
+   "updated_date": "2026-11-17T12:02:36.363000",
+   "client_name": "Greg Boglin: Just 4 Kids",
+   "est_inv_at": "13116",
+   "estimate_id": "6afc22574d33efd8b4d8b0ea",
+   "estimate_number": "EST-13116",
+   "customer_id": "6afbeba1ef70df8bb52cb3f7",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444a395bf991f356bffcb",
+   "updated_date": "2026-11-17T12:02:38.767000",
+   "client_name": "ABS Service",
+   "est_inv_at": "13136",
+   "estimate_id": "6afc227895fccfcd59edcccf",
+   "estimate_number": "EST-13136",
+   "customer_id": "6afbe702417ecaa60fe1adc3",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444a395bf991f356bffca",
+   "updated_date": "2026-11-17T12:03:35.669000",
+   "client_name": "Building Craft",
+   "est_inv_at": "13130",
+   "estimate_id": "6afc225a66ea434786ab1dff",
+   "estimate_number": "INV-13130",
+   "customer_id": "6afbeb9b63297d712e79a2fa",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444a60880f0cadc948151",
+   "updated_date": "2026-11-17T12:04:42.573000",
+   "client_name": "Priority National Title Services",
+   "est_inv_at": "13283",
+   "estimate_id": "6afc236d7566c9c103439676",
+   "estimate_number": "EST-13283",
+   "customer_id": "6afbe6e5a20ab316e86d609a",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444a60880f0cadc94814d",
+   "updated_date": "2026-11-17T12:06:37.347000",
+   "client_name": "Bergman Commercial - Monument",
+   "est_inv_at": "13279",
+   "estimate_id": "6afc233f48a6e4c33c8a4f57",
+   "estimate_number": "EST-13279",
+   "customer_id": "6afbe416f8ec75bfc08315ec",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444a60880f0cadc948181",
+   "updated_date": "2026-11-17T12:07:50.832000",
+   "client_name": "Robert Shettline",
+   "est_inv_at": "13370",
+   "estimate_id": "6afc23f75305ae7214426475",
+   "estimate_number": "EST-13370",
+   "customer_id": "6afbebbdedc5ea884d3935a7",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444a60880f0cadc94816e",
+   "updated_date": "2026-11-17T12:08:44.658000",
+   "client_name": "Skidmore (96 x 48 Tenure Wall)",
+   "est_inv_at": "13331",
+   "estimate_id": "6afc23c2c4b8f7ff48f9dcb5",
+   "estimate_number": "EST-13331",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444aa837e2f2441dcc52f",
+   "updated_date": "2026-11-17T12:09:45.796000",
+   "client_name": "Saint Clair Linden Lake Apts",
+   "est_inv_at": "13438",
+   "estimate_id": "6afc246f1b7ffff365a5fd70",
+   "estimate_number": "EST-13438",
+   "customer_id": "6afbebd81f6a4f0f42a8c43a",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444aa837e2f2441dcc525",
+   "updated_date": "2026-11-17T12:09:51.314000",
+   "client_name": "Short Vine Star Motors",
+   "est_inv_at": "13388",
+   "estimate_id": "6afc242f895523b890ac5b2c",
+   "estimate_number": "INV-13388",
+   "customer_id": "6afbebbf1475efb409b133d9",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444aa837e2f2441dcc52d",
+   "updated_date": "2026-11-17T12:09:54.831000",
+   "client_name": "Short Vine Star Motors - Desk Sign 24\" x 48\"",
+   "est_inv_at": "13436",
+   "estimate_id": "6afc246f8e265139346681cd",
+   "estimate_number": "EST-13436",
+   "customer_id": "6afbebbf1475efb409b133d9",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444aa837e2f2441dcc53f",
+   "updated_date": "2026-11-17T12:10:47.273000",
+   "client_name": "Lyons & Lyons Co",
+   "est_inv_at": "13509",
+   "estimate_id": "6afc24d9ec0a4dd64597c2c6",
+   "estimate_number": "INV-13509",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444aa837e2f2441dcc540",
+   "updated_date": "2026-11-17T12:10:51.394000",
+   "client_name": "Modern Office Method (Lobby Sign)",
+   "est_inv_at": "13510",
+   "estimate_id": "6afc24dab00b6a8421a4bccc",
+   "estimate_number": "EST-13510",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444aa837e2f2441dcc547",
+   "updated_date": "2026-11-17T12:11:49.993000",
+   "client_name": "Bright Star Communities",
+   "est_inv_at": "13536",
+   "estimate_id": "6afc24fc2b1a00ae13ce6574",
+   "estimate_number": "EST-13536",
+   "customer_id": "6afbebde9d90398e3c8fae73",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444aa837e2f2441dcc571",
+   "updated_date": "2026-11-17T12:11:56.127000",
+   "client_name": "Sundance Management - Hyde Park (3) Riders",
+   "est_inv_at": "13684",
+   "estimate_id": "6afc25eb0a171c7f7718708d",
+   "estimate_number": "EST-13684",
+   "customer_id": "6afbe47d27e434af53e3e391",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444aa837e2f2441dcc563",
+   "updated_date": "2026-11-17T12:12:50.695000",
+   "client_name": "CIP Retail - Braille Wall signs",
+   "est_inv_at": "13650",
+   "estimate_id": "6afc25a15eac5efec28c6011",
+   "estimate_number": "EST-13650",
+   "customer_id": "6afbeb08e7e0f5305ffaf9a0",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444aa837e2f2441dcc585",
+   "updated_date": "2026-11-17T12:13:50.664000",
+   "client_name": "Minuteman Press - Area 513 Restaurant",
+   "est_inv_at": "13741",
+   "estimate_id": "6afc264d25bd4d3827c45d59",
+   "estimate_number": "EST-13741",
+   "customer_id": "6a958582ba45a19e9344022d",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444aa837e2f2441dcc57a",
+   "updated_date": "2026-11-17T12:13:52.302000",
+   "client_name": "ADG",
+   "est_inv_at": "13713",
+   "estimate_id": "6afc2618d53a2023eaaf6760",
+   "estimate_number": "EST-13713",
+   "customer_id": "6a958582ba45a19e9343ff65",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444aa837e2f2441dcc562",
+   "updated_date": "2026-11-17T12:13:57.069000",
+   "client_name": "Terwilliger's Run Estates HOA",
+   "est_inv_at": "13645",
+   "estimate_id": "6afc25a00dbc7cc635076753",
+   "estimate_number": "EST-13645",
+   "customer_id": "6afbebfa773e60a28397121b",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444aa837e2f2441dcc576",
+   "updated_date": "2026-11-17T12:13:59.887000",
+   "client_name": "Minuteman Press - Damn Good Bar and Grill",
+   "est_inv_at": "13690",
+   "estimate_id": "6afc25ed79f78fec39a1541e",
+   "estimate_number": "EST-13690",
+   "customer_id": "6a958582ba45a19e9344022d",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444aa837e2f2441dcc57d",
+   "updated_date": "2026-11-17T12:14:54.772000",
+   "client_name": "Minuteman Press/Sharonville Location",
+   "est_inv_at": "13718",
+   "estimate_id": "6afc261951dcfa8a2d30bd05",
+   "estimate_number": "EST-13718",
+   "customer_id": "6a958582ba45a19e9344022d",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae887c",
+   "updated_date": "2026-11-17T12:14:59.021000",
+   "client_name": "Whiskers & Paws",
+   "est_inv_at": "13760",
+   "estimate_id": "6afc2666d5888ae2e7ec0e6c",
+   "estimate_number": "EST-13760",
+   "customer_id": "6afbe9145ad0c2174ad50c50",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae8892",
+   "updated_date": "2026-11-17T12:15:57.850000",
+   "client_name": "Skidmore Sales & Distributing",
+   "est_inv_at": "13844",
+   "estimate_id": "6afc26e630e211f850db417a",
+   "estimate_number": "INV-13844",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae887f",
+   "updated_date": "2026-11-17T12:16:03.396000",
+   "client_name": "Dig N Play (window vinyl balloons)",
+   "est_inv_at": "13767",
+   "estimate_id": "6afc266b6c2c5bd6eb1d80a9",
+   "estimate_number": "EST-13767",
+   "customer_id": "6afbebdf48b974ba0ca54878",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae8884",
+   "updated_date": "2026-11-17T12:16:05.356000",
+   "client_name": "Target World - (2) Parking Signs",
+   "est_inv_at": "13784",
+   "estimate_id": "6afc2690cd3e810b6f50c0d3",
+   "estimate_number": "EST-13784",
+   "customer_id": "6afbebc0e4ceab4ac4dc92c5",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae8898",
+   "updated_date": "2026-11-17T12:16:06.620000",
+   "client_name": "The Farmhouse at Emmett Ridge",
+   "est_inv_at": "13855",
+   "estimate_id": "6afc270d5b2286ce215f323c",
+   "estimate_number": "EST-13855",
+   "customer_id": "6afbec1d394bdc8ee75bbad1",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae88b6",
+   "updated_date": "2026-11-17T12:16:56.431000",
+   "client_name": "King Dental (parking lot sign)",
+   "est_inv_at": "13939",
+   "estimate_id": "6afc2785e6eb87288faa5e65",
+   "estimate_number": "EST-13939",
+   "customer_id": "6a958582ba45a19e9343ffe5",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae88a5",
+   "updated_date": "2026-11-17T12:17:04.632000",
+   "client_name": "Specialized Education of Ohio - High Road School /Int. Wall Decal",
+   "est_inv_at": "13886",
+   "estimate_id": "6afc27422b6d1c8deba23794",
+   "estimate_number": "EST-13886",
+   "customer_id": "6afbeba53d1abd985db7b343",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae88ad",
+   "updated_date": "2026-11-17T12:17:05.255000",
+   "client_name": "SkyZone (sign removal)",
+   "est_inv_at": "13910",
+   "estimate_id": "6afc275a94c67f1a8157a1f9",
+   "estimate_number": "EST-13910",
+   "customer_id": "6afbeb04f07b46b0f9da761e",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae88b3",
+   "updated_date": "2026-11-17T12:17:57.127000",
+   "client_name": "Adrienne Beauty Supply and Hair Braiding",
+   "est_inv_at": "13931",
+   "estimate_id": "6afc2783ac640c96110d824b",
+   "estimate_number": "EST-13931",
+   "customer_id": "6afbec3af3c94738a31398fc",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae88be",
+   "updated_date": "2026-11-17T12:18:07.113000",
+   "client_name": "Boys and Girls Club (illuminated)",
+   "est_inv_at": "13970",
+   "estimate_id": "6afc27a7479497b83ec6a588",
+   "estimate_number": "EST-13970",
+   "customer_id": "6afbeb807a30576726211796",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae88d7",
+   "updated_date": "2026-11-17T12:18:07.942000",
+   "client_name": "CIP Retail",
+   "est_inv_at": "14033",
+   "estimate_id": "6afc281b74cd1b0b1b53b1ae",
+   "estimate_number": "EST-14033",
+   "customer_id": "6afbeb08e7e0f5305ffaf9a0",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae88d4",
+   "updated_date": "2026-11-17T12:19:00.055000",
+   "client_name": "Physicians Associates at Kemper",
+   "est_inv_at": "14027",
+   "estimate_id": "6afc2819bd076c9d6643501f",
+   "estimate_number": "EST-14027",
+   "customer_id": "6afbec57fcf50c0bd3e14b9d",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae88bc",
+   "updated_date": "2026-11-17T12:19:05.755000",
+   "client_name": "Skippers Pub  (Outdoor Sign)",
+   "est_inv_at": "13950",
+   "estimate_id": "6afc2787591866079d782ac4",
+   "estimate_number": "EST-13950",
+   "customer_id": "6afbec3b6b2709707c014eb8",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae88d8",
+   "updated_date": "2026-11-17T12:19:06.901000",
+   "client_name": "Goodman Real Estate Services Group LLC",
+   "est_inv_at": "14037",
+   "estimate_id": "6afc281bb0f57e6a45bc43fe",
+   "estimate_number": "EST-14037",
+   "customer_id": "6afbec59dadd21017fbb9190",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444ad2187689833ae88bb",
+   "updated_date": "2026-11-17T12:20:06.276000",
+   "client_name": "Minuteman Press (Beechmont Ave)",
+   "est_inv_at": "13945",
+   "estimate_id": "6afc27866e0014a1422ce97e",
+   "estimate_number": "EST-13945",
+   "customer_id": "6afbe724c80660d7cd26c668",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b0321a02eebe9472a6",
+   "updated_date": "2026-11-17T12:20:11.999000",
+   "client_name": "SSRG  Construction Co (Dorothy Howell Elem. School)",
+   "est_inv_at": "14081",
+   "estimate_id": "6afc2862b969f8790fa5d35c",
+   "estimate_number": "EST-14081",
+   "customer_id": "6afbec5c7d3d6260cdbdf12f",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b0321a02eebe94729c",
+   "updated_date": "2026-11-17T12:21:14.473000",
+   "client_name": "Meineke - Huber Heights",
+   "est_inv_at": "14049",
+   "estimate_id": "6afc2851eaefaf64bcc64ac2",
+   "estimate_number": "EST-14049",
+   "customer_id": "6afbe85c70e14a8d17304386",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b0321a02eebe9472ae",
+   "updated_date": "2026-11-17T12:21:19.659000",
+   "client_name": "Lets Play Soccer",
+   "est_inv_at": "14098",
+   "estimate_id": "6afc2866f1a2df1d8ef6301d",
+   "estimate_number": "EST-14098",
+   "customer_id": "6afbec73e9e1b716cf45e50e",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b0321a02eebe9472df",
+   "updated_date": "2026-11-17T12:22:18.296000",
+   "client_name": "Monti's Autocenter - Vinyl on White Poly",
+   "est_inv_at": "14226",
+   "estimate_id": "6afc2945cb9ca8b9b9fc1593",
+   "estimate_number": "EST-14226",
+   "customer_id": "6afbec7b5276759e131cc84f",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b0321a02eebe9472d5",
+   "updated_date": "2026-11-17T12:23:10.380000",
+   "client_name": "Scioto Hills Christian Camp & Retreat",
+   "est_inv_at": "14210",
+   "estimate_id": "6afc29228d4d2345ca4b9fac",
+   "estimate_number": "EST-14210",
+   "customer_id": "6afbea2c0955ec57bdc65319",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b0321a02eebe9472c7",
+   "updated_date": "2026-11-17T12:23:11.225000",
+   "client_name": "Best Point / Middletown Phase 3",
+   "est_inv_at": "14168",
+   "estimate_id": "6afc28d238dd09f0c1e1cded",
+   "estimate_number": "EST-14168",
+   "customer_id": "6a958582ba45a19e93440082",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b0321a02eebe9472de",
+   "updated_date": "2026-11-17T12:23:17.915000",
+   "client_name": "Monti's Autocenter - Paint on 2nd surface",
+   "est_inv_at": "14226",
+   "estimate_id": "6afc2945cb9ca8b9b9fc1593",
+   "estimate_number": "EST-14226",
+   "customer_id": "6afbec7b5276759e131cc84f",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b0321a02eebe9472e2",
+   "updated_date": "2026-11-17T12:25:16.226000",
+   "client_name": "South Cuminsville Leadership Rotary Park",
+   "est_inv_at": "14238",
+   "estimate_id": "6afc29480b8a3667b2701e34",
+   "estimate_number": "INV-14238",
+   "customer_id": "6afbec16b7fad51c1d473608",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b0321a02eebe9472fc",
+   "updated_date": "2026-11-17T12:25:17.610000",
+   "client_name": "Biscuit Belly - Mason Location",
+   "est_inv_at": "14316",
+   "estimate_id": "6afc29da8807b2707c4ef47b",
+   "estimate_number": "EST-14316",
+   "customer_id": "6afbec9d7b5b18168986d959",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b0321a02eebe9472f6",
+   "updated_date": "2026-11-17T12:25:19.747000",
+   "client_name": "Preston Heating and Cooling",
+   "est_inv_at": "14303",
+   "estimate_id": "6afc29d7d42ecd05a94c9535",
+   "estimate_number": "EST-14303",
+   "customer_id": "6afbec9ccf3df732817ab843",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc1553",
+   "updated_date": "2026-11-17T12:25:27.065000",
+   "client_name": "Ben Gilles Design Option 1. (Halo Lit Lobby Sign w/ Halo TWC)",
+   "est_inv_at": "14321",
+   "estimate_id": "6afc29daeb44a5c8e16ba349",
+   "estimate_number": "EST-14321",
+   "customer_id": "6afbec9d1434a60f11033e5f",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc1554",
+   "updated_date": "2026-11-17T12:25:28.712000",
+   "client_name": "Golden Chic Studio (Channel  and Projecting)",
+   "est_inv_at": "14322",
+   "estimate_id": "6afc2a0726fc11ffc83b3958",
+   "estimate_number": "EST-14322",
+   "customer_id": "6afbec9eb44b55f8876ea028",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc1560",
+   "updated_date": "2026-11-17T12:26:21.431000",
+   "client_name": "Ben Gilles Design Option 2. (Push-Thru TWC)",
+   "est_inv_at": "14342",
+   "estimate_id": "6afc2a0bcf8e4152d2d2b482",
+   "estimate_number": "EST-14342",
+   "customer_id": "6afbec9d1434a60f11033e5f",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc1557",
+   "updated_date": "2026-11-17T12:26:22.070000",
+   "client_name": "Biscuit Belly - Florence location",
+   "est_inv_at": "14331",
+   "estimate_id": "6afc2a09a2faa5669f76bfd4",
+   "estimate_number": "EST-14331",
+   "customer_id": "6afbec9d7b5b18168986d959",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc1563",
+   "updated_date": "2026-11-17T12:26:28.681000",
+   "client_name": "2 Acru Properties",
+   "est_inv_at": "14349",
+   "estimate_id": "6afc2a3afa887c477ccc9ec6",
+   "estimate_number": "EST-14349",
+   "customer_id": "6afbec9bdb14e06506bd47b8",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc1573",
+   "updated_date": "2026-11-17T12:27:23.308000",
+   "client_name": "Biz Ideas (1 quote, 2 locations, Install Only and permitting)",
+   "est_inv_at": "14383",
+   "estimate_id": "6afc2a55e1876d7ae850a7f9",
+   "estimate_number": "EST-14383",
+   "customer_id": "6afbecb645b78ae939b1ebcf",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc156f",
+   "updated_date": "2026-11-17T12:27:24.745000",
+   "client_name": "Elite Tree Service",
+   "est_inv_at": "14379",
+   "estimate_id": "6afc2a5441de3dfaf2ccdeaa",
+   "estimate_number": "EST-14379",
+   "customer_id": "6afbec9ffe21b35c3183f29f",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc1564",
+   "updated_date": "2026-11-17T12:27:25.692000",
+   "client_name": "2 Acru Properties",
+   "est_inv_at": "14350",
+   "estimate_id": "6afc2a3a5887b9165ef355de",
+   "estimate_number": "EST-14350",
+   "customer_id": "6afbec9bdb14e06506bd47b8",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc15a2",
+   "updated_date": "2026-11-17T12:27:27.625000",
+   "client_name": "Watters & Co Salon/Suites (Relocation)",
+   "est_inv_at": "14517",
+   "estimate_id": "6afc2b7a1e23109eef6248ab",
+   "estimate_number": "EST-14517",
+   "customer_id": "6afbecd74a111dbaf2a9c4ce",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc157f",
+   "updated_date": "2026-11-17T12:27:31.913000",
+   "client_name": "All In One Collision",
+   "est_inv_at": "14413",
+   "estimate_id": "6afc2aa2128ea564e0a11ede",
+   "estimate_number": "EST-14413",
+   "customer_id": "6afbecb94e22043c2f9d96b6",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc159d",
+   "updated_date": "2026-11-17T12:28:28.651000",
+   "client_name": "Forward in Faith Ministries",
+   "est_inv_at": "14504",
+   "estimate_id": "6afc2b4f86723aa87a213646",
+   "estimate_number": "INV-14504",
+   "customer_id": "6afbecd6937f1f82f2fc33e7",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc159e",
+   "updated_date": "2026-11-17T12:28:29.881000",
+   "client_name": "ASI",
+   "est_inv_at": "14505",
+   "estimate_id": "6afc2b4f916519cbed1ff662",
+   "estimate_number": "EST-14505",
+   "customer_id": "6afbe8b8f881dae88bfd3e41",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc15a3",
+   "updated_date": "2026-11-17T12:28:32.047000",
+   "client_name": "Daihen-USA",
+   "est_inv_at": "14518",
+   "estimate_id": "6afc2b7a67a88d0539a82bd9",
+   "estimate_number": "INV-14518",
+   "customer_id": "6afbe7be7aa56da8961528d2",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc1593",
+   "updated_date": "2026-11-17T12:29:27.415000",
+   "client_name": "Elevate Home",
+   "est_inv_at": "14478",
+   "estimate_id": "6afc2b2cb4a67c4b39410cd8",
+   "estimate_number": "EST-14478",
+   "customer_id": "6afbecd46cb59876eed380da",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc1589",
+   "updated_date": "2026-11-17T12:29:28.685000",
+   "client_name": "Kaiker Development Madison Rd - Option 1",
+   "est_inv_at": "14447",
+   "estimate_id": "6afc2af7fd31cda2e4ef5833",
+   "estimate_number": "EST-14447",
+   "customer_id": "6a958582ba45a19e9343fec8",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc1594",
+   "updated_date": "2026-11-17T12:29:29.877000",
+   "client_name": "Roto-Rooter Service Company (Illum Monument)",
+   "est_inv_at": "14481",
+   "estimate_id": "6afc2b2caed0abeda673b1af",
+   "estimate_number": "EST-14481",
+   "customer_id": "6afbec99f1b7bbd751f4a66a",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc1588",
+   "updated_date": "2026-11-17T12:29:32.379000",
+   "client_name": "Kaiker Development (Madison Rd) - Option 2",
+   "est_inv_at": "14444",
+   "estimate_id": "6afc2af6418ec677d203ce1f",
+   "estimate_number": "EST-14444",
+   "customer_id": "6a958582ba45a19e9343fec8",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc158d",
+   "updated_date": "2026-11-17T12:29:32.945000",
+   "client_name": "Montana Valley Apts",
+   "est_inv_at": "14461",
+   "estimate_id": "6afc2afa4f3ecb617f3ce342",
+   "estimate_number": "EST-14461",
+   "customer_id": "6afbecba1c2faa18ca1e2f88",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc159b",
+   "updated_date": "2026-11-17T12:29:34.141000",
+   "client_name": "AA Lawncare & Landscaping",
+   "est_inv_at": "14493",
+   "estimate_id": "6afc2b4c654c96ee9495692f",
+   "estimate_number": "EST-14493",
+   "customer_id": "6afbecd331ba7724dc3eb59b",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc1598",
+   "updated_date": "2026-11-17T12:30:27.597000",
+   "client_name": "Eliza Mulert",
+   "est_inv_at": "14488",
+   "estimate_id": "6afc2b2d92f1327a01b166fe",
+   "estimate_number": "EST-14488",
+   "customer_id": "6afbecd42064e581ccdce7b2",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc15ab",
+   "updated_date": "2026-11-17T12:30:30.622000",
+   "client_name": "Mt Hope Church - S/S Monu EMC and Map",
+   "est_inv_at": "14336",
+   "estimate_id": "6afc2a0a27c64bcde822a7ba",
+   "estimate_number": "INV-14336",
+   "customer_id": "6afbec9d57397aadb8cbb2db",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc15b1",
+   "updated_date": "2026-11-17T12:30:32.497000",
+   "client_name": "Kingsley + Co (Black Tall Monument)",
+   "est_inv_at": "14533",
+   "estimate_id": "6afc2b7edfc809144aad4a66",
+   "estimate_number": "EST-14533",
+   "customer_id": "6afbecd5abd8a4e5eda24a59",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc15ac",
+   "updated_date": "2026-11-17T12:30:33.075000",
+   "client_name": "Mt Hope Church - S/S Monu EMC",
+   "est_inv_at": "14543",
+   "estimate_id": "6afc2ba1fe280bfa89dbe40b",
+   "estimate_number": "EST-14543",
+   "customer_id": "6afbec9d57397aadb8cbb2db",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b49d2ceaa41dfc15ae",
+   "updated_date": "2026-11-17T12:30:35.927000",
+   "client_name": "ASI / Hondros College of Nursing",
+   "est_inv_at": "13585",
+   "estimate_id": "6afc254eec51d722c512879a",
+   "estimate_number": "INV-13585",
+   "customer_id": "6afbebf90db8f2211dac6a26",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdcf4",
+   "updated_date": "2026-11-17T12:31:34.888000",
+   "client_name": "Bunnel Hill Construction (Hanging Sign)",
+   "est_inv_at": "14750",
+   "estimate_id": "6afc2cbb0a8a625ba36d9cf3",
+   "estimate_number": "EST-14750",
+   "customer_id": "6afbea09a6811128af07a785",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444dc1527e164723192b3",
+   "updated_date": "2026-11-17T12:31:39.360000",
+   "client_name": "City of Cincinnati Health Dept",
+   "est_inv_at": "14595",
+   "estimate_id": "6afc2c152eec2ccdd7b3a46e",
+   "estimate_number": "EST-14595",
+   "customer_id": "6afbec9eea55f0ef8a11e295",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444e0f84d8ff6a30bb8e0",
+   "updated_date": "2026-11-17T12:32:33.684000",
+   "client_name": "Keller Custom  Signs - Sharonville",
+   "est_inv_at": "14584",
+   "estimate_id": "6afc2be0b86e25c212416899",
+   "estimate_number": "INV-14584",
+   "customer_id": "6afbecd0b034b371a9ed0534",
+   "imported_cb": true
+  },
+  {
+   "id": "6ab444e0f84d8ff6a30bb8db",
+   "updated_date": "2026-11-17T12:32:35.005000",
+   "client_name": "Princeton Comm Middle School (3 walls, 20 doors)",
+   "est_inv_at": "14580",
+   "estimate_id": "6afc2be0fc6898c055ff9c54",
+   "estimate_number": "EST-14580",
+   "customer_id": "6afbecf146af3f210d30d4c7",
+   "imported_cb": true
+  },
+  {
+   "id": "6abe596f29891e3c55773706",
+   "updated_date": "2026-11-17T12:33:38.583000",
+   "client_name": "Princeton Comm Middle School (Go Vikes Mural)",
+   "est_inv_at": "14605",
+   "estimate_id": "6afc2c18c3aa8e1920fd7936",
+   "estimate_number": "EST-14605",
+   "customer_id": "6afbecf146af3f210d30d4c7",
+   "imported_cb": true
+  },
+  {
+   "id": "6abe75c88ce11a0e48ab2d31",
+   "updated_date": "2026-11-17T12:33:39.323000",
+   "client_name": "American Self Storage (8) feather flag holders",
+   "est_inv_at": "14606",
+   "estimate_id": "6afc2c18428f611dc5fc0b75",
+   "estimate_number": "EST-14606",
+   "customer_id": "6afbecbae62a7f9d274455f1",
+   "imported_cb": true
+  },
+  {
+   "id": "6adabff1d8bdac6656452c96",
+   "updated_date": "2026-11-17T12:34:33.331000",
+   "client_name": "Wicktora & Miller (Halo Lit)",
+   "est_inv_at": "14662",
+   "estimate_id": "6afc2c460ad99bf8be2c3d64",
+   "estimate_number": "EST-14662",
+   "customer_id": "6afbecf4039de115ceade898",
+   "imported_cb": true
+  },
+  {
+   "id": "6adabff1d8bdac6656452c95",
+   "updated_date": "2026-11-17T12:34:34.697000",
+   "client_name": "Gator Investments",
+   "est_inv_at": "14039",
+   "estimate_id": "6afc281c12e60f4ba06169f9",
+   "estimate_number": "INV-14039",
+   "customer_id": "6afbe9144fb2234769e6e5a7",
+   "imported_cb": true
+  },
+  {
+   "id": "6adabff1d8bdac6656452c9d",
+   "updated_date": "2026-11-17T12:34:35.556000",
+   "client_name": "Cincinnati Sub Zero/Weiss Technik North America",
+   "est_inv_at": "14639",
+   "estimate_id": "6afc2c42420b161fdf521312",
+   "estimate_number": "EST-14639",
+   "customer_id": "6afbe7a3b81dacbe1a943d72",
+   "imported_cb": true
+  },
+  {
+   "id": "6adabff1d8bdac6656452cbc",
+   "updated_date": "2026-11-17T12:34:45.020000",
+   "client_name": "Wicktora & Miller (Channel Letters drop in)",
+   "est_inv_at": "14670",
+   "estimate_id": "6afc2c66d8e630bde4bd9043",
+   "estimate_number": "EST-14670",
+   "customer_id": "6afbecf4039de115ceade898",
+   "imported_cb": true
+  },
+  {
+   "id": "6adabff1d8bdac6656452ca2",
+   "updated_date": "2026-11-17T12:35:39.991000",
+   "client_name": "Minnillo Law Group",
+   "est_inv_at": "14652",
+   "estimate_id": "6afc2c45b18498a8dc9abd8f",
+   "estimate_number": "INV-14652",
+   "customer_id": "6afbe5e86688a8028ec8d82a",
+   "imported_cb": true
+  },
+  {
+   "id": "6adabff1d8bdac6656452ccb",
+   "updated_date": "2026-11-17T12:35:49.349000",
+   "client_name": "Skidmore Sales (Office Name Plates)",
+   "est_inv_at": "14744",
+   "estimate_id": "6afc2cb95c25cf53d5513adf",
+   "estimate_number": "INV-14744",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6adabff1d8bdac6656452cc1",
+   "updated_date": "2026-11-17T12:36:20.734000",
+   "client_name": "Cincinnati Sub Zero/Weiss Technik North America",
+   "est_inv_at": "14682",
+   "estimate_id": "6afc2c680148881e68deb860",
+   "estimate_number": "EST-14682",
+   "customer_id": "6afbe7a3b81dacbe1a943d72",
+   "imported_cb": true
+  },
+  {
+   "id": "6adabff1d8bdac6656452cc5",
+   "updated_date": "2026-11-17T12:36:40.613000",
+   "client_name": "Miami University Polytechnic",
+   "est_inv_at": "14658",
+   "estimate_id": "6afc2c46a7217bbd611ca235",
+   "estimate_number": "INV-14658",
+   "customer_id": "6afbe9710dd4dbd5342171ea",
+   "imported_cb": true
+  },
+  {
+   "id": "6ae22c85562e45d36ef5c3ce",
+   "updated_date": "2026-11-17T12:36:53.344000",
+   "client_name": "Eric Moore - Garage sign",
+   "est_inv_at": "14704",
+   "estimate_id": "6afc2c9d7d98dbb658901c0b",
+   "estimate_number": "EST-14704",
+   "customer_id": "6afbed112f6e8f93343b8fc1",
+   "imported_cb": true
+  },
+  {
+   "id": "6ae50d5682f8bcc1fd4e2b1e",
+   "updated_date": "2026-11-17T12:37:48.704000",
+   "client_name": "Persona - THE GARAGE",
+   "est_inv_at": "14683",
+   "estimate_id": "6afc2c68df99276ed203d665",
+   "estimate_number": "INV-14683",
+   "customer_id": "6afbe7de9a9ccbe6a2c89b54",
+   "imported_cb": true
+  },
+  {
+   "id": "6aed7f86f702ca6549eb1b5a",
+   "updated_date": "2026-11-17T12:37:52.653000",
+   "client_name": "Best Point / Hamilton Phase 2 (Office Signs)",
+   "est_inv_at": "14516",
+   "estimate_id": "6afc2b7a7e613f7bfc720024",
+   "estimate_number": "INV-14516",
+   "customer_id": "6a958582ba45a19e93440082",
+   "imported_cb": true
+  },
+  {
+   "id": "6aee38d1469781d75c3e0564",
+   "updated_date": "2026-11-17T12:38:44.234000",
+   "client_name": "Skidmore Sales (Nov Magnets)",
+   "est_inv_at": "14747",
+   "estimate_id": "6afc2cba8e7a25eb6b744ada",
+   "estimate_number": "INV-14747",
+   "customer_id": null,
+   "imported_cb": true
+  },
+  {
+   "id": "6af605c603cd8b0cf616cbec",
+   "updated_date": "2026-11-17T12:38:48.763000",
+   "client_name": "Minnillo Law Group",
+   "est_inv_at": "14761",
+   "estimate_id": "6afc013970f16a31ac2e9718",
+   "estimate_number": "INV-14761",
+   "customer_id": "6afbe5e86688a8028ec8d82a",
+   "imported_cb": true
+  },
+  {
+   "id": "6afb83deb1d2c419dfccc989",
+   "updated_date": "2026-11-17T12:38:52.798000",
+   "client_name": "Cincinnati Vietnamese Baptist Church",
+   "est_inv_at": "14767",
+   "estimate_id": "6afc06e37df1eaeab27080fd",
+   "estimate_number": "EST-14767",
+   "customer_id": null,
+   "imported_cb": true
+  }
+ ],
+ "withNum": [],
+ "none": [
+  {
+   "id": "6ab4448306a95eb474d068de",
+   "client_name": "Crossroads Uptown Church",
+   "title": "2026-04-16",
+   "created_date": "2026-09-23T21:28:35.904000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd01",
+   "client_name": "Superior Dealer Services",
+   "title": "Smartsheet row 8257515152271236",
+   "created_date": "2026-09-23T21:29:27.532000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd02",
+   "client_name": "Churchill Fine Teas",
+   "title": "Smartsheet row 2738056572495748",
+   "created_date": "2026-09-23T21:29:27.532000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdcff",
+   "client_name": "Stay Online Repairs",
+   "title": "Smartsheet row 7241656199866244",
+   "created_date": "2026-09-23T21:29:27.532000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd07",
+   "client_name": "Minuteman Press/Seven Hills Neighborhood",
+   "title": "Smartsheet row 8920594335459204",
+   "created_date": "2026-09-23T21:29:27.532000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd04",
+   "client_name": "Don Bigote's Family Rest",
+   "title": "Smartsheet row 7556399246665604",
+   "created_date": "2026-09-23T21:29:27.532000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd03",
+   "client_name": "Blooms & Berries",
+   "title": "Smartsheet row 672903076833156",
+   "created_date": "2026-09-23T21:29:27.532000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd06",
+   "client_name": "JRoyce",
+   "title": "Smartsheet row 2169786201335684",
+   "created_date": "2026-09-23T21:29:27.532000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd1c",
+   "client_name": "OneTouch Point/Fifth Third",
+   "title": "Smartsheet row 1211286723553156",
+   "created_date": "2026-09-23T21:29:27.533000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd08",
+   "client_name": "Multi Color Corp. Mason Warehouse",
+   "title": "Smartsheet row 7620230229583748",
+   "created_date": "2026-09-23T21:29:27.533000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd0c",
+   "client_name": "Sherwood Elm.",
+   "title": "Smartsheet row 625888922232708",
+   "created_date": "2026-09-23T21:29:27.533000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd0b",
+   "client_name": "Three Tree Bakery",
+   "title": "Smartsheet row 7286573795436420",
+   "created_date": "2026-09-23T21:29:27.533000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd33",
+   "client_name": "Clean House",
+   "title": "Smartsheet row 6628206493362052",
+   "created_date": "2026-09-23T21:29:27.534000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd42",
+   "client_name": "Martinez & Martinez Dental",
+   "title": "Smartsheet row 4902188635187076",
+   "created_date": "2026-09-23T21:29:27.534000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd36",
+   "client_name": "Family Nurturing Center",
+   "title": "Smartsheet row 4740275864397700",
+   "created_date": "2026-09-23T21:29:27.534000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd2f",
+   "client_name": "Midwest Eye (Kenwood)",
+   "title": "Smartsheet row 3964126343522180",
+   "created_date": "2026-09-23T21:29:27.534000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd39",
+   "client_name": "F.O.O.T.S",
+   "title": "Smartsheet row 4779075360581508",
+   "created_date": "2026-09-23T21:29:27.534000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444b7894cc2ec6d8cdd52",
+   "client_name": "La Vanguardia",
+   "title": "Smartsheet row 5274056361830276",
+   "created_date": "2026-09-23T21:29:27.535000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444bc0edaeec3fa312ef8",
+   "client_name": "Karen Montgomery (wedding)",
+   "title": "Smartsheet row 6440393794578308",
+   "created_date": "2026-09-23T21:29:32.764000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444bc0edaeec3fa312ee0",
+   "client_name": "United Performance / Hamilton - Vinyl",
+   "title": "Smartsheet row 4543975573219204",
+   "created_date": "2026-09-23T21:29:32.764000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444bc0edaeec3fa312ed7",
+   "client_name": "Ben Madden / For Sale",
+   "title": "Smartsheet row 7287346414806916",
+   "created_date": "2026-09-23T21:29:32.764000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444bc0edaeec3fa312eeb",
+   "client_name": "Lyons & Lyons",
+   "title": "Smartsheet row 2079533405104004",
+   "created_date": "2026-09-23T21:29:32.764000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444bc0edaeec3fa312f0b",
+   "client_name": "Texas Roadhouse / Name Change",
+   "title": "Smartsheet row 1249068824586116",
+   "created_date": "2026-09-23T21:29:32.765000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444bc0edaeec3fa312f08",
+   "client_name": "Vivify",
+   "title": "Smartsheet row 495851467630468",
+   "created_date": "2026-09-23T21:29:32.765000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444bc0edaeec3fa312f04",
+   "client_name": "CCR & Design / Aesthetics in Motion",
+   "title": "Smartsheet row 4564296769398660",
+   "created_date": "2026-09-23T21:29:32.765000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444bc0edaeec3fa312efe",
+   "client_name": "Betsy",
+   "title": "Smartsheet row 4672903460611972",
+   "created_date": "2026-09-23T21:29:32.765000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444bc0edaeec3fa312efd",
+   "client_name": "Southwater Signs / Fairfield",
+   "title": "Smartsheet row 615062579898244",
+   "created_date": "2026-09-23T21:29:32.765000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444bf6fbc06e8b3b7d867",
+   "client_name": "Salt & Light",
+   "title": "Smartsheet row 5489124691076996",
+   "created_date": "2026-09-23T21:29:35.908000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444bf6fbc06e8b3b7d87e",
+   "client_name": "Southwater",
+   "title": "Smartsheet row 5566399927740292",
+   "created_date": "2026-09-23T21:29:35.909000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444bf6fbc06e8b3b7d8a2",
+   "client_name": "Seoul Korean BBQ & Hotspot",
+   "title": "Smartsheet row 1235399823255428",
+   "created_date": "2026-09-23T21:29:35.910000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444bf6fbc06e8b3b7d8b2",
+   "client_name": "Choose Amp / Unilever Cincinnati",
+   "title": "Smartsheet row 1079375436900228",
+   "created_date": "2026-09-23T21:29:35.910000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be7898ed",
+   "client_name": "Center for Spirituality",
+   "title": "Smartsheet row 6714961591199620",
+   "created_date": "2026-09-23T21:29:41.319000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be789905",
+   "client_name": "Sakura Steak House",
+   "title": "Smartsheet row 4571741566461828",
+   "created_date": "2026-09-23T21:29:41.320000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be789904",
+   "client_name": "Winfield of Middletown Assisted Living",
+   "title": "Smartsheet row 1376725596825476",
+   "created_date": "2026-09-23T21:29:41.320000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be789910",
+   "client_name": "RDI Magpies",
+   "title": "Smartsheet row 707155257911172",
+   "created_date": "2026-09-23T21:29:41.320000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be789911",
+   "client_name": "SunStar / Southwater Signs",
+   "title": "Smartsheet row 6794531637749636",
+   "created_date": "2026-09-23T21:29:41.320000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be789902",
+   "client_name": "IMC Management / American Structure Pointe",
+   "title": "Smartsheet row 6822547510454148",
+   "created_date": "2026-09-23T21:29:41.320000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be7898f8",
+   "client_name": "MJ Jewelers",
+   "title": "Smartsheet row 4931508939974532",
+   "created_date": "2026-09-23T21:29:41.320000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be789900",
+   "client_name": "Sunset Properties",
+   "title": "Smartsheet row 8564238913038212",
+   "created_date": "2026-09-23T21:29:41.320000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be7898fe",
+   "client_name": "The Armor Group Inc / UC Properties",
+   "title": "Smartsheet row 703034105456516",
+   "created_date": "2026-09-23T21:29:41.320000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be78990c",
+   "client_name": "Hoity Toity Donuts",
+   "title": "Smartsheet row 5540884265756548",
+   "created_date": "2026-09-23T21:29:41.320000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be78991e",
+   "client_name": "Marcus & Millichap",
+   "title": "Smartsheet row 3033726432372612",
+   "created_date": "2026-09-23T21:29:41.321000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be789916",
+   "client_name": "Divine Signs/AIT Solutions",
+   "title": "Smartsheet row 4563427382192004",
+   "created_date": "2026-09-23T21:29:41.321000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be78991a",
+   "client_name": "Forever Praise Lobby Sign",
+   "title": "Smartsheet row 8676967633708932",
+   "created_date": "2026-09-23T21:29:41.321000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be78991f",
+   "client_name": "Minnillo Law Firm",
+   "title": "Smartsheet row 6614437751220100",
+   "created_date": "2026-09-23T21:29:41.321000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be78993a",
+   "client_name": "Anderson's NY Deli (Brick Wall)",
+   "title": "Smartsheet row 1396791587301252",
+   "created_date": "2026-09-23T21:29:41.322000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be789939",
+   "client_name": "Anderson's NY Deli (Above Counter Wrap)",
+   "title": "Smartsheet row 5405877358225284",
+   "created_date": "2026-09-23T21:29:41.322000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be78993e",
+   "client_name": "Sweet Bliss Bakery",
+   "title": "Smartsheet row 3469769707808644",
+   "created_date": "2026-09-23T21:29:41.322000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be789938",
+   "client_name": "Anderson's Large Wall Graphic",
+   "title": "Smartsheet row 1344247175505796",
+   "created_date": "2026-09-23T21:29:41.322000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c5c73beca9be789934",
+   "client_name": "The Oaks",
+   "title": "Smartsheet row 6830908833458052",
+   "created_date": "2026-09-23T21:29:41.322000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c874d1e4bb2821699e",
+   "client_name": "Tom Ladshaw Magic",
+   "title": "Smartsheet row 924067228215172",
+   "created_date": "2026-09-23T21:29:44.744000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c874d1e4bb282169a9",
+   "client_name": "V2 Building Group - Cleopatra",
+   "title": "Smartsheet row 3470944135997316",
+   "created_date": "2026-09-23T21:29:44.744000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c874d1e4bb282169cd",
+   "client_name": "Infinite Acres / The Netherlands",
+   "title": "Smartsheet row 1281137217562500",
+   "created_date": "2026-09-23T21:29:44.745000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c874d1e4bb282169c5",
+   "client_name": "RHI",
+   "title": "Smartsheet row 4371521893754756",
+   "created_date": "2026-09-23T21:29:44.745000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c874d1e4bb282169be",
+   "client_name": "Coldwell Banker Aspire Realty",
+   "title": "Smartsheet row 2044066568791940",
+   "created_date": "2026-09-23T21:29:44.745000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c874d1e4bb282169d9",
+   "client_name": "J.F Berns",
+   "title": "Smartsheet row 4089199144920964",
+   "created_date": "2026-09-23T21:29:44.745000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c874d1e4bb282169c9",
+   "client_name": "Triangle Signs / Tempur-Pedic",
+   "title": "Smartsheet row 494523549149060",
+   "created_date": "2026-09-23T21:29:44.745000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c874d1e4bb282169ce",
+   "client_name": "NAI Bergman / 311 Elm",
+   "title": "Smartsheet row 2723735311935364",
+   "created_date": "2026-09-23T21:29:44.745000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c874d1e4bb282169d0",
+   "client_name": "Triangle Signs / Mason Family Pet Hospital",
+   "title": "Smartsheet row 6998447003199364",
+   "created_date": "2026-09-23T21:29:44.745000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c874d1e4bb282169bf",
+   "client_name": "Fast Signs/ Pennsylvania / Hillman",
+   "title": "Smartsheet row 7283938403477380",
+   "created_date": "2026-09-23T21:29:44.745000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c874d1e4bb282169cb",
+   "client_name": "Western Southern tennis Tournament / DFalt",
+   "title": "Smartsheet row 6919956255664004",
+   "created_date": "2026-09-23T21:29:44.745000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444c874d1e4bb282169f2",
+   "client_name": "Minutemen Press Sharonville / New Jerusalem Church",
+   "title": "Smartsheet row 1626423610763140",
+   "created_date": "2026-09-23T21:29:44.746000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444ccf3def4d6742fb2ee",
+   "client_name": "Heritage Hill Prop. Const. / Stonecreek & Cobblegate",
+   "title": "Smartsheet row 7014443787872132",
+   "created_date": "2026-09-23T21:29:48.527000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444ccf3def4d6742fb2e9",
+   "client_name": "Blue Pine Psych",
+   "title": "Smartsheet row 2459630079174532",
+   "created_date": "2026-09-23T21:29:48.527000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444ccf3def4d6742fb315",
+   "client_name": "SpeedPro",
+   "title": "Smartsheet row 7362839117686660",
+   "created_date": "2026-09-23T21:29:48.528000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444ccf3def4d6742fb319",
+   "client_name": "Midwest Eye / Florence",
+   "title": "Smartsheet row 7224466099005316",
+   "created_date": "2026-09-23T21:29:48.528000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444ccf3def4d6742fb313",
+   "client_name": "CVG Intermodal",
+   "title": "Smartsheet row 5827433755174788",
+   "created_date": "2026-09-23T21:29:48.528000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444ccf3def4d6742fb310",
+   "client_name": "Ethiopian Orthodox Church",
+   "title": "Smartsheet row 2051444370696068",
+   "created_date": "2026-09-23T21:29:48.528000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444ccf3def4d6742fb323",
+   "client_name": "Lyons & Lyons",
+   "title": "Smartsheet row 2485299206809476",
+   "created_date": "2026-09-23T21:29:48.528000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444ccf3def4d6742fb329",
+   "client_name": "Carlisle Auto Sales",
+   "title": "Smartsheet row 7259059870623620",
+   "created_date": "2026-09-23T21:29:48.529000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444ccf3def4d6742fb32c",
+   "client_name": "Sunset Properties / The Alcove (Turpin Woods)",
+   "title": "Smartsheet row 2658237433636740",
+   "created_date": "2026-09-23T21:29:48.529000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d06c14133b464a01c8",
+   "client_name": "Sunset Properties / Skytop (Beechmont)",
+   "title": "Smartsheet row 5191586569971588",
+   "created_date": "2026-09-23T21:29:52.104000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d06c14133b464a01cb",
+   "client_name": "Heavens Gain Ministries",
+   "title": "Smartsheet row 4907720789321604",
+   "created_date": "2026-09-23T21:29:52.104000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d06c14133b464a01f5",
+   "client_name": "Dyno Group (Cheney)",
+   "title": "Smartsheet row 2337872636317572",
+   "created_date": "2026-09-23T21:29:52.106000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d06c14133b464a01f4",
+   "client_name": "Jeff Wyler Mazda Batavia",
+   "title": "Smartsheet row 8741865639415684",
+   "created_date": "2026-09-23T21:29:52.106000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d06c14133b464a01f6",
+   "client_name": "Triangle Signs/ Sunglass Hut",
+   "title": "Smartsheet row 916650604138372",
+   "created_date": "2026-09-23T21:29:52.106000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d06c14133b464a0216",
+   "client_name": "Blackgate Partners",
+   "title": "Smartsheet row 5115154082598788",
+   "created_date": "2026-09-23T21:29:52.107000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d06c14133b464a0221",
+   "client_name": "A Break 4 Mom Daycare",
+   "title": "Smartsheet row 8578424992468868",
+   "created_date": "2026-09-23T21:29:52.107000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d06c14133b464a021e",
+   "client_name": "Sysco",
+   "title": "Smartsheet row 7140451923955588",
+   "created_date": "2026-09-23T21:29:52.107000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d06c14133b464a01fb",
+   "client_name": "St Cecilia Church",
+   "title": "Smartsheet row 5572132498870148",
+   "created_date": "2026-09-23T21:29:52.107000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d06c14133b464a0204",
+   "client_name": "The Learning Kitchen",
+   "title": "Smartsheet row 7917818096684932",
+   "created_date": "2026-09-23T21:29:52.107000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d06c14133b464a0201",
+   "client_name": "Cincinnati Clifton Dental Care",
+   "title": "Smartsheet row 559022803292036",
+   "created_date": "2026-09-23T21:29:52.107000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d06c14133b464a0210",
+   "client_name": "City of Lebanon Multi Trail System Signs",
+   "title": "Smartsheet row 4593847257567108",
+   "created_date": "2026-09-23T21:29:52.107000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d06c14133b464a0200",
+   "client_name": "Fore Front Group",
+   "title": "Smartsheet row 5106671250870148",
+   "created_date": "2026-09-23T21:29:52.107000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d06c14133b464a0202",
+   "client_name": "Hauser Heating & AC",
+   "title": "Smartsheet row 6299355415613316",
+   "created_date": "2026-09-23T21:29:52.107000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d311e24b44f024104b",
+   "client_name": "EXAIR",
+   "title": "Smartsheet row 2636852296585092",
+   "created_date": "2026-09-23T21:29:55.383000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d311e24b44f024106a",
+   "client_name": "Raymond Storage Concepts Cincinnati Columbus Louisville",
+   "title": "Smartsheet row 1615217094463364",
+   "created_date": "2026-09-23T21:29:55.383000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d311e24b44f0241049",
+   "client_name": "St Charles Borromeo Catholic School",
+   "title": "Smartsheet row 5170127086980996",
+   "created_date": "2026-09-23T21:29:55.383000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d311e24b44f0241068",
+   "client_name": "Elford ITB CMHA Cobblestone Manor",
+   "title": "Smartsheet row 842337259786116",
+   "created_date": "2026-09-23T21:29:55.383000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d311e24b44f024104c",
+   "client_name": "Infinity Labs",
+   "title": "Smartsheet row 7984876854087556",
+   "created_date": "2026-09-23T21:29:55.383000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d311e24b44f0241066",
+   "client_name": "Mercy HealthPlex",
+   "title": "Smartsheet row 5085055613833092",
+   "created_date": "2026-09-23T21:29:55.383000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d311e24b44f0241083",
+   "client_name": "JP Flooring",
+   "title": "Smartsheet row 491250992975748",
+   "created_date": "2026-09-23T21:29:55.384000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d311e24b44f0241081",
+   "client_name": "Union Promenade Club Apartments",
+   "title": "Smartsheet row 1954376234209156",
+   "created_date": "2026-09-23T21:29:55.384000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d311e24b44f024107d",
+   "client_name": "Storyland Studios",
+   "title": "Smartsheet row 6284957815836548",
+   "created_date": "2026-09-23T21:29:55.384000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d311e24b44f0241073",
+   "client_name": "Raymond Storage Concepts Cincinnati",
+   "title": "Smartsheet row 7346852468264836",
+   "created_date": "2026-09-23T21:29:55.384000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d311e24b44f0241093",
+   "client_name": "Drug Shoppe",
+   "title": "Smartsheet row 6486136482795396",
+   "created_date": "2026-09-23T21:29:55.384000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d311e24b44f02410a7",
+   "client_name": "Superior Image Embroidery LLC",
+   "title": "Smartsheet row 787395296595844",
+   "created_date": "2026-09-23T21:29:55.385000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d311e24b44f02410a6",
+   "client_name": "Dohn - COTA High School",
+   "title": "Smartsheet row 398259215830916",
+   "created_date": "2026-09-23T21:29:55.385000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129aed",
+   "client_name": "Deluxe Dry Cleaners / Cox Rd",
+   "title": "Smartsheet row 2691694508642180",
+   "created_date": "2026-09-23T21:30:00.719000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129adc",
+   "client_name": "Hyde Park Wellness",
+   "title": "Smartsheet row 7029168900640644",
+   "created_date": "2026-09-23T21:30:00.719000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129aea",
+   "client_name": "PersonaTriangle",
+   "title": "Smartsheet row 332492642455428",
+   "created_date": "2026-09-23T21:30:00.719000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129ae1",
+   "client_name": "MDI / AFAm Chamber",
+   "title": "Smartsheet row 708093883944836",
+   "created_date": "2026-09-23T21:30:00.719000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129aec",
+   "client_name": "Cincinnati Custom Signs",
+   "title": "Smartsheet row 4454794068463492",
+   "created_date": "2026-09-23T21:30:00.719000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129aeb",
+   "client_name": "Concentrix Corporation - Prospective Client",
+   "title": "Smartsheet row 385052482899844",
+   "created_date": "2026-09-23T21:30:00.719000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129af7",
+   "client_name": "Jackson Taylor Construction/Fed Ex Legacy",
+   "title": "Smartsheet row 3026734163300228",
+   "created_date": "2026-09-23T21:30:00.720000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129b26",
+   "client_name": "Mailbox Solutions",
+   "title": "Smartsheet row 2657816622468996",
+   "created_date": "2026-09-23T21:30:00.720000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129b25",
+   "client_name": "Regen Life Centers",
+   "title": "Smartsheet row 1973771162161028",
+   "created_date": "2026-09-23T21:30:00.720000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129b19",
+   "client_name": "St. Michael's Church - 9mm EMC - Panel Problem",
+   "title": "Smartsheet row 3666271645798276",
+   "created_date": "2026-09-23T21:30:00.720000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129b3e",
+   "client_name": "Origin: Banner and Window Vinyl",
+   "title": "Smartsheet row 3005670759796612",
+   "created_date": "2026-09-23T21:30:00.721000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129b39",
+   "client_name": "Beech Acres - Elsinore Place",
+   "title": "Smartsheet row 4933393907781508",
+   "created_date": "2026-09-23T21:30:00.721000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129b29",
+   "client_name": "Black Swan Holdings/The Woods of Wyoming Apartments",
+   "title": "Smartsheet row 6889549959991172",
+   "created_date": "2026-09-23T21:30:00.721000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129b2e",
+   "client_name": "Mercy HealthPlex",
+   "title": "Smartsheet row 881319127682948",
+   "created_date": "2026-09-23T21:30:00.721000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129b3c",
+   "client_name": "Beech Acres - Glenmore Ave (Timeline)",
+   "title": "Smartsheet row 2681594094096260",
+   "created_date": "2026-09-23T21:30:00.721000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444d805d3977fe0129b2d",
+   "client_name": "Cincinnati Custom Signs- Awning",
+   "title": "Smartsheet row 482239986405252",
+   "created_date": "2026-09-23T21:30:00.721000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444dc1527e1647231926b",
+   "client_name": "Showcase Building and Design",
+   "title": "Smartsheet row 8217732940763012",
+   "created_date": "2026-09-23T21:30:04.112000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444dc1527e16472319267",
+   "client_name": "Yonutz",
+   "title": "Smartsheet row 8708758769962884",
+   "created_date": "2026-09-23T21:30:04.112000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444dc1527e1647231928a",
+   "client_name": "America Freight Furniture & Mattress",
+   "title": "Smartsheet row 5596728209637252",
+   "created_date": "2026-09-23T21:30:04.112000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444dc1527e16472319286",
+   "client_name": "Anderson Square Apt",
+   "title": "Smartsheet row 8555768887967620",
+   "created_date": "2026-09-23T21:30:04.112000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444dc1527e16472319263",
+   "client_name": "Suburban Propane",
+   "title": "Smartsheet row 4441038276726660",
+   "created_date": "2026-09-23T21:30:04.112000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444dc1527e1647231927b",
+   "client_name": "Best Point ( Gymnasium floor",
+   "title": "Smartsheet row 3062596064182148",
+   "created_date": "2026-09-23T21:30:04.112000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444dc1527e16472319275",
+   "client_name": "Triangle Signs - Banana Republic Factory",
+   "title": "Smartsheet row 4357315477700484",
+   "created_date": "2026-09-23T21:30:04.112000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444dc1527e16472319268",
+   "client_name": "Joe's Pizza Napoli",
+   "title": "Smartsheet row 1184611134930820",
+   "created_date": "2026-09-23T21:30:04.112000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444dc1527e1647231925d",
+   "client_name": "Specialized Education of Ohio (High School Rd School) Wall Decal",
+   "title": "Smartsheet row 143215420444548",
+   "created_date": "2026-09-23T21:30:04.112000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444dc1527e1647231927c",
+   "client_name": "John P. Tumlin & Sons LTD.( RFQ- Aerohub Signage",
+   "title": "Smartsheet row 8422309710724996",
+   "created_date": "2026-09-23T21:30:04.112000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444dc1527e16472319298",
+   "client_name": "CLB Restaurants / Matt the Miller's Tavern",
+   "title": "Smartsheet row 120225585631108",
+   "created_date": "2026-09-23T21:30:04.113000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444dc1527e164723192bd",
+   "client_name": "Best Point / Hamilton Phase 3",
+   "title": "Smartsheet row 5825760661667716",
+   "created_date": "2026-09-23T21:30:04.113000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444dc1527e164723192a7",
+   "client_name": "Keller Custom Signs - The Service Experts",
+   "title": "Smartsheet row 1372257511145348",
+   "created_date": "2026-09-23T21:30:04.113000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444dc1527e164723192b1",
+   "client_name": "Sigma Chi Fraternity House",
+   "title": "Smartsheet row 3033287519764356",
+   "created_date": "2026-09-23T21:30:04.113000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151941",
+   "client_name": "Bluegrass Urgent Care independence",
+   "title": "Smartsheet row 4074511117537156",
+   "created_date": "2026-09-23T21:30:07.701000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151943",
+   "client_name": "Carl Zeiss",
+   "title": "Smartsheet row 7359381298276228",
+   "created_date": "2026-09-23T21:30:07.701000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151939",
+   "client_name": "Anchor Signs (Outback Steak House)",
+   "title": "Smartsheet row 3052799619295108",
+   "created_date": "2026-09-23T21:30:07.701000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151940",
+   "client_name": "Bluegrass Urgent Care Cold Spring",
+   "title": "Smartsheet row 6326310931222404",
+   "created_date": "2026-09-23T21:30:07.701000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151966",
+   "client_name": "Metropolitan Sewer District of Greater Cinti. Admin. Bldg",
+   "title": "Smartsheet row 3879009528090500",
+   "created_date": "2026-09-23T21:30:07.702000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151965",
+   "client_name": "Mary's Casera",
+   "title": "Smartsheet row 853878967691140",
+   "created_date": "2026-09-23T21:30:07.702000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b458115194d",
+   "client_name": "DGS/Athletico WC Beckett Ridge",
+   "title": "Smartsheet row 3584876092647300",
+   "created_date": "2026-09-23T21:30:07.702000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b458115195b",
+   "client_name": "Jaime Tree Service",
+   "title": "Smartsheet row 4670930653865860",
+   "created_date": "2026-09-23T21:30:07.702000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b458115195e",
+   "client_name": "Kelly Operations Business/ Fox & Hound",
+   "title": "Smartsheet row 6914287845042052",
+   "created_date": "2026-09-23T21:30:07.702000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151952",
+   "client_name": "Frost Haus Banner",
+   "title": "Smartsheet row 7944686511646596",
+   "created_date": "2026-09-23T21:30:07.702000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151964",
+   "client_name": "Lord Smoke Shop",
+   "title": "Smartsheet row 2410688217671556",
+   "created_date": "2026-09-23T21:30:07.702000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151967",
+   "client_name": "Midwest Eye / Florence",
+   "title": "Smartsheet row 8941173136811908",
+   "created_date": "2026-09-23T21:30:07.702000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151963",
+   "client_name": "Liberty Tax Hamilton",
+   "title": "Smartsheet row 8261992306239364",
+   "created_date": "2026-09-23T21:30:07.702000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151951",
+   "client_name": "Frost Haus",
+   "title": "Smartsheet row 4953963337934724",
+   "created_date": "2026-09-23T21:30:07.702000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151948",
+   "client_name": "CST Signs",
+   "title": "Smartsheet row 1122166050082692",
+   "created_date": "2026-09-23T21:30:07.702000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151969",
+   "client_name": "Midwest Eye / Kenwood",
+   "title": "Smartsheet row 4437573509441412",
+   "created_date": "2026-09-23T21:30:07.702000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151968",
+   "client_name": "Midwest Eye / Hamilton",
+   "title": "Smartsheet row 6689373323126660",
+   "created_date": "2026-09-23T21:30:07.702000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b458115196d",
+   "client_name": "NT Nails",
+   "title": "Smartsheet row 7114090690678660",
+   "created_date": "2026-09-23T21:30:07.704000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151978",
+   "client_name": "Ritter Family Martial Art",
+   "title": "Smartsheet row 7695211694974852",
+   "created_date": "2026-09-23T21:30:07.704000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151970",
+   "client_name": "Performance Health Chiropractic",
+   "title": "Smartsheet row 192372547839876",
+   "created_date": "2026-09-23T21:30:07.704000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b458115196b",
+   "client_name": "Minuteman Press/New Jerusalem Baptist",
+   "title": "Smartsheet row 4662488031356804",
+   "created_date": "2026-09-23T21:30:07.704000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151973",
+   "client_name": "Principle Global ** Abbvie",
+   "title": "Smartsheet row 3828888407592836",
+   "created_date": "2026-09-23T21:30:07.704000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151979",
+   "client_name": "Robert Clark",
+   "title": "Smartsheet row 7201711645740932",
+   "created_date": "2026-09-23T21:30:07.704000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b458115198a",
+   "client_name": "TLG Trucks",
+   "title": "Smartsheet row 6149024363112324",
+   "created_date": "2026-09-23T21:30:07.705000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151980",
+   "client_name": "Southwater/ Fairfield",
+   "title": "Smartsheet row 5509888914024324",
+   "created_date": "2026-09-23T21:30:07.705000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b458115198d",
+   "client_name": "Transfiguration of Spirituality",
+   "title": "Smartsheet row 5659080152272772",
+   "created_date": "2026-09-23T21:30:07.705000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151996",
+   "client_name": "Weiss Technik",
+   "title": "Smartsheet row 3076310590089092",
+   "created_date": "2026-09-23T21:30:07.705000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b458115198f",
+   "client_name": "United Performance",
+   "title": "Smartsheet row 5963708617254788",
+   "created_date": "2026-09-23T21:30:07.705000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151985",
+   "client_name": "Sunset Properties / Delta Ave",
+   "title": "Smartsheet row 6215765036558212",
+   "created_date": "2026-09-23T21:30:07.705000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b458115197e",
+   "client_name": "Skidmore",
+   "title": "Smartsheet row 6430499339822980",
+   "created_date": "2026-09-23T21:30:07.705000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151984",
+   "client_name": "Studio Vertu",
+   "title": "Smartsheet row 8440515444559748",
+   "created_date": "2026-09-23T21:30:07.705000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b4581151995",
+   "client_name": "Weiss Technik",
+   "title": "Smartsheet row 7988351678582660",
+   "created_date": "2026-09-23T21:30:07.705000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444df19446b458115198b",
+   "client_name": "Tracy Ray Farmer Florist",
+   "title": "Smartsheet row 5981201050429316",
+   "created_date": "2026-09-23T21:30:07.705000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ab444e0f84d8ff6a30bb8d3",
+   "client_name": "Heritage Estates",
+   "title": "Smartsheet row 3229346934947716",
+   "created_date": "2026-09-23T21:30:08.954000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6adabff1d8bdac6656452ca4",
+   "client_name": "DDI - Club Studio",
+   "title": "DDI - Club Studio",
+   "created_date": "2026-10-23T02:01:21.356000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6adabff1d8bdac6656452c9a",
+   "client_name": "Edgewood Office Suites",
+   "title": "Edgewood Office Suites",
+   "created_date": "2026-10-23T02:01:21.356000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6adabff1d8bdac6656452cbf",
+   "client_name": "Best Point - Medpace-CoStars",
+   "title": "Best Point - Medpace-CoStars",
+   "created_date": "2026-10-23T02:01:21.357000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6adf74487ab8a188bfdcfe63",
+   "client_name": "Prestige Installation LLC - Chamberlain Univ.",
+   "title": "Prestige Installation LLC - Chamberlain Univ.",
+   "created_date": "2026-10-26T15:39:52.374000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ae213c9173bcab152d8a576",
+   "client_name": "Christ Community Life Center",
+   "title": "Christ Community Life Church",
+   "created_date": "2026-10-28T15:24:57.979000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6ae4ff0971db664385a03707",
+   "client_name": "A to Z Retirement Planning",
+   "title": "A to Z Retirement Planning",
+   "created_date": "2026-10-30T20:33:13.460000",
+   "corbridge_link": ""
+  },
+  {
+   "id": "6af5f7910dfc0778df5bc26f",
+   "client_name": "Midwest Centers for Sight - Kenwood Surgery Center",
+   "title": "Midwest Centers for Sight - Kenwood Surgery Center",
+   "created_date": "2026-11-12T17:29:53.026000",
+   "corbridge_link": ""
+  }
+ ]
+}

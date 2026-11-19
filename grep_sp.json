@@ -1,0 +1,816 @@
+{
+  "matches": [
+    {
+      "path": "src/components/crm/crmEventsModel.js",
+      "line": 140,
+      "text": "// Distinct assigned_to values across CRM events, for the salesperson filter."
+    },
+    {
+      "path": "src/components/crm/CrmEventsQueue.jsx",
+      "line": 283,
+      "text": "        <FilterField label=\"Salesperson\">"
+    },
+    {
+      "path": "src/components/estimator/estimateLifecycle.js",
+      "line": 73,
+      "text": "    \"contact_email\", \"contact_phone\", \"salesperson\", \"target_install_date\", \"priority\", \"tags\",\r"
+    },
+    {
+      "path": "src/components/estimator/EstimateRevisionPanel.jsx",
+      "line": 35,
+      "text": "  [\"salesperson\", \"Salesperson\", (v) => v || \"—\"],"
+    },
+    {
+      "path": "src/components/estimator/customerSync.js",
+      "line": 15,
+      "text": "const CUSTOMER_SYNC_KEYS = [\"client_name\", \"office_phone\", \"order_contact\", \"contact_email\", \"office_phone_ext\", \"salesperson\", \"sales_center\", \"tax_group\", \"terms\", \"site_address\"];"
+    },
+    {
+      "path": "src/components/estimator/customerSync.js",
+      "line": 134,
+      "text": "    ...(include(\"salesperson\") ? { salesperson: form.salesperson } : {}),"
+    },
+    {
+      "path": "src/components/estimator/customerSync.js",
+      "line": 241,
+      "text": "    sales_rep: firstNonBlank(estimate.salesperson, existing?.sales_rep),"
+    },
+    {
+      "path": "src/components/estimator/customerSync.js",
+      "line": 242,
+      "text": "    estimator: firstNonBlank(estimate.salesperson, existing?.estimator),"
+    },
+    {
+      "path": "src/components/estimator/customerSync.js",
+      "line": 452,
+      "text": "      salesperson: wo.sales_rep || \"\","
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 97,
+      "text": "      salesperson: c.salesperson || form.salesperson,\r"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 426,
+      "text": "          <Row label=\"Salesperson\">\r"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 428,
+      "text": "              value={form.salesperson}\r"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 429,
+      "text": "              onChange={(e) => patch({ salesperson: e.target.value })}\r"
+    },
+    {
+      "path": "src/components/estimator/EstimateAcceptancePanel.jsx",
+      "line": 488,
+      "text": "            <div className=\"rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-800\"><strong>This cannot be undone from this panel.</strong> The estimate's Sales Pipeline stage moves to Lost and the follow-up task is assigned to {estimate?.salesperson || persistedEstimate?.salesperson || \"the estimate owner\"}.</div>"
+    },
+    {
+      "path": "src/components/estimator/EstimateHeaderForm.jsx",
+      "line": 14,
+      "text": "  { key: \"salesperson\", label: \"Salesperson\" },"
+    },
+    {
+      "path": "src/components/estimator/workOrderConversion.js",
+      "line": 292,
+      "text": "    sales_rep: firstNonBlank(estimate.salesperson, existing?.sales_rep),"
+    },
+    {
+      "path": "src/components/estimator/workOrderConversion.js",
+      "line": 293,
+      "text": "    estimator: firstNonBlank(estimate.salesperson, existing?.estimator),"
+    },
+    {
+      "path": "src/components/estimator/deepLinks.js",
+      "line": 62,
+      "text": "  \"salesperson_email\","
+    },
+    {
+      "path": "src/components/imports/ImportWizard.jsx",
+      "line": 32,
+      "text": "  \"contact_email\", \"contact_office_ext\", \"salesperson\", \"location\","
+    },
+    {
+      "path": "src/components/imports/importModel.js",
+      "line": 142,
+      "text": "      { key: \"salesperson\", label: \"Salesperson\", synonyms: [\"salesperson\", \"sales_rep\", \"rep\"] },\r"
+    },
+    {
+      "path": "src/components/workflow/WorkOrderForm.jsx",
+      "line": 329,
+      "text": "  // Get salespersons from authorized users with sales roles"
+    },
+    {
+      "path": "src/components/workflow/WorkOrderForm.jsx",
+      "line": 330,
+      "text": "  const salespersons = authorizedUsers.filter(u => "
+    },
+    {
+      "path": "src/components/workflow/WorkOrderForm.jsx",
+      "line": 331,
+      "text": "    u.sales_roles?.includes(\"Sales Rep\") || u.sales_roles?.includes(\"Salesperson\")"
+    },
+    {
+      "path": "src/components/workflow/WorkOrderForm.jsx",
+      "line": 1257,
+      "text": "          {/* Stage, Assignment, and Salesperson */}"
+    },
+    {
+      "path": "src/components/workflow/WorkOrderForm.jsx",
+      "line": 1300,
+      "text": "              <Label className=\"text-gray-700 font-medium\">Salesperson</Label>"
+    },
+    {
+      "path": "src/components/workflow/WorkOrderForm.jsx",
+      "line": 1303,
+      "text": "                  <SelectValue placeholder=\"Select salesperson\" />"
+    },
+    {
+      "path": "src/components/workflow/WorkOrderForm.jsx",
+      "line": 1306,
+      "text": "                  {salespersons.length > 0 ? ("
+    },
+    {
+      "path": "src/components/workflow/WorkOrderForm.jsx",
+      "line": 1307,
+      "text": "                    salespersons.map((person) => ("
+    },
+    {
+      "path": "src/components/workflow/attentionFeedCategories.js",
+      "line": 107,
+      "text": "        secondary: `due ${i.due_date} · ${feedMoney(i.balance_due)} open${i.salesperson_email ? ` · ${i.salesperson_email}` : \"\"}`,"
+    },
+    {
+      "path": "src/components/workflow/attentionFeedCategories.js",
+      "line": 148,
+      "text": "        primary: `${o.title || o.customer_display_name || \"Opportunity\"}${o.salesperson ? ` · ${o.salesperson}` : \"\"}`,"
+    },
+    {
+      "path": "src/components/workflow/attentionFeedCategories.js",
+      "line": 205,
+      "text": "        secondary: `${e.client_name || \"\"}${e.days_until_expiry != null ? ` · expires in ${e.days_until_expiry}d` : \"\"}${e.salesperson_email ? ` · ${e.salesperson_email}` : \"\"}`,"
+    },
+    {
+      "path": "src/components/workflow/attentionFeedCategories.js",
+      "line": 219,
+      "text": "        secondary: `${e.client_name || \"\"}${e.quote_expiration_date ? ` · expired ${e.quote_expiration_date}` : \"\"}${e.salesperson_email ? ` · ${e.salesperson_email}` : \"\"}`,"
+    },
+    {
+      "path": "src/components/admin/SmartsheetSyncSettings.jsx",
+      "line": 47,
+      "text": "  sales_rep: [\"sales rep\", \"rep\", \"salesperson\", \"sales person\", \"sales representative\", \"owner\", \"sales owner\", \"deal owner\", \"assigned rep\"],"
+    },
+    {
+      "path": "src/components/admin/smartsheetTaskAssigneeModel.js",
+      "line": 2,
+      "text": "import { salesPersonUsersForRole } from \"../sales/salesPersonIdentity.mjs\";"
+    },
+    {
+      "path": "src/components/admin/smartsheetTaskAssigneeModel.js",
+      "line": 6,
+      "text": "  return salesPersonUsersForRole(users, \"Task Assigned\");"
+    },
+    {
+      "path": "src/components/customer360/Sections.jsx",
+      "line": 111,
+      "text": "          <InfoRow label=\"Salesperson\">{clean(c.salesperson)}</InfoRow>"
+    },
+    {
+      "path": "src/components/customer360/Sections.jsx",
+      "line": 163,
+      "text": "                    {[clean(o.stage).replace(/_/g, \" \"), clean(o.salesperson), clean(o.desired_install_date) && `install ${clean(o.desired_install_date).slice(0, 10)}`]"
+    },
+    {
+      "path": "src/components/customer360/Sections.jsx",
+      "line": 465,
+      "text": "              { label: \"Salesperson\", render: (o) => clean(o.salesperson) || \"—\" },"
+    },
+    {
+      "path": "src/components/jobs/JobWorkspace.jsx",
+      "line": 499,
+      "text": "          <div><div className=\"font-semibold uppercase tracking-wide text-gray-400\">Salesperson</div><div className=\"mt-0.5 text-sm text-gray-800\">{wo.sales_rep || wo.representative || \"—\"}</div></div>"
+    },
+    {
+      "path": "src/components/sales/SalesOpportunityDialog.jsx",
+      "line": 20,
+      "text": "import { buildSalesPersonSelectModel } from \"@/components/sales/salesPersonIdentity.mjs\";"
+    },
+    {
+      "path": "src/components/sales/SalesOpportunityDialog.jsx",
+      "line": 301,
+      "text": "  const salesOwnerSelect = buildSalesPersonSelectModel(workOrder?.sales_rep, users);"
+    },
+    {
+      "path": "src/components/sales/salesColumnCatalog.mjs",
+      "line": 8,
+      "text": "  { id: \"sales_rep\", label: \"Salesperson / Owner\", headerLabel: \"Sales Owner\", minWidth: 115 },"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineMobileCards.jsx",
+      "line": 9,
+      "text": "import { buildSalesPersonSelectModel } from \"@/components/sales/salesPersonIdentity.mjs\";"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineMobileCards.jsx",
+      "line": 63,
+      "text": "        const salesOwnerLabel = buildSalesPersonSelectModel(wo.sales_rep, users).canonical;"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineKanban.jsx",
+      "line": 8,
+      "text": "import { buildSalesPersonSelectModel } from \"@/components/sales/salesPersonIdentity.mjs\";"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineKanban.jsx",
+      "line": 112,
+      "text": "                        <span className=\"truncate\">{buildSalesPersonSelectModel(workOrder.sales_rep, users).canonical || \"Unassigned\"}</span>"
+    },
+    {
+      "path": "src/components/sales/BulkDuplicateCleanup.jsx",
+      "line": 9,
+      "text": "import { loadSalesPersonRosterSafely } from \"@/components/sales/salesFilterPersistence\";\r"
+    },
+    {
+      "path": "src/components/sales/BulkDuplicateCleanup.jsx",
+      "line": 10,
+      "text": "import { buildSalesPersonSelectModel } from \"@/components/sales/salesPersonIdentity.mjs\";\r"
+    },
+    {
+      "path": "src/components/sales/BulkDuplicateCleanup.jsx",
+      "line": 145,
+      "text": "                    {wo.current_task_assigned_to && <span>→ {buildSalesPersonSelectModel(wo.current_task_assigned_to, users, \"Task Assigned\").canonical}</span>}\r"
+    },
+    {
+      "path": "src/components/sales/BulkDuplicateCleanup.jsx",
+      "line": 189,
+      "text": "        loadSalesPersonRosterSafely({ sessionToken, label: \"Duplicate Cleanup authorized users\" }),\r"
+    },
+    {
+      "path": "src/components/sales/CustomFilterDialog.jsx",
+      "line": 13,
+      "text": "import { createSalesFilterIfAbsent, createUniqueSalesFilterCopy, deleteSalesFilterIfUnchanged, loadSalesPersonRosterSafely, setSalesFilterSelectionSafely, updateSalesFilterIfUnchanged } from \"@/components/sales/salesFilterPersistence\";"
+    },
+    {
+      "path": "src/components/sales/CustomFilterDialog.jsx",
+      "line": 18,
+      "text": "import { salesPersonUsersForRole } from \"@/components/sales/salesPersonIdentity.mjs\";"
+    },
+    {
+      "path": "src/components/sales/CustomFilterDialog.jsx",
+      "line": 25,
+      "text": "  { value: \"sales_rep\", label: \"Salesperson / Owner\", type: \"user\" },"
+    },
+    {
+      "path": "src/components/sales/CustomFilterDialog.jsx",
+      "line": 148,
+      "text": "    const usersData = await loadSalesPersonRosterSafely({ sessionToken, label: \"Sales custom-filter users\" });"
+    },
+    {
+      "path": "src/components/sales/CustomFilterDialog.jsx",
+      "line": 152,
+      "text": "  const getUsersForRole = (role) => salesPersonUsersForRole(users, role || null);"
+    },
+    {
+      "path": "src/components/sales/salesFilterPersistence.js",
+      "line": 115,
+      "text": "const ROSTER_STORAGE_KEY = \"ccsSalesPersonRoster\";"
+    },
+    {
+      "path": "src/components/sales/salesFilterPersistence.js",
+      "line": 152,
+      "text": "export async function loadSalesPersonRosterSafely({ sessionToken, label = \"Sales person roster\" } = {}) {"
+    },
+    {
+      "path": "src/components/sales/salesPersonIdentity.mjs",
+      "line": 20,
+      "text": "export function canonicalSalesPersonRoster(users = []) {"
+    },
+    {
+      "path": "src/components/sales/salesPersonIdentity.mjs",
+      "line": 59,
+      "text": "export function salesPersonUsersForRole(users = [], role = null) {"
+    },
+    {
+      "path": "src/components/sales/salesPersonIdentity.mjs",
+      "line": 60,
+      "text": "  return canonicalSalesPersonRoster(users).filter((user) => roleMatch(user, role));"
+    },
+    {
+      "path": "src/components/sales/salesPersonIdentity.mjs",
+      "line": 63,
+      "text": "export function buildSalesPersonSelectModel(value, users = [], role = null) {"
+    },
+    {
+      "path": "src/components/sales/salesPersonIdentity.mjs",
+      "line": 64,
+      "text": "  const options = salesPersonUsersForRole(users, role);"
+    },
+    {
+      "path": "src/components/sales/salesPersonIdentity.mjs",
+      "line": 73,
+      "text": "export function salesPersonSearchText(value, users = [], role = null) {"
+    },
+    {
+      "path": "src/components/sales/salesPersonIdentity.mjs",
+      "line": 75,
+      "text": "  const canonical = buildSalesPersonSelectModel(value, users, role).canonical;"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 49,
+      "text": "import { buildSalesPersonSelectModel, salesPersonSearchText, salesPersonUsersForRole } from \"@/components/sales/salesPersonIdentity.mjs\";"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 57,
+      "text": "import { loadSalesPersonRosterSafely } from \"@/components/sales/salesFilterPersistence\";"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 140,
+      "text": "  return salesPersonUsersForRole(users, SALES_USER_FILTER_ROLES[field]);"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 717,
+      "text": "      const usersPromise = loadSalesPersonRosterSafely({ sessionToken, label: \"Sales Pipeline authorized users\" });"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2438,
+      "text": "      const ownerLabel = buildSalesPersonSelectModel(wo.sales_rep, users).canonical || \"Unassigned\";"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2458,
+      "text": "        const quoteOwnerLabel = buildSalesPersonSelectModel(wo.sales_rep, users).canonical || \"Unassigned\";"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2540,
+      "text": "          ? (buildSalesPersonSelectModel(rawLabel, users).canonical || fallbackLabel)"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2604,
+      "text": "          salesPersonSearchText(viewWo.sales_rep, users),"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2605,
+      "text": "          salesPersonSearchText(viewWo.estimator, users, \"Estimator\"),"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2606,
+      "text": "          salesPersonSearchText(viewWo.project_manager, users, \"PM\"),"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2607,
+      "text": "          salesPersonSearchText(viewWo.designer, users, \"Designer\"),"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2608,
+      "text": "          salesPersonSearchText(viewWo.current_task_assigned_to, users, \"Task Assigned\"),"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2710,
+      "text": "        aVal = buildSalesPersonSelectModel(aVal, users, role).canonical;"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2711,
+      "text": "        bVal = buildSalesPersonSelectModel(bVal, users, role).canonical;"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 3330,
+      "text": "                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'sales_rep' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('sales_rep')} onContextMenu={(e) => handleHeaderContextMenu(e, 'sales_rep', 'Salesperson / Owner')}>"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineRow.jsx",
+      "line": 16,
+      "text": "import { buildSalesPersonSelectModel } from \"@/components/sales/salesPersonIdentity.mjs\";\r"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineRow.jsx",
+      "line": 110,
+      "text": "  const salesOwnerSelect = buildSalesPersonSelectModel(wo.sales_rep, users);\r"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineRow.jsx",
+      "line": 111,
+      "text": "  const designerSelect = buildSalesPersonSelectModel(wo.designer, users, 'Designer');\r"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineRow.jsx",
+      "line": 112,
+      "text": "  const projectManagerSelect = buildSalesPersonSelectModel(wo.project_manager, users, 'PM');\r"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineRow.jsx",
+      "line": 113,
+      "text": "  const estimatorSelect = buildSalesPersonSelectModel(wo.estimator, users, 'Estimator');\r"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineRow.jsx",
+      "line": 188,
+      "text": "                <td key={columnId} className=\"px-1 py-0.5 border-r\" onContextMenu={(e) => handleContextMenu(e, wo, \"sales_rep\", \"Salesperson / Owner\", wo.sales_rep)}>\r"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineInsights.jsx",
+      "line": 226,
+      "text": "              <CoverageRow label=\"Sales owner\" covered={summary?.assignedOwnerCount || 0} total={openCount} note=\"Needed for fair salesperson workload and performance reporting.\" />"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineInsights.jsx",
+      "line": 234,
+      "text": "              <span>{pipelineHygieneReady ? \"No exact-name test placeholders are currently flagged.\" : `${placeholderCount} exact-name test placeholder${placeholderCount === 1 ? \" remains\" : \"s remain\"} in raw Current Pipeline reporting.`} {outcomeReady ? `${summary.totalTrackedOutcomeCount} authoritative Won/Lost outcome${summary.totalTrackedOutcomeCount === 1 ? \" is\" : \"s are\"} available for outcome reporting.` : \"No authoritative modern Won/Lost outcomes exist yet, so salesperson and source conversion rankings are not meaningful yet.\"} {stageReady ? \"Stage-change timing has full current-pipeline coverage.\" : \"Days-in-stage reporting remains intentionally withheld until stage-change timing has meaningful coverage.\"}</span>"
+    },
+    {
+      "path": "src/components/sales/SalesDailyQueue.jsx",
+      "line": 7,
+      "text": "import { buildSalesPersonSelectModel } from \"@/components/sales/salesPersonIdentity.mjs\";"
+    },
+    {
+      "path": "src/components/sales/SalesDailyQueue.jsx",
+      "line": 24,
+      "text": "const canonicalOwnerKey = (value, users) => ownerKey(buildSalesPersonSelectModel(value, users).canonical);"
+    },
+    {
+      "path": "src/components/sales/SalesDailyQueue.jsx",
+      "line": 157,
+      "text": "                  const salesOwnerLabel = buildSalesPersonSelectModel(workOrder.sales_rep, users).canonical;"
+    },
+    {
+      "path": "src/components/comms/notifyModel.js",
+      "line": 151,
+      "text": "  const salesperson ="
+    },
+    {
+      "path": "src/components/comms/notifyModel.js",
+      "line": 154,
+      "text": "    clean(estimate?.salesperson) ||"
+    },
+    {
+      "path": "src/components/comms/notifyModel.js",
+      "line": 155,
+      "text": "    clean(customer?.salesperson);"
+    },
+    {
+      "path": "src/components/comms/notifyModel.js",
+      "line": 177,
+      "text": "    salesperson_name: salesperson,"
+    },
+    {
+      "path": "src/components/comms/notifyModel.js",
+      "line": 209,
+      "text": "  salesperson_name: \"brett@ccssigns.com\","
+    },
+    {
+      "path": "src/components/comms/notifySend.js",
+      "line": 148,
+      "text": " *   cc           — optional CC address (billing, salesperson)"
+    },
+    {
+      "path": "src/components/comms/notificationTemplates.js",
+      "line": 39,
+      "text": "  \"salesperson_name\","
+    },
+    {
+      "path": "src/components/comms/notificationTemplates.js",
+      "line": 60,
+      "text": "      \"due_date\", \"salesperson_name\", \"portal_link\", \"company_name\","
+    },
+    {
+      "path": "src/components/comms/notificationTemplates.js",
+      "line": 70,
+      "text": "      \"Thank you,\\n{{salesperson_name}}\\n{{company_name}}\","
+    },
+    {
+      "path": "src/components/comms/notificationTemplates.js",
+      "line": 82,
+      "text": "      \"salesperson_name\", \"portal_link\", \"company_name\","
+    },
+    {
+      "path": "src/components/comms/notificationTemplates.js",
+      "line": 114,
+      "text": "      \"due_date\", \"salesperson_name\", \"company_name\","
+    },
+    {
+      "path": "src/components/comms/notificationTemplates.js",
+      "line": 142,
+      "text": "      \"salesperson_name\", \"company_name\","
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 45,
+      "text": "  salesperson: \"all\", location: \"all\","
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 70,
+      "text": "const VIEW_FILTER_KEYS = [\"from\", \"to\", \"salesperson\", \"location\", \"responsibility\", \"assignedTo\", \"designer\", \"dateBasis\"];"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 388,
+      "text": "      salesperson: uniqueSorted(["
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 390,
+      "text": "        ...estimates.map((e) => e?.salesperson),"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 426,
+      "text": "        if (filters.salesperson !== \"all\" && norm(wo?.sales_rep || wo?.representative) !== norm(filters.salesperson)) return false;"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 433,
+      "text": "        if (filters.salesperson !== \"all\" && clean(est?.salesperson) !== filters.salesperson) return false;"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 568,
+      "text": "  const filtersActive = filters.from || filters.to || filters.salesperson !== \"all\" || filters.location !== \"all\""
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 684,
+      "text": "            {has(\"salesperson\") && ("
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 685,
+      "text": "              <ReportFilterSelect label=\"Salesperson\" value={filters.salesperson} onChange={(v) => set(\"salesperson\", v)} options={options.salesperson} />"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 376,
+      "text": "// Estimate conversion by salesperson — created / converted / cancelled /"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 377,
+      "text": "// archived / open per AllInOneEstimate.salesperson. An estimate counts as"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 384,
+      "text": "    const key = clean(est.salesperson) || \"Unassigned\";"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 414,
+      "text": "      { key: \"salesperson\", label: \"Salesperson\" },"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1107,
+      "text": "// Avg Quote Value by Month per Salesperson (#277) — created-month cohorts"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1108,
+      "text": "// bucketed by salesperson: created count, quote value, per-month average,"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1116,
+      "text": "    const rep = clean(est.salesperson) || \"Unassigned\";"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1133,
+      "text": "      { key: \"salesperson\", label: \"Salesperson\" },"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1579,
+      "text": "    filters: [\"createdRange\", \"salesperson\"],"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1599,
+      "text": "    filters: [\"createdRange\", \"salesperson\"],"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1616,
+      "text": "    title: \"Estimate Conversion by Salesperson\","
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1619,
+      "text": "    filters: [\"createdRange\", \"salesperson\", \"location\"],"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1620,
+      "text": "    description: \"Created / converted / cancelled estimates per salesperson.\","
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1629,
+      "text": "    filters: [\"createdRange\", \"salesperson\", \"location\"],"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1639,
+      "text": "    filters: [\"createdRange\", \"salesperson\"],"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1712,
+      "text": "    filters: [\"createdRange\", \"salesperson\", \"location\"],"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1713,
+      "text": "    description: \"Per-month average quote value per salesperson (created-month cohorts).\","
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1722,
+      "text": "    filters: [\"createdRange\", \"salesperson\", \"location\"],"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1732,
+      "text": "    filters: [\"createdRange\", \"salesperson\", \"location\"],"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1742,
+      "text": "    filters: [\"createdRange\", \"salesperson\", \"location\"],"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1772,
+      "text": "    filters: [\"createdRange\", \"salesperson\"],"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 432,
+      "text": "                {Array.isArray(pipeline.estimate_funnel.by_salesperson) && pipeline.estimate_funnel.by_salesperson.length > 0 && (\r"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 434,
+      "text": "                    <div className=\"text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5\">By salesperson</div>\r"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 436,
+      "text": "                      {pipeline.estimate_funnel.by_salesperson.slice(0, 6).map((s) => (\r"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 437,
+      "text": "                        <div key={s.salesperson} className=\"flex items-center justify-between text-[11px] rounded border border-gray-100 px-2 py-1\">\r"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 438,
+      "text": "                          <span className=\"truncate text-gray-700\">{s.salesperson}</span>\r"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 57,
+      "text": "  \"salesperson\","
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 73,
+      "text": "  salesperson: \"\","
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 169,
+      "text": "    salesperson: \"\", lead_source: \"\", budget_amount: \"\", desired_install_date: \"\","
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 270,
+      "text": "          <Field label=\"Salesperson\">"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 271,
+      "text": "            <input className={inputCls} value={f.salesperson} onChange={(e) => set(\"salesperson\", e.target.value)} />"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 732,
+      "text": "                    {r.salesperson && <div className=\"text-xs text-slate-400\">{r.salesperson}</div>}"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 800,
+      "text": "        salesperson: clean(o.salesperson),"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 886,
+      "text": "              {o.salesperson ? ` · ${o.salesperson}` : \"\"}"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 909,
+      "text": "                <Field label=\"Salesperson\"><input className={inputCls} value={edit.salesperson || \"\"} onChange={(e) => setEdit((p) => ({ ...p, salesperson: e.target.value }))} /></Field>"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 1139,
+      "text": "      && (!q || [o.title, o.customer_display_name, o.salesperson].some((v) => clean(v).toLowerCase().includes(q))));"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 1288,
+      "text": "      if (q && ![o.title, o.customer_display_name, o.salesperson, o.next_action].some((v) => clean(v).toLowerCase().includes(q))) return false;"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 1357,
+      "text": "    if (v) bulkApply({ salesperson: v });"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 1435,
+      "text": "          {Array.isArray(funnel.by_salesperson) && funnel.by_salesperson.length > 0 && ("
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 1440,
+      "text": "                    <th className=\"py-1 pr-3\">Salesperson</th><th className=\"py-1 pr-3 text-right\">Open</th>"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 1446,
+      "text": "                  {funnel.by_salesperson.map((r) => ("
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 1447,
+      "text": "                    <tr key={r.salesperson} className=\"border-t border-slate-50 dark:border-slate-800/60\">"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 1448,
+      "text": "                      <td className=\"py-1.5 pr-3 font-medium text-slate-700 dark:text-slate-200\">{r.salesperson}</td>"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 1657,
+      "text": "                            {o.salesperson ? ` · ${o.salesperson}` : \"\"}"
+    },
+    {
+      "path": "src/pages/SalesPipeline.jsx",
+      "line": 934,
+      "text": "                <div className=\"text-sm font-semibold text-gray-800\">Salesperson Outcomes</div>"
+    },
+    {
+      "path": "src/pages/SalesPipeline.jsx",
+      "line": 937,
+      "text": "                  <div className=\"mt-3 rounded-lg bg-gray-50 px-3 py-4 text-sm text-gray-500\">No tracked salesperson outcomes yet. Current owner workload is available in the Current Pipeline → Insights view.</div>"
+    },
+    {
+      "path": "src/pages/SalesPipeline.jsx",
+      "line": 941,
+      "text": "                      <thead><tr className=\"border-b text-gray-400\"><th className=\"pb-2 text-left font-medium\">Salesperson</th><th className=\"pb-2 text-right font-medium\">Closed</th><th className=\"pb-2 text-right font-medium\">Won</th><th className=\"pb-2 text-right font-medium\">Win rate</th><th className=\"pb-2 text-right font-medium\">Won value</th></tr></thead>"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 497,
+      "text": "      list = list.filter((e) => String(e.salesperson_email || e.created_by || \"\").toLowerCase() === mineEmail);"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 545,
+      "text": "      [\"Estimate #\", \"Project\", \"Customer\", \"Status\", \"Quote Total\", \"Cost Total\", \"Salesperson\", \"Source\", \"Updated\", \"Due Date\"],"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 553,
+      "text": "        e.salesperson_email || e.created_by || \"\","
+    },
+    {
+      "path": "src/pages/Customer360.jsx",
+      "line": 329,
+      "text": "          [contact && `Contact: ${contact}`, clean(c.contact_email), clean(c.company_phone), clean(c.salesperson) && `Rep: ${clean(c.salesperson)}`]"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 162
+}

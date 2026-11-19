@@ -1,0 +1,2 @@
+Preflight: HEAD e1fbae8e clean, 3 targets + 16 guards raw-hash locked, ready.
+exit=0

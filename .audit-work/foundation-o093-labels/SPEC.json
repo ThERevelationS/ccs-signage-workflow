@@ -1,0 +1,87 @@
+{
+  "workstream": "WS-O",
+  "item": "O-093",
+  "ticket": "CMP-H02",
+  "title": "Foundation dimension input layer: plain-language labels, feet/inches entry, contextual help, suggestion placeholders (dimensional diagram = scene-level remainder)",
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remoteBaseline": "2083c6dbb",
+  "remoteDrift": "Remote advanced to 8a4ad456c during work (4 external-agent commits touching only FoundationLayoutCanvas.jsx, foundationLayoutModel.js, foundationSceneInput.js, foundationSceneTransforms.js — zero overlap with candidate files; candidates remain valid against 2083c6dbb baselines and unaffected by the drift).",
+  "deliverableMode": "candidates-only",
+  "remoteWrites": 0,
+  "generated": "2026-11-08",
+
+  "summary": "Adds a pure ft/in entry layer for every linear-dimension surface in the foundation module behind the existing panel seams. New module foundationFtInEntry.js provides a total parser (parseFoundationDimension), a canonical formatter (formatFoundationDimension: inches → `12' 6\"` / `12'` / `6.5\"` / `0.375\"`), the write-side draft boundary (foundationDimensionDraftValue — blank stays blank, parseable commits canonical inches, malformed stores verbatim for diagnostics, never 0/NaN coercion), and the shared controlled FoundationDimensionInput widget (draft-while-focused so partial ft/in never snaps; `title` carries field help; inline syntax hint via role=status; aria-invalid/aria-describedby wired to the existing field-issue seam). foundationGeometryInputs.js gains the additive FOUNDATION_DIMENSION_FIELDS map (label/help/placeholder/unit/ftIn/signed per section: foundation, pole, wall, wallCap, cabinet, wallOutline, landscape) plus fail-closed resolver foundationDimensionFieldMeta (unknown → null). Five panels switch their dimension inputs to the shared widget; WallShapeEditor parses rect drafts through the same parser (malformed disables Apply + hint); LandscapeDesigner applies the same draft/focus/hint contract to the cell-size field. Stored values remain canonical inches; no schema change; no stored defaults minted — placeholders are display text only.",
+
+  "parserContract": {
+    "parseFoundationDimension": "text|number → {ok:true, inches} | {ok:false, reason}. Never throws. Accepted: `150`, `150\"`, `12'`, `12.5'`, `12' 6\"`, `12'6`, `12'6\"`, `12'-6\"`, `12 6`, `12 6\"`, `-12 6`, `12-6\"`, `3/8`, `3/8\"`, `6 1/2\"`, `1 1/2`, `12 6 1/2`, `12' 6 1/2\"`, `-4'`, `-27`. Mark variants ' ′ ’ ‘ ` ´ and \" ″ ” normalized; case/spacing tolerant. Ambiguity rules: bare two-token pair = feet+inches (`12 6` → 150); pair ending in fraction = mixed inch (`1 1/2` → 1.5, `12 1/2` → 12.5, `6-1/2\"` → 6.5); inside ' marks dash is a separator; leading dash = sign; inches never clamped (`12' 13\"` → 157).",
+    "rejects": "blank (handled at draft boundary), `abc`, `12abc`, `1e3`, `12..5`, `5/0`, `'`, `12'-'`, `12'6\"7`, extra marks, embedded signs, 4+ tokens, non-finite, non-string. Positivity stays with existing calc validation.",
+    "formatFoundationDimension": "finite inches → `12' 6\"` (feet+inches), `12'`/`1'` (whole feet), `6.5\"`/`0.375\"` (sub-foot inch-only), `-2' 3\"` (signed). Non-finite → \"\".",
+    "foundationDimensionDraftValue": "write boundary: non-string → verbatim; blank → \"\"; parseable → canonical inches; malformed → verbatim draft for diagnostics.",
+    "foundationDimensionStoredText": "number → ft/in display; verbatim string → echoed; null/undefined → blank.",
+    "foundationDimensionInputIssue": "stored verbatim draft → inline syntax hint string; else null.",
+    "FoundationDimensionInput": "controlled widget (createElement, .js module): draft-while-focused, commits every keystroke through the draft boundary, blur settles display to stored value, `title`=help (existing tooltip seam) + focused reveal, role=status hint, aria-label/aria-invalid/aria-describedby."
+  },
+
+  "candidateFiles": {
+    "new": [
+      "src/components/estimator/foundation/foundationFtInEntry.js"
+    ],
+    "modified": [
+      "src/components/estimator/foundation/foundationGeometryInputs.js",
+      "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+      "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+      "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+      "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "src/components/estimator/foundation/WallShapeEditor.jsx",
+      "src/components/estimator/foundation/LandscapeDesigner.jsx"
+    ],
+    "protectedUnchanged": [
+      "src/components/estimator/foundation/FoundationItemCard.jsx",
+      "src/pages/FoundationEstimator.jsx",
+      "src/components/estimator/foundation/foundationCalc.js",
+      "src/components/estimator/foundation/foundationReinforcement*",
+      "src/components/estimator/foundation/partSync.js",
+      "src/components/estimator/foundation/FoundationBOM.jsx"
+    ]
+  },
+
+  "fieldCoverage": {
+    "pole": ["height_inches", "embedment_inches", "base_offset_inches", "total_length_inches"],
+    "wall": ["heightInches", "mortarGapInches", "internalWallHeightInches", "internalMortarGapInches"],
+    "wallCap": ["length_inches"],
+    "cabinet": ["width_inches", "height_inches", "depth_inches", "mount_height_inches"],
+    "wallOutline": ["rect_length", "rect_width (local drafts, parsed at apply)"],
+    "landscape": ["cell_size_inches"],
+    "foundationCardMapOnly": ["length_inches", "width_inches", "depth_inches", "diameter", "grade_offset_inches — metadata recorded for the card-label remainder (B-3 recovery owns FoundationItemCard.jsx); card itself unchanged"]
+  },
+
+  "verification": {
+    "model": ".audit-work/foundation-o093-labels/verify-o093-model.mjs → PASS o093-model, 122/122 assertions (log: verify/model-run.txt). Matrix covers all six required acceptance forms (`12' 6\"`, `12'-6\"`, `12.5'`, `150\"`, `12 6`, `12'6` → 150), fraction/mixed/pair/sign forms, formatting edge cases, 20+ malformed/non-string rejects, draft-boundary contract (blank stays blank, malformed verbatim, never 0), stored-text display, metadata map integrity (every placeholder string itself parses), resolver fail-closed → null, existing exports intact.",
+    "browser": ".audit-work/foundation-o093-labels/verify-o093-browser.mjs → PASS o093-browser, 39 assertions on real Chrome (channel=chrome) with real calc modules + real React (log: verify/browser-run.txt; screenshots: verify/fixture-out/shot-*.png at 1280 and 390). Real-component cases: poles (label/help/placeholder render, `10'` display, `12' 6\"`→150 commit, `abc`→verbatim+hint+aria-invalid+real pole issue), embed-legacy (`y_offset_inches:36`→`3'` display, `3' 6\"` commits canonical embedment_inches:42 and clears legacy spelling), walls (`2'`/`0.375\"` display, `3'`→36), caps (`4'`→malformed verbatim+hint), cabinets (`4'`→`2'-6\"`→30), shape (`8'`/`4'`→real foundationWallRectangle→96/48 segments; malformed disables Apply+hint), landscape (`1'`→`1' 6\"`→18→malformed verbatim+aria-invalid), bare-field matrix (all six acceptance forms commit 150 through the panel seam).",
+    "syntax": "esbuild parse check: all 8 candidate files OK",
+    "baselines": "remote-baseline/ holds byte-exact read-API + run-layer copies of all modified files (foundationGeometryInputs.js disk/blob divergence resolved: missing final newline only, MD5s recorded)"
+  },
+
+  "dataIntegrity": [
+    "Storage unchanged: canonical inches everywhere; no schema/entity change.",
+    "Explicit-null/blank discipline preserved: blank → \"\", malformed → verbatim draft, no parseFloat||0, no minted numeric defaults.",
+    "Placeholders are display text only (suggested format examples); add-row factories keep existing authored init values (pole 120\"/42\", wall 24\"/0.375, cabinet blanks, landscape 12 on explicit Clear reset).",
+    "Display-only fallbacks preserved as display-only (wall mortar 0.375, internal wall height follows outer) — nothing is stored by a fallback.",
+    "Issue contracts appended, never replaced: existing field/code/message issue lists untouched; the syntax hint layers on top via the same field seam; aria-invalid reflects both calc issues and malformed drafts."
+  ],
+
+  "behaviorDeltas": [
+    "Dimension inputs switch type=number → type=text + inputMode=text so ' \" - space / are typeable (full keyboard, documented).",
+    "Unfocused display renders canonical ft/in (`120` → `10'`) instead of raw inches; focused draft shows the same text the user typed.",
+    "WallCaps cut-length malformed draft now echoes back in the field (remote blanked display while flagging it in diagnostics).",
+    "WallShapeEditor rect drafts initialize as `8'`/`4'` (same 96/48 suggestion, ft/in spelling) and parse ft/in text before the rectangle check.",
+    "SignageCabinets dimension fields gain aria-invalid/describedBy linkage to the existing issue row (previously only quantity/unit cost carried it)."
+  ],
+
+  "knownRemainders": {
+    "cardLabels": "OPEN — foundation-item card dimension labels/placeholders (length/width/depth/diameter/grade_offset on FoundationItemCard.jsx) are mapped in FOUNDATION_DIMENSION_FIELDS.foundation but not rendered: FoundationItemCard.jsx is a protected choke point owned by B-3 recovery. Card inputs keep current labels and numeric entry until that recovery lands; the shared parser + meta map are ready for it.",
+    "dimensionalDiagram": "OPEN — the acceptance item's dimensional diagram is a scene-level remainder (O-093 classified (a) labels/entry/help now, diagram (b-scene)); deferred to the scene/module phase. No diagram code attempted.",
+    "pageHelpToggle": "FoundationToolbar onHelp seam lives in FoundationEstimator.jsx (protected); contextual help here rides the title/tooltip + inline hint seams instead."
+  }
+}

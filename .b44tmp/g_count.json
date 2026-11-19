@@ -1,0 +1,51 @@
+{
+  "matches": [
+    {
+      "path": "base44/shared/smartsheetConflictReview.ts",
+      "line": 14,
+      "text": "  if(body.action==='conflict_list')return {success:true,page:await entity.filter(query,{sort:'-created_date',limit:25,...(body.cursor?{cursor:body.cursor}:{})}),count:await entity.count(query)};\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 92,
+      "text": "        Rules.count(query),Rules.aggregate({query,groupBy:'status',count:true}),Rules.aggregate({query,groupBy:'rule_category',count:true}),\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 93,
+      "text": "        Rules.count({...query,is_operational:true}),Rules.count({...query,status:'needs_review'}),Rules.count({...query,draft_context:true}),Rules.count({...query,is_workflow_instruction:true,status:'staff_approved'})]);\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1849,
+      "text": "  try { openConflicts = Number(await base44.asServiceRole.entities.SyncConflict.count({ status: 'open' })) || 0; } catch {}\r"
+    },
+    {
+      "path": "base44/functions/weeklyAdminDigest/entry.ts",
+      "line": 10,
+      "text": "      ent.TimeOffRequest.count({ status: 'pending' }).catch(() => null),"
+    },
+    {
+      "path": "base44/functions/weeklyAdminDigest/entry.ts",
+      "line": 11,
+      "text": "      ent.TimeClockCorrectionRequest.count({ status: 'pending' }).catch(() => null),"
+    },
+    {
+      "path": "base44/functions/weeklyAdminDigest/entry.ts",
+      "line": 12,
+      "text": "      ent.DeletionRequest.count({ status: 'pending' }).catch(() => null),"
+    },
+    {
+      "path": "base44/functions/weeklyAdminDigest/entry.ts",
+      "line": 13,
+      "text": "      ent.SyncConflict.count({ status: 'open' }).catch(() => null),"
+    },
+    {
+      "path": "base44/functions/weeklyAdminDigest/entry.ts",
+      "line": 14,
+      "text": "      ent.AccessRequest.count({ status: 'pending' }).catch(() => null),"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 9
+}

@@ -1,0 +1,14 @@
+=== UNIT ===
+ok A: empty catalog -> global alert, saved amounts, no $0 claims
+ok A2: unknown snapshot -> Not saved; explicit 0 -> $0.00
+ok B: all save paths + copy + swap + CtrlS + autosave blocked -> zero I/O
+ok C: reload catalogs -> restore labels, clear alert, draft intact, explicit save succeeds
+ok D: failed reload keeps draft + alert, busy resets, retry succeeds
+ok E: stale reload reply cannot install into newer route context
+ok F: overlapping reload flights — second rejected, one flight completes
+PASS catalog-integrity passed=7 failed=0
+=== ESLINT ===
+eslint_exit=0
+=== PAGE BUNDLE ===
+
+Done in 40ms

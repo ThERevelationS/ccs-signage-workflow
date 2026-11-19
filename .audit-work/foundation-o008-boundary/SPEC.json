@@ -1,0 +1,103 @@
+{
+  "workstream": "WS-O",
+  "item": "O-008",
+  "ticket": "CMP-A08",
+  "title": "Normalize inventory field names/units at one boundary; honor legitimate zero values",
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remoteBaseline": "4b2f3ad60+",
+  "deliverableMode": "candidates-only",
+  "remoteWrites": 0,
+  "generated": "2026-11-07",
+
+  "summary": "All foundation-inventory normalization converges on one module, src/components/masterInventory/inventoryNormalization.js. Six identical strict-number parser copies, five draft-input copies, and the concrete-supplier field adapter were removed from calculators, write surfaces, and panels; every consumer now imports the same kernels. Field-name and unit canonicalization (brick_* → wall_unit_*, forming → forming_material, legacy pole_stock_length_inches → pole_stock_length_ft) runs once per row at the two ingress points: calcProject's inventory parameter and FoundationEstimator's setInventory. Authored rows are never mutated; normalization fills canonical fields on a calculation copy, and an explicitly authored canonical value (including null) always wins over a legacy alias.",
+
+  "boundaryContract": {
+    "inventoryFiniteNumber": "Finite signed number. String must match strict decimal grammar; number-typed inputs need only be finite. (was inputNumber, wallCapInputNumber)",
+    "inventoryNonnegativeNumber": "Catalog/customer price basis — finite, nonnegative. Explicit 0 is a legitimate free price. Blank/malformed/negative/non-finite → null (unavailable), never 0, never guessed. (was supplierPriceNumber, equipmentPriceNumber, wallPriceNumber, polePriceNumber, cabinetPriceNumber, landscapePriceNumber)",
+    "inventoryPositiveNumber": "Dimension/duration/quantity basis — finite, positive; accepts unsigned exponent strings matching the prior dimension parsers. (was wallDimensionNumber, poleDimensionNumber, equipmentPositiveNumber, cabinetQuantityNumber, landscapeCellSizeNumber)",
+    "inventoryNonnegativeMeasurement": "Measurement basis — finite, nonnegative with exponent strings; depth-in-ground may legitimately be 0. (was poleOffsetNumber)",
+    "inventoryIsPositiveWhole": "Positive whole-number predicate — safe integer > 0; string must be written as a whole number. (was positiveWholeNumber)",
+    "inventorySettingValue": "Explicit-0-respecting pick: recorded 0 wins; absent/blank/falsy keeps the ported default. (was wallSettingValue, poleSettingValue, calcItemCost getSetting pick)",
+    "inventorySettingNumber": "Setting composed onto the nonnegative price basis. (was wallSettingNumber, poleSettingNumber, foundationSettingNumber)",
+    "inventoryPositiveSettingNumber": "Setting composed onto the positive basis — for values the math divides by. (was wallPositiveSettingNumber, polePositiveSettingNumber)",
+    "inventoryNumberInput": "Catalog write-draft: blank → null ('not cataloged'), numeric → Number, malformed → verbatim for validation to report. Never partial-parses, never mints 0. (was catalogNumberInput ×4, FoundationItemCard nullSet, InventoryFormModal number coerce, MasterEquipmentTab/MasterSuppliesTab parseFloat||0 inputs)",
+    "inventoryDraftInput": "Project-entry draft: '' stays '' (authored empty state), numeric → Number, malformed → verbatim. (was equipmentInputValue, heightInput ×2)",
+    "normalizeFoundationInventoryRow": "Per-row canonicalization on a calculation copy: FOUNDATION_FIELD_ALIASES fills wall_unit_* from brick_* only when the canonical key is absent; FOUNDATION_MATERIAL_TYPE_ALIASES maps forming → forming_material; pole_stock_length_inches ÷ 12 → pole_stock_length_ft only when the canonical feet field is absent and the inch value parses positive. Authored fields preserved verbatim.",
+    "normalizeFoundationInventoryRows": "Array entry point (calcProject ingress + FoundationEstimator setInventory). Idempotent; non-array passes through.",
+    "normalizeConcreteSupplier": "LaborServiceInventory → FoundationInventory concrete_service shape, moved verbatim from legacyFoundationCalc (re-exported there). Mix/admixture/small-load/fuel fields keep null for 'not authored'; ported `|| 0` defaults retained for default_rate/minimum fields."
+  },
+
+  "candidateFiles": {
+    "new": [
+      "src/components/masterInventory/inventoryNormalization.js"
+    ],
+    "modified": [
+      "src/components/estimator/foundation/legacyFoundationCalc.js",
+      "src/components/estimator/foundation/foundationCalc.js",
+      "src/components/estimator/foundation/foundationInputValidation.js",
+      "src/components/estimator/foundation/wallCalculator.js",
+      "src/components/estimator/foundation/poleCalculator.js",
+      "src/components/estimator/foundation/wallCapCalculator.js",
+      "src/components/estimator/foundation/landscapeMaterials.js",
+      "src/components/estimator/foundation/FoundationItemCard.jsx",
+      "src/components/estimator/foundation/FoundationEquipmentTab.jsx",
+      "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+      "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+      "src/components/foundation/EquipmentInventoryTab.jsx",
+      "src/components/foundation/WallCapsInventoryTab.jsx",
+      "src/components/masterInventory/FoundationMaterialDialog.jsx",
+      "src/components/masterInventory/InventoryFormModal.jsx",
+      "src/components/masterInventory/MasterEquipmentTab.jsx",
+      "src/components/masterInventory/MasterSuppliesTab.jsx",
+      "src/pages/FoundationEstimator.jsx",
+      "src/pages/FoundationInventory.jsx"
+    ]
+  },
+
+  "consumerMap": {
+    "calc-ingress": "calcProject(project, rawInventory) wraps inventory once via normalizeFoundationInventoryRows; normalized copies feed calcItem/legacyCalcItemCost, calcWalls, calcPoles, calcWallCaps, calcEquipmentPricing, calcConcreteDelivery, foundationAssemblyCatalogIssues, foundationConstructionWarnings.",
+    "page-ingress": "FoundationEstimator setInventory wraps the combined FoundationInventory + normalizeConcreteSupplier(LaborServiceInventory) rows at both load sites — catalog memo, FoundationEquipmentTab, FoundationBOM and other tab props see the same canonical rows calcProject prices on.",
+    "calculators": "wallCalculator, poleCalculator, wallCapCalculator, landscapeMaterials, foundationInputValidation, foundationCalc, legacyFoundationCalc import boundary kernels under their historical local names (wallPriceNumber etc.) — no ported math changed.",
+    "re-exports": "legacyFoundationCalc re-exports normalizeConcreteSupplier (FoundationEstimator keeps its import path); wallCapCalculator re-exports wallCapInputNumber (FoundationWallCapsPanel keeps its import path).",
+    "write-surfaces": "FoundationInventory, EquipmentInventoryTab, WallCapsInventoryTab, FoundationMaterialDialog (catalogNumberInput), FoundationItemCard (nullSet override draft), InventoryFormModal number coerce, MasterEquipmentTab cost_per_day/week/month + delivery fields, MasterSuppliesTab foundation cost_per_unit → inventoryNumberInput.",
+    "project-drafts": "FoundationEquipmentTab equipmentInputValue, FoundationWallsPanel + FoundationPolesPanel heightInput → inventoryDraftInput."
+  },
+
+  "verification": {
+    "harness": ".audit-work/foundation-o008-boundary/test-o008-boundary.mjs — esbuild-bundles the candidate tree (testtree/ = remote unchanged siblings + candidate overlay) under Node",
+    "result": "PASS inventory-normalization — 461 passed, 0 failed",
+    "matrix": "46-value matrix (explicit 0/'0'/'.0'/'-0', valid decimals, negative, exponent strings, '12abc', 'abc', '', ' ', NaN, ±Infinity, null, undefined, booleans, [], {}, fn, comma/underscore/hex numerics) × 8 kernels — byte-for-byte parity with verbatim remote parser copies",
+    "settingsMatrix": "11 (value, fallback) pairs across inventorySettingValue/Number/PositiveSettingNumber — parity with remote wallSettingValue compositions",
+    "pinnedSemantics": ["0 → 0 (price)", "'0' → 0", "'' → null not 0", "'12abc' → null not 0", "-3 → null not 0", "numberInput('') → null", "numberInput('12abc') → '12abc' verbatim", "numberInput('  ') → null", "draftInput('') → ''"],
+    "fieldAliasFixtures": ["brick_* → wall_unit_* (authored kept, type unchanged)", "canonical wins over legacy", "authored canonical null wins over legacy", "forming → forming_material"],
+    "unitFixtures": ["240in → 20ft", "'300' → 25ft", "ft canonical wins", "malformed/0/negative inches → no materialization"],
+    "supplierFixtures": ["explicit-0 mix price preserved", "missing mix → null", "re-export output parity vs legacyFoundationCalc"],
+    "realSurface": ["calcWalls: raw brick_stone row → wall_unit_*_unavailable hold; normalized → priced materialCost", "calcPoles stock_price: 240in → 20ft parity $50; 120in → 10ft → 2 pieces $100 (observable divergence)", "calcProject: raw legacy inventory prices walls at ingress without caller normalization", "calcProject: canonical rows produce identical totals normalized or not (idempotent double-normalization)"],
+    "syntax": "esbuild parse check: all 20 candidate files OK"
+  },
+
+  "deliberateNonChanges": [
+    "Ported calculator-internal math unchanged — legacyFoundationCalc item-dimension parseFloat(...) || 0 sites, poleCalculator/wallCalculator parseFloat(settingValue(...)) settings reads, FoundationItemCard numSet dimension drafts: these are project-input formula internals gated by the check side, not inventory-catalog normalization. Zero strict-regex copies remain outside the boundary.",
+    "Display-formatting parseFloat sites (FoundationInventory list rows, EquipmentInventoryTab/WallCapsInventoryTab price badges, MasterSuppliesTab cost_display) — render-only guards, no stored normalization.",
+    "Form-init `|| 0` presets (MasterEquipmentTab/MasterSuppliesTab edit-form initializers, EquipmentInventoryTab openAdd cost fields, FoundationInventory brick default 0.75): authored defaults for new/edited forms — preserved to avoid changing stored values for untouched rows; flagged as a follow-up remainder if admin wants stored nulls to display blank on open.",
+    "Non-CMP surfaces: importMappers cleanNum/toInches (sign-parts/substrate/dimensional-letter imports), legacyInventoryMigrator (labor_service[non-concrete]/sign_parts_supplies/substrate targets), MasterEquipmentTab spec fields (mpg, heights, idle_running_cost_per_hour — not consumed by foundation math), MasterSuppliesTab channel-letter cost fields.",
+    "partSync reads pole_stock_length_ft off entity rows directly (estimator builder BOM path, not the CMP calc path); unchanged.",
+    "foundationFieldSchema.js untouched — stays the field-definition source; inventoryNormalization.js owns runtime canonicalization rather than extending the schema contract."
+  ],
+
+  "behaviorDeltas": [
+    "FoundationItemCard nullSet: whitespace-only draft now clears to null (remote minted Number(' ')=0 — a fabricated free override).",
+    "InventoryFormModal number fields: malformed drafts persist verbatim for validation to report (remote partial-parsed '12abc'→12, minted NaN for 'abc').",
+    "MasterEquipmentTab catalog cost fields + delivery, MasterSuppliesTab foundation cost_per_unit: blank → null 'not cataloged' and malformed → verbatim (remote minted 0 via parseFloat||0).",
+    "Legacy rows become priceable at ingress instead of held unavailable: brick_stone rows fill wall_unit_* from brick_*; 'forming' rows count as forming_material; pole_stock_length_inches rows convert to canonical feet.",
+    "calcProject parameter renamed inventory → rawInventory internally (normalized copy bound to `inventory`); signature and return contract unchanged."
+  ],
+
+  "knownRemainders": {
+    "supplierGrouping": "OPEN — supplier grouping remainder intentionally out of scope per workstream instruction.",
+    "formInitLaundering": "Edit-form initializers still mint 0 for absent stored cost fields (noted in deliberateNonChanges).",
+    "supplierDefaultRate": "normalizeConcreteSupplier retains the ported `default_rate || 0` (a LaborServiceInventory row without a rate becomes $0/cy) — verbatim port kept; revisit only with explicit product direction.",
+    "nonCmpNumericCoercions": "importMappers/legacyInventoryMigrator loose cleanNum and MasterEquipmentTab spec-field parseFloat||0 remain on non-foundation entities."
+  }
+}

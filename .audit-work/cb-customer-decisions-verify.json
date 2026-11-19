@@ -1,0 +1,204 @@
+{
+  "accounts": [
+    {
+      "account": "61",
+      "action": "attached",
+      "target_id": "6a958582ba45a19e9343ff75",
+      "customer_name": "The Liberty Center"
+    },
+    {
+      "account": "424",
+      "action": "attached",
+      "target_id": "6a958582ba45a19e9344017b",
+      "customer_name": "PLK Communities"
+    },
+    {
+      "account": "447",
+      "action": "created",
+      "target_id": "6afdc24e9a39dd2bccc648d4",
+      "customer_name": "Skidmore"
+    },
+    {
+      "account": "488",
+      "action": "attached",
+      "target_id": "6a958582ba45a19e934400bf",
+      "customer_name": "Lyons & Lyons Co"
+    },
+    {
+      "account": "531",
+      "action": "created",
+      "target_id": "6afdc2d60785d8dacc8e58f0",
+      "customer_name": "Towne Properties"
+    },
+    {
+      "account": "1036",
+      "action": "attached",
+      "target_id": "6a958582ba45a19e9343ff3d",
+      "customer_name": "Triumph Signs and Consulting, Inc."
+    },
+    {
+      "account": "1810",
+      "action": "attached",
+      "target_id": "6a958582ba45a19e9344022e",
+      "customer_name": "Karen Montgomery"
+    },
+    {
+      "account": "1926",
+      "action": "attached",
+      "target_id": "6a958582ba45a19e934400a0",
+      "customer_name": "Cincinnati Metro / SORTA"
+    },
+    {
+      "account": "2606",
+      "action": "created",
+      "target_id": "6afdc31a4285c460b0c45ad2",
+      "customer_name": "Towne Properties (Dayton)"
+    },
+    {
+      "account": "2608",
+      "action": "attached",
+      "target_id": "6a958582ba45a19e9343ff3d",
+      "customer_name": "Triumph Signs and Consulting, Inc."
+    },
+    {
+      "account": "2701",
+      "action": "attached",
+      "target_id": "6a958582ba45a19e9344017b",
+      "customer_name": "PLK Communities"
+    },
+    {
+      "account": "2767",
+      "action": "attached",
+      "target_id": "6a958582ba45a19e9344014e",
+      "customer_name": "Best Sanitizers"
+    },
+    {
+      "account": "2886",
+      "action": "attached",
+      "target_id": "6a958582ba45a19e9343ff75",
+      "customer_name": "The Liberty Center"
+    },
+    {
+      "account": "2944",
+      "action": "attached",
+      "target_id": "6a958582ba45a19e9343ff61",
+      "customer_name": "The Drunken Academy"
+    },
+    {
+      "account": "3284",
+      "action": "created",
+      "target_id": "6afdc2936e59c26fc389b886",
+      "customer_name": "Modern Office Method"
+    }
+  ],
+  "merges": [
+    {
+      "name": "Cincinnati Metro/Sorta",
+      "keep": "6a958582ba45a19e934400a0",
+      "lose": "6a958582ba45a19e9344014a",
+      "status": "merged",
+      "audit_id": "6afdc1b2fd893ae71702da3e",
+      "missing_schemas": [
+        "CrmSuggestion"
+      ]
+    },
+    {
+      "name": "Lyons & Lyons",
+      "keep": "6a958582ba45a19e934400bf",
+      "lose": "6a958582ba45a19e93440201",
+      "status": "already_merged",
+      "audit_id": "6afdbf6632d9d6dbf157cad9"
+    },
+    {
+      "name": "Karen Montgomery (wedding)",
+      "keep": "6a958582ba45a19e9344022e",
+      "lose": "6a958582ba45a19e93440217",
+      "status": "merged",
+      "audit_id": "6afdc1efa7674bf96874479d",
+      "missing_schemas": [
+        "CrmSuggestion"
+      ]
+    },
+    {
+      "name": "Best Sanitizers (3 Registered Marks)",
+      "keep": "6a958582ba45a19e9344014e",
+      "lose": "6a958582ba45a19e9344004f",
+      "status": "merged",
+      "audit_id": "6afdc228b05379f5a66e852a",
+      "missing_schemas": [
+        "CrmSuggestion"
+      ]
+    },
+    {
+      "name": "Drunken Academy",
+      "keep": "6a958582ba45a19e9343ff61",
+      "lose": "6a958582ba45a19e9343ff89",
+      "status": "merged",
+      "audit_id": "6afdc249f44cdd8d78a45afb",
+      "missing_schemas": [
+        "CrmSuggestion"
+      ]
+    },
+    {
+      "name": "Skidmore (47 Magnet Names)",
+      "keep": "6afdc24e9a39dd2bccc648d4",
+      "lose": "6a958582ba45a19e9344007a",
+      "status": "merged",
+      "audit_id": "6afdc2751522a5cf7c95bddd",
+      "missing_schemas": [
+        "CrmSuggestion"
+      ]
+    },
+    {
+      "name": "Skidmore (96 x 48 Tenure Wall)",
+      "keep": "6afdc24e9a39dd2bccc648d4",
+      "lose": "6a958582ba45a19e934400f6",
+      "status": "merged",
+      "audit_id": "6afdc28fad5cd14e80ef95a0",
+      "missing_schemas": [
+        "CrmSuggestion"
+      ]
+    },
+    {
+      "name": "Modern Office Method (Lobby Sign)",
+      "keep": "6afdc2936e59c26fc389b886",
+      "lose": "6a958582ba45a19e9343ff0c",
+      "status": "merged",
+      "audit_id": "6afdc2b0990d3feea59f2b6a",
+      "missing_schemas": [
+        "CrmSuggestion"
+      ]
+    },
+    {
+      "name": "Modern Office Method (Aluminum Box, Acrylic Letters, Clear Backer)",
+      "keep": "6afdc2936e59c26fc389b886",
+      "lose": "6a958582ba45a19e93440086",
+      "status": "merged",
+      "audit_id": "6afdc2d15abb3a7c8ef5ea0d",
+      "missing_schemas": [
+        "CrmSuggestion"
+      ]
+    },
+    {
+      "name": "Towne Properties (Kable's Mill)",
+      "keep": "6afdc2d60785d8dacc8e58f0",
+      "lose": "6a958582ba45a19e934401a2",
+      "status": "merged",
+      "audit_id": "6afdc2f345591f134347a2f8",
+      "missing_schemas": [
+        "CrmSuggestion"
+      ]
+    },
+    {
+      "name": "Towne Properties (Cheltenham)",
+      "keep": "6afdc2d60785d8dacc8e58f0",
+      "lose": "6a958582ba45a19e934401a3",
+      "status": "merged",
+      "audit_id": "6afdc30dad5cd14e80ef970a",
+      "missing_schemas": [
+        "CrmSuggestion"
+      ]
+    }
+  ],
+  "issues": []
+}

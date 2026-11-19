@@ -1,0 +1,420 @@
+{
+  "mode": "bad-paint",
+  "width": 390,
+  "before": {
+    "mode": "bad-paint",
+    "project": {
+      "id": "synthetic-pole-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "P",
+      "items": [],
+      "poles": [
+        {
+          "component_id": "synthetic-pole-stock",
+          "pole_id": "synthetic-pole-stock",
+          "height_inches": 120,
+          "y_offset_inches": 36,
+          "include_pole_painting": false,
+          "pole_name": "Stock pole 20ft",
+          "pole_cost": 999,
+          "pole_painting_cost": 0,
+          "total_cost": 999
+        },
+        {
+          "component_id": "synthetic-pole-lf",
+          "pole_id": "synthetic-pole-lf",
+          "height_inches": 96,
+          "y_offset_inches": 24,
+          "include_pole_painting": true,
+          "pole_name": "LF pole",
+          "pole_cost": 888,
+          "pole_painting_cost": 111,
+          "total_cost": 999
+        }
+      ],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [],
+      "walls": [],
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {}
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "total_pole_cost": 1887,
+      "total_pole_painting_cost": 111
+    },
+    "savedProject": {
+      "id": "synthetic-pole-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "P",
+      "items": [],
+      "poles": [
+        {
+          "component_id": "synthetic-pole-stock",
+          "pole_id": "synthetic-pole-stock",
+          "height_inches": 120,
+          "y_offset_inches": 36,
+          "include_pole_painting": false,
+          "pole_name": "Stock pole 20ft",
+          "pole_cost": 999,
+          "pole_painting_cost": 0,
+          "total_cost": 999
+        },
+        {
+          "component_id": "synthetic-pole-lf",
+          "pole_id": "synthetic-pole-lf",
+          "height_inches": 96,
+          "y_offset_inches": 24,
+          "include_pole_painting": true,
+          "pole_name": "LF pole",
+          "pole_cost": 888,
+          "pole_painting_cost": 111,
+          "total_cost": 999
+        }
+      ],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [],
+      "walls": [],
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {}
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "total_pole_cost": 1887,
+      "total_pole_painting_cost": 111
+    },
+    "inventory": [
+      {
+        "id": "synthetic-pole-stock",
+        "material_type": "pole",
+        "material_name": "Stock pole 20ft",
+        "pole_pricing_mode": "stock_price",
+        "pole_stock_price": 250,
+        "pole_stock_length_ft": 20,
+        "pole_width_inches": 8
+      },
+      {
+        "id": "synthetic-pole-lf",
+        "material_type": "pole",
+        "material_name": "LF pole",
+        "cost_per_unit": 12,
+        "pole_width_inches": 6
+      },
+      {
+        "id": "synthetic-wall-material",
+        "material_type": "wall_material",
+        "material_name": "Synthetic wall units",
+        "cost_per_unit": 2
+      }
+    ],
+    "settings": {
+      "pole_paint_cost_per_lf": "bogus",
+      "pole_paint_labor_per_lf": "2.5",
+      "pole_paint_size_multiplier_4in": "1",
+      "pole_paint_size_multiplier_6in": "1.25",
+      "pole_paint_size_multiplier_8in": "1.5",
+      "pole_paint_size_multiplier_10in": "1.75",
+      "pole_paint_size_multiplier_12in": "2"
+    },
+    "poles": [
+      {
+        "component_id": "synthetic-pole-stock",
+        "pole_id": "synthetic-pole-stock",
+        "height_inches": 120,
+        "y_offset_inches": 36,
+        "include_pole_painting": false,
+        "pole_name": "Stock pole 20ft",
+        "pole_cost": 250,
+        "pole_painting_cost": 0,
+        "total_cost": 250
+      },
+      {
+        "component_id": "synthetic-pole-lf",
+        "pole_id": "synthetic-pole-lf",
+        "height_inches": 96,
+        "y_offset_inches": 24,
+        "include_pole_painting": true,
+        "pole_name": "LF pole",
+        "pole_cost": 888,
+        "pole_painting_cost": 111,
+        "total_cost": 999
+      }
+    ],
+    "totals": {
+      "total_concrete_cost": 0,
+      "concrete_delivery_cost": 0,
+      "concrete_delivered_yards": 0,
+      "concrete_rate_per_yard": 201,
+      "concrete_trucks": [],
+      "additional_stops_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_labor_cost": 0,
+      "total_pole_cost": 1138,
+      "total_pole_painting_cost": 111,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_equipment_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "wall_caps_by_material": [],
+      "total_concrete_volume_cy": 0,
+      "total_excavation_volume_cy": 0,
+      "total_labor_hours": 0,
+      "grand_total": 1249
+    },
+    "catalogIssues": [
+      {
+        "kind": "pole",
+        "index": 1,
+        "componentId": "synthetic-pole-lf",
+        "field": "pole_paint_cost_per_lf",
+        "inventoryId": "synthetic-pole-lf",
+        "code": "pole_paint_setting_unavailable",
+        "message": "Pole 2: record a finite, nonnegative pole paint cost per LF before repricing."
+      }
+    ],
+    "polePricing": [
+      {
+        "available": true,
+        "issues": []
+      },
+      {
+        "available": false,
+        "issues": [
+          {
+            "kind": "pole",
+            "index": 1,
+            "componentId": "synthetic-pole-lf",
+            "field": "pole_paint_cost_per_lf",
+            "inventoryId": "synthetic-pole-lf",
+            "code": "pole_paint_setting_unavailable",
+            "message": "Pole 2: record a finite, nonnegative pole paint cost per LF before repricing."
+          }
+        ]
+      }
+    ],
+    "itemPricing": [],
+    "pricingUnavailable": true,
+    "writes": 0
+  },
+  "after": {
+    "mode": "bad-paint",
+    "project": {
+      "id": "synthetic-pole-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "P",
+      "items": [],
+      "poles": [
+        {
+          "component_id": "synthetic-pole-stock",
+          "pole_id": "synthetic-pole-stock",
+          "height_inches": 120,
+          "y_offset_inches": 36,
+          "include_pole_painting": false,
+          "pole_name": "Stock pole 20ft",
+          "pole_cost": 999,
+          "pole_painting_cost": 0,
+          "total_cost": 999
+        },
+        {
+          "component_id": "synthetic-pole-lf",
+          "pole_id": "synthetic-pole-lf",
+          "height_inches": 96,
+          "y_offset_inches": 24,
+          "include_pole_painting": true,
+          "pole_name": "LF pole",
+          "pole_cost": 888,
+          "pole_painting_cost": 111,
+          "total_cost": 999
+        }
+      ],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [],
+      "walls": [],
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {}
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "total_pole_cost": 1887,
+      "total_pole_painting_cost": 111
+    },
+    "savedProject": {
+      "id": "synthetic-pole-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "P",
+      "items": [],
+      "poles": [
+        {
+          "component_id": "synthetic-pole-stock",
+          "pole_id": "synthetic-pole-stock",
+          "height_inches": 120,
+          "y_offset_inches": 36,
+          "include_pole_painting": false,
+          "pole_name": "Stock pole 20ft",
+          "pole_cost": 999,
+          "pole_painting_cost": 0,
+          "total_cost": 999
+        },
+        {
+          "component_id": "synthetic-pole-lf",
+          "pole_id": "synthetic-pole-lf",
+          "height_inches": 96,
+          "y_offset_inches": 24,
+          "include_pole_painting": true,
+          "pole_name": "LF pole",
+          "pole_cost": 888,
+          "pole_painting_cost": 111,
+          "total_cost": 999
+        }
+      ],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [],
+      "walls": [],
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {}
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "total_pole_cost": 1887,
+      "total_pole_painting_cost": 111
+    },
+    "inventory": [
+      {
+        "id": "synthetic-pole-stock",
+        "material_type": "pole",
+        "material_name": "Stock pole 20ft",
+        "pole_pricing_mode": "stock_price",
+        "pole_stock_price": 250,
+        "pole_stock_length_ft": 20,
+        "pole_width_inches": 8
+      },
+      {
+        "id": "synthetic-pole-lf",
+        "material_type": "pole",
+        "material_name": "LF pole",
+        "cost_per_unit": 12,
+        "pole_width_inches": 6
+      },
+      {
+        "id": "synthetic-wall-material",
+        "material_type": "wall_material",
+        "material_name": "Synthetic wall units",
+        "cost_per_unit": 2
+      }
+    ],
+    "settings": {
+      "pole_paint_cost_per_lf": "bogus",
+      "pole_paint_labor_per_lf": "2.5",
+      "pole_paint_size_multiplier_4in": "1",
+      "pole_paint_size_multiplier_6in": "1.25",
+      "pole_paint_size_multiplier_8in": "1.5",
+      "pole_paint_size_multiplier_10in": "1.75",
+      "pole_paint_size_multiplier_12in": "2"
+    },
+    "poles": [
+      {
+        "component_id": "synthetic-pole-stock",
+        "pole_id": "synthetic-pole-stock",
+        "height_inches": 120,
+        "y_offset_inches": 36,
+        "include_pole_painting": false,
+        "pole_name": "Stock pole 20ft",
+        "pole_cost": 250,
+        "pole_painting_cost": 0,
+        "total_cost": 250
+      },
+      {
+        "component_id": "synthetic-pole-lf",
+        "pole_id": "synthetic-pole-lf",
+        "height_inches": 96,
+        "y_offset_inches": 24,
+        "include_pole_painting": true,
+        "pole_name": "LF pole",
+        "pole_cost": 888,
+        "pole_painting_cost": 111,
+        "total_cost": 999
+      }
+    ],
+    "totals": {
+      "total_concrete_cost": 0,
+      "concrete_delivery_cost": 0,
+      "concrete_delivered_yards": 0,
+      "concrete_rate_per_yard": 201,
+      "concrete_trucks": [],
+      "additional_stops_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_labor_cost": 0,
+      "total_pole_cost": 1138,
+      "total_pole_painting_cost": 111,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_equipment_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "wall_caps_by_material": [],
+      "total_concrete_volume_cy": 0,
+      "total_excavation_volume_cy": 0,
+      "total_labor_hours": 0,
+      "grand_total": 1249
+    },
+    "catalogIssues": [
+      {
+        "kind": "pole",
+        "index": 1,
+        "componentId": "synthetic-pole-lf",
+        "field": "pole_paint_cost_per_lf",
+        "inventoryId": "synthetic-pole-lf",
+        "code": "pole_paint_setting_unavailable",
+        "message": "Pole 2: record a finite, nonnegative pole paint cost per LF before repricing."
+      }
+    ],
+    "polePricing": [
+      {
+        "available": true,
+        "issues": []
+      },
+      {
+        "available": false,
+        "issues": [
+          {
+            "kind": "pole",
+            "index": 1,
+            "componentId": "synthetic-pole-lf",
+            "field": "pole_paint_cost_per_lf",
+            "inventoryId": "synthetic-pole-lf",
+            "code": "pole_paint_setting_unavailable",
+            "message": "Pole 2: record a finite, nonnegative pole paint cost per LF before repricing."
+          }
+        ]
+      }
+    ],
+    "itemPricing": [],
+    "pricingUnavailable": true,
+    "writes": 0
+  },
+  "writes": 0,
+  "netOps": {
+    "fetch": 0,
+    "xhr": 0
+  },
+  "externalUrls": [],
+  "consoleErrors": [],
+  "keyWarnings": []
+}

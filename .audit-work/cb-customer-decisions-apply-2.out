@@ -1,0 +1,23 @@
+{"account":2701,"action":"attached","target_id":"6a958582ba45a19e9344017b","complete":true}
+{"account":1036,"action":"attached","target_id":"6a958582ba45a19e9343ff3d","complete":true}
+{"account":2608,"action":"attached","target_id":"6a958582ba45a19e9343ff3d","complete":true}
+{"account":1926,"action":"attached","target_id":"6a958582ba45a19e934400a0","complete":true}
+{"merge":"Cincinnati Metro/Sorta","keep":"6a958582ba45a19e934400a0","lose":"6a958582ba45a19e9344014a","status":"merged"}
+{"account":488,"action":"attached","target_id":"6a958582ba45a19e934400bf","complete":true}
+{"account":1810,"action":"attached","target_id":"6a958582ba45a19e9344022e","complete":true}
+{"merge":"Karen Montgomery (wedding)","keep":"6a958582ba45a19e9344022e","lose":"6a958582ba45a19e93440217","status":"merged"}
+{"account":2767,"action":"attached","target_id":"6a958582ba45a19e9344014e","complete":true}
+{"merge":"Best Sanitizers (3 Registered Marks)","keep":"6a958582ba45a19e9344014e","lose":"6a958582ba45a19e9344004f","status":"merged"}
+{"account":2944,"action":"attached","target_id":"6a958582ba45a19e9343ff61","complete":true}
+{"merge":"Drunken Academy","keep":"6a958582ba45a19e9343ff61","lose":"6a958582ba45a19e9343ff89","status":"merged"}
+{"account":447,"action":"created","target_id":"6afdc24e9a39dd2bccc648d4","complete":true}
+{"merge":"Skidmore (47 Magnet Names)","keep":"6afdc24e9a39dd2bccc648d4","lose":"6a958582ba45a19e9344007a","status":"merged"}
+{"merge":"Skidmore (96 x 48 Tenure Wall)","keep":"6afdc24e9a39dd2bccc648d4","lose":"6a958582ba45a19e934400f6","status":"merged"}
+{"account":3284,"action":"created","target_id":"6afdc2936e59c26fc389b886","complete":true}
+{"merge":"Modern Office Method (Lobby Sign)","keep":"6afdc2936e59c26fc389b886","lose":"6a958582ba45a19e9343ff0c","status":"merged"}
+{"merge":"Modern Office Method (Aluminum Box, Acrylic Letters, Clear Backer)","keep":"6afdc2936e59c26fc389b886","lose":"6a958582ba45a19e93440086","status":"merged"}
+{"account":531,"action":"created","target_id":"6afdc2d60785d8dacc8e58f0","complete":true}
+{"merge":"Towne Properties (Kable's Mill)","keep":"6afdc2d60785d8dacc8e58f0","lose":"6a958582ba45a19e934401a2","status":"merged"}
+{"merge":"Towne Properties (Cheltenham)","keep":"6afdc2d60785d8dacc8e58f0","lose":"6a958582ba45a19e934401a3","status":"merged"}
+{"account":2606,"action":"created","target_id":"6afdc31a4285c460b0c45ad2","complete":true}
+{"complete_accounts":15,"merges":11,"blocked":0}

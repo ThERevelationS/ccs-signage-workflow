@@ -1,0 +1,2 @@
+PASS print-templates
+exit=0

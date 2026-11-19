@@ -1,0 +1,13 @@
+ok catalog unknown metadata stays blank and absent on ordinary Save, never defaulted from #4
+ok catalog raw decimal text is preserved until Save then sent as finite numeric metadata
+ok explicit clearing of recorded metadata emits null unknowns rather than zero
+ok malformed and zero metadata blocks button and direct Save callback before any API request
+ok imported zero remains visibly invalid until an explicit positive repair
+ok non-rebar type Save ignores temporary metadata text while preserving the original record
+ok changing the dialog record resets metadata buffers instead of leaking the previous item's measurements
+ok catalog Save captures one immutable update and disables all inputs while its response is pending
+ok legacy rebar editor also keeps unrecorded metadata absent instead of adding generic numeric zero defaults
+ok legacy rebar editor sends parsed numeric measurements and rejects raw partial/zero values
+ok legacy forming editor exposes no reinforcement inputs and retains its existing fields and values
+Catalog metadata UI: 11/11; failed=0
+exit=0

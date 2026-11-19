@@ -1,0 +1,82 @@
+{
+  "synthetic": true,
+  "mockedIO": true,
+  "realBase44StorageVerified": false,
+  "results": [
+    {
+      "name": "accept-undo-save-bom",
+      "width": 1440,
+      "ok": true,
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "name": "invalid-draft-reload-restore",
+      "width": 1440,
+      "ok": true,
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "name": "accept-undo-save-bom",
+      "width": 390,
+      "ok": true,
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "name": "invalid-draft-reload-restore",
+      "width": 390,
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: No full-page horizontal overflow\n    at check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-page-browser.mjs:128:12)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-page-browser.mjs:189:5",
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      },
+      "layout": {
+        "viewport": 390,
+        "scroll": 392,
+        "elements": [
+          {
+            "tag": "DIV",
+            "className": "flex items-center gap-2",
+            "left": 352.234375,
+            "right": 392.234375,
+            "width": 40,
+            "text": ""
+          },
+          {
+            "tag": "BUTTON",
+            "className": "text-gray-400 hover:text-red-600",
+            "left": 376.234375,
+            "right": 392.234375,
+            "width": 16,
+            "text": ""
+          },
+          {
+            "tag": "svg",
+            "className": "",
+            "left": 376.234375,
+            "right": 392.234375,
+            "width": 16,
+            "text": ""
+          }
+        ]
+      }
+    }
+  ]
+}

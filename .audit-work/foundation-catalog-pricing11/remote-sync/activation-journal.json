@@ -1,0 +1,214 @@
+[
+  {
+    "at": "2026-11-05T18:14:45.086Z",
+    "event": "fresh_baselines_verified",
+    "existing": 10,
+    "helper": "NOT_FOUND"
+  },
+  {
+    "at": "2026-11-05T18:14:46.521Z",
+    "event": "restore_checkpoint_created",
+    "checkpoint": {
+      "checkpointId": "6aecc7954ca2c4508d50aa24",
+      "name": "Concrete-pre-catalog-snapshot-pricing-guard",
+      "gitCommitHash": "0639604ee6aff43baf1b3b6b948182a59b7db2fe"
+    }
+  },
+  {
+    "at": "2026-11-05T18:15:17.357Z",
+    "event": "mutation_response",
+    "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+    "result": {
+      "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+      "bytesWritten": 1562,
+      "created": true,
+      "overwritten": false
+    }
+  },
+  {
+    "at": "2026-11-05T18:15:18.752Z",
+    "event": "readback_verified",
+    "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+    "remoteLfSha": "4a007cc1cb152c9903bd32a5e5ebb1af66ffcb19dc7502776ec9b75aa68efae8",
+    "localLfSha": "ce41b357b59be0ad1f5b995ba3636217662c6dda2a1e66c71f030c432de9041b"
+  },
+  {
+    "at": "2026-11-05T18:15:26.961Z",
+    "event": "mutation_response",
+    "path": "src/components/estimator/foundation/foundationCalc.js",
+    "result": {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "diff": "--- a/src/components/estimator/foundation/foundationCalc.js\n+++ b/src/components/estimator/foundation/foundationCalc.js\n@@ -15,6 +15,7 @@\n import { calcWalls } from \"./wallCalculator\";\n import { calcPoles } from \"./poleCalculator\";\n import { calcWallCaps } from \"./wallCapCalculator\";\n+import { foundationAssemblyCatalogIssues } from \"./foundationCatalogIntegrity\";\n \n const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);\n \n@@ -159,7 +160,10 @@\n \n   totals.grand_total = itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;\n \n-  return { items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery };\n+  return {\n+    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery,\n+    catalogIssues: foundationAssemblyCatalogIssues(project, inventory),\n+  };\n }\n \n export const money = (n) =>\n",
+      "applied": true
+    }
+  },
+  {
+    "at": "2026-11-05T18:15:28.720Z",
+    "event": "readback_verified",
+    "path": "src/components/estimator/foundation/foundationCalc.js",
+    "remoteLfSha": "112bd5b7054863c470da0d609f608f4c0be910bf4a1acd7349b88df6ced9cba8",
+    "localLfSha": "112bd5b7054863c470da0d609f608f4c0be910bf4a1acd7349b88df6ced9cba8"
+  },
+  {
+    "at": "2026-11-05T18:15:43.896Z",
+    "event": "mutation_response",
+    "path": "src/pages/FoundationEstimator.jsx",
+    "result": {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "diff": "--- a/src/pages/FoundationEstimator.jsx\n+++ b/src/pages/FoundationEstimator.jsx\n@@ -253,6 +253,55 @@\n     [project, inventory, settings]\n   );\n \n+  const catalogBlocked = Boolean(calc?.catalogIssues?.length);\n+  const [catalogReloading, setCatalogReloading] = useState(false);\n+  const catalogReloadRef = useRef(null);\n+\n+  const handleCatalogReload = async () => {\n+    const live = currentEditorRef.current;\n+    const generation = live.generation;\n+    const sourceId = live.sourceId;\n+    const estimateKey = live.estimateId;\n+    if (!mountedRef.current || !live.loaded || saveAttemptRef.current || copyFlightRef.current || saveSessionRef.current?.isSaving() || catalogReloadRef.current) return;\n+    const isCurrentFlight = (flight) => {\n+      const l = currentEditorRef.current;\n+      return mountedRef.current && catalogReloadRef.current === flight && l.loaded\n+        && l.sourceId === sourceId && l.estimateId === estimateKey && l.generation === generation;\n+    };\n+    const flight = (async () => {\n+      const [inv, concreteServices, settingRows] = await Promise.all([\n+        loadAllEntityRows({ entity: staffEntities.FoundationInventory, query: { show_in_foundation: true }, sort: \"material_name\", label: \"Foundation inventory\" }),\n+        loadAllEntityRows({ entity: staffEntities.LaborServiceInventory, query: { service_category: \"concrete_service\", is_active: true }, sort: \"service_name\", label: \"Concrete labor/services\" }),\n+        loadAllEntityRows({ entity: staffEntities.Settings, sort: \"created_date\", label: \"Estimator Settings\" }),\n+      ]);\n+      if (!isCurrentFlight(flight)) return; // stale reply: never install into a newer context\n+      bumpEdit();\n+      setInventory([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]);\n+      setSettings(Object.fromEntries((settingRows || []).map((r) => [r.setting_name, r.setting_value])));\n+      setAutoSave(false);\n+      setDirty(true);\n+      setSaveError(\"\");\n+    })();\n+    catalogReloadRef.current = flight;\n+    setCatalogReloading(true);\n+    try { await flight; }\n+    catch (e) {\n+      if (isCurrentFlight(flight)) setSaveError(\"Catalog reload failed: \" + (e?.message || \"unknown error\") + \" Last known catalog retained; retry.\");\n+    } finally {\n+      if (catalogReloadRef.current === flight) {\n+        const current = isCurrentFlight(flight);\n+        catalogReloadRef.current = null;\n+        if (current) setCatalogReloading(false);\n+      }\n+    }\n+  };\n+\n+  // Invalidate an in-flight catalog reload on route/reload context change.\n+  useEffect(() => {\n+    catalogReloadRef.current = null;\n+    setCatalogReloading(false);\n+  }, [id, estimateId, reloadRevision]);\n+\n   const assemblyIssues = useMemo(() => (project ? foundationAssemblyIssues(project) : []), [project]);\n \n   const catalog = useMemo(\n@@ -273,10 +322,10 @@\n \n   // Auto-save (debounced)\n   useEffect(() => {\n-    if (!autoSave || !dirty || recoveryRequired) return;\n+    if (!autoSave || !dirty || recoveryRequired || catalogBlocked || catalogReloading || catalogReloadRef.current) return;\n     const t = setTimeout(() => saveRef.current?.(), 2000);\n     return () => clearTimeout(t);\n-  }, [autoSave, dirty, project, recoveryRequired]);\n+  }, [autoSave, dirty, project, recoveryRequired, catalogBlocked, catalogReloading]);\n \n   // Ctrl+S / Cmd+S saves the section without leaving the editor.\n   useEffect(() => {\n@@ -442,6 +491,11 @@\n     }\n     const existing = saveAttemptRef.current;\n     if (existing) return existing.promise;\n+    if (catalogBlocked || catalogReloadRef.current) {\n+      setSaveError(\"Pricing unavailable: selected pole, cap or wall catalog materials need attention. Resolve catalog availability before saving.\");\n+      setDirty(true);\n+      return Promise.resolve({ ...staleOutcome, status: \"failed\", error: new Error(\"Save paused: catalog pricing is incomplete.\") });\n+    }\n     const captured = {\n       project, estimateId, basePayload: payload(),\n       items: calc.items, equipment: calc.equipment, walls: calc.walls,\n@@ -595,6 +649,10 @@\n     const live0 = currentEditorRef.current;\n     if (!mountedRef.current || !saveContext.loaded || !live0.loaded || live0.generation !== saveContext.generation || live0.sourceId !== saveContext.sourceId || live0.estimateId !== saveContext.estimateId || live0.editRevision !== saveContext.editRevision) return null;\n     if (saveAttemptRef.current || saveSessionRef.current?.isSaving()) return null;\n+    if (catalogBlocked || catalogReloadRef.current) {\n+      setSaveError(\"Pricing unavailable: selected pole, cap or wall catalog materials need attention. Resolve catalog availability before copying.\");\n+      return null;\n+    }\n     const gen = saveContext.generation;\n     const sourceId = saveContext.sourceId;\n     const estimateKey = saveContext.estimateId;\n@@ -662,6 +720,12 @@\n   // #77 — create a fresh Brick & Stone draft carrying the shared identity\n   // fields; the Foundation source is left untouched.\n   const handleSwapToBrickStone = async () => {\n+    const live = currentEditorRef.current;\n+    if (!mountedRef.current || !saveContext.loaded || !live.loaded || live.generation !== saveContext.generation || live.sourceId !== saveContext.sourceId || live.estimateId !== saveContext.estimateId || live.editRevision !== saveContext.editRevision) return null;\n+    if (catalogBlocked || catalogReloadRef.current) {\n+      setSaveError(\"Pricing unavailable: selected pole, cap or wall catalog materials need attention. Resolve catalog availability before swapping.\");\n+      return null;\n+    }\n     setSaving(true);\n     try {\n       const draft = await convertFoundationToBrickStone({ project, attemptRef: swapAttemptRef });\n@@ -690,6 +754,19 @@\n         <FoundationSectionBanner sectionName={project.project_name} />\n \n         {saveError && <div role=\"alert\" className=\"mb-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-[13px] text-red-800\">{saveError}</div>}\n+\n+        {catalogBlocked && (\n+          <div role=\"alert\" className=\"mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-900\">\n+            <div className=\"font-semibold\">Pricing unavailable: selected pole, cap or wall catalog materials need attention. Amounts shown are saved snapshots, not current prices. Save and estimate handoff are paused.</div>\n+            <ul className=\"mt-1 list-disc pl-5\">\n+              {calc.catalogIssues.map((i, idx) => <li key={idx}>{i.message}</li>)}\n+            </ul>\n+            <button type=\"button\" onClick={handleCatalogReload} disabled={catalogReloading || loading || saving}\n+              className=\"mt-2 rounded-sm border border-amber-400 bg-white px-2 py-1 text-[12px] font-semibold text-amber-800 disabled:opacity-50\">\n+              {catalogReloading ? \"Reloading catalogs…\" : \"Reload catalogs\"}\n+            </button>\n+          </div>\n+        )}\n \n         {(() => {\n           const marker = sourceRefreshRef.current;\n@@ -739,6 +816,7 @@\n           dirty={dirty}\n           lastSavedAt={project?.updated_date}\n           autoSave={autoSave}\n+          pricingUnavailable={catalogBlocked}\n           onToggleAutoSave={() => setAutoSave((v) => !v)}\n           canUndo={history.past.length > 0}\n           canRedo={history.future.length > 0}\n@@ -898,7 +976,7 @@\n                 <ConcreteDeliveryPanel project={project} delivery={calc.delivery} onChange={patch} />\n                 <FoundationRatesPanel settings={settings} project={project} onChange={patch} />\n                 <div className=\"max-w-xl\">\n-                  <FoundationTotals totals={calc.totals} />\n+                  <FoundationTotals totals={calc.totals} pricingUnavailable={catalogBlocked} />\n                   <div className=\"mt-3 space-y-1 text-[12px] text-gray-600\">\n                     <div className=\"flex justify-between\">\n                       <span>Signage cabinets</span>\n@@ -910,7 +988,7 @@\n                     </div>\n                   </div>\n                   <div className=\"mt-2 text-right text-[12px] text-gray-500\">\n-                    Section total flowing to estimate: <b className=\"text-red-700\">{money(sectionTotal)}</b>\n+                    Section total flowing to estimate: {catalogBlocked ? <b className=\"text-amber-700\">Estimate handoff paused</b> : <b className=\"text-red-700\">{money(sectionTotal)}</b>}\n                   </div>\n                   <Link\n                     to=\"/FoundationCatalog\"\n@@ -933,6 +1011,9 @@\n               </TabsContent>\n \n               <TabsContent value=\"pricing\" className=\"space-y-4\">\n+                {catalogBlocked ? (\n+                  <div className=\"rounded-sm border border-amber-300 bg-amber-50 p-3 text-[13px] text-amber-800\">Customer pricing unavailable: catalog pricing is incomplete. Resolve catalog materials first.</div>\n+                ) : (<>\n                 <CustomerPricingPanel\n                   cost={sectionTotal}\n                   project={project}\n@@ -949,6 +1030,7 @@\n                     customer_pricing: { ...(project.customer_pricing || {}), applied: true, tier_number: tier },\n                   })}\n                 />\n+                </>)}\n               </TabsContent>\n             </Tabs>\n           </div>\n",
+      "applied": true
+    }
+  },
+  {
+    "at": "2026-11-05T18:15:45.631Z",
+    "event": "readback_verified",
+    "path": "src/pages/FoundationEstimator.jsx",
+    "remoteLfSha": "051cbe9895097e5c64cc80286beef8c0653219560b273710db2f9ea0c3dc67ba",
+    "localLfSha": "051cbe9895097e5c64cc80286beef8c0653219560b273710db2f9ea0c3dc67ba"
+  },
+  {
+    "at": "2026-11-05T18:15:55.635Z",
+    "event": "mutation_response",
+    "path": "src/components/estimator/foundation/poleCalculator.js",
+    "result": {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "diff": "--- a/src/components/estimator/foundation/poleCalculator.js\n+++ b/src/components/estimator/foundation/poleCalculator.js\n@@ -26,7 +26,9 @@\n export function calcPoles(poles = [], inventory = [], settings = {}) {\n   return (poles || []).map((p) => {\n     const inv = inventory.find((i) => i.id === p.pole_id);\n-    if (!inv) return { ...p, pole_cost: 0, pole_painting_cost: 0, total_cost: 0, pole_name: \"\" };\n+    // Preserve the last saved amounts, not a fabricated free pole. The project\n+    // availability gate prevents these historical values becoming a new quote.\n+    if (!inv) return { ...p };\n \n     const totalPoleInches = (p.height_inches || 0) + (p.y_offset_inches || 0);\n     let poleCost;\n",
+      "applied": true
+    }
+  },
+  {
+    "at": "2026-11-05T18:15:57.217Z",
+    "event": "readback_verified",
+    "path": "src/components/estimator/foundation/poleCalculator.js",
+    "remoteLfSha": "094151890b486998e78315f5fe93b09f01453f169fb177ef77fd5a1e0b7befcc",
+    "localLfSha": "094151890b486998e78315f5fe93b09f01453f169fb177ef77fd5a1e0b7befcc"
+  },
+  {
+    "at": "2026-11-05T18:16:08.732Z",
+    "event": "mutation_response",
+    "path": "src/components/estimator/foundation/wallCapCalculator.js",
+    "result": {
+      "path": "src/components/estimator/foundation/wallCapCalculator.js",
+      "diff": "--- a/src/components/estimator/foundation/wallCapCalculator.js\n+++ b/src/components/estimator/foundation/wallCapCalculator.js\n@@ -5,6 +5,7 @@\n export function calcWallCaps(wallCaps = [], inventory = []) {\n   const caps = (wallCaps || []).map((cap) => {\n     const inv = inventory.find((i) => i.id === cap.cap_inventory_id);\n+    if (!inv) return { ...cap };\n     return {\n       ...cap,\n       cap_name: inv?.material_name || \"\",\n@@ -23,10 +24,10 @@\n         cost: 0,\n       };\n       acc[c.cap_inventory_id].qty += 1;\n-      acc[c.cap_inventory_id].cost += c.cost;\n+      acc[c.cap_inventory_id].cost += num(c.cost);\n       return acc;\n     }, {})\n   );\n \n-  return { caps, byInventory, total: caps.reduce((s, c) => s + c.cost, 0) };\n+  return { caps, byInventory, total: caps.reduce((s, c) => s + num(c.cost), 0) };\n }",
+      "applied": true
+    }
+  },
+  {
+    "at": "2026-11-05T18:16:10.216Z",
+    "event": "readback_verified",
+    "path": "src/components/estimator/foundation/wallCapCalculator.js",
+    "remoteLfSha": "1f118ca799f481bcbeb9c96e2dbadc587bfa67283e2cdfea92bbea8db0cf65eb",
+    "localLfSha": "1f118ca799f481bcbeb9c96e2dbadc587bfa67283e2cdfea92bbea8db0cf65eb"
+  },
+  {
+    "at": "2026-11-05T18:16:23.635Z",
+    "event": "mutation_response",
+    "path": "src/components/estimator/foundation/wallCalculator.js",
+    "result": {
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "diff": "--- a/src/components/estimator/foundation/wallCalculator.js\n+++ b/src/components/estimator/foundation/wallCalculator.js\n@@ -124,12 +124,19 @@\n export function calcWalls(project, inventory, settings = {}) {\n   const find = (id) => inventory.find((i) => i.id === id);\n   return (project.walls || []).map((wall) => {\n+    const wallMaterial = find(wall.materialId);\n+    const internalMaterial = find(wall.internalMaterialId);\n+    if (!wallMaterial || (wall.includeInternalWall && !internalMaterial)) {\n+      // Keep one coherent saved wall snapshot, rather than mixing a new outer\n+      // wall price with a silently omitted internal wall.\n+      return { ...wall, calculatedCosts: { ...(wall.calculatedCosts || {}) } };\n+    }\n     const costs =\n       calcWallCosts({\n         wall,\n         wallShape: wall.shape,\n-        wallMaterial: find(wall.materialId),\n-        internalMaterial: find(wall.internalMaterialId),\n+        wallMaterial,\n+        internalMaterial,\n         includeInternalWall: wall.includeInternalWall,\n         wallHeightInches: wall.heightInches || 24,\n         internalWallHeightInches: wall.internalWallHeightInches || wall.heightInches || 24,\n",
+      "applied": true
+    }
+  },
+  {
+    "at": "2026-11-05T18:16:25.143Z",
+    "event": "readback_verified",
+    "path": "src/components/estimator/foundation/wallCalculator.js",
+    "remoteLfSha": "55b6fc1ffcd9b7660d9c66b47e5000254de0e0e754719c1d25c3c0306f162614",
+    "localLfSha": "55b6fc1ffcd9b7660d9c66b47e5000254de0e0e754719c1d25c3c0306f162614"
+  },
+  {
+    "at": "2026-11-05T18:16:39.165Z",
+    "event": "mutation_response",
+    "path": "src/components/estimator/foundation/FoundationToolbar.jsx",
+    "result": {
+      "path": "src/components/estimator/foundation/FoundationToolbar.jsx",
+      "diff": "--- a/src/components/estimator/foundation/FoundationToolbar.jsx\n+++ b/src/components/estimator/foundation/FoundationToolbar.jsx\n@@ -1,127 +1,128 @@\n-import {\r\n-  ArrowLeft,\r\n-  HelpCircle,\r\n-  Undo2,\r\n-  Redo2,\r\n-  LayoutTemplate,\r\n-  BookmarkPlus,\r\n-  Copy,\r\n-  Save,\r\n-  ArrowLeftRight,\r\n-  Link2,\r\n-} from \"lucide-react\";\r\n-import { Link } from \"react-router-dom\";\r\n-import { money } from \"./foundationCalc\";\r\n-\r\n-const Btn = ({ icon: Icon, label, onClick, disabled }) => (\r\n-  <button\r\n-    type=\"button\"\r\n-    onClick={onClick}\r\n-    disabled={disabled}\r\n-    className=\"h-[28px] px-2.5 flex items-center gap-1.5 rounded-sm border border-gray-300 bg-white text-[12px] font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40\"\r\n-  >\r\n-    <Icon className=\"w-3.5 h-3.5 text-gray-500\" />\r\n-    {label}\r\n-  </button>\r\n-);\r\n-\r\n-export default function FoundationToolbar({\r\n-  title,\r\n-  subtitle,\r\n-  backTo,\r\n-  total,\r\n-  saving,\r\n-  dirty,\r\n-  lastSavedAt,\r\n-  autoSave,\r\n-  onToggleAutoSave,\r\n-  canUndo,\r\n-  canRedo,\r\n-  onUndo,\r\n-  onRedo,\r\n-  onSave,\r\n-  onSaveAndExit,\r\n-  onSaveAsCopy,\r\n-  onSaveAsTemplate,\r\n-  onTemplates,\r\n-  onSwapToBrickStone,\r\n-  onShareLink,\r\n-  onHelp,\r\n-  onBack,\r\n-}) {\r\n-  return (\r\n-    <div className=\"bg-white border border-gray-200 rounded-sm p-3 mb-3\">\r\n-      <div className=\"flex items-center gap-3 mb-2\">\r\n-        {onBack ? (\r\n-          <button\r\n-            type=\"button\"\r\n-            onClick={onBack}\r\n-            className=\"h-[28px] px-2.5 flex items-center gap-1 rounded-sm border border-gray-300 text-[12px] font-medium text-gray-700 hover:bg-gray-50\"\r\n-          >\r\n-            <ArrowLeft className=\"w-3.5 h-3.5\" aria-hidden=\"true\" /> Back\r\n-          </button>\r\n-        ) : (\r\n-          <Link\r\n-            to={backTo}\r\n-            className=\"h-[28px] px-2.5 flex items-center gap-1 rounded-sm border border-gray-300 text-[12px] font-medium text-gray-700 hover:bg-gray-50\"\r\n-          >\r\n-            <ArrowLeft className=\"w-3.5 h-3.5\" aria-hidden=\"true\" /> Back\r\n-          </Link>\r\n-        )}\r\n-        <div>\r\n-          <h1 className=\"text-[17px] font-bold text-gray-900 leading-tight\">{title}</h1>\r\n-          <p className=\"text-[11px] text-gray-500\">{subtitle}</p>\r\n-        </div>\r\n-      </div>\r\n-\r\n-      <div className=\"flex items-center gap-2 flex-wrap\">\r\n-        <span className=\"text-[13px] font-bold text-gray-900 mr-1\">Total: {money(total)}</span>\r\n-        <Btn icon={HelpCircle} label=\"Help\" onClick={onHelp} />\r\n-        <Btn icon={Undo2} label=\"Undo\" onClick={onUndo} disabled={!canUndo} />\r\n-        <Btn icon={Redo2} label=\"Redo\" onClick={onRedo} disabled={!canRedo} />\r\n-        <Btn icon={LayoutTemplate} label=\"Templates\" onClick={onTemplates} />\r\n-        <Btn icon={BookmarkPlus} label=\"Save as Template\" onClick={onSaveAsTemplate} />\r\n-        <Btn icon={Copy} label=\"Save As Copy\" onClick={onSaveAsCopy} />\r\n-        {onSwapToBrickStone ? <Btn icon={ArrowLeftRight} label=\"Swap to BrickStone\" onClick={onSwapToBrickStone} /> : null}\r\n-        {onShareLink ? <Btn icon={Link2} label=\"Share Link\" onClick={onShareLink} /> : null}\r\n-        <button\r\n-          type=\"button\"\r\n-          onClick={onSaveAndExit}\r\n-          disabled={saving}\r\n-          className=\"h-[28px] px-3 flex items-center gap-1.5 rounded-sm bg-lime-300 border border-lime-400 text-[12px] font-bold text-gray-800 hover:bg-lime-200 disabled:opacity-60\"\r\n-        >\r\n-          <Save className=\"w-3.5 h-3.5\" aria-hidden=\"true\" /> {saving ? \"Saving…\" : \"Save & Exit\"}\r\n-        </button>\r\n-\r\n-        <button\r\n-          type=\"button\"\r\n-          onClick={onToggleAutoSave}\r\n-          className={`ml-1 w-[38px] h-[20px] rounded-full transition-colors relative ${\r\n-            autoSave ? \"bg-gray-800\" : \"bg-gray-300\"\r\n-          }`}\r\n-          title=\"Auto-save\"\r\n-        >\r\n-          <span\r\n-            className={`absolute top-[2px] w-[16px] h-[16px] bg-white rounded-full transition-all ${\r\n-              autoSave ? \"left-[20px]\" : \"left-[2px]\"\r\n-            }`}\r\n-          />\r\n-        </button>\r\n-        <span className=\"text-[10px] font-semibold text-gray-500 uppercase tracking-wide\">\r\n-          Auto-save\r\n-        </span>\r\n-        <span className=\"text-[11px] text-gray-400\">\r\n-          {saving ? \"Saving…\" : dirty ? \"Not yet saved\" : \"All changes saved\"}{!saving && !dirty && lastSavedAt ? ` · Last saved ${new Date(lastSavedAt).toLocaleString()}` : \"\"}\r\n-        </span>\r\n-        <button\r\n-          type=\"button\"\r\n-          onClick={onSave}\r\n-          disabled={saving || !dirty}\r\n-          className=\"h-[28px] px-3 rounded-sm border border-gray-300 text-[12px] font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40\"\r\n-        >\r\n-          Save\r\n-        </button>\r\n-      </div>\r\n-    </div>\r\n-  );\r\n+import {\n+  ArrowLeft,\n+  HelpCircle,\n+  Undo2,\n+  Redo2,\n+  LayoutTemplate,\n+  BookmarkPlus,\n+  Copy,\n+  Save,\n+  ArrowLeftRight,\n+  Link2,\n+} from \"lucide-react\";\n+import { Link } from \"react-router-dom\";\n+import { money } from \"./foundationCalc\";\n+\n+const Btn = ({ icon: Icon, label, onClick, disabled }) => (\n+  <button\n+    type=\"button\"\n+    onClick={onClick}\n+    disabled={disabled}\n+    className=\"h-[28px] px-2.5 flex items-center gap-1.5 rounded-sm border border-gray-300 bg-white text-[12px] font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40\"\n+  >\n+    <Icon className=\"w-3.5 h-3.5 text-gray-500\" />\n+    {label}\n+  </button>\n+);\n+\n+export default function FoundationToolbar({\n+  title,\n+  subtitle,\n+  backTo,\n+  total,\n+  saving,\n+  dirty,\n+  lastSavedAt,\n+  autoSave,\n+  onToggleAutoSave,\n+  canUndo,\n+  canRedo,\n+  onUndo,\n+  onRedo,\n+  onSave,\n+  onSaveAndExit,\n+  onSaveAsCopy,\n+  onSaveAsTemplate,\n+  onTemplates,\n+  onSwapToBrickStone,\n+  onShareLink,\n+  onHelp,\n+  onBack,\n+  pricingUnavailable = false,\n+}) {\n+  return (\n+    <div className=\"bg-white border border-gray-200 rounded-sm p-3 mb-3\">\n+      <div className=\"flex items-center gap-3 mb-2\">\n+        {onBack ? (\n+          <button\n+            type=\"button\"\n+            onClick={onBack}\n+            className=\"h-[28px] px-2.5 flex items-center gap-1 rounded-sm border border-gray-300 text-[12px] font-medium text-gray-700 hover:bg-gray-50\"\n+          >\n+            <ArrowLeft className=\"w-3.5 h-3.5\" aria-hidden=\"true\" /> Back\n+          </button>\n+        ) : (\n+          <Link\n+            to={backTo}\n+            className=\"h-[28px] px-2.5 flex items-center gap-1 rounded-sm border border-gray-300 text-[12px] font-medium text-gray-700 hover:bg-gray-50\"\n+          >\n+            <ArrowLeft className=\"w-3.5 h-3.5\" aria-hidden=\"true\" /> Back\n+          </Link>\n+        )}\n+        <div>\n+          <h1 className=\"text-[17px] font-bold text-gray-900 leading-tight\">{title}</h1>\n+          <p className=\"text-[11px] text-gray-500\">{subtitle}</p>\n+        </div>\n+      </div>\n+\n+      <div className=\"flex items-center gap-2 flex-wrap\">\n+        <span className=\"text-[13px] font-bold text-gray-900 mr-1\">Total: {pricingUnavailable ? <span className=\"text-amber-700\">Pricing unavailable</span> : money(total)}</span>\n+        <Btn icon={HelpCircle} label=\"Help\" onClick={onHelp} />\n+        <Btn icon={Undo2} label=\"Undo\" onClick={onUndo} disabled={!canUndo} />\n+        <Btn icon={Redo2} label=\"Redo\" onClick={onRedo} disabled={!canRedo} />\n+        <Btn icon={LayoutTemplate} label=\"Templates\" onClick={onTemplates} />\n+        <Btn icon={BookmarkPlus} label=\"Save as Template\" onClick={onSaveAsTemplate} />\n+        <Btn icon={Copy} label=\"Save As Copy\" onClick={onSaveAsCopy} />\n+        {onSwapToBrickStone ? <Btn icon={ArrowLeftRight} label=\"Swap to BrickStone\" onClick={onSwapToBrickStone} /> : null}\n+        {onShareLink ? <Btn icon={Link2} label=\"Share Link\" onClick={onShareLink} /> : null}\n+        <button\n+          type=\"button\"\n+          onClick={onSaveAndExit}\n+          disabled={saving}\n+          className=\"h-[28px] px-3 flex items-center gap-1.5 rounded-sm bg-lime-300 border border-lime-400 text-[12px] font-bold text-gray-800 hover:bg-lime-200 disabled:opacity-60\"\n+        >\n+          <Save className=\"w-3.5 h-3.5\" aria-hidden=\"true\" /> {saving ? \"Saving…\" : \"Save & Exit\"}\n+        </button>\n+\n+        <button\n+          type=\"button\"\n+          onClick={onToggleAutoSave}\n+          className={`ml-1 w-[38px] h-[20px] rounded-full transition-colors relative ${\n+            autoSave ? \"bg-gray-800\" : \"bg-gray-300\"\n+          }`}\n+          title=\"Auto-save\"\n+        >\n+          <span\n+            className={`absolute top-[2px] w-[16px] h-[16px] bg-white rounded-full transition-all ${\n+              autoSave ? \"left-[20px]\" : \"left-[2px]\"\n+            }`}\n+          />\n+        </button>\n+        <span className=\"text-[10px] font-semibold text-gray-500 uppercase tracking-wide\">\n+          Auto-save\n+        </span>\n+        <span className=\"text-[11px] text-gray-400\">\n+          {saving ? \"Saving…\" : dirty ? \"Not yet saved\" : \"All changes saved\"}{!saving && !dirty && lastSavedAt ? ` · Last saved ${new Date(lastSavedAt).toLocaleString()}` : \"\"}\n+        </span>\n+        <button\n+          type=\"button\"\n+          onClick={onSave}\n+          disabled={saving || !dirty}\n+          className=\"h-[28px] px-3 rounded-sm border border-gray-300 text-[12px] font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40\"\n+        >\n+          Save\n+        </button>\n+      </div>\n+    </div>\n+  );\n }",
+      "applied": true
+    }
+  },
+  {
+    "at": "2026-11-05T18:16:40.900Z",
+    "event": "readback_verified",
+    "path": "src/components/estimator/foundation/FoundationToolbar.jsx",
+    "remoteLfSha": "688b7e9eb9645bb4b7f57b69f336e4a977c4237adbabf5930ffb3a62a0a74edc",
+    "localLfSha": "688b7e9eb9645bb4b7f57b69f336e4a977c4237adbabf5930ffb3a62a0a74edc"
+  },
+  {
+    "at": "2026-11-05T18:16:54.043Z",
+    "event": "mutation_response",
+    "path": "src/components/estimator/foundation/FoundationTotals.jsx",
+    "result": {
+      "path": "src/components/estimator/foundation/FoundationTotals.jsx",
+      "diff": "--- a/src/components/estimator/foundation/FoundationTotals.jsx\n+++ b/src/components/estimator/foundation/FoundationTotals.jsx\n@@ -1,50 +1,51 @@\n-import { money } from \"./foundationCalc\";\r\n-\r\n-export default function FoundationTotals({ totals }) {\r\n-  const lines = [\r\n-    [\"Concrete\", totals.total_concrete_cost],\r\n-    [\"Rebar\", totals.total_rebar_cost],\r\n-    [\"Excavation\", totals.total_excavation_cost],\r\n-    [\"Forming materials\", totals.total_forming_materials_cost],\r\n-    [\"Labor\", totals.total_labor_cost],\r\n-    [\"Poles\", totals.total_pole_cost],\r\n-    [\"Pole painting\", totals.total_pole_painting_cost],\r\n-    [\"Wall material\", totals.total_brick_cost],\r\n-    [\"Internal fill wall\", totals.total_fill_cost],\r\n-    [\"Wall mortar + labor\", (totals.total_wall_cost || 0) - (totals.total_brick_cost || 0) - (totals.total_fill_cost || 0)],\r\n-    [\"Wall caps\", totals.total_wall_cap_cost],\r\n-    [\"Equipment\", totals.total_equipment_cost],\r\n-  ];\r\n-\r\n-  return (\r\n-    <div className=\"bg-white rounded-xl border border-gray-200 p-4 sticky top-4\">\r\n-      <h2 className=\"font-semibold text-gray-900 mb-3\">Section Total</h2>\r\n-\r\n-      <div className=\"grid grid-cols-3 gap-2 mb-3 text-center\">\r\n-        {[\r\n-          [\"Concrete\", `${totals.total_concrete_volume_cy.toFixed(2)} CY`],\r\n-          [\"Excavation\", `${totals.total_excavation_volume_cy.toFixed(2)} CY`],\r\n-          [\"Labor\", `${totals.total_labor_hours.toFixed(1)} hr`],\r\n-        ].map(([label, value]) => (\r\n-          <div key={label} className=\"bg-slate-50 rounded-lg py-2\">\r\n-            <div className=\"text-[10px] uppercase tracking-wide text-gray-400\">{label}</div>\r\n-            <div className=\"text-sm font-semibold text-gray-800\">{value}</div>\r\n-          </div>\r\n-        ))}\r\n-      </div>\r\n-\r\n-      <div className=\"space-y-1.5 text-sm border-t border-gray-100 pt-3\">\r\n-        {lines.map(([label, value]) => (\r\n-          <div key={label} className=\"flex justify-between text-gray-600\">\r\n-            <span>{label}</span>\r\n-            <span>{money(value)}</span>\r\n-          </div>\r\n-        ))}\r\n-        <div className=\"flex justify-between font-bold text-gray-900 text-base border-t border-gray-200 pt-2\">\r\n-          <span>Total</span>\r\n-          <span className=\"text-red-600\">{money(totals.grand_total)}</span>\r\n-        </div>\r\n-      </div>\r\n-    </div>\r\n-  );\r\n+import { money } from \"./foundationCalc\";\n+\n+export default function FoundationTotals({ totals, pricingUnavailable = false }) {\n+  const lines = [\n+    [\"Concrete\", totals.total_concrete_cost],\n+    [\"Rebar\", totals.total_rebar_cost],\n+    [\"Excavation\", totals.total_excavation_cost],\n+    [\"Forming materials\", totals.total_forming_materials_cost],\n+    [\"Labor\", totals.total_labor_cost],\n+    [\"Poles\", totals.total_pole_cost],\n+    [\"Pole painting\", totals.total_pole_painting_cost],\n+    [\"Wall material\", totals.total_brick_cost],\n+    [\"Internal fill wall\", totals.total_fill_cost],\n+    [\"Wall mortar + labor\", (totals.total_wall_cost || 0) - (totals.total_brick_cost || 0) - (totals.total_fill_cost || 0)],\n+    [\"Wall caps\", totals.total_wall_cap_cost],\n+    [\"Equipment\", totals.total_equipment_cost],\n+  ];\n+\n+  return (\n+    <div className=\"bg-white rounded-xl border border-gray-200 p-4 sticky top-4\">\n+      <h2 className=\"font-semibold text-gray-900 mb-3\">Section Total</h2>\n+      {pricingUnavailable && <p className=\"mb-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800\">Saved/known amounts only; current pricing is incomplete.</p>}\n+\n+      <div className=\"grid grid-cols-3 gap-2 mb-3 text-center\">\n+        {[\n+          [\"Concrete\", `${totals.total_concrete_volume_cy.toFixed(2)} CY`],\n+          [\"Excavation\", `${totals.total_excavation_volume_cy.toFixed(2)} CY`],\n+          [\"Labor\", `${totals.total_labor_hours.toFixed(1)} hr`],\n+        ].map(([label, value]) => (\n+          <div key={label} className=\"bg-slate-50 rounded-lg py-2\">\n+            <div className=\"text-[10px] uppercase tracking-wide text-gray-400\">{label}</div>\n+            <div className=\"text-sm font-semibold text-gray-800\">{value}</div>\n+          </div>\n+        ))}\n+      </div>\n+\n+      <div className=\"space-y-1.5 text-sm border-t border-gray-100 pt-3\">\n+        {lines.map(([label, value]) => (\n+          <div key={label} className=\"flex justify-between text-gray-600\">\n+            <span>{label}</span>\n+            <span>{money(value)}</span>\n+          </div>\n+        ))}\n+        <div className=\"flex justify-between font-bold text-gray-900 text-base border-t border-gray-200 pt-2\">\n+          <span>Total</span>\n+          <span className=\"text-red-600\">{pricingUnavailable ? <span className=\"text-amber-700\">Pricing unavailable</span> : money(totals.grand_total)}</span>\n+        </div>\n+      </div>\n+    </div>\n+  );\n }",
+      "applied": true
+    }
+  },
+  {
+    "at": "2026-11-05T18:16:56.343Z",
+    "event": "readback_verified",
+    "path": "src/components/estimator/foundation/FoundationTotals.jsx",
+    "remoteLfSha": "8995af6e2b9e57cf77357efa39b68f04fb395dec4e7242f40a96674e9afb206f",
+    "localLfSha": "8995af6e2b9e57cf77357efa39b68f04fb395dec4e7242f40a96674e9afb206f"
+  },
+  {
+    "at": "2026-11-05T18:17:09.419Z",
+    "event": "mutation_response",
+    "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+    "result": {
+      "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+      "diff": "--- a/src/components/estimator/foundation/FoundationPolesPanel.jsx\n+++ b/src/components/estimator/foundation/FoundationPolesPanel.jsx\n@@ -2,6 +2,7 @@\n import { Input } from \"@/components/ui/input\";\n import { Trash2, Plus } from \"lucide-react\";\n import { money } from \"./foundationCalc\";\n+import { hasFoundationCostSnapshot } from \"./foundationCatalogIntegrity\";\n \n const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);\n \n@@ -123,9 +124,10 @@\n                 Paint pole\n               </label>\n               <div className=\"flex items-center gap-3 text-xs text-gray-600\">\n-                <span>Pole {money(pole.pole_cost)}</span>\n-                <span>Paint {money(pole.pole_painting_cost)}</span>\n-                <span className=\"font-bold text-gray-900 text-sm\">{money(pole.total_cost)}</span>\n+                <span>Pole {hasFoundationCostSnapshot(pole.pole_cost) ? money(pole.pole_cost) : \"Not saved\"}</span>\n+                <span>Paint {hasFoundationCostSnapshot(pole.pole_painting_cost) ? money(pole.pole_painting_cost) : \"Not saved\"}</span>\n+                <span className=\"font-bold text-gray-900 text-sm\">{hasFoundationCostSnapshot(pole.total_cost) ? money(pole.total_cost) : \"Not saved\"}</span>\n+                {(!options.some((o) => o.id === pole.pole_id)) && <span className=\"col-span-full text-[10px] text-amber-700\">Saved amounts (not current pricing)</span>}\n                 <Button variant=\"ghost\" size=\"icon\" onClick={() => removePole(index)}>\n                   <Trash2 className=\"w-4 h-4 text-red-500\" aria-hidden=\"true\" />\n                 </Button>\n",
+      "applied": true
+    }
+  },
+  {
+    "at": "2026-11-05T18:17:11.001Z",
+    "event": "readback_verified",
+    "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+    "remoteLfSha": "8ede1de988df75da16dd437ec05705a872d231b3a34e96eadef68feaca95ac25",
+    "localLfSha": "8ede1de988df75da16dd437ec05705a872d231b3a34e96eadef68feaca95ac25"
+  },
+  {
+    "at": "2026-11-05T18:17:28.427Z",
+    "event": "mutation_response",
+    "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+    "result": {
+      "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+      "diff": "--- a/src/components/estimator/foundation/FoundationWallCapsPanel.jsx\n+++ b/src/components/estimator/foundation/FoundationWallCapsPanel.jsx\n@@ -2,6 +2,7 @@\n import { Input } from \"@/components/ui/input\";\n import { Trash2, Plus } from \"lucide-react\";\n import { money } from \"./foundationCalc\";\n+import { hasFoundationCostSnapshot } from \"./foundationCatalogIntegrity\";\n \n const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);\n \n@@ -153,10 +154,11 @@\n             </div>\n             <div className=\"flex items-center justify-between mt-2 text-xs text-gray-600\">\n               <span>\n-                Stock length: <span className=\"font-semibold text-gray-900\">{cap.stock_length_inches || 0}\"</span>\n+                Stock length: <span className=\"font-semibold text-gray-900\">{hasFoundationCostSnapshot(cap.stock_length_inches) && cap.stock_length_inches > 0 ? cap.stock_length_inches + String.fromCharCode(34) : \"Not saved\"}</span>\n               </span>\n               <div className=\"flex items-center gap-3\">\n-                <span className=\"font-bold text-gray-900\">{money(cap.cost)}</span>\n+                <span className=\"font-bold text-gray-900\">{hasFoundationCostSnapshot(cap.cost) ? money(cap.cost) : \"Not saved\"}</span>\n+                {(!options.some((o) => o.id === cap.cap_inventory_id)) && <span className=\"text-[10px] text-amber-700\">Saved amounts (not current pricing)</span>}\n                 <Button variant=\"ghost\" size=\"icon\" onClick={() => removeCap(index)}>\n                   <Trash2 className=\"w-4 h-4 text-red-500\" aria-hidden=\"true\" />\n                 </Button>\n",
+      "applied": true
+    }
+  },
+  {
+    "at": "2026-11-05T18:17:30.121Z",
+    "event": "readback_verified",
+    "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+    "remoteLfSha": "b59d8abd9565a5d3ac7233ebdae3b6f939e9ed417b01202abd481d4e4113193a",
+    "localLfSha": "b59d8abd9565a5d3ac7233ebdae3b6f939e9ed417b01202abd481d4e4113193a"
+  },
+  {
+    "at": "2026-11-05T18:17:45.987Z",
+    "event": "mutation_response",
+    "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+    "result": {
+      "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+      "diff": "--- a/src/components/estimator/foundation/FoundationWallsPanel.jsx\n+++ b/src/components/estimator/foundation/FoundationWallsPanel.jsx\n@@ -3,6 +3,7 @@\n import { Input } from \"@/components/ui/input\";\n import { Trash2, Plus, PenLine } from \"lucide-react\";\n import { money } from \"./foundationCalc\";\n+import { hasFoundationCostSnapshot } from \"./foundationCatalogIntegrity\";\n import WallShapeEditor from \"./WallShapeEditor\";\n \n const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);\n@@ -10,6 +11,10 @@\n function WallRow({ wall, index, options, onChange, onRemove }) {\n   const c = wall.calculatedCosts || {};\n   const set = (changes) => onChange(index, changes);\n+  const outerMissing = !options.some((o) => o.id === wall.materialId);\n+  const innerMissing = !!wall.includeInternalWall && !options.some((o) => o.id === wall.internalMaterialId);\n+  const catalogMissing = outerMissing || innerMissing;\n+  const amt = (v) => (hasFoundationCostSnapshot(v) ? money(v) : \"Not saved\");\n   const [showEditor, setShowEditor] = React.useState(false);\n \n   return (\n@@ -22,7 +27,7 @@\n           onChange={(e) => set({ name: e.target.value })}\n         />\n         <div className=\"flex items-center gap-3\">\n-          <span className=\"font-bold text-gray-900\">{money(c.totalCost)}</span>\n+          <span className=\"font-bold text-gray-900\">{amt(c.totalCost)}</span>\n           <Button variant=\"ghost\" size=\"icon\" onClick={() => onRemove(index)}>\n             <Trash2 className=\"w-4 h-4 text-red-500\" aria-hidden=\"true\" />\n           </Button>\n@@ -119,11 +124,12 @@\n       <div className=\"grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-gray-600\">\n         <div>Units: <span className=\"font-semibold text-gray-900\">{Math.round(num(c.totalBricks))}</span></div>\n         <div>Courses: <span className=\"font-semibold text-gray-900\">{Math.ceil(num(c.numCourses))}</span></div>\n-        <div>Material: <span className=\"font-semibold text-gray-900\">{money(c.materialCost)}</span></div>\n-        <div>Mortar: <span className=\"font-semibold text-gray-900\">{money(c.mortarCost)}</span></div>\n-        <div>Labor: <span className=\"font-semibold text-gray-900\">{money(c.laborCost)}</span></div>\n+        <div>Material: <span className=\"font-semibold text-gray-900\">{amt(c.materialCost)}</span></div>\n+        <div>Mortar: <span className=\"font-semibold text-gray-900\">{amt(c.mortarCost)}</span></div>\n+        <div>Labor: <span className=\"font-semibold text-gray-900\">{amt(c.laborCost)}</span></div>\n         <div>Labor hrs: <span className=\"font-semibold text-gray-900\">{num(c.laborHours).toFixed(1)}</span></div>\n         <div>Linear in: <span className=\"font-semibold text-gray-900\">{Math.round(num(c.totalLinearInches))}</span></div>\n+        {catalogMissing && <div className=\"col-span-full text-[10px] font-semibold text-amber-700\">Saved amounts (not current pricing)</div>}\n       </div>\n \n       <div className=\"flex items-center gap-2\">\n",
+      "applied": true
+    }
+  },
+  {
+    "at": "2026-11-05T18:17:47.721Z",
+    "event": "readback_verified",
+    "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+    "remoteLfSha": "f6dd7daa82e1f6d7a5203ba63892fda7e7e0e9b1e84bb5c56b0006777748d3b5",
+    "localLfSha": "f6dd7daa82e1f6d7a5203ba63892fda7e7e0e9b1e84bb5c56b0006777748d3b5"
+  },
+  {
+    "at": "2026-11-05T18:18:04.178Z",
+    "event": "verified_checkpoint_created",
+    "checkpoint": {
+      "checkpointId": "6aecc85af43458099373b715",
+      "name": "Concrete-catalog-snapshots-handoff-guard-verified",
+      "gitCommitHash": "ea105847cb788ac0eb23845dfb59d17a72255b5b"
+    }
+  }
+]

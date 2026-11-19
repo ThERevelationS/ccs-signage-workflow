@@ -1,0 +1,26 @@
+[
+ {
+  "case": "desktop template save stores extended allowlist (links, AI brief, pricing selection, rates); forbidden fields absent",
+  "ok": true
+ },
+ {
+  "case": "desktop page-wired gate: saveDisabled + reason renders amber note, disabled action, zero service calls",
+  "ok": true
+ },
+ {
+  "case": "desktop save -> stored -> apply -> merge round-trips all covered fields with remapped ids and preserved identity",
+  "ok": true
+ },
+ {
+  "case": "mobile template save stores extended allowlist (links, AI brief, pricing selection, rates); forbidden fields absent",
+  "ok": true
+ },
+ {
+  "case": "mobile page-wired gate: saveDisabled + reason renders amber note, disabled action, zero service calls",
+  "ok": true
+ },
+ {
+  "case": "mobile save -> stored -> apply -> merge round-trips all covered fields with remapped ids and preserved identity",
+  "ok": true
+ }
+]

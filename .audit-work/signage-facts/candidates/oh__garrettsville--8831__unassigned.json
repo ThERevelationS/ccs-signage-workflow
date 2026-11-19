@@ -1,0 +1,53 @@
+{
+ "jurisdiction_id": "6adda668446072434c468831",
+ "jurisdiction_name": "Garrettsville",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "Size of Building or Addition: Width: ____________________________ Feet Height: ___________________ __________ Feet Length: ___________________________ Feet Area: ________________________ Square Feet Description of Property: Feet of frontage on road or other dedicated right - of - way: _______________ Feet Width of lot at setback or front building line: _________________________ Feet Depth of lot: ______________ Feet Area of lot: _________________ Square Feet Location of building or structure on the property or lot: Front Yard: ______________ feet from edge of road right - of way to proposed building or addition. Left Side Yard: ___________ feet from property line to proposed building or addition. Right Side Yard: ___________ feet from property line to proposed building or addition. Rear Yard: _______________ feet from property line to proposed buil ding or addition. Use of proposed build",
+   "tags": [
+    "area",
+    "dimension",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "c3932aa9c3b28120033d5cead4ddeb320e3c2577473e5b3da40ed4ed973f41ce",
+   "source_document_id": null,
+   "source_title": "c3932aa9c3b28120033d5cead4ddeb320e3c2577473e5b3da40ed4ed973f41ce.pdf",
+   "official_url": "https://core-docs.s3.us-east-1.amazonaws.com/documents/asset/uploaded_file/4423/garrettsville/3739585/App.for-Commercial-Zoning-Cert.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "(2.) The following signatures must be obtained by the applicant prior to the issuance of a zoning permit : a. The Fire Chief has reviewed the dr awings for new construction or remodels an d/or has inspected the prope rty in question with regards to fire safety and will forward any fire code violation to the Zoning Inspector /Planning Commission. (Phone 330 - 527 - 4050) Signa ture: b . T he Garrettsville Utility Department has inspected this property and finds Village sewer and water available. We further notify and request Owner/Builder to install a minimum 6” sanitary line to dwelling and a minimum of 3/4” water supply. Official stipulation if necessary. (Phone: 330 - 527 - 2 080) Signature: Dat e c. The Clerk of the Board of Public Affairs has received payment for Water and/or Sewer Tap - In Permits with the approval of the Utility Department. (Phone: 330 - 527 - 4424) Signature: Date",
+   "tags": [
+    "illumination",
+    "temporary",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "c3932aa9c3b28120033d5cead4ddeb320e3c2577473e5b3da40ed4ed973f41ce",
+   "source_document_id": null,
+   "source_title": "c3932aa9c3b28120033d5cead4ddeb320e3c2577473e5b3da40ed4ed973f41ce.pdf",
+   "official_url": "https://core-docs.s3.us-east-1.amazonaws.com/documents/asset/uploaded_file/4423/garrettsville/3739585/App.for-Commercial-Zoning-Cert.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Village of Garre ttsville Zoning Department 8213 High Street Garrettsville, Ohio 44231 Tel: 330 - 527 - 2070 Fax: 330 - 527 - 581 9 Email – zoning@garrettsville.org Items you need to know while planning and prior to open ing a business in Garrettsville : 1. Your business and sign for the proposed business must be approved by the Planning C ommission or the Zoning Office . Please obtain a copy of the ordinance s which regulates the business and signs with relation to the zoning district you are intending to occupy. A copy of the Codified Ordinances specific to C ommercial zones are located wi thin C - 1, local Commercial District , co vered in Chapter 1175 , C - 2 Gener a l Com mercial District , Chapter 1175, C - 3, In tensive Commercial District, Chapter 1180, Industrial District , Chapter 1181, and Residential/ Commercial District in Chapter 1182 . All the above c hapters are located w",
+   "tags": [
+    "sign",
+    "permit_required",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "a00403d16720e1a96e40131669667c20132e8f04dd322aa89a28938a41eaaaac",
+   "source_document_id": null,
+   "source_title": "a00403d16720e1a96e40131669667c20132e8f04dd322aa89a28938a41eaaaac.pdf",
+   "official_url": "https://core-docs.s3.us-east-1.amazonaws.com/documents/asset/uploaded_file/4423/garrettsville/3739572/Letter-for-new-Businesses.pdf"
+  }
+ ]
+}

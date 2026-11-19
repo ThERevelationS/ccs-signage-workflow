@@ -13,7 +13,7 @@ export default function SectionRow({ line, index, estimateId, onChange, onRemove
     <div className="clay-card p-4 border-l-4 border-l-red-400">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 min-w-0">
-          <Layers className="w-4 h-4 text-red-500 flex-shrink-0" />
+          <Layers className="w-4 h-4 text-red-500 flex-shrink-0" aria-hidden="true" />
           <div className="min-w-0">
             {editorPage ? (
               <Link
@@ -32,7 +32,7 @@ export default function SectionRow({ line, index, estimateId, onChange, onRemove
           <div className="text-base font-bold text-gray-900">
             {fmt(acceptedCustomerUnitPrice(line) * Math.max(0, Number(line.customer_quantity ?? 1) || 0) * (1 + Number(line.adjustment_percent || 0) / 100))}
           </div>
-          <button
+          <button type="button"
             onClick={() => {
               if (window.confirm(`Remove "${line.project_name || getModuleLabel(line.module_key)}" from this estimate?`)) {
                 onRemove(index);
@@ -41,7 +41,7 @@ export default function SectionRow({ line, index, estimateId, onChange, onRemove
             className="mt-1 p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50"
             title="Remove section"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>

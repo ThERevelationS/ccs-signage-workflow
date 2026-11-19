@@ -1,0 +1,1254 @@
+{
+  "entries": [
+    {
+      "name": "productStageSync.js",
+      "path": "src/components/estimator/productStageSync.js",
+      "type": "file",
+      "size": 9023
+    },
+    {
+      "name": "importEstimates.js",
+      "path": "src/components/estimator/importEstimates.js",
+      "type": "file",
+      "size": 27551
+    },
+    {
+      "name": "customerCreationService.js",
+      "path": "src/components/estimator/customerCreationService.js",
+      "type": "file",
+      "size": 817
+    },
+    {
+      "name": "SignaturePad.jsx",
+      "path": "src/components/estimator/SignaturePad.jsx",
+      "type": "file",
+      "size": 2819
+    },
+    {
+      "name": "customerLocationService.js",
+      "path": "src/components/estimator/customerLocationService.js",
+      "type": "file",
+      "size": 5117
+    },
+    {
+      "name": "IntegrationsSurface.jsx",
+      "path": "src/components/estimator/IntegrationsSurface.jsx",
+      "type": "file",
+      "size": 38168
+    },
+    {
+      "name": "quoteDeliveryService.js",
+      "path": "src/components/estimator/quoteDeliveryService.js",
+      "type": "file",
+      "size": 11136
+    },
+    {
+      "name": "customerQuote.js",
+      "path": "src/components/estimator/customerQuote.js",
+      "type": "file",
+      "size": 1527
+    },
+    {
+      "name": "estimateConversionService.js",
+      "path": "src/components/estimator/estimateConversionService.js",
+      "type": "file",
+      "size": 28403
+    },
+    {
+      "name": "useSectionSync.js",
+      "path": "src/components/estimator/useSectionSync.js",
+      "type": "file",
+      "size": 2597
+    },
+    {
+      "name": "quickPricePersistence.js",
+      "path": "src/components/estimator/quickPricePersistence.js",
+      "type": "file",
+      "size": 2741
+    },
+    {
+      "name": "customerSync.js",
+      "path": "src/components/estimator/customerSync.js",
+      "type": "file",
+      "size": 25775
+    },
+    {
+      "name": "profitability.js",
+      "path": "src/components/estimator/profitability.js",
+      "type": "file",
+      "size": 1803
+    },
+    {
+      "name": "recentCustomerHistory.js",
+      "path": "src/components/estimator/recentCustomerHistory.js",
+      "type": "file",
+      "size": 1626
+    },
+    {
+      "name": "idempotentEntityCreate.js",
+      "path": "src/components/estimator/idempotentEntityCreate.js",
+      "type": "file",
+      "size": 6458
+    },
+    {
+      "name": "customerPricing.js",
+      "path": "src/components/estimator/customerPricing.js",
+      "type": "file",
+      "size": 12016
+    },
+    {
+      "name": "EstimateQuoteDeliveryPanel.jsx",
+      "path": "src/components/estimator/EstimateQuoteDeliveryPanel.jsx",
+      "type": "file",
+      "size": 9928
+    },
+    {
+      "name": "navConfig.js",
+      "path": "src/components/estimator/navConfig.js",
+      "type": "file",
+      "size": 4489
+    },
+    {
+      "name": "exportEstimates.js",
+      "path": "src/components/estimator/exportEstimates.js",
+      "type": "file",
+      "size": 22096
+    },
+    {
+      "name": "AddSectionDialog.jsx",
+      "path": "src/components/estimator/AddSectionDialog.jsx",
+      "type": "file",
+      "size": 2389
+    },
+    {
+      "name": "quoteDefaultsPersistence.js",
+      "path": "src/components/estimator/quoteDefaultsPersistence.js",
+      "type": "file",
+      "size": 5369
+    },
+    {
+      "name": "loadAllEntityRows.js",
+      "path": "src/components/estimator/loadAllEntityRows.js",
+      "type": "file",
+      "size": 8105
+    },
+    {
+      "name": "estimatePersistence.js",
+      "path": "src/components/estimator/estimatePersistence.js",
+      "type": "file",
+      "size": 9445
+    },
+    {
+      "name": "EstimatorAuditPanel.jsx",
+      "path": "src/components/estimator/EstimatorAuditPanel.jsx",
+      "type": "file",
+      "size": 7667
+    },
+    {
+      "name": "estimateLifecycle.js",
+      "path": "src/components/estimator/estimateLifecycle.js",
+      "type": "file",
+      "size": 4671
+    },
+    {
+      "name": "NewEstimateDialog.jsx",
+      "path": "src/components/estimator/NewEstimateDialog.jsx",
+      "type": "file",
+      "size": 5387
+    },
+    {
+      "name": "workOrderSyncPersistence.js",
+      "path": "src/components/estimator/workOrderSyncPersistence.js",
+      "type": "file",
+      "size": 5194
+    },
+    {
+      "name": "ConvertToWorkOrder.jsx",
+      "path": "src/components/estimator/ConvertToWorkOrder.jsx",
+      "type": "file",
+      "size": 6218
+    },
+    {
+      "name": "EstimatorShell.jsx",
+      "path": "src/components/estimator/EstimatorShell.jsx",
+      "type": "file",
+      "size": 400
+    },
+    {
+      "name": "EstimateHeaderForm.jsx",
+      "path": "src/components/estimator/EstimateHeaderForm.jsx",
+      "type": "file",
+      "size": 4955
+    },
+    {
+      "name": "estimateMutationGuard.js",
+      "path": "src/components/estimator/estimateMutationGuard.js",
+      "type": "file",
+      "size": 3102
+    },
+    {
+      "name": "a11y.js",
+      "path": "src/components/estimator/a11y.js",
+      "type": "file",
+      "size": 4393
+    },
+    {
+      "name": "depositGate.js",
+      "path": "src/components/estimator/depositGate.js",
+      "type": "file",
+      "size": 4867
+    },
+    {
+      "name": "CustomerQuotePanel.jsx",
+      "path": "src/components/estimator/CustomerQuotePanel.jsx",
+      "type": "file",
+      "size": 44772
+    },
+    {
+      "name": "poRequiredModel.js",
+      "path": "src/components/estimator/poRequiredModel.js",
+      "type": "file",
+      "size": 3725
+    },
+    {
+      "name": "PricingSummary.jsx",
+      "path": "src/components/estimator/PricingSummary.jsx",
+      "type": "file",
+      "size": 6765
+    },
+    {
+      "name": "workOrderConversion.js",
+      "path": "src/components/estimator/workOrderConversion.js",
+      "type": "file",
+      "size": 36750
+    },
+    {
+      "name": "EstimateAcceptancePanel.jsx",
+      "path": "src/components/estimator/EstimateAcceptancePanel.jsx",
+      "type": "file",
+      "size": 39467
+    },
+    {
+      "name": "pipelineStatus.js",
+      "path": "src/components/estimator/pipelineStatus.js",
+      "type": "file",
+      "size": 2502
+    },
+    {
+      "name": "estimateSalesActivity.mjs",
+      "path": "src/components/estimator/estimateSalesActivity.mjs",
+      "type": "file",
+      "size": 977
+    },
+    {
+      "name": "EstimateCard.jsx",
+      "path": "src/components/estimator/EstimateCard.jsx",
+      "type": "file",
+      "size": 6631
+    },
+    {
+      "name": "quoteDefaults.js",
+      "path": "src/components/estimator/quoteDefaults.js",
+      "type": "file",
+      "size": 4005
+    },
+    {
+      "name": "estimateCreationService.js",
+      "path": "src/components/estimator/estimateCreationService.js",
+      "type": "file",
+      "size": 5583
+    },
+    {
+      "name": "estimateSaveRecovery.js",
+      "path": "src/components/estimator/estimateSaveRecovery.js",
+      "type": "file",
+      "size": 2957
+    },
+    {
+      "name": "EstimateRevisionPanel.jsx",
+      "path": "src/components/estimator/EstimateRevisionPanel.jsx",
+      "type": "file",
+      "size": 24297
+    },
+    {
+      "name": "EstimatorNav.jsx",
+      "path": "src/components/estimator/EstimatorNav.jsx",
+      "type": "file",
+      "size": 3394
+    },
+    {
+      "name": "CustomerMergeDialog.jsx",
+      "path": "src/components/estimator/CustomerMergeDialog.jsx",
+      "type": "file",
+      "size": 12954
+    },
+    {
+      "name": "customerPersistence.js",
+      "path": "src/components/estimator/customerPersistence.js",
+      "type": "file",
+      "size": 5895
+    },
+    {
+      "name": "userDateDisplay.js",
+      "path": "src/components/estimator/userDateDisplay.js",
+      "type": "file",
+      "size": 2761
+    },
+    {
+      "name": "estimateRevisionService.js",
+      "path": "src/components/estimator/estimateRevisionService.js",
+      "type": "file",
+      "size": 12439
+    },
+    {
+      "name": "EstimateMarginSection.jsx",
+      "path": "src/components/estimator/EstimateMarginSection.jsx",
+      "type": "file",
+      "size": 4536
+    },
+    {
+      "name": "deepLinks.js",
+      "path": "src/components/estimator/deepLinks.js",
+      "type": "file",
+      "size": 5736
+    },
+    {
+      "name": "MarginBreakdown.jsx",
+      "path": "src/components/estimator/MarginBreakdown.jsx",
+      "type": "file",
+      "size": 12780
+    },
+    {
+      "name": "EstimatorBrandBar.jsx",
+      "path": "src/components/estimator/EstimatorBrandBar.jsx",
+      "type": "file",
+      "size": 948
+    },
+    {
+      "name": "DuplicateEstimateDialog.jsx",
+      "path": "src/components/estimator/DuplicateEstimateDialog.jsx",
+      "type": "file",
+      "size": 2326
+    },
+    {
+      "name": "productionProductTypes.js",
+      "path": "src/components/estimator/productionProductTypes.js",
+      "type": "file",
+      "size": 759
+    },
+    {
+      "name": "quoteLifecycle.js",
+      "path": "src/components/estimator/quoteLifecycle.js",
+      "type": "file",
+      "size": 4203
+    },
+    {
+      "name": "EstimateActivityPanel.jsx",
+      "path": "src/components/estimator/EstimateActivityPanel.jsx",
+      "type": "file",
+      "size": 3820
+    },
+    {
+      "name": "quotePdf.js",
+      "path": "src/components/estimator/quotePdf.js",
+      "type": "file",
+      "size": 4537
+    },
+    {
+      "name": "VendorCostBadge.jsx",
+      "path": "src/components/estimator/VendorCostBadge.jsx",
+      "type": "file",
+      "size": 6107
+    },
+    {
+      "name": "aioPricing.js",
+      "path": "src/components/estimator/aioPricing.js",
+      "type": "file",
+      "size": 1982
+    },
+    {
+      "name": "estimateConcurrency.js",
+      "path": "src/components/estimator/estimateConcurrency.js",
+      "type": "file",
+      "size": 243
+    },
+    {
+      "name": "estimateStatusTransitions.js",
+      "path": "src/components/estimator/estimateStatusTransitions.js",
+      "type": "file",
+      "size": 3188
+    },
+    {
+      "name": "SectionRow.jsx",
+      "path": "src/components/estimator/SectionRow.jsx",
+      "type": "file",
+      "size": 4011
+    },
+    {
+      "name": "moduleRegistry.js",
+      "path": "src/components/estimator/moduleRegistry.js",
+      "type": "file",
+      "size": 2126
+    },
+    {
+      "name": "foundation",
+      "path": "src/components/estimator/foundation",
+      "type": "directory"
+    },
+    {
+      "name": "FoundationEquipmentTab.jsx",
+      "path": "src/components/estimator/foundation/FoundationEquipmentTab.jsx",
+      "type": "file",
+      "size": 22906
+    },
+    {
+      "name": "FoundationSectionBanner.jsx",
+      "path": "src/components/estimator/foundation/FoundationSectionBanner.jsx",
+      "type": "file",
+      "size": 1317
+    },
+    {
+      "name": "FoundationTemplateDialog.jsx",
+      "path": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+      "type": "file",
+      "size": 9785
+    },
+    {
+      "name": "foundationEquipmentBindings.js",
+      "path": "src/components/estimator/foundation/foundationEquipmentBindings.js",
+      "type": "file",
+      "size": 5718
+    },
+    {
+      "name": "landscapeMaterials.js",
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "type": "file",
+      "size": 5413
+    },
+    {
+      "name": "foundationSaveSession.js",
+      "path": "src/components/estimator/foundation/foundationSaveSession.js",
+      "type": "file",
+      "size": 2391
+    },
+    {
+      "name": "convertToBrickStone.js",
+      "path": "src/components/estimator/foundation/convertToBrickStone.js",
+      "type": "file",
+      "size": 1919
+    },
+    {
+      "name": "foundationCatalogIntegrity.js",
+      "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+      "type": "file",
+      "size": 3347
+    },
+    {
+      "name": "FoundationLayoutCanvas.jsx",
+      "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "type": "file",
+      "size": 9883
+    },
+    {
+      "name": "wallCapCalculator.js",
+      "path": "src/components/estimator/foundation/wallCapCalculator.js",
+      "type": "file",
+      "size": 5979
+    },
+    {
+      "name": "foundationAssemblyModel.js",
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "type": "file",
+      "size": 22455
+    },
+    {
+      "name": "LandscapeDesigner.jsx",
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "type": "file",
+      "size": 6522
+    },
+    {
+      "name": "foundationSyncRecovery.js",
+      "path": "src/components/estimator/foundation/foundationSyncRecovery.js",
+      "type": "file",
+      "size": 4007
+    },
+    {
+      "name": "SignageCabinetsPanel.jsx",
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "type": "file",
+      "size": 13219
+    },
+    {
+      "name": "poleCalculator.js",
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "type": "file",
+      "size": 11181
+    },
+    {
+      "name": "foundationCalc.js",
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "type": "file",
+      "size": 26618
+    },
+    {
+      "name": "FoundationBOM.jsx",
+      "path": "src/components/estimator/foundation/FoundationBOM.jsx",
+      "type": "file",
+      "size": 8349
+    },
+    {
+      "name": "FoundationPolesPanel.jsx",
+      "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+      "type": "file",
+      "size": 8570
+    },
+    {
+      "name": "CustomerPricingPanel.jsx",
+      "path": "src/components/estimator/foundation/CustomerPricingPanel.jsx",
+      "type": "file",
+      "size": 2362
+    },
+    {
+      "name": "FoundationWallCapsPanel.jsx",
+      "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+      "type": "file",
+      "size": 9647
+    },
+    {
+      "name": "foundationSellPricing.js",
+      "path": "src/components/estimator/foundation/foundationSellPricing.js",
+      "type": "file",
+      "size": 5357
+    },
+    {
+      "name": "FoundationWallsPanel.jsx",
+      "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+      "type": "file",
+      "size": 11408
+    },
+    {
+      "name": "foundationAiReview.js",
+      "path": "src/components/estimator/foundation/foundationAiReview.js",
+      "type": "file",
+      "size": 8572
+    },
+    {
+      "name": "foundationBuilderRecovery.js",
+      "path": "src/components/estimator/foundation/foundationBuilderRecovery.js",
+      "type": "file",
+      "size": 2698
+    },
+    {
+      "name": "FoundationTotals.jsx",
+      "path": "src/components/estimator/foundation/FoundationTotals.jsx",
+      "type": "file",
+      "size": 2704
+    },
+    {
+      "name": "foundationInputValidation.js",
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "type": "file",
+      "size": 10621
+    },
+    {
+      "name": "wallCalculator.js",
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "type": "file",
+      "size": 25598
+    },
+    {
+      "name": "foundationTemplateService.js",
+      "path": "src/components/estimator/foundation/foundationTemplateService.js",
+      "type": "file",
+      "size": 1250
+    },
+    {
+      "name": "foundationDraftRecovery.js",
+      "path": "src/components/estimator/foundation/foundationDraftRecovery.js",
+      "type": "file",
+      "size": 8959
+    },
+    {
+      "name": "legacyFoundationCalc.js",
+      "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+      "type": "file",
+      "size": 26462
+    },
+    {
+      "name": "FoundationItemCard.jsx",
+      "path": "src/components/estimator/foundation/FoundationItemCard.jsx",
+      "type": "file",
+      "size": 12660
+    },
+    {
+      "name": "FoundationRatesPanel.jsx",
+      "path": "src/components/estimator/foundation/FoundationRatesPanel.jsx",
+      "type": "file",
+      "size": 2630
+    },
+    {
+      "name": "WallShapeEditor.jsx",
+      "path": "src/components/estimator/foundation/WallShapeEditor.jsx",
+      "type": "file",
+      "size": 7671
+    },
+    {
+      "name": "foundationLayoutModel.js",
+      "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+      "type": "file",
+      "size": 2839
+    },
+    {
+      "name": "foundationTemplateModel.js",
+      "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+      "type": "file",
+      "size": 2825
+    },
+    {
+      "name": "FoundationToolbar.jsx",
+      "path": "src/components/estimator/foundation/FoundationToolbar.jsx",
+      "type": "file",
+      "size": 4519
+    },
+    {
+      "name": "Foundation3DPreview.jsx",
+      "path": "src/components/estimator/foundation/Foundation3DPreview.jsx",
+      "type": "file",
+      "size": 10395
+    },
+    {
+      "name": "AiEngineeringAssistant.jsx",
+      "path": "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+      "type": "file",
+      "size": 4708
+    },
+    {
+      "name": "ConcreteDeliveryPanel.jsx",
+      "path": "src/components/estimator/foundation/ConcreteDeliveryPanel.jsx",
+      "type": "file",
+      "size": 4784
+    },
+    {
+      "name": "laser",
+      "path": "src/components/estimator/laser",
+      "type": "directory"
+    },
+    {
+      "name": "laserCalc.js",
+      "path": "src/components/estimator/laser/laserCalc.js",
+      "type": "file",
+      "size": 2804
+    },
+    {
+      "name": "laserPricingAvailability.js",
+      "path": "src/components/estimator/laser/laserPricingAvailability.js",
+      "type": "file",
+      "size": 23438
+    },
+    {
+      "name": "laserSellPricing.js",
+      "path": "src/components/estimator/laser/laserSellPricing.js",
+      "type": "file",
+      "size": 4779
+    },
+    {
+      "name": "cnc",
+      "path": "src/components/estimator/cnc",
+      "type": "directory"
+    },
+    {
+      "name": "cncCalc.js",
+      "path": "src/components/estimator/cnc/cncCalc.js",
+      "type": "file",
+      "size": 3389
+    },
+    {
+      "name": "cncPricingAvailability.js",
+      "path": "src/components/estimator/cnc/cncPricingAvailability.js",
+      "type": "file",
+      "size": 19851
+    },
+    {
+      "name": "cncSellPricing.js",
+      "path": "src/components/estimator/cnc/cncSellPricing.js",
+      "type": "file",
+      "size": 4719
+    },
+    {
+      "name": "settings",
+      "path": "src/components/estimator/settings",
+      "type": "directory"
+    },
+    {
+      "name": "settingsSaveGuard.js",
+      "path": "src/components/estimator/settings/settingsSaveGuard.js",
+      "type": "file",
+      "size": 8274
+    },
+    {
+      "name": "SettingsTransferBar.jsx",
+      "path": "src/components/estimator/settings/SettingsTransferBar.jsx",
+      "type": "file",
+      "size": 3157
+    },
+    {
+      "name": "PricingAdminTabs.jsx",
+      "path": "src/components/estimator/settings/PricingAdminTabs.jsx",
+      "type": "file",
+      "size": 60787
+    },
+    {
+      "name": "moduleSettingDefaults.js",
+      "path": "src/components/estimator/settings/moduleSettingDefaults.js",
+      "type": "file",
+      "size": 7756
+    },
+    {
+      "name": "moduleShared",
+      "path": "src/components/estimator/moduleShared",
+      "type": "directory"
+    },
+    {
+      "name": "moduleProjectActions.js",
+      "path": "src/components/estimator/moduleShared/moduleProjectActions.js",
+      "type": "file",
+      "size": 2830
+    },
+    {
+      "name": "ModuleActionBar.jsx",
+      "path": "src/components/estimator/moduleShared/ModuleActionBar.jsx",
+      "type": "file",
+      "size": 2403
+    },
+    {
+      "name": "ModuleTemplateDialog.jsx",
+      "path": "src/components/estimator/moduleShared/ModuleTemplateDialog.jsx",
+      "type": "file",
+      "size": 5421
+    },
+    {
+      "name": "moduleTemplateService.js",
+      "path": "src/components/estimator/moduleShared/moduleTemplateService.js",
+      "type": "file",
+      "size": 1529
+    },
+    {
+      "name": "maintenance",
+      "path": "src/components/estimator/maintenance",
+      "type": "directory"
+    },
+    {
+      "name": "maintenanceSellPricing.js",
+      "path": "src/components/estimator/maintenance/maintenanceSellPricing.js",
+      "type": "file",
+      "size": 4967
+    },
+    {
+      "name": "builder",
+      "path": "src/components/estimator/builder",
+      "type": "directory"
+    },
+    {
+      "name": "builderEntityPersistence.js",
+      "path": "src/components/estimator/builder/builderEntityPersistence.js",
+      "type": "file",
+      "size": 7401
+    },
+    {
+      "name": "sourceProjectPersistence.js",
+      "path": "src/components/estimator/builder/sourceProjectPersistence.js",
+      "type": "file",
+      "size": 3808
+    },
+    {
+      "name": "builderMutationRecovery.js",
+      "path": "src/components/estimator/builder/builderMutationRecovery.js",
+      "type": "file",
+      "size": 23268
+    },
+    {
+      "name": "historicalBackfill.js",
+      "path": "src/components/estimator/builder/historicalBackfill.js",
+      "type": "file",
+      "size": 6489
+    },
+    {
+      "name": "partSync.js",
+      "path": "src/components/estimator/builder/partSync.js",
+      "type": "file",
+      "size": 191858
+    },
+    {
+      "name": "builderService.js",
+      "path": "src/components/estimator/builder/builderService.js",
+      "type": "file",
+      "size": 56601
+    },
+    {
+      "name": "builderPartPersistence.js",
+      "path": "src/components/estimator/builder/builderPartPersistence.js",
+      "type": "file",
+      "size": 3882
+    },
+    {
+      "name": "itemIdentity.js",
+      "path": "src/components/estimator/builder/itemIdentity.js",
+      "type": "file",
+      "size": 961
+    },
+    {
+      "name": "legacyBomReconcile.js",
+      "path": "src/components/estimator/builder/legacyBomReconcile.js",
+      "type": "file",
+      "size": 22175
+    },
+    {
+      "name": "builderProductPersistence.js",
+      "path": "src/components/estimator/builder/builderProductPersistence.js",
+      "type": "file",
+      "size": 4554
+    },
+    {
+      "name": "ReattachPartsModal.jsx",
+      "path": "src/components/estimator/builder/ReattachPartsModal.jsx",
+      "type": "file",
+      "size": 9194
+    },
+    {
+      "name": "builderPartGroupPersistence.js",
+      "path": "src/components/estimator/builder/builderPartGroupPersistence.js",
+      "type": "file",
+      "size": 3934
+    },
+    {
+      "name": "aio",
+      "path": "src/components/estimator/aio",
+      "type": "directory"
+    },
+    {
+      "name": "BuilderPartsPanel.jsx",
+      "path": "src/components/estimator/aio/BuilderPartsPanel.jsx",
+      "type": "file",
+      "size": 52461
+    },
+    {
+      "name": "MergeEstimateDialog.jsx",
+      "path": "src/components/estimator/aio/MergeEstimateDialog.jsx",
+      "type": "file",
+      "size": 8389
+    },
+    {
+      "name": "CreatePartGroupModal.jsx",
+      "path": "src/components/estimator/aio/CreatePartGroupModal.jsx",
+      "type": "file",
+      "size": 3220
+    },
+    {
+      "name": "AddProductGrid.jsx",
+      "path": "src/components/estimator/aio/AddProductGrid.jsx",
+      "type": "file",
+      "size": 30325
+    },
+    {
+      "name": "BuilderPartEditWarningModal.jsx",
+      "path": "src/components/estimator/aio/BuilderPartEditWarningModal.jsx",
+      "type": "file",
+      "size": 2618
+    },
+    {
+      "name": "MovePartGroupModal.jsx",
+      "path": "src/components/estimator/aio/MovePartGroupModal.jsx",
+      "type": "file",
+      "size": 3918
+    },
+    {
+      "name": "ProductNotesModal.jsx",
+      "path": "src/components/estimator/aio/ProductNotesModal.jsx",
+      "type": "file",
+      "size": 3291
+    },
+    {
+      "name": "CancelEstimateModal.jsx",
+      "path": "src/components/estimator/aio/CancelEstimateModal.jsx",
+      "type": "file",
+      "size": 5115
+    },
+    {
+      "name": "InlineProductEditor.jsx",
+      "path": "src/components/estimator/aio/InlineProductEditor.jsx",
+      "type": "file",
+      "size": 4428
+    },
+    {
+      "name": "Step1EstimateDetails.jsx",
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "type": "file",
+      "size": 20657
+    },
+    {
+      "name": "NewCustomerDialog.jsx",
+      "path": "src/components/estimator/aio/NewCustomerDialog.jsx",
+      "type": "file",
+      "size": 8602
+    },
+    {
+      "name": "CreateQuickProductModal.jsx",
+      "path": "src/components/estimator/aio/CreateQuickProductModal.jsx",
+      "type": "file",
+      "size": 8963
+    },
+    {
+      "name": "DetachedPartOverrideModal.jsx",
+      "path": "src/components/estimator/aio/DetachedPartOverrideModal.jsx",
+      "type": "file",
+      "size": 12754
+    },
+    {
+      "name": "CustomerSearchDialog.jsx",
+      "path": "src/components/estimator/aio/CustomerSearchDialog.jsx",
+      "type": "file",
+      "size": 4955
+    },
+    {
+      "name": "EstimateProductsList.jsx",
+      "path": "src/components/estimator/aio/EstimateProductsList.jsx",
+      "type": "file",
+      "size": 12501
+    },
+    {
+      "name": "ProductPriceHistoryModal.jsx",
+      "path": "src/components/estimator/aio/ProductPriceHistoryModal.jsx",
+      "type": "file",
+      "size": 6890
+    },
+    {
+      "name": "EstimateNotesTimeline.jsx",
+      "path": "src/components/estimator/aio/EstimateNotesTimeline.jsx",
+      "type": "file",
+      "size": 3060
+    },
+    {
+      "name": "AioEstimateHeader.jsx",
+      "path": "src/components/estimator/aio/AioEstimateHeader.jsx",
+      "type": "file",
+      "size": 4425
+    },
+    {
+      "name": "AioStepRail.jsx",
+      "path": "src/components/estimator/aio/AioStepRail.jsx",
+      "type": "file",
+      "size": 4831
+    },
+    {
+      "name": "ClipboardManagerModal.jsx",
+      "path": "src/components/estimator/aio/ClipboardManagerModal.jsx",
+      "type": "file",
+      "size": 11100
+    },
+    {
+      "name": "ProductRow.jsx",
+      "path": "src/components/estimator/aio/ProductRow.jsx",
+      "type": "file",
+      "size": 37585
+    },
+    {
+      "name": "metal",
+      "path": "src/components/estimator/metal",
+      "type": "directory"
+    },
+    {
+      "name": "metalSellPricing.js",
+      "path": "src/components/estimator/metal/metalSellPricing.js",
+      "type": "file",
+      "size": 4776
+    },
+    {
+      "name": "metalPricingAvailability.js",
+      "path": "src/components/estimator/metal/metalPricingAvailability.js",
+      "type": "file",
+      "size": 18089
+    },
+    {
+      "name": "brick",
+      "path": "src/components/estimator/brick",
+      "type": "directory"
+    },
+    {
+      "name": "brickPricingAvailability.js",
+      "path": "src/components/estimator/brick/brickPricingAvailability.js",
+      "type": "file",
+      "size": 12868
+    },
+    {
+      "name": "BrickTotals.jsx",
+      "path": "src/components/estimator/brick/BrickTotals.jsx",
+      "type": "file",
+      "size": 4388
+    },
+    {
+      "name": "BrickGeometryPanel.jsx",
+      "path": "src/components/estimator/brick/BrickGeometryPanel.jsx",
+      "type": "file",
+      "size": 4280
+    },
+    {
+      "name": "brickCalc.js",
+      "path": "src/components/estimator/brick/brickCalc.js",
+      "type": "file",
+      "size": 2345
+    },
+    {
+      "name": "brickSellPricing.js",
+      "path": "src/components/estimator/brick/brickSellPricing.js",
+      "type": "file",
+      "size": 4930
+    },
+    {
+      "name": "products",
+      "path": "src/components/estimator/products",
+      "type": "directory"
+    },
+    {
+      "name": "productRemovalService.js",
+      "path": "src/components/estimator/products/productRemovalService.js",
+      "type": "file",
+      "size": 14860
+    },
+    {
+      "name": "quickProductService.js",
+      "path": "src/components/estimator/products/quickProductService.js",
+      "type": "file",
+      "size": 52158
+    },
+    {
+      "name": "blankProductService.js",
+      "path": "src/components/estimator/products/blankProductService.js",
+      "type": "file",
+      "size": 16879
+    },
+    {
+      "name": "clipboardService.js",
+      "path": "src/components/estimator/products/clipboardService.js",
+      "type": "file",
+      "size": 12165
+    },
+    {
+      "name": "snapshotUtils.js",
+      "path": "src/components/estimator/products/snapshotUtils.js",
+      "type": "file",
+      "size": 676
+    },
+    {
+      "name": "kitService.js",
+      "path": "src/components/estimator/products/kitService.js",
+      "type": "file",
+      "size": 4605
+    },
+    {
+      "name": "productOperations.js",
+      "path": "src/components/estimator/products/productOperations.js",
+      "type": "file",
+      "size": 18787
+    },
+    {
+      "name": "reusableSaveIdempotency.js",
+      "path": "src/components/estimator/products/reusableSaveIdempotency.js",
+      "type": "file",
+      "size": 338
+    },
+    {
+      "name": "parts",
+      "path": "src/components/estimator/parts",
+      "type": "directory"
+    },
+    {
+      "name": "partPackageService.js",
+      "path": "src/components/estimator/parts/partPackageService.js",
+      "type": "file",
+      "size": 16046
+    },
+    {
+      "name": "customProductService.js",
+      "path": "src/components/estimator/parts/customProductService.js",
+      "type": "file",
+      "size": 45084
+    },
+    {
+      "name": "MasterPartPickerModal.jsx",
+      "path": "src/components/estimator/parts/MasterPartPickerModal.jsx",
+      "type": "file",
+      "size": 19631
+    },
+    {
+      "name": "partCatalog.js",
+      "path": "src/components/estimator/parts/partCatalog.js",
+      "type": "file",
+      "size": 14301
+    },
+    {
+      "name": "PartLibraryPickerModal.jsx",
+      "path": "src/components/estimator/parts/PartLibraryPickerModal.jsx",
+      "type": "file",
+      "size": 9729
+    },
+    {
+      "name": "partGroupService.js",
+      "path": "src/components/estimator/parts/partGroupService.js",
+      "type": "file",
+      "size": 52671
+    },
+    {
+      "name": "SavePartTemplateModal.jsx",
+      "path": "src/components/estimator/parts/SavePartTemplateModal.jsx",
+      "type": "file",
+      "size": 7602
+    },
+    {
+      "name": "partState.js",
+      "path": "src/components/estimator/parts/partState.js",
+      "type": "file",
+      "size": 440
+    },
+    {
+      "name": "partTemplateService.js",
+      "path": "src/components/estimator/parts/partTemplateService.js",
+      "type": "file",
+      "size": 11416
+    },
+    {
+      "name": "channel",
+      "path": "src/components/estimator/channel",
+      "type": "directory"
+    },
+    {
+      "name": "LetterPurchasesPanel.jsx",
+      "path": "src/components/estimator/channel/LetterPurchasesPanel.jsx",
+      "type": "file",
+      "size": 3759
+    },
+    {
+      "name": "ChannelItemCard.jsx",
+      "path": "src/components/estimator/channel/ChannelItemCard.jsx",
+      "type": "file",
+      "size": 6040
+    },
+    {
+      "name": "channelCalc.js",
+      "path": "src/components/estimator/channel/channelCalc.js",
+      "type": "file",
+      "size": 5570
+    },
+    {
+      "name": "channelSellPricing.js",
+      "path": "src/components/estimator/channel/channelSellPricing.js",
+      "type": "file",
+      "size": 2002
+    },
+    {
+      "name": "ChannelTotals.jsx",
+      "path": "src/components/estimator/channel/ChannelTotals.jsx",
+      "type": "file",
+      "size": 3164
+    },
+    {
+      "name": "channelConstants.js",
+      "path": "src/components/estimator/channel/channelConstants.js",
+      "type": "file",
+      "size": 1947
+    },
+    {
+      "name": "ChannelEquipmentPanel.jsx",
+      "path": "src/components/estimator/channel/ChannelEquipmentPanel.jsx",
+      "type": "file",
+      "size": 4048
+    },
+    {
+      "name": "paint",
+      "path": "src/components/estimator/paint",
+      "type": "directory"
+    },
+    {
+      "name": "paintCalc.js",
+      "path": "src/components/estimator/paint/paintCalc.js",
+      "type": "file",
+      "size": 17210
+    },
+    {
+      "name": "paintSellPricing.js",
+      "path": "src/components/estimator/paint/paintSellPricing.js",
+      "type": "file",
+      "size": 4929
+    },
+    {
+      "name": "paintPricingAvailability.js",
+      "path": "src/components/estimator/paint/paintPricingAvailability.js",
+      "type": "file",
+      "size": 18061
+    },
+    {
+      "name": "customItems",
+      "path": "src/components/estimator/customItems",
+      "type": "directory"
+    },
+    {
+      "name": "customItemsSellPricing.js",
+      "path": "src/components/estimator/customItems/customItemsSellPricing.js",
+      "type": "file",
+      "size": 4969
+    },
+    {
+      "name": "vinyl",
+      "path": "src/components/estimator/vinyl",
+      "type": "directory"
+    },
+    {
+      "name": "VinylTotals.jsx",
+      "path": "src/components/estimator/vinyl/VinylTotals.jsx",
+      "type": "file",
+      "size": 1954
+    },
+    {
+      "name": "vinylCalc.js",
+      "path": "src/components/estimator/vinyl/vinylCalc.js",
+      "type": "file",
+      "size": 3935
+    },
+    {
+      "name": "VinylRatesPanel.jsx",
+      "path": "src/components/estimator/vinyl/VinylRatesPanel.jsx",
+      "type": "file",
+      "size": 1100
+    },
+    {
+      "name": "VinylItemCard.jsx",
+      "path": "src/components/estimator/vinyl/VinylItemCard.jsx",
+      "type": "file",
+      "size": 4111
+    },
+    {
+      "name": "vinylEnginePricing.js",
+      "path": "src/components/estimator/vinyl/vinylEnginePricing.js",
+      "type": "file",
+      "size": 4752
+    },
+    {
+      "name": "home",
+      "path": "src/components/estimator/home",
+      "type": "directory"
+    },
+    {
+      "name": "StatCards.jsx",
+      "path": "src/components/estimator/home/StatCards.jsx",
+      "type": "file",
+      "size": 1406
+    },
+    {
+      "name": "RecentActivity.jsx",
+      "path": "src/components/estimator/home/RecentActivity.jsx",
+      "type": "file",
+      "size": 2567
+    }
+  ],
+  "truncated": false
+}

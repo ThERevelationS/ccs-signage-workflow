@@ -1,0 +1,61 @@
+{
+  "matches": [
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3298,
+      "text": "    const authorized = base44.asServiceRole.entities.AuthorizedEmail;\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3299,
+      "text": "    const entryEntity = base44.asServiceRole.entities.TimeEntry;\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3300,
+      "text": "    const stateEntity = base44.asServiceRole.entities.TimeClockEmployeeState;\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3301,
+      "text": "    const auditEntity = base44.asServiceRole.entities.TimeClockAudit;\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3303,
+      "text": "    const correctionRequestEntity = base44.asServiceRole.entities.TimeClockCorrectionRequest;\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3306,
+      "text": "    const workPauseEntity = base44.asServiceRole.entities.TimeClockWorkPause;\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3308,
+      "text": "    const shiftTemplateEntity = base44.asServiceRole.entities.TimeClockShiftTemplate;\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3309,
+      "text": "    const deviceEntity = base44.asServiceRole.entities.TimeClockDevice;\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 5104,
+      "text": "        const authorizedEmployees = await authorized.filter({});\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 5537,
+      "text": "          const authorizedEmployees = await authorized.filter({});\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 5769,
+      "text": "        const authorizedByReopenRequestId = String(supersededGeneration?.invalidated_by_reopen_request_id || '');\r"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 11
+}

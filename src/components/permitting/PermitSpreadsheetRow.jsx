@@ -16,10 +16,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
-import { ExternalLink, Info, Loader2, MapPin, ShieldAlert, Trash2, UserRoundPlus } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, Info, Loader2, MapPin, ShieldAlert, Trash2, UserRoundPlus } from "lucide-react";
 import PermitLineLifecycleDetails from "./PermitLineLifecycleDetails";
 import { isPermitLineEffectivelyComplete } from "./permitQueue";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { normalizePermitJurisdictionName } from "./jurisdictionPermitBridge";
 import { assessJurisdictionTrust, isJurisdictionPlaceholder } from "./jurisdictionTrust";
 
@@ -110,6 +110,7 @@ export default function PermitSpreadsheetRow({
   onShowLocalityInfo,
   onShowJurisdictionInfo,
   localityState,
+  locality = null,
   officeAuthority,
   legacyOfficeOptions = [],
   onLinkLegacyOffice,
@@ -117,7 +118,8 @@ export default function PermitSpreadsheetRow({
   isRegistered,
   users,
   currentUser,
-  today
+  today,
+  installDate = ""
 }) {
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -129,6 +131,20 @@ export default function PermitSpreadsheetRow({
   const [jurisdictionPreviewLoading, setJurisdictionPreviewLoading] = useState(false);
   const [jurisdictionPreviewError, setJurisdictionPreviewError] = useState("");
   const [jurisdictionMatches, setJurisdictionMatches] = useState(null);
+  // Collapsed-by-default completed lines; expanded by default for active work.
+  const expandKey = `permitline_expanded_${lineItem.id}`;
+  const [expanded, setExpanded] = useState(() => {
+    try {
+      const saved = localStorage.getItem(expandKey);
+      if (saved != null) return saved === "1";
+    } catch {}
+    return !isPermitLineEffectivelyComplete(lineItem);
+  });
+  const toggleExpanded = () => setExpanded(v => {
+    const n = !v;
+    try { localStorage.setItem(expandKey, n ? "1" : "0"); } catch {}
+    return n;
+  });
   const headerScrollRef = useRef(null);
   const dataScrollRef = useRef(null);
   const linkOfficeTriggerRef = useRef(null);
@@ -167,7 +183,32 @@ export default function PermitSpreadsheetRow({
 
   const officeTypes = getOfficeTypes(lineItem);
   const followupStyle = getFollowupStyle();
+  const expectedReplyOverdue = (() => {
+    if (isCompleted || !today || !lineItem.expected_response_date) return false;
+    const ed = parseLocalDate(lineItem.expected_response_date);
+    const td = parseLocalDate(today);
+    return !!(ed && td && differenceInDays(ed, td) < 0);
+  })();
+  const permitExpired = (() => {
+    if (isCompleted || !today || !lineItem.permit_expiration_date) return false;
+    const ed = parseLocalDate(lineItem.permit_expiration_date);
+    const td = parseLocalDate(today);
+    return !!(ed && td && differenceInDays(ed, td) < 0);
+  })();
+  const permitExpiresBeforeInstall = (() => {
+    if (isCompleted || !installDate || !lineItem.permit_expiration_date) return false;
+    const ed = parseLocalDate(lineItem.permit_expiration_date);
+    const id = parseLocalDate(installDate);
+    return !!(ed && id && differenceInDays(ed, id) < 0);
+  })();
   const localityLabel = lineItem.locality_name || "—";
+  const appliedByLabel = (() => {
+    const who = lineItem.applied_by || lineItem.created_by || "";
+    const when = lineItem.applied_date || lineItem.created_date || "";
+    if (!who && !when) return "";
+    const date = when ? (() => { try { return format(new Date(when), "MMM d"); } catch { return when.slice(0, 10); } })() : "";
+    return `Linked by ${who || "unknown"}${date ? ` · ${date}` : ""}`;
+  })();
   const currentUserOwnerLabel = currentUser?.full_name || currentUser?.email || "";
   const ownerOptions = [...new Set((users || []).map((user) => user.full_name || user.email).filter(Boolean))].sort();
   if (currentUserOwnerLabel && !ownerOptions.includes(currentUserOwnerLabel)) ownerOptions.unshift(currentUserOwnerLabel);
@@ -215,13 +256,52 @@ export default function PermitSpreadsheetRow({
       className={`group/line px-3 py-2 transition-colors ${isCompleted ? 'opacity-60 bg-gray-50/40' : 'hover:bg-gray-50/40'}`}
       style={followupStyle}
     >
+      {!expanded ? (() => {
+        const filledSteps = steps.filter(s => s.type === 'checkbox' ? s.checked : String(s.value || '').trim()).length;
+        return (
+          <button type="button" onClick={toggleExpanded} aria-expanded={false}
+            className="flex w-full items-center gap-2 text-left py-0.5">
+            <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <span className="flex items-center gap-1 flex-wrap flex-shrink-0">
+              {expectedReplyOverdue && <span className="text-[9px] font-bold px-1.5 py-px rounded-full bg-amber-100 text-amber-800 border border-amber-400">PAST DUE</span>}
+              {permitExpired && <span className="text-[9px] font-bold px-1.5 py-px rounded-full bg-red-50 text-red-800 border border-red-400">RENEWAL</span>}
+              {officeTypes.slice(0, 3).map((t, i) => {
+                const st = getTypeStyle(t);
+                return <span key={i} className="text-[9px] font-bold px-1.5 py-px rounded-full" style={{ backgroundColor: st.bg, color: st.text, border: `1px solid ${st.border}` }}>{t}</span>;
+              })}
+            </span>
+            <span className="truncate font-medium text-[12px] text-gray-800 flex-1">{localityLabel}</span>
+            <span className="text-[10px] text-gray-500 flex-shrink-0">{filledSteps}/{steps.length} steps</span>
+            {lineItem.next_followup_date && !isCompleted && (
+              <span className="text-[10px] text-amber-700 flex-shrink-0">follow-up {lineItem.next_followup_date.slice(5)}</span>
+            )}
+            {lineItem.assigned_to && <span className="text-[10px] text-gray-400 flex-shrink-0 truncate max-w-[100px]">{lineItem.assigned_to}</span>}
+            {lineItem.permit_number && <span className="text-[10px] font-semibold text-emerald-700 flex-shrink-0">#{lineItem.permit_number}</span>}
+          </button>
+        );
+      })() : (
+      <>
       {/* MICRO HEADER — office-type badges + column labels */}
       <div
         className="mb-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1.5 sm:grid-cols-[130px_minmax(0,1fr)_auto] sm:gap-x-3"
         style={{ fontSize: '12px' }}
       >
         {/* Office type badges (possibly multiple) */}
-        <div className="col-start-1 row-start-1 flex min-w-0 flex-wrap gap-1 pt-0.5 sm:w-[130px] sm:flex-shrink-0">
+        <div className="col-start-1 row-start-1 flex min-w-0 flex-wrap items-center gap-1 pt-0.5 sm:w-[130px] sm:flex-shrink-0">
+          <button type="button" onClick={toggleExpanded} aria-expanded={true}
+            className="rounded p-0.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 -ml-1"
+            title="Collapse this line">
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+          {expectedReplyOverdue && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full leading-tight" style={{ backgroundColor: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b' }} title="The office's stated reply date has passed — time to call them.">PAST DUE</span>
+          )}
+          {permitExpired && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full leading-tight" style={{ backgroundColor: '#fef2f2', color: '#991b1b', border: '1px solid #dc2626' }} title="This permit has expired — start the renewal before the install.">RENEWAL NEEDED</span>
+          )}
+          {permitExpiresBeforeInstall && !permitExpired && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full leading-tight" style={{ backgroundColor: '#fff7ed', color: '#9a3412', border: '1px solid #ea580c' }} title="The permit expires before the install date — renew or extend it first.">EXPIRES BEFORE INSTALL</span>
+          )}
           {officeTypes.length === 0 ? (
             <span
               className="text-[10px] font-bold px-2 py-0.5 rounded-full"
@@ -260,7 +340,7 @@ export default function PermitSpreadsheetRow({
         </div>
 
         {isRegistered && onDeleteLine && (
-          <button
+          <button type="button"
             onClick={() => setConfirmDeleteOpen(true)}
             className="col-start-2 row-start-1 flex-shrink-0 rounded p-1.5 opacity-100 transition-opacity hover:bg-red-50 sm:col-start-3 sm:p-0.5 sm:opacity-0 sm:group-hover/line:opacity-100"
             title="Delete this line"
@@ -290,9 +370,10 @@ export default function PermitSpreadsheetRow({
                 title={localityLabel}
               >
                 {localityLabel}
+                {appliedByLabel && <span className="block text-[9px] text-gray-400 font-normal">{appliedByLabel}</span>}
               </span>
               {lineItem.locality_id && (
-                <button
+                <button type="button"
                   onClick={() => onShowLocalityInfo(lineItem.locality_id)}
                   className="h-6 w-6 flex items-center justify-center rounded-md bg-blue-50 hover:bg-blue-100 border border-blue-200 flex-shrink-0"
                   title="View configured tracker locality"
@@ -373,6 +454,8 @@ export default function PermitSpreadsheetRow({
                                   {processingTime && <div><span className="font-semibold">Processing:</span> {processingTime}</div>}
                                   {maxArea && <div><span className="font-semibold">Max area:</span> {maxArea} sq ft</div>}
                                   {maxHeight && <div><span className="font-semibold">Max height:</span> {maxHeight} ft</div>}
+                                  {usableText(jurisdiction.required_documents) && <div className="col-span-2"><span className="font-semibold">Office wants:</span> {usableText(jurisdiction.required_documents)}</div>}
+                                  {usableText(jurisdiction.ordinance_citation) && <div className="col-span-2"><span className="font-semibold">Code:</span> {usableText(jurisdiction.ordinance_citation)}</div>}
                                 </div>
                               )}
                             </div>
@@ -429,16 +512,20 @@ export default function PermitSpreadsheetRow({
               </div>
             )}
             {isRegistered && onLinkLegacyOffice && legacyOfficeOptions.length > 0 && (
-              <button ref={linkOfficeTriggerRef} type="button" className="mt-1 rounded border border-purple-300 bg-purple-50 px-2 py-1 text-[11px] font-semibold text-purple-900"
+              <button type="button" ref={linkOfficeTriggerRef} className="mt-1 rounded border border-purple-300 bg-purple-50 px-2 py-1 text-[11px] font-semibold text-purple-900"
                 onClick={() => { setSelectedOfficeId(""); setLinkError(""); setLinkOfficeOpen(true); }}>
-                {lineItem.locality_office_id ? "Repair missing office link" : "Link legacy line to office"}
+                {lineItem.locality_office_id ? "Fix this line's office link" : "Link this line to an office"}
               </button>
             )}
             <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-gray-500">
               <span className="flex-shrink-0">Owner:</span>
               <Select
                 value={lineItem.assigned_to || "__unassigned__"}
-                onValueChange={(value) => onUpdateField(lineItem.id, 'assigned_to', value === "__unassigned__" ? "" : value)}
+                onValueChange={(value) => {
+                  const next = value === "__unassigned__" ? "" : value;
+                  if (lineItem.assigned_to && lineItem.assigned_to !== next && !( (()=>{try{return localStorage.getItem("permitting_skip_confirms")==="1";}catch{return false;}})() || window.confirm(`This line belongs to ${lineItem.assigned_to} — give it to ${next || "nobody"} instead?`))) return;
+                  onUpdateField(lineItem.id, 'assigned_to', next);
+                }}
                 disabled={!isRegistered}
               >
                 <SelectTrigger className="h-7 min-w-0 w-[140px] border-gray-200 px-2 text-[11px] shadow-none">
@@ -451,6 +538,40 @@ export default function PermitSpreadsheetRow({
                   ))}
                 </SelectContent>
               </Select>
+              {(lineItem.submission_method || lineItem.confirmation_number) && (
+                <button
+                  type="button"
+                  className="text-[10px] font-semibold text-indigo-700 underline"
+                  title="Copy this application&#039;s submission details to paste into the office portal for resubmit"
+                  onClick={async () => {
+                    const parts = [`Job: ${lineItem.work_order_title || ''}`, `Office: ${lineItem.locality_name || ''}`, `Submitted via: ${lineItem.submission_method || '—'}`, `Confirmation #: ${lineItem.confirmation_number || '—'}`, `Application ref: ${lineItem.application_reference_number || '—'}`, `Revision: ${lineItem.application_revision || 1}`];
+                    try { await navigator.clipboard.writeText(parts.join('\n')); } catch {}
+                  }}
+                >
+                  Copy submission details
+                </button>
+              )}
+              {isRegistered && lineItem.permit_number && (
+                <button
+                  type="button"
+                  className="inline-flex min-h-7 items-center gap-1 rounded-md border border-gray-300 bg-white px-2 text-[10px] font-semibold text-gray-700 hover:bg-gray-50"
+                  title="Print this permit's details for the job folder"
+                  onClick={() => {
+                    const rows = [
+                      ["Permit #", lineItem.permit_number], ["Job", lineItem.work_order_title || ""], ["Office", lineItem.locality_name || ""],
+                      ["Permit type", lineItem.permit_type || ""], ["Issued", lineItem.permit_issue_date || ""], ["Expires", lineItem.permit_expiration_date || ""],
+                      ["Inspection", lineItem.inspection_date || ""], ["Inspector", lineItem.inspector_contact || ""],
+                      ["App ref", lineItem.application_reference_number || ""], ["Document", lineItem.permit_document_url || ""],
+                    ].filter(([, v]) => v);
+                    const win = window.open("", "_blank", "width=620,height=800");
+                    if (!win) return;
+                    win.document.write(`<html><head><title>Permit ${lineItem.permit_number}</title><style>body{font-family:sans-serif;padding:24px}h1{font-size:18px;margin:0 0 12px}table{border-collapse:collapse;width:100%}td{border:1px solid #ccc;padding:6px 10px;font-size:12px}td:first-child{font-weight:600;width:140px;color:#555}</style></head><body><h1>Permit packet — ${lineItem.work_order_title || lineItem.row_name || "Permit"}</h1><table>${rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("")}</table></body></html>`);
+                    win.document.close(); win.print();
+                  }}
+                >
+                  Print packet
+                </button>
+              )}
               {canAssignToMe && (
                 <button
                   type="button"
@@ -499,7 +620,7 @@ export default function PermitSpreadsheetRow({
                     onOpenChange={(open) => setOpenDatePopover(open ? popoverId : null)}
                   >
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className={`h-7 w-full text-[13px] text-center hover:bg-gray-100 rounded font-medium ${isFollowup && dateVal ? 'text-amber-700' : step.type === 'permit_received_date' && dateVal ? 'text-green-700' : ''}`}>
+                      <button type="button" className={`h-7 w-full text-[13px] text-center hover:bg-gray-100 rounded font-medium ${isFollowup && dateVal ? 'text-amber-700' : step.type === 'permit_received_date' && dateVal ? 'text-green-700' : ''}`}>
                         {dateVal ? (() => { const d = parseLocalDate(dateVal); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "—"; })() : "—"}
                       </button>
                     </PopoverTrigger>
@@ -515,7 +636,7 @@ export default function PermitSpreadsheetRow({
                       />
                       {dateVal && (
                         <div className="p-2 border-t">
-                          <button
+                          <button type="button"
                             onClick={() => { onUpdateStep(lineItem.id, step.id, { value: "" }); setOpenDatePopover(null); }}
                             className="text-xs text-red-500 hover:underline w-full text-center"
                           >
@@ -545,10 +666,13 @@ export default function PermitSpreadsheetRow({
 
       <PermitLineLifecycleDetails
         lineItem={lineItem}
+        locality={locality}
         onUpdateField={onUpdateField}
         isRegistered={isRegistered}
         today={today}
       />
+      </>
+      )}
 
       <AlertDialog open={linkOfficeOpen} onOpenChange={open => {
         if (linkSaving) return;
@@ -560,18 +684,16 @@ export default function PermitSpreadsheetRow({
       }}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
-            <AlertDialogTitle>{lineItem.locality_office_id ? "Repair this missing office reference?" : "Link this existing permit line to an office?"}</AlertDialogTitle>
+            <AlertDialogTitle>{lineItem.locality_office_id ? "Fix this line's missing office?" : "Link this line to an office?"}</AlertDialogTitle>
             <AlertDialogDescription>
               {lineItem.locality_office_id && (
-                <>The saved office ID ({lineItem.locality_office_id}) no longer matches any current
-                office. Review the office history before selecting a replacement. </>
+                <>The office this line was pointing to is gone. Check the office list and pick a new one. </>
               )}
-              Confirm which configured office represents this line. Only this line's stable office
-              reference changes. This does not verify permitting authority or change workflow
-              steps, other lines, notes, or historical permits.
+              Pick which office this line belongs to. This only changes this line — it does not
+              change the offices, other lines, notes, or past permits.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <label className="text-sm font-semibold" htmlFor={"office-link-" + lineItem.id}>Configured office</label>
+          <label className="text-sm font-semibold" htmlFor={"office-link-" + lineItem.id}>Pick the office</label>
           <select ref={linkOfficeSelectRef} id={"office-link-" + lineItem.id} value={selectedOfficeId}
             onChange={event => setSelectedOfficeId(event.target.value)}
             disabled={linkSaving} aria-describedby={"office-link-help-" + lineItem.id} className="min-h-10 w-full rounded border px-2 text-sm">
@@ -619,7 +741,7 @@ export default function PermitSpreadsheetRow({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this permit line?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the {lineItem.row_name || lineItem.office_type || "permit"} line and its recorded workflow values from this Work Order. Other permit lines and the Work Order will not be deleted.
+              This removes the {lineItem.row_name || lineItem.office_type || "permit"} line and its recorded workflow values from this Work Order. Other permit lines and the Work Order will not be deleted. If you need it back, re-add it with "Edit permit setup…" on the job card.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

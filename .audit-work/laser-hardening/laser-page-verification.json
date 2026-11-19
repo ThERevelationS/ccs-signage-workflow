@@ -1,0 +1,16 @@
+{
+ "suite": "laser-page",
+ "scenarios": 9,
+ "result": "PASS",
+ "checks": [
+  "S1 clean project: no banner, finite totals persisted, items save derived-fresh costs (stale stored snapshot replaced), no estimate handoff without estimateId",
+  "S2 malformed quantity: banner + aria-invalid + saved-fallback shown; Save and Save-As-Copy each zero writes; 'Save paused'",
+  "S3 held without acknowledged totals: 'Not saved' shown, no fabricated $0, zero writes",
+  "S4 malformed live Settings row (cut_speed_1_4): project hold, 'Laser Settings' save message, zero writes",
+  "S5 explicit-zero parameter_handling_time_percentage honored on a NEW project seed: no banner, 0% persists as 0",
+  "S6 cut_speed_1_4=0 (positive-required) flagged and blocked",
+  "S7 blank fixed-setup-hours input preserved mid-edit, field flagged, zero writes",
+  "S8 reprice-staleness: fixed_setup_hours 0.5→2 reprices immediately; save persists fresh 150.5715 not stale 38.0715",
+  "S9 estimate context: recordBuilderSave receives finite liveTotal > 0"
+ ]
+}

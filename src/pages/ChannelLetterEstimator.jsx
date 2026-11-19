@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { ChannelLetterInstallation, Settings, ChannelLetterInstallInventory, ChannelLetterInstallEquipment } from "@/entities/all";
+import { ChannelLetterInstallation, Settings, ChannelLetterInstallInventory, ChannelLetterInstallEquipment, DimensionalLetterMaterial } from "@/api/gatedEntities";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
-import { Plus, ArrowLeft, Wrench, Package, FileText, ListChecks, Boxes, Calculator, MapPin, Copy, DollarSign, Check, HardHat, Type, Camera, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
+import { Plus, ArrowLeft, Wrench, Package, FileText, ListChecks, Boxes, Calculator, MapPin, Copy, DollarSign, Check, HardHat, ClipboardList, Type, Camera, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
 import ChannelLetterHelpAssistant from "@/components/channelLetterInstall/ChannelLetterHelpAssistant";
 import { useUnsavedChanges } from "@/components/UnsavedChangesContext";
-import { useAuth } from "@/components/auth/EmailGate";
+import { useAuth, getSessionToken } from "@/components/auth/EmailGate";
 import ClientSearchInput from "@/components/ClientSearchInput";
 import InstallSummaryCard from "@/components/channelLetterInstall/InstallSummaryCard";
 import ItemsList from "@/components/channelLetterInstall/ItemsList";
@@ -30,24 +30,33 @@ import { categorizeChannelLetterProject } from "@/components/markup/projectCateg
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import PhotoEstimateModal from "@/components/channelLetterInstall/PhotoEstimateModal";
 import AIInstallScopeModal from "@/components/channelLetterInstall/AIInstallScopeModal";
+import ChannelIntakeDialog from "@/components/channelLetterInstall/ChannelIntakeDialog";
+import ChannelTakeoffCard from "@/components/channelLetterInstall/ChannelTakeoffCard";
+import { recordFieldOverrides } from "@/components/channelLetterInstall/channelSetSync.js";
+import ProposalLifecycleCard from "@/components/channelLetterInstall/ProposalLifecycleCard";
+import { isProposalAccepted, patchOnlyTouchesLifecycle } from "@/components/channelLetterInstall/channelProposalLifecycle";
+import { useToast } from "@/components/ui/use-toast";
 import ConfirmModal from "@/components/channelLetterInstall/ConfirmModal";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
 import { suggestEquipmentForProject, selectedEquipmentFromInventory, suggestPersonnelForProject, suggestCrewSize } from "@/components/channelLetterInstall/equipmentSuggester";
 import {
-  calcLineItem,
-  calcProjectTotals,
   defaultMaterialsForItem,
   emptyLineItem,
 } from "@/components/channelLetterInstall/installCalculator";
-import { calcLettersTotals, syncInstallItemsFromPurchases } from "@/components/channelLetterInstall/lettersCalculator";
+import { syncInstallItemsFromPurchases } from "@/components/channelLetterInstall/lettersCalculator";
+import { calcChannelProject } from "@/components/channelLetterInstall/channelLetterPricingAvailability";
 import { buildSummaryText, downloadCSV } from "@/components/channelLetterInstall/installExport";
 import { upsertCustomerSummaryForEstimate } from "@/components/customerSummary/upsertCustomerSummary";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
+import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
+import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
 
-const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
+// Held/blank values render an em-dash instead of laundering into $0.00.
+const fmt = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 
 const blankProject = () => ({
   project_name: "",
@@ -77,7 +86,7 @@ const blankProject = () => ({
 
 export default function ChannelLetterEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const navigate = useNavigate();
-  const { sessionToken } = useAuth();
+  const { sessionToken, currentUser } = useAuth();
   const [searchParams] = useSearchParams();
   // Prop wins when embedded inside the All-In-One estimator.
   const editId = embeddedProjectId || searchParams.get("edit") || searchParams.get("id");
@@ -89,21 +98,27 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   const [settings, setSettings] = useState({});
   const [inventory, setInventory] = useState([]);
   const [equipmentInventory, setEquipmentInventory] = useState([]);
+  const [dimensionalMaterials, setDimensionalMaterials] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
+  const [intakeOpen, setIntakeOpen] = useState(false);
   const [aiInstallOpen, setAiInstallOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState(null); // { title, description, ... }
   const [helpTrigger, setHelpTrigger] = useState(false);
   const persistedProjectIdRef = React.useRef(editId || "");
   const createAttemptRef = React.useRef({ signature: "", key: "" });
+  const copyAttemptRef = React.useRef({ signature: "", key: "" });
+  const [templateMode, setTemplateMode] = useState(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     persistedProjectIdRef.current = editId || "";
     createAttemptRef.current = { signature: "", key: "" };
+    copyAttemptRef.current = { signature: "", key: "" };
   }, [editId]);
 
   useEffect(() => { if (!isLoading && !loadError) setHasLoaded(true); }, [isLoading, loadError]);
@@ -114,16 +129,23 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     setIsLoading(true);
     setLoadError("");
     try {
-      const [settingsList, inv, equipInv] = await Promise.all([
+      const [settingsList, inv, equipInv, dimMats] = await Promise.all([
         loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
         loadAllEntityRows({ entity: ChannelLetterInstallInventory, sort: "sort_order", label: "Channel Letter installation inventory" }),
         loadAllEntityRows({ entity: ChannelLetterInstallEquipment, sort: "sort_order", label: "Channel Letter equipment" }),
+        // Dimensional materials are catalog for the availability model — load
+        // the full table (incl. inactive) so stale/deleted selections can be
+        // flagged. Failure degrades to null = skip staleness checks, same
+        // pattern as vinyl's optional catalog lanes.
+        loadAllEntityRows({ entity: DimensionalLetterMaterial, label: "Dimensional Letter materials" })
+          .catch(() => null),
       ]);
       const settingsObj = {};
       settingsList.forEach(s => { settingsObj[s.setting_name] = s.setting_value; });
       setSettings(settingsObj);
       setInventory(inv);
       setEquipmentInventory(equipInv);
+      setDimensionalMaterials(dimMats);
 
       if (editId) {
         const existing = await ChannelLetterInstallation.get(editId);
@@ -167,31 +189,25 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
 
   useEffect(() => { loadEverything(); }, [loadEverything]);
 
-  // Recalc on every change
-  const recalculated = useMemo(() => {
-    if (!settings || Object.keys(settings).length === 0) return project;
-    const scope = project.project_scope || "full";
-    // Inject the project-level Interior/Exterior default so the calculator
-    // can resolve env-qualified setting keys for line items that don't
-    // override it themselves.
-    const settingsWithEnv = { ...settings, _project_install_environment: project.install_environment || "exterior" };
-    // 1) Letters tab math — totals each purchase row + project subtotal + markup
-    //    Zero out when scope is install_only.
-    const lettersTotals = scope === "install_only"
-      ? { letters_subtotal: 0, total_letters_cost: 0, letter_purchases: project.letter_purchases || [] }
-      : calcLettersTotals(project, settingsWithEnv);
-    // 2) Installation items recompute. Zero out when scope is letters_only.
-    const recalcItems = scope === "letters_only"
-      ? []
-      : (project.items || []).map(it => calcLineItem(it, settingsWithEnv, inventory));
-    // 3) Project rollup (uses total_letters_cost from step 1).
-    //    When letters_only, drop equipment + personnel from the rollup too.
-    const projectForTotals = scope === "letters_only"
-      ? { ...project, ...lettersTotals, items: recalcItems, selected_equipment: [], personnel: [] }
-      : { ...project, ...lettersTotals, items: recalcItems };
-    const totals = calcProjectTotals(projectForTotals);
-    return { ...project, ...lettersTotals, items: recalcItems, ...totals };
-  }, [project, settings, inventory]);
+  // Recalc on every change — routed through the pricing-availability layer so
+  // a missing, malformed, or unavailable pricing input can never silently
+  // become $0 or a hidden default. `recalculated` keeps the page's existing
+  // shape (identical fields for valid inputs); `pricingIssues` feeds the
+  // diagnostics UI + the save guard.
+  const pricing = useMemo(
+    () => calcChannelProject({
+      project, settings, inventory, equipmentInventory, dimensionalMaterials,
+      savedProject: project,
+    }),
+    [project, settings, inventory, equipmentInventory, dimensionalMaterials]
+  );
+  const recalculated = pricing.recalculated;
+  const pricingIssues = pricing.issues;
+  const pricingBlocked = pricingIssues.length > 0;
+  const pricingCatalogBlocked = pricingIssues.some(i => i.kind === "channel_catalog");
+  const lettersIssues = pricingIssues.some(i => i.hold === "letters" || i.hold === "purchase");
+  const installIssues = pricingIssues.some(i => i.hold === "install");
+  const crewIssues = pricingIssues.some(i => ["equipment", "personnel", "travel"].includes(i.hold));
 
   // Dimensional letters MUST have a Build/Fab config — block tab navigation away from Letters until each is configured
   const incompleteDimensionalIds = useMemo(
@@ -233,16 +249,21 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     (recalculated.items || []).forEach(it => {
       (it.materials || []).forEach(m => {
         const key = m.inventory_item_id || `manual:${m.item_name}`;
+        const mTotal = Number.isFinite(m.total_cost) ? m.total_cost : null;
         const existing = map.get(key);
         if (existing) {
           existing.quantity += parseFloat(m.quantity) || 0;
-          existing.total_cost += parseFloat(m.total_cost) || 0;
+          // Null-propagating price column — a held material keeps the pick-list
+          // total unavailable rather than laundering to $0.
+          existing.total_cost = (existing.total_cost === null || mTotal === null)
+            ? null
+            : existing.total_cost + mTotal;
         } else {
           map.set(key, {
             item_name: m.item_name,
             quantity: parseFloat(m.quantity) || 0,
             unit_cost: parseFloat(m.unit_cost) || 0,
-            total_cost: parseFloat(m.total_cost) || 0,
+            total_cost: mTotal,
           });
         }
       });
@@ -251,7 +272,20 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   }, [recalculated]);
 
   // Mutators
+  // P-11 hard-freeze — while a proposal is accepted its pricing basis is
+  // frozen: every content mutation is refused until the Lifecycle card
+  // explicitly reopens it. updateProject additionally admits the accept /
+  // reopen patches themselves (lifecycle keys only).
+  const proposalFrozen = isProposalAccepted(project);
+  const denyProposalMutation = () => {
+    toast({
+      variant: "destructive",
+      title: "Proposal is accepted",
+      description: "The pricing basis is frozen — reopen the proposal from the Lifecycle card to make changes.",
+    });
+  };
   const updateProject = (patch) => {
+    if (proposalFrozen && !patchOnlyTouchesLifecycle(patch)) { denyProposalMutation(); return; }
     setProject(prev => {
       const next = { ...prev, ...patch };
       // When letter_purchases changes, keep matching install items in sync
@@ -262,13 +296,23 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     });
   };
 
+  // Direct setProject content mutations outside the named mutators below
+  // (inline JSX handlers) funnel through the same guard.
+  const mutateProject = (updater) => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
+    setProject(updater);
+  };
   const updateItem = (idx, updated) => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     const next = [...project.items];
-    next[idx] = updated;
+    // P-07: hand-edits to sync-managed fields on a linked item become pinned
+    // overrides — the next letters->install re-sync leaves them alone.
+    next[idx] = recordFieldOverrides(project.items[idx], updated);
     setProject(prev => ({ ...prev, items: next }));
   };
 
   const addItem = () => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     const newItem = emptyLineItem();
     newItem.materials = defaultMaterialsForItem(newItem, inventory);
     setProject(prev => ({ ...prev, items: [...prev.items, newItem] }));
@@ -276,6 +320,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   };
 
   const removeItem = (idx) => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     if (!confirm("Remove this line item and all its materials?")) return;
     const next = [...project.items];
     next.splice(idx, 1);
@@ -283,6 +328,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   };
 
   const duplicateItem = (idx) => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     const copy = JSON.parse(JSON.stringify(project.items[idx]));
     const next = [...project.items];
     next.splice(idx + 1, 0, copy);
@@ -290,6 +336,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   };
 
   const reorderItems = (from, to) => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     const next = [...project.items];
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
@@ -316,6 +363,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     const shop = (settings.install_shop_address || "").trim();
     const site = (project.site_address || "").trim();
     if (!hasLoaded) return;
+    if (proposalFrozen) return; // accepted — travel miles can't be written anyway
     if (scope === "letters_only") return;
     if (!shop || !site || !hasEquipment) return;
     // Already have miles → nothing to fetch.
@@ -326,7 +374,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     let cancelled = false;
     (async () => {
       try {
-        const res = await base44.functions.invoke("calculateTravelMiles", { shop_address: shop, site_address: site });
+        const res = await base44.functions.invoke("calculateTravelMiles", { shop_address: shop, site_address: site, session_token: getSessionToken() });
         const rt = parseFloat(res?.data?.round_trip_miles);
         if (!cancelled && isFinite(rt) && rt > 0) {
           updateProject({ travel_miles_round_trip: rt });
@@ -337,7 +385,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
       }
     })();
     return () => { cancelled = true; };
-  }, [hasLoaded, hasEquipment, project.site_address, settings.install_shop_address, scope]);
+  }, [hasLoaded, hasEquipment, project.site_address, settings.install_shop_address, scope, proposalFrozen]);
 
   // Auto-suggest equipment when max install height changes (only if user hasn't picked any yet)
   const maxInstallHeight = useMemo(
@@ -346,6 +394,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   );
   useEffect(() => {
     if (!hasLoaded) return;
+    if (proposalFrozen) return; // accepted — no auto-fill mutations
     if ((project.selected_equipment || []).length > 0) return; // never auto-overwrite user choice
     if (maxInstallHeight <= 0 || equipmentInventory.length === 0) return;
     const projectLaborHours = recalculated.labor_hours || 0;
@@ -354,12 +403,13 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     const crewSize = (project.personnel || []).length || suggestCrewSize(project.items);
     const rows = suggested.map((inv) => selectedEquipmentFromInventory(inv, projectLaborHours, crewSize));
     setProject((prev) => ({ ...prev, selected_equipment: rows }));
-  }, [maxInstallHeight, equipmentInventory, hasLoaded]);
+  }, [maxInstallHeight, equipmentInventory, hasLoaded, proposalFrozen]);
 
   // Auto-fill personnel when the user enters the Crew & Equipment tab and the crew is empty.
   // Uses the same suggester as the "Auto-Suggest Crew" button, so the result is identical.
   useEffect(() => {
     if (!hasLoaded) return;
+    if (proposalFrozen) return; // accepted — no auto-fill mutations
     if (activeTab !== "crew") return;
     if ((project.personnel || []).length > 0) return; // never overwrite user choice
     if (!project.items || project.items.length === 0) return;
@@ -376,10 +426,11 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     const newCrew = suggestPersonnelForProject(project.items, projectLaborHours, rateForRole);
     if (newCrew.length === 0) return;
     setProject((prev) => ({ ...prev, personnel: newCrew }));
-  }, [activeTab, hasLoaded]);
+  }, [activeTab, hasLoaded, proposalFrozen]);
 
   // Apply AI-generated installation items
   const applyAIInstallItems = (aiItems, mode = "append") => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     const newItems = aiItems.map((ai) => {
       const base = emptyLineItem();
       const merged = {
@@ -402,6 +453,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
 
   // Apply Photo→Estimate result as a new line item
   const applyPhotoEstimate = (result) => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     const newItem = emptyLineItem();
     newItem.installation_height_feet = parseFloat(result.estimated_height_feet) || newItem.installation_height_feet;
     newItem.wall_material = result.wall_material || newItem.wall_material;
@@ -412,6 +464,27 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     newItem.description = `From site photo — ${result.confidence || ""} confidence`.trim();
     newItem.materials = defaultMaterialsForItem(newItem, inventory);
     setProject((prev) => ({ ...prev, items: [...prev.items, newItem] }));
+    setActiveTab("items");
+  };
+
+  // Apply structured-intake draft: project-level fields merge, the interview
+  // item lands on emptyLineItem with default materials (same convention as
+  // applyPhotoEstimate).
+  const applyIntakeDraft = (draft) => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
+    setProject((prev) => {
+      const next = { ...prev };
+      for (const [k, v] of Object.entries(draft || {})) {
+        if (k === "items" || k === "interview_version" || k === "unverified_assumptions") continue;
+        next[k] = v;
+      }
+      if (draft?.items?.length) {
+        const merged = { ...emptyLineItem(), ...draft.items[0] };
+        merged.materials = defaultMaterialsForItem(merged, inventory);
+        next.items = [...next.items, merged];
+      }
+      return next;
+    });
     setActiveTab("items");
   };
 
@@ -432,8 +505,31 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     return () => window.removeEventListener("keydown", handler);
   }, [project, recalculated]);
 
+  // Pricing-availability guard — shared by save, Save-As-Copy, and the
+  // estimate handoff (recordBuilderSave is only reachable through saveProject,
+  // so gating here covers the handoff too). Exits before setting saving state
+  // or touching the entity layer, and focuses the offending tab.
+  const blockIfPricingUnavailable = () => {
+    if (!pricingBlocked) return false;
+    const first = pricingIssues[0];
+    const focusTab = {
+      purchase: "letters", letters: "letters", install: "items",
+      equipment: "crew", personnel: "crew", travel: "crew",
+      supplies: "summary", markup: "summary", project: "project",
+    }[first?.hold] || "summary";
+    setActiveTab(focusTab);
+    alert(
+      `Can't save — ${pricingIssues.length} pricing issue${pricingIssues.length === 1 ? "" : "s"} must be fixed first` +
+      `${pricingCatalogBlocked ? " (missing or unavailable pricing records)" : ""}. ` +
+      `The flagged fields are highlighted and details are in the warnings panel.`
+    );
+    return true;
+  };
+
   // Save / Export
   const saveProject = async () => {
+    // Any pricing issue blocks the write — before saving state or entity calls.
+    if (blockIfPricingUnavailable()) return;
     // In embedded (All-In-One) mode these fields are inherited from the parent
     // estimate and shown read-only, so don't block the save on them.
     if (!embedded && (!project.project_name || !project.client_name)) {
@@ -459,6 +555,12 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
         customer_pricing: customerPricing || project.customer_pricing,
         status: "calculated",
       };
+      // Transient diagnostics are re-derived on every render — don't persist them.
+      delete dataToSave.__held;
+      delete dataToSave.pricingUnavailable;
+      delete dataToSave.issues;
+      dataToSave.items = (dataToSave.items || []).map(({ __held, ...rest }) => rest);
+      dataToSave.letter_purchases = (dataToSave.letter_purchases || []).map(({ __held, ...rest }) => rest);
       let savedId = persistedProjectIdRef.current || editId || "";
       let persistedSource = null;
       if (savedId) {
@@ -522,6 +624,61 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     }
     setIsSaving(false);
   };
+
+  // #78 — clone the current save payload into a brand-new Channel Letter project.
+  const handleSaveAsCopy = async () => {
+    // Same pricing guard as save — a held/blocked project never copies.
+    if (blockIfPricingUnavailable()) return;
+    setIsSaving(true);
+    try {
+      const copyPayload = {
+        ...recalculated,
+        customer_pricing: project.customer_pricing,
+        status: "calculated",
+      };
+      delete copyPayload.__held;
+      delete copyPayload.pricingUnavailable;
+      delete copyPayload.issues;
+      copyPayload.items = (copyPayload.items || []).map(({ __held, ...rest }) => rest);
+      copyPayload.letter_purchases = (copyPayload.letter_purchases || []).map(({ __held, ...rest }) => rest);
+      const copy = await saveModuleProjectCopy({
+        entity: ChannelLetterInstallation,
+        payload: copyPayload,
+        attemptRef: copyAttemptRef,
+        keyPrefix: "channel_letter_project_copy",
+        baseName: project.project_name || "Channel Letter",
+        label: "Channel Letter project copy",
+      });
+      if (embedded) onSaved?.();
+      else navigate(`/ChannelLetterEstimator?edit=${copy.id}`);
+    } catch (e) {
+      console.error(e);
+      alert("Save copy failed: " + e.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // #79 — template payload = the editable setup a user would reuse.
+  const buildChannelLetterTemplateData = (p) => ({
+    items: p.items || [],
+    letter_purchases: p.letter_purchases || [],
+    letters_delivery_fee: p.letters_delivery_fee,
+    letters_design_fee: p.letters_design_fee,
+    letters_install_supplies_fee: p.letters_install_supplies_fee,
+    letters_permitting_fee: p.letters_permitting_fee,
+    letters_other_fee: p.letters_other_fee,
+    letters_markup_percent: p.letters_markup_percent,
+    selected_equipment: p.selected_equipment || [],
+    personnel: p.personnel || [],
+    base_supplies_cost: p.base_supplies_cost,
+    extra_supplies_cost: p.extra_supplies_cost,
+    markup_percent: p.markup_percent,
+    travel_miles_round_trip: p.travel_miles_round_trip,
+    project_scope: p.project_scope,
+    install_environment: p.install_environment,
+    notes: p.notes,
+  });
 
   const copySummary = async () => {
     try {
@@ -643,6 +800,13 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
             >
               <Camera className="w-4 h-4 mr-2" /> Photo → Estimate
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIntakeOpen(true)}
+              className="bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200 text-indigo-800 hover:from-indigo-100 hover:to-blue-100"
+            >
+              <ClipboardList className="w-4 h-4 mr-2" /> Intake
+            </Button>
             <Link to={createPageUrl("MasterInventory")}>
               <Button variant="outline" className="bg-white">
                 <Package className="w-4 h-4 mr-2" /> Inventory
@@ -664,15 +828,18 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                 <TabsList className={`grid w-full bg-white shadow-md border border-slate-200 h-auto p-1 gap-1`} style={{ gridTemplateColumns: `repeat(${visibleTabsCount}, minmax(0, 1fr))` }}>
                   <TabBadgeTrigger value="project" icon={FileText} label="Project" />
                   {showLettersTab && (
-                    <TabBadgeTrigger value="letters" icon={Type} label="Letters" amount={recalculated.total_letters_cost} warn={hasIncompleteDimensional} />
+                    <TabBadgeTrigger value="letters" icon={Type} label="Letters" amount={recalculated.total_letters_cost} warn={hasIncompleteDimensional || lettersIssues} />
                   )}
                   {showInstallTab && (
                     <TabBadgeTrigger
                       value="items"
                       icon={ListChecks}
                       label="Install"
-                      amount={(recalculated.labor_cost_in_subtotal ?? recalculated.labor_cost ?? 0) + (recalculated.total_materials_cost || 0)}
+                      amount={Number.isFinite(recalculated.labor_cost_in_subtotal ?? recalculated.labor_cost) && Number.isFinite(recalculated.total_materials_cost)
+                        ? (recalculated.labor_cost_in_subtotal ?? recalculated.labor_cost) + recalculated.total_materials_cost
+                        : null}
                       count={recalculated.items.length}
+                      warn={installIssues}
                     />
                   )}
                   {showCrewTab && (
@@ -680,11 +847,13 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                       value="crew"
                       icon={HardHat}
                       label="Crew & Equipment"
-                      amount={(recalculated.total_equipment_cost || 0) + (recalculated.total_personnel_cost || 0) + (recalculated.total_travel_cost || 0)}
-                      warn={(recalculated.selected_equipment?.length || 0) === 0}
+                      amount={[recalculated.total_equipment_cost, recalculated.total_personnel_cost, recalculated.total_travel_cost].every(Number.isFinite)
+                        ? recalculated.total_equipment_cost + recalculated.total_personnel_cost + recalculated.total_travel_cost
+                        : null}
+                      warn={crewIssues || (recalculated.selected_equipment?.length || 0) === 0}
                     />
                   )}
-                  <TabBadgeTrigger value="summary" icon={Calculator} label="Summary" amount={recalculated.total_cost} />
+                  <TabBadgeTrigger value="summary" icon={Calculator} label="Summary" amount={recalculated.total_cost} warn={pricingBlocked} />
                   <TabBadgeTrigger value="pricing" icon={TrendingUp} label="Customer Pricing" accent />
                 </TabsList>
                   );
@@ -897,6 +1066,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                   settings={settings}
                   onUpdateProject={updateProject}
                   incompleteDimensionalIds={incompleteDimensionalIds}
+                  issues={pricingIssues}
                 />
               </TabsContent>
 
@@ -937,6 +1107,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                       onRemove={removeItem}
                       onDuplicate={duplicateItem}
                       onReorder={reorderItems}
+                      issues={pricingIssues}
                     />
                   </div>
                 )}
@@ -952,6 +1123,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                     items={recalculated.items}
                     projectLaborHours={recalculated.labor_hours || 0}
                     crewSize={(recalculated.personnel || []).length}
+                    issues={pricingIssues}
                   />
                 </div>
                 <div id="clp-ladder">
@@ -961,6 +1133,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                     equipmentInventory={equipmentInventory}
                     projectLaborHours={recalculated.labor_hours || 0}
                     crewSize={(recalculated.personnel || []).length}
+                    issues={pricingIssues}
                   />
                 </div>
                 <div id="clp-personnel">
@@ -974,6 +1147,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                     "Helper": parseFloat(settings.install_helper_rate) || 35,
                   }}
                   items={recalculated.items}
+                  issues={pricingIssues}
                 />
                 </div>
                 <div id="clp-travel">
@@ -1092,7 +1266,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                   project={recalculated}
                   categorize={categorizeChannelLetterProject}
                   accentColor="purple"
-                  onTierChange={(tier) => setProject((prev) => ({
+                  onTierChange={(tier) => mutateProject((prev) => ({
                     ...prev,
                     customer_pricing: { ...(prev.customer_pricing || {}), tier_number: tier },
                   }))}
@@ -1112,8 +1286,19 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
               onCopySummary={copySummary}
               onExportCSV={exportCSV}
             />
+            <div className="flex flex-wrap gap-2">
+              <ModuleActionBar
+                onTemplates={() => setTemplateMode("load")}
+                onSaveAsTemplate={() => setTemplateMode("save")}
+                onSaveAsCopy={handleSaveAsCopy}
+                estimateId={estimateId}
+                saving={isSaving}
+              />
+            </div>
             <CrewEquipmentHint items={recalculated.items} />
-            <ValidationWarnings project={recalculated} />
+            <ValidationWarnings project={recalculated} pricingIssues={pricingIssues} />
+            <ChannelTakeoffCard project={recalculated} inventory={inventory} equipmentInventory={equipmentInventory} />
+            <ProposalLifecycleCard project={recalculated} currentUser={currentUser} onUpdateProject={updateProject} />
             <div className="text-[10px] text-slate-400 text-center px-2">
               Shortcuts: <kbd className="px-1 bg-slate-100 rounded">⌘S</kbd> Save · <kbd className="px-1 bg-slate-100 rounded">⌘I</kbd> Add Item
             </div>
@@ -1137,6 +1322,24 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
         open={aiInstallOpen}
         onClose={() => setAiInstallOpen(false)}
         onApply={applyAIInstallItems}
+      />
+
+      <ChannelIntakeDialog
+        open={intakeOpen}
+        onClose={() => setIntakeOpen(false)}
+        onApply={applyIntakeDraft}
+      />
+
+      <ModuleTemplateDialog
+        open={!!templateMode}
+        mode={templateMode}
+        onClose={() => setTemplateMode(null)}
+        project={project}
+        onApply={(data) => mutateProject((prev) => ({ ...prev, ...data }))}
+        moduleKey="channel_letters"
+        title="Channel Letter"
+        buildTemplateData={buildChannelLetterTemplateData}
+        describeTemplate={(t) => `${(t.project_data?.items || []).length} items`}
       />
 
       <ConfirmModal

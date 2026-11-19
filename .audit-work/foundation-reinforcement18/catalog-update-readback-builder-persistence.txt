@@ -1,0 +1,2 @@
+PASS builder persistence (8 cases)
+exit=0

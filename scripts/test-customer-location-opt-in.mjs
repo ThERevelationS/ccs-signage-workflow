@@ -1,5 +1,22 @@
 import assert from "node:assert/strict";
-import { ensureEstimateCustomerLocation } from "../src/components/estimator/customerLocationService.js";
+import { buildSync } from "esbuild";
+import { writeFileSync } from "node:fs";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { dirname, resolve } from "node:path";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const stub = resolve(here, ".tmp-loc-stub.mjs");
+writeFileSync(stub, `
+export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => ({}) }) }), functions: { invoke: async () => ({}) }, auth: { me: async () => null }, asServiceRole: { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => ({}) }) }) } };
+export const isRetryableFunction = () => false;
+`);
+const out = resolve(here, ".tmp-loc-service.mjs");
+buildSync({
+  entryPoints: [resolve(here, "../src/components/estimator/customerLocationService.js")],
+  bundle: true, format: "esm", outfile: out, logLevel: "silent",
+  alias: { "@/api/base44Client": stub },
+});
+const { ensureEstimateCustomerLocation } = await import(pathToFileURL(out).href);
 
 const input = {
   customerId: "customer-synthetic-1",

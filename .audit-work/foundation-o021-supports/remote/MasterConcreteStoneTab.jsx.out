@@ -1,0 +1,15 @@
+Reading file
+Reading file
+Read file
+{
+  "files": [
+    {
+      "path": "src/components/masterInventory/MasterConcreteStoneTab.jsx",
+      "content": "// Master Inventory — Concrete & Stone tab.\n//\n// Wraps the same UI as the (now-deprecated) Foundation Inventory page so all\n// concrete/masonry materials live under Master Inventory:\n//   • Wall Materials (brick / cinderblock / stone / poured concrete)\n//   • Wall Fill Materials\n//   • Wall Caps\n//   • Bagged Concrete\n//   • Rebar\n//   • Forming Material\n//\n// Note: Concrete ready-mix SUPPLIERS (Citywide, Ernst, etc.) live in\n// Labor & Services with service_category = \"concrete_service\" and are NOT\n// shown here. EQUIPMENT lives in the Equipment tab. POLES live in the\n// Extruded Metals & Poles tab.\n\nimport React from \"react\";\nimport { Card, CardContent } from \"@/components/ui/card\";\nimport FoundationInventoryPage from \"@/pages/FoundationInventory\";\n\nexport default function MasterConcreteStoneTab() {\n  return (\n    <Card className=\"bg-white border-0 shadow-sm\">\n      <CardContent className=\"p-4\">\n        <FoundationInventoryPage embedded />\n      </CardContent>\n    </Card>\n  );\n}",
+      "startLine": 1,
+      "endLine": 29,
+      "totalLines": 29,
+      "truncated": false
+    }
+  ]
+}

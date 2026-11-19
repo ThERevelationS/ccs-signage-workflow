@@ -10,6 +10,7 @@ import {createJurisdictionIfAbsent} from './jurisdictionPersistence';
 import {summarizeSelectorElectricalResearchOutcome} from './selectorElectricalResearchOutcome.mjs';
 import SelectorSavedSourceReview from './SelectorSavedSourceReview';
 import OfficeResearchFindings from './OfficeResearchFindings';
+import { staffEntities } from "@/components/staff/staffEntities";
 export default function SelectorScanActions({locality,result,profiles,onProfileUpdated,loading,unavailable}){
  const {currentUser}=useAuth(),{runAction}=useResearchProgress(),[busy,setBusy]=useState(new Set()),[error,setError]=useState('');
  const [feedback,setFeedback]=useState(null);
@@ -20,7 +21,7 @@ export default function SelectorScanActions({locality,result,profiles,onProfileU
  const canScan=currentUser?.role==='admin'&&!unavailable;
  async function scan(profile,research=false){const key=profile?.id || 'new';if(pending.current.has(key))return;pending.current.add(key);setBusy(prev=>new Set([...prev,key]));setError('');setFeedback(null);try{
   let target=profile;
-  if(!target){const created=await createJurisdictionIfAbsent({entity:base44.entities.JurisdictionProfile,data:{name,state,type:/township/i.test(name)?'township':/county/i.test(name)?'county':'city',auto_refresh:false,ai_summary:'Research requested from project jurisdiction selector.'},label:`Selector research ${name}, ${state}`});target=created.record;}
+  if(!target){const created=await createJurisdictionIfAbsent({entity:staffEntities.JurisdictionProfile,data:{name,state,type:/township/i.test(name)?'township':/county/i.test(name)?'county':'city',auto_refresh:false,ai_summary:'Research requested from project jurisdiction selector.'},label:`Selector research ${name}, ${state}`});target=created.record;}
   const response=await runAction('refreshJurisdiction',{jurisdiction_id:target.id,...(!research?{discovery_only:true,defer_archive:true,rescan_source_url:target.permitting_url}:{})},`${research?'Research':'Scan website'} ${target.name}, ${target.state}`);
   const outcome=summarizeSelectorElectricalResearchOutcome({response,target,locality,action:research?'research':'discovery'});
   if(alive.current){onProfileUpdated(response.data?.jurisdiction || response.jurisdiction);setFeedback(outcome);}

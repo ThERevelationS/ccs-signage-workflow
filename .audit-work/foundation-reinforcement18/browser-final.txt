@@ -1,0 +1,17 @@
+ok c1 mount: zero callbacks, deep-frozen draft unchanged, Unknown metadata
+ok c2 raw "-oops" cover: exact string delivered, frozen original unchanged
+ok c3 two mat adds: unique prefixed ids, empty fields, delete preserves, undo restores
+ok c4 manual/catalog round-trip retains raw; unavailable id stays visible
+ok c5 override clear -> null; "0" stays "0"; item custom fields unchanged
+ok c6 accept gating: stale/canAccept:false/busy/disabled/nonstring-id/unsupported block; eligible fires once
+ok c7 delete parent mat: ties unmodified, orphan refs visible
+ok c8 pillar hoop all-blank + allowance "0"; type change preserves inactive spread
+ok c9 21 rows paginate; page-2 edit only that row; shrink+prev no stuck
+ok c10 styled mobile375+desktop: computed amber/grid, no overflow, populated shots
+ok r1 malformed mats + valid ties: repair notice, ties not remapped
+ok r2 malformed hoops + null row: explicit repair, null row delete
+ok r3 missing UUID: Add disabled with notice
+ok r4 4096 ties cap + 257th mat Add disabled
+ok r5 strict version labels: "2" is Unsupported not Version 2
+reinforcement-ui cases=15 failed=0
+fixture server kept running: http://127.0.0.1:5172 pid=36016

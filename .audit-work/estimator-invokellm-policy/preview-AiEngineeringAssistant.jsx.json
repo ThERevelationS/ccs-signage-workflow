@@ -1,0 +1,5 @@
+{
+  "path": "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+  "diff": "--- a/src/components/estimator/foundation/AiEngineeringAssistant.jsx\n+++ b/src/components/estimator/foundation/AiEngineeringAssistant.jsx\n@@ -2,6 +2,7 @@\n import { base44 } from \"@/api/base44Client\";\r\n import { Cpu, Loader2 } from \"lucide-react\";\r\n import ReactMarkdown from \"react-markdown\";\r\n+import { ESTIMATOR_AI_MODEL } from \"../../../../base44/shared/estimatorAiModelPolicy.js\";\r\n \r\n export default function AiEngineeringAssistant({ project, onResult }) {\r\n   const [running, setRunning] = useState(false);\r\n@@ -28,6 +29,7 @@\n       }));\r\n \r\n       const res = await base44.integrations.Core.InvokeLLM({\r\n+        model: ESTIMATOR_AI_MODEL,\r\n         prompt: `You are a structural engineer sizing sign foundations and poles.\r\n Foundations: ${JSON.stringify(summary)}\r\n Poles: ${JSON.stringify(poles)}\r\n",
+  "applied": false
+}

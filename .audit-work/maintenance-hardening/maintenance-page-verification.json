@@ -1,0 +1,16 @@
+{
+ "suite": "maintenance-page",
+ "scenarios": 9,
+ "result": "PASS",
+ "checks": [
+  "S1 clean project: no banner, finite totals persisted, one saveSource write, no estimate handoff",
+  "S2 missing MaintenanceActionRate row: banner + saved-fallback shown; Save and Save-As-Copy each zero writes",
+  "S3 held without acknowledged totals: 'Not saved' shown, no fabricated $0, zero writes",
+  "S4 malformed maintenance_tech_rate: project-level hold, 'Sign Maintenance Settings' message, zero writes",
+  "S5 blank qty draft preserved mid-edit, aria-invalid + describedby on input, zero writes",
+  "S6 malformed markup: banner names field, markup input describedby banner, zero writes",
+  "S7 explicit-zero markup honored: no banner, save proceeds",
+  "S8 personnel row missing total_cost: banner names it, zero writes",
+  "S9 dangling material rule id: banner, zero writes"
+ ]
+}

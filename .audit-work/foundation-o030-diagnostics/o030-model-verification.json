@@ -1,0 +1,101 @@
+{
+ "results": [
+  {
+   "id": "baseline-only-spoil-warning",
+   "ok": true
+  },
+  {
+   "id": "equipment-method-unpriced-rental",
+   "ok": true
+  },
+  {
+   "id": "equipment-method-with-rental-no-warning",
+   "ok": true
+  },
+  {
+   "id": "method-unspecified-assumes-hand-dig",
+   "ok": true
+  },
+  {
+   "id": "project-default-method-no-unspecified",
+   "ok": true
+  },
+  {
+   "id": "forming-without-finishing",
+   "ok": true
+  },
+  {
+   "id": "finishing-without-forming",
+   "ok": true
+  },
+  {
+   "id": "neither-forming-nor-finishing-no-warning",
+   "ok": true
+  },
+  {
+   "id": "pillar-forming-straight-stock",
+   "ok": true
+  },
+  {
+   "id": "pillar-no-forming-no-warning",
+   "ok": true
+  },
+  {
+   "id": "mix-unspecified-fallback",
+   "ok": true
+  },
+  {
+   "id": "mix-recorded-no-warning",
+   "ok": true
+  },
+  {
+   "id": "admix-calcium-chloride-rebar",
+   "ok": true
+  },
+  {
+   "id": "admix-calcium-chloride-no-rebar",
+   "ok": true
+  },
+  {
+   "id": "admix-accelerator-plus-retarder",
+   "ok": true
+  },
+  {
+   "id": "fastset-mix-plus-retarder",
+   "ok": true
+  },
+  {
+   "id": "fastset-mix-alone-no-warning",
+   "ok": true
+  },
+  {
+   "id": "winter-service-plus-retarder",
+   "ok": true
+  },
+  {
+   "id": "admixtures-on-bagged-only",
+   "ok": true
+  },
+  {
+   "id": "no-admixtures-no-warnings",
+   "ok": true
+  },
+  {
+   "id": "empty-project-no-warnings",
+   "ok": true
+  },
+  {
+   "id": "mixed-methods-two-spoil-warnings",
+   "ok": true
+  },
+  {
+   "id": "held-item-advisory-still-fires",
+   "ok": true
+  },
+  {
+   "id": "warning-record-shape",
+   "ok": true
+  }
+ ],
+ "pass": true
+}

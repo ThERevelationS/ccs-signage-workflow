@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { issueAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';
+import { verifyBadgeCredential } from '../../shared/timeClockBadgeVerify.ts';
 
 const FACE_DIMENSIONS = 128;
 const CONFIDENCE_THRESHOLD = 0.38;
@@ -52,25 +53,49 @@ Deno.serve(async (req) => {
     let method = '';
 
     const sessionToken = String(body?.session_token || '').trim();
-    if (sessionToken) {
+    const badgeCode = String(body?.badge_code || '').trim();
+    // QR badge arm — a valid TIMECLOCK2 badge is itself a verified credential
+    // (email|version|token checked against the active badge record's stored
+    // hash), so an admin's badge can unlock without a pre-existing session,
+    // matching how the same badge already identifies them on the kiosk.
+    if (badgeCode) {
+      const badgeAuth = await verifyBadgeCredential(
+        badgeCode,
+        base44.asServiceRole.entities.TimeClockBadge,
+        base44.asServiceRole.entities.AuthorizedEmail,
+      );
+      if (!badgeAuth?.target?.id) {
+        return Response.json({ error: 'Time Clock badge is invalid, expired, or has been replaced.' }, { status: 401 });
+      }
+      if (badgeAuth.target.role !== 'admin') {
+        return Response.json({ error: 'Admin access is required.' }, { status: 403 });
+      }
+      admin = badgeAuth.target;
+      method = 'admin_badge';
+    } else {
+      // An admin session is mandatory. A client-supplied face descriptor is a
+      // static, replayable template — it must never be the sole credential
+      // (any photo of an admin reproduces a matching vector). If one is sent
+      // alongside a session, it is checked only against THAT admin's
+      // stored descriptors as defense-in-depth.
+      if (!sessionToken) {
+        return Response.json({ error: 'A valid admin session is required.' }, { status: 401 });
+      }
       const user = await authenticateSignShopSession(base44, sessionToken);
       if (user?.role !== 'admin') {
         return Response.json({ error: 'Admin access is required.' }, { status: 403 });
       }
       admin = user;
       method = 'admin_session';
-    } else {
-      const descriptor = validDescriptor(body?.face_descriptor);
-      if (!descriptor) {
-        return Response.json({ error: 'A valid admin session or live face descriptor is required.' }, { status: 400 });
+    }
+
+    const descriptor = validDescriptor(body?.face_descriptor);
+    if (descriptor) {
+      const matched = bestAdminFaceMatch([admin], descriptor);
+      if (!matched?.id || matched.id !== admin.id) {
+        return Response.json({ error: 'Face verification failed for this admin.' }, { status: 401 });
       }
-      const admins = await base44.asServiceRole.entities.AuthorizedEmail.filter({ role: 'admin' });
-      if (!Array.isArray(admins)) throw new Error('Admin face catalog could not be verified.');
-      admin = bestAdminFaceMatch(admins, descriptor);
-      if (!admin?.id) {
-        return Response.json({ error: 'Admin face could not be verified confidently.' }, { status: 401 });
-      }
-      method = 'face';
+      method = 'admin_session+face';
     }
 
     const issued = await issueAdminSettingsCapability(admin);
@@ -88,7 +113,7 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 409, 429, 503].includes(status) ? status : 500;
     console.error('issueAdminSettingsAccess error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Admin Settings authorization could not be issued safely.' : error?.message,

@@ -1,0 +1,270 @@
+{
+ "jurisdiction_id": "6aea7866a8dfa04944477188",
+ "jurisdiction_name": "Independence Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "City of Independence Building Department 6335 Selig Drive, Independence Ohio 44131 Phone: 216 - 524 - 1019 Building@IndependenceOhio.org Sign Application Rev. 0 3 / 20 2 6 Approvals: ABR ______ ___________ BZA_______ _________ _ Address of Sign : ______ _________________________________ ____ Zoning District of Sign: _ ___________ Name of Business / Tenant : __ _______________________________________________________________ Type of Sign : Permanent / Temporary (i.e., ground, wall, pylon, etc.) Size of sign face : Length x Width = Square feet ____________ (x 2 if double sided) Colors: Background Lettering _ _________________ Other ________________ Double - faced (Y/N) Illuminated (Y/N) If yes, Internally or Externally? ____________ Allowable signage determined by size of building: Width of Building: __________ Width of Tenant Space:__________ Distance from top of grade to top of sign: ____",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "illumination",
+    "process",
+    "temporary"
+   ],
+   "weight": 11,
+   "source_sha256": "3d5a4a1152bd185d955dbfcd140847c2a09d4498c04ccc48bbe79e34f8d045e3",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\3d5a4a1152bd185d955dbfcd140847c2a09d4498c04ccc48bbe79e34f8d045e3.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Commercial%20Downloadable%20Forms/SIGN-APP2026.pdf?t=202603261140590"
+  },
+  {
+   "page": 1,
+   "snippet": "Business Type Reason for Registration Corporation Non-Profit Courtesy withholding for an employee's resident municipality S-Corp Estate & Trust Doing business within the municipality this year (temporary) LLC Sole Proprietor / LLC Approx. # of days Start Date Partnership Business with a fixed location Company Information (List physical address of work performed within this municipality) Name: Federal ID #: Address: SSN : City/State/Zip: Mailing Address (for withholding tax forms / if different from above) Mailing Address (for net profit tax forms / if different from above) Filing Status: Calendar year Fiscal year / month ending Do you have any employees? Yes No Number of employees at RITA location My withholding is filed under a 3rd party account (PEO or common paymaster) Monthly gross payroll at RITA location $ I am a small employer ( under $500,000 in gross revenue during previous year",
+   "tags": [
+    "sign",
+    "fee",
+    "dimension",
+    "illumination",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "7a46f89024e3c123aa6ff280fab2e0d51e7a461ae22b8f79d8ac6216bbbd8dc6",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\7a46f89024e3c123aa6ff280fab2e0d51e7a461ae22b8f79d8ac6216bbbd8dc6.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Commercial%20Downloadable%20Forms/Form%2048%20RITA.pdf?t=202410211255020"
+  },
+  {
+   "page": 2,
+   "snippet": "BUILDING PERMIT APPLICATION FOR RESIDENTIAL TEMPORARY AND PERMANENT SWIMMING POOLS CONT. Rev: 1/2023 TEMPORARY POOL APPLICATION PROCEDURE: To make an application for a building permit for a temporary swimming pool, you must submit two (2) sets of plans which will include: • A site plan which shows the parcel, location of existing house and proposed location of the swimming pool indicating the distance of the pool from the lot lines and other buildings on the property • Plans and specifications for the swimming pool • A fence (at least 4 feet in height) with a locking gate or other protective barrier proposed to erect around the pool if it is 5,000 gallons or more (see the Residential Miscellaneous Permit for application procedure). • FEES: Swimming Pool ………………….$50.00 1% State Assessment…………….$00.50 Inspection Fee…………………....$20.00 TOTAL…………………………..$70.50 PERMANENT POOL APPLICATION PROCED",
+   "tags": [
+    "fee",
+    "dimension",
+    "temporary",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "93b52d0030ea17ae34357169f0df835bd15198827d0be33bb91fbf01fee1be3a",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\93b52d0030ea17ae34357169f0df835bd15198827d0be33bb91fbf01fee1be3a.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Residential%20Swimming%20Pool%20Permit2023.pdf?t=202406041421210"
+  },
+  {
+   "page": 1,
+   "snippet": "City of Independence Building Department 6335 Selig Drive, Independence, Ohio 44131 Phone: 216-524-1019 Building@IndependenceOhio.org Revised 1/2023 ELECTRICAL PERMIT APPLICATION Job Site Name : Phone:_____________________ Address: Suite #_____ Email: _____________________ Contractor Name : Phone:_____________________ Address: E-mail:_____________________ City/St/Zip: __________________________________________________ Residential / Commercial ITEM BASE FEE QTY FEE PER TOT AL Base fee (includes 5 openings) $10.00 Panel, Sub - Panel, Meter Base X $ 10 . 0 0 Unit Openings (lights, switches, outlets, DC disconnect) X .40 Opening Fixtures and drop cords ( *** Fluorescent tubes ) X .40 Fixture Electrical signs, marquees, theater footlights, border strip lighting, decorative lights, etc. (base plus quantity) $ 6.00 X .30 Outlet High intensity lighting outlets 1000 watts or more (base plus quant",
+   "tags": [
+    "sign",
+    "fee",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "3e281c5d1abf98699e51753874f1ee5a08a747c75c938eafdcee76cbdd24d600",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\3e281c5d1abf98699e51753874f1ee5a08a747c75c938eafdcee76cbdd24d600.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Residential%20Downloadable%20Permits/electricapp%20revised23.pdf?t=202406041420470"
+  },
+  {
+   "page": 1,
+   "snippet": "BUILDING DEPARTMENT 6335 Selig Drive, Independence, Ohio 44131 Phone: 216-524-1019 Building@IndependenceOhio.org BUILDING PERMIT APPLICATION FOR RESIDENTIAL SWIMMING POOLS LOCATION AND DESCRIPTION OF LOT Address: ___________________________________________________________________________________________________ Permanent Parcel # ________________________________________ OWNER: _________________________________________ CONTRACTOR: __________________________________________ ADDRESS: _______________________________________ ADDRESS: _______________________________________________ CTY/ST/ZIP: _____________________________________ CTY/ST/ZIP: _____________________________________________ PHONE: _________________________________________ PHONE: _________________________________________________ EMAIL: __________________________________________ EMAIL: ______________________________________________",
+   "tags": [
+    "area",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "93b52d0030ea17ae34357169f0df835bd15198827d0be33bb91fbf01fee1be3a",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\93b52d0030ea17ae34357169f0df835bd15198827d0be33bb91fbf01fee1be3a.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Residential%20Swimming%20Pool%20Permit2023.pdf?t=202406041421210"
+  },
+  {
+   "page": 1,
+   "snippet": "Rev: 1/2023 City of Independence Building Department 6335 Selig Drive, Independence, Ohio 44131 Phone: 216-524-1019 Building@IndependenceOhio.org BUILDING PERMIT APPLICATION FOR RESIDENTIAL DECKS LOCATION AND DESCRIPTION OF LOT Address: ___________________________________________________________________________________________________ Permanent Parcel # ________________________________________ OWNER: _________________________________________ CONTRACTOR:___________________________________________ ADDRESS: _______________________________________ ADDRESS: _______________________________________________ CTY/ST/ZIP: _____________________________________ CTY/ST/ZIP: _____________________________________________ PHONE: _________________________________________ PHONE: _________________________________________________ EMAIL: _________________________________________ EMAIL:________________________",
+   "tags": [
+    "fee",
+    "area",
+    "authority",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "2604828ec41da43ce915c37087acc7244ed867365fe1e960f4536465c627822f",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\2604828ec41da43ce915c37087acc7244ed867365fe1e960f4536465c627822f.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Residential%20Deck%20Permit2.pdf?t=202406041421210"
+  },
+  {
+   "page": 1,
+   "snippet": "11/ 2 5 20 2 6 CONTRACTOR REGISTRATION BUILDING DEPARTMENT 6335 Selig Drive, I ndependence , OH 44131 - 5045 Phone: (216) 524 - 1019 • Building@independenc e ohio.org www.independenceohio.org 20 2 6 CONTRACTOR REGISTRATION The following requirements must be met by all general contractors, subcontractors, specialty contractors and landscapers performing any work in the City. R egistr ation is required whether it’s a new application or renewal . Contractors who start work in the City without registering may be subject to additional fees and a stop work order. □ The fee to register is $ 7 5.00 payable by check (made to the City of Independence ), MasterCard , Discover & Visa also accepted or once invoiced you can make payment on our website portal . Registration is valid January 1 st , 2026, to December 31, 202 6 . □ Registration Bond in the amount of $25,000.00 . ▪ Original copy with seal ",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "78168a97569da8d59b081d39829c2a3cc419162045bd6e471792e881ea2a18d4",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\78168a97569da8d59b081d39829c2a3cc419162045bd6e471792e881ea2a18d4.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Residential%20Downloadable%20Permits/Registration%20Packet%202026.pdf?t=202511241618130"
+  },
+  {
+   "page": 1,
+   "snippet": "Revised: 1/2023 Building Department 6335 Selig Drive, Independence, Ohio 44131 Phone: 216-524-1019 Building@IndependenceOhio.org BUILDING PERMIT APPLICATION FOR RESIDENTIAL SHEDS AND GARAGES LOCATION AND DESCRIPTION OF LOT Address: ___________________________________________________________________________________________________ # of Existing Accessory Bldgs. __________________________ Permanent Parcel # ________________________________________ OWNER: _________________________________________ CONTRACTOR: __________________________________________ ADDRESS: _______________________________________ ADDRESS: _______________________________________________ CTY/ST/ZIP: _____________________________________ CTY/ST/ZIP: _____________________________________________ PHONE: _________________________________________ PHONE: _________________________________________________ EMAIL: ___________________",
+   "tags": [
+    "area",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "0e0cf200e400ae02eabc18584f6764f0c46fd2be56d703fa7a30f23353a71538",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\0e0cf200e400ae02eabc18584f6764f0c46fd2be56d703fa7a30f23353a71538.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Residential%20Shed%20and%20Garage%20Permits.pdf?t=202406041421210"
+  },
+  {
+   "page": 1,
+   "snippet": "City of Independence Building Department 6335 Selig Drive, Independence OH 44131 Phone: 216-524-1019 Building@IndependenceOhio.org BUILDING PERMIT APPLICATION FOR COMMERCIAL PROJECTS LOCATION AND DESCRIPTION OF PARCEL Address & Street _______________________________________ Permanent Parcel # ______________________________ Building Name ________________________________________ Zoning ________________________________________ DESCRIPTION OF PROJECT Purpose of Construction, or intended use: Addition Exterior Alteration Commercial Building/New Other DESCRIPTION OF BUILDING BLDG. OWNER: __________________________________ CONTRACTOR: ___________________________________________ ADDRESS: ______________________________________ ADDRESS: _______________________________________________ CTY/ST/ZIP: _____________________________________ CTY/ST/ZIP: _____________________________________________ PHONE: ",
+   "tags": [
+    "area",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "2e8aa5c4e3df81839fdeff9a9158f875087140592c46f1c9b8ca6dbd50f4d133",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\2e8aa5c4e3df81839fdeff9a9158f875087140592c46f1c9b8ca6dbd50f4d133.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Commercial%20Downloadable%20Forms/Commproject%20App%20fillable.pdf?t=202406041420460"
+  },
+  {
+   "page": 2,
+   "snippet": "C ity of I ndependence Building Department 6335 Selig Drive, Independence Ohio 44131 Phone: 216 - 524 - 1019 Building@IndependenceOhio.org SIGN APPLICATION Architectural Board of Review: A ll new signs must be reviewed by the Architectural Board of Review (ABR) for their approval, they meet on the 1 st and 3 rd Thursday of each month at 3:00PM in the Meeting Room in the City Annex Building, 6335 Selig Drive, a nd a representative must be present. Applications and all materials required MUST be submitted to the Building Department no later than NOON, TEN (10) DAYS PRIOR TO THE ABR MEETING DATE , to be placed on the agenda. EACH SIGN APPLICATION MUST INCLUDE : 1 . Application completed in FULL . 2. Four ( 4 ) sets of drawings to scale. ARCHITECTURAL BOARD OF REVIEW REQUIRES SUBMITTAL OF COLORED RENDERINGS . 3. Plot plan/elevation showing the exact location of the sign i n relation to the b",
+   "tags": [
+    "sign",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "3d5a4a1152bd185d955dbfcd140847c2a09d4498c04ccc48bbe79e34f8d045e3",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\3d5a4a1152bd185d955dbfcd140847c2a09d4498c04ccc48bbe79e34f8d045e3.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Commercial%20Downloadable%20Forms/SIGN-APP2026.pdf?t=202603261140590"
+  },
+  {
+   "page": 1,
+   "snippet": "C ity of I ndependence Building Department 6335 Selig Drive, Independence, O hio 44131 P hone : 216 - 524 - 1019 Building@IndependenceOhio.org CONCRETE MISCELLANEOUS PERMIT APPLICATION Owners Name: Phone: ______ __________ ___ Address: Suite #: Contractor Name: Phone : Address: ___ City/St/Zip: Email: Residential: New Repair Commercial: New Repair Any permanent (concrete, asphalt, paving stone, etc.) patio, garage base, service walk, etc. is $10.00 / PER EACH ITEM LISTED BELOW. ***Site plan required with dimensions.*** Plesae provide a site plan showing the property and the location of the item being installed / replaced and the dimension s of it, and how far it will be from the sideyard, rearyard and structutres. Service Walks ___ Patio ___ Garage Base ___ Fire Pit ___ Other __ ________ ______ __ Total Permit fee $_______ __ ___ Revised 8 / 2 02 5",
+   "tags": [
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "488db76efdec7cb918bb154e08bb7b777ec86a4e9b138886d41aa2bfe7ca7709",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\488db76efdec7cb918bb154e08bb7b777ec86a4e9b138886d41aa2bfe7ca7709.pdf",
+   "official_url": "https://www.independenceohio.org/Building/misc-concrete%202025.pdf?t=202512110911530"
+  },
+  {
+   "page": 1,
+   "snippet": "City of Independence Building Department 6335 Selig Drive, Independence OH 44131 Phone: 216-524-1019 Building@IndependenceOhio.org BUILDING PERMIT APPLICATION FOR TENANT SPACE ALTERATIONS Address __________________________________________ Suite # ___________ Building Name _________________________ Tenant Space Name _______________________________________ Permanent Parcel # __________________________________ Total Square Footage of Tenant Space : ________________________ Type of Construction (circle one) : 1-A 1-B II-A II-B III-A III-B IV V-A V-B ►►►►►► ESTIMATED CONSTRUCTION COST : $ _____________________ ◄◄◄◄◄◄ BLDG. OWNER: __________________________________ CONTRACTOR: __________________________________________ ADDRESS: _ ______________________________________ ADDRESS: _ ______________________________________________ CTY/ST/ZIP: _____________________________________ CTY/ST/ZIP: _______",
+   "tags": [
+    "area",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "57fde9989acfc30e9ca6612b14a484c1e981c4b246b71c1322938021a3b5c580",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\57fde9989acfc30e9ca6612b14a484c1e981c4b246b71c1322938021a3b5c580.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Commercial%20Downloadable%20Forms/Comm_building_TenantAltApp%20fillable.pdf?t=202406041421240"
+  },
+  {
+   "page": 1,
+   "snippet": "City of Independence Building Department 6335 Selig Drive, Independence, OHIO 44131 Phone: 216-524-1019 Building@IndependenceOhio.org BUILDING PERMIT APPLICATION FOR RESIDENTIAL ADDITIONS, DEMOLITION, ETC. LOCATION AND DESCRIPTION OF LOT Address & Street _ __________________________________________________________________________________________________ # of Existing Accessory Bldgs. __________________________ Permanent Parcel # _ _______________________________________ OWNER: _ ________________________________________ CONTRACTOR: ___________________________________________ ADDRESS: _ ______________________________________ ADDRESS: _ ______________________________________________ CTY/ST/ZIP: _____________________________________ CTY/ST/ZIP: _____________________________________________ PHONE: _________________________________________ PHONE: _______________________________________________",
+   "tags": [
+    "area",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "d1c9dc953906e520a5232a0f0bd85b53703693c18072b6d25c13cd973d9064ee",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\d1c9dc953906e520a5232a0f0bd85b53703693c18072b6d25c13cd973d9064ee.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Residential-addition%202023.pdf?t=202406041421210"
+  },
+  {
+   "page": 1,
+   "snippet": "  Building Department 6335 Selig Drive, Independence Ohio 44131 Phone: 216 - 524 - 1019 Building@IndependenceOhio.org 202 6 RESIDENTIAL RENTAL REGISRATION Chapter 1366 of the Independence Codified Ordinances Requires all annual renewal registrations shall occur no later than January 31 st . The f ollowing information is required. A SEPARATE APPLICATION IS REQUIRED FOR EACH RENTAL PROPERTY Rental Property Address: Please check the type of registration: Owner: New Registration (new property or change in tenant) Renewal (same tenant & same property) Name Contact person if different from above Address City, State, Zip E - mail Cell Phone Tenant/Occupant: Name Address City, State, Zip E - mail Cell Phone NOTE: Maximum of three unrelated persons per dwelling unit. See the definition of “family” in Section 1107.07 (a) of ordinances. The undersigned acknowledge that there is an operating photo",
+   "tags": [
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "f6b3fcf50bd5c6fc09e647b420e621c8ba9ddb4518fc49561450bc9ccbab2196",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\f6b3fcf50bd5c6fc09e647b420e621c8ba9ddb4518fc49561450bc9ccbab2196.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Rental/2026%20Rental%20Registration.pdf?t=202603231114570"
+  },
+  {
+   "page": 2,
+   "snippet": "BUILDING PERMIT APPLICATION FOR RESIDENTIAL SHEDS AND GARAGES CONT. Revised: 12/2022 PROCEDURES SHED PROCEDURES: In order to make an application for a building permit for a shed, you must submit two (2) sets of plans which will include: • A site plan which shows the parcel, location of existing house and proposed location of the shed indicating the distance of the shed from the rear and side property lines. • Construction plans/brochure showing how the shed will be constructed and what it will look like when it is completed. • FEES: Shed ……………………………$20.00 Footer/Slab……………………...$10.00 (Optional) 1% State Assessment……………based on total of the building permit only GARAGE PROCEDURES: In order to make an application for a building permit for a garage (detached or attached), you must submit two (2) sets of plans which will include: • A site plan which shows the parcel, location of existing hous",
+   "tags": [
+    "fee",
+    "dimension",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "0e0cf200e400ae02eabc18584f6764f0c46fd2be56d703fa7a30f23353a71538",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\0e0cf200e400ae02eabc18584f6764f0c46fd2be56d703fa7a30f23353a71538.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Residential%20Shed%20and%20Garage%20Permits.pdf?t=202406041421210"
+  },
+  {
+   "page": 1,
+   "snippet": "1/2023 City of Independence Building Department 6335 Selig Drive, Independence Ohio 44131 Phone: 216-524-1019 Building@IndependenceOhio.org Auto Sale Permit Name: Address: Phone Number: License Plate #: Vehicle Year : Vehicle Make: Vehicle Model: • Copy of Owner’s driver’s license • Copy of Title • Permit must be posted and valid for 30 days from the date issued I acknowledge I have read and will comply to the Independence Codified Ordinance 761.01 __ _ _ (initial) ________________________________________________ Owner’s Signature Independence Codified Ordinance 761.01 . . . any resident of the Municipality is permitted to sell and/or display in the open (i.e., not within a permanently constructed building) one used car, of which he is the owner, upon satisfaction of the following conditions: 1. The resident obtains a permit for such sale and/or display from the Building Official, which ",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "b8dbdbff7571f6a7c0f1b96e3762e2f804298faca22878bb3023b5f713d50e30",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\b8dbdbff7571f6a7c0f1b96e3762e2f804298faca22878bb3023b5f713d50e30.pdf",
+   "official_url": "https://www.independenceohio.org/Building/AutoSalePermit.pdf?t=202407020706020"
+  },
+  {
+   "page": 1,
+   "snippet": "City of Independence Building Department 6335 Selig Drive, Independence, Ohio 44131 Phone: 216-524-1019 Building@IndependenceOhio.org Rev: October 2022 www.IndependenceOhio.org Occupancy Permit Application FOR CHANGE OF USE, NEW/CHANGE OF OCCUPANCY, OR EXPANSION OF SPACE Application is hereby made on this ______ day of ________ , 20 ___ to request a permit for a change of use, new/change of occupancy, or expansion of space. 1. Owner of Building: ___________________________________________ Street Address: ____________________________ City, State Zip: ____________________________ Phone Number: ____________________ Email : __________________________ 2. New Tenant/Occupant: ________________________________________ Proposed Street Address: _______________________________________ Proposed Parcel Number: _______________________________________ Applicant’s Name: _________________________________",
+   "tags": [
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "bcff243bf3e45c5108d361dd9578d6499ab8ce58236d2ff213e974320ae5ff3e",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\bcff243bf3e45c5108d361dd9578d6499ab8ce58236d2ff213e974320ae5ff3e.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Commercial%20Downloadable%20Forms/Occupancy%20Permit%20App%20fillable.pdf?t=202406041421230"
+  },
+  {
+   "page": 2,
+   "snippet": "2026 Contractor Registration Building Dept. #216-524-1019 Building@IndependenceOhio.org Company ____________________________________________________ Owner/Applicant Name __ ___________________________________________ Company Fed. ID/Soc.Sec. # _ _______________________________________ Address _ __________________________________________________________ City __ _____________________________________________________________ State & Zip _ ________________________________________________________ Phone _ ____________________________________________________________ Email __ ____________________________________________________________ List the names, addresses, telephone numbers and completion dates of your last three jobs, not necessarily in the City of Independence : _ _________________________________________________________________________________________________________ _ __________________",
+   "tags": [
+    "sign",
+    "process"
+   ],
+   "weight": 2,
+   "source_sha256": "78168a97569da8d59b081d39829c2a3cc419162045bd6e471792e881ea2a18d4",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\independence-township--7188\\unassigned\\sources\\78168a97569da8d59b081d39829c2a3cc419162045bd6e471792e881ea2a18d4.pdf",
+   "official_url": "https://www.independenceohio.org/Building/Residential%20Downloadable%20Permits/Registration%20Packet%202026.pdf?t=202511241618130"
+  }
+ ]
+}

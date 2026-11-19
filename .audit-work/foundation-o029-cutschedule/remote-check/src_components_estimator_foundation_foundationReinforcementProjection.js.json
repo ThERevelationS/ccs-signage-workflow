@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementProjection.js",
+      "content": "import { calculateFoundationReinforcementModel } from \"./foundationReinforcementModel\";\nimport { resolveFoundationReinforcementBasis } from \"./foundationReinforcementBasis\";\nimport { priceFoundationReinforcementModel } from \"./foundationReinforcementCost\";\nimport { resolveFoundationReinforcementSupports } from \"./foundationReinforcementSupport\";\n\n// Always calculate from current raw inputs, never a stored geometry/cost result.\n// Readiness here is internal steel pricing only, not source/quote authorization.\nexport function calculateFoundationReinforcementProjection({\n  item, design, material, inventory = [], settings = {},\n  quantityOverride = null, rateOverride = null, geometryLimit = 0,\n} = {}) {\n  const record = item && typeof item === \"object\" && !Array.isArray(item) ? item : {};\n  const model = calculateFoundationReinforcementModel(record, design, { geometryLimit });\n  const resolution = model.status === \"off\" ? null : resolveFoundationReinforcementBasis({\n    material, inventory, settings, quantityOverride, rateOverride,\n  });\n  // Support catalog economics resolve only from the fresh modeled geometry and\n  // the current catalog — never a stored pick or count.\n  const supports = model.status === \"valid\"\n    ? resolveFoundationReinforcementSupports({\n      item: record, design, model,\n      material: resolution?.materialSnapshot ?? null, inventory, basis: resolution?.basis ?? {},\n    })\n    : null;\n  const steel = priceFoundationReinforcementModel(model, resolution?.basis, supports);\n  const issues = [\n    ...model.issues.map(issue => ({ ...issue, scope: \"geometry\" })),\n    ...(resolution?.issues || []).map(issue => ({ ...issue, scope: \"basis\" })),\n    ...(supports?.issues || []).map(issue => ({ ...issue, scope: \"supports\" })),\n    ...steel.issues.map(issue => ({ ...issue, scope: \"pricing\" })),\n  ];\n  return {\n    calculationVersion: 2, projectionVersion: 1, engineeringApproved: false,\n    model, steel, issues, basis: resolution?.basis ?? null, supports,\n    materialSnapshot: resolution?.materialSnapshot ?? null,\n    rateSources: resolution?.rateSources ?? [],\n    canApplyToEstimate: steel.canApplyToEstimate && !issues.some(issue => issue.severity === \"error\"),\n  };\n}",
+      "startLine": 1,
+      "endLine": 39,
+      "totalLines": 39,
+      "truncated": false
+    }
+  ]
+}

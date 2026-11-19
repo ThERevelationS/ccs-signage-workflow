@@ -1,0 +1,73 @@
+{
+  "results": [
+    {
+      "name": "remounted-pending-snapshot",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'superseded'\n- 'saved'\n"
+    },
+    {
+      "name": "newer-unsent-edit-before-recovery",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\n'partial' !== 'saved'\n"
+    },
+    {
+      "name": "newer-unsent-edit-during-recovery",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "source-version-changed-after-load",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "invalid-unsent-design-does-not-block-saved-recovery",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "receipt-wrong-estimate",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "operation-wrong-source-version",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "operation-wrong-builder",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "archived-estimate",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "cancelled-estimate",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "protected-estimate-without-revision",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "pending-key-cleared-race",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "pending-key-replaced-race",
+      "ok": true,
+      "error": null
+    }
+  ],
+  "selectedScenarios": [],
+  "acceptedInitialPricesReused": true,
+  "realStorageVerified": false,
+  "backendAuthorizationVerified": false
+}

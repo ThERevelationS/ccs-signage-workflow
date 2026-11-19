@@ -1,0 +1,12 @@
+[
+  {
+    "name": "mixed bar groups pack per group, never across diameters",
+    "ok": false,
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n2 !== 1\n\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-o029-cutschedule/verify-o029.mjs:328:12\n    at check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-o029-cutschedule/verify-o029.mjs:73:17)\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-o029-cutschedule/verify-o029.mjs:316:1"
+  },
+  {
+    "name": "accept path persists cut_schedule inside reinforcement_cost_snapshot",
+    "ok": false,
+    "error": "AssertionError [ERR_ASSERTION]: Refresh and review the current proposal before accepting.\n\nfalse !== true\n\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-o029-cutschedule/verify-o029.mjs:571:10\n    at check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-o029-cutschedule/verify-o029.mjs:73:17)\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-o029-cutschedule/verify-o029.mjs:550:1"
+  }
+]

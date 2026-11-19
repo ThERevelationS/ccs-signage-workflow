@@ -1,0 +1,19 @@
+ok PRELIMINARY_NOTICE_TEXT is the verbatim O-119 acceptance sentence
+ok ensurePreliminaryNotice prepends the notice once (empty, plain, stamped, idempotent)
+ok ensurePreliminaryNotice: null/undefined -> notice alone; non-string fails closed
+ok hasPreliminaryNotice detects only the canonical sentence
+ok snapshot stamps notes preamble: stored template leads with the notice
+ok snapshot: absent notes stays absent; null travels; blank becomes the notice
+ok snapshot: already-stamped notes verbatim; malformed notes fails closed; source not mutated
+ok apply stamps a pre-change (unstamped) stored template note; stamped stays verbatim
+ok apply: absent notes absent (target preserved); null -> null; malformed throws
+ok chained save -> apply -> merge -> re-save keeps exactly one notice
+ok apply keeps the O-007t ai stamp + assembly cloning intact alongside the notes stamp
+ok convertFoundationToBrickStone authors notes leading with the notice
+ok PreliminaryNotice renders role="status" (never role="alert") with the canonical sentence
+ok PreliminaryNotice dismissible=true hides for that view only
+ok FoundationSectionBanner mounts the notice persistent — visible expanded AND collapsed
+ok dialog save mode discloses the notes preamble stamp
+ok dialog load rows flag carried project notes (one carrying + one bare row)
+
+PASS o119-notices (17 passed, 0 failed)

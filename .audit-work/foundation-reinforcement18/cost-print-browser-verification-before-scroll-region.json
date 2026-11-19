@@ -1,0 +1,70 @@
+{
+  "results": [
+    {
+      "name": "historical-unknown",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "width": 1280,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      },
+      "screenshot": ".audit-work/foundation-reinforcement18/cost-print-historical-unknown-1280.png"
+    },
+    {
+      "name": "historical-unknown",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "width": 580,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      },
+      "screenshot": ".audit-work/foundation-reinforcement18/cost-print-historical-unknown-390.png"
+    },
+    {
+      "name": "new-accepted-costs",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "width": 1280,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      },
+      "screenshot": ".audit-work/foundation-reinforcement18/cost-print-new-accepted-costs-1280.png"
+    },
+    {
+      "name": "new-accepted-costs",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Existing print-sheet width must not increase\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print-browser.mjs:75:14",
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    }
+  ],
+  "financialInputsUnchanged": true,
+  "syntheticStaticHtml": true,
+  "realBrowserPrintDialogVerified": false
+}

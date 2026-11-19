@@ -1,0 +1,28 @@
+X [ERROR] No matching export in "s:s://@/components/estimator/builder/sourceProjectPersistence" for import "sourcePatchMatches"
+
+    src/pages/FoundationEstimator.jsx:44:37:
+      44 │ ...eBuilderSourceProject, sourcePatchMatches } from "@/components/...
+         ╵                           ~~~~~~~~~~~~~~~~~~
+
+C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\esbuild\lib\main.js:1467
+  let error = new Error(text);
+              ^
+
+Error: Build failed with 1 error:
+src/pages/FoundationEstimator.jsx:44:37: ERROR: No matching export in "s:s://@/components/estimator/builder/sourceProjectPersistence" for import "sourcePatchMatches"
+    at failureErrorWithLog (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\esbuild\lib\main.js:926:25
+    at runOnEndCallbacks (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\esbuild\lib\main.js:1307:45)
+    at buildResponseToResult (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\esbuild\lib\main.js:924:7)
+    at C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\esbuild\lib\main.js:951:16
+    at responseCallbacks.<computed> (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:514:20)
+    at addChunk (node:internal/streams/readable:605:12) {
+  errors: [Getter/Setter],
+  warnings: [Getter/Setter]
+}
+
+Node.js v26.13.0
+exit=1

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,11 +11,31 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Trash2, Plus, Edit, Package, Building2, Layers, Wrench, Square } from 'lucide-react';
 import EquipmentInventoryTab from '@/components/foundation/EquipmentInventoryTab';
 import WallCapsInventoryTab from '@/components/foundation/WallCapsInventoryTab';
-import { loadAllEntityRows } from '@/components/estimator/loadAllEntityRows';
+import { loadAllEntityRows } from '@/lib/loadAllEntityRows';
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from '@/components/estimator/builder/builderEntityPersistence';
 import { createInventoryRecordWithRecovery } from '@/components/masterInventory/inventoryPersistence';
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const FoundationInventoryEntity = base44.entities.FoundationInventory;
+const FoundationInventoryEntity = staffEntities.FoundationInventory;
+
+// catalogNumberInput is the boundary's numeric catalog draft (CMP-A08): blank
+// clears to null ("not cataloged" — never a silent free price), a numeric
+// draft coerces to Number, anything else stays verbatim so availability
+// validation reports it instead of a NaN or minted 0 leaking into records.
+// canonicalWallMaterialSubtype (CMP-D03) classifies the recorded subtype so
+// poured-concrete rows display/edit on the volume basis even when the stored
+// spelling is an alias ("poured concrete", "cast_in_place").
+// groupInventoryBySupplier (CMP-A08 tail) renders the explicit supply
+// grouping: catalog lists split into per-supplier sections keyed on the
+// canonical supplier_key (case/spacing-insensitive), with unrecorded
+// suppliers held last as "No supplier recorded" — never silently merged.
+import { inventoryNumberInput as catalogNumberInput, canonicalWallMaterialSubtype, groupInventoryBySupplier } from "@/components/masterInventory/inventoryNormalization";
+
+// `list` field drafts (O-021 / CMP-B07): rebar_support_compatible_bar_sizes is
+// a stored string array edited as a comma-separated text draft. listFieldDraft
+// renders the draft; listFieldValue tokenizes it on save (blank -> [] =
+// "compatibility unknown", never universal; non-string values stay verbatim).
+import { listFieldDraft, listFieldValue } from "@/components/masterInventory/foundationFieldSchema";
 
 // ─── Wall Material constants ───────────────────────────────────────────────
 const WALL_SUBTYPES = [
@@ -52,6 +72,11 @@ const TAB_CONFIGS = {
     label: 'Bagged Concrete',
     types: ['bagged_concrete'],
     defaultType: 'bagged_concrete',
+    // CMP-A08 tail: the concrete supply split is explicit in the catalog UX —
+    // ready-mix supplier services live under Master Inventory → Labor &
+    // Services (service_category "concrete_service", grouped by vendor_key);
+    // bagged products stay here and group by their supplier field below.
+    intro: 'Ready-mix supplier services are managed under Master Inventory → Labor & Services. Bagged products below group by supplier.',
     fields: [
       { key: 'material_name', label: 'Material Name *', type: 'text', required: true },
       { key: 'material_description', label: 'Description', type: 'text' },
@@ -70,6 +95,33 @@ const TAB_CONFIGS = {
       { key: 'rebar_size', label: 'Rebar Size', type: 'select', options: [{ value: '#3', label: '#3' }, { value: '#4', label: '#4' }, { value: '#5', label: '#5' }, { value: '#6', label: '#6' }] },
       { key: 'supplier', label: 'Supplier', type: 'text' },
       { key: 'unit', label: 'Unit', type: 'select', options: [{ value: 'lf', label: 'Linear Ft' }, { value: 'ton', label: 'Ton' }, { value: 'each', label: 'Each' }] },
+      { key: 'cost_per_unit', label: 'Cost Per Unit ($)', type: 'number' },
+      { key: 'notes', label: 'Notes', type: 'text' },
+    ],
+  },
+  // O-021 / CMP-B07: rebar supports (chairs / stands / bolsters). Numeric
+  // metadata fields default to null — a blank support spec is "not cataloged",
+  // never an authored 0-inch height or a free 0-cost. `kind` is an optional
+  // enum: blank stays untyped (the schema leaves other hardware unmodeled).
+  // `compatible_bar_sizes` is a `list` field (comma-separated draft -> array).
+  supports: {
+    label: 'Rebar Support',
+    types: ['rebar_support'],
+    defaultType: 'rebar_support',
+    fields: [
+      { key: 'material_name', label: 'Support Name *', type: 'text', required: true },
+      { key: 'rebar_support_kind', label: 'Kind', type: 'select', optional: true, blankLabel: '— not specified —', options: [{ value: 'chair', label: 'Chair' }, { value: 'stand', label: 'Stand' }, { value: 'bolster', label: 'Bolster' }] },
+      { key: 'rebar_support_height_inches', label: 'Height (inches)', type: 'number', default: null },
+      { key: 'rebar_support_height_min_inches', label: 'Height Min (inches, adjustable)', type: 'number', default: null },
+      { key: 'rebar_support_height_max_inches', label: 'Height Max (inches, adjustable)', type: 'number', default: null },
+      { key: 'rebar_support_footprint_length_inches', label: 'Footprint Length (in)', type: 'number', default: null },
+      { key: 'rebar_support_footprint_width_inches', label: 'Footprint Width (in)', type: 'number', default: null },
+      { key: 'rebar_support_material', label: 'Material (steel / plastic / concrete)', type: 'text' },
+      { key: 'rebar_support_pack_size', label: 'Pack Size (units per pack)', type: 'number', default: null },
+      { key: 'rebar_support_compatible_bar_sizes', label: 'Compatible Bar Sizes (comma-separated, e.g. #3, #4)', type: 'list' },
+      { key: 'rebar_support_placement_notes', label: 'Placement Notes / Constraints', type: 'text' },
+      { key: 'supplier', label: 'Supplier', type: 'text' },
+      { key: 'unit', label: 'Unit', type: 'select', options: [{ value: 'each', label: 'Each' }, { value: 'pack', label: 'Pack' }, { value: 'box', label: 'Box' }] },
       { key: 'cost_per_unit', label: 'Cost Per Unit ($)', type: 'number' },
       { key: 'notes', label: 'Notes', type: 'text' },
     ],
@@ -115,8 +167,13 @@ function GenericItemForm({ tabKey, item, onSave, onCancel }) {
   const config = TAB_CONFIGS[tabKey];
   const defaults = { material_type: config.defaultType };
   config.fields.forEach(f => {
-    if (f.type === 'number') defaults[f.key] = 0;
-    else if (f.type === 'select') defaults[f.key] = f.options?.[0]?.value || '';
+    if (f.default !== undefined) defaults[f.key] = f.default;
+    // CMP-A08 tail: a number field with no declared default starts null —
+    // "not cataloged" — never a minted 0 that would persist a fabricated
+    // free price/dimension the admin never typed. Explicit 0 typed into the
+    // input still saves as a real authored zero via catalogNumberInput.
+    else if (f.type === 'number') defaults[f.key] = null;
+    else if (f.type === 'select') defaults[f.key] = f.optional ? null : (f.options?.[0]?.value || '');
     else defaults[f.key] = '';
   });
 
@@ -132,15 +189,26 @@ function GenericItemForm({ tabKey, item, onSave, onCancel }) {
           <div key={field.key} className={field.key === 'material_name' || field.key === 'notes' ? 'col-span-2' : ''}>
             <Label className="text-xs">{field.label}</Label>
             {field.type === 'select' ? (
-              <Select value={String(form[field.key] ?? field.options?.[0]?.value ?? '')} onValueChange={v => set(field.key, v)}>
+              // `optional` selects get an explicit "not specified" sentinel —
+              // radix SelectItem cannot carry an empty-string value, and an
+              // optional enum must be able to stay untyped (blank -> null).
+              <Select
+                value={form[field.key] === null || form[field.key] === undefined ? (field.optional ? '__unspecified__' : (field.options?.[0]?.value ?? '')) : String(form[field.key])}
+                onValueChange={v => set(field.key, field.optional && v === '__unspecified__' ? null : v)}
+              >
                 <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  {field.optional && <SelectItem value="__unspecified__">{field.blankLabel || '— not specified —'}</SelectItem>}
                   {field.options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                 </SelectContent>
               </Select>
+            ) : field.type === 'list' ? (
+              // Comma-separated draft for a stored string array; tokenized on
+              // save via listFieldValue (see handleSave button below).
+              <Input className="h-8" value={listFieldDraft(form[field.key])} onChange={e => set(field.key, e.target.value)} />
             ) : field.type === 'number' ? (
-              <Input type="number" className="h-8" value={form[field.key] ?? 0} step="0.01" min="0"
-                onChange={e => set(field.key, parseFloat(e.target.value) || 0)} />
+              <Input type="number" className="h-8" value={form[field.key] ?? ""} step="0.01" min="0"
+                onChange={e => set(field.key, catalogNumberInput(e.target.value))} />
             ) : (
               <Input className="h-8" value={form[field.key] ?? ''} onChange={e => set(field.key, e.target.value)} />
             )}
@@ -152,43 +220,50 @@ function GenericItemForm({ tabKey, item, onSave, onCancel }) {
          <div className="col-span-2 space-y-4 border-t border-slate-200 mt-4 pt-4">
             <h4 className="text-sm font-semibold text-slate-800">Mix Pricing ($/CY)</h4>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-               <div><Label className="text-xs">3500 AE</Label><Input type="number" className="h-8" value={form.mix_3500_price ?? 195.40} onChange={e => set('mix_3500_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">4000 AE (Standard)</Label><Input type="number" className="h-8" value={form.mix_4000_price ?? 201.00} onChange={e => set('mix_4000_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">4500 AE</Label><Input type="number" className="h-8" value={form.mix_4500_price ?? 208.70} onChange={e => set('mix_4500_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">5000 AE</Label><Input type="number" className="h-8" value={form.mix_5000_price ?? 214.60} onChange={e => set('mix_5000_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">Fast Set</Label><Input type="number" className="h-8" value={form.mix_fast_set_price ?? 248.00} onChange={e => set('mix_fast_set_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
+               <div><Label className="text-xs">3500 AE</Label><Input type="number" className="h-8" value={form.mix_3500_price ?? ""} onChange={e => set('mix_3500_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="195.40" /></div>
+               <div><Label className="text-xs">4000 AE (Standard)</Label><Input type="number" className="h-8" value={form.mix_4000_price ?? ""} onChange={e => set('mix_4000_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="201.00" /></div>
+               <div><Label className="text-xs">4500 AE</Label><Input type="number" className="h-8" value={form.mix_4500_price ?? ""} onChange={e => set('mix_4500_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="208.70" /></div>
+               <div><Label className="text-xs">5000 AE</Label><Input type="number" className="h-8" value={form.mix_5000_price ?? ""} onChange={e => set('mix_5000_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="214.60" /></div>
+               <div><Label className="text-xs">Fast Set</Label><Input type="number" className="h-8" value={form.mix_fast_set_price ?? ""} onChange={e => set('mix_fast_set_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="248.00" /></div>
             </div>
             
             <h4 className="text-sm font-semibold text-slate-800">Admixture Pricing ($/CY)</h4>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-               <div><Label className="text-xs">Calcium Chloride</Label><Input type="number" className="h-8" value={form.admix_calcium_chloride_price ?? 8.50} onChange={e => set('admix_calcium_chloride_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">Set-Retarding</Label><Input type="number" className="h-8" value={form.admix_set_retarding_price ?? 4.50} onChange={e => set('admix_set_retarding_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">Water-Reducing</Label><Input type="number" className="h-8" value={form.admix_water_reducing_price ?? 4.25} onChange={e => set('admix_water_reducing_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">Fibers</Label><Input type="number" className="h-8" value={form.admix_fibers_price ?? 12.50} onChange={e => set('admix_fibers_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">Winter Service</Label><Input type="number" className="h-8" value={form.admix_winter_service_price ?? 5.50} onChange={e => set('admix_winter_service_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
+               <div><Label className="text-xs">Calcium Chloride</Label><Input type="number" className="h-8" value={form.admix_calcium_chloride_price ?? ""} onChange={e => set('admix_calcium_chloride_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="8.50" /></div>
+               <div><Label className="text-xs">Set-Retarding</Label><Input type="number" className="h-8" value={form.admix_set_retarding_price ?? ""} onChange={e => set('admix_set_retarding_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="4.50" /></div>
+               <div><Label className="text-xs">Water-Reducing</Label><Input type="number" className="h-8" value={form.admix_water_reducing_price ?? ""} onChange={e => set('admix_water_reducing_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="4.25" /></div>
+               <div><Label className="text-xs">Fibers</Label><Input type="number" className="h-8" value={form.admix_fibers_price ?? ""} onChange={e => set('admix_fibers_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="12.50" /></div>
+               <div><Label className="text-xs">Winter Service</Label><Input type="number" className="h-8" value={form.admix_winter_service_price ?? ""} onChange={e => set('admix_winter_service_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="5.50" /></div>
             </div>
 
             <h4 className="text-sm font-semibold text-slate-800">Small Load Fees ($)</h4>
             <p className="text-xs text-slate-500 -mt-2">Fee charged by the supplier when ordering less than a full truck. Enter $0 for no fee.</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-               <div><Label className="text-xs">1 – 1.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_1_1_75 ?? 150} onChange={e => set('small_load_fee_1_1_75', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">2 – 2.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_2_2_75 ?? 120} onChange={e => set('small_load_fee_2_2_75', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">3 – 3.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_3_3_75 ?? 105} onChange={e => set('small_load_fee_3_3_75', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">4 – 4.25 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_4_4_25 ?? 80} onChange={e => set('small_load_fee_4_4_25', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">4.5 – 4.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_4_5_4_75 ?? 40} onChange={e => set('small_load_fee_4_5_4_75', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
+               <div><Label className="text-xs">1 – 1.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_1_1_75 ?? ""} onChange={e => set('small_load_fee_1_1_75', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="150" /></div>
+               <div><Label className="text-xs">2 – 2.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_2_2_75 ?? ""} onChange={e => set('small_load_fee_2_2_75', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="120" /></div>
+               <div><Label className="text-xs">3 – 3.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_3_3_75 ?? ""} onChange={e => set('small_load_fee_3_3_75', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="105" /></div>
+               <div><Label className="text-xs">4 – 4.25 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_4_4_25 ?? ""} onChange={e => set('small_load_fee_4_4_25', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="80" /></div>
+               <div><Label className="text-xs">4.5 – 4.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_4_5_4_75 ?? ""} onChange={e => set('small_load_fee_4_5_4_75', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="40" /></div>
             </div>
 
             <h4 className="text-sm font-semibold text-slate-800">Fuel / Delivery Surcharge ($)</h4>
             <p className="text-xs text-slate-500 -mt-2">Flat fee added per truck load for fuel and delivery.</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-               <div><Label className="text-xs">Per Load Surcharge</Label><Input type="number" className="h-8" value={form.fuel_surcharge ?? 30} onChange={e => set('fuel_surcharge', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
+               <div><Label className="text-xs">Per Load Surcharge</Label><Input type="number" className="h-8" value={form.fuel_surcharge ?? ""} onChange={e => set('fuel_surcharge', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="30" /></div>
             </div>
          </div>
       )}
 
       <div className="flex justify-end gap-2 pt-2">
         <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
-        <Button size="sm" onClick={() => onSave(form)} disabled={!isValid}>Save</Button>
+        <Button size="sm" onClick={() => {
+          const out = { ...form };
+          // `list` fields hold comma-separated drafts while editing; tokenize
+          // on save (blank -> [] = "unknown"). Non-string stored values pass
+          // through verbatim (fail-closed).
+          config.fields.forEach(f => { if (f.type === 'list') out[f.key] = listFieldValue(out[f.key]); });
+          onSave(out);
+        }} disabled={!isValid}>Save</Button>
       </div>
     </div>
   );
@@ -196,21 +271,28 @@ function GenericItemForm({ tabKey, item, onSave, onCancel }) {
 
 // ─── Wall Material Form ────────────────────────────────────────────────────
 function WallMaterialForm({ item, onSave, onCancel, isFillMaterial }) {
+  // CMP-A08 tail: numeric fields start null (blank = "not cataloged", never
+  // a minted price/dimension persisting on save). Subtype/color/texture keep
+  // authored visual defaults; standard unit dimensions only fill when the
+  // admin explicitly picks a subtype preset below — an authored choice, not
+  // a form-open mint.
   const [form, setForm] = useState({
     material_name: '', material_type: isFillMaterial ? 'fill_material' : 'wall_material', wall_material_subtype: 'brick',
-    wall_unit_length_inches: 8, wall_unit_width_inches: 4, wall_unit_height_inches: 2.25,
-    wall_color: '#b5451b', wall_texture: 'rough', cost_per_unit: 0.75, supplier: '', notes: '',
+    wall_unit_length_inches: null, wall_unit_width_inches: null, wall_unit_height_inches: null,
+    wall_color: '#b5451b', wall_texture: 'rough', cost_per_unit: null, supplier: '', notes: '',
     ...item,
   });
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
-  const isConcrete = form.wall_material_subtype === 'concrete';
+  const isConcrete = canonicalWallMaterialSubtype(form.wall_material_subtype) === 'concrete';
 
   const applyPreset = (subtype) => {
     set('wall_material_subtype', subtype);
-    if (subtype === 'brick') { set('wall_unit_length_inches', 8); set('wall_unit_width_inches', 3.75); set('wall_unit_height_inches', 2.25); }
-    else if (subtype === 'cinderblock') { set('wall_unit_length_inches', 16); set('wall_unit_width_inches', 8); set('wall_unit_height_inches', 8); }
-    else if (subtype === 'stone') { set('wall_unit_length_inches', 12); set('wall_unit_width_inches', 6); set('wall_unit_height_inches', 4); }
-    else if (subtype === 'concrete') { set('wall_unit_length_inches', 0); set('wall_unit_width_inches', 8); set('wall_unit_height_inches', 0); set('wall_color', '#9ca3af'); set('wall_texture', 'smooth'); }
+    if (subtype === 'brick') { set('wall_unit_length_inches', 8); set('wall_unit_width_inches', 3.75); set('wall_unit_height_inches', 2.25); set('unit', 'each'); }
+    else if (subtype === 'cinderblock') { set('wall_unit_length_inches', 16); set('wall_unit_width_inches', 8); set('wall_unit_height_inches', 8); set('unit', 'each'); }
+    else if (subtype === 'stone') { set('wall_unit_length_inches', 12); set('wall_unit_width_inches', 6); set('wall_unit_height_inches', 4); set('unit', 'each'); }
+    // Poured concrete has no unit length/height — those fields are cleared
+    // (not zeroed) and the cost basis is declared per cubic yard (CMP-D03).
+    else if (subtype === 'concrete') { set('wall_unit_length_inches', null); set('wall_unit_width_inches', 8); set('wall_unit_height_inches', null); set('unit', 'cy'); set('wall_color', '#9ca3af'); set('wall_texture', 'smooth'); }
   };
 
   return (
@@ -222,29 +304,32 @@ function WallMaterialForm({ item, onSave, onCancel, isFillMaterial }) {
         </div>
         <div>
           <Label className="text-xs">Material Subtype</Label>
-          <Select value={form.wall_material_subtype} onValueChange={applyPreset}>
+          {/* Alias spellings (e.g. "poured_concrete") display as their
+              canonical option; the authored value is preserved verbatim in
+              form state until the user picks a subtype (CMP-D03). */}
+          <Select value={canonicalWallMaterialSubtype(form.wall_material_subtype) || form.wall_material_subtype} onValueChange={applyPreset}>
             <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
             <SelectContent>{WALL_SUBTYPES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div>
-          <Label className="text-xs">Cost Per Unit ($)</Label>
-          <Input type="number" className="h-8" value={form.cost_per_unit} onChange={e => set('cost_per_unit', parseFloat(e.target.value) || 0)} step="0.01" min="0" />
+          <Label className="text-xs">Cost Per {isConcrete ? 'Cubic Yard' : 'Unit'} ($)</Label>
+          <Input type="number" className="h-8" value={form.cost_per_unit ?? ""} onChange={e => set('cost_per_unit', catalogNumberInput(e.target.value))} step="0.01" min="0" />
         </div>
       </div>
       {!isConcrete && (
         <>
           <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Unit Dimensions</div>
           <div className="grid grid-cols-3 gap-3">
-            <div><Label className="text-xs">Length (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_length_inches} onChange={e => set('wall_unit_length_inches', parseFloat(e.target.value) || 0)} step="0.125" /></div>
-            <div><Label className="text-xs">Width / Depth (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_width_inches} onChange={e => set('wall_unit_width_inches', parseFloat(e.target.value) || 0)} step="0.125" /></div>
-            <div><Label className="text-xs">Height (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_height_inches} onChange={e => set('wall_unit_height_inches', parseFloat(e.target.value) || 0)} step="0.125" /></div>
+            <div><Label className="text-xs">Length (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_length_inches ?? ""} onChange={e => set('wall_unit_length_inches', catalogNumberInput(e.target.value))} step="0.125" /></div>
+            <div><Label className="text-xs">Width / Depth (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_width_inches ?? ""} onChange={e => set('wall_unit_width_inches', catalogNumberInput(e.target.value))} step="0.125" /></div>
+            <div><Label className="text-xs">Height (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_height_inches ?? ""} onChange={e => set('wall_unit_height_inches', catalogNumberInput(e.target.value))} step="0.125" /></div>
           </div>
         </>
       )}
       {isConcrete && (
         <div className="grid grid-cols-2 gap-3">
-          <div><Label className="text-xs">Wall Depth / Width (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_width_inches} onChange={e => set('wall_unit_width_inches', parseFloat(e.target.value) || 0)} step="0.5" /></div>
+          <div><Label className="text-xs">Wall Depth / Width (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_width_inches ?? ""} onChange={e => set('wall_unit_width_inches', catalogNumberInput(e.target.value))} step="0.5" /></div>
         </div>
       )}
       <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Visual / 3D Appearance</div>
@@ -253,7 +338,7 @@ function WallMaterialForm({ item, onSave, onCancel, isFillMaterial }) {
           <Label className="text-xs">Color</Label>
           <div className="flex gap-2 mt-1 flex-wrap">
             {PRESET_COLORS.map(c => (
-              <button key={c.value} title={c.label}
+              <button type="button" key={c.value} title={c.label}
                 className={`w-6 h-6 rounded border-2 transition-transform hover:scale-110 ${form.wall_color === c.value ? 'border-blue-500 scale-110' : 'border-transparent'}`}
                 style={{ backgroundColor: c.value }} onClick={() => set('wall_color', c.value)} />
             ))}
@@ -274,7 +359,9 @@ function WallMaterialForm({ item, onSave, onCancel, isFillMaterial }) {
       </div>
       <div className="flex justify-end gap-2 pt-2">
         <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
-        <Button size="sm" onClick={() => onSave(form)} disabled={!form.material_name}>Save</Button>
+        {/* Poured rows persist the $/CY basis the label declares — a saved
+            row never carries a contradicting unit (CMP-D03). */}
+        <Button size="sm" onClick={() => onSave(isConcrete ? { ...form, unit: 'cy' } : form)} disabled={!form.material_name}>Save</Button>
       </div>
     </div>
   );
@@ -291,7 +378,10 @@ function GenericTab({ tabKey, items, onEdit, onDelete, onAdd, isAdmin }) {
   return (
     <div className="space-y-4 mt-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-600">{config.label} items used for cost estimation in foundation projects.</p>
+        <div>
+          <p className="text-sm text-slate-600">{config.label} items used for cost estimation in foundation projects.</p>
+          {config.intro && <p className="text-xs text-slate-500 mt-0.5">{config.intro}</p>}
+        </div>
         {isAdmin && <Button size="sm" onClick={onAdd}><Plus className="w-4 h-4 mr-1" /> Add {config.label}</Button>}
       </div>
       {items.length === 0 ? (
@@ -303,8 +393,16 @@ function GenericTab({ tabKey, items, onEdit, onDelete, onAdd, isAdmin }) {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-2">
-          {items.map(item => (
+        <div className="space-y-4">
+          {groupInventoryBySupplier(items).map(group => (
+            <div key={group.key ?? '__unassigned__'} className="space-y-2">
+              {/* CMP-A08 tail: explicit supply grouping — rows split by their
+                  canonical supplier key; unrecorded suppliers stay visible
+                  last instead of silently merging into another vendor. */}
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 pb-1">
+                {group.label ? <>Supplier: <span className="text-slate-700 normal-case">{group.label}</span></> : 'No supplier recorded'}
+              </div>
+              {group.rows.map(item => (
             <Card key={item.id} className="hover:shadow-sm transition-shadow border-blue-200 shadow-sm overflow-hidden mb-3">
               <CardContent className="py-3 px-4 flex items-start justify-between gap-3 bg-blue-50/30">
                 <div className="flex-1 min-w-0">
@@ -315,7 +413,7 @@ function GenericTab({ tabKey, items, onEdit, onDelete, onAdd, isAdmin }) {
                       const val = item[f.key];
                       if (!val && val !== 0) return null;
                       const label = f.label.replace(' ($)', '').replace(' *', '');
-                      const display = f.type === 'number' && f.label.includes('$') ? `$${parseFloat(val).toFixed(2)}` : val;
+                      const display = f.type === 'number' && f.label.includes('$') && Number.isFinite(parseFloat(val)) ? `$${parseFloat(val).toFixed(2)}` : (Array.isArray(val) ? val.join(', ') : val);
                       return <span key={f.key} className="text-xs text-slate-500">{label}: <span className="text-slate-700 font-medium">{display}</span></span>;
                     })}
                     {item.cost_per_unit > 0 && !displayFields.find(f => f.key === 'cost_per_unit') && (
@@ -334,6 +432,8 @@ function GenericTab({ tabKey, items, onEdit, onDelete, onAdd, isAdmin }) {
                 )}
               </CardContent>
             </Card>
+              ))}
+            </div>
           ))}
         </div>
       )}
@@ -365,7 +465,7 @@ export default function FoundationInventoryPage({ embedded = false }) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const user = await base44.auth.me();
+      const user = await base44.auth.me().catch(() => null);
       setIsAdmin(user?.role === 'admin');
     };
     checkAuth();
@@ -521,6 +621,7 @@ export default function FoundationInventoryPage({ embedded = false }) {
           <TabsTrigger value="wall_material" className="flex items-center gap-1"><Building2 className="w-3 h-3" /> Wall Materials</TabsTrigger>
           <TabsTrigger value="concrete">Concrete</TabsTrigger>
           <TabsTrigger value="rebar">Rebar</TabsTrigger>
+          <TabsTrigger value="supports">Supports</TabsTrigger>
           <TabsTrigger value="forming">Forming</TabsTrigger>
           {!embedded && <TabsTrigger value="equipment" className="flex items-center gap-1"><Wrench className="w-3 h-3" /> Equipment</TabsTrigger>}
           {!embedded && <TabsTrigger value="poles">Poles</TabsTrigger>}
@@ -548,7 +649,14 @@ export default function FoundationInventoryPage({ embedded = false }) {
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {wallMaterials.map(m => (
+                {groupInventoryBySupplier(wallMaterials).map(group => (
+                  <Fragment key={group.key ?? '__unassigned__'}>
+                    {/* CMP-A08 tail: explicit supply grouping by canonical
+                        supplier key; unrecorded suppliers stay visible last. */}
+                    <div className="col-span-full text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-orange-200 pb-1">
+                      {group.label ? <>Supplier: <span className="text-slate-700 normal-case">{group.label}</span></> : 'No supplier recorded'}
+                    </div>
+                    {group.rows.map(m => (
                   <Card key={m.id} className="hover:shadow-md transition-shadow border-orange-200 shadow-sm overflow-hidden">
                     <CardHeader className="py-3 px-4 bg-orange-50/50 border-b border-orange-100">
                       <div className="flex items-center justify-between">
@@ -568,13 +676,15 @@ export default function FoundationInventoryPage({ embedded = false }) {
                       </div>
                     </CardHeader>
                     <CardContent className="px-4 pb-3 text-xs text-slate-600 space-y-1">
-                      {m.wall_material_subtype !== 'concrete' && <div>Size: {m.wall_unit_length_inches}"L × {m.wall_unit_width_inches}"W × {m.wall_unit_height_inches}"H</div>}
-                      {m.wall_material_subtype === 'concrete' && <div>Wall depth: {m.wall_unit_width_inches}"</div>}
-                      <div>Cost: ${parseFloat(m.cost_per_unit || 0).toFixed(2)} / unit</div>
+                      {canonicalWallMaterialSubtype(m.wall_material_subtype) !== 'concrete' && <div>Size: {m.wall_unit_length_inches}"L × {m.wall_unit_width_inches}"W × {m.wall_unit_height_inches}"H</div>}
+                      {canonicalWallMaterialSubtype(m.wall_material_subtype) === 'concrete' && <div>Wall depth: {m.wall_unit_width_inches}"</div>}
+                      <div>Cost: {Number.isFinite(parseFloat(m.cost_per_unit)) ? `${parseFloat(m.cost_per_unit).toFixed(2)} / ${canonicalWallMaterialSubtype(m.wall_material_subtype) === 'concrete' ? 'CY' : 'unit'}` : (m.cost_per_unit ?? 'Not priced')}</div>
                       <div>Texture: <span className="capitalize">{m.wall_texture}</span></div>
                       {m.supplier && <div>Supplier: {m.supplier}</div>}
                     </CardContent>
                   </Card>
+                    ))}
+                  </Fragment>
                 ))}
               </div>
             )}
@@ -600,7 +710,12 @@ export default function FoundationInventoryPage({ embedded = false }) {
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {fillMaterials.map(m => (
+                {groupInventoryBySupplier(fillMaterials).map(group => (
+                  <Fragment key={group.key ?? '__unassigned__'}>
+                    <div className="col-span-full text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-indigo-200 pb-1">
+                      {group.label ? <>Supplier: <span className="text-slate-700 normal-case">{group.label}</span></> : 'No supplier recorded'}
+                    </div>
+                    {group.rows.map(m => (
                   <Card key={m.id} className="hover:shadow-md transition-shadow border-indigo-200 shadow-sm overflow-hidden">
                     <CardHeader className="py-3 px-4 bg-indigo-50/50 border-b border-indigo-100">
                       <div className="flex items-center justify-between">
@@ -620,13 +735,15 @@ export default function FoundationInventoryPage({ embedded = false }) {
                       </div>
                     </CardHeader>
                     <CardContent className="px-4 pb-3 text-xs text-slate-600 space-y-1">
-                      {m.wall_material_subtype !== 'concrete' && <div>Size: {m.wall_unit_length_inches}"L × {m.wall_unit_width_inches}"W × {m.wall_unit_height_inches}"H</div>}
-                      {m.wall_material_subtype === 'concrete' && <div>Wall depth: {m.wall_unit_width_inches}"</div>}
-                      <div>Cost: ${parseFloat(m.cost_per_unit || 0).toFixed(2)} / unit</div>
+                      {canonicalWallMaterialSubtype(m.wall_material_subtype) !== 'concrete' && <div>Size: {m.wall_unit_length_inches}"L × {m.wall_unit_width_inches}"W × {m.wall_unit_height_inches}"H</div>}
+                      {canonicalWallMaterialSubtype(m.wall_material_subtype) === 'concrete' && <div>Wall depth: {m.wall_unit_width_inches}"</div>}
+                      <div>Cost: {Number.isFinite(parseFloat(m.cost_per_unit)) ? `${parseFloat(m.cost_per_unit).toFixed(2)} / ${canonicalWallMaterialSubtype(m.wall_material_subtype) === 'concrete' ? 'CY' : 'unit'}` : (m.cost_per_unit ?? 'Not priced')}</div>
                       <div>Texture: <span className="capitalize">{m.wall_texture}</span></div>
                       {m.supplier && <div>Supplier: {m.supplier}</div>}
                     </CardContent>
                   </Card>
+                    ))}
+                  </Fragment>
                 ))}
               </div>
             )}

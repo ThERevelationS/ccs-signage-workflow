@@ -1,0 +1,11 @@
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+The above error occurred in the <LaserEstimator> component:
+
+    at LaserEstimator (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/laser-hardening/.laser-red-bundle.mjs:152:27)
+    at EB (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/laser-hardening/verify-laser-red.mjs:66:1)
+    at Router (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\react-router\dist\umd\react-router.development.js:1207:17)
+    at MemoryRouter (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\react-router\dist\umd\react-router.development.js:1101:7)
+
+React will try to recreate this component tree from scratch using the error boundary you provided, EB.
+PASS laser-red (remote defects: render crash, NaN persisted, display laundering, silent seed, destroyed blanks, resurrected zeros) — 26 checks

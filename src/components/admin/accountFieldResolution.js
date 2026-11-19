@@ -8,7 +8,8 @@ const FIELDS = [
   ["can_import_export","Import/export permission"],
   ["can_order_export","Order Form export permission"],
   ["can_view_resources","Resources permission"],
-  ["employment_type","Employment type"], ["can_work_pause","Work Pause permission"]
+  ["employment_type","Employment type"], ["can_work_pause","Work Pause permission"],
+  ["can_self_approve_shifts","Self shift approval"], ["is_owner","Owner role"]
 ];
 const FIELDS_KEYS=FIELDS.map(([key])=>key);
 const equal=(key,a,b)=>key==="sales_roles"
@@ -45,7 +46,7 @@ export function planAccountFieldResolution({baseline,attempted,latest,draft,choi
     const selected=explicit || (editedLater?"mine":"latest");
     result[key]=copy(selected==="mine"?draft[key]:remote[key]);
     fields.push({key,label,selected,tried,remoteChanged,editedLater,
-      sensitive:["role","sales_roles","can_import_export","can_order_export","can_view_resources"].includes(key),
+      sensitive:["role","sales_roles","can_import_export","can_order_export","can_view_resources","can_self_approve_shifts","is_owner"].includes(key),
       matchesLatest:equal(key,draft[key],remote[key])});
   }
   const adjustments=[];
@@ -53,9 +54,17 @@ export function planAccountFieldResolution({baseline,attempted,latest,draft,choi
     result.can_order_export=false;
     adjustments.push("Order Form export is disabled for non-admin accounts.");
   }
+  if(result.role!=="admin" && result.can_self_approve_shifts!==false){
+    result.can_self_approve_shifts=false;
+    adjustments.push("Self shift approval is disabled for non-admin accounts.");
+  }
   if(result.role==="admin" && result.can_view_resources!==true){
     result.can_view_resources=true;
     adjustments.push("Administrators have Resources access enabled.");
+  }
+  if(result.is_owner===true && result.role!=="admin"){
+    result.role="admin";
+    adjustments.push("Owner is the highest tier of administrator — role set to admin.");
   }
   return {
     fields, draft:result, adjustments,

@@ -1,0 +1,58 @@
+{
+ "jurisdiction_id": "6ac7389e4b2ded3758fc82cb",
+ "jurisdiction_name": "Augusta",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Sign Permit Application Revised 04-2021 Page 1 of 3 STAMP RECEIVED STAMP PAID Sign Permit Application Established 1836 RELATED FILES SN - _____ - _____ _____ - _____ - _____ _____ - _____ - _____ _____ - _____ - _____ TOWNSHIP FILE GENERAL INFORMATION SIGN INFORMATION PAYMENT INFORMATION FEE : $ 70 .00 Total Amount Paid: $__________________ Paid via □ Cash □ Check # ______________ Rec’d By ______________ Receipt # ________________ G/L # ______ - ______ - ______ - ______ Name(s) of Legal Property Owner(s) ________________________________________________________________________ Street Address (Street # & Name or P.O. Box) _______________________________________________________________ City ________________________ State ______ Zip _________ Email ____________________________________________ Phone __________________________ Fax _____________________________ Cell ____________________________",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "8c997e238afbc9b3ad5bbaf5adbe461d83c853cccbe5e83b620583704807b947",
+   "source_document_id": null,
+   "source_title": "8c997e238afbc9b3ad5bbaf5adbe461d83c853cccbe5e83b620583704807b947.pdf",
+   "official_url": "https://augustatownship.org/wp-content/uploads/2021/08/Sign_Permit_Application_STG_Fillable_1.2.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Sign Permit Application Revised 04-2021 Page 2 of 3 By submitting this application, authority is given to Township representatives to physically view and inspect the property . The undersigned says that (s)he is the Petitioner involved in this Application, and that the foregoing answers and statements herein contained, and the information herewith submitted are, in all respects, true and correct to the best of his/her knowledge and belief. Petitioner Signature ______________________________________________ Date _____________________________ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - If the Petitioner and Property Owner are NOT the same individual, the Property Owner, by signing below, says that they have given the Petitioner permission to submit this Applicat",
+   "tags": [
+    "sign",
+    "permit_required",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "8c997e238afbc9b3ad5bbaf5adbe461d83c853cccbe5e83b620583704807b947",
+   "source_document_id": null,
+   "source_title": "8c997e238afbc9b3ad5bbaf5adbe461d83c853cccbe5e83b620583704807b947.pdf",
+   "official_url": "https://augustatownship.org/wp-content/uploads/2021/08/Sign_Permit_Application_STG_Fillable_1.2.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Sign Permit Application Revised 04-2021 Page 3 of 3 Date Rec’d. ____________________ by ______________ □ Application Form completed and signed by the Petitioner and/or Property Owner. □ Four (4) copies of all plans and supplemental information provided. Fee: $ 70 .00 Amount Paid: __________________ Paid via: □ Cash □ Check # ________________ Rec’d By ____________ Receipt # _______________ G/L # _____-_____-_____-_____ For all new applications, a Township file number must be assigned and a new file must be created. □ Township File No.: SN - ________ - ________ □ Related Township Files cross-referenced □ Application tracking spreadsheet updated □ Original application and one copy of all materials retained for Township File □ Four copies of all materials delivered to Zoning Administrator This application has been reviewed for compliance with the Township Zoning Ordinance and is hereby: □ Ap",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "authority",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "8c997e238afbc9b3ad5bbaf5adbe461d83c853cccbe5e83b620583704807b947",
+   "source_document_id": null,
+   "source_title": "8c997e238afbc9b3ad5bbaf5adbe461d83c853cccbe5e83b620583704807b947.pdf",
+   "official_url": "https://augustatownship.org/wp-content/uploads/2021/08/Sign_Permit_Application_STG_Fillable_1.2.pdf"
+  }
+ ]
+}

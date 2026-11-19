@@ -1,0 +1,18 @@
+ok legacy compatibility: ordinary positive split remains40 material/72 labor (112 total)
+ok legacy compatibility: explicit0 rate incorrectly classifies all72 steel labor as material
+ok legacy compatibility: explicit0 aggregatefeet becomes1ft and48labor is classified as material
+ok legacy compatibility: manualv2 material is incorrectly linked to legacy #4 catalog row
+ok legacy compatibility: stable v2 catalog ID is ignored in favor of legacy size lookup
+ok fresh typed2 snapshot, not legacy size lookup or combined total
+ok manual typed2 is never linked by legacy size
+ok zero aggregate stays zero; material0 and labor12 remain distinct
+ok explicit zero2 rate cannot fall through to current catalog
+ok unrelated descriptor zero behavior remains unchanged
+ok unknown active selector 2 cannot silently use legacy
+ok unknown active selector 3 cannot silently use legacy
+ok unknown active selector 0 cannot silently use legacy
+ok typed2 missing or inconsistent snapshot fails before producing any parts
+ok off2 ignores inactive malformed snapshot
+ok pure extraction never executes blocked SDK or persistence dependency
+Shared extraction: 16/16; failed=0
+exit=0

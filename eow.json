@@ -1,0 +1,11 @@
+{
+  "files": [
+    {
+      "path": "base44/functions/ensureOpportunityWorkspace/entry.ts",
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "File not found."
+      }
+    }
+  ]
+}

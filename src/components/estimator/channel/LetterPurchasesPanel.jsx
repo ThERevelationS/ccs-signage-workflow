@@ -1,4 +1,3 @@
-import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus } from "lucide-react";
@@ -54,14 +53,14 @@ export default function LetterPurchasesPanel({ project, purchases, totals, onCha
             onChange={(e) => setRow(idx, { unit_cost: parseFloat(e.target.value) || 0 })}
           />
           <span className="text-sm text-gray-700 w-20 text-right">{money(p.line_total)}</span>
-          <button
+          <button type="button"
             onClick={() => {
               if (!window.confirm(`Remove "${p.description || "this letter line"}"?`)) return;
               onChange({ letter_purchases: project.letter_purchases.filter((_, i) => i !== idx) });
             }}
             className="text-gray-400 hover:text-red-600 p-1"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       ))}
@@ -77,7 +76,7 @@ export default function LetterPurchasesPanel({ project, purchases, totals, onCha
           onChange({ letter_purchases: [...(project.letter_purchases || []), { qty: 1, unit_cost: 0 }] })
         }
       >
-        <Plus className="w-4 h-4" /> Add Letter Line
+        <Plus className="w-4 h-4" aria-hidden="true" /> Add Letter Line
       </Button>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 border-t border-gray-100 pt-3">

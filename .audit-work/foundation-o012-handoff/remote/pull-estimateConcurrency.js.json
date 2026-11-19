@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/estimator/estimateConcurrency.js",
+      "content": "export function hasEstimateVersionConflict(knownUpdatedAt, currentUpdatedAt) {\n  const known = String(knownUpdatedAt || \"\").trim();\n  const current = String(currentUpdatedAt || \"\").trim();\n  return !!(known && current && known !== current);\n}",
+      "startLine": 1,
+      "endLine": 5,
+      "totalLines": 5,
+      "truncated": false
+    }
+  ]
+}

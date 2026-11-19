@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "base44/shared/pagedEntityRows.ts",
+      "content": "const DEFAULT_PAGE_SIZE = 500;\nconst DEFAULT_MAX_ROWS = 50000;\n\nfunction rowIdentity(row: any, index: number) {\n  const id = String(row?.id || '').trim();\n  return id || `__row_${index}`;\n}\n\nexport async function loadAllEntityRows({\n  entity,\n  query = null,\n  sort = 'created_date',\n  pageSize = DEFAULT_PAGE_SIZE,\n  maxRows = DEFAULT_MAX_ROWS,\n  label = 'Entity rows',\n}: {\n  entity: any;\n  query?: Record<string, unknown> | null;\n  sort?: string | null;\n  pageSize?: number;\n  maxRows?: number;\n  label?: string;\n}) {\n  const hasFilter = !!query && typeof query === 'object';\n  const reader = hasFilter ? entity?.filter : entity?.list;\n  if (typeof reader !== 'function') {\n    throw new Error(`${label} could not initialize its paged read.`);\n  }\n\n  const safePageSize = Math.max(1, Math.min(500, Number(pageSize) || DEFAULT_PAGE_SIZE));\n  const safeMaxRows = Math.max(safePageSize, Number(maxRows) || DEFAULT_MAX_ROWS);\n  const rows: any[] = [];\n  const seen = new Set<string>();\n  let skip = 0;\n\n  while (skip < safeMaxRows) {\n    const page = hasFilter\n      ? await entity.filter(query, sort || undefined, safePageSize, skip)\n      : await entity.list(sort || undefined, safePageSize, skip);\n\n    if (!Array.isArray(page)) {\n      throw new Error(`${label} could not be verified completely.`);\n    }\n\n    for (let index = 0; index < page.length; index += 1) {\n      const row = page[index];\n      const key = rowIdentity(row, skip + index);\n      if (seen.has(key)) continue;\n      seen.add(key);\n      rows.push(row);\n    }\n\n    if (page.length < safePageSize) return rows;\n    skip += safePageSize;\n  }\n\n  throw new Error(`${label} exceeds the ${safeMaxRows.toLocaleString()}-record verification safety limit.`);\n}",
+      "startLine": 1,
+      "endLine": 58,
+      "totalLines": 58,
+      "truncated": false
+    }
+  ]
+}

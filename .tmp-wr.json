@@ -1,0 +1,10 @@
+Writing file
+Writing file
+Wrote file
+{
+  "path": "scripts/test-accounting-suite.mjs",
+  "bytesWritten": 71999,
+  "created": false,
+  "overwritten": true
+}
+Update available: 0.3.0 → 0.3.1. Run: npm install -g base44@latest

@@ -1,0 +1,79 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "fdd71de8e5fa512a2e85525ab1ed22445c550073",
+  "baselineFile": "pole-pricing-baseline-v2.json",
+  "proofSpec": "pole-pricing-proof-spec.json",
+  "flowSpec": "pole-pricing-flow-proof-spec.json",
+  "targetOrder": [
+    "src/components/estimator/foundation/poleCalculator.js",
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+    "src/components/estimator/foundation/FoundationBOM.jsx",
+    "src/pages/FoundationEstimator.jsx"
+  ],
+  "candidatePrefix": "pole-pricing-candidate-",
+  "candidateHashes": {
+    "poleCalculator.js": "8cdfbb75492817b8628eda4d10f133b7d05c9b50c46f1dd745ae1a50e201596e",
+    "foundationCalc.js": "cf744d530e198dbdf5499646cb9e49e63211a2ed7de884556ecf39bacd061332",
+    "FoundationPolesPanel.jsx": "2016265a3e7f8367f0788390460d97e9e0cd2177b9f6016e5c58a5a1dc26663f",
+    "FoundationBOM.jsx": "f85657e3f52eb5855f6eb251dd67378b9872c7e107c6afd2e4811708fead4698",
+    "FoundationEstimator.jsx": "084a90cb3a7ff116bdd55f05f6fd75b601971ef311cacd4915a332ea02735b56"
+  },
+  "atomicEditPerFile": true,
+  "editInput": "stdin",
+  "editsPerFile": 1,
+  "candidateLineEndings": "LF",
+  "candidateTerminalLF": {
+    "poleCalculator.js": true,
+    "foundationCalc.js": false,
+    "FoundationPolesPanel.jsx": true,
+    "FoundationBOM.jsx": false,
+    "FoundationEstimator.jsx": false
+  },
+  "protectedFiles": [
+    "src/components/estimator/foundation/wallCalculator.js",
+    "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+    "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+    "base44/shared/estimatorAiModelPolicy.js",
+    "base44/entities/FoundationProject.jsonc",
+    "base44/entities/FoundationInventory.jsonc",
+    "base44/entities/WorkOrder.jsonc",
+    "src/components/estimator/foundation/legacyFoundationCalc.js",
+    "src/components/estimator/workOrderConversion.js",
+    "base44/functions/staffEntityWrite/entry.ts",
+    "base44/functions/staffDataRead/entry.ts",
+    "src/components/estimator/builder/builderEntityPersistence.js",
+    "src/components/estimator/foundation/Foundation3DPreview.jsx",
+    "src/components/estimator/foundation/foundationAiReview.js",
+    "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+    "src/components/estimator/foundation/FoundationTotals.jsx",
+    "src/components/estimator/foundation/wallCapCalculator.js",
+    "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+    "src/components/estimator/foundation/WallShapeEditor.jsx"
+  ],
+  "buildEntries": [
+    "src/components/estimator/foundation/poleCalculator.js",
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+    "src/components/estimator/foundation/FoundationBOM.jsx",
+    "src/pages/FoundationEstimator.jsx"
+  ],
+  "buildAlias": {
+    "@": "/app/src"
+  },
+  "forbiddenExternalImportPrefix": "@/",
+  "pageOutputMustContainAllTargets": true,
+  "stageBase64ChunkLength": 3000,
+  "remoteTempPrefix": "/tmp/ccs-pole-pricing-",
+  "restoreCheckpointName": "Before Pole Pricing Availability Hardening",
+  "finalCheckpointName": "Pole Pricing Availability Hardening Verified",
+  "checkpointAuthority": "lead",
+  "applyRequiresLeadApproval": true,
+  "deleteOrRestoreAuthorization": false,
+  "businessRecordOperationsAuthorized": false,
+  "schemaOrMetadataActivationAuthorized": false,
+  "publishOrDeployAuthorized": false,
+  "remoteApplicationPerformed": false,
+  "checkpointsCreated": false
+}

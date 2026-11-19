@@ -1,0 +1,26 @@
+{
+ "jurisdiction_id": "6aea88e8db8e017caef03f4f",
+ "jurisdiction_name": "Fairfield",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "ZONING CERTIFICATE A PPLICATION FAIRFIELD TOWNSHIP PLANNING & ZONING DEPARTMENT 6032 MORRIS ROAD ● FAIRFIELD TOWNSHIP, OHIO 45011 PHONE (513) - 887 - 4400 ● FAX (513) - 887 - 4405 FOR OFFICE USE ONLY APPLICATION: # 26 - ______________ FEE AMOUNT: $ _____________________ DATE RECIEVED :_________________ RECEIPT: #________ ___________________ APPLICANT ______________________________________ PHONE________________ EMAIL______________________ ADDRESS ________________________________________ CITY,STATE,ZIP __________________________________ __ PROPERTY OWNER ______________________________ PHONE________________ EMAIL_____________________ _ ADDRESS ________________________________________ CITY,STATE,ZIP ____________________________________ CONTRACTOR ___________________________________ PHONE________________ EMAIL_____________________ _ ADDRESS ________________________________________ CITY,STATE,",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "temporary",
+    "type",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "8fb8703ab085383a6670bd9ba5b0703d17a9e13ec356533d301c19efd36cba06",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\fairfield--3f4f\\unassigned\\sources\\8fb8703ab085383a6670bd9ba5b0703d17a9e13ec356533d301c19efd36cba06.pdf",
+   "official_url": "https://www.fairfieldtwp.org/media/departments/Zoning%20Certificate%20Application%202026.pdf"
+  }
+ ]
+}

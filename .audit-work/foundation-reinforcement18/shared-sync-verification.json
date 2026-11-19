@@ -1,0 +1,135 @@
+{
+  "synthetic": true,
+  "planOnly": true,
+  "externalCalls": [],
+  "results": [
+    {
+      "name": "unchecked baseline preserves exact split and per-unit labor manual cost",
+      "ok": true
+    },
+    {
+      "name": "explicit zero baseline never uses positive inventory price",
+      "ok": true
+    },
+    {
+      "name": "recalculated zero current price does not silently accept over frozen40",
+      "ok": true
+    },
+    {
+      "name": "catalog to manual clears current link/candidates, keeps original and frozen history",
+      "ok": true
+    },
+    {
+      "name": "repeat manual saves never reattach through historical original ID",
+      "ok": true
+    },
+    {
+      "name": "manual to catalog disables manual override and attaches only selected ID",
+      "ok": true
+    },
+    {
+      "name": "only explicit accept replaces frozen40 with known manual0",
+      "ok": true
+    },
+    {
+      "name": "intentional detached override retains amount, quantity and manual value",
+      "ok": true
+    },
+    {
+      "name": "replacement path changes inventory ID, never destroys the material object",
+      "ok": true
+    },
+    {
+      "name": "legacy unlinked labor keeps its existing per-job amount convention",
+      "ok": true
+    },
+    {
+      "name": "fresh saved catalog proof works without trusting a caller recalculation flag",
+      "ok": true
+    },
+    {
+      "name": "caller recalculated=true cannot stamp a stale saved catalog as calculated",
+      "ok": true
+    },
+    {
+      "name": "new parts added to an existing priced builder also carry the recalculation requirement",
+      "ok": true
+    },
+    {
+      "name": "size changes with unchanged price still require source recalculation",
+      "ok": true
+    },
+    {
+      "name": "unsupported catalog units cannot be certified by a stored ft label",
+      "ok": true
+    },
+    {
+      "name": "unknown weight or missing catalog revision never becomes current proof",
+      "ok": true
+    },
+    {
+      "name": "stale basis cannot establish an unchecked baseline or accept frozen prices",
+      "ok": true
+    },
+    {
+      "name": "missing catalog retains detached review rather than fabricating a fresh basis",
+      "ok": true
+    },
+    {
+      "name": "part acceptance rejects stale proof even if parent flag or monetary prices look unchanged",
+      "ok": true
+    },
+    {
+      "name": "fresh explicit zero override is retained with positive catalog pricing",
+      "ok": true
+    },
+    {
+      "name": "new frozen baselines record both price quantities and their correct units",
+      "ok": true
+    },
+    {
+      "name": "legacy per-job budgets never acquire an invented frozen hourly basis",
+      "ok": true
+    },
+    {
+      "name": "current40ft80 does not overwrite frozen20ft40 or its physical snapshot",
+      "ok": true
+    },
+    {
+      "name": "explicit sync price acceptance records current40ft80 as the new financial basis",
+      "ok": true
+    },
+    {
+      "name": "price-acceptance planning records new context without mutating the previous basis",
+      "ok": true
+    },
+    {
+      "name": "accepted removals clear the active frozen context rather than fabricating a zero-rate recipe",
+      "ok": true
+    },
+    {
+      "name": "ordinary refresh rejects a corrupt recorded context instead of silently repairing it",
+      "ok": true
+    },
+    {
+      "name": "unrecorded contexts are isolated between parts and later planning calls",
+      "ok": true
+    },
+    {
+      "name": "explicit v2 removal needs no replacement for a deleted catalog item, but live detached parts still block",
+      "ok": true
+    },
+    {
+      "name": "reattachment cannot relabel an old v2 cost snapshot with a replacement inventory id",
+      "ok": true
+    },
+    {
+      "name": "fresh replacement source keeps the original frozen material until explicit same-money acceptance",
+      "ok": true
+    },
+    {
+      "name": "planning is frozen-input safe and never executes live operations",
+      "ok": true
+    }
+  ]
+}

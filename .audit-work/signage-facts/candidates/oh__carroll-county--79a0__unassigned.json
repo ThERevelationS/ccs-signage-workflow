@@ -1,0 +1,24 @@
+{
+ "jurisdiction_id": "6ae99d50019cac0ed6c279a0",
+ "jurisdiction_name": "Carroll County",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "68 Center St PO Box 367 Carroll, Ohio 43112-0367 740-756-4031 fax: 740-756-4611 Village of Carroll APPLICATION FOR SIGN PERMIT Name: ___________________________________________________________ Address: _________________________________________________________ Parcel #: _________________________________________________________ Phone: __________________________________________________________ Zoning District: ___________________________________________________ Design of Sign: ___________________________________________________ Including Total Area of Sign: ________________________________________ ________________________________________________________________ ________________________________________________________________ Exact Location of Sign(s) ___________________________________________ ________________________________________________________________ In Relation to Building & Propert",
+   "tags": [
+    "sign",
+    "permit_required",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "416fc6f772effab8cc8d9a58edbbf55004aadd8ff7e4e597358b55f47b4d3a9f",
+   "source_document_id": null,
+   "source_title": "416fc6f772effab8cc8d9a58edbbf55004aadd8ff7e4e597358b55f47b4d3a9f.pdf",
+   "official_url": "https://ci.carroll.oh.us/pdf/Application-for-Sign-Permit-Form.pdf"
+  }
+ ]
+}

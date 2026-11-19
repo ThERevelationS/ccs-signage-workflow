@@ -1,0 +1,2769 @@
+2768
+ D .audit-work/bundle.js
+ D .audit-work/failed-runs.json
+ D .audit-work/portal-edits.json
+ D .audit-work/portal-entry-fixed.ts
+ D .audit-work/portal-entry.ts
+ D .audit-work/remote-files-c3.txt
+ D .audit-work/remote-ls.txt
+ D .audit-work/remote-tree.err
+ D .audit-work/remote-tree.json
+ D .audit-work/smoke.cjs
+ D .audit-work/workflow-runs.json
+ D .audit-work/workflows-c2.json
+ D .audit-work/workflows.json
+ M .devin/hooks.v1.json
+ M .devin/stop-backlog.ps1
+ M .gitignore
+ D .tmp-apply.mjs
+ D .tmp-check.mjs
+ D .tmp-cl.mjs
+ D .tmp-conflicts.mjs
+ D .tmp-diff.mjs
+ D .tmp-edit-be-restore.json
+ D .tmp-edit-entry.json
+ D .tmp-edit-qcs-sum.json
+ D .tmp-edit-status.json
+ D .tmp-fix-dup.json
+ D .tmp-gda.json
+ D .tmp-keys.mjs
+ D .tmp-layout-edit-crlf.json
+ D .tmp-layout-edit.json
+ D .tmp-map2.mjs
+ D .tmp-md5d.json
+ D .tmp-md5e.json
+ D .tmp-md5f.json
+ D .tmp-md5g.json
+ D .tmp-merge.mjs
+ D .tmp-mmm.json
+ D .tmp-mob.json
+ D .tmp-myworkflow-edit-crlf.json
+ D .tmp-myworkflow-edit.json
+ D .tmp-orders.mjs
+ D .tmp-orphan.mjs
+ D .tmp-pairs-a1.json
+ D .tmp-pairs-br.json
+ D .tmp-pairs-br2.json
+ D .tmp-pairs-face.json
+ D .tmp-pairs-fence.json
+ D .tmp-pairs-fence2.json
+ D .tmp-pairs-fencing.json
+ D .tmp-pairs-h.json
+ D .tmp-pairs-oh.json
+ D .tmp-pairs-panels.json
+ D .tmp-pairs-popup.json
+ D .tmp-pairs-q3.json
+ D .tmp-pairs-qr.json
+ D .tmp-pairs-revert.json
+ D .tmp-pairs-rf.json
+ D .tmp-pairs-rsf.json
+ D .tmp-pairs-scope.json
+ D .tmp-pairs-scroll.json
+ D .tmp-pairs-slf.json
+ D .tmp-pairs-sum.json
+ D .tmp-pairs-tracker.json
+ D .tmp-pairs-tracker2.json
+ D .tmp-pairs-tt.json
+ D .tmp-pairs-tt2.json
+ D .tmp-pairs-tt3.json
+ D .tmp-pairs-tt4.json
+ D .tmp-pairs-tt5.json
+ D .tmp-pairs-tt6.json
+ D .tmp-pairs-tt7.json
+ D .tmp-pairs-val.json
+ D .tmp-pairs-val2.json
+ D .tmp-png.json
+ D .tmp-png1.json
+ D .tmp-push-batch-body.json
+ D .tmp-push-batch.mjs
+ D .tmp-push-single-body.json
+ D .tmp-push-single.mjs
+ D .tmp-push.mjs
+ D .tmp-rec.mjs
+ D .tmp-rec2.mjs
+ D .tmp-rec3.mjs
+ D .tmp-rec4.mjs
+ D .tmp-recent.mjs
+ D .tmp-recs.mjs
+ D .tmp-redeploy-body.json
+ D .tmp-redeploy-gda.mjs
+ D .tmp-redeploy-strays.mjs
+ D .tmp-remote-manifest.json
+ D .tmp-remote/FaceRecognition.jsx.json
+ D .tmp-remote/Layout.json
+ D .tmp-remote/QRScanner.json
+ D .tmp-remote/be-check.json
+ D .tmp-remote/crap.json
+ D .tmp-remote/crd.json
+ D .tmp-remote/css-fresh.json
+ D .tmp-remote/ent-TimeClockAudit.json
+ D .tmp-remote/ent-TimeClockEmployeePreference.json
+ D .tmp-remote/ent-TimeClockWorkPause.json
+ D .tmp-remote/entry-r.json
+ D .tmp-remote/faceScanRuntime.js.json
+ D .tmp-remote/fed.json
+ D .tmp-remote/fi.json
+ D .tmp-remote/fr.json
+ D .tmp-remote/fsr.json
+ D .tmp-remote/gate.json
+ D .tmp-remote/gwpc2.json
+ D .tmp-remote/login-dialog.json
+ D .tmp-remote/mci-fresh.json
+ D .tmp-remote/ppm.json
+ D .tmp-remote/pto.json
+ D .tmp-remote/ptr.json
+ D .tmp-remote/qcs-final.json
+ D .tmp-remote/qcs-fresh.json
+ D .tmp-remote/qcs-v2.json
+ D .tmp-remote/qcs-v3.json
+ D .tmp-remote/qcs-v4.json
+ D .tmp-remote/qcs-v5.json
+ D .tmp-remote/qcs-v6.json
+ D .tmp-remote/qcs-v7.json
+ D .tmp-remote/qcs-v8.json
+ D .tmp-remote/qcs.json
+ D .tmp-remote/qr.json
+ D .tmp-remote/se.json
+ D .tmp-remote/tc.json
+ D .tmp-remote/tca.json
+ D .tmp-remote/tcrd.json
+ D .tmp-remote/tcsd.json
+ D .tmp-remote/tcstatus.json
+ D .tmp-remote/today-card.json
+ D .tmp-remote/tord.json
+ D .tmp-remote/tt-check.json
+ D .tmp-remote/tt-final.json
+ D .tmp-remote/tt.json
+ D .tmp-remote/tts.json
+ D .tmp-remote/v-facescan.json
+ D .tmp-remote/v-facescan.mjs
+ D .tmp-remote/v-gwpc.json
+ D .tmp-remote/v-gwpc.mjs
+ D .tmp-remote/v-pprec.json
+ D .tmp-remote/v-pprec.mjs
+ D .tmp-remote/v-qcs-val.json
+ D .tmp-remote/v-qcs-val.mjs
+ D .tmp-remote/v-rf.json
+ D .tmp-remote/v-rf.mjs
+ D .tmp-remote/v-rsf.json
+ D .tmp-remote/v-rsf.mjs
+ D .tmp-remote/v-session-load-fencing.json
+ D .tmp-remote/v-session-load-fencing.mjs
+ D .tmp-remote/v-session-security.json
+ D .tmp-remote/v-session-security.mjs
+ D .tmp-remote/v-src_components_timeclock_MissedClockInDialog.jsx.json
+ D .tmp-remote/v-src_components_timeclock_QuickClockSection.jsx.json
+ D .tmp-remote/v-src_index.css.json
+ D .tmp-remote/v-todaycard.json
+ D .tmp-remote/v-todaycard.mjs
+ D .tmp-remote/v-unresolved-routing.json
+ D .tmp-remote/v-unresolved-routing.mjs
+ D .tmp-remote/v-work-pause-overlay-ui.json
+ D .tmp-remote/v-work-pause-overlay-ui.mjs
+ D .tmp-remote/v-wpo.json
+ D .tmp-remote/validate-face.json
+ D .tmp-remote/wpo-src.json
+ D .tmp-res.mjs
+ D .tmp-res1.mjs
+ D .tmp-reviews.mjs
+ D .tmp-reviews2.mjs
+ D .tmp-run.mjs
+ D .tmp-s.mjs
+ D .tmp-sales.mjs
+ D .tmp-sims.mjs
+ D .tmp-st.mjs
+ D .tmp-sta.mjs
+ D .tmp-sta2.mjs
+ D .tmp-stab.mjs
+ D .tmp-status.mjs
+ D .tmp-subtabs-diag.mjs
+ D .tmp-sync-local.mjs
+ D .tmp-tca-body.json
+ D .tmp-today.mjs
+ D .tmp-v5.json
+ D .tmp-v6.json
+ D .tmp-wos.mjs
+ D .tmp-write-be.json
+ D .tmp-write-be2.json
+ D .tmp-write-be3.json
+ D .tmp-write-be4.json
+ D .tmp-write-be5.json
+ D .tmp-write-be6.json
+ M AGENTS.md
+ M ESTIMATOR_BACKLOG.md
+ M audit/BUG_AUDIT_2026-10-27.md
+ M base44/agents/jurisdiction_accuracy_audit.jsonc
+ M base44/agents/jurisdiction_change_monitor.jsonc
+ D base44/agents/jurisdiction_research.jsonc
+ M base44/entities/ActivityLog.jsonc
+ M base44/entities/AllInOneEstimate.jsonc
+ M base44/entities/Announcement.jsonc
+ M base44/entities/AuthorizedEmail.jsonc
+ M base44/entities/AutomationRule.jsonc
+ M base44/entities/BouncieOAuthState.jsonc
+ M base44/entities/BouncieVehicleLiveState.jsonc
+ M base44/entities/BrickStoneInventory.jsonc
+ M base44/entities/BrickStoneProject.jsonc
+ M base44/entities/BuilderPart.jsonc
+ M base44/entities/BuilderPartGroup.jsonc
+ M base44/entities/BuilderPriceRevision.jsonc
+ M base44/entities/BuilderProduct.jsonc
+ M base44/entities/CNCProject.jsonc
+ M base44/entities/CalendarEvent.jsonc
+ M base44/entities/CellHistory.jsonc
+ M base44/entities/ChangeOrder.jsonc
+ M base44/entities/ChannelLetterInstallEquipment.jsonc
+ M base44/entities/ChannelLetterInstallInventory.jsonc
+ M base44/entities/ChannelLetterInstallation.jsonc
+ M base44/entities/ChecklistSubItem.jsonc
+ M base44/entities/ChecklistTemplate.jsonc
+ M base44/entities/CostPlusConfig.jsonc
+ M base44/entities/Customer.jsonc
+ M base44/entities/CustomerContact.jsonc
+ M base44/entities/CustomerInfo.jsonc
+ M base44/entities/CustomerLocation.jsonc
+ M base44/entities/CustomerPortalLink.jsonc
+ M base44/entities/CustomerSummary.jsonc
+ M base44/entities/DO_NOT_USE.jsonc
+ M base44/entities/DefaultModuleSettings.jsonc
+ M base44/entities/DimensionalLetterMaterial.jsonc
+ M base44/entities/EmailGroup.jsonc
+ M base44/entities/EmailNotificationSettings.jsonc
+ M base44/entities/EstimateAcceptance.jsonc
+ M base44/entities/EstimateClipboardItem.jsonc
+ M base44/entities/EstimateOption.jsonc
+ M base44/entities/EstimateQuoteDelivery.jsonc
+ M base44/entities/EstimateRevision.jsonc
+ M base44/entities/EstimateSectionAcceptance.jsonc
+ M base44/entities/FeatureReport.jsonc
+ M base44/entities/FieldAudit.jsonc
+ M base44/entities/FoundationInventory.jsonc
+ M base44/entities/FoundationProject.jsonc
+ M base44/entities/GeneralTask.jsonc
+ M base44/entities/GlobalSettings.jsonc
+ M base44/entities/ImportJob.jsonc
+ M base44/entities/Inventory.jsonc
+ M base44/entities/InventoryCostHistory.jsonc
+ M base44/entities/InventoryMovement.jsonc
+ M base44/entities/Invoice.jsonc
+ M base44/entities/JurisdictionProfile.jsonc
+ M base44/entities/LaborServiceInventory.jsonc
+ M base44/entities/LaserProject.jsonc
+ M base44/entities/MaintenanceActionRate.jsonc
+ M base44/entities/MaintenanceEquipment.jsonc
+ M base44/entities/MaintenanceInventory.jsonc
+ M base44/entities/MaintenanceProject.jsonc
+ M base44/entities/MarkupCategory.jsonc
+ M base44/entities/MarkupTier.jsonc
+ M base44/entities/MetalProject.jsonc
+ M base44/entities/ModuleStatus.jsonc
+ M base44/entities/Nope.jsonc
+ M base44/entities/Nope2.jsonc
+ M base44/entities/OopsShouldNotCreate.jsonc
+ M base44/entities/OpportunityActivity.jsonc
+ M base44/entities/Order.jsonc
+ M base44/entities/PTOPolicy.jsonc
+ M base44/entities/PartTemplate.jsonc
+ M base44/entities/Payment.jsonc
+ M base44/entities/PendingImport.jsonc
+ M base44/entities/PermitLineItem.jsonc
+ M base44/entities/PermitLocality.jsonc
+ M base44/entities/PermittingAddressArchive.jsonc
+ M base44/entities/PermittingHtmlEvidence.jsonc
+ M base44/entities/PermittingRule.jsonc
+ M base44/entities/PermittingRuleExtractionRun.jsonc
+ M base44/entities/PermittingScanRun.jsonc
+ M base44/entities/PermittingSourceAuthorityReview.jsonc
+ M base44/entities/PermittingSourceDocument.jsonc
+ M base44/entities/PermittingSourceTextSegment.jsonc
+ M base44/entities/PermittingWorkflowDraft.jsonc
+ M base44/entities/PricingMode.jsonc
+ M base44/entities/Project.jsonc
+ M base44/entities/ProjectTemplate.jsonc
+ M base44/entities/PurchaseOrder.jsonc
+ M base44/entities/QuickProduct.jsonc
+ M base44/entities/QuickProductCategory.jsonc
+ M base44/entities/QuoteDefaults.jsonc
+ M base44/entities/QuoteScopeLine.jsonc
+ M base44/entities/RegulationAlert.jsonc
+ M base44/entities/Report.jsonc
+ M base44/entities/SalesFilter.jsonc
+ M base44/entities/SaveColor.jsonc
+ M base44/entities/Settings.jsonc
+ M base44/entities/SignHardwareInventory.jsonc
+ M base44/entities/SignLightingInventory.jsonc
+ M base44/entities/SignPartsSuppliesInventory.jsonc
+ M base44/entities/SipChecklistTemplate.jsonc
+ M base44/entities/SmartsheetSyncTrace.jsonc
+ M base44/entities/SourceCollectionQueue.jsonc
+ M base44/entities/SourceMonitorState.jsonc
+ M base44/entities/SyncConflict.jsonc
+ M base44/entities/TaskTemplate.jsonc
+ M base44/entities/TaxGroup.jsonc
+ M base44/entities/Temp3.jsonc
+ M base44/entities/Temp5.jsonc
+ M base44/entities/Temp6.jsonc
+ M base44/entities/TempIgnore.jsonc
+ M base44/entities/TimeClockCorrectionRequest.jsonc
+ M base44/entities/TimeClockEmployeePreference.jsonc
+ M base44/entities/TimeEntry.jsonc
+ M base44/entities/UserCapacity.jsonc
+ M base44/entities/UserCredential.jsonc
+ M base44/entities/VinylInventory.jsonc
+ M base44/entities/VinylMachine.jsonc
+ M base44/entities/VinylPartTemplate.jsonc
+ M base44/entities/VinylProject.jsonc
+ M base44/entities/VinylWorkflowTemplate.jsonc
+ M base44/entities/WorkOrder.jsonc
+ M base44/entities/_CheckpointMistake.jsonc
+ M base44/entities/_Noop.jsonc
+ M base44/entities/__do_not_create__.jsonc
+ M base44/entities/__invalid_placeholder.jsonc
+ M base44/entities/__noop.jsonc
+ M base44/entities/__noop__.jsonc
+ M base44/entities/_never_use_checkpoint_probe.jsonc
+ M base44/entities/_noop.jsonc
+ M base44/entities/_noop_should_not_create.jsonc
+ M base44/functions/aiResearchOffice/entry.ts
+ M base44/functions/archiveAddressResearchFile/entry.ts
+ M base44/functions/auditJurisdictionAccuracy/entry.ts
+ M base44/functions/backupPermittingRepository/entry.ts
+ M base44/functions/backupToGoogleDrive/entry.ts
+ M base44/functions/batchUpdateJurisdictions/entry.ts
+ M base44/functions/bouncieApi/entry.ts
+ M base44/functions/bouncieAuthCallback/entry.ts
+ M base44/functions/bouncieAuthInitiate/entry.ts
+ M base44/functions/bouncieRepairWebhook/entry.ts
+ M base44/functions/bouncieStatus/entry.ts
+ M base44/functions/bouncieSyncNotifications/entry.ts
+ M base44/functions/bouncieWebhook/entry.ts
+ M base44/functions/cagisSearch/entry.ts
+ M base44/functions/calculateTravelMiles/entry.ts
+ M base44/functions/callJurisdictionAgent/entry.ts
+ M base44/functions/changeOrderAction/entry.ts
+ M base44/functions/checkDeadlineReminders/entry.ts
+ M base44/functions/checkGmailConnection/entry.ts
+ M base44/functions/checkPermitFollowupReminders/entry.ts
+ M base44/functions/continueAddressResearchDiscovery/entry.ts
+ M base44/functions/continueJurisdictionArchives/entry.ts
+ M base44/functions/continuePermittingSourceText/entry.ts
+ M base44/functions/corebridgeApiAction/entry.ts
+ M base44/functions/correctJurisdictionIdentityType/entry.ts
+ M base44/functions/customerPortalAction/entry.ts
+ M base44/functions/deleteCreatedDuplicateWorkOrder/entry.ts
+ M base44/functions/detectSalesDuplicates/entry.ts
+ M base44/functions/downloadPermitPDF/entry.ts
+ M base44/functions/driveOAuthCallback/entry.ts
+ M base44/functions/ensureBuilderPriceRevision/entry.ts
+ M base44/functions/ensureCustomerSummary/entry.ts
+ M base44/functions/ensureEstimateCustomer/entry.ts
+ M base44/functions/ensureEstimateLifecycleRevision/entry.ts
+ M base44/functions/ensureNewCustomer/entry.ts
+ M base44/functions/ensureNewEstimate/entry.ts
+ M base44/functions/ensureOpenEstimateRevision/entry.ts
+ M base44/functions/fieldHistoryAction/entry.ts
+ M base44/functions/findLocalityByAddress/entry.ts
+ M base44/functions/findLocalityByAddress/handler.ts
+ M base44/functions/fleetAlertSettingsAction/entry.ts
+ M base44/functions/fleetBouncieNotificationAction/entry.ts
+ M base44/functions/fleetBulkMaintenancePlan/entry.ts
+ M base44/functions/fleetCutoverControl/entry.ts
+ M base44/functions/fleetDashboardPreferenceAction/entry.ts
+ M base44/functions/fleetDataRead/entry.ts
+ M base44/functions/fleetEquipmentAction/entry.ts
+ M base44/functions/fleetEquipmentDocumentAction/entry.ts
+ M base44/functions/fleetFuelAction/entry.ts
+ M base44/functions/fleetInspectionAction/entry.ts
+ M base44/functions/fleetIntegrityAudit/entry.ts
+ M base44/functions/fleetInventoryAction/entry.ts
+ M base44/functions/fleetLifecycleAction/entry.ts
+ M base44/functions/fleetMaintenanceAction/entry.ts
+ M base44/functions/fleetMechanicPortal/entry.ts
+ M base44/functions/fleetMeterMaintenanceAction/entry.ts
+ M base44/functions/fleetMeterMaintenanceGeneration/entry.ts
+ M base44/functions/fleetNotificationDispatcher/entry.ts
+ M base44/functions/fleetNotificationWorker/entry.ts
+ M base44/functions/fleetPartLookupAction/entry.ts
+ M base44/functions/fleetPublicIssueReport/entry.ts
+ M base44/functions/fleetRepairEstimateAction/entry.ts
+ M base44/functions/fleetRequestAction/entry.ts
+ M base44/functions/fleetReservationAction/entry.ts
+ M base44/functions/fleetScheduledMaintenanceGeneration/entry.ts
+ M base44/functions/fleetScheduledReminders/entry.ts
+ M base44/functions/fleetSearch/entry.ts
+ M base44/functions/fleetSettingsAction/entry.ts
+ M base44/functions/fleetSystemReportAction/entry.ts
+ M base44/functions/fleetWarrantyAction/entry.ts
+ M base44/functions/fleetWorkOrderAction/entry.ts
+ M base44/functions/generateDocNumber/entry.ts
+ M base44/functions/getAddressResearchCollections/entry.ts
+ M base44/functions/getGoogleMapsKey/entry.ts
+ M base44/functions/getPermittingSourceTextPages/entry.ts
+ M base44/functions/gmailAuthCallback/entry.ts
+ M base44/functions/googleDriveCustomCallback/entry.ts
+ M base44/functions/googleDriveOperations/entry.ts
+ M base44/functions/importOrders/entry.ts
+ M base44/functions/importSalesPipeline/entry.ts
+ M base44/functions/importWipSheet/entry.ts
+ M base44/functions/inventoryAction/entry.ts
+ M base44/functions/invoicingAction/entry.ts
+ M base44/functions/issueAdminSettingsAccess/entry.ts
+ M base44/functions/issuePasswordReset/entry.ts
+ M base44/functions/jobCostingAction/entry.ts
+ M base44/functions/jurisdictionResearchAgent/entry.ts
+ M base44/functions/linkAddressResearchDocument/entry.ts
+ M base44/functions/listAuthorizedUserDirectory/entry.ts
+ M base44/functions/manageAccountDeletionRequest/entry.ts
+ M base44/functions/manageAnnouncements/entry.ts
+ M base44/functions/manageAuthorizedUsers/entry.ts
+ M base44/functions/manageAutomationConfig/entry.ts
+ M base44/functions/manageCalendarEvents/entry.ts
+ M base44/functions/manageFeatureReports/entry.ts
+ M base44/functions/manageOwnProfile/entry.ts
+ M base44/functions/managePTOConfig/entry.ts
+ M base44/functions/manageQuoteApprovalSettings/entry.ts
+ M base44/functions/manageSalesFilters/entry.ts
+ M base44/functions/manageUserCalendarSettings/entry.ts
+ M base44/functions/manageUserCapacity/entry.ts
+ M base44/functions/manageWorkflowSchedules/entry.ts
+ M base44/functions/migrateCredentials/entry.ts
+ M base44/functions/monitorJurisdictionChanges/entry.ts
+ M base44/functions/onboardingAccountAction/entry.ts
+ M base44/functions/opportunityBridgeProductionApply/entry.ts
+ M base44/functions/opportunityWorkspaceAction/entry.ts
+ M base44/functions/permittingHtmlEvidence/entry.ts
+ M base44/functions/permittingOfficeAuthorityReview/entry.ts
+ M base44/functions/permittingOfficeCandidate/entry.ts
+ M base44/functions/permittingOperationalAlerts/entry.ts
+ M base44/functions/permittingProxy/entry.ts
+ M base44/functions/permittingResearchBacklogDispatch/entry.ts
+ M base44/functions/permittingRuleExtraction/entry.ts
+ M base44/functions/permittingRuleInvalidate/entry.ts
+ M base44/functions/permittingRuleReview/entry.ts
+ M base44/functions/permittingScanStatus/entry.ts
+ M base44/functions/permittingSourceAuthorityReview/entry.ts
+ M base44/functions/permittingSourceOcrEvidence/entry.ts
+ M base44/functions/processWorkflowTriggers/entry.ts
+ M base44/functions/purchaseOrderAction/entry.ts
+ M base44/functions/recordEstimateAcceptance/entry.ts
+ M base44/functions/recordEstimateQuoteDelivery/entry.ts
+ M base44/functions/refreshJurisdiction/entry.ts
+ M base44/functions/resolvePermittingAddress/entry.ts
+ M base44/functions/scanPermittingOffice/entry.ts
+ M base44/functions/searchExternalClients/entry.ts
+ M base44/functions/searchJurisdictions/entry.ts
+ M base44/functions/sendEmail/entry.ts
+ M base44/functions/setPassword/entry.ts
+ M base44/functions/smartsheetSyncAction/entry.ts
+ M base44/functions/sourceMonitorScan/entry.ts
+ M base44/functions/sourceMonitorSeed/entry.ts
+ M base44/functions/staffDataRead/entry.ts
+ M base44/functions/staffEntityWrite/entry.ts
+ M base44/functions/timeClockAction/entry.ts
+ M base44/functions/translateSmartsheetNotes/entry.ts
+ M base44/functions/updateEstimateRevisionAudit/entry.ts
+ M base44/functions/updateJurisdictionRewriteAuthority/entry.ts
+ M base44/functions/verifyLogin/entry.ts
+ M base44/functions/verifySession/entry.ts
+ M base44/shared/bouncie.ts
+ M base44/shared/cronSchedule.mjs
+ M base44/shared/entityRateLimitRetry.ts
+ M base44/shared/fleetStaffSession.ts
+ M base44/shared/opportunityFoundationPersistence.mjs
+ M base44/shared/pagedEntityRows.ts
+ M base44/shared/permittingResearchBacklog.mjs
+ M base44/shared/permittingScanReporter.mjs
+ M base44/shared/permittingSpatialResolution.mjs
+ M base44/shared/quoteRecipientContact.mjs
+ M base44/shared/safeExternalFetch.ts
+ M base44/shared/signShopSession.ts
+ M base44/shared/smartsheetOrderCreateSafety.mjs
+ M base44/shared/timeClockStatusLite.ts
+ M base44/shared/workflowInvocationCapability.ts
+ M base44/shared/workflowScheduleManager.ts
+ M base44/shared/workflowTriggerEngine.ts
+ M "base44/workflows/Daily Deadline Reminder Check.jsonc"
+ M "base44/workflows/Daily Jurisdiction Regulation Monitoring.jsonc"
+ M "base44/workflows/Fleet Bouncie Alert Sync.jsonc"
+ M "base44/workflows/Fleet Notification Queue Worker.jsonc"
+ M "base44/workflows/Permit Follow-up Reminders.jsonc"
+ M "base44/workflows/Permitting Research Backlog Refill.jsonc"
+ M "base44/workflows/Scheduled Google Drive Backup.jsonc"
+ M "base44/workflows/Smartsheet Scheduled Order Sync.jsonc"
+ M "base44/workflows/Smartsheet Scheduled Sync.jsonc"
+ M "base44/workflows/Time Clock Stale Shift Monitor.jsonc"
+ M "base44/workflows/Weekly Jurisdiction Accuracy Audit.jsonc"
+ M "base44/workflows/Weekly Jurisdiction Refresh.jsonc"
+ M "base44/workflows/Weekly Sales Duplicate Detection.jsonc"
+ M esbuild_err.txt
+ M jsconfig.json
+ M package-lock.json
+ M package.json
+ M scripts/.tmp-aio-pricing.mjs
+ M scripts/.tmp-builder-persistence.mjs
+ M scripts/.tmp-builder-product.mjs
+ M scripts/.tmp-cas/estimatePersistence.mjs
+ M scripts/.tmp-cust-pricing.mjs
+ M scripts/.tmp-customer-persistence.mjs
+ M scripts/.tmp-customer-pricing.mjs
+ M scripts/.tmp-idempotentEntityCreate.mjs
+ M scripts/.tmp-inventoryImportPersistence.mjs
+ M scripts/.tmp-inventoryPersistence.mjs
+ M scripts/.tmp-legacy-migrator.mjs
+ M scripts/.tmp-loadAllEntityRows.mjs
+ M scripts/.tmp-markup-engine.mjs
+ M scripts/.tmp-module-registry.mjs
+ M scripts/.tmp-nav-config.mjs
+ M scripts/.tmp-profitability.mjs
+ D scripts/.tmp-quote-defaults.mjs
+ M scripts/.tmp-quote-lifecycle.mjs
+ M scripts/.tmp-vinyl-persistence.mjs
+ M scripts/.tmp-wo-persistence.mjs
+ M scripts/build-permitting-address-runtime.mjs
+ M scripts/frontend-shared-modules.mjs
+ M scripts/permitting-picker-session-ui.test.mjs
+ M scripts/test-builder-recovery.mjs
+ M scripts/test-builder-service.mjs
+ M scripts/test-canonical-compares.mjs
+ M scripts/test-customer-location-opt-in.mjs
+ M scripts/test-customer-statement.mjs
+ M scripts/test-customer-sync.mjs
+ M scripts/test-estimate-card-customer-note.mjs
+ M scripts/test-estimator-workflow-batch.mjs
+ M scripts/test-import-mappers.mjs
+ M scripts/test-inventory-persistence.mjs
+ M scripts/test-legacy-migrator.mjs
+ M scripts/test-module-registry.mjs
+ M scripts/test-nav-wiring.mjs
+ M scripts/test-quote-defaults.mjs
+ M scripts/test-staff-entities.mjs
+ M scripts/validate-mmm-board.mjs
+ M scripts/validate-opportunity-workspace.mjs
+ M scripts/validate-timeclock-face-scan.mjs
+ M src/App.css
+ M src/App.jsx
+ M src/Layout.jsx
+ M src/api/base44Client.js
+ M src/api/gatedEntities.js
+ M src/api/permittingReviewClient.js
+ M src/api/requestGovernor.mjs
+ M src/components/AuthLayout.jsx
+ M src/components/ClientSearchInput.jsx
+ M src/components/CommandPalette.jsx
+ M src/components/ProtectedRoute.jsx
+ M src/components/UserNotRegisteredError.jsx
+ M src/components/admin/ActivityFeed.jsx
+ M src/components/admin/AdminAccessDialog.jsx
+ M src/components/admin/AdminCalendarSettings.jsx
+ M src/components/admin/AdminPanelContent.jsx
+ M src/components/admin/AdminSettingsSearch.jsx
+ M src/components/admin/BackupManager.jsx
+ M src/components/admin/CorebridgeApiSettings.jsx
+ M src/components/admin/EmailGroupsManager.jsx
+ M src/components/admin/JurisdictionAccuracyAudit.jsx
+ M src/components/admin/JurisdictionMonitoringSettings.jsx
+ M src/components/admin/JurisdictionRewriteAuthorityAdmin.jsx
+ M src/components/admin/OpportunityBridgeReview.jsx
+ M src/components/admin/OvertimeRulesManager.jsx
+ M src/components/admin/PTOManagement.jsx
+ M src/components/admin/PermittingApprovedEvidenceSearch.jsx
+ M src/components/admin/PermittingCollectionCycleStatus.jsx
+ M src/components/admin/PermittingHtmlEvidencePanel.jsx
+ M src/components/admin/PermittingOfficeAuthorityReview.jsx
+ M src/components/admin/PermittingOfficeCandidate.jsx
+ M src/components/admin/PermittingResearchDispatchSettings.jsx
+ M src/components/admin/PermittingReviewBrowserFixture.jsx
+ M src/components/admin/PermittingRuleEvidenceExtraction.jsx
+ M src/components/admin/PermittingRulesReview.jsx
+ M src/components/admin/PermittingSourceAuthorityReview.jsx
+ M src/components/admin/ProjectTrash.jsx
+ M src/components/admin/SmartsheetControlledCreationProposalsCard.jsx
+ M src/components/admin/SmartsheetSalesSnapshotReview.jsx
+ M src/components/admin/SmartsheetSyncTraces.jsx
+ M src/components/admin/SmartsheetSyncWidget.jsx
+ M src/components/admin/SyncConflictAlert.jsx
+ M src/components/admin/SyncConflictReview.jsx
+ M src/components/admin/TaskAssignmentRules.jsx
+ M src/components/admin/UserManagement.jsx
+ M src/components/admin/WorkflowSchedulesPanel.jsx
+ M src/components/admin/accountFieldResolution.js
+ M src/components/admin/accountSaveConflict.js
+ M src/components/admin/adminAccountDraft.js
+ M src/components/admin/adminNavigationPersistence.js
+ M src/components/admin/adminTabNavigation.js
+ M src/components/admin/authorizedEmailPersistence.js
+ M src/components/admin/authorizedUserAdminPersistence.js
+ M src/components/admin/automationBuilderModel.mjs
+ M src/components/admin/automationOperationReconciliation.js
+ M src/components/admin/automationReadDeadline.js
+ M src/components/admin/automationRulePersistence.js
+ M src/components/admin/automationSaveReconciliation.js
+ M src/components/admin/corebridgeApiPersistence.js
+ M src/components/admin/customAssigneeReviewPersistence.js
+ M src/components/admin/deletionImpactDeadline.js
+ M src/components/admin/deletionImpactRetryCoordinator.js
+ M src/components/admin/emailGroupPersistence.js
+ M src/components/admin/permittingPreviewQa.js
+ M src/components/admin/projectTrashPersistence.js
+ M src/components/admin/smartsheetConfigState.mjs
+ M src/components/admin/smartsheetCreationReadinessModel.js
+ M src/components/admin/smartsheetCustomerResolutionModel.js
+ M src/components/admin/smartsheetCustomerResolutionReviewModel.js
+ M src/components/admin/smartsheetMappingFreshnessModel.js
+ M src/components/admin/smartsheetRolloutModel.js
+ M src/components/admin/smartsheetRolloutReadinessModel.js
+ M src/components/admin/smartsheetSyncFields.js
+ M src/components/admin/smartsheetSyncStatusModel.js
+ M src/components/admin/smartsheetTranslationModel.js
+ M src/components/admin/syncRequestQueuePolicy.mjs
+ M src/components/admin/unverifiedAccountSave.js
+ M src/components/announcements/AnnouncementContext.jsx
+ M src/components/announcements/AnnouncementManager.jsx
+ M src/components/announcements/announcementPersistence.js
+ M src/components/auth/AppErrorBoundary.jsx
+ M src/components/auth/EmailGate.jsx
+ M src/components/calendar/AgendaView.jsx
+ M src/components/calendar/CalendarEventForm.jsx
+ M src/components/calendar/CalendarEventPopover.jsx
+ M src/components/calendar/DayView.jsx
+ M src/components/calendar/UserCalendarSettingsPanel.jsx
+ M src/components/calendar/WeekView.jsx
+ M src/components/calendar/calendarEventPersistence.js
+ M src/components/calendar/userCalendarSettingsPersistence.js
+ M src/components/channelLetterInstall/AIInstallScopeModal.jsx
+ M src/components/channelLetterInstall/AIScopeWriterModal.jsx
+ M src/components/channelLetterInstall/AddressAutocomplete.jsx
+ M src/components/channelLetterInstall/BackerFabModal.jsx
+ M src/components/channelLetterInstall/BackerFabPanel.jsx
+ M src/components/channelLetterInstall/BackerSection.jsx
+ M src/components/channelLetterInstall/BaseTimesSizeCard.jsx
+ M src/components/channelLetterInstall/BoomLiftReachChart.jsx
+ M src/components/channelLetterInstall/ChannelLetterHelpAssistant.jsx
+ M src/components/channelLetterInstall/CuttingMethodSlider.jsx
+ M src/components/channelLetterInstall/DimensionalFabModal.jsx
+ M src/components/channelLetterInstall/DimensionalFabPanel.jsx
+ M src/components/channelLetterInstall/DimensionalMaterialPickerDialog.jsx
+ M src/components/channelLetterInstall/DimensionalMaterialsTab.jsx
+ M src/components/channelLetterInstall/EquipmentInventoryTab.jsx
+ M src/components/channelLetterInstall/InstallLineItem.jsx
+ M src/components/channelLetterInstall/InstallSummaryCard.jsx
+ M src/components/channelLetterInstall/InstallTypePicker.jsx
+ M src/components/channelLetterInstall/LetterPurchaseRow.jsx
+ M src/components/channelLetterInstall/LetterSizePicker.jsx
+ M src/components/channelLetterInstall/LettersPurchaseTab.jsx
+ M src/components/channelLetterInstall/MaterialsInventoryTab.jsx
+ M src/components/channelLetterInstall/PhotoEstimateModal.jsx
+ M src/components/channelLetterInstall/TravelCostCard.jsx
+ M src/components/channelLetterInstall/WallMaterialPicker.jsx
+ M src/components/cnc/HoldDownAdvisor.jsx
+ M src/components/estimator/AddSectionDialog.jsx
+ M src/components/estimator/ConvertToWorkOrder.jsx
+ M src/components/estimator/CustomerMergeDialog.jsx
+ M src/components/estimator/CustomerQuotePanel.jsx
+ M src/components/estimator/EstimateAcceptancePanel.jsx
+ M src/components/estimator/EstimateCard.jsx
+ M src/components/estimator/EstimateHeaderForm.jsx
+ M src/components/estimator/EstimateQuoteDeliveryPanel.jsx
+ M src/components/estimator/EstimateRevisionPanel.jsx
+ M src/components/estimator/EstimatorBrandBar.jsx
+ M src/components/estimator/EstimatorNav.jsx
+ M src/components/estimator/EstimatorShell.jsx
+ M src/components/estimator/NewEstimateDialog.jsx
+ M src/components/estimator/PricingSummary.jsx
+ M src/components/estimator/SectionRow.jsx
+ M src/components/estimator/aio/AddProductGrid.jsx
+ M src/components/estimator/aio/AioEstimateHeader.jsx
+ M src/components/estimator/aio/AioStepRail.jsx
+ M src/components/estimator/aio/BuilderPartEditWarningModal.jsx
+ M src/components/estimator/aio/BuilderPartsPanel.jsx
+ M src/components/estimator/aio/CancelEstimateModal.jsx
+ M src/components/estimator/aio/ClipboardManagerModal.jsx
+ M src/components/estimator/aio/CreatePartGroupModal.jsx
+ M src/components/estimator/aio/CreateQuickProductModal.jsx
+ M src/components/estimator/aio/CustomerSearchDialog.jsx
+ M src/components/estimator/aio/DetachedPartOverrideModal.jsx
+ M src/components/estimator/aio/EstimateNotesTimeline.jsx
+ M src/components/estimator/aio/EstimateProductsList.jsx
+ M src/components/estimator/aio/InlineProductEditor.jsx
+ M src/components/estimator/aio/MergeEstimateDialog.jsx
+ M src/components/estimator/aio/MovePartGroupModal.jsx
+ M src/components/estimator/aio/NewCustomerDialog.jsx
+ M src/components/estimator/aio/ProductNotesModal.jsx
+ M src/components/estimator/aio/ProductPriceHistoryModal.jsx
+ M src/components/estimator/aio/ProductRow.jsx
+ M src/components/estimator/aio/Step1EstimateDetails.jsx
+ M src/components/estimator/brick/BrickGeometryPanel.jsx
+ M src/components/estimator/brick/BrickTotals.jsx
+ M src/components/estimator/builder/ReattachPartsModal.jsx
+ M src/components/estimator/builder/builderEntityPersistence.js
+ M src/components/estimator/builder/builderMutationRecovery.js
+ M src/components/estimator/builder/builderPartGroupPersistence.js
+ M src/components/estimator/builder/builderPartPersistence.js
+ M src/components/estimator/builder/builderProductPersistence.js
+ M src/components/estimator/builder/builderService.js
+ M src/components/estimator/builder/historicalBackfill.js
+ M src/components/estimator/builder/itemIdentity.js
+ M src/components/estimator/builder/legacyBomReconcile.js
+ M src/components/estimator/builder/partSync.js
+ M src/components/estimator/builder/sourceProjectPersistence.js
+ M src/components/estimator/channel/ChannelEquipmentPanel.jsx
+ M src/components/estimator/channel/ChannelItemCard.jsx
+ M src/components/estimator/channel/ChannelTotals.jsx
+ M src/components/estimator/channel/LetterPurchasesPanel.jsx
+ D src/components/estimator/cnc/CNCItemCard.jsx
+ D src/components/estimator/cnc/CNCTotals.jsx
+ D src/components/estimator/cnc/HoldDownAdvisor.jsx
+ M src/components/estimator/customerCreationService.js
+ M src/components/estimator/customerLocationService.js
+ M src/components/estimator/customerPersistence.js
+ M src/components/estimator/customerPricing.js
+ M src/components/estimator/customerQuote.js
+ M src/components/estimator/customerSync.js
+ M src/components/estimator/estimateLifecycle.js
+ M src/components/estimator/estimateMutationGuard.js
+ M src/components/estimator/estimatePersistence.js
+ M src/components/estimator/estimateRevisionService.js
+ M src/components/estimator/estimateSalesActivity.mjs
+ M src/components/estimator/estimateStatusTransitions.js
+ M src/components/estimator/foundation/AiEngineeringAssistant.jsx
+ M src/components/estimator/foundation/ConcreteDeliveryPanel.jsx
+ M src/components/estimator/foundation/CustomerPricingPanel.jsx
+ M src/components/estimator/foundation/Foundation3DPreview.jsx
+ M src/components/estimator/foundation/FoundationBOM.jsx
+ M src/components/estimator/foundation/FoundationEquipmentTab.jsx
+ M src/components/estimator/foundation/FoundationItemCard.jsx
+ M src/components/estimator/foundation/FoundationLayoutCanvas.jsx
+ M src/components/estimator/foundation/FoundationPolesPanel.jsx
+ M src/components/estimator/foundation/FoundationRatesPanel.jsx
+ M src/components/estimator/foundation/FoundationSectionBanner.jsx
+ M src/components/estimator/foundation/FoundationTemplateDialog.jsx
+ M src/components/estimator/foundation/FoundationToolbar.jsx
+ M src/components/estimator/foundation/FoundationTotals.jsx
+ M src/components/estimator/foundation/FoundationWallCapsPanel.jsx
+ M src/components/estimator/foundation/FoundationWallsPanel.jsx
+ M src/components/estimator/foundation/LandscapeDesigner.jsx
+ M src/components/estimator/foundation/SignageCabinetsPanel.jsx
+ M src/components/estimator/foundation/WallShapeEditor.jsx
+ M src/components/estimator/foundation/foundationCalc.js
+ M src/components/estimator/foundation/foundationTemplateService.js
+ M src/components/estimator/foundation/poleCalculator.js
+ M src/components/estimator/foundation/wallCalculator.js
+ M src/components/estimator/foundation/wallCapCalculator.js
+ M src/components/estimator/home/RecentActivity.jsx
+ M src/components/estimator/home/StatCards.jsx
+ M src/components/estimator/idempotentEntityCreate.js
+ D src/components/estimator/laser/LaserItemCard.jsx
+ D src/components/estimator/laser/LaserTotals.jsx
+ M src/components/estimator/loadAllEntityRows.js
+ D src/components/estimator/maintenance/MaintenanceActionRow.jsx
+ D src/components/estimator/maintenance/MaintenanceItemCard.jsx
+ D src/components/estimator/maintenance/MaintenanceTotals.jsx
+ D src/components/estimator/maintenance/maintenanceCalc.js
+ D src/components/estimator/maintenance/maintenanceConstants.js
+ D src/components/estimator/metal/MetalItemCard.jsx
+ D src/components/estimator/metal/MetalTotals.jsx
+ D src/components/estimator/metal/metalCalc.js
+ M src/components/estimator/moduleRegistry.js
+ M src/components/estimator/navConfig.js
+ M src/components/estimator/paint/paintCalc.js
+ M src/components/estimator/parts/MasterPartPickerModal.jsx
+ M src/components/estimator/parts/PartLibraryPickerModal.jsx
+ M src/components/estimator/parts/SavePartTemplateModal.jsx
+ M src/components/estimator/parts/customProductService.js
+ M src/components/estimator/parts/partCatalog.js
+ M src/components/estimator/parts/partGroupService.js
+ M src/components/estimator/parts/partPackageService.js
+ M src/components/estimator/parts/partState.js
+ M src/components/estimator/pipelineStatus.js
+ M src/components/estimator/productionProductTypes.js
+ M src/components/estimator/products/blankProductService.js
+ M src/components/estimator/products/clipboardService.js
+ M src/components/estimator/products/productOperations.js
+ M src/components/estimator/products/productRemovalService.js
+ M src/components/estimator/products/quickProductService.js
+ M src/components/estimator/products/reusableSaveIdempotency.js
+ M src/components/estimator/products/snapshotUtils.js
+ M src/components/estimator/profitability.js
+ M src/components/estimator/quickPricePersistence.js
+ M src/components/estimator/quoteDefaults.js
+ M src/components/estimator/quoteDefaultsPersistence.js
+ M src/components/estimator/quoteDeliveryService.js
+ M src/components/estimator/quoteLifecycle.js
+ M src/components/estimator/quotePdf.js
+ M src/components/estimator/settings/SettingsTransferBar.jsx
+ M src/components/estimator/settings/settingsSaveGuard.js
+ M src/components/estimator/vinyl/VinylItemCard.jsx
+ M src/components/estimator/vinyl/VinylRatesPanel.jsx
+ M src/components/estimator/vinyl/VinylTotals.jsx
+ M src/components/estimator/workOrderConversion.js
+ M src/components/estimator/workOrderSyncPersistence.js
+ M src/components/financials/FinancialsSpreadsheet.jsx
+ M src/components/fleet/AlertSettingsModal.jsx
+ M src/components/fleet/FleetBulkMaintenanceDialog.jsx
+ M src/components/fleet/FleetConfirmDialog.jsx
+ M src/components/fleet/FleetEquipmentDialog.jsx
+ M src/components/fleet/FleetEquipmentDocuments.jsx
+ M src/components/fleet/FleetEquipmentTimeline.jsx
+ M src/components/fleet/FleetInventoryDialog.jsx
+ M src/components/fleet/FleetInventoryUsageDialog.jsx
+ M src/components/fleet/FleetLifecyclePanel.jsx
+ M src/components/fleet/FleetMaintenanceCalendar.jsx
+ M src/components/fleet/FleetMaintenanceDialog.jsx
+ M src/components/fleet/FleetMaintenanceWorkspace.jsx
+ M src/components/fleet/FleetMap.jsx
+ M src/components/fleet/FleetMeterRuleDialog.jsx
+ M src/components/fleet/FleetModuleNav.jsx
+ M src/components/fleet/FleetPartLookupDialog.jsx
+ M src/components/fleet/FleetQuickActions.jsx
+ M src/components/fleet/FleetRepairApprovalPolicies.jsx
+ M src/components/fleet/FleetRepairEstimateDialog.jsx
+ M src/components/fleet/FleetRequestDialog.jsx
+ M src/components/fleet/FleetSettingsEditor.jsx
+ M src/components/fleet/FleetSidebar.jsx
+ M src/components/fleet/FleetStartWorkDialog.jsx
+ M src/components/fleet/FleetWorkOrderDialog.jsx
+ M src/components/fleet/TripsTab.jsx
+ M src/components/fleet/VehiclePanel.jsx
+ M src/components/fleet/fleetEntityLoaders.js
+ M src/components/fleet/fleetHealth.js
+ M src/components/fleet/fleetInvoke.js
+ M src/components/fleet/fleetMaintenanceTemplates.js
+ M src/components/fleet/fleetWorkOrderFocus.js
+ M src/components/fleet/fleetWorkOrderRefresh.js
+ M src/components/foundation/EquipmentInventoryTab.jsx
+ M src/components/foundation/WallCapsInventoryTab.jsx
+ M src/components/foundation/foundationInventoryPersistence.js
+ M src/components/layout/MultiPageView.jsx
+ M src/components/markup/markupEngine.jsx
+ M src/components/markup/projectCategorizer.jsx
+ M src/components/markup/savedCustomerPricing.js
+ M src/components/masterInventory/ExcelImporterDialog.jsx
+ M src/components/masterInventory/MasterEquipmentTab.jsx
+ M src/components/masterInventory/MasterSuppliesTab.jsx
+ M src/components/masterInventory/equipmentPersistence.js
+ M src/components/masterInventory/importMappers.jsx
+ M src/components/masterInventory/inventoryImportPersistence.js
+ M src/components/masterInventory/inventoryPersistence.js
+ M src/components/masterInventory/legacyInventoryMigrator.jsx
+ M src/components/mobile/MobileSelect.jsx
+ M src/components/mobile/PullToRefresh.jsx
+ M src/components/orders/OrderCreateAttemptReview.jsx
+ M src/components/orders/OrderDateParityReview.jsx
+ M src/components/orders/OrderDuplicateReview.jsx
+ M src/components/orders/OrderIndependentPullEvidence.jsx
+ M src/components/orders/OrderLinkIntegrityReview.jsx
+ M src/components/orders/OrderLinkedCustomerReview.jsx
+ M src/components/orders/OrderMobileCards.jsx
+ M src/components/orders/OrderMobileDetail.jsx
+ M src/components/orders/OrderRequestorEmailReview.jsx
+ M src/components/orders/OrderReviewTools.jsx
+ M src/components/orders/OrderSpreadsheet.jsx
+ M src/components/orders/WorkOrderOrders.jsx
+ M src/components/orders/orderBatchReviewSummary.mjs
+ M src/components/orders/orderCustomerAssociationSafety.mjs
+ M src/components/orders/orderCustomerBlurSafety.mjs
+ M src/components/orders/orderCustomerJobPicker.mjs
+ M src/components/orders/orderDeletionSmartsheetSafety.mjs
+ M src/components/orders/orderHistoryLayout.js
+ M src/components/orders/orderImmediatePending.mjs
+ M src/components/orders/orderIndependentPullEvidenceModel.mjs
+ M src/components/orders/orderLinkedCustomerReviewPresentation.mjs
+ M src/components/orders/orderReloadSafety.mjs
+ M src/components/orders/orderRemoteVerificationReview.mjs
+ M src/components/orders/orderRestoreSmartsheetSafety.mjs
+ M src/components/orders/orderSaveRecoveryAction.mjs
+ M src/components/orders/orderSaveSyncBatch.mjs
+ M src/components/orders/orderSaveSyncStatus.mjs
+ M src/components/orders/orderSyncCompletionSafety.mjs
+ M src/components/orders/orderSyncLiveProgress.mjs
+ M src/components/orders/orderSyncReconnect.mjs
+ M src/components/orders/orderSyncRecovery.js
+ M src/components/orders/orderSyncToastModel.js
+ M src/components/orders/orderSyncWidgetRelevance.mjs
+ M src/components/orders/orderUncertainSyncReadback.mjs
+ M src/components/permitting/AddPermitLineDialog.jsx
+ M src/components/permitting/AddressDocumentLink.jsx
+ M src/components/permitting/AddressResearchPages.jsx
+ M src/components/permitting/AddressSearchSummary.jsx
+ M src/components/permitting/AutomaticAddressScanResults.jsx
+ M src/components/permitting/DocumentRepositoryBrowser.jsx
+ M src/components/permitting/DrainLiveFeed.jsx
+ M src/components/permitting/ElectricalAuthorityCoverage.jsx
+ M src/components/permitting/ElectricalOfficeGapList.jsx
+ M src/components/permitting/ElectricalOfficeInquiry.jsx
+ M src/components/permitting/ElectricalOfficeResponseContext.jsx
+ M src/components/permitting/ElectricalResearchResources.jsx
+ M src/components/permitting/ElectricalResearchTasks.jsx
+ M src/components/permitting/ExternalPermittingReferrals.jsx
+ M src/components/permitting/GoogleMapView.jsx
+ M src/components/permitting/InlineEditField.jsx
+ M src/components/permitting/JurisdictionActivityTab.jsx
+ M src/components/permitting/JurisdictionCard.jsx
+ M src/components/permitting/JurisdictionDetailPanel.jsx
+ M src/components/permitting/JurisdictionFormDialog.jsx
+ M src/components/permitting/JurisdictionPDFReport.jsx
+ M src/components/permitting/JurisdictionRequirements.jsx
+ M src/components/permitting/JurisdictionWorkspaceNavigation.jsx
+ M src/components/permitting/JurisdictionsView.jsx
+ M src/components/permitting/LocalityApprovedEvidence.jsx
+ M src/components/permitting/LocalityInfoPopup.jsx
+ M src/components/permitting/LocalityOfficeEditor.jsx
+ M src/components/permitting/LocalityOfficeEvidence.jsx
+ M src/components/permitting/LocalityOfficeReviewEvidence.jsx
+ M src/components/permitting/LocalityPickerDialog.jsx
+ M src/components/permitting/LocalityProfileLinkEditor.jsx
+ M src/components/permitting/LocalitySubmissionContext.jsx
+ M src/components/permitting/OfficeCandidateEvidencePanel.jsx
+ M src/components/permitting/OfficeCatalogEditor.jsx
+ M src/components/permitting/OfficeIdentityComparisonPanel.jsx
+ M src/components/permitting/OfficeIdentityLivePreview.jsx
+ M src/components/permitting/OfficeRescanButton.jsx
+ M src/components/permitting/OfficeResearchFindings.jsx
+ M src/components/permitting/OfficeResearchIdentityComparison.jsx
+ M src/components/permitting/OfficeResearchResponses.jsx
+ M src/components/permitting/OfficeRoleOverview.jsx
+ M src/components/permitting/OfficialSourceRescans.jsx
+ M src/components/permitting/OhioMunicipalResearchResources.jsx
+ M src/components/permitting/OriginalFileStatus.jsx
+ M src/components/permitting/PermitClientGroup.jsx
+ M src/components/permitting/PermitJobDocuments.jsx
+ M src/components/permitting/PermitLineHistory.jsx
+ M src/components/permitting/PermitLineLifecycleDetails.jsx
+ M src/components/permitting/PermitSettingsDialog.jsx
+ M src/components/permitting/PermitSpreadsheetRow.jsx
+ M src/components/permitting/PermitWorkflowDesigner.jsx
+ M src/components/permitting/PermittingCompletenessDashboard.jsx
+ M src/components/permitting/PermittingDraftHistory.jsx
+ M src/components/permitting/PermittingDraftLibrary.jsx
+ M src/components/permitting/PermittingRecordedCoverage.jsx
+ M src/components/permitting/PermittingRepositoryAdmin.jsx
+ M src/components/permitting/PermittingRetainedPageReview.jsx
+ M src/components/permitting/RegulationAlertPanel.jsx
+ M src/components/permitting/RenderedPDFPages.jsx
+ M src/components/permitting/ResearchProgressBar.jsx
+ M src/components/permitting/ResearchProgressContext.jsx
+ M src/components/permitting/SavedAddressResearch.jsx
+ M src/components/permitting/SelectorSavedSourceReview.jsx
+ M src/components/permitting/SelectorScanActions.jsx
+ M src/components/permitting/SelectorSourceOfficeReviewLookup.jsx
+ M src/components/permitting/SourceMonitorPanel.jsx
+ M src/components/permitting/SourceTextEvidenceBrowser.jsx
+ M src/components/permitting/SourceVersionComparison.jsx
+ M src/components/permitting/WorkflowCitationList.jsx
+ M src/components/permitting/WorkflowPlanningReview.jsx
+ M src/components/permitting/WorkflowReviewPacket.jsx
+ M src/components/permitting/WorkflowSourceEvidenceDialog.jsx
+ M src/components/permitting/addressOriginalBatch.mjs
+ M src/components/permitting/addressPageScan.mjs
+ M src/components/permitting/cincinnatiElectricalResearch.json
+ M src/components/permitting/documentHeaderNavigation.js
+ M src/components/permitting/documentSearchSnippet.js
+ M src/components/permitting/electricalOfficeInquiry.mjs
+ M src/components/permitting/electricalOfficeResponseHandoff.mjs
+ M src/components/permitting/googleMapsAuthFailure.js
+ M src/components/permitting/googleMapsLoader.js
+ M src/components/permitting/governmentOfficeCatalog.js
+ M src/components/permitting/jurisdictionAuthorityGate.js
+ M src/components/permitting/jurisdictionPermitBridge.js
+ M src/components/permitting/jurisdictionPersistence.js
+ M src/components/permitting/jurisdictionQuestionContext.js
+ M src/components/permitting/jurisdictionTrust.js
+ M src/components/permitting/localityAuthorityVerification.js
+ M src/components/permitting/localityOfficeCatalogBridge.js
+ M src/components/permitting/localityOfficeReviewEvidence.js
+ M src/components/permitting/officeCandidateEvidence.mjs
+ M src/components/permitting/officeIdentityComparison.mjs
+ M src/components/permitting/officeIdentityComparisonEvidence.json
+ M src/components/permitting/officeIdentityPreviewRequest.mjs
+ M src/components/permitting/officeResearchCompleteness.mjs
+ M src/components/permitting/officeResearchDraftEditing.mjs
+ M src/components/permitting/officeResearchIdentityComparison.mjs
+ M src/components/permitting/officeResearchResponses.mjs
+ M src/components/permitting/officialGeographicInventory.json
+ M src/components/permitting/ohioMunicipalResearch.json
+ M src/components/permitting/permitArchiveVerification.js
+ M src/components/permitting/permitDraftComparison.mjs
+ M src/components/permitting/permitGlobalSettingsPersistence.js
+ M src/components/permitting/permitLineItemIntegration.js
+ M src/components/permitting/permitLocalityPersistence.js
+ M src/components/permitting/permitQueue.js
+ M src/components/permitting/permitWorkflowDesigner.js
+ M src/components/permitting/permittingCountyChoices.mjs
+ M src/components/permitting/permittingCoverageReader.mjs
+ M src/components/permitting/permittingElectricalSourceAudit.mjs
+ M src/components/permitting/permittingOfficeEvidenceReader.mjs
+ M src/components/permitting/permittingRetainedElectricalPageCheck.mjs
+ M src/components/permitting/permittingReviewEventReconciliation.mjs
+ M src/components/permitting/permittingReviewedOfficeMirror.mjs
+ M src/components/permitting/pickerDraftAction.mjs
+ M src/components/permitting/savedDraftReviewFilters.mjs
+ M src/components/permitting/selectorElectricalOfficeHandoff.mjs
+ M src/components/permitting/selectorElectricalResearchOutcome.mjs
+ M src/components/permitting/selectorSavedSourceEvidence.mjs
+ M src/components/permitting/selectorSourceOfficeReviewReferences.mjs
+ M src/components/permitting/useLocalityOfficeGapReview.js
+ M src/components/permitting/usePermittingQueueBrowse.js
+ M src/components/permitting/workflowPlanningReview.mjs
+ M src/components/permitting/workflowReviewPacket.css
+ M src/components/permitting/workflowSourceEvidence.mjs
+ M src/components/portal/PortalPanel.jsx
+ M src/components/reports/featureReportPersistence.js
+ M src/components/resourcePlanning/userCapacityPersistence.js
+ M src/components/sales/BulkDuplicateCleanup.jsx
+ M src/components/sales/CustomFilterDialog.jsx
+ M src/components/sales/SalesCreateAttemptReview.jsx
+ M src/components/sales/SalesDailyQueue.jsx
+ M src/components/sales/SalesFollowUpCompleteDialog.jsx
+ M src/components/sales/SalesImportHistoryDialog.jsx
+ M src/components/sales/SalesImportPreviewDialog.jsx
+ M src/components/sales/SalesOpportunityDialog.jsx
+ M src/components/sales/SalesPipelineDialogsAndEditList.jsx
+ M src/components/sales/SalesPipelineImportProgress.jsx
+ M src/components/sales/SalesPipelineInsights.jsx
+ M src/components/sales/SalesPipelineKanban.jsx
+ M src/components/sales/SalesPipelineMobileCards.jsx
+ M src/components/sales/SalesPipelineRow.jsx
+ M src/components/sales/SalesPipelineSpreadsheet.jsx
+ M src/components/sales/SalesPipelineTableBody.jsx
+ M src/components/sales/SalesRecoveryHistoryReview.jsx
+ M src/components/sales/SalesStatusTransitionDialog.jsx
+ M src/components/sales/salesArchiveRecovery.mjs
+ M src/components/sales/salesAttention.js
+ M src/components/sales/salesAttentionMenu.mjs
+ M src/components/sales/salesColumnCatalog.mjs
+ M src/components/sales/salesColumnEditorDraft.mjs
+ M src/components/sales/salesColumnPresetSelection.mjs
+ M src/components/sales/salesDateFilterRange.mjs
+ M src/components/sales/salesFilterPersistence.js
+ M src/components/sales/salesFilterPreferenceRestore.mjs
+ M src/components/sales/salesFollowUpCompletionGuards.mjs
+ M src/components/sales/salesFollowUpSaveRecovery.mjs
+ M src/components/sales/salesLiveEditView.mjs
+ M src/components/sales/salesOpportunityIdentity.mjs
+ M src/components/sales/salesPersonIdentity.mjs
+ M src/components/sales/salesPlaceholder.js
+ M src/components/sales/salesQuickEditUncertainRecovery.mjs
+ M src/components/sales/salesQuoteAging.js
+ M src/components/sales/salesRecordScopes.js
+ M src/components/sales/salesReviewQueueExit.mjs
+ M src/components/sales/salesStageAging.js
+ M src/components/sales/salesStageTrust.mjs
+ M src/components/sales/salesTaskStageMapping.mjs
+ M src/components/shared/CellContextMenu.jsx
+ M src/components/shared/ColumnHeaderContextMenu.jsx
+ M src/components/shared/ImportProgressContext.jsx
+ M src/components/shared/MultiUserSelect.jsx
+ M src/components/shared/MultiUserSelectInline.jsx
+ M src/components/shared/columnSortPersistence.mjs
+ M src/components/shared/globalSettingsPersistence.js
+ M src/components/shared/trackedFieldPersistence.js
+ M src/components/signMaintenance/ActionPicker.jsx
+ M src/components/signMaintenance/MaintenanceMaterialRulesTab.jsx
+ M src/components/signMaintenance/MaintenanceMaterialsByAxis.jsx
+ M src/components/signMaintenance/SignTypePicker.jsx
+ M src/components/signMaintenance/maintenanceMaterialRules.js
+ M src/components/sips/ProductChecklistDialog.jsx
+ M src/components/sips/TemplateBuilder.jsx
+ M src/components/sips/checklistSaveRecovery.js
+ M src/components/sips/templateBuilderPersistence.js
+ M src/components/staff/staffEntities.js
+ M src/components/timeclock/ClockOutDialog.jsx
+ M src/components/timeclock/CorrectionCoordinatorDiagnostics.jsx
+ M src/components/timeclock/CorrectionRequestAdminPanel.jsx
+ M src/components/timeclock/CorrectionRequestDialog.jsx
+ M src/components/timeclock/CurrentWorkCard.jsx
+ M src/components/timeclock/EmployeeTodayCard.jsx
+ M src/components/timeclock/FaceEnrollmentDialog.jsx
+ M src/components/timeclock/FaceRecognition.jsx
+ M src/components/timeclock/FocusPausePair.jsx
+ M src/components/timeclock/GlobalFocusTimer.jsx
+ M src/components/timeclock/GlobalWorkPauseControl.jsx
+ M src/components/timeclock/LateClockInReviewDialog.jsx
+ M src/components/timeclock/MissedClockInDialog.jsx
+ M src/components/timeclock/MissedPunchResolutionDialog.jsx
+ M src/components/timeclock/PTOBalanceView.jsx
+ M src/components/timeclock/PayPeriodManager.jsx
+ M src/components/timeclock/QuickClockSection.jsx
+ M src/components/timeclock/TimeClockAdmin.jsx
+ M src/components/timeclock/TimeClockAuditTrail.jsx
+ M src/components/timeclock/TimeClockExceptionCenter.jsx
+ M src/components/timeclock/TimeClockLoginDialog.jsx
+ M src/components/timeclock/TimeClockManagementDashboard.jsx
+ M src/components/timeclock/TimeClockPunchExceptionReport.jsx
+ M src/components/timeclock/TimeClockReportsDashboard.jsx
+ M src/components/timeclock/TimeClockShiftDetail.jsx
+ M src/components/timeclock/TimeClockStatusContext.jsx
+ M src/components/timeclock/TimeOffApprovalPanel.jsx
+ M src/components/timeclock/TimeOffRequestDialog.jsx
+ M src/components/timeclock/TimeTracker.jsx
+ M src/components/timeclock/TimeTrackerSettings.jsx
+ M src/components/timeclock/UserQRCode.jsx
+ M src/components/timeclock/UserSettingsTab.jsx
+ M src/components/timeclock/WorkPauseMenu.jsx
+ M src/components/timeclock/WorkPauseOverlay.jsx
+ M src/components/timeclock/faceScanRuntime.js
+ M src/components/timeclock/focusTimerState.js
+ M src/components/timeclock/ptoPersistence.js
+ M src/components/timeclock/timeClockCompanyTime.js
+ M src/components/timeclock/timeClockSessionSecurity.js
+ M src/components/ui/accordion.jsx
+ M src/components/ui/alert-dialog.jsx
+ M src/components/ui/alert.jsx
+ M src/components/ui/aspect-ratio.jsx
+ M src/components/ui/avatar.jsx
+ M src/components/ui/badge.jsx
+ M src/components/ui/breadcrumb.jsx
+ M src/components/ui/button.jsx
+ M src/components/ui/calendar.jsx
+ M src/components/ui/card.jsx
+ M src/components/ui/carousel.jsx
+ M src/components/ui/chart.jsx
+ M src/components/ui/checkbox.jsx
+ M src/components/ui/collapsible.jsx
+ M src/components/ui/command.jsx
+ M src/components/ui/context-menu.jsx
+ M src/components/ui/drawer.jsx
+ M src/components/ui/dropdown-menu.jsx
+ M src/components/ui/form.jsx
+ M src/components/ui/hover-card.jsx
+ M src/components/ui/input-otp.jsx
+ M src/components/ui/input.jsx
+ M src/components/ui/label.jsx
+ M src/components/ui/menubar.jsx
+ M src/components/ui/navigation-menu.jsx
+ M src/components/ui/pagination.jsx
+ M src/components/ui/popover.jsx
+ M src/components/ui/progress.jsx
+ M src/components/ui/radio-group.jsx
+ M src/components/ui/resizable.jsx
+ M src/components/ui/scroll-area.jsx
+ M src/components/ui/select.jsx
+ M src/components/ui/separator.jsx
+ M src/components/ui/sheet.jsx
+ M src/components/ui/sidebar.jsx
+ M src/components/ui/skeleton.jsx
+ M src/components/ui/slider.jsx
+ M src/components/ui/sonner.jsx
+ M src/components/ui/switch.jsx
+ M src/components/ui/table.jsx
+ M src/components/ui/tabs.jsx
+ M src/components/ui/textarea.jsx
+ M src/components/ui/toast.jsx
+ M src/components/ui/toggle-group.jsx
+ M src/components/ui/toggle.jsx
+ M src/components/ui/tooltip.jsx
+ M src/components/ui/use-toast.jsx
+ M src/components/user/UserHRDataForm.jsx
+ M src/components/user/accountDeletionRequestPersistence.js
+ M src/components/user/authorizedUserDirectoryPersistence.js
+ M src/components/user/ownProfilePersistence.js
+ M src/components/user/reconcileHrDraft.js
+ M src/components/vinylEstimator/VinylArtworkUploadDialog.jsx
+ M src/components/vinylEstimator/VinylPartsLibraryDialog.jsx
+ M src/components/vinylEstimator/VinylPartsTable.jsx
+ M src/components/vinylEstimator/VinylProjectSummaryCard.jsx
+ M src/components/vinylEstimator/VinylRollWidthRecommender.jsx
+ M src/components/vinylEstimator/VinylSearchPickerDialog.jsx
+ M src/components/vinylEstimator/VinylWorkflowCard.jsx
+ M src/components/vinylEstimator/VinylWorkflowCardHeader.jsx
+ M src/components/vinylEstimator/VinylWorkflowTemplatesDialog.jsx
+ M src/components/vinylEstimator/vinylLaborRoles.jsx
+ M src/components/vinylInventory/VinylEditDialog.jsx
+ M src/components/vinylInventory/vinylInventoryPersistence.js
+ M src/components/vinylInventory/vinylMachinePersistence.js
+ M src/components/workflow/ActivityLogger.jsx
+ M src/components/workflow/AddTaskDialog.jsx
+ M src/components/workflow/AttentionBell.jsx
+ M src/components/workflow/AttentionFeed.jsx
+ M src/components/workflow/ClientInfoSection.jsx
+ M src/components/workflow/CreateRiderDialog.jsx
+ M src/components/workflow/DragDropList.jsx
+ M src/components/workflow/EmbeddedDriveFiles.jsx
+ M src/components/workflow/EnhancedSipChecklist.jsx
+ M src/components/workflow/GanttChart.jsx
+ M src/components/workflow/GlobalSearch.jsx
+ M src/components/workflow/MilestoneManager.jsx
+ M src/components/workflow/NotificationService.jsx
+ M src/components/workflow/ProjectHealthBadge.jsx
+ M src/components/workflow/ResourceAllocationView.jsx
+ M src/components/workflow/SavedViews.jsx
+ M src/components/workflow/SipChecklistDialog.jsx
+ M src/components/workflow/SipChecklistSection.jsx
+ M src/components/workflow/StageTasksPanel.jsx
+ M src/components/workflow/TaskDependencyManager.jsx
+ M src/components/workflow/TaskTemplateDialog.jsx
+ M src/components/workflow/WorkOrderCard.jsx
+ M src/components/workflow/WorkOrderDetailsDialog.jsx
+ M src/components/workflow/WorkOrderFiles.jsx
+ M src/components/workflow/WorkOrderForm.jsx
+ M src/components/workflow/activityPersistence.js
+ M src/components/workflow/generalTaskPersistence.js
+ M src/components/workflow/taskTemplatePersistence.js
+ M src/components/workflow/twoColumnWorkOrderReorder.js
+ M src/components/workflow/workOrderCreationIdentity.mjs
+ M src/components/workflow/workOrderPersistence.js
+ M src/components/workflow/workOrderPriorityPersistence.js
+ M src/functions/generateDocNumber.js
+ M src/hooks/use-mobile.jsx
+ M src/index.css
+ M src/lib/AuthContext.jsx
+ M src/lib/PageNotFound.jsx
+ M src/lib/VisualEditAgent.jsx
+ M src/lib/app-params.js
+ M src/lib/usePolling.js
+ M src/lib/utils.js
+ M src/lib/workOrderCache.js
+ M src/main.jsx
+ M src/pages.config.js
+ M src/pages/AdminPermittingSettings.jsx
+ M src/pages/AdminSettings.jsx
+ M src/pages/BrickStoneEstimator.jsx
+ M src/pages/CNCEstimator.jsx
+ M src/pages/CNCSettings.jsx
+ M src/pages/ChangeOrders.jsx
+ M src/pages/ChannelLetterEstimator.jsx
+ M src/pages/CompletedReports.jsx
+ M src/pages/CustomerPortal.jsx
+ M src/pages/Design.jsx
+ M src/pages/EstimateDetail.jsx
+ M src/pages/Estimating.jsx
+ M src/pages/Estimator.jsx
+ M src/pages/EstimatorCustomers.jsx
+ M src/pages/EstimatorParts.jsx
+ M src/pages/EstimatorProducts.jsx
+ M src/pages/EstimatorQueues.jsx
+ M src/pages/EstimatorSettings.jsx
+ M src/pages/EstimatorTools.jsx
+ M src/pages/Fabrication.jsx
+ M src/pages/FeatureReports.jsx
+ M src/pages/Financials.jsx
+ M src/pages/FleetAnalytics.jsx
+ M src/pages/FleetEquipment.jsx
+ M src/pages/FleetEquipmentDetail.jsx
+ M src/pages/FleetFuel.jsx
+ M src/pages/FleetHistory.jsx
+ M src/pages/FleetInspections.jsx
+ M src/pages/FleetMaintenance.jsx
+ M src/pages/FleetMechanic.jsx
+ M src/pages/FleetNotifications.jsx
+ M src/pages/FleetOverview.jsx
+ M src/pages/FleetParts.jsx
+ M src/pages/FleetPublicReport.jsx
+ M src/pages/FleetRequests.jsx
+ M src/pages/FleetReservations.jsx
+ M src/pages/FleetSearch.jsx
+ M src/pages/FleetSettings.jsx
+ M src/pages/FleetTracking.jsx
+ M src/pages/FleetWarranties.jsx
+ M src/pages/FleetWorkOrders.jsx
+ M src/pages/FoundationCatalog.jsx
+ M src/pages/FoundationEstimator.jsx
+ M src/pages/FoundationInventory.jsx
+ M src/pages/FoundationSettings.jsx
+ M src/pages/Home.jsx
+ M src/pages/InstallationDeliver.jsx
+ M src/pages/InstallationSettings.jsx
+ M src/pages/Inventory.jsx
+ M src/pages/Invoices.jsx
+ M src/pages/JobCosting.jsx
+ M src/pages/LaserEstimator.jsx
+ M src/pages/LaserSettings.jsx
+ M src/pages/MainWorkflow.jsx
+ M src/pages/MaintenanceEstimator.jsx
+ M src/pages/MaintenanceSettings.jsx
+ M src/pages/MasterInventory.jsx
+ M src/pages/MetalEstimator.jsx
+ M src/pages/MetalSettings.jsx
+ M src/pages/MondayMorningMeeting.jsx
+ M src/pages/MyWorkflow.jsx
+ M src/pages/NewAllInOneEstimate.jsx
+ M src/pages/OAuthConsent.jsx
+ M src/pages/Opportunities.jsx
+ M src/pages/PaintingEstimator.jsx
+ M src/pages/PaintingSettings.jsx
+ M src/pages/Permitting.jsx
+ M src/pages/PermittingDocs.jsx
+ M src/pages/Production.jsx
+ M src/pages/ProductionSchedule.jsx
+ M src/pages/PurchaseOrders.jsx
+ M src/pages/QuickPrice.jsx
+ M src/pages/QuoteSettings.jsx
+ M src/pages/ReportingDashboard.jsx
+ M src/pages/ResourcePlanning.jsx
+ M src/pages/SIPs.jsx
+ M src/pages/SalesPipeline.jsx
+ M src/pages/TimeClock.jsx
+ M src/pages/UserSettings.jsx
+ M src/pages/VinylEstimator.jsx
+ M src/pages/VinylInventory.jsx
+ M src/pages/VinylSettings.jsx
+ M src/pages/WorkOrderTraveler.jsx
+ M src/shared/historicalSalesOutcomeReconciliation.mjs
+ M src/shared/orderDueState.mjs
+ M src/shared/orderExportAccess.mjs
+ M src/shared/permittingAddressLocality.js
+ M src/shared/permittingAddressState.js
+ M src/shared/smartsheetOrderReceivedState.mjs
+ M src/shared/smartsheetSalesImportEligibility.mjs
+ M src/shared/timeClockAuditPagination.mjs
+ M src/shared/timeClockPayrollMembershipEvidence.mjs
+ M src/utils/safeExternalUrl.js
+?? %TEMP%b44readme.md
+?? %TEMP%sdr.json
+?? %TEMP%sew.json
+?? %TEMP%wd-grep.json
+?? .a11y-work/
+?? .addr-resp.json
+?? .address-feeder-citypool.json
+?? .address-feeder-seen.json
+?? .approx-recheck.txt
+?? .asset-manifest-list.txt
+?? .audit-work/.audit-work/
+?? .audit-work/.call-ledger.jsonl
+?? .audit-work/.esb/
+?? .audit-work/CONCRETE_ACTIVE_RESUME.md
+?? .audit-work/CONCRETE_FOUNDATION_SOURCE_REGISTER.md
+?? .audit-work/_ent.json
+?? .audit-work/app-edits.json
+?? .audit-work/batches/
+?? .audit-work/bulk-mint-done.json
+?? .audit-work/bulk-mint-rules.json
+?? .audit-work/bulk-mint.mjs
+?? .audit-work/check-rule-cover.cjs
+?? .audit-work/chk/
+?? .audit-work/dashscript.js
+?? .audit-work/dedupe-done.json
+?? .audit-work/dedupe-final.mjs
+?? .audit-work/dedupe-rules.mjs
+?? .audit-work/dl-fail-counts.json
+?? .audit-work/dl-remote-handoff.json
+?? .audit-work/doc-pipeline.pid
+?? .audit-work/dryrun/
+?? .audit-work/esb-check/
+?? .audit-work/esb-check2/
+?? .audit-work/esb-check3/
+?? .audit-work/esb-check4/
+?? .audit-work/esb-check5/
+?? .audit-work/esbuild-out/
+?? .audit-work/estimator-controller-final/
+?? .audit-work/estimator-invokellm-policy/
+?? .audit-work/fb-fixture-extract/
+?? .audit-work/fb-fixture-mutations/
+?? .audit-work/fb-fixture/
+?? .audit-work/fb-state/
+?? .audit-work/feeder-cursor.json
+?? .audit-work/final-sync.mjs
+?? .audit-work/final-sync2.mjs
+?? .audit-work/fix-key.mjs
+?? .audit-work/fleet-spawns.json
+?? .audit-work/flusher-instance/
+?? .audit-work/foundation-activation09/
+?? .audit-work/foundation-ai12/
+?? .audit-work/foundation-assembly04/
+?? .audit-work/foundation-browser03/
+?? .audit-work/foundation-catalog-pricing11/
+?? .audit-work/foundation-catalog06/
+?? .audit-work/foundation-equipment13/
+?? .audit-work/foundation-layout10/
+?? .audit-work/foundation-materials14/
+?? .audit-work/foundation-navigation15-fx.cjs
+?? .audit-work/foundation-navigation15/
+?? .audit-work/foundation-recovery02/
+?? .audit-work/foundation-reinforcement16/
+?? .audit-work/foundation-reinforcement17/
+?? .audit-work/foundation-reinforcement18/
+?? .audit-work/foundation-remote08/
+?? .audit-work/foundation-route07/
+?? .audit-work/foundation-save01/
+?? .audit-work/foundation-template05/
+?? .audit-work/fx-n.cjs
+?? .audit-work/fx-n10.cjs
+?? .audit-work/fx-nav2.cjs
+?? .audit-work/fx-v.cjs
+?? .audit-work/fx-v2.cjs
+?? .audit-work/fx2-state/
+?? .audit-work/fx2/
+?? .audit-work/fx50k-state/
+?? .audit-work/fx50k/
+?? .audit-work/gap-research-claims-0.json
+?? .audit-work/gap-research-claims-1.json
+?? .audit-work/gap/
+?? .audit-work/gaz-cousub-oh.txt
+?? .audit-work/gaz-ky.txt
+?? .audit-work/gaz-oh.txt
+?? .audit-work/geocode-mint-unresolved.json
+?? .audit-work/human-review-queue.json
+?? .audit-work/index-written.json
+?? .audit-work/mint-fresno.mjs
+?? .audit-work/mint-geo-rules.cjs
+?? .audit-work/mint-geo-rules2.cjs
+?? .audit-work/mint-geo-rules3.cjs
+?? .audit-work/mint-real-rules.cjs
+?? .audit-work/mint2.mjs
+?? .audit-work/mint3.mjs
+?? .audit-work/mint8.mjs
+?? .audit-work/mirrors/
+?? .audit-work/myfiles/
+?? .audit-work/nominatim-last.json
+?? .audit-work/office-files/
+?? .audit-work/outbox-done.jsonl
+?? .audit-work/outbox-inflight.jsonl
+?? .audit-work/outbox.jsonl
+?? .audit-work/probe-game.mjs
+?? .audit-work/push-entities.cjs
+?? .audit-work/push-ui.cjs
+?? .audit-work/push-ui2.cjs
+?? .audit-work/r3/
+?? .audit-work/r4/
+?? .audit-work/r5/
+?? .audit-work/reactivate.mjs
+?? .audit-work/remote-docwrite.json
+?? .audit-work/remote-docwrite.ts
+?? .audit-work/remote-entry.json
+?? .audit-work/remote-entry2.json
+?? .audit-work/remote-pull/
+?? .audit-work/remote-sop/
+?? .audit-work/remote-sync/
+?? .audit-work/remote/
+?? .audit-work/remote2/
+?? .audit-work/repair-blocked-claims.json
+?? .audit-work/retire-bad-rules.cjs
+?? .audit-work/retire-bad-rules2.cjs
+?? .audit-work/rule-extract-claims-0.json
+?? .audit-work/rule-import-claims.json
+?? .audit-work/shots/
+?? .audit-work/signage-facts/
+?? .audit-work/sop-pass4/
+?? .audit-work/sop2-remote/
+?? .audit-work/source-files/
+?? .audit-work/source-monitor.pid
+?? .audit-work/staffDataRead-nested-backup/
+?? .audit-work/stamp-blocked.cjs
+?? .audit-work/stamp-blocked2.cjs
+?? .audit-work/test-sfact-write.cjs
+?? .audit-work/test-sfact-write2.cjs
+?? .audit-work/tmp-build/
+?? .audit-work/tmp-eq/
+?? .audit-work/tmp-m14/
+?? .audit-work/tmp-p/
+?? .audit-work/trigger-cursor.json
+?? .audit-work/triggers/
+?? .audit-work/ui-audit/
+?? .audit-work/unraid-bundle/
+?? .audit-work/verify-first.jsonl
+?? .audit-work/wf-remote/
+?? .b44tmp/
+?? .chain-5000.mjs
+?? .cities-oh-ky.json
+?? .cp-list.json
+?? .cp-list2.json
+?? .cp-list3.json
+?? .deploy-out.json
+?? .devin-remote/.tmp-schema/
+?? .devin-remote/base44/
+?? .devin-remote/owa-entry.json
+?? .devin-remote/pull.mjs
+?? .devin-remote/src/
+?? .devin/BACKLOG_DONE
+?? .devin/estimator-run-control.mjs
+?? .devin/estimator-run-control.ps1
+?? .devin/estimator-run-model.mjs
+?? .devin/estimator-run/
+?? .devin/stop-masterplan.ps1
+?? .edits-apg.json
+?? .edits-apg2.json
+?? .edits-brick.json
+?? .edits-cl.json
+?? .edits-cnc.json
+?? .edits-ed104.json
+?? .edits-edkit.json
+?? .edits-foundation.json
+?? .edits-foundationest.json
+?? .edits-ia.json
+?? .edits-imv.json
+?? .edits-inv.json
+?? .edits-laser.json
+?? .edits-maint.json
+?? .edits-metal.json
+?? .edits-pa.json
+?? .edits-paint.json
+?? .edits-setcnc.json
+?? .edits-setfound.json
+?? .edits-setlaser.json
+?? .edits-setmaint.json
+?? .edits-setmetal.json
+?? .edits-setpaint.json
+?? .edits-vinyl.json
+?? .err-monitor.mjs
+?? .failed-addrs.json
+?? .fixture-build-done
+?? .fixture-business-1000-src-detail.json
+?? .fixture-business-1000-src.json
+?? .fixture-business-1000-src2-detail.json
+?? .fixture-business-1000-src2.json
+?? .fixture-business-5000-src-detail.json
+?? .fixture-business-5000-src.json
+?? .fixture-business-addresses-detail.json
+?? .fixture-business-addresses.json
+?? .fixture-business-all.json
+?? .fixture-overpass-detail.json
+?? .fixture-overpass.json
+?? .fixture-overpass.progress
+?? .fixture-pool-live.jsonl
+?? .flagged-addrs.json
+?? .forever-rerun.json
+?? .gate-test-out.json
+?? .gate-test.mjs
+?? .gen-apg2.mjs
+?? .gen-ed.mjs
+?? .gen-ed2.mjs
+?? .gen-ia.mjs
+?? .geocode-r17.json
+?? .geocode-r18.json
+?? .geocode-r19.json
+?? .geocode-r20.json
+?? .geocode-r21.json
+?? .geocode-retry-final.json
+?? .geocode-retry-h.json
+?? .geocode-retry.json
+?? .geocode-retry10.json
+?? .geocode-retry11.json
+?? .geocode-retry12.json
+?? .geocode-retry13.json
+?? .geocode-retry14.json
+?? .geocode-retry15.json
+?? .geocode-retry16.json
+?? .geocode-retry2.json
+?? .geocode-retry3.json
+?? .geocode-retry4.json
+?? .geocode-retry5.json
+?? .geocode-retry6.json
+?? .geocode-retry7.json
+?? .geocode-retry8.json
+?? .geocode-retry9.json
+?? .geocode-rf.json
+?? .geocode-rf2.json
+?? .keep-awake.ps1
+?? .live-events-prev.jsonl
+?? .live-events.jsonl
+?? .masterplan-claims/
+?? .missing-files.txt
+?? .permit-session-token
+?? .permit-token.txt
+?? .permitting-plan-claims/
+?? .probe-dup.mjs
+?? .probe-ky.mjs
+?? .probe-ky2.mjs
+?? .probe-office.mjs
+?? .remaining-pool-forever.json
+?? .remaining-pool.json
+?? .remaining-pool2.json
+?? .remaining-pool3.json
+?? .remaining-pool4.json
+?? .remaining-pool5.json
+?? .remaining-pool6.json
+?? .remaining-pool7.json
+?? .remaining-pool8.json
+?? .remaining-pool9.json
+?? .remote-dialog.tmp.jsx
+?? .remote-dup.json
+?? .remote-out-entry.ts
+?? .remote-out-permittingResearchBacklog.mjs
+?? .remote-package.json
+?? .remote-permitting.json
+?? .remote-permitting.jsx
+?? .remote-picker.json
+?? .remote-picker.jsx
+?? .remote-staffEntityWrite.ts
+?? .remote/
+?? .retry-failed.json
+?? .retry-pass.json
+?? .retry-review.json
+?? .rsew.json
+?? .rsew2.json
+?? .rsew3.json
+?? .run-pool7.json
+?? .run-pool8.json
+?? .run-pool9.json
+?? .scratch/
+?? .status-test.json
+?? .tmp-2.json
+?? .tmp-3files.json
+?? .tmp-RA-patched.ts
+?? .tmp-ascii.cjs
+?? .tmp-batch-be.cjs
+?? .tmp-batch-be2.cjs
+?? .tmp-battery.json
+?? .tmp-c1-pull.json
+?? .tmp-c2-pull.json
+?? .tmp-c360.json
+?? .tmp-c5-pull.json
+?? .tmp-cam2.cjs
+?? .tmp-camera.cjs
+?? .tmp-cap2.json
+?? .tmp-cap3.json
+?? .tmp-cap4.json
+?? .tmp-cap5.json
+?? .tmp-capf.json
+?? .tmp-capg.json
+?? .tmp-caph.json
+?? .tmp-capi.json
+?? .tmp-capj.json
+?? .tmp-capr.json
+?? .tmp-client-edit.json
+?? .tmp-customerSync-remote.js
+?? .tmp-diff.cjs
+?? .tmp-diff2.cjs
+?? .tmp-diff3.cjs
+?? .tmp-edits.json
+?? .tmp-edits2.json
+?? .tmp-edits3.json
+?? .tmp-edits4.json
+?? .tmp-edits5.json
+?? .tmp-ensureEstimateCustomer-entry.ts
+?? .tmp-ent-edits.json
+?? .tmp-entity-pull.json
+?? .tmp-esbuild-check/
+?? .tmp-est-ver
+?? .tmp-finalB.cjs
+?? .tmp-fixrls.cjs
+?? .tmp-fl.json
+?? .tmp-fnlist.json
+?? .tmp-gov-edit.json
+?? .tmp-gov-read.json
+?? .tmp-gov-read2.json
+?? .tmp-gov.mjs
+?? .tmp-grep-rls.cjs
+?? .tmp-hashcheck.cjs
+?? .tmp-hold.cjs
+?? .tmp-key
+?? .tmp-l.txt
+?? .tmp-l2a-pull.json
+?? .tmp-l2a-pull2.json
+?? .tmp-links.py
+?? .tmp-lint-files.txt
+?? .tmp-markbatch.cjs
+?? .tmp-markbe.cjs
+?? .tmp-markdone.cjs
+?? .tmp-markdone2.cjs
+?? .tmp-markdone3.cjs
+?? .tmp-mb2.cjs
+?? .tmp-mb3.cjs
+?? .tmp-md5.json
+?? .tmp-missed.json
+?? .tmp-missed.jsx
+?? .tmp-mm.mjs
+?? .tmp-opp2.json
+?? .tmp-opp3.json
+?? .tmp-opp4.json
+?? .tmp-opplist.json
+?? .tmp-opplist2.json
+?? .tmp-opplist3.json
+?? .tmp-opplist4.json
+?? .tmp-oppw.json
+?? .tmp-owa-r5.json
+?? .tmp-owa-r6.json
+?? .tmp-owa-r6.ts
+?? .tmp-owa-remote.json
+?? .tmp-owa-remote.ts
+?? .tmp-owa-remote2.json
+?? .tmp-owa-remote3.json
+?? .tmp-owa-remote4.json
+?? .tmp-pagelist.txt
+?? .tmp-pages1.json
+?? .tmp-patch-buttons.cjs
+?? .tmp-patch-recreate.cjs
+?? .tmp-patch.js
+?? .tmp-patch.py
+?? .tmp-pl.json
+?? .tmp-pq-pull.json
+?? .tmp-probe.cjs
+?? .tmp-ps.json
+?? .tmp-pull3.cjs
+?? .tmp-pull3.mjs
+?? .tmp-pull4.cjs
+?? .tmp-pull5.cjs
+?? .tmp-pull6.cjs
+?? .tmp-push-list.txt
+?? .tmp-push.cjs
+?? .tmp-push2.txt
+?? .tmp-pushlist8.txt
+?? .tmp-pushlist9.txt
+?? .tmp-qcs-batch.cjs
+?? .tmp-qcs2.cjs
+?? .tmp-r-EstimateDetail.jsx
+?? .tmp-r-InstallRouteMap.jsx
+?? .tmp-readme.md
+?? .tmp-recordEstimateAcceptance-entry.ts
+?? .tmp-recreate-action.json
+?? .tmp-remote-Layout.jsx
+?? .tmp-remote-accountFieldResolution.js
+?? .tmp-remote-adminAccountDraft.js
+?? .tmp-remote-md5.txt
+?? .tmp-remote-pagesconfig.js
+?? .tmp-remote-unverifiedAccountSave.js
+?? .tmp-remote/reports-task/
+?? .tmp-rfiles.txt
+?? .tmp-rls.cjs
+?? .tmp-rlscheck.cjs
+?? .tmp-rlsfix.cjs
+?? .tmp-rlsretry.cjs
+?? .tmp-rlsscan.cjs
+?? .tmp-rlssweep.cjs
+?? .tmp-scan-nonascii.cjs
+?? .tmp-selfapprove-edits.json
+?? .tmp-shared-pull.json
+?? .tmp-ssa-func.json
+?? .tmp-ssa-remote.ts
+?? .tmp-ssa.json
+?? .tmp-suites.sh
+?? .tmp-sync-all.cjs
+?? .tmp-tc-edits.json
+?? .tmp-tca-head.json
+?? .tmp-tca-remote.json
+?? .tmp-tcadmin-remote.jsx
+?? .tmp-tcadmin.json
+?? .tmp-tok
+?? .tmp-tok2
+?? .tmp-tok3
+?? .tmp-tracked-remote.js
+?? .tmp-tt-edits.cjs
+?? .tmp-um-edits.json
+?? .tmp-unique.cjs
+?? .tmp-unmark.cjs
+?? .tmp-unmark2.cjs
+?? .tmp-v1.txt
+?? .tmp-v2.txt
+?? .tmp-v3.txt
+?? .tmp-v4.txt
+?? .tmp-v5.txt
+?? .tmp-vcheck.cjs
+?? .tmp-verify.cjs
+?? .tmp-verify2.cjs
+?? .tmp-verify3.cjs
+?? .tmp-wo.json
+?? .tmp-wo2.json
+?? .tmp-woc-remote.json
+?? .tmp-wr.json
+?? .tmp_verify/
+?? .tmpread.json
+?? .ui-pass/
+?? .v-final.json
+?? .v-h.json
+?? .v-r10.json
+?? .v-r11.json
+?? .v-r12.json
+?? .v-r13.json
+?? .v-r14.json
+?? .v-r15.json
+?? .v-r16.json
+?? .v-r17.json
+?? .v-r18.json
+?? .v-r19.json
+?? .v-r20.json
+?? .v-r21.json
+?? .v-r4.json
+?? .v-r5.json
+?? .v-r6.json
+?? .v-r7.json
+?? .v-r8.json
+?? .v-r9.json
+?? .v-rf.json
+?? .v-rf2.json
+?? .validation-500.json
+?? .validation-A.json
+?? .validation-B.json
+?? .validation-C.json
+?? .validation-all.json
+?? .validation-geo-final.json
+?? .validation-geo-retry.json
+?? .validation-geo-retry2.json
+?? .validation-geo-retry3.json
+?? .validation-geo-retry5.json
+?? .validation-live-500.json
+?? .validation-live-biz-500-google.json
+?? .validation-live-biz-500.json
+?? .validation-local.json
+?? .validation-pool3.json
+?? .validation-pool4.json
+?? .validation-retry-pass.json
+?? .validation-retry.json
+?? .wfrun.json
+?? .work-tmp/
+?? .workflows.json
+?? 48MB
+?? ADMIN_BACKLOG.md
+?? BACKLOG_MASTERPLAN.md
+?? COREBRIDGE_MAP.md
+?? "C\357\200\272UsersBRETTH~1AppDataLocalTempinvAction.json"
+?? "C\357\200\272UsersBRETTH~1AppDataLocalTempnotifsvc.txt"
+?? ESTIMATOR_AI_MODEL_POLICY.md
+?? ESTIMATOR_CONCRETE_MASONRY_POLE_AUDIT.md
+?? ESTIMATOR_CONCRETE_MASONRY_POLE_MASTERPLAN.md
+?? ESTIMATOR_MASTERPLAN.md
+?? ESTIMATOR_MODULE_MASTERPLAN.md
+?? ESTIMATOR_PROGRESS.md
+?? FILEBRIDGE_MASTERPLAN.md
+?? NUL
+?? NUL-tmp/
+?? NUL2/
+?? NUL3/
+?? PERMITTING_AUDIT_MASTERPLAN.md
+?? PERMITTING_BACKLOG.md
+?? PERMITTING_MASTERPLAN.md
+?? PERMITTING_PICKER_BACKLOG.md
+?? PROGRESS_LOG.md
+?? SIGNAGE_INTEL_MASTERPLAN.md
+?? TIMECLOCK_BACKLOG.md
+?? _agent_patch.mjs
+?? agent/
+?? assetlab1.png
+?? audit-permit-errors.txt
+?? audit-sales-errors.txt
+?? audit-stable-defaults.err
+?? audit-stable-defaults.out
+?? audit-tc-errors.txt
+?? audit/PERF_AUDIT_2026-10-29.md
+?? auto
+?? b44readme.md
+?? backlog_lines.txt
+?? base44/actors/
+?? base44/agents/jurisdiction_research_agent.jsonc
+?? base44/entities/AccessRequest.jsonc
+?? base44/entities/AdminAuditLog.jsonc
+?? base44/entities/BroadcastMessage.jsonc
+?? base44/entities/COGSAccount.jsonc
+?? base44/entities/CatalogPartGroup.jsonc
+?? base44/entities/CrmEventType.jsonc
+?? base44/entities/CrmSuggestion.jsonc
+?? base44/entities/CustomItemsProject.jsonc
+?? base44/entities/CustomerFolderLink.jsonc
+?? base44/entities/FailedAdminAttempt.jsonc
+?? base44/entities/FileBridgeChunk.jsonc
+?? base44/entities/FileBridgeCommand.jsonc
+?? base44/entities/FileBridgeEvent.jsonc
+?? base44/entities/FileBridgeHealth.jsonc
+?? base44/entities/FileBridgeInventory.jsonc
+?? base44/entities/FileBridgeRecent.jsonc
+?? base44/entities/FileBridgeSpikeRow.jsonc
+?? base44/entities/FileBridgeUpload.jsonc
+?? base44/entities/FileIndex.jsonc
+?? base44/entities/FileShareRoot.jsonc
+?? base44/entities/GlobalPricingTier.jsonc
+?? base44/entities/IncomeAccount.jsonc
+?? base44/entities/LaborLevel.jsonc
+?? base44/entities/Machine.jsonc
+?? base44/entities/MachineRate.jsonc
+?? base44/entities/ModifierOption.jsonc
+?? base44/entities/Notification.jsonc
+?? base44/entities/NotificationPreference.jsonc
+?? base44/entities/NotificationTemplate.jsonc
+?? base44/entities/OriginationNode.jsonc
+?? base44/entities/PermitLookupIndex.jsonc
+?? base44/entities/PermitResolutionRule.jsonc
+?? base44/entities/PricingModifier.jsonc
+?? base44/entities/PricingTemplate.jsonc
+?? base44/entities/PricingTierMatrix.jsonc
+?? base44/entities/ProductActivity.jsonc
+?? base44/entities/ProductSubstatus.jsonc
+?? base44/entities/ProofShareLink.jsonc
+?? base44/entities/ReconciliationBatch.jsonc
+?? base44/entities/ReportRun.jsonc
+?? base44/entities/Responsibility.jsonc
+?? base44/entities/SalesLocation.jsonc
+?? base44/entities/SavedQueueView.jsonc
+?? base44/entities/ScheduledReport.jsonc
+?? base44/entities/ShiftSwapRequest.jsonc
+?? base44/entities/SignageFact.jsonc
+?? base44/entities/SignageFactIndex.jsonc
+?? base44/entities/Sop.jsonc
+?? base44/entities/StoreCreditLedger.jsonc
+?? base44/entities/TaxAgency.jsonc
+?? base44/entities/TimeClockDevice.jsonc
+?? base44/entities/TimeClockShiftTemplate.jsonc
+?? base44/entities/TrainingAssignment.jsonc
+?? base44/entities/TrainingItem.jsonc
+?? base44/entities/UserSession.jsonc
+?? base44/entities/UserWorkspacePreferences.jsonc
+?? base44/entities/Vendor.jsonc
+?? base44/entities/WorkOrderTimeEntry.jsonc
+?? base44/functions/accessRequestAction/
+?? base44/functions/accountingAdminAction/
+?? base44/functions/boardFeed/
+?? base44/functions/customerPortalAction/function.jsonc
+?? base44/functions/dailyAnomalyDigest/
+?? base44/functions/dataIntegrityAction/
+?? base44/functions/fileBridgeAction/
+?? base44/functions/fileBridgeIngest/
+?? base44/functions/fileBridgeMaintenance/
+?? base44/functions/fileBridgeSpike/
+?? base44/functions/findLocalityByAddress/function.jsonc
+?? base44/functions/findLocalityByAddress/main.ts
+?? base44/functions/fixtureBusinessSearch/
+?? base44/functions/followUpSweepAction/
+?? base44/functions/hostedAssetManifest/
+?? base44/functions/jurisdiction_research/
+?? base44/functions/manageBroadcasts/
+?? base44/functions/manageCustomerLifecycle/
+?? base44/functions/manageMigration/
+?? base44/functions/manageReconciliation/
+?? base44/functions/manageSops/
+?? base44/functions/manageTraining/
+?? base44/functions/notificationAction/
+?? base44/functions/permittingHealth/
+?? base44/functions/placesAutocomplete/
+?? base44/functions/queueFeed/
+?? base44/functions/quickbooksExport/
+?? base44/functions/resolvePermittingAddress/function.jsonc
+?? base44/functions/resolvePermittingAddress/main.ts
+?? base44/functions/seedNotificationTemplates/
+?? base44/functions/sendStaffEmail/
+?? base44/functions/sessionAdminAction/
+?? base44/functions/shiftSwapAction/
+?? base44/functions/smartsheetSyncAction/function.jsonc
+?? base44/functions/staffArchiveFile/
+?? base44/functions/staffDataRead/function.jsonc
+?? base44/functions/staffEntityBulkWrite/
+?? base44/functions/staffPermittingDocWrite/
+?? base44/functions/streetViewPreview/
+?? base44/functions/timeClockAction/base44/
+?? base44/functions/timeClockAction/function.jsonc
+?? base44/functions/weeklyAdminDigest/
+?? base44/functions/workOrderTraveler/
+?? base44/functions/workspacePrefsAction/
+?? base44/functions/zzCleanupAction/
+?? base44/shared/accountingAlertsModel.ts
+?? base44/shared/accountingExportModel.ts
+?? base44/shared/alertSubscriptionsModel.ts
+?? base44/shared/arAgingReports.ts
+?? base44/shared/auditLogModel.ts
+?? base44/shared/boardFeedFields.ts
+?? base44/shared/brickPricingWire.ts
+?? base44/shared/broadcastModel.ts
+?? base44/shared/catalogImportModel.ts
+?? base44/shared/channelPricingWire.ts
+?? base44/shared/cncPricingWire.ts
+?? base44/shared/contactRolesModel.ts
+?? base44/shared/creditMemoModel.ts
+?? base44/shared/crmSuggestionModel.ts
+?? base44/shared/customItemsPricingWire.ts
+?? base44/shared/customStatusModel.ts
+?? base44/shared/customerAnalyticsModel.ts
+?? base44/shared/customerImportModel.ts
+?? base44/shared/customerLifecycleRules.ts
+?? base44/shared/customerMergeModel.ts
+?? base44/shared/customerReports.ts
+?? base44/shared/customerTierModel.ts
+?? base44/shared/customerWarningModel.ts
+?? base44/shared/dataExportModel.ts
+?? base44/shared/delivery.ts
+?? base44/shared/deliveryTelemetryModel.ts
+?? base44/shared/digestBatchModel.ts
+?? base44/shared/docNumberAllocation.ts
+?? base44/shared/doubleSidedPricing.ts
+?? base44/shared/dueDateEngine.ts
+?? base44/shared/emailSettingsModel.ts
+?? base44/shared/estimateReports.ts
+?? base44/shared/estimatorAiModelPolicy.js
+?? base44/shared/fileBridgeModel.ts
+?? base44/shared/financialReports.ts
+?? base44/shared/followUpMachine.ts
+?? base44/shared/formulaEval.ts
+?? base44/shared/foundationPricingWire.ts
+?? base44/shared/fulfillmentModel.ts
+?? base44/shared/glAccountAdminModel.ts
+?? base44/shared/glSplitModel.ts
+?? base44/shared/hoursOfOperationModel.ts
+?? base44/shared/integrationsStatusModel.ts
+?? base44/shared/internalFunctionCapability.ts
+?? base44/shared/jurisdictionRegistry.mjs
+?? base44/shared/laborLevels.ts
+?? base44/shared/laserPricingWire.ts
+?? base44/shared/lineAccountResolution.ts
+?? base44/shared/lumpSyncModel.ts
+?? base44/shared/machineCosts.ts
+?? base44/shared/maintenancePricingWire.ts
+?? base44/shared/marginModel.ts
+?? base44/shared/metalPricingWire.ts
+?? base44/shared/migrationMappers.ts
+?? base44/shared/modifierPricing.ts
+?? base44/shared/numberingFormatModel.ts
+?? base44/shared/orderFees.ts
+?? base44/shared/ownerRole.ts
+?? base44/shared/paintPricingWire.ts
+?? base44/shared/parentSizeModel.ts
+?? base44/shared/partGroupInheritance.ts
+?? base44/shared/paymentRegisterModel.ts
+?? base44/shared/paymentReminderModel.ts
+?? base44/shared/permittingLookupIndex.mjs
+?? base44/shared/portalPaymentModel.ts
+?? base44/shared/pricingEngine.ts
+?? base44/shared/pricingTemplateModel.ts
+?? base44/shared/pricingVariables.ts
+?? base44/shared/productStatusModel.ts
+?? base44/shared/productionReports.ts
+?? base44/shared/proofBatchModel.ts
+?? base44/shared/proofChangeRequestModel.ts
+?? base44/shared/proofDueRecalcModel.ts
+?? base44/shared/proofFollowUpModel.ts
+?? base44/shared/proofShareLinkModel.ts
+?? base44/shared/proofTransitionModel.ts
+?? base44/shared/qboAdapterModel.ts
+?? base44/shared/queueFeedModel.mjs
+?? base44/shared/quoteDefaultsModel.ts
+?? base44/shared/readyTriggerModel.ts
+?? base44/shared/reconciliationModel.ts
+?? base44/shared/regionalProviders.mjs
+?? base44/shared/reportCatalogModel.ts
+?? base44/shared/reportDrilldownModel.ts
+?? base44/shared/salesFunnelModel.ts
+?? base44/shared/salesReports.ts
+?? base44/shared/savedReportRunsModel.ts
+?? base44/shared/setupFeeCompose.ts
+?? base44/shared/sizeDiscounts.ts
+?? base44/shared/smtpClient.ts
+?? base44/shared/statementBatchModel.ts
+?? base44/shared/statementBatchWriteModel.ts
+?? base44/shared/statementTextModel.ts
+?? base44/shared/taxLiabilityModel.ts
+?? base44/shared/templateRender.ts
+?? base44/shared/timeClockBadgeVerify.ts
+?? base44/shared/userDefaultsModel.ts
+?? base44/shared/vendorCostModel.ts
+?? base44/shared/vendorNotifyModel.ts
+?? base44/shared/vinylPricingWire.ts
+?? "base44/workflows/Daily Estimate Follow-up Sweep.jsonc"
+?? "base44/workflows/File Bridge Maintenance.jsonc"
+?? bpr.json
+?? bpr_entry_remote.ts
+?? cam-default.png
+?? cam-orbit.png
+?? check-360-async.mjs
+?? check-360.mjs
+?? cja.json
+?? ckpt.json
+?? crystal-shift-check.png
+?? crystal-zoom.png
+?? deploy4.err
+?? deploy_bpr.err
+?? deploy_jr.err
+?? docs/filebridge-openability.md
+?? docs/filebridge-spike-results.md
+?? docs/pricing-engine.md
+?? docs/read-budget.md
+?? docs/read-headroom.md
+?? docs/unraid-filebridge-setup.md
+?? ed.json
+?? eow.json
+?? eow_entry_remote.ts
+?? eq.json
+?? est_backlog_new.md
+?? est_backlog_remote.json
+?? est_backlog_remote.md
+?? est_cust.json
+?? est_cust_head.txt
+?? exterior-live.png
+?? exterior-live2.png
+?? exterior-live3.png
+?? extract_pull.mjs
+?? extract_sandbox.cjs
+?? fix_laser.py
+?? fix_laser2.py
+?? fn_ls.json
+?? gdn.json
+?? grep1.json
+?? grep10.json
+?? grep11.json
+?? grep12.json
+?? grep13.json
+?? grep14.json
+?? grep15.json
+?? grep2.json
+?? grep3.json
+?? grep4.json
+?? grep5.json
+?? grep6.json
+?? grep7.json
+?? grep8.json
+?? grep9.json
+?? grep_dd.json
+?? grep_ens.json
+?? grep_jr.err
+?? grep_jr.json
+?? grep_jr2.json
+?? grep_leftover.json
+?? grep_pld.json
+?? grep_sp.json
+?? grep_st.json
+?? grep_tax.json
+?? grep_uwp.json
+?? grep_wp.json
+?? home.png
+?? hq1.png
+?? hq2.png
+?? hq3.png
+?? jra.json
+?? jrename.json
+?? la92.json
+?? la92b.json
+?? laserfix2.sh
+?? live-game.png
+?? live1.png
+?? live2.png
+?? live3.png
+?? live4.png
+?? local_auditJurisdictionAccuracy_entry.ts
+?? local_batchUpdateJurisdictions_entry.ts
+?? local_jurisdictionResearchAgent_entry.ts
+?? local_monitorJurisdictionChanges_entry.ts
+?? local_refreshJurisdiction_entry.ts
+?? ls_err.txt
+?? lsents.json
+?? mig_work/
+?? mk92.json
+?? mk92b.json
+?? mk_493c.py
+?? mk_92.py
+?? mk_92b.py
+?? mk_92c.py
+?? mk_92d.py
+?? mk_b64.py
+?? mk_ed493.py
+?? mk_eq493.py
+?? mk_laserfix.py
+?? mk_laserfix2.py
+?? mk_qd493.py
+?? nul
+?? opp.json
+?? opp_top.json
+?? owa.json
+?? owa_360.json
+?? owa_entry.txt
+?? patch-mine.mjs
+?? phase4.png
+?? play1.png
+?? public/manifest.json
+?? pull1.json
+?? pull1_err.txt
+?? pull2.json
+?? pull3.json
+?? pull4.json
+?? pull_fresh.json
+?? pull_verify.json
+?? pullents.json
+?? qp.json
+?? qs.json
+?? r1.json
+?? r2.json
+?? r3.json
+?? r4.json
+?? readme_agent.md
+?? remote_AuditLog.jsx
+?? remote_CompletedReports.jsx
+?? remote_CustomerQuotePanel.jsx
+?? remote_EstimatorSettings.jsx
+?? remote_EstimatorTools.jsx
+?? remote_OpsReportView.jsx
+?? remote_PricingAdmin.jsx
+?? remote_QuoteSettings.jsx
+?? remote_SalesHome.jsx
+?? remote_Step1EstimateDetails.jsx
+?? remote_WorkspacePreferencesProvider.jsx
+?? remote_cs.json
+?? remote_cs.jsx
+?? remote_cust_ent.json
+?? remote_cust_ent.jsonc
+?? remote_fresh/
+?? remote_gatedEntities.js
+?? remote_generateDocNumber.ts
+?? remote_inv_fn.json
+?? remote_inv_fn.ts
+?? remote_invadj_fn.json
+?? remote_inventory_fn.ts
+?? remote_jc_fn.json
+?? remote_jc_fn.ts
+?? remote_jc_page.json
+?? remote_jc_page.jsx
+?? remote_po_entity.json
+?? remote_po_entity.jsonc
+?? remote_po_fn.json
+?? remote_po_fn.ts
+?? remote_po_page.json
+?? remote_po_page.jsx
+?? remote_pull/Inventory.remote.json
+?? remote_pull/Inventory.remote.jsonc
+?? remote_pull/MarkupCategory.remote.json
+?? remote_pull/MarkupCategory.remote.jsonc
+?? remote_pull/MyWorkflow.jsx
+?? remote_pull/PartTemplate.remote.json
+?? remote_pull/PartTemplate.remote.jsonc
+?? remote_pull/Payment.remote.json
+?? remote_pull/Payment.remote.jsonc
+?? remote_pull/RB.remote2.json
+?? remote_pull/RB.remote2.jsonc
+?? remote_pull/ReconciliationBatch.remote.json
+?? remote_pull/_agent_patch.mjs
+?? remote_pull/base44/
+?? remote_pull/bundle.tar
+?? remote_pull/err1.txt
+?? remote_pull/local-md5.txt
+?? remote_pull/proofbatch/
+?? remote_pull/push.sh
+?? remote_pull/src/components/estimator/quoteDeliveryService.js
+?? remote_pull/src/components/jobs/
+?? remote_pull/src/components/portal/
+?? remote_pull/src/components/workflow/
+?? remote_pull/src/pages/
+?? remote_quoteDefaults.js
+?? remote_quoteLifecycle.js
+?? remote_quotePdf.js
+?? remote_ref/
+?? remote_staff.json
+?? remote_staffEntities.js
+?? remote_t360.json
+?? remote_test-nav-wiring.mjs
+?? remote_test-walk-in.mjs
+?? remote_test/
+?? remote_test_recon.json
+?? remote_test_recon.mjs
+?? remote_tests.json
+?? remote_training/
+?? remote_validate-opportunity-workspace.mjs
+?? remote_verify/
+?? remote_w166/
+?? remote_w166_pull.json
+?? remote_w167/
+?? remote_w167_ptm.json
+?? remote_w167_pull.err
+?? remote_w167_pull.json
+?? remote_wo_entity.json
+?? remote_wo_entity.jsonc
+?? remote_workspacePrefs.js
+?? rt.json
+?? scripts/.btest.tmp.mjs
+?? scripts/.diffnorm.tmp.mjs
+?? scripts/.extract.tmp.mjs
+?? scripts/.tmp-brick-wire-calc.mjs
+?? scripts/.tmp-brick-wire-engine.mjs
+?? scripts/.tmp-brick-wire-glue.mjs
+?? scripts/.tmp-brick-wire-seam.mjs
+?? scripts/.tmp-brick-wire-tpl.mjs
+?? scripts/.tmp-brick-wire.mjs
+?? scripts/.tmp-categorizer.mjs
+?? scripts/.tmp-channel-wire.mjs
+?? scripts/.tmp-cnc-wire-calc.mjs
+?? scripts/.tmp-cnc-wire-engine.mjs
+?? scripts/.tmp-cnc-wire-seam.mjs
+?? scripts/.tmp-cnc-wire-tpl.mjs
+?? scripts/.tmp-cnc-wire.mjs
+?? scripts/.tmp-cp.mjs
+?? scripts/.tmp-crm-events.mjs
+?? scripts/.tmp-custom-items-wire-engine.mjs
+?? scripts/.tmp-custom-items-wire-seam.mjs
+?? scripts/.tmp-custom-items-wire-tpl.mjs
+?? scripts/.tmp-custom-items-wire.mjs
+?? scripts/.tmp-customer-merge.mjs
+?? scripts/.tmp-dbg.mjs
+?? scripts/.tmp-double-sided.mjs
+?? scripts/.tmp-email-gate.mjs
+?? scripts/.tmp-equipment-persistence.mjs
+?? scripts/.tmp-extract-parts.mjs
+?? scripts/.tmp-file-bridge.mjs
+?? scripts/.tmp-followup-templates.mjs
+?? scripts/.tmp-followups.mjs
+?? scripts/.tmp-foundation-reorder.mjs
+?? scripts/.tmp-foundation-wire-engine.mjs
+?? scripts/.tmp-foundation-wire-glue.mjs
+?? scripts/.tmp-foundation-wire-seam.mjs
+?? scripts/.tmp-foundation-wire-tpl.mjs
+?? scripts/.tmp-foundation-wire.mjs
+?? scripts/.tmp-imports.mjs
+?? scripts/.tmp-inv-b44-stub.mjs
+?? scripts/.tmp-laser-wire-calc.mjs
+?? scripts/.tmp-laser-wire-engine.mjs
+?? scripts/.tmp-laser-wire-seam.mjs
+?? scripts/.tmp-laser-wire-tpl.mjs
+?? scripts/.tmp-laser-wire.mjs
+?? scripts/.tmp-loc-service.mjs
+?? scripts/.tmp-loc-stub.mjs
+?? scripts/.tmp-machine-costs.mjs
+?? scripts/.tmp-maintenance-wire-engine.mjs
+?? scripts/.tmp-maintenance-wire-seam.mjs
+?? scripts/.tmp-maintenance-wire-tpl.mjs
+?? scripts/.tmp-maintenance-wire.mjs
+?? scripts/.tmp-margin.mjs
+?? scripts/.tmp-metal-wire-engine.mjs
+?? scripts/.tmp-metal-wire-seam.mjs
+?? scripts/.tmp-metal-wire-tpl.mjs
+?? scripts/.tmp-metal-wire.mjs
+?? scripts/.tmp-mutation-guard.mjs
+?? scripts/.tmp-n5.mjs
+?? scripts/.tmp-notification-model.mjs
+?? scripts/.tmp-origination.mjs
+?? scripts/.tmp-paint-wire-calc.mjs
+?? scripts/.tmp-paint-wire-engine.mjs
+?? scripts/.tmp-paint-wire-seam.mjs
+?? scripts/.tmp-paint-wire-tpl.mjs
+?? scripts/.tmp-paint-wire.mjs
+?? scripts/.tmp-part-group.mjs
+?? scripts/.tmp-patch-app.py
+?? scripts/.tmp-pe.mjs
+?? scripts/.tmp-pricing-engine.mjs
+?? scripts/.tmp-pricing-matrix.mjs
+?? scripts/.tmp-pricing-template.mjs
+?? scripts/.tmp-procurement-bill.mjs
+?? scripts/.tmp-procurement-recv.mjs
+?? scripts/.tmp-ptm.mjs
+?? scripts/.tmp-register.py
+?? scripts/.tmp-register2.py
+?? scripts/.tmp-register3.py
+?? scripts/.tmp-sdk-legacy.mjs
+?? scripts/.tmp-user-defaults.mjs
+?? scripts/.tmp-vinyl-wire-calc.mjs
+?? scripts/.tmp-vinyl-wire-engine.mjs
+?? scripts/.tmp-vinyl-wire-seam.mjs
+?? scripts/.tmp-vinyl-wire-tpl.mjs
+?? scripts/.tmp-vinyl-wire.mjs
+?? scripts/.tmp-wo-mut.mjs
+?? scripts/.upgrade.tmp.mjs
+?? scripts/.yt3.tmp.mjs
+?? scripts/.ytlive.tmp.mjs
+?? scripts/.ytlive2.tmp.mjs
+?? scripts/.ytlive3.tmp.mjs
+?? scripts/build-board-feed-fields.mjs
+?? scripts/build-business-address-fixture.mjs
+?? scripts/build-overpass-address-fixture.mjs
+?? scripts/check-gateway-allowlist.mjs
+?? scripts/crm-event-type-seed.json
+?? scripts/foundation-catalog-browser-fixture.mjs
+?? scripts/foundation-catalog-integrity-browser-fixture.mjs
+?? scripts/foundation-equipment-browser-fixture.mjs
+?? scripts/foundation-input-validation-browser-fixture.mjs
+?? scripts/foundation-layout-browser-fixture.mjs
+?? scripts/foundation-material-browser-fixture.mjs
+?? scripts/foundation-navigation-browser-fixture.mjs
+?? scripts/foundation-reinforcement-ui-fixture.mjs
+?? scripts/foundation-route-browser-fixture.mjs
+?? scripts/foundation-save-browser-fixture.mjs
+?? scripts/foundation-template-browser-fixture.mjs
+?? scripts/lib/
+?? scripts/live-serve-guard.mjs
+?? scripts/live-serve.tmp.mjs
+?? scripts/masterplan-serve.mjs
+?? scripts/permitting-address-feeder.mjs
+?? scripts/permitting-address-validation.mjs
+?? scripts/permitting-authority-verifier.mjs
+?? scripts/permitting-batch-geocode.mjs
+?? scripts/permitting-batch-lookup.mjs
+?? scripts/permitting-bbs-harvest.mjs
+?? scripts/permitting-bulk-office-drafts.mjs
+?? scripts/permitting-county-propagate.mjs
+?? scripts/permitting-doc-pipeline.mjs
+?? scripts/permitting-error-watchdog.mjs
+?? scripts/permitting-expand-state.mjs
+?? scripts/permitting-file-uploader.mjs
+?? scripts/permitting-fleet-supervisor.mjs
+?? scripts/permitting-forever-runner.mjs
+?? scripts/permitting-full-audit.mjs
+?? scripts/permitting-gap-researcher.mjs
+?? scripts/permitting-geocode-rule-mint.mjs
+?? scripts/permitting-gis-office-harvest.mjs
+?? scripts/permitting-gis-ordinance-harvest.mjs
+?? scripts/permitting-headless-research.mjs
+?? scripts/permitting-hollow-sweep.mjs
+?? scripts/permitting-keep-awake.mjs
+?? scripts/permitting-local-researcher.mjs
+?? scripts/permitting-local-resolver.mjs
+?? scripts/permitting-metrics.mjs
+?? scripts/permitting-mirror-sync.mjs
+?? scripts/permitting-office-dedupe.mjs
+?? scripts/permitting-office-diff.mjs
+?? scripts/permitting-office-researcher.mjs
+?? scripts/permitting-office-seed-scan.mjs
+?? scripts/permitting-office-sweep.mjs
+?? scripts/permitting-ordinance-scan.mjs
+?? scripts/permitting-parcel-discover.mjs
+?? scripts/permitting-parcel-resolver.mjs
+?? scripts/permitting-picker-contract.test.mjs
+?? scripts/permitting-picker-live-check.mjs
+?? scripts/permitting-pipeline-trigger.mjs
+?? scripts/permitting-queue-hygiene.mjs
+?? scripts/permitting-regional-harvest.mjs
+?? scripts/permitting-repair-blocked.mjs
+?? scripts/permitting-research-runner.mjs
+?? scripts/permitting-review-burn.mjs
+?? scripts/permitting-review-resolve.mjs
+?? scripts/permitting-roster-harvest.mjs
+?? scripts/permitting-rule-extractor.mjs
+?? scripts/permitting-signage-facts-worker.mjs
+?? scripts/permitting-source-monitor.mjs
+?? scripts/permitting-sweep-cleanup.mjs
+?? scripts/permitting-write-flusher.mjs
+?? scripts/pull-remote.mjs
+?? scripts/run-1000-validation.tmp.mjs
+?? scripts/run-3000-validation.tmp.mjs
+?? scripts/start-permitting-fleet.ps1
+?? scripts/strip-site-deploy-assets.mjs
+?? scripts/test-accounting-alerts.mjs
+?? scripts/test-accounting-export.mjs
+?? scripts/test-accounting-suite.mjs
+?? scripts/test-alert-subscriptions.mjs
+?? scripts/test-ar-aging-reports.mjs
+?? scripts/test-audit-log.mjs
+?? scripts/test-brick-pricing-wire.mjs
+?? scripts/test-broadcast.mjs
+?? scripts/test-cas-key-parity.mjs
+?? scripts/test-catalog-import.mjs
+?? scripts/test-channel-pricing-wire.mjs
+?? scripts/test-cnc-pricing-wire.mjs
+?? scripts/test-completed-vs-paid.mjs
+?? scripts/test-contact-roles.mjs
+?? scripts/test-conversion-seeding.mjs
+?? scripts/test-credit-memo.mjs
+?? scripts/test-credit-terms.mjs
+?? scripts/test-crm-event-queue.mjs
+?? scripts/test-crm-events.mjs
+?? scripts/test-crm-suggestion.mjs
+?? scripts/test-crm-suite.mjs
+?? scripts/test-custom-items-pricing-wire.mjs
+?? scripts/test-custom-status.mjs
+?? scripts/test-customer-analytics.mjs
+?? scripts/test-customer-import.mjs
+?? scripts/test-customer-lifecycle.mjs
+?? scripts/test-customer-merge.mjs
+?? scripts/test-customer-reports.mjs
+?? scripts/test-customer-tier.mjs
+?? scripts/test-customer-warning.mjs
+?? scripts/test-customer360-page.mjs
+?? scripts/test-data-export.mjs
+?? scripts/test-deep-links.mjs
+?? scripts/test-delivery-adapter.mjs
+?? scripts/test-delivery-telemetry.mjs
+?? scripts/test-digest-batch.mjs
+?? scripts/test-double-sided.mjs
+?? scripts/test-due-date-engine.mjs
+?? scripts/test-due-date-suite.mjs
+?? scripts/test-due-date-wiring.mjs
+?? scripts/test-email-settings.mjs
+?? scripts/test-estimate-import-export.mjs
+?? scripts/test-estimate-reports.mjs
+?? scripts/test-estimator-unattended.mjs
+?? scripts/test-face-scan-browser.mjs
+?? scripts/test-file-bridge.mjs
+?? scripts/test-financial-reports.mjs
+?? scripts/test-follow-up-machine.mjs
+?? scripts/test-follow-up-sweep.mjs
+?? scripts/test-followups.mjs
+?? scripts/test-formula-eval.mjs
+?? scripts/test-foundation-assembly.mjs
+?? scripts/test-foundation-catalog-integrity.mjs
+?? scripts/test-foundation-catalog-visibility.mjs
+?? scripts/test-foundation-draft-recovery.mjs
+?? scripts/test-foundation-equipment.mjs
+?? scripts/test-foundation-layout.mjs
+?? scripts/test-foundation-material-ui.mjs
+?? scripts/test-foundation-pricing-wire.mjs
+?? scripts/test-foundation-save-handler.mjs
+?? scripts/test-foundation-save-session.mjs
+?? scripts/test-foundation-sync-recovery.mjs
+?? scripts/test-foundation-template.mjs
+?? scripts/test-foundation-write-gateway.mjs
+?? scripts/test-fulfillment.mjs
+?? scripts/test-gl-account-admin.mjs
+?? scripts/test-gl-splits.mjs
+?? scripts/test-hard-due.mjs
+?? scripts/test-hours-of-operation.mjs
+?? scripts/test-imports.mjs
+?? scripts/test-integrations-status.mjs
+?? scripts/test-integrations-surface.mjs
+?? scripts/test-job-workspace-tabs.mjs
+?? scripts/test-job-workspace.mjs
+?? scripts/test-labor-levels.mjs
+?? scripts/test-laser-pricing-wire.mjs
+?? scripts/test-lump-sync.mjs
+?? scripts/test-machine-costs.mjs
+?? scripts/test-maintenance-pricing-wire.mjs
+?? scripts/test-margin.mjs
+?? scripts/test-master-account.mjs
+?? scripts/test-metal-pricing-wire.mjs
+?? scripts/test-migration.mjs
+?? scripts/test-modifier-pricing.mjs
+?? scripts/test-my-queue.mjs
+?? scripts/test-notes-override.mjs
+?? scripts/test-notification-center.mjs
+?? scripts/test-notification-suite.mjs
+?? scripts/test-notification-templates.mjs
+?? scripts/test-numbering-format.mjs
+?? scripts/test-ops-reports.mjs
+?? scripts/test-order-entry-override.mjs
+?? scripts/test-order-fees.mjs
+?? scripts/test-order-header.mjs
+?? scripts/test-order-waterfall-history.mjs
+?? scripts/test-origination.mjs
+?? scripts/test-override-report.mjs
+?? scripts/test-paint-pricing-wire.mjs
+?? scripts/test-parent-sizes.mjs
+?? scripts/test-part-group.mjs
+?? scripts/test-payment-register.mjs
+?? scripts/test-payment-reminders.mjs
+?? scripts/test-po-required.mjs
+?? scripts/test-poll-registry.mjs
+?? scripts/test-portal-payment.mjs
+?? scripts/test-portal-products.mjs
+?? scripts/test-portal-upload.mjs
+?? scripts/test-pricing-admin.mjs
+?? scripts/test-pricing-engine.mjs
+?? scripts/test-pricing-matrix.mjs
+?? scripts/test-pricing-regression.mjs
+?? scripts/test-pricing-template.mjs
+?? scripts/test-pricing-variables.mjs
+?? scripts/test-print-templates.mjs
+?? scripts/test-procurement.mjs
+?? scripts/test-product-audit-stage.mjs
+?? scripts/test-product-operational-status.mjs
+?? scripts/test-product-queue-model.mjs
+?? scripts/test-product-stage-sync.mjs
+?? scripts/test-product-status-model.mjs
+?? scripts/test-product-timer.mjs
+?? scripts/test-production-reports.mjs
+?? scripts/test-products-to-parts.mjs
+?? scripts/test-proof-batch.mjs
+?? scripts/test-proof-change-request.mjs
+?? scripts/test-proof-due-recalc.mjs
+?? scripts/test-proof-follow-up.mjs
+?? scripts/test-proof-pipeline.mjs
+?? scripts/test-proof-share-link.mjs
+?? scripts/test-proof-transitions.mjs
+?? scripts/test-proof-workflow.mjs
+?? scripts/test-qbo-adapter.mjs
+?? scripts/test-queue-auto-refresh.mjs
+?? scripts/test-queue-counters.mjs
+?? scripts/test-queue-feed.mjs
+?? scripts/test-queue-grouping.mjs
+?? scripts/test-queue-rows.mjs
+?? scripts/test-queue-url-state.mjs
+?? scripts/test-ready-triggers.mjs
+?? scripts/test-reconciliation-ui.mjs
+?? scripts/test-reconciliation.mjs
+?? scripts/test-refunds.mjs
+?? scripts/test-relationship-ids.mjs
+?? scripts/test-report-catalog.mjs
+?? scripts/test-report-drilldown.mjs
+?? scripts/test-report-engine-suite.mjs
+?? scripts/test-report-engine.mjs
+?? scripts/test-sales-funnel.mjs
+?? scripts/test-sales-reports.mjs
+?? scripts/test-samevalue-emptyclass.mjs
+?? scripts/test-saved-queue-views.mjs
+?? scripts/test-saved-report-runs.mjs
+?? scripts/test-scale-frontend.mjs
+?? scripts/test-scale-invoicing.mjs
+?? scripts/test-scale-reads.mjs
+?? scripts/test-schema-additions.mjs
+?? scripts/test-schema-crm-fields.mjs
+?? scripts/test-schema-crmevent.mjs
+?? scripts/test-schema-featurereport.mjs
+?? scripts/test-schema-globalsettings.mjs
+?? scripts/test-schema-income-cogs.mjs
+?? scripts/test-schema-invoice-fields.mjs
+?? scripts/test-schema-machine-tax.mjs
+?? scripts/test-schema-order-fields.mjs
+?? scripts/test-schema-part-fields.mjs
+?? scripts/test-schema-partgroups-modifiers.mjs
+?? scripts/test-schema-payment-fields.mjs
+?? scripts/test-schema-pricing-entities.mjs
+?? scripts/test-schema-savedqueueview.mjs
+?? scripts/test-schema-vendor.mjs
+?? scripts/test-sendstaffemail.mjs
+?? scripts/test-setup-fee-compose.mjs
+?? scripts/test-size-discounts.mjs
+?? scripts/test-sop-module.mjs
+?? scripts/test-source-project-persistence.mjs
+?? scripts/test-stable-hook-defaults.mjs
+?? scripts/test-statement-batch.mjs
+?? scripts/test-statement-depth.mjs
+?? scripts/test-statements.mjs
+?? scripts/test-store-credit.mjs
+?? scripts/test-suite-conventions.mjs
+?? scripts/test-tag-responsibility.mjs
+?? scripts/test-tax-exempt.mjs
+?? scripts/test-tax-liability.mjs
+?? scripts/test-template-render.mjs
+?? scripts/test-training-module.mjs
+?? scripts/test-ui-pass-financial.mjs
+?? scripts/test-unified-alerts.mjs
+?? scripts/test-user-defaults.mjs
+?? scripts/test-user-prefs.mjs
+?? scripts/test-vendor-cost.mjs
+?? scripts/test-vendor-notify.mjs
+?? scripts/test-vinyl-pricing-wire.mjs
+?? scripts/test-walk-in.mjs
+?? scripts/test-write-swallow-audit.mjs
+?? scripts/watch-validation.mjs
+?? src/api/rateLimitCooldown.js
+?? src/assets/oh-ky-counties.json
+?? src/components/LoadErrorBanner.jsx
+?? src/components/account/
+?? src/components/admin/AssetMigrationPanel.jsx
+?? src/components/admin/DataExportPanel.jsx
+?? src/components/admin/IntegrationsPanel.jsx
+?? src/components/admin/PermittingRulesList.jsx
+?? src/components/comms/
+?? src/components/crm/
+?? src/components/customer360/
+?? src/components/estimator/DuplicateEstimateDialog.jsx
+?? src/components/estimator/EstimateActivityPanel.jsx
+?? src/components/estimator/EstimateMarginSection.jsx
+?? src/components/estimator/EstimatorAuditPanel.jsx
+?? src/components/estimator/IntegrationsSurface.jsx
+?? src/components/estimator/MarginBreakdown.jsx
+?? src/components/estimator/SignaturePad.jsx
+?? src/components/estimator/VendorCostBadge.jsx
+?? src/components/estimator/a11y.js
+?? src/components/estimator/brick/brickSellPricing.js
+?? src/components/estimator/channel/channelSellPricing.js
+?? src/components/estimator/cnc/cncSellPricing.js
+?? src/components/estimator/customItems/
+?? src/components/estimator/deepLinks.js
+?? src/components/estimator/depositGate.js
+?? src/components/estimator/estimateConversionService.js
+?? src/components/estimator/exportEstimates.js
+?? src/components/estimator/foundation/FoundationReinforcementPricingInfo.jsx
+?? src/components/estimator/foundation/FoundationReinforcementProposalPanel.jsx
+?? src/components/estimator/foundation/ReinforcementDraftField.jsx
+?? src/components/estimator/foundation/ReinforcementDraftGeometry.jsx
+?? src/components/estimator/foundation/ReinforcementDraftList.jsx
+?? src/components/estimator/foundation/ReinforcementDraftMaterial.jsx
+?? src/components/estimator/foundation/convertToBrickStone.js
+?? src/components/estimator/foundation/foundationAssemblyModel.js
+?? src/components/estimator/foundation/foundationCatalogIntegrity.js
+?? src/components/estimator/foundation/foundationDraftRecovery.js
+?? src/components/estimator/foundation/foundationEquipmentBindings.js
+?? src/components/estimator/foundation/foundationGeometryInputs.js
+?? src/components/estimator/foundation/foundationInputValidation.js
+?? src/components/estimator/foundation/foundationLayoutModel.js
+?? src/components/estimator/foundation/foundationReinforcementBasis.js
+?? src/components/estimator/foundation/foundationReinforcementBasisKey.js
+?? src/components/estimator/foundation/foundationReinforcementCost.js
+?? src/components/estimator/foundation/foundationReinforcementDraft.js
+?? src/components/estimator/foundation/foundationReinforcementFrozenPricing.js
+?? src/components/estimator/foundation/foundationReinforcementItemProjection.js
+?? src/components/estimator/foundation/foundationReinforcementModel.js
+?? src/components/estimator/foundation/foundationReinforcementPartDescriptors.js
+?? src/components/estimator/foundation/foundationReinforcementProjection.js
+?? src/components/estimator/foundation/foundationReinforcementProposal.js
+?? src/components/estimator/foundation/foundationSaveSession.js
+?? src/components/estimator/foundation/foundationSellPricing.js
+?? src/components/estimator/foundation/foundationSyncRecovery.js
+?? src/components/estimator/foundation/foundationTemplateModel.js
+?? src/components/estimator/importEstimates.js
+?? src/components/estimator/laser/laserSellPricing.js
+?? src/components/estimator/maintenance/maintenanceSellPricing.js
+?? src/components/estimator/metal/metalSellPricing.js
+?? src/components/estimator/moduleShared/
+?? src/components/estimator/paint/paintSellPricing.js
+?? src/components/estimator/poRequiredModel.js
+?? src/components/estimator/productStageSync.js
+?? src/components/estimator/products/kitService.js
+?? src/components/estimator/settings/PricingAdminTabs.jsx
+?? src/components/estimator/settings/moduleSettingDefaults.js
+?? src/components/estimator/userDateDisplay.js
+?? src/components/estimator/vinyl/vinylEnginePricing.js
+?? src/components/files/
+?? src/components/importer/
+?? src/components/imports/
+?? src/components/invoicing/
+?? src/components/jobcosting/
+?? src/components/jobs/
+?? src/components/kit/
+?? src/components/layout/NavFlyoutMenu.jsx
+?? src/components/layout/NavPageLink.jsx
+?? src/components/layout/PageLoading.jsx
+?? src/components/layout/SidebarNavGroup.jsx
+?? src/components/layout/WorkspacePreferencesProvider.jsx
+?? src/components/layout/navPreferences.js
+?? src/components/layout/workspacePrefs.js
+?? src/components/migration/
+?? src/components/permitting/ClientSignagePanel.jsx
+?? src/components/permitting/CoverageMap.jsx
+?? src/components/permitting/OfficeChangeLog.jsx
+?? src/components/permitting/OpenNowBadge.jsx
+?? src/components/permitting/SignageFactsPanel.jsx
+?? src/components/permitting/application/
+?? src/components/permitting/permitPack.js
+?? src/components/portal/ProductStatusPanel.jsx
+?? src/components/portal/productPortalModel.js
+?? src/components/pricing/
+?? src/components/procurement/
+?? src/components/proofs/
+?? src/components/queues/
+?? src/components/reconciliation/
+?? src/components/reports/OpsReportView.jsx
+?? src/components/reports/ReportCatalogPanel.jsx
+?? src/components/reports/opsReportModel.js
+?? src/components/reports/overrideReportModel.js
+?? src/components/reports/reportEngine.js
+?? src/components/shared/SiteStreetView.jsx
+?? src/components/shared/exportCsv.js
+?? src/components/shared/glExport.js
+?? src/components/shared/loadGlLookup.js
+?? src/components/sop/
+?? src/components/statements/
+?? src/components/timeclock/AdminNoteDialog.jsx
+?? src/components/timeclock/AdminRosterPanels.jsx
+?? src/components/timeclock/CrystalShiftButton.jsx
+?? src/components/timeclock/MissedShiftDialog.jsx
+?? src/components/timeclock/TimeClockCalendar.jsx
+?? src/components/timeclock/TimeClockHelpCard.jsx
+?? src/components/timeclock/TimeQuickPick.jsx
+?? src/components/timeclock/WorkDayGroupDialog.jsx
+?? src/components/timeclock/WorkspaceSettingsCenter.jsx
+?? src/components/timeclock/timeClockIdentifyCopy.js
+?? src/components/timeclock/timeClockReadCache.js
+?? src/components/training/
+?? src/components/ui/ccs-date-field.jsx
+?? src/components/walkin/
+?? src/components/workflow/NotificationCenter.jsx
+?? src/components/workflow/NotificationHistory.jsx
+?? src/components/workflow/attentionComputedModel.js
+?? src/components/workflow/attentionFeedCategories.js
+?? src/components/workflow/notificationClient.js
+?? src/components/workflow/notificationModel.mjs
+?? src/lib/lazyPage.js
+?? src/lib/pollRegistry.js
+?? src/pages/AuditLog.jsx
+?? src/pages/CbMigration.jsx
+?? src/pages/CommsFollowups.jsx
+?? src/pages/CrmEvents.jsx
+?? src/pages/CustomItemsEstimator.jsx
+?? src/pages/Customer360.jsx
+?? src/pages/CustomerStatements.jsx
+?? src/pages/Imports.jsx
+?? src/pages/InstallRouteMap.jsx
+?? src/pages/JobWorkspace.jsx
+?? src/pages/OpsReports.jsx
+?? src/pages/PermittingSearch.jsx
+?? src/pages/PricingAdmin.jsx
+?? src/pages/ProductQueues.jsx
+?? src/pages/Reconciliation.jsx
+?? src/pages/SOP.jsx
+?? src/pages/ServerFiles.jsx
+?? src/pages/WalkIn.jsx
+?? src/shared/hostedAssetUrl.js
+?? src/shared/publicAssetPaths.js
+?? src_components_estimator_EstimatorAuditPanel.jsx
+?? src_components_estimator_userDateDisplay.js
+?? tests1.json
+?? tmp_FeatureReports.jsx
+?? tmp_pulls/
+?? tmp_smtp/
+?? v1.json
+?? v2.json
+?? v3.json
+?? v4.json
+?? v5.json
+?? w1.json
+?? wp.json
+?? wpa.json
+?? wpp.json
+?? wtmp.json

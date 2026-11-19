@@ -1,0 +1,73 @@
+{
+  "mockedIO": true,
+  "realBase44StorageVerified": false,
+  "explicitNullClearReadbackVerified": false,
+  "results": [
+    {
+      "mode": "dialog",
+      "width": 1440,
+      "ok": true,
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "mode": "new",
+      "width": 1440,
+      "ok": true,
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "mode": "legacy",
+      "width": 1440,
+      "ok": true,
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "mode": "dialog",
+      "width": 390,
+      "ok": true,
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "mode": "new",
+      "width": 390,
+      "ok": true,
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "mode": "legacy",
+      "width": 390,
+      "ok": true,
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    }
+  ]
+}

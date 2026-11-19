@@ -1,0 +1,48 @@
+ok pole: clean active row prices (parity + no catalog issue)
+ok pole: inactive row -> catalog_item_inactive + held (never $0)
+ok pole: inactive via is_active:false -> catalog_item_inactive
+ok pole: tombstoned row -> catalog_item_deleted
+ok pole: unpriced row -> existing pole_price_unavailable (parity)
+ok pole: deliberate $0 row prices as free (parity)
+ok pole: stock mode inactive -> inactive flag (not price issue)
+ok pole: stock mode active prices stock math (parity)
+ok pole: missing/ambiguous/wrong-type codes unchanged (parity)
+ok pole: saved snapshot retained under inactive flag
+ok wall: clean active material prices (parity)
+ok wall: inactive material -> catalog_item_inactive + held
+ok wall: tombstoned material -> catalog_item_deleted
+ok wall: internal-wall inactive material -> internal_wall inactive flag
+ok wall: internal-wall deleted material -> internal_wall deleted flag
+ok wall: unpriced material -> existing wall_material_price_unavailable (parity)
+ok wall: lifecycle beats consumed basis (inactive+unpriced -> inactive only)
+ok wall: missing/ambiguous/wrong-type codes unchanged (parity)
+ok wall: saved calculatedCosts retained under inactive flag
+ok cap: clean active row prices full stock (parity)
+ok cap: inactive row -> catalog_item_inactive + held
+ok cap: tombstoned row -> catalog_item_deleted
+ok cap: unpriced row -> existing wall_cap_stock_price_unavailable (parity)
+ok cap: deliberate $0 stock stays free-priced (parity)
+ok cap: missing/ambiguous/wrong-type codes unchanged (parity)
+ok cap: saved snapshot retained under inactive flag
+ok equipment: clean active entry prices (parity)
+ok equipment: inactive row -> catalog_item_inactive + held entry
+ok equipment: tombstoned row -> catalog_item_deleted
+ok equipment: normalized attachments inactive -> attachment inactive flag
+ok equipment: attachment_counts inactive -> attachment flag; deleted sub -> sub_attachment flag
+ok equipment: zero-count attachment to inactive row stays unconsumed (parity)
+ok equipment: unassigned/missing codes unchanged (parity)
+ok equipment: unpriced catalog rate -> existing equipment_price_unavailable (parity)
+ok equipment: saved equipment_cost retained under inactive flag
+ok parity: calcPoles output byte-identical to remote baseline
+ok parity: calcWalls output byte-identical to remote baseline
+ok parity: calcWallCaps output byte-identical to remote baseline
+ok parity: calcEquipmentPricing output byte-identical to remote baseline
+ok parity: held-path codes on missing rows byte-identical to remote
+ok parity: fully-priced calcProject byte-identical to remote baseline
+ok calcProject: inactive pole/wall/cap/equipment surface through catalogIssues once
+ok calcProject: saved project snapshot retained under lifecycle flags
+ok calcProject: deleted equipment row flags + equipment total withheld
+ok calcProject: assembly scan keeps its own pole lifecycle guard for other callers
+ok calcProject: wall_cap lifecycle issue arrives via the single emitter channel
+
+46 passed, 0 failed

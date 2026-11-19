@@ -1,0 +1,21 @@
+{
+ "suite": "brick-red",
+ "passed": 13,
+ "failed": 0,
+ "result": "PASS",
+ "defects": [
+  "waste_factor 0 → bricks/material/labor silently $0 while surface area stayed positive (saveable)",
+  "bricks_per_hour 0 → Math.max(1,·) clamp silently priced labor at 1 brick/hr (brick-count hours)",
+  "mortar_bag_cost 'abc' → silently resolved the $12 default",
+  "markup_percent 'abc' → silently priced as 0% markup",
+  "missing material cost_per_unit → $0 material silently",
+  "blank mortar_gap '' → num('') laundered to 0 (not the 0.375\" default)",
+  "recorded layers 0 → silently repriced as 1 layer",
+  "hex '0x10' waste_factor → num() parsed 16 → ~16x brick-count explosion",
+  "malformed dimension 'abc' → silently 0, wall still produced saveable surface area",
+  "null mortar_bag_cost → num(null) laundered to $0 (not the default)",
+  "malformed labor rate 'free' → silently resolved $55",
+  "missing material length → derived geometry silently dropped",
+  "no issues/pricingUnavailable/__held channel existed at all"
+ ]
+}

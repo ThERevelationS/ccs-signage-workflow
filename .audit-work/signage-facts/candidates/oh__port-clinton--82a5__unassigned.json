@@ -1,0 +1,36 @@
+{
+ "jurisdiction_id": "6adc435796787638c95082a5",
+ "jurisdiction_name": "Port Clinton",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Fee : R esidential: $40.00 Commercial: $120.00 APPLICATION FOR ZONING PERMIT Port Clinton Planning Commission 1868 East Perry Street Port Clinton, Ohio 43452 Phone: 419 - 734 - 5522 Fax: 419 - 734 - 1043 Date of Application ____/____/____ Permit Number _________ The undersigned hereby applies for a zoning permit for the following use, to be issued on the basis of the representations contained herein, all of which applicant says are true. 1. Location of Property _______________________________________________________ 2. Occupant of Property ________ __________________ Phone ______________________ 3. Name of Property Owner _______________________ Phone _______________________ 4. Address of Property Owner _________________________________________________ 5. Proposed Use (explain) ________________________________ ____________________ _____ New Construction _____ Business _____ Remodeling ___",
+   "tags": [
+    "fee",
+    "dimension",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "341f630793438eab751ec97671bb839d9884ced4aa419f116ef19a76641ae4ec",
+   "source_document_id": null,
+   "source_title": "341f630793438eab751ec97671bb839d9884ced4aa419f116ef19a76641ae4ec.pdf",
+   "official_url": "https://cms2.revize.com/revize/portclinton/zoning-permit-application.pdf?t=202508191127250&t=202508191127250"
+  },
+  {
+   "page": 2,
+   "snippet": "Fee : R esidential: $40.00 Commercial: $120.00 7. Buildings Use ___________________________________________________________ Number of Stories _____ Basement _____ Yes _____ No Useable floor space designed for use as living quarter, exclusive of basements, porches, garages, breezeways, terrace, atti cs or partial stories: First Floor ___________________________________ square feet Second Floor ________________________________ square feet Off Street Parking _____________________________ number of spaces ********** Access must remain available to wat er meters, water meter pits and / or water meter remotes ********** 8. Address of ad joining property owners: Each Side: ______________________________________________________________ ______________________________________________________________ Rear ______________________________________________________________ 9. Remarks: ___________________",
+   "tags": [
+    "fee",
+    "area"
+   ],
+   "weight": 3,
+   "source_sha256": "341f630793438eab751ec97671bb839d9884ced4aa419f116ef19a76641ae4ec",
+   "source_document_id": null,
+   "source_title": "341f630793438eab751ec97671bb839d9884ced4aa419f116ef19a76641ae4ec.pdf",
+   "official_url": "https://cms2.revize.com/revize/portclinton/zoning-permit-application.pdf?t=202508191127250&t=202508191127250"
+  }
+ ]
+}

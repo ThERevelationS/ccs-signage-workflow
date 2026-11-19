@@ -1,0 +1,18 @@
+ok legacy or absent calculation versions never acquire invented steel or a new design
+ok one top mat renders exactly eight horizontal 30-inch paths, totaling 20 physical feet, with no invented vertical steel
+ok inches convert once into concrete-centered local feet with the nominal physical bar radius
+ok a grade offset and shared parent rotation preserve the concrete-to-steel registration
+ok multiple instances retain per-instance geometry instead of scaling a bar's dimensions
+ok pricing overrides, frozen totals and an unapplied draft cannot alter the active physical preview
+ok pillar longitudinal bars and hoop centerlines remain separate physical primitives
+ok inter-mat ties remain reference paths; authored hook/cut allowances are not invented as straight geometry
+ok unconfigured supports stay visibly unmodeled rather than being fabricated as zero support objects
+ok rebar explicitly off produces no steel and does not require a design
+ok unsupported versions and malformed active designs do not silently display legacy steel
+ok invalid counts never turn into one foundation or an unbounded render loop
+ok hiding reinforcement does not change foundation geometry or the saved design
+ok instance and steel budgets affect only the preview, not authored quantities
+ok nonfinite or partial authored transforms fail visibly; large finite rotation is safely normalized
+ok unsupported 3D float ranges and malformed collections do not fabricate zero-sized geometry
+Reinforcement preview model: 16/16; failed=0
+exit=0

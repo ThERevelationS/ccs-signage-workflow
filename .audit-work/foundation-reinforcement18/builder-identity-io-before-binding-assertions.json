@@ -1,0 +1,202 @@
+{
+  "synthetic": true,
+  "actualBuilderService": true,
+  "financialHelpersMocked": true,
+  "partSyncMocked": true,
+  "recoveryExecutionMocked": true,
+  "authorizationGateMocked": true,
+  "realBase44StorageVerified": false,
+  "scope": "Actual service selection, ensureProduct routing, Estimate update, marker selection and return scoping. Not a financial calculator, complete recovery, provider or real-storage test.",
+  "results": [
+    {
+      "name": "normal save, missing unrelated Builder ID",
+      "ok": true,
+      "returnedLineId": "foundation-line",
+      "unrelatedRecordsUnchanged": true,
+      "writes": [
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "estimate",
+          "lineIds": [
+            "unrelated-line",
+            "foundation-line"
+          ]
+        }
+      ],
+      "pendingRecoveryTargets": []
+    },
+    {
+      "name": "normal save, null Builder IDs",
+      "ok": true,
+      "returnedLineId": "foundation-line",
+      "unrelatedRecordsUnchanged": true,
+      "writes": [
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "estimate",
+          "lineIds": [
+            "unrelated-line",
+            "foundation-line"
+          ]
+        }
+      ],
+      "pendingRecoveryTargets": []
+    },
+    {
+      "name": "normal save, empty Builder IDs",
+      "ok": true,
+      "returnedLineId": "foundation-line",
+      "unrelatedRecordsUnchanged": true,
+      "writes": [
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "estimate",
+          "lineIds": [
+            "unrelated-line",
+            "foundation-line"
+          ]
+        }
+      ],
+      "pendingRecoveryTargets": []
+    },
+    {
+      "name": "same module, different source and missing Builder ID",
+      "ok": true,
+      "returnedLineId": "foundation-line",
+      "unrelatedRecordsUnchanged": true,
+      "writes": [
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "estimate",
+          "lineIds": [
+            "unrelated-line",
+            "foundation-line"
+          ]
+        }
+      ],
+      "pendingRecoveryTargets": []
+    },
+    {
+      "name": "different modules sharing a project ID",
+      "ok": true,
+      "returnedLineId": "foundation-line",
+      "unrelatedRecordsUnchanged": true,
+      "writes": [
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "estimate",
+          "lineIds": [
+            "unrelated-line",
+            "foundation-line"
+          ]
+        }
+      ],
+      "pendingRecoveryTargets": []
+    },
+    {
+      "name": "legacy target line without its Builder ID",
+      "ok": true,
+      "returnedLineId": "foundation-line",
+      "unrelatedRecordsUnchanged": true,
+      "writes": [
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "estimate",
+          "lineIds": [
+            "unrelated-line",
+            "foundation-line"
+          ]
+        }
+      ],
+      "pendingRecoveryTargets": []
+    },
+    {
+      "name": "explicit target Builder ID without project hint",
+      "ok": true,
+      "returnedLineId": "foundation-line",
+      "unrelatedRecordsUnchanged": true,
+      "writes": [
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "estimate",
+          "lineIds": [
+            "unrelated-line",
+            "foundation-line"
+          ]
+        }
+      ],
+      "pendingRecoveryTargets": []
+    },
+    {
+      "name": "initial freeze scopes marker, recovery and returned line",
+      "ok": true,
+      "returnedLineId": "foundation-line",
+      "unrelatedRecordsUnchanged": true,
+      "writes": [
+        {
+          "kind": "builder",
+          "id": "foundation-builder"
+        },
+        {
+          "kind": "estimate",
+          "lineIds": [
+            "unrelated-line",
+            "foundation-line"
+          ]
+        }
+      ],
+      "pendingRecoveryTargets": [
+        "foundation-line"
+      ]
+    }
+  ]
+}

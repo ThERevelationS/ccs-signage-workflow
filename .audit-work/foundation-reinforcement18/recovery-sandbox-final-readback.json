@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "exact": true
+    },
+    {
+      "path": "src/components/estimator/builder/builderService.js",
+      "exact": true
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationBuilderRecovery.js",
+      "exact": true
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "exact": true
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "exact": true
+    }
+  ],
+  "reinforcementV2Activated": false
+}

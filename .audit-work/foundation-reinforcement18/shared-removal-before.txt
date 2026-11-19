@@ -1,0 +1,35 @@
+ok unchecked baseline preserves exact split and per-unit labor manual cost
+ok explicit zero baseline never uses positive inventory price
+ok recalculated zero current price does not silently accept over frozen40
+ok catalog to manual clears current link/candidates, keeps original and frozen history
+ok repeat manual saves never reattach through historical original ID
+ok manual to catalog disables manual override and attaches only selected ID
+ok only explicit accept replaces frozen40 with known manual0
+ok intentional detached override retains amount, quantity and manual value
+ok replacement path changes inventory ID, never destroys the material object
+ok legacy unlinked labor keeps its existing per-job amount convention
+ok fresh saved catalog proof works without trusting a caller recalculation flag
+ok caller recalculated=true cannot stamp a stale saved catalog as calculated
+ok new parts added to an existing priced builder also carry the recalculation requirement
+ok size changes with unchanged price still require source recalculation
+ok unsupported catalog units cannot be certified by a stored ft label
+ok unknown weight or missing catalog revision never becomes current proof
+ok stale basis cannot establish an unchecked baseline or accept frozen prices
+ok missing catalog retains detached review rather than fabricating a fresh basis
+ok part acceptance rejects stale proof even if parent flag or monetary prices look unchanged
+ok fresh explicit zero override is retained with positive catalog pricing
+ok new frozen baselines record both price quantities and their correct units
+ok legacy per-job budgets never acquire an invented frozen hourly basis
+ok current40ft80 does not overwrite frozen20ft40 or its physical snapshot
+ok explicit sync price acceptance records current40ft80 as the new financial basis
+ok price-acceptance planning records new context without mutating the previous basis
+ok accepted removals clear the active frozen context rather than fabricating a zero-rate recipe
+ok ordinary refresh rejects a corrupt recorded context instead of silently repairing it
+ok unrecorded contexts are isolated between parts and later planning calls
+FAIL explicit v2 removal needs no replacement for a deleted catalog item, but live detached parts still block Expected values to be strictly equal:
+
+1 !== 0
+
+ok planning is frozen-input safe and never executes live operations
+Shared sync planning: 29/30; failed=1
+exit=1

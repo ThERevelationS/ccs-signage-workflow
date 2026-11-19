@@ -1,0 +1,160 @@
+{
+  "results": [
+    {
+      "name": "unchanged: concrete material, positive settings",
+      "ok": true
+    },
+    {
+      "name": "unchanged: genuine zero material price",
+      "ok": true
+    },
+    {
+      "name": "unchanged: brick, explicit dry joint",
+      "ok": true
+    },
+    {
+      "name": "unchanged: brick_stone type and mortar joint",
+      "ok": true
+    },
+    {
+      "name": "unchanged: stone units, two unequal segments",
+      "ok": true
+    },
+    {
+      "name": "unchanged: closed outline with internal brick",
+      "ok": true
+    },
+    {
+      "name": "unchanged: open outline with internal brick",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal concrete units",
+      "ok": true
+    },
+    {
+      "name": "unchanged: outer explicit price override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: outer explicit free override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal explicit price override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal explicit free override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: outer explicit quantity override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: outer explicit zero quantity",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal explicit quantity override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal explicit zero quantity",
+      "ok": true
+    },
+    {
+      "name": "unchanged: fractional explicit material price",
+      "ok": true
+    },
+    {
+      "name": "unchanged: numeric-string material price",
+      "ok": true
+    },
+    {
+      "name": "unchanged: numeric-string free price",
+      "ok": true
+    },
+    {
+      "name": "unchanged: irrelevant catalog row cannot change wall calculation",
+      "ok": true
+    },
+    {
+      "name": "numeric zero labor respects a genuine minimum of one",
+      "ok": false,
+      "error": "numeric zero labor respects a genuine minimum of one / laborCost\n\n45 !== 1\n"
+    },
+    {
+      "name": "numeric zero minimum leaves the actual one-dollar labor charge",
+      "ok": false,
+      "error": "numeric zero minimum leaves the actual one-dollar labor charge / laborCost\n\n150 !== 1\n"
+    },
+    {
+      "name": "numeric zero mortar rate does not substitute ten dollars",
+      "ok": false,
+      "error": "numeric zero mortar rate does not substitute ten dollars / mortarCost\n\n10 !== 0\n"
+    },
+    {
+      "name": "numeric zero labor and minimum leave only concrete wall materials",
+      "ok": false,
+      "error": "numeric zero labor and minimum leave only concrete wall materials / laborCost\n\n150 !== 0\n"
+    },
+    {
+      "name": "all numeric zero shop rates retain the brick material charge",
+      "ok": false,
+      "error": "all numeric zero shop rates retain the brick material charge / laborCost\n\n150 !== 0\n"
+    },
+    {
+      "name": "free material and all zero shop rates produce a genuine zero total",
+      "ok": false,
+      "error": "free material and all zero shop rates produce a genuine zero total / laborCost\n\n150 !== 0\n"
+    },
+    {
+      "name": "internal wall uses the same explicit zero labor and mortar settings",
+      "ok": false,
+      "error": "internal wall uses the same explicit zero labor and mortar settings / laborCost\n\n180 !== 0\n"
+    },
+    {
+      "name": "internal zero mortar preserves positive actual labor quantities",
+      "ok": false,
+      "error": "internal zero mortar preserves positive actual labor quantities / laborCost\n\n150 !== 4\n"
+    },
+    {
+      "name": "numeric-string zero behavior remains unchanged",
+      "ok": true
+    },
+    {
+      "name": "missing shop settings retain the existing documented defaults",
+      "ok": true
+    },
+    {
+      "name": "missing brick shop settings retain the existing defaults",
+      "ok": true
+    },
+    {
+      "name": "outer labor override still wins over a zero shop labor rate",
+      "ok": false,
+      "error": "outer labor override still wins over a zero shop labor rate / laborCost\n\n150 !== 7\n"
+    },
+    {
+      "name": "outer mortar override still wins over a zero shop mortar rate",
+      "ok": false,
+      "error": "outer mortar override still wins over a zero shop mortar rate / laborCost\n\n150 !== 1\n"
+    },
+    {
+      "name": "internal labor override retains its own basis with zero shop rates",
+      "ok": false,
+      "error": "internal labor override retains its own basis with zero shop rates / laborCost\n\n180 !== 0\n"
+    },
+    {
+      "name": "internal mortar override retains its own basis with zero shop rates",
+      "ok": false,
+      "error": "internal mortar override retains its own basis with zero shop rates / laborCost\n\n180 !== 0\n"
+    },
+    {
+      "name": "unavailable material still holds the acknowledged snapshot with zero shop rates",
+      "ok": true
+    }
+  ]
+}

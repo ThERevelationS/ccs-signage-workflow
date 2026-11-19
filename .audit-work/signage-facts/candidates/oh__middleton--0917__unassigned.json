@@ -1,0 +1,26 @@
+{
+ "jurisdiction_id": "6aea1073160763e2e57b0917",
+ "jurisdiction_name": "Middleton",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Zoning Fees Effective Date 6-2011 Residential Dwelling – Single Family* $300 + .10 per sq ft Residential Dwelling – Two Family * $300 + .10 per sq ft Multi-Family Dwellings (per dwelling or family unit) $300 + .10 per sq ft Additional Units $300 + .10 per sq ft Residential Additions $100 + .10 per sq ft Accessory Buildings/Garages/Pole Barns $200 + .10 per sq ft Industrial $500 + .10 per sq ft Commercial $500 + .10 per sq ft Industrial/Commercial Additions $300 + .10 per sq ft Driveway/Culvert $200 Fences/Walls $50 Ponds/Pools $200 Decks/Pergolas $50 + .10 per sq ft Billboards $500 Signs – Off Site less than 200 sq ft $500 Signs – On Site $200 Signs – On Site More than 100 sq ft $275 Temporary Real Estate Signs 12 sq ft and over (6 mos.) $50 Construction Trailer/Temporary Tool (6 mos.) $100 Temporary Living Trailers (1 year) $75 Zoning Commission Hearing ** $300 Appeals Hearing/Condition",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "process",
+    "billboard",
+    "temporary"
+   ],
+   "weight": 11,
+   "source_sha256": "b0fa16612fd4b3eae19054d04dd5082478c96fa525ca87f00ab892d1b32ee500",
+   "source_document_id": null,
+   "source_title": "b0fa16612fd4b3eae19054d04dd5082478c96fa525ca87f00ab892d1b32ee500.pdf",
+   "official_url": "https://www.middletontownship.com/wp-content/uploads/2022/05/Middleton-TWP-Zoning-Fees.pdf"
+  }
+ ]
+}

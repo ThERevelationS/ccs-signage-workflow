@@ -1,0 +1,34 @@
+{
+  "inputs": [
+    "s:s://@/api/gatedEntities",
+    "s:s://lucide-react",
+    "s:s://@/components/ui/button",
+    "s:s://@/components/ui/input",
+    "s:s://@/components/ui/textarea",
+    "s:s://@/components/ui/select",
+    "s:s://@/components/estimator/builder/builderService",
+    "s:s://@/components/estimator/loadAllEntityRows",
+    "s:s://@/components/estimator/builder/sourceProjectPersistence",
+    "s:s://@/components/estimator/idempotentEntityCreate",
+    "s:s://@/components/estimator/moduleShared/ModuleActionBar",
+    "s:s://@/components/estimator/moduleShared/ModuleTemplateDialog",
+    "s:s://@/components/estimator/moduleShared/moduleProjectActions",
+    "s:s://@/components/markup/CustomerPricingTab",
+    "frozen:/app/src/components/markup/projectCategorizer.jsx",
+    "s:s://@/components/markup/savedCustomerPricing",
+    "frozen:/app/src/components/estimator/builder/itemIdentity.js",
+    "frozen:/app/src/components/estimator/paint/paintCalc.js",
+    "frozen:/app/src/components/estimator/paint/paintPricingAvailability.js",
+    "s:s://@/components/staff/staffEntities",
+    "frozen:/app/src/pages/PaintingEstimator.jsx",
+    "frozen:/app/paint-page-entry.jsx"
+  ],
+  "loaded": {
+    "/app/paint-page-entry.jsx": "bc72a67e6f2ca227d5fb1b49b49e674489038c662c4056a924eb1d6a0e4cb25e",
+    "/app/src/pages/PaintingEstimator.jsx": "96e45eb0954746cbbaadf0af67085b0997131b15dfb4252053f72b055e34ffcc",
+    "/app/src/components/estimator/builder/itemIdentity.js": "e6bc3736697685117afd483a081d7bba378ca6ef99e865d42bc2114208b30d3d",
+    "/app/src/components/estimator/paint/paintCalc.js": "49fc1502d9072e6adf96bad1360bc448e7e50928d96fd7a6bc249a43a1178dde",
+    "/app/src/components/estimator/paint/paintPricingAvailability.js": "da5a648bfe4bbda3e7ee1f3de798afe1bf6dc4f2b024314167083e46b6e384fc",
+    "/app/src/components/markup/projectCategorizer.jsx": "e66446aefa59977bd8924d7014dca1b910f2d1aee35b9bc7561178f79c3ed93b"
+  }
+}

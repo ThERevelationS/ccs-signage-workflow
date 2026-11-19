@@ -1,0 +1,41 @@
+{
+  "syntheticOnly": true,
+  "source": "fresh-sandbox",
+  "results": [
+    {
+      "name": "known-price",
+      "inputPrice": 25,
+      "savedCost": 21,
+      "calculatedCost": 25,
+      "total": 25
+    },
+    {
+      "name": "explicit-zero",
+      "inputPrice": 0,
+      "savedCost": 21,
+      "calculatedCost": 0,
+      "total": 0
+    },
+    {
+      "name": "missing-price",
+      "inputPrice": null,
+      "savedCost": 21,
+      "calculatedCost": 0,
+      "total": 0
+    },
+    {
+      "name": "blank-price",
+      "inputPrice": "",
+      "savedCost": 21,
+      "calculatedCost": 0,
+      "total": 0
+    },
+    {
+      "name": "malformed-price",
+      "inputPrice": "bad",
+      "savedCost": 21,
+      "calculatedCost": 0,
+      "total": 0
+    }
+  ]
+}

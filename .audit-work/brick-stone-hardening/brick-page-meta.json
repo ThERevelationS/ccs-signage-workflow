@@ -1,0 +1,32 @@
+{
+  "inputs": [
+    "s:s://@/components/ui/button",
+    "s:s://@/components/ui/input",
+    "s:s://lucide-react",
+    "frozen:/app/src/components/estimator/brick/brickCalc.js",
+    "frozen:/app/src/components/estimator/brick/brickPricingAvailability.js",
+    "frozen:/app/src/components/estimator/brick/BrickGeometryPanel.jsx",
+    "frozen:/app/src/components/estimator/brick/BrickTotals.jsx",
+    "s:s://@/components/estimator/builder/builderService",
+    "s:s://@/components/estimator/loadAllEntityRows",
+    "s:s://@/components/estimator/builder/sourceProjectPersistence",
+    "s:s://@/components/estimator/moduleShared/ModuleActionBar",
+    "s:s://@/components/estimator/moduleShared/ModuleTemplateDialog",
+    "s:s://@/components/estimator/moduleShared/moduleProjectActions",
+    "s:s://@/components/markup/CustomerPricingTab",
+    "frozen:/app/src/components/markup/projectCategorizer.jsx",
+    "s:s://@/components/markup/savedCustomerPricing",
+    "s:s://@/components/staff/staffEntities",
+    "frozen:/app/src/pages/BrickStoneEstimator.jsx",
+    "frozen:/app/brick-page-entry.jsx"
+  ],
+  "loaded": {
+    "/app/brick-page-entry.jsx": "c5e52bd2fb4742c163b3674bef5aa51d817fdc6300cea6a6bc146b29ab6c57c4",
+    "/app/src/pages/BrickStoneEstimator.jsx": "ad9701b43a195f535228d70a1dab2861b088a307dba384232ff247a2e970c7cf",
+    "/app/src/components/estimator/brick/BrickGeometryPanel.jsx": "1f5c2cf5eddcc29020b0058476f50d0d831bae55b476d25c257fffacee7b206e",
+    "/app/src/components/estimator/brick/brickPricingAvailability.js": "0c3b68d549709d9b03ce54001de5f3128cf30e7d221df4e2888b90eb2de13d09",
+    "/app/src/components/estimator/brick/BrickTotals.jsx": "9d3e323eb7748ecffe2e86ba729652289385d9c5dbf5bfa0e9b63e64be62ed38",
+    "/app/src/components/markup/projectCategorizer.jsx": "e66446aefa59977bd8924d7014dca1b910f2d1aee35b9bc7561178f79c3ed93b",
+    "/app/src/components/estimator/brick/brickCalc.js": "c54ed2c11a12e917dbc047c23d33afd9e0b1694f2b350bdb89e6808a661506a6"
+  }
+}

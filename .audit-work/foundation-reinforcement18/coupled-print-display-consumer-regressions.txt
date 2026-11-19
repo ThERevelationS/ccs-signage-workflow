@@ -1,0 +1,17 @@
+ok conversion manifest serializes frozen material40 and labor72 with separate physical metadata
+ok embedded and manifest-catalog parts retain identical112-dollar frozen rollups
+ok raw embedded Builder Parts use frozen20 even when the last calculation prices40
+ok unknown legacy hourly basis stays absent through JSON and both normalization paths
+ok catalog enrichment cannot invent missing historical hours or a72-per-hour rate
+ok priced zero never erases physical20 or becomes one priced foot in the Work Order
+ok ordinary and independent manifests and normalized rows match their frozen pre-change behavior
+ok local shop print keeps ordinary output unchanged from its own baseline
+ok local shop print separates priced0 and physical20 and escapes the review note
+ok local shop print retains72 without creating hourly pricing for unknown history
+ok sandbox-candidate shop print keeps ordinary output unchanged from its own baseline
+ok sandbox-candidate shop print separates priced0 and physical20 and escapes the review note
+ok sandbox-candidate shop print retains72 without creating hourly pricing for unknown history
+ok manifest and normalization reject corrupt v2 state instead of silently using generic pricing
+ok pure integration never reads or writes SDK records
+Work Order consumers: 15/15; failed=0
+exit=0

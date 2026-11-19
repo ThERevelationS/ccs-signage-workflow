@@ -1,0 +1,7 @@
+[
+  {
+    "old_text": "                <FoundationBOM\n                  items={calc.items}\n                  poles={calc.poles}\n                  walls={calc.walls}\n                  delivery={calc.delivery}\n                  totals={calc.totals}\n                  inventory={inventory}\n                  itemPricing={calc.itemPricing}\n                  polePricing={calc.polePricing}\n                  wallPricing={calc.wallPricing}\n                  pricingUnavailable={pricingBlocked}\n                />",
+    "new_text": "                <FoundationBOM\n                  items={calc.items}\n                  poles={calc.poles}\n                  walls={calc.walls}\n                  delivery={calc.delivery}\n                  totals={calc.totals}\n                  inventory={inventory}\n                  itemPricing={calc.itemPricing}\n                  polePricing={calc.polePricing}\n                  wallPricing={calc.wallPricing}\n                  cabinets={project.signage_cabinets || []}\n                  landscape={project.landscape}\n                  landscapePricing={calc.landscapePricing}\n                  pricingUnavailable={pricingBlocked}\n                />",
+    "replace_all": false
+  }
+]

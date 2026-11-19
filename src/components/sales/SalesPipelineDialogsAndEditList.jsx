@@ -83,7 +83,7 @@ export default function SalesPipelineDialogsAndEditList({
                         <div className="w-[80px] flex-shrink-0 border-r border-gray-200 px-1">
                           <Popover>
                             <PopoverTrigger asChild>
-                              <button className="h-7 w-20 text-xs border rounded px-2 flex items-center gap-1 hover:bg-gray-100">
+                              <button type="button" className="h-7 w-20 text-xs border rounded px-2 flex items-center gap-1 hover:bg-gray-100">
                                 {item.color ? (<><div className="w-3 h-3 rounded border" style={{ backgroundColor: item.color }} /><span className="truncate text-[10px]">{TASK_COLORS.find(c => c.value === item.color)?.label || "Custom"}</span></>) : (<span className="text-gray-500">Color</span>)}
                               </button>
                             </PopoverTrigger>
@@ -92,7 +92,7 @@ export default function SalesPipelineDialogsAndEditList({
                                 <div className="text-xs font-medium text-gray-600 mb-1">Preset Colors</div>
                                 <div className="grid grid-cols-4 gap-1">
                                   {TASK_COLORS.map(c => (
-                                    <button key={c.value} onClick={() => updateTaskStyle(item, "color", c.value === "none" ? "" : c.value)}
+                                    <button type="button" key={c.value} onClick={() => updateTaskStyle(item, "color", c.value === "none" ? "" : c.value)}
                                       className={`w-8 h-8 rounded border-2 flex items-center justify-center transition-all ${(item.color || "") === (c.value === "none" ? "" : c.value) ? "border-blue-500 ring-2 ring-blue-200" : "border-gray-200 hover:border-gray-400"}`}
                                       style={{ backgroundColor: c.value === "none" ? "#ffffff" : c.value }} title={c.label}>
                                       {c.value === "none" && <span className="text-xs text-gray-400">✕</span>}

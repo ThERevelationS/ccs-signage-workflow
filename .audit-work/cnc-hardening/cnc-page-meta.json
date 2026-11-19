@@ -1,0 +1,38 @@
+{
+  "inputs": [
+    "s:s://@/api/gatedEntities",
+    "s:s://@/components/ui/button",
+    "s:s://@/components/ui/card",
+    "s:s://@/components/ui/input",
+    "s:s://@/components/ui/label",
+    "s:s://@/components/ui/textarea",
+    "s:s://@/components/ui/select",
+    "s:s://lucide-react",
+    "s:s://@/components/ui/tabs",
+    "frozen:/app/src/components/channelLetterInstall/TabBadgeTrigger.jsx",
+    "s:s://@/components/markup/CustomerPricingTab",
+    "frozen:/app/src/components/markup/projectCategorizer.jsx",
+    "s:s://@/components/markup/savedCustomerPricing",
+    "s:s://@/components/cnc/HoldDownAdvisor",
+    "s:s://@/components/estimator/builder/builderService",
+    "s:s://@/components/estimator/loadAllEntityRows",
+    "s:s://@/components/estimator/builder/sourceProjectPersistence",
+    "frozen:/app/src/components/estimator/builder/itemIdentity.js",
+    "s:s://@/components/estimator/idempotentEntityCreate",
+    "s:s://@/components/estimator/moduleShared/ModuleActionBar",
+    "s:s://@/components/estimator/moduleShared/ModuleTemplateDialog",
+    "s:s://@/components/estimator/moduleShared/moduleProjectActions",
+    "s:s://@/components/staff/staffEntities",
+    "frozen:/app/src/components/estimator/cnc/cncPricingAvailability.js",
+    "frozen:/app/src/pages/CNCEstimator.jsx",
+    "frozen:/app/cnc-page-entry.jsx"
+  ],
+  "loaded": {
+    "/app/cnc-page-entry.jsx": "ca07852b4a05bc2382cdd16c981962fa11b88ca21d6ae872a325169d9fe5b8e4",
+    "/app/src/pages/CNCEstimator.jsx": "cad8d0c80544d7aced15b91a050e24178b497ef327391ef2301f8742eeff9be7",
+    "/app/src/components/channelLetterInstall/TabBadgeTrigger.jsx": "d2fe4259f0899eb6dd16635a3541347278805ff42b32c14029722b950fb13757",
+    "/app/src/components/estimator/builder/itemIdentity.js": "e6bc3736697685117afd483a081d7bba378ca6ef99e865d42bc2114208b30d3d",
+    "/app/src/components/markup/projectCategorizer.jsx": "e66446aefa59977bd8924d7014dca1b910f2d1aee35b9bc7561178f79c3ed93b",
+    "/app/src/components/estimator/cnc/cncPricingAvailability.js": "7ff2091c118b7d5a470e2f4288c0dfab001160fc32f8618d5c00b7a1c431f484"
+  }
+}

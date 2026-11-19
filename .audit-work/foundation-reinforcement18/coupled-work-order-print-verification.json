@@ -1,0 +1,21 @@
+{
+  "results": [
+    {
+      "name": "saved-page-print-readback",
+      "ok": true
+    },
+    {
+      "name": "recovered-page-print-readback",
+      "ok": true
+    },
+    {
+      "name": "lost-work-order-create-reply-print-readback",
+      "ok": true
+    }
+  ],
+  "actualSourceHelpers": true,
+  "syntheticEntityAndFunctionBoundaries": true,
+  "realStorageVerified": false,
+  "backendAuthorizationVerified": false,
+  "reinforcementV2Activated": false
+}

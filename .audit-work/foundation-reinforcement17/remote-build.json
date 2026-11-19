@@ -1,0 +1,7 @@
+{
+  "stdout": "Verified actual page, rebar guard, card, toolbar and auth\n",
+  "stderr": "\n  ../tmp/ccs-foundation-rebar17.js  3.8mb ⚠️\n\n⚡ Done in 917ms\n",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 1180
+}

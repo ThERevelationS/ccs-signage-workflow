@@ -1,0 +1,12 @@
+{
+  "authorized": true,
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "77101a44e4b449a2d1d74b59efa24e1e30849d1b",
+  "restoreCheckpointId": "6aeea63e24076af0062d506b",
+  "candidateHashes": {
+    "wallCalculator.js": "4ab4a2b473ae9b6a350d9e4c8f0a416f4062521f1e797f359d53d8077c00c7d5",
+    "FoundationWallsPanel.jsx": "03620a63e2b273d08d1ad8ecd665173ceade72a8c556e12be64b0fde356e23e0"
+  },
+  "reviewedProtocolHash": "7e79373cd722cd402a88a61c5a0350d9541c2d62b0abc1001aea24ee6a4e2ab0"
+}

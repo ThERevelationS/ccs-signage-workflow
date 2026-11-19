@@ -1,0 +1,20 @@
+--- remote/src__components__estimator__foundation__FoundationEquipmentTab.jsx	2026-11-07 22:58:45.818963500 -0500
++++ candidates/src/components/estimator/foundation/FoundationEquipmentTab.jsx	2026-11-07 23:14:33.137007100 -0500
+@@ -6,6 +6,7 @@
+ import { Badge } from '@/components/ui/badge';
+ import { Checkbox } from '@/components/ui/checkbox';
+ import { Trash2, Wrench } from 'lucide-react';
++import { inventoryDraftInput } from "@/components/masterInventory/inventoryNormalization";
+ import { money, calcEquipmentPricing, equipmentCostTotal } from './foundationCalc';
+ import { hasFoundationCostSnapshot } from './foundationCatalogIntegrity';
+ import { setFoundationEquipmentCount } from './foundationEquipmentBindings';
+@@ -15,7 +16,8 @@
+ // Blank-preserving draft coercion (same rule as the wall/pole panels): a blank
+ // draft stays blank, a numeric draft becomes a number, and a malformed draft
+ // is stored verbatim so the pricing diagnostics can flag it — never coerced.
+-const equipmentInputValue = (value) => value === "" ? "" : Number.isFinite(Number(value)) ? Number(value) : value;
++// Blank-preserving project-entry draft, delegated to the boundary (CMP-A08).
++const equipmentInputValue = inventoryDraftInput;
+ 
+ function OverrideChip({ label, value, onClear, moneyVal = false, invalid = false }) {
+   if (value === undefined || value === null) return null;

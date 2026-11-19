@@ -1,0 +1,1006 @@
+{
+  "matches": [
+    {
+      "path": "src/components/customerSummary/upsertCustomerSummary.jsx",
+      "line": 16,
+      "text": " * @param {string} args.project_name     - friendly project name"
+    },
+    {
+      "path": "src/components/customerSummary/upsertCustomerSummary.jsx",
+      "line": 23,
+      "text": "  project_name,"
+    },
+    {
+      "path": "src/components/customerSummary/upsertCustomerSummary.jsx",
+      "line": 35,
+      "text": "      project_name: project_name || \"\","
+    },
+    {
+      "path": "src/components/masterInventory/InventoryTable.jsx",
+      "line": 34,
+      "text": "        out.push(row?.estimate_name || row?.name || row?.project_name || id);"
+    },
+    {
+      "path": "src/components/CommandPalette.jsx",
+      "line": 123,
+      "text": "          const title = r.title || r.company_name || r.project_name || r.invoice_number || r.po_number || r.change_order_number || r.estimate_number || r.description || \"Record\";"
+    },
+    {
+      "path": "src/components/vinylEstimator/vinylProjectHelpers.jsx",
+      "line": 35,
+      "text": "  project_name: \"\",\r"
+    },
+    {
+      "path": "src/components/channelLetterInstall/installExport.jsx",
+      "line": 12,
+      "text": "  lines.push(`Project: ${project.project_name || \"-\"}`);"
+    },
+    {
+      "path": "src/components/channelLetterInstall/installExport.jsx",
+      "line": 89,
+      "text": "  link.download = `${(project.project_name || \"estimate\").replace(/[^a-z0-9]/gi, \"_\")}.csv`;"
+    },
+    {
+      "path": "src/components/importer/ImportExportButtons.jsx",
+      "line": 113,
+      "text": "        `• ${e.project_name || e.project || e.title || \"(untitled)\"} — ${e.client_name || e.customer || e.customer_name || \"no customer\"}`"
+    },
+    {
+      "path": "src/components/importer/ImportExportButtons.jsx",
+      "line": 136,
+      "text": "          results.failed.push({ name: raw?.project_name || raw?.client_name || \"estimate\", message: error?.message || \"Import failed.\" });"
+    },
+    {
+      "path": "src/components/importer/ImportExportButtons.jsx",
+      "line": 245,
+      "text": "        `Append ${lineItems.length} line item(s) to \"${estimate.project_name || estimate.estimate_number}\"?${dropped.length ? ` ${dropped.length} row(s) will be skipped (no name).` : \"\"}\\n\\nSave the estimate afterward to keep them.`"
+    },
+    {
+      "path": "src/components/importer/ImportExportButtons.jsx",
+      "line": 419,
+      "text": "    ? estimates.filter((e) => [e.estimate_number, e.project_name, e.client_name].filter(Boolean).some((v) => String(v).toLowerCase().includes(term)))"
+    },
+    {
+      "path": "src/components/importer/ImportExportButtons.jsx",
+      "line": 445,
+      "text": "                        <div className=\"text-[12px] font-semibold text-gray-800\">{e.project_name || e.estimate_number || \"Estimate\"}</div>"
+    },
+    {
+      "path": "src/components/importer/ImportExportButtons.jsx",
+      "line": 456,
+      "text": "              <div className=\"text-[12px] text-gray-600\">Source: <b>{sourceEstimate.project_name || sourceEstimate.estimate_number}</b> — pick the Product whose BOM to copy.</div>"
+    },
+    {
+      "path": "src/components/jobs/orderHeaderModel.js",
+      "line": 17,
+      "text": "//                      sales_center, follow_up_date, project_name."
+    },
+    {
+      "path": "src/components/jobs/orderHeaderModel.js",
+      "line": 123,
+      "text": "    // wo title → source estimate's project_name."
+    },
+    {
+      "path": "src/components/jobs/orderHeaderModel.js",
+      "line": 124,
+      "text": "    field(\"title\", \"Title\", firstNonBlank(wo.title, est.project_name)),"
+    },
+    {
+      "path": "src/components/estimator/useSectionSync.js",
+      "line": 23,
+      "text": "          project_name: record.project_name || line.project_name,"
+    },
+    {
+      "path": "src/components/estimator/useSectionSync.js",
+      "line": 40,
+      "text": "        project_name: record.project_name || line.project_name,"
+    },
+    {
+      "path": "src/components/estimator/moduleShared/moduleProjectActions.js",
+      "line": 29,
+      "text": "  nameField = \"project_name\","
+    },
+    {
+      "path": "src/components/estimator/NewEstimateDialog.jsx",
+      "line": 62,
+      "text": "          project_name: projectName.trim(),\r"
+    },
+    {
+      "path": "src/components/estimator/ConvertToWorkOrder.jsx",
+      "line": 70,
+      "text": "            return window.confirm(`Create a Work Order for \"${estimate.project_name || \"this estimate\"}\" and link it to the sales pipeline? (${preview})${sectionsPreview}`);\r"
+    },
+    {
+      "path": "src/components/estimator/EstimateCard.jsx",
+      "line": 85,
+      "text": "              {estimate.project_name}\r"
+    },
+    {
+      "path": "src/components/estimator/quickPricePersistence.js",
+      "line": 24,
+      "text": "  const projectName = String(data?.project_name || \"\").trim();"
+    },
+    {
+      "path": "src/components/estimator/quickPricePersistence.js",
+      "line": 31,
+      "text": "    const rows = await entity.filter({ project_name: projectName, client_name: clientName, status: data.status || \"draft\" });"
+    },
+    {
+      "path": "src/components/estimator/EstimateRevisionPanel.jsx",
+      "line": 27,
+      "text": "  [\"project_name\", \"Project\", (v) => v || \"—\"],\r"
+    },
+    {
+      "path": "src/components/estimator/exportEstimates.js",
+      "line": 50,
+      "text": "  const projectPart = safeFilePart(estimate.project_name, \"export\");"
+    },
+    {
+      "path": "src/components/estimator/exportEstimates.js",
+      "line": 72,
+      "text": "  if (!estimate?.id && !estimate?.project_name && !estimate?.estimate_number) {"
+    },
+    {
+      "path": "src/components/estimator/exportEstimates.js",
+      "line": 98,
+      "text": "  [\"project_name\", \"Project\"],"
+    },
+    {
+      "path": "src/components/estimator/exportEstimates.js",
+      "line": 217,
+      "text": "    const sectionName = line.client_product_name || line.project_name || line.product_category || `Section ${index + 1}`;"
+    },
+    {
+      "path": "src/components/estimator/exportEstimates.js",
+      "line": 375,
+      "text": "      <div style=\"margin-top:4px;font-size:13px;font-weight:700\">${escHtml(estimate.project_name || \"Project\")}</div>"
+    },
+    {
+      "path": "src/components/estimator/exportEstimates.js",
+      "line": 420,
+      "text": "  if (!estimate?.id && !estimate?.project_name) throw new Error(\"There is no loaded estimate to export.\");"
+    },
+    {
+      "path": "src/components/estimator/deepLinks.js",
+      "line": 57,
+      "text": "  \"project_name\","
+    },
+    {
+      "path": "src/components/estimator/deepLinks.js",
+      "line": 77,
+      "text": "  \"project_name\","
+    },
+    {
+      "path": "src/components/estimator/parts/customProductService.js",
+      "line": 126,
+      "text": "    project_name: name,"
+    },
+    {
+      "path": "src/components/estimator/home/RecentActivity.jsx",
+      "line": 25,
+      "text": "                <div className=\"text-sm font-semibold text-gray-800 truncate\">{e.project_name}</div>\r"
+    },
+    {
+      "path": "src/components/estimator/estimateCreationService.js",
+      "line": 89,
+      "text": "  clone.project_name = `${source.project_name || source.estimate_number || \"Estimate\"} (split)`;"
+    },
+    {
+      "path": "src/components/estimator/products/productRemovalService.js",
+      "line": 27,
+      "text": "    project_name: line?.project_name || \"\","
+    },
+    {
+      "path": "src/components/estimator/products/productRemovalService.js",
+      "line": 262,
+      "text": "    product_name: currentLine.client_product_name || currentLine.project_name || \"Product\","
+    },
+    {
+      "path": "src/components/estimator/products/clipboardService.js",
+      "line": 27,
+      "text": "    source_product_name: line?.client_product_name || line?.project_name || \"\",\r"
+    },
+    {
+      "path": "src/components/estimator/products/clipboardService.js",
+      "line": 46,
+      "text": "    product_name: line.client_product_name || builder.client_product_name || line.project_name || \"Product\",\r"
+    },
+    {
+      "path": "src/components/estimator/products/quickProductService.js",
+      "line": 209,
+      "text": "    if (Object.prototype.hasOwnProperty.call(sourceExpectedData, \"project_name\")) sourceExpectedData.project_name = productName;"
+    },
+    {
+      "path": "src/components/estimator/products/quickProductService.js",
+      "line": 311,
+      "text": "    project_name: productName,"
+    },
+    {
+      "path": "src/components/estimator/products/quickProductService.js",
+      "line": 467,
+      "text": "    project_name: name,"
+    },
+    {
+      "path": "src/components/estimator/products/quickProductService.js",
+      "line": 639,
+      "text": "    if (blueprint.sourceTaggedData?.project_name) filter.project_name = blueprint.sourceTaggedData.project_name;"
+    },
+    {
+      "path": "src/components/estimator/products/blankProductService.js",
+      "line": 188,
+      "text": "    project_name: pending.product_name,"
+    },
+    {
+      "path": "src/components/estimator/products/blankProductService.js",
+      "line": 254,
+      "text": "    project_name: pending.product_name,"
+    },
+    {
+      "path": "src/components/estimator/products/blankProductService.js",
+      "line": 326,
+      "text": "      project_name: productName,"
+    },
+    {
+      "path": "src/components/estimator/products/blankProductService.js",
+      "line": 339,
+      "text": "    project_name: productName,"
+    },
+    {
+      "path": "src/components/estimator/products/productOperations.js",
+      "line": 61,
+      "text": "  const originalName = currentLine.client_product_name || builder.client_product_name || currentLine.project_name || \"Product\";"
+    },
+    {
+      "path": "src/components/estimator/importEstimates.js",
+      "line": 151,
+      "text": "//   • { customer|client_name, project|project_name|title,"
+    },
+    {
+      "path": "src/components/estimator/importEstimates.js",
+      "line": 164,
+      "text": "  const projectName = cleanStr(raw.project_name ?? raw.project ?? raw.title ?? raw.job_name ?? \"\");"
+    },
+    {
+      "path": "src/components/estimator/importEstimates.js",
+      "line": 183,
+      "text": "      project_name: cleanStr(item.section ?? item.group ?? item.category ?? projectName) || label,"
+    },
+    {
+      "path": "src/components/estimator/importEstimates.js",
+      "line": 199,
+      "text": "      project_name: projectName || clientName || \"Imported estimate\","
+    },
+    {
+      "path": "src/components/estimator/importEstimates.js",
+      "line": 240,
+      "text": "      project_name: section || name,"
+    },
+    {
+      "path": "src/components/estimator/importEstimates.js",
+      "line": 423,
+      "text": "      const name = cleanStr(item?.client_product_name ?? item?.name ?? item?.project_name ?? item?.product_category ?? \"\");"
+    },
+    {
+      "path": "src/components/estimator/importEstimates.js",
+      "line": 429,
+      "text": "        project_name: cleanStr(item?.project_name) || name,"
+    },
+    {
+      "path": "src/components/estimator/SectionRow.jsx",
+      "line": 28,
+      "text": "            <div className=\"text-xs text-gray-400\">{line.project_name}</div>\r"
+    },
+    {
+      "path": "src/components/estimator/SectionRow.jsx",
+      "line": 37,
+      "text": "              if (window.confirm(`Remove \"${line.project_name || getModuleLabel(line.module_key)}\" from this estimate?`)) {\r"
+    },
+    {
+      "path": "src/components/estimator/EstimateHeaderForm.jsx",
+      "line": 6,
+      "text": "  { key: \"project_name\", label: \"Estimate description\" },"
+    },
+    {
+      "path": "src/components/estimator/customerSync.js",
+      "line": 244,
+      "text": "    title: firstNonBlank(estimate.project_name, existing?.title),"
+    },
+    {
+      "path": "src/components/estimator/foundation/convertToBrickStone.js",
+      "line": 11,
+      "text": "  const sourceName = String(project.project_name || \"Foundation\").trim();"
+    },
+    {
+      "path": "src/components/estimator/foundation/convertToBrickStone.js",
+      "line": 13,
+      "text": "    project_name: `${sourceName} (Brick & Stone)`,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationDraftRecovery.js",
+      "line": 4,
+      "text": "  \"project_name\", \"notes\", \"assembly_schema_version\","
+    },
+    {
+      "path": "src/components/estimator/estimateLifecycle.js",
+      "line": 72,
+      "text": "    \"project_name\", \"client_name\", \"customer_id\", \"po_number\", \"site_address\", \"order_contact\", \"contact_name\",\r"
+    },
+    {
+      "path": "src/components/estimator/estimateConversionService.js",
+      "line": 155,
+      "text": "        section_name: str(line?.client_product_name || line?.project_name),"
+    },
+    {
+      "path": "src/components/estimator/estimateConversionService.js",
+      "line": 189,
+      "text": "    const name = pendingPrice.line?.client_product_name || pendingPrice.line?.project_name || \"Product\";"
+    },
+    {
+      "path": "src/components/estimator/estimateConversionService.js",
+      "line": 345,
+      "text": "    .map((l) => `• ${getModuleLabel(l.module_key)} — ${l.project_name}`)"
+    },
+    {
+      "path": "src/components/estimator/workOrderConversion.js",
+      "line": 120,
+      "text": "    const productName = line.client_product_name || line.project_name || getModuleLabel(line.module_key) || `Product ${index + 1}`;"
+    },
+    {
+      "path": "src/components/estimator/workOrderConversion.js",
+      "line": 520,
+      "text": "    title: firstNonBlank(estimate.project_name, existing?.title),"
+    },
+    {
+      "path": "src/components/estimator/builder/builderService.js",
+      "line": 156,
+      "text": "  const builderName = line?.builder_name || getModuleLabel(line?.module_key) || line?.project_name || \"Product\";"
+    },
+    {
+      "path": "src/components/estimator/builder/builderService.js",
+      "line": 157,
+      "text": "  const clientName = line?.client_product_name || line?.project_name || builderName;"
+    },
+    {
+      "path": "src/components/estimator/builder/builderService.js",
+      "line": 580,
+      "text": "        product_name: line.client_product_name || line.project_name || getModuleLabel(line.module_key) || \"Product\","
+    },
+    {
+      "path": "src/components/estimator/builder/builderMutationRecovery.js",
+      "line": 476,
+      "text": "  const name = line.client_product_name || line.project_name || \"A selected section\";"
+    },
+    {
+      "path": "src/components/estimator/CustomerQuotePanel.jsx",
+      "line": 206,
+      "text": "        projectName: estimate.project_name,\r"
+    },
+    {
+      "path": "src/components/estimator/CustomerQuotePanel.jsx",
+      "line": 336,
+      "text": "        projectName: estimate.project_name,\r"
+    },
+    {
+      "path": "src/components/estimator/CustomerQuotePanel.jsx",
+      "line": 531,
+      "text": "                <div className=\"mt-1 text-[13px] font-bold\">{estimate.project_name || \"Project\"}</div>\r"
+    },
+    {
+      "path": "src/components/estimator/quoteDeliveryService.js",
+      "line": 15,
+      "text": "    project_name: String(estimate.project_name || \"\").trim(),"
+    },
+    {
+      "path": "src/components/estimator/quoteDeliveryService.js",
+      "line": 34,
+      "text": "  const project = String(estimate.project_name || \"\").replace(/[\\r\\n]+/g, \" \").trim();"
+    },
+    {
+      "path": "src/components/estimator/quoteDeliveryService.js",
+      "line": 47,
+      "text": "  return `${greeting}\\n\\nPlease find the attached estimate for ${estimate.project_name || \"your project\"}. Please let us know if you have any questions or if there is anything you would like us to review.\\n\\nThank you,\\n${company}`;"
+    },
+    {
+      "path": "src/components/estimator/aio/MovePartGroupModal.jsx",
+      "line": 54,
+      "text": "                <option key={line.builder_product_id} value={line.builder_product_id}>{line.client_product_name || line.project_name || line.builder_name || \"Product\"}</option>\r"
+    },
+    {
+      "path": "src/components/estimator/aio/ProductRow.jsx",
+      "line": 216,
+      "text": "    const name = line.client_product_name || line.project_name || \"Product\";\r"
+    },
+    {
+      "path": "src/components/estimator/aio/ProductRow.jsx",
+      "line": 233,
+      "text": "          aria-label={partsOpen ? `Collapse parts for ${line.client_product_name || line.project_name || \"product\"}` : `Expand parts for ${line.client_product_name || line.project_name || \"product\"}`}\r"
+    },
+    {
+      "path": "src/components/estimator/aio/ProductRow.jsx",
+      "line": 242,
+      "text": "              {line.client_product_name || line.project_name || getModuleLabel(line.module_key)}\r"
+    },
+    {
+      "path": "src/components/estimator/aio/ProductRow.jsx",
+      "line": 263,
+      "text": "            {line.project_name && line.project_name !== line.client_product_name ? `Source: ${line.project_name} · ` : \"\"}\r"
+    },
+    {
+      "path": "src/components/estimator/aio/ProductRow.jsx",
+      "line": 498,
+      "text": "            const name = line.client_product_name || line.project_name || \"Product\";\r"
+    },
+    {
+      "path": "src/components/estimator/aio/ProductRow.jsx",
+      "line": 504,
+      "text": "          aria-label={priceAcceptancePending ? \"Resume the pending Product operation before removing this Product.\" : `Remove ${line.client_product_name || line.project_name || \"product\"} from this estimate`}\r"
+    },
+    {
+      "path": "src/components/estimator/aio/ProductRow.jsx",
+      "line": 520,
+      "text": "            value={line.client_product_name || line.project_name || \"\"}\r"
+    },
+    {
+      "path": "src/components/estimator/aio/EstimateProductsList.jsx",
+      "line": 67,
+      "text": "        (line.project_name || \"\").toLowerCase().includes(q) ||\r"
+    },
+    {
+      "path": "src/components/estimator/aio/EstimateProductsList.jsx",
+      "line": 199,
+      "text": "                  <input type=\"checkbox\" disabled={splitting} checked={splitIds.has(lineId)} onChange={() => toggleSplitId(lineId)} className=\"w-3.5 h-3.5 accent-indigo-600\" aria-label={`Select ${line.client_product_name || line.project_name || line.description || `product ${index + 1}`} to split`} />\r"
+    },
+    {
+      "path": "src/components/estimator/aio/ProductNotesModal.jsx",
+      "line": 45,
+      "text": "            <div className=\"text-[13px] font-semibold text-gray-900\">{line?.client_product_name || line?.project_name || \"Product\"}</div>\r"
+    },
+    {
+      "path": "src/components/estimator/aio/ClipboardManagerModal.jsx",
+      "line": 143,
+      "text": "                                {targets.map((line) => <option key={line.builder_product_id} value={line.builder_product_id}>{line.client_product_name || line.project_name || line.builder_name || \"Product\"}</option>)}\r"
+    },
+    {
+      "path": "src/components/estimator/aio/ProductPriceHistoryModal.jsx",
+      "line": 65,
+      "text": "              <div className=\"text-[13px] font-semibold text-gray-900\">{line?.client_product_name || line?.project_name || \"Product\"}</div>\r"
+    },
+    {
+      "path": "src/components/estimator/aio/InlineProductEditor.jsx",
+      "line": 122,
+      "text": "        builderName={line.client_product_name || line.project_name || line.builder_name || \"Builder\"}"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 319,
+      "text": "            value={form.project_name}\r"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 320,
+      "text": "            onChange={(e) => patch({ project_name: e.target.value })}\r"
+    },
+    {
+      "path": "src/components/estimator/aio/CreateQuickProductModal.jsx",
+      "line": 21,
+      "text": "    setName(line?.client_product_name || line?.project_name || \"Quick Product\");\r"
+    },
+    {
+      "path": "src/components/estimator/aio/MergeEstimateDialog.jsx",
+      "line": 130,
+      "text": "                    <span className=\"font-semibold\">{e.estimate_number ? `#${e.estimate_number} ` : \"\"}{e.project_name || \"Untitled estimate\"}</span>\r"
+    },
+    {
+      "path": "src/components/estimator/customerQuote.js",
+      "line": 9,
+      "text": "      description: estimate?.project_name || \"\","
+    },
+    {
+      "path": "src/components/estimator/customerQuote.js",
+      "line": 19,
+      "text": "      name: section.client_product_name || section.project_name || section.product_category || `Product ${index + 1}`,"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 901,
+      "text": "      line: clean(line?.client_product_name) || clean(line?.builder_name) || clean(line?.project_name) || \"Line\","
+    },
+    {
+      "path": "src/components/workflow/attentionFeedCategories.js",
+      "line": 190,
+      "text": "        primary: `${e.project_name || \"Estimate\"}${e.estimate_number ? ` · #${e.estimate_number}` : \"\"}`,"
+    },
+    {
+      "path": "src/components/workflow/attentionFeedCategories.js",
+      "line": 204,
+      "text": "        primary: `${e.project_name || \"Estimate\"}${e.estimate_number ? ` · #${e.estimate_number}` : \"\"}`,"
+    },
+    {
+      "path": "src/components/workflow/attentionFeedCategories.js",
+      "line": 218,
+      "text": "        primary: `${e.project_name || \"Estimate\"}${e.estimate_number ? ` · #${e.estimate_number}` : \"\"}`,"
+    },
+    {
+      "path": "src/components/workflow/attentionFeedCategories.js",
+      "line": 321,
+      "text": "        primary: `${e.project_name || \"Estimate\"}${e.estimate_number ? ` · #${e.estimate_number}` : \"\"}`,"
+    },
+    {
+      "path": "src/components/workflow/GlobalSearch.jsx",
+      "line": 316,
+      "text": "                          {r.title || r.project_name || r.invoice_number || r.po_number || r.change_order_number}\r"
+    },
+    {
+      "path": "src/components/customer360/customer360Model.js",
+      "line": 193,
+      "text": "  clean(e?.project_name) || clean(e?.estimate_number) || \"Estimate\";"
+    },
+    {
+      "path": "src/components/customer360/Sections.jsx",
+      "line": 236,
+      "text": "                {estimateNumber(e) && clean(e.project_name) && <div className={sub}>{estimateNumber(e)}</div>}"
+    },
+    {
+      "path": "src/components/ClientSearchInput.jsx",
+      "line": 43,
+      "text": "            project_name: p.project_name,"
+    },
+    {
+      "path": "src/components/ClientSearchInput.jsx",
+      "line": 136,
+      "text": "              {r.project_name && ("
+    },
+    {
+      "path": "src/components/ClientSearchInput.jsx",
+      "line": 137,
+      "text": "                <div className=\"text-xs text-slate-500 mt-0.5 truncate\">{r.project_name}</div>"
+    },
+    {
+      "path": "src/components/ClientSearchInput.jsx",
+      "line": 159,
+      "text": "                  project_name: r.project_name,"
+    },
+    {
+      "path": "src/components/ClientSearchInput.jsx",
+      "line": 167,
+      "text": "              {(r.project_name || r.estimate_number) && ("
+    },
+    {
+      "path": "src/components/ClientSearchInput.jsx",
+      "line": 169,
+      "text": "                      {r.project_name} {r.project_name && r.estimate_number ? ' | ' : ''} {r.estimate_number ? `Est: ${r.estimate_number}` : ''}"
+    },
+    {
+      "path": "src/components/pricing/MatrixSuggestPanel.jsx",
+      "line": 118,
+      "text": "          label: line?.client_product_name || line?.project_name || `Line ${index + 1}`,"
+    },
+    {
+      "path": "src/components/pricing/MatrixSuggestPanel.jsx",
+      "line": 271,
+      "text": "                    const name = s.line?.client_product_name || s.line?.project_name || `Product ${s.index + 1}`;"
+    },
+    {
+      "path": "src/pages/BrickStoneEstimator.jsx",
+      "line": 158,
+      "text": "        project_name: project.project_name,"
+    },
+    {
+      "path": "src/pages/BrickStoneEstimator.jsx",
+      "line": 237,
+      "text": "          project_name: project.project_name,"
+    },
+    {
+      "path": "src/pages/BrickStoneEstimator.jsx",
+      "line": 274,
+      "text": "        baseName: project.project_name || \"Brick & Stone\","
+    },
+    {
+      "path": "src/pages/BrickStoneEstimator.jsx",
+      "line": 369,
+      "text": "                  value={project.project_name || \"\"}"
+    },
+    {
+      "path": "src/pages/BrickStoneEstimator.jsx",
+      "line": 370,
+      "text": "                  onChange={(e) => patch({ project_name: e.target.value })}"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 48,
+      "text": "  project_name: \"\",\r"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 218,
+      "text": "    if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {\r"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 334,
+      "text": "        baseName: project.project_name || \"Maintenance\",\r"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 457,
+      "text": "                            <Input value={project.project_name} onChange={(e) => updateProject({ project_name: e.target.value })} placeholder=\"e.g. Main St Sign — Annual Service\" className=\"mt-1\" />\r"
+    },
+    {
+      "path": "src/pages/QuickPrice.jsx",
+      "line": 76,
+      "text": "      [entry.project_name, entry.client_name, entry.module_label, entry.module_key]\r"
+    },
+    {
+      "path": "src/pages/QuickPrice.jsx",
+      "line": 101,
+      "text": "    setProjectName(`${entry.project_name || \"\"} copy`.trim());\r"
+    },
+    {
+      "path": "src/pages/QuickPrice.jsx",
+      "line": 120,
+      "text": "          project_name: projectName.trim(),\r"
+    },
+    {
+      "path": "src/pages/QuickPrice.jsx",
+      "line": 129,
+      "text": "        project_name: projectName.trim(),\r"
+    },
+    {
+      "path": "src/pages/QuickPrice.jsx",
+      "line": 229,
+      "text": "                      <div className=\"text-sm text-gray-700 truncate\">{entry.project_name}</div>\r"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 78,
+      "text": "    project_name: \"\","
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 413,
+      "text": "    if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 555,
+      "text": "        baseName: project.project_name || \"Laser\","
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 589,
+      "text": "  <title>Laser Estimate - ${escHtml(project.project_name)}</title>"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 893,
+      "text": "          <span class=\"info-value\">${escHtml(project.project_name)}</span>"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 1029,
+      "text": "    a.download = `${project.project_name.replace(/\\s+/g, '_')}_Laser_Estimate.html`;"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 1042,
+      "text": "          <title>Laser Estimate - ${escHtml(project.project_name)}</title>"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 1345,
+      "text": "                  <span class=\"info-value\">${escHtml(project.project_name)}</span>"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 1488,
+      "text": "Please find the laser cutting estimate for ${project.project_name}:"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 1515,
+      "text": "    const mailtoUrl = `mailto:?subject=${encodeURIComponent(`Laser Estimate - ${project.project_name}`)}&body=${encodeURIComponent(emailBody)}`;"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 1613,
+      "text": "                    <Label htmlFor=\"project_name\">Project Name *</Label>"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 1615,
+      "text": "                      id=\"project_name\""
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 1616,
+      "text": "                      value={project.project_name}"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 1617,
+      "text": "                      onChange={(e) => setProject((prev) => ({ ...prev, project_name: e.target.value }))}"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 2050,
+      "text": "                <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name) || project.items.length === 0} className=\"w-full bg-green-600 hover:bg-green-700 text-white py-3 mt-4\">"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 28,
+      "text": "// Identity fields (project_name, estimate_number, po_number) and the"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 65,
+      "text": "  project_name: \"\","
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 139,
+      "text": "      String(e.project_name || \"\").toLowerCase().includes(dupQueryNorm))"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 177,
+      "text": "    const description = form.project_name.trim();"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 188,
+      "text": "        project_name: description,"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 214,
+      "text": "          project_name: description,"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 281,
+      "text": "          description={form.project_name}"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 297,
+      "text": "                        {t.project_name || `#${t.estimate_number || \"â€”\"}`}"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 330,
+      "text": "                          <span className=\"text-slate-400\"> Â· {e.project_name || \"\"}</span>"
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 265,
+      "text": "          <h3 className=\"mt-1 text-lg font-semibold text-slate-900\">{quote.quote_title || quote.project_name || \"Estimate\"}</h3>"
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 930,
+      "text": "                      <p className=\"text-sm text-slate-600\">{data.estimate.project_name || data.estimate.quote_title || \"Project\"}</p>"
+    },
+    {
+      "path": "src/pages/CustomItemsEstimator.jsx",
+      "line": 33,
+      "text": "        setProject(proj || { project_name: \"Custom items\", client_name: \"\", items: [newItem()], total_cost: 0 });"
+    },
+    {
+      "path": "src/pages/CustomItemsEstimator.jsx",
+      "line": 106,
+      "text": "          <div><Label className=\"text-[9px]\">Section name</Label><Input value={project.project_name || \"\"} onChange={(e) => setProject((p) => ({ ...p, project_name: e.target.value }))} className=\"h-[30px] text-[11px] mt-0.5\" /></div>"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 745,
+      "text": "                    <div className=\"font-semibold text-slate-900 dark:text-slate-100\">{e.project_name || e.estimate_number}</div>"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 760,
+      "text": "                <div className=\"text-sm font-semibold text-slate-900 dark:text-slate-100\">{selected.project_name || selected.estimate_number}</div>"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 151,
+      "text": "      if (!bundle?.estimate?.project_name) throw new Error(\"Not an estimate export — expected { estimate, products, parts }.\");"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 284,
+      "text": "              estimate_number: e.estimate_number || e.project_name || e.id.slice(0, 8),"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 292,
+      "text": "              estimate_number: e.estimate_number || e.project_name || e.id.slice(0, 8),"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 435,
+      "text": "    if (!window.confirm(`Archive \"${e.project_name || \"this estimate\"}\"? It stays restorable from the Archived queue.`)) return;"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 496,
+      "text": "      if (!window.confirm(`Move \"${e.project_name || \"this estimate\"}\" to Trash? It will be hidden from all estimate lists until it is restored.`)) return;"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 538,
+      "text": "    ref: e.estimate_number || e.project_name || e.job_name || e.id,"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 540,
+      "text": "    productName: e.project_name || \"\","
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 649,
+      "text": "        e.project_name || \"\","
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 842,
+      "text": "                          {e.project_name}"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 882,
+      "text": "                      aria-label={`Select ${e.project_name || \"estimate\"}`}"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 890,
+      "text": "                      <div className=\"text-sm font-semibold text-gray-800 truncate flex items-center gap-1.5\">{myEmail && e.personal_tags?.[myEmail]?.color ? <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${TAG_DOT[e.personal_tags[myEmail].color] || \"\"}`} title={`My label: ${e.personal_tags[myEmail].color}`} /> : null}{e.project_name}</div>"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 920,
+      "text": "                        aria-label={`Duplicate ${e.project_name || \"estimate\"}`}"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 930,
+      "text": "                          aria-label={`Archive ${e.project_name || \"estimate\"}`}"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 940,
+      "text": "                        aria-label={`Move ${e.project_name || \"estimate\"} to Trash`}"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 313,
+      "text": "    if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 490,
+      "text": "        baseName: project.project_name || \"Vinyl\","
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 626,
+      "text": "                        <Input value={project.project_name} onChange={(e) => updateProject({ project_name: e.target.value })} className=\"mt-1\" />"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 158,
+      "text": "                      <span className=\"truncate text-gray-700\">{e.project_name || e.estimate_number || e.id}</span>"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 389,
+      "text": "                            <span className=\"truncate text-gray-700\">{q.project_name || q.client_name || q.estimate_number}</span>\r"
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 68,
+      "text": "    project_name: \"\","
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 305,
+      "text": "    if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {"
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 435,
+      "text": "        baseName: project.project_name || \"CNC\","
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 471,
+      "text": "  <title>CNC Estimate - ${escHtml(project.project_name)}</title>"
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 768,
+      "text": "          <span class=\"info-value\">${escHtml(project.project_name)}</span>"
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 869,
+      "text": "    a.download = `${project.project_name.replace(/\\s+/g, '_')}_CNC_Estimate.html`;"
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 888,
+      "text": "          <title>CNC Estimate - ${escHtml(project.project_name)}</title>"
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 1184,
+      "text": "                  <span class=\"info-value\">${escHtml(project.project_name)}</span>"
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 1361,
+      "text": "                  <div><Label>Project Name *</Label><Input value={project.project_name} onChange={(e) => setProject(p => ({ ...p, project_name: e.target.value }))} /></div>"
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 1555,
+      "text": "            <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name)} className=\"w-full bg-green-600 hover:bg-green-700\">{isSaving ? 'Saving...' : <><Save className=\"w-4 h-4 mr-2\" />Save Estimate</>}</Button>"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 56,
+      "text": "  project_name: \"\","
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 475,
+      "text": "    if (!embedded && (!project.project_name || !project.client_name)) {"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 544,
+      "text": "        project_name: project.project_name,"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 589,
+      "text": "        baseName: project.project_name || \"Channel Letter\","
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 648,
+      "text": "      `${project.project_name || \"Untitled Project\"}${project.estimate_number ? ` — ${project.estimate_number}` : \"\"}`,"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 671,
+      "text": "      `${project.project_name || \"Untitled Project\"}${project.estimate_number ? ` — ${project.estimate_number}` : \"\"}`,"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 817,
+      "text": "                            <span className=\"sm:block font-medium text-slate-900\">{project.project_name || \"—\"}</span>"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 839,
+      "text": "                                project_name: data.project_name || project.project_name,"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 848,
+      "text": "                            <Label htmlFor=\"project_name\">Project Name *</Label>"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 850,
+      "text": "                              id=\"project_name\""
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 851,
+      "text": "                              value={project.project_name}"
+    }
+  ],
+  "truncated": true,
+  "returnedMatches": 200
+}

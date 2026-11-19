@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "run_id": "estimator-modernization-20261105",
+  "nonce": "49d99d6d-34f0-45df-b43b-16f759f16b26",
+  "requested": true,
+  "purpose": "Capture trusted current-session hook metadata only; do not activate or edit approval/state/selector"
+}

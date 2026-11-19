@@ -1,0 +1,8 @@
+ok current valid
+ok missing rate with acknowledged snapshot
+ok new row missing rate without acknowledgment
+ok genuine zero rate
+ok internal missing rate keeps acknowledged snapshot
+ok both outer and internal missing
+masonry-ui passed=6 failed=0
+exit=0

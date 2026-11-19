@@ -1,0 +1,156 @@
+{
+ "results": [
+  {
+   "case": "sticky: live cost + markup 20 -> cost/sell/margin trio",
+   "ok": true
+  },
+  {
+   "case": "sticky: override beats markup; override 0 falls back to markup",
+   "ok": true
+  },
+  {
+   "case": "sticky: applied tier -> sell = snapshot total + acknowledged margin pair",
+   "ok": true
+  },
+  {
+   "case": "sticky: tier snapshot cost equal to shown cost -> differs false",
+   "ok": true
+  },
+  {
+   "case": "sticky: applied tier without numeric total falls back to manual",
+   "ok": true
+  },
+  {
+   "case": "sticky: applied=false tier is ignored",
+   "ok": true
+  },
+  {
+   "case": "sticky: engine resolver wins over tier + override + markup",
+   "ok": true
+  },
+  {
+   "case": "sticky: engine passthrough falls through to tier",
+   "ok": true
+  },
+  {
+   "case": "sticky: throwing engine resolver degrades to ladder, never crashes",
+   "ok": true
+  },
+  {
+   "case": "sticky HELD: null live + saved cost -> cost=saved, markup sell suppressed (no fabrication)",
+   "ok": true
+  },
+  {
+   "case": "sticky HELD: saved cost + applied tier -> acknowledged sell shows; margin vs saved",
+   "ok": true
+  },
+  {
+   "case": "sticky HELD: saved cost + authored override -> override sell + margin vs saved",
+   "ok": true
+  },
+  {
+   "case": "sticky HELD: engine NOT invoked while cost held (baseline null guard)",
+   "ok": true
+  },
+  {
+   "case": "sticky: never-priced record -> all none, margin —",
+   "ok": true
+  },
+  {
+   "case": "sticky: no project prop -> sell none + projectLinked false (unwired honest state)",
+   "ok": true
+  },
+  {
+   "case": "sticky: negative margin shown honestly (sell < cost)",
+   "ok": true
+  },
+  {
+   "case": "sticky: sell $0 override -> margin amount shows, pct is null (no fake 0%)",
+   "ok": true
+  },
+  {
+   "case": "sticky: markup 0 -> sell = cost, margin $0 · 0.0%",
+   "ok": true
+  },
+  {
+   "case": "takeoff: full wiring -> all groups + per-component rows with qty + amount",
+   "ok": true
+  },
+  {
+   "case": "takeoff HELD: held item row flags saved snapshot, amount Not saved when absent",
+   "ok": true
+  },
+  {
+   "case": "takeoff HELD: pole without required_length falls back to height+embedment",
+   "ok": true
+  },
+  {
+   "case": "takeoff HELD: cap without cost -> held + null amount; wallCaps absent -> by-material fallback",
+   "ok": true
+  },
+  {
+   "case": "takeoff: unwired (totals only) -> delivery + caps-by-material rows, no item detail",
+   "ok": true
+  },
+  {
+   "case": "takeoff: empty everything -> rowCount 0",
+   "ok": true
+  },
+  {
+   "case": "checklist: blocking channels enumerate inputIssues + catalogIssues",
+   "ok": true
+  },
+  {
+   "case": "checklist: advisory channels = constructionWarnings + placement",
+   "ok": true
+  },
+  {
+   "case": "checklist HELD: non-finite partition fields enumerate held buckets",
+   "ok": true
+  },
+  {
+   "case": "checklist HELD: wall-cap-only hold surfaces even with zero issues (channel the issue lists miss)",
+   "ok": true
+  },
+  {
+   "case": "checklist HELD: saved-snapshot held values still enumerate (finite totals, no extra rows)",
+   "ok": true
+  },
+  {
+   "case": "checklist: delivery pricingUnavailable -> held delivery row",
+   "ok": true
+  },
+  {
+   "case": "checklist: identical issues dedupe across channels",
+   "ok": true
+  },
+  {
+   "case": "checklist: clean wired calc -> complete flag + zero counts",
+   "ok": true
+  },
+  {
+   "case": "checklist: unwired -> channelsKnown false, complete never claimed",
+   "ok": true
+  },
+  {
+   "case": "checklist: unwired but held totals -> held channel still enumerates",
+   "ok": true
+  },
+  {
+   "case": "checklist: pricingUnavailable catch-all when no reason enumerable",
+   "ok": true
+  },
+  {
+   "case": "checklist: issues override prop wins over calc",
+   "ok": true
+  },
+  {
+   "case": "partition: FOUNDATION_STICKY_PARTITION_FIELDS == FOUNDATION_RECORD_TOTAL_FIELDS order + set",
+   "ok": true
+  },
+  {
+   "case": "robustness: garbage inputs never throw",
+   "ok": true
+  }
+ ]
+}

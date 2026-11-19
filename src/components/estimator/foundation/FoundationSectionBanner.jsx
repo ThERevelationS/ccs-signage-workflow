@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { ChevronUp, ChevronDown, Info } from "lucide-react";
+import { PreliminaryNotice } from "./foundationPreliminaryNotice";
 
 export default function FoundationSectionBanner({ sectionName }) {
   const [open, setOpen] = useState(true);
   return (
+    <>
     <div className="bg-violet-100 border border-violet-300 rounded-sm px-3 py-2 mb-3 flex items-center gap-2">
-      <Info className="w-4 h-4 text-violet-600 flex-shrink-0" />
+      <Info className="w-4 h-4 text-violet-600 flex-shrink-0" aria-hidden="true" />
       <span className="text-[12px] text-violet-900 flex-1">
         {open ? (
           <>
@@ -23,9 +25,13 @@ export default function FoundationSectionBanner({ sectionName }) {
         onClick={() => setOpen((v) => !v)}
         className="h-[24px] px-2 flex items-center gap-1 rounded-sm bg-white border border-violet-300 text-[11px] font-medium text-violet-800"
       >
-        {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+        {open ? <ChevronUp className="w-3 h-3" aria-hidden="true" /> : <ChevronDown className="w-3 h-3" aria-hidden="true" />}
         {open ? "Collapse Section" : "Expand Section"}
       </button>
     </div>
+    {/* O-119: sibling of the collapsible explainer so "Collapse Section" never
+        hides it — the notice stays persistent on the concept surface. */}
+    <PreliminaryNotice className="-mt-2 mb-3" />
+    </>
   );
 }

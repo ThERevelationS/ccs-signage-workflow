@@ -1,0 +1,305 @@
+{
+  "results": [
+    {
+      "name": "new-accepted-costs",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Existing print-sheet width must not increase\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print-browser.mjs:82:14",
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      },
+      "width": 607,
+      "screenshot": ".audit-work/foundation-reinforcement18/cost-print-new-accepted-costs-390.png",
+      "overflow": [
+        {
+          "headers": [
+            "#",
+            "Product / Description",
+            "Type",
+            "Qty",
+            "Unit Price",
+            "Ext Price",
+            "Unit Cost",
+            "Ext Cost",
+            "Margin",
+            "Status"
+          ],
+          "width": 578.15625,
+          "right": 606.953125,
+          "scrollWidth": 578,
+          "clientWidth": 578,
+          "rows": [
+            [
+              {
+                "text": "#",
+                "width": 23.1875
+              },
+              {
+                "text": "Product / Description",
+                "width": 91.921875
+              },
+              {
+                "text": "Type",
+                "width": 45.03125
+              },
+              {
+                "text": "Qty",
+                "width": 38.734375
+              },
+              {
+                "text": "Unit Price",
+                "width": 59.390625
+              },
+              {
+                "text": "Ext Price",
+                "width": 59.390625
+              },
+              {
+                "text": "Unit Cost",
+                "width": 59.390625
+              },
+              {
+                "text": "Ext Cost",
+                "width": 59.390625
+              },
+              {
+                "text": "Margin",
+                "width": 60.625
+              },
+              {
+                "text": "Status",
+                "width": 80.09375
+              }
+            ],
+            [
+              {
+                "text": "1",
+                "width": 23.1875
+              },
+              {
+                "text": "Painting",
+                "width": 91.921875
+              },
+              {
+                "text": "—",
+                "width": 45.03125
+              },
+              {
+                "text": "1",
+                "width": 38.734375
+              },
+              {
+                "text": "$345.00",
+                "width": 59.390625
+              },
+              {
+                "text": "$345.00",
+                "width": 59.390625
+              },
+              {
+                "text": "$345.00",
+                "width": 59.390625
+              },
+              {
+                "text": "$345.00",
+                "width": 59.390625
+              },
+              {
+                "text": "$0.00",
+                "width": 60.625
+              },
+              {
+                "text": "order_review",
+                "width": 80.09375
+              }
+            ],
+            [
+              {
+                "text": "2",
+                "width": 23.1875
+              },
+              {
+                "text": "Concrete | Masonry | Poles",
+                "width": 91.921875
+              },
+              {
+                "text": "—",
+                "width": 45.03125
+              },
+              {
+                "text": "1",
+                "width": 38.734375
+              },
+              {
+                "text": "$694.00",
+                "width": 59.390625
+              },
+              {
+                "text": "$694.00",
+                "width": 59.390625
+              },
+              {
+                "text": "$694.00",
+                "width": 59.390625
+              },
+              {
+                "text": "$694.00",
+                "width": 59.390625
+              },
+              {
+                "text": "$0.00",
+                "width": 60.625
+              },
+              {
+                "text": "order_review",
+                "width": 80.09375
+              }
+            ]
+          ]
+        },
+        {
+          "headers": [],
+          "width": 280,
+          "right": 361.203125,
+          "scrollWidth": 280,
+          "clientWidth": 280,
+          "rows": [
+            [
+              {
+                "text": "Products Subtotal",
+                "width": 174.015625
+              },
+              {
+                "text": "$1,039.00",
+                "width": 104.984375
+              }
+            ],
+            [
+              {
+                "text": "Contract Total (estimate)",
+                "width": 174.015625
+              },
+              {
+                "text": "$1,039.00",
+                "width": 104.984375
+              }
+            ],
+            [
+              {
+                "text": "Internal Cost",
+                "width": 174.015625
+              },
+              {
+                "text": "$1,039.00",
+                "width": 104.984375
+              }
+            ]
+          ]
+        },
+        {
+          "headers": [
+            "Part",
+            "Type",
+            "Section",
+            "Qty",
+            "Unit Cost",
+            "Ext Cost"
+          ],
+          "width": 397.609375,
+          "right": 426.40625,
+          "scrollWidth": 398,
+          "clientWidth": 398,
+          "rows": [
+            [
+              {
+                "text": "Part",
+                "width": 100.03125
+              },
+              {
+                "text": "Type",
+                "width": 71.375
+              },
+              {
+                "text": "Section",
+                "width": 65.40625
+              },
+              {
+                "text": "Qty",
+                "width": 42.015625
+              },
+              {
+                "text": "Unit Cost",
+                "width": 59.390625
+              },
+              {
+                "text": "Ext Cost",
+                "width": 59.390625
+              }
+            ],
+            [
+              {
+                "text": "Concrete Finishing Labor",
+                "width": 100.03125
+              },
+              {
+                "text": "labor",
+                "width": 71.375
+              },
+              {
+                "text": "Concrete | Masonry | Poles",
+                "width": 65.40625
+              },
+              {
+                "text": "0.19 hour",
+                "width": 42.015625
+              },
+              {
+                "text": "$60.00",
+                "width": 59.390625
+              },
+              {
+                "text": "$11.25",
+                "width": 59.390625
+              }
+            ],
+            [
+              {
+                "text": "Concrete Pour Labor",
+                "width": 100.03125
+              },
+              {
+                "text": "labor",
+                "width": 71.375
+              },
+              {
+                "text": "Concrete | Masonry | Poles",
+                "width": 65.40625
+              },
+              {
+                "text": "1 cy",
+                "width": 42.015625
+              },
+              {
+                "text": "$15.00",
+                "width": 59.390625
+              },
+              {
+                "text": "$15.00",
+                "width": 59.390625
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "financialInputsUnchanged": true,
+  "syntheticStaticHtml": true,
+  "realBrowserPrintDialogVerified": false
+}

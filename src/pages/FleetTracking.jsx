@@ -9,7 +9,7 @@ import { buildWeeklyRanges } from "@/components/fleet/fleetHelpers";
 import { useAuth } from "@/components/auth/EmailGate";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Loader2, LinkIcon, AlertCircle, RefreshCw, LogOut, ExternalLink, ChevronDown, ChevronUp, Gauge, GripHorizontal, Maximize2, Minimize2, X } from "lucide-react";
-import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { invokeFleet, isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 const normalizeVin = (value) => String(value || "").trim().toUpperCase();
 const normalizeImei = (value) => String(value || "").trim();
@@ -181,7 +181,9 @@ export default function FleetTracking() {
         loadNotifications();
         if (!s?.needsReconnect) {
           loadVehicles();
-          if (currentUser?.role === "admin") syncNotifications();
+          // bouncieSyncNotifications is heavy; the scheduled workflow syncs
+          // every 30 min. Browser triggers stay manual (refresh button /
+          // post-connect flow) instead of firing automatically at mount.
         } else {
           setVehiclesLoading(false);
         }
@@ -194,6 +196,7 @@ export default function FleetTracking() {
   useEffect(() => {
     if (!status?.connected || status?.needsReconnect) return;
     refreshTimer.current = setInterval(() => {
+      if (document.hidden || isFleetCoolingDown()) return;
       loadVehicles();
       loadNotifications();
     }, 60000);
@@ -245,6 +248,7 @@ export default function FleetTracking() {
         // Poll for connection so this tab refreshes once the popup completes.
         const started = Date.now();
         const poll = setInterval(async () => {
+          if (document.hidden || isFleetCoolingDown()) return;
           const s = await loadStatus();
           if (s?.connected && !s?.needsReconnect) {
             clearInterval(poll);
@@ -370,7 +374,7 @@ export default function FleetTracking() {
           </p>
           {isAdmin ? (
             <>
-              <button
+              <button type="button"
                 onClick={handleConnect}
                 disabled={connecting}
                 className="w-full py-3 rounded-lg text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
@@ -418,7 +422,7 @@ export default function FleetTracking() {
                   <div>Last REST sync: {status.lastSyncAt ? new Date(status.lastSyncAt).toLocaleString() : "unknown"}</div>
                 </div>
                 {isAdmin ? (
-                  <button
+                  <button type="button"
                     onClick={handleConnect}
                     disabled={connecting}
                     className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-700 text-white font-semibold hover:bg-amber-800 disabled:opacity-50"

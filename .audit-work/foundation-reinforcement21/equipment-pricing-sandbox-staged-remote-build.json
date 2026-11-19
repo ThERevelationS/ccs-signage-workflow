@@ -1,0 +1,7 @@
+{
+  "stdout": "{\"ok\":true,\"inputs\":[\"src/components/estimator/foundation/legacyFoundationCalc.js\",\"src/components/estimator/foundation/wallCalculator.js\",\"src/components/estimator/foundation/poleCalculator.js\",\"src/components/estimator/foundation/wallCapCalculator.js\",\"src/components/estimator/foundation/foundationEquipmentBindings.js\",\"src/components/estimator/foundation/foundationCatalogIntegrity.js\",\"src/components/estimator/foundation/foundationInputValidation.js\",\"src/components/estimator/foundation/foundationCalc.js\",\"src/lib/utils.js\",\"src/components/ui/card.jsx\",\"src/components/ui/button.jsx\",\"src/components/ui/label.jsx\",\"src/components/ui/select.jsx\",\"src/components/ui/badge.jsx\",\"src/components/ui/checkbox.jsx\",\"src/components/estimator/foundation/FoundationEquipmentTab.jsx\"],\"outputs\":2,\"overridesLoaded\":{\"/app/src/components/estimator/foundation/foundationCalc.js\":{\"name\":\"foundationCalc.js\",\"sha256\":\"845a45841f415a5eb9f7f7cd6553ad38044e713b534035a99358f83657a1abe1\"},\"/app/src/components/estimator/foundation/FoundationEquipmentTab.jsx\":{\"name\":\"FoundationEquipmentTab.jsx\",\"sha256\":\"e621b4959702d1e6ad825a919bbf5a0afefe1d87682b9c2a21764dfc9ab7cfe9\"}},\"pageOutputs\":[],\"pageInputs\":[],\"externalAt\":[],\"warnings\":[]}\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 812
+}

@@ -1,0 +1,84 @@
+{
+  "synthetic": true,
+  "scope": "Diagnostic reproductions on fresh matched source, not regression acceptance or pricing changes.",
+  "observed": {
+    "renderMutation": {
+      "before": {
+        "_id": "selected-eq",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "attachment_ids": [
+          "att"
+        ],
+        "equipment_cost": 100
+      },
+      "after": {
+        "_id": "selected-eq",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {
+          "att": 1
+        },
+        "attachment_ids": [
+          "att"
+        ],
+        "equipment_cost": 100
+      },
+      "engineBefore": 100,
+      "engineAfter": 115,
+      "updates": 0,
+      "dirtyCalls": 0
+    },
+    "normalizedAttachmentsIgnoredByUi": {
+      "entry": {
+        "_id": "selected-eq",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "attachment_ids": [],
+        "equipment_cost": 100,
+        "attachments": [
+          {
+            "id": "att",
+            "qty": 2
+          }
+        ]
+      },
+      "engineCost": 130,
+      "cardTotalShown": 100
+    },
+    "zeroOverridesIgnoredByUi": {
+      "entry": {
+        "_id": "selected-eq",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": true,
+        "attachment_counts": {},
+        "attachment_ids": [],
+        "equipment_cost": 100,
+        "custom_rate": 0,
+        "custom_qty": 2,
+        "custom_delivery_charge": 0
+      },
+      "engineCost": 0,
+      "cardTotalShown": 120
+    },
+    "missingEquipment": {
+      "savedSnapshot": 600,
+      "engineCost": 0,
+      "selectedRowVisible": false
+    },
+    "missingAttachment": {
+      "savedSnapshot": 115,
+      "engineCost": 100
+    }
+  }
+}

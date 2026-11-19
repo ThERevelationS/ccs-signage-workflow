@@ -1,0 +1,1 @@
+export * as remote from "./../remote-src/src/components/estimator/brick/brickCalc.js";

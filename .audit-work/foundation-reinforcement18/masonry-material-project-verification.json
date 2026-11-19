@@ -1,0 +1,70 @@
+{
+  "results": [
+    {
+      "name": "valid current wall and project totals remain exact",
+      "ok": true
+    },
+    {
+      "name": "empty walls have genuine zero totals",
+      "ok": true
+    },
+    {
+      "name": "unknown material rate holds acknowledged 408, not rendered 57",
+      "ok": true
+    },
+    {
+      "name": "new row cannot manufacture zero totals from a preview",
+      "ok": true
+    },
+    {
+      "name": "different source project cannot supply wall history",
+      "ok": true
+    },
+    {
+      "name": "new component cannot borrow the removed wall amount",
+      "ok": true
+    },
+    {
+      "name": "ambiguous current component identity remains unknown",
+      "ok": true
+    },
+    {
+      "name": "ambiguous saved component identity remains unknown",
+      "ok": true
+    },
+    {
+      "name": "known section total does not invent a missing material breakdown",
+      "ok": true
+    },
+    {
+      "name": "missing section total does not invent one from partial components",
+      "ok": true
+    },
+    {
+      "name": "genuine zero price remains current and save-gate eligible",
+      "ok": true
+    },
+    {
+      "name": "internal missing price uses the complete acknowledged basis",
+      "ok": true
+    },
+    {
+      "name": "one unknown wall prevents a partially known total from appearing complete",
+      "ok": true
+    },
+    {
+      "name": "aggregate overflow is unknown rather than infinity",
+      "ok": true
+    }
+  ],
+  "loaded": {
+    "/app/src/components/estimator/foundation/foundationCalc.js": "74d8b5a0ff5dd7d677c9e060879298f673530bfb7b15e83c7a16d45dc8fd9747",
+    "/app/src/components/estimator/foundation/foundationInputValidation.js": "5ba7d776581bffd7cee8df7b40e98fe146fd8ccd64a9b7fb722f4b8e78e24e57",
+    "/app/src/components/estimator/foundation/poleCalculator.js": "094151890b486998e78315f5fe93b09f01453f169fb177ef77fd5a1e0b7befcc",
+    "/app/src/components/estimator/foundation/wallCalculator.js": "19f986b158ecd651b0dfd64b306e765dcedb42aa52b5e032f020288f7b080686",
+    "/app/src/components/estimator/foundation/wallCapCalculator.js": "90e64ee49d8fe815ea63506ab21c25e9fd449c55581afe0a21f19371c87695eb",
+    "/app/src/components/estimator/foundation/legacyFoundationCalc.js": "d7b60db418f41663bc74f24d04fd65937b08b1156e2c322a577fae38156a21ff",
+    "/app/src/components/estimator/foundation/foundationCatalogIntegrity.js": "702f1405b1cae1256da4eda2e7ed4d50085a5be1b4cd3324cf232a84938eca4e",
+    "/app/src/components/estimator/foundation/foundationEquipmentBindings.js": "6ffaeaedc3c348a2e6af19006cea963fc63078650394f4ecaf6dd6f6c93fa3d5"
+  }
+}

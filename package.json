@@ -11,13 +11,17 @@
     "sales-import:validate": "node scripts/validate-sales-import.mjs",
     "smartsheet-sync:validate": "node scripts/validate-smartsheet-sync.mjs",
     "typecheck": "tsc -p ./jsconfig.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:site": "npm run build && node scripts/strip-site-deploy-assets.mjs && npx base44 site deploy --no-build --publish --yes"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.57",
     "@base44/vite-plugin": "^1.0.48",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^4.1.2",
+    "@mantine/core": "^8.3.18",
+    "@mantine/dates": "^8.3.18",
+    "@mantine/hooks": "^8.3.18",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-aspect-ratio": "^1.1.2",
@@ -53,6 +57,8 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
+    "dayjs": "^1.11.23",
+    "dompurify": "3.4.17",
     "embla-carousel-react": "^8.5.2",
     "face-api.js": "^0.22.2",
     "framer-motion": "^11.16.4",

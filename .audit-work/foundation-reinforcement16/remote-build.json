@@ -1,0 +1,7 @@
+{
+  "stdout": "Verified actual page, validator, card, auth and toolbar inputs\n",
+  "stderr": "\n  ../tmp/ccs-foundation-validation16.js  3.8mb ⚠️\n\n⚡ Done in 1340ms\n",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 1770
+}

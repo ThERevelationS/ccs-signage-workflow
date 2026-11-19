@@ -1,0 +1,95 @@
+{
+  "results": [
+    {
+      "name": "infeasible geometry uses acknowledged 21 rather than an inherited rendered 25",
+      "ok": true
+    },
+    {
+      "name": "unavailable catalog also restores only the acknowledged snapshot fields",
+      "ok": true
+    },
+    {
+      "name": "unassigned material also restores only the acknowledged snapshot fields",
+      "ok": true
+    },
+    {
+      "name": "ambiguous catalog also restores only the acknowledged snapshot fields",
+      "ok": true
+    },
+    {
+      "name": "wrong catalog type also restores only the acknowledged snapshot fields",
+      "ok": true
+    },
+    {
+      "name": "missing rate also restores only the acknowledged snapshot fields",
+      "ok": true
+    },
+    {
+      "name": "missing stock dimension also restores only the acknowledged snapshot fields",
+      "ok": true
+    },
+    {
+      "name": "cleared cut also restores only the acknowledged snapshot fields",
+      "ok": true
+    },
+    {
+      "name": "an explicit empty acknowledgment cannot claim draft prices as saved",
+      "ok": true
+    },
+    {
+      "name": "an explicit null acknowledgment cannot claim draft prices as saved",
+      "ok": true
+    },
+    {
+      "name": "an explicit undefined acknowledgment cannot claim draft prices as saved",
+      "ok": true
+    },
+    {
+      "name": "an explicit malformed acknowledgment cannot claim draft prices as saved",
+      "ok": true
+    },
+    {
+      "name": "a replacement component cannot borrow history merely because its legacy ID was copied",
+      "ok": true
+    },
+    {
+      "name": "missing canonical identity cannot borrow an acknowledged row by index or inventory ID",
+      "ok": true
+    },
+    {
+      "name": "duplicate current or acknowledged identities do not select an arbitrary saved amount",
+      "ok": true
+    },
+    {
+      "name": "reordering uses canonical identity rather than array position",
+      "ok": true
+    },
+    {
+      "name": "historical zero remains zero and an unrecorded historical field never inherits its preview counterpart",
+      "ok": true
+    },
+    {
+      "name": "valid geometry keeps current full-stock pricing even for a new unacknowledged row",
+      "ok": true
+    },
+    {
+      "name": "an invalid first row does not prevent the next valid row from using its current price",
+      "ok": true
+    },
+    {
+      "name": "a newer acknowledged save becomes the next invalid edit's basis",
+      "ok": true
+    },
+    {
+      "name": "project adapter uses only a matching project's acknowledgment and preserves source objects",
+      "ok": true
+    },
+    {
+      "name": "legacy standalone calls without a supplied snapshot still preserve their known input amounts",
+      "ok": true
+    }
+  ],
+  "syntheticOnly": true,
+  "realStorageVerified": false,
+  "reinforcementV2Activated": false
+}

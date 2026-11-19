@@ -1,0 +1,95 @@
+{
+ "command": "npx esbuild <each candidate> --loader:.jsx=jsx --outfile=NUL (grep warning|error -> none)",
+ "files": [
+  "src/components/channelLetterInstall/channelLetterPricingAvailability.js",
+  "src/components/channelLetterInstall/BackerFabPanel.jsx",
+  "src/components/channelLetterInstall/BackerSection.jsx",
+  "src/components/channelLetterInstall/DimensionalFabPanel.jsx",
+  "src/components/channelLetterInstall/EquipmentSelector.jsx",
+  "src/components/channelLetterInstall/InstallLineItem.jsx",
+  "src/components/channelLetterInstall/InstallSummaryCard.jsx",
+  "src/components/channelLetterInstall/ItemsList.jsx",
+  "src/components/channelLetterInstall/LadderSelector.jsx",
+  "src/components/channelLetterInstall/LetterPurchaseRow.jsx",
+  "src/components/channelLetterInstall/LettersPurchaseTab.jsx",
+  "src/components/channelLetterInstall/MaterialsList.jsx",
+  "src/components/channelLetterInstall/PersonnelSelector.jsx",
+  "src/components/channelLetterInstall/SummaryDetailsCard.jsx",
+  "src/components/channelLetterInstall/ValidationWarnings.jsx",
+  "src/components/channelLetterInstall/installExport.jsx",
+  "src/pages/ChannelLetterEstimator.jsx"
+ ],
+ "errors": 0,
+ "warnings": 0,
+ "results": [
+  {
+   "file": "src/components/channelLetterInstall/channelLetterPricingAvailability.js",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/BackerFabPanel.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/BackerSection.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/DimensionalFabPanel.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/EquipmentSelector.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/InstallLineItem.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/InstallSummaryCard.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/ItemsList.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/LadderSelector.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/LetterPurchaseRow.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/LettersPurchaseTab.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/MaterialsList.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/PersonnelSelector.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/SummaryDetailsCard.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/ValidationWarnings.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/components/channelLetterInstall/installExport.jsx",
+   "ok": true
+  },
+  {
+   "file": "src/pages/ChannelLetterEstimator.jsx",
+   "ok": true
+  }
+ ],
+ "summary": "0 errors / 0 warnings over 17 candidate files"
+}

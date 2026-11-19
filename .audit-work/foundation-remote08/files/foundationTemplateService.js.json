@@ -1,0 +1,15 @@
+Reading file
+Reading file
+Read file
+{
+  "files": [
+    {
+      "path": "src/components/estimator/foundation/foundationTemplateService.js",
+      "content": "import { base44 } from \"@/api/base44Client\";\nimport { ensureReusableRecord } from \"@/components/estimator/products/reusableSaveIdempotency\";\nimport { deleteEntityIfUnchanged } from \"@/components/estimator/builder/builderEntityPersistence\";\n\nexport async function saveFoundationTemplate({ idempotencyKey, data }) {\n  return ensureReusableRecord({\n    entity: base44.entities.ProjectTemplate,\n    idempotencyKey,\n    data,\n    label: \"Foundation template\",\n  });\n}\n\nexport async function deleteFoundationTemplate(templateId) {\n  const id = String(templateId || \"\").trim();\n  if (!id) throw new Error(\"Foundation template id is required.\");\n\n  const current = await base44.entities.ProjectTemplate.get(id).catch(() => null);\n  if (!current) return true;\n  await deleteEntityIfUnchanged({\n    entity: base44.entities.ProjectTemplate,\n    record: current,\n    label: \"Foundation template\",\n  });\n  return true;\n}",
+      "startLine": 1,
+      "endLine": 26,
+      "totalLines": 26,
+      "truncated": false
+    }
+  ]
+}

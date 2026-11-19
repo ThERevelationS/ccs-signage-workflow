@@ -1,0 +1,13 @@
+ok valid 1280
+ok valid 390
+ok held 1280
+ok held 390
+ok new 1280
+ok new 390
+ok zero 1280
+ok zero 390
+ok inner 1280
+ok inner 390
+ok both 1280
+ok both 390
+masonry-browser passed=12 failed=0

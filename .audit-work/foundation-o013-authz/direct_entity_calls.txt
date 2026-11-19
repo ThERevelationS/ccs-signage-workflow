@@ -1,0 +1,144 @@
+src/api/entities.js L4 >> (no-op-call).export const Query = base44.entities.Query;
+src/api/gatedEntities.js L2 >> (no-op-call).// direct base44.entities.<staff-tier> references now that those entities are
+src/components/admin/AdminCalendarSettings.jsx L51 >> CalendarEvent.list
+src/components/admin/AdminCalendarSettings.jsx L53 >> (no-op-call).entity: base44.entities.GlobalSettings,
+src/components/admin/AdminCalendarSettings.jsx L57 >> WorkOrder.list
+src/components/admin/AdminCalendarSettings.jsx L84 >> (no-op-call).entity: base44.entities.GlobalSettings,
+src/components/admin/EmailGroupsManager.jsx L31 >> (no-op-call).const EmailGroup = base44.entities.EmailGroup;
+src/components/admin/JurisdictionMonitoringSettings.jsx L40 >> (no-op-call).const allAutomations = await base44.entities.AutomationRule?.list?.() || [];
+src/components/admin/JurisdictionMonitoringSettings.jsx L53 >> (no-op-call).entity: base44.entities.GlobalSettings,
+src/components/admin/JurisdictionMonitoringSettings.jsx L68 >> (no-op-call).const recentAlerts = await base44.entities.RegulationAlert?.list?.("-detected_at", 5) || [];
+src/components/admin/JurisdictionMonitoringSettings.jsx L81 >> (no-op-call).entity: base44.entities.GlobalSettings,
+src/components/admin/PTOManagement.jsx L59 >> (no-op-call).const PTOPolicy = base44.entities.PTOPolicy;
+src/components/admin/SmartsheetSyncWidget.jsx L43 >> (no-op-call).loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: STATUS_KEYS.orders, label: "Smar
+src/components/admin/SmartsheetSyncWidget.jsx L44 >> (no-op-call).loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: STATUS_KEYS.sales, label: "Smart
+src/components/admin/SmartsheetSyncWidget.jsx L45 >> (no-op-call).loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: STATUS_KEYS.legacy, label: "Smar
+src/components/admin/SmartsheetSyncWidget.jsx L46 >> (no-op-call).loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: CONFIG_KEY, label: "Smartsheet s
+src/components/announcements/AnnouncementContext.jsx L120 >> (no-op-call).entity: base44.entities.Announcement,
+src/components/announcements/AnnouncementContext.jsx L146 >> Announcement.subscribe
+src/components/announcements/AnnouncementManager.jsx L33 >> (no-op-call).const Announcement = base44.entities.Announcement;
+src/components/estimator/ConvertToWorkOrder.jsx L26 >> WorkOrder.get
+src/components/estimator/ConvertToWorkOrder.jsx L84 >> AllInOneEstimate.get
+src/components/estimator/CustomerQuotePanel.jsx L144 >> (no-op-call).entity: base44.entities.EstimateQuoteDelivery,
+src/components/estimator/CustomerQuotePanel.jsx L273 >> Customer.get
+src/components/estimator/CustomerQuotePanel.jsx L327 >> (no-op-call).entity: base44.entities.EstimateQuoteDelivery,
+src/components/estimator/EstimateAcceptancePanel.jsx L113 >> (no-op-call).entity: base44.entities.EstimateAcceptance,
+src/components/estimator/EstimateAcceptancePanel.jsx L120 >> (no-op-call).entity: base44.entities.EstimateQuoteDelivery,
+src/components/estimator/EstimateAcceptancePanel.jsx L126 >> (no-op-call).entity: base44.entities.EstimateSectionAcceptance,
+src/components/estimator/EstimateActivityPanel.jsx L21 >> OpportunityActivity.filter
+src/components/estimator/EstimateActivityPanel.jsx L23 >> PortalMessage.filter
+src/components/estimator/EstimateQuoteDeliveryPanel.jsx L36 >> (no-op-call).entity: base44.entities.EstimateQuoteDelivery,
+src/components/estimator/EstimatorAuditPanel.jsx L47 >> EstimateRevision.filter
+src/components/estimator/EstimatorAuditPanel.jsx L48 >> OpportunityActivity.filter
+src/components/estimator/EstimatorAuditPanel.jsx L49 >> AdminAuditLog.filter
+src/components/estimator/aio/BuilderPartsPanel.jsx L307 >> BuilderPartGroup.get
+src/components/estimator/aio/BuilderPartsPanel.jsx L311 >> (no-op-call).entity: base44.entities.BuilderPartGroup,
+src/components/estimator/aio/BuilderPartsPanel.jsx L590 >> (no-op-call).loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort
+src/components/estimator/aio/BuilderPartsPanel.jsx L591 >> (no-op-call).loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId },
+src/components/estimator/aio/CreateQuickProductModal.jsx L28 >> (no-op-call).loadAllEntityRows({ entity: base44.entities.QuickProductCategory, sort: "category_name", label: "Quick Product
+src/components/estimator/aio/ProductPriceHistoryModal.jsx L35 >> (no-op-call).entity: base44.entities.BuilderPriceRevision,
+src/components/estimator/aio/ProductRow.jsx L154 >> (no-op-call).const rows = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_
+src/components/estimator/builder/builderService.js L972 >> (no-op-call).loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductI
+src/components/estimator/builder/builderService.js L1001 >> (no-op-call).entity: base44.entities.BuilderPriceRevision,
+src/components/estimator/estimateConversionService.js L29 >> (no-op-call).Estimate: base44.entities.AllInOneEstimate,
+src/components/estimator/estimateConversionService.js L30 >> (no-op-call).WorkOrder: base44.entities.WorkOrder,
+src/components/estimator/estimateRevisionService.js L15 >> (no-op-call).entity: base44.entities.EstimateRevision,
+src/components/estimator/estimateRevisionService.js L27 >> (no-op-call).const rows = await loadAllEntityRows({ entity: base44.entities.EstimateRevision, query: { estimate_id: estimat
+src/components/estimator/estimateRevisionService.js L144 >> (no-op-call).entity = base44.entities.AllInOneEstimate,
+src/components/estimator/estimateRevisionService.js L152 >> EstimateRevision.get
+src/components/estimator/foundation/FoundationTemplateDialog.jsx L60 >> (no-op-call).entity: base44.entities.ProjectTemplate,
+src/components/estimator/foundation/foundationTemplateService.js L7 >> (no-op-call).entity: base44.entities.ProjectTemplate,
+src/components/estimator/foundation/foundationTemplateService.js L38 >> ProjectTemplate.get
+src/components/estimator/foundation/foundationTemplateService.js L47 >> (no-op-call).entity: base44.entities.ProjectTemplate,
+src/components/estimator/moduleShared/moduleTemplateService.js L12 >> (no-op-call).entity: base44.entities.ProjectTemplate,
+src/components/estimator/moduleShared/moduleTemplateService.js L21 >> (no-op-call).entity: base44.entities.ProjectTemplate,
+src/components/estimator/moduleShared/moduleTemplateService.js L32 >> ProjectTemplate.get
+src/components/estimator/moduleShared/moduleTemplateService.js L35 >> (no-op-call).entity: base44.entities.ProjectTemplate,
+src/components/estimator/parts/MasterPartPickerModal.jsx L100 >> (no-op-call).entity: base44.entities.Inventory,
+src/components/estimator/parts/customProductService.js L612 >> (no-op-call).const revisions = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_pro
+src/components/estimator/parts/partGroupService.js L275 >> (no-op-call).loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductI
+src/components/estimator/parts/partGroupService.js L671 >> (no-op-call).loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: sourceBuilder.i
+src/components/estimator/parts/partGroupService.js L672 >> (no-op-call).loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: targetBuilder.i
+src/components/estimator/parts/partPackageService.js L110 >> (no-op-call).const revisions = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_pro
+src/components/estimator/products/productOperations.js L173 >> (no-op-call).const revisions = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_pro
+src/components/estimator/products/productRemovalService.js L67 >> (no-op-call).loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductI
+src/components/estimator/products/productRemovalService.js L111 >> (no-op-call).loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductI
+src/components/estimator/products/productRemovalService.js L168 >> (no-op-call).for (const step of plan.revisions || []) await deleteVerified(base44.entities.BuilderPriceRevision, step, "pri
+src/components/financials/FinancialsSpreadsheet.jsx L18 >> (no-op-call).const WorkOrder = base44.entities.WorkOrder;
+src/components/importer/ImportExportButtons.jsx L291 >> (no-op-call).const rows = await loadAllEntityRows({ entity: base44.entities.ProjectTemplate, sort: "-created_date", label: 
+src/components/markup/savedCustomerPricing.js L31 >> (no-op-call).loadAllEntityRows({ entity: base44.entities.MarkupTier, sort: "sort_order", label: "Customer pricing markup ti
+src/components/markup/savedCustomerPricing.js L34 >> (no-op-call).loadAllEntityRows({ entity: base44.entities.MarkupCategory, sort: "sort_order", label: "Customer pricing marku
+src/components/markup/savedCustomerPricing.js L35 >> (no-op-call).loadAllEntityRows({ entity: base44.entities.Settings, query: { category: "pricing" }, sort: null, label: "Cust
+src/components/markup/savedCustomerPricing.js L37 >> Customer.get
+src/components/masterInventory/FoundationMaterialDialog.jsx L42 >> FoundationInventory.get
+src/components/masterInventory/FoundationMaterialDialog.jsx L54 >> (no-op-call).entity: base44.entities.FoundationInventory,
+src/components/masterInventory/FoundationMaterialDialog.jsx L63 >> (no-op-call).entity: base44.entities.FoundationInventory,
+src/components/masterInventory/InventoryTable.jsx L29 >> AllInOneEstimate.get
+src/components/masterInventory/MasterEquipmentTab.jsx L35 >> (no-op-call).const FoundationInventoryEntity = base44.entities.FoundationInventory;
+src/components/masterInventory/inventoryPersistence.js L103 >> BuilderPart.filter
+src/components/masterInventory/inventoryPersistence.js L119 >> BuilderPart.filter
+src/components/masterInventory/inventoryPersistence.js L124 >> BuilderProduct.get
+src/components/orders/WorkOrderOrders.jsx L63 >> (no-op-call).const Order = base44.entities.Order;
+src/components/orders/WorkOrderOrders.jsx L65 >> (no-op-call).const GlobalSettings = base44.entities.GlobalSettings;
+src/components/permitting/JurisdictionDetailPanel.jsx L253 >> JurisdictionProfile.get
+src/components/permitting/JurisdictionDetailPanel.jsx L264 >> JurisdictionProfile.get
+src/components/permitting/JurisdictionDetailPanel.jsx L272 >> JurisdictionProfile.get
+src/components/permitting/JurisdictionDetailPanel.jsx L517 >> (no-op-call).entity: base44.entities.JurisdictionProfile,
+src/components/permitting/JurisdictionDetailPanel.jsx L586 >> JurisdictionProfile.get
+src/components/permitting/JurisdictionDetailPanel.jsx L687 >> PermitLocality.filter
+src/components/permitting/OfficeChangeLog.jsx L16 >> PermitLocality.filter
+src/components/permitting/PermitSettingsDialog.jsx L29 >> (no-op-call).const PermitLocality = base44.entities.PermitLocality;
+src/components/permitting/PermitSettingsDialog.jsx L30 >> (no-op-call).const GlobalSettings = base44.entities.GlobalSettings;
+src/components/permitting/PermitSpreadsheetRow.jsx L210 >> (no-op-call).entity: base44.entities.JurisdictionProfile,
+src/components/permitting/PermittingCompletenessDashboard.jsx L144 >> JurisdictionProfile.aggregate
+src/components/permitting/PermittingCompletenessDashboard.jsx L145 >> JurisdictionProfile.count
+src/components/permitting/PermittingCompletenessDashboard.jsx L146 >> JurisdictionProfile.count
+src/components/permitting/PermittingCompletenessDashboard.jsx L147 >> JurisdictionProfile.count
+src/components/permitting/PermittingCompletenessDashboard.jsx L255 >> JurisdictionProfile.filter
+src/components/queues/queueFeedClient.js L375 >> (no-op-call).loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: "dropdownConditions", label: "My
+src/components/queues/queueFeedClient.js L378 >> (no-op-call).loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: "salesTaskDescriptions", label: 
+src/components/sales/BulkDuplicateCleanup.jsx L12 >> (no-op-call).const WorkOrder = base44.entities.WorkOrder;
+src/components/sales/CustomFilterDialog.jsx L141 >> (no-op-call).const SalesFilter = base44.entities.SalesFilter;
+src/components/shared/CellContextMenu.jsx L9 >> (no-op-call).const CellHistory = base44.entities.CellHistory;
+src/components/sips/ProductChecklistDialog.jsx L23 >> (no-op-call).const WorkOrder = base44.entities.WorkOrder;
+src/components/sips/ProductChecklistDialog.jsx L270 >> (no-op-call).entity: base44.entities.GlobalSettings,
+src/components/sips/ProductChecklistDialog.jsx L275 >> (no-op-call).entity: base44.entities.GlobalSettings,
+src/components/sips/ProductChecklistDialog.jsx L280 >> (no-op-call).entity: base44.entities.GlobalSettings,
+src/components/sips/TemplateBuilder.jsx L26 >> (no-op-call).const GlobalSettings = base44.entities.GlobalSettings;
+src/components/timeclock/ClockOutDialog.jsx L14 >> (no-op-call).const WorkOrder = base44.entities.WorkOrder;
+src/components/timeclock/CurrentWorkCard.jsx L11 >> (no-op-call).const WorkOrder = base44.entities.WorkOrder;
+src/components/timeclock/PTOBalanceView.jsx L22 >> (no-op-call).const PTOPolicy = base44.entities.PTOPolicy;
+src/components/timeclock/TimeClockReportsDashboard.jsx L31 >> (no-op-call).const WorkOrder = base44.entities.WorkOrder;
+src/components/workflow/EnhancedSipChecklist.jsx L33 >> (no-op-call).const WorkOrder = base44.entities.WorkOrder;
+src/components/workflow/NotificationService.jsx L7 >> (no-op-call).const EmailNotificationSettings = base44.entities.EmailNotificationSettings;
+src/components/workflow/NotificationService.jsx L8 >> (no-op-call).const User = base44.entities.User;
+src/components/workflow/SipChecklistSection.jsx L18 >> (no-op-call).const WorkOrder = base44.entities.WorkOrder;
+src/components/workflow/SipChecklistSection.jsx L46 >> (no-op-call).entity: base44.entities.GlobalSettings,
+src/pages/AdminSettings.jsx L128 >> (no-op-call).const AutomationRule = base44.entities.AutomationRule;
+src/pages/AdminSettings.jsx L129 >> (no-op-call).const EmailGroup = base44.entities.EmailGroup;
+src/pages/AuditLog.jsx L32 >> EstimateRevision.filter
+src/pages/AuditLog.jsx L33 >> OpportunityActivity.filter
+src/pages/Financials.jsx L291 >> (no-op-call).const SalesFilter = base44.entities.SalesFilter;
+src/pages/MondayMorningMeeting.jsx L25 >> (no-op-call).const WorkOrder = base44.entities.WorkOrder;
+src/pages/MondayMorningMeeting.jsx L348 >> (no-op-call).entity: base44.entities.GlobalSettings,
+src/pages/ResourcePlanning.jsx L37 >> (no-op-call).const WorkOrder = base44.entities.WorkOrder;
+src/pages/SalesPipeline.jsx L175 >> (no-op-call).const SalesFilter = base44.entities.SalesFilter;
+src/pages/SalesPipeline.jsx L319 >> (no-op-call).const SalesFilter = base44.entities.SalesFilter;
+==== entity histogram
+92 (no-op-call)
+9 JurisdictionProfile
+3 EstimateRevision
+3 OpportunityActivity
+2 Customer
+2 PermitLocality
+2 WorkOrder
+2 AllInOneEstimate
+2 BuilderPart
+2 ProjectTemplate
+1 CalendarEvent
+1 FoundationInventory
+1 BuilderProduct
+1 AdminAuditLog
+1 BuilderPartGroup
+1 PortalMessage
+1 Announcement

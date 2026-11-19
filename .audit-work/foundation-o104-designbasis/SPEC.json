@@ -1,0 +1,105 @@
+{
+  "unit": "O-104 (CMP-I03) + O-105 (CMP-I04) — project design-basis capture + site/hazard inputs",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remote_head_stated": "8b0fcf921+ (per task; sandbox pulls taken fresh this session)",
+  "mode": "candidate-only (no remote writes, no publish/deploy/entity ops)",
+  "source_of_truth": "remote sandbox pulls taken this session via npx base44@latest sandbox read/ls/grep; local src/ never consulted for baselines",
+
+  "remote_baseline_md5": {
+    "base44/entities/FoundationProject.jsonc": "a0165731b75ef24a3537ea12fc3ac33b",
+    "src/components/estimator/foundation/FoundationRatesPanel.jsx": "316be798f372a312977d9767bc8ebeae",
+    "src/pages/FoundationSettings.jsx": "8ddd06d9a312180f4b3097a7ee184d50",
+    "src/components/estimator/foundation/foundationTemplateModel.js": "58b28c6e14f15b7c80ff4be14caebeca",
+    "src/components/estimator/foundation/foundationDraftRecovery.js": "6273ac50e54691f682361e6b5e3f24ab",
+    "src/components/estimator/foundation/foundationInputValidation.js": "3c50b350b9867213c9ac176dfe6ddea5"
+  },
+  "candidate_md5": {
+    "FoundationProject.jsonc": "132fc734940ac711163945229ba5d5e7",
+    "FoundationRatesPanel.jsx": "09c0911dbbac0bdf997c58f27dee0ed4",
+    "FoundationDesignBasisPanel.jsx": "eec243e7b2b4e50c8217371f67a978ac",
+    "foundationDesignBasis.js": "ca619641be5640d798387c437b3371fd"
+  },
+
+  "acceptance_text": {
+    "O-104": "Capture a project's design-basis edition and locality; do not equate \"newest code\" with the locally adopted code or change an existing project's basis silently. (ESTIMATOR_MASTERPLAN.md:699 / CMP-I03)",
+    "O-105": "Define site/hazard inputs with coordinates, units, standard edition, risk category, exposure assumptions, and timestamp. Support official report/manual entry before API automation. (ESTIMATOR_MASTERPLAN.md:700 / CMP-I04)"
+  },
+
+  "ownership_resolution": {
+    "brief_surface": "src/components/foundation/FoundationSettings.jsx",
+    "finding": "That path does not exist remotely. src/components/foundation/ holds only WallCapsInventoryTab.jsx, EquipmentInventoryTab.jsx, foundationInventoryPersistence.js. The literal file src/pages/FoundationSettings.jsx is the SHOP-WIDE Settings-entity rate editor (Settings rows filtered by ACTIVE_KEYS; writes via saveSettingsRowsSafely to the Settings entity) — it is NOT a per-project surface and cannot hold per-FoundationProject fields. The project-level settings surface is src/components/estimator/foundation/FoundationRatesPanel.jsx: mounted at src/pages/FoundationEstimator.jsx:1345 inside the Summary tab with { settings, project, onChange } where onChange is the page's single commit()/patch() path — the same contract the excavation_method project field already uses. Per the brief's 'or wherever project-level settings render — verify path via sandbox ls' clause, FoundationRatesPanel.jsx is the mount surface; src/pages/FoundationSettings.jsx is untouched.",
+    "candidate_files": [
+      "base44/entities/FoundationProject.jsonc (additive design_basis + site_hazard objects)",
+      "src/components/estimator/foundation/FoundationRatesPanel.jsx (import + sibling mount, +10 lines)",
+      "src/components/estimator/foundation/FoundationDesignBasisPanel.jsx (NEW — the capture UI)",
+      "src/components/estimator/foundation/foundationDesignBasis.js (NEW — pure write-shaping model)"
+    ],
+    "not_touched": "FoundationEstimator.jsx, foundationCalc.js, foundationReinforcement*, partSync.js, FoundationBOM.jsx, template files (foundationTemplateModel.js read-only reference), recovery files (foundationDraftRecovery.js, foundationBuilderRecovery.js, foundationSyncRecovery.js), inventory files, src/pages/FoundationSettings.jsx"
+  },
+
+  "schema_addition": {
+    "placement": "tail of FoundationProject.properties after ai_engineering_data; purely additive (verified: every pre-existing property deepEqual-unchanged, required/rls byte-identical)",
+    "design_basis": {
+      "version": "integer — block shape version, 1",
+      "code_edition": "string — locally adopted edition ('ASCE 7-16', 'OBC 2019'...). String not enum: adopted editions can be old/obscure and an enum would fail closed on legitimate values",
+      "code_edition_prior": "string — superseded edition preserved on post-capture change (the no-silent-change trail)",
+      "jurisdiction": "string — free-text adopted-code locality; future PermitLocality/JurisdictionProfile link may refine, never replace",
+      "basis_notes": "string — local amendments / ordinance refs / partial adoptions (CMP-I02 keeps adopted amendments distinct from referenced standards)",
+      "basis_source": "enum [manual, official_report, api] — api reserved (no current writer); authored content edits re-mark 'manual' unless official_report explicitly selected this write",
+      "basis_captured_at": "string ISO-8601 — FIRST capture, immutable thereafter",
+      "basis_updated_at": "string ISO-8601 — most recent authored basis edit",
+      "basis_locked": "boolean — operator lock; gated edits require recorded re-capture confirmation; stripped when nothing is captured"
+    },
+    "site_hazard": {
+      "version": "integer — 1",
+      "latitude": "number, nullable, -90..90 enforced at the write model — null = recorded-but-unset, absent = never captured, never 0-filled",
+      "longitude": "number, nullable, -180..180",
+      "units": "enum [imperial, metric] — absent = unstated, never assumed",
+      "risk_category": "enum [I, II, III, IV] — ASCE-7-style",
+      "exposure_category": "enum [B, C, D]",
+      "exposure_assumption": "string — free-text terrain/exposure assumption note",
+      "entry_method": "enum [manual, official_report, api] — api reserved",
+      "input_timestamp": "string ISO-8601 — most recent authored change"
+    },
+    "edition_single_source": "the adopted standard edition lives ONCE in design_basis.code_edition; site_hazard deliberately does not duplicate it (two edition fields could diverge silently — the exact failure O-104 forbids)"
+  },
+
+  "write_model_semantics": "candidates/foundationDesignBasis.js — sanitizeDesignBasisWrite(current, fields, {now, confirmed}) and sanitizeSiteHazardWrite(current, fields, {now}) return {next|undefined, changed, issues[]}. Empty-string fields strip keys (explicit-empty vs authored); coords accept explicit null (schema-declared nullable); out-of-enum/out-of-range values are rejected from the record with an issue and the prior value kept; provenance (basis_source/entry_method) lands 'manual' on authored writes, honors explicit official_report, and can never produce 'api'; basis_updated_at/input_timestamp stamp only on real changes (an identical re-write returns changed:false — no timestamp churn, no dirty-marking); basis_captured_at is first-capture immutable; a post-capture code_edition change (including clearing it) preserves the superseded value in code_edition_prior; a fully cleared block reduces to next:undefined so the editor stores null (explicit clear, not a ghost audit shell); a locked basis rejects content edits AND unlocking until confirmed:true.",
+
+  "panel_behavior": "FoundationDesignBasisPanel renders inside FoundationRatesPanel below the rates card, same {project, onChange} patch contract. code_edition commits whole-value on blur/Enter (per-keystroke writes would pollute code_edition_prior with mid-typing fragments); jurisdiction/basis_notes/exposure_assumption commit live; selects show '— not recorded —' for unset and strip on clear; CoordInputs keep an in-focus draft so negatives/partials type freely (empty commits explicit null, finite numbers commit live); the source select defaults the SESSION to 'manual' so any edit re-marks a captured basis manual unless official_report is explicitly re-picked this session ('api' is never offered); a locked basis disables all basis inputs behind a 'Change basis…' confirm that records the re-capture intent (armed state and both source selections are scoped to project.id so nothing leaks across a project switch); status lines display captured/updated timestamps, source, prior edition, and recorded-input timestamp/entry-method.",
+
+  "carry_path_audit": {
+    "in_memory": "normalizeFoundationAssembly does const next = { ...project } (foundationAssemblyModel.js:259) — both blocks survive commit() normalization, undo/redo history, and calc memos verbatim",
+    "PERSISTENCE_REMAINDER_BLOCKER": "payload() (src/pages/FoundationEstimator.jsx ~line 649) is a strict field allowlist consumed by updateBuilderSourceProject -> staffEntityWrite updateMany {id, updated_date} {$set}. It does NOT carry design_basis/site_hazard, so panel edits round-trip in-memory but are DROPPED ON SAVE until the estimator-page owner adds two lines: `design_basis: project.design_basis,` and `site_hazard: project.site_hazard,` to payload(). FoundationEstimator.jsx is outside this unit's ownership — this is the flagged integration remainder. Side-writing from the panel was rejected: a $set outside the page's CAS bumps updated_date and forces 'changed in another session' conflicts on the user's next save.",
+    "draft_recovery_remainder": "FOUNDATION_DRAFT_FIELDS (foundationDraftRecovery.js:3) is also an allowlist — basis/hazard edits are not covered by the unsent browser-draft backup until the recovery owner adds both keys (recovery files not owned).",
+    "save_as_copy": "handleSaveAsCopy builds baseData from payload() + identity fields — new blocks do not copy. DELIBERATE: a copy is a new project and must re-confirm its own basis rather than silently inherit the source project's capture (O-104). Revisit only as an explicit user choice.",
+    "template_travel": "FOUNDATION_TEMPLATE_FIELDS (foundationTemplateModel.js:37) does not carry them — DELIBERATE non-carry, matching the pricing_engine exclusion precedent: a template is a reusable design while a basis is site/project-specific; transplanting another site's adopted edition/jurisdiction would be exactly the silent equating O-104 bans. A future apply-time 'also copy site inputs' checkbox would be an authored choice, not a carry.",
+    "cas_verify": "sourcePatchMatches verifies only patch fields — unaffected",
+    "validation": "foundationProjectInputIssues inspects named fields only — new objects pass through, no validation breaks",
+    "calc_pricing": "calcProject/foundationCalc/foundationSellPricing/foundationPricingWire/partSync read named fields — untouched and unaffected",
+    "backend_write": "staffEntityWrite allows FoundationProject {create, updateMany} — additive fields flow through the normal $set once carried; no function changes needed",
+    "other_surfaces": "importEstimates/exportEstimates/CustomerPricingTab/projectCategorizer read named fields — no break; export coverage of the blocks is deferred to O-118 (preliminary design-basis summary/handoff) which explicitly consumes them"
+  },
+
+  "no_silent_change_guarantees": [
+    "nothing auto-fills: absent stays absent, no edition/units/category is ever suggested as a value (the datalist offers text suggestions only, committed by the user)",
+    "the newest-published-is-adopted conflation is blocked by copy: UI text states 'locally adopted — never the newest published edition'",
+    "every basis write stamps basis_source + basis_updated_at; captured_at is immutable; edition changes preserve code_edition_prior",
+    "basis_locked makes post-capture edits impossible without an explicit recorded re-capture intent",
+    "no other writer exists: only the panel writes these fields, and only through the page's own commit path"
+  ],
+
+  "verification": {
+    "script": "scripts/test-foundation-design-basis.mjs — PASS foundation-design-basis (24 groups)",
+    "coverage": "schema parses + pure additivity (deepEqual on every pre-existing property, required/rls identical, required members + enums asserted); design_basis model (first-capture stamping, no-op detection with zero timestamp churn, prior-edition A->B->C walk, clear-edition->prior+absent, api->manual+issue, official_report honored, lock preserves source, locked reject/confirm gate, lock-nothing strip, clear-all->store-null, malformed tolerated); site_hazard model (explicit null coords never 0, range/non-finite rejected keeping prior value, enum rejection, entry_method rules, clear->null, non-object tolerated); esbuild JSX compile of both candidates; react-test-renderer smoke (empty project prompts, exposure select -> site_hazard patch with provenance, edition draft+blur -> design_basis patch, locked -> disabled -> arm -> edit -> manual re-mark, recorded latitude displayed)"
+  },
+
+  "residual_gaps_documented_not_fixed": [
+    "payload() carry in FoundationEstimator.jsx — the one-line-per-field integration that makes persistence real; owned by the estimator-page workstream (flagged as the blocker remainder)",
+    "FOUNDATION_DRAFT_FIELDS — browser-draft backup coverage for the new fields; recovery-file owner",
+    "export/handoff surfaces (exportEstimates, O-118 summary) do not yet read the blocks",
+    "risk_category/exposure_category are ASCE-7-style fixed enums — a non-ASCE standard's categories would need a schema enum extension",
+    "jurisdiction is free text; a PermitLocality/JurisdictionProfile FK link is a later refinement (entities exist but linking was not in scope)"
+  ]
+}

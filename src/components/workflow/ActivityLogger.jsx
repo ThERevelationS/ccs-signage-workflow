@@ -1,7 +1,6 @@
-import { base44 } from "@/api/base44Client";
 import { NotificationTriggers } from "./NotificationService";
 import { createActivityLogBestEffort } from "./activityPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const ActivityLog = staffEntities.ActivityLog;

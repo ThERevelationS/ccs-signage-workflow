@@ -1,0 +1,7 @@
+{
+  "stdout": "      \"description\": \"Internal retry receipt used only to make the first create of this Builder source project idempotent.\"\n    },\n    \"builder_sync_attempt\": {\n      \"type\": \"object\",\n      \"description\": \"Internal source-save receipt; synchronization is acknowledged by the linked estimate line at the same source updated_date.\",\n      \"properties\": {\n        \"schema_version\": {\n          \"type\": \"integer\"\n        },\n        \"key\": {\n          \"type\": \"string\"\n        },\n        \"source_project_id\": {\n          \"type\": \"string\"\n        },\n        \"estimate_id\": {\n          \"type\": \"string\"\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 1723
+}

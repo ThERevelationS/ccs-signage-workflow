@@ -1,0 +1,26 @@
+{
+ "wallCapCalculator.js": {
+  "bytes": 3491,
+  "sha256": "ccad250885b9ddb2de99c6f8018812b03bf94cd092821bfaf5cba7de3c0f7ee9",
+  "endsNL": false,
+  "hunks": 3
+ },
+ "FoundationWallCapsPanel.jsx": {
+  "bytes": 8606,
+  "sha256": "7bf313fadcda3c6cb2eeef5fbf3d82dddf953f21906b1fa97bb7d1601cf64f69",
+  "endsNL": false,
+  "hunks": 3
+ },
+ "foundationCatalogIntegrity.js": {
+  "bytes": 3463,
+  "sha256": "be6555ed5d484e648f7dbb5abb4489e96b2b61f0a5068561c92943e64c5ea40e",
+  "endsNL": true,
+  "hunks": 5
+ },
+ "foundationCalc.js": {
+  "bytes": 12562,
+  "sha256": "94d4e8092788b5ac68a9fc606168b1e495568d3c857ef06a09aa7f0488bb04bb",
+  "endsNL": false,
+  "hunks": 1
+ }
+}

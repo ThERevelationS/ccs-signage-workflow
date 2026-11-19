@@ -1,0 +1,13 @@
+{
+  "authorized": true,
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "e1fbae8e8bc2162a5bd184b0cc4ccc2dfbe78f3b",
+  "restoreCheckpointId": "6aee836e8860e4101a3c75e9",
+  "candidateHashes": {
+    "wallCapCalculator.js": "90e64ee49d8fe815ea63506ab21c25e9fd449c55581afe0a21f19371c87695eb",
+    "foundationCalc.js": "ec358d29484065ee1a8960a95394276bb4dc56b179a5cb733f020b375759f312",
+    "FoundationWallCapsPanel.jsx": "3d2c186e797001661798cf1cb787ea35ee7cb63d3f5e73e1d2aac5b25c4f974d"
+  },
+  "reviewedProtocolHash": "536608e4a8a7a31d0992e3af50f64c269f8519709ad3bc438a29e865319b1cbb"
+}

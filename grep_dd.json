@@ -1,0 +1,301 @@
+{
+  "matches": [
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 182,
+      "text": "  { value: \"task_due_date_set\", label: \"Task Due Date Set\", category: \"Tasks\" },"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 183,
+      "text": "  { value: \"task_due_date_approaching\", label: \"Task Due Date Approaching\", category: \"Tasks\" },"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 184,
+      "text": "  { value: \"task_due_date_passed\", label: \"Task Due Date Passed (Overdue)\", category: \"Tasks\" },"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 229,
+      "text": "  { value: \"due_date_approaching\", label: \"Due Date Approaching\", category: \"Dates\" },"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 230,
+      "text": "  { value: \"due_date_passed\", label: \"Due Date Passed\", category: \"Dates\" },"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 231,
+      "text": "  { value: \"due_date_set\", label: \"Due Date Set / Changed\", category: \"Dates\" },"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 232,
+      "text": "  { value: \"due_date_cleared\", label: \"Due Date Cleared\", category: \"Dates\" },"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 386,
+      "text": "  { value: \"set_due_date\", label: \"Set Due Date\", icon: Calendar, color: \"pink\" },"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 420,
+      "text": "  \"due_date_set\", \"due_date_cleared\", \"start_date_set\","
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 428,
+      "text": "  \"task_due_date_set\", \"task_assigned\", \"all_tasks_completed\","
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 455,
+      "text": "  \"due_date_approaching\", \"due_date_passed\","
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 458,
+      "text": "  \"task_due_date_approaching\", \"task_due_date_passed\","
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 535,
+      "text": "  \"add_task\", \"add_note\", \"set_due_date\", \"create_rider\","
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 604,
+      "text": "  \"{{assigned_to}}\", \"{{due_date}}\", \"{{created_by}}\", \"{{is_rider}}\","
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 2243,
+      "text": "      case \"set_due_date\":"
+    },
+    {
+      "path": "src/pages/WorkOrderTraveler.jsx",
+      "line": 32,
+      "text": "            {[clean(task.assigned_to), clean(task.due_date) && `due ${fmtDate(task.due_date)}`, task.estimated_hours ? `est ${task.estimated_hours}h` : \"\"].filter(Boolean).join(\" · \")}"
+    },
+    {
+      "path": "src/pages/WorkOrderTraveler.jsx",
+      "line": 187,
+      "text": "              [\"Due\", fmtDate(wo.due_date)],"
+    },
+    {
+      "path": "src/pages/WorkOrderTraveler.jsx",
+      "line": 327,
+      "text": "                  <p className=\"text-[11px] text-slate-500\">{STAGE_LABELS[clean(r.rider_stage) || clean(r.current_stage)] || \"—\"} · due {fmtDate(r.due_date)}</p>"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1373,
+      "text": "        due_date: String(dueDate || \"\").trim(),"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 57,
+      "text": "    escHtml(i.invoice_number || \"â€”\"), escHtml(i.issue_date || \"â€”\"), escHtml(i.due_date || \"â€”\"),"
+    },
+    {
+      "path": "src/pages/MainWorkflow.jsx",
+      "line": 20,
+      "text": "  const [sortBy, setSortBy] = useState(\"due_date\");"
+    },
+    {
+      "path": "src/pages/MainWorkflow.jsx",
+      "line": 81,
+      "text": "      case \"due_date\":"
+    },
+    {
+      "path": "src/pages/MainWorkflow.jsx",
+      "line": 107,
+      "text": "                <SelectItem value=\"due_date\">Due Date</SelectItem>"
+    },
+    {
+      "path": "src/pages/ResourcePlanning.jsx",
+      "line": 131,
+      "text": "                dueDate: task.due_date || wo.due_date"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 13,
+      "text": "// due_date is stored date-only (\"YYYY-MM-DD\"); a bare new Date(str) parses it"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 115,
+      "text": "      if (!wo.due_date) return false;\r"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 116,
+      "text": "      return format(parseLocalDate(wo.due_date), \"MMM d\") === label;\r"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 176,
+      "text": "    if (!wo.due_date) return false;\r"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 177,
+      "text": "    return parseLocalDate(wo.due_date) < startOfToday;\r"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 128,
+      "text": "    onAddTask(wo, { text, assigned_to: taskAssignee, due_date: taskDueDate });"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 166,
+      "text": "                {task.due_date && (() => { const d = parseLocalDate(task.due_date); return d && !isNaN(d) ? <span className=\"shrink-0 text-xs text-gray-500\">due {format(d, \"M/d\")}</span> : null; })()}"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 552,
+      "text": "  const addMmmTask = async (wo, { text, assigned_to, due_date }) => {"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 560,
+      "text": "      due_date: due_date || \"\","
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 252,
+      "text": "    due_date: clean(invoice?.due_date),"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 284,
+      "text": "        due_date: clean(form.due_date),"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 322,
+      "text": "            <div><label className={labelCls}>Due date</label><CcsDateField className={inputCls} value={form.due_date} onChange={set(\"due_date\")} /></div>"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 456,
+      "text": "                  {inv.issue_date ? `Issued ${inv.issue_date}` : \"Not issued\"}{inv.due_date ? ` · Due ${inv.due_date}` : \"\"}{inv.terms ? ` · ${inv.terms}` : \"\"}"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 583,
+      "text": "                {Number(inv.balance_due) > 0 && [\"sent\", \"partially_paid\"].includes(inv.status) && inv.due_date && inv.due_date < today() && ("
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 706,
+      "text": "        due_date: dueDate || undefined,"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 841,
+      "text": "  const overdueRows = invoices.filter((i) => Number(i.balance_due) > 0 && [\"sent\", \"partially_paid\"].includes(i.status) && i.due_date && i.due_date < today());"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 1046,
+      "text": "            const overdue = Number(inv.balance_due) > 0 && [\"sent\", \"partially_paid\"].includes(inv.status) && inv.due_date && inv.due_date < today();"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 1064,
+      "text": "                {inv.due_date || \"—\"}"
+    },
+    {
+      "path": "src/pages/Financials.jsx",
+      "line": 17,
+      "text": "// due_date is stored date-only (\"YYYY-MM-DD\"); a bare new Date(str) parses it"
+    },
+    {
+      "path": "src/pages/Financials.jsx",
+      "line": 72,
+      "text": "  const overdueCount = active.filter(wo => wo.due_date && parseLocalDate(wo.due_date) < startOfToday).length;"
+    },
+    {
+      "path": "src/pages/Financials.jsx",
+      "line": 91,
+      "text": "    count: active.filter(wo => wo.due_date && dateFnsFormat(parseLocalDate(wo.due_date), \"MMM d\") === label).length"
+    },
+    {
+      "path": "src/pages/ProductQueues.jsx",
+      "line": 10,
+      "text": "  { key: \"design\", label: \"Design\", stageFilter: [\"design\", \"estimating\", \"sales\"], dueField: \"design_due_date\", title: \"Design Queue\" },"
+    },
+    {
+      "path": "src/pages/ProductQueues.jsx",
+      "line": 11,
+      "text": "  { key: \"production\", label: \"Production\", stageFilter: [\"production\", \"fabrication\"], dueField: \"product_due_date\", title: \"Production Queue\" },"
+    },
+    {
+      "path": "src/pages/ProductQueues.jsx",
+      "line": 12,
+      "text": "  { key: \"fulfillment\", label: \"Fulfillment\", stageFilter: [\"installation\", \"completed\"], dueField: \"product_due_date\", title: \"Fulfillment Queue\" },"
+    },
+    {
+      "path": "src/pages/ProductQueues.jsx",
+      "line": 13,
+      "text": "  { key: \"all\", label: \"All Active\", stageFilter: null, dueField: \"product_due_date\", title: \"All Active Products\" },"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 556,
+      "text": "        e.due_date || \"\","
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 306,
+      "text": "          due_date: gt.due_date,"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 520,
+      "text": "    setEditTaskDue(String(item.task.due_date || \"\").slice(0, 10));"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 539,
+      "text": "      due_date: editTaskDue || \"\","
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 820,
+      "text": "                        {wo.due_date ? format(parseLocalDate(wo.due_date), \"M/d/yy\") : \"-\"}"
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 115,
+      "text": "              {invoice.due_date || \"—\"}"
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 116,
+      "text": "              {Number(invoice.balance_due) > 0 && invoice.due_date && new Date(invoice.due_date) < new Date() && <Clock className=\"h-3.5 w-3.5 text-red-500\" />}"
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 448,
+      "text": "        {job.due_date && <span>Due: <span className=\"font-medium text-slate-700\">{job.due_date}</span></span>}"
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 517,
+      "text": "          <p className=\"text-xs text-slate-500\">{invoice.issue_date ? `Issued ${invoice.issue_date}` : \"Draft\"}{invoice.due_date ? ` · due ${invoice.due_date}` : \"\"}</p>"
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 1142,
+      "text": "                                  <td className=\"py-1.5 pr-3 text-slate-500\">{i.due_date || \"—\"}</td>"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 59
+}

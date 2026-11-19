@@ -1,0 +1,387 @@
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Save } from "lucide-react";
+import BrickGeometryPanel from "@/components/estimator/brick/BrickGeometryPanel";
+import BrickTotals from "@/components/estimator/brick/BrickTotals";
+import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
+import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
+import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
+import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
+import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
+import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
+import { categorizeBrickStoneProject } from "@/components/markup/projectCategorizer";
+import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
+import { staffEntities } from "@/components/staff/staffEntities";
+
+export default function BrickStoneEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
+  const params = new URLSearchParams(window.location.search);
+  const id = embeddedProjectId || params.get("id") || params.get("edit");
+  const estimateId = embeddedEstimateId || params.get("estimateId");
+
+  const [project, setProject] = useState(null);
+  const [materials, setMaterials] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [templateMode, setTemplateMode] = useState(null);
+  const saveRef = useRef(null);
+  const copyAttemptRef = useRef({ signature: "", key: "" });
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    copyAttemptRef.current = { signature: "", key: "" };
+    const load = async () => {
+      setLoading(true);
+      setLoadError("");
+      try {
+        const [p, legacyMats, foundationMats] = await Promise.all([
+          id ? staffEntities.BrickStoneProject.get(id) : Promise.resolve(null),
+          // Legacy entity is optional compatibility data; the modern Foundation
+          // inventory below is the authoritative masonry catalog and is strict.
+          loadAllEntityRows({ entity: staffEntities.BrickStoneInventory, sort: "material_name", label: "Legacy Brick & Stone inventory" }).catch(() => []),
+          loadAllEntityRows({ entity: staffEntities.FoundationInventory, sort: "material_name", label: "Foundation masonry inventory" }),
+        ]);
+
+      // The committed SignEstimate Pro repo defined BrickStoneInventory but never
+      // shipped a Brick estimator implementation or any BrickStoneInventory data.
+      // Modern Master Inventory stores masonry units in FoundationInventory. Use
+      // those rows as the primary catalog while keeping the legacy entity readable
+      // for compatibility if an older record is ever encountered.
+      const modernMats = (foundationMats || [])
+        .filter((row) =>
+          row.show_in_foundation !== false && (
+            row.material_type === "brick_stone" ||
+            (row.material_type === "wall_material" && ["brick", "stone", "cinderblock"].includes(row.wall_material_subtype))
+          )
+        )
+        .map((row) => ({
+          ...row,
+          length: row.material_type === "brick_stone" ? row.brick_length_inches : row.wall_unit_length_inches,
+          width: row.material_type === "brick_stone" ? row.brick_width_inches : row.wall_unit_width_inches,
+          height: row.material_type === "brick_stone" ? row.brick_height_inches : row.wall_unit_height_inches,
+          _inventory_entity: "FoundationInventory",
+        }));
+      const legacyNormalized = (legacyMats || []).map((row) => ({
+        ...row,
+        _inventory_entity: "BrickStoneInventory",
+      }));
+
+        setProject(p);
+        setMaterials([...modernMats, ...legacyNormalized]);
+      } catch (error) {
+        console.error("Brick & Stone prerequisites could not be loaded:", error);
+        setLoadError(error?.message || "Brick & Stone Builder prerequisites could not be verified.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [id]);
+
+  const material = useMemo(
+    () => materials.find((m) => m.id === project?.selected_material_id),
+    [materials, project]
+  );
+  const totals = useMemo(
+    () => (project ? calcBrickStoneProject(project, material) : null),
+    [project, material]
+  );
+
+  // Ctrl+S / Cmd+S saves the section without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!saving) saveRef.current?.();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saving]);
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!saving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saving]);
+
+  if (loading) return <div className="p-10 text-center text-gray-400">Loading section…</div>;
+  if (loadError) return <div className="p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded">Brick & Stone Builder unavailable. Required project data or the primary masonry catalog could not be verified. {loadError}</div>;
+  if (!project) return <div className="p-10 text-center text-gray-500">Section not found.</div>;
+
+  const patch = (changes) => setProject((prev) => ({ ...prev, ...changes }));
+
+  const handleSave = async () => {
+    if (!(Number(totals?.calculated_surface_area) > 0)) {
+      window.alert("Wall area must be greater than zero before this section can be saved. Check the wall dimensions and material selection.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const pricingProject = {
+        ...project,
+        material_cost: totals.material_cost,
+        mortar_cost: totals.mortar_cost,
+        labor_cost: totals.labor_cost,
+        subtotal: totals.subtotal,
+      };
+      const customerPricing = project.customer_pricing?.applied === true
+        ? await calculateSavedCustomerPricing({
+            project: pricingProject,
+            categorize: categorizeBrickStoneProject,
+            tierNumber: project.customer_pricing?.tier_number,
+          })
+        : project.customer_pricing;
+      const dataToSave = {
+        project_name: project.project_name,
+        notes: project.notes,
+        status: "calculated",
+        selected_material_id: project.selected_material_id,
+        material_name: project.material_name,
+        material_dimensions: project.material_dimensions,
+        bricks_along_length: project.bricks_along_length,
+        bricks_along_width: project.bricks_along_width,
+        courses_high: project.courses_high,
+        layers: project.layers,
+        mortar_gap: project.mortar_gap,
+        waste_factor: project.waste_factor,
+        mortar_bag_cost: project.mortar_bag_cost,
+        bricks_per_hour: project.bricks_per_hour,
+        labor_rate_per_hour: project.labor_rate_per_hour,
+        markup_percent: project.markup_percent,
+        base_length: totals.derived_length,
+        base_width: totals.derived_width,
+        base_height: totals.derived_height,
+        calculated_bricks: totals.calculated_bricks,
+        calculated_surface_area: totals.calculated_surface_area,
+        mortar_bags_needed: totals.mortar_bags_needed,
+        material_cost: totals.material_cost,
+        mortar_cost: totals.mortar_cost,
+        labor_hours: totals.labor_hours,
+        labor_cost: totals.labor_cost,
+        subtotal: totals.subtotal,
+        markup_amount: totals.markup_amount,
+        total_cost: totals.total_cost,
+        customer_pricing: customerPricing,
+      };
+      const savedProject = await updateBuilderSourceProject({
+        entity: staffEntities.BrickStoneProject,
+        sourceId: project.id,
+        expectedUpdatedAt: project.updated_date,
+        data: dataToSave,
+        estimateId,
+        label: "Brick & Stone project",
+      });
+      if (savedProject?.updated_date) {
+        setProject((prev) => ({ ...prev, updated_date: savedProject.updated_date }));
+      }
+
+      if (estimateId) {
+        await recordBuilderSave({
+          estimateId,
+          line: { project_id: project.id, module_key: "brick_stone" },
+          sourceProject: savedProject,
+          liveTotal: totals.total_cost,
+        });
+      }
+      onSaved?.();
+    } catch (e) {
+      console.error(e); alert("Save failed: " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+  saveRef.current = handleSave;
+
+  // #78 — clone the current save payload into a brand-new Brick & Stone project.
+  const handleSaveAsCopy = async () => {
+    setSaving(true);
+    try {
+      const copy = await saveModuleProjectCopy({
+        entity: staffEntities.BrickStoneProject,
+        payload: {
+          project_name: project.project_name,
+          client_name: project.client_name,
+          customer_id: project.customer_id,
+          estimate_number: project.estimate_number,
+          hyperlink: project.hyperlink,
+          notes: project.notes,
+          status: "calculated",
+          selected_material_id: project.selected_material_id,
+          material_name: project.material_name,
+          material_dimensions: project.material_dimensions,
+          bricks_along_length: project.bricks_along_length,
+          bricks_along_width: project.bricks_along_width,
+          courses_high: project.courses_high,
+          layers: project.layers,
+          mortar_gap: project.mortar_gap,
+          waste_factor: project.waste_factor,
+          mortar_bag_cost: project.mortar_bag_cost,
+          bricks_per_hour: project.bricks_per_hour,
+          labor_rate_per_hour: project.labor_rate_per_hour,
+          markup_percent: project.markup_percent,
+          base_length: totals.derived_length,
+          base_width: totals.derived_width,
+          base_height: totals.derived_height,
+          calculated_bricks: totals.calculated_bricks,
+          calculated_surface_area: totals.calculated_surface_area,
+          mortar_bags_needed: totals.mortar_bags_needed,
+          material_cost: totals.material_cost,
+          mortar_cost: totals.mortar_cost,
+          labor_hours: totals.labor_hours,
+          labor_cost: totals.labor_cost,
+          subtotal: totals.subtotal,
+          markup_amount: totals.markup_amount,
+          total_cost: totals.total_cost,
+          customer_pricing: project.customer_pricing,
+        },
+        attemptRef: copyAttemptRef,
+        keyPrefix: "brick_stone_project_copy",
+        baseName: project.project_name || "Brick & Stone",
+        label: "Brick & Stone project copy",
+      });
+      if (embedded) onSaved?.();
+      else navigate(`/BrickStoneEstimator?id=${copy.id}`);
+    } catch (e) {
+      console.error(e); alert("Save copy failed: " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // #79 — template payload = the editable masonry setup a user would reuse.
+  const buildBrickStoneTemplateData = (p) => ({
+    selected_material_id: p.selected_material_id,
+    material_name: p.material_name,
+    material_dimensions: p.material_dimensions,
+    bricks_along_length: p.bricks_along_length,
+    bricks_along_width: p.bricks_along_width,
+    courses_high: p.courses_high,
+    layers: p.layers,
+    mortar_gap: p.mortar_gap,
+    waste_factor: p.waste_factor,
+    mortar_bag_cost: p.mortar_bag_cost,
+    bricks_per_hour: p.bricks_per_hour,
+    labor_rate_per_hour: p.labor_rate_per_hour,
+    markup_percent: p.markup_percent,
+    notes: p.notes,
+  });
+
+  return (
+    <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6">
+        <div className="flex items-center justify-between gap-4 mb-5">
+          {embedded ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to products
+            </button>
+          ) : (
+            <Link
+              to={estimateId ? `/EstimateDetail?id=${estimateId}` : "/Estimator"}
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to estimate
+            </Link>
+          )}
+          {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
+          <Button onClick={handleSave} disabled={saving || !project.selected_material_id} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
+            <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save Section"}
+          </Button>
+          <ModuleActionBar
+            onTemplates={() => setTemplateMode("load")}
+            onSaveAsTemplate={() => setTemplateMode("save")}
+            onSaveAsCopy={handleSaveAsCopy}
+            estimateId={estimateId}
+            saving={saving}
+          />
+        </div>
+
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold text-gray-900">Brick &amp; Stone</h1>
+          <p className="text-sm text-gray-500">{project.client_name}</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
+              <label className="text-xs text-gray-500">
+                Section name
+                <Input
+                  value={project.project_name || ""}
+                  onChange={(e) => patch({ project_name: e.target.value })}
+                />
+              </label>
+            </div>
+
+            <BrickGeometryPanel
+              project={project}
+              materials={materials}
+              derived={totals}
+              onChange={patch}
+            />
+
+            {materials.length === 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-700">
+                No masonry materials in the catalog yet.{" "}
+                <Link to="/FoundationCatalog" className="font-semibold underline hover:text-amber-900">
+                  Add brick or stone in the foundation catalog →
+                </Link>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <BrickTotals
+              project={project}
+              totals={totals}
+              onChange={(changes) => patch({
+                ...changes,
+                ...(Object.prototype.hasOwnProperty.call(changes, "markup_percent")
+                  ? { customer_pricing: { ...(project.customer_pricing || {}), applied: false } }
+                  : {}),
+              })}
+            />
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <CustomerPricingTab
+            project={{
+              ...project,
+              material_cost: totals.material_cost,
+              mortar_cost: totals.mortar_cost,
+              labor_cost: totals.labor_cost,
+              subtotal: totals.subtotal,
+            }}
+            categorize={categorizeBrickStoneProject}
+            accentColor="red"
+            onApplyTier={(tier) => patch({
+              customer_pricing: { ...(project.customer_pricing || {}), applied: true, tier_number: tier },
+            })}
+          />
+        </div>
+
+        <ModuleTemplateDialog
+          open={!!templateMode}
+          mode={templateMode}
+          onClose={() => setTemplateMode(null)}
+          project={project}
+          onApply={(data) => patch(data)}
+          moduleKey="brick_stone"
+          title="Brick & Stone"
+          buildTemplateData={buildBrickStoneTemplateData}
+          describeTemplate={(t) => (t.project_data?.material_name || "Saved wall setup")}
+        />
+      </div>
+    </div>
+  );
+}

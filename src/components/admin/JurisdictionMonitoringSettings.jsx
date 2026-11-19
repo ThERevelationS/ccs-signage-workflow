@@ -10,6 +10,7 @@ import { AlertCircle, Clock, RefreshCw, Loader2, Plus, X, Mail } from "lucide-re
 import { format } from "date-fns";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/permitting/permitGlobalSettingsPersistence";
 import { useAuth } from "@/components/auth/EmailGate";
+import { CcsTimeField } from "@/components/ui/ccs-date-field";
 
 export default function JurisdictionMonitoringSettings() {
   const { sessionToken } = useAuth();
@@ -175,8 +176,7 @@ export default function JurisdictionMonitoringSettings() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-sm font-medium text-gray-700">Run Time (24-hour format)</Label>
-                <Input
-                  type="time"
+                <CcsTimeField
                   value={monitoringSettings.run_time}
                   onChange={(e) => setMonitoringSettings({ ...monitoringSettings, run_time: e.target.value })}
                   className="mt-2"
@@ -252,7 +252,7 @@ export default function JurisdictionMonitoringSettings() {
             {(monitoringSettings.notification_emails || []).map(email => (
               <div key={email} className="flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                 <span>{email}</span>
-                <button
+                <button type="button"
                   onClick={() => setMonitoringSettings({
                     ...monitoringSettings,
                     notification_emails: monitoringSettings.notification_emails.filter(e => e !== email)

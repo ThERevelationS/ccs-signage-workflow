@@ -1,0 +1,131 @@
+{
+  "id": "O-010",
+  "ticket": "CMP-A10",
+  "title": "Reconcile module totals, cost categories, customer tiers, overrides, and accepted snapshots",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "verified_remote_head": "4b2f3ad606e21a237f8abe0349410761cb6408ea",
+  "prior_remote_head": "cbee8813d8df6cb49b35b669d266eb29343daf0c",
+  "remote_write_status": "none — audit/candidate package only; no sandbox edit/write, checkpoint, deploy, or publish performed",
+  "baseline_provenance": {
+    "method": "npx base44@latest sandbox read <path> --app-id 68dfcc5e57bbbc35387da97c --branch main --json",
+    "normalization": "sandbox read returns content with CRLF normalized to LF and strips the file's final newline; baseline/*, fixture-pulls/* and candidates/* therefore differ byte-wise from git blobs by endings only. All 30 reconciliation files were re-verified content-identical to HEAD 4b2f3ad606 modulo that normalization (git show | tr -d '\\r' comparison).",
+    "mid_work_drift": "HEAD moved cbee8813 -> 4b2f3ad606 during the audit (external-agent commits). FoundationEstimator.jsx was the only in-scope substantive change (Save-As-Copy metadata preservation + template-save disabled while pricing blocked); baseline re-pulled and candidate edits re-applied on top at ~22:40.",
+    "unrelated_remote_change": "FoundationEstimator.jsx gained preservation of estimate_number/hyperlink/beautify_data_url/pricing_engine on Save As Copy and template-save disabling when pricing is blocked — preserved verbatim in candidates/FoundationEstimator.jsx."
+  },
+  "ownership_chain": {
+    "builder_source": "FoundationProject record — persists the 12-field split-total partition (see persisted_total_fields). grand_total is computed, not persisted. total_brick_cost and total_fill_cost are subsets of total_wall_cost and are NEVER summed into the section total (would double-count walls).",
+    "calculator": "foundationCalc.js calcProject() — owns live quantity/cost math; totals.grand_total = core calculated subtotal (excludes signage cabinets + landscape).",
+    "editor_save_owner": "FoundationEstimator.jsx — sectionTotal = calc.totals.grand_total + total_signage_cabinet_cost + total_landscape_cost (null-propagating); recordBuilderSave persists split totals + pushes live_total_snapshot/live_customer_price_snapshot onto the linked estimate line.",
+    "source_total_derivation": "builderService.sourceProjectTotal foundation branch — direct finite grand_total wins, else the shared FOUNDATION_RECORD_TOTAL_FIELDS 12-field sum; candidate extraction makes that field list the single definition used by both sourceProjectTotal and the new foundationRecordSavedTotal.",
+    "display_surfaces": "FoundationTotals.jsx / FoundationBOM.jsx — display only; FoundationBOM.materialTotal is a materials-scoped subtotal, NOT the section total; neither computes an authoritative total.",
+    "estimate": "AllInOneEstimate.line_items — total_snapshot + customer_price_snapshot = accepted/FROZEN values; live_total_snapshot + live_customer_price_snapshot = current recalculated values. Frozen values change only on explicit price acceptance.",
+    "sync": "useSectionSync.refreshSectionSnapshots — refreshes live_* snapshots from source totals; compares with 0.005 tolerance.",
+    "estimate_ui_pattern": "ProductRow.jsx — precedent UI comparing frozen vs live internal+customer values at 0.005 tolerance; the new advisory reuses this tolerance.",
+    "pricing_consumers": "aioPricing.js builds estimate pricing from ACCEPTED customer unit prices; customerQuote.js builds quote rows from accepted/adjusted section pricing; workOrderConversion.js seeds WO products from frozen pricing sections and resolves converted amount via pricing waterfall -> estimate quote_total -> accepted snapshot sum."
+  },
+  "persisted_total_fields": [
+    "total_concrete_cost", "total_rebar_cost", "total_excavation_cost", "total_forming_materials_cost",
+    "total_labor_cost", "total_wall_cost", "total_pole_cost", "total_pole_painting_cost",
+    "total_equipment_cost", "total_wall_cap_cost", "total_signage_cabinet_cost", "total_landscape_cost"
+  ],
+  "excluded_subset_fields": {
+    "total_brick_cost": "subset of total_wall_cost",
+    "total_fill_cost": "subset of total_wall_cost"
+  },
+  "pricing_precedence": {
+    "ladder": "pricing engine config > applied saved customer-tier snapshot (applied===true + numeric total) > customer_price_override > customer_markup_percent",
+    "engine_ladder_documented": "machine override > part fixed price > part tier/markup > customer tier > global default; chart-row specificity inside tier layers",
+    "rules": [
+      "no tier/engine config -> manual baseline",
+      "manual markup: cost * (1 + markup/100)",
+      "positive override beats markup; override 0 falls back to markup",
+      "applied saved tier snapshot replaces manual sell price, internal cost unchanged",
+      "tier applied without numeric saved total -> manual baseline",
+      "applied === false -> manual baseline",
+      "engaged foundation engine config owns sell side over tier and manual; empty engine context resolves back to override",
+      "editing markup/override in CustomerPricingPanel patches customer_pricing.applied=false (returns section to manual pricing)"
+    ],
+    "evidence": "baseline/customerPricing.js sourceProjectEconomics lines 55-89 (foundation branch); 38-case model harness asserts each rule"
+  },
+  "candidate_changes": [
+    {
+      "file": "src/components/estimator/builder/builderService.js",
+      "candidate": "candidates/builderService.js",
+      "baseline": "baseline/builderService.js",
+      "diff": "diffs/builderService.js.diff",
+      "changes": "exports FOUNDATION_RECORD_TOTAL_FIELDS (the 12-field persisted partition) and foundationRecordSavedTotal(record) — direct finite grand_total wins, else 12-field sum, else null for never-priced records; sourceProjectTotal foundation branch refactored to consume the shared list. Byte-identical totals for every record shape (model-verified parity)."
+    },
+    {
+      "file": "src/pages/FoundationEstimator.jsx",
+      "candidate": "candidates/FoundationEstimator.jsx",
+      "baseline": "baseline/FoundationEstimator.jsx",
+      "diff": "diffs/FoundationEstimator.jsx.diff",
+      "changes": "imports foundationRecordSavedTotal; computes savedSectionTotal from the acknowledged saved source project; passes savedSectionTotal + live sectionTotal into FoundationTotals. Advisory only — no save-path behavior change. External-agent Save-As-Copy + template-disable changes preserved."
+    },
+    {
+      "file": "src/components/estimator/foundation/FoundationTotals.jsx",
+      "candidate": "candidates/FoundationTotals.jsx",
+      "baseline": "baseline/FoundationTotals.jsx",
+      "diff": "diffs/FoundationTotals.jsx.diff",
+      "changes": "accepts savedSectionTotal + sectionTotal; renders an advisory [role=status] strip when |current - saved| > 0.005 (up/down arrows, absolute delta, 'Save to update the estimate'); renders 'Saved $X — current pricing unavailable' when live total unavailable; renders nothing for never-priced records. Never blocks editing/saving."
+    },
+    {
+      "file": "src/components/estimator/foundation/CustomerPricingPanel.jsx",
+      "candidate": "candidates/CustomerPricingPanel.jsx",
+      "baseline": "baseline/CustomerPricingPanel.jsx",
+      "diff": "diffs/CustomerPricingPanel.jsx.diff",
+      "changes": "imports foundationHasEnginePricing; shows a precedence note when an applied saved tier (numeric total differing >0.005 from manual baseline) shadows markup/override, and a separate engine-precedence note when engine config is engaged; suppresses notes when no precedence applies, tier unapplied/unsaved, or tier equals baseline. Manual calculation display unchanged."
+    }
+  ],
+  "verification": {
+    "model_harness": {
+      "script": "verify-totals-model.mjs",
+      "results": "verify-totals-model-results.json",
+      "last_run": "post-rebase, HEAD 4b2f3ad606",
+      "status": "PASS totals-model o010 (38 cases)",
+      "coverage": [
+        "12-field total reconciliation + direct grand_total precedence + null/empty never-priced + partial fields",
+        "wall-subset exclusion (brick+fill never double-counted)",
+        "candidate/baseline sourceProjectTotal parity on all foundation record shapes",
+        "foundation calculator section-total equality + categorizer line-sum equality",
+        "manual markup, positive-override-wins, override+markup precedence, override-0 fallback",
+        "applied-tier precedence, tier-no-total fallback, applied=false fallback",
+        "engine precedence over tier+manual, empty-engine-context fallback",
+        "accepted/live customer+internal snapshots; refreshSectionSnapshots at 0.005 tolerance",
+        "quote + work-order conversion consume frozen pricing; estimateConvertedAmount waterfall",
+        "calculateSavedCustomerPricing tier resolution + applyMarkups + float reassociation within $0.005"
+      ]
+    },
+    "browser_harness": {
+      "script": "verify-totals-browser.mjs",
+      "results": "totals-browser-verification.json",
+      "last_run": "post-rebase, HEAD 4b2f3ad606",
+      "status": "PASS totals-browser o010 (14 cases, 0 page errors, 0 foreign requests)",
+      "viewports": ["1280px desktop", "390px mobile"],
+      "coverage": [
+        "saved-vs-current upward + downward delta strips with absolute delta and sign",
+        "exact |delta|==0.005 boundary does not fire; 0.006 fires",
+        "never-priced (null saved) renders no strip; current-unavailable keeps saved amount",
+        "manual pricing no note; tier note; tier-equal no spurious note; tier-unsaved no note; tier+override note; engine precedence note naming the ladder",
+        "mobile 390px wrap for both indicators"
+      ],
+      "screenshots": ["totals-delta-1280.png", "totals-delta-390.png", "totals-equal-1280.png", "totals-blocked-1280.png", "panel-tier-1280.png", "panel-tier-390.png", "panel-engine-1280.png"]
+    },
+    "syntax": "esbuild parse OK on all 4 candidates (jsx loader where applicable), post-rebase"
+  },
+  "claims": {
+    "proven": [
+      "persisted foundation totals = exactly the 12-field partition; brick+fill are wall subsets and are excluded (no double count)",
+      "cabinets + landscape enter the section total exactly once via sectionTotal (grand_total excludes them)",
+      "single ownership definition shared between source-total derivation and saved-total reconciliation (FOUNDATION_RECORD_TOTAL_FIELDS)",
+      "accepted/frozen estimate values preserved; live recalculated values carried separately; quote + WO conversion consume accepted values",
+      "tier-vs-manual-vs-engine precedence ladder as documented; proven end-to-end in model harness and surfaced visibly in the panel",
+      "saved-vs-current indicator is advisory, float-tolerant (0.005), and never blocks",
+      "no remote writes of any kind were performed"
+    ],
+    "open": [
+      "work-order -> invoice tail exact-once claim: source-level consumer map is consistent (frozen-only reads) but exact-once across live WO/invoice records requires live-record evidence — intentionally left OPEN"
+    ]
+  }
+}

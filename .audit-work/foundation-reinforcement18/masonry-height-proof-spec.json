@@ -1,0 +1,28 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "77101a44e4b449a2d1d74b59efa24e1e30849d1b",
+  "jsonProofs": [
+    { "file": "masonry-height-model-verification.json", "resultCount": 61 },
+    { "file": "masonry-height-page-verification.json", "resultCount": 5 },
+    { "file": "masonry-height-browser-verification.json", "resultCount": 10 }
+  ],
+  "allResultsMustHaveOkTrue": true,
+  "scopedLintLogs": [
+    { "file": "masonry-height-lint-calc.txt", "line": "exit=0" },
+    { "file": "masonry-height-lint-panel.txt", "line": "exit=0" }
+  ],
+  "candidateHashes": {
+    "wallCalculator.js": "4ab4a2b473ae9b6a350d9e4c8f0a416f4062521f1e797f359d53d8077c00c7d5",
+    "FoundationWallsPanel.jsx": "03620a63e2b273d08d1ad8ecd665173ceade72a8c556e12be64b0fde356e23e0"
+  },
+  "actualRemoteBundleCount": 3,
+  "allowedBuildWarningCount": 0,
+  "requiredAppStatus": "ready",
+  "testDataMustRemainEnabled": false,
+  "realStorageVerified": false,
+  "realBusinessAuthorizationVerified": false,
+  "schemaActivationAuthorized": false,
+  "reinforcementV2ActivationAuthorized": false,
+  "publishDeployAuthorized": false
+}

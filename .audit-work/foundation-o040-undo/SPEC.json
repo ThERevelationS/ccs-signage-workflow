@@ -1,0 +1,155 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "8a4ad456c1ca7b365069ea9d5c424a5b358f89e2",
+  "baselineFile": "o040-baseline.json",
+  "workItems": [
+    "O-040 (CMP-C09)"
+  ],
+  "acceptanceText": "Coalesce a drag/paint stroke into one undo command; preserve redo and sensible history.",
+  "title": "Stroke-level scene undo — pure history store + canvas wiring at the O-039 input seam (additive)",
+  "targetOrder": [
+    "src/components/estimator/foundation/foundationSceneHistory.js",
+    "src/components/estimator/foundation/foundationSceneInput.js",
+    "src/components/estimator/foundation/FoundationLayoutCanvas.jsx"
+  ],
+  "candidatePrefix": "o040-candidate-",
+  "candidateHashes": {
+    "foundationSceneHistory.js": "b2ce1cf4279f63cd4311076d6e55e38ba9cd81f80dd5d822d237bba791ab05d6",
+    "foundationSceneInput.js": "3575d3152374afdfbceb6fd0889eb3c307027cf06b71ddc7efbf44680c24eac7",
+    "FoundationLayoutCanvas.jsx": "e987944e2623c9a45020733791956145e7ef7c07283fcd5aff1c1e4a370fb635"
+  },
+  "atomicEditPerFile": true,
+  "apply": [
+    {
+      "path": "src/components/estimator/foundation/foundationSceneHistory.js",
+      "mode": "write",
+      "candidate": "o040-candidate-foundationSceneHistory.js",
+      "sha256": "b2ce1cf4279f63cd4311076d6e55e38ba9cd81f80dd5d822d237bba791ab05d6",
+      "note": "NEW file — remote exists:false at source head (o040-baseline.json). Imports ./foundationLayoutModel only (already remote). Whole-file write, LF, no terminal newline."
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationSceneInput.js",
+      "mode": "edit",
+      "candidate": "o040-candidate-foundationSceneInput.js",
+      "sha256": "3575d3152374afdfbceb6fd0889eb3c307027cf06b71ddc7efbf44680c24eac7",
+      "note": "Append-only diff vs remote (diff-input.patch): one new export section at file end (SCENE_EDIT_ITEM_MOVE + sceneEditFromDrag + sceneEditFromNudge + sceneEditCoalesceKey). All existing exports byte-identical — remote sha256 6d986c4b… equals the O-038/O-039 spec hash. Whole-file write of the candidate is equivalent; the anchor below also works with sandbox edit.",
+      "edits": [
+        {
+          "old": "  const guides = [];\n  if (gx) guides.push({ axis: \"x\", value: gx.value, source: gx.source, delta: gx.delta });\n  if (gz) guides.push({ axis: \"z\", value: gz.value, source: gz.source, delta: gz.delta });\n  return { x: gx ? gx.value : p.x, z: gz ? gz.value : p.z, guides };\n}",
+          "new": "  const guides = [];\n  if (gx) guides.push({ axis: \"x\", value: gx.value, source: gx.source, delta: gx.delta });\n  if (gz) guides.push({ axis: \"z\", value: gz.value, source: gz.source, delta: gz.delta });\n  return { x: gx ? gx.value : p.x, z: gz ? gz.value : p.z, guides };\n}\n\n// ---------------------------------------------------------------------------\n// Scene-edit records (O-040 — the stroke-undo seam)\n// ---------------------------------------------------------------------------\n//\n// A finished gesture or keyboard edit as a history-ready record: `before`\n// holds the pre-stroke state, `after` the committed patch — for item moves\n// both are { x_inches, z_inches } patch-shaped, so the record doubles as\n// the undo payload. Anchors are the history store's concern (consumers\n// stamp before/after anchors at record time); identity (`key`,\n// `identityKind`) rides along for target resolution + labels.\n\nexport const SCENE_EDIT_ITEM_MOVE = \"item-move\";\n\n// A committed corner drag. `drag` is the live beginSceneDrag record (its\n// `corner` is the captured pre-stroke state); `patch` is the commitSceneDrag\n// result. Null on any missing/invalid piece — callers already null-check\n// patch/target upstream.\nexport function sceneEditFromDrag(drag, patch) {\n  if (!drag || !patch) return null;\n  if (!fin(drag?.corner?.x) || !fin(drag?.corner?.z)) return null;\n  if (!fin(patch?.x_inches) || !fin(patch?.z_inches)) return null;\n  return {\n    kind: SCENE_EDIT_ITEM_MOVE,\n    method: \"drag\",\n    key: drag.key ?? null,\n    identityKind: drag.identityKind ?? null,\n    before: { x_inches: drag.corner.x, z_inches: drag.corner.z },\n    after: { x_inches: patch.x_inches, z_inches: patch.z_inches },\n  };\n}\n\n// A keyboard nudge — same before/after shape as the drag path so the\n// history store treats every item move uniformly. `position` is the row's\n// current authored position ({x,z} or {x_inches,z_inches}); `key` is the\n// layoutItemKey identity the consumer resolves targets + bursts by.\nexport function sceneEditFromNudge(key, position, patch) {\n  const pos = planPointOf(position);\n  if (!pos || !patch || !fin(patch?.x_inches) || !fin(patch?.z_inches)) return null;\n  return {\n    kind: SCENE_EDIT_ITEM_MOVE,\n    method: \"nudge\",\n    key: key ?? null,\n    identityKind: \"key\",\n    before: { x_inches: pos.x, z_inches: pos.z },\n    after: { x_inches: patch.x_inches, z_inches: patch.z_inches },\n  };\n}\n\n// Burst-coalescing identity (O-040 \"sensible history\"): drags never merge —\n// one gesture is already one commit. Nudges on the same row merge while the\n// key stream keeps hitting the same target; the merge window lives in the\n// history store, this is only the identity. Anything else returns null and\n// records as its own command.\nexport function sceneEditCoalesceKey(edit) {\n  if (!edit || edit.method !== \"nudge\" || typeof edit.key !== \"string\" || !edit.key) return null;\n  return `nudge:${edit.key}`;\n}"
+        }
+      ]
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "mode": "edit",
+      "candidate": "o040-candidate-FoundationLayoutCanvas.jsx",
+      "sha256": "e987944e2623c9a45020733791956145e7ef7c07283fcd5aff1c1e4a370fb635",
+      "note": "Additive seam diff vs remote (diff-canvas.patch): 3 new named imports + 1 new module import, optional sceneHistory prop, internal store + observe effect, and recordEdit blocks at the two commit points (drag + nudge). DOM structure, handlers, guards, render unchanged. Whole-file write is simplest; anchors in diff-canvas.patch."
+    }
+  ],
+  "deployTogether": "foundationSceneHistory imports only foundationLayoutModel (remote since before this changeset); the canvas imports foundationSceneHistory + the new foundationSceneInput exports — all three must land together or the estimator bundle breaks (FoundationEstimator imports the canvas). Import DAG is acyclic: layoutModel <- sceneHistory <- canvas, layoutModel <- transforms <- input <- canvas.",
+  "wiring": {
+    "decision": "WIRED at the existing O-039 input seam — the canvas already routed begin/move/commit/keyboard through identifiable primitives; the history record rides those same call sites with provably identical emitted patches (9-step remote-parity replay, 0 diffs). The store is opt-in via the sceneHistory prop; an internal store keeps unmounted use byte-identical.",
+    "strokeModel": "recordEdit for single-commit gestures (pointer drag — beginSceneDrag's captured corner is the inverse patch) AND keyboard nudge bursts (same-row coalesceKey merges adjacent committed nudges inside coalesceWindowMs, default 1200ms; 0 disables, Infinity always merges). beginStroke/extendStroke/commitStroke/cancelStroke cover future multi-commit gestures (paint cells, vertex drags) — each landed stroke still records ONE entry.",
+    "casAnchors": "Every entry carries beforeAnchor/afterAnchor — opaque caller tokens over scene GEOMETRY (sceneLayoutAnchor: layoutItemFingerprint for items+poles, shape.points+closed for walls; order/count covered; component ids + non-geometry fields excluded by design). Entries chain before->after; undo applies only while the live anchor equals the head's afterAnchor. Anchors are computed as 'the scene with only this row's geometry swapped' (rowsWithPatch) so an interleaved write to a different row is preserved inside the entry instead of detaching it.",
+    "externalInvalidation": "history.observe(anchor) on every items change — a mismatch (any write that did not arrive through the stroke channel) marks all recorded entries detached, clears future, and cancels an open stroke. Detached entries stay listed for honest reporting, are never applied, and prune on contact; undo at the boundary reports 'stale'. normalizeFoundationAssembly never rewrites x_inches/z_inches (verified in the pulled assembly model), so optimistic anchors match observed anchors exactly.",
+    "applyGate": "undo(anchor, apply)/redo(anchor, apply) run the consumer's commit path inside the transition — apply returning false (commit refused) or throwing leaves the stacks untouched ('rejected'). Omitting apply performs the transition unconditionally.",
+    "bounds": "past and future each bounded at capacity (default 100); oldest evicts and the detached boundary shifts with eviction. stateVersion + subscribe(listener) expose the store to React (useSyncExternalStore-compatible).",
+    "statusVocabulary": [
+      "recorded",
+      "merged",
+      "merged-noop",
+      "ignored-noop",
+      "ignored-unanchored",
+      "anchored",
+      "current",
+      "detached",
+      "unanchored",
+      "open",
+      "extended",
+      "cancelled",
+      "cancelled-empty",
+      "no-stroke",
+      "applied",
+      "rejected",
+      "empty",
+      "stale",
+      "busy",
+      "anchor-mismatch",
+      "cleared"
+    ],
+    "mountAnchorsDoc": "MOUNT-ANCHORS.md",
+    "primitivesWired": [
+      "createSceneHistory",
+      "sceneLayoutAnchor",
+      "rowsWithPatch",
+      "recordEdit",
+      "observe",
+      "sceneEditFromDrag",
+      "sceneEditFromNudge",
+      "sceneEditCoalesceKey"
+    ],
+    "primitivesAwaitingConsumers": [
+      "beginStroke/extendStroke/commitStroke/cancelStroke (paint/vertex multi-commit gestures, O-035/O-044)",
+      "undo/redo/peekUndo/peekRedo/getState/entries/subscribe (page undo UI — deferred anchors)",
+      "clear (page context reset)"
+    ]
+  },
+  "pageInterplay": "The page's existing snapshot history (FoundationEstimator L115/L526+/L765+) is untouched and stays the coarse whole-project undo. Scene history is a companion: stroke-level fidelity for canvas geometry edits, apply-gated through patchItem/commit so CAS guards + normalize + browser-draft backup stay in force. Coexistence semantics + recommended routing documented in MOUNT-ANCHORS.md.",
+  "protectedFiles": [
+    "src/pages/FoundationEstimator.jsx",
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/components/estimator/foundation/foundationReinforcement*",
+    "src/components/estimator/foundation/partSync.js",
+    "src/components/estimator/foundation/FoundationBOM.jsx",
+    "src/components/estimator/foundation/foundationLayoutModel.js",
+    "src/components/estimator/foundation/foundationAssemblyModel.js",
+    "src/components/estimator/foundation/foundationSceneTransforms.js",
+    "src/components/estimator/foundation/foundationDuplicateMirror.js",
+    "src/components/estimator/foundation/foundationAssemblyPresets.js",
+    "src/components/estimator/foundation/foundationGeometryInputs.js",
+    "src/components/estimator/foundation/WallShapeEditor.jsx"
+  ],
+  "applyRequiresLeadApproval": true,
+  "businessRecordOperationsAuthorized": false,
+  "schemaOrMetadataActivationAuthorized": false,
+  "publishOrDeployAuthorized": false,
+  "remoteApplicationPerformed": false,
+  "checkpointsCreated": false,
+  "remoteWritesPerformed": false,
+  "businessRecordOperationsPerformed": false,
+  "publishDeployPerformed": false,
+  "transportPerformed": false,
+  "entityOperationsPerformed": false,
+  "note": "Candidate creation + local/staging verification only. No sandbox apply, checkpoint, entity operation, schema change, publish, or deploy occurred or is authorized. The staging tree assembled for verification contains only remote-pulled files plus these candidates — local src/ was never read or trusted.",
+  "verification": {
+    "model": "verify-o040-model.mjs -> PASS: 34 assertion groups (o040-model-verification.json) — anchor determinism/geometry-only/reorder/poles+walls/invalid rows, rowsWithPatch, scene-edit primitives, recordEdit (single/burst/boundary/never-merge/noop/unanchored/plain-stack), undo/redo multi-level round-trips with apply-gated commits, caller-anchor CAS refusal, refused-commit stack integrity, external-write detach + stale refusal + interleaved-write preservation, multi-commit strokes (cancel/empty/auto-commit/unanchored-commit/observe-kill/busy), capacity eviction incl. detached boundary, subscribe/versioning, config windows (0/Infinity), inspection surface, clear, and the full O-039 begin->move->commit lifecycle end to end.",
+    "browser": "verify-o040-browser.mjs -> PASS: 10 real-Chromium scenarios on the candidate component with a mounted store (o040-browser-verification.json): drag = one command carrying the pre-stroke corner, undo/redo through the real onMoveItem commit path, 4-key burst = one command + window boundary, external write detaches (stale never resurrected), mid-gesture interleaved write preserved inside anchors, refused commit records nothing, wiggle/second-pointer paths, read-only, zoomed drag, in-browser module probe. Screenshot o040-browser-canvas.png.",
+    "remoteParity": "verify-o040-remote-parity.mjs -> PASS: identical scripted gesture stream vs the REMOTE canvas bundle — 9 steps (rotated-item drag, keyboard+modifier matrix, wiggle, reorder commit, fingerprint cancel, index-identity cancel after delete, zoomed drag, negative drag), 0 diffs in emitted patches + DOM rects (o040-parity-*.json).",
+    "bundle": "esbuild ESM bundle of the staging graph: 0 warnings, 5 inputs (scene-history-bundle.mjs); browser metafile confirms only staging-src + react + lucide stub (o040-browser-inputs.json).",
+    "syntax": "esbuild transform parse clean for all 3 candidates."
+  },
+  "deferredWiring": {
+    "neededForFullSurface": true,
+    "reason": "FoundationEstimator.jsx is ownership-protected (B-3 recovery) — not modified in this unit",
+    "anchors": [
+      "Store + prop: sceneHistoryRef/createSceneHistory + useSyncExternalStore(sceneHistory.subscribe, () => sceneHistory.stateVersion); pass sceneHistory={sceneHistory} at the existing <FoundationLayoutCanvas> mount (~L1487)",
+      "Apply: sceneHistory.undo(sceneLayoutAnchor(items), (rev) => patchItem(rev.target.index, rev.patch) !== false) — same commit channel",
+      "UI: route scene edits' undo through the store first; page snapshot history remains for other edits (coexistence semantics + quirk documented)",
+      "Context: sceneHistory.clear(...) on contextKey switch (or lazy detach — both documented)"
+    ],
+    "effectUnwired": "canvas still records every gesture into its internal store — harmless, GC'd with the component; page undo behavior fully unchanged (0-diff parity proven)"
+  },
+  "candidateLineEndings": "LF",
+  "candidateTerminalLF": {
+    "foundationSceneHistory.js": false,
+    "foundationSceneInput.js": false,
+    "FoundationLayoutCanvas.jsx": false
+  },
+  "remoteReadNormalization": "sandbox read strips the terminal LF — baseline hashes are sha256 of the read-returned content. Candidates are LF with no terminal LF, matching remote convention for these files.",
+  "status": "candidates-verified-local-only",
+  "remoteHeadRechecked": "9a872e9248c57e9b468881baecf7b899248f5c24",
+  "recheck": "Owned/target files byte-identical between sourceHead and remoteHeadRechecked (verified by re-pull). Concurrent external-agent commits touched FoundationPolesPanel/FoundationWallCapsPanel/FoundationWallsPanel/LandscapeDesigner/SignageCabinetsPanel/WallShapeEditor/foundationFtInEntry/foundationGeometryInputs only — none are O-040 surfaces. foundationSceneHistory.js confirmed absent at new HEAD. Tree clean."
+}

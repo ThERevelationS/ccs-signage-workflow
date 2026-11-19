@@ -1,0 +1,15 @@
+=== save-handler ===
+}
+
+Node.js v26.13.0
+save_exit=0
+=== catalog ===
+ok E: deferred A reload settling while on B installs nothing; A-B-A reopen gets new flight
+ok F: overlapping reload — second click zero reads, one flight completes, busy false
+PASS catalog-integrity passed=7 failed=0
+catalog_exit=0
+=== equipment ===
+ok zero-rate and unknown periods; duration preserves quantity override
+ok valid typing reaches shared source and dirty state before blur or keyboard save
+PASS equipment-ui passed=13 failed=0
+eq_exit=0

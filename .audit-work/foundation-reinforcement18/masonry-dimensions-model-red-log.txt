@@ -1,0 +1,534 @@
+ok unchanged: concrete material, positive settings
+ok unchanged: genuine zero material price
+ok unchanged: brick, explicit dry joint
+ok unchanged: brick_stone type and mortar joint
+ok unchanged: stone units, two unequal segments
+ok unchanged: closed outline with internal brick
+ok unchanged: open outline with internal brick
+ok unchanged: internal concrete units
+ok unchanged: outer explicit price override
+ok unchanged: outer explicit free override
+ok unchanged: internal explicit price override
+ok unchanged: internal explicit free override
+ok unchanged: outer explicit quantity override
+ok unchanged: outer explicit zero quantity
+ok unchanged: internal explicit quantity override
+ok unchanged: internal explicit zero quantity
+ok unchanged: fractional explicit material price
+ok unchanged: numeric-string material price
+ok unchanged: numeric-string free price
+ok unchanged: irrelevant catalog row cannot change wall calculation
+FAIL outer unknown wall_unit_length_inches: absent: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_length_inches: null: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_length_inches: empty: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_length_inches: whitespace: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_length_inches: zero: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_length_inches: zero string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_length_inches: negative: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_length_inches: negative string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_length_inches: true: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_length_inches: false: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_length_inches: array: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_length_inches: object: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_length_inches: NaN: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_length_inches: Infinity: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_length_inches: malformed: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: absent: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: null: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: empty: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: whitespace: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: zero: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: zero string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: negative: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: negative string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: true: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: false: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: array: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: object: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: NaN: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: Infinity: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_width_inches: malformed: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: absent: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: null: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: empty: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: whitespace: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: zero: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: zero string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: negative: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: negative string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: true: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: false: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: array: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: object: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: NaN: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: Infinity: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown wall_unit_height_inches: malformed: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: absent: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: null: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: empty: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: whitespace: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: zero: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: zero string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: negative: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: negative string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: true: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: false: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: array: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: object: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: NaN: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: Infinity: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_length_inches: malformed: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: absent: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: null: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: empty: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: whitespace: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: zero: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: zero string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: negative: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: negative string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: true: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: false: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: array: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: object: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: NaN: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: Infinity: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_width_inches: malformed: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: absent: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: null: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: empty: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: whitespace: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: zero: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: zero string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: negative: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: negative string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: true: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: false: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: array: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: object: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: NaN: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: Infinity: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal unknown wall_unit_height_inches: malformed: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer numeric-string unit dimensions: decimal: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
+    internalLaborCost: 0,
+    internalLaborHours: 0,
+    internalMaterialCost: 0,
+    internalMortarCost: 0,
+    internalTotalBricks: 0,
+    laborCost: 45,
++   laborHours: 0.02,
++   materialCost: 2,
+-   laborHours: 0.12,
+-   materialCost: 12,
+    mortarCost: 0,
++   numCourses: 0.225,
++   totalBricks: 1,
++   totalCost: 47,
+-   numCourses: 2.25,
+-   totalBricks: 6,
+-   totalCost: 57,
+    totalLinearInches: 16
+  }
+
+ok outer numeric-string unit dimensions: fractional
+ok outer numeric-string unit dimensions: exponent
+FAIL internal numeric-string unit dimensions: decimal: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 15,
++   internalLaborHours: 0.02,
++   internalMaterialCost: 3,
+-   internalLaborCost: 210,
+-   internalLaborHours: 0.42,
+-   internalMaterialCost: 63,
+    internalMortarCost: 10,
++   internalTotalBricks: 1,
+-   internalTotalBricks: 21,
+    laborCost: 202.5,
+    laborHours: 0.54,
+    materialCost: 54,
+    mortarCost: 0,
+    numCourses: 2.25,
+    totalBricks: 27,
++   totalCost: 284.5,
+-   totalCost: 539.5,
+    totalLinearInches: 72
+  }
+
+FAIL internal numeric-string unit dimensions: fractional: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 15,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
+-   internalLaborCost: 210,
+-   internalLaborHours: 0.42,
+-   internalMaterialCost: 63,
+    internalMortarCost: 10,
++   internalTotalBricks: 0,
+-   internalTotalBricks: 21,
+    laborCost: 202.5,
+    laborHours: 0.54,
+    materialCost: 54,
+    mortarCost: 0,
+    numCourses: 2.25,
+    totalBricks: 27,
++   totalCost: 0,
+-   totalCost: 539.5,
+    totalLinearInches: 72
+  }
+
+FAIL internal numeric-string unit dimensions: exponent: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   internalLaborCost: 15,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
+-   internalLaborCost: 210,
+-   internalLaborHours: 0.42,
+-   internalMaterialCost: 63,
+    internalMortarCost: 10,
++   internalTotalBricks: 0,
+-   internalTotalBricks: 21,
+    laborCost: 202.5,
+    laborHours: 0.54,
+    materialCost: 54,
+    mortarCost: 0,
+    numCourses: 2.25,
+    totalBricks: 27,
++   totalCost: 0,
+-   totalCost: 539.5,
+    totalLinearInches: 72
+  }
+
+FAIL new invalid-dimension row cannot adopt rendered price history: Expected values to be strictly deep-equal:
++ actual - expected
+
++ {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 45,
++   laborHours: 0.12,
++   materialCost: 12,
++   mortarCost: 0,
++   numCourses: 2.25,
++   totalBricks: 6,
++   totalCost: 57,
++   totalLinearInches: 16
++ }
+- {}
+
+FAIL dimension diagnostics have distinct keys for three missing measures: Expected values to be strictly equal:
+
+0 !== 3
+
+FAIL invalid dimensions mark BOM material as acknowledged rather than current: Expected values to be strictly equal:
+
+false !== true
+
+ok an irrelevant catalog record cannot invalidate selected dimensions
+ok disabled internal material does not require unused dimensions
+ok valid dimensions with genuine zero unit price and zero shop rates remain free
+FAIL a zero price cannot validate missing physical dimensions: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).length > 0)
+
+ok existing invalid-height guard remains active: ""
+ok existing invalid-height guard remains active: 0
+masonry-dimensions-model passed=27 failed=98
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(results.every(r => r.ok))
+
+    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-masonry-dimensions-model.mjs:117:8 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.13.0

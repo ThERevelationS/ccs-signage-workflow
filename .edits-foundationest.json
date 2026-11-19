@@ -1,0 +1,18 @@
+[
+  {
+    "old_text": "import { ensureIdempotentEntityCreate, newCreationRequestKey } from \"@/components/estimator/idempotentEntityCreate\";\nimport { staffEntities } from \"@/components/staff/staffEntities\";",
+    "new_text": "import { ensureIdempotentEntityCreate, newCreationRequestKey } from \"@/components/estimator/idempotentEntityCreate\";\nimport { convertFoundationToBrickStone } from \"@/components/estimator/foundation/convertToBrickStone\";\nimport { createEstimateReadOnlyShareLink } from \"@/components/estimator/moduleShared/moduleProjectActions\";\nimport { staffEntities } from \"@/components/staff/staffEntities\";"
+  },
+  {
+    "old_text": "  const saveRef = useRef(null);\n  const copyAttemptRef = useRef({ signature: \"\", key: \"\" });\n\n  useEffect(() => {\n    copyAttemptRef.current = { signature: \"\", key: \"\" };\n  }, [id]);",
+    "new_text": "  const saveRef = useRef(null);\n  const copyAttemptRef = useRef({ signature: \"\", key: \"\" });\n  const swapAttemptRef = useRef({ signature: \"\", key: \"\" });\n\n  useEffect(() => {\n    copyAttemptRef.current = { signature: \"\", key: \"\" };\n    swapAttemptRef.current = { signature: \"\", key: \"\" };\n  }, [id]);"
+  },
+  {
+    "old_text": "      if (!copy?.id) throw new Error(\"Foundation project copy could not be verified.\");\n      navigate(`/FoundationEstimator?id=${copy.id}`);\n    } catch (e) {\n      console.error(e); alert(\"Save failed: \" + e.message);\n    } finally {\n      setSaving(false);\n    }\n  };",
+    "new_text": "      if (!copy?.id) throw new Error(\"Foundation project copy could not be verified.\");\n      navigate(`/FoundationEstimator?id=${copy.id}`);\n    } catch (e) {\n      console.error(e); alert(\"Save failed: \" + e.message);\n    } finally {\n      setSaving(false);\n    }\n  };\n\n  // #77 — create a fresh Brick & Stone draft carrying the shared identity\n  // fields; the Foundation source is left untouched.\n  const handleSwapToBrickStone = async () => {\n    setSaving(true);\n    try {\n      const draft = await convertFoundationToBrickStone({ project, attemptRef: swapAttemptRef });\n      navigate(`/BrickStoneEstimator?id=${draft.id}`);\n    } catch (e) {\n      console.error(e); alert(\"Swap failed: \" + e.message);\n    } finally {\n      setSaving(false);\n    }\n  };\n\n  // #88 — copy a read-only staff_view portal link for this estimate.\n  const handleShareLink = async () => {\n    try {\n      const url = await createEstimateReadOnlyShareLink({ estimateId });\n      await navigator.clipboard.writeText(url);\n      alert(\"Read-only link copied to clipboard:\\n\" + url);\n    } catch (e) {\n      console.error(e); alert(\"Share link failed: \" + e.message);\n    }\n  };"
+  },
+  {
+    "old_text": "          onSaveAsCopy={handleSaveAsCopy}\n          onSaveAsTemplate={() => setTemplateMode(\"save\")}\n          onTemplates={() => setTemplateMode(\"load\")}",
+    "new_text": "          onSaveAsCopy={handleSaveAsCopy}\n          onSaveAsTemplate={() => setTemplateMode(\"save\")}\n          onTemplates={() => setTemplateMode(\"load\")}\n          onSwapToBrickStone={handleSwapToBrickStone}\n          onShareLink={estimateId ? handleShareLink : undefined}"
+  }
+]

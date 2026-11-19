@@ -1,0 +1,9 @@
+{
+  "kind": [
+    "sandbox",
+    "edit"
+  ],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "The command line is too long.\r\n"
+}

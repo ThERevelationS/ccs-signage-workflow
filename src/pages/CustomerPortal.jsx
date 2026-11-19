@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import { buildStatement } from "@/components/statements/statementModel";
+import StatementView from "@/components/statements/StatementView";
+import ProductStatusPanel from "@/components/portal/ProductStatusPanel";
 import {
   Receipt,
   ShieldCheck,
@@ -111,7 +114,7 @@ function InvoiceView({ invoice, payments }) {
             <p className="text-xs text-slate-500">Due</p>
             <p className="mt-0.5 flex items-center gap-1 text-sm font-medium text-slate-800">
               {invoice.due_date || "—"}
-              {Number(invoice.balance_due) > 0 && invoice.due_date && new Date(invoice.due_date) < new Date() && <Clock className="h-3.5 w-3.5 text-red-500" />}
+              {Number(invoice.balance_due) > 0 && invoice.due_date && invoice.due_date < new Date().toLocaleDateString("en-CA") && <Clock className="h-3.5 w-3.5 text-red-500" />}
             </p>
           </div>
           <div><p className="text-xs text-slate-500">Paid to date</p><p className="mt-0.5 text-sm font-medium text-slate-800">{money(invoice.amount_paid)}</p></div>
@@ -178,12 +181,82 @@ function InvoiceView({ invoice, payments }) {
   );
 }
 
-function QuoteCard({ quote, onRespond, busy }) {
+// Draw-to-sign pad (#251): plain canvas + pointer events. onChange receives a
+// PNG data URL when the pad has ink, "" when cleared. Optional — an empty pad
+// submits no signature and the approval proceeds exactly as before.
+function SignaturePad({ onChange }) {
+  const canvasRef = useRef(null);
+  const drawing = useRef(false);
+  const [hasInk, setHasInk] = useState(false);
+  useEffect(() => {
+    const ctx = canvasRef.current?.getContext("2d");
+    if (ctx) { ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#1e293b"; }
+  }, []);
+  const pos = (e) => {
+    const c = canvasRef.current;
+    const r = c.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (c.width / r.width), y: (e.clientY - r.top) * (c.height / r.height) };
+  };
+  const start = (e) => {
+    drawing.current = true;
+    const ctx = canvasRef.current.getContext("2d");
+    const p = pos(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    e.preventDefault();
+  };
+  const move = (e) => {
+    if (!drawing.current) return;
+    const ctx = canvasRef.current.getContext("2d");
+    const p = pos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    if (!hasInk) setHasInk(true);
+    e.preventDefault();
+  };
+  const end = () => {
+    if (!drawing.current) return;
+    drawing.current = false;
+    onChange?.(canvasRef.current.toDataURL("image/png"));
+  };
+  const clear = () => {
+    const c = canvasRef.current;
+    c.getContext("2d").clearRect(0, 0, c.width, c.height);
+    setHasInk(false);
+    onChange?.("");
+  };
+  return (
+    <div className="mt-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-emerald-900">Signature (optional)</p>
+        {hasInk && <button type="button" onClick={clear} className="text-[11px] font-medium text-slate-500 underline">Clear</button>}
+      </div>
+      <canvas
+        ref={canvasRef}
+        width={560}
+        height={140}
+        onPointerDown={start}
+        onPointerMove={move}
+        onPointerUp={end}
+        onPointerLeave={end}
+        className="mt-1 w-full touch-none cursor-crosshair rounded-lg border border-emerald-300 bg-white"
+      />
+    </div>
+  );
+}
+
+function QuoteCard({ quote, onRespond, onCounter, busy }) {
   const [mode, setMode] = useState("");
   const [note, setNote] = useState("");
+  const [signature, setSignature] = useState("");
+  const [counterTotal, setCounterTotal] = useState("");
   const [open, setOpen] = useState(false);
   const respondable = quote.can_respond;
   const sections = Array.isArray(quote.sections) ? quote.sections : [];
+  // Proof-approval / payment terms render only when the estimate payload
+  // carries a terms field (optional-chained — absent keys stay hidden).
+  const quoteTerms = [quote?.proof_approval_terms, quote?.terms, quote?.payment_terms, quote?.quote_terms_conditions]
+    .find((v) => typeof v === "string" && v.trim()) || "";
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -210,7 +283,7 @@ function QuoteCard({ quote, onRespond, busy }) {
       </div>
       {sections.length > 0 && (
         <div className="mt-3">
-          <button onClick={() => setOpen(!open)} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-800">
+          <button type="button" onClick={() => setOpen(!open)} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-800">
             {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             {open ? "Hide" : "View"} quote details
           </button>
@@ -251,14 +324,20 @@ function QuoteCard({ quote, onRespond, busy }) {
       )}
       {respondable && !mode && (
         <div className="mt-4 flex flex-wrap gap-2">
-          <button onClick={() => setMode("approve")} disabled={busy}
+          <button type="button" onClick={() => setMode("approve")} disabled={busy}
             className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
             <CheckCircle2 className="h-4 w-4" />Approve quote
           </button>
-          <button onClick={() => setMode("changes")} disabled={busy}
+          <button type="button" onClick={() => setMode("changes")} disabled={busy}
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
             Request changes
           </button>
+          {onCounter && (
+            <button type="button" onClick={() => setMode("counter")} disabled={busy}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-300 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50">
+              Counter offer
+            </button>
+          )}
         </div>
       )}
       {respondable && mode === "approve" && (
@@ -266,12 +345,13 @@ function QuoteCard({ quote, onRespond, busy }) {
           <p className="text-sm font-medium text-emerald-900">Approve {quote.estimate_number || "this quote"} for {money(quote.quote_total)}?</p>
           <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note for the team…"
             className="mt-2 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm" />
+          <SignaturePad onChange={setSignature} />
           <div className="mt-3 flex gap-2">
-            <button onClick={() => onRespond(quote, "approve", note)} disabled={busy}
+            <button type="button" onClick={() => onRespond(quote, "approve", note, undefined, signature || undefined)} disabled={busy}
               className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}Confirm approval
             </button>
-            <button onClick={() => { setMode(""); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+            <button type="button" onClick={() => { setMode(""); setNote(""); setSignature(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
           </div>
         </div>
       )}
@@ -281,29 +361,72 @@ function QuoteCard({ quote, onRespond, busy }) {
           <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Describe the revisions you'd like…"
             className="mt-2 w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm" />
           <div className="mt-3 flex gap-2">
-            <button onClick={() => onRespond(quote, "request_changes", note)} disabled={busy || !note.trim()}
+            <button type="button" onClick={() => onRespond(quote, "request_changes", note)} disabled={busy || !note.trim()}
               className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send request
             </button>
-            <button onClick={() => { setMode(""); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+            <button type="button" onClick={() => onRespond(quote, "declined", note)} disabled={busy || !note.trim()}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+              title="Decline this quote — a reason is required">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Decline quote
+            </button>
+            <button type="button" onClick={() => { setMode(""); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+          </div>
+        </div>
+      )}
+      {respondable && mode === "counter" && onCounter && (
+        <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+          <p className="text-sm font-medium text-indigo-900">
+            Propose a total for {quote.estimate_number || "this quote"}{Number(quote.quote_total) > 0 ? ` (quoted ${money(quote.quote_total)})` : ""} — we'll review it and follow up.
+          </p>
+          <div className="mt-2 flex items-center gap-1.5">
+            <span className="text-sm font-semibold text-indigo-900">$</span>
+            <input type="number" min="0" step="0.01" inputMode="decimal" value={counterTotal} onChange={(e) => setCounterTotal(e.target.value)} placeholder="0.00"
+              className="w-40 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm" />
+          </div>
+          <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note — what would make this work for you?"
+            className="mt-2 w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm" />
+          <div className="mt-3 flex gap-2">
+            <button type="button" onClick={() => { onCounter(quote, Number(counterTotal), note); setMode(""); setCounterTotal(""); setNote(""); }} disabled={busy || !(Number(counterTotal) > 0)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send counter offer
+            </button>
+            <button type="button" onClick={() => { setMode(""); setCounterTotal(""); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
           </div>
         </div>
       )}
       {quote.status === "approved" && (
         <p className="mt-4 flex items-center gap-1.5 text-sm font-medium text-emerald-700"><CheckCircle2 className="h-4 w-4" />Approved — thank you. We'll take it from here.</p>
       )}
+      {quoteTerms && (
+        <p className="mt-3 whitespace-pre-line text-[11px] text-slate-500">
+          <span className="font-semibold text-slate-600">Terms:</span> {quoteTerms}
+        </p>
+      )}
     </div>
   );
 }
 
-function JobCard({ job, onRequestChange, busy }) {
+function JobCard({ job, onRequestChange, onReorder, busy }) {
   const style = JOB_STYLES[job.status] || { label: (job.status || "open").replace(/_/g, " "), cls: "bg-slate-100 text-slate-700" };
   const stepIndex = JOB_STEPS.indexOf(job.status);
   const progress = job.task_progress;
   const pct = progress && progress.total ? Math.round((progress.completed / progress.total) * 100) : (job.status === "completed" ? 100 : stepIndex > 0 ? 50 : 0);
   const [changing, setChanging] = useState(false);
   const [note, setNote] = useState("");
+  const [reordering, setReordering] = useState(false);
+  const [reorderNote, setReorderNote] = useState("");
   const active = !["completed", "cancelled"].includes(job.status);
+  // Deposit + terms surface only when the portal payload carries them — the
+  // concurrent WO deposit fields (deposit_required/deposit_amount) and any
+  // proof-approval terms flow through automatically once jobPortalView
+  // returns them; until then these stay undefined and nothing renders.
+  const depositAmount = Number(job?.deposit_amount) || Number(job?.deposit_total) || 0;
+  const depositPercent = Number(job?.deposit_percent) || 0;
+  const depositPaid = Number(job?.deposit_paid) || Number(job?.deposit_amount_paid) || 0;
+  const depositDue = job?.deposit_required === true || depositAmount > 0 || depositPercent > 0;
+  const jobTerms = [job?.proof_approval_terms, job?.terms, job?.terms_and_conditions]
+    .find((v) => typeof v === "string" && v.trim()) || "";
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -327,8 +450,24 @@ function JobCard({ job, onRequestChange, busy }) {
         {job.install_location && <span>Site: <span className="font-medium text-slate-700">{job.install_location}</span></span>}
         {progress && <span>Tasks: <span className="font-medium text-slate-700">{progress.completed}/{progress.total}</span></span>}
       </div>
+      {Array.isArray(job.products) && job.products.length > 0 && (
+        <div className="mt-3">
+          <ProductStatusPanel workOrder={job} />
+        </div>
+      )}
+      {depositDue && (
+        <div className="mt-3 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-800">
+          Deposit required{depositAmount > 0 ? `: ${money(depositAmount)}` : depositPercent > 0 ? `: ${depositPercent}%` : ""}
+          {depositPaid > 0 ? ` · ${money(depositPaid)} received` : ""}
+        </div>
+      )}
+      {jobTerms && (
+        <p className="mt-2 whitespace-pre-line text-[11px] text-slate-500">
+          <span className="font-semibold text-slate-600">Terms:</span> {jobTerms}
+        </p>
+      )}
       {active && onRequestChange && !changing && (
-        <button onClick={() => setChanging(true)} disabled={busy}
+        <button type="button" onClick={() => setChanging(true)} disabled={busy}
           className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
           Request a change to this job
         </button>
@@ -339,11 +478,31 @@ function JobCard({ job, onRequestChange, busy }) {
           <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Move the install date, swap the panel color, add a vinyl banner…"
             className="mt-2 w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm" />
           <div className="mt-3 flex gap-2">
-            <button onClick={() => onRequestChange(job, note)} disabled={busy || !note.trim()}
+            <button type="button" onClick={() => onRequestChange(job, note)} disabled={busy || !note.trim()}
               className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send request
             </button>
-            <button onClick={() => { setChanging(false); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+            <button type="button" onClick={() => { setChanging(false); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+          </div>
+        </div>
+      )}
+      {onReorder && !reordering && (
+        <button type="button" onClick={() => setReordering(true)} disabled={busy}
+          className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-blue-300 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-50">
+          <RefreshCw className="h-4 w-4" />Order something like this
+        </button>
+      )}
+      {onReorder && reordering && (
+        <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
+          <p className="text-sm font-medium text-blue-900">Send this job to estimating as the starting point for a new order?</p>
+          <textarea rows={2} value={reorderNote} onChange={(e) => setReorderNote(e.target.value)} placeholder="Anything different this time? (optional)"
+            className="mt-2 w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm" />
+          <div className="mt-3 flex gap-2">
+            <button type="button" onClick={() => { onReorder(job, reorderNote); setReordering(false); setReorderNote(""); }} disabled={busy}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send to estimating
+            </button>
+            <button type="button" onClick={() => { setReordering(false); setReorderNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
           </div>
         </div>
       )}
@@ -358,7 +517,7 @@ function InvoiceRow({ invoice, payments, onNotice, busy }) {
   const due = Number(invoice.balance_due) > 0;
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <button onClick={() => setOpen(!open)} className="flex w-full flex-wrap items-center justify-between gap-3 p-4 text-left">
+      <button type="button" onClick={() => setOpen(!open)} className="flex w-full flex-wrap items-center justify-between gap-3 p-4 text-left">
         <div>
           <p className="font-semibold text-slate-900">{invoice.invoice_number || "Invoice"}</p>
           <p className="text-xs text-slate-500">{invoice.issue_date ? `Issued ${invoice.issue_date}` : "Draft"}{invoice.due_date ? ` · due ${invoice.due_date}` : ""}</p>
@@ -378,7 +537,7 @@ function InvoiceRow({ invoice, payments, onNotice, busy }) {
         <div className="border-t border-slate-100 p-4">
           <InvoiceView invoice={invoice} payments={payments} />
           {due && !noticing && (
-            <button onClick={() => setNoticing(true)}
+            <button type="button" onClick={() => setNoticing(true)}
               className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-blue-300 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50">
               <AlertCircle className="h-4 w-4" />Let us know a payment is on the way
             </button>
@@ -389,11 +548,11 @@ function InvoiceRow({ invoice, payments, onNotice, busy }) {
               <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Check #1042 mailed today, ACH tomorrow…"
                 className="mt-2 w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm" />
               <div className="mt-3 flex gap-2">
-                <button onClick={() => { onNotice(invoice, note); setNoticing(false); setNote(""); }} disabled={busy}
+                <button type="button" onClick={() => { onNotice(invoice, note); setNoticing(false); setNote(""); }} disabled={busy}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
                   {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send notice
                 </button>
-                <button onClick={() => setNoticing(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+                <button type="button" onClick={() => setNoticing(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
               </div>
             </div>
           )}
@@ -403,17 +562,38 @@ function InvoiceRow({ invoice, payments, onNotice, busy }) {
   );
 }
 
+const PORTAL_ATTACHMENT_MAX_BYTES = 6 * 1024 * 1024;
+const fmtBytes = (b) => (Number(b) >= 1048576 ? `${(Number(b) / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(Number(b) / 1024))} KB`);
+
 function Thread({ messages, onSend, busy, customerName }) {
   const [draft, setDraft] = useState("");
   const [attachment, setAttachment] = useState(null);
+  const [fileError, setFileError] = useState("");
   const endRef = useRef(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length]);
+  // Photo/PDF only, 6MB cap — the backend upload_file action enforces the
+  // same limits; this keeps bad picks from ever reading into memory.
+  const pickFile = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    setFileError("");
+    if (!file) return;
+    const isImage = (file.type || "").startsWith("image/");
+    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    if (!isImage && !isPdf) { setAttachment(null); setFileError("Only photos (JPG, PNG, etc.) or PDF drawings can be attached."); return; }
+    if (file.size > PORTAL_ATTACHMENT_MAX_BYTES) { setAttachment(null); setFileError(`Files up to ${fmtBytes(PORTAL_ATTACHMENT_MAX_BYTES)} can be attached — "${file.name}" is ${fmtBytes(file.size)}.`); return; }
+    const reader = new FileReader();
+    reader.onload = () => setAttachment({ name: file.name, size: file.size, mime: file.type || (isPdf ? "application/pdf" : "image/jpeg"), base64: String(reader.result || "").split(",")[1] || "" });
+    reader.onerror = () => setFileError("That file could not be read — try again.");
+    reader.readAsDataURL(file);
+  };
   const send = () => {
     const text = draft.trim();
     if (!text && !attachment?.base64) return;
     onSend(text, attachment);
     setDraft("");
     setAttachment(null);
+    setFileError("");
   };
   return (
     <div className="flex min-h-[420px] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -456,19 +636,14 @@ function Thread({ messages, onSend, busy, customerName }) {
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
             placeholder={`Message CCS Signage about your ${customerName ? "account" : "project"}…`}
             className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none" />
-          <label className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 cursor-pointer hover:border-blue-400">
-            <input type="file" className="hidden" onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (!file) { setAttachment(null); return; }
-              const reader = new FileReader();
-              reader.onload = () => setAttachment({ name: file.name, mime: file.type || "application/octet-stream", base64: String(reader.result || "").split(",")[1] || "" });
-              reader.readAsDataURL(file);
-            }} />
-            {attachment ? attachment.name : "Attach file"}
+          <label className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 cursor-pointer hover:border-blue-400" title="Attach a site photo or marked-up drawing (photo or PDF, up to 6 MB)">
+            <input type="file" accept="image/*,application/pdf,.pdf" className="hidden" onChange={pickFile} />
+            {attachment ? `${attachment.name} · ${fmtBytes(attachment.size)}` : "Attach photo or PDF"}
             {attachment && <button type="button" onClick={(e) => { e.preventDefault(); setAttachment(null); }} className="ml-1 text-slate-400 hover:text-red-500">×</button>}
           </label>
+          {fileError && <p className="mt-1 text-[11px] font-medium text-red-600">{fileError}</p>}
           </div>
-          <button onClick={send} disabled={busy || (!draft.trim() && !attachment)}
+          <button type="button" onClick={send} disabled={busy || (!draft.trim() && !attachment)}
             className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </button>
@@ -493,11 +668,13 @@ export default function CustomerPortal() {
   const [tab, setTab] = useState("overview");
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
+  const [statement, setStatement] = useState(null);
   const [dismissed, setDismissed] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem(ANNOUNCEMENT_DISMISS_KEY) || "[]")); }
     catch { return new Set(); }
   });
   const msgKeyRef = useRef(crypto.randomUUID());
+  const counterKeyRef = useRef("");
 
   const load = useCallback(async () => {
     try {
@@ -525,11 +702,17 @@ export default function CustomerPortal() {
 
   const data = state.data;
   const isCustomer = data?.kind === "customer";
+  const isWorkOrder = data?.kind === "work_order";
+  const isEstimate = data?.kind === "estimate";
   const estimates = data?.estimates || [];
   const jobs = data?.jobs || [];
   const invoices = data?.invoices || [];
   const messages = data?.messages || [];
   const openBalance = invoices.reduce((sum, i) => sum + (Number(i.balance_due) || 0), 0);
+  const openInvoices = invoices
+    .filter((i) => Number(i.balance_due) > 0)
+    .slice()
+    .sort((a, b) => String(a.issue_date || "").localeCompare(String(b.issue_date || "")));
   const awaiting = estimates.filter((e) => e.can_respond);
   const activeJobs = jobs.filter((j) => !["completed", "cancelled"].includes(j.status));
   const unreadFromStaff = data?.unread_for_customer || 0;
@@ -544,16 +727,55 @@ export default function CustomerPortal() {
     });
   };
 
-  const respond = async (quote, decision, note, section) => {
+  // Statement of account: the portal bootstrap already carries invoices +
+  // payments_by_invoice, so the statement builds inline via the shared pure
+  // model — the staff invoicingAction statement path needs a session token
+  // a portal link cannot supply.
+  const openStatement = () => {
+    const payments = Object.entries(data?.payments_by_invoice || {}).flatMap(([invoiceId, rows]) =>
+      (Array.isArray(rows) ? rows : []).map((p) => ({
+        invoice_id: invoiceId,
+        paid_date: String(p?.paid_at ?? "").slice(0, 10),
+        amount: Number(p?.amount) || 0,
+        method: p?.method || "other",
+        status: "recorded",
+      })));
+    setStatement(buildStatement({
+      customer: { company_name: data?.customer?.name, terms: data?.customer?.terms },
+      invoices,
+      payments,
+      asOfDate: todayStamp(),
+    }));
+  };
+
+  const respond = async (quote, decision, note, section, signature) => {
     setBusy(true);
     try {
       const payload = { action: "estimate_respond", token, estimate_id: quote.id, decision, note, creation_request_key: crypto.randomUUID() };
       if (section?.key) { payload.section_key = section.key; payload.section_label = section.label || ""; }
+      if (signature) payload.signature_image = signature;
       await call(payload);
       setToast(section?.key ? (decision === "accepted" ? "Section accepted — thank you!" : decision === "rejected" ? "Section declined — noted." : "Question sent.") : decision === "approve" ? "Quote approved — thank you!" : "Revision request sent.");
       await load();
     } catch (error) {
       setToast(error?.message || "Could not submit your response.");
+    } finally { setBusy(false); }
+  };
+
+  // Counter offer (#257): one attempt key per form session so a retried or
+  // double-clicked submit reuses the server-side idempotency receipt instead
+  // of double-logging the event.
+  const sendCounter = async (quote, proposedTotal, note) => {
+    if (!window.confirm(`Send a counter offer of ${money(proposedTotal)} on ${quote.estimate_number || "this quote"}? We'll review it and follow up.`)) return;
+    setBusy(true);
+    try {
+      if (!counterKeyRef.current) counterKeyRef.current = crypto.randomUUID();
+      await call({ action: "counter_offer", token, estimate_id: quote.id, proposed_total: proposedTotal, note, creation_request_key: counterKeyRef.current });
+      counterKeyRef.current = "";
+      setToast(`Counter offer of ${money(proposedTotal)} sent — we'll review it and follow up.`);
+      await load();
+    } catch (error) {
+      setToast(error?.message || "Could not send the counter offer.");
     } finally { setBusy(false); }
   };
 
@@ -565,6 +787,16 @@ export default function CustomerPortal() {
       await load();
     } catch (error) {
       setToast(error?.message || "Could not send the notice.");
+    } finally { setBusy(false); }
+  };
+
+  const requestReorder = async (job, note) => {
+    setBusy(true);
+    try {
+      await call({ action: "request_reorder", token, work_order_id: job.id, note, creation_request_key: crypto.randomUUID() });
+      setToast("Sent to estimating — we'll follow up.");
+    } catch (error) {
+      setToast(error?.message || "Could not send the reorder request.");
     } finally { setBusy(false); }
   };
 
@@ -582,12 +814,12 @@ export default function CustomerPortal() {
   const sendMessage = async (text, attachment) => {
     setBusy(true);
     try {
-      const payload = { action: "post_message", token, body: text, creation_request_key: msgKeyRef.current };
-      if (attachment?.base64) {
-        payload.attachment_name = attachment.name;
-        payload.attachment_mime = attachment.mime;
-        payload.attachment_base64 = attachment.base64;
-      }
+      // Files go through the dedicated upload_file action — it validates the
+      // type/size server-side, stores the blob, and posts the thread message
+      // carrying the stored URL in one atomic call.
+      const payload = attachment?.base64
+        ? { action: "upload_file", token, body: text, file_name: attachment.name, file_mime: attachment.mime, file_base64: attachment.base64, creation_request_key: msgKeyRef.current }
+        : { action: "post_message", token, body: text, creation_request_key: msgKeyRef.current };
       await call(payload);
       msgKeyRef.current = crypto.randomUUID();
       await load();
@@ -612,7 +844,7 @@ export default function CustomerPortal() {
             </div>
           </div>
           {!state.loading && !state.error && (
-            <button onClick={() => { setState((s) => ({ ...s, loading: true })); load(); }}
+            <button type="button" onClick={() => { setState((s) => ({ ...s, loading: true })); load(); }}
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">
               <RefreshCw className="h-3.5 w-3.5" />Refresh
             </button>
@@ -627,7 +859,7 @@ export default function CustomerPortal() {
               {a.message && <p className="mt-0.5 whitespace-pre-line text-sm text-slate-600">{a.message}</p>}
               {a.image_url && <img src={a.image_url} alt="" className="mt-2 max-h-40 rounded-lg" />}
             </div>
-            <button onClick={() => dismissAnnouncement(a.title)} className="h-fit rounded-lg p-1 text-slate-400 hover:bg-white/60 hover:text-slate-600" aria-label="Dismiss">
+            <button type="button" onClick={() => dismissAnnouncement(a.title)} className="h-fit rounded-lg p-1 text-slate-400 hover:bg-white/60 hover:text-slate-600" aria-label="Dismiss">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -650,17 +882,91 @@ export default function CustomerPortal() {
 
         {!state.loading && data && !isCustomer && (
           <>
+            {isEstimate && (
+              <div className="space-y-4">
+                {estimates.filter((q) => q.can_respond).length > 0 && (
+                  <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-medium text-violet-900">
+                    This quote is waiting for your response — approve it, request changes, or respond per section below.
+                  </div>
+                )}
+                {estimates.map((q) => <QuoteCard key={q.id} quote={q} onRespond={respond} onCounter={sendCounter} busy={busy} />)}
+                <p className="text-center text-[11px] text-slate-400">Approve or respond right from this link — no account needed.</p>
+              </div>
+            )}
+            {isWorkOrder && data.job && (
+              <div className="space-y-4">
+                <JobCard job={data.job} busy={false} />
+                {Array.isArray(data.products) && data.products.length > 0 && (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Items on this job</p>
+                    <ul className="mt-2 divide-y divide-slate-100">
+                      {data.products.map((p, i) => (
+                        <li key={i} className="flex items-center justify-between gap-3 py-2 text-sm">
+                          <span className="min-w-0 truncate text-slate-800">{p.description}{Number(p.quantity) > 1 ? ` x ${p.quantity}` : ""}</span>
+                          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">
+                            {p.fulfillment_state ? `${p.fulfillment_state.replace(/_/g, " ")}` : (p.customer_facing_status || "In progress")}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div>
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Messages about this job</p>
+                  <Thread messages={data.messages || []} onSend={sendMessage} busy={busy} customerName={data?.label} />
+                </div>
+                <p className="text-center text-[11px] text-slate-400">Status updates appear here as the job moves — bookmark this link.</p>
+              </div>
+            )}
+            {data.kind === "staff_view" && data.estimate && (
+              <>
+                <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+                  <span className="font-semibold">Shared read-only view</span> — this link opens one quote, view-only. Contact CCS Signage with any questions or change requests.
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="text-lg font-bold text-slate-900">{data.estimate.estimate_number || "Estimate"}</p>
+                      <p className="text-sm text-slate-600">{data.estimate.project_name || data.estimate.quote_title || "Project"}</p>
+                      {data.estimate.client_name && <p className="mt-0.5 text-xs text-slate-500">{data.estimate.client_name}</p>}
+                    </div>
+                    <div className="text-right">
+                      {data.estimate.quote_total != null && <p className="text-lg font-bold text-slate-900">{money(data.estimate.quote_total)}</p>}
+                      <p className="text-xs text-slate-500">{data.estimate.status || ""}{data.estimate.quote_expiration_date ? ` · valid until ${data.estimate.quote_expiration_date}` : ""}</p>
+                    </div>
+                  </div>
+                  {Array.isArray(data.estimate.sections) && data.estimate.sections.length > 0 && (
+                    <div className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
+                      {data.estimate.sections.map((s, i) => (
+                        <div key={i} className="flex items-center justify-between gap-3 py-2">
+                          <span className="text-sm text-slate-700">{s.name || s.section_label || `Section ${i + 1}`}</span>
+                          {s.quote_total != null && <span className="text-sm font-semibold text-slate-800">{money(s.quote_total)}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span className="flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" />Read-only view — this page reflects the live estimate.</span>
+                  <Button variant="outline" size="sm" onClick={() => window.print()}>Print / PDF</Button>
+                </div>
+              </>
+            )}
+            {data.kind !== "staff_view" && data.invoice && (
             <InvoiceView invoice={data.invoice} payments={data.payments} />
+            )}
             {Number(data.invoice?.balance_due) > 0 && (
               <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
                 <p className="text-sm font-medium text-blue-900">Balance due: <span className="font-bold">{money(data.invoice.balance_due)}</span></p>
                 <p className="mt-1 text-xs text-blue-700">To pay, contact CCS Signage and reference invoice {data.invoice.invoice_number}.</p>
               </div>
             )}
+            {data.kind !== "staff_view" && (
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" />Read-only view — this page reflects live billing records.</span>
               <Button variant="outline" size="sm" onClick={() => window.print()}>Print / PDF</Button>
             </div>
+            )}
           </>
         )}
 
@@ -671,7 +977,7 @@ export default function CustomerPortal() {
                 const Icon = t.icon;
                 const badge = t.key === "messages" && unreadFromStaff > 0 ? unreadFromStaff : t.key === "quotes" && awaiting.length > 0 ? awaiting.length : 0;
                 return (
-                  <button key={t.key} onClick={() => setTab(t.key)}
+                  <button type="button" key={t.key} onClick={() => setTab(t.key)}
                     className={`relative inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold transition ${
                       tab === t.key ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
                     }`}>
@@ -714,7 +1020,7 @@ export default function CustomerPortal() {
                     <p className="text-sm font-semibold text-amber-900">
                       {awaiting.length === 1 ? "A quote is waiting for your response." : `${awaiting.length} quotes are waiting for your response.`}
                     </p>
-                    <button onClick={() => setTab("quotes")} className="mt-2 text-sm font-semibold text-amber-800 underline">Review quotes →</button>
+                    <button type="button" onClick={() => setTab("quotes")} className="mt-2 text-sm font-semibold text-amber-800 underline">Review quotes →</button>
                   </div>
                 )}
 
@@ -786,7 +1092,7 @@ export default function CustomerPortal() {
                 {estimates.length === 0 && (
                   <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-400">No quotes shared with you yet.</div>
                 )}
-                {estimates.map((q) => <QuoteCard key={q.id} quote={q} onRespond={respond} busy={busy} />)}
+                {estimates.map((q) => <QuoteCard key={q.id} quote={q} onRespond={respond} onCounter={sendCounter} busy={busy} />)}
               </div>
             )}
 
@@ -795,12 +1101,64 @@ export default function CustomerPortal() {
                 {jobs.length === 0 && (
                   <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-400">No jobs on your account yet.</div>
                 )}
-                {jobs.map((j) => <JobCard key={j.id} job={j} onRequestChange={requestJobChange} busy={busy} />)}
+                {jobs.map((j) => <JobCard key={j.id} job={j} onRequestChange={requestJobChange} onReorder={requestReorder} busy={busy} />)}
               </div>
             )}
 
             {tab === "invoices" && (
               <div className="space-y-4">
+                {/* Statements: open invoices + running balance. The printable
+                    sheet reuses the staff StatementView overlay (Print + CSV)
+                    built from portal bootstrap data — no staff session needed. */}
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">Statements</h3>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {openInvoices.length} open invoice{openInvoices.length === 1 ? "" : "s"} · open balance{" "}
+                        <span className="font-semibold text-slate-800">{money(openBalance)}</span>
+                      </p>
+                    </div>
+                    <button type="button" onClick={openStatement}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-blue-300 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50">
+                      <FileText className="h-4 w-4" />Download statement
+                    </button>
+                  </div>
+                  {openInvoices.length > 0 && (
+                    <div className="mt-3 overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wide text-slate-400">
+                            <th className="pb-1.5 pr-3">Issued</th>
+                            <th className="pb-1.5 pr-3">Invoice</th>
+                            <th className="pb-1.5 pr-3">Due</th>
+                            <th className="pb-1.5 pr-3 text-right">Total</th>
+                            <th className="pb-1.5 pr-3 text-right">Open</th>
+                            <th className="pb-1.5 text-right">Running</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(() => {
+                            let running = 0;
+                            return openInvoices.map((i) => {
+                              running += Number(i.balance_due) || 0;
+                              return (
+                                <tr key={i.id} className="border-b border-slate-50 last:border-0">
+                                  <td className="py-1.5 pr-3 text-slate-500">{i.issue_date || "—"}</td>
+                                  <td className="py-1.5 pr-3 font-medium text-slate-800">{i.invoice_number || "Invoice"}</td>
+                                  <td className="py-1.5 pr-3 text-slate-500">{i.due_date || "—"}</td>
+                                  <td className="py-1.5 pr-3 text-right text-slate-600">{money(i.total)}</td>
+                                  <td className="py-1.5 pr-3 text-right font-medium text-red-700">{money(i.balance_due)}</td>
+                                  <td className="py-1.5 text-right font-semibold text-slate-900">{money(running)}</td>
+                                </tr>
+                              );
+                            });
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
                 {invoices.length === 0 && (
                   <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-400">No invoices on your account yet.</div>
                 )}
@@ -812,6 +1170,14 @@ export default function CustomerPortal() {
 
             {tab === "messages" && (
               <Thread messages={messages} onSend={sendMessage} busy={busy} customerName={data?.customer?.name} />
+            )}
+
+            {statement && (
+              <StatementView
+                statements={[statement]}
+                company={{ company_name: data?.company?.name, company_logo_url: data?.company?.logo_url }}
+                onClose={() => setStatement(null)}
+              />
             )}
 
             <div className="flex items-center justify-between text-xs text-slate-400">

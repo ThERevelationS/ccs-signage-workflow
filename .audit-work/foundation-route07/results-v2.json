@@ -1,0 +1,84 @@
+{
+ "synthetic": true,
+ "note": "no SDK; fake entity/Builder boundary only",
+ "results": [
+  {
+   "case": "1 stale deferred first read does not clobber latest A",
+   "ok": true,
+   "visible": "Project A latest",
+   "counters": {
+    "projectGet": 3,
+    "estimateGet": 3,
+    "updateMany": 0,
+    "filter": 0,
+    "create": 0,
+    "builderSync": 0
+   }
+  },
+  {
+   "case": "2 in-flight A save after reroute: no stale close/nav, no B writes",
+   "ok": true,
+   "savedSnapshot": "v10",
+   "counters": {
+    "projectGet": 4,
+    "estimateGet": 4,
+    "updateMany": 1,
+    "filter": 0,
+    "create": 0,
+    "builderSync": 0
+   },
+   "events": []
+  },
+  {
+   "case": "3 copy success: one create, remapped ids, no receipt, nav to copy",
+   "ok": true,
+   "copyId": "copy1_mw3rp1xi",
+   "counters": {
+    "projectGet": 1,
+    "estimateGet": 1,
+    "updateMany": 0,
+    "filter": 2,
+    "create": 1,
+    "builderSync": 0
+   }
+  },
+  {
+   "case": "4:console",
+   "ok": true,
+   "message": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  },
+  {
+   "case": "4:console",
+   "ok": true,
+   "message": "Error: Foundation project copy create failed and no matching record was visible on recovery read. Do not retry blindly; reload first. synthetic create failure\n    at ensureIdempotentEntityCreate (http"
+  },
+  {
+   "case": "4:dialog",
+   "ok": true,
+   "message": "Save failed: Foundation project copy create failed and no matching record was visible on recovery read. Do not retry blindly; reload first. synthetic create failure"
+  },
+  {
+   "case": "4 copy fail: alert, no record, URL same, retry same key+data",
+   "ok": true,
+   "retryKey": "foundation_project_copy:cd69683f-59d1-47d0-a1c4-3a3555c6e7d0"
+  },
+  {
+   "case": "4b:console",
+   "ok": true,
+   "message": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  },
+  {
+   "case": "4b lost reply with persisted row: reconcile, no duplicate",
+   "ok": true,
+   "reconciled": "copy1_mw3rp44o",
+   "creates": 1,
+   "filters": 2
+  },
+  {
+   "case": "5 old copy completes after route B: no stale nav, B untouched",
+   "ok": true,
+   "orphanCopy": "copy1_mw3rp5pe",
+   "url": "http://127.0.0.1:5172/FoundationEstimator?id=pB&estimateId=eB"
+  }
+ ]
+}

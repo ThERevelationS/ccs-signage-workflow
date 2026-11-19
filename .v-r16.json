@@ -1,0 +1,565 @@
+{
+  "summary": {
+    "total": 38,
+    "resolved": 38,
+    "rate": "100.0%",
+    "failure_stages": {},
+    "geocode_misses": 0,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "219 Prince Royal Dr Ste 8, Berea, KY 40403",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: berea -> berea",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "berea"
+      },
+      "county": "",
+      "ms": 1586,
+      "worker": 1
+    },
+    {
+      "address": "130 Chestnut Hill Dr, Ravenna, OH 44266",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 41.158603503693,
+        "lng": -81.243018120947
+      },
+      "matched": "130 N CHESTNUT ST, RAVENNA, OH, 44266",
+      "target": {
+        "type": "municipality",
+        "name": "Ravenna city"
+      },
+      "county": "Portage County",
+      "ms": 2883,
+      "worker": 2
+    },
+    {
+      "address": "713 Phillips Dr, Wickliffe, KY 42087",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: wickliffe -> wickliffe",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "wickliffe"
+      },
+      "county": "",
+      "ms": 2420,
+      "worker": 3
+    },
+    {
+      "address": "2535 US-41 ALT, Dixon, KY 42409",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.490309189282,
+        "lng": -87.709972754781
+      },
+      "matched": "2535 US HWY 41 ALTERNATE RTE S, DIXON, KY, 42409",
+      "target": {
+        "type": "municipality",
+        "name": "Dixon city"
+      },
+      "county": "Webster County",
+      "ms": 1885,
+      "worker": 1
+    },
+    {
+      "address": "4105 Mercury Boulevard, Somerset, KY 42501",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: somerset -> somerset",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "somerset"
+      },
+      "county": "",
+      "ms": 1698,
+      "worker": 3
+    },
+    {
+      "address": "200 Peterson Dr, Elizabethtown, KY 42701",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: elizabethtown -> elizabethtown",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "elizabethtown"
+      },
+      "county": "",
+      "ms": 2236,
+      "worker": 2
+    },
+    {
+      "address": "114 Cyril Cir, Lebanon, KY 40033",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: lebanon -> lebanon",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "lebanon"
+      },
+      "county": "",
+      "ms": 1380,
+      "worker": 1
+    },
+    {
+      "address": "317 Main St, Hazel, KY 42049",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: hazel -> hazel",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "hazel"
+      },
+      "county": "",
+      "ms": 1709,
+      "worker": 3
+    },
+    {
+      "address": "1201 S Main St, Hartford, KY 42347",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: hartford -> hartford",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "hartford"
+      },
+      "county": "",
+      "ms": 2718,
+      "worker": 1
+    },
+    {
+      "address": "1105 US-60, Irvington, KY 40146",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: irvington -> irvington",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "irvington"
+      },
+      "county": "",
+      "ms": 2709,
+      "worker": 2
+    },
+    {
+      "address": "40 Williamsburg Plastics Road, Williamsburg, KY 40769",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: williamsburg -> williamsburg",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "williamsburg"
+      },
+      "county": "",
+      "ms": 2680,
+      "worker": 3
+    },
+    {
+      "address": "325 10th Street, Toledo, OH 43610",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: toledo -> toledo",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "toledo"
+      },
+      "county": "",
+      "ms": 1695,
+      "worker": 2
+    },
+    {
+      "address": "3730 Mary Street, Youngstown, OH 44507",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: youngstown -> youngstown",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "youngstown"
+      },
+      "county": "",
+      "ms": 2699,
+      "worker": 1
+    },
+    {
+      "address": "4311270071, Franklin, OH 45005",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: franklin -> franklin",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "franklin"
+      },
+      "county": "",
+      "ms": 1701,
+      "worker": 3
+    },
+    {
+      "address": "1250 Hill Rd N, Pickerington, OH 43147",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: pickerington -> pickerington",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "pickerington"
+      },
+      "county": "",
+      "ms": 1764,
+      "worker": 2
+    },
+    {
+      "address": "284 Cherry St, Horse Cave, KY 42749",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: horse cave -> horse cave",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "horse cave"
+      },
+      "county": "",
+      "ms": 1698,
+      "worker": 3
+    },
+    {
+      "address": "139 Historical Trail Rd, Shepherdsville, KY 40165",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: shepherdsville -> shepherdsville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "shepherdsville"
+      },
+      "county": "",
+      "ms": 1703,
+      "worker": 1
+    },
+    {
+      "address": "548 Clinton Avenue, Washington Court House, OH 43160",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: washington court house -> washington court house",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "washington court house"
+      },
+      "county": "",
+      "ms": 1619,
+      "worker": 2
+    },
+    {
+      "address": "723 KY-15, Jackson, KY 41339",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: jackson -> jackson",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "jackson"
+      },
+      "county": "",
+      "ms": 1660,
+      "worker": 3
+    },
+    {
+      "address": "4847 Gray Ln, Stow, OH 44224",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: stow -> stow",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "stow"
+      },
+      "county": "",
+      "ms": 1655,
+      "worker": 1
+    },
+    {
+      "address": "9000 Canvas Parkway, Brecksville, OH 44141",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: brecksville -> brecksville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "brecksville"
+      },
+      "county": "",
+      "ms": 1700,
+      "worker": 2
+    },
+    {
+      "address": "319 E Adair St, Smithland, KY 42081",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: smithland -> smithland",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "smithland"
+      },
+      "county": "",
+      "ms": 1826,
+      "worker": 1
+    },
+    {
+      "address": "4MG6+65, Newtown, OH 45244",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: newtown -> newtown",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "newtown"
+      },
+      "county": "",
+      "ms": 1821,
+      "worker": 3
+    },
+    {
+      "address": "4153 OH-128 unit # e, Cleves, OH 45002",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: cleves -> cleves",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "cleves"
+      },
+      "county": "",
+      "ms": 2730,
+      "worker": 2
+    },
+    {
+      "address": "53 Green St, Wickliffe, KY 42087",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: wickliffe -> wickliffe",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "wickliffe"
+      },
+      "county": "",
+      "ms": 2010,
+      "worker": 3
+    },
+    {
+      "address": "192 Lebanon Trade Center, Lebanon, KY 40033",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: lebanon -> lebanon",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "lebanon"
+      },
+      "county": "",
+      "ms": 1634,
+      "worker": 1
+    },
+    {
+      "address": "31 Nathan Lane, Jackson, KY 41339",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: jackson -> jackson",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "jackson"
+      },
+      "county": "",
+      "ms": 1626,
+      "worker": 2
+    },
+    {
+      "address": "555 Stumbo Road North, Ontario, OH 44906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: ontario -> ontario",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "ontario"
+      },
+      "county": "",
+      "ms": 2654,
+      "worker": 1
+    },
+    {
+      "address": "1697 North Main Street, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 2275,
+      "worker": 3
+    },
+    {
+      "address": "1354 S Main St, Hartford, KY 42347",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: hartford -> hartford",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "hartford"
+      },
+      "county": "",
+      "ms": 1739,
+      "worker": 2
+    },
+    {
+      "address": "1090 Walburg Ave, Villa Hills, KY 41017",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: villa hills -> villa hills",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "villa hills"
+      },
+      "county": "",
+      "ms": 1695,
+      "worker": 3
+    },
+    {
+      "address": "160 Enterprise Dr, Madisonville, KY 42431",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: madisonville -> madisonville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "madisonville"
+      },
+      "county": "",
+      "ms": 1659,
+      "worker": 1
+    },
+    {
+      "address": "1512 North Dixie Highway, Elizabethtown, KY 42701",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: elizabethtown -> elizabethtown",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "elizabethtown"
+      },
+      "county": "",
+      "ms": 1667,
+      "worker": 2
+    },
+    {
+      "address": "4770 US-42, Carrollton, KY 41008",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: carrollton -> carrollton",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "carrollton"
+      },
+      "county": "",
+      "ms": 1699,
+      "worker": 1
+    },
+    {
+      "address": "219 Kroger Way, Versailles, KY 40383",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: versailles -> versailles",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "versailles"
+      },
+      "county": "",
+      "ms": 1678,
+      "worker": 3
+    },
+    {
+      "address": "8283 OH-66, Defiance, OH 43512",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: defiance -> defiance",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "defiance"
+      },
+      "county": "",
+      "ms": 1688,
+      "worker": 2
+    },
+    {
+      "address": "6424 Cooper Grace Ln., Morrow, OH 45152",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: morrow -> morrow",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "morrow"
+      },
+      "county": "",
+      "ms": 1730,
+      "worker": 3
+    },
+    {
+      "address": "145 Old Hwy, U.S 60, Hardinsburg, KY 40143",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.761918367477,
+        "lng": -86.458895541677
+      },
+      "matched": "145 US HWY 60, HARDINSBURG, KY, 40143",
+      "target": {
+        "type": "township",
+        "name": "Hardinsburg CCD",
+        "county": "Breckinridge County"
+      },
+      "county": "Breckinridge County",
+      "ms": 2254,
+      "worker": 1
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "results": [
+    {
+      "id": "valid 1280",
+      "ok": true
+    },
+    {
+      "id": "valid 390",
+      "ok": true
+    },
+    {
+      "id": "held 1280",
+      "ok": true
+    },
+    {
+      "id": "held 390",
+      "ok": true
+    },
+    {
+      "id": "new 1280",
+      "ok": true
+    },
+    {
+      "id": "new 390",
+      "ok": true
+    },
+    {
+      "id": "zero 1280",
+      "ok": true
+    },
+    {
+      "id": "zero 390",
+      "ok": true
+    },
+    {
+      "id": "inner 1280",
+      "ok": true
+    },
+    {
+      "id": "inner 390",
+      "ok": true
+    },
+    {
+      "id": "both 1280",
+      "ok": true
+    },
+    {
+      "id": "both 390",
+      "ok": true
+    }
+  ],
+  "port": 59058
+}

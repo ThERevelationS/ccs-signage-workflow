@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6ae0448c60298e619ad2d901",
+ "jurisdiction_name": "Henrietta",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR ZONING CERTIFICATE Henrietta Township, Lorain County, Ohio Application No. ....................... To the Henrietta Township Board of Trustees: The undersigned hereby applies for a zoning certificate for the following use, to be used on the basis of the representations herein contained, all of which the applicant swears to be true: 1. Location of Property.............................................................................. •···································•···· 2. Name of Land Owner..................................................................................................................... . Address of Land Owner..................................................................... •• • •••••• •••••• ••• • ••• • •• • ••• •• • • • ••••• •·· ·· ··· 3. Occupant of Premises........................................................................... ••····•··",
+   "tags": [
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "aa49b58b546ae3585688dd877f49a3b7d004c7438c6ff1ea5e33dffacea37026",
+   "source_document_id": null,
+   "source_title": "aa49b58b546ae3585688dd877f49a3b7d004c7438c6ff1ea5e33dffacea37026.pdf",
+   "official_url": "https://www.henriettaohio.org/_files/ugd/c8a414_aa9912b43e83438fb382535d71bac36b.pdf"
+  }
+ ]
+}

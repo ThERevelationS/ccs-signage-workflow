@@ -1,0 +1,263 @@
+{
+ "jurisdiction_id": "6adf7c2156f630c5c4e4bdbf",
+ "jurisdiction_name": "Green",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 10,
+   "snippet": "Page 13-10 Northeast Green Township Zoning Resolution 13-7 SIGNS SPECIFICALLY PROHIBITED IN ALL ZONING DISTRICTS. The following signs, in addition to all other signs not expressly permitted by this Chapter 13, are prohibited in all zoning districts and shall not be erected, or maintained: a. Roof Signs. b. Signs that move or give the appearance of moving, including pennants, streamers, flags in excess of sixty (60) square feet, other than government flags and other signs, unless otherwise approved as part of Localized Alternative Sign Regulations pursuant to Section 13-15. (This section does not prohibit variable message signs or signs designed with periodic rotation). c. Flashing Signs. Signs containing any flashing or running lights or lights creating an illusion of movement, excluding holiday decorations and time and temperature devices which display time and temperature messages only",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "type",
+    "authority"
+   ],
+   "weight": 18,
+   "source_sha256": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea",
+   "source_document_id": null,
+   "source_title": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea.pdf",
+   "official_url": "https://irp.cdn-website.com/22175a4d/files/uploaded/Ch13.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "Page 13-12 Northeast Green Township Zoning Resolution b. Portable signs on institutional property identifying special events, when the sign pertains to a specific event occurring on the subject property, subject to the following: 1. The use of portable signs is limited to 30 days per use certificate, for no more than four (4) uses per year 2. An application for a use certificate must be filed prior to the placement of the sign; said application shall clearly state the type of event planned, dates of the event and the specific dates the sign will be on site. 13-10 SIGNS PERMITTED IN RESIDENTIAL DISTRICTS. The following regulations apply to those properties located in the “A”, “B”, & “C” Residential Districts. Any sign not expressly permitted by Section 13-9 or by these district regulations is prohibited. Unless otherwise stated each of the following sign type shall be constructed for on p",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "temporary",
+    "type",
+    "authority",
+    "process"
+   ],
+   "weight": 18,
+   "source_sha256": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea",
+   "source_document_id": null,
+   "source_title": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea.pdf",
+   "official_url": "https://irp.cdn-website.com/22175a4d/files/uploaded/Ch13.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Page 13-2 Northeast Green Township Zoning Resolution C. TEMPORARY SIGNS, CONT . Development or Busine ss, New A temporary sign used to identify a business or development that begins commercial activity at a new location or that changes its name. Such sign shall be removed following the construction of the tenant’s permanent sign. Event Sign, Commercial A temporary sign used to display a commercial message related to a special event, offer, service or other similar advertisement. Event Sign, Non - Commercial A temporary sign used to display a non - commercial message such as: Now Hiring, Now Placing, etc. Fe stival Banner Sign A temporary sign on a banner related to public festivals installed on public property or in the public right - of - way. Festival Device Signs A temporary sign on balloons, umbrellas and similar devices. Flag, Pennant or Other Moving or An imated Sign Any temporary ",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "billboard",
+    "temporary",
+    "type",
+    "authority",
+    "penalties"
+   ],
+   "weight": 16,
+   "source_sha256": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea",
+   "source_document_id": null,
+   "source_title": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea.pdf",
+   "official_url": "https://irp.cdn-website.com/22175a4d/files/uploaded/Ch13.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "Northeast Green Township Zoning Resolution Page 13-11 h. Non-illuminated signs proclaiming religious or other noncommercial messages not exceeding twelve (12) square feet in surface display area in any residential district nor thirty-two (32) square feet in any other zoning district. Exception: Political campaign signs shall be exempt from the provisions of the Zoning Resolution. i. Non-illuminated real estate signs advertising the sale or lease of property or building where the sign is located, not exceeding one per street frontage and twelve (12) square feet of surface display area in any residential district nor thirty-two (32) square feet in any other zoning district. j. One temporary event (not portable or moveable) sign per public street frontage subject to the following: 1. Signs installed must be related to festivals or other seasonal events occurring on the institutional propert",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 16,
+   "source_sha256": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea",
+   "source_document_id": null,
+   "source_title": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea.pdf",
+   "official_url": "https://irp.cdn-website.com/22175a4d/files/uploaded/Ch13.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Northeast Green Township Zoning Resolution Page 13-1 13 S IGNS S IGNS 13-1 PURPOSE. The purpose of this Chapter is to regulate and encourage the orderly development of signs so as to protect the public health, safety welfare of the Township while recognizing the need for adequate business identification, informational and advertising communication and the value of visual attractiveness. 13-2 SCOPE. The regulations of this Chapter shall govern and control the erection, enlargement, expansion, alteration, operation, maintenance and relocation of any sign that is visible from any street, sidewalk or public or private common open space. These regulations shall also govern the removal of signs determined to be physically unsafe or which create a safety hazard to the public. The regulations of this Chapter dictate the types, location and physical standards of signs that are permissible for spe",
+   "tags": [
+    "sign",
+    "permit_required",
+    "dimension",
+    "illumination",
+    "temporary",
+    "type",
+    "authority",
+    "penalties"
+   ],
+   "weight": 15,
+   "source_sha256": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea",
+   "source_document_id": null,
+   "source_title": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea.pdf",
+   "official_url": "https://irp.cdn-website.com/22175a4d/files/uploaded/Ch13.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Northeast Green Township Zoning Resolution Page 13-3 Facade That portion of an enclosed building facing the street or that wall of a building through which there is primary access for customers. Where more than one business occupies the same building the facade for each business shall be that portion of the building occupied by the business which faces the street or which provides the primary access. Face Change The removal or replacement of an existing surface display panel where the remaining structural frame is not changed. The changing of the copy or poster on bulletin b oards and billboards is not considered a face change. Flashing Sign A sign that uses an intermittent, moving or flashing light source to attract attention. Frontage, Building Total lineal feet of enclosed building length along the facade that fronts the principal dedicated street, or the facade that contains the main",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "billboard",
+    "temporary",
+    "type",
+    "authority",
+    "penalties"
+   ],
+   "weight": 13,
+   "source_sha256": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea",
+   "source_document_id": null,
+   "source_title": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea.pdf",
+   "official_url": "https://irp.cdn-website.com/22175a4d/files/uploaded/Ch13.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "Northeast Green Township Zoning Resolution Page 13-13 13-11.3 Tenant Identification Signs Tenant identification signs, the content of which is related solely to the name and address of multiple occupants of the premises are permitted when such signs are attached to the building or installed adjacent to a driveway or within fifteen (15) feet of a principle entrance to the building, are illuminated by indirect lighting and do not exceed twelve (12) square feet. 13-11.4 Building Signs. One Sign identifying the building or the occupant(s) not exceeding twenty-four (24) square feet may be mounted to the façade of the building that faces the principal dedicated street or internal driveway. 13-12 SIGNS PERMITTED IN D RETAIL The following regulations shall apply to those properties located in the “D” Retail District. Any sign not expressly permitted by Section 13-9 or by these district regulatio",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority"
+   ],
+   "weight": 13,
+   "source_sha256": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea",
+   "source_document_id": null,
+   "source_title": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea.pdf",
+   "official_url": "https://irp.cdn-website.com/22175a4d/files/uploaded/Ch13.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "Page 13-6 Northeast Green Township Zoning Resolution 13-5.5 Traffic Safety. a. Confusion with Traffic Signals. No sign shall be maintained at any location where by reason of its position, size, shape, content, color, or illumination it may obstruct, impair, obscure, interfere with the view of, or be confused with, any traffic control sign, sign or device, or where it may interfere with, mislead or confuse traffic regardless whether or not it meets other size, location and setback requirements of this Section 13-5. b. Obstruction of Clear Sight Distance Triangles Prohibited. No freestanding sign, nor any part of a freestanding sign other than supporting poles or braces shall be located with clearance lower than nine (9) feet from grade unless the entire sign is three (3) feet or less from grade within the area of any sight distance triangle as defined in Section 13-3. 13-5.6 Signs in Righ",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 12,
+   "source_sha256": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea",
+   "source_document_id": null,
+   "source_title": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea.pdf",
+   "official_url": "https://irp.cdn-website.com/22175a4d/files/uploaded/Ch13.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "Page 13-14 Northeast Green Township Zoning Resolution c. Businesses and other permitted uses having street frontage in excess of 350 linial feet shall be permitted a second 80 square foot monument style advertising or business sign not to exceed 80 square feet and 12 feet in height, provided the sign employs no motion or intermittence of its illuminator and is located in a dedicated landscape area at least twice the size of the sign. d. Multi-Tenant Shopping Centers with more than 5 tenants and at least 50,000 square feet of contiguous building square footage shall be permitted one 150 square foot monument style sign not to exceed 20 feet in height for the purpose of providing identification for the shopping center and/or individual tenants, if placed in a dedicated landscaped area at least twice the size of the sign. Additional signage shall be permitted in conformance with lot frontage",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "type",
+    "authority"
+   ],
+   "weight": 11,
+   "source_sha256": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea",
+   "source_document_id": null,
+   "source_title": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea.pdf",
+   "official_url": "https://irp.cdn-website.com/22175a4d/files/uploaded/Ch13.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Page 13-4 Northeast Green Township Zoning Resolution Public Service Sign or Device A sign or device displaying only the time, temperature, stock market quotations or ci vic messages by means of a lampbank. D. MISCELLANEOUS SIGN TERMS, CONT . Sign Any object, device, or structure, or part thereof, situated outdoors or indoors and intended to be visible from the exter ior of the structure which is used to advertise, identify, display, direct, or attract attention to an object, person, institution, organization, business, product, service, event or location by any means, including words, letters, figures, designs, symbol s, fixtures, colors, illumination, or projected images. Signs do not include the flag or emblem on any nation, organization or nations, state, county, city, or any fraternal, religious or civic organizations; works of art which in no way identify a produc t or business logo",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "temporary",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea",
+   "source_document_id": null,
+   "source_title": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea.pdf",
+   "official_url": "https://irp.cdn-website.com/22175a4d/files/uploaded/Ch13.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "Northeast Green Township Zoning Resolution Page 13-15 13-12.5 Outdoor Advertising Signs. Outdoor Advertising Signs are prohibited in all commercial districts. 13-13 SIGNS PERMITTED WITH CONDITIONAL USE ZONING CERTIFICATE. A Conditional Use Zoning Certificate must be obtained as part of the application for a Sign Zoning Certificate, pursuant to the procedures of Chapter 17, for signs identified in this Section. 13-13.1 Freestanding On Premise Advertising Signs in Retail Districts with Lot Frontages of 60 Feet or Less as measured at the building setback line. a. Not more than one freestanding sign per lot shall be permitted. b. Minimum setback of 10 feet from the right-of-way, 5 feet from all other property lines. c. Height shall not exceed 18 feet. d. Minimum distance from grade shall be not less than 9 feet or maximum height of 3 feet when located in a sight distance triangle. (See Figur",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea",
+   "source_document_id": null,
+   "source_title": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea.pdf",
+   "official_url": "https://irp.cdn-website.com/22175a4d/files/uploaded/Ch13.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Northeast Green Township Zoning Resolution Page 13-5 13-4.3 Nonconforming or Noncomplying Signs. Signs existing on or before the effective date of this resolution shall be allowed face changes provided that a zoning certificate shall be obtained except as specified in Sec. 13-4.2 (c). If the size of an existing sign face or the size of the overall structure is increased, the structure is relocated, the structure is replaced, or the structure is damaged to an extent greater than 70% of its estimated replacement value (unless damage was caused by vandalism, an act of God, or automobile or similar accident) then said sign shall be ordered removed by the Zoning Inspector. 13-5 GENERAL STANDARDS. Unless expressly exempted by Section 13-4.2 above, all signs within the Township shall conform to the following general standards. 13-5.1 Illumination. a. Location and Design of Light Source. Wheneve",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 9,
+   "source_sha256": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea",
+   "source_document_id": null,
+   "source_title": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea.pdf",
+   "official_url": "https://irp.cdn-website.com/22175a4d/files/uploaded/Ch13.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "Page 13-16 Northeast Green Township Zoning Resolution 13-14.5 Changes to Approved Localized Alternative Sign Regulations. Alternative localized sign regulations which have been approved as a PUD-1 pursuant to Chapter 18 may be amended or varied only pursuant to the procedures and standards in Chapter 18 for the original approval. 13-15 ENFORCEMENT. 13-15.1 Violations. a. Failure to Obtain Required Zoning Certificate or Permits. Any person who erects, alters or moves any sign for which a Zoning Certificate or permit is required after the effective date of this Chapter shall be deemed a violation of this Zoning Resolution subject to the procedures and penalties described in Chapter 24 of this Resolution. b. Continuing Violations. Each day that a violation continues following the issuance of a citation shall be deemed a separate offense. 13-15.2 Penalties for Violations. Penalties shall be ",
+   "tags": [
+    "sign",
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea",
+   "source_document_id": null,
+   "source_title": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea.pdf",
+   "official_url": "https://irp.cdn-website.com/22175a4d/files/uploaded/Ch13.pdf"
+  },
+  {
+   "page": 17,
+   "snippet": "Northeast Green Township Zoning Resolution Page 13-17 13-16 VARIANCES. 13-16.1 Variances. Any party refused a zoning certificate for a sign application due to size, height or setback regulations, may appeal the decision of the Administrative Officer to the Board of Zoning Appeals. 13-16.2 Procedures. Appeals and variances to the Board of Zoning Appeals shall follow the procedures in Chapters 21; Variances, and Chapter 22; Appeals to the Board of Zoning Appeals. 13-17 SIGN ADVISORY COUNCIL. The Rural Zoning Commission and the Hamilton County Board of Commissioners has establish a Sign Advisory Council for the purpose of periodically reviewing implementation of the provisions of the County Zoning Resolution relating to all signage and code enforcement, new sign technology, or other issues which may relate to signage. When applicable the Green Township Board of Trustees may consider the rec",
+   "tags": [
+    "sign",
+    "dimension",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea",
+   "source_document_id": null,
+   "source_title": "de4f81063396f47eaf4cee082f9d83bf682250344947a2d03f3bb1905026c0ea.pdf",
+   "official_url": "https://irp.cdn-website.com/22175a4d/files/uploaded/Ch13.pdf"
+  }
+ ]
+}

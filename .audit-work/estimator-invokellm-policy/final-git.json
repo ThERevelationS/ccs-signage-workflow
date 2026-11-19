@@ -1,0 +1,7 @@
+{
+  "stdout": "base44/shared/estimatorAiModelPolicy.js\nsrc/components/channelLetterInstall/AIInstallScopeModal.jsx\nsrc/components/channelLetterInstall/AIScopeWriterModal.jsx\nsrc/components/channelLetterInstall/AddressAutocomplete.jsx\nsrc/components/channelLetterInstall/PhotoEstimateModal.jsx\nsrc/components/estimator/foundation/AiEngineeringAssistant.jsx\nsrc/components/vinylEstimator/VinylArtworkUploadDialog.jsx\nb359c0a43e62075b1d25d61fa132ceeb9b875d51\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 1175
+}

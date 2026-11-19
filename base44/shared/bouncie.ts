@@ -95,6 +95,7 @@ export async function exchangeAuthorizationCode(base44, code, redirectUri) {
   const res = await fetch(AUTH_BASE + "/oauth/token", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(30_000),
     body: JSON.stringify({
       client_id: (secrets.get("BOUNCIE_CLIENT_ID") || "").trim(),
       client_secret: (secrets.get("BOUNCIE_CLIENT_SECRET") || "").trim(),
@@ -180,7 +181,14 @@ async function claimRefreshLock(base44, connection) {
       await Conn.update(conn.id, { refresh_claim_token: claim, refresh_claim_at: new Date().toISOString() });
       await sleep(250);
       const check = await Conn.get(conn.id).catch(() => null);
-      if (!check) throw new Error("BOUNCIE_NOT_CONNECTED");
+      // A failed verify read is transient (entity cap, network) — the
+      // connection itself may be fine. Reporting NOT_CONNECTED here would
+      // falsely tell the operator to re-link Bouncie.
+      if (!check) {
+        const err = new Error("BOUNCIE_REFRESH_IN_PROGRESS");
+        err.status = 503;
+        throw err;
+      }
       conn = check;
       if (conn.refresh_claim_token === claim) return { claimed: true, conn };
       continue;
@@ -213,6 +221,7 @@ export async function refreshAccessToken(base44, connection) {
       res = await fetch(AUTH_BASE + "/oauth/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(30_000),
         body: JSON.stringify({
           client_id: (secrets.get("BOUNCIE_CLIENT_ID") || "").trim(),
           client_secret: (secrets.get("BOUNCIE_CLIENT_SECRET") || "").trim(),
@@ -306,6 +315,7 @@ export async function callBouncieApi(base44, method, path, { query, body } = {})
       // Bouncie expects the RAW access token — no "Bearer " prefix.
       method,
       headers: { Authorization: accessToken, "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(30_000),
       body: body ? JSON.stringify(body) : undefined
     });
 
@@ -337,7 +347,7 @@ export async function callBouncieApi(base44, method, path, { query, body } = {})
 }
 
 export async function fetchBouncieUser(base44, accessToken) {
-  const res = await fetch(API_BASE + "/v1/user", { headers: { Authorization: accessToken } });
+  const res = await fetch(API_BASE + "/v1/user", { headers: { Authorization: accessToken }, signal: AbortSignal.timeout(30_000) });
   if (!res.ok) return {};
   return await res.json();
 }

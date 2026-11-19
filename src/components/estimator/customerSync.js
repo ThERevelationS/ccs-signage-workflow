@@ -2,10 +2,12 @@ import { base44 } from "@/api/base44Client";
 import { resolvePipelineLifecycleDates, resolvePipelineSalesStatus } from "./pipelineStatus";
 import { hasVerifiedEstimateSalesActivity } from "./estimateSalesActivity.mjs";
 import { localDateStamp } from "./quoteLifecycle";
-import { loadAllEntityRows } from "./loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { createEstimateLinkedWorkOrderWithRecovery, deleteCreatedDuplicateWorkOrderIfUnchanged, expectedWorkOrderFields } from "./workOrderSyncPersistence";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "./estimatePersistence";
 import { expectedCustomerFields, replaceCustomerFieldsIfUnchanged } from "./customerPersistence";
+import { deriveWorkOrderStage, hasManualStageOverride } from "../jobs/productStageModel";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const norm = (s) => String(s || "").trim().toLowerCase();
@@ -149,7 +151,7 @@ export const resolveCustomerForEstimate = async (form, customers = []) => {
   if (linkedId) {
     const linked = customers.find((customer) => customer.id === linkedId);
     if (linked) return linked;
-    const fetched = await staffEntities.Customer.get(linkedId).catch(() => null);
+    const fetched = await staffEntities.Customer.get(linkedId);
     if (fetched) return fetched;
   }
   return findCustomerByName(customers, form?.client_name);
@@ -220,6 +222,24 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     issuedQuoteDate: estimate.quote_issue_date || "",
     issuedQuoteVersion: estimate.quote_version || 0,
   });
+  // Stage (B-13): the WO board stage derives worst-first from its products'
+  // operational_status when they carry signal (a single straggler still in
+  // design holds the job at design — that is the point of the derivation,
+  // including moves backward toward the least-advanced open product). When no
+  // product carries status signal, keep the legacy rule: estimate approval
+  // advances the job into production, but only from the estimating stage so
+  // a manual later-stage move is never rewound. A manual-override marker on
+  // the WO (hasManualStageOverride) parks all sync-driven stage writes until
+  // a human clears it — that hand move is the override the ProductActivity
+  // `override` audit row records.
+  const manualStageLocked = hasManualStageOverride(existing);
+  const productDerivedStage = manualStageLocked ? null : deriveWorkOrderStage(existing?.products);
+  const approvalStage =
+    estimate.status === "approved" && String(existing?.current_stage || "estimating").trim() === "estimating"
+      ? "production"
+      : "";
+  // "" while a human owns the stage — neither derivation nor approval writes.
+  const syncStage = manualStageLocked ? "" : productDerivedStage || approvalStage;
   const fields = {
     title: firstNonBlank(estimate.project_name, existing?.title),
     client_name: firstNonBlank(estimate.client_name, existing?.client_name),
@@ -245,10 +265,11 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
       ? estimate.attachment_refs
       : existing?.attachment_refs || [],
     install_location: firstNonBlank(estimate.site_address, existing?.install_location),
-    // Estimate approval advances the job into production — but only from the
-    // estimating stage so a manual later-stage move is never rewound.
-    ...(estimate.status === "approved" && String(existing?.current_stage || "estimating").trim() === "estimating"
-      ? { current_stage: "production" } : {}),
+    // Stage write: the derived/approval target applies only when it differs
+    // from the stored stage — no-op writes stay out of the CAS field set, and
+    // manual-override jobs skip this key entirely (syncStage is "" there).
+    ...(syncStage && norm(existing?.current_stage || "estimating") !== syncStage
+      ? { current_stage: syncStage } : {}),
     // Quote changed after conversion: flag the job for re-review. The flag is
     // sticky — once set it is only cleared by a human, not by later syncs.
     ...(Number(existing?.estimate_amount || 0) > 0 && Number(existing.estimate_amount) !== Number(estimate.quote_total || 0)
@@ -322,7 +343,12 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
       // Checklist seeded from the estimate's sections — create-time only, so a
       // live WO checklist is never overwritten by later syncs.
       ...(seededTasks.length ? { tasks: seededTasks } : {}),
-      current_stage: estimate.status === "approved" ? "production" : "estimating",
+      // A fresh WO derives its opening stage from any products the create
+      // payload carries (B-14 seeding); today fields.products is empty so the
+      // legacy approval/estimating default applies.
+      current_stage:
+        deriveWorkOrderStage(fields.products) ||
+        (estimate.status === "approved" ? "production" : "estimating"),
       date_initial_contact: new Date().toISOString().slice(0, 10),
     };
 
@@ -341,6 +367,34 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
         duplicateLabel: "Sales Pipeline record",
       }),
     });
+  }
+
+  // (#170) Forward stamp: the estimate's sales_stage mirrors the Work Order
+  // stage this sync produced. The reverse direction (a WO stage change
+  // written back onto linked estimates) lives in opportunityWorkspaceAction's
+  // syncWorkOrderStage / sync_estimate_sales_stage path. This write is
+  // advisory metadata only — a CAS conflict just means another session is
+  // mid-save; the pipeline sync itself never fails over it.
+  if (workOrder?.id && String(workOrder.sales_status || "").trim()
+    && String(estimate.sales_stage || "") !== String(workOrder.sales_status)) {
+    try {
+      await replaceEstimateFieldsIfUnchanged({
+        entity: staffEntities.AllInOneEstimate,
+        estimateId: estimate.id,
+        expectedFields: expectedEstimateFields(estimate, {
+          sales_stage: workOrder.sales_status,
+          sales_stage_changed_at: new Date().toISOString(),
+        }),
+        guardFields: { updated_date: estimate.updated_date },
+        nextFields: {
+          sales_stage: workOrder.sales_status,
+          sales_stage_changed_at: new Date().toISOString(),
+        },
+        label: "Estimate sales_stage sync stamp",
+      });
+    } catch (stampError) {
+      console.warn("Estimate sales_stage stamp skipped:", stampError?.message || stampError);
+    }
   }
 
   // Permit line auto-seed: a brand-new job with a site address gets one open
@@ -400,11 +454,8 @@ export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus 
  * Returns the (possibly extended) customer list.
  */
 export const backfillCustomersFromWorkOrders = async (customers, { sessionToken = "" } = {}) => {
-  const workOrders = await loadAllEntityRows({
-    entity: staffEntities.WorkOrder,
-    sort: "-created_date",
-    label: "Workflow Work Orders",
-  });
+  const workOrders = (await fetchAllWorkOrders())
+    .sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
   const known = new Set();
   customers.forEach((c) => {
     known.add(norm(c.company_name));
@@ -450,7 +501,7 @@ export const backfillCustomersFromWorkOrders = async (customers, { sessionToken 
     const result = response?.data || response;
     if (result?.error) throw new Error(result.error);
     if (!result?.customer?.id) {
-      throw new Error(`Workflow Customer â€œ${company_name}â€� could not be verified after creation.`);
+      throw new Error(`Workflow Customer “${company_name}” could not be verified after creation.`);
     }
     if (!knownIds.has(result.customer.id)) {
       knownIds.add(result.customer.id);

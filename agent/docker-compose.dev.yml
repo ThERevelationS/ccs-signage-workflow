@@ -1,0 +1,41 @@
+# Dev harness — full stack test before touching real servers.
+# Usage: docker compose -f docker-compose.dev.yml up --build
+# Fixture tree lives in ./fixtures (seeded by fixtures-seed.sh or by hand).
+# Chaos toggles: CHAOS_DROP_COMMANDS=1, CHAOS_FAKE_CLOCK_SKEW_MS=300000, or just
+#   docker stop dev-agent-primary  → reads fail over, writes queue.
+services:
+  agent-primary:
+    build: .
+    container_name: dev-agent-primary
+    environment:
+      FB_APP_URL: ${FB_APP_URL:-https://preview-sandbox--68dfcc5e57bbbc35387da97c.base44.app}
+      FB_AGENT_ID: dev-primary
+      FB_ROLE: primary
+      FB_HMAC_KEY: ${FB_HMAC_KEY:-dev-secret-change-me}
+      FB_ROOTS: /roots/customer,/roots/media,/roots/_Inbound
+      FB_VERSION: 0.1.0-dev
+      CHAOS_DROP_COMMANDS: ${CHAOS_DROP_COMMANDS:-0}
+    volumes:
+      - ./fixtures/customer:/roots/customer:ro
+      - ./fixtures/media:/roots/media:ro
+      - ./fixtures/inbound:/roots/_Inbound:rw   # primary write root = rw
+      - dev-state-primary:/state
+
+  agent-backup:
+    build: .
+    container_name: dev-agent-backup
+    environment:
+      FB_APP_URL: ${FB_APP_URL:-https://preview-sandbox--68dfcc5e57bbbc35387da97c.base44.app}
+      FB_AGENT_ID: dev-backup
+      FB_ROLE: backup
+      FB_HMAC_KEY: ${FB_HMAC_KEY:-dev-secret-change-me}
+      FB_ROOTS: /roots/customer,/roots/media
+      FB_VERSION: 0.1.0-dev
+    volumes:
+      - ./fixtures-backup/customer:/roots/customer:ro   # replica copy, always ro
+      - ./fixtures-backup/media:/roots/media:ro
+      - dev-state-backup:/state
+
+volumes:
+  dev-state-primary:
+  dev-state-backup:

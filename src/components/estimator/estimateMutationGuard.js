@@ -7,8 +7,9 @@ import { getOpenEstimateRevision } from "@/components/estimator/estimateRevision
  * estimate may have changed lifecycle state in another browser session.
  *
  * draft/calculated: editable normally
- * sent/approved/archived: editable only while an EstimateRevision is open
- * cancelled: permanently locked
+ * sent/approved: editable only while an EstimateRevision is open
+ * archived/cancelled: permanently locked (unarchive/restore happens through
+ *   the status lifecycle, never through a Product or Part mutation)
  */
 // Stale pendings must not block mutations forever — if a Builder recovery was
 // abandoned mid-operation more than 24h ago, treat its pending entry as expired
@@ -45,6 +46,9 @@ export async function assertEstimateProductMutationAllowed(estimate, { expectedU
   const status = String(estimate.status || "draft");
   if (status === "cancelled") {
     throw new Error("This estimate is cancelled and permanently locked. Product or Part changes cannot be added.");
+  }
+  if (status === "archived") {
+    throw new Error("This estimate is archived and locked. Restore it to an active status before changing Products or Parts.");
   }
   if (!isEstimateProtected(status)) return null;
 

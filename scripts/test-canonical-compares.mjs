@@ -16,18 +16,20 @@ export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get
 export const staffEntities = base44.entities;
 export const assertEstimateProductMutationAllowed = async () => null;
 export const getOpenEstimateRevision = async () => null;
+export const isRetryableFunction = () => false;
+export const appParams = {};
 `);
 const out1 = resolve(here, '.tmp-custsync.mjs');
 const out2 = resolve(here, '.tmp-srcproj.mjs');
 buildSync({
   entryPoints: [resolve(here, '../src/components/estimator/customerSync.js')],
   bundle: true, format: 'esm', outfile: out1, logLevel: 'silent',
-  alias: { '@/api/base44Client': stub, '@/components/staff/staffEntities': stub },
+  alias: { '@/api/base44Client': stub, '@/components/staff/staffEntities': stub, '@/lib/app-params': stub },
 });
 buildSync({
   entryPoints: [resolve(here, '../src/components/estimator/builder/sourceProjectPersistence.js')],
   bundle: true, format: 'esm', outfile: out2, logLevel: 'silent',
-  alias: { '@/api/base44Client': stub, '@/components/staff/staffEntities': stub, '@/components/estimator/estimateMutationGuard': stub },
+  alias: { '@/api/base44Client': stub, '@/components/staff/staffEntities': stub, '@/lib/app-params': stub, '@/components/estimator/estimateMutationGuard': stub },
 });
 const { canonicalEstimateWorkOrder } = await import(pathToFileURL(out1).href);
 const { sourcePatchMatches } = await import(pathToFileURL(out2).href);

@@ -68,6 +68,10 @@
       "default": true,
       "description": "Visible to all users on the universal company calendar"
     },
+    "travel_buffer_minutes": {
+      "type": "number",
+      "description": "Travel/buffer minutes treated as busy time before and after the event for conflict checks"
+    },
     "recurrence": {
       "type": "string",
       "enum": [

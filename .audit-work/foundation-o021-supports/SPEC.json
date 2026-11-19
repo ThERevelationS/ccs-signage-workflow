@@ -1,0 +1,115 @@
+{
+  "item": "WS-O O-021 (CMP-B07) — rebar_support catalog/admin UI",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "schema_commit": "a9ffbbdb (FoundationInventory.jsonc already carries material_type enum 'rebar_support' + 10 rebar_support_* properties — confirmed by fresh pull, no entity ops needed or performed)",
+  "scope": "Admin/catalog surfaces ONLY. No remote writes (candidates + SPEC only). No publish/deploy/entity ops. Estimator consumption (FoundationEstimator.jsx, foundationCalc.js, foundationReinforcement*) untouched — owned by Phase B-2.",
+  "entity_fields_surfaced": [
+    "rebar_support_kind (enum chair|stand|bolster — optional, blank = untyped, never guessed)",
+    "rebar_support_height_inches",
+    "rebar_support_height_min_inches",
+    "rebar_support_height_max_inches",
+    "rebar_support_footprint_length_inches",
+    "rebar_support_footprint_width_inches",
+    "rebar_support_material (free text)",
+    "rebar_support_pack_size (integer)",
+    "rebar_support_compatible_bar_sizes (string[] — comma-separated draft in UI)",
+    "rebar_support_placement_notes (free text)",
+    "+ COMMON row (material_name, material_description, supplier, unit, cost_per_unit) — cost_per_unit stays the per-unit catalog price basis per schema doc"
+  ],
+  "candidate_files": [
+    {
+      "path": "src/components/masterInventory/foundationFieldSchema.js",
+      "remote_sha_basis": "pulled main 2026-11-08 (75 lines)",
+      "changes": [
+        "MATERIAL_TYPES += { value: 'rebar_support', label: 'Rebar Support' } immediately after 'rebar' (reinforcement-family adjacency in every consumer: FoundationCatalog chips, dialog type picker, typeLabel).",
+        "BY_TYPE.rebar_support: all 10 rebar_support_* fields as labeled, unit-hinted descriptors; introduces two descriptor types — 'select' (options list; blank clears to null) and 'list' (comma-separated draft -> string array on save).",
+        "New exports listFieldDraft(value) (array -> '#3, #4' draft; absent -> ''; anything else verbatim) and listFieldValue(value) (string -> token array; blank -> []; array passthrough; non-string/non-array VERBATIM fail-closed)."
+      ]
+    },
+    {
+      "path": "src/components/masterInventory/FoundationMaterialDialog.jsx",
+      "remote_sha_basis": "pulled main 2026-11-08 (142 lines)",
+      "changes": [
+        "Field renderer gains 'select' (native <select> matching the dialog's own material_type picker — blank option -> null; stored out-of-enum value renders as an extra verbatim option, never remapped) and 'list' (text input over listFieldDraft, raw draft kept in form state).",
+        "handleSave: list-typed fields of the active type run through listFieldValue before CAS write — '#3, #4' -> ['#3','#4'], blank -> [], untouched stored arrays/malformed values pass through verbatim.",
+        "Numeric fields unchanged: inventoryNumberInput boundary (blank->null, numeric->Number, malformed->verbatim, explicit-0 honored)."
+      ]
+    },
+    {
+      "path": "src/pages/FoundationInventory.jsx",
+      "remote_sha_basis": "pulled main 2026-11-08 (688 lines)",
+      "changes": [
+        "TAB_CONFIGS += 'supports' (label 'Rebar Support', types ['rebar_support']) inserted between 'rebar' and 'forming' — object order drives generic TabsContent order; matching <TabsTrigger value='supports'>Supports</TabsTrigger> added between Rebar and Forming triggers. Renders in BOTH standalone page and embedded Master Inventory → Concrete & Stone modes (only equipment/poles are non-embedded — supports is a material).",
+        "supports field list: all 10 rebar_support_* fields + supplier/unit/cost_per_unit/notes. kind = optional select (blank sentinel -> null, 'other hardware stays untyped' per schema doc); numeric metadata fields carry default:null so a new row never fabricates 0-inch heights (cost_per_unit keeps the sibling-tab convention number->0 = explicit authored free price, visible to the admin).",
+        "GenericItemForm: defaults loop honors f.default and f.optional; select renderer gains '__unspecified__' sentinel (radix SelectItem rejects ''); new 'list' renderer (comma draft via listFieldDraft); Save button maps list fields through listFieldValue before onSave.",
+        "GenericTab displayFields: array values join ', ' (defensive — keeps list fields displayable if reordered into the first-4 slice)."
+      ]
+    },
+    {
+      "path": "src/components/masterInventory/MasterSuppliesTab.jsx",
+      "remote_sha_basis": "pulled main 2026-11-08 (510 lines)",
+      "changes": [
+        "FOUNDATION_SUPPLY_TYPES += 'rebar_support' — drives both row visibility AND the foundation-source type <Select> options (FOUNDATION_TYPE_OPTIONS is derived).",
+        "passThroughFoundation passKeys += all 10 rebar_support_* fields — DATA-LOSS FIX: without this, editing a support row through the Supplies tab rebuilt the form without support metadata and replaceEntityFieldsIfUnchanged would write it back stripped."
+      ]
+    },
+    {
+      "path": "src/components/estimator/parts/partCatalog.js",
+      "remote_sha_basis": "pulled main 2026-11-08 (257 lines)",
+      "changes": [
+        "FoundationInventory allowlists in 'supplies' and 'concrete_stone' SOURCES += 'rebar_support' (mirrors wherever 'rebar' appears — Master Part Picker can now see support rows, grouped under Concrete & Stone).",
+        "TYPE_DETAIL_FIELDS.FoundationInventory += rebar_support_kind ('Support') + rebar_support_height_inches ('Support Height').",
+        "OWNERSHIP FLAG: file lives under src/components/estimator/parts/ — NOT in the forbidden set (FoundationEstimator.jsx/foundationCalc.js/foundationReinforcement*), and task required flowing the type through picker/registry lists, but if Phase B-2 claims picker surfaces these 3 one-word allowlist additions + 2 detail entries can be dropped without affecting A-E verification."
+      ]
+    }
+  ],
+  "surfaces_checked_no_change_needed": [
+    "FoundationEstimator.jsx catalog buckets (lines ~358-366): rebar/rebar_support are not catalog-bucketed today — estimator-side consumption is Phase B-2 (reinforcement v2). Read-only recon only.",
+    "foundationCatalogIntegrity.js: rebar checks are specific to 'rebar' type + catalog-basis reinforcement; no global known-types allowlist that would flag rebar_support as invalid.",
+    "EquipmentInventoryTab / WallCapsInventoryTab: filter their own types only.",
+    "MasterEquipmentTab: FoundationInventory filter = excavation_equipment/attachment/sub_attachment.",
+    "MasterExtrudedMetalsPolesTab: material_type === 'pole' only.",
+    "maintenanceMaterialRules.js: exclusion-list (not equipment types) — supports flow correctly through show_in_sign_maintenance toggle semantics.",
+    "inventorySources.jsx: FoundationInventory is custom-tabbed (concrete_stone/equipment/supplies/extruded), not a declarative source — no field list to extend.",
+    "importMappers.jsx / legacyInventoryMigrator.jsx: only FoundationInventory target is poles; no supports mapping required (admin UI covers authoring; bulk import out of item scope).",
+    "inventoryNormalization.js: no aliases needed (new type, no legacy spellings); inventoryNumberInput reused verbatim by both editors.",
+    "normalizeFoundationInventoryRow: no canonicalization needed for rebar_support fields (single canonical spelling)."
+  ],
+  "boundary_contract_honored": {
+    "blank_numeric -> null": "not cataloged, never a silent free price — verified B3",
+    "malformed_numeric -> verbatim": "'abc' saved verbatim for availability validation to report — verified B3",
+    "explicit_0 -> honored": "cost_per_unit 0 persists as authored free price — verified B3",
+    "list_blank -> []": "compatibility unknown, not universal — verified B3/D3",
+    "stored_malformed -> verbatim": "compatible_bar_sizes:42 and kind:'wedge' survive untouched saves — verified B4",
+    "kind_optional": "blank stays null — schema says other hardware stays untyped, never guessed 'chair' — verified D3",
+    "no_pricing_guessing": "admin UI edits records only; unpriced supports carry cost_per_unit null through to the established consumption-side unavailable/issue pattern (Phase B-2 surface, unchanged by this work)"
+  },
+  "verification": {
+    "harness": ".audit-work/foundation-o021-supports/verify.mjs — esbuild-bundles REAL candidate components (FoundationMaterialDialog, FoundationInventory page, FoundationCatalog page, MasterSuppliesTab, partCatalog, field schema, inventoryNormalization) with stubs only for ui primitives/lucide/api/persistence edges (persistence stubs record exact emitted payloads); mounted via react-test-renderer inside act()",
+    "results": "13/13 PASS",
+    "assertions": {
+      "A1": "MATERIAL_TYPES: rebar_support adjacent to rebar; typeLabel resolves",
+      "A2": "fieldsFor covers all 10 rebar_support_* entity keys (regex-checked against pulled jsonc) + COMMON; kind=select w/ enum options; bar sizes=list",
+      "A3": "listFieldDraft/listFieldValue + inventoryNumberInput boundary semantics",
+      "B1": "real dialog CREATE — all 10 fields render labeled, payload round-trips correct types (height=5 number, pack=100, sizes=['#3','#4'], kind='chair')",
+      "B2": "real dialog EDIT — stored values render (array->'#3, #4' draft, kind select='chair'); untouched fields round-trip verbatim; edit goes through replaceEntityFieldsIfUnchanged",
+      "B3": "real dialog FAIL-CLOSED — 'abc'->verbatim, ''->null, '0'->0, blank list->[]",
+      "B4": "real dialog VERBATIM — stored malformed list (42) + unknown kind ('wedge') display and save unmodified",
+      "C1": "real FoundationCatalog — 'Rebar Support (1)' chip renders, filters list to support rows only",
+      "D1": "real FoundationInventory page — Supports tab lists support rows only (rebar excluded, and vice versa); kind/height shown",
+      "D2": "real page edit form — prefilled values, list draft, optional-select sentinel; save round-trips bolster+['#4','#5'] via CAS path",
+      "D3": "real page add form — metadata defaults null not fabricated 0; kind sentinel defaults untyped; untouched list -> []",
+      "E1": "real MasterSuppliesTab — support row listed w/ 'rebar support' badge; edit->save retains ALL 10 rebar_support_* fields (passThrough regression)",
+      "F1": "real partCatalog — support row enters supplies+concrete_stone categories; unitCost from cost_per_unit; typeDetails shows Support fields"
+    },
+    "browser_note": "Full-app browser verification not possible within mandate: candidates are not deployable (no remote writes permitted) and local src/ is stale (missing remote-only inventoryNormalization.js — local tree cannot compile current remote state). Real-component mounts exercise create/edit/list/filter on all four admin surfaces; responsive layout is inherited unchanged (dialog grid-cols-1 sm:grid-cols-2 = mobile stacked / desktop 2-col; catalog chips overflow-x-auto; tab bar flex-wrap)."
+  },
+  "residual_risks_and_notes": [
+    "rebar_support_pack_size is schema-integer; number input can produce a fractional value — stored verbatim per boundary contract, entity integer validation on write is the fail-closed backstop (admin sees save error).",
+    "FoundationInventory.jsx generic form keeps the sibling-tab convention cost_per_unit default 0 (explicit authored free price, visible); support metadata fields are the ones defaulted to null.",
+    "Switching material_type mid-edit in FoundationMaterialDialog leaves prior-type fields on the record (pre-existing behavior for all types, unchanged).",
+    "ExcelImporterDialog has no rebar_support mapper — bulk import of supports is a follow-up if wanted; manual catalog authoring is fully covered.",
+    "Estimator/BOM consumption of rebar_support rows (placement math, spacing, pack rounding, unavailable-issue emission) is entirely Phase B-2 scope; this work only makes the records catalogable, visible, editable, and pickable."
+  ]
+}

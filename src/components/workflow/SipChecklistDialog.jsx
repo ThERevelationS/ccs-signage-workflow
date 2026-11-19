@@ -1,19 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { useState, useEffect } from "react";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Check, X, Plus, Trash2, Pencil, Save, 
   ClipboardList, FileText, Copy, Star 
 } from "lucide-react";
 
-const SipChecklistTemplate = base44.entities.SipChecklistTemplate;
+const SipChecklistTemplate = staffEntities.SipChecklistTemplate;
 
 // Default checklist items if no template exists
-const DEFAULT_CHECKLIST = [
+const _DEFAULT_CHECKLIST = [
   { id: 1, text: "Design Approved" },
   { id: 2, text: "Materials Ordered" },
   { id: 3, text: "Permit Submitted" },
@@ -35,7 +34,7 @@ export default function SipChecklistDialog({
   onSave,
   isRegistered,
   title = "SIP Checklist",
-  checklistField = "sip_checklist",
+  checklistField: _checklistField = "sip_checklist",
   accentColor = "blue"
 }) {
   const [activeTab, setActiveTab] = useState("checklist");
@@ -275,14 +274,14 @@ export default function SipChecklistDialog({
                   {/* Reorder buttons */}
                   {isRegistered && (
                     <div className="flex flex-col gap-0.5">
-                      <button 
+                      <button type="button" 
                         onClick={() => moveItem(index, 'up')}
                         disabled={index === 0}
                         className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-30"
                       >
                         ▲
                       </button>
-                      <button 
+                      <button type="button" 
                         onClick={() => moveItem(index, 'down')}
                         disabled={index === checklist.length - 1}
                         className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-30"

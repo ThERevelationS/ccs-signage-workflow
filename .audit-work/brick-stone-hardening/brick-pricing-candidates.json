@@ -1,0 +1,42 @@
+{
+ "src/components/estimator/brick/brickPricingAvailability.js": {
+  "candidateFile": "brick-pricing-candidate-brickPricingAvailability.js",
+  "sha256": "0c3b68d549709d9b03ce54001de5f3128cf30e7d221df4e2888b90eb2de13d09",
+  "bytes": 12868,
+  "lines": 268,
+  "lineEndings": "LF",
+  "terminalLF": true,
+  "existsOnRemote": false,
+  "remoteSha256": null
+ },
+ "src/components/estimator/brick/BrickGeometryPanel.jsx": {
+  "candidateFile": "brick-pricing-candidate-BrickGeometryPanel.jsx",
+  "sha256": "1f5c2cf5eddcc29020b0058476f50d0d831bae55b476d25c257fffacee7b206e",
+  "bytes": 4280,
+  "lines": 101,
+  "lineEndings": "LF",
+  "terminalLF": true,
+  "existsOnRemote": true,
+  "remoteSha256": "fb30a1afd34c411430a74c533f376062d92dc6d0bab223bff4fdc906898157ef"
+ },
+ "src/components/estimator/brick/BrickTotals.jsx": {
+  "candidateFile": "brick-pricing-candidate-BrickTotals.jsx",
+  "sha256": "9d3e323eb7748ecffe2e86ba729652289385d9c5dbf5bfa0e9b63e64be62ed38",
+  "bytes": 4388,
+  "lines": 93,
+  "lineEndings": "LF",
+  "terminalLF": true,
+  "existsOnRemote": true,
+  "remoteSha256": "142343640942d1c8f48be0b10eacc52d8a4c775dbfdc2ac7a4d105610566f91b"
+ },
+ "src/pages/BrickStoneEstimator.jsx": {
+  "candidateFile": "brick-pricing-candidate-BrickStoneEstimator.jsx",
+  "sha256": "ad9701b43a195f535228d70a1dab2861b088a307dba384232ff247a2e970c7cf",
+  "bytes": 19439,
+  "lines": 440,
+  "lineEndings": "LF",
+  "terminalLF": true,
+  "existsOnRemote": true,
+  "remoteSha256": "2837722bbd6222a4b2717a297efba12729276e220f98f68228018262dc7fd779"
+ }
+}

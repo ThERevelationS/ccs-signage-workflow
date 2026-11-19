@@ -1,0 +1,12 @@
+
+## Backlog sweep — Phase A (Data Integrity & Concurrency, §15 #351–375) DONE
+
+3 file-fenced agents verified every item; ~19 already-hardened by prior work, 6 real fixes landed:
+- #351 refuse-on-trashed check completed in replaceEstimateFieldsIfUnchanged (declared deleted still CASes for trash lifecycle)
+- #353 archived lock added to assertEstimateProductMutationAllowed (deleted was already there)
+- #371 expectedCustomerFields carries company_name baseline; rename races now fail closed
+- #372 REAL BUG: recordEstimateAcceptance mirrored the discarded duplicate instead of canonical — fixed + DEPLOYED
+- #363 ensureIdempotentEntityCreate concurrent-dup guard (RESIDUAL: backend unique constraint on creation_request_key still needed)
+- #375 createBuilderPartGroupWithRecovery normalization gap filled
+- #361 sameValue semantics documented in both copies
+Suites green: estimate-cas(10) entity-persistence(16) customer-persistence(7) estimate-lifecycle(14) builder-persistence(8) builder-service(12) builder-recovery(22) module-registry(22) work-order-persistence(16) quick-price(5). Agent checkpoints 6ae6ee43/6ae6ef30/6ae6ef6c.

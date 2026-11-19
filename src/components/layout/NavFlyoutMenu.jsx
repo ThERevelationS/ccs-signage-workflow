@@ -1,0 +1,263 @@
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Link } from "react-router-dom";
+import { ChevronDown, Columns } from "lucide-react";
+import { Droppable, Draggable } from "@hello-pangea/dnd";
+import { hexToRgbTuple } from "@/components/layout/navPreferences";
+import { navButtonStyle } from "@/components/layout/navCustomization";
+
+const MENU_WIDTH = 200;
+
+// Dropdown pill for the horizontal bar. The menu is portaled to <body> and
+// positioned fixed, so it floats above the page instead of being clipped by
+// the navigation container.
+//
+// Folder-model additions: the pill can carry a user style preset + custom
+// text color; dropping a page ONTO the pill is a combine drop that adds it to
+// the folder; the open menu's `folder-list:` droppable accepts precise
+// placement; menu items are Draggables so pages can be reordered inside the
+// folder or dragged out to the bar / another folder.
+export default function NavFlyoutMenu({
+  label,
+  icon: Icon,
+  accent,
+  items,
+  compactView = false,
+  activePath,
+  isInSplitUrl,
+  onNavigate,
+  folderId = null,
+  stylePreset = "glass",
+  onContextMenuPill,
+  onContextMenuItem,
+}) {
+  const [open, setOpen] = useState(false);
+  // "Lite" = menu opened WHILE a drag is in flight. @hello-pangea/dnd cannot
+  // register a populated Droppable mid-drag (fld-* children register before
+  // their parent droppable -> shouldPublishUpdate's getById throws -> drag
+  // dies), so the lite list renders plain items and the Layout's pointer
+  // hit-test resolves the drop index instead.
+  const [liteMode, setLiteMode] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
+  const openRef = useRef(false);
+  openRef.current = open;
+
+  // Mid-drag auto-open: an armed nav drag lingering on this pill dispatches
+  // ccs-nav-open-folder so the menu mounts while the drag is still in flight.
+  // An already-open menu keeps its real Droppable (it was collected at drag
+  // start); only a closed->open transition during the drag picks lite mode.
+  useEffect(() => {
+    if (!folderId) return undefined;
+    const onOpen = (event) => {
+      if (event.detail?.folderId !== folderId || openRef.current) return;
+      setLiteMode(!!window.__ccsNavDragging);
+      setOpen(true);
+    };
+    window.addEventListener("ccs-nav-open-folder", onOpen);
+    return () => window.removeEventListener("ccs-nav-open-folder", onOpen);
+  }, [folderId]);
+
+  // Once the drag finishes, upgrade a lite-open menu back to the real
+  // Droppable list so items can be dragged out again.
+  useEffect(() => {
+    const onDragEnd = () => setLiteMode(false);
+    window.addEventListener("ccs-nav-drag-end", onDragEnd);
+    return () => window.removeEventListener("ccs-nav-drag-end", onDragEnd);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - MENU_WIDTH - 8));
+    setPos({ top: rect.bottom + 6, left });
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointerDown = (event) => {
+      // Keep the menu open as a drop target during drags (plain flag — no
+      // React state may change while a drag is in flight).
+      if (window.__ccsNavDragging) return;
+      if (triggerRef.current?.contains(event.target)) return;
+      if (menuRef.current?.contains(event.target)) return;
+      // Presses inside the nav surface keep the flyout open — a page drag
+      // starts as a pointerdown on a nav button before the drag threshold
+      // lifts, and closing here would unmount the folder-list drop target.
+      if (event.target.closest?.(".top-nav, [role='menu'], [data-nav-item], [data-nav-folder]")) return;
+      setOpen(false);
+    };
+    const onKeyDown = (event) => {
+      // Escape during a nav drag cancels the drag itself — closing here would
+      // additionally unmount the folder-list droppable mid-flight and trip the
+      // library's "Cannot find droppable entry" invariant, so defer the close.
+      if (event.key === "Escape" && !window.__ccsNavDragging) setOpen(false);
+    };
+    // Scroll/resize churn during a nav drag (auto-scroll, freeze restore)
+    // must not unmount the menu — the drag may be aiming at it right now.
+    const close = () => { if (!window.__ccsNavDragging) setOpen(false); };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [open]);
+
+  const hasActive = items.some((item) => item.url === activePath);
+  const look = navButtonStyle(stylePreset, accent);
+
+  const renderItem = (item, dragProvided) => {
+    const ItemIcon = item.icon;
+    const isActive = activePath === item.url;
+    const isInSplit = isInSplitUrl(item);
+    const itemLook = navButtonStyle(item.stylePreset || "glass", item.accent);
+    const itemText = itemLook.textColor || (isActive ? "#fff" : "#f1f5f9");
+    return (
+      <Link
+        ref={dragProvided?.innerRef}
+        {...(dragProvided?.draggableProps || {})}
+        {...(dragProvided?.dragHandleProps || {})}
+        key={item.title}
+        to={item.url}
+        role="menuitem"
+        onClick={(event) => {
+          onNavigate(event, item);
+          setOpen(false);
+        }}
+        onContextMenu={(event) => {
+          if (!onContextMenuItem) return;
+          event.preventDefault();
+          event.stopPropagation();
+          onContextMenuItem(item, { x: event.clientX, y: event.clientY });
+        }}
+        className={`${itemLook.glass ? "ccs-glass-nav-item" : "ccs-nav-styled"} flex items-center gap-2 rounded-lg px-3 py-2 ${isActive ? "font-bold" : ""}`}
+        style={{
+          ...(dragProvided?.draggableProps?.style || {}),
+          "--glass-accent-rgb": hexToRgbTuple(item.accent),
+          ...itemLook.style,
+        }}
+        title="Drag to move · Right-click to edit · Ctrl+Click for split view"
+      >
+        <ItemIcon
+          className="h-4 w-4 flex-shrink-0"
+          style={{ color: itemLook.textColor || item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }}
+        />
+        <span
+          className={`text-sm font-medium ${isActive ? "font-bold" : ""}`}
+          style={{ color: itemText, textShadow: itemLook.style?.textShadow }}
+        >
+          {item.title}
+        </span>
+        {isInSplit && <Columns className="h-3 w-3 text-purple-500" />}
+      </Link>
+    );
+  };
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        data-nav-folder="true"
+        onClick={() => setOpen((value) => !value)}
+        onContextMenu={(event) => {
+          if (!onContextMenuPill) return;
+          event.preventDefault();
+          event.stopPropagation();
+          onContextMenuPill({ x: event.clientX, y: event.clientY });
+        }}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className={`${look.glass ? "ccs-glass-nav-item" : "ccs-nav-styled"} flex flex-shrink-0 items-center whitespace-nowrap border ${
+          compactView ? "gap-1 rounded-lg px-1 py-0.5" : "gap-1.5 rounded-lg px-2 py-1.5"
+        }`}
+        style={{ "--glass-accent-rgb": hexToRgbTuple(accent), ...look.style }}
+        title="Click to open · Drag pages onto me · Right-click to edit"
+      >
+        <Icon
+          className={`${compactView ? "h-3 w-3" : "h-3.5 w-3.5"} flex-shrink-0`}
+          style={{ color: look.textColor || accent, filter: hasActive ? `drop-shadow(0 0 6px ${accent})` : undefined }}
+        />
+        <span
+          className={`${compactView ? "text-[10px]" : "text-xs"} font-medium ${hasActive ? "font-bold" : ""}`}
+          style={{ color: look.textColor || (hasActive ? "#fff" : "#f1f5f9"), textShadow: look.style?.textShadow }}
+        >
+          {label}
+        </span>
+        <ChevronDown
+          className={`h-3 w-3 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+          style={{ color: look.textColor || (hasActive ? "#6B46C1" : "#9CA3AF") }}
+        />
+      </button>
+
+      {open &&
+        createPortal(
+          liteMode && folderId ? (
+            <div
+              ref={menuRef}
+              role="menu"
+              data-ccs-folder-list={folderId}
+              className="ccs-glass-panel fixed z-[80] rounded-xl p-1 text-slate-100 shadow-2xl"
+              style={{ top: pos.top, left: pos.left, width: MENU_WIDTH }}
+            >
+              {items.map((item) => {
+                const ItemIcon = item.icon;
+                const itemLook = navButtonStyle(item.stylePreset || "glass", item.accent);
+                return (
+                  <div
+                    key={item.url}
+                    data-ccs-fld-item
+                    className={`${itemLook.glass ? "ccs-glass-nav-item" : "ccs-nav-styled"} flex items-center gap-2 rounded-lg px-3 py-2 transition-transform duration-100`}
+                    style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent), ...itemLook.style }}
+                  >
+                    <ItemIcon className="h-4 w-4 flex-shrink-0" style={{ color: itemLook.textColor || item.accent }} />
+                    <span className="text-sm font-medium" style={{ color: itemLook.textColor || "#f1f5f9", textShadow: itemLook.style?.textShadow }}>
+                      {item.title}
+                    </span>
+                  </div>
+                );
+              })}
+              {!items.length && <div className="px-3 py-2 text-xs text-slate-400">Empty — drop page here</div>}
+            </div>
+          ) : folderId ? (
+            <Droppable droppableId={`folder-list:${folderId}`} direction="vertical">
+              {(dropProvided, dropSnapshot) => (
+                <div
+                  ref={(node) => { menuRef.current = node; dropProvided.innerRef(node); }}
+                  {...dropProvided.droppableProps}
+                  role="menu"
+                  className={`ccs-glass-panel fixed z-[80] rounded-xl p-1 text-slate-100 shadow-2xl ${dropSnapshot.isDraggingOver ? "ring-2 ring-violet-400" : ""}`}
+                  style={{ top: pos.top, left: pos.left, width: MENU_WIDTH }}
+                >
+                  {items.map((item, index) => (
+                    <Draggable key={item.url} draggableId={`fld-${folderId}-${item.url}`} index={index}>
+                      {(dragProvided) => renderItem(item, dragProvided)}
+                    </Draggable>
+                  ))}
+                  {dropProvided.placeholder}
+                  {!items.length && <div className="px-3 py-2 text-xs text-slate-400">Empty — drag pages here</div>}
+                </div>
+              )}
+            </Droppable>
+          ) : (
+            <div
+              ref={menuRef}
+              role="menu"
+              className="ccs-glass-panel fixed z-[80] rounded-xl p-1 text-slate-100 shadow-2xl"
+              style={{ top: pos.top, left: pos.left, width: MENU_WIDTH }}
+            >
+              {items.map((item) => renderItem(item))}
+            </div>
+          ),
+          document.body
+        )}
+    </>
+  );
+}

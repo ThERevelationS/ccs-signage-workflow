@@ -1,0 +1,17 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "verdict": "accepted",
+  "scope": "Materials14 only; no publishing, deployment, or business-record testing",
+  "evidence": ["financial-verification.json", "final-gate.json", "browser-results-v4.json"],
+  "files": {
+    "base44/entities/FoundationProject.jsonc": "63b19eb18191fe43c91ce40ec0ba875194de456e4658c0f7306ce2aec4549b71",
+    "src/components/estimator/foundation/FoundationItemCard.jsx": "6abea33d71aa98edd72f16dd7fded87151ee7c62b928523e404392646d5edccc",
+    "src/components/estimator/foundation/ConcreteDeliveryPanel.jsx": "81381dc9449774622976ceeac95c70ffcf9d2edf4ac0b369a7fa096ef043824d",
+    "src/components/estimator/foundation/FoundationTotals.jsx": "7ffbca2f7c08fd6449690c4ddff0ea8536d88dd8336e823c170dc293a88043fd",
+    "src/components/estimator/foundation/FoundationBOM.jsx": "d71804c43b191969b5b7e761b53f413e2c3f5bbe11e23805d97c4e8ee6c16a4a",
+    "src/components/estimator/foundation/foundationCatalogIntegrity.js": "b0baa000d3103a9dd8df0cb117636eb5dac57be3be8fa45cf24000ed9523843a",
+    "src/components/estimator/foundation/foundationCalc.js": "4dd1e58bbd0dc643a0804d36b37ce948758288e030f2782522839865079c484b",
+    "src/pages/FoundationEstimator.jsx": "ae57d373c5fcb579b8e348b620540da9654ccf54cb827464418bd82938d8990d"
+  }
+}

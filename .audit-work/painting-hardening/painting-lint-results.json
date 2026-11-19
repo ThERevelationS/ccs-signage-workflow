@@ -1,0 +1,17 @@
+{
+ "src/components/estimator/paint/paintCalc.js": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/estimator/paint/paintPricingAvailability.js": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/pages/PaintingEstimator.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ }
+}

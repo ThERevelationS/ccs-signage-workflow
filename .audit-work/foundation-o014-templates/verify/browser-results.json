@@ -1,0 +1,26 @@
+{
+ "synthetic": true,
+ "note": "no Base44 SDK/services/records; stub entity fakes only",
+ "results": [
+  {
+   "case": "load failure: real DOM shows could-not-load + alert + Retry; no fake empty",
+   "ok": true
+  },
+  {
+   "case": "save rejection: alert in real DOM, dialog stays open",
+   "ok": true
+  },
+  {
+   "case": "delete transient get failure: row kept + alert",
+   "ok": true
+  },
+  {
+   "case": "saveDisabled gate: disabled button + explanatory note in real DOM",
+   "ok": true
+  },
+  {
+   "case": "external-requests-blocked",
+   "ok": true
+  }
+ ]
+}

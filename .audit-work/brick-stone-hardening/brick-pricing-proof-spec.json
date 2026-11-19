@@ -1,0 +1,73 @@
+{
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "1840b224140634135d546377b1878a283443463e",
+ "jsonProofs": [
+  {
+   "file": "brick-model-verification.json",
+   "resultCount": 121
+  },
+  {
+   "file": "brick-model-red-verification.json",
+   "resultCount": 13
+  },
+  {
+   "file": "brick-page-verification.json",
+   "resultCount": 9
+  },
+  {
+   "file": "brick-browser-results.json",
+   "resultCount": 4
+  },
+  {
+   "file": "brick-consumer-build.json",
+   "resultCount": 8
+  },
+  {
+   "file": "brick-lint-results.json",
+   "resultCount": 4
+  },
+  {
+   "file": "brick-page-import-edges.json",
+   "resultCount": "see file"
+  },
+  {
+   "file": "brick-page-meta.json",
+   "resultCount": "see file"
+  }
+ ],
+ "allResultsMustHaveOkTrue": true,
+ "scopedLintLogs": [
+  {
+   "file": "brick-lint-results.json",
+   "line": "0 errors / 0 warnings over 4 candidate files"
+  }
+ ],
+ "candidateHashes": {
+  "src/components/estimator/brick/brickPricingAvailability.js": "0c3b68d549709d9b03ce54001de5f3128cf30e7d221df4e2888b90eb2de13d09",
+  "src/components/estimator/brick/BrickGeometryPanel.jsx": "1f5c2cf5eddcc29020b0058476f50d0d831bae55b476d25c257fffacee7b206e",
+  "src/components/estimator/brick/BrickTotals.jsx": "9d3e323eb7748ecffe2e86ba729652289385d9c5dbf5bfa0e9b63e64be62ed38",
+  "src/pages/BrickStoneEstimator.jsx": "ad9701b43a195f535228d70a1dab2861b088a307dba384232ff247a2e970c7cf"
+ },
+ "remoteBaselineHashes": {
+  "src/components/estimator/brick/BrickGeometryPanel.jsx": "fb30a1afd34c411430a74c533f376062d92dc6d0bab223bff4fdc906898157ef",
+  "src/components/estimator/brick/BrickTotals.jsx": "142343640942d1c8f48be0b10eacc52d8a4c775dbfdc2ac7a4d105610566f91b",
+  "src/pages/BrickStoneEstimator.jsx": "2837722bbd6222a4b2717a297efba12729276e220f98f68228018262dc7fd779",
+  "src/components/estimator/brick/brickCalc.js": "c54ed2c11a12e917dbc047c23d33afd9e0b1694f2b350bdb89e6808a661506a6",
+  "src/components/estimator/brick/brickSellPricing.js": "5109889d3bc98c86ca62023a8b5ac6f8997945fcc2bd38d62ca7ee79b7a7b0b7",
+  "src/components/estimator/builder/partSync.js": "fb77561aa50012b8ff70490f485b2a9775ab4cfdc70cc5904f189dbff8627549"
+ },
+ "allowedBuildWarningCount": 0,
+ "remoteOperationsPermitted": [
+  "sandbox read",
+  "sandbox run (read-only shell)"
+ ],
+ "remoteMutationsPerformed": 0,
+ "applyRequiresLeadApproval": true,
+ "remoteWriteAuthorized": false,
+ "checkpointAuthorized": false,
+ "entityOperationsAuthorized": false,
+ "schemaOrMetadataAuthorized": false,
+ "publishOrDeployAuthorized": false,
+ "baselineFile": "brick-pricing-baseline-v3.json"
+}

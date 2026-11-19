@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "=== test-canonical-compares\nPASS canonical compares (13 cases)\n=== test-customer-sync\nPASS customer sync, picker normalization, and mutation guard\n=== test-equipment-relationship-persistence\nPASS equipment relationship persistence (5 cases)\n=== test-staff-entities\nPASS staff entities facade (18 cases)\n=== test-revision-reads\nPASS revision reads (8 cases)\n=== test-relationship-ids\nPASS test-relationship-ids\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 37494
+}

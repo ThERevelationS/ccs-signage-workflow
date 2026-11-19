@@ -1,0 +1,1176 @@
+{
+  "workOrder": {
+    "title": "",
+    "client_name": "Synthetic",
+    "customer_id": "synthetic-customer",
+    "estimate_id": "coupled-estimate",
+    "opportunity_id": "",
+    "estimating_request_id": "",
+    "description": "• Painting — undefined\n• Concrete | Masonry | Poles — undefined",
+    "current_stage": "sales",
+    "sales_status": "won",
+    "install_location": "",
+    "contact_name": "",
+    "contact_email": "",
+    "contact_phone": "",
+    "representative": "",
+    "sales_rep": "",
+    "estimator": "",
+    "estimate_amount": 1039,
+    "date_order_created": "2026-11-06",
+    "corbridge_invoice_number": "SYN-COUPLED",
+    "project_install_date": "",
+    "in_pipeline": true,
+    "due_date": "",
+    "products": [
+      {
+        "id": "unrelated-line",
+        "description": "Painting",
+        "product_type": "",
+        "estimate_line_id": "unrelated-line",
+        "builder_product_id": "",
+        "source_project_id": "page-source",
+        "module_key": "painting",
+        "quantity": 1,
+        "quoted_unit_price": 345,
+        "quoted_total": 345,
+        "category": "",
+        "customer_description": "",
+        "estimator_notes": "",
+        "operational_status": "order_review",
+        "operational_substatus": "",
+        "customer_facing_status": "Order Review",
+        "fulfillment_state": "none",
+        "design_due_date": "",
+        "product_due_date": "",
+        "hard_due_date": false,
+        "designer": "",
+        "assigned_to": "",
+        "responsibility": "",
+        "responsibility_color": "",
+        "queue_priority": 0,
+        "proof_status": "none",
+        "proof_file_url": "",
+        "proof_file_name": "",
+        "proof_version": 0,
+        "proof_approved_version": 0,
+        "source_estimate_id": "coupled-estimate",
+        "source_estimate_number": "SYN-COUPLED"
+      },
+      {
+        "id": "coupled-foundation-builder",
+        "description": "Concrete | Masonry | Poles",
+        "product_type": "",
+        "estimate_line_id": "coupled-foundation-line",
+        "builder_product_id": "coupled-foundation-builder",
+        "source_project_id": "page-source",
+        "module_key": "foundation",
+        "quantity": 1,
+        "quoted_unit_price": 694,
+        "quoted_total": 694,
+        "category": "",
+        "customer_description": "",
+        "estimator_notes": "",
+        "operational_status": "order_review",
+        "operational_substatus": "",
+        "customer_facing_status": "Order Review",
+        "fulfillment_state": "none",
+        "design_due_date": "",
+        "product_due_date": "",
+        "hard_due_date": false,
+        "designer": "",
+        "assigned_to": "",
+        "responsibility": "",
+        "responsibility_color": "",
+        "queue_priority": 0,
+        "proof_status": "none",
+        "proof_file_url": "",
+        "proof_file_name": "",
+        "proof_version": 0,
+        "proof_approved_version": 0,
+        "source_estimate_id": "coupled-estimate",
+        "source_estimate_number": "SYN-COUPLED"
+      }
+    ],
+    "conversion_events": [
+      {
+        "schema_version": 1,
+        "creation_request_key": "estimate_conversion:coupled-estimate:new:unrelated-line",
+        "work_order_id": "",
+        "product_id": "unrelated-line",
+        "product_label": "Painting",
+        "event_type": "conversion",
+        "label": "Estimate Converted to Order - via product status (APPROVED)",
+        "actor_type": "staff",
+        "actor_label": "",
+        "from_value": "SYN-COUPLED",
+        "to_value": "",
+        "note": "Estimate Converted to Order - via product status (APPROVED)",
+        "occurred_at": "2026-11-06T21:31:11.789Z",
+        "details": {
+          "source": "estimate_conversion",
+          "estimate_id": "coupled-estimate",
+          "estimate_number": "SYN-COUPLED",
+          "conversion_status": "APPROVED",
+          "estimate_line_id": "unrelated-line",
+          "builder_product_id": ""
+        }
+      },
+      {
+        "schema_version": 1,
+        "creation_request_key": "estimate_conversion:coupled-estimate:new:coupled-foundation-builder",
+        "work_order_id": "",
+        "product_id": "coupled-foundation-builder",
+        "product_label": "Concrete | Masonry | Poles",
+        "event_type": "conversion",
+        "label": "Estimate Converted to Order - via product status (APPROVED)",
+        "actor_type": "staff",
+        "actor_label": "",
+        "from_value": "SYN-COUPLED",
+        "to_value": "",
+        "note": "Estimate Converted to Order - via product status (APPROVED)",
+        "occurred_at": "2026-11-06T21:31:11.789Z",
+        "details": {
+          "source": "estimate_conversion",
+          "estimate_id": "coupled-estimate",
+          "estimate_number": "SYN-COUPLED",
+          "conversion_status": "APPROVED",
+          "estimate_line_id": "coupled-foundation-line",
+          "builder_product_id": "coupled-foundation-builder"
+        }
+      }
+    ],
+    "materials": [
+      {
+        "builder_part_id": "BuilderPart-synthetic-11",
+        "part_key": "foundation:item:0:finishing",
+        "part_name": "Concrete Finishing Labor",
+        "part_type": "labor",
+        "part_subtype": "concrete_finishing",
+        "quantity": 0.1875,
+        "unit": "hour",
+        "unit_cost": 60,
+        "extended_cost": 11.25,
+        "inventory_item_id": "",
+        "inventory_item_name": "Concrete Finishing Labor",
+        "source": "estimate_conversion",
+        "source_estimate_id": "coupled-estimate",
+        "source_estimate_number": "SYN-COUPLED",
+        "estimate_line_id": "coupled-foundation-line",
+        "builder_product_id": "coupled-foundation-builder",
+        "module_key": "foundation",
+        "section_name": "Concrete | Masonry | Poles"
+      },
+      {
+        "builder_part_id": "BuilderPart-synthetic-9",
+        "part_key": "foundation:item:0:pouring",
+        "part_name": "Concrete Pour Labor",
+        "part_type": "labor",
+        "part_subtype": "concrete_pouring",
+        "quantity": 1,
+        "unit": "cy",
+        "unit_cost": 15,
+        "extended_cost": 15,
+        "inventory_item_id": "",
+        "inventory_item_name": "Concrete Pour Labor",
+        "source": "estimate_conversion",
+        "source_estimate_id": "coupled-estimate",
+        "source_estimate_number": "SYN-COUPLED",
+        "estimate_line_id": "coupled-foundation-line",
+        "builder_product_id": "coupled-foundation-builder",
+        "module_key": "foundation",
+        "section_name": "Concrete | Masonry | Poles"
+      },
+      {
+        "builder_part_id": "BuilderPart-synthetic-17",
+        "part_key": "foundation:concrete-delivery:truck:0:fuel",
+        "part_name": "Concrete Truck 1 — Fuel Surcharge",
+        "part_type": "service",
+        "part_subtype": "concrete_fuel_surcharge",
+        "quantity": 1,
+        "unit": "truck",
+        "unit_cost": 30,
+        "extended_cost": 30,
+        "inventory_item_id": "",
+        "inventory_item_name": "Concrete Truck 1 — Fuel Surcharge",
+        "source": "estimate_conversion",
+        "source_estimate_id": "coupled-estimate",
+        "source_estimate_number": "SYN-COUPLED",
+        "estimate_line_id": "coupled-foundation-line",
+        "builder_product_id": "coupled-foundation-builder",
+        "module_key": "foundation",
+        "section_name": "Concrete | Masonry | Poles"
+      },
+      {
+        "builder_part_id": "BuilderPart-synthetic-15",
+        "part_key": "foundation:concrete-delivery:truck:0:small-load",
+        "part_name": "Concrete Truck 1 — Small Load Fee",
+        "part_type": "service",
+        "part_subtype": "concrete_small_load_fee",
+        "quantity": 1,
+        "unit": "truck",
+        "unit_cost": 150,
+        "extended_cost": 150,
+        "inventory_item_id": "",
+        "inventory_item_name": "Concrete Truck 1 — Small Load Fee",
+        "source": "estimate_conversion",
+        "source_estimate_id": "coupled-estimate",
+        "source_estimate_number": "SYN-COUPLED",
+        "estimate_line_id": "coupled-foundation-line",
+        "builder_product_id": "coupled-foundation-builder",
+        "module_key": "foundation",
+        "section_name": "Concrete | Masonry | Poles"
+      },
+      {
+        "builder_part_id": "BuilderPart-synthetic-7",
+        "part_key": "foundation:item:0:excavation",
+        "part_name": "Excavation Labor",
+        "part_type": "labor",
+        "part_subtype": "excavation",
+        "quantity": 2.5,
+        "unit": "hour",
+        "unit_cost": 60,
+        "extended_cost": 150,
+        "inventory_item_id": "",
+        "inventory_item_name": "Excavation Labor",
+        "source": "estimate_conversion",
+        "source_estimate_id": "coupled-estimate",
+        "source_estimate_number": "SYN-COUPLED",
+        "estimate_line_id": "coupled-foundation-line",
+        "builder_product_id": "coupled-foundation-builder",
+        "module_key": "foundation",
+        "section_name": "Concrete | Masonry | Poles"
+      },
+      {
+        "builder_part_id": "BuilderPart-synthetic-21",
+        "part_key": "foundation:landscape",
+        "part_name": "Landscape Materials",
+        "part_type": "material",
+        "part_subtype": "landscape",
+        "quantity": 1,
+        "unit": "job",
+        "unit_cost": 0.75,
+        "extended_cost": 0.75,
+        "inventory_item_id": "",
+        "inventory_item_name": "Landscape Materials",
+        "source": "estimate_conversion",
+        "source_estimate_id": "coupled-estimate",
+        "source_estimate_number": "SYN-COUPLED",
+        "estimate_line_id": "coupled-foundation-line",
+        "builder_product_id": "coupled-foundation-builder",
+        "module_key": "foundation",
+        "section_name": "Concrete | Masonry | Poles"
+      },
+      {
+        "builder_part_id": "BuilderPart-synthetic-13",
+        "part_key": "foundation:concrete-delivery:mix",
+        "part_name": "Ready-Mix Concrete — 4000 AIR ENTRAINED (AE)",
+        "part_type": "material",
+        "part_subtype": "ready_mix_concrete",
+        "quantity": 1,
+        "unit": "cy",
+        "unit_cost": 201,
+        "extended_cost": 201,
+        "inventory_item_id": "",
+        "inventory_item_name": "Ready-Mix Concrete — 4000 AIR ENTRAINED (AE)",
+        "source": "estimate_conversion",
+        "source_estimate_id": "coupled-estimate",
+        "source_estimate_number": "SYN-COUPLED",
+        "estimate_line_id": "coupled-foundation-line",
+        "builder_product_id": "coupled-foundation-builder",
+        "module_key": "foundation",
+        "section_name": "Concrete | Masonry | Poles"
+      },
+      {
+        "builder_part_id": "BuilderPart-synthetic-5",
+        "part_key": "foundation:item:0:rebar-labor",
+        "part_name": "Reinforcement labor",
+        "part_type": "labor",
+        "part_subtype": "rebar_labor",
+        "quantity": 1.2000000000000002,
+        "unit": "hr",
+        "unit_cost": 60,
+        "extended_cost": 72.00000000000001,
+        "inventory_item_id": "",
+        "inventory_item_name": "",
+        "source": "estimate_conversion",
+        "source_estimate_id": "coupled-estimate",
+        "source_estimate_number": "SYN-COUPLED",
+        "estimate_line_id": "coupled-foundation-line",
+        "builder_product_id": "coupled-foundation-builder",
+        "module_key": "foundation",
+        "section_name": "Concrete | Masonry | Poles",
+        "foundation_reinforcement_handoff": {
+          "version": 1,
+          "authority": "linked_builder_snapshot",
+          "part_type": "labor",
+          "frozen_pricing": {
+            "version": 1,
+            "state": "recorded",
+            "part_type": "labor",
+            "quantity": 1.2000000000000002,
+            "unit": "hr",
+            "unit_cost": 60,
+            "extended_cost": 72.00000000000001,
+            "labor_rate_per_hour": 60,
+            "pricing_basis": {
+              "unit": "ft",
+              "bar_diameter_inches": 0.5,
+              "weight_lb_per_ft": 0.668,
+              "cost_per_ft": 2,
+              "quantity_override_ft": null,
+              "labor_rate_per_hour": 60,
+              "labor_hours_per_ft": 0.02,
+              "labor_hours_per_connection": 0.05
+            },
+            "rate_sources": [
+              {
+                "key": "foundation_main_labor_rate",
+                "source": "legacy_default",
+                "value": 60
+              },
+              {
+                "key": "foundation_rebar_time_linear_ft",
+                "source": "legacy_default",
+                "value": 0.02
+              },
+              {
+                "key": "foundation_rebar_time_cross_section",
+                "source": "legacy_default",
+                "value": 0.05
+              }
+            ],
+            "zero_rate_authored": false,
+            "reinforcement_snapshot": {
+              "version": 1,
+              "calculation_version": 2,
+              "component_id": "one",
+              "physical_quantity_ft": 20,
+              "priced_quantity_ft": 20,
+              "geometry_weight_lbs": 13.360000000000001,
+              "priced_weight_lbs": 13.360000000000001,
+              "connection_count": 16,
+              "engineering_approved": false,
+              "procurement_ready": false,
+              "material": {
+                "kind": "manual",
+                "inventory_id": null,
+                "inventory_updated_date": null,
+                "name": "Synthetic",
+                "reason": "Synthetic explicit per-foot basis",
+                "pricing_unit": "ft",
+                "original_unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "rate_source": "custom_rebar_cost_per_ft"
+              },
+              "amounts": {
+                "geometry_feet": 20,
+                "priced_feet": 20,
+                "connection_count": 16,
+                "material_cost": 40,
+                "labor_hours": 1.2000000000000002,
+                "labor_cost": 72.00000000000001,
+                "steel_cost": 112.00000000000001,
+                "priced_weight_lbs": 13.360000000000001,
+                "geometry_weight_lbs": 13.360000000000001
+              }
+            }
+          },
+          "last_calculated": {
+            "version": 1,
+            "state": "recorded",
+            "part_type": "labor",
+            "quantity": 1.2000000000000002,
+            "unit": "hr",
+            "unit_cost": 60,
+            "extended_cost": 72.00000000000001,
+            "labor_rate_per_hour": 60,
+            "pricing_basis": {
+              "unit": "ft",
+              "bar_diameter_inches": 0.5,
+              "weight_lb_per_ft": 0.668,
+              "cost_per_ft": 2,
+              "quantity_override_ft": null,
+              "labor_rate_per_hour": 60,
+              "labor_hours_per_ft": 0.02,
+              "labor_hours_per_connection": 0.05
+            },
+            "rate_sources": [
+              {
+                "key": "foundation_main_labor_rate",
+                "source": "legacy_default",
+                "value": 60
+              },
+              {
+                "key": "foundation_rebar_time_linear_ft",
+                "source": "legacy_default",
+                "value": 0.02
+              },
+              {
+                "key": "foundation_rebar_time_cross_section",
+                "source": "legacy_default",
+                "value": 0.05
+              }
+            ],
+            "zero_rate_authored": false,
+            "reinforcement_snapshot": {
+              "version": 1,
+              "calculation_version": 2,
+              "component_id": "one",
+              "physical_quantity_ft": 20,
+              "priced_quantity_ft": 20,
+              "geometry_weight_lbs": 13.360000000000001,
+              "priced_weight_lbs": 13.360000000000001,
+              "connection_count": 16,
+              "engineering_approved": false,
+              "procurement_ready": false,
+              "material": {
+                "kind": "manual",
+                "inventory_id": null,
+                "inventory_updated_date": null,
+                "name": "Synthetic",
+                "reason": "Synthetic explicit per-foot basis",
+                "pricing_unit": "ft",
+                "original_unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "rate_source": "custom_rebar_cost_per_ft"
+              },
+              "amounts": {
+                "geometry_feet": 20,
+                "priced_feet": 20,
+                "connection_count": 16,
+                "material_cost": 40,
+                "labor_hours": 1.2000000000000002,
+                "labor_cost": 72.00000000000001,
+                "steel_cost": 112.00000000000001,
+                "priced_weight_lbs": 13.360000000000001,
+                "geometry_weight_lbs": 13.360000000000001
+              }
+            }
+          },
+          "definition_reference": {
+            "component_id": "one",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "include_rebar": true,
+            "include_finishing": true,
+            "rebar_size": "#4",
+            "rebar_cost": 112.00000000000001,
+            "item_total_cost": 288.25,
+            "concrete_volume_cy": 1,
+            "excavation_volume_cy": 1.25,
+            "concrete_bags": null,
+            "concrete_cost": 0,
+            "concrete_rate": 0,
+            "rebar_feet": 20,
+            "rebar_weight_lbs": 13.360000000000001,
+            "rebar_rate": 2,
+            "rebar_material_cost": 40,
+            "rebar_labor_cost": 72.00000000000001,
+            "rebar_labor_hours": 1.2000000000000002,
+            "rebar_geometry_feet": 20,
+            "rebar_geometry_weight_lbs": 13.360000000000001,
+            "rebar_connection_count": 16,
+            "excavation_cost": 150,
+            "excavation_hours": 2.5,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "pouring_cost": 15,
+            "finishing_cost": 11.25,
+            "finishing_hours": 0.1875,
+            "reinforcement_calculation_version": 2,
+            "reinforcement_design": {
+              "version": 2,
+              "bar_diameter_inches": 0.5,
+              "cover_inches": {
+                "side": 3,
+                "top": 3,
+                "bottom": 3
+              },
+              "supports": {
+                "mode": "off",
+                "reason": "Synthetic explicit exclusion, not structural advice."
+              },
+              "spread": {
+                "mats": [
+                  {
+                    "id": "top",
+                    "bearing_elevation_inches": 32,
+                    "max_spacing_x_inches": 12,
+                    "max_spacing_z_inches": 12
+                  }
+                ],
+                "inter_mat_ties": []
+              },
+              "pillar": {
+                "longitudinal": {}
+              }
+            },
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Synthetic",
+              "reason": "Synthetic explicit per-foot basis",
+              "unit": "ft",
+              "bar_diameter_inches": 0.5,
+              "weight_lb_per_ft": 0.668,
+              "cost_per_ft": 2
+            },
+            "custom_rebar_qty": null,
+            "custom_rebar_cost_per_ft": 2,
+            "reinforcement_cost_snapshot": {
+              "version": 1,
+              "calculation_version": 2,
+              "engineering_approved": false,
+              "amounts": {
+                "geometry_feet": 20,
+                "priced_feet": 20,
+                "connection_count": 16,
+                "material_cost": 40,
+                "labor_hours": 1.2000000000000002,
+                "labor_cost": 72.00000000000001,
+                "steel_cost": 112.00000000000001,
+                "priced_weight_lbs": 13.360000000000001,
+                "geometry_weight_lbs": 13.360000000000001
+              },
+              "material": {
+                "kind": "manual",
+                "inventory_id": null,
+                "inventory_updated_date": null,
+                "name": "Synthetic",
+                "reason": "Synthetic explicit per-foot basis",
+                "pricing_unit": "ft",
+                "original_unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "rate_source": "custom_rebar_cost_per_ft"
+              },
+              "basis": {
+                "unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "quantity_override_ft": null,
+                "labor_rate_per_hour": 60,
+                "labor_hours_per_ft": 0.02,
+                "labor_hours_per_connection": 0.05
+              },
+              "rate_sources": [
+                {
+                  "key": "foundation_main_labor_rate",
+                  "source": "legacy_default",
+                  "value": 60
+                },
+                {
+                  "key": "foundation_rebar_time_linear_ft",
+                  "source": "legacy_default",
+                  "value": 0.02
+                },
+                {
+                  "key": "foundation_rebar_time_cross_section",
+                  "source": "legacy_default",
+                  "value": 0.05
+                }
+              ]
+            },
+            "reinforcement_acceptance": {
+              "version": 1,
+              "proposal_id": "foundation_reinforcement_proposal:b8d782fd-64b5-493e-89c3-dbfc22c337a1",
+              "accepted_at": "2026-11-06T20:49:39.016Z",
+              "owner_id": "synthetic-owner",
+              "source_id": "page-source",
+              "component_id": "one",
+              "source_updated_at": "version-1",
+              "acknowledged_warning_codes": [
+                "reinforcement_geometry_truncated",
+                "reinforcement_supports_off_explained"
+              ],
+              "engineering_approved": false
+            }
+          },
+          "catalog_basis_current": null,
+          "engineering_approved": false,
+          "procurement_ready": false,
+          "purchasing": {
+            "state": "unplanned"
+          }
+        }
+      },
+      {
+        "builder_part_id": "BuilderPart-synthetic-19",
+        "part_key": "foundation:cabinet:0",
+        "part_name": "Signage Cabinet",
+        "part_type": "fabrication",
+        "part_subtype": "signage_cabinet",
+        "quantity": 2,
+        "unit": "each",
+        "unit_cost": 12,
+        "extended_cost": 24,
+        "inventory_item_id": "",
+        "inventory_item_name": "Signage Cabinet",
+        "source": "estimate_conversion",
+        "source_estimate_id": "coupled-estimate",
+        "source_estimate_number": "SYN-COUPLED",
+        "estimate_line_id": "coupled-foundation-line",
+        "builder_product_id": "coupled-foundation-builder",
+        "module_key": "foundation",
+        "section_name": "Concrete | Masonry | Poles"
+      },
+      {
+        "builder_part_id": "BuilderPart-synthetic-3",
+        "part_key": "foundation:item:0:rebar",
+        "part_name": "Synthetic",
+        "part_type": "material",
+        "part_subtype": "rebar",
+        "quantity": 20,
+        "unit": "ft",
+        "unit_cost": 2,
+        "extended_cost": 40,
+        "inventory_item_id": "",
+        "inventory_item_name": "Synthetic",
+        "source": "estimate_conversion",
+        "source_estimate_id": "coupled-estimate",
+        "source_estimate_number": "SYN-COUPLED",
+        "estimate_line_id": "coupled-foundation-line",
+        "builder_product_id": "coupled-foundation-builder",
+        "module_key": "foundation",
+        "section_name": "Concrete | Masonry | Poles",
+        "foundation_reinforcement_handoff": {
+          "version": 1,
+          "authority": "linked_builder_snapshot",
+          "part_type": "material",
+          "frozen_pricing": {
+            "version": 1,
+            "state": "recorded",
+            "part_type": "material",
+            "quantity": 20,
+            "unit": "ft",
+            "unit_cost": 2,
+            "extended_cost": 40,
+            "labor_rate_per_hour": 60,
+            "pricing_basis": {
+              "unit": "ft",
+              "bar_diameter_inches": 0.5,
+              "weight_lb_per_ft": 0.668,
+              "cost_per_ft": 2,
+              "quantity_override_ft": null,
+              "labor_rate_per_hour": 60,
+              "labor_hours_per_ft": 0.02,
+              "labor_hours_per_connection": 0.05
+            },
+            "rate_sources": [
+              {
+                "key": "foundation_main_labor_rate",
+                "source": "legacy_default",
+                "value": 60
+              },
+              {
+                "key": "foundation_rebar_time_linear_ft",
+                "source": "legacy_default",
+                "value": 0.02
+              },
+              {
+                "key": "foundation_rebar_time_cross_section",
+                "source": "legacy_default",
+                "value": 0.05
+              }
+            ],
+            "zero_rate_authored": false,
+            "reinforcement_snapshot": {
+              "version": 1,
+              "calculation_version": 2,
+              "component_id": "one",
+              "physical_quantity_ft": 20,
+              "priced_quantity_ft": 20,
+              "geometry_weight_lbs": 13.360000000000001,
+              "priced_weight_lbs": 13.360000000000001,
+              "connection_count": 16,
+              "engineering_approved": false,
+              "procurement_ready": false,
+              "material": {
+                "kind": "manual",
+                "inventory_id": null,
+                "inventory_updated_date": null,
+                "name": "Synthetic",
+                "reason": "Synthetic explicit per-foot basis",
+                "pricing_unit": "ft",
+                "original_unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "rate_source": "custom_rebar_cost_per_ft"
+              },
+              "amounts": {
+                "geometry_feet": 20,
+                "priced_feet": 20,
+                "connection_count": 16,
+                "material_cost": 40,
+                "labor_hours": 1.2000000000000002,
+                "labor_cost": 72.00000000000001,
+                "steel_cost": 112.00000000000001,
+                "priced_weight_lbs": 13.360000000000001,
+                "geometry_weight_lbs": 13.360000000000001
+              }
+            }
+          },
+          "last_calculated": {
+            "version": 1,
+            "state": "recorded",
+            "part_type": "material",
+            "quantity": 20,
+            "unit": "ft",
+            "unit_cost": 2,
+            "extended_cost": 40,
+            "labor_rate_per_hour": 60,
+            "pricing_basis": {
+              "unit": "ft",
+              "bar_diameter_inches": 0.5,
+              "weight_lb_per_ft": 0.668,
+              "cost_per_ft": 2,
+              "quantity_override_ft": null,
+              "labor_rate_per_hour": 60,
+              "labor_hours_per_ft": 0.02,
+              "labor_hours_per_connection": 0.05
+            },
+            "rate_sources": [
+              {
+                "key": "foundation_main_labor_rate",
+                "source": "legacy_default",
+                "value": 60
+              },
+              {
+                "key": "foundation_rebar_time_linear_ft",
+                "source": "legacy_default",
+                "value": 0.02
+              },
+              {
+                "key": "foundation_rebar_time_cross_section",
+                "source": "legacy_default",
+                "value": 0.05
+              }
+            ],
+            "zero_rate_authored": false,
+            "reinforcement_snapshot": {
+              "version": 1,
+              "calculation_version": 2,
+              "component_id": "one",
+              "physical_quantity_ft": 20,
+              "priced_quantity_ft": 20,
+              "geometry_weight_lbs": 13.360000000000001,
+              "priced_weight_lbs": 13.360000000000001,
+              "connection_count": 16,
+              "engineering_approved": false,
+              "procurement_ready": false,
+              "material": {
+                "kind": "manual",
+                "inventory_id": null,
+                "inventory_updated_date": null,
+                "name": "Synthetic",
+                "reason": "Synthetic explicit per-foot basis",
+                "pricing_unit": "ft",
+                "original_unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "rate_source": "custom_rebar_cost_per_ft"
+              },
+              "amounts": {
+                "geometry_feet": 20,
+                "priced_feet": 20,
+                "connection_count": 16,
+                "material_cost": 40,
+                "labor_hours": 1.2000000000000002,
+                "labor_cost": 72.00000000000001,
+                "steel_cost": 112.00000000000001,
+                "priced_weight_lbs": 13.360000000000001,
+                "geometry_weight_lbs": 13.360000000000001
+              }
+            }
+          },
+          "definition_reference": {
+            "component_id": "one",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "include_rebar": true,
+            "include_finishing": true,
+            "rebar_size": "#4",
+            "rebar_cost": 112.00000000000001,
+            "item_total_cost": 288.25,
+            "concrete_volume_cy": 1,
+            "excavation_volume_cy": 1.25,
+            "concrete_bags": null,
+            "concrete_cost": 0,
+            "concrete_rate": 0,
+            "rebar_feet": 20,
+            "rebar_weight_lbs": 13.360000000000001,
+            "rebar_rate": 2,
+            "rebar_material_cost": 40,
+            "rebar_labor_cost": 72.00000000000001,
+            "rebar_labor_hours": 1.2000000000000002,
+            "rebar_geometry_feet": 20,
+            "rebar_geometry_weight_lbs": 13.360000000000001,
+            "rebar_connection_count": 16,
+            "excavation_cost": 150,
+            "excavation_hours": 2.5,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "pouring_cost": 15,
+            "finishing_cost": 11.25,
+            "finishing_hours": 0.1875,
+            "reinforcement_calculation_version": 2,
+            "reinforcement_design": {
+              "version": 2,
+              "bar_diameter_inches": 0.5,
+              "cover_inches": {
+                "side": 3,
+                "top": 3,
+                "bottom": 3
+              },
+              "supports": {
+                "mode": "off",
+                "reason": "Synthetic explicit exclusion, not structural advice."
+              },
+              "spread": {
+                "mats": [
+                  {
+                    "id": "top",
+                    "bearing_elevation_inches": 32,
+                    "max_spacing_x_inches": 12,
+                    "max_spacing_z_inches": 12
+                  }
+                ],
+                "inter_mat_ties": []
+              },
+              "pillar": {
+                "longitudinal": {}
+              }
+            },
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Synthetic",
+              "reason": "Synthetic explicit per-foot basis",
+              "unit": "ft",
+              "bar_diameter_inches": 0.5,
+              "weight_lb_per_ft": 0.668,
+              "cost_per_ft": 2
+            },
+            "custom_rebar_qty": null,
+            "custom_rebar_cost_per_ft": 2,
+            "reinforcement_cost_snapshot": {
+              "version": 1,
+              "calculation_version": 2,
+              "engineering_approved": false,
+              "amounts": {
+                "geometry_feet": 20,
+                "priced_feet": 20,
+                "connection_count": 16,
+                "material_cost": 40,
+                "labor_hours": 1.2000000000000002,
+                "labor_cost": 72.00000000000001,
+                "steel_cost": 112.00000000000001,
+                "priced_weight_lbs": 13.360000000000001,
+                "geometry_weight_lbs": 13.360000000000001
+              },
+              "material": {
+                "kind": "manual",
+                "inventory_id": null,
+                "inventory_updated_date": null,
+                "name": "Synthetic",
+                "reason": "Synthetic explicit per-foot basis",
+                "pricing_unit": "ft",
+                "original_unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "rate_source": "custom_rebar_cost_per_ft"
+              },
+              "basis": {
+                "unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "quantity_override_ft": null,
+                "labor_rate_per_hour": 60,
+                "labor_hours_per_ft": 0.02,
+                "labor_hours_per_connection": 0.05
+              },
+              "rate_sources": [
+                {
+                  "key": "foundation_main_labor_rate",
+                  "source": "legacy_default",
+                  "value": 60
+                },
+                {
+                  "key": "foundation_rebar_time_linear_ft",
+                  "source": "legacy_default",
+                  "value": 0.02
+                },
+                {
+                  "key": "foundation_rebar_time_cross_section",
+                  "source": "legacy_default",
+                  "value": 0.05
+                }
+              ]
+            },
+            "reinforcement_acceptance": {
+              "version": 1,
+              "proposal_id": "foundation_reinforcement_proposal:b8d782fd-64b5-493e-89c3-dbfc22c337a1",
+              "accepted_at": "2026-11-06T20:49:39.016Z",
+              "owner_id": "synthetic-owner",
+              "source_id": "page-source",
+              "component_id": "one",
+              "source_updated_at": "version-1",
+              "acknowledged_warning_codes": [
+                "reinforcement_geometry_truncated",
+                "reinforcement_supports_off_explained"
+              ],
+              "engineering_approved": false
+            }
+          },
+          "catalog_basis_current": null,
+          "engineering_approved": false,
+          "procurement_ready": false,
+          "purchasing": {
+            "state": "unplanned"
+          }
+        }
+      }
+    ],
+    "sales_last_activity_at": "2026-11-06T21:31:11.789Z",
+    "sales_stage_changed_at": "2026-11-06T21:31:11.789Z",
+    "tasks": [
+      {
+        "id": "tpl_painting_unrelated-line_0",
+        "text": "Confirm color/sheen approval with customer",
+        "completed": false
+      },
+      {
+        "id": "tpl_painting_unrelated-line_1",
+        "text": "Mask & prep surfaces before spray",
+        "completed": false
+      },
+      {
+        "id": "sec_unrelated-line",
+        "text": "Estimate section: painting",
+        "completed": false
+      },
+      {
+        "id": "tpl_foundation_coupled-foundation-line_0",
+        "text": "Confirm footing depth/diameter with site conditions",
+        "completed": false
+      },
+      {
+        "id": "tpl_foundation_coupled-foundation-line_1",
+        "text": "Order concrete & schedule pour window",
+        "completed": false
+      },
+      {
+        "id": "sec_coupled-foundation-line",
+        "text": "Estimate section: Concrete | Masonry | Poles",
+        "completed": false
+      }
+    ],
+    "id": "WorkOrder-synthetic-39",
+    "updated_date": "2026-11-07T12:00:00.040Z"
+  },
+  "model": {
+    "template_id": "",
+    "order_number": "WorkOrder-synthetic-39",
+    "job_code": "",
+    "document_title": "Work Order",
+    "document_title_es": "Orden de Trabajo",
+    "printed_at": "2026-11-07T12:00:00.000Z",
+    "footer_note": "",
+    "work_order_title": "",
+    "description": "• Painting — undefined\n• Concrete | Masonry | Poles — undefined",
+    "asap": false,
+    "completed": false,
+    "piece_count": 2,
+    "company": {
+      "name": "Synthetic company",
+      "logo_url": "",
+      "address_lines": [],
+      "phone": "",
+      "email": "",
+      "website": "",
+      "license": "",
+      "footer_note": ""
+    },
+    "bill_to": {
+      "name": "Synthetic",
+      "attention": "",
+      "address_lines": [],
+      "phone": "",
+      "email": ""
+    },
+    "ship_to": {
+      "attention": "",
+      "address_lines": []
+    },
+    "rows": [
+      {
+        "line": 1,
+        "name": "Painting",
+        "type": "",
+        "qty": 1,
+        "unit_price": 345,
+        "ext_price": 345,
+        "internal": {
+          "unit_cost": null,
+          "ext_cost": null,
+          "margin": null
+        },
+        "status": "Order Review",
+        "notes": "",
+        "due_date": ""
+      },
+      {
+        "line": 2,
+        "name": "Concrete | Masonry | Poles",
+        "type": "",
+        "qty": 1,
+        "unit_price": 694,
+        "ext_price": 694,
+        "internal": {
+          "unit_cost": null,
+          "ext_cost": null,
+          "margin": null
+        },
+        "status": "Order Review",
+        "notes": "",
+        "due_date": ""
+      }
+    ],
+    "materials": [
+      {
+        "name": "Concrete Finishing Labor",
+        "type": "labor",
+        "section": "Concrete | Masonry | Poles",
+        "qty": 0.19,
+        "unit": "hour",
+        "unit_cost": 60,
+        "ext_cost": 11.25
+      },
+      {
+        "name": "Concrete Pour Labor",
+        "type": "labor",
+        "section": "Concrete | Masonry | Poles",
+        "qty": 1,
+        "unit": "cy",
+        "unit_cost": 15,
+        "ext_cost": 15
+      },
+      {
+        "name": "Concrete Truck 1 — Fuel Surcharge",
+        "type": "service",
+        "section": "Concrete | Masonry | Poles",
+        "qty": 1,
+        "unit": "truck",
+        "unit_cost": 30,
+        "ext_cost": 30
+      },
+      {
+        "name": "Concrete Truck 1 — Small Load Fee",
+        "type": "service",
+        "section": "Concrete | Masonry | Poles",
+        "qty": 1,
+        "unit": "truck",
+        "unit_cost": 150,
+        "ext_cost": 150
+      },
+      {
+        "name": "Excavation Labor",
+        "type": "labor",
+        "section": "Concrete | Masonry | Poles",
+        "qty": 2.5,
+        "unit": "hour",
+        "unit_cost": 60,
+        "ext_cost": 150
+      },
+      {
+        "name": "Landscape Materials",
+        "type": "material",
+        "section": "Concrete | Masonry | Poles",
+        "qty": 1,
+        "unit": "job",
+        "unit_cost": 0.75,
+        "ext_cost": 0.75
+      },
+      {
+        "name": "Ready-Mix Concrete — 4000 AIR ENTRAINED (AE)",
+        "type": "material",
+        "section": "Concrete | Masonry | Poles",
+        "qty": 1,
+        "unit": "cy",
+        "unit_cost": 201,
+        "ext_cost": 201
+      },
+      {
+        "name": "Reinforcement labor",
+        "type": "labor",
+        "section": "Concrete | Masonry | Poles",
+        "qty": 1.2,
+        "unit": "hr",
+        "unit_cost": 60,
+        "ext_cost": 72.00000000000001
+      },
+      {
+        "name": "Signage Cabinet",
+        "type": "fabrication",
+        "section": "Concrete | Masonry | Poles",
+        "qty": 2,
+        "unit": "each",
+        "unit_cost": 12,
+        "ext_cost": 24
+      },
+      {
+        "name": "Synthetic",
+        "type": "material",
+        "section": "Concrete | Masonry | Poles",
+        "qty": 20,
+        "unit": "ft",
+        "unit_cost": 2,
+        "ext_cost": 40
+      }
+    ],
+    "tasks": [],
+    "task_counts": {
+      "done": 0,
+      "total": 0
+    },
+    "totals": {
+      "subtotal": 1039,
+      "estimate_amount": 1039,
+      "contract_total": 1039,
+      "deposit_required": false,
+      "deposit_amount": null,
+      "deposit_invoiced": false,
+      "balance_due": 1039,
+      "internal": {
+        "total_cost": null,
+        "total_margin": null,
+        "margin_pct": null,
+        "actual_cost": null,
+        "profit_margin": null
+      }
+    },
+    "meta": [
+      {
+        "key": "stage",
+        "label": "Stage",
+        "value": "Sales"
+      }
+    ]
+  },
+  "sourceHead": "e99a089ff3b1e0bf7bfdcd7259bddd354ad767b6"
+}

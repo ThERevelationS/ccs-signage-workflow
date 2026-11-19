@@ -1,0 +1,104 @@
+{
+  "results": [
+    {
+      "name": "each cut row remains one FULL stock price regardless of cut length or unrelated quantity metadata",
+      "ok": true
+    },
+    {
+      "name": "an explicit catalog zero is genuine zero, not an unavailable price",
+      "ok": true
+    },
+    {
+      "name": "explicit decimal string rates remain supported without blank-string zero coercion",
+      "ok": true
+    },
+    {
+      "name": "missing stock price preserves acknowledged amounts and blocks current catalog pricing",
+      "ok": true
+    },
+    {
+      "name": "null stock price preserves acknowledged amounts and blocks current catalog pricing",
+      "ok": true
+    },
+    {
+      "name": "blank stock price preserves acknowledged amounts and blocks current catalog pricing",
+      "ok": true
+    },
+    {
+      "name": "whitespace stock price preserves acknowledged amounts and blocks current catalog pricing",
+      "ok": true
+    },
+    {
+      "name": "malformed stock price preserves acknowledged amounts and blocks current catalog pricing",
+      "ok": true
+    },
+    {
+      "name": "boolean stock price preserves acknowledged amounts and blocks current catalog pricing",
+      "ok": true
+    },
+    {
+      "name": "array stock price preserves acknowledged amounts and blocks current catalog pricing",
+      "ok": true
+    },
+    {
+      "name": "object stock price preserves acknowledged amounts and blocks current catalog pricing",
+      "ok": true
+    },
+    {
+      "name": "nonfinite stock price preserves acknowledged amounts and blocks current catalog pricing",
+      "ok": true
+    },
+    {
+      "name": "negative stock price preserves acknowledged amounts and blocks current catalog pricing",
+      "ok": true
+    },
+    {
+      "name": "unrecorded cost is unknown in both material group and total, never silently zero",
+      "ok": true
+    },
+    {
+      "name": "recorded zero history stays exactly zero when the current price becomes unavailable",
+      "ok": true
+    },
+    {
+      "name": "a missing material retains exact saved identity amount stock and quantity fields",
+      "ok": true
+    },
+    {
+      "name": "wrong type ambiguous identity and unassigned materials cannot become current cap prices",
+      "ok": true
+    },
+    {
+      "name": "mixed known/current and unrecorded rows keep individual values but not a fabricated complete subtotal",
+      "ok": true
+    },
+    {
+      "name": "catalog IDs that are object prototype keys form ordinary isolated groups without pollution",
+      "ok": true
+    },
+    {
+      "name": "overflow makes the subtotal unknown and creates a save-blocking diagnostic",
+      "ok": true
+    },
+    {
+      "name": "the shared catalog gate includes cap rate diagnostics even when the selected ID exists",
+      "ok": true
+    },
+    {
+      "name": "project rollup preserves current full-stock price or saved cost while reporting incomplete current pricing",
+      "ok": true
+    },
+    {
+      "name": "project rollup never coerces an unknown cap subtotal to a zero contribution",
+      "ok": true
+    },
+    {
+      "name": "no cap rows remains a genuine zero and valid frozen source inputs are never mutated",
+      "ok": true
+    }
+  ],
+  "candidate": true,
+  "syntheticOnly": true,
+  "realStorageVerified": false,
+  "pricingActivation": false
+}

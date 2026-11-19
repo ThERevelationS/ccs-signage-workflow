@@ -1,0 +1,17 @@
+{
+ "checks": [
+  {
+   "file": "o030-candidate-foundationConstructionChecks.js",
+   "exit0": true
+  },
+  {
+   "file": "o030-candidate-foundationCalc.js",
+   "exit0": true
+  },
+  {
+   "file": "o030-candidate-FoundationEstimator.jsx",
+   "exit0": true
+  }
+ ],
+ "allPassed": true
+}

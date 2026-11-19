@@ -1,0 +1,42 @@
+{
+ "jurisdiction_id": "6ae99e23ddbfa3e25abeb0d5",
+ "jurisdiction_name": "Wayne County",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "SITE INFORMATION … continued ⃝ Application for Onsite Sewage Treatment System (Septic) Permit (Health Department) and/or Private Water System Permit/Alteration Permit. ⃝ Variance Requested Items required for Variance review: ⃝ Variance Justification ⃝ Variance request Fee Amount: _________________ RECEIPT # _______________ Date Variance Granted/Number _______________ Date Variance Request Denied _______________ ⃝ Stormwater Construction Permit Renewal, Transfer or Amendment Requested (Current Permittees Only) ⃝ Renewal, Transfer, or Amendment Fee. Amount: ______________ RECEIPT # _______________ Date Renewal/Transfer/Amendment Granted _______________ Date Renewal/Transfer/Amendment Denied _______________ Stormwater Construction Permit # _______________ REVISION SUBMITTALS Revision Number Date Received Revision Number Date Received Revision Number Date Received Revision Number Date Receiv",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "process",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 14,
+   "source_sha256": "62e40f7824a7646bcb9a134610e20aa3eb28d253aaa52ad4bfde5d63b8edafea",
+   "source_document_id": null,
+   "source_title": "62e40f7824a7646bcb9a134610e20aa3eb28d253aaa52ad4bfde5d63b8edafea.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/2026/03/CAP-V7-3-24-26.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "* RESIDENTIAL * Application for Building/Electrical/HVAC Permits Wayne County Building Department 428 West Liberty Street Wooster, Ohio 44691 330-287-5525 BUILDING PERMIT # ELECTRICAL PERMIT # Property Owner ’ s Name : HVAC PERMIT # Property Owner’s Address: ELECTRIC: NEC 110.3 All electrical shall be installed and used in accordance with the listing requirements and manufacturer’s instruction. City: State: ZIP: Power Company ⃝ Ohio Edison OE Dr # ______________________________ Property Owner's E mail: ⃝ AEP ⃝ Holmes Wayne ⃝ Orrville Property Owner's Phone: ⃝ WADS ⃝ LMRE Job Site Address: (Assigned by Wayne County Map office) SERVICE: SIZE/AMPS _______ SOLAR: Occupant’s Name: ⃝ Temporary ⃝ Permanent ⃝ Underground ⃝ Overhead City: ZIP HVAC: 401.1 Heating and Cooling equipment and appliances shall be installed in accordance with the manufacturer’s installation instructions and the requirem",
+   "tags": [
+    "area",
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "22d408fdd3970355f0bb39bcc50096ee590cc5723456e3ab7d58db48572d44c7",
+   "source_document_id": null,
+   "source_title": "22d408fdd3970355f0bb39bcc50096ee590cc5723456e3ab7d58db48572d44c7.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/Residential/Residential-app-for-permit-v20.pdf"
+  }
+ ]
+}

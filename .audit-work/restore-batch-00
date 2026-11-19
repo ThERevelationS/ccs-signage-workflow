@@ -1,0 +1,10 @@
+base44/functions/opportunityWorkspaceAction/entry.ts
+base44/functions/recordEstimateQuoteDelivery/entry.ts
+src/components/estimator/customerSync.js
+src/components/estimator/estimateCreationService.js
+src/components/estimator/foundation/AiEngineeringAssistant.jsx
+src/components/estimator/foundation/Foundation3DPreview.jsx
+src/components/estimator/foundation/FoundationBOM.jsx
+src/components/estimator/foundation/FoundationItemCard.jsx
+src/components/estimator/foundation/FoundationToolbar.jsx
+src/components/estimator/foundation/FoundationWallCapsPanel.jsx

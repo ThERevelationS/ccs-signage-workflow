@@ -1,0 +1,38 @@
+{
+  "count": 8,
+  "allPassed": true,
+  "results": [
+    {
+      "file": "settings-catalog-candidate-EquipmentInventoryTab.jsx",
+      "ok": true
+    },
+    {
+      "file": "settings-catalog-candidate-FoundationInventory.jsx",
+      "ok": true
+    },
+    {
+      "file": "settings-catalog-candidate-FoundationMaterialDialog.jsx",
+      "ok": true
+    },
+    {
+      "file": "settings-catalog-candidate-WallCapsInventoryTab.jsx",
+      "ok": true
+    },
+    {
+      "file": "settings-catalog-candidate-foundationCalc.js",
+      "ok": true
+    },
+    {
+      "file": "settings-catalog-candidate-foundationEquipmentBindings.js",
+      "ok": true
+    },
+    {
+      "file": "settings-catalog-candidate-foundationInputValidation.js",
+      "ok": true
+    },
+    {
+      "file": "settings-catalog-candidate-legacyFoundationCalc.js",
+      "ok": true
+    }
+  ]
+}

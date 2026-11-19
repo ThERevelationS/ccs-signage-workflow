@@ -1,0 +1,97 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "3258e9b244991711e965b65f566d420b204f3144",
+  "workstream": "WS-O",
+  "item": "O-004 (CMP-A04) — Foundation draft recovery, ledger-open remainder",
+  "baselineDir": "baseline/",
+  "frozenSourceRoot": "remote-src/",
+  "jsonProofs": [
+    {
+      "file": "draft-model-verification.json",
+      "script": "verify-draft-model.mjs",
+      "resultCount": 11,
+      "mustBeAllOk": true,
+      "includes": [
+        "pricing fields drafted + restored verbatim (markup/override/customer_pricing.tier_number)",
+        "identity/link/computed/internal fields excluded (status, builder_sync_attempt, hyperlink, client_name, customer_id, estimate_number, pricing_engine, concrete_delivery_snapshot, totals)",
+        "quota refusal on empty storage -> draftLost tombstone -> read() invalid + Discard clears",
+        "quota refusal with existing draft -> prior draft retained, no tombstone clobber",
+        "oversize write -> tombstone when empty / previous retained when stored",
+        "tombstone is a valid CAS revision (write-over-marker proceeds)",
+        "CAS conflict / owner-source-estimate context isolation / identity gates unchanged",
+        "RED: baseline store drops pricing fields (discrimination)"
+      ]
+    },
+    {
+      "file": "draft-page-verification.json",
+      "script": "verify-draft-page.mjs",
+      "resultCount": 8,
+      "mustBeAllOk": true,
+      "includes": [
+        "nav guard wiring present (click capture + sentinel popstate + forward() re-arm + origin check)",
+        "pricing-inclusive draft messaging in all 3 user-facing strings",
+        "store: allowlist extension + loss marker + read() invalid surface",
+        "availability-hardening wiring preserved (pricingBlocked, wallPricing/polePricing props, null-gated totals, catalogReloadRef, inputIssues, snapshot gates, delivery snapshot)",
+        "draft wiring preserved (commit/undo/redo persist, restore CAS re-read, CAS discard, save-path clear, pending fieldset lock)",
+        "save/sync hardening preserved (calculateSavedCustomerPricing, validateFoundationSyncAttempt, updateBuilderSourceProject, createFoundationSyncAttempt, assertFoundationBuilderAcknowledgment, loadFoundationBuilderRecovery, verifyFoundationRecoverySource, sourceWriteEpochRef, exitGenerationRef, sourcePatchMatches)",
+        "store diff confined: clear() and below byte-identical; allowlist keeps all prior fields; no forbidden fields",
+        "page diff confined: +45 lines = guard effect only; 3 single-line message swaps"
+      ]
+    },
+    {
+      "file": "browser/browser-verification.json",
+      "script": "verify-draft-browser.mjs",
+      "resultCount": 7,
+      "mustBeAllOk": true,
+      "synthetic": true,
+      "frozenRemoteSourcesOnly": true,
+      "realSourcesInBundle": [
+        "src/pages/FoundationEstimator.jsx (candidate)",
+        "src/components/estimator/foundation/foundationDraftRecovery.js (candidate)",
+        "foundationCalc.js / legacyFoundationCalc.js / wallCalculator.js / poleCalculator.js / wallCapCalculator.js",
+        "foundationCatalogIntegrity.js / foundationEquipmentBindings.js / foundationInputValidation.js / landscapeMaterials.js",
+        "foundationAssemblyModel.js / foundationTemplateModel.js / foundationSaveSession.js / foundationSyncRecovery.js / foundationBuilderRecovery.js",
+        "FoundationItemCard.jsx / ConcreteDeliveryPanel.jsx / FoundationTotals.jsx / FoundationBOM.jsx",
+        "FoundationWallsPanel.jsx / FoundationWallCapsPanel.jsx / FoundationPolesPanel.jsx / FoundationEquipmentTab.jsx",
+        "FoundationToolbar.jsx / CustomerPricingPanel.jsx (real pricing panel — markup/override inputs live)"
+      ],
+      "stubbedBoundaries": [
+        "staffEntities / loadAllEntityRows / sourceProjectPersistence / builderService / builderMutationRecovery / estimateMutationGuard / savedCustomerPricing / projectCategorizer / idempotentEntityCreate / EmailGate",
+        "ui primitives / lucide / visual leaves (3DPreview, TemplateDialog, LayoutCanvas, SignageCabinetsPanel, LandscapeDesigner, RatesPanel, SectionBanner, AiEngineeringAssistant, WallShapeEditor)",
+        "CustomerPricingTab renders a button driving the real onApplyTier(3) prop path"
+      ],
+      "includes": [
+        "O1 desktop+mobile: description+markup+override+tier drafted, offered after leave/return, restored exactly (zero writes)",
+        "O2: internal anchor click guarded — cancel stays with edits, accept leaves, draft retained",
+        "O3: Back press lands on sentinel -> confirm — dismiss stays (forward() re-arm), accept exits; Forward returns to restore offer",
+        "O4: after verified save, stale sentinel passes through — Back exits with zero confirms, draft cleared",
+        "O5: storage quota refusal -> draftLost tombstone -> reload surfaces 'cannot be restored' + Discard clears marker",
+        "O6: healthy boot — real CustomerPricingPanel + totals render, zero console errors, zero foreign requests"
+      ],
+      "telemetryMustBe": { "foreign": 0, "consoleErrors": 0, "pageErrors": 0 }
+    }
+  ],
+  "esbuildLint": "npx esbuild candidates/* --loader:.jsx=jsx — both clean",
+  "candidateHashes": {
+    "src/components/estimator/foundation/foundationDraftRecovery.js": "84e739062efbb5308662d8ff913800d617c1a71fdf793d1930157bb806ed6e82",
+    "src/pages/FoundationEstimator.jsx": "d781338d4f5bcb8412b0ef71c7988dae394b8307d5034275079d4df2048c99c7"
+  },
+  "baselineHashes": {
+    "src/components/estimator/foundation/foundationDraftRecovery.js": "8c25d6ff634949e84cc78a125ab16aa0d510b4f7a094a0022c3d4f31e44d7473",
+    "src/pages/FoundationEstimator.jsx": "475599547f426b61cc514d3e0921efe3c0fd78ba7a3d818bb8816284070af555"
+  },
+  "candidateLineEndings": "LF (no terminal LF — matches remote file convention)",
+  "remoteWritesPerformed": false,
+  "checkpointsCreated": false,
+  "businessRecordOperationsPerformed": false,
+  "publishOrDeployPerformed": false,
+  "ledgerOpen": [
+    "sessionStorage is per-tab — drafts still die with the tab and can be evicted by the browser under storage pressure; the draftLost tombstone converts quota/size refusals into a warn-on-reopen, but a true tab-close or full eviction leaves no trace (out of reach within sessionStorage).",
+    "Draft-vs-source merge conflicts beyond the existing baseUpdatedAt warning are not resolved — restore replaces design+pricing fields wholesale after a confirm.",
+    "Partial Builder-sync retry for drafted pricing remains open (out of scope per ledger).",
+    "Live authorization/refresh coverage remains open (out of scope per ledger).",
+    "Nav guard covers internal anchor clicks + Back/Forward while mounted; programmatic navigate() calls from outside the page component (none currently) would bypass it — the synchronous draft backup remains the safety net.",
+    "Forward traversal while dirty can land on the sentinel and re-arm (harmless no-op) — documented bounded wart."
+  ]
+}

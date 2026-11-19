@@ -1,0 +1,851 @@
+{
+  "matches": [
+    {
+      "path": "src/components/signMaintenance/maintenanceMaterialRules.js",
+      "line": 51,
+      "text": "    const grossSqft = num(row.sheet_width_inches) * num(row.sheet_length_inches) / 144;"
+    },
+    {
+      "path": "src/components/foundation/WallCapsInventoryTab.jsx",
+      "line": 42,
+      "text": "    cap_stock_length_inches: null,"
+    },
+    {
+      "path": "src/components/foundation/WallCapsInventoryTab.jsx",
+      "line": 66,
+      "text": "          <Input type=\"number\" className=\"h-8\" value={form.cap_stock_length_inches ?? \"\"} step=\"0.25\" min=\"1\""
+    },
+    {
+      "path": "src/components/foundation/WallCapsInventoryTab.jsx",
+      "line": 67,
+      "text": "            onChange={e => set('cap_stock_length_inches', catalogNumberInput(e.target.value))} />"
+    },
+    {
+      "path": "src/components/foundation/WallCapsInventoryTab.jsx",
+      "line": 252,
+      "text": "                <div>Size: {cap.cap_stock_length_inches}\"L × {cap.cap_width_inches}\"W × {cap.cap_height_inches}\"H</div>"
+    },
+    {
+      "path": "src/components/masterInventory/foundationFieldSchema.js",
+      "line": 58,
+      "text": "    { key: \"rebar_support_footprint_length_inches\", label: \"Footprint length (in)\", type: \"number\" },"
+    },
+    {
+      "path": "src/components/masterInventory/foundationFieldSchema.js",
+      "line": 86,
+      "text": "    { key: \"brick_length_inches\", label: \"Length (in)\", type: \"number\" },"
+    },
+    {
+      "path": "src/components/masterInventory/foundationFieldSchema.js",
+      "line": 96,
+      "text": "    { key: \"wall_unit_length_inches\", label: \"Unit length (in)\", type: \"number\" },"
+    },
+    {
+      "path": "src/components/masterInventory/foundationFieldSchema.js",
+      "line": 102,
+      "text": "    { key: \"cap_stock_length_inches\", label: \"Stock length (in)\", type: \"number\" },"
+    },
+    {
+      "path": "src/components/masterInventory/MasterExtrudedMetalsPolesTab.jsx",
+      "line": 83,
+      "text": "    { name: \"pole_depth_inches\", label: \"Depth (in)\", type: \"number\" },"
+    },
+    {
+      "path": "src/components/masterInventory/MasterExtrudedMetalsPolesTab.jsx",
+      "line": 123,
+      "text": "  size: [p.pole_width_inches, p.pole_depth_inches].filter(Boolean).join(\" × \") +"
+    },
+    {
+      "path": "src/components/masterInventory/inventorySources.jsx",
+      "line": 71,
+      "text": "      { name: \"sheet_length_inches\", label: \"Sheet Length (in)\", type: \"number\" },"
+    },
+    {
+      "path": "src/components/masterInventory/inventorySources.jsx",
+      "line": 177,
+      "text": "      { name: \"length_inches\", label: \"Length (in)\", type: \"number\" },"
+    },
+    {
+      "path": "src/components/masterInventory/importMappers.jsx",
+      "line": 314,
+      "text": "    sheet_length_inches: toInches(row[\"Parent Height\"], row[\"Parent Height Units\"]) || 96,"
+    },
+    {
+      "path": "src/components/masterInventory/MasterSuppliesTab.jsx",
+      "line": 522,
+      "text": "    \"pole_shape\", \"pole_width_inches\", \"pole_depth_inches\", \"pole_wall_thickness_inches\","
+    },
+    {
+      "path": "src/components/masterInventory/MasterSuppliesTab.jsx",
+      "line": 524,
+      "text": "    \"brick_length_inches\", \"brick_width_inches\", \"brick_height_inches\", \"brick_color\", \"brick_texture\","
+    },
+    {
+      "path": "src/components/masterInventory/MasterSuppliesTab.jsx",
+      "line": 526,
+      "text": "    \"wall_unit_length_inches\", \"wall_unit_width_inches\", \"wall_unit_height_inches\", \"wall_color\", \"wall_texture\","
+    },
+    {
+      "path": "src/components/masterInventory/MasterSuppliesTab.jsx",
+      "line": 527,
+      "text": "    \"cap_stock_length_inches\", \"cap_width_inches\", \"cap_height_inches\", \"cap_profile\", \"cap_color\", \"cap_stock_price\", \"is_cuttable\","
+    },
+    {
+      "path": "src/components/masterInventory/MasterSuppliesTab.jsx",
+      "line": 530,
+      "text": "    \"rebar_support_footprint_length_inches\", \"rebar_support_footprint_width_inches\","
+    },
+    {
+      "path": "src/components/masterInventory/legacyInventoryMigrator.jsx",
+      "line": 143,
+      "text": "      sheet_length_inches: 96,"
+    },
+    {
+      "path": "src/components/masterInventory/inventoryNormalization.js",
+      "line": 134,
+      "text": "// Legacy `brick_stone` rows carry brick_length_inches/brick_width_inches/"
+    },
+    {
+      "path": "src/components/masterInventory/inventoryNormalization.js",
+      "line": 140,
+      "text": "  [\"wall_unit_length_inches\", \"brick_length_inches\"],"
+    },
+    {
+      "path": "src/components/masterInventory/inventoryNormalization.js",
+      "line": 212,
+      "text": "// explicitly inch-denominated name (`pole_stock_length_inches`) is converted"
+    },
+    {
+      "path": "src/components/masterInventory/inventoryNormalization.js",
+      "line": 235,
+      "text": "  if (out.pole_stock_length_ft === undefined && out.pole_stock_length_inches !== undefined) {"
+    },
+    {
+      "path": "src/components/masterInventory/inventoryNormalization.js",
+      "line": 236,
+      "text": "    const stockLengthInches = inventoryPositiveNumber(out.pole_stock_length_inches);"
+    },
+    {
+      "path": "src/components/channelLetterInstall/dimensionalFabCalculator.jsx",
+      "line": 318,
+      "text": "    cut_length_inches: perLetterCutLengthIn,"
+    },
+    {
+      "path": "src/components/channelLetterInstall/dimensionalFabCalculator.jsx",
+      "line": 340,
+      "text": "  const sheetArea = num(material.sheet_length_inches) * num(material.sheet_width_inches);"
+    },
+    {
+      "path": "src/components/channelLetterInstall/DimensionalMaterialsTab.jsx",
+      "line": 116,
+      "text": "        sheet_length_inches: 96,"
+    },
+    {
+      "path": "src/components/channelLetterInstall/DimensionalMaterialsTab.jsx",
+      "line": 392,
+      "text": "                        value={m.sheet_length_inches}"
+    },
+    {
+      "path": "src/components/channelLetterInstall/DimensionalMaterialsTab.jsx",
+      "line": 393,
+      "text": "                        onChange={(e) => updateMaterial(idx, { sheet_length_inches: parseFloat(e.target.value) || 0 })}"
+    },
+    {
+      "path": "src/components/channelLetterInstall/BackerFabPanel.jsx",
+      "line": 328,
+      "text": "        <PreviewRow label={CUTTING_METHOD_LABELS[fab.cutting_method] || \"Cutting\"} value={computed.unit_cut_cost} subtitle={`${(computed.cut_length_inches || 0).toFixed(0)}\" cut`} />"
+    },
+    {
+      "path": "src/components/channelLetterInstall/DimensionalFabModal.jsx",
+      "line": 402,
+      "text": "                subtitle={`${(computed.cut_length_inches || 0).toFixed(0)}\" cut`}"
+    },
+    {
+      "path": "src/components/channelLetterInstall/DimensionalFabPanel.jsx",
+      "line": 428,
+      "text": "          subtitle={`${(computed.cut_length_inches || 0).toFixed(0)}\" cut/letter`}"
+    },
+    {
+      "path": "src/components/channelLetterInstall/BackerFabModal.jsx",
+      "line": 89,
+      "text": "    cut_length_inches: cutLengthIn,"
+    },
+    {
+      "path": "src/components/channelLetterInstall/BackerFabModal.jsx",
+      "line": 391,
+      "text": "              <PreviewRow label={CUTTING_METHOD_LABELS[fab.cutting_method] || \"Cutting\"} value={computed.unit_cut_cost} subtitle={`${(computed.cut_length_inches || 0).toFixed(0)}\" cut`} />"
+    },
+    {
+      "path": "src/components/channelLetterInstall/channelLetterPricingAvailability.js",
+      "line": 835,
+      "text": "    [\"sheet_length_inches\", \"sheet length (in)\"],\r"
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 1477,
+      "text": "      length: row.wall_unit_length_inches,\r"
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 1485,
+      "text": "      length: row.brick_length_inches,\r"
+    },
+    {
+      "path": "src/components/estimator/parts/partCatalog.js",
+      "line": 115,
+      "text": "  \"thickness_inches\", \"sheet_width_inches\", \"sheet_length_inches\", \"yield_factor\","
+    },
+    {
+      "path": "src/components/estimator/parts/partCatalog.js",
+      "line": 118,
+      "text": "  \"length_inches\", \"diameter_inches\", \"load_rating_lbs\","
+    },
+    {
+      "path": "src/components/estimator/parts/partCatalog.js",
+      "line": 125,
+      "text": "    [\"material_type\", \"Type\"], [\"thickness_inches\", \"Thickness\"], [\"sheet_width_inches\", \"Sheet Width\"], [\"sheet_length_inches\", \"Sheet Length\"], [\"color\", \"Color\"], [\"yield_factor\", \"Yield\"], [\"supplier\", \"Supplier\"],"
+    },
+    {
+      "path": "src/components/estimator/parts/partCatalog.js",
+      "line": 134,
+      "text": "    [\"hardware_type\", \"Type\"], [\"material\", \"Material\"], [\"finish\", \"Finish\"], [\"size\", \"Size\"], [\"thread_size\", \"Thread\"], [\"length_inches\", \"Length\"], [\"diameter_inches\", \"Diameter\"], [\"load_rating_lbs\", \"Load Rating\"], [\"supplier\", \"Supplier\"],"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationDuplicateMirror.js",
+      "line": 11,
+      "text": "//     unrotated footprint from foundationLayoutFootprint() (length_inches x\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationDuplicateMirror.js",
+      "line": 27,
+      "text": "  FOUNDATION_LAYOUT_DEPTH_INCHES,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationDuplicateMirror.js",
+      "line": 297,
+      "text": "    ? (ax === \"x\" ? FOUNDATION_LAYOUT_WIDTH_INCHES / 2 : FOUNDATION_LAYOUT_DEPTH_INCHES / 2)\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 15,
+      "text": "  depth_inches: 8,"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 66,
+      "text": "        <Field label=\"Depth (in)\" type=\"number\" value={cabinet.depth_inches ?? 0} onChange={num(\"depth_inches\")} />"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementCost.js",
+      "line": 55,
+      "text": "    if (!STEEL_ROLES.includes(group?.role) || !whole(group?.count) || !group.count || !nonnegative(group.cut_length_inches) || !group.cut_length_inches"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementCost.js",
+      "line": 60,
+      "text": "    scheduledFeet += group.count * group.cut_length_inches / 12 * model.instanceCount;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "line": 71,
+      "text": "          length_inches: 96,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "line": 73,
+      "text": "          depth_inches: 24,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "line": 105,
+      "text": "          depth_inches: 36,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "line": 137,
+      "text": "          depth_inches: 42,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "line": 181,
+      "text": "          length_inches: 48,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "line": 183,
+      "text": "          depth_inches: 24,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "line": 200,
+      "text": "          length_inches: 48,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "line": 202,
+      "text": "          depth_inches: 24,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "line": 254,
+      "text": "          depth_inches: 10,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "line": 269,
+      "text": "          depth_inches: 10,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "line": 289,
+      "text": "          length_inches: 240,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "line": 291,
+      "text": "          depth_inches: 24,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "line": 339,
+      "text": "          length_inches: 180,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "line": 341,
+      "text": "          depth_inches: 18,\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "line": 6,
+      "text": "  horizontal_count: 0, horizontal_length_inches: 0,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "line": 7,
+      "text": "  longitudinal_count: 0, longitudinal_length_inches: 0,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "line": 8,
+      "text": "  hoop_count: 0, hoop_length_inches: 0,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "line": 9,
+      "text": "  inter_mat_tie_count: 0, inter_mat_tie_length_inches: 0,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "line": 60,
+      "text": "    groups.push({ id, role, count, cut_length_inches: length, diameter_inches: design.bar_diameter_inches });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "line": 62,
+      "text": "    counts[`${role}_length_inches`] += count * length;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "line": 119,
+      "text": "    const length = number(tie?.cut_length_inches, `${field}.cut_length_inches`);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "line": 129,
+      "text": "      issue(`${field}.cut_length_inches`, \"reinforcement_tie_length_invalid\", \"Cut length is shorter than the mat-to-mat path.\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "line": 225,
+      "text": "    const length = key.endsWith(\"_length_inches\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "line": 226,
+      "text": "    totals[length ? key.replace(\"_length_inches\", \"_feet\") : key] = (length ? value / 12 : value) * quantity;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "line": 265,
+      "text": "      length: Number(item.length_inches), width: Number(item.width_inches),"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "line": 266,
+      "text": "      depth: Number(item.depth_inches), diameter: Number(item.diameter),"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "line": 277,
+      "text": "  const safeCounts = Object.entries(c.counts).filter(([key]) => !key.endsWith(\"_length_inches\"));"
+    },
+    {
+      "path": "src/components/estimator/foundation/Foundation3DPreview.jsx",
+      "line": 21,
+      "text": "    const depth = (Number(item.depth_inches) || 0) * IN;"
+    },
+    {
+      "path": "src/components/estimator/foundation/Foundation3DPreview.jsx",
+      "line": 30,
+      "text": "        const l = (Number(item.length_inches) || 0) * IN;"
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCapCalculator.js",
+      "line": 16,
+      "text": "  return Object.prototype.hasOwnProperty.call(cap, \"length_inches\") ? cap.length_inches : cap.cut_length_inches;"
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCapCalculator.js",
+      "line": 54,
+      "text": "    for (const field of [\"cost\", \"cap_name\", \"stock_length_inches\"]) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCapCalculator.js",
+      "line": 98,
+      "text": "    const stockLength = wallCapInputNumber(inv.cap_stock_length_inches);"
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCapCalculator.js",
+      "line": 101,
+      "text": "      issue(\"cap_stock_length_inches\", \"wall_cap_stock_length_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCapCalculator.js",
+      "line": 105,
+      "text": "      issue(\"length_inches\", \"wall_cap_cut_length_invalid\","
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCapCalculator.js",
+      "line": 108,
+      "text": "      issue(\"length_inches\", \"wall_cap_cut_exceeds_stock\","
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCapCalculator.js",
+      "line": 115,
+      "text": "      stock_length_inches: stockLength,"
+    },
+    {
+      "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+      "line": 192,
+      "text": "  const lenIn = parseFloat(item.length_inches) || 0;"
+    },
+    {
+      "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+      "line": 194,
+      "text": "  const depIn = parseFloat(item.depth_inches) || 0;"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationBOM.jsx",
+      "line": 106,
+      "text": "      const billedInches = hasFoundationCostSnapshot(p.required_length_inches)"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationBOM.jsx",
+      "line": 107,
+      "text": "        ? p.required_length_inches"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationBOM.jsx",
+      "line": 121,
+      "text": "      const req = Number(p.required_length_inches);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationTotalsSummary.js",
+      "line": 267,
+      "text": "    const billedInches = numOrNull(pole?.required_length_inches)\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationTotalsSummary.js",
+      "line": 290,
+      "text": "        const cut = numOrNull(cap?.length_inches ?? cap?.cut_length_inches);\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAiReview.js",
+      "line": 44,
+      "text": "        [\"id\", \"from_mat_id\", \"to_mat_id\", \"x_inches\", \"z_inches\", \"cut_length_inches\"], \"Inter-mat tie\")),"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAiReview.js",
+      "line": 66,
+      "text": "        length_inches: scalar(item.length_inches, \"Foundation length\"),"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAiReview.js",
+      "line": 69,
+      "text": "        depth_inches: scalar(item.depth_inches, \"Foundation depth\"),"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementDraft.js",
+      "line": 67,
+      "text": "        ...numbers(record, [\"x_inches\", \"z_inches\", \"cut_length_inches\"]),"
+    },
+    {
+      "path": "src/components/estimator/foundation/ReinforcementDraftGeometry.jsx",
+      "line": 138,
+      "text": "              { key: \"cut_length_inches\", label: \"Cut length (in)\" },"
+    },
+    {
+      "path": "src/components/estimator/foundation/ReinforcementDraftGeometry.jsx",
+      "line": 140,
+      "text": "            onAdd={() => setSpread({ inter_mat_ties: [...(ties ?? []), { id: newRowId(\"tie\"), from_mat_id: \"\", to_mat_id: \"\", x_inches: \"\", z_inches: \"\", cut_length_inches: \"\" }] })}"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+      "line": 217,
+      "text": "                    value={pole.total_length_inches ?? \"\"}"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+      "line": 219,
+      "text": "                    aria-invalid={fieldIssue(\"total_length_inches\") || undefined}"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+      "line": 220,
+      "text": "                    aria-describedby={fieldIssue(\"total_length_inches\") ? describedBy : undefined}"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+      "line": 221,
+      "text": "                    onChange={(e) => patchPole(index, { total_length_inches: heightInput(e.target.value) })}"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+      "line": 238,
+      "text": "                  {geometry && Number.isFinite(geometry.required_length_inches) && ("
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+      "line": 239,
+      "text": "                    <span title={`Required ${geometry.required_length_inches} in${Number.isFinite(pole.stock_pieces) ? ` · ${pole.stock_pieces} stock ${pole.stock_pieces === 1 ? \"piece\" : \"pieces\"}` : \"\"}${geometry.pole_shape ? ` · ${geometry.pole_shape}` : \"\"}${geometry.base_offset_inches > 0 ? ` · base +${geometry.base_offset_inches} in` : \"\"}`}>"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+      "line": 240,
+      "text": "                      {geometry.required_length_inches} in req"
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "line": 52,
+      "text": "  const unitL = wallMaterial.wall_unit_length_inches || 8;"
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "line": 114,
+      "text": "    const intUnitL = internalMaterial.wall_unit_length_inches || 8;"
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "line": 392,
+      "text": "      : [[\"wall_unit_length_inches\", \"unit length\"], [\"wall_unit_width_inches\", \"unit width\"], [\"wall_unit_height_inches\", \"unit height\"]])) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+      "line": 19,
+      "text": "    const stockLength = wallCapInputNumber(inv?.cap_stock_length_inches);"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+      "line": 30,
+      "text": "        length_inches: stockLength !== null && stockLength > 0 ? stockLength : \"\","
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+      "line": 39,
+      "text": "  const geometryIssues = (index) => capIssues.filter(issue => issue.index === index && [\"length_inches\", \"cap_stock_length_inches\"].includes(issue.field));"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+      "line": 155,
+      "text": "                  aria-invalid={geometryIssues(index).some((i) => i.field === \"length_inches\") || undefined}"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+      "line": 160,
+      "text": "                    patchCap(index, { length_inches: parsed === null ? raw : parsed });"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+      "line": 174,
+      "text": "                {unavailableCaps.has(index) ? \"Saved stock length: \" : \"Stock length: \"}<span className=\"font-semibold text-gray-900\">{hasFoundationCostSnapshot(cap.stock_length_inches) && cap.stock_length_inches > 0 ? cap.stock_length_inches + String.fromCharCode(34) : \"Not saved\"}</span>"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+      "line": 4,
+      "text": "export const FOUNDATION_LAYOUT_DEPTH_INCHES = 320; // 26 ft 8 in deep (3:2)"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+      "line": 23,
+      "text": "    z_inches: ((clientY - rect.top) * FOUNDATION_LAYOUT_DEPTH_INCHES) / rect.height,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+      "line": 31,
+      "text": "    : finiteNumber(item.length_inches);"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationItemCard.jsx",
+      "line": 137,
+      "text": "            <Field label=\"Length (in)\" type=\"number\" value={item.length_inches ?? 0} onChange={numSet(\"length_inches\")} />"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationItemCard.jsx",
+      "line": 141,
+      "text": "        <Field label=\"Depth (in)\" type=\"number\" value={item.depth_inches ?? 0} onChange={numSet(\"depth_inches\")} />"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 53,
+      "text": "    ? [[\"length_inches\", \"length\"], [\"width_inches\", \"width\"], [\"depth_inches\", \"depth\"]]"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 54,
+      "text": "    : type === \"pillar\" ? [[\"diameter\", \"diameter\"], [\"depth_inches\", \"depth\"]] : [];"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 64,
+      "text": "    const depth = dimensions.depth_inches / 12;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 67,
+      "text": "      ? ((dimensions.length_inches / 12) * (dimensions.width_inches / 12) * depth) / 27 * quantity"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "line": 5,
+      "text": "  FOUNDATION_LAYOUT_DEPTH_INCHES,"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "line": 21,
+      "text": "  const pctD = (inches) => `${(inches / FOUNDATION_LAYOUT_DEPTH_INCHES) * 100}%`;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+      "line": 31,
+      "text": "    ? [[\"length_inches\", \"length\"], [\"width_inches\", \"width\"], [\"depth_inches\", \"depth\"]]"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+      "line": 32,
+      "text": "    : type === \"pillar\" ? [[\"diameter\", \"diameter\"], [\"depth_inches\", \"depth\"]] : [];"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+      "line": 42,
+      "text": "    const depth = dimensions.depth_inches / 12;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+      "line": 45,
+      "text": "      ? ((dimensions.length_inches / 12) * (dimensions.width_inches / 12) * depth) / 27 * quantity"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 24,
+      "text": "// length (`total_length_inches`, the billed length when recorded; otherwise"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 120,
+      "text": "//   total_length_inches       — explicit billed/purchased stock length override"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 121,
+      "text": "//   required_length_inches    — billed material length: explicit total, else"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 200,
+      "text": "  const totalRaw = p.total_length_inches;"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 206,
+      "text": "      add(\"total_length_inches\", \"pole_total_length_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 209,
+      "text": "      totalSource = \"total_length_inches\";"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 216,
+      "text": "  if (totalSource === \"total_length_inches\" && total !== null) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 219,
+      "text": "      add(\"total_length_inches\", \"pole_total_length_conflict\","
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 248,
+      "text": "    depth_inches: poleOffsetNumber(inv.pole_depth_inches),"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 264,
+      "text": "    total_length_inches: total,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 265,
+      "text": "    required_length_inches: required,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 561,
+      "text": "        \"required_length_inches\", \"stock_pieces\"]) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 574,
+      "text": "      const requiredInches = geometry.required_length_inches;"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 604,
+      "text": "        required_length_inches: requiredInches,"
+    },
+    {
+      "path": "src/components/estimator/cnc/cncCalc.js",
+      "line": 49,
+      "text": "        num(item.total_cut_length_inches) ||"
+    },
+    {
+      "path": "src/components/estimator/laser/laserPricingAvailability.js",
+      "line": 229,
+      "text": "  // total_cut_length_inches — the calc multiplies it by MM_PER_IN verbatim:"
+    },
+    {
+      "path": "src/components/estimator/laser/laserPricingAvailability.js",
+      "line": 233,
+      "text": "    const n = laserStrictNumber(rawItem?.total_cut_length_inches);"
+    },
+    {
+      "path": "src/components/estimator/laser/laserPricingAvailability.js",
+      "line": 235,
+      "text": "      add(\"total_cut_length_inches\", \"laser_cut_length_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/laser/laserPricingAvailability.js",
+      "line": 336,
+      "text": "    const cutLengthMm = item.total_cut_length_inches * MM_PER_IN;"
+    },
+    {
+      "path": "src/components/estimator/laser/laserCalc.js",
+      "line": 25,
+      "text": "      num(item.total_cut_length_inches) ||"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 65,
+      "text": "  length_inches: 48,"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 68,
+      "text": "  depth_inches: 36,"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 254,
+      "text": "      total_cut_length_inches: 0,"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 306,
+      "text": "          // Reset total_cut_length_inches first to ensure correct recalculation"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 307,
+      "text": "          updated.total_cut_length_inches = 0;"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 311,
+      "text": "            updated.total_cut_length_inches = perimeterInches * updated.quantity;"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 320,
+      "text": "            updated.total_cut_length_inches = perimeterPerLetter * updated.num_letters * updated.quantity;"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 322,
+      "text": "          // For 'engraving', total_cut_length_inches remains 0."
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 1817,
+      "text": "                              <strong>Total Cut Length:</strong> {Number.isFinite(item.total_cut_length_inches) ? item.total_cut_length_inches.toFixed(2) : \"—\"}\" "
+    },
+    {
+      "path": "src/pages/FoundationInventory.jsx",
+      "line": 117,
+      "text": "      { key: 'rebar_support_footprint_length_inches', label: 'Footprint Length (in)', type: 'number', default: null },"
+    },
+    {
+      "path": "src/pages/FoundationInventory.jsx",
+      "line": 152,
+      "text": "      { key: 'pole_depth_inches', label: 'Depth (inches)', type: 'number' },"
+    },
+    {
+      "path": "src/pages/FoundationInventory.jsx",
+      "line": 281,
+      "text": "    wall_unit_length_inches: null, wall_unit_width_inches: null, wall_unit_height_inches: null,"
+    },
+    {
+      "path": "src/pages/FoundationInventory.jsx",
+      "line": 290,
+      "text": "    if (subtype === 'brick') { set('wall_unit_length_inches', 8); set('wall_unit_width_inches', 3.75); set('wall_unit_height_inches', 2.25); set('unit', 'each'); }"
+    },
+    {
+      "path": "src/pages/FoundationInventory.jsx",
+      "line": 291,
+      "text": "    else if (subtype === 'cinderblock') { set('wall_unit_length_inches', 16); set('wall_unit_width_inches', 8); set('wall_unit_height_inches', 8); set('unit', 'each'); }"
+    },
+    {
+      "path": "src/pages/FoundationInventory.jsx",
+      "line": 292,
+      "text": "    else if (subtype === 'stone') { set('wall_unit_length_inches', 12); set('wall_unit_width_inches', 6); set('wall_unit_height_inches', 4); set('unit', 'each'); }"
+    },
+    {
+      "path": "src/pages/FoundationInventory.jsx",
+      "line": 295,
+      "text": "    else if (subtype === 'concrete') { set('wall_unit_length_inches', null); set('wall_unit_width_inches', 8); set('wall_unit_height_inches', null); set('unit', 'cy'); set('wall_color', '#9ca3af'); set('wall_texture', 'smooth'); }"
+    },
+    {
+      "path": "src/pages/FoundationInventory.jsx",
+      "line": 324,
+      "text": "            <div><Label className=\"text-xs\">Length (inches)</Label><Input type=\"number\" className=\"h-8\" value={form.wall_unit_length_inches ?? \"\"} onChange={e => set('wall_unit_length_inches', catalogNumberInput(e.target.value))} step=\"0.125\" /></div>"
+    },
+    {
+      "path": "src/pages/FoundationInventory.jsx",
+      "line": 679,
+      "text": "                      {canonicalWallMaterialSubtype(m.wall_material_subtype) !== 'concrete' && <div>Size: {m.wall_unit_length_inches}\"L × {m.wall_unit_width_inches}\"W × {m.wall_unit_height_inches}\"H</div>}"
+    },
+    {
+      "path": "src/pages/FoundationInventory.jsx",
+      "line": 738,
+      "text": "                      {canonicalWallMaterialSubtype(m.wall_material_subtype) !== 'concrete' && <div>Size: {m.wall_unit_length_inches}\"L × {m.wall_unit_width_inches}\"W × {m.wall_unit_height_inches}\"H</div>}"
+    },
+    {
+      "path": "src/pages/BrickStoneEstimator.jsx",
+      "line": 63,
+      "text": "          length: row.material_type === \"brick_stone\" ? row.brick_length_inches : row.wall_unit_length_inches,"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 169
+}

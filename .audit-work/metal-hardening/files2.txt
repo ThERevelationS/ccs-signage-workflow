@@ -1,0 +1,9 @@
+src/components/channelLetterInstall/TabBadgeTrigger.jsx
+src/api/gatedEntities.js
+src/components/estimator/settings/moduleSettingDefaults.js
+src/components/estimator/moduleShared/moduleProjectActions.js
+src/components/estimator/moduleShared/ModuleActionBar.jsx
+src/components/estimator/customerPricing.js
+src/components/markup/projectCategorizer.jsx
+src/components/markup/savedCustomerPricing.js
+src/components/estimator/loadAllEntityRows.js

@@ -1,0 +1,306 @@
+{
+  "matches": [
+    {
+      "path": "src/api/base44Client.js",
+      "line": 147,
+      "text": "  'BuilderPriceRevision', 'BuilderProduct', 'CalendarEvent', 'CellHistory', 'ChannelLetterInstallEquipment', 'ChecklistSubItem',\r"
+    },
+    {
+      "path": "src/api/gatedEntities.js",
+      "line": 19,
+      "text": "export const ChannelLetterInstallEquipment = staffEntities.ChannelLetterInstallEquipment;"
+    },
+    {
+      "path": "src/api/gatedEntities.js",
+      "line": 20,
+      "text": "export const ChannelLetterInstallInventory = staffEntities.ChannelLetterInstallInventory;"
+    },
+    {
+      "path": "src/api/gatedEntities.js",
+      "line": 21,
+      "text": "export const ChannelLetterInstallation = staffEntities.ChannelLetterInstallation;"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 3,
+      "text": "import { ChannelLetterInstallation, Settings, ChannelLetterInstallInventory, ChannelLetterInstallEquipment } from \"@/api/gatedEntities\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 13,
+      "text": "import ChannelLetterHelpAssistant from \"@/components/channelLetterInstall/ChannelLetterHelpAssistant\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 17,
+      "text": "import InstallSummaryCard from \"@/components/channelLetterInstall/InstallSummaryCard\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 18,
+      "text": "import ItemsList from \"@/components/channelLetterInstall/ItemsList\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 19,
+      "text": "import CrewEquipmentHint from \"@/components/channelLetterInstall/CrewEquipmentHint\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 20,
+      "text": "import ValidationWarnings from \"@/components/channelLetterInstall/ValidationWarnings\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 21,
+      "text": "import EquipmentSelector from \"@/components/channelLetterInstall/EquipmentSelector\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 22,
+      "text": "import LadderSelector from \"@/components/channelLetterInstall/LadderSelector\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 23,
+      "text": "import PersonnelSelector from \"@/components/channelLetterInstall/PersonnelSelector\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 24,
+      "text": "import LettersPurchaseTab from \"@/components/channelLetterInstall/LettersPurchaseTab\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 25,
+      "text": "import TravelCostCard from \"@/components/channelLetterInstall/TravelCostCard\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 26,
+      "text": "import SummaryDetailsCard from \"@/components/channelLetterInstall/SummaryDetailsCard\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 27,
+      "text": "import TabBadgeTrigger from \"@/components/channelLetterInstall/TabBadgeTrigger\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 31,
+      "text": "import PhotoEstimateModal from \"@/components/channelLetterInstall/PhotoEstimateModal\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 32,
+      "text": "import AIInstallScopeModal from \"@/components/channelLetterInstall/AIInstallScopeModal\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 33,
+      "text": "import ConfirmModal from \"@/components/channelLetterInstall/ConfirmModal\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 34,
+      "text": "import AddressAutocomplete from \"@/components/channelLetterInstall/AddressAutocomplete\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 35,
+      "text": "import { suggestEquipmentForProject, selectedEquipmentFromInventory, suggestPersonnelForProject, suggestCrewSize } from \"@/components/channelLetterInstall/equipmentSuggester\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 41,
+      "text": "} from \"@/components/channelLetterInstall/installCalculator\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 42,
+      "text": "import { calcLettersTotals, syncInstallItemsFromPurchases } from \"@/components/channelLetterInstall/lettersCalculator\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 43,
+      "text": "import { buildSummaryText, downloadCSV } from \"@/components/channelLetterInstall/installExport\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 125,
+      "text": "        loadAllEntityRows({ entity: ChannelLetterInstallInventory, sort: \"sort_order\", label: \"Channel Letter installation inventory\" }),"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 126,
+      "text": "        loadAllEntityRows({ entity: ChannelLetterInstallEquipment, sort: \"sort_order\", label: \"Channel Letter equipment\" }),"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 135,
+      "text": "        const existing = await ChannelLetterInstallation.get(editId);"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 472,
+      "text": "          entity: ChannelLetterInstallation,"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 489,
+      "text": "          entity: ChannelLetterInstallation,"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 514,
+      "text": "        const savedProject = await ChannelLetterInstallation.get(savedId).catch(() => null);"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 537,
+      "text": "        entity: ChannelLetterInstallation,"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 10,
+      "text": "  Settings, ChannelLetterInstallEquipment,"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 29,
+      "text": "import AddressAutocomplete from \"@/components/channelLetterInstall/AddressAutocomplete\";"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 30,
+      "text": "import EquipmentSelector from \"@/components/channelLetterInstall/EquipmentSelector\";"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 31,
+      "text": "import PersonnelSelector from \"@/components/channelLetterInstall/PersonnelSelector\";"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 32,
+      "text": "import TravelCostCard from \"@/components/channelLetterInstall/TravelCostCard\";"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 98,
+      "text": "          loadAllEntityRows({ entity: ChannelLetterInstallEquipment, sort: \"sort_order\", label: \"Installation equipment\" }),"
+    },
+    {
+      "path": "src/pages/CNCEstimator.jsx",
+      "line": 13,
+      "text": "import TabBadgeTrigger from \"@/components/channelLetterInstall/TabBadgeTrigger\";\r"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 13,
+      "text": "import EquipmentSelector from \"@/components/channelLetterInstall/EquipmentSelector\";\r"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 14,
+      "text": "import LadderSelector from \"@/components/channelLetterInstall/LadderSelector\";\r"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 15,
+      "text": "import PersonnelSelector from \"@/components/channelLetterInstall/PersonnelSelector\";\r"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 16,
+      "text": "import TravelCostCard from \"@/components/channelLetterInstall/TravelCostCard\";\r"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 17,
+      "text": "import AddressAutocomplete from \"@/components/channelLetterInstall/AddressAutocomplete\";\r"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 86,
+      "text": "        loadAllEntityRows({ entity: staffEntities.ChannelLetterInstallEquipment, sort: \"sort_order\", label: \"Maintenance equipment\" }),\r"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 97,
+      "text": "        .map((row) => ({ ...row, _inventory_entity: \"ChannelLetterInstallEquipment\" })));\r"
+    },
+    {
+      "path": "src/pages/MetalEstimator.jsx",
+      "line": 12,
+      "text": "import TabBadgeTrigger from \"@/components/channelLetterInstall/TabBadgeTrigger\";"
+    },
+    {
+      "path": "src/pages/LaserEstimator.jsx",
+      "line": 13,
+      "text": "import TabBadgeTrigger from \"@/components/channelLetterInstall/TabBadgeTrigger\";"
+    },
+    {
+      "path": "src/pages/InstallationSettings.jsx",
+      "line": 9,
+      "text": "import BaseTimesSizeCard from \"@/components/channelLetterInstall/BaseTimesSizeCard\";"
+    },
+    {
+      "path": "src/pages/InstallationSettings.jsx",
+      "line": 10,
+      "text": "import RacewayTimesCard from \"@/components/channelLetterInstall/RacewayTimesCard\";"
+    },
+    {
+      "path": "src/pages/InstallationSettings.jsx",
+      "line": 11,
+      "text": "import { HEIGHT_BUCKETS, ENV_KEYS, qualifiedKey, qualifiedNotesKey } from \"@/components/channelLetterInstall/installSizeRates\";"
+    },
+    {
+      "path": "src/pages/InstallationSettings.jsx",
+      "line": 12,
+      "text": "import { WALL_MATERIALS } from \"@/components/channelLetterInstall/wallMaterials\";"
+    },
+    {
+      "path": "src/components/admin/deletionImpactValidation.js",
+      "line": 16,
+      "text": "  \"CustomerSummary\", \"FoundationProject\", \"ChannelLetterInstallation\","
+    },
+    {
+      "path": "src/components/channelLetterInstall/MaterialsInventoryTab.jsx",
+      "line": 2,
+      "text": "import { ChannelLetterInstallInventory, ChannelLetterInstallation } from \"@/api/gatedEntities\";"
+    },
+    {
+      "path": "src/components/channelLetterInstall/MaterialsInventoryTab.jsx",
+      "line": 63,
+      "text": "      loadAllEntityRows({ entity: ChannelLetterInstallInventory, sort: \"sort_order\", label: \"Channel Letter installation inventory\" }),"
+    },
+    {
+      "path": "src/components/channelLetterInstall/MaterialsInventoryTab.jsx",
+      "line": 65,
+      "text": "      loadAllEntityRows({ entity: ChannelLetterInstallation, sort: \"created_date\", label: \"Channel Letter projects\" }).catch(() => []),"
+    },
+    {
+      "path": "src/components/channelLetterInstall/MaterialsInventoryTab.jsx",
+      "line": 129,
+      "text": "        await ChannelLetterInstallInventory.delete(item.id);"
+    },
+    {
+      "path": "src/components/channelLetterInstall/MaterialsInventoryTab.jsx",
+      "line": 163,
+      "text": "      if (id) saved = await ChannelLetterInstallInventory.update(id, payload);"
+    },
+    {
+      "path": "src/components/channelLetterInstall/MaterialsInventoryTab.jsx",
+      "line": 164,
+      "text": "      else saved = await ChannelLetterInstallInventory.create(payload);"
+    },
+    {
+      "path": "src/components/channelLetterInstall/MaterialsInventoryTab.jsx",
+      "line": 244,
+      "text": "      await Promise.all(idsToDelete.map(id => ChannelLetterInstallInventory.delete(id)));"
+    }
+  ],
+  "truncated": true,
+  "returnedMatches": 60
+}

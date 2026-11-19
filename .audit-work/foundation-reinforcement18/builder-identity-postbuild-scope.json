@@ -1,0 +1,7 @@
+{
+  "stdout": "src/components/estimator/builder/builderService.js\n src/components/estimator/builder/builderService.js | 20 +++++++++++++-------\n 1 file changed, 13 insertions(+), 7 deletions(-)\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 1287
+}

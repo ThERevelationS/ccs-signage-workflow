@@ -1,0 +1,43 @@
+{
+ "CNCProject": {
+  "scanned": 5,
+  "gatewayCount": 5,
+  "countTruncated": false,
+  "unparsableUpdatedDate": 0,
+  "newestUpdated": "2026-08-31T17:37:45.922000",
+  "inWindow": []
+ },
+ "MetalProject": {
+  "scanned": 4,
+  "gatewayCount": 4,
+  "countTruncated": false,
+  "unparsableUpdatedDate": 0,
+  "newestUpdated": "2026-08-31T17:37:46.281000",
+  "inWindow": []
+ },
+ "MaintenanceProject": {
+  "scanned": 1,
+  "gatewayCount": 1,
+  "countTruncated": false,
+  "unparsableUpdatedDate": 0,
+  "newestUpdated": "2026-08-31T17:37:46.396000",
+  "inWindow": []
+ },
+ "AllInOneEstimate": {
+  "scanned": 56,
+  "gatewayCount": 56,
+  "countTruncated": false,
+  "moduleKeysSeen": [
+   "channel_letters",
+   "cnc",
+   "custom",
+   "foundation",
+   "laser",
+   "maintenance",
+   "metal",
+   "painting",
+   "vinyl"
+  ],
+  "inWindowWithModuleLines": []
+ }
+}

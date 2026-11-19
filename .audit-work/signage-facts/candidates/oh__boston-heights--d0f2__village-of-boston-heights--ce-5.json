@@ -1,0 +1,41 @@
+{
+ "jurisdiction_id": "6adeed920fcb4a8d64cad0f2",
+ "jurisdiction_name": "Boston Heights",
+ "state": "OH",
+ "office_id": "scan-6adeed920fcb4a8d64cad0f2-office-5",
+ "office_name": "Village of Boston Heights",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Permit #_________________ - _____ Applicant Certification: Applicant Date Additional Information Required: Permits Approvals Miscellaneous $ FEE $ Deposit (Professional Review) *If the applicant already had obtained a bond with Summit County, they may use said bond and provide a copy to the Village. Additional Comments from Zoning Inspector: Village Approval Zoning Inspector, Jason Popiel, P.E. Date E-mail: jason.popiel@ohm-advisors.com, PH: 330.687.8113 Address of Permit: Proposed Work Type Property Owner Name: (Check all that apply) (GP) Village of Boston Heights 45 E. Boston Mills Road Boston Heights, Ohio 44236 (330) 650-4111 Fax (330) 655-9578 ZONING PERMIT - (GP) (General/Site/Property Realted Improvements) City, State, Zip: Office Phone #: Street Address: Contractor Name: Property Owner Phone #: Contact Name: Email: 24 Hr # (Mobile): Estimated Start Date: District Total Work Days:",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 9,
+   "source_sha256": "b8cd3131efa60be7b6226c739bde7f57d028ef4f57cd52b5c7bff37b38aa7c0e",
+   "source_document_id": null,
+   "source_title": "b8cd3131efa60be7b6226c739bde7f57d028ef4f57cd52b5c7bff37b38aa7c0e.pdf",
+   "official_url": "https://irp.cdn-website.com/41b5a2e4/files/uploaded/Zoning_Permit_%28GP%29.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Permit #_________________ - _____ Revised 01/2023 Page 1 of 2 Bond #: Principal: (Full name and address) Obligee: (Principal's customer) Effective Date: Expiration Date: AMOUNT OF BOND: Dollars ($ ), lawful money of the United States, to be paid to the said obligee, for which payment well and truly to be made we bind ourselves and our legal representative, jointly and severally. The condition of this obligation is such, that whereas, the principal has been licensed by the Obligee for: Signed with our hands and sealed with our seals this, the day of , 2013 (Principal) (Surety) (Notary Public) County, Ohio My commission expires: , Revised 01/2023 Page 2 of 2 Village of Boston Heights 45 E. Boston Mills Road Boston Heights, Ohio 44236 (330) 650-4111 Fax (330) 655-9578 LICENSE AND PERMIT BOND Location of Work: (Valid up to 3 years) NOW, THEREFORE, it said Principal shall faithfully perform a",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "b8cd3131efa60be7b6226c739bde7f57d028ef4f57cd52b5c7bff37b38aa7c0e",
+   "source_document_id": null,
+   "source_title": "b8cd3131efa60be7b6226c739bde7f57d028ef4f57cd52b5c7bff37b38aa7c0e.pdf",
+   "official_url": "https://irp.cdn-website.com/41b5a2e4/files/uploaded/Zoning_Permit_%28GP%29.pdf"
+  }
+ ]
+}

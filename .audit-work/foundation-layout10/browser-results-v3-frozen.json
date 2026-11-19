@@ -1,0 +1,26 @@
+{
+ "synthetic": true,
+ "note": "real panel+model; lucide-only stub; no SDK/network",
+ "telemetry": {
+  "foreignRequests": [],
+  "consoleErrors": [],
+  "pageErrors": []
+ },
+ "results": [
+  {
+   "case": "mouse drag zoom 1/2/0.5 -> corner 216,142, one commit each",
+   "ok": true,
+   "zooms": 3
+  },
+  {
+   "case": "touch drag: pointer-capture path commits once; touch cancel -> none",
+   "ok": true,
+   "touch": true
+  },
+  {
+   "case": "keyboard arrows + reorder mid-drag resolves index + delete cancels",
+   "ok": true,
+   "done": true
+  }
+ ]
+}

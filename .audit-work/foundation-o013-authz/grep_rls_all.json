@@ -1,0 +1,1336 @@
+{
+  "matches": [
+    {
+      "path": "base44/entities/__do_not_create__.jsonc",
+      "line": 6,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Invoice.jsonc",
+      "line": 273,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ChecklistTemplate.jsonc",
+      "line": 57,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetMigrationAudit.jsonc",
+      "line": 82,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/LaborServiceInventory.jsonc",
+      "line": 718,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/__noop__.jsonc",
+      "line": 6,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/SalesFilter.jsonc",
+      "line": 58,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetAlertSetting.jsonc",
+      "line": 60,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CustomerPortalLink.jsonc",
+      "line": 64,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Order.jsonc",
+      "line": 143,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/SignageFactIndex.jsonc",
+      "line": 28,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TempIgnore.jsonc",
+      "line": 6,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TaskTemplate.jsonc",
+      "line": 47,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Machine.jsonc",
+      "line": 74,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ScheduledReport.jsonc",
+      "line": 51,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 75,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockPayPeriod.jsonc",
+      "line": 97,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockEmployeeState.jsonc",
+      "line": 178,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeEntry.jsonc",
+      "line": 346,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FailedAdminAttempt.jsonc",
+      "line": 26,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetReservation.jsonc",
+      "line": 70,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ActivityLog.jsonc",
+      "line": 64,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PendingImport.jsonc",
+      "line": 84,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/VinylInventory.jsonc",
+      "line": 280,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/MaintenanceActionRate.jsonc",
+      "line": 124,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/SalesLocation.jsonc",
+      "line": 33,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PTOPolicy.jsonc",
+      "line": 117,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetNotificationQueue.jsonc",
+      "line": 71,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/MetalProject.jsonc",
+      "line": 170,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetFuelEntry.jsonc",
+      "line": 60,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetLifecycleProfile.jsonc",
+      "line": 61,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Temp5.jsonc",
+      "line": 6,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/GlobalPricingTier.jsonc",
+      "line": 47,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FileBridgeUpload.jsonc",
+      "line": 94,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/BuilderPriceRevision.jsonc",
+      "line": 79,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FileIndex.jsonc",
+      "line": 157,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CorebridgeLog.jsonc",
+      "line": 83,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AccountDeletionRequest.jsonc",
+      "line": 62,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CustomerContact.jsonc",
+      "line": 131,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockDevice.jsonc",
+      "line": 69,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CustomerFolderLink.jsonc",
+      "line": 78,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/SignHardwareInventory.jsonc",
+      "line": 133,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PermitLookupIndex.jsonc",
+      "line": 148,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Project.jsonc",
+      "line": 172,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/WorkOrder.jsonc",
+      "line": 1225,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PermittingWorkflowDraft.jsonc",
+      "line": 44,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Report.jsonc",
+      "line": 94,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetPart.jsonc",
+      "line": 193,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/BuilderProduct.jsonc",
+      "line": 282,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockBadge.jsonc",
+      "line": 36,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/BuilderPart.jsonc",
+      "line": 386,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/UserCalendarSettings.jsonc",
+      "line": 78,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetMaintenanceWorkOrder.jsonc",
+      "line": 242,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Payment.jsonc",
+      "line": 128,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/LaborLevel.jsonc",
+      "line": 63,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CustomerLocation.jsonc",
+      "line": 99,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PermitLineItem.jsonc",
+      "line": 351,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PermittingOfficeAuthorityReview.jsonc",
+      "line": 127,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CalendarEvent.jsonc",
+      "line": 122,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FoundationProject.jsonc",
+      "line": 835,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/WorkOrderTimeEntry.jsonc",
+      "line": 78,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PricingModifier.jsonc",
+      "line": 83,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/MaintenanceInventory.jsonc",
+      "line": 215,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FieldAudit.jsonc",
+      "line": 76,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/BackupLog.jsonc",
+      "line": 61,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/NotificationPreference.jsonc",
+      "line": 70,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ChannelLetterInstallation.jsonc",
+      "line": 298,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Nope.jsonc",
+      "line": 6,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/OpportunityIntake.jsonc",
+      "line": 112,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/InventoryMovement.jsonc",
+      "line": 67,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CustomerSummary.jsonc",
+      "line": 64,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/BouncieConnection.jsonc",
+      "line": 9,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/BouncieConnection.jsonc",
+      "line": 20,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/BouncieConnection.jsonc",
+      "line": 123,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PricingTierMatrix.jsonc",
+      "line": 121,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Inventory.jsonc",
+      "line": 151,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ChecklistSubItem.jsonc",
+      "line": 25,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CellHistory.jsonc",
+      "line": 43,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/EstimatingRequest.jsonc",
+      "line": 194,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FileBridgeCommand.jsonc",
+      "line": 108,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/MarkupTier.jsonc",
+      "line": 33,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/WorkflowScheduleChange.jsonc",
+      "line": 67,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/MachineRate.jsonc",
+      "line": 58,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FoundationInventory.jsonc",
+      "line": 382,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockCorrectionRequest.jsonc",
+      "line": 121,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Sop.jsonc",
+      "line": 220,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockBreak.jsonc",
+      "line": 77,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockAdminNote.jsonc",
+      "line": 56,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetPartFluidRequest.jsonc",
+      "line": 121,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PricingMode.jsonc",
+      "line": 21,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PartTemplate.jsonc",
+      "line": 202,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AutomationRule.jsonc",
+      "line": 130,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TaxAgency.jsonc",
+      "line": 31,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetVehicleMetadata.jsonc",
+      "line": 57,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/EstimateQuoteDelivery.jsonc",
+      "line": 156,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/DimensionalLetterMaterial.jsonc",
+      "line": 120,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/_Noop.jsonc",
+      "line": 10,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ChangeOrder.jsonc",
+      "line": 133,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetEquipmentDocument.jsonc",
+      "line": 80,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AuthorizedEmail.jsonc",
+      "line": 56,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AuthorizedEmail.jsonc",
+      "line": 82,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AuthorizedEmail.jsonc",
+      "line": 93,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AuthorizedEmail.jsonc",
+      "line": 105,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AuthorizedEmail.jsonc",
+      "line": 122,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AuthorizedEmail.jsonc",
+      "line": 134,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AuthorizedEmail.jsonc",
+      "line": 358,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AuthorizedEmail.jsonc",
+      "line": 369,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AuthorizedEmail.jsonc",
+      "line": 381,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AuthorizedEmail.jsonc",
+      "line": 398,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockPayPeriodCreateGate.jsonc",
+      "line": 38,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/BrickStoneProject.jsonc",
+      "line": 176,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/QuoteDefaults.jsonc",
+      "line": 239,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/BrickStoneInventory.jsonc",
+      "line": 65,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Announcement.jsonc",
+      "line": 136,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetEquipmentLog.jsonc",
+      "line": 81,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Notification.jsonc",
+      "line": 109,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/MaintenanceProject.jsonc",
+      "line": 149,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/__invalid_placeholder.jsonc",
+      "line": 6,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockWorkPause.jsonc",
+      "line": 63,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetSystemLog.jsonc",
+      "line": 48,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/_never_use_checkpoint_probe.jsonc",
+      "line": 6,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/EstimateSectionAcceptance.jsonc",
+      "line": 82,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetOperationReceipt.jsonc",
+      "line": 75,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/OopsShouldNotCreate.jsonc",
+      "line": 6,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetMigrationMap.jsonc",
+      "line": 53,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/UserCredential.jsonc",
+      "line": 23,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ChannelLetterInstallInventory.jsonc",
+      "line": 160,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/User.jsonc",
+      "line": 8,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/User.jsonc",
+      "line": 19,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/User.jsonc",
+      "line": 30,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/User.jsonc",
+      "line": 45,
+      "text": "      \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PermittingSourceTextSegment.jsonc",
+      "line": 100,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/SourceMonitorState.jsonc",
+      "line": 125,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ProductSubstatus.jsonc",
+      "line": 33,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/UserWorkspacePreferences.jsonc",
+      "line": 41,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/LaserProject.jsonc",
+      "line": 194,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ProductActivity.jsonc",
+      "line": 87,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FileBridgeSpikeRow.jsonc",
+      "line": 14,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetSystemReport.jsonc",
+      "line": 81,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PricingTemplate.jsonc",
+      "line": 59,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ReportRun.jsonc",
+      "line": 38,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/EstimateRevision.jsonc",
+      "line": 108,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CatalogPartGroup.jsonc",
+      "line": 36,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/SignLightingInventory.jsonc",
+      "line": 137,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/UserSession.jsonc",
+      "line": 43,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FileShareRoot.jsonc",
+      "line": 78,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/UserCapacity.jsonc",
+      "line": 65,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ModuleStatus.jsonc",
+      "line": 29,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Vendor.jsonc",
+      "line": 96,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PermitResolutionRule.jsonc",
+      "line": 79,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetWarranty.jsonc",
+      "line": 84,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CustomerInfo.jsonc",
+      "line": 331,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/JurisdictionProfile.jsonc",
+      "line": 453,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/VinylMachine.jsonc",
+      "line": 167,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CorebridgeApiAudit.jsonc",
+      "line": 42,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CrmSuggestion.jsonc",
+      "line": 111,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TrainingAssignment.jsonc",
+      "line": 101,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ShiftSwapRequest.jsonc",
+      "line": 41,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/SavedQueueView.jsonc",
+      "line": 68,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/COGSAccount.jsonc",
+      "line": 40,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/DocNumberCounter.jsonc",
+      "line": 19,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/RegulationAlert.jsonc",
+      "line": 109,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/IncomeAccount.jsonc",
+      "line": 40,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/SourceCollectionQueue.jsonc",
+      "line": 116,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/InventoryCostHistory.jsonc",
+      "line": 37,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetPublicReportThrottle.jsonc",
+      "line": 28,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AllInOneEstimate.jsonc",
+      "line": 828,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/EstimateOption.jsonc",
+      "line": 44,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/_noop_should_not_create.jsonc",
+      "line": 6,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetDashboardPreference.jsonc",
+      "line": 40,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/SipChecklistTemplate.jsonc",
+      "line": 35,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PermittingHtmlEvidence.jsonc",
+      "line": 105,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/EmailGroup.jsonc",
+      "line": 32,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/DefaultModuleSettings.jsonc",
+      "line": 30,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Settings.jsonc",
+      "line": 76,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PermittingSourceDocument.jsonc",
+      "line": 425,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FileBridgeRecent.jsonc",
+      "line": 62,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetInspectionTemplate.jsonc",
+      "line": 89,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CustomerNote.jsonc",
+      "line": 36,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/VinylProject.jsonc",
+      "line": 193,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetCutoverState.jsonc",
+      "line": 57,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockPunchException.jsonc",
+      "line": 113,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/GeneralTask.jsonc",
+      "line": 101,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetMaintenanceTask.jsonc",
+      "line": 159,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TaxGroup.jsonc",
+      "line": 33,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PermittingScanRun.jsonc",
+      "line": 7,
+      "text": " \"rls\": {"
+    },
+    {
+      "path": "base44/entities/SmartsheetSyncTrace.jsonc",
+      "line": 68,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/_CheckpointMistake.jsonc",
+      "line": 17,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/EstimateClipboardItem.jsonc",
+      "line": 76,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/QuoteScopeLine.jsonc",
+      "line": 47,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Customer.jsonc",
+      "line": 432,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetRepairApprovalPolicyCreateGate.jsonc",
+      "line": 39,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/EstimateAcceptance.jsonc",
+      "line": 108,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/BouncieOAuthState.jsonc",
+      "line": 37,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetPartIdentification.jsonc",
+      "line": 165,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeOffRequest.jsonc",
+      "line": 92,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetRepairEstimate.jsonc",
+      "line": 137,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ImportJob.jsonc",
+      "line": 131,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/OpportunityActivity.jsonc",
+      "line": 129,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ChannelLetterInstallEquipment.jsonc",
+      "line": 168,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Nope2.jsonc",
+      "line": 6,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/SignPartsSuppliesInventory.jsonc",
+      "line": 100,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/LegacyMigrationMap.jsonc",
+      "line": 41,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ProjectTemplate.jsonc",
+      "line": 32,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/BouncieVehicleLiveState.jsonc",
+      "line": 83,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/UserPTOBalance.jsonc",
+      "line": 77,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetEquipment.jsonc",
+      "line": 122,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/MaintenanceEquipment.jsonc",
+      "line": 141,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FileBridgeChunk.jsonc",
+      "line": 33,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CustomItemsProject.jsonc",
+      "line": 77,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockEmployeePreference.jsonc",
+      "line": 250,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FileBridgeEvent.jsonc",
+      "line": 55,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetRepairEstimateCreateGate.jsonc",
+      "line": 52,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetMechanicAccess.jsonc",
+      "line": 55,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/VinylPartTemplate.jsonc",
+      "line": 47,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PermittingSourceAuthorityReview.jsonc",
+      "line": 52,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TrainingItem.jsonc",
+      "line": 65,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Temp3.jsonc",
+      "line": 6,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/BuilderPartGroup.jsonc",
+      "line": 58,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/BroadcastMessage.jsonc",
+      "line": 102,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetAlertRuntimeState.jsonc",
+      "line": 52,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetSettings.jsonc",
+      "line": 297,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PermittingAddressArchive.jsonc",
+      "line": 65,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/SignageFact.jsonc",
+      "line": 78,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockAdminCorrectionGate.jsonc",
+      "line": 41,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CrmEventType.jsonc",
+      "line": 38,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PermittingRuleExtractionRun.jsonc",
+      "line": 107,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetMaintenanceMeterRule.jsonc",
+      "line": 70,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Responsibility.jsonc",
+      "line": 42,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/MarkupCategory.jsonc",
+      "line": 42,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockLaborSegment.jsonc",
+      "line": 110,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AdminAuditLog.jsonc",
+      "line": 26,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/SaveColor.jsonc",
+      "line": 18,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/BouncieNotification.jsonc",
+      "line": 82,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/__noop.jsonc",
+      "line": 4,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/EmailNotificationSettings.jsonc",
+      "line": 117,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/OriginationNode.jsonc",
+      "line": 31,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/AccessRequest.jsonc",
+      "line": 48,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PortalMessage.jsonc",
+      "line": 89,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/VinylWorkflowTemplate.jsonc",
+      "line": 55,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetFluid.jsonc",
+      "line": 99,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetInspection.jsonc",
+      "line": 135,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FileBridgeHealth.jsonc",
+      "line": 75,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Temp6.jsonc",
+      "line": 6,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/_noop.jsonc",
+      "line": 10,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/GlobalSettings.jsonc",
+      "line": 154,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ReconciliationBatch.jsonc",
+      "line": 141,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/SyncConflict.jsonc",
+      "line": 90,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockShiftTemplate.jsonc",
+      "line": 55,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FleetRepairApprovalPolicy.jsonc",
+      "line": 52,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockAudit.jsonc",
+      "line": 94,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/DO_NOT_USE.jsonc",
+      "line": 7,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/OpportunityBridgeOperationReceipt.jsonc",
+      "line": 149,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/Opportunity.jsonc",
+      "line": 236,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/QuickProduct.jsonc",
+      "line": 212,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FileBridgeInventory.jsonc",
+      "line": 72,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CostPlusConfig.jsonc",
+      "line": 39,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/StoreCreditLedger.jsonc",
+      "line": 71,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PermitLocality.jsonc",
+      "line": 328,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/CNCProject.jsonc",
+      "line": 205,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/ModifierOption.jsonc",
+      "line": 39,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PurchaseOrder.jsonc",
+      "line": 151,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/QuickProductCategory.jsonc",
+      "line": 29,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/FeatureReport.jsonc",
+      "line": 102,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/PermittingRule.jsonc",
+      "line": 276,
+      "text": "  \"rls\": {"
+    },
+    {
+      "path": "base44/entities/NotificationTemplate.jsonc",
+      "line": 105,
+      "text": "  \"rls\": {"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 266
+}

@@ -1,0 +1,83 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "004155bbf0f66614ca20e41e3ed6dcba5dd973d5",
+  "baselineFile": "supplier-defaults-baseline-v2.json",
+  "baselineStatusFile": "supplier-defaults-baseline-status.json",
+  "dependencyArtifact": "supplier-defaults-dependency-source.json",
+  "fixtureArtifact": "supplier-defaults-fixture.json",
+  "flowSpec": "supplier-defaults-flow-proof-spec.json",
+  "jsonProofs": [
+    {
+      "file": "supplier-model-verification.json",
+      "resultCount": 32,
+      "mustBeAllOk": true
+    },
+    {
+      "file": "supplier-model-red-verification.json",
+      "resultCount": 32,
+      "expectedFailuresAgainstPreHardeningSource": 29,
+      "expectedCompatibilityPasses": 3,
+      "mustNotBeAllOk": true
+    },
+    {
+      "file": "supplier-page-verification.json",
+      "resultCount": 7,
+      "mustBeAllOk": true
+    },
+    {
+      "file": "supplier-defaults-browser-verification.json",
+      "resultCount": 14,
+      "mustBeAllOk": true
+    },
+    {
+      "file": "supplier-consumer-build.json",
+      "warnings": 0,
+      "inputs": 57
+    },
+    {
+      "file": "supplier-page-import-edges.json",
+      "externalOnly": true
+    }
+  ],
+  "allResultsMustHaveOkTrue": true,
+  "scopedLintLogs": [
+    {
+      "file": "supplier-defaults-lint-legacyFoundationCalc.js.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "supplier-defaults-lint-foundationCalc.js.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "supplier-defaults-lint-ConcreteDeliveryPanel.jsx.txt",
+      "line": "exit=0"
+    }
+  ],
+  "esbuildParseChecks": {
+    "file": "supplier-defaults-esbuild-parse.json",
+    "count": 3,
+    "allPassed": true
+  },
+  "candidateHashes": {
+    "legacyFoundationCalc.js": "5fed3773159e2b1f0d547a35b931e0b2a2dd09e19413e7da162d1410c3947778",
+    "foundationCalc.js": "cf0f3f363ac2dda62106aeb82edbe3cec03b774d1ad0825215f5dd047342e5b9",
+    "ConcreteDeliveryPanel.jsx": "1f33ce28ef0ed5217fcfb5d01778bf0efbd6c9c404540c05c8632f51a954e0cb"
+  },
+  "candidateFiles": {
+    "legacyFoundationCalc.js": "supplier-defaults-candidate-legacyFoundationCalc.js",
+    "foundationCalc.js": "supplier-defaults-candidate-foundationCalc.js",
+    "ConcreteDeliveryPanel.jsx": "supplier-defaults-candidate-ConcreteDeliveryPanel.jsx"
+  },
+  "candidateLineEndings": "LF",
+  "screenshotDirectory": ".audit-work/foundation-reinforcement23",
+  "screenshotCount": 14,
+  "allowedBuildWarningCount": 0,
+  "remoteWritesPerformed": false,
+  "checkpointsCreated": false,
+  "businessRecordOperationsPerformed": false,
+  "schemaActivationAuthorized": false,
+  "publishDeployAuthorized": false,
+  "transportPerformed": false
+}

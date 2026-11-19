@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Briefcase, Clock3, Loader2, Search, Square, Wrench } from "lucide-react";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -42,7 +43,23 @@ export default function CurrentWorkCard({
   const [actionBusy, setActionBusy] = useState(false);
   const [error, setError] = useState("");
   const [now, setNow] = useState(() => new Date());
+  const [recentJobs, setRecentJobs] = useState([]);
   const searchSeqRef = useRef(0);
+  const { sessionToken } = useAuth();
+
+  // Recent labor quick-pick: the employee's last distinct allocations.
+  useEffect(() => {
+    if (!sessionToken) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await base44.functions.invoke("timeClockAction", { action: "my_labor_history", session_token: sessionToken, request_id: crypto.randomUUID() });
+        const data = res?.data || res;
+        if (!cancelled && data?.success === true && Array.isArray(data.recent)) setRecentJobs(data.recent);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [sessionToken]);
 
   useEffect(() => {
     if (!activeLabor?.id) return;
@@ -69,12 +86,9 @@ export default function CurrentWorkCard({
       const seq = ++searchSeqRef.current;
       setSearchBusy(true);
       try {
-        const rows = await loadAllEntityRows({
-          entity: WorkOrder,
-          query: { completed: false, deleted: { $ne: true } },
-          sort: "-created_date",
-          label: "Current Work WorkOrders",
-        });
+        const rows = (await fetchAllWorkOrders({ preferSnapshot: true }))
+          .filter((wo) => wo.completed !== true && wo.deleted !== true)
+          .sort((a, b) => String(b.created_date || "").localeCompare(String(a.created_date || "")));
         if (seq !== searchSeqRef.current) return;
         const needle = searchTerm.trim().toLowerCase();
         setResults(rows.filter((wo) => [wo.title, wo.client_name, wo.description].filter(Boolean).join(" ").toLowerCase().includes(needle)).slice(0, 12));
@@ -138,6 +152,24 @@ export default function CurrentWorkCard({
             <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
             <SelectContent>{ACTIVITY_OPTIONS.map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
           </Select>
+          {recentJobs.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {recentJobs.slice(0, 6).map((job, i) => (
+                <button type="button"
+                  key={i} type="button"
+                  disabled={actionBusy || disabled}
+                  onClick={() => {
+                    setActivityType(job.activity_type || "shop");
+                    setSelectedWorkOrder(job.work_order_id ? { id: job.work_order_id, title: job.work_order_title, client_name: job.client_name } : null);
+                  }}
+                  className="rounded-full border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-medium text-blue-700 hover:border-blue-400 hover:bg-blue-50"
+                  title={job.work_order_title || job.inhouse_task || "Recent allocation"}
+                >
+                  {job.work_order_title || job.inhouse_task || job.client_name || job.activity_type}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div>
           <Label className="text-xs">Optional WorkOrder</Label>
@@ -159,7 +191,7 @@ export default function CurrentWorkCard({
       {!selectedWorkOrder && results.length > 0 && (
         <div className="max-h-40 overflow-y-auto rounded-lg border bg-white divide-y">
           {results.map((wo) => (
-            <button key={wo.id} type="button" className="w-full text-left p-2 hover:bg-gray-50" onClick={() => { setSelectedWorkOrder(wo); setSearchTerm(""); setResults([]); }}>
+            <button type="button" key={wo.id}  className="w-full text-left p-2 hover:bg-gray-50" onClick={() => { setSelectedWorkOrder(wo); setSearchTerm(""); setResults([]); }}>
               <div className="text-sm font-medium flex items-center gap-2"><Briefcase className="w-3.5 h-3.5 text-purple-600" />{wo.client_name || "Client"}</div>
               <div className="text-xs text-gray-500 truncate">{wo.title}</div>
             </button>

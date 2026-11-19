@@ -1,0 +1,2657 @@
+{
+  "generated_at": "2026-11-18T15:25:31.100Z",
+  "summary": {
+    "original_rows": 169,
+    "no_longer_eligible": 0,
+    "linked_existing": 4,
+    "new_customers": 160,
+    "rows_for_new_customers": 165,
+    "blocked": 0
+  },
+  "existing": [
+    {
+      "id": "6ab444c874d1e4bb282169d9",
+      "updated_date": "2026-10-01T23:07:05.530000",
+      "client_name": "J.F Berns",
+      "customer_id": "6afbe9b2be17fa57f8958ec8"
+    },
+    {
+      "id": "6ab444d06c14133b464a01cb",
+      "updated_date": "2026-10-01T23:07:09.003000",
+      "client_name": "Heavens Gain Ministries",
+      "customer_id": "6afbea0bc1b2708427a205f7"
+    },
+    {
+      "id": "6ab444dc1527e16472319268",
+      "updated_date": "2026-10-01T23:06:52.830000",
+      "client_name": "Joe's Pizza Napoli",
+      "customer_id": "6afbec577b5b18168986d6d1"
+    },
+    {
+      "id": "6ab444df19446b458115197e",
+      "updated_date": "2026-10-01T23:05:41.327000",
+      "client_name": "Skidmore",
+      "customer_id": "6afdc24e9a39dd2bccc648d4"
+    }
+  ],
+  "new_customers": [
+    {
+      "normalized_name": "crossroads uptown church",
+      "data": {
+        "__source_id__": "pipeline-lead:d913f4cb05fb05e80db060a5",
+        "company_name": "Crossroads Uptown Church",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab4448306a95eb474d068de — no CoreBridge estimate",
+        "location_address_1": "2026-02-05"
+      },
+      "rows": [
+        {
+          "id": "6ab4448306a95eb474d068de",
+          "updated_date": "2026-10-01T23:06:01.080000",
+          "client_name": "Crossroads Uptown Church"
+        }
+      ]
+    },
+    {
+      "normalized_name": "superior dealer services",
+      "data": {
+        "__source_id__": "pipeline-lead:720ef9d5853f11a278b57485",
+        "company_name": "Superior Dealer Services",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd01 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd01",
+          "updated_date": "2026-10-01T23:07:02.306000",
+          "client_name": "Superior Dealer Services"
+        }
+      ]
+    },
+    {
+      "normalized_name": "churchill fine teas",
+      "data": {
+        "__source_id__": "pipeline-lead:1c334d2d9bec84020d9f8844",
+        "company_name": "Churchill Fine Teas",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd02 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd02",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Churchill Fine Teas"
+        }
+      ]
+    },
+    {
+      "normalized_name": "stay online repairs",
+      "data": {
+        "__source_id__": "pipeline-lead:11124326a2be4d721950605e",
+        "company_name": "Stay Online Repairs",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdcff — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdcff",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Stay Online Repairs"
+        }
+      ]
+    },
+    {
+      "normalized_name": "minuteman pressseven hills neighborhood",
+      "data": {
+        "__source_id__": "pipeline-lead:0078ff80182d0ba74d9784e5",
+        "company_name": "Minuteman Press/Seven Hills Neighborhood",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd07 — no CoreBridge estimate",
+        "location_address_1": "no"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd07",
+          "updated_date": "2026-10-23T02:03:06.424000",
+          "client_name": "Minuteman Press/Seven Hills Neighborhood"
+        }
+      ]
+    },
+    {
+      "normalized_name": "don bigotes family rest",
+      "data": {
+        "__source_id__": "pipeline-lead:85fe65c1eb59ee2d90c86ab8",
+        "company_name": "Don Bigote's Family Rest",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd04 — no CoreBridge estimate",
+        "location_address_1": "2021-01-25"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd04",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Don Bigote's Family Rest"
+        }
+      ]
+    },
+    {
+      "normalized_name": "blooms berries",
+      "data": {
+        "__source_id__": "pipeline-lead:aeb087d5aac51f9ebb600e40",
+        "company_name": "Blooms & Berries",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd03 — no CoreBridge estimate",
+        "location_address_1": "2021-01-14"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd03",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Blooms & Berries"
+        }
+      ]
+    },
+    {
+      "normalized_name": "jroyce",
+      "data": {
+        "__source_id__": "pipeline-lead:04d83007629ab7d2a0c3b80c",
+        "company_name": "JRoyce",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd06 — no CoreBridge estimate",
+        "location_address_1": "no"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd06",
+          "updated_date": "2026-10-23T02:03:06.424000",
+          "client_name": "JRoyce"
+        }
+      ]
+    },
+    {
+      "normalized_name": "onetouch pointfifth third",
+      "data": {
+        "__source_id__": "pipeline-lead:b67e9e583d622ecfc3ed2287",
+        "company_name": "OneTouch Point/Fifth Third",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd1c — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd1c",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "OneTouch Point/Fifth Third"
+        }
+      ]
+    },
+    {
+      "normalized_name": "multi color corp mason warehouse",
+      "data": {
+        "__source_id__": "pipeline-lead:2a59cd67eceefd42c5d7549f",
+        "company_name": "Multi Color Corp. Mason Warehouse",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd08 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd08",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Multi Color Corp. Mason Warehouse"
+        }
+      ]
+    },
+    {
+      "normalized_name": "sherwood elm",
+      "data": {
+        "__source_id__": "pipeline-lead:a18491cd62e0339fccc08db7",
+        "company_name": "Sherwood Elm.",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd0c — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd0c",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Sherwood Elm."
+        }
+      ]
+    },
+    {
+      "normalized_name": "three tree bakery",
+      "data": {
+        "__source_id__": "pipeline-lead:22beb34bacfdbb131e478594",
+        "company_name": "Three Tree Bakery",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd0b — no CoreBridge estimate",
+        "location_address_1": "no"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd0b",
+          "updated_date": "2026-10-23T02:03:06.424000",
+          "client_name": "Three Tree Bakery"
+        }
+      ]
+    },
+    {
+      "normalized_name": "clean house",
+      "data": {
+        "__source_id__": "pipeline-lead:b56a05c63a07f51892d7398a",
+        "company_name": "Clean House",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd33 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd33",
+          "updated_date": "2026-10-01T23:05:33.900000",
+          "client_name": "Clean House"
+        }
+      ]
+    },
+    {
+      "normalized_name": "martinez martinez dental",
+      "data": {
+        "__source_id__": "pipeline-lead:676bcaea57829466b8fdca9c",
+        "company_name": "Martinez & Martinez Dental",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd42 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd42",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Martinez & Martinez Dental"
+        }
+      ]
+    },
+    {
+      "normalized_name": "family nurturing center",
+      "data": {
+        "__source_id__": "pipeline-lead:25150873bae1d555e1dd4b75",
+        "company_name": "Family Nurturing Center",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd36 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd36",
+          "updated_date": "2026-10-01T23:05:33.900000",
+          "client_name": "Family Nurturing Center"
+        }
+      ]
+    },
+    {
+      "normalized_name": "midwest eye kenwood",
+      "data": {
+        "__source_id__": "pipeline-lead:7ba58748d0949ad550021093",
+        "company_name": "Midwest Eye (Kenwood)",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd2f, 6ab444df19446b4581151969 — no CoreBridge estimate",
+        "location_address_1": "2021-01-29"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd2f",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Midwest Eye (Kenwood)"
+        },
+        {
+          "id": "6ab444df19446b4581151969",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "Midwest Eye / Kenwood"
+        }
+      ]
+    },
+    {
+      "normalized_name": "foots",
+      "data": {
+        "__source_id__": "pipeline-lead:02292ea5a1a0b5664788275c",
+        "company_name": "F.O.O.T.S",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd39 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd39",
+          "updated_date": "2026-10-01T23:07:02.306000",
+          "client_name": "F.O.O.T.S"
+        }
+      ]
+    },
+    {
+      "normalized_name": "la vanguardia",
+      "data": {
+        "__source_id__": "pipeline-lead:c210c5cbeb2c27d9d09506a0",
+        "company_name": "La Vanguardia",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444b7894cc2ec6d8cdd52 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444b7894cc2ec6d8cdd52",
+          "updated_date": "2026-10-01T23:07:02.306000",
+          "client_name": "La Vanguardia"
+        }
+      ]
+    },
+    {
+      "normalized_name": "karen montgomery wedding",
+      "data": {
+        "__source_id__": "pipeline-lead:3dd2d98af21883424523d69c",
+        "company_name": "Karen Montgomery (wedding)",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444bc0edaeec3fa312ef8 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444bc0edaeec3fa312ef8",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "Karen Montgomery (wedding)"
+        }
+      ]
+    },
+    {
+      "normalized_name": "united performance hamilton vinyl",
+      "data": {
+        "__source_id__": "pipeline-lead:ca03c5651a84af3f8c4283c3",
+        "company_name": "United Performance / Hamilton - Vinyl",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444bc0edaeec3fa312ee0 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444bc0edaeec3fa312ee0",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "United Performance / Hamilton - Vinyl"
+        }
+      ]
+    },
+    {
+      "normalized_name": "ben madden for sale",
+      "data": {
+        "__source_id__": "pipeline-lead:b83bedbf63a5abfba20fd5bf",
+        "company_name": "Ben Madden / For Sale",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444bc0edaeec3fa312ed7 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444bc0edaeec3fa312ed7",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "Ben Madden / For Sale"
+        }
+      ]
+    },
+    {
+      "normalized_name": "lyons lyons",
+      "data": {
+        "__source_id__": "pipeline-lead:a252e4ff59222453f398afaf",
+        "company_name": "Lyons & Lyons",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444bc0edaeec3fa312eeb, 6ab444ccf3def4d6742fb323 — no CoreBridge estimate",
+        "location_address_1": "2023-10-09"
+      },
+      "rows": [
+        {
+          "id": "6ab444bc0edaeec3fa312eeb",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "Lyons & Lyons"
+        },
+        {
+          "id": "6ab444ccf3def4d6742fb323",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Lyons & Lyons"
+        }
+      ]
+    },
+    {
+      "normalized_name": "texas roadhouse name change",
+      "data": {
+        "__source_id__": "pipeline-lead:997a7a5082ae0fc4ef6d2593",
+        "company_name": "Texas Roadhouse / Name Change",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444bc0edaeec3fa312f0b — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444bc0edaeec3fa312f0b",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "Texas Roadhouse / Name Change"
+        }
+      ]
+    },
+    {
+      "normalized_name": "vivify",
+      "data": {
+        "__source_id__": "pipeline-lead:9e064754407ea4649b41f190",
+        "company_name": "Vivify",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444bc0edaeec3fa312f08 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444bc0edaeec3fa312f08",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Vivify"
+        }
+      ]
+    },
+    {
+      "normalized_name": "ccr design aesthetics in motion",
+      "data": {
+        "__source_id__": "pipeline-lead:76891b6830133dbee56c136b",
+        "company_name": "CCR & Design / Aesthetics in Motion",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444bc0edaeec3fa312f04 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444bc0edaeec3fa312f04",
+          "updated_date": "2026-10-01T23:07:02.306000",
+          "client_name": "CCR & Design / Aesthetics in Motion"
+        }
+      ]
+    },
+    {
+      "normalized_name": "betsy",
+      "data": {
+        "__source_id__": "pipeline-lead:5ad00a25c7d2d42e811125f5",
+        "company_name": "Betsy",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444bc0edaeec3fa312efe — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444bc0edaeec3fa312efe",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "Betsy"
+        }
+      ]
+    },
+    {
+      "normalized_name": "southwater signs fairfield",
+      "data": {
+        "__source_id__": "pipeline-lead:973a47632e24d83b59816b1b",
+        "company_name": "Southwater Signs / Fairfield",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444bc0edaeec3fa312efd — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444bc0edaeec3fa312efd",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "Southwater Signs / Fairfield"
+        }
+      ]
+    },
+    {
+      "normalized_name": "salt light",
+      "data": {
+        "__source_id__": "pipeline-lead:8b5f2366a75842c2ac9ea97b",
+        "company_name": "Salt & Light",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444bf6fbc06e8b3b7d867 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444bf6fbc06e8b3b7d867",
+          "updated_date": "2026-10-01T23:07:02.306000",
+          "client_name": "Salt & Light"
+        }
+      ]
+    },
+    {
+      "normalized_name": "southwater",
+      "data": {
+        "__source_id__": "pipeline-lead:381eba571152999e4b9a65a0",
+        "company_name": "Southwater",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444bf6fbc06e8b3b7d87e — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444bf6fbc06e8b3b7d87e",
+          "updated_date": "2026-10-01T23:07:17.703000",
+          "client_name": "Southwater"
+        }
+      ]
+    },
+    {
+      "normalized_name": "seoul korean bbq hotspot",
+      "data": {
+        "__source_id__": "pipeline-lead:7c6043981b30aa6cced78d6f",
+        "company_name": "Seoul Korean BBQ & Hotspot",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444bf6fbc06e8b3b7d8a2 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444bf6fbc06e8b3b7d8a2",
+          "updated_date": "2026-10-01T23:07:17.703000",
+          "client_name": "Seoul Korean BBQ & Hotspot"
+        }
+      ]
+    },
+    {
+      "normalized_name": "choose amp unilever cincinnati",
+      "data": {
+        "__source_id__": "pipeline-lead:664b55dc95a257abb597b2e6",
+        "company_name": "Choose Amp / Unilever Cincinnati",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444bf6fbc06e8b3b7d8b2 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444bf6fbc06e8b3b7d8b2",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "Choose Amp / Unilever Cincinnati"
+        }
+      ]
+    },
+    {
+      "normalized_name": "center for spirituality",
+      "data": {
+        "__source_id__": "pipeline-lead:279cad4490987f2ec0b3fd44",
+        "company_name": "Center for Spirituality",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be7898ed — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be7898ed",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "Center for Spirituality"
+        }
+      ]
+    },
+    {
+      "normalized_name": "sakura steak house",
+      "data": {
+        "__source_id__": "pipeline-lead:a64a56eb402503713c9a50ac",
+        "company_name": "Sakura Steak House",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be789905 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be789905",
+          "updated_date": "2026-10-01T23:05:33.900000",
+          "client_name": "Sakura Steak House"
+        }
+      ]
+    },
+    {
+      "normalized_name": "winfield of middletown assisted living",
+      "data": {
+        "__source_id__": "pipeline-lead:a1f5b88d256fd19e8de4dc1a",
+        "company_name": "Winfield of Middletown Assisted Living",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be789904 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be789904",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "Winfield of Middletown Assisted Living"
+        }
+      ]
+    },
+    {
+      "normalized_name": "rdi magpies",
+      "data": {
+        "__source_id__": "pipeline-lead:532562c4e6611736db2b9ed1",
+        "company_name": "RDI Magpies",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be789910 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be789910",
+          "updated_date": "2026-10-01T23:07:17.703000",
+          "client_name": "RDI Magpies"
+        }
+      ]
+    },
+    {
+      "normalized_name": "sunstar southwater signs",
+      "data": {
+        "__source_id__": "pipeline-lead:5e72376cbfa8c62641581c1d",
+        "company_name": "SunStar / Southwater Signs",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be789911 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be789911",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "SunStar / Southwater Signs"
+        }
+      ]
+    },
+    {
+      "normalized_name": "imc management american structure pointe",
+      "data": {
+        "__source_id__": "pipeline-lead:2646352b7d2e930594515115",
+        "company_name": "IMC Management / American Structure Pointe",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be789902 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be789902",
+          "updated_date": "2026-10-01T23:07:17.703000",
+          "client_name": "IMC Management / American Structure Pointe"
+        }
+      ]
+    },
+    {
+      "normalized_name": "mj jewelers",
+      "data": {
+        "__source_id__": "pipeline-lead:48518ae64370923978f0c4e8",
+        "company_name": "MJ Jewelers",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be7898f8 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be7898f8",
+          "updated_date": "2026-10-01T23:05:33.900000",
+          "client_name": "MJ Jewelers"
+        }
+      ]
+    },
+    {
+      "normalized_name": "sunset properties",
+      "data": {
+        "__source_id__": "pipeline-lead:066031b5526674ab838a6883",
+        "company_name": "Sunset Properties",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be789900 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be789900",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "Sunset Properties"
+        }
+      ]
+    },
+    {
+      "normalized_name": "the armor group inc uc properties",
+      "data": {
+        "__source_id__": "pipeline-lead:6eaf4eee0ce5c63aedc3bdb8",
+        "company_name": "The Armor Group Inc / UC Properties",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be7898fe — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be7898fe",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "The Armor Group Inc / UC Properties"
+        }
+      ]
+    },
+    {
+      "normalized_name": "hoity toity donuts",
+      "data": {
+        "__source_id__": "pipeline-lead:6edea20ca90fbf7b807c100f",
+        "company_name": "Hoity Toity Donuts",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be78990c — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be78990c",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "Hoity Toity Donuts"
+        }
+      ]
+    },
+    {
+      "normalized_name": "marcus millichap",
+      "data": {
+        "__source_id__": "pipeline-lead:242a1a084de6b3fd95ef4703",
+        "company_name": "Marcus & Millichap",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be78991e — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be78991e",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "Marcus & Millichap"
+        }
+      ]
+    },
+    {
+      "normalized_name": "divine signsait solutions",
+      "data": {
+        "__source_id__": "pipeline-lead:668315353eb70d05ad6e578d",
+        "company_name": "Divine Signs/AIT Solutions",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be789916 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be789916",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "Divine Signs/AIT Solutions"
+        }
+      ]
+    },
+    {
+      "normalized_name": "forever praise lobby sign",
+      "data": {
+        "__source_id__": "pipeline-lead:19c4a7b2850853dbad1f1e39",
+        "company_name": "Forever Praise Lobby Sign",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be78991a — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be78991a",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "Forever Praise Lobby Sign"
+        }
+      ]
+    },
+    {
+      "normalized_name": "minnillo law firm",
+      "data": {
+        "__source_id__": "pipeline-lead:e4adea725b3e6ab1cd5f5a9a",
+        "company_name": "Minnillo Law Firm",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be78991f — no CoreBridge estimate",
+        "location_address_1": "2020-12-01"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be78991f",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "Minnillo Law Firm"
+        }
+      ]
+    },
+    {
+      "normalized_name": "andersons ny deli brick wall",
+      "data": {
+        "__source_id__": "pipeline-lead:aa7d88766d2d127fd22d5ed8",
+        "company_name": "Anderson's NY Deli (Brick Wall)",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be78993a — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be78993a",
+          "updated_date": "2026-10-01T23:07:17.703000",
+          "client_name": "Anderson's NY Deli (Brick Wall)"
+        }
+      ]
+    },
+    {
+      "normalized_name": "andersons ny deli above counter wrap",
+      "data": {
+        "__source_id__": "pipeline-lead:3606e8e9744d78fba31a35dd",
+        "company_name": "Anderson's NY Deli (Above Counter Wrap)",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be789939 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be789939",
+          "updated_date": "2026-10-01T23:07:17.703000",
+          "client_name": "Anderson's NY Deli (Above Counter Wrap)"
+        }
+      ]
+    },
+    {
+      "normalized_name": "sweet bliss bakery",
+      "data": {
+        "__source_id__": "pipeline-lead:42336efc0486b235e35c9f88",
+        "company_name": "Sweet Bliss Bakery",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be78993e — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be78993e",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "Sweet Bliss Bakery"
+        }
+      ]
+    },
+    {
+      "normalized_name": "andersons large wall graphic",
+      "data": {
+        "__source_id__": "pipeline-lead:86fa153dfb0de9dc612e1df5",
+        "company_name": "Anderson's Large Wall Graphic",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be789938 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be789938",
+          "updated_date": "2026-10-01T23:07:17.703000",
+          "client_name": "Anderson's Large Wall Graphic"
+        }
+      ]
+    },
+    {
+      "normalized_name": "the oaks",
+      "data": {
+        "__source_id__": "pipeline-lead:a8e47468f53f0c566ea9965f",
+        "company_name": "The Oaks",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c5c73beca9be789934 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c5c73beca9be789934",
+          "updated_date": "2026-10-01T23:05:33.900000",
+          "client_name": "The Oaks"
+        }
+      ]
+    },
+    {
+      "normalized_name": "tom ladshaw magic",
+      "data": {
+        "__source_id__": "pipeline-lead:b32c734e799d4891f7d9cc36",
+        "company_name": "Tom Ladshaw Magic",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c874d1e4bb2821699e — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c874d1e4bb2821699e",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "Tom Ladshaw Magic"
+        }
+      ]
+    },
+    {
+      "normalized_name": "v2 building group cleopatra",
+      "data": {
+        "__source_id__": "pipeline-lead:74fc5eb669eef63223b42db1",
+        "company_name": "V2 Building Group - Cleopatra",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c874d1e4bb282169a9 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c874d1e4bb282169a9",
+          "updated_date": "2026-10-01T23:07:17.703000",
+          "client_name": "V2 Building Group - Cleopatra"
+        }
+      ]
+    },
+    {
+      "normalized_name": "infinite acres the netherlands",
+      "data": {
+        "__source_id__": "pipeline-lead:1df07288e1b1b2373d624f15",
+        "company_name": "Infinite Acres / The Netherlands",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c874d1e4bb282169cd — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c874d1e4bb282169cd",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "Infinite Acres / The Netherlands"
+        }
+      ]
+    },
+    {
+      "normalized_name": "rhi",
+      "data": {
+        "__source_id__": "pipeline-lead:7bab34904a7cd92f603b5663",
+        "company_name": "RHI",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c874d1e4bb282169c5 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c874d1e4bb282169c5",
+          "updated_date": "2026-10-01T23:07:17.703000",
+          "client_name": "RHI"
+        }
+      ]
+    },
+    {
+      "normalized_name": "coldwell banker aspire realty",
+      "data": {
+        "__source_id__": "pipeline-lead:5c6bbcdea69bc54a4500f321",
+        "company_name": "Coldwell Banker Aspire Realty",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c874d1e4bb282169be — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c874d1e4bb282169be",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "Coldwell Banker Aspire Realty"
+        }
+      ]
+    },
+    {
+      "normalized_name": "triangle signs tempurpedic",
+      "data": {
+        "__source_id__": "pipeline-lead:6e493242944cf6cc02e65fc0",
+        "company_name": "Triangle Signs / Tempur-Pedic",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c874d1e4bb282169c9 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c874d1e4bb282169c9",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "Triangle Signs / Tempur-Pedic"
+        }
+      ]
+    },
+    {
+      "normalized_name": "nai bergman 311 elm",
+      "data": {
+        "__source_id__": "pipeline-lead:4aed6a69282a316cfe85de1b",
+        "company_name": "NAI Bergman / 311 Elm",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c874d1e4bb282169ce — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c874d1e4bb282169ce",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "NAI Bergman / 311 Elm"
+        }
+      ]
+    },
+    {
+      "normalized_name": "triangle signs mason family pet hospital",
+      "data": {
+        "__source_id__": "pipeline-lead:bd6ca19a23167c21d0f084a1",
+        "company_name": "Triangle Signs / Mason Family Pet Hospital",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c874d1e4bb282169d0 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c874d1e4bb282169d0",
+          "updated_date": "2026-10-01T23:07:17.703000",
+          "client_name": "Triangle Signs / Mason Family Pet Hospital"
+        }
+      ]
+    },
+    {
+      "normalized_name": "fast signs pennsylvania hillman",
+      "data": {
+        "__source_id__": "pipeline-lead:96165ec22b2cc46b2c0acce0",
+        "company_name": "Fast Signs/ Pennsylvania / Hillman",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c874d1e4bb282169bf — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c874d1e4bb282169bf",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "Fast Signs/ Pennsylvania / Hillman"
+        }
+      ]
+    },
+    {
+      "normalized_name": "western southern tennis tournament dfalt",
+      "data": {
+        "__source_id__": "pipeline-lead:6e220174795f45657f836929",
+        "company_name": "Western Southern tennis Tournament / DFalt",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c874d1e4bb282169cb — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c874d1e4bb282169cb",
+          "updated_date": "2026-10-01T23:07:17.703000",
+          "client_name": "Western Southern tennis Tournament / DFalt"
+        }
+      ]
+    },
+    {
+      "normalized_name": "minutemen press sharonville new jerusalem church",
+      "data": {
+        "__source_id__": "pipeline-lead:c50237a4f0fc9b6bbc57d791",
+        "company_name": "Minutemen Press Sharonville / New Jerusalem Church",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444c874d1e4bb282169f2 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444c874d1e4bb282169f2",
+          "updated_date": "2026-10-01T23:07:05.530000",
+          "client_name": "Minutemen Press Sharonville / New Jerusalem Church"
+        }
+      ]
+    },
+    {
+      "normalized_name": "heritage hill prop const stonecreek cobblegate",
+      "data": {
+        "__source_id__": "pipeline-lead:d504a7cda170b6ba220909a9",
+        "company_name": "Heritage Hill Prop. Const. / Stonecreek & Cobblegate",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444ccf3def4d6742fb2ee — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444ccf3def4d6742fb2ee",
+          "updated_date": "2026-10-01T23:07:17.703000",
+          "client_name": "Heritage Hill Prop. Const. / Stonecreek & Cobblegate"
+        }
+      ]
+    },
+    {
+      "normalized_name": "blue pine psych",
+      "data": {
+        "__source_id__": "pipeline-lead:3d6d0777b175884240cd7497",
+        "company_name": "Blue Pine Psych",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444ccf3def4d6742fb2e9 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444ccf3def4d6742fb2e9",
+          "updated_date": "2026-10-01T23:07:09.003000",
+          "client_name": "Blue Pine Psych"
+        }
+      ]
+    },
+    {
+      "normalized_name": "speedpro",
+      "data": {
+        "__source_id__": "pipeline-lead:b587e510143aa11d2bf4e115",
+        "company_name": "SpeedPro",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444ccf3def4d6742fb315 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444ccf3def4d6742fb315",
+          "updated_date": "2026-10-01T23:07:09.003000",
+          "client_name": "SpeedPro"
+        }
+      ]
+    },
+    {
+      "normalized_name": "midwest eye florence",
+      "data": {
+        "__source_id__": "pipeline-lead:8ae5e9fe3d45f67ceae523b8",
+        "company_name": "Midwest Eye / Florence",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444ccf3def4d6742fb319, 6ab444df19446b4581151967 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444ccf3def4d6742fb319",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Midwest Eye / Florence"
+        },
+        {
+          "id": "6ab444df19446b4581151967",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "Midwest Eye / Florence"
+        }
+      ]
+    },
+    {
+      "normalized_name": "cvg intermodal",
+      "data": {
+        "__source_id__": "pipeline-lead:3cf5fd9120b3bf507f9625a9",
+        "company_name": "CVG Intermodal",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444ccf3def4d6742fb313 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444ccf3def4d6742fb313",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "CVG Intermodal"
+        }
+      ]
+    },
+    {
+      "normalized_name": "ethiopian orthodox church",
+      "data": {
+        "__source_id__": "pipeline-lead:10c49360652ccd53d1b3eaf6",
+        "company_name": "Ethiopian Orthodox Church",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444ccf3def4d6742fb310 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444ccf3def4d6742fb310",
+          "updated_date": "2026-10-01T23:07:17.703000",
+          "client_name": "Ethiopian Orthodox Church"
+        }
+      ]
+    },
+    {
+      "normalized_name": "carlisle auto sales",
+      "data": {
+        "__source_id__": "pipeline-lead:dc73b37a60f993cc174968fd",
+        "company_name": "Carlisle Auto Sales",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444ccf3def4d6742fb329 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444ccf3def4d6742fb329",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Carlisle Auto Sales"
+        }
+      ]
+    },
+    {
+      "normalized_name": "sunset properties the alcove turpin woods",
+      "data": {
+        "__source_id__": "pipeline-lead:42a61344662af54641e698c9",
+        "company_name": "Sunset Properties / The Alcove (Turpin Woods)",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444ccf3def4d6742fb32c — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444ccf3def4d6742fb32c",
+          "updated_date": "2026-10-01T23:07:09.003000",
+          "client_name": "Sunset Properties / The Alcove (Turpin Woods)"
+        }
+      ]
+    },
+    {
+      "normalized_name": "sunset properties skytop beechmont",
+      "data": {
+        "__source_id__": "pipeline-lead:d0ffdc04c75e14e3f551b34b",
+        "company_name": "Sunset Properties / Skytop (Beechmont)",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d06c14133b464a01c8 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d06c14133b464a01c8",
+          "updated_date": "2026-10-01T23:07:09.003000",
+          "client_name": "Sunset Properties / Skytop (Beechmont)"
+        }
+      ]
+    },
+    {
+      "normalized_name": "dyno group cheney",
+      "data": {
+        "__source_id__": "pipeline-lead:f8f80490e88efbb2ec02d7ff",
+        "company_name": "Dyno Group (Cheney)",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d06c14133b464a01f5 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d06c14133b464a01f5",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Dyno Group (Cheney)"
+        }
+      ]
+    },
+    {
+      "normalized_name": "jeff wyler mazda batavia",
+      "data": {
+        "__source_id__": "pipeline-lead:74072cb064a7e2b5c33d007b",
+        "company_name": "Jeff Wyler Mazda Batavia",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d06c14133b464a01f4 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d06c14133b464a01f4",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Jeff Wyler Mazda Batavia"
+        }
+      ]
+    },
+    {
+      "normalized_name": "triangle signs sunglass hut",
+      "data": {
+        "__source_id__": "pipeline-lead:5cbb1466f0b975067c4bb7b0",
+        "company_name": "Triangle Signs/ Sunglass Hut",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d06c14133b464a01f6 — no CoreBridge estimate",
+        "location_address_1": "2023-08-31"
+      },
+      "rows": [
+        {
+          "id": "6ab444d06c14133b464a01f6",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Triangle Signs/ Sunglass Hut"
+        }
+      ]
+    },
+    {
+      "normalized_name": "blackgate partners",
+      "data": {
+        "__source_id__": "pipeline-lead:2665bfc5b9a876f37ff730fe",
+        "company_name": "Blackgate Partners",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d06c14133b464a0216 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d06c14133b464a0216",
+          "updated_date": "2026-10-01T23:07:09.003000",
+          "client_name": "Blackgate Partners"
+        }
+      ]
+    },
+    {
+      "normalized_name": "a break 4 mom daycare",
+      "data": {
+        "__source_id__": "pipeline-lead:21ac9c08039af1130b77af5e",
+        "company_name": "A Break 4 Mom Daycare",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d06c14133b464a0221 — no CoreBridge estimate",
+        "location_address_1": "2023-12-29"
+      },
+      "rows": [
+        {
+          "id": "6ab444d06c14133b464a0221",
+          "updated_date": "2026-10-01T23:06:52.830000",
+          "client_name": "A Break 4 Mom Daycare"
+        }
+      ]
+    },
+    {
+      "normalized_name": "sysco",
+      "data": {
+        "__source_id__": "pipeline-lead:ad9ba43653139d6d6c4d88f4",
+        "company_name": "Sysco",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d06c14133b464a021e — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d06c14133b464a021e",
+          "updated_date": "2026-10-01T23:06:49.372000",
+          "client_name": "Sysco"
+        }
+      ]
+    },
+    {
+      "normalized_name": "st cecilia church",
+      "data": {
+        "__source_id__": "pipeline-lead:683616cbd36af66709113435",
+        "company_name": "St Cecilia Church",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d06c14133b464a01fb — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d06c14133b464a01fb",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "St Cecilia Church"
+        }
+      ]
+    },
+    {
+      "normalized_name": "the learning kitchen",
+      "data": {
+        "__source_id__": "pipeline-lead:b05f1d83f25a7b2dabc39052",
+        "company_name": "The Learning Kitchen",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d06c14133b464a0204 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d06c14133b464a0204",
+          "updated_date": "2026-10-01T23:07:09.003000",
+          "client_name": "The Learning Kitchen"
+        }
+      ]
+    },
+    {
+      "normalized_name": "cincinnati clifton dental care",
+      "data": {
+        "__source_id__": "pipeline-lead:ba4655bb5db630af97fad047",
+        "company_name": "Cincinnati Clifton Dental Care",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d06c14133b464a0201 — no CoreBridge estimate",
+        "location_address_1": "2023-09-20"
+      },
+      "rows": [
+        {
+          "id": "6ab444d06c14133b464a0201",
+          "updated_date": "2026-10-01T23:07:09.003000",
+          "client_name": "Cincinnati Clifton Dental Care"
+        }
+      ]
+    },
+    {
+      "normalized_name": "city of lebanon multi trail system signs",
+      "data": {
+        "__source_id__": "pipeline-lead:6d87fdf0b1e89ef293d15543",
+        "company_name": "City of Lebanon Multi Trail System Signs",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d06c14133b464a0210 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d06c14133b464a0210",
+          "updated_date": "2026-10-01T23:06:52.830000",
+          "client_name": "City of Lebanon Multi Trail System Signs"
+        }
+      ]
+    },
+    {
+      "normalized_name": "fore front group",
+      "data": {
+        "__source_id__": "pipeline-lead:4685e71ba979f47c649937d0",
+        "company_name": "Fore Front Group",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d06c14133b464a0200 — no CoreBridge estimate",
+        "contact_first_name": "08/22/23",
+        "location_address_1": "08/28/23"
+      },
+      "rows": [
+        {
+          "id": "6ab444d06c14133b464a0200",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Fore Front Group"
+        }
+      ]
+    },
+    {
+      "normalized_name": "hauser heating ac",
+      "data": {
+        "__source_id__": "pipeline-lead:20ca52672c6a21bb1d68c8e5",
+        "company_name": "Hauser Heating & AC",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d06c14133b464a0202 — no CoreBridge estimate",
+        "location_address_1": "2023-09-19"
+      },
+      "rows": [
+        {
+          "id": "6ab444d06c14133b464a0202",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Hauser Heating & AC"
+        }
+      ]
+    },
+    {
+      "normalized_name": "exair",
+      "data": {
+        "__source_id__": "pipeline-lead:50ee9430d8c5ed56c03eb20b",
+        "company_name": "EXAIR",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d311e24b44f024104b — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d311e24b44f024104b",
+          "updated_date": "2026-10-01T23:06:49.372000",
+          "client_name": "EXAIR"
+        }
+      ]
+    },
+    {
+      "normalized_name": "raymond storage concepts cincinnati columbus louisville",
+      "data": {
+        "__source_id__": "pipeline-lead:e4bea468f0e371bcfa3b53e4",
+        "company_name": "Raymond Storage Concepts Cincinnati Columbus Louisville",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d311e24b44f024106a — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d311e24b44f024106a",
+          "updated_date": "2026-10-01T23:07:24.514000",
+          "client_name": "Raymond Storage Concepts Cincinnati Columbus Louisville"
+        }
+      ]
+    },
+    {
+      "normalized_name": "st charles borromeo catholic school",
+      "data": {
+        "__source_id__": "pipeline-lead:5c6ee0371410f36267643be9",
+        "company_name": "St Charles Borromeo Catholic School",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d311e24b44f0241049 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d311e24b44f0241049",
+          "updated_date": "2026-10-01T23:06:49.372000",
+          "client_name": "St Charles Borromeo Catholic School"
+        }
+      ]
+    },
+    {
+      "normalized_name": "elford itb cmha cobblestone manor",
+      "data": {
+        "__source_id__": "pipeline-lead:3249ed98a0a5377e1571222c",
+        "company_name": "Elford ITB CMHA Cobblestone Manor",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d311e24b44f0241068 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d311e24b44f0241068",
+          "updated_date": "2026-10-01T23:06:49.372000",
+          "client_name": "Elford ITB CMHA Cobblestone Manor"
+        }
+      ]
+    },
+    {
+      "normalized_name": "infinity labs",
+      "data": {
+        "__source_id__": "pipeline-lead:76b999cdbb647e0cddd32554",
+        "company_name": "Infinity Labs",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d311e24b44f024104c — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d311e24b44f024104c",
+          "updated_date": "2026-10-01T23:06:49.372000",
+          "client_name": "Infinity Labs"
+        }
+      ]
+    },
+    {
+      "normalized_name": "mercy healthplex",
+      "data": {
+        "__source_id__": "pipeline-lead:2a955a4e8191d44aa4675f99",
+        "company_name": "Mercy HealthPlex",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d311e24b44f0241066, 6ab444d805d3977fe0129b2e — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d311e24b44f0241066",
+          "updated_date": "2026-10-01T23:06:58.548000",
+          "client_name": "Mercy HealthPlex"
+        },
+        {
+          "id": "6ab444d805d3977fe0129b2e",
+          "updated_date": "2026-10-01T23:06:52.830000",
+          "client_name": "Mercy HealthPlex"
+        }
+      ]
+    },
+    {
+      "normalized_name": "jp flooring",
+      "data": {
+        "__source_id__": "pipeline-lead:a18c8562370dc977b9615675",
+        "company_name": "JP Flooring",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d311e24b44f0241083 — no CoreBridge estimate",
+        "location_address_1": "2024-02-27"
+      },
+      "rows": [
+        {
+          "id": "6ab444d311e24b44f0241083",
+          "updated_date": "2026-10-01T23:06:49.372000",
+          "client_name": "JP Flooring"
+        }
+      ]
+    },
+    {
+      "normalized_name": "union promenade club apartments",
+      "data": {
+        "__source_id__": "pipeline-lead:1402fd4fb669d718b1ff7550",
+        "company_name": "Union Promenade Club Apartments",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d311e24b44f0241081 — no CoreBridge estimate",
+        "location_address_1": "2024-03-12"
+      },
+      "rows": [
+        {
+          "id": "6ab444d311e24b44f0241081",
+          "updated_date": "2026-10-01T23:06:49.372000",
+          "client_name": "Union Promenade Club Apartments"
+        }
+      ]
+    },
+    {
+      "normalized_name": "storyland studios",
+      "data": {
+        "__source_id__": "pipeline-lead:46b105e5f6c050d10a6645d7",
+        "company_name": "Storyland Studios",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d311e24b44f024107d — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d311e24b44f024107d",
+          "updated_date": "2026-10-01T23:05:30.129000",
+          "client_name": "Storyland Studios"
+        }
+      ]
+    },
+    {
+      "normalized_name": "raymond storage concepts cincinnati",
+      "data": {
+        "__source_id__": "pipeline-lead:5fe9d0a7e8393fa1db253312",
+        "company_name": "Raymond Storage Concepts Cincinnati",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d311e24b44f0241073 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d311e24b44f0241073",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "Raymond Storage Concepts Cincinnati"
+        }
+      ]
+    },
+    {
+      "normalized_name": "drug shoppe",
+      "data": {
+        "__source_id__": "pipeline-lead:15fb7e82486c024c09c0e4a9",
+        "company_name": "Drug Shoppe",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d311e24b44f0241093 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d311e24b44f0241093",
+          "updated_date": "2026-10-01T23:06:58.548000",
+          "client_name": "Drug Shoppe"
+        }
+      ]
+    },
+    {
+      "normalized_name": "superior image embroidery llc",
+      "data": {
+        "__source_id__": "pipeline-lead:727ecbb9dffc3aa8c0a7b6f3",
+        "company_name": "Superior Image Embroidery LLC",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d311e24b44f02410a7 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d311e24b44f02410a7",
+          "updated_date": "2026-10-01T23:06:58.548000",
+          "client_name": "Superior Image Embroidery LLC"
+        }
+      ]
+    },
+    {
+      "normalized_name": "dohn cota high school",
+      "data": {
+        "__source_id__": "pipeline-lead:4cba53b5b156a3af08a4f6cb",
+        "company_name": "Dohn - COTA High School",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d311e24b44f02410a6 — no CoreBridge estimate",
+        "location_address_1": "2023-12-14"
+      },
+      "rows": [
+        {
+          "id": "6ab444d311e24b44f02410a6",
+          "updated_date": "2026-10-01T23:07:09.003000",
+          "client_name": "Dohn - COTA High School"
+        }
+      ]
+    },
+    {
+      "normalized_name": "deluxe dry cleaners cox rd",
+      "data": {
+        "__source_id__": "pipeline-lead:e4ac9356d17a5c69c19f3dc0",
+        "company_name": "Deluxe Dry Cleaners / Cox Rd",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129aed — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129aed",
+          "updated_date": "2026-10-01T23:06:52.830000",
+          "client_name": "Deluxe Dry Cleaners / Cox Rd"
+        }
+      ]
+    },
+    {
+      "normalized_name": "hyde park wellness",
+      "data": {
+        "__source_id__": "pipeline-lead:0c927578830fb02852adabcd",
+        "company_name": "Hyde Park Wellness",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129adc — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129adc",
+          "updated_date": "2026-10-01T23:06:58.548000",
+          "client_name": "Hyde Park Wellness"
+        }
+      ]
+    },
+    {
+      "normalized_name": "personatriangle",
+      "data": {
+        "__source_id__": "pipeline-lead:51e30045dbde1448540cb0ed",
+        "company_name": "PersonaTriangle",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129aea — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129aea",
+          "updated_date": "2026-10-01T23:05:33.900000",
+          "client_name": "PersonaTriangle"
+        }
+      ]
+    },
+    {
+      "normalized_name": "mdi afam chamber",
+      "data": {
+        "__source_id__": "pipeline-lead:3da0140af12212e27ab7f513",
+        "company_name": "MDI / AFAm Chamber",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129ae1 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129ae1",
+          "updated_date": "2026-10-01T23:06:52.830000",
+          "client_name": "MDI / AFAm Chamber"
+        }
+      ]
+    },
+    {
+      "normalized_name": "cincinnati custom signs",
+      "data": {
+        "__source_id__": "pipeline-lead:6e139c39ebc9779134633a75",
+        "company_name": "Cincinnati Custom Signs",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129aec — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129aec",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Cincinnati Custom Signs"
+        }
+      ]
+    },
+    {
+      "normalized_name": "concentrix corporation prospective client",
+      "data": {
+        "__source_id__": "pipeline-lead:86aae01ab183ff62efe406f4",
+        "company_name": "Concentrix Corporation - Prospective Client",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129aeb — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129aeb",
+          "updated_date": "2026-10-01T23:06:52.830000",
+          "client_name": "Concentrix Corporation - Prospective Client"
+        }
+      ]
+    },
+    {
+      "normalized_name": "jackson taylor constructionfed ex legacy",
+      "data": {
+        "__source_id__": "pipeline-lead:4fc9bb284ff1723b0d6c5d32",
+        "company_name": "Jackson Taylor Construction/Fed Ex Legacy",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129af7 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129af7",
+          "updated_date": "2026-10-01T23:06:52.830000",
+          "client_name": "Jackson Taylor Construction/Fed Ex Legacy"
+        }
+      ]
+    },
+    {
+      "normalized_name": "mailbox solutions",
+      "data": {
+        "__source_id__": "pipeline-lead:c2fc0aa38ac3b14951e1a4fb",
+        "company_name": "Mailbox Solutions",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129b26 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129b26",
+          "updated_date": "2026-10-01T23:06:58.548000",
+          "client_name": "Mailbox Solutions"
+        }
+      ]
+    },
+    {
+      "normalized_name": "regen life centers",
+      "data": {
+        "__source_id__": "pipeline-lead:be813e910025f3426f7aaf1f",
+        "company_name": "Regen Life Centers",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129b25 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129b25",
+          "updated_date": "2026-10-01T23:06:58.548000",
+          "client_name": "Regen Life Centers"
+        }
+      ]
+    },
+    {
+      "normalized_name": "st michaels church 9mm emc panel problem",
+      "data": {
+        "__source_id__": "pipeline-lead:15720ffa249faa390023cfc7",
+        "company_name": "St. Michael's Church - 9mm EMC - Panel Problem",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129b19 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129b19",
+          "updated_date": "2026-10-01T23:06:52.830000",
+          "client_name": "St. Michael's Church - 9mm EMC - Panel Problem"
+        }
+      ]
+    },
+    {
+      "normalized_name": "origin banner and window vinyl",
+      "data": {
+        "__source_id__": "pipeline-lead:7b746715a68d4a7195181dfc",
+        "company_name": "Origin: Banner and Window Vinyl",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129b3e — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129b3e",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Origin: Banner and Window Vinyl"
+        }
+      ]
+    },
+    {
+      "normalized_name": "beech acres elsinore place",
+      "data": {
+        "__source_id__": "pipeline-lead:c949c729c0e5457dee40dd3f",
+        "company_name": "Beech Acres - Elsinore Place",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129b39 — no CoreBridge estimate",
+        "location_address_1": "2025-11-11"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129b39",
+          "updated_date": "2026-10-01T23:07:24.514000",
+          "client_name": "Beech Acres - Elsinore Place"
+        }
+      ]
+    },
+    {
+      "normalized_name": "black swan holdingsthe woods of wyoming apartments",
+      "data": {
+        "__source_id__": "pipeline-lead:ce71da5f69474134c6337875",
+        "company_name": "Black Swan Holdings/The Woods of Wyoming Apartments",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129b29 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129b29",
+          "updated_date": "2026-10-01T23:06:58.548000",
+          "client_name": "Black Swan Holdings/The Woods of Wyoming Apartments"
+        }
+      ]
+    },
+    {
+      "normalized_name": "beech acres glenmore ave timeline",
+      "data": {
+        "__source_id__": "pipeline-lead:1aa73510bf3af9154f187206",
+        "company_name": "Beech Acres - Glenmore Ave (Timeline)",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129b3c — no CoreBridge estimate",
+        "location_address_1": "2025-11-11"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129b3c",
+          "updated_date": "2026-10-01T23:07:24.514000",
+          "client_name": "Beech Acres - Glenmore Ave (Timeline)"
+        }
+      ]
+    },
+    {
+      "normalized_name": "cincinnati custom signs awning",
+      "data": {
+        "__source_id__": "pipeline-lead:5b01d048c7748ea746a71ccf",
+        "company_name": "Cincinnati Custom Signs- Awning",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444d805d3977fe0129b2d — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444d805d3977fe0129b2d",
+          "updated_date": "2026-10-01T23:06:52.830000",
+          "client_name": "Cincinnati Custom Signs- Awning"
+        }
+      ]
+    },
+    {
+      "normalized_name": "showcase building and design",
+      "data": {
+        "__source_id__": "pipeline-lead:26b3c42ad5f5c3a51accd912",
+        "company_name": "Showcase Building and Design",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444dc1527e1647231926b — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444dc1527e1647231926b",
+          "updated_date": "2026-10-01T23:06:58.548000",
+          "client_name": "Showcase Building and Design"
+        }
+      ]
+    },
+    {
+      "normalized_name": "yonutz",
+      "data": {
+        "__source_id__": "pipeline-lead:813885fbe7f78b5f5b1d8fb7",
+        "company_name": "Yonutz",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444dc1527e16472319267 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444dc1527e16472319267",
+          "updated_date": "2026-10-01T23:06:58.548000",
+          "client_name": "Yonutz"
+        }
+      ]
+    },
+    {
+      "normalized_name": "america freight furniture mattress",
+      "data": {
+        "__source_id__": "pipeline-lead:b2fcd21e5e4cde61b8387cd5",
+        "company_name": "America Freight Furniture & Mattress",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444dc1527e1647231928a — no CoreBridge estimate",
+        "location_address_1": "2026-05-07"
+      },
+      "rows": [
+        {
+          "id": "6ab444dc1527e1647231928a",
+          "updated_date": "2026-10-23T02:03:06.424000",
+          "client_name": "America Freight Furniture & Mattress"
+        }
+      ]
+    },
+    {
+      "normalized_name": "anderson square apt",
+      "data": {
+        "__source_id__": "pipeline-lead:74cf064138a1b863fd096896",
+        "company_name": "Anderson Square Apt",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444dc1527e16472319286 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444dc1527e16472319286",
+          "updated_date": "2026-10-01T23:06:52.830000",
+          "client_name": "Anderson Square Apt"
+        }
+      ]
+    },
+    {
+      "normalized_name": "suburban propane",
+      "data": {
+        "__source_id__": "pipeline-lead:562dec9f88e21f56f95eeb75",
+        "company_name": "Suburban Propane",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444dc1527e16472319263 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444dc1527e16472319263",
+          "updated_date": "2026-10-01T23:06:52.830000",
+          "client_name": "Suburban Propane"
+        }
+      ]
+    },
+    {
+      "normalized_name": "best point gymnasium floor",
+      "data": {
+        "__source_id__": "pipeline-lead:218ebb7065d060ddc61bcd71",
+        "company_name": "Best Point ( Gymnasium floor",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444dc1527e1647231927b — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444dc1527e1647231927b",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Best Point ( Gymnasium floor"
+        }
+      ]
+    },
+    {
+      "normalized_name": "triangle signs banana republic factory",
+      "data": {
+        "__source_id__": "pipeline-lead:94407cfafbed71a06863d4af",
+        "company_name": "Triangle Signs - Banana Republic Factory",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444dc1527e16472319275 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444dc1527e16472319275",
+          "updated_date": "2026-10-01T23:07:24.514000",
+          "client_name": "Triangle Signs - Banana Republic Factory"
+        }
+      ]
+    },
+    {
+      "normalized_name": "specialized education of ohio high school rd school wall decal",
+      "data": {
+        "__source_id__": "pipeline-lead:df84bc4e19c55e84a8173d03",
+        "company_name": "Specialized Education of Ohio (High School Rd School) Wall Decal",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444dc1527e1647231925d — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444dc1527e1647231925d",
+          "updated_date": "2026-10-01T23:06:58.548000",
+          "client_name": "Specialized Education of Ohio (High School Rd School) Wall Decal"
+        }
+      ]
+    },
+    {
+      "normalized_name": "john p tumlin sons ltd rfq aerohub signage",
+      "data": {
+        "__source_id__": "pipeline-lead:b977f9fbd0abe3a0d84e77e9",
+        "company_name": "John P. Tumlin & Sons LTD.( RFQ- Aerohub Signage",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444dc1527e1647231927c — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444dc1527e1647231927c",
+          "updated_date": "2026-10-01T23:06:52.830000",
+          "client_name": "John P. Tumlin & Sons LTD.( RFQ- Aerohub Signage"
+        }
+      ]
+    },
+    {
+      "normalized_name": "clb restaurants matt the millers tavern",
+      "data": {
+        "__source_id__": "pipeline-lead:554ca32f66705f50e0c4ee94",
+        "company_name": "CLB Restaurants / Matt the Miller's Tavern",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444dc1527e16472319298 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444dc1527e16472319298",
+          "updated_date": "2026-10-01T23:06:52.830000",
+          "client_name": "CLB Restaurants / Matt the Miller's Tavern"
+        }
+      ]
+    },
+    {
+      "normalized_name": "best point hamilton phase 3",
+      "data": {
+        "__source_id__": "pipeline-lead:0755f1d20a37e1c75b9a0cf5",
+        "company_name": "Best Point / Hamilton Phase 3",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444dc1527e164723192bd — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444dc1527e164723192bd",
+          "updated_date": "2026-11-06T07:41:02.896000",
+          "client_name": "Best Point / Hamilton Phase 3"
+        }
+      ]
+    },
+    {
+      "normalized_name": "keller custom signs the service experts",
+      "data": {
+        "__source_id__": "pipeline-lead:cb78ec3abecdb69ee63953d0",
+        "company_name": "Keller Custom Signs - The Service Experts",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444dc1527e164723192a7 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444dc1527e164723192a7",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Keller Custom Signs - The Service Experts"
+        }
+      ]
+    },
+    {
+      "normalized_name": "sigma chi fraternity house",
+      "data": {
+        "__source_id__": "pipeline-lead:380a17cca3739e37b98af198",
+        "company_name": "Sigma Chi Fraternity House",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444dc1527e164723192b1 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444dc1527e164723192b1",
+          "updated_date": "2026-10-23T14:27:27.907000",
+          "client_name": "Sigma Chi Fraternity House"
+        }
+      ]
+    },
+    {
+      "normalized_name": "bluegrass urgent care independence",
+      "data": {
+        "__source_id__": "pipeline-lead:8dbd2d26d9e464b323a8edae",
+        "company_name": "Bluegrass Urgent Care independence",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151941 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151941",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Bluegrass Urgent Care independence"
+        }
+      ]
+    },
+    {
+      "normalized_name": "carl zeiss",
+      "data": {
+        "__source_id__": "pipeline-lead:79f0fa9cf7504569229cefd3",
+        "company_name": "Carl Zeiss",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151943 — no CoreBridge estimate",
+        "location_address_1": "no"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151943",
+          "updated_date": "2026-10-23T02:03:06.424000",
+          "client_name": "Carl Zeiss"
+        }
+      ]
+    },
+    {
+      "normalized_name": "anchor signs outback steak house",
+      "data": {
+        "__source_id__": "pipeline-lead:d470752bd00f8fc6edcb23d7",
+        "company_name": "Anchor Signs (Outback Steak House)",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151939 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151939",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Anchor Signs (Outback Steak House)"
+        }
+      ]
+    },
+    {
+      "normalized_name": "bluegrass urgent care cold spring",
+      "data": {
+        "__source_id__": "pipeline-lead:05b6bec4bc87036b23e7c176",
+        "company_name": "Bluegrass Urgent Care Cold Spring",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151940 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151940",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Bluegrass Urgent Care Cold Spring"
+        }
+      ]
+    },
+    {
+      "normalized_name": "metropolitan sewer district of greater cinti admin bldg",
+      "data": {
+        "__source_id__": "pipeline-lead:9227e93c4edcfa2652509d31",
+        "company_name": "Metropolitan Sewer District of Greater Cinti. Admin. Bldg",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151966 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151966",
+          "updated_date": "2026-10-01T23:06:58.548000",
+          "client_name": "Metropolitan Sewer District of Greater Cinti. Admin. Bldg"
+        }
+      ]
+    },
+    {
+      "normalized_name": "marys casera",
+      "data": {
+        "__source_id__": "pipeline-lead:e8b0804d2cf8cb13cb55251c",
+        "company_name": "Mary's Casera",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151965 — no CoreBridge estimate",
+        "location_address_1": "2020-12-23"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151965",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Mary's Casera"
+        }
+      ]
+    },
+    {
+      "normalized_name": "dgsathletico wc beckett ridge",
+      "data": {
+        "__source_id__": "pipeline-lead:250f83f7b3873883803ce8b8",
+        "company_name": "DGS/Athletico WC Beckett Ridge",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b458115194d — no CoreBridge estimate",
+        "location_address_1": "no"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b458115194d",
+          "updated_date": "2026-10-23T02:03:06.424000",
+          "client_name": "DGS/Athletico WC Beckett Ridge"
+        }
+      ]
+    },
+    {
+      "normalized_name": "jaime tree service",
+      "data": {
+        "__source_id__": "pipeline-lead:eb69956be36ed5e6c4d7173f",
+        "company_name": "Jaime Tree Service",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b458115195b — no CoreBridge estimate",
+        "location_address_1": "no"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b458115195b",
+          "updated_date": "2026-10-23T02:03:06.424000",
+          "client_name": "Jaime Tree Service"
+        }
+      ]
+    },
+    {
+      "normalized_name": "kelly operations business fox hound",
+      "data": {
+        "__source_id__": "pipeline-lead:c50279d07c260eed0e5e3582",
+        "company_name": "Kelly Operations Business/ Fox & Hound",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b458115195e — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b458115195e",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "Kelly Operations Business/ Fox & Hound"
+        }
+      ]
+    },
+    {
+      "normalized_name": "frost haus banner",
+      "data": {
+        "__source_id__": "pipeline-lead:844095383454b2e0b18eefee",
+        "company_name": "Frost Haus Banner",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151952 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151952",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Frost Haus Banner"
+        }
+      ]
+    },
+    {
+      "normalized_name": "lord smoke shop",
+      "data": {
+        "__source_id__": "pipeline-lead:e7ea061671c66410aee57bbf",
+        "company_name": "Lord Smoke Shop",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151964 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151964",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Lord Smoke Shop"
+        }
+      ]
+    },
+    {
+      "normalized_name": "liberty tax hamilton",
+      "data": {
+        "__source_id__": "pipeline-lead:7d0e9d376b54cbeca5e67494",
+        "company_name": "Liberty Tax Hamilton",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151963 — no CoreBridge estimate",
+        "location_address_1": "2020-12-22"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151963",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Liberty Tax Hamilton"
+        }
+      ]
+    },
+    {
+      "normalized_name": "frost haus",
+      "data": {
+        "__source_id__": "pipeline-lead:3dcbff07747d5e757ad41569",
+        "company_name": "Frost Haus",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151951 — no CoreBridge estimate",
+        "location_address_1": "2021-01-21"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151951",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Frost Haus"
+        }
+      ]
+    },
+    {
+      "normalized_name": "cst signs",
+      "data": {
+        "__source_id__": "pipeline-lead:96b55e100230fe5074fa53ac",
+        "company_name": "CST Signs",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151948 — no CoreBridge estimate",
+        "location_address_1": "2023-07-14"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151948",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "CST Signs"
+        }
+      ]
+    },
+    {
+      "normalized_name": "midwest eye hamilton",
+      "data": {
+        "__source_id__": "pipeline-lead:6ca5daf132616832660bb8e3",
+        "company_name": "Midwest Eye / Hamilton",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151968 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151968",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "Midwest Eye / Hamilton"
+        }
+      ]
+    },
+    {
+      "normalized_name": "nt nails",
+      "data": {
+        "__source_id__": "pipeline-lead:f0a1059f29b2b82556260682",
+        "company_name": "NT Nails",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b458115196d — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b458115196d",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "NT Nails"
+        }
+      ]
+    },
+    {
+      "normalized_name": "ritter family martial art",
+      "data": {
+        "__source_id__": "pipeline-lead:1b5983d269469b2c5bc479dd",
+        "company_name": "Ritter Family Martial Art",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151978 — no CoreBridge estimate",
+        "location_address_1": "no"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151978",
+          "updated_date": "2026-10-23T02:03:06.424000",
+          "client_name": "Ritter Family Martial Art"
+        }
+      ]
+    },
+    {
+      "normalized_name": "performance health chiropractic",
+      "data": {
+        "__source_id__": "pipeline-lead:c521d211d813cde63d1fa9ae",
+        "company_name": "Performance Health Chiropractic",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151970 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151970",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Performance Health Chiropractic"
+        }
+      ]
+    },
+    {
+      "normalized_name": "minuteman pressnew jerusalem baptist",
+      "data": {
+        "__source_id__": "pipeline-lead:8f35a64db99a33f6e7680ebb",
+        "company_name": "Minuteman Press/New Jerusalem Baptist",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b458115196b — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b458115196b",
+          "updated_date": "2026-10-01T23:05:41.327000",
+          "client_name": "Minuteman Press/New Jerusalem Baptist"
+        }
+      ]
+    },
+    {
+      "normalized_name": "principle global abbvie",
+      "data": {
+        "__source_id__": "pipeline-lead:6f0b578cc2dd137aeaf0b2b4",
+        "company_name": "Principle Global ** Abbvie",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151973 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151973",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Principle Global ** Abbvie"
+        }
+      ]
+    },
+    {
+      "normalized_name": "robert clark",
+      "data": {
+        "__source_id__": "pipeline-lead:50792dfaf22553cb4cb544e8",
+        "company_name": "Robert Clark",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151979 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151979",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Robert Clark"
+        }
+      ]
+    },
+    {
+      "normalized_name": "tlg trucks",
+      "data": {
+        "__source_id__": "pipeline-lead:21e62a0e020030a562788b47",
+        "company_name": "TLG Trucks",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b458115198a — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b458115198a",
+          "updated_date": "2026-10-01T23:05:37.658000",
+          "client_name": "TLG Trucks"
+        }
+      ]
+    },
+    {
+      "normalized_name": "southwater fairfield",
+      "data": {
+        "__source_id__": "pipeline-lead:5734f17a41b54e9faa743eb2",
+        "company_name": "Southwater/ Fairfield",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151980 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151980",
+          "updated_date": "2026-10-01T23:05:41.327000",
+          "client_name": "Southwater/ Fairfield"
+        }
+      ]
+    },
+    {
+      "normalized_name": "transfiguration of spirituality",
+      "data": {
+        "__source_id__": "pipeline-lead:ed33b9c0988ae7e3047bd59b",
+        "company_name": "Transfiguration of Spirituality",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b458115198d — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b458115198d",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Transfiguration of Spirituality"
+        }
+      ]
+    },
+    {
+      "normalized_name": "weiss technik",
+      "data": {
+        "__source_id__": "pipeline-lead:681ddeb56e57ff6408dace6b",
+        "company_name": "Weiss Technik",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151995, 6ab444df19446b4581151996 — no CoreBridge estimate",
+        "location_address_1": "2021-02-02"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151996",
+          "updated_date": "2026-10-01T23:07:24.514000",
+          "client_name": "Weiss Technik"
+        },
+        {
+          "id": "6ab444df19446b4581151995",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Weiss Technik"
+        }
+      ]
+    },
+    {
+      "normalized_name": "united performance",
+      "data": {
+        "__source_id__": "pipeline-lead:09c6b2b6b7814f22bd0ca93d",
+        "company_name": "United Performance",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b458115198f — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b458115198f",
+          "updated_date": "2026-10-01T23:05:41.327000",
+          "client_name": "United Performance"
+        }
+      ]
+    },
+    {
+      "normalized_name": "sunset properties delta ave",
+      "data": {
+        "__source_id__": "pipeline-lead:ce707eb632dd3faea16041c8",
+        "company_name": "Sunset Properties / Delta Ave",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151985 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151985",
+          "updated_date": "2026-10-01T23:07:21.292000",
+          "client_name": "Sunset Properties / Delta Ave"
+        }
+      ]
+    },
+    {
+      "normalized_name": "studio vertu",
+      "data": {
+        "__source_id__": "pipeline-lead:c4a8dac665b862a9afbd4c1b",
+        "company_name": "Studio Vertu",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b4581151984 — no CoreBridge estimate",
+        "location_address_1": "2023-06-26"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b4581151984",
+          "updated_date": "2026-10-01T23:06:58.548000",
+          "client_name": "Studio Vertu"
+        }
+      ]
+    },
+    {
+      "normalized_name": "tracy ray farmer florist",
+      "data": {
+        "__source_id__": "pipeline-lead:276b31aa613a9fbaabaf7913",
+        "company_name": "Tracy Ray Farmer Florist",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444df19446b458115198b — no CoreBridge estimate",
+        "location_address_1": "2021-02-08"
+      },
+      "rows": [
+        {
+          "id": "6ab444df19446b458115198b",
+          "updated_date": "2026-10-01T23:07:14.159000",
+          "client_name": "Tracy Ray Farmer Florist"
+        }
+      ]
+    },
+    {
+      "normalized_name": "heritage estates",
+      "data": {
+        "__source_id__": "pipeline-lead:dcd31665a694e6ed9fb82a1a",
+        "company_name": "Heritage Estates",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ab444e0f84d8ff6a30bb8d3 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ab444e0f84d8ff6a30bb8d3",
+          "updated_date": "2026-10-23T08:22:52.056000",
+          "client_name": "Heritage Estates"
+        }
+      ]
+    },
+    {
+      "normalized_name": "ddi club studio",
+      "data": {
+        "__source_id__": "pipeline-lead:0bf510ead31a68d9f1141782",
+        "company_name": "DDI - Club Studio",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6adabff1d8bdac6656452ca4 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6adabff1d8bdac6656452ca4",
+          "updated_date": "2026-11-06T07:41:02.896000",
+          "client_name": "DDI - Club Studio"
+        }
+      ]
+    },
+    {
+      "normalized_name": "edgewood office suites",
+      "data": {
+        "__source_id__": "pipeline-lead:2d9e4b69d78a25e62369324d",
+        "company_name": "Edgewood Office Suites",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6adabff1d8bdac6656452c9a — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6adabff1d8bdac6656452c9a",
+          "updated_date": "2026-11-12T22:33:27.109000",
+          "client_name": "Edgewood Office Suites"
+        }
+      ]
+    },
+    {
+      "normalized_name": "best point medpacecostars",
+      "data": {
+        "__source_id__": "pipeline-lead:9fac3dba441e87e95973c3f9",
+        "company_name": "Best Point - Medpace-CoStars",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6adabff1d8bdac6656452cbf — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6adabff1d8bdac6656452cbf",
+          "updated_date": "2026-11-06T21:34:13.079000",
+          "client_name": "Best Point - Medpace-CoStars"
+        }
+      ]
+    },
+    {
+      "normalized_name": "prestige installation llc chamberlain univ",
+      "data": {
+        "__source_id__": "pipeline-lead:2bbf9bbbc223941922ca68ca",
+        "company_name": "Prestige Installation LLC - Chamberlain Univ.",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6adf74487ab8a188bfdcfe63 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6adf74487ab8a188bfdcfe63",
+          "updated_date": "2026-11-06T07:41:02.896000",
+          "client_name": "Prestige Installation LLC - Chamberlain Univ."
+        }
+      ]
+    },
+    {
+      "normalized_name": "christ community life center",
+      "data": {
+        "__source_id__": "pipeline-lead:d4c5ed5308bd4417e6b5c6fc",
+        "company_name": "Christ Community Life Center",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ae213c9173bcab152d8a576 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ae213c9173bcab152d8a576",
+          "updated_date": "2026-11-13T17:32:15.602000",
+          "client_name": "Christ Community Life Center"
+        }
+      ]
+    },
+    {
+      "normalized_name": "a to z retirement planning",
+      "data": {
+        "__source_id__": "pipeline-lead:b932f762814bcec3c1a8eefd",
+        "company_name": "A to Z Retirement Planning",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6ae4ff0971db664385a03707 — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6ae4ff0971db664385a03707",
+          "updated_date": "2026-11-02T19:35:27.699000",
+          "client_name": "A to Z Retirement Planning"
+        }
+      ]
+    },
+    {
+      "normalized_name": "midwest centers for sight kenwood surgery center",
+      "data": {
+        "__source_id__": "pipeline-lead:bc93435cfdf3bc9af8d106f9",
+        "company_name": "Midwest Centers for Sight - Kenwood Surgery Center",
+        "customer_status": "prospect",
+        "notes": "Created from Sales Pipeline lead row(s) 6af5f7910dfc0778df5bc26f — no CoreBridge estimate"
+      },
+      "rows": [
+        {
+          "id": "6af5f7910dfc0778df5bc26f",
+          "updated_date": "2026-11-16T14:30:50.301000",
+          "client_name": "Midwest Centers for Sight - Kenwood Surgery Center"
+        }
+      ]
+    }
+  ],
+  "blocked": []
+}

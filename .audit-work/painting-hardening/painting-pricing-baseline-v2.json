@@ -1,0 +1,1534 @@
+{
+ "head": "71b65186f4df1159193acceb91db50ea50946a7a",
+ "dirty": "",
+ "changed": "src/components/permitting/JurisdictionDetailPanel.jsx\n",
+ "files": [
+  {
+   "path": "src/components/estimator/paint/paintCalc.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "0d72136349101a7685a9716e2d81393e2d45bb9cc01bb680f7a6eaf16beba132",
+   "role": "target",
+   "text": "const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;\n\nexport const PAINT_THICKNESSES = [\n  \"1/16\", \"1/8\", \"3/16\", \"1/4\", \"3/8\", \"1/2\", \"5/8\", \"3/4\", \"7/8\", \"1\",\n  \"1-1/8\", \"1-1/4\", \"1-3/8\", \"1-1/2\", \"1-5/8\", \"1-3/4\", \"1-7/8\", \"2\",\n  \"2-1/4\", \"2-1/2\", \"2-3/4\", \"3\", \"3-1/4\", \"3-1/2\", \"3-3/4\", \"4\",\n];\n\nexport function parseImperialFraction(value) {\n  if (typeof value !== \"string\") return num(value);\n  let text = value.trim();\n  if (!text) return 0;\n  let total = 0;\n  const wholeAndFraction = text.split(\"-\");\n  if (wholeAndFraction.length === 2) {\n    total += num(wholeAndFraction[0]);\n    text = wholeAndFraction[1];\n  } else {\n    text = wholeAndFraction[0];\n  }\n  const parts = text.split(\"/\");\n  if (parts.length === 2) {\n    const denominator = num(parts[1]);\n    if (denominator) total += num(parts[0]) / denominator;\n  } else {\n    total += num(text);\n  }\n  return total;\n}\n\nfunction parseTiers(raw) {\n  if (Array.isArray(raw)) return raw;\n  try {\n    const parsed = JSON.parse(raw || \"[]\");\n    return Array.isArray(parsed) ? parsed : [];\n  } catch {\n    return [];\n  }\n}\n\nexport function laborTierMultiplier(settings, itemType, quantity) {\n  const settingKey = itemType === \"panel\"\n    ? \"panel_labor_tiers\"\n    : itemType === \"complex_shapes\"\n      ? \"complex_shapes_labor_tiers\"\n      : itemType === \"lettering\"\n        ? \"lettering_labor_tiers\"\n        : \"\";\n  if (!settingKey) return 1;\n  const tiers = parseTiers(settings?.[settingKey]);\n  const qty = num(quantity, 1);\n  const tier = tiers.find((row) => qty >= num(row.min_quantity) && qty <= num(row.max_quantity));\n  return tier ? num(tier.labor_multiplier, 1) : 1;\n}\n\nfunction costPerGallon(cost, unit) {\n  const unitFactors = { oz: 128, pint: 8, quart: 4, liter: 3.78541, gallon: 1 };\n  const factor = unitFactors[unit];\n  return factor ? num(cost) * factor : 0;\n}\n\nexport function liquidPaintRatePerSqft(settings = {}) {\n  const paintCost = costPerGallon(settings.paint_cost_per_unit, settings.paint_unit);\n  const hardenerCost = costPerGallon(settings.hardener_cost_per_unit, settings.hardener_unit);\n  const reducerCost = costPerGallon(settings.reducer_cost_per_unit, settings.reducer_unit);\n  const paintRatio = num(settings.paint_mix_ratio, 3) || 3;\n  const hardenerRatio = num(settings.hardener_mix_ratio, 1) || 1;\n  const reducerRatio = num(settings.reducer_mix_ratio, 1) || 1;\n  const totalRatio = paintRatio + hardenerRatio + reducerRatio;\n  const mixCost = totalRatio > 0\n    ? (paintCost / totalRatio * paintRatio) + (hardenerCost / totalRatio * hardenerRatio) + (reducerCost / totalRatio * reducerRatio)\n    : 0;\n  const coverage = num(settings.mixed_paint_coverage_sqft_per_gallon, 1) || 1;\n  return coverage > 0 ? mixCost / coverage : 0;\n}\n\nexport function autoPaintMaskSqft(item = {}) {\n  if (!(num(item.length) > 0 && num(item.width) > 0)) return 0;\n  let faceArea = 0;\n  if (item.item_type === \"lettering\") {\n    const letterHeight = num(item.width);\n    const letterCount = num(item.length);\n    faceArea = (letterHeight ** 2 * 0.8 * letterCount) / 144;\n  } else {\n    faceArea = num(item.length) * num(item.width) / 144;\n  }\n  return item.paint_sides === \"both_sides\" ? faceArea * 2 : faceArea;\n}\n\nexport function normalizePaintingItem(item = {}) {\n  return {\n    item_type: \"panel\",\n    description: \"\",\n    thickness: \"1/2\",\n    length: 0,\n    width: 0,\n    quantity: 1,\n    edge_complexity_multiplier: 1,\n    paint_sides: \"one_side\",\n    paint_colors: [\"\"],\n    letter_size: \"normal\",\n    paint_mask_sqft: 0,\n    base_supplies_cost: 0,\n    fixed_waste_gallons: 0,\n    supplies_cost: 0,\n    paint_cost: 0,\n    paint_gallons: 0,\n    labor_hours: 0,\n    labor_cost: 0,\n    ...item,\n    paint_colors: Array.isArray(item.paint_colors) ? item.paint_colors : [],\n    paint_sides: item.paint_sides === \"none\" ? \"one_side\" : (item.paint_sides || \"one_side\"),\n  };\n}\n\nexport function calculatePaintingItem(rawItem, settings = {}, liquidRate = 0, projectPaintSuppliesRate = 0) {\n  const item = normalizePaintingItem(rawItem);\n  const perimFactor = num(settings.letter_perimeter_factor, 3.5) || 3.5;\n  const thickness = parseImperialFraction(item.thickness);\n  let paintableSqFt = 0;\n\n  if (item.item_type === \"panel\" && num(item.length) > 0 && num(item.width) > 0) {\n    const faceArea = num(item.length) * num(item.width) / 144;\n    const perimeterInches = 2 * (num(item.length) + num(item.width));\n    const edgeArea = thickness > 0 ? perimeterInches * thickness / 144 : 0;\n    paintableSqFt = item.paint_sides === \"both_sides\" ? faceArea * 2 + edgeArea : faceArea + edgeArea;\n  } else if (item.item_type === \"lettering\" && num(item.width) > 0 && num(item.length) > 0 && thickness > 0) {\n    const letterHeight = num(item.width);\n    const letterCount = num(item.length);\n    const faceArea = (letterHeight ** 2 * 0.8 * letterCount) / 144;\n    const perimeterInches = letterHeight * perimFactor * letterCount;\n    const edgeArea = perimeterInches * thickness / 144;\n    paintableSqFt = item.paint_sides === \"both_sides\" ? faceArea * 2 + edgeArea : faceArea + edgeArea;\n  } else if (item.item_type === \"complex_shapes\" && num(item.length) > 0 && num(item.width) > 0 && thickness > 0) {\n    const faceArea = num(item.length) * num(item.width) / 144;\n    const perimeterInches = 2 * (num(item.length) + num(item.width));\n    const edgeArea = perimeterInches * thickness * num(item.edge_complexity_multiplier, 1) / 144;\n    paintableSqFt = item.paint_sides === \"both_sides\" ? faceArea * 2 + edgeArea : faceArea + edgeArea;\n  }\n\n  const paintMaskMaterialRate = num(settings.paint_mask_rate_per_sqft, 0.75) || 0.75;\n  const paintMaskMachineRate = num(settings.paint_mask_machine_cutting_rate_per_sqft, 0.10) || 0.10;\n  // Preserve SignEstimate Pro behavior exactly: item cost math uses the stored\n  // color-array length. Blank entries are only removed when the project is saved.\n  const numColors = (item.paint_colors || []).length;\n  let paintMaskCost = 0;\n  if (numColors > 1 && num(item.paint_mask_sqft) > 0) {\n    paintMaskCost = num(item.paint_mask_sqft) * (paintMaskMaterialRate + paintMaskMachineRate) * (numColors - 1);\n  }\n\n  let liquidPaintCost = 0;\n  let paintApplicationSuppliesCost = 0;\n  let paintGallons = 0;\n  if (numColors > 0) {\n    const wasteMultiplier = num(settings.paint_waste_multiplier, 1.25) || 1.25;\n    const coverage = num(settings.mixed_paint_coverage_sqft_per_gallon, 350) || 350;\n    paintApplicationSuppliesCost = paintableSqFt * num(projectPaintSuppliesRate) * numColors;\n    if (liquidRate > 0) liquidPaintCost = paintableSqFt * liquidRate * wasteMultiplier * numColors;\n    paintGallons = paintableSqFt * wasteMultiplier * numColors / coverage;\n  }\n\n  const itemFixedWasteGallons = num(item.fixed_waste_gallons);\n  paintGallons += itemFixedWasteGallons;\n  const coverage = num(settings.mixed_paint_coverage_sqft_per_gallon, 350) || 350;\n  liquidPaintCost += itemFixedWasteGallons * liquidRate * coverage;\n  const liquidPaintAndSuppliesCost = paintApplicationSuppliesCost + liquidPaintCost + num(item.base_supplies_cost);\n\n  const laborRate = num(settings.default_labor_rate, 60) || 60;\n  const baseHoursPerSqFt = num(settings.base_labor_hours_per_sqft, 0.05) || 0.05;\n  const complexityMap = {\n    extra_small: \"complex\",\n    small: \"complex\",\n    normal: \"moderate\",\n    medium: \"moderate\",\n    large: \"simple\",\n    extra_large: \"simple\",\n  };\n  const itemComplexity = item.item_type === \"lettering\" ? complexityMap[item.letter_size] || \"moderate\" : \"moderate\";\n  const complexityMultipliers = {\n    simple: num(settings.simple_complexity_multiplier, 0.7) || 0.7,\n    moderate: num(settings.moderate_complexity_multiplier, 1) || 1,\n    complex: num(settings.complex_complexity_multiplier, 1.5) || 1.5,\n  };\n  const paintMultipliers = {\n    one_side: num(settings.one_side_paint_multiplier, 0.8) || 0.8,\n    both_sides: num(settings.both_sides_paint_multiplier, 1) || 1,\n  };\n  const additionalColorMultiplier = num(settings.additional_color_multiplier, 0.3) || 0.3;\n\n  let baseHours = paintableSqFt * baseHoursPerSqFt * (complexityMultipliers[itemComplexity] || 1) * (paintMultipliers[item.paint_sides] || 1);\n  if (numColors > 1) baseHours *= 1 + (numColors - 1) * additionalColorMultiplier;\n\n  const maskApplicationLaborRate = num(settings.paint_mask_application_labor_rate_per_sqft, 0.25) || 0.25;\n  const maskCuttingLaborRate = num(settings.paint_mask_cutting_labor_rate_per_sqft, 0.15) || 0.15;\n  if (numColors > 1 && num(item.paint_mask_sqft) > 0) {\n    baseHours += (num(item.paint_mask_sqft) * maskApplicationLaborRate * (numColors - 1) / laborRate)\n      + (num(item.paint_mask_sqft) * maskCuttingLaborRate * (numColors - 1) / laborRate);\n  }\n\n  const qty = item.item_type === \"lettering\" ? 1 : Math.max(num(item.quantity, 1), 1);\n  const discountedLaborHours = baseHours * laborTierMultiplier(settings, item.item_type, qty);\n  const laborCost = discountedLaborHours * laborRate * qty;\n\n  return {\n    ...item,\n    quantity: qty,\n    supplies_cost: paintMaskCost * qty,\n    paint_cost: liquidPaintAndSuppliesCost * qty,\n    paint_gallons: paintGallons * qty,\n    labor_hours: discountedLaborHours * qty,\n    labor_cost: laborCost,\n    paintable_sqft: paintableSqFt,\n  };\n}\n\nexport function calculatePaintingProject(project = {}, settings = {}) {\n  const liquidRate = liquidPaintRatePerSqft(settings);\n  const projectSuppliesRate = num(\n    project.paint_supplies_per_sqft,\n    num(settings.default_paint_supplies_per_sqft, 1.25) || 1.25\n  );\n  const items = (project.items || []).map((item) => calculatePaintingItem(item, settings, liquidRate, projectSuppliesRate));\n\n  const totalPaintMask = items.reduce((sum, item) => sum + num(item.supplies_cost), 0);\n  let totalLiquidPaintAndSupplies = items.reduce((sum, item) => sum + num(item.paint_cost), 0);\n  const totalItemLaborCost = items.reduce((sum, item) => sum + num(item.labor_cost), 0);\n  let totalPaintGallons = items.reduce((sum, item) => sum + num(item.paint_gallons), 0);\n\n  const globalFixedWasteGallons = num(settings.fixed_paint_waste_gallons);\n  totalPaintGallons += globalFixedWasteGallons;\n  const coverage = num(settings.mixed_paint_coverage_sqft_per_gallon, 350) || 350;\n  totalLiquidPaintAndSupplies += globalFixedWasteGallons * liquidRate * coverage;\n\n  const itemFixedWaste = items.reduce((sum, item) => sum + num(item.fixed_waste_gallons), 0);\n  const numberOfMixes = Math.ceil(totalPaintGallons);\n  const mixingHours = numberOfMixes * (num(settings.paint_mixing_labor_hours, 0.25) || 0.25);\n  const setupHours = num(settings.setup_time_labor_hours, 0.5) || 0.5;\n\n  const uniqueColors = new Set();\n  items.forEach((item) => (item.paint_colors || []).forEach((color) => {\n    const normalized = String(color || \"\").trim().toLowerCase();\n    if (normalized) uniqueColors.add(normalized);\n  }));\n  const uniqueColorCount = uniqueColors.size;\n  const totalColorChangeHours = uniqueColorCount > 1\n    ? (uniqueColorCount - 1) * (num(settings.color_change_setup_hours, 0.25) || 0.25)\n    : 0;\n  const totalPaintGunCleaningHours = uniqueColorCount > 0\n    ? uniqueColorCount * (num(settings.paint_gun_cleaning_hours, 0.15) || 0.15)\n    : 0;\n  const laborRate = num(settings.default_labor_rate, 60) || 60;\n  const fixedLaborCost = (mixingHours + setupHours + totalColorChangeHours + totalPaintGunCleaningHours) * laborRate;\n  let totalLabor = totalItemLaborCost + fixedLaborCost;\n  const totalLaborHours = items.reduce((sum, item) => sum + num(item.labor_hours), 0)\n    + mixingHours + setupHours + totalColorChangeHours + totalPaintGunCleaningHours;\n\n  const minLaborHours = num(settings.min_labor_hours);\n  const minPaintCost = num(settings.min_paint_cost);\n  if (totalLaborHours > 0 && totalLaborHours < minLaborHours) totalLabor = minLaborHours * laborRate;\n  if (totalLiquidPaintAndSupplies > 0 && totalLiquidPaintAndSupplies < minPaintCost) totalLiquidPaintAndSupplies = minPaintCost;\n\n  const totalCost = totalPaintMask + totalLiquidPaintAndSupplies + totalLabor;\n  return {\n    items,\n    liquidPaintRate: liquidRate,\n    totals: {\n      total_paint_mask_cost: totalPaintMask,\n      total_liquid_paint_and_supplies_cost: totalLiquidPaintAndSupplies,\n      total_labor_cost: totalLabor,\n      total_labor_hours: totalLaborHours,\n      total_paint_gallons: totalPaintGallons,\n      number_of_mixes: numberOfMixes,\n      mixing_hours: mixingHours,\n      setup_hours: setupHours,\n      unique_color_count: uniqueColorCount,\n      color_change_hours: totalColorChangeHours,\n      gun_cleaning_hours: totalPaintGunCleaningHours,\n      fixed_waste_gallons: globalFixedWasteGallons + itemFixedWaste,\n      total_cost: totalCost,\n    },\n  };\n}\n",
+   "base64": "Y29uc3QgbnVtID0gKHZhbHVlLCBmYWxsYmFjayA9IDApID0+IE51bWJlci5pc0Zpbml0ZShOdW1iZXIodmFsdWUpKSA/IE51bWJlcih2YWx1ZSkgOiBmYWxsYmFjazsKCmV4cG9ydCBjb25zdCBQQUlOVF9USElDS05FU1NFUyA9IFsKICAiMS8xNiIsICIxLzgiLCAiMy8xNiIsICIxLzQiLCAiMy84IiwgIjEvMiIsICI1LzgiLCAiMy80IiwgIjcvOCIsICIxIiwKICAiMS0xLzgiLCAiMS0xLzQiLCAiMS0zLzgiLCAiMS0xLzIiLCAiMS01LzgiLCAiMS0zLzQiLCAiMS03LzgiLCAiMiIsCiAgIjItMS80IiwgIjItMS8yIiwgIjItMy80IiwgIjMiLCAiMy0xLzQiLCAiMy0xLzIiLCAiMy0zLzQiLCAiNCIsCl07CgpleHBvcnQgZnVuY3Rpb24gcGFyc2VJbXBlcmlhbEZyYWN0aW9uKHZhbHVlKSB7CiAgaWYgKHR5cGVvZiB2YWx1ZSAhPT0gInN0cmluZyIpIHJldHVybiBudW0odmFsdWUpOwogIGxldCB0ZXh0ID0gdmFsdWUudHJpbSgpOwogIGlmICghdGV4dCkgcmV0dXJuIDA7CiAgbGV0IHRvdGFsID0gMDsKICBjb25zdCB3aG9sZUFuZEZyYWN0aW9uID0gdGV4dC5zcGxpdCgiLSIpOwogIGlmICh3aG9sZUFuZEZyYWN0aW9uLmxlbmd0aCA9PT0gMikgewogICAgdG90YWwgKz0gbnVtKHdob2xlQW5kRnJhY3Rpb25bMF0pOwogICAgdGV4dCA9IHdob2xlQW5kRnJhY3Rpb25bMV07CiAgfSBlbHNlIHsKICAgIHRleHQgPSB3aG9sZUFuZEZyYWN0aW9uWzBdOwogIH0KICBjb25zdCBwYXJ0cyA9IHRleHQuc3BsaXQoIi8iKTsKICBpZiAocGFydHMubGVuZ3RoID09PSAyKSB7CiAgICBjb25zdCBkZW5vbWluYXRvciA9IG51bShwYXJ0c1sxXSk7CiAgICBpZiAoZGVub21pbmF0b3IpIHRvdGFsICs9IG51bShwYXJ0c1swXSkgLyBkZW5vbWluYXRvcjsKICB9IGVsc2UgewogICAgdG90YWwgKz0gbnVtKHRleHQpOwogIH0KICByZXR1cm4gdG90YWw7Cn0KCmZ1bmN0aW9uIHBhcnNlVGllcnMocmF3KSB7CiAgaWYgKEFycmF5LmlzQXJyYXkocmF3KSkgcmV0dXJuIHJhdzsKICB0cnkgewogICAgY29uc3QgcGFyc2VkID0gSlNPTi5wYXJzZShyYXcgfHwgIltdIik7CiAgICByZXR1cm4gQXJyYXkuaXNBcnJheShwYXJzZWQpID8gcGFyc2VkIDogW107CiAgfSBjYXRjaCB7CiAgICByZXR1cm4gW107CiAgfQp9CgpleHBvcnQgZnVuY3Rpb24gbGFib3JUaWVyTXVsdGlwbGllcihzZXR0aW5ncywgaXRlbVR5cGUsIHF1YW50aXR5KSB7CiAgY29uc3Qgc2V0dGluZ0tleSA9IGl0ZW1UeXBlID09PSAicGFuZWwiCiAgICA/ICJwYW5lbF9sYWJvcl90aWVycyIKICAgIDogaXRlbVR5cGUgPT09ICJjb21wbGV4X3NoYXBlcyIKICAgICAgPyAiY29tcGxleF9zaGFwZXNfbGFib3JfdGllcnMiCiAgICAgIDogaXRlbVR5cGUgPT09ICJsZXR0ZXJpbmciCiAgICAgICAgPyAibGV0dGVyaW5nX2xhYm9yX3RpZXJzIgogICAgICAgIDogIiI7CiAgaWYgKCFzZXR0aW5nS2V5KSByZXR1cm4gMTsKICBjb25zdCB0aWVycyA9IHBhcnNlVGllcnMoc2V0dGluZ3M/LltzZXR0aW5nS2V5XSk7CiAgY29uc3QgcXR5ID0gbnVtKHF1YW50aXR5LCAxKTsKICBjb25zdCB0aWVyID0gdGllcnMuZmluZCgocm93KSA9PiBxdHkgPj0gbnVtKHJvdy5taW5fcXVhbnRpdHkpICYmIHF0eSA8PSBudW0ocm93Lm1heF9xdWFudGl0eSkpOwogIHJldHVybiB0aWVyID8gbnVtKHRpZXIubGFib3JfbXVsdGlwbGllciwgMSkgOiAxOwp9CgpmdW5jdGlvbiBjb3N0UGVyR2FsbG9uKGNvc3QsIHVuaXQpIHsKICBjb25zdCB1bml0RmFjdG9ycyA9IHsgb3o6IDEyOCwgcGludDogOCwgcXVhcnQ6IDQsIGxpdGVyOiAzLjc4NTQxLCBnYWxsb246IDEgfTsKICBjb25zdCBmYWN0b3IgPSB1bml0RmFjdG9yc1t1bml0XTsKICByZXR1cm4gZmFjdG9yID8gbnVtKGNvc3QpICogZmFjdG9yIDogMDsKfQoKZXhwb3J0IGZ1bmN0aW9uIGxpcXVpZFBhaW50UmF0ZVBlclNxZnQoc2V0dGluZ3MgPSB7fSkgewogIGNvbnN0IHBhaW50Q29zdCA9IGNvc3RQZXJHYWxsb24oc2V0dGluZ3MucGFpbnRfY29zdF9wZXJfdW5pdCwgc2V0dGluZ3MucGFpbnRfdW5pdCk7CiAgY29uc3QgaGFyZGVuZXJDb3N0ID0gY29zdFBlckdhbGxvbihzZXR0aW5ncy5oYXJkZW5lcl9jb3N0X3Blcl91bml0LCBzZXR0aW5ncy5oYXJkZW5lcl91bml0KTsKICBjb25zdCByZWR1Y2VyQ29zdCA9IGNvc3RQZXJHYWxsb24oc2V0dGluZ3MucmVkdWNlcl9jb3N0X3Blcl91bml0LCBzZXR0aW5ncy5yZWR1Y2VyX3VuaXQpOwogIGNvbnN0IHBhaW50UmF0aW8gPSBudW0oc2V0dGluZ3MucGFpbnRfbWl4X3JhdGlvLCAzKSB8fCAzOwogIGNvbnN0IGhhcmRlbmVyUmF0aW8gPSBudW0oc2V0dGluZ3MuaGFyZGVuZXJfbWl4X3JhdGlvLCAxKSB8fCAxOwogIGNvbnN0IHJlZHVjZXJSYXRpbyA9IG51bShzZXR0aW5ncy5yZWR1Y2VyX21peF9yYXRpbywgMSkgfHwgMTsKICBjb25zdCB0b3RhbFJhdGlvID0gcGFpbnRSYXRpbyArIGhhcmRlbmVyUmF0aW8gKyByZWR1Y2VyUmF0aW87CiAgY29uc3QgbWl4Q29zdCA9IHRvdGFsUmF0aW8gPiAwCiAgICA/IChwYWludENvc3QgLyB0b3RhbFJhdGlvICogcGFpbnRSYXRpbykgKyAoaGFyZGVuZXJDb3N0IC8gdG90YWxSYXRpbyAqIGhhcmRlbmVyUmF0aW8pICsgKHJlZHVjZXJDb3N0IC8gdG90YWxSYXRpbyAqIHJlZHVjZXJSYXRpbykKICAgIDogMDsKICBjb25zdCBjb3ZlcmFnZSA9IG51bShzZXR0aW5ncy5taXhlZF9wYWludF9jb3ZlcmFnZV9zcWZ0X3Blcl9nYWxsb24sIDEpIHx8IDE7CiAgcmV0dXJuIGNvdmVyYWdlID4gMCA/IG1peENvc3QgLyBjb3ZlcmFnZSA6IDA7Cn0KCmV4cG9ydCBmdW5jdGlvbiBhdXRvUGFpbnRNYXNrU3FmdChpdGVtID0ge30pIHsKICBpZiAoIShudW0oaXRlbS5sZW5ndGgpID4gMCAmJiBudW0oaXRlbS53aWR0aCkgPiAwKSkgcmV0dXJuIDA7CiAgbGV0IGZhY2VBcmVhID0gMDsKICBpZiAoaXRlbS5pdGVtX3R5cGUgPT09ICJsZXR0ZXJpbmciKSB7CiAgICBjb25zdCBsZXR0ZXJIZWlnaHQgPSBudW0oaXRlbS53aWR0aCk7CiAgICBjb25zdCBsZXR0ZXJDb3VudCA9IG51bShpdGVtLmxlbmd0aCk7CiAgICBmYWNlQXJlYSA9IChsZXR0ZXJIZWlnaHQgKiogMiAqIDAuOCAqIGxldHRlckNvdW50KSAvIDE0NDsKICB9IGVsc2UgewogICAgZmFjZUFyZWEgPSBudW0oaXRlbS5sZW5ndGgpICogbnVtKGl0ZW0ud2lkdGgpIC8gMTQ0OwogIH0KICByZXR1cm4gaXRlbS5wYWludF9zaWRlcyA9PT0gImJvdGhfc2lkZXMiID8gZmFjZUFyZWEgKiAyIDogZmFjZUFyZWE7Cn0KCmV4cG9ydCBmdW5jdGlvbiBub3JtYWxpemVQYWludGluZ0l0ZW0oaXRlbSA9IHt9KSB7CiAgcmV0dXJuIHsKICAgIGl0ZW1fdHlwZTogInBhbmVsIiwKICAgIGRlc2NyaXB0aW9uOiAiIiwKICAgIHRoaWNrbmVzczogIjEvMiIsCiAgICBsZW5ndGg6IDAsCiAgICB3aWR0aDogMCwKICAgIHF1YW50aXR5OiAxLAogICAgZWRnZV9jb21wbGV4aXR5X211bHRpcGxpZXI6IDEsCiAgICBwYWludF9zaWRlczogIm9uZV9zaWRlIiwKICAgIHBhaW50X2NvbG9yczogWyIiXSwKICAgIGxldHRlcl9zaXplOiAibm9ybWFsIiwKICAgIHBhaW50X21hc2tfc3FmdDogMCwKICAgIGJhc2Vfc3VwcGxpZXNfY29zdDogMCwKICAgIGZpeGVkX3dhc3RlX2dhbGxvbnM6IDAsCiAgICBzdXBwbGllc19jb3N0OiAwLAogICAgcGFpbnRfY29zdDogMCwKICAgIHBhaW50X2dhbGxvbnM6IDAsCiAgICBsYWJvcl9ob3VyczogMCwKICAgIGxhYm9yX2Nvc3Q6IDAsCiAgICAuLi5pdGVtLAogICAgcGFpbnRfY29sb3JzOiBBcnJheS5pc0FycmF5KGl0ZW0ucGFpbnRfY29sb3JzKSA/IGl0ZW0ucGFpbnRfY29sb3JzIDogW10sCiAgICBwYWludF9zaWRlczogaXRlbS5wYWludF9zaWRlcyA9PT0gIm5vbmUiID8gIm9uZV9zaWRlIiA6IChpdGVtLnBhaW50X3NpZGVzIHx8ICJvbmVfc2lkZSIpLAogIH07Cn0KCmV4cG9ydCBmdW5jdGlvbiBjYWxjdWxhdGVQYWludGluZ0l0ZW0ocmF3SXRlbSwgc2V0dGluZ3MgPSB7fSwgbGlxdWlkUmF0ZSA9IDAsIHByb2plY3RQYWludFN1cHBsaWVzUmF0ZSA9IDApIHsKICBjb25zdCBpdGVtID0gbm9ybWFsaXplUGFpbnRpbmdJdGVtKHJhd0l0ZW0pOwogIGNvbnN0IHBlcmltRmFjdG9yID0gbnVtKHNldHRpbmdzLmxldHRlcl9wZXJpbWV0ZXJfZmFjdG9yLCAzLjUpIHx8IDMuNTsKICBjb25zdCB0aGlja25lc3MgPSBwYXJzZUltcGVyaWFsRnJhY3Rpb24oaXRlbS50aGlja25lc3MpOwogIGxldCBwYWludGFibGVTcUZ0ID0gMDsKCiAgaWYgKGl0ZW0uaXRlbV90eXBlID09PSAicGFuZWwiICYmIG51bShpdGVtLmxlbmd0aCkgPiAwICYmIG51bShpdGVtLndpZHRoKSA+IDApIHsKICAgIGNvbnN0IGZhY2VBcmVhID0gbnVtKGl0ZW0ubGVuZ3RoKSAqIG51bShpdGVtLndpZHRoKSAvIDE0NDsKICAgIGNvbnN0IHBlcmltZXRlckluY2hlcyA9IDIgKiAobnVtKGl0ZW0ubGVuZ3RoKSArIG51bShpdGVtLndpZHRoKSk7CiAgICBjb25zdCBlZGdlQXJlYSA9IHRoaWNrbmVzcyA+IDAgPyBwZXJpbWV0ZXJJbmNoZXMgKiB0aGlja25lc3MgLyAxNDQgOiAwOwogICAgcGFpbnRhYmxlU3FGdCA9IGl0ZW0ucGFpbnRfc2lkZXMgPT09ICJib3RoX3NpZGVzIiA/IGZhY2VBcmVhICogMiArIGVkZ2VBcmVhIDogZmFjZUFyZWEgKyBlZGdlQXJlYTsKICB9IGVsc2UgaWYgKGl0ZW0uaXRlbV90eXBlID09PSAibGV0dGVyaW5nIiAmJiBudW0oaXRlbS53aWR0aCkgPiAwICYmIG51bShpdGVtLmxlbmd0aCkgPiAwICYmIHRoaWNrbmVzcyA+IDApIHsKICAgIGNvbnN0IGxldHRlckhlaWdodCA9IG51bShpdGVtLndpZHRoKTsKICAgIGNvbnN0IGxldHRlckNvdW50ID0gbnVtKGl0ZW0ubGVuZ3RoKTsKICAgIGNvbnN0IGZhY2VBcmVhID0gKGxldHRlckhlaWdodCAqKiAyICogMC44ICogbGV0dGVyQ291bnQpIC8gMTQ0OwogICAgY29uc3QgcGVyaW1ldGVySW5jaGVzID0gbGV0dGVySGVpZ2h0ICogcGVyaW1GYWN0b3IgKiBsZXR0ZXJDb3VudDsKICAgIGNvbnN0IGVkZ2VBcmVhID0gcGVyaW1ldGVySW5jaGVzICogdGhpY2tuZXNzIC8gMTQ0OwogICAgcGFpbnRhYmxlU3FGdCA9IGl0ZW0ucGFpbnRfc2lkZXMgPT09ICJib3RoX3NpZGVzIiA/IGZhY2VBcmVhICogMiArIGVkZ2VBcmVhIDogZmFjZUFyZWEgKyBlZGdlQXJlYTsKICB9IGVsc2UgaWYgKGl0ZW0uaXRlbV90eXBlID09PSAiY29tcGxleF9zaGFwZXMiICYmIG51bShpdGVtLmxlbmd0aCkgPiAwICYmIG51bShpdGVtLndpZHRoKSA+IDAgJiYgdGhpY2tuZXNzID4gMCkgewogICAgY29uc3QgZmFjZUFyZWEgPSBudW0oaXRlbS5sZW5ndGgpICogbnVtKGl0ZW0ud2lkdGgpIC8gMTQ0OwogICAgY29uc3QgcGVyaW1ldGVySW5jaGVzID0gMiAqIChudW0oaXRlbS5sZW5ndGgpICsgbnVtKGl0ZW0ud2lkdGgpKTsKICAgIGNvbnN0IGVkZ2VBcmVhID0gcGVyaW1ldGVySW5jaGVzICogdGhpY2tuZXNzICogbnVtKGl0ZW0uZWRnZV9jb21wbGV4aXR5X211bHRpcGxpZXIsIDEpIC8gMTQ0OwogICAgcGFpbnRhYmxlU3FGdCA9IGl0ZW0ucGFpbnRfc2lkZXMgPT09ICJib3RoX3NpZGVzIiA/IGZhY2VBcmVhICogMiArIGVkZ2VBcmVhIDogZmFjZUFyZWEgKyBlZGdlQXJlYTsKICB9CgogIGNvbnN0IHBhaW50TWFza01hdGVyaWFsUmF0ZSA9IG51bShzZXR0aW5ncy5wYWludF9tYXNrX3JhdGVfcGVyX3NxZnQsIDAuNzUpIHx8IDAuNzU7CiAgY29uc3QgcGFpbnRNYXNrTWFjaGluZVJhdGUgPSBudW0oc2V0dGluZ3MucGFpbnRfbWFza19tYWNoaW5lX2N1dHRpbmdfcmF0ZV9wZXJfc3FmdCwgMC4xMCkgfHwgMC4xMDsKICAvLyBQcmVzZXJ2ZSBTaWduRXN0aW1hdGUgUHJvIGJlaGF2aW9yIGV4YWN0bHk6IGl0ZW0gY29zdCBtYXRoIHVzZXMgdGhlIHN0b3JlZAogIC8vIGNvbG9yLWFycmF5IGxlbmd0aC4gQmxhbmsgZW50cmllcyBhcmUgb25seSByZW1vdmVkIHdoZW4gdGhlIHByb2plY3QgaXMgc2F2ZWQuCiAgY29uc3QgbnVtQ29sb3JzID0gKGl0ZW0ucGFpbnRfY29sb3JzIHx8IFtdKS5sZW5ndGg7CiAgbGV0IHBhaW50TWFza0Nvc3QgPSAwOwogIGlmIChudW1Db2xvcnMgPiAxICYmIG51bShpdGVtLnBhaW50X21hc2tfc3FmdCkgPiAwKSB7CiAgICBwYWludE1hc2tDb3N0ID0gbnVtKGl0ZW0ucGFpbnRfbWFza19zcWZ0KSAqIChwYWludE1hc2tNYXRlcmlhbFJhdGUgKyBwYWludE1hc2tNYWNoaW5lUmF0ZSkgKiAobnVtQ29sb3JzIC0gMSk7CiAgfQoKICBsZXQgbGlxdWlkUGFpbnRDb3N0ID0gMDsKICBsZXQgcGFpbnRBcHBsaWNhdGlvblN1cHBsaWVzQ29zdCA9IDA7CiAgbGV0IHBhaW50R2FsbG9ucyA9IDA7CiAgaWYgKG51bUNvbG9ycyA+IDApIHsKICAgIGNvbnN0IHdhc3RlTXVsdGlwbGllciA9IG51bShzZXR0aW5ncy5wYWludF93YXN0ZV9tdWx0aXBsaWVyLCAxLjI1KSB8fCAxLjI1OwogICAgY29uc3QgY292ZXJhZ2UgPSBudW0oc2V0dGluZ3MubWl4ZWRfcGFpbnRfY292ZXJhZ2Vfc3FmdF9wZXJfZ2FsbG9uLCAzNTApIHx8IDM1MDsKICAgIHBhaW50QXBwbGljYXRpb25TdXBwbGllc0Nvc3QgPSBwYWludGFibGVTcUZ0ICogbnVtKHByb2plY3RQYWludFN1cHBsaWVzUmF0ZSkgKiBudW1Db2xvcnM7CiAgICBpZiAobGlxdWlkUmF0ZSA+IDApIGxpcXVpZFBhaW50Q29zdCA9IHBhaW50YWJsZVNxRnQgKiBsaXF1aWRSYXRlICogd2FzdGVNdWx0aXBsaWVyICogbnVtQ29sb3JzOwogICAgcGFpbnRHYWxsb25zID0gcGFpbnRhYmxlU3FGdCAqIHdhc3RlTXVsdGlwbGllciAqIG51bUNvbG9ycyAvIGNvdmVyYWdlOwogIH0KCiAgY29uc3QgaXRlbUZpeGVkV2FzdGVHYWxsb25zID0gbnVtKGl0ZW0uZml4ZWRfd2FzdGVfZ2FsbG9ucyk7CiAgcGFpbnRHYWxsb25zICs9IGl0ZW1GaXhlZFdhc3RlR2FsbG9uczsKICBjb25zdCBjb3ZlcmFnZSA9IG51bShzZXR0aW5ncy5taXhlZF9wYWludF9jb3ZlcmFnZV9zcWZ0X3Blcl9nYWxsb24sIDM1MCkgfHwgMzUwOwogIGxpcXVpZFBhaW50Q29zdCArPSBpdGVtRml4ZWRXYXN0ZUdhbGxvbnMgKiBsaXF1aWRSYXRlICogY292ZXJhZ2U7CiAgY29uc3QgbGlxdWlkUGFpbnRBbmRTdXBwbGllc0Nvc3QgPSBwYWludEFwcGxpY2F0aW9uU3VwcGxpZXNDb3N0ICsgbGlxdWlkUGFpbnRDb3N0ICsgbnVtKGl0ZW0uYmFzZV9zdXBwbGllc19jb3N0KTsKCiAgY29uc3QgbGFib3JSYXRlID0gbnVtKHNldHRpbmdzLmRlZmF1bHRfbGFib3JfcmF0ZSwgNjApIHx8IDYwOwogIGNvbnN0IGJhc2VIb3Vyc1BlclNxRnQgPSBudW0oc2V0dGluZ3MuYmFzZV9sYWJvcl9ob3Vyc19wZXJfc3FmdCwgMC4wNSkgfHwgMC4wNTsKICBjb25zdCBjb21wbGV4aXR5TWFwID0gewogICAgZXh0cmFfc21hbGw6ICJjb21wbGV4IiwKICAgIHNtYWxsOiAiY29tcGxleCIsCiAgICBub3JtYWw6ICJtb2RlcmF0ZSIsCiAgICBtZWRpdW06ICJtb2RlcmF0ZSIsCiAgICBsYXJnZTogInNpbXBsZSIsCiAgICBleHRyYV9sYXJnZTogInNpbXBsZSIsCiAgfTsKICBjb25zdCBpdGVtQ29tcGxleGl0eSA9IGl0ZW0uaXRlbV90eXBlID09PSAibGV0dGVyaW5nIiA/IGNvbXBsZXhpdHlNYXBbaXRlbS5sZXR0ZXJfc2l6ZV0gfHwgIm1vZGVyYXRlIiA6ICJtb2RlcmF0ZSI7CiAgY29uc3QgY29tcGxleGl0eU11bHRpcGxpZXJzID0gewogICAgc2ltcGxlOiBudW0oc2V0dGluZ3Muc2ltcGxlX2NvbXBsZXhpdHlfbXVsdGlwbGllciwgMC43KSB8fCAwLjcsCiAgICBtb2RlcmF0ZTogbnVtKHNldHRpbmdzLm1vZGVyYXRlX2NvbXBsZXhpdHlfbXVsdGlwbGllciwgMSkgfHwgMSwKICAgIGNvbXBsZXg6IG51bShzZXR0aW5ncy5jb21wbGV4X2NvbXBsZXhpdHlfbXVsdGlwbGllciwgMS41KSB8fCAxLjUsCiAgfTsKICBjb25zdCBwYWludE11bHRpcGxpZXJzID0gewogICAgb25lX3NpZGU6IG51bShzZXR0aW5ncy5vbmVfc2lkZV9wYWludF9tdWx0aXBsaWVyLCAwLjgpIHx8IDAuOCwKICAgIGJvdGhfc2lkZXM6IG51bShzZXR0aW5ncy5ib3RoX3NpZGVzX3BhaW50X211bHRpcGxpZXIsIDEpIHx8IDEsCiAgfTsKICBjb25zdCBhZGRpdGlvbmFsQ29sb3JNdWx0aXBsaWVyID0gbnVtKHNldHRpbmdzLmFkZGl0aW9uYWxfY29sb3JfbXVsdGlwbGllciwgMC4zKSB8fCAwLjM7CgogIGxldCBiYXNlSG91cnMgPSBwYWludGFibGVTcUZ0ICogYmFzZUhvdXJzUGVyU3FGdCAqIChjb21wbGV4aXR5TXVsdGlwbGllcnNbaXRlbUNvbXBsZXhpdHldIHx8IDEpICogKHBhaW50TXVsdGlwbGllcnNbaXRlbS5wYWludF9zaWRlc10gfHwgMSk7CiAgaWYgKG51bUNvbG9ycyA+IDEpIGJhc2VIb3VycyAqPSAxICsgKG51bUNvbG9ycyAtIDEpICogYWRkaXRpb25hbENvbG9yTXVsdGlwbGllcjsKCiAgY29uc3QgbWFza0FwcGxpY2F0aW9uTGFib3JSYXRlID0gbnVtKHNldHRpbmdzLnBhaW50X21hc2tfYXBwbGljYXRpb25fbGFib3JfcmF0ZV9wZXJfc3FmdCwgMC4yNSkgfHwgMC4yNTsKICBjb25zdCBtYXNrQ3V0dGluZ0xhYm9yUmF0ZSA9IG51bShzZXR0aW5ncy5wYWludF9tYXNrX2N1dHRpbmdfbGFib3JfcmF0ZV9wZXJfc3FmdCwgMC4xNSkgfHwgMC4xNTsKICBpZiAobnVtQ29sb3JzID4gMSAmJiBudW0oaXRlbS5wYWludF9tYXNrX3NxZnQpID4gMCkgewogICAgYmFzZUhvdXJzICs9IChudW0oaXRlbS5wYWludF9tYXNrX3NxZnQpICogbWFza0FwcGxpY2F0aW9uTGFib3JSYXRlICogKG51bUNvbG9ycyAtIDEpIC8gbGFib3JSYXRlKQogICAgICArIChudW0oaXRlbS5wYWludF9tYXNrX3NxZnQpICogbWFza0N1dHRpbmdMYWJvclJhdGUgKiAobnVtQ29sb3JzIC0gMSkgLyBsYWJvclJhdGUpOwogIH0KCiAgY29uc3QgcXR5ID0gaXRlbS5pdGVtX3R5cGUgPT09ICJsZXR0ZXJpbmciID8gMSA6IE1hdGgubWF4KG51bShpdGVtLnF1YW50aXR5LCAxKSwgMSk7CiAgY29uc3QgZGlzY291bnRlZExhYm9ySG91cnMgPSBiYXNlSG91cnMgKiBsYWJvclRpZXJNdWx0aXBsaWVyKHNldHRpbmdzLCBpdGVtLml0ZW1fdHlwZSwgcXR5KTsKICBjb25zdCBsYWJvckNvc3QgPSBkaXNjb3VudGVkTGFib3JIb3VycyAqIGxhYm9yUmF0ZSAqIHF0eTsKCiAgcmV0dXJuIHsKICAgIC4uLml0ZW0sCiAgICBxdWFudGl0eTogcXR5LAogICAgc3VwcGxpZXNfY29zdDogcGFpbnRNYXNrQ29zdCAqIHF0eSwKICAgIHBhaW50X2Nvc3Q6IGxpcXVpZFBhaW50QW5kU3VwcGxpZXNDb3N0ICogcXR5LAogICAgcGFpbnRfZ2FsbG9uczogcGFpbnRHYWxsb25zICogcXR5LAogICAgbGFib3JfaG91cnM6IGRpc2NvdW50ZWRMYWJvckhvdXJzICogcXR5LAogICAgbGFib3JfY29zdDogbGFib3JDb3N0LAogICAgcGFpbnRhYmxlX3NxZnQ6IHBhaW50YWJsZVNxRnQsCiAgfTsKfQoKZXhwb3J0IGZ1bmN0aW9uIGNhbGN1bGF0ZVBhaW50aW5nUHJvamVjdChwcm9qZWN0ID0ge30sIHNldHRpbmdzID0ge30pIHsKICBjb25zdCBsaXF1aWRSYXRlID0gbGlxdWlkUGFpbnRSYXRlUGVyU3FmdChzZXR0aW5ncyk7CiAgY29uc3QgcHJvamVjdFN1cHBsaWVzUmF0ZSA9IG51bSgKICAgIHByb2plY3QucGFpbnRfc3VwcGxpZXNfcGVyX3NxZnQsCiAgICBudW0oc2V0dGluZ3MuZGVmYXVsdF9wYWludF9zdXBwbGllc19wZXJfc3FmdCwgMS4yNSkgfHwgMS4yNQogICk7CiAgY29uc3QgaXRlbXMgPSAocHJvamVjdC5pdGVtcyB8fCBbXSkubWFwKChpdGVtKSA9PiBjYWxjdWxhdGVQYWludGluZ0l0ZW0oaXRlbSwgc2V0dGluZ3MsIGxpcXVpZFJhdGUsIHByb2plY3RTdXBwbGllc1JhdGUpKTsKCiAgY29uc3QgdG90YWxQYWludE1hc2sgPSBpdGVtcy5yZWR1Y2UoKHN1bSwgaXRlbSkgPT4gc3VtICsgbnVtKGl0ZW0uc3VwcGxpZXNfY29zdCksIDApOwogIGxldCB0b3RhbExpcXVpZFBhaW50QW5kU3VwcGxpZXMgPSBpdGVtcy5yZWR1Y2UoKHN1bSwgaXRlbSkgPT4gc3VtICsgbnVtKGl0ZW0ucGFpbnRfY29zdCksIDApOwogIGNvbnN0IHRvdGFsSXRlbUxhYm9yQ29zdCA9IGl0ZW1zLnJlZHVjZSgoc3VtLCBpdGVtKSA9PiBzdW0gKyBudW0oaXRlbS5sYWJvcl9jb3N0KSwgMCk7CiAgbGV0IHRvdGFsUGFpbnRHYWxsb25zID0gaXRlbXMucmVkdWNlKChzdW0sIGl0ZW0pID0+IHN1bSArIG51bShpdGVtLnBhaW50X2dhbGxvbnMpLCAwKTsKCiAgY29uc3QgZ2xvYmFsRml4ZWRXYXN0ZUdhbGxvbnMgPSBudW0oc2V0dGluZ3MuZml4ZWRfcGFpbnRfd2FzdGVfZ2FsbG9ucyk7CiAgdG90YWxQYWludEdhbGxvbnMgKz0gZ2xvYmFsRml4ZWRXYXN0ZUdhbGxvbnM7CiAgY29uc3QgY292ZXJhZ2UgPSBudW0oc2V0dGluZ3MubWl4ZWRfcGFpbnRfY292ZXJhZ2Vfc3FmdF9wZXJfZ2FsbG9uLCAzNTApIHx8IDM1MDsKICB0b3RhbExpcXVpZFBhaW50QW5kU3VwcGxpZXMgKz0gZ2xvYmFsRml4ZWRXYXN0ZUdhbGxvbnMgKiBsaXF1aWRSYXRlICogY292ZXJhZ2U7CgogIGNvbnN0IGl0ZW1GaXhlZFdhc3RlID0gaXRlbXMucmVkdWNlKChzdW0sIGl0ZW0pID0+IHN1bSArIG51bShpdGVtLmZpeGVkX3dhc3RlX2dhbGxvbnMpLCAwKTsKICBjb25zdCBudW1iZXJPZk1peGVzID0gTWF0aC5jZWlsKHRvdGFsUGFpbnRHYWxsb25zKTsKICBjb25zdCBtaXhpbmdIb3VycyA9IG51bWJlck9mTWl4ZXMgKiAobnVtKHNldHRpbmdzLnBhaW50X21peGluZ19sYWJvcl9ob3VycywgMC4yNSkgfHwgMC4yNSk7CiAgY29uc3Qgc2V0dXBIb3VycyA9IG51bShzZXR0aW5ncy5zZXR1cF90aW1lX2xhYm9yX2hvdXJzLCAwLjUpIHx8IDAuNTsKCiAgY29uc3QgdW5pcXVlQ29sb3JzID0gbmV3IFNldCgpOwogIGl0ZW1zLmZvckVhY2goKGl0ZW0pID0+IChpdGVtLnBhaW50X2NvbG9ycyB8fCBbXSkuZm9yRWFjaCgoY29sb3IpID0+IHsKICAgIGNvbnN0IG5vcm1hbGl6ZWQgPSBTdHJpbmcoY29sb3IgfHwgIiIpLnRyaW0oKS50b0xvd2VyQ2FzZSgpOwogICAgaWYgKG5vcm1hbGl6ZWQpIHVuaXF1ZUNvbG9ycy5hZGQobm9ybWFsaXplZCk7CiAgfSkpOwogIGNvbnN0IHVuaXF1ZUNvbG9yQ291bnQgPSB1bmlxdWVDb2xvcnMuc2l6ZTsKICBjb25zdCB0b3RhbENvbG9yQ2hhbmdlSG91cnMgPSB1bmlxdWVDb2xvckNvdW50ID4gMQogICAgPyAodW5pcXVlQ29sb3JDb3VudCAtIDEpICogKG51bShzZXR0aW5ncy5jb2xvcl9jaGFuZ2Vfc2V0dXBfaG91cnMsIDAuMjUpIHx8IDAuMjUpCiAgICA6IDA7CiAgY29uc3QgdG90YWxQYWludEd1bkNsZWFuaW5nSG91cnMgPSB1bmlxdWVDb2xvckNvdW50ID4gMAogICAgPyB1bmlxdWVDb2xvckNvdW50ICogKG51bShzZXR0aW5ncy5wYWludF9ndW5fY2xlYW5pbmdfaG91cnMsIDAuMTUpIHx8IDAuMTUpCiAgICA6IDA7CiAgY29uc3QgbGFib3JSYXRlID0gbnVtKHNldHRpbmdzLmRlZmF1bHRfbGFib3JfcmF0ZSwgNjApIHx8IDYwOwogIGNvbnN0IGZpeGVkTGFib3JDb3N0ID0gKG1peGluZ0hvdXJzICsgc2V0dXBIb3VycyArIHRvdGFsQ29sb3JDaGFuZ2VIb3VycyArIHRvdGFsUGFpbnRHdW5DbGVhbmluZ0hvdXJzKSAqIGxhYm9yUmF0ZTsKICBsZXQgdG90YWxMYWJvciA9IHRvdGFsSXRlbUxhYm9yQ29zdCArIGZpeGVkTGFib3JDb3N0OwogIGNvbnN0IHRvdGFsTGFib3JIb3VycyA9IGl0ZW1zLnJlZHVjZSgoc3VtLCBpdGVtKSA9PiBzdW0gKyBudW0oaXRlbS5sYWJvcl9ob3VycyksIDApCiAgICArIG1peGluZ0hvdXJzICsgc2V0dXBIb3VycyArIHRvdGFsQ29sb3JDaGFuZ2VIb3VycyArIHRvdGFsUGFpbnRHdW5DbGVhbmluZ0hvdXJzOwoKICBjb25zdCBtaW5MYWJvckhvdXJzID0gbnVtKHNldHRpbmdzLm1pbl9sYWJvcl9ob3Vycyk7CiAgY29uc3QgbWluUGFpbnRDb3N0ID0gbnVtKHNldHRpbmdzLm1pbl9wYWludF9jb3N0KTsKICBpZiAodG90YWxMYWJvckhvdXJzID4gMCAmJiB0b3RhbExhYm9ySG91cnMgPCBtaW5MYWJvckhvdXJzKSB0b3RhbExhYm9yID0gbWluTGFib3JIb3VycyAqIGxhYm9yUmF0ZTsKICBpZiAodG90YWxMaXF1aWRQYWludEFuZFN1cHBsaWVzID4gMCAmJiB0b3RhbExpcXVpZFBhaW50QW5kU3VwcGxpZXMgPCBtaW5QYWludENvc3QpIHRvdGFsTGlxdWlkUGFpbnRBbmRTdXBwbGllcyA9IG1pblBhaW50Q29zdDsKCiAgY29uc3QgdG90YWxDb3N0ID0gdG90YWxQYWludE1hc2sgKyB0b3RhbExpcXVpZFBhaW50QW5kU3VwcGxpZXMgKyB0b3RhbExhYm9yOwogIHJldHVybiB7CiAgICBpdGVtcywKICAgIGxpcXVpZFBhaW50UmF0ZTogbGlxdWlkUmF0ZSwKICAgIHRvdGFsczogewogICAgICB0b3RhbF9wYWludF9tYXNrX2Nvc3Q6IHRvdGFsUGFpbnRNYXNrLAogICAgICB0b3RhbF9saXF1aWRfcGFpbnRfYW5kX3N1cHBsaWVzX2Nvc3Q6IHRvdGFsTGlxdWlkUGFpbnRBbmRTdXBwbGllcywKICAgICAgdG90YWxfbGFib3JfY29zdDogdG90YWxMYWJvciwKICAgICAgdG90YWxfbGFib3JfaG91cnM6IHRvdGFsTGFib3JIb3VycywKICAgICAgdG90YWxfcGFpbnRfZ2FsbG9uczogdG90YWxQYWludEdhbGxvbnMsCiAgICAgIG51bWJlcl9vZl9taXhlczogbnVtYmVyT2ZNaXhlcywKICAgICAgbWl4aW5nX2hvdXJzOiBtaXhpbmdIb3VycywKICAgICAgc2V0dXBfaG91cnM6IHNldHVwSG91cnMsCiAgICAgIHVuaXF1ZV9jb2xvcl9jb3VudDogdW5pcXVlQ29sb3JDb3VudCwKICAgICAgY29sb3JfY2hhbmdlX2hvdXJzOiB0b3RhbENvbG9yQ2hhbmdlSG91cnMsCiAgICAgIGd1bl9jbGVhbmluZ19ob3VyczogdG90YWxQYWludEd1bkNsZWFuaW5nSG91cnMsCiAgICAgIGZpeGVkX3dhc3RlX2dhbGxvbnM6IGdsb2JhbEZpeGVkV2FzdGVHYWxsb25zICsgaXRlbUZpeGVkV2FzdGUsCiAgICAgIHRvdGFsX2Nvc3Q6IHRvdGFsQ29zdCwKICAgIH0sCiAgfTsKfQo=",
+   "normalized": "const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;\n\nexport const PAINT_THICKNESSES = [\n  \"1/16\", \"1/8\", \"3/16\", \"1/4\", \"3/8\", \"1/2\", \"5/8\", \"3/4\", \"7/8\", \"1\",\n  \"1-1/8\", \"1-1/4\", \"1-3/8\", \"1-1/2\", \"1-5/8\", \"1-3/4\", \"1-7/8\", \"2\",\n  \"2-1/4\", \"2-1/2\", \"2-3/4\", \"3\", \"3-1/4\", \"3-1/2\", \"3-3/4\", \"4\",\n];\n\nexport function parseImperialFraction(value) {\n  if (typeof value !== \"string\") return num(value);\n  let text = value.trim();\n  if (!text) return 0;\n  let total = 0;\n  const wholeAndFraction = text.split(\"-\");\n  if (wholeAndFraction.length === 2) {\n    total += num(wholeAndFraction[0]);\n    text = wholeAndFraction[1];\n  } else {\n    text = wholeAndFraction[0];\n  }\n  const parts = text.split(\"/\");\n  if (parts.length === 2) {\n    const denominator = num(parts[1]);\n    if (denominator) total += num(parts[0]) / denominator;\n  } else {\n    total += num(text);\n  }\n  return total;\n}\n\nfunction parseTiers(raw) {\n  if (Array.isArray(raw)) return raw;\n  try {\n    const parsed = JSON.parse(raw || \"[]\");\n    return Array.isArray(parsed) ? parsed : [];\n  } catch {\n    return [];\n  }\n}\n\nexport function laborTierMultiplier(settings, itemType, quantity) {\n  const settingKey = itemType === \"panel\"\n    ? \"panel_labor_tiers\"\n    : itemType === \"complex_shapes\"\n      ? \"complex_shapes_labor_tiers\"\n      : itemType === \"lettering\"\n        ? \"lettering_labor_tiers\"\n        : \"\";\n  if (!settingKey) return 1;\n  const tiers = parseTiers(settings?.[settingKey]);\n  const qty = num(quantity, 1);\n  const tier = tiers.find((row) => qty >= num(row.min_quantity) && qty <= num(row.max_quantity));\n  return tier ? num(tier.labor_multiplier, 1) : 1;\n}\n\nfunction costPerGallon(cost, unit) {\n  const unitFactors = { oz: 128, pint: 8, quart: 4, liter: 3.78541, gallon: 1 };\n  const factor = unitFactors[unit];\n  return factor ? num(cost) * factor : 0;\n}\n\nexport function liquidPaintRatePerSqft(settings = {}) {\n  const paintCost = costPerGallon(settings.paint_cost_per_unit, settings.paint_unit);\n  const hardenerCost = costPerGallon(settings.hardener_cost_per_unit, settings.hardener_unit);\n  const reducerCost = costPerGallon(settings.reducer_cost_per_unit, settings.reducer_unit);\n  const paintRatio = num(settings.paint_mix_ratio, 3) || 3;\n  const hardenerRatio = num(settings.hardener_mix_ratio, 1) || 1;\n  const reducerRatio = num(settings.reducer_mix_ratio, 1) || 1;\n  const totalRatio = paintRatio + hardenerRatio + reducerRatio;\n  const mixCost = totalRatio > 0\n    ? (paintCost / totalRatio * paintRatio) + (hardenerCost / totalRatio * hardenerRatio) + (reducerCost / totalRatio * reducerRatio)\n    : 0;\n  const coverage = num(settings.mixed_paint_coverage_sqft_per_gallon, 1) || 1;\n  return coverage > 0 ? mixCost / coverage : 0;\n}\n\nexport function autoPaintMaskSqft(item = {}) {\n  if (!(num(item.length) > 0 && num(item.width) > 0)) return 0;\n  let faceArea = 0;\n  if (item.item_type === \"lettering\") {\n    const letterHeight = num(item.width);\n    const letterCount = num(item.length);\n    faceArea = (letterHeight ** 2 * 0.8 * letterCount) / 144;\n  } else {\n    faceArea = num(item.length) * num(item.width) / 144;\n  }\n  return item.paint_sides === \"both_sides\" ? faceArea * 2 : faceArea;\n}\n\nexport function normalizePaintingItem(item = {}) {\n  return {\n    item_type: \"panel\",\n    description: \"\",\n    thickness: \"1/2\",\n    length: 0,\n    width: 0,\n    quantity: 1,\n    edge_complexity_multiplier: 1,\n    paint_sides: \"one_side\",\n    paint_colors: [\"\"],\n    letter_size: \"normal\",\n    paint_mask_sqft: 0,\n    base_supplies_cost: 0,\n    fixed_waste_gallons: 0,\n    supplies_cost: 0,\n    paint_cost: 0,\n    paint_gallons: 0,\n    labor_hours: 0,\n    labor_cost: 0,\n    ...item,\n    paint_colors: Array.isArray(item.paint_colors) ? item.paint_colors : [],\n    paint_sides: item.paint_sides === \"none\" ? \"one_side\" : (item.paint_sides || \"one_side\"),\n  };\n}\n\nexport function calculatePaintingItem(rawItem, settings = {}, liquidRate = 0, projectPaintSuppliesRate = 0) {\n  const item = normalizePaintingItem(rawItem);\n  const perimFactor = num(settings.letter_perimeter_factor, 3.5) || 3.5;\n  const thickness = parseImperialFraction(item.thickness);\n  let paintableSqFt = 0;\n\n  if (item.item_type === \"panel\" && num(item.length) > 0 && num(item.width) > 0) {\n    const faceArea = num(item.length) * num(item.width) / 144;\n    const perimeterInches = 2 * (num(item.length) + num(item.width));\n    const edgeArea = thickness > 0 ? perimeterInches * thickness / 144 : 0;\n    paintableSqFt = item.paint_sides === \"both_sides\" ? faceArea * 2 + edgeArea : faceArea + edgeArea;\n  } else if (item.item_type === \"lettering\" && num(item.width) > 0 && num(item.length) > 0 && thickness > 0) {\n    const letterHeight = num(item.width);\n    const letterCount = num(item.length);\n    const faceArea = (letterHeight ** 2 * 0.8 * letterCount) / 144;\n    const perimeterInches = letterHeight * perimFactor * letterCount;\n    const edgeArea = perimeterInches * thickness / 144;\n    paintableSqFt = item.paint_sides === \"both_sides\" ? faceArea * 2 + edgeArea : faceArea + edgeArea;\n  } else if (item.item_type === \"complex_shapes\" && num(item.length) > 0 && num(item.width) > 0 && thickness > 0) {\n    const faceArea = num(item.length) * num(item.width) / 144;\n    const perimeterInches = 2 * (num(item.length) + num(item.width));\n    const edgeArea = perimeterInches * thickness * num(item.edge_complexity_multiplier, 1) / 144;\n    paintableSqFt = item.paint_sides === \"both_sides\" ? faceArea * 2 + edgeArea : faceArea + edgeArea;\n  }\n\n  const paintMaskMaterialRate = num(settings.paint_mask_rate_per_sqft, 0.75) || 0.75;\n  const paintMaskMachineRate = num(settings.paint_mask_machine_cutting_rate_per_sqft, 0.10) || 0.10;\n  // Preserve SignEstimate Pro behavior exactly: item cost math uses the stored\n  // color-array length. Blank entries are only removed when the project is saved.\n  const numColors = (item.paint_colors || []).length;\n  let paintMaskCost = 0;\n  if (numColors > 1 && num(item.paint_mask_sqft) > 0) {\n    paintMaskCost = num(item.paint_mask_sqft) * (paintMaskMaterialRate + paintMaskMachineRate) * (numColors - 1);\n  }\n\n  let liquidPaintCost = 0;\n  let paintApplicationSuppliesCost = 0;\n  let paintGallons = 0;\n  if (numColors > 0) {\n    const wasteMultiplier = num(settings.paint_waste_multiplier, 1.25) || 1.25;\n    const coverage = num(settings.mixed_paint_coverage_sqft_per_gallon, 350) || 350;\n    paintApplicationSuppliesCost = paintableSqFt * num(projectPaintSuppliesRate) * numColors;\n    if (liquidRate > 0) liquidPaintCost = paintableSqFt * liquidRate * wasteMultiplier * numColors;\n    paintGallons = paintableSqFt * wasteMultiplier * numColors / coverage;\n  }\n\n  const itemFixedWasteGallons = num(item.fixed_waste_gallons);\n  paintGallons += itemFixedWasteGallons;\n  const coverage = num(settings.mixed_paint_coverage_sqft_per_gallon, 350) || 350;\n  liquidPaintCost += itemFixedWasteGallons * liquidRate * coverage;\n  const liquidPaintAndSuppliesCost = paintApplicationSuppliesCost + liquidPaintCost + num(item.base_supplies_cost);\n\n  const laborRate = num(settings.default_labor_rate, 60) || 60;\n  const baseHoursPerSqFt = num(settings.base_labor_hours_per_sqft, 0.05) || 0.05;\n  const complexityMap = {\n    extra_small: \"complex\",\n    small: \"complex\",\n    normal: \"moderate\",\n    medium: \"moderate\",\n    large: \"simple\",\n    extra_large: \"simple\",\n  };\n  const itemComplexity = item.item_type === \"lettering\" ? complexityMap[item.letter_size] || \"moderate\" : \"moderate\";\n  const complexityMultipliers = {\n    simple: num(settings.simple_complexity_multiplier, 0.7) || 0.7,\n    moderate: num(settings.moderate_complexity_multiplier, 1) || 1,\n    complex: num(settings.complex_complexity_multiplier, 1.5) || 1.5,\n  };\n  const paintMultipliers = {\n    one_side: num(settings.one_side_paint_multiplier, 0.8) || 0.8,\n    both_sides: num(settings.both_sides_paint_multiplier, 1) || 1,\n  };\n  const additionalColorMultiplier = num(settings.additional_color_multiplier, 0.3) || 0.3;\n\n  let baseHours = paintableSqFt * baseHoursPerSqFt * (complexityMultipliers[itemComplexity] || 1) * (paintMultipliers[item.paint_sides] || 1);\n  if (numColors > 1) baseHours *= 1 + (numColors - 1) * additionalColorMultiplier;\n\n  const maskApplicationLaborRate = num(settings.paint_mask_application_labor_rate_per_sqft, 0.25) || 0.25;\n  const maskCuttingLaborRate = num(settings.paint_mask_cutting_labor_rate_per_sqft, 0.15) || 0.15;\n  if (numColors > 1 && num(item.paint_mask_sqft) > 0) {\n    baseHours += (num(item.paint_mask_sqft) * maskApplicationLaborRate * (numColors - 1) / laborRate)\n      + (num(item.paint_mask_sqft) * maskCuttingLaborRate * (numColors - 1) / laborRate);\n  }\n\n  const qty = item.item_type === \"lettering\" ? 1 : Math.max(num(item.quantity, 1), 1);\n  const discountedLaborHours = baseHours * laborTierMultiplier(settings, item.item_type, qty);\n  const laborCost = discountedLaborHours * laborRate * qty;\n\n  return {\n    ...item,\n    quantity: qty,\n    supplies_cost: paintMaskCost * qty,\n    paint_cost: liquidPaintAndSuppliesCost * qty,\n    paint_gallons: paintGallons * qty,\n    labor_hours: discountedLaborHours * qty,\n    labor_cost: laborCost,\n    paintable_sqft: paintableSqFt,\n  };\n}\n\nexport function calculatePaintingProject(project = {}, settings = {}) {\n  const liquidRate = liquidPaintRatePerSqft(settings);\n  const projectSuppliesRate = num(\n    project.paint_supplies_per_sqft,\n    num(settings.default_paint_supplies_per_sqft, 1.25) || 1.25\n  );\n  const items = (project.items || []).map((item) => calculatePaintingItem(item, settings, liquidRate, projectSuppliesRate));\n\n  const totalPaintMask = items.reduce((sum, item) => sum + num(item.supplies_cost), 0);\n  let totalLiquidPaintAndSupplies = items.reduce((sum, item) => sum + num(item.paint_cost), 0);\n  const totalItemLaborCost = items.reduce((sum, item) => sum + num(item.labor_cost), 0);\n  let totalPaintGallons = items.reduce((sum, item) => sum + num(item.paint_gallons), 0);\n\n  const globalFixedWasteGallons = num(settings.fixed_paint_waste_gallons);\n  totalPaintGallons += globalFixedWasteGallons;\n  const coverage = num(settings.mixed_paint_coverage_sqft_per_gallon, 350) || 350;\n  totalLiquidPaintAndSupplies += globalFixedWasteGallons * liquidRate * coverage;\n\n  const itemFixedWaste = items.reduce((sum, item) => sum + num(item.fixed_waste_gallons), 0);\n  const numberOfMixes = Math.ceil(totalPaintGallons);\n  const mixingHours = numberOfMixes * (num(settings.paint_mixing_labor_hours, 0.25) || 0.25);\n  const setupHours = num(settings.setup_time_labor_hours, 0.5) || 0.5;\n\n  const uniqueColors = new Set();\n  items.forEach((item) => (item.paint_colors || []).forEach((color) => {\n    const normalized = String(color || \"\").trim().toLowerCase();\n    if (normalized) uniqueColors.add(normalized);\n  }));\n  const uniqueColorCount = uniqueColors.size;\n  const totalColorChangeHours = uniqueColorCount > 1\n    ? (uniqueColorCount - 1) * (num(settings.color_change_setup_hours, 0.25) || 0.25)\n    : 0;\n  const totalPaintGunCleaningHours = uniqueColorCount > 0\n    ? uniqueColorCount * (num(settings.paint_gun_cleaning_hours, 0.15) || 0.15)\n    : 0;\n  const laborRate = num(settings.default_labor_rate, 60) || 60;\n  const fixedLaborCost = (mixingHours + setupHours + totalColorChangeHours + totalPaintGunCleaningHours) * laborRate;\n  let totalLabor = totalItemLaborCost + fixedLaborCost;\n  const totalLaborHours = items.reduce((sum, item) => sum + num(item.labor_hours), 0)\n    + mixingHours + setupHours + totalColorChangeHours + totalPaintGunCleaningHours;\n\n  const minLaborHours = num(settings.min_labor_hours);\n  const minPaintCost = num(settings.min_paint_cost);\n  if (totalLaborHours > 0 && totalLaborHours < minLaborHours) totalLabor = minLaborHours * laborRate;\n  if (totalLiquidPaintAndSupplies > 0 && totalLiquidPaintAndSupplies < minPaintCost) totalLiquidPaintAndSupplies = minPaintCost;\n\n  const totalCost = totalPaintMask + totalLiquidPaintAndSupplies + totalLabor;\n  return {\n    items,\n    liquidPaintRate: liquidRate,\n    totals: {\n      total_paint_mask_cost: totalPaintMask,\n      total_liquid_paint_and_supplies_cost: totalLiquidPaintAndSupplies,\n      total_labor_cost: totalLabor,\n      total_labor_hours: totalLaborHours,\n      total_paint_gallons: totalPaintGallons,\n      number_of_mixes: numberOfMixes,\n      mixing_hours: mixingHours,\n      setup_hours: setupHours,\n      unique_color_count: uniqueColorCount,\n      color_change_hours: totalColorChangeHours,\n      gun_cleaning_hours: totalPaintGunCleaningHours,\n      fixed_waste_gallons: globalFixedWasteGallons + itemFixedWaste,\n      total_cost: totalCost,\n    },\n  };\n}\n",
+   "inPriorBaseline": true,
+   "driftFromBaseline": true
+  },
+  {
+   "path": "src/components/estimator/paint/paintPricingAvailability.js",
+   "exists": false,
+   "role": "target",
+   "inPriorBaseline": true,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/pages/PaintingEstimator.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "55fab979524940828f88890aa50cab2decebbb0ef6b8ad710e188478a5814dba",
+   "role": "target",
+   "text": "import { useEffect, useMemo, useRef, useState } from \"react\";\r\nimport { Project, Settings } from \"@/api/gatedEntities\";\r\nimport { Link, useNavigate, useSearchParams } from \"react-router-dom\";\r\nimport { ArrowLeft, Palette, Plus, Save, Trash2 } from \"lucide-react\";\r\nimport { Button } from \"@/components/ui/button\";\r\nimport { Input } from \"@/components/ui/input\";\r\nimport { Textarea } from \"@/components/ui/textarea\";\r\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from \"@/components/ui/select\";\r\nimport { recordBuilderSave } from \"@/components/estimator/builder/builderService\";\r\nimport { loadAllEntityRows } from \"@/components/estimator/loadAllEntityRows\";\r\nimport { preflightBuilderSourceMutation, updateBuilderSourceProject } from \"@/components/estimator/builder/sourceProjectPersistence\";\r\nimport { ensureIdempotentEntityCreate, newCreationRequestKey } from \"@/components/estimator/idempotentEntityCreate\";\r\nimport ModuleActionBar from \"@/components/estimator/moduleShared/ModuleActionBar\";\r\nimport ModuleTemplateDialog from \"@/components/estimator/moduleShared/ModuleTemplateDialog\";\r\nimport { saveModuleProjectCopy } from \"@/components/estimator/moduleShared/moduleProjectActions\";\r\nimport CustomerPricingTab from \"@/components/markup/CustomerPricingTab\";\r\nimport { categorizePaintProject } from \"@/components/markup/projectCategorizer\";\r\nimport { calculateSavedCustomerPricing } from \"@/components/markup/savedCustomerPricing\";\r\nimport { newBuilderItemId, seedBuilderItemIds } from \"@/components/estimator/builder/itemIdentity\";\r\nimport {\r\n  PAINT_THICKNESSES,\r\n  autoPaintMaskSqft,\r\n  calculatePaintingProject,\r\n  normalizePaintingItem,\r\n} from \"@/components/estimator/paint/paintCalc\";\r\nimport { staffEntities } from \"@/components/staff/staffEntities\";\r\n\r\nconst money = (value) => Number(value || 0).toLocaleString(\"en-US\", { style: \"currency\", currency: \"USD\" });\r\nconst number = (value, digits = 2) => Number(value || 0).toLocaleString(\"en-US\", { maximumFractionDigits: digits });\r\n\r\nconst emptyItem = () => normalizePaintingItem({\r\n  builder_item_id: newBuilderItemId(\"paint-item\"),\r\n  paint_colors: [\"\"],\r\n});\r\n\r\nexport default function PaintingEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {\r\n  const navigate = useNavigate();\r\n  const [searchParams] = useSearchParams();\r\n  const editId = embeddedProjectId || searchParams.get(\"edit\") || searchParams.get(\"id\");\r\n  const estimateId = embeddedEstimateId || searchParams.get(\"estimateId\");\r\n  const [project, setProject] = useState(null);\r\n  const [settings, setSettings] = useState({});\r\n  const [loading, setLoading] = useState(true);\r\n  const [saving, setSaving] = useState(false);\r\n  const [error, setError] = useState(\"\");\r\n  const persistedProjectIdRef = useRef(editId || \"\");\r\n  const createAttemptRef = useRef({ signature: \"\", key: \"\" });\r\n  const copyAttemptRef = useRef({ signature: \"\", key: \"\" });\r\n  const [templateMode, setTemplateMode] = useState(null);\r\n\r\n  useEffect(() => {\r\n    persistedProjectIdRef.current = editId || \"\";\r\n    createAttemptRef.current = { signature: \"\", key: \"\" };\r\n    copyAttemptRef.current = { signature: \"\", key: \"\" };\r\n  }, [editId]);\r\n\r\n  useEffect(() => {\r\n    let active = true;\r\n    const load = async () => {\r\n      setLoading(true);\r\n      try {\r\n        const [settingsRows, existing, estimate] = await Promise.all([\r\n          loadAllEntityRows({ entity: Settings, sort: \"created_date\", label: \"Estimator Settings\" }),\r\n          editId ? Project.get(editId) : Promise.resolve(null),\r\n          estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),\r\n        ]);\r\n        if (!active) return;\r\n        const settingsMap = {};\r\n        (settingsRows || []).forEach((row) => { settingsMap[row.setting_name] = row.setting_value; });\r\n        setSettings(settingsMap);\r\n        const suppliesDefault = Number(settingsMap.default_paint_supplies_per_sqft) || 1.25;\r\n        if (existing) {\r\n          setProject({\r\n            ...existing,\r\n            client_name: estimate?.client_name || existing.client_name || \"\",\r\n            customer_id: estimate?.customer_id || existing.customer_id || null,\r\n            estimate_number: estimate?.estimate_number || existing.estimate_number || \"\",\r\n            items: seedBuilderItemIds((existing.items || []).map(normalizePaintingItem), \"paint-item\"),\r\n            paint_supplies_per_sqft: existing.paint_supplies_per_sqft ?? suppliesDefault,\r\n          });\r\n        } else {\r\n          setProject({\r\n            project_name: estimate?.project_name ? `${estimate.project_name} — Painting` : \"\",\r\n            client_name: estimate?.client_name || \"\",\r\n            customer_id: estimate?.customer_id || null,\r\n            estimate_number: estimate?.estimate_number || \"\",\r\n            hyperlink: \"\",\r\n            status: \"draft\",\r\n            items: [],\r\n            paint_supplies_per_sqft: suppliesDefault,\r\n            notes: settingsMap.default_notes_template || \"\",\r\n          });\r\n        }\r\n      } catch (e) {\r\n        console.error(\"Could not load Painting estimator:\", e);\r\n        if (active) setError(e.message || \"Could not load Painting estimator.\");\r\n      } finally {\r\n        if (active) setLoading(false);\r\n      }\r\n    };\r\n    load();\r\n    return () => { active = false; };\r\n  }, [editId, estimateId]);\r\n\r\n  const calculated = useMemo(\r\n    () => project ? calculatePaintingProject(project, settings) : null,\r\n    [project, settings]\r\n  );\r\n  const totals = calculated?.totals || {};\r\n\r\n  const patchProject = (changes) => setProject((prev) => ({ ...prev, ...changes }));\r\n\r\n  const patchItem = (index, changes, { autoMask = false } = {}) => {\r\n    setProject((prev) => {\r\n      const items = [...(prev.items || [])];\r\n      let item = normalizePaintingItem({ ...items[index], ...changes });\r\n      if (item.item_type === \"lettering\") item.quantity = 1;\r\n      if (Object.prototype.hasOwnProperty.call(changes, \"width\") && item.item_type === \"lettering\") {\r\n        const height = Number(item.width || 0);\r\n        item.letter_size = height <= 4 ? \"extra_small\"\r\n          : height <= 8 ? \"small\"\r\n            : height <= 12 ? \"normal\"\r\n              : height <= 20 ? \"medium\"\r\n                : height <= 30 ? \"large\"\r\n                  : \"extra_large\";\r\n      }\r\n      if (autoMask) item.paint_mask_sqft = autoPaintMaskSqft(item);\r\n      items[index] = item;\r\n      return { ...prev, items };\r\n    });\r\n  };\r\n\r\n  const addItem = () => {\r\n    setTimeout(() => document.querySelector(`input[data-item-desc=\"${(project.items || []).length}\"]`)?.focus(), 60);\r\n    patchProject({ items: [...(project.items || []), emptyItem()] });\r\n  };\r\n  const removeItem = (index) => {\r\n    const label = project.items?.[index]?.description || `item ${index + 1}`;\r\n    if (!window.confirm(`Delete \"${label}\"?`)) return;\r\n    patchProject({ items: project.items.filter((_, i) => i !== index) });\r\n  };\r\n\r\n  const updateColor = (itemIndex, colorIndex, value) => {\r\n    const colors = [...(project.items[itemIndex].paint_colors || [])];\r\n    colors[colorIndex] = value;\r\n    patchItem(itemIndex, { paint_colors: colors });\r\n  };\r\n  const addColor = (itemIndex) => patchItem(itemIndex, { paint_colors: [...(project.items[itemIndex].paint_colors || []), \"\"] });\r\n  const removeColor = (itemIndex, colorIndex) => patchItem(itemIndex, {\r\n    paint_colors: (project.items[itemIndex].paint_colors || []).filter((_, i) => i !== colorIndex),\r\n  });\r\n\r\n  // Ctrl+S / Cmd+S saves the section without leaving the editor.\r\n  useEffect(() => {\r\n    const handler = (e) => {\r\n      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === \"s\") {\r\n        e.preventDefault();\r\n        if (!saving) saveProject();\r\n      }\r\n    };\r\n    window.addEventListener(\"keydown\", handler);\r\n    return () => window.removeEventListener(\"keydown\", handler);\r\n  }, [saving]);\r\n  // Block accidental navigation while a save is in flight.\r\n  useEffect(() => {\r\n    if (!saving) return undefined;\r\n    const warn = (e) => { e.preventDefault(); e.returnValue = \"\"; };\r\n    window.addEventListener(\"beforeunload\", warn);\r\n    return () => window.removeEventListener(\"beforeunload\", warn);\r\n  }, [saving]);\r\n  const saveProject = async () => {\r\n    if (!project?.project_name?.trim() || !project?.client_name?.trim()) {\r\n      setError(\"Project name and client name are required.\");\r\n      return;\r\n    }\r\n    setSaving(true);\r\n    setError(\"\");\r\n    try {\r\n      const cleanItems = (calculated?.items || []).map((item) => ({\r\n        ...item,\r\n        paint_colors: (item.paint_colors || []).filter((color) => String(color || \"\").trim()),\r\n      }));\r\n      const pricingProject = {\r\n        ...project,\r\n        total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),\r\n        total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),\r\n        total_labor_cost: Number(totals.total_labor_cost || 0),\r\n      };\r\n      const customerPricing = project.customer_pricing?.applied === true\r\n        ? await calculateSavedCustomerPricing({\r\n            project: pricingProject,\r\n            categorize: categorizePaintProject,\r\n            tierNumber: project.customer_pricing?.tier_number,\r\n          })\r\n        : project.customer_pricing;\r\n      const payload = {\r\n        project_name: project.project_name,\r\n        client_name: project.client_name,\r\n        customer_id: project.customer_id || null,\r\n        estimate_number: project.estimate_number || \"\",\r\n        hyperlink: project.hyperlink || \"\",\r\n        status: \"calculated\",\r\n        items: cleanItems,\r\n        paint_supplies_per_sqft: Number(project.paint_supplies_per_sqft || 0),\r\n        total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),\r\n        total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),\r\n        total_labor_cost: Number(totals.total_labor_cost || 0),\r\n        customer_pricing: customerPricing,\r\n        notes: project.notes || \"\",\r\n      };\r\n\r\n      let projectId = persistedProjectIdRef.current || editId || \"\";\r\n      let savedProject;\r\n      if (projectId) {\r\n        savedProject = await updateBuilderSourceProject({\r\n          entity: Project,\r\n          sourceId: projectId,\r\n          expectedUpdatedAt: project.updated_date,\r\n          data: payload,\r\n          estimateId,\r\n          label: \"Painting project\",\r\n        });\r\n      } else {\r\n        await preflightBuilderSourceMutation({ estimateId });\r\n        const signature = JSON.stringify(payload);\r\n        if (createAttemptRef.current.signature !== signature) {\r\n          createAttemptRef.current = {\r\n            signature,\r\n            key: newCreationRequestKey(\"painting_project\"),\r\n          };\r\n        }\r\n        savedProject = await ensureIdempotentEntityCreate({\r\n          entity: Project,\r\n          keyField: \"creation_request_key\",\r\n          key: createAttemptRef.current.key,\r\n          data: payload,\r\n          label: \"Painting project\",\r\n        });\r\n        if (!savedProject?.id) throw new Error(\"Painting project create could not be verified.\");\r\n        projectId = savedProject.id;\r\n        persistedProjectIdRef.current = projectId;\r\n      }\r\n\r\n      if (!savedProject?.id) savedProject = await Project.get(projectId);\r\n      if (estimateId) {\r\n        await recordBuilderSave({\r\n          estimateId,\r\n          line: { project_id: projectId, module_key: \"painting\" },\r\n          sourceProject: savedProject,\r\n          liveTotal: Number(totals.total_cost || 0),\r\n        });\r\n      }\r\n      setProject((prev) => ({ ...prev, ...savedProject, items: seedBuilderItemIds(savedProject.items || [], \"paint-item\") }));\r\n      onSaved?.();\r\n      if (!embedded && !editId) navigate(`/PaintingEstimator?id=${projectId}`);\r\n    } catch (e) {\r\n      console.error(\"Could not save Painting estimator:\", e);\r\n      setError(e.message || \"Could not save Painting estimator.\");\r\n    } finally {\r\n      setSaving(false);\r\n    }\r\n  };\r\n\r\n  // #78 — clone the current save payload into a brand-new Painting project.\r\n  const handleSaveAsCopy = async () => {\r\n    setSaving(true);\r\n    setError(\"\");\r\n    try {\r\n      const cleanItems = (calculated?.items || []).map((item) => ({\r\n        ...item,\r\n        paint_colors: (item.paint_colors || []).filter((color) => String(color || \"\").trim()),\r\n      }));\r\n      const copy = await saveModuleProjectCopy({\r\n        entity: Project,\r\n        payload: {\r\n          project_name: project.project_name,\r\n          client_name: project.client_name,\r\n          customer_id: project.customer_id || null,\r\n          estimate_number: project.estimate_number || \"\",\r\n          hyperlink: project.hyperlink || \"\",\r\n          status: \"calculated\",\r\n          items: cleanItems,\r\n          paint_supplies_per_sqft: Number(project.paint_supplies_per_sqft || 0),\r\n          total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),\r\n          total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),\r\n          total_labor_cost: Number(totals.total_labor_cost || 0),\r\n          customer_pricing: project.customer_pricing,\r\n          notes: project.notes || \"\",\r\n        },\r\n        attemptRef: copyAttemptRef,\r\n        keyPrefix: \"painting_project_copy\",\r\n        baseName: project.project_name || \"Painting\",\r\n        label: \"Painting project copy\",\r\n      });\r\n      if (embedded) onSaved?.();\r\n      else navigate(`/PaintingEstimator?id=${copy.id}`);\r\n    } catch (e) {\r\n      console.error(\"Could not copy Painting estimator:\", e);\r\n      setError(e.message || \"Could not copy Painting estimator.\");\r\n    } finally {\r\n      setSaving(false);\r\n    }\r\n  };\r\n\r\n  // #79 — template payload = the editable setup a user would reuse.\r\n  const buildPaintingTemplateData = (p) => ({\r\n    items: p.items || [],\r\n    paint_supplies_per_sqft: p.paint_supplies_per_sqft,\r\n    notes: p.notes,\r\n  });\r\n\r\n  if (loading) return <div className=\"p-10 text-center text-gray-400\">Loading Painting Builder…</div>;\r\n  if (!project) return <div className=\"p-10 text-center text-red-600\">{error || \"Painting project not found.\"}</div>;\r\n\r\n  return (\r\n    <div className=\"min-h-full bg-gray-50\">\r\n      <div className=\"max-w-[1220px] mx-auto p-4 sm:p-5\">\r\n        <div className=\"flex items-center justify-between gap-3 mb-4\">\r\n          {embedded ? (\r\n            <button type=\"button\" onClick={onClose} className=\"inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600 hover:text-gray-900\">\r\n              <ArrowLeft className=\"w-4 h-4\" /> Back to products\r\n            </button>\r\n          ) : (\r\n            <Link to={estimateId ? `/EstimateDetail?id=${estimateId}` : \"/Estimator\"} className=\"inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600 hover:text-gray-900\">\r\n              <ArrowLeft className=\"w-4 h-4\" /> Back to estimator\r\n            </Link>\r\n          )}\r\n          {project?.updated_date && (<div className=\"mt-1 text-[10px] text-gray-400\">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}\r\n          <Button onClick={saveProject} disabled={saving || !project.project_name?.trim() || !project.client_name?.trim()} className=\"h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold\">\r\n            <Save className=\"w-4 h-4 mr-1.5\" /> {saving ? \"Saving…\" : \"Save Painting\"}\r\n          </Button>\r\n          <ModuleActionBar\r\n            onTemplates={() => setTemplateMode(\"load\")}\r\n            onSaveAsTemplate={() => setTemplateMode(\"save\")}\r\n            onSaveAsCopy={handleSaveAsCopy}\r\n            estimateId={estimateId}\r\n            saving={saving}\r\n          />\r\n        </div>\r\n\r\n        <div className=\"flex items-center gap-3 mb-4\">\r\n          <div className=\"w-9 h-9 rounded-md bg-sky-100 text-sky-700 flex items-center justify-center\"><Palette className=\"w-5 h-5\" /></div>\r\n          <div>\r\n            <h1 className=\"text-[20px] font-bold text-gray-900\">Painting Builder</h1>\r\n            <p className=\"text-[11px] text-gray-500\">Panels, dimensional lettering and complex shapes using the migrated SignEstimate Pro paint formulas.</p>\r\n          </div>\r\n        </div>\r\n\r\n        {error && <div className=\"mb-3 px-3 py-2 text-[12px] text-red-700 bg-red-50 border border-red-200 rounded\">{error}</div>}\r\n\r\n        <div className=\"grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_310px] gap-4\">\r\n          <div className=\"space-y-4 min-w-0\">\r\n            <section className=\"bg-white border border-gray-200 rounded-md p-4\">\r\n              <div className=\"text-[12px] font-bold text-gray-800 mb-3\">Project</div>\r\n              <div className=\"grid sm:grid-cols-2 gap-3\">\r\n                <label className=\"text-[11px] text-gray-600\">Project name\r\n                  <Input value={project.project_name || \"\"} onChange={(e) => patchProject({ project_name: e.target.value })} className=\"mt-1 h-[32px] text-[12px]\" />\r\n                </label>\r\n                <label className=\"text-[11px] text-gray-600\">Client\r\n                  <Input value={project.client_name || \"\"} onChange={(e) => patchProject({ client_name: e.target.value })} disabled={!!estimateId} className=\"mt-1 h-[32px] text-[12px]\" />\r\n                </label>\r\n                <label className=\"text-[11px] text-gray-600\">Estimate number\r\n                  <Input value={project.estimate_number || \"\"} onChange={(e) => patchProject({ estimate_number: e.target.value })} disabled={!!estimateId} className=\"mt-1 h-[32px] text-[12px]\" />\r\n                </label>\r\n                <label className=\"text-[11px] text-gray-600\">Paint application supplies / sq ft / color\r\n                  <Input type=\"number\" step=\"0.01\" min=\"0\" value={project.paint_supplies_per_sqft ?? \"\"} onChange={(e) => patchProject({ paint_supplies_per_sqft: Number(e.target.value) })} className=\"mt-1 h-[32px] text-[12px]\" />\r\n                </label>\r\n              </div>\r\n              <label className=\"block text-[11px] text-gray-600 mt-3\">Notes\r\n                <Textarea value={project.notes || \"\"} onChange={(e) => patchProject({ notes: e.target.value })} className=\"mt-1 min-h-[70px] text-[12px]\" />\r\n              </label>\r\n            </section>\r\n\r\n            <section className=\"bg-white border border-gray-200 rounded-md\">\r\n              <div className=\"px-4 py-3 border-b border-gray-200 flex items-center justify-between gap-3\">\r\n                <div>\r\n                  <div className=\"text-[12px] font-bold text-gray-800\">Paint Items</div>\r\n                  <div className=\"text-[10px] text-gray-500\">Geometry drives paintable area; colors drive paint, mask and labor.</div>\r\n                </div>\r\n                <Button onClick={addItem} variant=\"outline\" className=\"h-[30px] px-3 text-[11px]\"><Plus className=\"w-3.5 h-3.5 mr-1\" /> Add Item</Button>\r\n              </div>\r\n\r\n              {(project.items || []).length === 0 ? (\r\n                <div className=\"py-12 text-center text-[12px] text-gray-400\">No paint items yet.</div>\r\n              ) : (\r\n                <div className=\"divide-y divide-gray-100\">\r\n                  {project.items.map((rawItem, index) => {\r\n                    const item = calculated.items[index] || rawItem;\r\n                    const lettering = rawItem.item_type === \"lettering\";\r\n                    return (\r\n                      <div key={rawItem.builder_item_id || index} className=\"p-4 space-y-3\">\r\n                        <div className=\"flex items-center gap-2\">\r\n                          <span className=\"w-6 h-6 rounded bg-gray-100 text-gray-600 flex items-center justify-center text-[10px] font-bold\">{index + 1}</span>\r\n                          <Input data-item-desc={index} value={rawItem.description || \"\"} onChange={(e) => patchItem(index, { description: e.target.value })} placeholder=\"Item description\" className=\"h-[30px] text-[12px] flex-1\" />\r\n                          <button type=\"button\" onClick={() => removeItem(index)} className=\"w-8 h-8 inline-flex items-center justify-center rounded text-red-500 hover:bg-red-50\" aria-label=\"Remove item\"><Trash2 className=\"w-4 h-4\" /></button>\r\n                        </div>\r\n\r\n                        {!lettering && (\r\n                          <div className=\"flex flex-wrap items-center gap-1.5\">\r\n                            <span className=\"text-[9px] font-bold tracking-wide text-gray-400\">SURFACE PRESETS</span>\r\n                            {[[\"4′×8′ face\", 48, 96], [\"8′×4′ face\", 96, 48], [\"2′×4′ face\", 24, 48], [\"4′×4′ face\", 48, 48]].map(([label, l, w]) => (\r\n                              <button key={label} type=\"button\" onClick={() => patchItem(index, { length: l, width: w }, { autoMask: true })} className=\"px-2 h-[24px] rounded border border-gray-300 text-[10px] text-gray-600 hover:bg-gray-50\">{label}</button>\r\n                            ))}\r\n                          </div>\r\n                        )}\r\n                        <div className=\"grid sm:grid-cols-2 lg:grid-cols-4 gap-2.5\">\r\n                          <Field label=\"Type\">\r\n                            <Select value={rawItem.item_type || \"panel\"} onValueChange={(value) => patchItem(index, { item_type: value }, { autoMask: true })}>\r\n                              <SelectTrigger className=\"h-[30px] text-[11px]\"><SelectValue /></SelectTrigger>\r\n                              <SelectContent>\r\n                                <SelectItem value=\"panel\">Panel</SelectItem>\r\n                                <SelectItem value=\"lettering\">Lettering</SelectItem>\r\n                                <SelectItem value=\"complex_shapes\">Complex Shape</SelectItem>\r\n                              </SelectContent>\r\n                            </Select>\r\n                          </Field>\r\n                          <Field label=\"Thickness\">\r\n                            <Select value={rawItem.thickness || \"1/2\"} onValueChange={(value) => patchItem(index, { thickness: value }, { autoMask: true })}>\r\n                              <SelectTrigger className=\"h-[30px] text-[11px]\"><SelectValue /></SelectTrigger>\r\n                              <SelectContent>{PAINT_THICKNESSES.map((size) => <SelectItem value={size} key={size}>{size}&quot;</SelectItem>)}</SelectContent>\r\n                            </Select>\r\n                          </Field>\r\n                          <Field label={lettering ? \"Letter height (in)\" : \"Length (in)\"}>\r\n                            <Input type=\"number\" min=\"0\" step=\"0.01\" value={rawItem[lettering ? \"width\" : \"length\"] ?? 0} onChange={(e) => patchItem(index, { [lettering ? \"width\" : \"length\"]: Number(e.target.value) }, { autoMask: true })} className=\"h-[30px] text-[11px]\" />\r\n                          </Field>\r\n                          <Field label={lettering ? \"Number of letters\" : \"Width (in)\"}>\r\n                            <Input type=\"number\" min=\"0\" step={lettering ? \"1\" : \"0.01\"} value={rawItem[lettering ? \"length\" : \"width\"] ?? 0} onChange={(e) => patchItem(index, { [lettering ? \"length\" : \"width\"]: Number(e.target.value) }, { autoMask: true })} className=\"h-[30px] text-[11px]\" />\r\n                          </Field>\r\n                          {!lettering && <Field label=\"Quantity\"><Input type=\"number\" min=\"1\" step=\"1\" value={rawItem.quantity ?? 1} onChange={(e) => patchItem(index, { quantity: Math.max(1, Number(e.target.value) || 1) })} className=\"h-[30px] text-[11px]\" /></Field>}\r\n                          <Field label=\"Paint sides\">\r\n                            <Select value={rawItem.paint_sides || \"one_side\"} onValueChange={(value) => patchItem(index, { paint_sides: value })}>\r\n                              <SelectTrigger className=\"h-[30px] text-[11px]\"><SelectValue /></SelectTrigger>\r\n                              <SelectContent><SelectItem value=\"one_side\">One side + edges</SelectItem><SelectItem value=\"both_sides\">Both sides + edges</SelectItem></SelectContent>\r\n                            </Select>\r\n                          </Field>\r\n                          {rawItem.item_type === \"complex_shapes\" && <Field label=\"Edge complexity\"><Input type=\"number\" min=\"0\" step=\"0.1\" value={rawItem.edge_complexity_multiplier ?? 1} onChange={(e) => patchItem(index, { edge_complexity_multiplier: Number(e.target.value) })} className=\"h-[30px] text-[11px]\" /></Field>}\r\n                          <Field label=\"Paint mask sq ft\"><Input type=\"number\" min=\"0\" step=\"0.01\" value={rawItem.paint_mask_sqft ?? 0} onChange={(e) => patchItem(index, { paint_mask_sqft: Number(e.target.value) })} className=\"h-[30px] text-[11px]\" /></Field>\r\n                          <Field label=\"Item fixed waste (gal)\"><Input type=\"number\" min=\"0\" step=\"0.01\" value={rawItem.fixed_waste_gallons ?? 0} onChange={(e) => patchItem(index, { fixed_waste_gallons: Number(e.target.value) })} className=\"h-[30px] text-[11px]\" /></Field>\r\n                          <Field label=\"Base supplies\"><Input type=\"number\" min=\"0\" step=\"0.01\" value={rawItem.base_supplies_cost ?? 0} onChange={(e) => patchItem(index, { base_supplies_cost: Number(e.target.value) })} className=\"h-[30px] text-[11px]\" /></Field>\r\n                        </div>\r\n\r\n                        <div className=\"bg-gray-50 border border-gray-100 rounded p-2.5\">\r\n                          <div className=\"flex items-center justify-between mb-2\">\r\n                            <div className=\"text-[10px] font-bold uppercase tracking-wide text-gray-500\">Paint colors</div>\r\n                            <button type=\"button\" onClick={() => addColor(index)} className=\"text-[10px] font-semibold text-sky-700 hover:text-sky-900\">+ Add color</button>\r\n                          </div>\r\n                          {(rawItem.paint_colors || []).length === 0 ? <div className=\"text-[10px] text-gray-400\">No colors selected — no liquid paint is charged.</div> : (\r\n                            <div className=\"flex flex-wrap gap-2\">\r\n                              {(rawItem.paint_colors || []).map((color, colorIndex) => (\r\n                                <div className=\"flex items-center gap-1\" key={colorIndex}>\r\n                                  <Input value={color || \"\"} onChange={(e) => updateColor(index, colorIndex, e.target.value)} placeholder=\"PMS / color\" className=\"h-[28px] w-[145px] text-[11px]\" />\r\n                                  <button type=\"button\" onClick={() => removeColor(index, colorIndex)} className=\"w-6 h-6 rounded text-gray-400 hover:text-red-600 hover:bg-white\">×</button>\r\n                                </div>\r\n                              ))}\r\n                            </div>\r\n                          )}\r\n                        </div>\r\n\r\n                        <div className=\"grid grid-cols-2 md:grid-cols-5 gap-2 text-[10px]\">\r\n                          <Metric label=\"Paintable area\" value={`${number(item.paintable_sqft)} sf`} />\r\n                          <Metric label=\"Paint mask\" value={money(item.supplies_cost)} />\r\n                          <Metric label=\"Paint + supplies\" value={money(item.paint_cost)} />\r\n                          <Metric label=\"Labor\" value={money(item.labor_cost)} />\r\n                          <Metric label=\"Paint volume\" value={`${number(item.paint_gallons, 3)} gal`} />\r\n                        </div>\r\n                      </div>\r\n                    );\r\n                  })}\r\n                </div>\r\n              )}\r\n            </section>\r\n          </div>\r\n\r\n          <aside className=\"space-y-3\">\r\n            <section className=\"bg-white border border-gray-200 rounded-md sticky top-4\">\r\n              <div className=\"px-4 py-3 border-b border-gray-200\">\r\n                <div className=\"text-[12px] font-bold text-gray-800\">Cost Summary</div>\r\n                <div className=\"text-[10px] text-gray-500\">Internal Builder cost before estimate-level markup.</div>\r\n              </div>\r\n              <div className=\"p-4 space-y-2 text-[11px]\">\r\n                <SummaryRow label=\"Paint mask\" value={money(totals.total_paint_mask_cost)} />\r\n                <SummaryRow label=\"Liquid paint & supplies\" value={money(totals.total_liquid_paint_and_supplies_cost)} />\r\n                <SummaryRow label=\"Painting labor\" value={money(totals.total_labor_cost)} />\r\n                <div className=\"border-t border-gray-200 pt-2 mt-2 flex justify-between items-center\">\r\n                  <span className=\"font-bold text-gray-800\">Total cost</span>\r\n                  <span className=\"text-[16px] font-bold text-gray-900\">{money(totals.total_cost)}</span>\r\n                </div>\r\n              </div>\r\n              <div className=\"px-4 py-3 border-t border-gray-100 bg-gray-50 space-y-1.5 text-[10px] text-gray-500\">\r\n                <SummaryRow label=\"Paint needed\" value={`${number(totals.total_paint_gallons, 3)} gal`} subtle />\r\n                <SummaryRow label=\"Labor time\" value={`${number(totals.total_labor_hours)} hr`} subtle />\r\n                <SummaryRow label=\"Unique colors\" value={number(totals.unique_color_count, 0)} subtle />\r\n                <SummaryRow label=\"Mixes\" value={number(totals.number_of_mixes, 0)} subtle />\r\n                <SummaryRow label=\"Setup / cleanup\" value={`${number(totals.setup_hours)} hr`} subtle />\r\n                <SummaryRow label=\"Mixing\" value={`${number(totals.mixing_hours)} hr`} subtle />\r\n              </div>\r\n              <div className=\"px-4 py-3 border-t border-gray-100 text-[10px] text-gray-500\">\r\n                Mixed paint rate: <span className=\"font-semibold text-gray-700\">{money(calculated.liquidPaintRate)}/sf</span>\r\n              </div>\r\n            </section>\r\n          </aside>\r\n        </div>\r\n\r\n        <div className=\"mt-4\">\r\n          <CustomerPricingTab\r\n            project={{\r\n              ...project,\r\n              total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),\r\n              total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),\r\n              total_labor_cost: Number(totals.total_labor_cost || 0),\r\n            }}\r\n            categorize={categorizePaintProject}\r\n            accentColor=\"blue\"\r\n            onApplyTier={(tier) => patchProject({\r\n              customer_pricing: { ...(project.customer_pricing || {}), applied: true, tier_number: tier },\r\n            })}\r\n          />\r\n        </div>\r\n      </div>\r\n      <ModuleTemplateDialog\r\n        open={!!templateMode}\r\n        mode={templateMode}\r\n        onClose={() => setTemplateMode(null)}\r\n        project={project}\r\n        onApply={(data) => patchProject(data)}\r\n        moduleKey=\"painting\"\r\n        title=\"Painting\"\r\n        buildTemplateData={buildPaintingTemplateData}\r\n        describeTemplate={(t) => `${(t.project_data?.items || []).length} items`}\r\n      />\r\n    </div>\r\n  );\r\n}\r\n\r\nfunction Field({ label, children }) {\r\n  return <label className=\"text-[10px] text-gray-500 min-w-0\"><span className=\"block mb-1\">{label}</span>{children}</label>;\r\n}\r\n\r\nfunction Metric({ label, value }) {\r\n  return <div className=\"bg-white border border-gray-100 rounded px-2 py-1.5\"><div className=\"text-gray-400\">{label}</div><div className=\"font-semibold text-gray-700 mt-0.5\">{value}</div></div>;\r\n}\r\n\r\nfunction SummaryRow({ label, value, subtle = false }) {\r\n  return <div className={`flex items-center justify-between gap-3 ${subtle ? \"text-gray-500\" : \"text-gray-600\"}`}><span>{label}</span><span className={subtle ? \"font-medium\" : \"font-semibold text-gray-800\"}>{value}</span></div>;\r\n}",
+   "base64": "aW1wb3J0IHsgdXNlRWZmZWN0LCB1c2VNZW1vLCB1c2VSZWYsIHVzZVN0YXRlIH0gZnJvbSAicmVhY3QiOw0KaW1wb3J0IHsgUHJvamVjdCwgU2V0dGluZ3MgfSBmcm9tICJAL2FwaS9nYXRlZEVudGl0aWVzIjsNCmltcG9ydCB7IExpbmssIHVzZU5hdmlnYXRlLCB1c2VTZWFyY2hQYXJhbXMgfSBmcm9tICJyZWFjdC1yb3V0ZXItZG9tIjsNCmltcG9ydCB7IEFycm93TGVmdCwgUGFsZXR0ZSwgUGx1cywgU2F2ZSwgVHJhc2gyIH0gZnJvbSAibHVjaWRlLXJlYWN0IjsNCmltcG9ydCB7IEJ1dHRvbiB9IGZyb20gIkAvY29tcG9uZW50cy91aS9idXR0b24iOw0KaW1wb3J0IHsgSW5wdXQgfSBmcm9tICJAL2NvbXBvbmVudHMvdWkvaW5wdXQiOw0KaW1wb3J0IHsgVGV4dGFyZWEgfSBmcm9tICJAL2NvbXBvbmVudHMvdWkvdGV4dGFyZWEiOw0KaW1wb3J0IHsgU2VsZWN0LCBTZWxlY3RDb250ZW50LCBTZWxlY3RJdGVtLCBTZWxlY3RUcmlnZ2VyLCBTZWxlY3RWYWx1ZSB9IGZyb20gIkAvY29tcG9uZW50cy91aS9zZWxlY3QiOw0KaW1wb3J0IHsgcmVjb3JkQnVpbGRlclNhdmUgfSBmcm9tICJAL2NvbXBvbmVudHMvZXN0aW1hdG9yL2J1aWxkZXIvYnVpbGRlclNlcnZpY2UiOw0KaW1wb3J0IHsgbG9hZEFsbEVudGl0eVJvd3MgfSBmcm9tICJAL2NvbXBvbmVudHMvZXN0aW1hdG9yL2xvYWRBbGxFbnRpdHlSb3dzIjsNCmltcG9ydCB7IHByZWZsaWdodEJ1aWxkZXJTb3VyY2VNdXRhdGlvbiwgdXBkYXRlQnVpbGRlclNvdXJjZVByb2plY3QgfSBmcm9tICJAL2NvbXBvbmVudHMvZXN0aW1hdG9yL2J1aWxkZXIvc291cmNlUHJvamVjdFBlcnNpc3RlbmNlIjsNCmltcG9ydCB7IGVuc3VyZUlkZW1wb3RlbnRFbnRpdHlDcmVhdGUsIG5ld0NyZWF0aW9uUmVxdWVzdEtleSB9IGZyb20gIkAvY29tcG9uZW50cy9lc3RpbWF0b3IvaWRlbXBvdGVudEVudGl0eUNyZWF0ZSI7DQppbXBvcnQgTW9kdWxlQWN0aW9uQmFyIGZyb20gIkAvY29tcG9uZW50cy9lc3RpbWF0b3IvbW9kdWxlU2hhcmVkL01vZHVsZUFjdGlvbkJhciI7DQppbXBvcnQgTW9kdWxlVGVtcGxhdGVEaWFsb2cgZnJvbSAiQC9jb21wb25lbnRzL2VzdGltYXRvci9tb2R1bGVTaGFyZWQvTW9kdWxlVGVtcGxhdGVEaWFsb2ciOw0KaW1wb3J0IHsgc2F2ZU1vZHVsZVByb2plY3RDb3B5IH0gZnJvbSAiQC9jb21wb25lbnRzL2VzdGltYXRvci9tb2R1bGVTaGFyZWQvbW9kdWxlUHJvamVjdEFjdGlvbnMiOw0KaW1wb3J0IEN1c3RvbWVyUHJpY2luZ1RhYiBmcm9tICJAL2NvbXBvbmVudHMvbWFya3VwL0N1c3RvbWVyUHJpY2luZ1RhYiI7DQppbXBvcnQgeyBjYXRlZ29yaXplUGFpbnRQcm9qZWN0IH0gZnJvbSAiQC9jb21wb25lbnRzL21hcmt1cC9wcm9qZWN0Q2F0ZWdvcml6ZXIiOw0KaW1wb3J0IHsgY2FsY3VsYXRlU2F2ZWRDdXN0b21lclByaWNpbmcgfSBmcm9tICJAL2NvbXBvbmVudHMvbWFya3VwL3NhdmVkQ3VzdG9tZXJQcmljaW5nIjsNCmltcG9ydCB7IG5ld0J1aWxkZXJJdGVtSWQsIHNlZWRCdWlsZGVySXRlbUlkcyB9IGZyb20gIkAvY29tcG9uZW50cy9lc3RpbWF0b3IvYnVpbGRlci9pdGVtSWRlbnRpdHkiOw0KaW1wb3J0IHsNCiAgUEFJTlRfVEhJQ0tORVNTRVMsDQogIGF1dG9QYWludE1hc2tTcWZ0LA0KICBjYWxjdWxhdGVQYWludGluZ1Byb2plY3QsDQogIG5vcm1hbGl6ZVBhaW50aW5nSXRlbSwNCn0gZnJvbSAiQC9jb21wb25lbnRzL2VzdGltYXRvci9wYWludC9wYWludENhbGMiOw0KaW1wb3J0IHsgc3RhZmZFbnRpdGllcyB9IGZyb20gIkAvY29tcG9uZW50cy9zdGFmZi9zdGFmZkVudGl0aWVzIjsNCg0KY29uc3QgbW9uZXkgPSAodmFsdWUpID0+IE51bWJlcih2YWx1ZSB8fCAwKS50b0xvY2FsZVN0cmluZygiZW4tVVMiLCB7IHN0eWxlOiAiY3VycmVuY3kiLCBjdXJyZW5jeTogIlVTRCIgfSk7DQpjb25zdCBudW1iZXIgPSAodmFsdWUsIGRpZ2l0cyA9IDIpID0+IE51bWJlcih2YWx1ZSB8fCAwKS50b0xvY2FsZVN0cmluZygiZW4tVVMiLCB7IG1heGltdW1GcmFjdGlvbkRpZ2l0czogZGlnaXRzIH0pOw0KDQpjb25zdCBlbXB0eUl0ZW0gPSAoKSA9PiBub3JtYWxpemVQYWludGluZ0l0ZW0oew0KICBidWlsZGVyX2l0ZW1faWQ6IG5ld0J1aWxkZXJJdGVtSWQoInBhaW50LWl0ZW0iKSwNCiAgcGFpbnRfY29sb3JzOiBbIiJdLA0KfSk7DQoNCmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uIFBhaW50aW5nRXN0aW1hdG9yKHsgZW1iZWRkZWQgPSBmYWxzZSwgZW1iZWRkZWRQcm9qZWN0SWQgPSBudWxsLCBlbWJlZGRlZEVzdGltYXRlSWQgPSBudWxsLCBvbkNsb3NlLCBvblNhdmVkIH0pIHsNCiAgY29uc3QgbmF2aWdhdGUgPSB1c2VOYXZpZ2F0ZSgpOw0KICBjb25zdCBbc2VhcmNoUGFyYW1zXSA9IHVzZVNlYXJjaFBhcmFtcygpOw0KICBjb25zdCBlZGl0SWQgPSBlbWJlZGRlZFByb2plY3RJZCB8fCBzZWFyY2hQYXJhbXMuZ2V0KCJlZGl0IikgfHwgc2VhcmNoUGFyYW1zLmdldCgiaWQiKTsNCiAgY29uc3QgZXN0aW1hdGVJZCA9IGVtYmVkZGVkRXN0aW1hdGVJZCB8fCBzZWFyY2hQYXJhbXMuZ2V0KCJlc3RpbWF0ZUlkIik7DQogIGNvbnN0IFtwcm9qZWN0LCBzZXRQcm9qZWN0XSA9IHVzZVN0YXRlKG51bGwpOw0KICBjb25zdCBbc2V0dGluZ3MsIHNldFNldHRpbmdzXSA9IHVzZVN0YXRlKHt9KTsNCiAgY29uc3QgW2xvYWRpbmcsIHNldExvYWRpbmddID0gdXNlU3RhdGUodHJ1ZSk7DQogIGNvbnN0IFtzYXZpbmcsIHNldFNhdmluZ10gPSB1c2VTdGF0ZShmYWxzZSk7DQogIGNvbnN0IFtlcnJvciwgc2V0RXJyb3JdID0gdXNlU3RhdGUoIiIpOw0KICBjb25zdCBwZXJzaXN0ZWRQcm9qZWN0SWRSZWYgPSB1c2VSZWYoZWRpdElkIHx8ICIiKTsNCiAgY29uc3QgY3JlYXRlQXR0ZW1wdFJlZiA9IHVzZVJlZih7IHNpZ25hdHVyZTogIiIsIGtleTogIiIgfSk7DQogIGNvbnN0IGNvcHlBdHRlbXB0UmVmID0gdXNlUmVmKHsgc2lnbmF0dXJlOiAiIiwga2V5OiAiIiB9KTsNCiAgY29uc3QgW3RlbXBsYXRlTW9kZSwgc2V0VGVtcGxhdGVNb2RlXSA9IHVzZVN0YXRlKG51bGwpOw0KDQogIHVzZUVmZmVjdCgoKSA9PiB7DQogICAgcGVyc2lzdGVkUHJvamVjdElkUmVmLmN1cnJlbnQgPSBlZGl0SWQgfHwgIiI7DQogICAgY3JlYXRlQXR0ZW1wdFJlZi5jdXJyZW50ID0geyBzaWduYXR1cmU6ICIiLCBrZXk6ICIiIH07DQogICAgY29weUF0dGVtcHRSZWYuY3VycmVudCA9IHsgc2lnbmF0dXJlOiAiIiwga2V5OiAiIiB9Ow0KICB9LCBbZWRpdElkXSk7DQoNCiAgdXNlRWZmZWN0KCgpID0+IHsNCiAgICBsZXQgYWN0aXZlID0gdHJ1ZTsNCiAgICBjb25zdCBsb2FkID0gYXN5bmMgKCkgPT4gew0KICAgICAgc2V0TG9hZGluZyh0cnVlKTsNCiAgICAgIHRyeSB7DQogICAgICAgIGNvbnN0IFtzZXR0aW5nc1Jvd3MsIGV4aXN0aW5nLCBlc3RpbWF0ZV0gPSBhd2FpdCBQcm9taXNlLmFsbChbDQogICAgICAgICAgbG9hZEFsbEVudGl0eVJvd3MoeyBlbnRpdHk6IFNldHRpbmdzLCBzb3J0OiAiY3JlYXRlZF9kYXRlIiwgbGFiZWw6ICJFc3RpbWF0b3IgU2V0dGluZ3MiIH0pLA0KICAgICAgICAgIGVkaXRJZCA/IFByb2plY3QuZ2V0KGVkaXRJZCkgOiBQcm9taXNlLnJlc29sdmUobnVsbCksDQogICAgICAgICAgZXN0aW1hdGVJZCA/IHN0YWZmRW50aXRpZXMuQWxsSW5PbmVFc3RpbWF0ZS5nZXQoZXN0aW1hdGVJZCkgOiBQcm9taXNlLnJlc29sdmUobnVsbCksDQogICAgICAgIF0pOw0KICAgICAgICBpZiAoIWFjdGl2ZSkgcmV0dXJuOw0KICAgICAgICBjb25zdCBzZXR0aW5nc01hcCA9IHt9Ow0KICAgICAgICAoc2V0dGluZ3NSb3dzIHx8IFtdKS5mb3JFYWNoKChyb3cpID0+IHsgc2V0dGluZ3NNYXBbcm93LnNldHRpbmdfbmFtZV0gPSByb3cuc2V0dGluZ192YWx1ZTsgfSk7DQogICAgICAgIHNldFNldHRpbmdzKHNldHRpbmdzTWFwKTsNCiAgICAgICAgY29uc3Qgc3VwcGxpZXNEZWZhdWx0ID0gTnVtYmVyKHNldHRpbmdzTWFwLmRlZmF1bHRfcGFpbnRfc3VwcGxpZXNfcGVyX3NxZnQpIHx8IDEuMjU7DQogICAgICAgIGlmIChleGlzdGluZykgew0KICAgICAgICAgIHNldFByb2plY3Qoew0KICAgICAgICAgICAgLi4uZXhpc3RpbmcsDQogICAgICAgICAgICBjbGllbnRfbmFtZTogZXN0aW1hdGU/LmNsaWVudF9uYW1lIHx8IGV4aXN0aW5nLmNsaWVudF9uYW1lIHx8ICIiLA0KICAgICAgICAgICAgY3VzdG9tZXJfaWQ6IGVzdGltYXRlPy5jdXN0b21lcl9pZCB8fCBleGlzdGluZy5jdXN0b21lcl9pZCB8fCBudWxsLA0KICAgICAgICAgICAgZXN0aW1hdGVfbnVtYmVyOiBlc3RpbWF0ZT8uZXN0aW1hdGVfbnVtYmVyIHx8IGV4aXN0aW5nLmVzdGltYXRlX251bWJlciB8fCAiIiwNCiAgICAgICAgICAgIGl0ZW1zOiBzZWVkQnVpbGRlckl0ZW1JZHMoKGV4aXN0aW5nLml0ZW1zIHx8IFtdKS5tYXAobm9ybWFsaXplUGFpbnRpbmdJdGVtKSwgInBhaW50LWl0ZW0iKSwNCiAgICAgICAgICAgIHBhaW50X3N1cHBsaWVzX3Blcl9zcWZ0OiBleGlzdGluZy5wYWludF9zdXBwbGllc19wZXJfc3FmdCA/PyBzdXBwbGllc0RlZmF1bHQsDQogICAgICAgICAgfSk7DQogICAgICAgIH0gZWxzZSB7DQogICAgICAgICAgc2V0UHJvamVjdCh7DQogICAgICAgICAgICBwcm9qZWN0X25hbWU6IGVzdGltYXRlPy5wcm9qZWN0X25hbWUgPyBgJHtlc3RpbWF0ZS5wcm9qZWN0X25hbWV9IOKAlCBQYWludGluZ2AgOiAiIiwNCiAgICAgICAgICAgIGNsaWVudF9uYW1lOiBlc3RpbWF0ZT8uY2xpZW50X25hbWUgfHwgIiIsDQogICAgICAgICAgICBjdXN0b21lcl9pZDogZXN0aW1hdGU/LmN1c3RvbWVyX2lkIHx8IG51bGwsDQogICAgICAgICAgICBlc3RpbWF0ZV9udW1iZXI6IGVzdGltYXRlPy5lc3RpbWF0ZV9udW1iZXIgfHwgIiIsDQogICAgICAgICAgICBoeXBlcmxpbms6ICIiLA0KICAgICAgICAgICAgc3RhdHVzOiAiZHJhZnQiLA0KICAgICAgICAgICAgaXRlbXM6IFtdLA0KICAgICAgICAgICAgcGFpbnRfc3VwcGxpZXNfcGVyX3NxZnQ6IHN1cHBsaWVzRGVmYXVsdCwNCiAgICAgICAgICAgIG5vdGVzOiBzZXR0aW5nc01hcC5kZWZhdWx0X25vdGVzX3RlbXBsYXRlIHx8ICIiLA0KICAgICAgICAgIH0pOw0KICAgICAgICB9DQogICAgICB9IGNhdGNoIChlKSB7DQogICAgICAgIGNvbnNvbGUuZXJyb3IoIkNvdWxkIG5vdCBsb2FkIFBhaW50aW5nIGVzdGltYXRvcjoiLCBlKTsNCiAgICAgICAgaWYgKGFjdGl2ZSkgc2V0RXJyb3IoZS5tZXNzYWdlIHx8ICJDb3VsZCBub3QgbG9hZCBQYWludGluZyBlc3RpbWF0b3IuIik7DQogICAgICB9IGZpbmFsbHkgew0KICAgICAgICBpZiAoYWN0aXZlKSBzZXRMb2FkaW5nKGZhbHNlKTsNCiAgICAgIH0NCiAgICB9Ow0KICAgIGxvYWQoKTsNCiAgICByZXR1cm4gKCkgPT4geyBhY3RpdmUgPSBmYWxzZTsgfTsNCiAgfSwgW2VkaXRJZCwgZXN0aW1hdGVJZF0pOw0KDQogIGNvbnN0IGNhbGN1bGF0ZWQgPSB1c2VNZW1vKA0KICAgICgpID0+IHByb2plY3QgPyBjYWxjdWxhdGVQYWludGluZ1Byb2plY3QocHJvamVjdCwgc2V0dGluZ3MpIDogbnVsbCwNCiAgICBbcHJvamVjdCwgc2V0dGluZ3NdDQogICk7DQogIGNvbnN0IHRvdGFscyA9IGNhbGN1bGF0ZWQ/LnRvdGFscyB8fCB7fTsNCg0KICBjb25zdCBwYXRjaFByb2plY3QgPSAoY2hhbmdlcykgPT4gc2V0UHJvamVjdCgocHJldikgPT4gKHsgLi4ucHJldiwgLi4uY2hhbmdlcyB9KSk7DQoNCiAgY29uc3QgcGF0Y2hJdGVtID0gKGluZGV4LCBjaGFuZ2VzLCB7IGF1dG9NYXNrID0gZmFsc2UgfSA9IHt9KSA9PiB7DQogICAgc2V0UHJvamVjdCgocHJldikgPT4gew0KICAgICAgY29uc3QgaXRlbXMgPSBbLi4uKHByZXYuaXRlbXMgfHwgW10pXTsNCiAgICAgIGxldCBpdGVtID0gbm9ybWFsaXplUGFpbnRpbmdJdGVtKHsgLi4uaXRlbXNbaW5kZXhdLCAuLi5jaGFuZ2VzIH0pOw0KICAgICAgaWYgKGl0ZW0uaXRlbV90eXBlID09PSAibGV0dGVyaW5nIikgaXRlbS5xdWFudGl0eSA9IDE7DQogICAgICBpZiAoT2JqZWN0LnByb3RvdHlwZS5oYXNPd25Qcm9wZXJ0eS5jYWxsKGNoYW5nZXMsICJ3aWR0aCIpICYmIGl0ZW0uaXRlbV90eXBlID09PSAibGV0dGVyaW5nIikgew0KICAgICAgICBjb25zdCBoZWlnaHQgPSBOdW1iZXIoaXRlbS53aWR0aCB8fCAwKTsNCiAgICAgICAgaXRlbS5sZXR0ZXJfc2l6ZSA9IGhlaWdodCA8PSA0ID8gImV4dHJhX3NtYWxsIg0KICAgICAgICAgIDogaGVpZ2h0IDw9IDggPyAic21hbGwiDQogICAgICAgICAgICA6IGhlaWdodCA8PSAxMiA/ICJub3JtYWwiDQogICAgICAgICAgICAgIDogaGVpZ2h0IDw9IDIwID8gIm1lZGl1bSINCiAgICAgICAgICAgICAgICA6IGhlaWdodCA8PSAzMCA/ICJsYXJnZSINCiAgICAgICAgICAgICAgICAgIDogImV4dHJhX2xhcmdlIjsNCiAgICAgIH0NCiAgICAgIGlmIChhdXRvTWFzaykgaXRlbS5wYWludF9tYXNrX3NxZnQgPSBhdXRvUGFpbnRNYXNrU3FmdChpdGVtKTsNCiAgICAgIGl0ZW1zW2luZGV4XSA9IGl0ZW07DQogICAgICByZXR1cm4geyAuLi5wcmV2LCBpdGVtcyB9Ow0KICAgIH0pOw0KICB9Ow0KDQogIGNvbnN0IGFkZEl0ZW0gPSAoKSA9PiB7DQogICAgc2V0VGltZW91dCgoKSA9PiBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBpbnB1dFtkYXRhLWl0ZW0tZGVzYz0iJHsocHJvamVjdC5pdGVtcyB8fCBbXSkubGVuZ3RofSJdYCk/LmZvY3VzKCksIDYwKTsNCiAgICBwYXRjaFByb2plY3QoeyBpdGVtczogWy4uLihwcm9qZWN0Lml0ZW1zIHx8IFtdKSwgZW1wdHlJdGVtKCldIH0pOw0KICB9Ow0KICBjb25zdCByZW1vdmVJdGVtID0gKGluZGV4KSA9PiB7DQogICAgY29uc3QgbGFiZWwgPSBwcm9qZWN0Lml0ZW1zPy5baW5kZXhdPy5kZXNjcmlwdGlvbiB8fCBgaXRlbSAke2luZGV4ICsgMX1gOw0KICAgIGlmICghd2luZG93LmNvbmZpcm0oYERlbGV0ZSAiJHtsYWJlbH0iP2ApKSByZXR1cm47DQogICAgcGF0Y2hQcm9qZWN0KHsgaXRlbXM6IHByb2plY3QuaXRlbXMuZmlsdGVyKChfLCBpKSA9PiBpICE9PSBpbmRleCkgfSk7DQogIH07DQoNCiAgY29uc3QgdXBkYXRlQ29sb3IgPSAoaXRlbUluZGV4LCBjb2xvckluZGV4LCB2YWx1ZSkgPT4gew0KICAgIGNvbnN0IGNvbG9ycyA9IFsuLi4ocHJvamVjdC5pdGVtc1tpdGVtSW5kZXhdLnBhaW50X2NvbG9ycyB8fCBbXSldOw0KICAgIGNvbG9yc1tjb2xvckluZGV4XSA9IHZhbHVlOw0KICAgIHBhdGNoSXRlbShpdGVtSW5kZXgsIHsgcGFpbnRfY29sb3JzOiBjb2xvcnMgfSk7DQogIH07DQogIGNvbnN0IGFkZENvbG9yID0gKGl0ZW1JbmRleCkgPT4gcGF0Y2hJdGVtKGl0ZW1JbmRleCwgeyBwYWludF9jb2xvcnM6IFsuLi4ocHJvamVjdC5pdGVtc1tpdGVtSW5kZXhdLnBhaW50X2NvbG9ycyB8fCBbXSksICIiXSB9KTsNCiAgY29uc3QgcmVtb3ZlQ29sb3IgPSAoaXRlbUluZGV4LCBjb2xvckluZGV4KSA9PiBwYXRjaEl0ZW0oaXRlbUluZGV4LCB7DQogICAgcGFpbnRfY29sb3JzOiAocHJvamVjdC5pdGVtc1tpdGVtSW5kZXhdLnBhaW50X2NvbG9ycyB8fCBbXSkuZmlsdGVyKChfLCBpKSA9PiBpICE9PSBjb2xvckluZGV4KSwNCiAgfSk7DQoNCiAgLy8gQ3RybCtTIC8gQ21kK1Mgc2F2ZXMgdGhlIHNlY3Rpb24gd2l0aG91dCBsZWF2aW5nIHRoZSBlZGl0b3IuDQogIHVzZUVmZmVjdCgoKSA9PiB7DQogICAgY29uc3QgaGFuZGxlciA9IChlKSA9PiB7DQogICAgICBpZiAoKGUuY3RybEtleSB8fCBlLm1ldGFLZXkpICYmIGUua2V5LnRvTG93ZXJDYXNlKCkgPT09ICJzIikgew0KICAgICAgICBlLnByZXZlbnREZWZhdWx0KCk7DQogICAgICAgIGlmICghc2F2aW5nKSBzYXZlUHJvamVjdCgpOw0KICAgICAgfQ0KICAgIH07DQogICAgd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoImtleWRvd24iLCBoYW5kbGVyKTsNCiAgICByZXR1cm4gKCkgPT4gd2luZG93LnJlbW92ZUV2ZW50TGlzdGVuZXIoImtleWRvd24iLCBoYW5kbGVyKTsNCiAgfSwgW3NhdmluZ10pOw0KICAvLyBCbG9jayBhY2NpZGVudGFsIG5hdmlnYXRpb24gd2hpbGUgYSBzYXZlIGlzIGluIGZsaWdodC4NCiAgdXNlRWZmZWN0KCgpID0+IHsNCiAgICBpZiAoIXNhdmluZykgcmV0dXJuIHVuZGVmaW5lZDsNCiAgICBjb25zdCB3YXJuID0gKGUpID0+IHsgZS5wcmV2ZW50RGVmYXVsdCgpOyBlLnJldHVyblZhbHVlID0gIiI7IH07DQogICAgd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoImJlZm9yZXVubG9hZCIsIHdhcm4pOw0KICAgIHJldHVybiAoKSA9PiB3aW5kb3cucmVtb3ZlRXZlbnRMaXN0ZW5lcigiYmVmb3JldW5sb2FkIiwgd2Fybik7DQogIH0sIFtzYXZpbmddKTsNCiAgY29uc3Qgc2F2ZVByb2plY3QgPSBhc3luYyAoKSA9PiB7DQogICAgaWYgKCFwcm9qZWN0Py5wcm9qZWN0X25hbWU/LnRyaW0oKSB8fCAhcHJvamVjdD8uY2xpZW50X25hbWU/LnRyaW0oKSkgew0KICAgICAgc2V0RXJyb3IoIlByb2plY3QgbmFtZSBhbmQgY2xpZW50IG5hbWUgYXJlIHJlcXVpcmVkLiIpOw0KICAgICAgcmV0dXJuOw0KICAgIH0NCiAgICBzZXRTYXZpbmcodHJ1ZSk7DQogICAgc2V0RXJyb3IoIiIpOw0KICAgIHRyeSB7DQogICAgICBjb25zdCBjbGVhbkl0ZW1zID0gKGNhbGN1bGF0ZWQ/Lml0ZW1zIHx8IFtdKS5tYXAoKGl0ZW0pID0+ICh7DQogICAgICAgIC4uLml0ZW0sDQogICAgICAgIHBhaW50X2NvbG9yczogKGl0ZW0ucGFpbnRfY29sb3JzIHx8IFtdKS5maWx0ZXIoKGNvbG9yKSA9PiBTdHJpbmcoY29sb3IgfHwgIiIpLnRyaW0oKSksDQogICAgICB9KSk7DQogICAgICBjb25zdCBwcmljaW5nUHJvamVjdCA9IHsNCiAgICAgICAgLi4ucHJvamVjdCwNCiAgICAgICAgdG90YWxfcGFpbnRfbWFza19jb3N0OiBOdW1iZXIodG90YWxzLnRvdGFsX3BhaW50X21hc2tfY29zdCB8fCAwKSwNCiAgICAgICAgdG90YWxfbGlxdWlkX3BhaW50X2FuZF9zdXBwbGllc19jb3N0OiBOdW1iZXIodG90YWxzLnRvdGFsX2xpcXVpZF9wYWludF9hbmRfc3VwcGxpZXNfY29zdCB8fCAwKSwNCiAgICAgICAgdG90YWxfbGFib3JfY29zdDogTnVtYmVyKHRvdGFscy50b3RhbF9sYWJvcl9jb3N0IHx8IDApLA0KICAgICAgfTsNCiAgICAgIGNvbnN0IGN1c3RvbWVyUHJpY2luZyA9IHByb2plY3QuY3VzdG9tZXJfcHJpY2luZz8uYXBwbGllZCA9PT0gdHJ1ZQ0KICAgICAgICA/IGF3YWl0IGNhbGN1bGF0ZVNhdmVkQ3VzdG9tZXJQcmljaW5nKHsNCiAgICAgICAgICAgIHByb2plY3Q6IHByaWNpbmdQcm9qZWN0LA0KICAgICAgICAgICAgY2F0ZWdvcml6ZTogY2F0ZWdvcml6ZVBhaW50UHJvamVjdCwNCiAgICAgICAgICAgIHRpZXJOdW1iZXI6IHByb2plY3QuY3VzdG9tZXJfcHJpY2luZz8udGllcl9udW1iZXIsDQogICAgICAgICAgfSkNCiAgICAgICAgOiBwcm9qZWN0LmN1c3RvbWVyX3ByaWNpbmc7DQogICAgICBjb25zdCBwYXlsb2FkID0gew0KICAgICAgICBwcm9qZWN0X25hbWU6IHByb2plY3QucHJvamVjdF9uYW1lLA0KICAgICAgICBjbGllbnRfbmFtZTogcHJvamVjdC5jbGllbnRfbmFtZSwNCiAgICAgICAgY3VzdG9tZXJfaWQ6IHByb2plY3QuY3VzdG9tZXJfaWQgfHwgbnVsbCwNCiAgICAgICAgZXN0aW1hdGVfbnVtYmVyOiBwcm9qZWN0LmVzdGltYXRlX251bWJlciB8fCAiIiwNCiAgICAgICAgaHlwZXJsaW5rOiBwcm9qZWN0Lmh5cGVybGluayB8fCAiIiwNCiAgICAgICAgc3RhdHVzOiAiY2FsY3VsYXRlZCIsDQogICAgICAgIGl0ZW1zOiBjbGVhbkl0ZW1zLA0KICAgICAgICBwYWludF9zdXBwbGllc19wZXJfc3FmdDogTnVtYmVyKHByb2plY3QucGFpbnRfc3VwcGxpZXNfcGVyX3NxZnQgfHwgMCksDQogICAgICAgIHRvdGFsX3BhaW50X21hc2tfY29zdDogTnVtYmVyKHRvdGFscy50b3RhbF9wYWludF9tYXNrX2Nvc3QgfHwgMCksDQogICAgICAgIHRvdGFsX2xpcXVpZF9wYWludF9hbmRfc3VwcGxpZXNfY29zdDogTnVtYmVyKHRvdGFscy50b3RhbF9saXF1aWRfcGFpbnRfYW5kX3N1cHBsaWVzX2Nvc3QgfHwgMCksDQogICAgICAgIHRvdGFsX2xhYm9yX2Nvc3Q6IE51bWJlcih0b3RhbHMudG90YWxfbGFib3JfY29zdCB8fCAwKSwNCiAgICAgICAgY3VzdG9tZXJfcHJpY2luZzogY3VzdG9tZXJQcmljaW5nLA0KICAgICAgICBub3RlczogcHJvamVjdC5ub3RlcyB8fCAiIiwNCiAgICAgIH07DQoNCiAgICAgIGxldCBwcm9qZWN0SWQgPSBwZXJzaXN0ZWRQcm9qZWN0SWRSZWYuY3VycmVudCB8fCBlZGl0SWQgfHwgIiI7DQogICAgICBsZXQgc2F2ZWRQcm9qZWN0Ow0KICAgICAgaWYgKHByb2plY3RJZCkgew0KICAgICAgICBzYXZlZFByb2plY3QgPSBhd2FpdCB1cGRhdGVCdWlsZGVyU291cmNlUHJvamVjdCh7DQogICAgICAgICAgZW50aXR5OiBQcm9qZWN0LA0KICAgICAgICAgIHNvdXJjZUlkOiBwcm9qZWN0SWQsDQogICAgICAgICAgZXhwZWN0ZWRVcGRhdGVkQXQ6IHByb2plY3QudXBkYXRlZF9kYXRlLA0KICAgICAgICAgIGRhdGE6IHBheWxvYWQsDQogICAgICAgICAgZXN0aW1hdGVJZCwNCiAgICAgICAgICBsYWJlbDogIlBhaW50aW5nIHByb2plY3QiLA0KICAgICAgICB9KTsNCiAgICAgIH0gZWxzZSB7DQogICAgICAgIGF3YWl0IHByZWZsaWdodEJ1aWxkZXJTb3VyY2VNdXRhdGlvbih7IGVzdGltYXRlSWQgfSk7DQogICAgICAgIGNvbnN0IHNpZ25hdHVyZSA9IEpTT04uc3RyaW5naWZ5KHBheWxvYWQpOw0KICAgICAgICBpZiAoY3JlYXRlQXR0ZW1wdFJlZi5jdXJyZW50LnNpZ25hdHVyZSAhPT0gc2lnbmF0dXJlKSB7DQogICAgICAgICAgY3JlYXRlQXR0ZW1wdFJlZi5jdXJyZW50ID0gew0KICAgICAgICAgICAgc2lnbmF0dXJlLA0KICAgICAgICAgICAga2V5OiBuZXdDcmVhdGlvblJlcXVlc3RLZXkoInBhaW50aW5nX3Byb2plY3QiKSwNCiAgICAgICAgICB9Ow0KICAgICAgICB9DQogICAgICAgIHNhdmVkUHJvamVjdCA9IGF3YWl0IGVuc3VyZUlkZW1wb3RlbnRFbnRpdHlDcmVhdGUoew0KICAgICAgICAgIGVudGl0eTogUHJvamVjdCwNCiAgICAgICAgICBrZXlGaWVsZDogImNyZWF0aW9uX3JlcXVlc3Rfa2V5IiwNCiAgICAgICAgICBrZXk6IGNyZWF0ZUF0dGVtcHRSZWYuY3VycmVudC5rZXksDQogICAgICAgICAgZGF0YTogcGF5bG9hZCwNCiAgICAgICAgICBsYWJlbDogIlBhaW50aW5nIHByb2plY3QiLA0KICAgICAgICB9KTsNCiAgICAgICAgaWYgKCFzYXZlZFByb2plY3Q/LmlkKSB0aHJvdyBuZXcgRXJyb3IoIlBhaW50aW5nIHByb2plY3QgY3JlYXRlIGNvdWxkIG5vdCBiZSB2ZXJpZmllZC4iKTsNCiAgICAgICAgcHJvamVjdElkID0gc2F2ZWRQcm9qZWN0LmlkOw0KICAgICAgICBwZXJzaXN0ZWRQcm9qZWN0SWRSZWYuY3VycmVudCA9IHByb2plY3RJZDsNCiAgICAgIH0NCg0KICAgICAgaWYgKCFzYXZlZFByb2plY3Q/LmlkKSBzYXZlZFByb2plY3QgPSBhd2FpdCBQcm9qZWN0LmdldChwcm9qZWN0SWQpOw0KICAgICAgaWYgKGVzdGltYXRlSWQpIHsNCiAgICAgICAgYXdhaXQgcmVjb3JkQnVpbGRlclNhdmUoew0KICAgICAgICAgIGVzdGltYXRlSWQsDQogICAgICAgICAgbGluZTogeyBwcm9qZWN0X2lkOiBwcm9qZWN0SWQsIG1vZHVsZV9rZXk6ICJwYWludGluZyIgfSwNCiAgICAgICAgICBzb3VyY2VQcm9qZWN0OiBzYXZlZFByb2plY3QsDQogICAgICAgICAgbGl2ZVRvdGFsOiBOdW1iZXIodG90YWxzLnRvdGFsX2Nvc3QgfHwgMCksDQogICAgICAgIH0pOw0KICAgICAgfQ0KICAgICAgc2V0UHJvamVjdCgocHJldikgPT4gKHsgLi4ucHJldiwgLi4uc2F2ZWRQcm9qZWN0LCBpdGVtczogc2VlZEJ1aWxkZXJJdGVtSWRzKHNhdmVkUHJvamVjdC5pdGVtcyB8fCBbXSwgInBhaW50LWl0ZW0iKSB9KSk7DQogICAgICBvblNhdmVkPy4oKTsNCiAgICAgIGlmICghZW1iZWRkZWQgJiYgIWVkaXRJZCkgbmF2aWdhdGUoYC9QYWludGluZ0VzdGltYXRvcj9pZD0ke3Byb2plY3RJZH1gKTsNCiAgICB9IGNhdGNoIChlKSB7DQogICAgICBjb25zb2xlLmVycm9yKCJDb3VsZCBub3Qgc2F2ZSBQYWludGluZyBlc3RpbWF0b3I6IiwgZSk7DQogICAgICBzZXRFcnJvcihlLm1lc3NhZ2UgfHwgIkNvdWxkIG5vdCBzYXZlIFBhaW50aW5nIGVzdGltYXRvci4iKTsNCiAgICB9IGZpbmFsbHkgew0KICAgICAgc2V0U2F2aW5nKGZhbHNlKTsNCiAgICB9DQogIH07DQoNCiAgLy8gIzc4IOKAlCBjbG9uZSB0aGUgY3VycmVudCBzYXZlIHBheWxvYWQgaW50byBhIGJyYW5kLW5ldyBQYWludGluZyBwcm9qZWN0Lg0KICBjb25zdCBoYW5kbGVTYXZlQXNDb3B5ID0gYXN5bmMgKCkgPT4gew0KICAgIHNldFNhdmluZyh0cnVlKTsNCiAgICBzZXRFcnJvcigiIik7DQogICAgdHJ5IHsNCiAgICAgIGNvbnN0IGNsZWFuSXRlbXMgPSAoY2FsY3VsYXRlZD8uaXRlbXMgfHwgW10pLm1hcCgoaXRlbSkgPT4gKHsNCiAgICAgICAgLi4uaXRlbSwNCiAgICAgICAgcGFpbnRfY29sb3JzOiAoaXRlbS5wYWludF9jb2xvcnMgfHwgW10pLmZpbHRlcigoY29sb3IpID0+IFN0cmluZyhjb2xvciB8fCAiIikudHJpbSgpKSwNCiAgICAgIH0pKTsNCiAgICAgIGNvbnN0IGNvcHkgPSBhd2FpdCBzYXZlTW9kdWxlUHJvamVjdENvcHkoew0KICAgICAgICBlbnRpdHk6IFByb2plY3QsDQogICAgICAgIHBheWxvYWQ6IHsNCiAgICAgICAgICBwcm9qZWN0X25hbWU6IHByb2plY3QucHJvamVjdF9uYW1lLA0KICAgICAgICAgIGNsaWVudF9uYW1lOiBwcm9qZWN0LmNsaWVudF9uYW1lLA0KICAgICAgICAgIGN1c3RvbWVyX2lkOiBwcm9qZWN0LmN1c3RvbWVyX2lkIHx8IG51bGwsDQogICAgICAgICAgZXN0aW1hdGVfbnVtYmVyOiBwcm9qZWN0LmVzdGltYXRlX251bWJlciB8fCAiIiwNCiAgICAgICAgICBoeXBlcmxpbms6IHByb2plY3QuaHlwZXJsaW5rIHx8ICIiLA0KICAgICAgICAgIHN0YXR1czogImNhbGN1bGF0ZWQiLA0KICAgICAgICAgIGl0ZW1zOiBjbGVhbkl0ZW1zLA0KICAgICAgICAgIHBhaW50X3N1cHBsaWVzX3Blcl9zcWZ0OiBOdW1iZXIocHJvamVjdC5wYWludF9zdXBwbGllc19wZXJfc3FmdCB8fCAwKSwNCiAgICAgICAgICB0b3RhbF9wYWludF9tYXNrX2Nvc3Q6IE51bWJlcih0b3RhbHMudG90YWxfcGFpbnRfbWFza19jb3N0IHx8IDApLA0KICAgICAgICAgIHRvdGFsX2xpcXVpZF9wYWludF9hbmRfc3VwcGxpZXNfY29zdDogTnVtYmVyKHRvdGFscy50b3RhbF9saXF1aWRfcGFpbnRfYW5kX3N1cHBsaWVzX2Nvc3QgfHwgMCksDQogICAgICAgICAgdG90YWxfbGFib3JfY29zdDogTnVtYmVyKHRvdGFscy50b3RhbF9sYWJvcl9jb3N0IHx8IDApLA0KICAgICAgICAgIGN1c3RvbWVyX3ByaWNpbmc6IHByb2plY3QuY3VzdG9tZXJfcHJpY2luZywNCiAgICAgICAgICBub3RlczogcHJvamVjdC5ub3RlcyB8fCAiIiwNCiAgICAgICAgfSwNCiAgICAgICAgYXR0ZW1wdFJlZjogY29weUF0dGVtcHRSZWYsDQogICAgICAgIGtleVByZWZpeDogInBhaW50aW5nX3Byb2plY3RfY29weSIsDQogICAgICAgIGJhc2VOYW1lOiBwcm9qZWN0LnByb2plY3RfbmFtZSB8fCAiUGFpbnRpbmciLA0KICAgICAgICBsYWJlbDogIlBhaW50aW5nIHByb2plY3QgY29weSIsDQogICAgICB9KTsNCiAgICAgIGlmIChlbWJlZGRlZCkgb25TYXZlZD8uKCk7DQogICAgICBlbHNlIG5hdmlnYXRlKGAvUGFpbnRpbmdFc3RpbWF0b3I/aWQ9JHtjb3B5LmlkfWApOw0KICAgIH0gY2F0Y2ggKGUpIHsNCiAgICAgIGNvbnNvbGUuZXJyb3IoIkNvdWxkIG5vdCBjb3B5IFBhaW50aW5nIGVzdGltYXRvcjoiLCBlKTsNCiAgICAgIHNldEVycm9yKGUubWVzc2FnZSB8fCAiQ291bGQgbm90IGNvcHkgUGFpbnRpbmcgZXN0aW1hdG9yLiIpOw0KICAgIH0gZmluYWxseSB7DQogICAgICBzZXRTYXZpbmcoZmFsc2UpOw0KICAgIH0NCiAgfTsNCg0KICAvLyAjNzkg4oCUIHRlbXBsYXRlIHBheWxvYWQgPSB0aGUgZWRpdGFibGUgc2V0dXAgYSB1c2VyIHdvdWxkIHJldXNlLg0KICBjb25zdCBidWlsZFBhaW50aW5nVGVtcGxhdGVEYXRhID0gKHApID0+ICh7DQogICAgaXRlbXM6IHAuaXRlbXMgfHwgW10sDQogICAgcGFpbnRfc3VwcGxpZXNfcGVyX3NxZnQ6IHAucGFpbnRfc3VwcGxpZXNfcGVyX3NxZnQsDQogICAgbm90ZXM6IHAubm90ZXMsDQogIH0pOw0KDQogIGlmIChsb2FkaW5nKSByZXR1cm4gPGRpdiBjbGFzc05hbWU9InAtMTAgdGV4dC1jZW50ZXIgdGV4dC1ncmF5LTQwMCI+TG9hZGluZyBQYWludGluZyBCdWlsZGVy4oCmPC9kaXY+Ow0KICBpZiAoIXByb2plY3QpIHJldHVybiA8ZGl2IGNsYXNzTmFtZT0icC0xMCB0ZXh0LWNlbnRlciB0ZXh0LXJlZC02MDAiPntlcnJvciB8fCAiUGFpbnRpbmcgcHJvamVjdCBub3QgZm91bmQuIn08L2Rpdj47DQoNCiAgcmV0dXJuICgNCiAgICA8ZGl2IGNsYXNzTmFtZT0ibWluLWgtZnVsbCBiZy1ncmF5LTUwIj4NCiAgICAgIDxkaXYgY2xhc3NOYW1lPSJtYXgtdy1bMTIyMHB4XSBteC1hdXRvIHAtNCBzbTpwLTUiPg0KICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleCBpdGVtcy1jZW50ZXIganVzdGlmeS1iZXR3ZWVuIGdhcC0zIG1iLTQiPg0KICAgICAgICAgIHtlbWJlZGRlZCA/ICgNCiAgICAgICAgICAgIDxidXR0b24gdHlwZT0iYnV0dG9uIiBvbkNsaWNrPXtvbkNsb3NlfSBjbGFzc05hbWU9ImlubGluZS1mbGV4IGl0ZW1zLWNlbnRlciBnYXAtMSB0ZXh0LVsxMnB4XSBmb250LXNlbWlib2xkIHRleHQtZ3JheS02MDAgaG92ZXI6dGV4dC1ncmF5LTkwMCI+DQogICAgICAgICAgICAgIDxBcnJvd0xlZnQgY2xhc3NOYW1lPSJ3LTQgaC00IiAvPiBCYWNrIHRvIHByb2R1Y3RzDQogICAgICAgICAgICA8L2J1dHRvbj4NCiAgICAgICAgICApIDogKA0KICAgICAgICAgICAgPExpbmsgdG89e2VzdGltYXRlSWQgPyBgL0VzdGltYXRlRGV0YWlsP2lkPSR7ZXN0aW1hdGVJZH1gIDogIi9Fc3RpbWF0b3IifSBjbGFzc05hbWU9ImlubGluZS1mbGV4IGl0ZW1zLWNlbnRlciBnYXAtMSB0ZXh0LVsxMnB4XSBmb250LXNlbWlib2xkIHRleHQtZ3JheS02MDAgaG92ZXI6dGV4dC1ncmF5LTkwMCI+DQogICAgICAgICAgICAgIDxBcnJvd0xlZnQgY2xhc3NOYW1lPSJ3LTQgaC00IiAvPiBCYWNrIHRvIGVzdGltYXRvcg0KICAgICAgICAgICAgPC9MaW5rPg0KICAgICAgICAgICl9DQogICAgICAgICAge3Byb2plY3Q/LnVwZGF0ZWRfZGF0ZSAmJiAoPGRpdiBjbGFzc05hbWU9Im10LTEgdGV4dC1bMTBweF0gdGV4dC1ncmF5LTQwMCI+TGFzdCBzYXZlZCB7bmV3IERhdGUocHJvamVjdC51cGRhdGVkX2RhdGUpLnRvTG9jYWxlU3RyaW5nKCl9PC9kaXY+KX0NCiAgICAgICAgICA8QnV0dG9uIG9uQ2xpY2s9e3NhdmVQcm9qZWN0fSBkaXNhYmxlZD17c2F2aW5nIHx8ICFwcm9qZWN0LnByb2plY3RfbmFtZT8udHJpbSgpIHx8ICFwcm9qZWN0LmNsaWVudF9uYW1lPy50cmltKCl9IGNsYXNzTmFtZT0iaC1bMzJweF0gYmctWyM0NTQ1NDVdIGhvdmVyOmJnLVsjMzUzNTM1XSB0ZXh0LXdoaXRlIHRleHQtWzEycHhdIGZvbnQtc2VtaWJvbGQiPg0KICAgICAgICAgICAgPFNhdmUgY2xhc3NOYW1lPSJ3LTQgaC00IG1yLTEuNSIgLz4ge3NhdmluZyA/ICJTYXZpbmfigKYiIDogIlNhdmUgUGFpbnRpbmcifQ0KICAgICAgICAgIDwvQnV0dG9uPg0KICAgICAgICAgIDxNb2R1bGVBY3Rpb25CYXINCiAgICAgICAgICAgIG9uVGVtcGxhdGVzPXsoKSA9PiBzZXRUZW1wbGF0ZU1vZGUoImxvYWQiKX0NCiAgICAgICAgICAgIG9uU2F2ZUFzVGVtcGxhdGU9eygpID0+IHNldFRlbXBsYXRlTW9kZSgic2F2ZSIpfQ0KICAgICAgICAgICAgb25TYXZlQXNDb3B5PXtoYW5kbGVTYXZlQXNDb3B5fQ0KICAgICAgICAgICAgZXN0aW1hdGVJZD17ZXN0aW1hdGVJZH0NCiAgICAgICAgICAgIHNhdmluZz17c2F2aW5nfQ0KICAgICAgICAgIC8+DQogICAgICAgIDwvZGl2Pg0KDQogICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGl0ZW1zLWNlbnRlciBnYXAtMyBtYi00Ij4NCiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0idy05IGgtOSByb3VuZGVkLW1kIGJnLXNreS0xMDAgdGV4dC1za3ktNzAwIGZsZXggaXRlbXMtY2VudGVyIGp1c3RpZnktY2VudGVyIj48UGFsZXR0ZSBjbGFzc05hbWU9InctNSBoLTUiIC8+PC9kaXY+DQogICAgICAgICAgPGRpdj4NCiAgICAgICAgICAgIDxoMSBjbGFzc05hbWU9InRleHQtWzIwcHhdIGZvbnQtYm9sZCB0ZXh0LWdyYXktOTAwIj5QYWludGluZyBCdWlsZGVyPC9oMT4NCiAgICAgICAgICAgIDxwIGNsYXNzTmFtZT0idGV4dC1bMTFweF0gdGV4dC1ncmF5LTUwMCI+UGFuZWxzLCBkaW1lbnNpb25hbCBsZXR0ZXJpbmcgYW5kIGNvbXBsZXggc2hhcGVzIHVzaW5nIHRoZSBtaWdyYXRlZCBTaWduRXN0aW1hdGUgUHJvIHBhaW50IGZvcm11bGFzLjwvcD4NCiAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgPC9kaXY+DQoNCiAgICAgICAge2Vycm9yICYmIDxkaXYgY2xhc3NOYW1lPSJtYi0zIHB4LTMgcHktMiB0ZXh0LVsxMnB4XSB0ZXh0LXJlZC03MDAgYmctcmVkLTUwIGJvcmRlciBib3JkZXItcmVkLTIwMCByb3VuZGVkIj57ZXJyb3J9PC9kaXY+fQ0KDQogICAgICAgIDxkaXYgY2xhc3NOYW1lPSJncmlkIGdyaWQtY29scy0xIHhsOmdyaWQtY29scy1bbWlubWF4KDAsMWZyKV8zMTBweF0gZ2FwLTQiPg0KICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJzcGFjZS15LTQgbWluLXctMCI+DQogICAgICAgICAgICA8c2VjdGlvbiBjbGFzc05hbWU9ImJnLXdoaXRlIGJvcmRlciBib3JkZXItZ3JheS0yMDAgcm91bmRlZC1tZCBwLTQiPg0KICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0idGV4dC1bMTJweF0gZm9udC1ib2xkIHRleHQtZ3JheS04MDAgbWItMyI+UHJvamVjdDwvZGl2Pg0KICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZ3JpZCBzbTpncmlkLWNvbHMtMiBnYXAtMyI+DQogICAgICAgICAgICAgICAgPGxhYmVsIGNsYXNzTmFtZT0idGV4dC1bMTFweF0gdGV4dC1ncmF5LTYwMCI+UHJvamVjdCBuYW1lDQogICAgICAgICAgICAgICAgICA8SW5wdXQgdmFsdWU9e3Byb2plY3QucHJvamVjdF9uYW1lIHx8ICIifSBvbkNoYW5nZT17KGUpID0+IHBhdGNoUHJvamVjdCh7IHByb2plY3RfbmFtZTogZS50YXJnZXQudmFsdWUgfSl9IGNsYXNzTmFtZT0ibXQtMSBoLVszMnB4XSB0ZXh0LVsxMnB4XSIgLz4NCiAgICAgICAgICAgICAgICA8L2xhYmVsPg0KICAgICAgICAgICAgICAgIDxsYWJlbCBjbGFzc05hbWU9InRleHQtWzExcHhdIHRleHQtZ3JheS02MDAiPkNsaWVudA0KICAgICAgICAgICAgICAgICAgPElucHV0IHZhbHVlPXtwcm9qZWN0LmNsaWVudF9uYW1lIHx8ICIifSBvbkNoYW5nZT17KGUpID0+IHBhdGNoUHJvamVjdCh7IGNsaWVudF9uYW1lOiBlLnRhcmdldC52YWx1ZSB9KX0gZGlzYWJsZWQ9eyEhZXN0aW1hdGVJZH0gY2xhc3NOYW1lPSJtdC0xIGgtWzMycHhdIHRleHQtWzEycHhdIiAvPg0KICAgICAgICAgICAgICAgIDwvbGFiZWw+DQogICAgICAgICAgICAgICAgPGxhYmVsIGNsYXNzTmFtZT0idGV4dC1bMTFweF0gdGV4dC1ncmF5LTYwMCI+RXN0aW1hdGUgbnVtYmVyDQogICAgICAgICAgICAgICAgICA8SW5wdXQgdmFsdWU9e3Byb2plY3QuZXN0aW1hdGVfbnVtYmVyIHx8ICIifSBvbkNoYW5nZT17KGUpID0+IHBhdGNoUHJvamVjdCh7IGVzdGltYXRlX251bWJlcjogZS50YXJnZXQudmFsdWUgfSl9IGRpc2FibGVkPXshIWVzdGltYXRlSWR9IGNsYXNzTmFtZT0ibXQtMSBoLVszMnB4XSB0ZXh0LVsxMnB4XSIgLz4NCiAgICAgICAgICAgICAgICA8L2xhYmVsPg0KICAgICAgICAgICAgICAgIDxsYWJlbCBjbGFzc05hbWU9InRleHQtWzExcHhdIHRleHQtZ3JheS02MDAiPlBhaW50IGFwcGxpY2F0aW9uIHN1cHBsaWVzIC8gc3EgZnQgLyBjb2xvcg0KICAgICAgICAgICAgICAgICAgPElucHV0IHR5cGU9Im51bWJlciIgc3RlcD0iMC4wMSIgbWluPSIwIiB2YWx1ZT17cHJvamVjdC5wYWludF9zdXBwbGllc19wZXJfc3FmdCA/PyAiIn0gb25DaGFuZ2U9eyhlKSA9PiBwYXRjaFByb2plY3QoeyBwYWludF9zdXBwbGllc19wZXJfc3FmdDogTnVtYmVyKGUudGFyZ2V0LnZhbHVlKSB9KX0gY2xhc3NOYW1lPSJtdC0xIGgtWzMycHhdIHRleHQtWzEycHhdIiAvPg0KICAgICAgICAgICAgICAgIDwvbGFiZWw+DQogICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgICA8bGFiZWwgY2xhc3NOYW1lPSJibG9jayB0ZXh0LVsxMXB4XSB0ZXh0LWdyYXktNjAwIG10LTMiPk5vdGVzDQogICAgICAgICAgICAgICAgPFRleHRhcmVhIHZhbHVlPXtwcm9qZWN0Lm5vdGVzIHx8ICIifSBvbkNoYW5nZT17KGUpID0+IHBhdGNoUHJvamVjdCh7IG5vdGVzOiBlLnRhcmdldC52YWx1ZSB9KX0gY2xhc3NOYW1lPSJtdC0xIG1pbi1oLVs3MHB4XSB0ZXh0LVsxMnB4XSIgLz4NCiAgICAgICAgICAgICAgPC9sYWJlbD4NCiAgICAgICAgICAgIDwvc2VjdGlvbj4NCg0KICAgICAgICAgICAgPHNlY3Rpb24gY2xhc3NOYW1lPSJiZy13aGl0ZSBib3JkZXIgYm9yZGVyLWdyYXktMjAwIHJvdW5kZWQtbWQiPg0KICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0icHgtNCBweS0zIGJvcmRlci1iIGJvcmRlci1ncmF5LTIwMCBmbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWJldHdlZW4gZ2FwLTMiPg0KICAgICAgICAgICAgICAgIDxkaXY+DQogICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0idGV4dC1bMTJweF0gZm9udC1ib2xkIHRleHQtZ3JheS04MDAiPlBhaW50IEl0ZW1zPC9kaXY+DQogICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0idGV4dC1bMTBweF0gdGV4dC1ncmF5LTUwMCI+R2VvbWV0cnkgZHJpdmVzIHBhaW50YWJsZSBhcmVhOyBjb2xvcnMgZHJpdmUgcGFpbnQsIG1hc2sgYW5kIGxhYm9yLjwvZGl2Pg0KICAgICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgICAgIDxCdXR0b24gb25DbGljaz17YWRkSXRlbX0gdmFyaWFudD0ib3V0bGluZSIgY2xhc3NOYW1lPSJoLVszMHB4XSBweC0zIHRleHQtWzExcHhdIj48UGx1cyBjbGFzc05hbWU9InctMy41IGgtMy41IG1yLTEiIC8+IEFkZCBJdGVtPC9CdXR0b24+DQogICAgICAgICAgICAgIDwvZGl2Pg0KDQogICAgICAgICAgICAgIHsocHJvamVjdC5pdGVtcyB8fCBbXSkubGVuZ3RoID09PSAwID8gKA0KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJweS0xMiB0ZXh0LWNlbnRlciB0ZXh0LVsxMnB4XSB0ZXh0LWdyYXktNDAwIj5ObyBwYWludCBpdGVtcyB5ZXQuPC9kaXY+DQogICAgICAgICAgICAgICkgOiAoDQogICAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImRpdmlkZS15IGRpdmlkZS1ncmF5LTEwMCI+DQogICAgICAgICAgICAgICAgICB7cHJvamVjdC5pdGVtcy5tYXAoKHJhd0l0ZW0sIGluZGV4KSA9PiB7DQogICAgICAgICAgICAgICAgICAgIGNvbnN0IGl0ZW0gPSBjYWxjdWxhdGVkLml0ZW1zW2luZGV4XSB8fCByYXdJdGVtOw0KICAgICAgICAgICAgICAgICAgICBjb25zdCBsZXR0ZXJpbmcgPSByYXdJdGVtLml0ZW1fdHlwZSA9PT0gImxldHRlcmluZyI7DQogICAgICAgICAgICAgICAgICAgIHJldHVybiAoDQogICAgICAgICAgICAgICAgICAgICAgPGRpdiBrZXk9e3Jhd0l0ZW0uYnVpbGRlcl9pdGVtX2lkIHx8IGluZGV4fSBjbGFzc05hbWU9InAtNCBzcGFjZS15LTMiPg0KICAgICAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImZsZXggaXRlbXMtY2VudGVyIGdhcC0yIj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPSJ3LTYgaC02IHJvdW5kZWQgYmctZ3JheS0xMDAgdGV4dC1ncmF5LTYwMCBmbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWNlbnRlciB0ZXh0LVsxMHB4XSBmb250LWJvbGQiPntpbmRleCArIDF9PC9zcGFuPg0KICAgICAgICAgICAgICAgICAgICAgICAgICA8SW5wdXQgZGF0YS1pdGVtLWRlc2M9e2luZGV4fSB2YWx1ZT17cmF3SXRlbS5kZXNjcmlwdGlvbiB8fCAiIn0gb25DaGFuZ2U9eyhlKSA9PiBwYXRjaEl0ZW0oaW5kZXgsIHsgZGVzY3JpcHRpb246IGUudGFyZ2V0LnZhbHVlIH0pfSBwbGFjZWhvbGRlcj0iSXRlbSBkZXNjcmlwdGlvbiIgY2xhc3NOYW1lPSJoLVszMHB4XSB0ZXh0LVsxMnB4XSBmbGV4LTEiIC8+DQogICAgICAgICAgICAgICAgICAgICAgICAgIDxidXR0b24gdHlwZT0iYnV0dG9uIiBvbkNsaWNrPXsoKSA9PiByZW1vdmVJdGVtKGluZGV4KX0gY2xhc3NOYW1lPSJ3LTggaC04IGlubGluZS1mbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWNlbnRlciByb3VuZGVkIHRleHQtcmVkLTUwMCBob3ZlcjpiZy1yZWQtNTAiIGFyaWEtbGFiZWw9IlJlbW92ZSBpdGVtIj48VHJhc2gyIGNsYXNzTmFtZT0idy00IGgtNCIgLz48L2J1dHRvbj4NCiAgICAgICAgICAgICAgICAgICAgICAgIDwvZGl2Pg0KDQogICAgICAgICAgICAgICAgICAgICAgICB7IWxldHRlcmluZyAmJiAoDQogICAgICAgICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGZsZXgtd3JhcCBpdGVtcy1jZW50ZXIgZ2FwLTEuNSI+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPSJ0ZXh0LVs5cHhdIGZvbnQtYm9sZCB0cmFja2luZy13aWRlIHRleHQtZ3JheS00MDAiPlNVUkZBQ0UgUFJFU0VUUzwvc3Bhbj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICB7W1siNOKAssOXOOKAsiBmYWNlIiwgNDgsIDk2XSwgWyI44oCyw5c04oCyIGZhY2UiLCA5NiwgNDhdLCBbIjLigLLDlzTigLIgZmFjZSIsIDI0LCA0OF0sIFsiNOKAssOXNOKAsiBmYWNlIiwgNDgsIDQ4XV0ubWFwKChbbGFiZWwsIGwsIHddKSA9PiAoDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8YnV0dG9uIGtleT17bGFiZWx9IHR5cGU9ImJ1dHRvbiIgb25DbGljaz17KCkgPT4gcGF0Y2hJdGVtKGluZGV4LCB7IGxlbmd0aDogbCwgd2lkdGg6IHcgfSwgeyBhdXRvTWFzazogdHJ1ZSB9KX0gY2xhc3NOYW1lPSJweC0yIGgtWzI0cHhdIHJvdW5kZWQgYm9yZGVyIGJvcmRlci1ncmF5LTMwMCB0ZXh0LVsxMHB4XSB0ZXh0LWdyYXktNjAwIGhvdmVyOmJnLWdyYXktNTAiPntsYWJlbH08L2J1dHRvbj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICApKX0NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICAgICAgICAgICAgICApfQ0KICAgICAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImdyaWQgc206Z3JpZC1jb2xzLTIgbGc6Z3JpZC1jb2xzLTQgZ2FwLTIuNSI+DQogICAgICAgICAgICAgICAgICAgICAgICAgIDxGaWVsZCBsYWJlbD0iVHlwZSI+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPFNlbGVjdCB2YWx1ZT17cmF3SXRlbS5pdGVtX3R5cGUgfHwgInBhbmVsIn0gb25WYWx1ZUNoYW5nZT17KHZhbHVlKSA9PiBwYXRjaEl0ZW0oaW5kZXgsIHsgaXRlbV90eXBlOiB2YWx1ZSB9LCB7IGF1dG9NYXNrOiB0cnVlIH0pfT4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxTZWxlY3RUcmlnZ2VyIGNsYXNzTmFtZT0iaC1bMzBweF0gdGV4dC1bMTFweF0iPjxTZWxlY3RWYWx1ZSAvPjwvU2VsZWN0VHJpZ2dlcj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxTZWxlY3RDb250ZW50Pg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8U2VsZWN0SXRlbSB2YWx1ZT0icGFuZWwiPlBhbmVsPC9TZWxlY3RJdGVtPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8U2VsZWN0SXRlbSB2YWx1ZT0ibGV0dGVyaW5nIj5MZXR0ZXJpbmc8L1NlbGVjdEl0ZW0+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxTZWxlY3RJdGVtIHZhbHVlPSJjb21wbGV4X3NoYXBlcyI+Q29tcGxleCBTaGFwZTwvU2VsZWN0SXRlbT4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvU2VsZWN0Q29udGVudD4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L1NlbGVjdD4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPC9GaWVsZD4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPEZpZWxkIGxhYmVsPSJUaGlja25lc3MiPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxTZWxlY3QgdmFsdWU9e3Jhd0l0ZW0udGhpY2tuZXNzIHx8ICIxLzIifSBvblZhbHVlQ2hhbmdlPXsodmFsdWUpID0+IHBhdGNoSXRlbShpbmRleCwgeyB0aGlja25lc3M6IHZhbHVlIH0sIHsgYXV0b01hc2s6IHRydWUgfSl9Pg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFNlbGVjdFRyaWdnZXIgY2xhc3NOYW1lPSJoLVszMHB4XSB0ZXh0LVsxMXB4XSI+PFNlbGVjdFZhbHVlIC8+PC9TZWxlY3RUcmlnZ2VyPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFNlbGVjdENvbnRlbnQ+e1BBSU5UX1RISUNLTkVTU0VTLm1hcCgoc2l6ZSkgPT4gPFNlbGVjdEl0ZW0gdmFsdWU9e3NpemV9IGtleT17c2l6ZX0+e3NpemV9JnF1b3Q7PC9TZWxlY3RJdGVtPil9PC9TZWxlY3RDb250ZW50Pg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvU2VsZWN0Pg0KICAgICAgICAgICAgICAgICAgICAgICAgICA8L0ZpZWxkPg0KICAgICAgICAgICAgICAgICAgICAgICAgICA8RmllbGQgbGFiZWw9e2xldHRlcmluZyA/ICJMZXR0ZXIgaGVpZ2h0IChpbikiIDogIkxlbmd0aCAoaW4pIn0+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPElucHV0IHR5cGU9Im51bWJlciIgbWluPSIwIiBzdGVwPSIwLjAxIiB2YWx1ZT17cmF3SXRlbVtsZXR0ZXJpbmcgPyAid2lkdGgiIDogImxlbmd0aCJdID8/IDB9IG9uQ2hhbmdlPXsoZSkgPT4gcGF0Y2hJdGVtKGluZGV4LCB7IFtsZXR0ZXJpbmcgPyAid2lkdGgiIDogImxlbmd0aCJdOiBOdW1iZXIoZS50YXJnZXQudmFsdWUpIH0sIHsgYXV0b01hc2s6IHRydWUgfSl9IGNsYXNzTmFtZT0iaC1bMzBweF0gdGV4dC1bMTFweF0iIC8+DQogICAgICAgICAgICAgICAgICAgICAgICAgIDwvRmllbGQ+DQogICAgICAgICAgICAgICAgICAgICAgICAgIDxGaWVsZCBsYWJlbD17bGV0dGVyaW5nID8gIk51bWJlciBvZiBsZXR0ZXJzIiA6ICJXaWR0aCAoaW4pIn0+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPElucHV0IHR5cGU9Im51bWJlciIgbWluPSIwIiBzdGVwPXtsZXR0ZXJpbmcgPyAiMSIgOiAiMC4wMSJ9IHZhbHVlPXtyYXdJdGVtW2xldHRlcmluZyA/ICJsZW5ndGgiIDogIndpZHRoIl0gPz8gMH0gb25DaGFuZ2U9eyhlKSA9PiBwYXRjaEl0ZW0oaW5kZXgsIHsgW2xldHRlcmluZyA/ICJsZW5ndGgiIDogIndpZHRoIl06IE51bWJlcihlLnRhcmdldC52YWx1ZSkgfSwgeyBhdXRvTWFzazogdHJ1ZSB9KX0gY2xhc3NOYW1lPSJoLVszMHB4XSB0ZXh0LVsxMXB4XSIgLz4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPC9GaWVsZD4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgeyFsZXR0ZXJpbmcgJiYgPEZpZWxkIGxhYmVsPSJRdWFudGl0eSI+PElucHV0IHR5cGU9Im51bWJlciIgbWluPSIxIiBzdGVwPSIxIiB2YWx1ZT17cmF3SXRlbS5xdWFudGl0eSA/PyAxfSBvbkNoYW5nZT17KGUpID0+IHBhdGNoSXRlbShpbmRleCwgeyBxdWFudGl0eTogTWF0aC5tYXgoMSwgTnVtYmVyKGUudGFyZ2V0LnZhbHVlKSB8fCAxKSB9KX0gY2xhc3NOYW1lPSJoLVszMHB4XSB0ZXh0LVsxMXB4XSIgLz48L0ZpZWxkPn0NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPEZpZWxkIGxhYmVsPSJQYWludCBzaWRlcyI+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPFNlbGVjdCB2YWx1ZT17cmF3SXRlbS5wYWludF9zaWRlcyB8fCAib25lX3NpZGUifSBvblZhbHVlQ2hhbmdlPXsodmFsdWUpID0+IHBhdGNoSXRlbShpbmRleCwgeyBwYWludF9zaWRlczogdmFsdWUgfSl9Pg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFNlbGVjdFRyaWdnZXIgY2xhc3NOYW1lPSJoLVszMHB4XSB0ZXh0LVsxMXB4XSI+PFNlbGVjdFZhbHVlIC8+PC9TZWxlY3RUcmlnZ2VyPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFNlbGVjdENvbnRlbnQ+PFNlbGVjdEl0ZW0gdmFsdWU9Im9uZV9zaWRlIj5PbmUgc2lkZSArIGVkZ2VzPC9TZWxlY3RJdGVtPjxTZWxlY3RJdGVtIHZhbHVlPSJib3RoX3NpZGVzIj5Cb3RoIHNpZGVzICsgZWRnZXM8L1NlbGVjdEl0ZW0+PC9TZWxlY3RDb250ZW50Pg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvU2VsZWN0Pg0KICAgICAgICAgICAgICAgICAgICAgICAgICA8L0ZpZWxkPg0KICAgICAgICAgICAgICAgICAgICAgICAgICB7cmF3SXRlbS5pdGVtX3R5cGUgPT09ICJjb21wbGV4X3NoYXBlcyIgJiYgPEZpZWxkIGxhYmVsPSJFZGdlIGNvbXBsZXhpdHkiPjxJbnB1dCB0eXBlPSJudW1iZXIiIG1pbj0iMCIgc3RlcD0iMC4xIiB2YWx1ZT17cmF3SXRlbS5lZGdlX2NvbXBsZXhpdHlfbXVsdGlwbGllciA/PyAxfSBvbkNoYW5nZT17KGUpID0+IHBhdGNoSXRlbShpbmRleCwgeyBlZGdlX2NvbXBsZXhpdHlfbXVsdGlwbGllcjogTnVtYmVyKGUudGFyZ2V0LnZhbHVlKSB9KX0gY2xhc3NOYW1lPSJoLVszMHB4XSB0ZXh0LVsxMXB4XSIgLz48L0ZpZWxkPn0NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPEZpZWxkIGxhYmVsPSJQYWludCBtYXNrIHNxIGZ0Ij48SW5wdXQgdHlwZT0ibnVtYmVyIiBtaW49IjAiIHN0ZXA9IjAuMDEiIHZhbHVlPXtyYXdJdGVtLnBhaW50X21hc2tfc3FmdCA/PyAwfSBvbkNoYW5nZT17KGUpID0+IHBhdGNoSXRlbShpbmRleCwgeyBwYWludF9tYXNrX3NxZnQ6IE51bWJlcihlLnRhcmdldC52YWx1ZSkgfSl9IGNsYXNzTmFtZT0iaC1bMzBweF0gdGV4dC1bMTFweF0iIC8+PC9GaWVsZD4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPEZpZWxkIGxhYmVsPSJJdGVtIGZpeGVkIHdhc3RlIChnYWwpIj48SW5wdXQgdHlwZT0ibnVtYmVyIiBtaW49IjAiIHN0ZXA9IjAuMDEiIHZhbHVlPXtyYXdJdGVtLmZpeGVkX3dhc3RlX2dhbGxvbnMgPz8gMH0gb25DaGFuZ2U9eyhlKSA9PiBwYXRjaEl0ZW0oaW5kZXgsIHsgZml4ZWRfd2FzdGVfZ2FsbG9uczogTnVtYmVyKGUudGFyZ2V0LnZhbHVlKSB9KX0gY2xhc3NOYW1lPSJoLVszMHB4XSB0ZXh0LVsxMXB4XSIgLz48L0ZpZWxkPg0KICAgICAgICAgICAgICAgICAgICAgICAgICA8RmllbGQgbGFiZWw9IkJhc2Ugc3VwcGxpZXMiPjxJbnB1dCB0eXBlPSJudW1iZXIiIG1pbj0iMCIgc3RlcD0iMC4wMSIgdmFsdWU9e3Jhd0l0ZW0uYmFzZV9zdXBwbGllc19jb3N0ID8/IDB9IG9uQ2hhbmdlPXsoZSkgPT4gcGF0Y2hJdGVtKGluZGV4LCB7IGJhc2Vfc3VwcGxpZXNfY29zdDogTnVtYmVyKGUudGFyZ2V0LnZhbHVlKSB9KX0gY2xhc3NOYW1lPSJoLVszMHB4XSB0ZXh0LVsxMXB4XSIgLz48L0ZpZWxkPg0KICAgICAgICAgICAgICAgICAgICAgICAgPC9kaXY+DQoNCiAgICAgICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJiZy1ncmF5LTUwIGJvcmRlciBib3JkZXItZ3JheS0xMDAgcm91bmRlZCBwLTIuNSI+DQogICAgICAgICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWJldHdlZW4gbWItMiI+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9InRleHQtWzEwcHhdIGZvbnQtYm9sZCB1cHBlcmNhc2UgdHJhY2tpbmctd2lkZSB0ZXh0LWdyYXktNTAwIj5QYWludCBjb2xvcnM8L2Rpdj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8YnV0dG9uIHR5cGU9ImJ1dHRvbiIgb25DbGljaz17KCkgPT4gYWRkQ29sb3IoaW5kZXgpfSBjbGFzc05hbWU9InRleHQtWzEwcHhdIGZvbnQtc2VtaWJvbGQgdGV4dC1za3ktNzAwIGhvdmVyOnRleHQtc2t5LTkwMCI+KyBBZGQgY29sb3I8L2J1dHRvbj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICAgICAgICAgICAgICAgIHsocmF3SXRlbS5wYWludF9jb2xvcnMgfHwgW10pLmxlbmd0aCA9PT0gMCA/IDxkaXYgY2xhc3NOYW1lPSJ0ZXh0LVsxMHB4XSB0ZXh0LWdyYXktNDAwIj5ObyBjb2xvcnMgc2VsZWN0ZWQg4oCUIG5vIGxpcXVpZCBwYWludCBpcyBjaGFyZ2VkLjwvZGl2PiA6ICgNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleCBmbGV4LXdyYXAgZ2FwLTIiPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgeyhyYXdJdGVtLnBhaW50X2NvbG9ycyB8fCBbXSkubWFwKChjb2xvciwgY29sb3JJbmRleCkgPT4gKA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTEiIGtleT17Y29sb3JJbmRleH0+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPElucHV0IHZhbHVlPXtjb2xvciB8fCAiIn0gb25DaGFuZ2U9eyhlKSA9PiB1cGRhdGVDb2xvcihpbmRleCwgY29sb3JJbmRleCwgZS50YXJnZXQudmFsdWUpfSBwbGFjZWhvbGRlcj0iUE1TIC8gY29sb3IiIGNsYXNzTmFtZT0iaC1bMjhweF0gdy1bMTQ1cHhdIHRleHQtWzExcHhdIiAvPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxidXR0b24gdHlwZT0iYnV0dG9uIiBvbkNsaWNrPXsoKSA9PiByZW1vdmVDb2xvcihpbmRleCwgY29sb3JJbmRleCl9IGNsYXNzTmFtZT0idy02IGgtNiByb3VuZGVkIHRleHQtZ3JheS00MDAgaG92ZXI6dGV4dC1yZWQtNjAwIGhvdmVyOmJnLXdoaXRlIj7DlzwvYnV0dG9uPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICkpfQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgICAgICAgICAgICAgICApfQ0KICAgICAgICAgICAgICAgICAgICAgICAgPC9kaXY+DQoNCiAgICAgICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJncmlkIGdyaWQtY29scy0yIG1kOmdyaWQtY29scy01IGdhcC0yIHRleHQtWzEwcHhdIj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPE1ldHJpYyBsYWJlbD0iUGFpbnRhYmxlIGFyZWEiIHZhbHVlPXtgJHtudW1iZXIoaXRlbS5wYWludGFibGVfc3FmdCl9IHNmYH0gLz4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPE1ldHJpYyBsYWJlbD0iUGFpbnQgbWFzayIgdmFsdWU9e21vbmV5KGl0ZW0uc3VwcGxpZXNfY29zdCl9IC8+DQogICAgICAgICAgICAgICAgICAgICAgICAgIDxNZXRyaWMgbGFiZWw9IlBhaW50ICsgc3VwcGxpZXMiIHZhbHVlPXttb25leShpdGVtLnBhaW50X2Nvc3QpfSAvPg0KICAgICAgICAgICAgICAgICAgICAgICAgICA8TWV0cmljIGxhYmVsPSJMYWJvciIgdmFsdWU9e21vbmV5KGl0ZW0ubGFib3JfY29zdCl9IC8+DQogICAgICAgICAgICAgICAgICAgICAgICAgIDxNZXRyaWMgbGFiZWw9IlBhaW50IHZvbHVtZSIgdmFsdWU9e2Ake251bWJlcihpdGVtLnBhaW50X2dhbGxvbnMsIDMpfSBnYWxgfSAvPg0KICAgICAgICAgICAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICAgICAgICAgICk7DQogICAgICAgICAgICAgICAgICB9KX0NCiAgICAgICAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICAgICAgKX0NCiAgICAgICAgICAgIDwvc2VjdGlvbj4NCiAgICAgICAgICA8L2Rpdj4NCg0KICAgICAgICAgIDxhc2lkZSBjbGFzc05hbWU9InNwYWNlLXktMyI+DQogICAgICAgICAgICA8c2VjdGlvbiBjbGFzc05hbWU9ImJnLXdoaXRlIGJvcmRlciBib3JkZXItZ3JheS0yMDAgcm91bmRlZC1tZCBzdGlja3kgdG9wLTQiPg0KICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0icHgtNCBweS0zIGJvcmRlci1iIGJvcmRlci1ncmF5LTIwMCI+DQogICAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9InRleHQtWzEycHhdIGZvbnQtYm9sZCB0ZXh0LWdyYXktODAwIj5Db3N0IFN1bW1hcnk8L2Rpdj4NCiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0idGV4dC1bMTBweF0gdGV4dC1ncmF5LTUwMCI+SW50ZXJuYWwgQnVpbGRlciBjb3N0IGJlZm9yZSBlc3RpbWF0ZS1sZXZlbCBtYXJrdXAuPC9kaXY+DQogICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0icC00IHNwYWNlLXktMiB0ZXh0LVsxMXB4XSI+DQogICAgICAgICAgICAgICAgPFN1bW1hcnlSb3cgbGFiZWw9IlBhaW50IG1hc2siIHZhbHVlPXttb25leSh0b3RhbHMudG90YWxfcGFpbnRfbWFza19jb3N0KX0gLz4NCiAgICAgICAgICAgICAgICA8U3VtbWFyeVJvdyBsYWJlbD0iTGlxdWlkIHBhaW50ICYgc3VwcGxpZXMiIHZhbHVlPXttb25leSh0b3RhbHMudG90YWxfbGlxdWlkX3BhaW50X2FuZF9zdXBwbGllc19jb3N0KX0gLz4NCiAgICAgICAgICAgICAgICA8U3VtbWFyeVJvdyBsYWJlbD0iUGFpbnRpbmcgbGFib3IiIHZhbHVlPXttb25leSh0b3RhbHMudG90YWxfbGFib3JfY29zdCl9IC8+DQogICAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImJvcmRlci10IGJvcmRlci1ncmF5LTIwMCBwdC0yIG10LTIgZmxleCBqdXN0aWZ5LWJldHdlZW4gaXRlbXMtY2VudGVyIj4NCiAgICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT0iZm9udC1ib2xkIHRleHQtZ3JheS04MDAiPlRvdGFsIGNvc3Q8L3NwYW4+DQogICAgICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9InRleHQtWzE2cHhdIGZvbnQtYm9sZCB0ZXh0LWdyYXktOTAwIj57bW9uZXkodG90YWxzLnRvdGFsX2Nvc3QpfTwvc3Bhbj4NCiAgICAgICAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJweC00IHB5LTMgYm9yZGVyLXQgYm9yZGVyLWdyYXktMTAwIGJnLWdyYXktNTAgc3BhY2UteS0xLjUgdGV4dC1bMTBweF0gdGV4dC1ncmF5LTUwMCI+DQogICAgICAgICAgICAgICAgPFN1bW1hcnlSb3cgbGFiZWw9IlBhaW50IG5lZWRlZCIgdmFsdWU9e2Ake251bWJlcih0b3RhbHMudG90YWxfcGFpbnRfZ2FsbG9ucywgMyl9IGdhbGB9IHN1YnRsZSAvPg0KICAgICAgICAgICAgICAgIDxTdW1tYXJ5Um93IGxhYmVsPSJMYWJvciB0aW1lIiB2YWx1ZT17YCR7bnVtYmVyKHRvdGFscy50b3RhbF9sYWJvcl9ob3Vycyl9IGhyYH0gc3VidGxlIC8+DQogICAgICAgICAgICAgICAgPFN1bW1hcnlSb3cgbGFiZWw9IlVuaXF1ZSBjb2xvcnMiIHZhbHVlPXtudW1iZXIodG90YWxzLnVuaXF1ZV9jb2xvcl9jb3VudCwgMCl9IHN1YnRsZSAvPg0KICAgICAgICAgICAgICAgIDxTdW1tYXJ5Um93IGxhYmVsPSJNaXhlcyIgdmFsdWU9e251bWJlcih0b3RhbHMubnVtYmVyX29mX21peGVzLCAwKX0gc3VidGxlIC8+DQogICAgICAgICAgICAgICAgPFN1bW1hcnlSb3cgbGFiZWw9IlNldHVwIC8gY2xlYW51cCIgdmFsdWU9e2Ake251bWJlcih0b3RhbHMuc2V0dXBfaG91cnMpfSBocmB9IHN1YnRsZSAvPg0KICAgICAgICAgICAgICAgIDxTdW1tYXJ5Um93IGxhYmVsPSJNaXhpbmciIHZhbHVlPXtgJHtudW1iZXIodG90YWxzLm1peGluZ19ob3Vycyl9IGhyYH0gc3VidGxlIC8+DQogICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0icHgtNCBweS0zIGJvcmRlci10IGJvcmRlci1ncmF5LTEwMCB0ZXh0LVsxMHB4XSB0ZXh0LWdyYXktNTAwIj4NCiAgICAgICAgICAgICAgICBNaXhlZCBwYWludCByYXRlOiA8c3BhbiBjbGFzc05hbWU9ImZvbnQtc2VtaWJvbGQgdGV4dC1ncmF5LTcwMCI+e21vbmV5KGNhbGN1bGF0ZWQubGlxdWlkUGFpbnRSYXRlKX0vc2Y8L3NwYW4+DQogICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgPC9zZWN0aW9uPg0KICAgICAgICAgIDwvYXNpZGU+DQogICAgICAgIDwvZGl2Pg0KDQogICAgICAgIDxkaXYgY2xhc3NOYW1lPSJtdC00Ij4NCiAgICAgICAgICA8Q3VzdG9tZXJQcmljaW5nVGFiDQogICAgICAgICAgICBwcm9qZWN0PXt7DQogICAgICAgICAgICAgIC4uLnByb2plY3QsDQogICAgICAgICAgICAgIHRvdGFsX3BhaW50X21hc2tfY29zdDogTnVtYmVyKHRvdGFscy50b3RhbF9wYWludF9tYXNrX2Nvc3QgfHwgMCksDQogICAgICAgICAgICAgIHRvdGFsX2xpcXVpZF9wYWludF9hbmRfc3VwcGxpZXNfY29zdDogTnVtYmVyKHRvdGFscy50b3RhbF9saXF1aWRfcGFpbnRfYW5kX3N1cHBsaWVzX2Nvc3QgfHwgMCksDQogICAgICAgICAgICAgIHRvdGFsX2xhYm9yX2Nvc3Q6IE51bWJlcih0b3RhbHMudG90YWxfbGFib3JfY29zdCB8fCAwKSwNCiAgICAgICAgICAgIH19DQogICAgICAgICAgICBjYXRlZ29yaXplPXtjYXRlZ29yaXplUGFpbnRQcm9qZWN0fQ0KICAgICAgICAgICAgYWNjZW50Q29sb3I9ImJsdWUiDQogICAgICAgICAgICBvbkFwcGx5VGllcj17KHRpZXIpID0+IHBhdGNoUHJvamVjdCh7DQogICAgICAgICAgICAgIGN1c3RvbWVyX3ByaWNpbmc6IHsgLi4uKHByb2plY3QuY3VzdG9tZXJfcHJpY2luZyB8fCB7fSksIGFwcGxpZWQ6IHRydWUsIHRpZXJfbnVtYmVyOiB0aWVyIH0sDQogICAgICAgICAgICB9KX0NCiAgICAgICAgICAvPg0KICAgICAgICA8L2Rpdj4NCiAgICAgIDwvZGl2Pg0KICAgICAgPE1vZHVsZVRlbXBsYXRlRGlhbG9nDQogICAgICAgIG9wZW49eyEhdGVtcGxhdGVNb2RlfQ0KICAgICAgICBtb2RlPXt0ZW1wbGF0ZU1vZGV9DQogICAgICAgIG9uQ2xvc2U9eygpID0+IHNldFRlbXBsYXRlTW9kZShudWxsKX0NCiAgICAgICAgcHJvamVjdD17cHJvamVjdH0NCiAgICAgICAgb25BcHBseT17KGRhdGEpID0+IHBhdGNoUHJvamVjdChkYXRhKX0NCiAgICAgICAgbW9kdWxlS2V5PSJwYWludGluZyINCiAgICAgICAgdGl0bGU9IlBhaW50aW5nIg0KICAgICAgICBidWlsZFRlbXBsYXRlRGF0YT17YnVpbGRQYWludGluZ1RlbXBsYXRlRGF0YX0NCiAgICAgICAgZGVzY3JpYmVUZW1wbGF0ZT17KHQpID0+IGAkeyh0LnByb2plY3RfZGF0YT8uaXRlbXMgfHwgW10pLmxlbmd0aH0gaXRlbXNgfQ0KICAgICAgLz4NCiAgICA8L2Rpdj4NCiAgKTsNCn0NCg0KZnVuY3Rpb24gRmllbGQoeyBsYWJlbCwgY2hpbGRyZW4gfSkgew0KICByZXR1cm4gPGxhYmVsIGNsYXNzTmFtZT0idGV4dC1bMTBweF0gdGV4dC1ncmF5LTUwMCBtaW4tdy0wIj48c3BhbiBjbGFzc05hbWU9ImJsb2NrIG1iLTEiPntsYWJlbH08L3NwYW4+e2NoaWxkcmVufTwvbGFiZWw+Ow0KfQ0KDQpmdW5jdGlvbiBNZXRyaWMoeyBsYWJlbCwgdmFsdWUgfSkgew0KICByZXR1cm4gPGRpdiBjbGFzc05hbWU9ImJnLXdoaXRlIGJvcmRlciBib3JkZXItZ3JheS0xMDAgcm91bmRlZCBweC0yIHB5LTEuNSI+PGRpdiBjbGFzc05hbWU9InRleHQtZ3JheS00MDAiPntsYWJlbH08L2Rpdj48ZGl2IGNsYXNzTmFtZT0iZm9udC1zZW1pYm9sZCB0ZXh0LWdyYXktNzAwIG10LTAuNSI+e3ZhbHVlfTwvZGl2PjwvZGl2PjsNCn0NCg0KZnVuY3Rpb24gU3VtbWFyeVJvdyh7IGxhYmVsLCB2YWx1ZSwgc3VidGxlID0gZmFsc2UgfSkgew0KICByZXR1cm4gPGRpdiBjbGFzc05hbWU9e2BmbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWJldHdlZW4gZ2FwLTMgJHtzdWJ0bGUgPyAidGV4dC1ncmF5LTUwMCIgOiAidGV4dC1ncmF5LTYwMCJ9YH0+PHNwYW4+e2xhYmVsfTwvc3Bhbj48c3BhbiBjbGFzc05hbWU9e3N1YnRsZSA/ICJmb250LW1lZGl1bSIgOiAiZm9udC1zZW1pYm9sZCB0ZXh0LWdyYXktODAwIn0+e3ZhbHVlfTwvc3Bhbj48L2Rpdj47DQp9",
+   "normalized": "import { useEffect, useMemo, useRef, useState } from \"react\";\nimport { Project, Settings } from \"@/api/gatedEntities\";\nimport { Link, useNavigate, useSearchParams } from \"react-router-dom\";\nimport { ArrowLeft, Palette, Plus, Save, Trash2 } from \"lucide-react\";\nimport { Button } from \"@/components/ui/button\";\nimport { Input } from \"@/components/ui/input\";\nimport { Textarea } from \"@/components/ui/textarea\";\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from \"@/components/ui/select\";\nimport { recordBuilderSave } from \"@/components/estimator/builder/builderService\";\nimport { loadAllEntityRows } from \"@/components/estimator/loadAllEntityRows\";\nimport { preflightBuilderSourceMutation, updateBuilderSourceProject } from \"@/components/estimator/builder/sourceProjectPersistence\";\nimport { ensureIdempotentEntityCreate, newCreationRequestKey } from \"@/components/estimator/idempotentEntityCreate\";\nimport ModuleActionBar from \"@/components/estimator/moduleShared/ModuleActionBar\";\nimport ModuleTemplateDialog from \"@/components/estimator/moduleShared/ModuleTemplateDialog\";\nimport { saveModuleProjectCopy } from \"@/components/estimator/moduleShared/moduleProjectActions\";\nimport CustomerPricingTab from \"@/components/markup/CustomerPricingTab\";\nimport { categorizePaintProject } from \"@/components/markup/projectCategorizer\";\nimport { calculateSavedCustomerPricing } from \"@/components/markup/savedCustomerPricing\";\nimport { newBuilderItemId, seedBuilderItemIds } from \"@/components/estimator/builder/itemIdentity\";\nimport {\n  PAINT_THICKNESSES,\n  autoPaintMaskSqft,\n  calculatePaintingProject,\n  normalizePaintingItem,\n} from \"@/components/estimator/paint/paintCalc\";\nimport { staffEntities } from \"@/components/staff/staffEntities\";\n\nconst money = (value) => Number(value || 0).toLocaleString(\"en-US\", { style: \"currency\", currency: \"USD\" });\nconst number = (value, digits = 2) => Number(value || 0).toLocaleString(\"en-US\", { maximumFractionDigits: digits });\n\nconst emptyItem = () => normalizePaintingItem({\n  builder_item_id: newBuilderItemId(\"paint-item\"),\n  paint_colors: [\"\"],\n});\n\nexport default function PaintingEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {\n  const navigate = useNavigate();\n  const [searchParams] = useSearchParams();\n  const editId = embeddedProjectId || searchParams.get(\"edit\") || searchParams.get(\"id\");\n  const estimateId = embeddedEstimateId || searchParams.get(\"estimateId\");\n  const [project, setProject] = useState(null);\n  const [settings, setSettings] = useState({});\n  const [loading, setLoading] = useState(true);\n  const [saving, setSaving] = useState(false);\n  const [error, setError] = useState(\"\");\n  const persistedProjectIdRef = useRef(editId || \"\");\n  const createAttemptRef = useRef({ signature: \"\", key: \"\" });\n  const copyAttemptRef = useRef({ signature: \"\", key: \"\" });\n  const [templateMode, setTemplateMode] = useState(null);\n\n  useEffect(() => {\n    persistedProjectIdRef.current = editId || \"\";\n    createAttemptRef.current = { signature: \"\", key: \"\" };\n    copyAttemptRef.current = { signature: \"\", key: \"\" };\n  }, [editId]);\n\n  useEffect(() => {\n    let active = true;\n    const load = async () => {\n      setLoading(true);\n      try {\n        const [settingsRows, existing, estimate] = await Promise.all([\n          loadAllEntityRows({ entity: Settings, sort: \"created_date\", label: \"Estimator Settings\" }),\n          editId ? Project.get(editId) : Promise.resolve(null),\n          estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),\n        ]);\n        if (!active) return;\n        const settingsMap = {};\n        (settingsRows || []).forEach((row) => { settingsMap[row.setting_name] = row.setting_value; });\n        setSettings(settingsMap);\n        const suppliesDefault = Number(settingsMap.default_paint_supplies_per_sqft) || 1.25;\n        if (existing) {\n          setProject({\n            ...existing,\n            client_name: estimate?.client_name || existing.client_name || \"\",\n            customer_id: estimate?.customer_id || existing.customer_id || null,\n            estimate_number: estimate?.estimate_number || existing.estimate_number || \"\",\n            items: seedBuilderItemIds((existing.items || []).map(normalizePaintingItem), \"paint-item\"),\n            paint_supplies_per_sqft: existing.paint_supplies_per_sqft ?? suppliesDefault,\n          });\n        } else {\n          setProject({\n            project_name: estimate?.project_name ? `${estimate.project_name} — Painting` : \"\",\n            client_name: estimate?.client_name || \"\",\n            customer_id: estimate?.customer_id || null,\n            estimate_number: estimate?.estimate_number || \"\",\n            hyperlink: \"\",\n            status: \"draft\",\n            items: [],\n            paint_supplies_per_sqft: suppliesDefault,\n            notes: settingsMap.default_notes_template || \"\",\n          });\n        }\n      } catch (e) {\n        console.error(\"Could not load Painting estimator:\", e);\n        if (active) setError(e.message || \"Could not load Painting estimator.\");\n      } finally {\n        if (active) setLoading(false);\n      }\n    };\n    load();\n    return () => { active = false; };\n  }, [editId, estimateId]);\n\n  const calculated = useMemo(\n    () => project ? calculatePaintingProject(project, settings) : null,\n    [project, settings]\n  );\n  const totals = calculated?.totals || {};\n\n  const patchProject = (changes) => setProject((prev) => ({ ...prev, ...changes }));\n\n  const patchItem = (index, changes, { autoMask = false } = {}) => {\n    setProject((prev) => {\n      const items = [...(prev.items || [])];\n      let item = normalizePaintingItem({ ...items[index], ...changes });\n      if (item.item_type === \"lettering\") item.quantity = 1;\n      if (Object.prototype.hasOwnProperty.call(changes, \"width\") && item.item_type === \"lettering\") {\n        const height = Number(item.width || 0);\n        item.letter_size = height <= 4 ? \"extra_small\"\n          : height <= 8 ? \"small\"\n            : height <= 12 ? \"normal\"\n              : height <= 20 ? \"medium\"\n                : height <= 30 ? \"large\"\n                  : \"extra_large\";\n      }\n      if (autoMask) item.paint_mask_sqft = autoPaintMaskSqft(item);\n      items[index] = item;\n      return { ...prev, items };\n    });\n  };\n\n  const addItem = () => {\n    setTimeout(() => document.querySelector(`input[data-item-desc=\"${(project.items || []).length}\"]`)?.focus(), 60);\n    patchProject({ items: [...(project.items || []), emptyItem()] });\n  };\n  const removeItem = (index) => {\n    const label = project.items?.[index]?.description || `item ${index + 1}`;\n    if (!window.confirm(`Delete \"${label}\"?`)) return;\n    patchProject({ items: project.items.filter((_, i) => i !== index) });\n  };\n\n  const updateColor = (itemIndex, colorIndex, value) => {\n    const colors = [...(project.items[itemIndex].paint_colors || [])];\n    colors[colorIndex] = value;\n    patchItem(itemIndex, { paint_colors: colors });\n  };\n  const addColor = (itemIndex) => patchItem(itemIndex, { paint_colors: [...(project.items[itemIndex].paint_colors || []), \"\"] });\n  const removeColor = (itemIndex, colorIndex) => patchItem(itemIndex, {\n    paint_colors: (project.items[itemIndex].paint_colors || []).filter((_, i) => i !== colorIndex),\n  });\n\n  // Ctrl+S / Cmd+S saves the section without leaving the editor.\n  useEffect(() => {\n    const handler = (e) => {\n      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === \"s\") {\n        e.preventDefault();\n        if (!saving) saveProject();\n      }\n    };\n    window.addEventListener(\"keydown\", handler);\n    return () => window.removeEventListener(\"keydown\", handler);\n  }, [saving]);\n  // Block accidental navigation while a save is in flight.\n  useEffect(() => {\n    if (!saving) return undefined;\n    const warn = (e) => { e.preventDefault(); e.returnValue = \"\"; };\n    window.addEventListener(\"beforeunload\", warn);\n    return () => window.removeEventListener(\"beforeunload\", warn);\n  }, [saving]);\n  const saveProject = async () => {\n    if (!project?.project_name?.trim() || !project?.client_name?.trim()) {\n      setError(\"Project name and client name are required.\");\n      return;\n    }\n    setSaving(true);\n    setError(\"\");\n    try {\n      const cleanItems = (calculated?.items || []).map((item) => ({\n        ...item,\n        paint_colors: (item.paint_colors || []).filter((color) => String(color || \"\").trim()),\n      }));\n      const pricingProject = {\n        ...project,\n        total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),\n        total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),\n        total_labor_cost: Number(totals.total_labor_cost || 0),\n      };\n      const customerPricing = project.customer_pricing?.applied === true\n        ? await calculateSavedCustomerPricing({\n            project: pricingProject,\n            categorize: categorizePaintProject,\n            tierNumber: project.customer_pricing?.tier_number,\n          })\n        : project.customer_pricing;\n      const payload = {\n        project_name: project.project_name,\n        client_name: project.client_name,\n        customer_id: project.customer_id || null,\n        estimate_number: project.estimate_number || \"\",\n        hyperlink: project.hyperlink || \"\",\n        status: \"calculated\",\n        items: cleanItems,\n        paint_supplies_per_sqft: Number(project.paint_supplies_per_sqft || 0),\n        total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),\n        total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),\n        total_labor_cost: Number(totals.total_labor_cost || 0),\n        customer_pricing: customerPricing,\n        notes: project.notes || \"\",\n      };\n\n      let projectId = persistedProjectIdRef.current || editId || \"\";\n      let savedProject;\n      if (projectId) {\n        savedProject = await updateBuilderSourceProject({\n          entity: Project,\n          sourceId: projectId,\n          expectedUpdatedAt: project.updated_date,\n          data: payload,\n          estimateId,\n          label: \"Painting project\",\n        });\n      } else {\n        await preflightBuilderSourceMutation({ estimateId });\n        const signature = JSON.stringify(payload);\n        if (createAttemptRef.current.signature !== signature) {\n          createAttemptRef.current = {\n            signature,\n            key: newCreationRequestKey(\"painting_project\"),\n          };\n        }\n        savedProject = await ensureIdempotentEntityCreate({\n          entity: Project,\n          keyField: \"creation_request_key\",\n          key: createAttemptRef.current.key,\n          data: payload,\n          label: \"Painting project\",\n        });\n        if (!savedProject?.id) throw new Error(\"Painting project create could not be verified.\");\n        projectId = savedProject.id;\n        persistedProjectIdRef.current = projectId;\n      }\n\n      if (!savedProject?.id) savedProject = await Project.get(projectId);\n      if (estimateId) {\n        await recordBuilderSave({\n          estimateId,\n          line: { project_id: projectId, module_key: \"painting\" },\n          sourceProject: savedProject,\n          liveTotal: Number(totals.total_cost || 0),\n        });\n      }\n      setProject((prev) => ({ ...prev, ...savedProject, items: seedBuilderItemIds(savedProject.items || [], \"paint-item\") }));\n      onSaved?.();\n      if (!embedded && !editId) navigate(`/PaintingEstimator?id=${projectId}`);\n    } catch (e) {\n      console.error(\"Could not save Painting estimator:\", e);\n      setError(e.message || \"Could not save Painting estimator.\");\n    } finally {\n      setSaving(false);\n    }\n  };\n\n  // #78 — clone the current save payload into a brand-new Painting project.\n  const handleSaveAsCopy = async () => {\n    setSaving(true);\n    setError(\"\");\n    try {\n      const cleanItems = (calculated?.items || []).map((item) => ({\n        ...item,\n        paint_colors: (item.paint_colors || []).filter((color) => String(color || \"\").trim()),\n      }));\n      const copy = await saveModuleProjectCopy({\n        entity: Project,\n        payload: {\n          project_name: project.project_name,\n          client_name: project.client_name,\n          customer_id: project.customer_id || null,\n          estimate_number: project.estimate_number || \"\",\n          hyperlink: project.hyperlink || \"\",\n          status: \"calculated\",\n          items: cleanItems,\n          paint_supplies_per_sqft: Number(project.paint_supplies_per_sqft || 0),\n          total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),\n          total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),\n          total_labor_cost: Number(totals.total_labor_cost || 0),\n          customer_pricing: project.customer_pricing,\n          notes: project.notes || \"\",\n        },\n        attemptRef: copyAttemptRef,\n        keyPrefix: \"painting_project_copy\",\n        baseName: project.project_name || \"Painting\",\n        label: \"Painting project copy\",\n      });\n      if (embedded) onSaved?.();\n      else navigate(`/PaintingEstimator?id=${copy.id}`);\n    } catch (e) {\n      console.error(\"Could not copy Painting estimator:\", e);\n      setError(e.message || \"Could not copy Painting estimator.\");\n    } finally {\n      setSaving(false);\n    }\n  };\n\n  // #79 — template payload = the editable setup a user would reuse.\n  const buildPaintingTemplateData = (p) => ({\n    items: p.items || [],\n    paint_supplies_per_sqft: p.paint_supplies_per_sqft,\n    notes: p.notes,\n  });\n\n  if (loading) return <div className=\"p-10 text-center text-gray-400\">Loading Painting Builder…</div>;\n  if (!project) return <div className=\"p-10 text-center text-red-600\">{error || \"Painting project not found.\"}</div>;\n\n  return (\n    <div className=\"min-h-full bg-gray-50\">\n      <div className=\"max-w-[1220px] mx-auto p-4 sm:p-5\">\n        <div className=\"flex items-center justify-between gap-3 mb-4\">\n          {embedded ? (\n            <button type=\"button\" onClick={onClose} className=\"inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600 hover:text-gray-900\">\n              <ArrowLeft className=\"w-4 h-4\" /> Back to products\n            </button>\n          ) : (\n            <Link to={estimateId ? `/EstimateDetail?id=${estimateId}` : \"/Estimator\"} className=\"inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600 hover:text-gray-900\">\n              <ArrowLeft className=\"w-4 h-4\" /> Back to estimator\n            </Link>\n          )}\n          {project?.updated_date && (<div className=\"mt-1 text-[10px] text-gray-400\">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}\n          <Button onClick={saveProject} disabled={saving || !project.project_name?.trim() || !project.client_name?.trim()} className=\"h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold\">\n            <Save className=\"w-4 h-4 mr-1.5\" /> {saving ? \"Saving…\" : \"Save Painting\"}\n          </Button>\n          <ModuleActionBar\n            onTemplates={() => setTemplateMode(\"load\")}\n            onSaveAsTemplate={() => setTemplateMode(\"save\")}\n            onSaveAsCopy={handleSaveAsCopy}\n            estimateId={estimateId}\n            saving={saving}\n          />\n        </div>\n\n        <div className=\"flex items-center gap-3 mb-4\">\n          <div className=\"w-9 h-9 rounded-md bg-sky-100 text-sky-700 flex items-center justify-center\"><Palette className=\"w-5 h-5\" /></div>\n          <div>\n            <h1 className=\"text-[20px] font-bold text-gray-900\">Painting Builder</h1>\n            <p className=\"text-[11px] text-gray-500\">Panels, dimensional lettering and complex shapes using the migrated SignEstimate Pro paint formulas.</p>\n          </div>\n        </div>\n\n        {error && <div className=\"mb-3 px-3 py-2 text-[12px] text-red-700 bg-red-50 border border-red-200 rounded\">{error}</div>}\n\n        <div className=\"grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_310px] gap-4\">\n          <div className=\"space-y-4 min-w-0\">\n            <section className=\"bg-white border border-gray-200 rounded-md p-4\">\n              <div className=\"text-[12px] font-bold text-gray-800 mb-3\">Project</div>\n              <div className=\"grid sm:grid-cols-2 gap-3\">\n                <label className=\"text-[11px] text-gray-600\">Project name\n                  <Input value={project.project_name || \"\"} onChange={(e) => patchProject({ project_name: e.target.value })} className=\"mt-1 h-[32px] text-[12px]\" />\n                </label>\n                <label className=\"text-[11px] text-gray-600\">Client\n                  <Input value={project.client_name || \"\"} onChange={(e) => patchProject({ client_name: e.target.value })} disabled={!!estimateId} className=\"mt-1 h-[32px] text-[12px]\" />\n                </label>\n                <label className=\"text-[11px] text-gray-600\">Estimate number\n                  <Input value={project.estimate_number || \"\"} onChange={(e) => patchProject({ estimate_number: e.target.value })} disabled={!!estimateId} className=\"mt-1 h-[32px] text-[12px]\" />\n                </label>\n                <label className=\"text-[11px] text-gray-600\">Paint application supplies / sq ft / color\n                  <Input type=\"number\" step=\"0.01\" min=\"0\" value={project.paint_supplies_per_sqft ?? \"\"} onChange={(e) => patchProject({ paint_supplies_per_sqft: Number(e.target.value) })} className=\"mt-1 h-[32px] text-[12px]\" />\n                </label>\n              </div>\n              <label className=\"block text-[11px] text-gray-600 mt-3\">Notes\n                <Textarea value={project.notes || \"\"} onChange={(e) => patchProject({ notes: e.target.value })} className=\"mt-1 min-h-[70px] text-[12px]\" />\n              </label>\n            </section>\n\n            <section className=\"bg-white border border-gray-200 rounded-md\">\n              <div className=\"px-4 py-3 border-b border-gray-200 flex items-center justify-between gap-3\">\n                <div>\n                  <div className=\"text-[12px] font-bold text-gray-800\">Paint Items</div>\n                  <div className=\"text-[10px] text-gray-500\">Geometry drives paintable area; colors drive paint, mask and labor.</div>\n                </div>\n                <Button onClick={addItem} variant=\"outline\" className=\"h-[30px] px-3 text-[11px]\"><Plus className=\"w-3.5 h-3.5 mr-1\" /> Add Item</Button>\n              </div>\n\n              {(project.items || []).length === 0 ? (\n                <div className=\"py-12 text-center text-[12px] text-gray-400\">No paint items yet.</div>\n              ) : (\n                <div className=\"divide-y divide-gray-100\">\n                  {project.items.map((rawItem, index) => {\n                    const item = calculated.items[index] || rawItem;\n                    const lettering = rawItem.item_type === \"lettering\";\n                    return (\n                      <div key={rawItem.builder_item_id || index} className=\"p-4 space-y-3\">\n                        <div className=\"flex items-center gap-2\">\n                          <span className=\"w-6 h-6 rounded bg-gray-100 text-gray-600 flex items-center justify-center text-[10px] font-bold\">{index + 1}</span>\n                          <Input data-item-desc={index} value={rawItem.description || \"\"} onChange={(e) => patchItem(index, { description: e.target.value })} placeholder=\"Item description\" className=\"h-[30px] text-[12px] flex-1\" />\n                          <button type=\"button\" onClick={() => removeItem(index)} className=\"w-8 h-8 inline-flex items-center justify-center rounded text-red-500 hover:bg-red-50\" aria-label=\"Remove item\"><Trash2 className=\"w-4 h-4\" /></button>\n                        </div>\n\n                        {!lettering && (\n                          <div className=\"flex flex-wrap items-center gap-1.5\">\n                            <span className=\"text-[9px] font-bold tracking-wide text-gray-400\">SURFACE PRESETS</span>\n                            {[[\"4′×8′ face\", 48, 96], [\"8′×4′ face\", 96, 48], [\"2′×4′ face\", 24, 48], [\"4′×4′ face\", 48, 48]].map(([label, l, w]) => (\n                              <button key={label} type=\"button\" onClick={() => patchItem(index, { length: l, width: w }, { autoMask: true })} className=\"px-2 h-[24px] rounded border border-gray-300 text-[10px] text-gray-600 hover:bg-gray-50\">{label}</button>\n                            ))}\n                          </div>\n                        )}\n                        <div className=\"grid sm:grid-cols-2 lg:grid-cols-4 gap-2.5\">\n                          <Field label=\"Type\">\n                            <Select value={rawItem.item_type || \"panel\"} onValueChange={(value) => patchItem(index, { item_type: value }, { autoMask: true })}>\n                              <SelectTrigger className=\"h-[30px] text-[11px]\"><SelectValue /></SelectTrigger>\n                              <SelectContent>\n                                <SelectItem value=\"panel\">Panel</SelectItem>\n                                <SelectItem value=\"lettering\">Lettering</SelectItem>\n                                <SelectItem value=\"complex_shapes\">Complex Shape</SelectItem>\n                              </SelectContent>\n                            </Select>\n                          </Field>\n                          <Field label=\"Thickness\">\n                            <Select value={rawItem.thickness || \"1/2\"} onValueChange={(value) => patchItem(index, { thickness: value }, { autoMask: true })}>\n                              <SelectTrigger className=\"h-[30px] text-[11px]\"><SelectValue /></SelectTrigger>\n                              <SelectContent>{PAINT_THICKNESSES.map((size) => <SelectItem value={size} key={size}>{size}&quot;</SelectItem>)}</SelectContent>\n                            </Select>\n                          </Field>\n                          <Field label={lettering ? \"Letter height (in)\" : \"Length (in)\"}>\n                            <Input type=\"number\" min=\"0\" step=\"0.01\" value={rawItem[lettering ? \"width\" : \"length\"] ?? 0} onChange={(e) => patchItem(index, { [lettering ? \"width\" : \"length\"]: Number(e.target.value) }, { autoMask: true })} className=\"h-[30px] text-[11px]\" />\n                          </Field>\n                          <Field label={lettering ? \"Number of letters\" : \"Width (in)\"}>\n                            <Input type=\"number\" min=\"0\" step={lettering ? \"1\" : \"0.01\"} value={rawItem[lettering ? \"length\" : \"width\"] ?? 0} onChange={(e) => patchItem(index, { [lettering ? \"length\" : \"width\"]: Number(e.target.value) }, { autoMask: true })} className=\"h-[30px] text-[11px]\" />\n                          </Field>\n                          {!lettering && <Field label=\"Quantity\"><Input type=\"number\" min=\"1\" step=\"1\" value={rawItem.quantity ?? 1} onChange={(e) => patchItem(index, { quantity: Math.max(1, Number(e.target.value) || 1) })} className=\"h-[30px] text-[11px]\" /></Field>}\n                          <Field label=\"Paint sides\">\n                            <Select value={rawItem.paint_sides || \"one_side\"} onValueChange={(value) => patchItem(index, { paint_sides: value })}>\n                              <SelectTrigger className=\"h-[30px] text-[11px]\"><SelectValue /></SelectTrigger>\n                              <SelectContent><SelectItem value=\"one_side\">One side + edges</SelectItem><SelectItem value=\"both_sides\">Both sides + edges</SelectItem></SelectContent>\n                            </Select>\n                          </Field>\n                          {rawItem.item_type === \"complex_shapes\" && <Field label=\"Edge complexity\"><Input type=\"number\" min=\"0\" step=\"0.1\" value={rawItem.edge_complexity_multiplier ?? 1} onChange={(e) => patchItem(index, { edge_complexity_multiplier: Number(e.target.value) })} className=\"h-[30px] text-[11px]\" /></Field>}\n                          <Field label=\"Paint mask sq ft\"><Input type=\"number\" min=\"0\" step=\"0.01\" value={rawItem.paint_mask_sqft ?? 0} onChange={(e) => patchItem(index, { paint_mask_sqft: Number(e.target.value) })} className=\"h-[30px] text-[11px]\" /></Field>\n                          <Field label=\"Item fixed waste (gal)\"><Input type=\"number\" min=\"0\" step=\"0.01\" value={rawItem.fixed_waste_gallons ?? 0} onChange={(e) => patchItem(index, { fixed_waste_gallons: Number(e.target.value) })} className=\"h-[30px] text-[11px]\" /></Field>\n                          <Field label=\"Base supplies\"><Input type=\"number\" min=\"0\" step=\"0.01\" value={rawItem.base_supplies_cost ?? 0} onChange={(e) => patchItem(index, { base_supplies_cost: Number(e.target.value) })} className=\"h-[30px] text-[11px]\" /></Field>\n                        </div>\n\n                        <div className=\"bg-gray-50 border border-gray-100 rounded p-2.5\">\n                          <div className=\"flex items-center justify-between mb-2\">\n                            <div className=\"text-[10px] font-bold uppercase tracking-wide text-gray-500\">Paint colors</div>\n                            <button type=\"button\" onClick={() => addColor(index)} className=\"text-[10px] font-semibold text-sky-700 hover:text-sky-900\">+ Add color</button>\n                          </div>\n                          {(rawItem.paint_colors || []).length === 0 ? <div className=\"text-[10px] text-gray-400\">No colors selected — no liquid paint is charged.</div> : (\n                            <div className=\"flex flex-wrap gap-2\">\n                              {(rawItem.paint_colors || []).map((color, colorIndex) => (\n                                <div className=\"flex items-center gap-1\" key={colorIndex}>\n                                  <Input value={color || \"\"} onChange={(e) => updateColor(index, colorIndex, e.target.value)} placeholder=\"PMS / color\" className=\"h-[28px] w-[145px] text-[11px]\" />\n                                  <button type=\"button\" onClick={() => removeColor(index, colorIndex)} className=\"w-6 h-6 rounded text-gray-400 hover:text-red-600 hover:bg-white\">×</button>\n                                </div>\n                              ))}\n                            </div>\n                          )}\n                        </div>\n\n                        <div className=\"grid grid-cols-2 md:grid-cols-5 gap-2 text-[10px]\">\n                          <Metric label=\"Paintable area\" value={`${number(item.paintable_sqft)} sf`} />\n                          <Metric label=\"Paint mask\" value={money(item.supplies_cost)} />\n                          <Metric label=\"Paint + supplies\" value={money(item.paint_cost)} />\n                          <Metric label=\"Labor\" value={money(item.labor_cost)} />\n                          <Metric label=\"Paint volume\" value={`${number(item.paint_gallons, 3)} gal`} />\n                        </div>\n                      </div>\n                    );\n                  })}\n                </div>\n              )}\n            </section>\n          </div>\n\n          <aside className=\"space-y-3\">\n            <section className=\"bg-white border border-gray-200 rounded-md sticky top-4\">\n              <div className=\"px-4 py-3 border-b border-gray-200\">\n                <div className=\"text-[12px] font-bold text-gray-800\">Cost Summary</div>\n                <div className=\"text-[10px] text-gray-500\">Internal Builder cost before estimate-level markup.</div>\n              </div>\n              <div className=\"p-4 space-y-2 text-[11px]\">\n                <SummaryRow label=\"Paint mask\" value={money(totals.total_paint_mask_cost)} />\n                <SummaryRow label=\"Liquid paint & supplies\" value={money(totals.total_liquid_paint_and_supplies_cost)} />\n                <SummaryRow label=\"Painting labor\" value={money(totals.total_labor_cost)} />\n                <div className=\"border-t border-gray-200 pt-2 mt-2 flex justify-between items-center\">\n                  <span className=\"font-bold text-gray-800\">Total cost</span>\n                  <span className=\"text-[16px] font-bold text-gray-900\">{money(totals.total_cost)}</span>\n                </div>\n              </div>\n              <div className=\"px-4 py-3 border-t border-gray-100 bg-gray-50 space-y-1.5 text-[10px] text-gray-500\">\n                <SummaryRow label=\"Paint needed\" value={`${number(totals.total_paint_gallons, 3)} gal`} subtle />\n                <SummaryRow label=\"Labor time\" value={`${number(totals.total_labor_hours)} hr`} subtle />\n                <SummaryRow label=\"Unique colors\" value={number(totals.unique_color_count, 0)} subtle />\n                <SummaryRow label=\"Mixes\" value={number(totals.number_of_mixes, 0)} subtle />\n                <SummaryRow label=\"Setup / cleanup\" value={`${number(totals.setup_hours)} hr`} subtle />\n                <SummaryRow label=\"Mixing\" value={`${number(totals.mixing_hours)} hr`} subtle />\n              </div>\n              <div className=\"px-4 py-3 border-t border-gray-100 text-[10px] text-gray-500\">\n                Mixed paint rate: <span className=\"font-semibold text-gray-700\">{money(calculated.liquidPaintRate)}/sf</span>\n              </div>\n            </section>\n          </aside>\n        </div>\n\n        <div className=\"mt-4\">\n          <CustomerPricingTab\n            project={{\n              ...project,\n              total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),\n              total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),\n              total_labor_cost: Number(totals.total_labor_cost || 0),\n            }}\n            categorize={categorizePaintProject}\n            accentColor=\"blue\"\n            onApplyTier={(tier) => patchProject({\n              customer_pricing: { ...(project.customer_pricing || {}), applied: true, tier_number: tier },\n            })}\n          />\n        </div>\n      </div>\n      <ModuleTemplateDialog\n        open={!!templateMode}\n        mode={templateMode}\n        onClose={() => setTemplateMode(null)}\n        project={project}\n        onApply={(data) => patchProject(data)}\n        moduleKey=\"painting\"\n        title=\"Painting\"\n        buildTemplateData={buildPaintingTemplateData}\n        describeTemplate={(t) => `${(t.project_data?.items || []).length} items`}\n      />\n    </div>\n  );\n}\n\nfunction Field({ label, children }) {\n  return <label className=\"text-[10px] text-gray-500 min-w-0\"><span className=\"block mb-1\">{label}</span>{children}</label>;\n}\n\nfunction Metric({ label, value }) {\n  return <div className=\"bg-white border border-gray-100 rounded px-2 py-1.5\"><div className=\"text-gray-400\">{label}</div><div className=\"font-semibold text-gray-700 mt-0.5\">{value}</div></div>;\n}\n\nfunction SummaryRow({ label, value, subtle = false }) {\n  return <div className={`flex items-center justify-between gap-3 ${subtle ? \"text-gray-500\" : \"text-gray-600\"}`}><span>{label}</span><span className={subtle ? \"font-medium\" : \"font-semibold text-gray-800\"}>{value}</span></div>;\n}",
+   "inPriorBaseline": true,
+   "driftFromBaseline": true
+  },
+  {
+   "path": "src/pages/VinylEstimator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a31428b6b864128902ac89a998c870cf0ccd9b5bcd403461c4f24ec84a944eb3",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/pages/PaintingSettings.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "09e62dc6daae9a358995270069f0e06b7b9b90f8d220c56af4758b5899e45ba1",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/AIInstallScopeModal.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "b1ea55f45ed7f427c5f69c46dee0788a6c8f4c67936e739f308c728f1c6b628e",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/AIScopeWriterModal.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "121f7c70d0bff3df7cbc0a896db9a574098c6467e061099abc4d261700636be3",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/AddressAutocomplete.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "6363902bb99025acafa9a99c1cddbf1d7c54e101e1efdcb517ee02b39021cc55",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/AppliesToMultiSelect.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "ddf96186c9742a8aa44f06ade559e1d2e457fbbf68333cf7260f086905e38d7d",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/AutoGrowNotes.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "3e8e0080c48d0b8cebc3810d49b464fb304aefbb5f0f82e3466996216e142878",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BackerFabModal.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "c21a101eefa21787fc8c98e0f8b2cb28fce459fddc2600c1fba4960fe99bbbb5",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BackerFabPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "812860105527a9e435c2f878ab501f39a7d43ab6cab638c771eabac2c3674fc1",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BackerLetterTimesCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "ee6ba39084ae0632151c958872e6686a04bfccb769a1a01dc339709814e9c1fb",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BackerPanelTimesCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "326639bf2632ef609b4c77debd55f48e0c97c4bb630f2da035cc00a51271a470",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BackerSection.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "4a1eadd8f2a0939c9f9fea4195db09b4eed99b6855d7ecf0cb4b07901c2836a0",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BaseTimesSizeCard.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "00aae816da790e0be0770c2189347a645e810fc0764aa9a04f26f84c6ec28943",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BoomLiftReachChart.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "836c5124b4ea2d8c30da0aebd96150773b5e372c75cd7c256b9e811510c23ac4",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BulkActionsBar.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "f0bfcf595b59408a14d9a80a8e9f7f5ad126f5afceea4be71863e836c0d17751",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BulkPriceAdjustDialog.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "2837869a00e08bb1fac57b77d67b1ef7b68d7a627590800a4f7ed01891034e49",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/ChannelLetterHelpAssistant.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "f29d5db2491932e7e8aef23465de66da60f3939991845179c7a8e91d359620fd",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/ConditionPicker.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "966922966d982469b7484f31111f25b9ca1aeee8efc8d2e345275f7cd9592fbd",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/ConfirmModal.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "e39e61f567259395ed41b5749a5a6a4c5d52bc085b68dd20468c69abd0f1d204",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/CostBreakdownBar.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "4937690b18e98d4195c77557b396c3f114414e78adb3cab96b982959bb8aa03e",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/CrewEquipmentHint.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d999e1d2607a100ae925b8e8d86fb43cba0271012bd0e6f89b6f8aa770253d49",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/CuttingMethodSlider.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "98a0bb435969deb2caebc4f9435efc440b495a74cdbabf211eb4f5d581e8df12",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/CyclingImage.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "1cc1bfbe5542a744869e7492e3f61ff8001473df8b4e518b57635b064d252e34",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/DimensionalFabModal.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "f972287091beddd45d1643dd5c8fecc9e404001f6216c60fbfb2f7d25f11cdd7",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/DimensionalFabPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "27073eed73387475a014e605cfe875a283aef1371930814c1ab7d4488c80105a",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/DimensionalMaterialPickerDialog.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "8408828a92e95a9ce8233126f63cd55aea88f733b24ea46937ae9cc8a217a9a3",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/DimensionalMaterialsTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "f862343d4f4cb7173a45ba4c7f342273cdf5678033e8b5e8c0f951e829854f88",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/EquipmentInventoryTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "00f047a5c3eac2b5c62a3bdd2ff41d903485174e00556ae5a2c6720f4d640b22",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/EquipmentSelector.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "332a84a29f7af6b09b3664a79a1287d32551ba312dd716bc01fd00b41df4c4b5",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/InstallHeightSlider.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "9d9ec4ff247c15f6e422282054470abe13cf02df37a7f4e8e23691a3cb49933e",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/InstallLineItem.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "c4263807737f5b4a3ae93243241671696ef3c2fb5a58cb5fa3ced6e35f8e9874",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/InstallSummaryCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "aa7ae1dc82edded5a842f68f5f72dac86a6b452d11031781e835515f0ab1b30d",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/InstallTypePicker.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "ad956700c25fe12c26cdda32b8a23bb7eeba4061ddfee64d499aa8c582221347",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/ItemsList.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a3b7c3463c11eb0ebb782aaaf948416650ddfe7e6047bfadc51ceef71bb155d8",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/LadderSelector.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "35b0c8f79251d4ed1678265c0bbc47e3c0ea3ef360c6edef170358e6df50f3a2",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/LetterPurchaseRow.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "b42ffaa9d9a92b5088786973f6980354f05104a45ebc37d6cb4e59ec6d6a6a00",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/LetterSizePicker.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "248ced9fa710894451389cde6ac3d95bb551dfb72daf7b0892815a614c8f359a",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/LettersPurchaseTab.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "eae18b6d6b8e5d1c357ad334e2c04280c9d77e13ecf6898dd455c98e6595d853",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/MaterialItemCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "13be314a1f302171f36686c249ee75be701fe88e99e079b5fb32f1c16687bfea",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/MaterialsInventoryTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a6c2d6aac572d1e5c3cbf59b1258399e284ea826a782fde4a3775f6a536ecdb9",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/MaterialsList.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "6afdf4ca2e978a7f576c4ff7756cfd9d00717043219e7d5cef698a8e6bf3a466",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/PaintCoverageHelper.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a5c6d4bf3c4a72132d452399008f4037fe05e19e9bd85bffe60a2a69300d3622",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/PersonnelSelector.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "f691250568394b2bc18d04106a7f479348e2a8ff2ffe104ee49ae691a1ebd506",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/PhotoEstimateModal.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "5eb14a7827292626cd1aaa961cbb9c08fe39c77abcb78506b8b9735214102979",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/PriceHistoryDialog.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d7b65d8bdef803e91a1e474545219f839a6ccb8514a2f9817b0b44da716e58cd",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/QuantityTiersEditor.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "c60ad34afed6d47bb98abd731857aaf6fe342383735461b006ceca4e9a0628e7",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/RacewayTimesCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "bef953689cc805c60071ebd2b4822cb54311d22ff64c0d314246e388c470c314",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/SummaryDetailsCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "543c327b63c4ca1d15e65afd81620b4adbfe33ae8736906cd73f828523b22900",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/TabBadgeTrigger.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d2fe4259f0899eb6dd16635a3541347278805ff42b32c14029722b950fb13757",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/TravelCostCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "2d145274a6397c1e2879bfa523c0f67c35055722bacabd5b0867e7ed29f663f2",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/ValidationWarnings.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "0a345d62a58554a9e043f67837d1ea737cd8c4da6cbf265d68831f06da1495be",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/WallMaterialPicker.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "23c9bcd92da51a76ce0fbd0fbe1e4fe7976db53b15b2158dcdaa797f108e731c",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/dimensionalFabCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "dc65044d57effdca8e018c4ad98545593296b49881c7f444a07049f435b1166c",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/equipmentSuggester.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "9d1980dc7bcb0f090989f40a95b5972dd5c6ff2468b6fc9844bd7f8d29e2be78",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/installCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "43e7a14be4e933233e282a98548e8bd0317da5c298e7375b1661d401c70164bf",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/installExport.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "79b489b02316291faa9f19cd18b24ddc6c4a5fa1df6f1e909d1fee8a501ea5e4",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/installSizeRates.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "c61c261016a0e6abb676827fcda7ad393ae509be3e1185efd97a8340484d0025",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/letterWidthCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "1c134535863f0c0fa87ec5be95c05d1f3d3780e6d4579f574ffe1ecb2f65df40",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/lettersCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d95def8378e3a71766c7f1a979557f53805570a1ddb287a78d985597d4a55d03",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/materialsConstants.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "40b194976380339df8ebaa6f687d9b9dd2cbd525aba4acd893a6f8670f1b7bbf",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/materialsHelpers.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "81d5d726358a52f8fc4c57f4877315458c22b2ad84fc65e07a9449bced18800a",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/wallMaterials.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "3d940d042d3defb9f77a729cf997d7902ff231528e8c3fcc73ac8043e6bba4fb",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylAlternativeCompare.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "aaf074ed52bba01e46b9d822b0a64ac6c7171b11964d1ddf09f2f63beb2d20d0",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylArtworkUploadDialog.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "fd01fc654d5bf70b6f76077570fa776d9af5c3954c3dd7bd21fafb3ba0e697dc",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylBulkImportDialog.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "91483c264a9a1d7e3e783521239d136664caf9a571c73a0f620e50c99cb46610",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylCuttingExtrasCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "7602b55138e3b5c29784196a8712b3cb3cfdd3fe0b2b26dfb23c1fc4972e9da4",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylMachinePicker.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "3a10f3ea188e53f45e00c3a7a29d72c3f495862d785a309ec15a7470723ce371",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylMaterialPicker.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "b7f2b2182b0d1e3d37bebf66f676d793594c61533b29d105c7b5d4e2ace0e30c",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylMoveToWorkflowMenu.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "635dbe9be3ac00a48083505e67f418054b120b59b448f49d824d74cc456f6914",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylPartsLibraryDialog.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "4a3cf716f9fda3405b93dd7390c50847f9f860fea6c6decde5961cd91a6246ae",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylPartsTable.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "03b900f0634b09806810bb8410b2c42a256c567801d9341302bd01b9c91eed2a",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylPresetBar.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "e786dc38d69a8b2451274a06cad78104b67a8e206197e8f29f6450d667ea72d8",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylProjectSummaryCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "fb78a1c4a258c16a1128aee6e8083520a86870cb5394e16ab7f8c2e75921da5d",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylRollVisualizer.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "9503e0a66f65827e8bdc463b8282af66b8737ffbac4c145e7184d123ec1d0ee6",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylRollWidthRecommender.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d6b779c92e3cb9f1396e202a8e4ed32d9f90f536f95dea0a0abc3ad9faf7dd78",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylSearchPickerDialog.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "84e1fd955052640601480b2d611d806eda9e6a54832758468fc8d43d9f1c69c9",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylStockWarning.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d69297c12c592cb59edbe6dfc122b63d9f09993f27da492ecebedb83c509fc7d",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylSummaryPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "0b3e3c2d609aa770d4d512fd529f2fc3bc3fce0e97665ded20eac6401a24cbd9",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylWorkflowCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "4dc9bd8fc215cdd39c7860369e2862dea8527e7f547c8461831a33c6f480a8d1",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylWorkflowCardHeader.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "b6d4d27fecbd341b52442435e89fe24cb73b7aff3d247729d0e1a548a03a5fbe",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylWorkflowMetricsBadge.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "54d100d43fd3c33d744712fb3d41162c0a5f28355b82b1c259c619ce127b4271",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylWorkflowPersonnel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "6c00c3bf54a27a5b8ea28f5db184a8f447d69911b55c41770f438162afcaf0f4",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylWorkflowTemplatesDialog.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "1f69871048ffb4a2278d9697e5ffc5eb4de14b73206940fbed46451915e03d7d",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/vinylCostHelpers.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "0a5c6b9d9ebdeb32724db2785acafd43a69b4ce3201d75637cc87f8b88bfdde5",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/vinylLaborRoles.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "0f91e78126552523e64a4080fb42ff354105802498d15da00f403ad57eac9f3f",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/vinylNestingCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a87bb0a61f0700781a4046c8eb681bcf33d32b038ab10ca412c609cadf047f44",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/vinylPricingAvailability.js",
+   "exists": true,
+   "crlf": true,
+   "hash": "0bb8c5813dbccf63b5b6a39dee437993ddd1baaaa8f45142a4c437d8fc9a5f8a",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/vinylProjectHelpers.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "ed2ceb7acef7942c0e1a68e441a1460c741389852ee0d42b7f35a57886d41512",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/vinylTemplatePersistence.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "21e8718201b7c3f1c5217823a15d085ec3049c1a3e54ea233c53603a433517ca",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/vinylEstimator/vinylWorkflowPresets.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "042fd683b2d6d521292e2bdaa6463e51b467abc8abd6416a7595af267ffae791",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/customerPricing.js",
+   "exists": true,
+   "crlf": true,
+   "hash": "3bcaba41cfd9b3c3d9c8c220964229ae73797ee91ff0378f6479224884c04f75",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/paint/paintSellPricing.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "3a67ab09b22da8fe078157065b3accda8b164c42d73b182c01848c906048cfcc",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/markup/CustomerPricingTab.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "47d0108fe556f3c3069c798ee4da6d764b4401475ffb3465f221ff74a22fed36",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/markup/projectCategorizer.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "69d9df4fa6892f10a40ddefc87583fc94fddfd5e5be880c46a03b8df63efa0e4",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/builder/builderService.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "e6175c22dc7d098169682de5aa0e3231ff2df34edaa9eeb334fcdf1645ba5cdf",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/builder/sourceProjectPersistence.js",
+   "exists": true,
+   "crlf": true,
+   "hash": "6d6381c9f6d7c81235259a889562e99a85d9bc53fc2c87ffb8ab461ff76844f2",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/builder/itemIdentity.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "3f6700c4155350056dfed2f9442bdd174a870854d1c7229beb0c39ace7d1582d",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/moduleShared/moduleProjectActions.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "d21e225d2274917731855aef4cff8e9a0eecf470cc6508d3981cf91aad75c9ab",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/settings/moduleSettingDefaults.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "86e9efbad755883d0d359f137ef28336354e359d98754741e45071db8d3ed611",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/ActionPicker.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "88e043f6d2f6192431a5b9e296e9f764b83549dfcae5299b29dfc8c1043cd82d",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/ActionRateCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "873b00f675eddb0d03176c8566498bf70c2c650f963d82f3747213b1567f75be",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/DimLetterPaintSubPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "cb1a9a1bb4d2752e8513cd30b83bb7242f27e1ee2eec6865ae238ce6469ce762",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/MaintenanceDimensionalSheetsTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "bc5e629860c99ef732ccdaaa0561f08fc6ec4128e0511a5a9f39af6cc33185fd",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/MaintenanceMaterialItem.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a6cc64e566d21e02a60d15b4a4359a5fc3658e23ea36bdde47342158af3f2f46",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/MaintenanceMaterialRulesTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "aa974238cf2500aa347bc27b450334898f82c0fb094fbc929eb4f088ec03b53d",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/MaintenanceMaterialsByAxis.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a5c534e1e58543ba4f5529b1d8eebacb0d24638ef8e15b3cee8c5e1c0b456a84",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/MaintenanceMaterialsTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "33d0acf570ab5bf93a6c5a586b78287d88c6b8735937a8c4e1267b1de4eaa265",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/MinimumsTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "011169d72326a7ea7d47b122d3c80d2f37c05956eb0ba381b4ac12ceada59ce9",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/RatesBySignTypeTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "cee882abba42f2b5bd97a75da2bd1ebbdab385fff3dd749cd6769331fd456830",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/RepaintMonumentPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "4d9c3ba4809ecc84cb2d5d416c7f635059166e1dcedd2ff7442c1b6e10192b2b",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/RepaintSettingsTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a19baf51cce57902c29f90a34c771ba3023d78e0fff6a7ef6959f78362026e17",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/SectionCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "4e70b492bcd6ca448cdd382ddfcde0a30f541251ed5cedf9e5566e91c8765f5d",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/ServiceItemRow.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "f72c33a2a558e6f99690506493954fbcb8df109e506410e14441ae86fa1c5ebe",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/SettingInput.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "f1d7efa6316be3cab5eb9c03cad9c9f55392b1242a7c507268971a543cf5d263",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/SignTypePicker.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "2776caa409ce62f969cfe91bc1cc6bf35624f285ff85484ce7669d7b856d9b74",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/SiteConditionsTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "b53d8859f734639633c094b3a3569eaa00629d38fc7af39ec98e5f2a3e0a56ca",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/TravelTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "e5295f376dbb30c6bfc81c6dc9c074d58edf5dae6fc8c78068ae2ffef965c0a3",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/constants.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "01fd816a6ebd28d7858876cfc5bc8d98b34cfbc28176117ba0ce1a03898db965",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/defaults.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d66649196fe731588bb963659302df515ad5c0c7dcd96a58d0d6b7a61f60e713",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/dimLetterPaintCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "71b8ce366872fed4b69f372e21dde077bb4d228c5c8bc03b290bea6d6618ee43",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/maintenanceActionRatePersistence.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "82661f1d333a01bf6c89cca48092661ee45029ae56dfbe8bed6eccda5d6b7cf7",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/maintenanceCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "db1e4f3a9dfcd0df539dca171ecc697d348804164e09e228e07643ad7fac6b0d",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/maintenanceMaterialRulePersistence.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "c94216bf914bd234006fcd4289d17362f606080290a7ffd275d95d8a2aa48b39",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/maintenanceMaterialRules.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "f41321b4adbef978f278e154decb36d1c98a223f0adcb3757769a1bda4d25a9e",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/maintenanceTravelSiteDefs.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "7c93a7d940d633539ff79cdceff0b763b56dd50f6eafad55062a587e2b89cba9",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/repaintCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "699c8354fb0671b65e100c176ed5995772dac3a98b33debf2f14d657d6719e0a",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/signMaintenance/repaintDefaults.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "347c8d55d4f75bc59134f50c9d5356290ccfb4b8f878d61baf2922d3f7711546",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "b02a4baa889c8b09656f8b22ed0d638ba8d33a4c07b54850003b9f64819465d8",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/ConcreteDeliveryPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "1f33ce28ef0ed5217fcfb5d01778bf0efbd6c9c404540c05c8632f51a954e0cb",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/CustomerPricingPanel.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "d3720bb8df80cff5b2bfe2e5a132e99bed59c736c864877e456ab9252522e669",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/Foundation3DPreview.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "523ad3977cb181064c66509a4ca5a3e72d65bf375cbf2167e82b9f783b1e29e3",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationBOM.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "af99e00cb818eb0229a572e614615c5ec75a609644bc5989dd4791b07e2ed25f",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationEquipmentTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "e621b4959702d1e6ad825a919bbf5a0afefe1d87682b9c2a21764dfc9ab7cfe9",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationItemCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "bbc699269f1e4d254a2d5c95ffe07a465ee1d5e929314478120e0a9fc76ac43e",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "ac4f9e0cc6f948f9000fa2f740f5532817e9d00fc9baf929a71414090163125c",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "2016265a3e7f8367f0788390460d97e9e0cd2177b9f6016e5c58a5a1dc26663f",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationRatesPanel.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "3987b0742829f98bbddc5f0b3db17be4672e385e4044f78af20705bf92de194c",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationSectionBanner.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "06ece3c5746fec82fda05007989d63838d8d2aaa6a19c576ab8260cc51c0a4f9",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "70233a10b07274571a9d27e693cad3a51c705bc561514fe5c688d5648085f152",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationToolbar.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "688b7e9eb9645bb4b7f57b69f336e4a977c4237adbabf5930ffb3a62a0a74edc",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationTotals.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "571795bd9b2a2cd77fd776255903efa74edb0733cffefcf7fdb230f6936c5cb7",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "3d2c186e797001661798cf1cb787ea35ee7cb63d3f5e73e1d2aac5b25c4f974d",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "857456235bc823bbf535380c90c66490e7087ec057dbc539cb8c972e7eb42186",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "4956450d189584ffdfcaf190aeef79c03953e8678840657c4a346c7915f0fd23",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "7cc8d401338d284fd0e24483eebf79cd75c31930aed6d91d476d60cb21d73ff5",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/WallShapeEditor.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "37a14e19c8a89bbebd0100f164d1ae4d8b9148e120514452105c187875f9a22b",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/convertToBrickStone.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "1e2af87c581e1f6aa4813e94f7f88e90ce058c38b2965b37d40778c5bfb2847e",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationAiReview.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "3a8339fb498a91475bd7e4783fd10f657cd3ebdeea7545eefffae63e096c6657",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "8e197f9559b4bfbc4861040ee323ea526fb0fcfd84341ca9c7ece78efd57ac79",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationBuilderRecovery.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "7e6fa754eac96e7d4b689cf028163a1a99f69617e151c0698ec3cf122e00629c",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationCalc.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "ac9c53eb4c08a023ac7c2268c07de09b6591528976cf38a322e8b82d7769557a",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "702f1405b1cae1256da4eda2e7ed4d50085a5be1b4cd3324cf232a84938eca4e",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationDraftRecovery.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "16cf0d383ef46a3bf21557cff04ca2a6f0ad50ef0b5928ad3ad601f361de8904",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationEquipmentBindings.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "9770051bb7cce5424d5075b6fff2910288f2eba6b5724dc3194d2a59928b543f",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationInputValidation.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "cd2cd349650134af3137be7a7a200c11fb52bd5d7a2429b9faf436abbb657f63",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "a2178910f6a564ccb2662c9d1a7fce4c91fbaacea4f9e7ced8cb786c61380fb3",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationSaveSession.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "f9c6984e8ea679a81a7d3d6933714b31a1b7e215dff3d84c2d90b9dc394be4de",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationSellPricing.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "b7c632d16b79f1a19e750e9bd3462dca8793a41aae2c52bdb70e7cd3c7c038c1",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationSyncRecovery.js",
+   "exists": true,
+   "crlf": true,
+   "hash": "ab08ffc8345ce29d177377768d2d5c4a19eabfd4ff778c01d2248131969c3251",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "a475bfd50def02443331df581a90b5ebfc0a2292788afad070bb52003e92fdcb",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationTemplateService.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "570d264e27d81f6c3a00fefdcca9332584eddbb0191275bc995990572587196d",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/landscapeMaterials.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "ba13081706de2a5e2e1f6429c1e8a058ecb11f72535ed2fefd40b31927ab906a",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "b799f3d33a794f6249beadb0b527a710f7df42d9aad0d0e062edb846dee4d1e4",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/poleCalculator.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "8cdfbb75492817b8628eda4d10f133b7d05c9b50c46f1dd745ae1a50e201596e",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/wallCalculator.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "4bb6795851b678bd6f72dc7146bbdc6a5ab486528605d12a2058d5ed5b1e8f9d",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  },
+  {
+   "path": "src/components/estimator/foundation/wallCapCalculator.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "90e64ee49d8fe815ea63506ab21c25e9fd449c55581afe0a21f19371c87695eb",
+   "role": "protected",
+   "inPriorBaseline": false,
+   "driftFromBaseline": false
+  }
+ ],
+ "headAfter": "71b65186f4df1159193acceb91db50ea50946a7a",
+ "dirtyAfter": ""
+}

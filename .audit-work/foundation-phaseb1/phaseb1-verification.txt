@@ -1,0 +1,46 @@
+ok remote-identical whole-model output: bag spread
+ok remote-identical whole-model output: bag spread all options single layer
+ok remote-identical whole-model output: bag spread multilayer
+ok remote-identical whole-model output: bag pillar default size
+ok remote-identical whole-model output: bag pillar size5 hoops and quantity
+ok remote-identical whole-model output: ready spread
+ok remote-identical whole-model output: ready pillar
+ok remote-identical whole-model output: ready mix and admixtures
+ok remote-identical whole-model output: three delivery trucks
+ok remote-identical whole-model output: quarter yard order
+ok remote-identical whole-model output: multiple service foundations
+ok remote-identical whole-model output: mixed bag and ready foundations
+ok remote-identical whole-model output: legacy two supplier grouping unchanged
+ok remote-identical whole-model output: manual zero rebar and quantity
+ok remote-identical whole-model output: all explicit zero overrides
+ok remote-identical whole-model output: free bag catalog rate
+ok remote-identical whole-model output: free ready supplier explicit zero fields
+ok remote-identical whole-model output: inactive dangling selections
+ok remote-identical whole-model output: manual rebar without matching catalog
+ok remote-identical whole-model output: manual zero rebar without matching catalog
+ok remote-identical whole-model output: bag manual quantity legacy units unchanged
+ok remote-identical whole-model output: unassigned project delivery assumptions unchanged
+ok remote-identical whole-model output: new sign stops
+ok remote-identical whole-model output: project equipment excavation
+ok remote-identical whole-model output: custom settings
+ok remote-identical snapshot-mode: bag spread
+ok remote-identical snapshot-mode: bag spread all options single layer
+ok remote-identical snapshot-mode: bag spread multilayer
+ok remote-identical snapshot-mode: bag pillar default size
+ok remote-identical snapshot-mode: bag pillar size5 hoops and quantity
+info: remote still reproduces 0/25 pre-hardening frozen expected outputs
+ok accepted version2 dispatch retains 20ft/112 steel and 288.25 item instead of legacy steel math
+ok explicit manual version2 selection does not require an unrelated legacy rebar size
+ok unknown active calculation versions are unavailable rather than silently calculated as legacy
+ok unconfigured supports keep acknowledged amounts and block active pricing and saving
+ok valid active recalculation returns a new reconciled snapshot instead of reusing an old result
+ok disabled version2 steel clears live steel snapshots without requiring a material or design
+ok zero priced footage keeps physical 20ft and 48 connection labor
+ok missing selected catalog ID cannot be replaced by legacy size even with a rate override
+ok a current selected ID controls active rate rather than a different legacy size match
+ok inactive legacy reinforcement fields do not block or influence version2
+ok unknown material weight cannot become a ready zero-weight active estimate
+ok unavailable version2 with no acknowledged snapshot never adopts raw999 or fabricates zero
+ok duplicate live component IDs cannot borrow another component's acknowledged amounts
+ok same inputs: v1 legacy steel exceeds explicit v2 single-mat steel (single-mat honesty by design)
+PASS phaseb1 cases=44 failed=0

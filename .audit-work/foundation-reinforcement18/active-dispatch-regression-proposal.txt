@@ -1,0 +1,33 @@
+ok unacknowledged valid monetary preview cannot be accepted
+ok fresh proposal compares current252.8steel/429.05item against112/288.25
+ok accept returns one immutable project update, typed configuration, exact split and explicit receipt
+ok accepted zero aggregate override remains0 and never scales to1ft
+ok accepted zero rate remains0material, not legacy catalog rate
+ok every raw context identity/revision field invalidates an eligible preview
+ok edit then Undo of raw design still rejects when edit revision advanced
+ok A-B-A project route cycle rejects with generation advanced
+ok raw dimension, override and proposed material changes require new deltas
+ok catalog price/diameter/weight/unit and settings changes reject, including manual-basis catalog refresh
+ok acknowledged source revision changes invalidate even when design is unchanged
+ok acknowledged source monetary changes invalidate comparison without trusting Undo metadata
+ok transient item results and unapplied proposal metadata are excluded from raw basis
+ok cached wall/pole costs remain in basis because missing-catalog behavior may depend on them
+ok unrelated component reorder is rejected instead of applying by array index
+ok missing or duplicate target component IDs never accept
+ok unknown active version including string2 is not silently downgraded
+ok failed catalog/settings reads yield unavailable proposals without throwing
+ok wrong owner/source snapshot and unknown linked-estimate revision fail closed
+ok standalone source permits explicit null estimate context but not an omitted context identity
+ok negative historical saved costs stay signed when used for current fallback
+ok unknown prior totals remain unknown, not0 or a fabricated savings delta
+ok changed/missing warning acknowledgments cannot use an older reviewed basis
+ok exact ID and valid acceptance time are mandatory
+ok superseded or consumed preview ID rejects even when all monetary inputs remain identical
+ok cached preview quantities/costs are never applied; acceptance recomputes fresh
+ok one returned commit preserves unrelated rows; simulated single Undo restores full prior project
+ok actual version2 current amount comes from accepted config, not legacy rows
+ok blocked active version2 uses acknowledged price, not a new preliminary unapproved amount
+ok finite prior and proposed prices with overflowing delta remain unavailable, not0
+ok frozen raw/acknowledged/preview inputs are never mutated or aliased into receipt
+Proposal: 31/31 passed; failed=0
+exit=0

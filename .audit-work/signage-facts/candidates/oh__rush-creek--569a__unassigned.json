@@ -1,0 +1,938 @@
+{
+ "jurisdiction_id": "6adf8b1ebe24645ad1f7569a",
+ "jurisdiction_name": "Rush Creek",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 65,
+   "snippet": "61 B. If the camping equipment or recreation vehicles is parked or stored outside of a garage, it shall be parked or stored to the side or rear of the house. 10.7 SIGNS A. General Sign Regulations. All signs shall comply with the following general regulations and the size, height and setback standards for the applicable zoning district, as specified in Section 10.7B. 1. Sign Lighting. a. Sign lighting shall be consistent, understated, and properly disguised. One of the following methods of lighting may be employed: i. A white, steady, stationary light that does not glare onto surrounding areas, is directed solely at the sign, and is otherwise prevented from beaming directly onto adjacent properties or rights - of - way. ii. A white interio r light with primary and secondary images lit or silhouetted on an opaque background. The background must be opaque. No additional background lighting",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "type",
+    "authority"
+   ],
+   "weight": 14,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 77,
+   "snippet": "73 finish will also be permitted. Alternative tower designs that camouflage the tower and/or antenna, such as man - made trees, may also be permitted as approved by the Board of Zoning Appeals. 5. A fence (minimum six (6) feet in height) shall fully enclose the tower. Gates shall be locked at all times when unattended by an agent of the telecommunication provider. 6. A landscaped buffer of not less than fifteen (15) feet in depth shall be placed between the fence surrounding the tower and any adjacent public right - of - way and any adj acent properties. The 15 - foot buffer shall consist of hardy evergreen shrubbery, not less than six (6) feet in height, and of a density to obstruct the view. The Board of Zoning Appeals may require additional landscaping upon review of an individual applic ation. All required landscaping shall be continuously maintained and promptly restored, if necessa",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "process",
+    "temporary"
+   ],
+   "weight": 12,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 91,
+   "snippet": "87 1. The proposed Rural Residential Business Use shall be operated by a resident of the property and such use shall be clearly subordina te and incidental to the use of the premise for residential purposes. 2. The proposed Rural Residential Business is conducted in conjunction with and to the rear or side of the principally permitted use. 3. There shall be no more than three (3) non - resident employees. 4. The proposed Rural Residential Business may be conducted within an accessory structure on the same lot as the principally permitted use. 5. Any outdoor activities shall be located a minimum of 200 feet from a property line. 6. No proposed Rural Residential Business shall be used or occupied in such a manner so as to create any dangerous, injurious, noxious, otherwise objectionable impact on any adjacent land. Such impacts shall include those related to noise, vibration, odor, dust, h",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "process",
+    "type"
+   ],
+   "weight": 12,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 66,
+   "snippet": "62 with placement on walls entrance columns or similar landscape features used to denote the entrance to the subdivision. There shall be no more t han one subdivision identification sign per development entrance. Each sign shall not exceed eight (8) feet in height and twenty (20) square feet in area. Each sign shall be setback a minimum of 15 feet from the right – of – way. 7. Construction - All signs and parts thereof, including any electrical wiring, shall be erected, constructed, and maintained so as to not constitute a safety hazard. B. On - Premise Signs Size, Height, and Setback Requirements. All on - premise signs shall comply with the size, height and setback requirements for the district in which the sign is located. These requirements are listed in the following table: District Permitted Types Max. # of Signs Max. Height (Ft.) Max. Sign Area (Sq. Ft.)* Min. Setback from R.O.W (",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "prohibited",
+    "billboard",
+    "authority"
+   ],
+   "weight": 11,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "2 ARTICLE II INTERPRETATION OF STANDARDS — EXEMPTIONS AND LIMITATIONS 2.1 INTERPRETATION AND APPLICATION. The provisions of this Resolution shall be held to be minimum requirements. Where this Resolution imposes a greater restriction than is imposed by other provisions of law, or by other rules or regulations or resolutions, the provisions of this Resolution shall control. It is not intended by this Resolution to interfere with abrogate, or annul any easements, covenants o r other agreements between parties which do not violate this Resolution. Where any specific provisions of this Resolution conflict or conflicts with any other lawfully adopted rules, regulations, or resolutions, the most restrictive or those imposing a higher standard shall apply. 2.2 SEPARABILITY CLAUSE. The invalidation of any clause, sentence, paragraph or section of this Resolution by a court of competent jurisdict",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "9 GARAGE, PUBLIC: A building or portion of a building in which more than two motor vehicles are or are intended to be housed under a rrangements made with patrons for renting or leasing such space and accommodation in which no repair work is carried on. GRADE: The ground elevation established for the purpose of regulating the number of stories and the height of buildings. The building grade shall be the level of the ground adjacent to the walls of the building if the finished grade is level. If the ground is not entirely level, the grade shall be determined by averaging the elevation of the ground for each face of the building. GUESTRO OM: A room offered to the public for a fee that contains, at a minimum provision for sleeping. HOMES FOR THE AGING: A home that provides services as a residential care facility and a nursing home, except that the home provides its services only to individ ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "11 U.S.C.A. 5415, certifying compliance with all applicable federal construction and safety standards (ORC Section 3781.06(C)(4)). MANUFACTURED HOME PARK: Per ORC Section 3733.01(A), any tract of land upon which three (3) or more manufactured or mobile homes used for habitation are parked, either free of charge or for revenue purposes, and include any roadway, building, structure, vehicle, or enclosure used or intended for use as a part of the facilities of such park. Per Section ORC Section 3733.01(A), manufactured home park does not include any of the following: 1. A tract of land used solely for the storage or display for sale of manufactured or mobile homes or solely as a temporary park - camp as defined in section 3729.01 of the Ohio Revised Code; 2. A tract of land that is subdivided and the individual lots are for sale or sold for the purpose of installation of manufactured or mob",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 39,
+   "snippet": "35 d. The use of land and location of structures on adjacent property. e. Architectural rendering when requested by the Board of Zoning Appeals. 7. Such other information regarding the property, proposed use, or surrounding area as may be pertinent to the Board of Zoning Appeals. D. Standards for Co nditional Use. The Board shall not grant a Conditional Use unless it shall, in each specific case, make specific findings of fact directly based upon the particular evidence presented to it, that support conclusions that such use complies with the following criteria and the specific criteria listed in Article XI: 1. The proposed Conditional Use will comply with all applicable regulations of this Resolution, including lot size requirements, development standards, and use limitations. 2. Adequate utility, drainage, and other such necessary facilities have been or will be provided. 3. Adequate a",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 75,
+   "snippet": "71 surfacing or such other treatment as may be specified by the Board of Zoning Appeals. 2. No mining or sand and gravel removal shall be carried on, or any stock pile placed closer than fifty (50) feet to any property line, or such greater distance as specified by the Board of Zoning Appeals, where such is deemed necessary for the protection of adjacent property, especially when such use is located adjacent to a residential district. However, the above specified 50 - foot setback may be reduced by the written consent of the owner or owners of abutting property, but in any such event, adequate lateral support shall be provided for said abutting property. 3. In the event that the site of the mining operation i s adjacent to the right - of - way of any public street or road, no part of such operation shall take place closer than fifty (50) feet to the nearest line of such right - of - way,",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 82,
+   "snippet": "78 site layout shall provide for the separation of ingress and egress vehicles during high volume periods and shall provide safe drop - off point(s) for children that will not impede other traffic. 2. All outdoor play areas shall be fully enclosed by a minimum four (4) foot tall fence, shall be located to the rear of the principal structure, and shall be screened from adjacent parcels by the use of hardy evergreen shrubs. The fence shall not exceed six (6) feet in height. 3. Li ghting shall not constitute a nuisance and shall in no way impair safe movement of traffic on any street or highway. All parking lot light fixtures shall be of the cut - off type to reduce light from shining directly onto adjacent properties. Uplighting may be used to illuminate architectural features, but such lighting shall be screened with landscaping. 4. Sufficient evidence shall be provided to the Board of Zo",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "14 SEXUAL ENCOUNTER CENTER: A business or commercial enterprise that, as one of its primary business purposes, offers for any form of consideration: A. Physic al contact in the form of wrestling or tumbling between persons of the opposite sex; or B. Activities between male or female persons and/or persons of the same sex when one or more of the persons is in a state of nudity or semi - nudity. SEXUALLY ORIENTED BUSINESS: An adult arcade, adult bookstore, adult video store, adult cabaret, adult motel, adult motion picture theater, adult theater, escort agency, nude model studio, or sexual encounter center. SIGN: Any device for visual communication which is designed, intended, or used to convey a message, advertise, inform or otherwise direct attention to a person, institution, organization, activity, business, place, object, or product. SIGN, FREESTANDING: Any sign which is wholly indepen",
+   "tags": [
+    "sign",
+    "illumination",
+    "billboard",
+    "temporary",
+    "type"
+   ],
+   "weight": 9,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 23,
+   "snippet": "19 ARTICLE IV ENFORCEMENT, PENALTIES, AND FEES 4.1 ENFORCEMENT. It sh all be the duty of the Zoning Inspector, as provided under Section 519.02 et. seq. of the Ohio Revised Code to enforce this Resolution in accordance with the administrative and other provisions of this Resolution. All officials and public employees of Rushcreek Township shall conform to the provisions of this Resolution and shall issue no permit or license for any use, building, or purpose in conflict with the provisions of this Resolution. Any permit or license, issued in conflict with the provisions o f this Resolution shall be null and void. 4.2 ZONING PERMIT REQUIRED. No building or other structure, unless specifically exempted per Section 2.4 of this Resolution, shall be erected, moved, added to, structurally altered, nor shall any building, structure, or land be established or changed in use without a permit ther",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 31,
+   "snippet": "27 The Township Board of Zoning Appeals shall organize and adopt rules in accordance with the Resolution. Meetings of the Board shall be held at the call of the chair and at such other times as the Board determines. The chair, or an acting chair may administer oaths, and the Board of Zoning Appeals may compel the attendance of witnesses. All meetings of the Board shall be open to the public. The Board shall keep minutes of its proceedings showing the vote of each member upon each question, or if absent or failing to vote, indicating such a fact, and shall keep records of its examinations and other official actions, all of which shall be immediately file d in the office of the Township Board of Trustees and be made a matter of public record. C. Duties of the Board of Zoning Appeals In exercising its duties, the Board may, as long as such action is in conformity with the terms of this Reso",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 37,
+   "snippet": "33 3. Each application on an appeal shall refer to the specific provisions of this Resolution. 4. A list of property owners within, contiguous to, and directly across the street from the parcel being considered and their addresses as appearing on the County Auditor’s then current tax list. 5. Each application for a variance shall set forth: a. The use for which special exception is sought. b. Details of the variance that is applied for and the grounds on which it is claimed that the variance should be granted, as the case may be. c. The application for a variance must also be addressed to answering provisions of Section 7.2B 1 – 4. E. Supplementary Conditions and Safeguards. In granting any appeal or variance, the Board of Zoning Appeals may prescribe appropriate conditions and safeguards in conformity with this Resolution. Violation of such conditions and safeguards, when made a part of",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 50,
+   "snippet": "46 D. Accessory Uses. 1. Accessory structures, as defined in Article III and regulated in Section 10.3. 2. Customary home occupations as permitted and regulated in Section 10.5. 3. Attached Telecommunication Towers, provided the attached structure does not extend more than twenty (20) feet above the highest point of the structure to which it is attached and complies with all applicable Federal regulations. 4. Private swimming pools, to be used primarily for the enjoyment of the occupants of the principal use of a property on which it is located and subject to the provisions of Section 10.4. 5. Recreational vehicles, subject to the standards in Section 10.6. 6. Portable home storage units, subject to the standards in Section 10.10. E. Signs. Signs shall be permitted in the MR District as regulated in Section 10.7. F. Off - Street Parking and Loading. Off - street parking and loading space",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 63,
+   "snippet": "59 10.3 ACCESSORY STRUCTURES. A. Accessory buildings shall be subject to the following requirements: 1. All accessory structures shall be located to the rear or side of the principal structure. 2. Accessory structures may encroach a required rear or side yard, but in no case, shall an accessory structure be closer than five (5) feet from the side or rear lot line. 3. The cumulative area for accessory structures shall not exceed t hree thousand two hundred ( 3 , 2 00) square feet. 4. Each residential lot shall be permitted to have a five – hundred eighty (580) square foot private garage either attached or detached from the principal structure that shall not count toward the maximum cumulative area of accessory structures. 5. No single accessory structure shall structure shall be located closer than ten (10) feet to the principal structure or other accessory structure on the same lot. 6. A",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 9,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 67,
+   "snippet": "63 C. Outdoor Advertising Signs (Billboards). Outdoor advertising signs (Billboards) shall be permitted only in the B – 1 and I – 1 districts in addition to any on - premise signs permitted in Section 10.7B. All outdoor advertising signs (Billboards) shall comply with the following requirements: 1. The maximum height of an outdoor advertising sign shall be 35 feet. 2. All outdoor advertising signs shall comply with the setback requirements for the district in which such sign is located. 3. The maximum sign area for each face of an outdoor advertising sign shall be three hundred sixty (360) square feet. 4. No outdoor advertising sign shall be located within one thousand (1,000) feet of a residential zoning district or one thousand (1,000) feet from any other outdoor advertising sign. D. Measurement of Signs. For purposes of this Resolution, the measurement of sign area shall comply with t",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "billboard",
+    "authority"
+   ],
+   "weight": 9,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "3 b. Buildings or structures incident to the use of land for agricultural purposes on lots greater than one acre but not greater than five acres by: setback building lines, height and size. Such buildings or structures shall comply with the requirements within the applicable zoning district. c. Dairying and animal and poultry husbandry on lots greater than one acre but not greater than five acres when at least 35 percent of the lots in the subdivision are developed with at least one building, structure, or improvements that is subject to real property tax ation or that is subject to the tax on manufactured homes under Section 4503.06 of the Revised Code. After 35 percent of the lots are so developed, dairying and animal and poultry husbandry shall be considered nonconforming uses of land and buildings or st ructures pursuant to Section 519.19 of the Revised Code and subject to the restri",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "12 MONOPOLE: A support structure constructed of a single, self - supporting hollow metal tube securely anchored to a foundation. MOTEL: Any building or gr oup of buildings containing sleeping rooms, with or without cooking facilities, designed primarily as overnight sleeping quarters for automobile tourists or transients, with garage attached or parking space conveniently located to each unit, including auto courts, motor lodges, and tourist courts. NONCONFORMING USE: Any building or land lawfully occupied by a use on the effective date of these regulations or any amendment or supplement thereto, which does not conform to the Regulations of the district in which it is situated. NUDE MODEL STUDIO: Any place where a person who appears in a state of nudity or displays \"specified anatomical areas” is provided to be observed, sketched, drawn, painted, sculptured, photographed, or similarly de",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 17,
+   "snippet": "13 PORTABLE HOME STORAGE UNITS: Any assembly of materials which is designed, constructed or reconstructed to make it portable and capable of movement from one site to another and designed to be used without a permanent foundation. Such structures are typically utilized for temporarily storing household goods or other such materials on a residential property. A portable home storage unit shall not be considered an accessory str ucture as defined in this Article due to its temporary nature. PUBLIC BUILDINGS: Any structure owned and operated by a governmental agency or public school or school which is certified and/or licensed by the State of Ohio. RECREATIONAL VEHICLE: Any vehicle used for recreational purposes, including all - terrain vehicles, boats, boat trailers, camper trailers, jet skis, motor homes, and snowmobiles. RECYCLING TRANSFER FACILITY: A facility for the collection of waste",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 24,
+   "snippet": "20 shall be retu rned to the applicant by the Zoning Inspector, after such copy is marked either approved or denied and attested to same by Zoning Inspector’s signature on such copy. One copy of the plan, similarly marked, shall be retained by the Zoning Inspector. A copy of the application shall be forwarded by the Zoning Inspector to the County Auditor upon issuance of a Certificate of Occupancy. The Zoning Inspector shall issue a placard, to be posted in a conspicuous place on the property in question, attesting to the fact that the use or alteration is in conformance with the provisions of this Resolution. In every case where the lot is not provided with public water supply and/or disposal of sanitary wastes by means of public sewers, the application shall be accompanie d by a Certificate of Approval by the Fairfield Department of Health of the proposed method of water supply and/or ",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 25,
+   "snippet": "21 D. Record of Certificate of Occupancy shall be maintained by the Zoning Inspector. A reco rd of all certificates of occupancy and a copy of any individual certificate shall be furnished upon request to any occupant or a legally authorized representative. 4.8 VIOLATION. A. Failure to obtain a zoning permit or certificate of occupancy shall be a violation of this Resolution and punishable under Section 4.8 D of this \"Resolution.\" B. Construction and use is to be as provided in application, plans, permits, and certificates. Zoning permits or certificates of occupancy issued on the basis of plans and applications approved by the Zoning Inspector authorize only the use and arrangement set forth in such approved plans and applications or amendments thereto, and no other use, arrangement, or construction. Use, arrangement, or construction at variance with that authorized shall be deemed a vi",
+   "tags": [
+    "fee",
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 26,
+   "snippet": "22 ARTICLE V NON - CONFORMING USES 5.1 INTENT. Within the districts established by this Resolution or amendments hereinafter adopted there exists lots, structures, uses of land and structures which were lawful before this Resolution was passed or amended, but which would be prohibited, regulated, or restricted under the terms of this Resolution or future amendments. It is the intent of this Resolution to permit these non - conformities to contin ue until they are removed, but not to encourage their survival. 5.2 GRACE PERIOD. Any property purchased or acquired in good faith for any non - conforming use prior to the adoption of this Resolution, upon which property the work of changing or remodeling or construction of such non - conforming use has been legally commenced at the time of adoption of this Resolution, may be used for the non - conforming use for which such changing, remodeling,",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 36,
+   "snippet": "32 to life or property. In such case proceedings shall not be stayed other than by a restraining order wh ich may, on due cause shown, be granted by the Board of Zoning Appeals after notice to the Zoning Inspector, or by judicial proceedings. B. Variances. The Board of Zoning Appeals shall have the power to authorize upon appeal in specific cases, filed as herei nafter provided, such variances from the provisions or requirements of this Resolution as will not be contrary to the public interest but only in the case of exceptional conditions involving irregular, narrow, shallow, or steep lots, or other exceptional p hysical conditions, whereby strict application of such provision or requirements would result in practical difficulty and unnecessary hardship that would deprive the owner of the reasonable use of the land and buildings involved. Provided, however, no vari ances from the strict",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 38,
+   "snippet": "34 of the Board's decision shall be binding upon the Zoning Inspector, observed and by the Zoning Inspector shall be incorporated into the terms and conditions of the same in the permit to the applicant or appellant whenever a permit is authorized by the Board. After the Board of Zoning Appeals by Resolution certifies its approval on any application or appeal there shall be no further hearings upon such case. However, when the Board has denied an application or appeal, a new application o r appeal may be filed subject to the same procedure as an original application or appeal. If a new application or appeal is filed within one (1) year of the date of the Board's decision the Zoning Inspector shall not schedule any hearing until the Board ha s received the application or appeal and decided that there is new matter, evidence, or facts to be heard by the Board. 7.3 PROCEDURE AND REQUIREMENT",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 80,
+   "snippet": "76 5. The proposed architecture is compatible with the surrounding neighborhood. 6. The proposed signage complies with the sign regulations for the applicable district. 7. Lighting shall not constitute a nuisance and shall in no way impair safe movement of traffic on any street or highway. All parking lot light fixtures shall be of the cut - off type to reduce light from shining directly onto adjacent properties. Up lighting may be used to illuminate archite ctural features, but such lighting shall be screened with landscaping. 8. Sufficient evidence has been provided indicating that all required licenses and certificates from the State of Ohio have been obtained. 9. Sufficient evidence has been provided that any necessary on - site water and septic systems have been approved by the applicable governing agency. 10. In the case of proposed residential facilities – type B, there is no othe",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 83,
+   "snippet": "79 be provided to prevent encroachment of vehicles into parking areas and/or adjacent road networks. There shall be at least one (1) stacking space for each gas pum p, service bay etc. Each drive - through facility shall have a minimum of three (3) stacking spaces between any ordering area and pick - up window(s), in addition to at least three (3) stacking spaces behind the ordering area. Each stacking space shall be nine (9) feet wide and twenty - two (22) feet deep. The Board of Zoning Appeals may require additional stacking areas when needed to ensure proper on - site circulation. 5. Sufficient landscaping around the perimeter of the site shall be provided to reduce the noise and visual impacts typically associated with auto - oriented uses. The landscaping shall include hardy evergreen shrubbery and shall be placed in a manner that creates a visual buffer from the adjacent parcels. 6",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 84,
+   "snippet": "80 4. A site plan shall be submitted as part of the conditional use application to demonstrate that adequate ingress/egress will be provided and that the sufficient on - site circulation patterns are proposed. 5. Lighting shall not constitute a nuisance and shall in no way impair safe movement of traffic on any street or highway. All parking lot light fixtures shall be of the cut - off type to reduce light from shining directly onto adjacent properties. Up lighting may be used to illuminate architectural features, but such lighting shall be screened with landscaping. The Board of Zoning Appeals shall ensure no lighting will create a nuisance to adjoining residential uses and/or impair safe movement of traffic on any street or highway. 6. All facilities shall meet any applicable Local, County, and/or State of Ohio health, building, electrical, or any other applicable codes. 7. Sufficient ",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 86,
+   "snippet": "82 A. Intent. It is the intent of this section to create standards for Bars, Night Clubs, Pool Halls, Bowling Alleys, Dance Halls, Skating Rinks and other similar enterprises to ensure such uses are compatible to the surrounding area in which the use is located. B. Applicability. These standards shall apply when a Bar, Night Club, Pool Hall, Bowling Alley, Dance Hall, Skating Rink or other similar enterprise is proposed within a district where they are considered to be conditional uses. C. Conditions. The Board of Zoning Appeals shall issue a conditional use permit for a Bar, Night Club, Pool Ha ll, Bowling Alley, Dance Hall, Skating Rink, or other similar enterprise, if the proposed use complies with the following conditions in addition to the general conditions listed in Section 7.3D. 1. Such use is located a minimum of one hundred (100) feet from any residential district boundary. Any",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "6 are the principle use of the building. AUTOMOBILE OR TRAILER SALES AREA: An open area other than a street, used for the display, sale, or rental of new or used motor vehicles or trailers in operable condition and where only incidental repair work is done. AUTOMOBILE REPAIR SHOP: A building or portion of a building in which commercial repairs are made to motor vehicles. AUTOMOBILE SERVICE STATION: A place where gasoline, kerosene, or any other motor vehicle fuel or lubricating oil or grease for operating mo tor vehicles is offered for sale to the public and deliveries are made directly into the motor vehicles, including greasing and oiling on the premises. BASEMENT: That portion of a building, the floor of which is not less then two (2) feet below and the ceiling of which is not more than four (4) feet and six (6) inches above the average grade. A basement shall not be included in the c",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited",
+    "billboard"
+   ],
+   "weight": 7,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 29,
+   "snippet": "25 ARTICLE VI ADMINISTRATIVE BODIES AND THEIR RESPONSIBILITIES 6.1 ZONING INSPECTOR. A Zoning Inspector designated by the Township Board of Trustees shall administer and enforce this Resolution and may be provided with the assistance of such other persons as the Board may direct. The Township Zoning Inspector, before entering upon established duties, shall give bond as specified in Section 519.161, Ohio Revised Code. The duties of the Zoning Inspector shall be: A. Upon finding that any of the provisions of this Resolution are being violated, a notification in writing shall be made to the person responsible for such violation(s), ordering the action necessary to correct such violations. B. Order di scontinuance of illegal zoning, uses of land, buildings, or structures. C. Order removal of illegal buildings or structures or illegal additions or structural alterations. D. Order discontinuan",
+   "tags": [
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 43,
+   "snippet": "39 application, including the development plan. The public hearing shall not be more than thirty (30) days from the receipt of the recommendation from the Zoning Commission. I. Notice of Public Hearing. The Township Board of Trustees shall give notice of the public hearing by one publication in one (1) or more newspapers of general circulation in the township at least ten (10) days before the date of such hearing. The published notice of the public hearing shall state the information required in Section 519.12 of the Ohio Revised Code. Written notice of the public hearing shall also be mailed by the Township Board of Trustees, by first class mail, at least ten (10) days before the date of the public hearing to all owners of the property within and contiguous to and directly across the street from such area proposed for rezoning to the addresses of such owners appearing on the County Audi",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 44,
+   "snippet": "40 ARTICLE VIII ZONING DISTRICTS AND ZO NING MAPS 8.1 DISTRICTS. In order to classify, regulate, and restrict the use and location of buildings designed for specified uses; to regulate and limit the heights and bulk of buildings; to regulate and determine the area of yards, courts, and other open spaces surrounding buildings, and to regulate and limit the density of population, Rushcreek Township, Fairfield County, Ohio, is divided into six (6) zoning districts, including one (1) overlay district. Said districts shall be known as: R - R RURAL RESIDEN TIAL DISTRICT 9.1 MR MULTI - FAMILY RESIDENTIAL DISTRICT 9.2 MHP MANUFACTURED HOME PARK DISTRICT 9.3 B - 1 HIGHWAY BUSINESS - COMMERCIAL DISTRICT 9.4 I - 1 GENERAL INDUSTRIAL DISTRICT 9.5 PUD PLANNED UNIT DEVELOPMENT DISTRICT 9.6 F - P FLOOD PLAIN OVERLAY DISTRICT 9.7 8.2 MAP. The boundaries of these districts are hereby established as shown",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 47,
+   "snippet": "43 8. Libraries, museums, and art galleries, subject to the conditions in Section 11.8. 9. Free Standing Telecommunicati on Towers, subject to the conditions in Section 11.2. 10. Boarding Homes and Tourist Homes (including bed and breakfast establishments), subject to the conditions in Section 11.10. 11. Rural Residential Businesses, subject to the conditions in Section 11.18. Rural Residential Businesses include sawmills (woodworking such as cabinet making, furniture refinishing , repair or construction); commercial recreation uses, small engine maintenance and repair shop; outdoor sales of products built on - site; professional business and office sales; landscaping services; welding shops; retail sales; and commercial vehicle and equipment storage. Any rural residential business that may be proposed, but not listed above, may be permitted as a conditional use provided it is dete rmine",
+   "tags": [
+    "sign",
+    "dimension",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 51,
+   "snippet": "47 9.3 MHP – Manufactured Home Park District. A. Intent. It is the intent of the MHP, Manufactured Home Park District, to provide an area for planned manufactured home parks in accordance with Ohio Administrative Code 3701 and the Ohio Revised Code Section 3733. B. Principal Permitted Uses. 1. Manufactured Homes, subject to the restrictions in Section 10.1A. 2. Type B Family Day - Care Home. C. Accessory Uses. 1. Accessory uses, buildings, or other structure customarily incidental to manufactured homes, including Home Occupations as regulated by Section 10.5. 2. Portable home storage units, subject to the conditions in Section 10.10. D. Approval Procedures. Manufactured home parks shall be developed according to the standards and regulations stated and referenced in Section 9.3 E. The procedure to amend the Official Zoning Map to establish the MHP District shall be that procedure for ame",
+   "tags": [
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 52,
+   "snippet": "48 9.4 B - l HIGHWAY BUSINESS - COMMERCIAL DISTRICT. A. Intent. It is the intent of the B - 1 Highway Business - Commercial District to provide small business clusters for highway oriented business. These clusters should be located in the vicinity of intersecting, major streets and highways. B. Principal Permitted Uses. Principal permitted uses for a building or lot in the B - 1 District shall be used only for the following purposes: 1. Business, professional, medical and dental office buildings. 2. Any retail business. 3. Banks, building and loan associations, credit unions, and other similar financial institutions, without drive – through facilities. 4. Institutions providing social, cultural, educational, and health services to member agencies, organizations, and individuals or to the general public. 5. Funeral homes or mortuaries. 6. Private clubs, lodges, and meeting places for simi",
+   "tags": [
+    "sign",
+    "process",
+    "billboard",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 62,
+   "snippet": "58 front, excluding corner lots, is less than the front yard depth prescribed elsewhere in thi s Resolution the required depth of the front yards shall be modified, provided, however, there are two (2) or more front yards of existing buildings involved. In such cases the required front yard in question shall be the average depth of existing front ya rds provided further that said front yard shall be at least twenty (20) feet. 3. Projections Into Yards. The only projections into yards shall be: a. A wall or fence not over six (6) feet high may be erected in any yard or court, except a front yard or side street side yard in which case the height of the wall or fence shall not be over four (4) feet. If the wall is a retaining wall the height shall be measured on the highest (fill) side. No fence, tree, or foliage shall be maintained on a lot that will mater ially obstruct the view of a driv",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "temporary",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 69,
+   "snippet": "65 c. When units of measurement, determining number of required parking spaces, result in a requirement of a fractional space, any fraction up to and including one - half (1/2) shall be disregarded and fractions over one - half (1/2) shall require one (1) parking space. 5. Whenever, in any building, there is a change in use, or an increase in floor area, or other unit of measurement specified hereinafter; fo r the purpose of determining the number of required off - street parking spaces, and such change or increase creates a need for an increase of more than ten (10) percent in the number of off - street parking spaces, as determined by the requirements in this se ction additional off - street parking spaces shall be provided on the basis of the increased requirement of the new use, or on the basis of the increase in floor area, or other unit of measurement. However, in the case where a ",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 76,
+   "snippet": "72 3. Vegetation shall be restored by the spreading of sufficient soil and by appropriate seeding of grasses or planting of shrubs and trees in all parts of said mining area where the same is not submerged under water. 4. Proper drainage shall be provided for the mined area. 5. All equipment and structures shall be removed from the depleted area within six (6) months of the completion of operations therefrom. 6. The Board may impose such other reasonable conditions and restrictions as it may deem necessary for the protection of the pub lic. 7. Due to the inherent difficulties in reclaiming and rehabilitation areas where stone has been quarried, the Board is hereby empowered, in the issuance of a Conditional Use Permit for the quarrying operations, to impose such reasonable standards for reclamation as may be necessary to protect the public interest without restricting the operations of t",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 20,
+   "snippet": "16 and maintained in conjunction with or by clubs, motels, hotels, and community associations. TELECOMMUNICATION TOWER: Per ORC Section 519.211(B)(1), any free - standing structure, or any structure to be attached to a building or structure, that meets all of the following criteria: a. The free - standing or attached structure is proposed to be constructed on or after October 31, 1996. b. The free - standing or attached structure is proposed to be owned or principally used by a public utility (or equivalent provider) engaged in the provision of telecommunication services. c. The free - standing or attached structure is proposed to be located in the unincorporated area of a township, in an area zoned for residential use. d(i). The free - standing structure is proposed to top at a height that is greater than either the maximum allowable height of residential structures within the zoned are",
+   "tags": [
+    "dimension",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 21,
+   "snippet": "17 or employee and who are on the premises of the child care shall be counted. This definition does not include a residence in which the needs of children are administered to, if all of the children whose needs are being administered to are siblings of the same immediate family and the residence is the home of the siblings. This definition shall not be construed to include child day camps (ORC Section 5104.01(RR)). TYPE B FAMILY DAY - CARE HOME: A permanent residence of the provider in which child care is provided for one (1) to six (6) children at one time and in which no more than three (3) children under two (2) years of age at one time. In counting children for the purposes of this code, any chi ldren under six (6) years of age who are related to the provider and who are on the premises of the child care shall be counted. This definition does not include a residence in which the need",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 27,
+   "snippet": "23 5.5 NON - CONFORMING STRUCTURES. A. Continuation. Any structure which is devoted to a use which is permitted in the zoning district in which it is located, but which is located on a lot which does not comply with the applicable lot size requirements and/or development standards, may be continued, so long as it remains otherwise lawful, subject to the restrictions of Sections 5.5B, 5.5C and 5.7. B. Enlargement, Repair, Alterations. Any such structure described in Subsection 5.5A may be enlarged, maintained, repaired, or structurally altered; provided, however, that no such enlargement, maintenance, repair, or structural alteration shall either create any additional non - conformity or increase or extend the degree of existing non - conformity of all or any part of such structures. C. Moving. No structure described in Subsection 5.5A shall be moved in whole or in part for any d istance ",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 30,
+   "snippet": "26 charges, and after a copy of the charges has been served upon the member so charged at least ten (10) days prior to the hearing, either personally, by registered mail, or by leaving such copy at the usual place of residence. The member shall be given an opportunity to be heard and answer such charges. Vacancies shall be filled by the Board and shall be for the unexpired term. B. Proceedings of Zoning Commission The Township Zoning Commission shall adopt rules necessary for conducting its affairs in keeping with the provisions of this Resolution. Meetings shall be held at the call of the Chair and at such other times as the Township Zoning Commission may determine. All meetings shall be open to the public. The Township Zoning Commission shall keep minutes of its proceedings showing the vote of each member upon each question, or if absent or failing to vote, indicating such fact, and sh",
+   "tags": [
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 35,
+   "snippet": "31 M. Notice of Property Owners by Township Board of Trustees. If the proposed amendment intends to rezone or redistrict ten (10) or less parcels of land, as listed on the tax duplicate, written notice of the hearing may be mailed by the Fiscal Officer of the Township Board of Trustees, by first class mail, at least ten (10) days bef ore the day of the public hearing to all owners of property within, contiguous to, and directly across the street from such area proposed to be rezoned or redistricted to the address of such owners appearing on the County Auditor's current tax list and to such other list or lists that may be specified by the Township Board of Trustees. The notice shall contain the same information as required of notices published in newspapers as specified in Section 7.1L. N. Action by Township Board of Trustees. Within twenty (20) days after the public hearing required in S",
+   "tags": [
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 40,
+   "snippet": "36 F. Public Hearing by the Board of Zoning Appeals. The Board shall hold a public hearing within thirty (30) days from the receipt of the application specified in Section 7.3B. G. Notice of Public Hearing in Newspaper. Before holding the public hearing required in Section 7.3F, notice of such hearings shall be given in one (1) or more newspapers of general circulation in the Township at least ten (10) days before the date of said hearing. The notice shall set forth the time and place of the public hearing, and the nature of the proposed conditional use. H. Notices to Parties of Interest. Before holding the public hearing required in Section 7.3F, written notice of such hearing shall be mailed by the Secretary of the Board, by first class mail, at least ten (10) days before the day of the hearing to all parties of interest. The notice shall contain the same information as required of not",
+   "tags": [
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 41,
+   "snippet": "37 5. Proposed use(s). 6. A vicinity map showing the property lines and streets. 7. A development plan for the entire tract to be rezoned drawn to scale showing: a. Layout of proposed lots and building setback lines, indicating dwelling unit types and the total number of dwelling units proposed in the development plan. b. Layout, dimensions and names of existing and proposed streets and rights – of – way. c. Existing topography at two (2) – foot or five (5) – foot intervals. d. Location, type, and size of commercial uses. e. Utility easements. f. Any existing features on the tract of land to be rezoned to PUD, including, but not limited to existing water bodies, buildings, utilities, rights – of – way or streets, wetlands, parks, wooded areas, and other significant topographic or natural features. g. Proposed parks, community spaces, and open spaces and any proposed amenities included wi",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 53,
+   "snippet": "49 2. Commercial parking lots, subject to the conditions in Section 11.7. 3. Kennels and boarding of dogs or other small animals, subject to the conditions in Section 11.4. 4. Bars, night clubs, pool halls, bowling alleys, dance halls, skating rinks, or other similar enterprises, subject to the conditions in Section 11.11. 5. Drive – through facilities, developed independently or in association with a permitted use, subject to the conditions in Section 11.7. 6. Airports, subject to the conditions in Section 11.12. 7. Sexually Oriented Businesses, subject to the conditions in Section 11.13. D. Accessory Uses. 1. Accessory uses, buildings, or other structures customarily incidental to any aforesaid permitted use. 2. Temporary buildings for uses incidental to construction work, which buildings shall be removed upon completion or abandonment of the construction work. 3. Dwelling units, provi",
+   "tags": [
+    "sign",
+    "dimension",
+    "temporary",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 55,
+   "snippet": "51 b. Electronic components. c. Leathers or furs. d. Animal byproducts. e. Metal. f. Building materials. g. Pharmaceuticals, cosmetics, or medical equipment/supplies. h. Explosives, incendiary devices, flammables, ammunition, including storage. i. Plastics, polymers, or rubbers. 2. Printing, Publishing, or Allied Professions, subject to the conditions of Section 11.14. 3. Laboratories, subject to the conditions in Section 11.14. 4. Storage yards for contractor’s equipment, heavy machinery, repair equipment, motor vehicles, trucks, or other similar pieces of equipment or machinery , subject to the conditions in Section 11.15. 5. Salvage yards, junk yards, scrap yards, and automobile wrecking yards, subject to the conditions in Section 11.16. 6. Sanitary landfills, subje ct to the conditions in Section 11.17. 7. Quarrying, mining, and resource extraction operations, subject to the conditio",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 58,
+   "snippet": "54 waste disposal syste ms proposed when determining if sufficient lot area has been provided for individual units. 4. Setbacks. Minimum front, side and rear setbacks for individual lots within the PUD shall be determined by the approved development plan. 5. Height. No structure within a PUD shall exceed thirty – five (35) feet in height. 6. Utilities. Potable water and adequate sewage facilities shall be provided to accommodate the development. 7. Signs. Only those signs approved with the development plan shall be permitted within the PUD, except for temporary signs, which shall be regulated by Section 10.7A5. 8. Parking. Parking, unless otherwise approved with a development plan, shall be provided in accordance with Section 10.8. 9. Landscaping. The Township Board of Trustees, upon recomme ndation from the Township Zoning Commission, may require landscaping for non single – family deve",
+   "tags": [
+    "sign",
+    "dimension",
+    "temporary",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 61,
+   "snippet": "57 ARTICLE X GENERAL DEVELOPMENT STANDARDS 10.1 BUILDING SIZE, LOT AREA, YARD REQUIREMENTS, AND HEIGHT LIMITS. A. Building Size. Any single - family dwelling, manufactured home, or permanently sited manufactured home shall contain a minimum livable floor area of six hundred fifty ( 6 50) square feet on the first floor . B. Lot Area, Yard Requirements, and Height Limits. The minimum lot are a, yard requirements and height limits shall be as established and listed within the applicable zoning district. 10.2 MEASUREMENTS. A. Front Yard Depth. The front yard depth shall be measured from the right - of - way line of the existing street on which the lot fronts provided there is a minimum right - of - way of sixty (60) feet. In the case where the right - of - way is less than sixty (60) feet the front yard depth shall be measured from a point thirty (30) feet from the center line of the street.",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 64,
+   "snippet": "60 10.5 HOME OCCUPATIONS A. If a home occupation complies with the following criteria, it shall be permitted as an a ccessory use in residential districts. 1. A home occupation shall be conducted entirely within a dwelling unit and shall be clearly subordinate to the use of the dwelling unit. Home occupations shall not be conducted within accessory structures, such as garages or sheds, on the lot. 2. The appearance of the dwelling unit in which a home occupation is conducted shall not be altered or the occupation within the dwelling shall not be conducted in a manner which would cause the premises to differ from its residential character either by colors, materials, construction, or lighting. 3. The home occupation shall not generate traffic greater in volume than normal for a residential neighborhood. 4. The home occupation shall not include wholesale or retail sales. 5. No equipment or",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 73,
+   "snippet": "69 10.10 PORTABLE HOME STORAGE UNITS. A. Portable home storage units shall be permitted as accessory uses within any residential district, provided the following regulations are met. A zoning permit shall be obtained for any portable home storage unit greater than sixty - four (64) square feet in area. 1. Portable home storage units shall be prohibited from being located within any right - of - way. 2. Portable home storage units shall be kept in the driveway of the property at the furthest accessible point from the street. 3. Only two (2) portable home storage units shall be permitted on any residential property at any one time. 4. Portable home storage units shall be permitted for 180 calendar days within any 365 calendar day period. 5. Portable home storage units shall not be utilized for living purposes.",
+   "tags": [
+    "area",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 78,
+   "snippet": "74 c. The proposed antenna would cause interference impacting the usability of other existing equipment at the tower and the interference c annot be prevented at reasonable cost, as documented by a professional engineer. d. Existing towers cannot accommodate the proposed antenna at a height necessary to function reasonably as documented by a qualified R. F. engineer. e. Co - location would violate F ederal, State, County or Township regulations. 12. The tower shall be removed within 180 - days after the use of the tower is discontinued. 13. The applicant shall provide a signed statement indicating that the applicant agrees to allow for the potential co - location of other antenna to the extent possible. 14. Any other conditions as warranted by the Board of Zoning Appeals. D. Exemptions. In the event, a telecommunication tower is proposed within a residential distri ct, the telecommunicat",
+   "tags": [
+    "dimension",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 87,
+   "snippet": "83 intent nor effect of this chapter to restrict or deny access by adults to sexually oriented materials protected by the First Amendment, or to deny access by the distributors and exhibitors of sexually oriented entertainment to their intended market. There is convincing documented evidence that sexually oriented businesses, because of their very nature, have a deleterious effect on both the existing businesses around them and the surrounding residential areas adjacent to them, causing increased crime and the downgrading of property values. It is recognized that sexually oriented businesses, due to their nature have serious objectionable operational characteristics particularly when they are located in close proximity to each other, thereby contributing to urban blight and downgrading the quality of life in the adjacent ar eas. The Township Board of Trustees desires to minimize and cont",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 89,
+   "snippet": "85 11.15 Junk and Scrap Yards. A. Intent. It is the intent of this section to create standards for Junk and Scrap Yards to ensure they do not negatively impact the surrounding areas. B. Applicability. These standards shall apply to Junk and Scrap Yards when proposed within an I - 1 district they are listed as conditional uses. C. Conditions. The Board of Zoning Appeals shall issue a conditional use permit for a Junk or Scr ap Yard, if the proposed use complies with the following conditions in addition to the general conditions listed in Section 7.3D. 1. Such uses shall be located on a minimum of 20 acres and shall be setback a minimum of 500 feet from the boundary of any residential district. 2. The area of use shall be completely enclosed by a fence (minimum of 6 feet in height). Sufficient landscaping shall be provided between the fence and the property line. The landscaping shall incl",
+   "tags": [
+    "dimension",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 90,
+   "snippet": "86 2. Truck routes shall be established for movement in and out of the development in such a way that it will minimize the damage to public streets and prevent hazards and damage to other properties in the community. 3. All equipment used in the operation shall be placed and operated in a manner to minimize noise, vibration, dust, odor, and other potential nuisances. All accessways or roads within the premises shall be maintained in a dust free condition through surfacing or such other treatment a s may be necessary. 4. Vehicle storage, equipment, structures, delivery areas, and processing areas shall be adequately screened from adjacent residential districts and rights - of - way. 5. The area of use shall be completely enclosed by a fence (minimum of 6 feet in height). Sufficient landscaping shall be provided between the fence and the property line. The landscaping shall include hardy e",
+   "tags": [
+    "dimension",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "SECTION PAGE 9.3 MHP – MOBILE HOME PARK DISTRICT 47 9.4 B - 1 – HIGHWAY BUSINESS - COMMERCIAL DISTRICT 48 9.5 I - 1 – GENERAL INDUSTRIAL DISTRICT 50 9.6 PUD – PLANNED UNIT DEVELOPMENT DISTRICT 53 9.7 F - P – FLOOD PLAIN OVERLAY DISTRICT 55 ARTICLE X GENERAL DEVELOPMENT STANDARDS 10.1 BUILDING SIZE, LOT AREA, YARD REQUIREMENTS, AND HEIGHT LIMITS 57 10.2 MEASUREMENTS 57 10.3 ACCESSORY STRUCTURES 59 10.4 PRIVATE SWIMMING POOL 59 10.5 HOME OCCUPATIONS 60 10.6 RECREATIONAL VEHICLES 60 10.7 SIGNS 61 10.8 PARKING AND LOADING SPACES 63 10.9 REAR DWELLINGS 68 10.10 PORTABLE HOME STORAGE UNITS 69 ARTICLE XI CONDITIONAL USE REGULATIONS 11.1 COMMERCIAL MINES, QUARRIES, AND GRAVEL PITS 70 11.2 FREE - STANDING TELECOMMUNICATION TOWERS 72 11.3 ADULT GROUP HOMES, RESIDENTIAL FACILITIES – TYPE B, NURSING HOMES, RESIDENTIAL CARE FACILITITES – TYPES A AND B, AND HOMES FOR THE AGING 75 11.4 KENNELS AND BOAR",
+   "tags": [
+    "sign",
+    "dimension",
+    "temporary"
+   ],
+   "weight": 5,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "7 licensee or administrator in which child care or publicly funded child care is provided for seven (7) to twelve (12) children at one time. In counting children for purposes of this code, any children under six (6) years of age who are related to a licensee, administrator, or employ ee and who are on the premises of the center shall be counted. Any facility listed in ORC Section 5104.01(L)(1) - (3) shall not be considered a Child Day - Care Center (ORC Section 5104.01(L)). CLINIC: Any building or other structure devoted to the medical diagnosis, treatment, and care of outpatients. CO – LOCATION: The use of a telecommunication tower by more than one (1) telecommunications provider. CONDITIONAL USE: A desirable use within a zoning district that may more intensely affect the surrounding area than would a permitted use in said district. Such uses may require supplementary conditions and saf",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 34,
+   "snippet": "30 amendment, the name of the person giving notice of the public hearing, the time and place where the proposed amendment will be available for examination for a period of at least ten (10) days before the public hearing, and a statement that after the conclusion of such public hea ring the matter will be referred to the Township Board of Trustees for further determination. If the proposed amendment intends to rezone or redistrict ten (10) or fewer parcels, the notice shall also include a list of the names and addresses of all proper ties to be rezoned or redistricted by the proposed amendment, as they appear on the County Auditor’s then current tax list, as well as, the present zoning classification of the subject property. I. Notice of Property Owners by Zoning Commission. If the proposed amendment intends to rezone or redistrict ten (10) or less parcels of land, as listed on the tax d",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  },
+  {
+   "page": 56,
+   "snippet": "52 3. Minimum front yard depth shall be thirty (30) feet, measured in accordance with Section 10.2A of this resolution. 4. Minimum rear yard depth shall be fifty (50) feet. 5. Minimum side yard width shall be twenty – five (25) feet, unless located adjacent to a residential use, than a fifty (50) foot side yard width shall be required. 6. Maximum height shall be fifty (50) feet. H. Prohibited Uses. No land, building, area, or structure in the I - 1 District shall be used for any of the prohibited uses as follows: 1. Dwellings, residences, living quarters, or other residential uses, except for watchman quarters. 2. Motel or hotel. 3. Schools and colleges. 4. Churches. 5. Hospitals, clinics, and other institutions for human care, except where incidental to a permitted principal use.",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e",
+   "source_document_id": null,
+   "source_title": "33a6b61333ee06cf7079c0da15a75930cb83a3ed2249c570b6151f2f3488254e.pdf",
+   "official_url": "https://www.rushcreektwp.org/pdf/Zoning-Manual.pdf"
+  }
+ ]
+}

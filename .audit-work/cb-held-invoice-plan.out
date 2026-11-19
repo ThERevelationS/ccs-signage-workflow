@@ -1,0 +1,34 @@
+{
+  "additions": {
+    "invoices": 86,
+    "payments": 84,
+    "refunds": 4
+  },
+  "summary": {
+    "archive_invoices": 4631,
+    "invoices": 4631,
+    "payments": 4780,
+    "refunds": 140,
+    "archive_payments": 4780,
+    "archive_refunds": 140,
+    "archive_payment_total": 8910277.02,
+    "archive_refund_total": -398668.54,
+    "unknown_methods": {},
+    "unresolved_customers": 0,
+    "missing_refund_parents": 0,
+    "ambiguous_work_orders": 27,
+    "amount_paid_diffs": 1,
+    "line_diffs": 47,
+    "statuses": {
+      "draft": 18,
+      "paid": 3527,
+      "void": 1018,
+      "partially_paid": 43,
+      "sent": 25
+    },
+    "archive_invoice_total": 14784493.71,
+    "invoice_total": 14784493.71,
+    "payment_total": 8910277.02,
+    "refund_total": -398668.54
+  }
+}

@@ -1,0 +1,54 @@
+{
+ "jurisdiction_id": "6ad5c0583557324dcfe80db1",
+ "jurisdiction_name": "Carbon Hill",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Village of Carbon Hill Permit & Inspection Fees Building Permits are required to be filled out completely for all construction. No building is to be started until permit is APPROVED. Courtesy Permit: $25.00 (Village Board determines whether Courtesy or Building Permit is required.) For the following buildings, structures, and uses: repairs, awnings, trellises, balconies, fences, playhouses, decks, sheds and storage buildings (300 sq. ft. max.), pools, terraces, patios, outdoor fireplaces (List is not all inclusive.) Addition Building Permit: $5.00 per 100 sq. ft. For the following building, structure, and use additions: garages, carports-enclosed, and room additions that are 301 sq. ft. to 900 sq. ft. Administrative Fees: $25.00 for fences, decks, and similar projects $50.00 for room additions $100.00 for solar panels and poultry permits $100.00 for residential + commercial buildings New",
+   "tags": [
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "4e8cf1cf166fefa324ec7d67bb4b1a4db6d6964f0d25f7a288598321aedd8488",
+   "source_document_id": null,
+   "source_title": "4e8cf1cf166fefa324ec7d67bb4b1a4db6d6964f0d25f7a288598321aedd8488.pdf",
+   "official_url": "https://villageofcarbonhill-il.gov/wp-content/uploads/2024/11/2-Permit-and-inspection-fees.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Requirements for R-2 Zoning District 1. YARDS Yards and other open spaces as required by these ordinances shall be located on the same lot as the principal building, structure, or use. On through lots, the front lot line shall be designated by the Zoning Officer, except that when a front lot line has been established on one or more lots in the same block, the front lot line for such lot or lots shall be the front lot line on all vacant through lots in such block. Only those obstructions permitted in front yards shall be located in that part of a rear yard adjoining a street that is equivalent in depth to a required front yard, except where a no-access strip has been provided for such lots on the recorded plat. No legally required yards, open space, or lot area for any use or structure shall be used to satisfy yard, open space, or lot area requirements for any other structure or use. No y",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited"
+   ],
+   "weight": 7,
+   "source_sha256": "337e08c339de1565cf08ea791802ed14f928452b15afa686998d5548478158b8",
+   "source_document_id": null,
+   "source_title": "337e08c339de1565cf08ea791802ed14f928452b15afa686998d5548478158b8.pdf",
+   "official_url": "https://villageofcarbonhill-il.gov/wp-content/uploads/2024/11/4-Setback-Requirements-for-R-2-Zoning-District.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Pool Permit Acknowledgement The undersigned has applied for an outdoor private swimming pool permit. The undersigned acknowledges and understands the International Building Code, as adopted by the Village of Carbon Hill, requires a four foot (48”) barrier above ground level surrounding all swimming pools, hot tubs and spas capable of containing more than 24 inches of water. Ladders must be removed or locked up above the barrier whenever the pool is not in use. Failure to remove the ladder when not in use constitutes a violation on the Code and the Village of Carbon Hill “P- ticket” Ordinance. Violations are punishable by fines of no less than $25 nor more than $750. The undersigned acknowledges receipt of this notice on the date set forth below. Date: ________________________________ Permit Holder Name: _____________________________ Property Address: __________________________________ Pe",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "afb80bec22d8b110cc7954d6820271db4391328e2671022bea5b800db6e93bd4",
+   "source_document_id": null,
+   "source_title": "afb80bec22d8b110cc7954d6820271db4391328e2671022bea5b800db6e93bd4.pdf",
+   "official_url": "https://villageofcarbonhill-il.gov/wp-content/uploads/2024/11/Pool-Permit-Acknowledgement.pdf"
+  }
+ ]
+}

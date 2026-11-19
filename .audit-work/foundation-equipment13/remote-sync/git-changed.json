@@ -1,0 +1,7 @@
+{
+  "stdout": "src/components/estimator/foundation/FoundationEquipmentTab.jsx\nsrc/components/estimator/foundation/foundationCalc.js\nsrc/components/estimator/foundation/foundationCatalogIntegrity.js\nsrc/components/estimator/foundation/foundationEquipmentBindings.js\nsrc/pages/FoundationEstimator.jsx\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 374
+}

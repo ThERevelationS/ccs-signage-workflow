@@ -297,7 +297,7 @@ export async function addPartPackageToProduct({
       builder_snapshot_after: builder.builder_snapshot || {},
       price_snapshot_before: { total: previousFrozen },
       price_snapshot_after: { total: nextFrozen },
-      notes: `${sourceType === "clipboard" ? "Pasted" : "Added"} ${itemType.replace("_", " ")} â€œ${itemName || "Saved Part"}â€� from the ${auditSourceLabel}.`,
+      notes: `${sourceType === "clipboard" ? "Pasted" : "Added"} ${itemType.replace("_", " ")} “${itemName || "Saved Part"}” from the ${auditSourceLabel}.`,
     },
   };
 

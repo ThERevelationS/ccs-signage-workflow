@@ -8,12 +8,16 @@ const here = dirname(fileURLToPath(import.meta.url));
 const stub = resolve(here, '.tmp-b44-stub.mjs');
 writeFileSync(stub, `
 export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => ({}) }) }), functions: { invoke: async () => ({}) }, auth: { me: async () => null }, asServiceRole: { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => ({}) }) }) } };
+export const isRetryableFunction = () => false;
+export const createClient = () => base44;
+export const createAxiosClient = () => ({ get: async () => ({}), post: async () => ({}), interceptors: { request: { use: () => {} }, response: { use: () => {} } } });
 `);
+globalThis.window = {};
 const bundlePath = resolve(here, '.tmp-dup-est.mjs');
 buildSync({
   entryPoints: [resolve(here, '../src/components/estimator/estimateCreationService.js')],
   bundle: true, format: 'esm', outfile: bundlePath, logLevel: 'silent',
-  alias: { '@/api/base44Client': stub },
+  alias: { '@/api/base44Client': stub, '@base44/sdk/dist/utils/axios-client': stub, '@base44/sdk': stub },
 });
 const { buildDuplicateEstimate, buildSplitEstimate, splitEstimate } = await import(pathToFileURL(bundlePath).href);
 

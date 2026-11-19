@@ -1,0 +1,751 @@
+{
+  "summary": {
+    "total": 55,
+    "resolved": 48,
+    "rate": "87.3%",
+    "failure_stages": {
+      "geocode": 7
+    },
+    "geocode_misses": 7,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "6333 Key Ln #1428, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 1595,
+      "worker": 1
+    },
+    {
+      "address": "222 Court St, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 2705,
+      "worker": 2
+    },
+    {
+      "address": "6499 KY-1428, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 1585,
+      "worker": 1
+    },
+    {
+      "address": "60 Court St, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 1418,
+      "worker": 2
+    },
+    {
+      "address": "6363 KY-1428, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 1679,
+      "worker": 1
+    },
+    {
+      "address": "234 Sam Walton Dr, Russellville, KY 42276",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: russellville -> russellville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "russellville"
+      },
+      "county": "",
+      "ms": 1684,
+      "worker": 2
+    },
+    {
+      "address": "16 Winter Hawk Ln, Albany, KY 42602",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: albany -> albany",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "albany"
+      },
+      "county": "",
+      "ms": 1701,
+      "worker": 1
+    },
+    {
+      "address": "6459 KY-1428, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 2692,
+      "worker": 2
+    },
+    {
+      "address": "23 Cemetery Loop Rd, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 2708,
+      "worker": 1
+    },
+    {
+      "address": "6089 KY-1428, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 1692,
+      "worker": 2
+    },
+    {
+      "address": "8498 US-23, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 1685,
+      "worker": 1
+    },
+    {
+      "address": "6486 KY-1428, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 1697,
+      "worker": 2
+    },
+    {
+      "address": "100 Railroad St, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 1741,
+      "worker": 1
+    },
+    {
+      "address": "6333 KY-1428, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 1703,
+      "worker": 2
+    },
+    {
+      "address": "11565 KY-558, Albany, KY 42602",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: albany -> albany",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "albany"
+      },
+      "county": "",
+      "ms": 1643,
+      "worker": 1
+    },
+    {
+      "address": "540 West Industrial Park Drive, Russellville, KY 42276",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: russellville -> russellville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "russellville"
+      },
+      "county": "",
+      "ms": 1711,
+      "worker": 2
+    },
+    {
+      "address": "194 McWhorter Spur Rd Suite B, Albany, KY 42602",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: albany -> albany",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "albany"
+      },
+      "county": "",
+      "ms": 1690,
+      "worker": 1
+    },
+    {
+      "address": "100 Jimmy Dyer Ln, Albany, KY 42602",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: albany -> albany",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "albany"
+      },
+      "county": "",
+      "ms": 1713,
+      "worker": 2
+    },
+    {
+      "address": "100 Emergency Dr, Albany, KY 42602",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: albany -> albany",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "albany"
+      },
+      "county": "",
+      "ms": 1679,
+      "worker": 1
+    },
+    {
+      "address": "1533 KY-80, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 1663,
+      "worker": 2
+    },
+    {
+      "address": "55 Swafford St, Manchester, KY 40962",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: manchester -> manchester",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "manchester"
+      },
+      "county": "",
+      "ms": 2708,
+      "worker": 1
+    },
+    {
+      "address": "4846 KY-1428, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 2693,
+      "worker": 2
+    },
+    {
+      "address": "8177 KY-1428, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 1692,
+      "worker": 1
+    },
+    {
+      "address": "1440 Simonton Rd, Ashland, OH 44805",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: ashland -> ashland",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "ashland"
+      },
+      "county": "",
+      "ms": 1701,
+      "worker": 2
+    },
+    {
+      "address": "1380 Enterprise Pl, Ashland, OH 44805",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: ashland -> ashland",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "ashland"
+      },
+      "county": "",
+      "ms": 1744,
+      "worker": 1
+    },
+    {
+      "address": "256 Russell Rd, Ashland, KY 41101",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: ashland -> ashland",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "ashland"
+      },
+      "county": "",
+      "ms": 1696,
+      "worker": 2
+    },
+    {
+      "address": "433 Diederich Blvd, Ashland, KY 41101",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: ashland -> ashland",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "ashland"
+      },
+      "county": "",
+      "ms": 1628,
+      "worker": 1
+    },
+    {
+      "address": "1028 Commerce Pk, Ashland, KY 41102",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: ashland -> ashland",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "ashland"
+      },
+      "county": "",
+      "ms": 1688,
+      "worker": 2
+    },
+    {
+      "address": "5425 N Forty Rd, Ashland, KY 41102",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: ashland -> ashland",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "ashland"
+      },
+      "county": "",
+      "ms": 1715,
+      "worker": 1
+    },
+    {
+      "address": "12352 Cr-1307, Ashland, KY 41102",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: ashland -> ashland",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "ashland"
+      },
+      "county": "",
+      "ms": 1697,
+      "worker": 2
+    },
+    {
+      "address": "106 public square, Auburn, KY 42206",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: auburn -> auburn",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "auburn"
+      },
+      "county": "",
+      "ms": 1660,
+      "worker": 1
+    },
+    {
+      "address": "379 Old US 68 Loop, Auburn, KY 42206",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: auburn -> auburn",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "auburn"
+      },
+      "county": "",
+      "ms": 1694,
+      "worker": 2
+    },
+    {
+      "address": "200 Park Ave, WARRENSVL HTS, OH 44122",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1694,
+      "worker": 1
+    },
+    {
+      "address": "24086 OH-697, Delphos, OH 45833",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 2688,
+      "worker": 2
+    },
+    {
+      "address": "46 Flegle St, Bardwell, KY 42023",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bardwell -> bardwell",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bardwell"
+      },
+      "county": "",
+      "ms": 2707,
+      "worker": 1
+    },
+    {
+      "address": "435 Ed Embry Dr, Leitchfield, KY 42754",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: leitchfield -> leitchfield",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "leitchfield"
+      },
+      "county": "",
+      "ms": 1681,
+      "worker": 2
+    },
+    {
+      "address": "100 Entrance Rd, Wickliffe, KY 42087",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: wickliffe -> wickliffe",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "wickliffe"
+      },
+      "county": "",
+      "ms": 1690,
+      "worker": 1
+    },
+    {
+      "address": "3rd St, 615 Old State Rd 60 Bldg, Hardinsburg, KY 40143",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: hardinsburg -> hardinsburg",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "hardinsburg"
+      },
+      "county": "",
+      "ms": 1770,
+      "worker": 2
+    },
+    {
+      "address": "4537 A Redhewn Lane, South Lebanon, OH 45065",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: south lebanon -> south lebanon",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "south lebanon"
+      },
+      "county": "",
+      "ms": 1684,
+      "worker": 1
+    },
+    {
+      "address": "525 Beech Grove St, Calhoun, KY 42327",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: calhoun -> calhoun",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "calhoun"
+      },
+      "county": "",
+      "ms": 1650,
+      "worker": 2
+    },
+    {
+      "address": "590 U.S. Highway 41 Alternate South, 590 US-41 ALT, Dixon, KY 42409",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: dixon -> dixon",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "dixon"
+      },
+      "county": "",
+      "ms": 1746,
+      "worker": 1
+    },
+    {
+      "address": "10548 Harrison Ave Ste 1500, Harrison, OH 45030",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1669,
+      "worker": 2
+    },
+    {
+      "address": "10791 Aerohub Blvd, Cincinnati, OH 45215",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: cincinnati -> cincinnati",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "cincinnati"
+      },
+      "county": "",
+      "ms": 1627,
+      "worker": 1
+    },
+    {
+      "address": "216 Cedar Rapids Rd, Mt Vernon, KY 40456",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1715,
+      "worker": 2
+    },
+    {
+      "address": "2100 UNITED GRINDING Boulevard, Miamisburg, OH 45342",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: miamisburg -> miamisburg",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "miamisburg"
+      },
+      "county": "",
+      "ms": 1704,
+      "worker": 1
+    },
+    {
+      "address": "100 Conley Ln, Greensburg, KY 42743",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: greensburg -> greensburg",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "greensburg"
+      },
+      "county": "",
+      "ms": 1708,
+      "worker": 2
+    },
+    {
+      "address": "8989 Lake Rd, Seville, OH 44273",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: seville -> seville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "seville"
+      },
+      "county": "",
+      "ms": 2714,
+      "worker": 1
+    },
+    {
+      "address": "675 Western Kentucky Pkwy # 2, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 2670,
+      "worker": 2
+    },
+    {
+      "address": "1400 OH-125, Amelia, OH 45102",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1673,
+      "worker": 1
+    },
+    {
+      "address": "400 Geissel St, Wapakoneta, OH 45895",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1689,
+      "worker": 2
+    },
+    {
+      "address": "2221 US-68, Carlisle, KY 40311",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1697,
+      "worker": 1
+    },
+    {
+      "address": "122 Old State Rd 60, Hardinsburg, KY 40143",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: hardinsburg -> hardinsburg",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "hardinsburg"
+      },
+      "county": "",
+      "ms": 1716,
+      "worker": 2
+    },
+    {
+      "address": "140A Old State Rd 60, Hardinsburg, KY 40143",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: hardinsburg -> hardinsburg",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "hardinsburg"
+      },
+      "county": "",
+      "ms": 1741,
+      "worker": 1
+    },
+    {
+      "address": "381 Sam Ball Way, Henderson, KY 42420",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: henderson -> henderson",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "henderson"
+      },
+      "county": "",
+      "ms": 1650,
+      "worker": 2
+    },
+    {
+      "address": "273 Parkway Plaza #18, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 1664,
+      "worker": 1
+    }
+  ]
+}

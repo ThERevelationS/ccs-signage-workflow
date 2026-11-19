@@ -1,0 +1,13 @@
+[
+  { "channel": "call", "label": "AR/Collections", "sort": 10, "is_custom": false },
+  { "channel": "call", "label": "Estimate Follow Up", "sort": 20, "is_custom": false },
+  { "channel": "call", "label": "Prospecting", "sort": 30, "is_custom": false },
+  { "channel": "call", "label": "Proof", "sort": 40, "is_custom": false },
+  { "channel": "email", "label": "Estimate", "sort": 50, "is_custom": false },
+  { "channel": "email", "label": "Follow Up", "sort": 60, "is_custom": false },
+  { "channel": "visit", "label": "Installation", "sort": 70, "is_custom": false },
+  { "channel": "visit", "label": "Sales", "sort": 80, "is_custom": false },
+  { "channel": "visit", "label": "Site Survey", "sort": 90, "is_custom": false },
+  { "channel": "consultation", "label": "General", "sort": 100, "is_custom": false },
+  { "channel": "redo", "label": "Redo", "sort": 110, "is_custom": false }
+]

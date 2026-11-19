@@ -1,0 +1,372 @@
+{
+  "synthetic": true,
+  "readOnly": true,
+  "remoteSourceSha256": "fb77561aa50012b8ff70490f485b2a9775ab4cfdc70cc5904f189dbff8627549",
+  "observed": [
+    {
+      "name": "ordinary positive split remains40 material/72 labor (112 total)",
+      "syntheticInput": {
+        "component_id": "synthetic-foundation",
+        "foundation_type": "spread_foot",
+        "include_rebar": true,
+        "reinforcement_calculation_version": 2,
+        "reinforcement_material": {
+          "kind": "manual",
+          "name": "Explicit manual steel",
+          "unit": "ft"
+        },
+        "rebar_feet": 20,
+        "rebar_rate": 2,
+        "rebar_cost": 112
+      },
+      "parts": [
+        {
+          "part_key": "foundation:item:0:rebar",
+          "part_name": "#4 Rebar",
+          "part_type": "material",
+          "part_subtype": "rebar",
+          "source_path": "items[0].rebar_size",
+          "inventory_entity": "FoundationInventory",
+          "inventory_item_id": "legacy-by-size",
+          "quantity": 20,
+          "unit": "ft",
+          "unit_cost": 2,
+          "extended_cost": 40,
+          "builder_data": {
+            "component_id": "synthetic-foundation",
+            "foundation_type": "spread_foot",
+            "include_rebar": true,
+            "reinforcement_calculation_version": 2,
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Explicit manual steel",
+              "unit": "ft"
+            },
+            "rebar_feet": 20,
+            "rebar_rate": 2,
+            "rebar_cost": 112
+          },
+          "calculation_snapshot": {
+            "rebar_cost": 112,
+            "rebar_material_cost": 40,
+            "rebar_labor_cost": 72,
+            "rebar_feet": 20
+          },
+          "pricing_basis_snapshot": {}
+        },
+        {
+          "part_key": "foundation:item:0:rebar-labor",
+          "part_name": "Rebar Labor",
+          "part_type": "labor",
+          "part_subtype": "rebar_labor",
+          "source_path": "items[0].rebar_cost",
+          "inventory_entity": "",
+          "inventory_item_id": "",
+          "quantity": 1,
+          "unit": "job",
+          "unit_cost": 72,
+          "extended_cost": 72,
+          "builder_data": {
+            "component_id": "synthetic-foundation",
+            "foundation_type": "spread_foot",
+            "include_rebar": true,
+            "reinforcement_calculation_version": 2,
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Explicit manual steel",
+              "unit": "ft"
+            },
+            "rebar_feet": 20,
+            "rebar_rate": 2,
+            "rebar_cost": 112
+          },
+          "calculation_snapshot": {
+            "total_rebar_cost": 112,
+            "material_cost": 40,
+            "labor_cost": 72
+          },
+          "pricing_basis_snapshot": {}
+        }
+      ]
+    },
+    {
+      "name": "explicit0 rate incorrectly classifies all72 steel labor as material",
+      "syntheticInput": {
+        "component_id": "synthetic-foundation",
+        "foundation_type": "spread_foot",
+        "include_rebar": true,
+        "reinforcement_calculation_version": 2,
+        "reinforcement_material": {
+          "kind": "manual",
+          "name": "Explicit manual steel",
+          "unit": "ft"
+        },
+        "rebar_feet": 20,
+        "rebar_rate": 0,
+        "custom_rebar_cost_per_ft": 0,
+        "rebar_cost": 72
+      },
+      "parts": [
+        {
+          "part_key": "foundation:item:0:rebar",
+          "part_name": "#4 Rebar",
+          "part_type": "material",
+          "part_subtype": "rebar",
+          "source_path": "items[0].rebar_size",
+          "inventory_entity": "FoundationInventory",
+          "inventory_item_id": "legacy-by-size",
+          "quantity": 20,
+          "unit": "ft",
+          "unit_cost": 0,
+          "extended_cost": 72,
+          "builder_data": {
+            "component_id": "synthetic-foundation",
+            "foundation_type": "spread_foot",
+            "include_rebar": true,
+            "reinforcement_calculation_version": 2,
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Explicit manual steel",
+              "unit": "ft"
+            },
+            "rebar_feet": 20,
+            "rebar_rate": 0,
+            "custom_rebar_cost_per_ft": 0,
+            "rebar_cost": 72
+          },
+          "calculation_snapshot": {
+            "rebar_cost": 72,
+            "rebar_material_cost": 72,
+            "rebar_labor_cost": 0,
+            "rebar_feet": 20
+          },
+          "pricing_basis_snapshot": {}
+        }
+      ]
+    },
+    {
+      "name": "explicit0 aggregatefeet becomes1ft and48labor is classified as material",
+      "syntheticInput": {
+        "component_id": "synthetic-foundation",
+        "foundation_type": "spread_foot",
+        "include_rebar": true,
+        "reinforcement_calculation_version": 2,
+        "reinforcement_material": {
+          "kind": "manual",
+          "name": "Explicit manual steel",
+          "unit": "ft"
+        },
+        "rebar_feet": 0,
+        "rebar_rate": 2,
+        "rebar_cost": 48
+      },
+      "parts": [
+        {
+          "part_key": "foundation:item:0:rebar",
+          "part_name": "#4 Rebar",
+          "part_type": "material",
+          "part_subtype": "rebar",
+          "source_path": "items[0].rebar_size",
+          "inventory_entity": "FoundationInventory",
+          "inventory_item_id": "legacy-by-size",
+          "quantity": 1,
+          "unit": "ft",
+          "unit_cost": 2,
+          "extended_cost": 48,
+          "builder_data": {
+            "component_id": "synthetic-foundation",
+            "foundation_type": "spread_foot",
+            "include_rebar": true,
+            "reinforcement_calculation_version": 2,
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Explicit manual steel",
+              "unit": "ft"
+            },
+            "rebar_feet": 0,
+            "rebar_rate": 2,
+            "rebar_cost": 48
+          },
+          "calculation_snapshot": {
+            "rebar_cost": 48,
+            "rebar_material_cost": 48,
+            "rebar_labor_cost": 0,
+            "rebar_feet": 0
+          },
+          "pricing_basis_snapshot": {}
+        }
+      ]
+    },
+    {
+      "name": "manualv2 material is incorrectly linked to legacy #4 catalog row",
+      "syntheticInput": {
+        "component_id": "synthetic-foundation",
+        "foundation_type": "spread_foot",
+        "include_rebar": true,
+        "reinforcement_calculation_version": 2,
+        "reinforcement_material": {
+          "kind": "manual",
+          "name": "Explicit manual steel",
+          "unit": "ft"
+        },
+        "rebar_feet": 20,
+        "rebar_rate": 2,
+        "rebar_cost": 112
+      },
+      "parts": [
+        {
+          "part_key": "foundation:item:0:rebar",
+          "part_name": "#4 Rebar",
+          "part_type": "material",
+          "part_subtype": "rebar",
+          "source_path": "items[0].rebar_size",
+          "inventory_entity": "FoundationInventory",
+          "inventory_item_id": "legacy-by-size",
+          "quantity": 20,
+          "unit": "ft",
+          "unit_cost": 2,
+          "extended_cost": 40,
+          "builder_data": {
+            "component_id": "synthetic-foundation",
+            "foundation_type": "spread_foot",
+            "include_rebar": true,
+            "reinforcement_calculation_version": 2,
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Explicit manual steel",
+              "unit": "ft"
+            },
+            "rebar_feet": 20,
+            "rebar_rate": 2,
+            "rebar_cost": 112
+          },
+          "calculation_snapshot": {
+            "rebar_cost": 112,
+            "rebar_material_cost": 40,
+            "rebar_labor_cost": 72,
+            "rebar_feet": 20
+          },
+          "pricing_basis_snapshot": {}
+        },
+        {
+          "part_key": "foundation:item:0:rebar-labor",
+          "part_name": "Rebar Labor",
+          "part_type": "labor",
+          "part_subtype": "rebar_labor",
+          "source_path": "items[0].rebar_cost",
+          "inventory_entity": "",
+          "inventory_item_id": "",
+          "quantity": 1,
+          "unit": "job",
+          "unit_cost": 72,
+          "extended_cost": 72,
+          "builder_data": {
+            "component_id": "synthetic-foundation",
+            "foundation_type": "spread_foot",
+            "include_rebar": true,
+            "reinforcement_calculation_version": 2,
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Explicit manual steel",
+              "unit": "ft"
+            },
+            "rebar_feet": 20,
+            "rebar_rate": 2,
+            "rebar_cost": 112
+          },
+          "calculation_snapshot": {
+            "total_rebar_cost": 112,
+            "material_cost": 40,
+            "labor_cost": 72
+          },
+          "pricing_basis_snapshot": {}
+        }
+      ]
+    },
+    {
+      "name": "stable v2 catalog ID is ignored in favor of legacy size lookup",
+      "syntheticInput": {
+        "component_id": "synthetic-foundation",
+        "foundation_type": "spread_foot",
+        "include_rebar": true,
+        "reinforcement_calculation_version": 2,
+        "reinforcement_material": {
+          "kind": "catalog",
+          "inventory_id": "explicit-other-id"
+        },
+        "rebar_feet": 20,
+        "rebar_rate": 2,
+        "rebar_cost": 112
+      },
+      "parts": [
+        {
+          "part_key": "foundation:item:0:rebar",
+          "part_name": "#4 Rebar",
+          "part_type": "material",
+          "part_subtype": "rebar",
+          "source_path": "items[0].rebar_size",
+          "inventory_entity": "FoundationInventory",
+          "inventory_item_id": "legacy-by-size",
+          "quantity": 20,
+          "unit": "ft",
+          "unit_cost": 2,
+          "extended_cost": 40,
+          "builder_data": {
+            "component_id": "synthetic-foundation",
+            "foundation_type": "spread_foot",
+            "include_rebar": true,
+            "reinforcement_calculation_version": 2,
+            "reinforcement_material": {
+              "kind": "catalog",
+              "inventory_id": "explicit-other-id"
+            },
+            "rebar_feet": 20,
+            "rebar_rate": 2,
+            "rebar_cost": 112
+          },
+          "calculation_snapshot": {
+            "rebar_cost": 112,
+            "rebar_material_cost": 40,
+            "rebar_labor_cost": 72,
+            "rebar_feet": 20
+          },
+          "pricing_basis_snapshot": {}
+        },
+        {
+          "part_key": "foundation:item:0:rebar-labor",
+          "part_name": "Rebar Labor",
+          "part_type": "labor",
+          "part_subtype": "rebar_labor",
+          "source_path": "items[0].rebar_cost",
+          "inventory_entity": "",
+          "inventory_item_id": "",
+          "quantity": 1,
+          "unit": "job",
+          "unit_cost": 72,
+          "extended_cost": 72,
+          "builder_data": {
+            "component_id": "synthetic-foundation",
+            "foundation_type": "spread_foot",
+            "include_rebar": true,
+            "reinforcement_calculation_version": 2,
+            "reinforcement_material": {
+              "kind": "catalog",
+              "inventory_id": "explicit-other-id"
+            },
+            "rebar_feet": 20,
+            "rebar_rate": 2,
+            "rebar_cost": 112
+          },
+          "calculation_snapshot": {
+            "total_rebar_cost": 112,
+            "material_cost": 40,
+            "labor_cost": 72
+          },
+          "pricing_basis_snapshot": {}
+        }
+      ]
+    }
+  ],
+  "explicitZeroCurrentUnitCostObservation": 9,
+  "conclusion": "Version2 must not activate before extraction and current-unit-cost handling use explicit accepted basis and material/labor split."
+}

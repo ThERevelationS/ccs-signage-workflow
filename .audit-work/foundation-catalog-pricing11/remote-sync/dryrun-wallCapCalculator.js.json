@@ -1,0 +1,5 @@
+{
+  "path": "src/components/estimator/foundation/wallCapCalculator.js",
+  "diff": "--- a/src/components/estimator/foundation/wallCapCalculator.js\n+++ b/src/components/estimator/foundation/wallCapCalculator.js\n@@ -5,6 +5,7 @@\n export function calcWallCaps(wallCaps = [], inventory = []) {\n   const caps = (wallCaps || []).map((cap) => {\n     const inv = inventory.find((i) => i.id === cap.cap_inventory_id);\n+    if (!inv) return { ...cap };\n     return {\n       ...cap,\n       cap_name: inv?.material_name || \"\",\n@@ -23,10 +24,10 @@\n         cost: 0,\n       };\n       acc[c.cap_inventory_id].qty += 1;\n-      acc[c.cap_inventory_id].cost += c.cost;\n+      acc[c.cap_inventory_id].cost += num(c.cost);\n       return acc;\n     }, {})\n   );\n \n-  return { caps, byInventory, total: caps.reduce((s, c) => s + c.cost, 0) };\n+  return { caps, byInventory, total: caps.reduce((s, c) => s + num(c.cost), 0) };\n }",
+  "applied": false
+}

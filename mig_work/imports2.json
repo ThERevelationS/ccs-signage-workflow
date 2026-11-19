@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/pages/Imports.jsx",
+      "content": "      />\n\n      <Tabs value={tab} onValueChange={setTab}>\n        <TabsList className=\"h-[32px]\">\n          <TabsTrigger value=\"new\" className=\"text-[11px]\"><Upload className=\"w-3.5 h-3.5 mr-1\" /> New Import</TabsTrigger>\n          <TabsTrigger value=\"history\" className=\"text-[11px]\"><History className=\"w-3.5 h-3.5 mr-1\" /> Import History</TabsTrigger>\n        </TabsList>\n        <TabsContent value=\"new\" className=\"mt-4\">\n          <ImportWizard onImportFinished={() => setReloadKey((k) => k + 1)} />\n        </TabsContent>\n        <TabsContent value=\"history\" className=\"mt-4\">\n          <ImportHistory reloadKey={reloadKey} onNewImport={() => setTab(\"new\")} />\n        </TabsContent>\n      </Tabs>\n    </div>\n  );\n}",
+      "startLine": 120,
+      "endLine": 136,
+      "totalLines": 136,
+      "truncated": false
+    }
+  ]
+}

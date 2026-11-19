@@ -1,0 +1,27 @@
+{
+  "syntheticOnly": true,
+  "applicationSourceUnchanged": true,
+  "results": [
+    {
+      "case": "material replacement",
+      "authoredCut": 18,
+      "selectedStock": 96,
+      "emittedCut": 96
+    },
+    {
+      "case": "cleared cut input",
+      "typed": "",
+      "emittedCut": 1
+    },
+    {
+      "case": "new cap with missing catalog stock length",
+      "catalogStock": null,
+      "emittedCut": 48
+    },
+    {
+      "case": "unrecorded saved cut input",
+      "recordedCut": null,
+      "displayedCut": 48
+    }
+  ]
+}

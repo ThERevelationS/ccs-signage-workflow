@@ -1,0 +1,24 @@
+ok N1 recovery: back/forward offers draft; restore yields exact description, zero writes
+ok N2 recovery: shell leave/return -> cancel discard keeps offer; confirm removes cache only
+ok N3 recovery: real reload dismiss retains; accepted reload offers, restore exact
+FAIL N4 save: CAS current, source+Builder once, exact cache removed, saved state - locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByText('All changes saved', { exact: true }) to be visible[22m
+
+FAIL N5 deferred write + newer edit: stale ack keeps newer draft/dirty; retry uses latest CAS - notes literal in saved body
+
+undefined !== 'n'
+
+ok N6 owner isolation: B sees no A offer; A returns -> offer
+ok N7 changed backend: warn+confirm; forbidden fields dropped; save CAS new version
+ok N8 storage failure: warning shown, edits retained, no false backup, save works
+FAIL N9 mid-offer write: stale discard retains new rev; storage-fail reread preserves offer - offer dismissed
+
+1 !== 0
+
+FAIL N10 pending blocks handlers; restore+undo+redo syncs cache, CAS latest - undo cache holds original desc
+
+undefined !== ''
+
+navigation-recovery scenarios=10 failed=4
+exit=1

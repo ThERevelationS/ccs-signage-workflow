@@ -1,0 +1,70 @@
+{
+ "wallCapCalculator": {
+  "path": "src/components/estimator/foundation/wallCapCalculator.js",
+  "hunks": [
+   {
+    "old_text": "// Wall cap pricing — ported from SignEstimate Pro (WallCapsTab.jsx).\n// A cut cap piece is always charged at FULL stock price; cuts do not reduce price.\nconst num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);\n\n",
+    "new_text": "// Wall cap pricing - ported from SignEstimate Pro (WallCapsTab.jsx).\n// A cut cap piece is always charged at FULL stock price; cuts do not reduce price.\nconst num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);\nconst stockPriceNumber = value => {\n  if (typeof value === \"number\") return Number.isFinite(value) ? value : null;\n  if (typeof value !== \"string\" || !/^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)$/.test(value.trim())) return null;\n  const number = Number(value);\n  return Number.isFinite(number) ? number : null;\n};\nconst known = value => typeof value === \"number\" && Number.isFinite(value);\nconst assigned = id => (typeof id === \"string\" && id.trim() !== \"\")\n  || (typeof id === \"number\" && Number.isFinite(id));\nconst sumKnown = rows => {\n  let total = 0;\n  for (const row of rows) {\n    if (!known(row.cost)) return null;\n    total += row.cost;\n    if (!Number.isFinite(total)) return null;\n  }\n  return total;\n};\n\n"
+   },
+   {
+    "old_text": "export function calcWallCaps(wallCaps = [], inventory = []) {\n  const caps = (wallCaps || []).map((cap) => {\n    const inv = inventory.find((i) => i.id === cap.cap_inventory_id);\n    if (!inv) return { ...cap };\n    return {\n      ...cap,\n      cap_name: inv?.material_name || \"\",\n      stock_length_inches: num(inv?.cap_stock_length_inches),\n      cost: num(inv?.cap_stock_price),\n    };\n  });\n",
+    "new_text": "export function calcWallCaps(wallCaps = [], inventory = []) {\n  const issues = [];\n  const caps = (wallCaps || []).map((cap, index) => {\n    const id = cap.cap_inventory_id;\n    const issue = (field, code, message) => issues.push({\n      kind: \"wall_cap\", index, componentId: cap.component_id ?? cap.id ?? null,\n      field, inventoryId: assigned(id) ? id : null, code,\n      message: `Wall cap ${index + 1}: ${message}`,\n    });\n    const matches = assigned(id) ? inventory.filter(row => row?.id === id) : [];\n    if (matches.length !== 1) {\n      issue(\"cap_inventory_id\", !assigned(id) ? \"catalog_item_unassigned\"\n        : matches.length > 1 ? \"catalog_item_ambiguous\" : \"catalog_item_unavailable\",\n      !assigned(id) ? \"select a catalog material.\" : matches.length > 1\n        ? \"the selected catalog ID is ambiguous; refresh the catalog.\" : \"selected catalog material is unavailable.\");\n      return { ...cap };\n    }\n    const inv = matches[0];\n    if (inv.material_type !== \"wall_cap\") {\n      issue(\"cap_inventory_id\", \"catalog_item_type_mismatch\", \"the selected catalog material is not a wall cap.\");\n      return { ...cap };\n    }\n    const rate = stockPriceNumber(inv.cap_stock_price);\n    if (rate === null || rate < 0) {\n      issue(\"cap_stock_price\", \"wall_cap_stock_price_unavailable\",\n        \"record a finite nonnegative full-stock price; a missing price is not zero. Saved amounts are retained.\");\n      return { ...cap };\n    }\n    return {\n      ...cap,\n      cap_name: inv.material_name || \"\",\n      stock_length_inches: num(inv?.cap_stock_length_inches),\n      cost: rate,\n    };\n  });\n"
+   },
+   {
+    "old_text": "\n  const byInventory = Object.values(\n    caps.reduce((acc, c) => {\n      if (!c.cap_inventory_id) return acc;\n      acc[c.cap_inventory_id] = acc[c.cap_inventory_id] || {\n        id: c.cap_inventory_id,\n        name: c.cap_name,\n        qty: 0,\n        cost: 0,\n      };\n      acc[c.cap_inventory_id].qty += 1;\n      acc[c.cap_inventory_id].cost += num(c.cost);\n      return acc;\n    }, {})\n  );\n\n  return { caps, byInventory, total: caps.reduce((s, c) => s + num(c.cost), 0) };\n}",
+    "new_text": "\n  const groups = new Map();\n  for (const cap of caps) {\n    if (!assigned(cap.cap_inventory_id)) continue;\n    if (!groups.has(cap.cap_inventory_id)) groups.set(cap.cap_inventory_id, []);\n    groups.get(cap.cap_inventory_id).push(cap);\n  }\n  const byInventory = [...groups].map(([id, rows]) => ({\n    id, name: rows[0].cap_name, qty: rows.length, cost: sumKnown(rows),\n  }));\n  const total = sumKnown(caps);\n  if (total === null && caps.every(cap => known(cap.cost))) {\n    issues.push({\n      kind: \"wall_cap\", index: 0, componentId: caps[0]?.component_id ?? caps[0]?.id ?? null,\n      field: \"cost\", inventoryId: null, code: \"wall_cap_cost_total_invalid\",\n      message: \"Wall cap total is outside the supported numeric range; current pricing is unavailable.\",\n    });\n  }\n  return { caps, byInventory, total, issues };\n}\n\nexport function foundationWallCapCatalogIssues(wallCaps = [], inventory = []) {\n  return calcWallCaps(wallCaps, inventory).issues;\n}"
+   }
+  ]
+ },
+ "FoundationWallCapsPanel": {
+  "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+  "hunks": [
+   {
+    "old_text": "import { hasFoundationCostSnapshot } from \"./foundationCatalogIntegrity\";",
+    "new_text": "import { hasFoundationCostSnapshot } from \"./foundationCatalogIntegrity\";\nimport { foundationWallCapCatalogIssues } from \"./wallCapCalculator\";"
+   },
+   {
+    "old_text": "  return (",
+    "new_text": "  const unavailableCaps = new Set(foundationWallCapCatalogIssues(caps, options).filter(issue => issue.code !== \"wall_cap_cost_total_invalid\").map(issue => issue.index));\n\n  return ("
+   },
+   {
+    "old_text": "                {(!options.some((o) => o.id === cap.cap_inventory_id)) && <span",
+    "new_text": "                {unavailableCaps.has(index) && <span"
+   }
+  ]
+ },
+ "foundationCatalogIntegrity": {
+  "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+  "hunks": [
+   {
+    "old_text": "import { foundationEquipmentCatalogIssues } from \"./foundationEquipmentBindings\";",
+    "new_text": "import { foundationEquipmentCatalogIssues } from \"./foundationEquipmentBindings\";\nimport { foundationWallCapCatalogIssues } from \"./wallCapCalculator\";"
+   },
+   {
+    "old_text": "// Availability only: this does not validate rates, geometry, or engineering.\n",
+    "new_text": ""
+   },
+   {
+    "old_text": "export function foundationAssemblyCatalogIssues",
+    "new_text": "// Check catalog availability and the explicit wall-cap full-stock price basis.\nexport function foundationAssemblyCatalogIssues"
+   },
+   {
+    "old_text": "  for (const [index, cap] of (project?.wall_caps || []).entries()) {\n    check(cap, index, \"wall_cap\", \"cap_inventory_id\", \"Wall cap\");\n  }\n",
+    "new_text": ""
+   },
+   {
+    "old_text": "    ...issues,",
+    "new_text": "    ...issues,\n    ...foundationWallCapCatalogIssues(project?.wall_caps || [], inventory),"
+   }
+  ]
+ },
+ "foundationCalc": {
+  "path": "src/components/estimator/foundation/foundationCalc.js",
+  "hunks": [
+   {
+    "old_text": "totals.grand_total = itemsTotal === null ? null :",
+    "new_text": "totals.grand_total = itemsTotal === null || wallCaps.total === null ? null :"
+   }
+  ]
+ }
+}

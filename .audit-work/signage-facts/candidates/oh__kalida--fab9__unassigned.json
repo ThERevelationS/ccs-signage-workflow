@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6adeedd5ad40e675e416fab9",
+ "jurisdiction_name": "Kalida",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "VILLAGE OF KALIDA, OHIO BUILDING PERMIT A Building Permit must be submitted and approved prior to any construction . DATE __________________________ PERMIT NO .___________________________ PROPERTY OWNER APPLICANT if not the owner NAME__________________________ NAME________________________________ ADDRESS_______________________ ADDRESS_____________________________ ________________________________ ______________________________________ TELEPHONE____________________ TELEPHONE___________________________ I hereby apply for permit to__________________________________________________________ CONTRACTOR ARCHITECT NAME__________________________ NAME________________________________ ADDRESS_______________________ ADDRESS_____________________________ ________________________________ ______________________________________ TELEPHONE____________________ TELEPHONE___________________________ SUB-CONTRACT",
+   "tags": [
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "b03fa5b247e1dbe9ae1817811b483653947d36cd2c2696db81130ea4b3c071c6",
+   "source_document_id": null,
+   "source_title": "b03fa5b247e1dbe9ae1817811b483653947d36cd2c2696db81130ea4b3c071c6.pdf",
+   "official_url": "https://www.villageofkalida.com/phocadownload/other/Building-Permit-form.pdf"
+  }
+ ]
+}

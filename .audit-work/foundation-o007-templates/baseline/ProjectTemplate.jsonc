@@ -1,0 +1,63 @@
+{
+  "name": "ProjectTemplate",
+  "type": "object",
+  "description": "Reusable snapshot of an estimator project used as a starting template for new estimates.",
+  "properties": {
+    "template_name": {
+      "type": "string",
+      "description": "Name of the template, e.g. 'Standard 8ft Pylon Sign'"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description of when to use this template"
+    },
+    "module_key": {
+      "type": "string",
+      "description": "Estimator module this template belongs to."
+    },
+    "project_data": {
+      "type": "object",
+      "description": "Snapshot of the project to use as a template",
+      "additionalProperties": true
+    },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Internal random receipt used to make one Save Template action retry-safe without merging separate intentional templates."
+    }
+  },
+  "required": [
+    "template_name",
+    "project_data"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__admin_settings_backend_only__"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "__admin_settings_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__admin_settings_backend_only__"
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "target": "src/components/estimator/builder/builderEntityPersistence.js",
+  "sourceHead": "a78d9b057084f3692a22297d00cbf2ca7463aa7c",
+  "verifiedHead": "509de5f66dee6c34f0e044efce0338558243e53d",
+  "exactHash": "6b2ebe467e42d438d52b77bf380f47a6322da37f1678133d6a9fd4708db44577",
+  "protectedSourcesUnchanged": [
+    "base44/functions/staffEntityWrite/entry.ts",
+    "base44/entities/FoundationInventory.jsonc",
+    "base44/entities/FoundationProject.jsonc",
+    "base44/entities/WorkOrder.jsonc",
+    "src/components/estimator/workOrderConversion.js",
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/pages/FoundationEstimator.jsx",
+    "src/pages/FoundationInventory.jsx",
+    "src/components/masterInventory/FoundationMaterialDialog.jsx",
+    "src/components/masterInventory/inventoryPersistence.js"
+  ],
+  "clean": true,
+  "remoteConsumerDependencyBuild": true,
+  "offlineReadbackCases": 10,
+  "existingBuilderPersistenceCases": 8,
+  "schemaChanged": false,
+  "catalogMetadataActivated": false,
+  "reinforcementV2Activated": false,
+  "realStorageVerified": false,
+  "realAuthenticationVerified": false
+}

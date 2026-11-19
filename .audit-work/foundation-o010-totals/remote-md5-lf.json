@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "7e756189cb6bfd9595ea2a50af7c74b3 src/components/estimator/customerPricing.js\n3ceaf7546a7b0102d800d34c3982c84b src/components/estimator/foundation/foundationSellPricing.js\n225027c492e6e313e0929a4bb4e9ebb2 base44/shared/foundationPricingWire.ts\n35ac71956243f283e0b57b1bb8878dc6 src/components/estimator/builder/partSync.js\n1ee1c21dca11b5f366e7f0eba86ac32c src/components/markup/savedCustomerPricing.js\n6f3dc0192ce9e470b2cc89783e48a010 src/components/markup/markupEngine.jsx\n62e12a19df07978f60807561cb0bc085 src/components/markup/projectCategorizer.jsx\n01e9346ec859f760336a1406ce062b7b src/components/estimator/aioPricing.js\n5194e8fc2a3b08acd0d0fa34e2bb35ce src/components/estimator/customerQuote.js\nd969f848890c72745933bbfc6add9eeb src/components/markup/CustomerPricingTab.jsx\nf680a597efaf6bf1130ca0929470ea57 src/components/workflow/workOrderPersistence.js\n66eb0061d8c11736e008443f5e267273 src/components/estimator/depositGate.js\n1f1590145d997983b80005f258d1c67c base44/shared/dueDateEngine.ts\n6cc3828af8ac40be7cd3fff3170c330e base44/shared/productStatusModel.ts\na000c2dafef0dd0e137af7bfba7afee3 base44/shared/pricingEngine.ts\nad6f95bd2a858b29ede7be2489fdc068 base44/shared/pricingTemplateModel.ts\ne5e5d2f25ff527d6ce493f0bbe9f5ec9 src/components/estimator/foundation/foundationAssemblyModel.js\n7196df774da8580817fbee9b7cf4e1d2 src/components/estimator/foundation/wallCalculator.js\nee925f279e94ff10c51bf48436c6bd6b src/components/estimator/foundation/poleCalculator.js\ne8a41c45ebe8163c3089dbe4dbfe60d5 src/components/estimator/foundation/foundationCatalogIntegrity.js\n38630c71dba3d4703bec1912b5e86424 src/components/estimator/foundation/landscapeMaterials.js\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 902
+}

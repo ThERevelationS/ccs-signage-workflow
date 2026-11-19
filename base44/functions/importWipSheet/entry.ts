@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
@@ -178,7 +179,7 @@ async function readWipBytes(response) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const actor = await authenticateSignShopSession(base44, body?.session_token);
     if (actor?.role !== 'admin') {
@@ -264,6 +265,10 @@ Deno.serve(async (req) => {
       if (page.length < pageSize) break;
       skip += pageSize;
     }
+
+    // Exclude deleted, completed and rider rows from matching — a dead record
+    // must never absorb an update meant for a live order.
+    allWorkOrders = allWorkOrders.filter(wo => !wo.deleted && !wo.completed && !wo.is_rider);
 
     // Build lookup indexes for faster matching
     const byInvoiceNum = new Map();
@@ -478,7 +483,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 413].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 413, 429].includes(status) ? status : 500;
     console.error('importWipSheet error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'WIP import could not be completed safely' : error.message,

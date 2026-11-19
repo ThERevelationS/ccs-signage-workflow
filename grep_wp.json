@@ -1,0 +1,171 @@
+{
+  "matches": [
+    {
+      "path": "src/Layout.jsx",
+      "line": 78,
+      "text": "import { useWorkspacePreferences, WorkspacePreferencesProvider } from \"@/components/layout/WorkspacePreferencesProvider\";"
+    },
+    {
+      "path": "src/Layout.jsx",
+      "line": 241,
+      "text": "  const { prefs: workspacePrefs, reportNavOrder, updatePrefs: updateWorkspacePrefs, loaded: workspacePrefsLoaded } = useWorkspacePreferences();"
+    },
+    {
+      "path": "src/Layout.jsx",
+      "line": 1814,
+      "text": "      <WorkspacePreferencesProvider>"
+    },
+    {
+      "path": "src/Layout.jsx",
+      "line": 1816,
+      "text": "      </WorkspacePreferencesProvider>"
+    },
+    {
+      "path": "src/components/layout/NavPageLink.jsx",
+      "line": 4,
+      "text": "import { useWorkspacePreferences } from \"@/components/layout/WorkspacePreferencesProvider\";"
+    },
+    {
+      "path": "src/components/layout/NavPageLink.jsx",
+      "line": 22,
+      "text": "  const { prefs } = useWorkspacePreferences();"
+    },
+    {
+      "path": "src/components/layout/WorkspacePreferencesProvider.jsx",
+      "line": 15,
+      "text": "export function WorkspacePreferencesProvider({ children }) {"
+    },
+    {
+      "path": "src/components/layout/WorkspacePreferencesProvider.jsx",
+      "line": 103,
+      "text": "  const updatePrefs = useCallback((path, value) => {"
+    },
+    {
+      "path": "src/components/layout/WorkspacePreferencesProvider.jsx",
+      "line": 171,
+      "text": "    updatePrefs, patchPrefs, resetSection, resetAll,"
+    },
+    {
+      "path": "src/components/layout/WorkspacePreferencesProvider.jsx",
+      "line": 173,
+      "text": "  }), [prefs, profiles, loaded, saving, saveError, updatePrefs, patchPrefs, resetSection, resetAll, reportNavOrder, saveProfile, applyProfile, deleteProfile]);"
+    },
+    {
+      "path": "src/components/layout/WorkspacePreferencesProvider.jsx",
+      "line": 178,
+      "text": "export function useWorkspacePreferences() {"
+    },
+    {
+      "path": "src/components/layout/WorkspacePreferencesProvider.jsx",
+      "line": 182,
+      "text": "    updatePrefs: () => {}, patchPrefs: () => {}, resetSection: () => {}, resetAll: () => {},"
+    },
+    {
+      "path": "src/components/timeclock/WorkspaceSettingsCenter.jsx",
+      "line": 2,
+      "text": "import { useWorkspacePreferences } from \"@/components/layout/WorkspacePreferencesProvider\";"
+    },
+    {
+      "path": "src/components/timeclock/WorkspaceSettingsCenter.jsx",
+      "line": 64,
+      "text": "  const wp = useWorkspacePreferences();"
+    },
+    {
+      "path": "src/components/timeclock/WorkspaceSettingsCenter.jsx",
+      "line": 148,
+      "text": "              <Seg options={THEME_MODES} value={prefs.appearance?.mode || \"system\"} onChange={(v) => wp.updatePrefs(\"appearance.mode\", v)} />"
+    },
+    {
+      "path": "src/components/timeclock/WorkspaceSettingsCenter.jsx",
+      "line": 153,
+      "text": "                  <button key={name} type=\"button\" title={name} onClick={() => wp.updatePrefs(\"appearance.accent\", name)}"
+    },
+    {
+      "path": "src/components/timeclock/WorkspaceSettingsCenter.jsx",
+      "line": 162,
+      "text": "                  onValueChange={([v]) => wp.updatePrefs(\"appearance.fontScale\", v / 100)} />"
+    },
+    {
+      "path": "src/components/timeclock/WorkspaceSettingsCenter.jsx",
+      "line": 172,
+      "text": "              <Seg options={DENSITY_MODES} value={prefs.density || \"comfortable\"} onChange={(v) => wp.updatePrefs(\"density\", v)} />"
+    },
+    {
+      "path": "src/components/timeclock/WorkspaceSettingsCenter.jsx",
+      "line": 181,
+      "text": "              <Switch checked={!!prefs.appearance?.reducedMotion} onCheckedChange={(v) => wp.updatePrefs(\"appearance.reducedMotion\", v)} />"
+    },
+    {
+      "path": "src/components/timeclock/WorkspaceSettingsCenter.jsx",
+      "line": 184,
+      "text": "              <Switch checked={!!prefs.appearance?.highContrast} onCheckedChange={(v) => wp.updatePrefs(\"appearance.highContrast\", v)} />"
+    },
+    {
+      "path": "src/components/timeclock/WorkspaceSettingsCenter.jsx",
+      "line": 193,
+      "text": "              <Seg options={LABEL_MODES} value={nav.labels || \"full\"} onChange={(v) => wp.updatePrefs(\"navigation.labels\", v)} />"
+    },
+    {
+      "path": "src/components/timeclock/WorkspaceSettingsCenter.jsx",
+      "line": 196,
+      "text": "              <Seg options={SIZE_MODES} value={nav.size || \"auto\"} onChange={(v) => wp.updatePrefs(\"navigation.size\", v)} />"
+    },
+    {
+      "path": "src/components/timeclock/WorkspaceSettingsCenter.jsx",
+      "line": 199,
+      "text": "              <Switch checked={nav.tooltips !== false} onCheckedChange={(v) => wp.updatePrefs(\"navigation.tooltips\", v)} />"
+    },
+    {
+      "path": "src/components/timeclock/WorkspaceSettingsCenter.jsx",
+      "line": 233,
+      "text": "              <select value={nav.landingPage || \"\"} onChange={(e) => wp.updatePrefs(\"navigation.landingPage\", e.target.value)}"
+    },
+    {
+      "path": "src/components/timeclock/WorkspaceSettingsCenter.jsx",
+      "line": 247,
+      "text": "                onClick={() => wp.updatePrefs(\"workflow.stageFilter\", \"all\")}>"
+    },
+    {
+      "path": "src/components/timeclock/WorkspaceSettingsCenter.jsx",
+      "line": 258,
+      "text": "              <select value={prefs.pipeline?.defaultView || \"\"} onChange={(e) => wp.updatePrefs(\"pipeline.defaultView\", e.target.value)}"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 6,
+      "text": "import { useWorkspacePreferences } from \"@/components/layout/WorkspacePreferencesProvider\";"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 190,
+      "text": "  const { prefs, updatePrefs } = useWorkspacePreferences();"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 518,
+      "text": "  const writeSavedViews = (next) => updatePrefs(SAVED_VIEWS_PATH, (next || []).slice(-SAVED_VIEWS_CAP));"
+    },
+    {
+      "path": "src/pages/SalesPipeline.jsx",
+      "line": 4,
+      "text": "import { useWorkspacePreferences } from \"@/components/layout/WorkspacePreferencesProvider\";"
+    },
+    {
+      "path": "src/pages/SalesPipeline.jsx",
+      "line": 90,
+      "text": "  const { prefs: workspacePrefs, updatePrefs: updateWorkspacePrefs, loaded: workspacePrefsLoaded } = useWorkspacePreferences();"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 4,
+      "text": "import { useWorkspacePreferences } from \"@/components/layout/WorkspacePreferencesProvider\";"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 156,
+      "text": "  const { prefs: workspacePrefs, updatePrefs: updateWorkspacePrefs, loaded: workspacePrefsLoaded } = useWorkspacePreferences();"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 33
+}

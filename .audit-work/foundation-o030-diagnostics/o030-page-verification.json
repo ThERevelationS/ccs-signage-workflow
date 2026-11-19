@@ -1,0 +1,817 @@
+{
+ "results": [
+  {
+   "id": "warnings-render-not-blocking-save",
+   "ok": true
+  },
+  {
+   "id": "advisory-set-renders-and-saves",
+   "ok": true
+  },
+  {
+   "id": "clean-project-single-advisory",
+   "ok": true
+  },
+  {
+   "id": "empty-project-no-warning-panel",
+   "ok": true
+  },
+  {
+   "id": "blocking-issue-still-blocks-with-warning-present",
+   "ok": true
+  },
+  {
+   "id": "load-materialized-mix-no-advisory-bagged-admix-renders",
+   "ok": true
+  }
+ ],
+ "pass": true,
+ "proof": [
+  {
+   "caseId": "warnings-render-not-blocking-save",
+   "saveOutcome": {
+    "status": "saved"
+   },
+   "alertText": "",
+   "statusText": "Construction checks — verify before build Foundation 1: under hand dig excavation the soil spoil is assumed at 125% of the priced concrete volume (≈0.74 CY across 1 foundation) — excavation is priced as labor only; haul-off, disposal, and backfill are not priced. Verify spoil handling.",
+   "spies": [
+    [
+     "projectGet",
+     "synthetic-o030-project"
+    ],
+    [
+     "estimateGet",
+     "synthetic-o030-estimate"
+    ],
+    [
+     "estimateGet",
+     "synthetic-o030-estimate"
+    ],
+    [
+     "estimateGet",
+     "synthetic-o030-estimate"
+    ],
+    [
+     "saveSource",
+     {
+      "query": {
+       "id": "synthetic-o030-project",
+       "updated_date": "synthetic-v1"
+      },
+      "patch": {
+       "$set": {
+        "project_name": "Edited",
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "items": [
+         {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 48,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": false,
+          "include_forming": true,
+          "include_finishing": true,
+          "is_new_sign_location": false,
+          "selected_concrete_id": "synthetic-readymix",
+          "excavation_method": "hand_dig",
+          "selected_forming_id": "synthetic-forming",
+          "item_total_cost": 201.77777777777777,
+          "concrete_volume_cy": 0.5925925925925926,
+          "concrete_cost": 0,
+          "excavation_cost": 88.88888888888889,
+          "excavation_volume_cy": 0.7407407407407407,
+          "concrete_bags": null,
+          "rebar_feet": 0,
+          "rebar_weight_lbs": 0,
+          "concrete_rate": 190,
+          "rebar_cost": 0,
+          "rebar_rate": 0,
+          "excavation_hours": 1.4814814814814814,
+          "forming_cost": 84,
+          "forming_qty": 2,
+          "pouring_cost": 8.88888888888889,
+          "finishing_cost": 20,
+          "finishing_hours": 0.3333333333333333
+         }
+        ],
+        "selected_equipment": [],
+        "walls": [],
+        "wall_caps": [],
+        "poles": [],
+        "signage_cabinets": [],
+        "landscape": {
+         "cell_size_inches": 12,
+         "cells": {}
+        },
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "customer_pricing": {
+         "applied": false
+        },
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "concrete_delivery_snapshot": {
+         "version": 1,
+         "concrete_total": 337.5,
+         "rounded_yards": 0.75,
+         "rate_per_yard": 210,
+         "additional_stops_cost": 0,
+         "trucks": [
+          {
+           "yards": 0.75,
+           "rounded_yards": 0.75,
+           "cost": 337.5,
+           "small_order_fee": 145,
+           "fuel_fee": 35
+          }
+         ]
+        },
+        "total_concrete_cost": 337.5,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 88.88888888888889,
+        "total_labor_cost": 28.88888888888889,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 84,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+         "schema_version": 1,
+         "key": "key-foundation_sync-2",
+         "source_project_id": "synthetic-o030-project",
+         "estimate_id": "synthetic-o030-estimate",
+         "requested_at": "2026-11-11T09:24:46.688Z"
+        }
+       }
+      }
+     }
+    ],
+    [
+     "projectGet",
+     "synthetic-o030-project"
+    ],
+    [
+     "recordBuilderSave",
+     {
+      "estimateId": "synthetic-o030-estimate",
+      "line": {
+       "project_id": "synthetic-o030-project",
+       "module_key": "foundation"
+      },
+      "sourceProject": {
+       "id": "synthetic-o030-project",
+       "updated_date": "synthetic-v2",
+       "project_name": "Edited",
+       "project_concrete_type": "4000_ae",
+       "project_concrete_admixtures": [],
+       "items": [
+        {
+         "component_id": "synthetic-item-1",
+         "foundation_type": "spread_foot",
+         "quantity": 2,
+         "length_inches": 48,
+         "width_inches": 24,
+         "depth_inches": 12,
+         "include_rebar": false,
+         "include_forming": true,
+         "include_finishing": true,
+         "is_new_sign_location": false,
+         "selected_concrete_id": "synthetic-readymix",
+         "excavation_method": "hand_dig",
+         "selected_forming_id": "synthetic-forming",
+         "item_total_cost": 201.77777777777777,
+         "concrete_volume_cy": 0.5925925925925926,
+         "concrete_cost": 0,
+         "excavation_cost": 88.88888888888889,
+         "excavation_volume_cy": 0.7407407407407407,
+         "concrete_bags": null,
+         "rebar_feet": 0,
+         "rebar_weight_lbs": 0,
+         "concrete_rate": 190,
+         "rebar_cost": 0,
+         "rebar_rate": 0,
+         "excavation_hours": 1.4814814814814814,
+         "forming_cost": 84,
+         "forming_qty": 2,
+         "pouring_cost": 8.88888888888889,
+         "finishing_cost": 20,
+         "finishing_hours": 0.3333333333333333
+        }
+       ],
+       "poles": [],
+       "wall_caps": [],
+       "walls": [],
+       "selected_equipment": [],
+       "signage_cabinets": [],
+       "landscape": {
+        "cell_size_inches": 12,
+        "cells": {}
+       },
+       "customer_pricing": {
+        "applied": false
+       },
+       "excavation_method": "hand_dig",
+       "total_concrete_cost": 337.5,
+       "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 337.5,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 210,
+        "additional_stops_cost": 0,
+        "trucks": [
+         {
+          "yards": 0.75,
+          "rounded_yards": 0.75,
+          "cost": 337.5,
+          "small_order_fee": 145,
+          "fuel_fee": 35
+         }
+        ]
+       },
+       "status": "calculated",
+       "assembly_schema_version": 1,
+       "total_signage_cabinet_cost": 0,
+       "total_landscape_cost": 0,
+       "customer_markup_percent": 0,
+       "total_rebar_cost": 0,
+       "total_excavation_cost": 88.88888888888889,
+       "total_labor_cost": 28.88888888888889,
+       "total_equipment_cost": 0,
+       "total_forming_materials_cost": 84,
+       "total_pole_cost": 0,
+       "total_pole_painting_cost": 0,
+       "total_brick_cost": 0,
+       "total_fill_cost": 0,
+       "total_wall_cost": 0,
+       "total_wall_cap_cost": 0,
+       "builder_sync_attempt": {
+        "schema_version": 1,
+        "key": "key-foundation_sync-2",
+        "source_project_id": "synthetic-o030-project",
+        "estimate_id": "synthetic-o030-estimate",
+        "requested_at": "2026-11-11T09:24:46.688Z"
+       },
+       "builder_calculation": {
+        "totals": {
+         "total_concrete_cost": 337.5,
+         "concrete_delivery_cost": 337.5,
+         "concrete_delivered_yards": 0.75,
+         "concrete_rate_per_yard": 210,
+         "concrete_trucks": [
+          {
+           "yards": 0.75,
+           "roundedYards": 0.75,
+           "cost": 337.5,
+           "smallOrderFee": 145,
+           "fuelFee": 35
+          }
+         ],
+         "additional_stops_cost": 0,
+         "total_rebar_cost": 0,
+         "total_excavation_cost": 88.88888888888889,
+         "total_forming_materials_cost": 84,
+         "total_labor_cost": 28.88888888888889,
+         "total_pole_cost": 0,
+         "total_pole_painting_cost": 0,
+         "total_brick_cost": 0,
+         "total_fill_cost": 0,
+         "total_equipment_cost": 0,
+         "total_wall_cost": 0,
+         "total_wall_cap_cost": 0,
+         "wall_caps_by_material": [],
+         "total_concrete_volume_cy": 0.5925925925925926,
+         "total_excavation_volume_cy": 0.7407407407407407,
+         "total_labor_hours": 1.8148148148148147,
+         "total_signage_cabinet_cost": 0,
+         "total_landscape_cost": 0,
+         "grand_total": 539.2777777777778
+        },
+        "delivery": {
+         "issues": [],
+         "concreteTotal": 337.5,
+         "roundedYards": 0.75,
+         "ratePerYard": 210,
+         "trucksList": [
+          {
+           "yards": 0.75,
+           "roundedYards": 0.75,
+           "cost": 337.5,
+           "smallOrderFee": 145,
+           "fuelFee": 35
+          }
+         ],
+         "additionalStopsCost": 0,
+         "availableMixes": [
+          {
+           "id": "3500_ae",
+           "name": "3500 AIR ENTRAINED (AE)",
+           "price": 205,
+           "field": "mix_3500_price",
+           "desc": "Often used for driveways, slabs, and moderate-load footings."
+          },
+          {
+           "id": "4000_ae",
+           "name": "4000 AIR ENTRAINED (AE)",
+           "price": 210,
+           "field": "mix_4000_price",
+           "desc": "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability."
+          },
+          {
+           "id": "4500_ae",
+           "name": "4500 AIR ENTRAINED (AE)",
+           "price": 218,
+           "field": "mix_4500_price",
+           "desc": "Used for heavy-duty commercial slabs and heavy traffic areas."
+          },
+          {
+           "id": "5000_ae",
+           "name": "5000 AIR ENTRAINED (AE)",
+           "price": 224,
+           "field": "mix_5000_price",
+           "desc": "High-strength mix for heavy structural columns, pillars, and extreme load conditions."
+          },
+          {
+           "id": "fast_set",
+           "name": "FAST SET",
+           "price": 258,
+           "field": "mix_fast_set_price",
+           "desc": "Quick-curing concrete used when rapid strength gain is needed to minimize downtime."
+          }
+         ],
+         "availableAdmixes": [
+          {
+           "id": "calcium_chloride",
+           "name": "Calcium Chloride",
+           "price": 9,
+           "field": "admix_calcium_chloride_price",
+           "desc": "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!"
+          },
+          {
+           "id": "set_retarding",
+           "name": "Set-Retarding Admix (Type D)",
+           "price": 5,
+           "field": "admix_set_retarding_price",
+           "desc": "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site."
+          },
+          {
+           "id": "water_reducing",
+           "name": "Water-Reducing Admix (Type A)",
+           "price": 4.75,
+           "field": "admix_water_reducing_price",
+           "desc": "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar."
+          },
+          {
+           "id": "fibers",
+           "name": "Fibers",
+           "price": 13,
+           "field": "admix_fibers_price",
+           "desc": "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse."
+          },
+          {
+           "id": "winter_service",
+           "name": "Winter Service",
+           "price": 6,
+           "field": "admix_winter_service_price",
+           "desc": "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing."
+          }
+         ]
+        },
+        "cabinet_cost": 0,
+        "landscape_cost": 0,
+        "section_total": 539.2777777777778
+       }
+      },
+      "liveTotal": 539.2777777777778
+     }
+    ]
+   ]
+  },
+  {
+   "caseId": "advisory-set-renders-and-saves",
+   "saveOutcome": {
+    "status": "saved"
+   },
+   "alertText": "",
+   "statusText": "Construction checks — verify before build Foundation 1: under equipment excavation the soil spoil is assumed at 125% of the priced concrete volume (≈0.74 CY across 1 foundation) — excavation is priced as labor only; haul-off, disposal, and backfill are not priced. Verify spoil handling. Foundation 1: equipment excavation is priced as crew hours at the equipment rate — no excavation equipment rental is attached to this project. Verify whether a rental is needed. Foundation 1: forming is priced but top finishing is not — a formed pour still exposes the top surface. Verify whether finishing is in scope. Concrete delivery: Calcium Chloride is selected while Foundation 1 includes rebar — the supplier catalog warns calcium chloride corrodes rebar. Verify the admixture choice. Concrete delivery: Calcium Chloride (accelerating) and Set-Retarding Admix (Type D) (retarding) admixtures are selected together — verify the intended set behavior.",
+   "spies": [
+    [
+     "projectGet",
+     "synthetic-o030-project"
+    ],
+    [
+     "estimateGet",
+     "synthetic-o030-estimate"
+    ],
+    [
+     "estimateGet",
+     "synthetic-o030-estimate"
+    ],
+    [
+     "estimateGet",
+     "synthetic-o030-estimate"
+    ],
+    [
+     "saveSource",
+     {
+      "query": {
+       "id": "synthetic-o030-project",
+       "updated_date": "synthetic-v1"
+      },
+      "patch": {
+       "$set": {
+        "project_name": "Edited",
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "items": [
+         {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 48,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": true,
+          "include_forming": true,
+          "include_finishing": false,
+          "is_new_sign_location": false,
+          "selected_concrete_id": "synthetic-readymix",
+          "excavation_method": "equipment_excavation",
+          "selected_forming_id": "synthetic-forming",
+          "item_total_cost": 312.49111111111114,
+          "concrete_volume_cy": 0.5925925925925926,
+          "concrete_cost": 0,
+          "excavation_cost": 22.22222222222222,
+          "rebar_size": "#4",
+          "rebar_spacing_length": 12,
+          "rebar_spacing_width": 12,
+          "rebar_layers": 1,
+          "excavation_volume_cy": 0.7407407407407407,
+          "concrete_bags": null,
+          "rebar_feet": 59,
+          "rebar_weight_lbs": 39.412,
+          "concrete_rate": 190,
+          "rebar_cost": 197.38,
+          "rebar_rate": 0.62,
+          "excavation_hours": 0.37037037037037035,
+          "forming_cost": 84,
+          "forming_qty": 2,
+          "pouring_cost": 8.88888888888889,
+          "finishing_cost": 0,
+          "finishing_hours": 0
+         }
+        ],
+        "selected_equipment": [],
+        "walls": [],
+        "wall_caps": [],
+        "poles": [],
+        "signage_cabinets": [],
+        "landscape": {
+         "cell_size_inches": 12,
+         "cells": {}
+        },
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "customer_pricing": {
+         "applied": false
+        },
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [
+         "calcium_chloride",
+         "set_retarding"
+        ],
+        "concrete_delivery_snapshot": {
+         "version": 1,
+         "concrete_total": 348,
+         "rounded_yards": 0.75,
+         "rate_per_yard": 224,
+         "additional_stops_cost": 0,
+         "trucks": [
+          {
+           "yards": 0.75,
+           "rounded_yards": 0.75,
+           "cost": 348,
+           "small_order_fee": 145,
+           "fuel_fee": 35
+          }
+         ]
+        },
+        "total_concrete_cost": 348,
+        "total_rebar_cost": 197.38,
+        "total_excavation_cost": 22.22222222222222,
+        "total_labor_cost": 8.88888888888889,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 84,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+         "schema_version": 1,
+         "key": "key-foundation_sync-4",
+         "source_project_id": "synthetic-o030-project",
+         "estimate_id": "synthetic-o030-estimate",
+         "requested_at": "2026-11-11T09:24:46.713Z"
+        }
+       }
+      }
+     }
+    ],
+    [
+     "projectGet",
+     "synthetic-o030-project"
+    ],
+    [
+     "recordBuilderSave",
+     {
+      "estimateId": "synthetic-o030-estimate",
+      "line": {
+       "project_id": "synthetic-o030-project",
+       "module_key": "foundation"
+      },
+      "sourceProject": {
+       "id": "synthetic-o030-project",
+       "updated_date": "synthetic-v2",
+       "project_name": "Edited",
+       "project_concrete_type": "4000_ae",
+       "project_concrete_admixtures": [
+        "calcium_chloride",
+        "set_retarding"
+       ],
+       "items": [
+        {
+         "component_id": "synthetic-item-1",
+         "foundation_type": "spread_foot",
+         "quantity": 2,
+         "length_inches": 48,
+         "width_inches": 24,
+         "depth_inches": 12,
+         "include_rebar": true,
+         "include_forming": true,
+         "include_finishing": false,
+         "is_new_sign_location": false,
+         "selected_concrete_id": "synthetic-readymix",
+         "excavation_method": "equipment_excavation",
+         "selected_forming_id": "synthetic-forming",
+         "item_total_cost": 312.49111111111114,
+         "concrete_volume_cy": 0.5925925925925926,
+         "concrete_cost": 0,
+         "excavation_cost": 22.22222222222222,
+         "rebar_size": "#4",
+         "rebar_spacing_length": 12,
+         "rebar_spacing_width": 12,
+         "rebar_layers": 1,
+         "excavation_volume_cy": 0.7407407407407407,
+         "concrete_bags": null,
+         "rebar_feet": 59,
+         "rebar_weight_lbs": 39.412,
+         "concrete_rate": 190,
+         "rebar_cost": 197.38,
+         "rebar_rate": 0.62,
+         "excavation_hours": 0.37037037037037035,
+         "forming_cost": 84,
+         "forming_qty": 2,
+         "pouring_cost": 8.88888888888889,
+         "finishing_cost": 0,
+         "finishing_hours": 0
+        }
+       ],
+       "poles": [],
+       "wall_caps": [],
+       "walls": [],
+       "selected_equipment": [],
+       "signage_cabinets": [],
+       "landscape": {
+        "cell_size_inches": 12,
+        "cells": {}
+       },
+       "customer_pricing": {
+        "applied": false
+       },
+       "excavation_method": "hand_dig",
+       "total_concrete_cost": 348,
+       "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 348,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 224,
+        "additional_stops_cost": 0,
+        "trucks": [
+         {
+          "yards": 0.75,
+          "rounded_yards": 0.75,
+          "cost": 348,
+          "small_order_fee": 145,
+          "fuel_fee": 35
+         }
+        ]
+       },
+       "status": "calculated",
+       "assembly_schema_version": 1,
+       "total_signage_cabinet_cost": 0,
+       "total_landscape_cost": 0,
+       "customer_markup_percent": 0,
+       "total_rebar_cost": 197.38,
+       "total_excavation_cost": 22.22222222222222,
+       "total_labor_cost": 8.88888888888889,
+       "total_equipment_cost": 0,
+       "total_forming_materials_cost": 84,
+       "total_pole_cost": 0,
+       "total_pole_painting_cost": 0,
+       "total_brick_cost": 0,
+       "total_fill_cost": 0,
+       "total_wall_cost": 0,
+       "total_wall_cap_cost": 0,
+       "builder_sync_attempt": {
+        "schema_version": 1,
+        "key": "key-foundation_sync-4",
+        "source_project_id": "synthetic-o030-project",
+        "estimate_id": "synthetic-o030-estimate",
+        "requested_at": "2026-11-11T09:24:46.713Z"
+       },
+       "builder_calculation": {
+        "totals": {
+         "total_concrete_cost": 348,
+         "concrete_delivery_cost": 348,
+         "concrete_delivered_yards": 0.75,
+         "concrete_rate_per_yard": 224,
+         "concrete_trucks": [
+          {
+           "yards": 0.75,
+           "roundedYards": 0.75,
+           "cost": 348,
+           "smallOrderFee": 145,
+           "fuelFee": 35
+          }
+         ],
+         "additional_stops_cost": 0,
+         "total_rebar_cost": 197.38,
+         "total_excavation_cost": 22.22222222222222,
+         "total_forming_materials_cost": 84,
+         "total_labor_cost": 8.88888888888889,
+         "total_pole_cost": 0,
+         "total_pole_painting_cost": 0,
+         "total_brick_cost": 0,
+         "total_fill_cost": 0,
+         "total_equipment_cost": 0,
+         "total_wall_cost": 0,
+         "total_wall_cap_cost": 0,
+         "wall_caps_by_material": [],
+         "total_concrete_volume_cy": 0.5925925925925926,
+         "total_excavation_volume_cy": 0.7407407407407407,
+         "total_labor_hours": 0.37037037037037035,
+         "total_signage_cabinet_cost": 0,
+         "total_landscape_cost": 0,
+         "grand_total": 660.4911111111112
+        },
+        "delivery": {
+         "issues": [],
+         "concreteTotal": 348,
+         "roundedYards": 0.75,
+         "ratePerYard": 224,
+         "trucksList": [
+          {
+           "yards": 0.75,
+           "roundedYards": 0.75,
+           "cost": 348,
+           "smallOrderFee": 145,
+           "fuelFee": 35
+          }
+         ],
+         "additionalStopsCost": 0,
+         "availableMixes": [
+          {
+           "id": "3500_ae",
+           "name": "3500 AIR ENTRAINED (AE)",
+           "price": 205,
+           "field": "mix_3500_price",
+           "desc": "Often used for driveways, slabs, and moderate-load footings."
+          },
+          {
+           "id": "4000_ae",
+           "name": "4000 AIR ENTRAINED (AE)",
+           "price": 210,
+           "field": "mix_4000_price",
+           "desc": "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability."
+          },
+          {
+           "id": "4500_ae",
+           "name": "4500 AIR ENTRAINED (AE)",
+           "price": 218,
+           "field": "mix_4500_price",
+           "desc": "Used for heavy-duty commercial slabs and heavy traffic areas."
+          },
+          {
+           "id": "5000_ae",
+           "name": "5000 AIR ENTRAINED (AE)",
+           "price": 224,
+           "field": "mix_5000_price",
+           "desc": "High-strength mix for heavy structural columns, pillars, and extreme load conditions."
+          },
+          {
+           "id": "fast_set",
+           "name": "FAST SET",
+           "price": 258,
+           "field": "mix_fast_set_price",
+           "desc": "Quick-curing concrete used when rapid strength gain is needed to minimize downtime."
+          }
+         ],
+         "availableAdmixes": [
+          {
+           "id": "calcium_chloride",
+           "name": "Calcium Chloride",
+           "price": 9,
+           "field": "admix_calcium_chloride_price",
+           "desc": "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!"
+          },
+          {
+           "id": "set_retarding",
+           "name": "Set-Retarding Admix (Type D)",
+           "price": 5,
+           "field": "admix_set_retarding_price",
+           "desc": "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site."
+          },
+          {
+           "id": "water_reducing",
+           "name": "Water-Reducing Admix (Type A)",
+           "price": 4.75,
+           "field": "admix_water_reducing_price",
+           "desc": "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar."
+          },
+          {
+           "id": "fibers",
+           "name": "Fibers",
+           "price": 13,
+           "field": "admix_fibers_price",
+           "desc": "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse."
+          },
+          {
+           "id": "winter_service",
+           "name": "Winter Service",
+           "price": 6,
+           "field": "admix_winter_service_price",
+           "desc": "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing."
+          }
+         ]
+        },
+        "cabinet_cost": 0,
+        "landscape_cost": 0,
+        "section_total": 660.4911111111112
+       }
+      },
+      "liveTotal": 660.4911111111112
+     }
+    ]
+   ]
+  },
+  {
+   "caseId": "blocking-issue-still-blocks-with-warning-present",
+   "saveOutcome": {
+    "status": "failed",
+    "error": "Save paused: fix highlighted design inputs or catalog selections."
+   },
+   "alertText": "Pricing unavailable: fix highlighted design inputs or catalog selections before saving. | Design input required: fix highlighted design inputs below. Save and estimate handoff are paused. Foundation 1: length (inches) must be a finite positive number.",
+   "statusText": "Construction checks — verify before build Foundation 1: forming is priced but top finishing is not — a formed pour still exposes the top surface. Verify whether finishing is in scope.",
+   "spies": [
+    [
+     "projectGet",
+     "synthetic-o030-project"
+    ],
+    [
+     "estimateGet",
+     "synthetic-o030-estimate"
+    ],
+    [
+     "estimateGet",
+     "synthetic-o030-estimate"
+    ]
+   ]
+  },
+  {
+   "caseId": "load-materialized-mix-no-advisory-bagged-admix-renders",
+   "alertText": "",
+   "statusText": "Construction checks — verify before build Foundation 1: under hand dig excavation the soil spoil is assumed at 125% of the priced concrete volume (≈0.74 CY across 1 foundation) — excavation is priced as labor only; haul-off, disposal, and backfill are not priced. Verify spoil handling. Concrete delivery: selected admixtures apply to delivered ready-mix only — every foundation uses bagged concrete, so they price nothing here. Verify the admixture selection.",
+   "spies": [
+    [
+     "projectGet",
+     "synthetic-o030-project"
+    ],
+    [
+     "estimateGet",
+     "synthetic-o030-estimate"
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,19 @@
+{
+  "synthetic": true,
+  "cases": [
+    "missing pole retains its complete supplied snapshot",
+    "missing cap retains supplied price, stock length and authored metadata",
+    "missing outer wall retains the coherent saved cost object",
+    "missing internal wall cannot silently remove the internal cost",
+    "absent snapshots stay absent, rather than manufactured zero-valued fields",
+    "zero is a saved amount; absent, coerced and invalid values are not",
+    "project flags each missing reference without mutating snapshot inputs",
+    "unassigned selections differ from unavailable selections",
+    "disabled internal walls do not require an internal selection",
+    "complete-catalog outputs match the frozen original cost engine exactly",
+    "complete catalogs with legitimate zero pole override and cap rate remain unchanged"
+  ],
+  "completeCatalogParity": true,
+  "inputsFrozen": true,
+  "scope": "Snapshot preservation and missing-reference status; no engineering/formula correctness claim."
+}

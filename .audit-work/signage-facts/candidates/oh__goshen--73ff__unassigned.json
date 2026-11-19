@@ -1,0 +1,24 @@
+{
+ "jurisdiction_id": "6adf809f5554ccaeebf173ff",
+ "jurisdiction_name": "Goshen",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "GOSHEN TOWNSHIP PERMIT REQUIREMENTS Revised 3-12-2020 *APPLICATION WITH PROPERTY OWNER'S SIGNATURE REQUIRED FOR ALL PERMITS* **INSPECTIONS REQUIRED: FINAL, FOUNDATION, PIERS & SIGNS** COMMERCIAL APPLICATION TYPE PLANS REQUIRED NUMBER OF SETS New Commmercial Building ISR Worksheet 1 Commercial Addition Interior Finish/Alterations Accessory Use Structure (including solar panels) (120 sq. ft. and over) Accessory Use Structure (under 120 sq. ft.) Site Plan Elevation Floor Plan Façade Renovations Site Plan Elevation Signage Plan (if applicable) Tenant Change (no interior changes) Site Plan Floor Plan Letter of Intent 1 New Sign Site Plan Sign Details Elevation Foundation Plan (if applicable) Sign Face Change Site Plan Before/After Elevations Temporary Sign Site Plan Sign Elevation Temporary Tents Site Plan (Under 200 sq. ft. closed sides) Tent Details (Under 700 Sq. ft. open sides) Letter of ",
+   "tags": [
+    "sign",
+    "area",
+    "temporary",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "47bbe40103a0da575395e3fa1f86c4106c6434c673f47909485146ab5fd3795c",
+   "source_document_id": null,
+   "source_title": "47bbe40103a0da575395e3fa1f86c4106c6434c673f47909485146ab5fd3795c.pdf",
+   "official_url": "https://goshen-oh.gov/PDF/cd/apps/060920-CommPermitRequirements.pdf"
+  }
+ ]
+}

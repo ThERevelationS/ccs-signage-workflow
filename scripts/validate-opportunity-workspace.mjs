@@ -79,8 +79,8 @@ assert.match(globalSearch, /action: "global_search"/, 'search must request globa
 assert.ok(!globalSearch.includes('entities.Invoice'), 'search must not touch backend-only entities directly');
 
 // Lifecycle hub: the Opportunity detail must surface linked financial records.
-assert.match(entry, /Invoice\.filter\(\{ opportunity_id: opportunityId \}\)/, 'detail must load linked invoices');
-assert.match(entry, /PurchaseOrder\.filter\(\{ opportunity_id: opportunityId \}\)/, 'detail must load linked POs');
+assert.match(entry, /Invoice\.filter\(\{ opportunity_id: opportunityId \},\s*"[^"]+",\s*\d{3,}\)/, 'detail must load linked invoices with an explicit limit');
+assert.match(entry, /PurchaseOrder\.filter\(\{ opportunity_id: opportunityId \},\s*"[^"]+",\s*\d{3,}\)/, 'detail must load linked POs with an explicit limit');
 assert.match(entry, /financials: \{/, 'detail must return a financial rollup');
 assert.match(page, /detail\?\.financials|detail\.financials/, 'page must render the financial rollup');
 
@@ -139,7 +139,7 @@ for (const action of ['list_invoiceable_estimates', 'create_from_estimate']) {
 assert.match(invoicing, /Only approved estimates can be invoiced/, 'billing must require an approved estimate');
 assert.match(invoicing, /billing_type/, 'invoices must carry a progress-billing type');
 assert.match(invoicing, /already has .* invoiced|already fully invoiced|exceed the billable remainder/, 'billing must guard against over-billing');
-assert.match(invoicing, /Estimate\.filter\(\{ status: "approved" \}/, 'invoiceable list must only offer approved estimates');
+assert.match(invoicing, /Estimate\.filter\(\{ status: "approved" \}|query: \{ status: "approved" \}/, 'invoiceable list must only offer approved estimates');
 assert.match(invoicesPage, /action: "list_invoiceable_estimates"/, 'page must list invoiceable estimates');
 assert.match(invoicesPage, /action: "create_from_estimate"/, 'page must create invoices from estimates');
 assert.match(readFileSync('base44/entities/Invoice.jsonc', 'utf8'), /"deposit".*"progress".*"final"|deposit.*progress.*final/s, 'billing_type enum must include deposit/progress/final');
@@ -365,6 +365,10 @@ assert.match(palette, /pagesConfig\?\.Pages/, 'command palette must index routed
 assert.match(palette, /\/Opportunities\?open=/, 'command palette must deep-link opportunities');
 assert.match(palette, /\/Invoices\?invoice=/, 'command palette must deep-link invoices');
 assert.match(appShell, /<CommandPalette \/>/, 'app shell must mount the command palette');
+for (const p of ['ProductQueues','JobWorkspace','WalkIn','OpsReports','CrmEvents','Imports','Reconciliation','CustomerStatements','PricingAdmin','CommsFollowups']) {
+  assert.ok(palette.includes(p), 'command palette must index ' + p);
+}
+assert.ok(palette.includes('/JobWorkspace?wo='), 'command palette must deep-link work orders to job workspace');
 assert.match(poPage, /Overdue/, 'PO list must flag overdue rows');
 assert.match(entry, /lost_reasons: lostReasons/, 'funnel must report loss reasons');
 assert.match(entry, /No reason given/, 'funnel must bucket unreasoned losses');
@@ -375,7 +379,7 @@ assert.match(portalFn, /display_pages.*customerportal|customerportal.*display_pa
 assert.match(portalPage, /data\?\.announcements/, 'portal page must render announcements');
 const annManager = readFileSync('src/components/announcements/AnnouncementManager.jsx', 'utf8');
 assert.match(annManager, /customerportal/, 'announcement manager must offer the portal page target');
-assert.match(entry, /payments: \(Array\.isArray\(payments\)/, 'customer 360 must return payments for the statement');
+assert.match(entry, /payments: custPayments|payments: \(Array\.isArray\(payments\)/, 'customer 360 must return payments for the statement');
 assert.match(custDetailPage, /statementHtml/, 'customer 360 must render a printable statement');
 assert.match(custDetailPage, /escHtml/, 'statement must escape customer-supplied values');
 assert.match(invoicing, /action === "revenue_summary"/, 'invoicing must expose a revenue summary for reporting');
@@ -399,6 +403,7 @@ assert.match(oppPage3, /dupes/, 'intake must warn on possible duplicate customer
 assert.match(entry, /attention_feed/, 'workspace must expose an attention feed');
 assert.match(entry, /read_by_staff: false/, 'attention feed must count unread portal messages');
 const attentionFeed = readFileSync('src/components/workflow/AttentionFeed.jsx', 'utf8');
+const attentionFeedCats = readFileSync('src/components/workflow/attentionFeedCategories.js', 'utf8');
 assert.match(attentionFeed, /attention_feed/, 'attention feed must call the workspace action');
 const mainWorkflow = readFileSync('src/pages/MainWorkflow.jsx', 'utf8');
 assert.match(mainWorkflow, /AttentionFeed/, 'main workflow must mount the attention feed');
@@ -409,7 +414,7 @@ const woDialog = readFileSync('src/components/workflow/WorkOrderDetailsDialog.js
 assert.match(woDialog, /Print Traveler/, 'work order dialog must link to the traveler');
 assert.match(oppPage3, /PipelineBoard/, 'opportunities must include a kanban board view');
 assert.match(oppPage3, /text\/opp-id/, 'board must support drag-drop stage moves');
-assert.match(entry, /work_orders: \(Array\.isArray\(wos\)/, 'global search must include work orders');
+assert.match(entry, /work_orders:\s*(?:mergeLegacy\([^)]*,\s*)?\(Array\.isArray\(wos\)/, 'global search must include work orders');
 assert.match(palette, /work_orders/, 'command palette must surface work orders');
 assert.match(mainWorkflow, /\?wo=|get\("wo"\)/, 'main workflow must deep-link work orders');
 const coPage2 = readFileSync('src/pages/ChangeOrders.jsx', 'utf8');
@@ -437,10 +442,10 @@ assert.match(entry, /low_stock/, 'attention feed must expose low stock');
 assert.match(entry, /overdue_jobs/, 'attention feed must expose overdue jobs');
 assert.match(entry, /expiring_permits/, 'attention feed must expose expiring permits');
 assert.match(entry, /permit_fees_due/, 'attention feed must expose permit fees due');
-assert.match(attentionFeed, /low_stock/, 'attention feed UI must show low stock');
-assert.match(attentionFeed, /overdue_jobs/, 'attention feed UI must show overdue jobs');
-assert.match(attentionFeed, /expiring_permits/, 'attention feed UI must show expiring permits');
-assert.match(attentionFeed, /permit_fees_due/, 'attention feed UI must show permit fees due');
+assert.match(attentionFeedCats, /low_stock/, 'attention feed UI must show low stock');
+assert.match(attentionFeedCats, /overdue_jobs/, 'attention feed UI must show overdue jobs');
+assert.match(attentionFeedCats, /expiring_permits/, 'attention feed UI must show expiring permits');
+assert.match(attentionFeedCats, /permit_fees_due/, 'attention feed UI must show permit fees due');
 assert.match(invoicing, /email_statement/, 'invoicing must expose statement emails');
 assert.match(invoicesPage, /email_statement/, 'invoice detail must offer email statement');
 const quoteDelivery = readFileSync('base44/functions/recordEstimateQuoteDelivery/entry.ts', 'utf8');
@@ -452,8 +457,12 @@ const acceptFn = readFileSync('base44/functions/recordEstimateAcceptance/entry.t
 assert.match(acceptFn, /javascript\|data\|vbscript/, 'acceptance evidence_reference must reject dangerous URL schemes');
 
 const poPageV = readFileSync('src/pages/PurchaseOrders.jsx', 'utf8');
-assert.match(poPageV, /Fill every line with its full open quantity/, 'PO receive must offer fill-all');
+const receivePanelSrc = existsSync('src/components/procurement/ReceivePanel.jsx') ? readFileSync('src/components/procurement/ReceivePanel.jsx', 'utf8') : '';
+assert.match(poPageV + receivePanelSrc, /Fill every line with its full open quantity/, 'PO receive must offer fill-all');
 const layoutShell = readFileSync('src/Layout.jsx', 'utf8');
+assert.match(layoutShell, /OpsReports/, 'sidebar must link ops reports');
+assert.match(layoutShell, /CustomerStatements/, 'sidebar must link statements');
+assert.match(layoutShell, /Reconciliation/, 'sidebar must link reconciliation');
 assert.match(layoutShell, /AttentionBell/, 'shell must mount the attention bell');
 assert.ok(existsSync('src/components/workflow/AttentionBell.jsx'), 'attention bell component must exist');
 const queuesPage = readFileSync('src/pages/EstimatorQueues.jsx', 'utf8');

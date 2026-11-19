@@ -1,0 +1,17 @@
+{
+ "inputs": [
+  "node_modules/react/cjs/react.development.js",
+  "node_modules/react/index.js",
+  "node_modules/scheduler/cjs/scheduler.development.js",
+  "node_modules/scheduler/index.js",
+  "node_modules/react-dom/cjs/react-dom.development.js",
+  "node_modules/react-dom/index.js",
+  "node_modules/react-dom/client.js",
+  "s:C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\s-lucide_react",
+  "src/components/estimator/foundation/foundationLayoutModel.js",
+  "node_modules/react/cjs/react-jsx-runtime.development.js",
+  "node_modules/react/jsx-runtime.js",
+  "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+  "h:harness"
+ ]
+}

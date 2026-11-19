@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, createContext, useContext, useRef, Fragment } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -33,12 +33,19 @@ import {
   GitBranch,
   Receipt,
   FileDiff,
+  FileText,
+  Scale,
   Package,
+  BookOpen,
   Minimize2,
   ChevronsLeft,
   ChevronsRight,
   ChevronsUp,
   ChevronsDown,
+  HardDrive,
+  FolderPlus,
+  PencilLine,
+  Trash2,
 } from "lucide-react";
 import { DarkModeSwitch } from "react-toggle-dark-mode";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
@@ -60,6 +67,37 @@ import FocusPausePair from "@/components/timeclock/FocusPausePair";
 import TimeTracker from "@/components/timeclock/TimeTracker";
 import SmartsheetSyncWidget from "@/components/admin/SmartsheetSyncWidget";
 import SyncConflictAlert from '@/components/admin/SyncConflictAlert';
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import NavPageLink from "@/components/layout/NavPageLink";
+import NavFlyoutMenu from "@/components/layout/NavFlyoutMenu";
+import SidebarNavGroup from "@/components/layout/SidebarNavGroup";
+import NavContextMenu from "@/components/layout/NavContextMenu";
+import NavItemEditor, { folderIconFor } from "@/components/layout/NavItemEditor";
+import {
+  createFolder as navCreateFolder,
+  deleteFolder as navDeleteFolder,
+  entriesToOrder,
+  folderToken,
+  isFolderToken,
+  movePageToFolder,
+  movePageToTop,
+  newFolderId,
+  patchFolder as navPatchFolder,
+  removeUrlEverywhere,
+  resolveTopLevel,
+  sanitizeFolders,
+  sanitizePageStyles,
+  tokenFolderId,
+} from "@/components/layout/navCustomization";
+import {
+  applyNavOrder,
+  hexToRgbTuple,
+  loadCollapsedGroups,
+  loadNavOrder,
+  saveCollapsedGroups,
+  saveNavOrder,
+} from "@/components/layout/navPreferences";
+import { useWorkspacePreferences, WorkspacePreferencesProvider } from "@/components/layout/WorkspacePreferencesProvider";
 
 // Context for multi-page view
 const MultiPageContext = createContext(null);
@@ -76,23 +114,48 @@ const navigationItems = [
   { title: "Production", url: createPageUrl("Production"), icon: Hammer, accent: "#4ADE80" },
   { title: "Fabrication", url: createPageUrl("Fabrication"), icon: Wrench, accent: "#C084FC" },
   { title: "Installation/Delivery", url: createPageUrl("InstallationDeliver"), icon: Truck, accent: "#FB923C" },
+  { title: "SOP", url: createPageUrl("SOP"), icon: BookOpen, accent: "#F472B6" },
+  { title: "Server Files", url: createPageUrl("ServerFiles"), icon: HardDrive, accent: "#94A3B8" },
   { title: "Order Form", url: createPageUrl("OrderForm"), icon: ClipboardList, accent: "#34D399" },
   { title: "Estimator", url: createPageUrl("Estimator"), icon: Calculator, accent: "#F87171" },
   { title: "Fleet", url: createPageUrl("FleetOverview"), icon: NavigationIcon, accent: "#22D3EE" },
 ];
 
-const meetingsDropdownItems = [
+const meetingsNavItems = [
   { title: "SIPs", url: createPageUrl("SIPs"), icon: ClipboardList, accent: "#FACC15" },
   { title: "Monday Meeting", url: createPageUrl("MondayMorningMeeting"), icon: ClipboardList, accent: "#A3E635" },
+];
+
+const reportsNavItems = [
   { title: "Financials", url: createPageUrl("Financials"), icon: DollarSign, accent: "#3B82F6" },
   { title: "Invoices", url: createPageUrl("Invoices"), icon: Receipt, accent: "#10B981" },
   { title: "Change Orders", url: createPageUrl("ChangeOrders"), icon: FileDiff, accent: "#F97316" },
   { title: "Purchase Orders", url: createPageUrl("PurchaseOrders"), icon: Package, accent: "#0EA5E9" },
   { title: "Job Costing", url: createPageUrl("JobCosting"), icon: BarChart3, accent: "#8B5CF6" },
   { title: "Inventory", url: createPageUrl("Inventory"), icon: Package, accent: "#84CC16" },
-  { title: "Calendar", url: createPageUrl("WorkOrderCalendar"), icon: Calendar, accent: "#818CF8" },
-
+  { title: "Ops Reports", url: createPageUrl("OpsReports"), icon: BarChart3, accent: "#22D3EE" },
+  { title: "Statements", url: createPageUrl("CustomerStatements"), icon: FileText, accent: "#F59E0B" },
+  { title: "Reconciliation", url: createPageUrl("Reconciliation"), icon: Scale, accent: "#34D399" },
 ];
+
+// Every routable nav page, keyed by url — folder contents resolve through this.
+const ALL_NAV_PAGES = new Map(
+  [...navigationItems, ...meetingsNavItems, ...reportsNavItems].map((item) => [item.url, item])
+);
+
+// Built-in folders are the seed for prefs.navigation.folders — editable like
+// user folders (rename/recolor/restyle/move pages/delete) once customized.
+const BUILTIN_NAV_FOLDERS = [
+  { id: "meetings", name: "Meetings", icon: "Calendar", color: "#FACC15", style: "glass", items: meetingsNavItems.map((i) => i.url) },
+  { id: "reports", name: "Reports", icon: "BarChart3", color: "#8B5CF6", style: "glass", items: reportsNavItems.map((i) => i.url) },
+];
+
+// Extract the page url out of a draggable id. Page draggables end in the url
+// (which always starts with "/"); folder pill draggables are "folder:<id>".
+const pageUrlFromDraggable = (draggableId) => {
+  const slash = String(draggableId || "").indexOf("/");
+  return slash >= 0 ? draggableId.slice(slash) : null;
+};
 
 
 
@@ -105,13 +168,6 @@ const SHELL_SPRING = {
   stiffness: 210,
   damping: 30,
   mass: 0.82,
-};
-
-const hexToRgbTuple = (hex) => {
-  const normalized = String(hex || "").replace("#", "");
-  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return "148 163 184";
-  const value = Number.parseInt(normalized, 16);
-  return `${(value >> 16) & 255} ${(value >> 8) & 255} ${value & 255}`;
 };
 
 function ShellViewControls({
@@ -136,7 +192,7 @@ function ShellViewControls({
         onClick={onToggleCompact}
         aria-pressed={compactView}
         title={compactView ? "Return navigation to comfortable spacing" : "Use compact navigation spacing"}
-        className={`flex h-full min-w-0 flex-1 items-center justify-center rounded-lg font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${compactView ? "gap-0.5 px-1 text-[8px]" : "gap-1 px-1.5 text-[9px]"} ${compactView
+        className={`flex h-full min-w-0 flex-1 items-center justify-center rounded-lg font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${compactView ? "gap-0.5 px-1 text-[10px] whitespace-nowrap" : "gap-1 px-1.5 text-[10px] whitespace-nowrap"} ${compactView
           ? "bg-violet-400/20 text-violet-100 shadow-inner"
           : "text-slate-200 hover:bg-white/10"}`}
         whileHover={{ y: -1, scale: 1.025 }}
@@ -152,7 +208,7 @@ function ShellViewControls({
         onClick={onToggleCollapsed}
         aria-pressed={collapsed}
         title={collapsed ? "Pin navigation open" : "Collapse navigation; hover the screen edge to peek"}
-        className={`flex h-full min-w-0 flex-1 items-center justify-center rounded-lg font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${compactView ? "gap-0.5 px-1 text-[8px]" : "gap-1 px-1.5 text-[9px]"} ${collapsed
+        className={`flex h-full min-w-0 flex-1 items-center justify-center rounded-lg font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${compactView ? "gap-0.5 px-1 text-[10px] whitespace-nowrap" : "gap-1 px-1.5 text-[10px] whitespace-nowrap"} ${collapsed
           ? "bg-cyan-400/15 text-cyan-100 shadow-inner"
           : "text-slate-200 hover:bg-white/10"}`}
         whileHover={{ y: -1, scale: 1.025 }}
@@ -221,18 +277,650 @@ function LayoutContent({ children }) {
   const [compactView, setCompactView] = useState(() => localStorage.getItem("ccsShellCompact") === "true");
   const [isHovered, setIsHovered] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [meetingsDropdownOpen, setMeetingsDropdownOpen] = useState(false);
   const [showAddTaskDialog, setShowAddTaskDialog] = useState(false);
   const [showAnnouncementManager, setShowAnnouncementManager] = useState(false);
   const { currentUser, sessionToken, isRegistered, logout, getUserFirstName, showLoginDialog } = useAuth();
+  const { prefs: workspacePrefs, reportNavOrder, updatePrefs: updateWorkspacePrefs, loaded: workspacePrefsLoaded } = useWorkspacePreferences();
+  const navPrefs = workspacePrefs.navigation || {};
+  const navHidden = navPrefs.hidden || [];
   
   // Multi-page view state
   const { additionalPages, addPage, removePage, clearPages, isInMultiView, orientation, toggleOrientation } = useMultiPageView();
-  
-  // Detect mobile
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+
+  // Per-user page-button order (drag and drop) and collapsed nav groups.
+  const [navOrder, setNavOrder] = useState(() => loadNavOrder(currentUser?.email));
+  // Collapsed-group memory lives in the workspace blob (cross-device); the
+  // legacy localStorage copy is only a pre-hydration fallback.
+  const [collapsedGroups, setCollapsedGroups] = useState(() => {
+    const seeded = workspacePrefs.navigation?.collapsedGroups;
+    return seeded && Object.keys(seeded).length ? seeded : loadCollapsedGroups();
+  });
+  const collapsedHydratedRef = useRef(false);
   useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
+    if (collapsedHydratedRef.current || !workspacePrefsLoaded) return;
+    collapsedHydratedRef.current = true;
+    const serverGroups = workspacePrefs.navigation?.collapsedGroups;
+    if (serverGroups && Object.keys(serverGroups).length) setCollapsedGroups(serverGroups);
+  }, [workspacePrefsLoaded, workspacePrefs.navigation?.collapsedGroups]);
+
+  useEffect(() => {
+    setNavOrder(loadNavOrder(currentUser?.email));
+  }, [currentUser?.email]);
+
+  // Tab title fallback: pages that set their own title override this once mounted.
+  useEffect(() => {
+    const segment = (location.pathname || "/").split("/").filter(Boolean).pop() || "MyWorkflow";
+    const name = segment.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[-_]/g, " ").trim();
+    document.title = name + " - Workflow Manager";
+  }, [location.pathname]);
+
+  const orderedNavItems = useMemo(() => applyNavOrder(navigationItems, navOrder), [navOrder]);
+  // Hidden buttons are a render filter only — order/permissions untouched.
+  const visibleNavItems = useMemo(() => orderedNavItems.filter((i) => !navHidden.includes(i.url)), [orderedNavItems, navHidden]);
+
+  // ---- User nav customization: folders + page styles ----
+  // navPrefs.folders: null → built-ins; array → user's own folder set.
+  const effectiveFolders = useMemo(
+    () => sanitizeFolders(navPrefs.folders) ?? BUILTIN_NAV_FOLDERS,
+    [navPrefs.folders]
+  );
+  const pageStyles = useMemo(() => sanitizePageStyles(navPrefs.pageStyles), [navPrefs.pageStyles]);
+  const folderMemberUrls = useMemo(
+    () => new Set(effectiveFolders.flatMap((f) => f.items)),
+    [effectiveFolders]
+  );
+  // Pages eligible for top-level: every routable nav page not inside a folder
+  // and not hidden — including folder-native pages pulled out to the bar.
+  const barPageUrls = useMemo(
+    () => new Set([...ALL_NAV_PAGES.keys()].filter((u) => !folderMemberUrls.has(u) && !navHidden.includes(u))),
+    [folderMemberUrls, navHidden]
+  );
+  const topEntries = useMemo(
+    () => resolveTopLevel(navOrder, effectiveFolders, barPageUrls),
+    [navOrder, effectiveFolders, barPageUrls]
+  );
+  // Page button with user style overrides applied.
+  const styledPage = useCallback((url) => {
+    const base = ALL_NAV_PAGES.get(url);
+    if (!base) return null;
+    const s = pageStyles[url];
+    if (!s) return base;
+    return { ...base, title: s.name || base.title, accent: s.color || base.accent, stylePreset: s.style || "glass" };
+  }, [pageStyles]);
+  const folderItems = useCallback(
+    (folder) => folder.items.filter((u) => !navHidden.includes(u)).map(styledPage).filter(Boolean),
+    [navHidden, styledPage]
+  );
+  const barItems = useMemo(
+    () => visibleNavItems.map((i) => styledPage(i.url) || i),
+    [visibleNavItems, styledPage]
+  );
+  const barItemByUrl = useMemo(() => new Map(barItems.map((i) => [i.url, i])), [barItems]);
+
+  const [navMenu, setNavMenu] = useState(null);   // {x,y,kind:'bar'|'folder'|'page', folderId?, url?}
+  const [navEditor, setNavEditor] = useState(null); // {mode:'folder'|'page', isNew?, folderId?, url?}
+  // Drag state lives in a plain global — NO React state may change during a
+  // drag lifecycle (onDragStart/Update re-renders mid-flight can kill the
+  // active drag with "Cannot stop drag when no active drag").
+  const navDragFlag = (v) => { if (v === undefined) return window.__ccsNavDragging; window.__ccsNavDragging = v; };
+
+  const persistNavState = useCallback((order, folders) => {
+    setNavOrder(order);
+    saveNavOrder(currentUser?.email, order);
+    reportNavOrder(order);
+    updateWorkspacePrefs("navigation.folders", folders);
+  }, [currentUser?.email, reportNavOrder, updateWorkspacePrefs]);
+
+  const navState = useCallback(
+    () => ({ order: navOrder, folders: effectiveFolders }),
+    [navOrder, effectiveFolders]
+  );
+
+  const handleBarContextMenu = useCallback((event) => {
+    if (event.target.closest("[data-nav-item],[data-nav-folder]")) return;
+    event.preventDefault();
+    setNavMenu({ x: event.clientX, y: event.clientY, kind: "bar" });
+  }, []);
+
+  const openFolderEditor = useCallback((folderId, isNew = false) => {
+    setNavEditor({ mode: "folder", folderId, isNew });
+  }, []);
+  const openPageEditor = useCallback((url) => setNavEditor({ mode: "page", url }), []);
+
+  // Freeze nav layout on any potential drag press. A lifting page leaves the
+  // flex-wrap flow → the bar reflows chaotically and drop targets slide out
+  // from under the pointer ("can't get pages into folders"). Absolute-pinning
+  // every nav draggable at its current spot keeps all targets dead still for
+  // the whole drag; ancestor boxes are fixed-positioned too, so a collapsing
+  // grid/flex parent can't drag the frozen region to new coordinates. Pure
+  // DOM — no React state — so the drag lifecycle is never disturbed; styles
+  // are restored verbatim on release.
+  useEffect(() => {
+    const FROZEN = "ccs-nav-frozen";
+    const POS_PROPS = ["position", "left", "top", "right", "bottom", "width", "height",
+      "minWidth", "minHeight", "margin", "zIndex", "flexShrink", "justifySelf", "alignSelf",
+      "boxSizing",
+      // Containing-block creators — cleared on the drag source's ancestor
+      // chain so the ghost's position:fixed stays viewport-true (see below).
+      "backdropFilter", "WebkitBackdropFilter", "filter", "perspective",
+      "willChange", "contain", "containerType", "contentVisibility"];
+    const saveStyle = (el) => {
+      const saved = {};
+      for (const k of POS_PROPS) saved[k] = el.style[k];
+      return saved;
+    };
+    // Props that make an element a containing block for position:fixed
+    // descendants (CSS Contain + Filter specs). The glass shell/panel's
+    // backdrop-filter does exactly this — the ghost's fixed coords resolved
+    // inside the blurred box instead of the viewport, so the dragged pill
+    // floated offset from the pointer ("not tied to the mouse location").
+    // Cleared for the duration of the freeze and restored verbatim.
+    const CB_RESET = {
+      backdropFilter: "none", WebkitBackdropFilter: "none", filter: "none",
+      perspective: "none", willChange: "auto", contain: "none",
+      containerType: "normal", contentVisibility: "visible",
+    };
+    const clearContainingBlock = (el) => { for (const k in CB_RESET) el.style[k] = CB_RESET[k]; };
+    const freezeAll = (root, dragEl) => {
+      // The scope element itself may BE a droppable (open flyout menu) —
+      // querySelectorAll only matches descendants.
+      const drops = root.matches?.("[data-rfd-droppable-id]")
+        ? [root, ...root.querySelectorAll("[data-rfd-droppable-id]")]
+        : [...root.querySelectorAll("[data-rfd-droppable-id]")];
+      for (const dropEl of drops) {
+        if (dropEl.__ccsFrozen) continue;
+        dropEl.__ccsFrozen = true;
+        const isSourceDrop = dropEl.contains(dragEl);
+        // Measure EVERYTHING before mutating — each style change can reflow
+        // siblings, so lazy measurement would corrupt the offsets.
+        const rect = dropEl.getBoundingClientRect();
+        const els = [...dropEl.querySelectorAll("[data-rfd-draggable-id]")];
+        const rects = els.map((el) => el.getBoundingClientRect());
+        // Ancestor chain up to the nearest already-fixed/sticky element (or
+        // <body>): those boxes must not relayout under the frozen region.
+        const anchors = [];
+        let p = dropEl.parentElement;
+        while (p && p !== document.body) {
+          const cs = getComputedStyle(p);
+          const r = p.getBoundingClientRect();
+          anchors.push([p, r, cs.position]);
+          if (cs.position === "fixed" || cs.position === "sticky") break;
+          p = p.parentElement;
+        }
+        // --- apply pass ---
+        for (const [a, r, pos] of anchors) {
+          a.__ccsSavedStyle = saveStyle(a);
+          a.__ccsPinned = true;
+          if (isSourceDrop) clearContainingBlock(a);
+          if (pos === "fixed" || pos === "sticky") {
+            a.style.width = `${r.width}px`;
+            a.style.height = `${r.height}px`;
+            a.style.minWidth = `${r.width}px`;
+            a.style.minHeight = `${r.height}px`;
+            continue;
+          }
+          a.style.position = "fixed";
+          a.style.margin = "0";
+          a.style.left = "0px";
+          a.style.top = "0px";
+          // Correct for whichever containing block the fixed box resolved to.
+          const r2 = a.getBoundingClientRect();
+          const cs2 = getComputedStyle(a);
+          a.style.left = `${parseFloat(cs2.left) + (r.left - r2.left)}px`;
+          a.style.top = `${parseFloat(cs2.top) + (r.top - r2.top)}px`;
+          a.style.width = `${r.width}px`;
+          a.style.height = `${r.height}px`;
+          a.style.zIndex = "60";
+        }
+        dropEl.__ccsAnchors = anchors.map(([a]) => a);
+        dropEl.__ccsSavedStyle = saveStyle(dropEl);
+        dropEl.classList.add(FROZEN);
+        if (isSourceDrop) clearContainingBlock(dropEl);
+        // A portal'd droppable (open flyout menu) is already position:fixed —
+        // forcing relative here would teleport it to the flow origin.
+        if (getComputedStyle(dropEl).position !== "fixed") dropEl.style.position = "relative";
+        // Pin BOTH dims — once the children leave flow the container would
+        // otherwise collapse to 0x0 and stop being a hit-testable drop zone.
+        // border-box so px pins match the measured border-box exactly.
+        dropEl.style.boxSizing = "border-box";
+        dropEl.style.height = `${rect.height}px`;
+        dropEl.style.width = `${rect.width}px`;
+        dropEl.style.flexShrink = "0";
+        els.forEach((el, i) => {
+          const r = rects[i];
+          el.__ccsSavedStyle = saveStyle(el);
+          el.style.position = "absolute";
+          el.style.left = `${r.left - rect.left}px`;
+          el.style.top = `${r.top - rect.top}px`;
+          el.style.boxSizing = "border-box";
+          el.style.width = `${r.width}px`;
+          el.style.height = `${r.height}px`;
+          el.style.margin = "0";
+          // The drag source becomes the fixed ghost — keep it above siblings.
+          // .ccs-drag-src exempts it from the frozen transform-strip so its
+          // translate still follows the pointer.
+          el.classList.toggle("ccs-drag-src", el === dragEl);
+          el.style.zIndex = el === dragEl ? "5000" : "1";
+        });
+      }
+    };
+    const unfreezeAll = () => {
+      for (const dropEl of document.querySelectorAll(`.${FROZEN}`)) {
+        dropEl.__ccsFrozen = false;
+        dropEl.classList.remove(FROZEN);
+        if (dropEl.__ccsSavedStyle) Object.assign(dropEl.style, dropEl.__ccsSavedStyle);
+        for (const el of dropEl.querySelectorAll("[data-rfd-draggable-id]")) {
+          el.classList.remove("ccs-drag-src");
+          if (el.__ccsSavedStyle) { Object.assign(el.style, el.__ccsSavedStyle); el.__ccsSavedStyle = null; }
+        }
+        for (const a of dropEl.__ccsAnchors || []) {
+          if (a.__ccsSavedStyle) Object.assign(a.style, a.__ccsSavedStyle);
+          a.__ccsSavedStyle = null;
+          a.__ccsPinned = false;
+        }
+        dropEl.__ccsAnchors = null;
+      }
+    };
+    let pressedEl = null;
+    let armed = false;
+    let holdTimer = null;
+    let hoverTimer = null;
+    let hoverEl = null;
+    let hoverId = "";
+    const HOLD_MS = 1000;       // press-and-hold charge-up before the drag arms
+    const HOVER_OPEN_MS = 420;  // linger on a folder pill before it opens
+
+    const clearHover = () => {
+      if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+      if (hoverEl) { hoverEl.classList.remove("ccs-drop-hover"); hoverEl = null; }
+      hoverId = "";
+    };
+    const resetDragUI = () => {
+      clearHover();
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      armed = false;
+      if (pressedEl) pressedEl.classList.remove("ccs-nav-holding");
+      document.documentElement.classList.remove("ccs-grab-cursor");
+      pressedEl = null;
+      hideLiteGap();
+    };
+    // First draggable under the point, skipping the pointer-following ghost.
+    const dragTargetAt = (x, y) => {
+      for (const el of document.querySelectorAll("[data-rfd-draggable-id]")) {
+        if (el === pressedEl) continue;
+        const r = el.getBoundingClientRect();
+        if (x < r.left || x > r.right || y < r.top || y > r.bottom) continue;
+        return el;
+      }
+      return null;
+    };
+
+    const onPointerDown = (event) => {
+      if (event.button === 2) return; // right-click opens context menus, not drags
+      window.__ccsNavDropFolder = "";
+      window.__ccsNavDropPage = "";
+      pressedEl = event.target.closest?.("[data-rfd-draggable-id]") || null;
+      if (!pressedEl) return;
+      const scope = pressedEl.closest("[data-top-navigation-links], .side-nav, [role='menu']");
+      if (scope) freezeAll(scope, pressedEl);
+      // Hold-to-drag ritual: HOLD_MS of still-pressing charges up the pill
+      // (.ccs-nav-holding cue), then the drag arms and the cursor becomes the
+      // grab hand. Moves before arming are swallowed so the library can't
+      // lift early.
+      pressedEl.classList.add("ccs-nav-holding");
+      holdTimer = setTimeout(() => {
+        holdTimer = null;
+        armed = true;
+        pressedEl?.classList.remove("ccs-nav-holding");
+        document.documentElement.classList.add("ccs-grab-cursor");
+      }, HOLD_MS);
+    };
+
+    // Lite flyout gap preview: pointer inside an auto-opened folder list
+    // shifts the items below the insertion point down, opening a visible gap
+    // — same "make room" language as the bar's displaced pills.
+    const hideLiteGap = () => {
+      for (const el of document.querySelectorAll("[data-ccs-fld-item]")) {
+        el.style.transform = "";
+        el.__ccsOrigCenter = null;
+      }
+      for (const m of document.querySelectorAll("[data-ccs-folder-list]")) {
+        m.__ccsGapIdx = null;
+        m.classList.remove("ccs-drop-hover");
+      }
+    };
+    const showLiteGap = (menuEl, y) => {
+      const items = Array.from(menuEl.querySelectorAll("[data-ccs-fld-item]"));
+      const itemH = items[0]?.offsetHeight || 38;
+      const idx = items.filter((el) => {
+        if (el.__ccsOrigCenter == null) {
+          const r = el.getBoundingClientRect();
+          // Rect may already be displaced by our own shift — subtract it back.
+          el.__ccsOrigCenter = r.top + r.height / 2 - (el.__ccsShifted ? itemH : 0);
+        }
+        return el.__ccsOrigCenter < y;
+      }).length;
+      menuEl.__ccsGapIdx = idx;
+      menuEl.classList.add("ccs-drop-hover");
+      items.forEach((el, i) => {
+        const on = i >= idx;
+        if (on !== !!el.__ccsShifted) {
+          el.__ccsShifted = on;
+          el.style.transform = on ? `translateY(${itemH}px)` : "";
+        }
+      });
+    };
+
+    const onPointerMove = (event) => {
+      if (!pressedEl) return;
+      if (!armed) { event.stopImmediatePropagation(); return; }
+      // Armed: hover bookkeeping — highlight the folder pill under the
+      // pointer; lingering opens top-bar flyouts so the page can be placed
+      // inside. Over an open menu = inside the folder, no pill hover.
+      const liteMenu = document.elementFromPoint(event.clientX, event.clientY)
+        ?.closest?.("[data-ccs-folder-list]");
+      const srcId0 = pressedEl.getAttribute("data-rfd-draggable-id") || "";
+      if (liteMenu && !(isFolderToken(srcId0) || srcId0.startsWith("sfolder:"))) {
+        clearHover();
+        showLiteGap(liteMenu, event.clientY);
+        return;
+      }
+      hideLiteGap();
+      if (event.target.closest?.("[role='menu']")) { clearHover(); return; }
+      const srcId = pressedEl.getAttribute("data-rfd-draggable-id") || "";
+      const srcIsFolder = isFolderToken(srcId) || srcId.startsWith("sfolder:");
+      const hit = dragTargetAt(event.clientX, event.clientY);
+      const hitId = hit?.getAttribute("data-rfd-draggable-id") || "";
+      if (!srcIsFolder && hit && (isFolderToken(hitId) || hitId.startsWith("sfolder:"))) {
+        if (hitId !== hoverId) {
+          clearHover();
+          hoverId = hitId;
+          hoverEl = hit;
+          hit.classList.add("ccs-drop-hover");
+          if (isFolderToken(hitId)) {
+            const fid = tokenFolderId(hitId);
+            hoverTimer = setTimeout(() => {
+              hoverTimer = null;
+              window.dispatchEvent(new CustomEvent("ccs-nav-open-folder", { detail: { folderId: fid } }));
+            }, HOVER_OPEN_MS);
+          }
+        }
+      } else clearHover();
+    };
+    // Pre-arm swallow for the legacy mouse-event path (the library may listen
+    // mousemove instead of pointermove depending on sensor).
+    const onMouseMove = (event) => {
+      if (pressedEl && !armed) event.stopImmediatePropagation();
+    };
+    // On release during a nav drag, hit-test the pointer against the folder
+    // pills' painted boxes BEFORE unfreezing (unfreeze restores pre-drag
+    // rects). handleNavReorder reads __ccsNavDropFolder so the pill the
+    // pointer is visually over wins — not whichever displaced model box the
+    // library's combine math picked.
+    const onPointerUp = (event) => {
+      window.__ccsNavDropFolder = "";
+      window.__ccsNavDropPage = "";
+      window.__ccsNavDropAfter = false;
+      window.__ccsNavDropIndex = -1;
+      if (window.__ccsNavDragging) {
+        // Release inside an auto-opened (lite) folder list: the gap index the
+        // preview showed is the slot the page lands in.
+        const liteMenu = document.elementFromPoint(event.clientX, event.clientY)
+          ?.closest?.("[data-ccs-folder-list]");
+        if (liteMenu) {
+          window.__ccsNavDropFolder = liteMenu.getAttribute("data-ccs-folder-list") || "";
+          window.__ccsNavDropIndex = Number.isInteger(liteMenu.__ccsGapIdx) ? liteMenu.__ccsGapIdx : 0;
+        }
+        let page = "";
+        let pageRect = null;
+        for (const el of liteMenu ? [] : document.querySelectorAll("[data-rfd-draggable-id]")) {
+          // The drag ghost always contains the release point — skip it or it
+          // shadows the real target (self-combine no-ops the drop).
+          if (el === pressedEl) continue;
+          const id = el.getAttribute("data-rfd-draggable-id");
+          const r = el.getBoundingClientRect();
+          if (event.clientX < r.left || event.clientX > r.right ||
+              event.clientY < r.top || event.clientY > r.bottom) continue;
+          if (isFolderToken(id) || id?.startsWith("sfolder:")) {
+            window.__ccsNavDropFolder = isFolderToken(id)
+              ? tokenFolderId(id) : id.slice("sfolder:".length);
+            break;
+          }
+          if (!page && (id?.startsWith("top-") || id?.startsWith("side-"))) { page = id; pageRect = r; }
+        }
+        window.__ccsNavDropPage = page;
+        // Release in the target's right/bottom half = insert AFTER it — the
+        // displaced gap preview the user aimed at decides the slot.
+        if (pageRect) window.__ccsNavDropAfter = event.clientX > pageRect.left + pageRect.width / 2;
+      }
+      resetDragUI();
+      unfreezeAll();
+    };
+    const onKeyDown = (event) => { if (event.key === "Escape") { resetDragUI(); unfreezeAll(); } };
+    const onCancel = () => { resetDragUI(); unfreezeAll(); };
+    // pointerup on window+capture: registered at mount, so it runs before the
+    // drag library's own window-level release handler and before onDragEnd.
+    document.addEventListener("pointerdown", onPointerDown, true);
+    window.addEventListener("pointermove", onPointerMove, true);
+    window.addEventListener("mousemove", onMouseMove, true);
+    window.addEventListener("pointerup", onPointerUp, true);
+    window.addEventListener("pointercancel", onCancel, true);
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("blur", onCancel);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      window.removeEventListener("pointermove", onPointerMove, true);
+      window.removeEventListener("mousemove", onMouseMove, true);
+      window.removeEventListener("pointerup", onPointerUp, true);
+      window.removeEventListener("pointercancel", onCancel, true);
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("blur", onCancel);
+      resetDragUI();
+      unfreezeAll();
+    };
+  }, []);
+
+  // Server-side order sync (other devices / settings reset) re-reads the
+  // bridged localStorage copy and repaints the bars.
+  useEffect(() => {
+    const sync = () => setNavOrder(loadNavOrder(currentUser?.email));
+    window.addEventListener("ccs-nav-order-sync", sync);
+    return () => window.removeEventListener("ccs-nav-order-sync", sync);
+  }, [currentUser?.email]);
+
+  // Personal landing page: only intercepts the bare root route.
+  useEffect(() => {
+    if (location.pathname === "/" && navPrefs.landingPage) {
+      navigate(navPrefs.landingPage, { replace: true });
+    }
+  }, [location.pathname, navPrefs.landingPage, navigate]);
+
+  const isInSplitView = useCallback(
+    (item) => Boolean(additionalPages.find((p) => item.url.includes(p.name))),
+    [additionalPages]
+  );
+
+  const handleNavReorder = (result) => {
+    const { source, destination, draggableId, combine } = result;
+    navDragFlag(false);
+    window.dispatchEvent(new Event("ccs-nav-drag-end"));
+    const state = navState();
+
+    // WYSIWYG folder drop: the pointerup handler recorded which folder pill
+    // (if any) the pointer was visually over while rects still reflected the
+    // painted positions — that intent beats the library's displaced-model
+    // combine math. Folder drags can't nest (their url resolves null and
+    // falls through to the reorder path).
+    const dropFolder = window.__ccsNavDropFolder;
+    window.__ccsNavDropFolder = "";
+    if (dropFolder) {
+      window.__ccsNavDropPage = "";
+      const url = pageUrlFromDraggable(draggableId);
+      if (url) {
+        const idx = window.__ccsNavDropIndex;
+        window.__ccsNavDropIndex = -1;
+        const next = movePageToFolder(state, url, dropFolder,
+          Number.isInteger(idx) && idx >= 0 ? idx : undefined);
+        persistNavState(mergeHiddenTail(next.order), next.folders);
+        return;
+      }
+    }
+
+    // WYSIWYG page drop: the pill the pointer was over won above; a page the
+    // pointer was over is the insert target — same semantics as a page combine
+    // ("drop at that position"). Falls back to the library's combine/dest.
+    const dropPage = window.__ccsNavDropPage;
+    window.__ccsNavDropPage = "";
+    const effCombine = dropPage ? { draggableId: dropPage } : combine;
+
+    // Combine drop: a page released on a folder pill/group header joins that
+    // folder (bar droppables run isCombineEnabled). Non-folder combines are
+    // page-on-page — treated as "insert at that target's position".
+    if (effCombine) {
+      const target = String(effCombine.draggableId || "");
+      const folderId = isFolderToken(target) ? tokenFolderId(target)
+        : target.startsWith("sfolder:") ? target.slice("sfolder:".length) : null;
+      const url = pageUrlFromDraggable(draggableId);
+      if (!url) return;
+      if (folderId) {
+        // Pointer-measured slot inside an auto-opened (lite) list wins over a
+        // plain append — the visible gap the user aimed at is the contract.
+        const idx = window.__ccsNavDropIndex;
+        window.__ccsNavDropIndex = -1;
+        const next = movePageToFolder(state, url, folderId,
+          Number.isInteger(idx) && idx >= 0 ? idx : undefined);
+        persistNavState(mergeHiddenTail(next.order), next.folders);
+        return;
+      }
+      // Combine onto a page button = "drop at that position" — pull the page
+      // out of any folder and slot it where the target sits on the bar.
+      const targetUrl = pageUrlFromDraggable(target);
+      if (!targetUrl || targetUrl === url) return;
+      const { order, folders } = removeUrlEverywhere(state.order, state.folders, url);
+      const entries = resolveTopLevel(order, folders, barPageUrls);
+      const at = entries.findIndex((e) => e.type === "page" && e.url === targetUrl);
+      // Pointer released in the target's right half lands after it — matches
+      // the shift-to-make-room gap the user actually aimed at.
+      const insertAt = (at < 0 ? entries.length : at) + (window.__ccsNavDropAfter ? 1 : 0);
+      window.__ccsNavDropAfter = false;
+      entries.splice(insertAt, 0, { type: "page", url });
+      persistNavState(mergeHiddenTail(entriesToOrder(entries)), folders);
+      return;
+    }
+    if (!destination) return;
+    const destId = destination.droppableId;
+    const srcId = source.droppableId;
+
+    // Folder pill drag — only a top-level reorder is legal (no folder nesting).
+    if (isFolderToken(draggableId) || draggableId.startsWith("sfolder:")) {
+      if (destId !== "page-nav-top" && destId !== "page-nav-side") return;
+      const token = isFolderToken(draggableId) ? draggableId : draggableId.replace(/^sfolder:/, "folder:");
+      const entries = topEntries.slice();
+      const from = entries.findIndex((e) => e.type === "folder" && folderToken(e.id) === token);
+      if (from < 0) return;
+      const [moved] = entries.splice(from, 1);
+      entries.splice(destination.index, 0, moved);
+      const order = entriesToOrder(entries);
+      persistNavState(mergeHiddenTail(order), effectiveFolders);
+      return;
+    }
+
+    const url = pageUrlFromDraggable(draggableId);
+    if (!url) return;
+
+    // Drop into an open folder list → insert at index (also within-folder reorder).
+    const listDest = destId.startsWith("folder-list:")
+      ? destId.slice(destId.indexOf(":") + 1) : null;
+    if (listDest) {
+      const folder = effectiveFolders.find((f) => f.id === listDest);
+      if (!folder) return;
+      if (srcId === destId && source.index === destination.index) return;
+      const next = movePageToFolder(state, url, listDest, destination.index);
+      persistNavState(mergeHiddenTail(next.order), next.folders);
+      return;
+    }
+
+    // Drop on the bar (top or side) → reorder, or move a folder page back out.
+    if (destId === "page-nav-top" || destId === "page-nav-side") {
+      if (srcId === destId) {
+        if (source.index === destination.index) return;
+        const entries = topEntries.slice();
+        const [moved] = entries.splice(source.index, 1);
+        if (!moved) return;
+        entries.splice(destination.index, 0, moved);
+        persistNavState(mergeHiddenTail(entriesToOrder(entries)), effectiveFolders);
+      } else {
+        const next = movePageToTop(state, url, null);
+        const entries = topEntries.filter((e) => !(e.type === "page" && e.url === url));
+        entries.splice(destination.index, 0, { type: "page", url });
+        persistNavState(mergeHiddenTail(entriesToOrder(entries)), next.folders);
+      }
+    }
+  };
+
+  const handleNavDragStart = () => navDragFlag(true);
+  // Intentionally no onDragUpdate handler — updating state mid-drag re-renders
+  // the DnD tree and can abort the drag. Combine targets and open folder
+  // lists give all the feedback needed.
+
+  // Hidden pages keep their tail slot in the saved order.
+  const hiddenTail = () => orderedNavItems.filter((i) => navHidden.includes(i.url)).map((i) => i.url);
+  const mergeHiddenTail = (order) => [...order, ...hiddenTail().filter((u) => !order.includes(u))];
+
+  const handleDeleteFolder = useCallback((folderId) => {
+    const next = navDeleteFolder(navState(), folderId);
+    persistNavState(mergeHiddenTail(next.order), next.folders);
+    setNavEditor(null);
+  }, [navState, persistNavState]);
+
+  const handleSaveFolder = useCallback((folderId, isNew, patch) => {
+    if (isNew) {
+      const folder = { id: newFolderId(), name: patch.name, color: patch.color, style: patch.style, icon: patch.icon, items: [] };
+      const next = navCreateFolder(navState(), folder);
+      persistNavState(mergeHiddenTail(next.order), next.folders);
+    } else {
+      const next = navPatchFolder(navState(), folderId, { name: patch.name, color: patch.color, style: patch.style, icon: patch.icon });
+      persistNavState(mergeHiddenTail(next.order), next.folders);
+    }
+    setNavEditor(null);
+  }, [navState, persistNavState]);
+
+  const handleSavePage = useCallback((url, patch) => {
+    const base = ALL_NAV_PAGES.get(url);
+    const next = { ...pageStyles };
+    const value = {};
+    if (patch.name && patch.name !== base?.title) value.name = patch.name;
+    if (patch.color && patch.color !== base?.accent) value.color = patch.color;
+    if (patch.style && patch.style !== "glass") value.style = patch.style;
+    if (Object.keys(value).length) next[url] = value; else delete next[url];
+    updateWorkspacePrefs("navigation.pageStyles", next);
+    setNavEditor(null);
+  }, [pageStyles, updateWorkspacePrefs]);
+
+  const handleResetPage = useCallback((url) => {
+    const next = { ...pageStyles };
+    delete next[url];
+    updateWorkspacePrefs("navigation.pageStyles", next);
+    setNavEditor(null);
+  }, [pageStyles, updateWorkspacePrefs]);
+
+  const toggleNavGroup = (key) => {
+    const next = { ...collapsedGroups, [key]: !collapsedGroups[key] };
+    setCollapsedGroups(next);
+    saveCollapsedGroups(next);
+    updateWorkspacePrefs("navigation.collapsedGroups", next);
+  };
+  
+  // Detect mobile + narrow-desktop widths (top bar auto-compacts below 1400px)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [isNarrowShell, setIsNarrowShell] = useState(() => window.innerWidth < 1400);
+  const [isShortShell, setIsShortShell] = useState(() => window.innerHeight < 720);
+  useEffect(() => {
+    const handler = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsNarrowShell(window.innerWidth < 1400);
+      setIsShortShell(window.innerHeight < 720);
+    };
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
   }, []);
@@ -329,6 +1017,7 @@ function LayoutContent({ children }) {
   const isSideNav = navLayout === "side" && !isMobile;
   const effectiveCollapsed = (navCollapsed || isFullscreen) && !isMobile;
   const sideNavWidth = compactView ? 158 : 224;
+  const topBarCompact = compactView || isNarrowShell;
   const collapsedRail = 10;
   const shellTransition = reduceMotion ? { duration: 0.01 } : SHELL_SPRING;
 
@@ -687,6 +1376,58 @@ function LayoutContent({ children }) {
 
         .ccs-glass-nav-item > span { color: #334155 !important; }
 
+        .ccs-nav-styled {
+          position: relative;
+          transition:
+            transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+            filter 180ms ease,
+            box-shadow 180ms ease;
+        }
+
+        .ccs-nav-styled:hover {
+          transform: translateY(-1px);
+          filter: brightness(1.07) saturate(1.06);
+        }
+
+        .ccs-nav-styled:active {
+          transform: translateY(0) scale(0.985);
+          filter: brightness(0.96);
+        }
+
+        /* While a nav drag is frozen (absolute-pinned), the library's
+           flow-position placeholder would render at the container origin —
+           hide it; combine + folder-list targets give the feedback. */
+        .ccs-nav-frozen [data-rfd-placeholder-context-id] {
+          display: none !important;
+        }
+
+
+        /* Press-and-hold charge-up: a 1s fill cue on the pressed pill before
+           the drag arms — communicates "keep holding to grab". */
+        .ccs-nav-holding {
+          animation: ccsNavHoldCharge 1s cubic-bezier(0.2, 0.7, 0.3, 1) forwards !important;
+        }
+        @keyframes ccsNavHoldCharge {
+          0%   { box-shadow: inset 0 0 0 2px rgba(139,92,246,0), 0 0 0 0 rgba(139,92,246,0); transform: scale(1); }
+          55%  { box-shadow: inset 0 0 0 2px rgba(139,92,246,.75), 0 0 10px 1px rgba(139,92,246,.30); transform: scale(1.035); }
+          100% { box-shadow: inset 0 0 0 2px rgba(139,92,246,.95), 0 0 16px 3px rgba(139,92,246,.45); transform: scale(1.06); }
+        }
+
+        /* Folder pill currently hovered by an armed drag — ring + glow shows
+           it will receive the page (and will open after a short linger). */
+        .ccs-drop-hover {
+          outline: 2px solid rgba(139,92,246,.95) !important;
+          outline-offset: 2px;
+          box-shadow: 0 0 0 5px rgba(139,92,246,.28), 0 0 20px rgba(139,92,246,.5) !important;
+        }
+
+        /* While a nav drag is armed: the whole window gets the grab-hand
+           cursor (gloved fist asset) with native grabbing as fallback. */
+        html.ccs-grab-cursor,
+        html.ccs-grab-cursor * {
+          cursor: url("data:image/svg+xml,%3Csvg%20width%3D%2232%22%20height%3D%2232%22%20id%3D%22emoji%22%20viewBox%3D%220%200%2072%2072%22%20version%3D%221.1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20id%3D%22color%22%3E%3Cline%20x1%3D%2251%22%20x2%3D%2251%22%20y1%3D%2247.42%22%20y2%3D%2233.14%22%20fill%3D%22none%22%2F%3E%3C%2Fg%3E%3Cg%20id%3D%22skin%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m42.03%2047.56c-0.3312%202.471-2.599%207.032-5.057%206.7-0.293-0.03821-0.6495-0.1401-1.045-0.293%200.8407-3.095%205.477-7.923%206.114-9.579l-0.01274%201.987c0.05095%200.3949%200.05095%200.8025%200%201.185z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m33.19%2024.09-0.01274%201.223h0.01274c0.05095-0.4204%200.05095-0.828%200-1.223zm8.917-1.146v1.172c0.05095-0.3949%200.05095-0.8025%200-1.172z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m56.86%2028.69c-0.2038-0.1529-1.745-0.3482-1.745-0.3482l-3.264-0.01274c-0.5987-0.2802-0.8247-1.55-0.8247-4.288%200.3312-2.471-1.401-4.726-3.86-5.057-8.881%202.622-2.133%201.723-8.917%200.08917-9.376%202.498-1.771%202.843-8.917%201.185-9.755%200.1624-1.828%206.409-9.006%201.274-2.458-0.3312-4.726%201.401-5.044%203.86-0.06369%200.3949-0.06369%200.8025%200%201.197h-0.03821l0.03821%2010.97c-0.3312%202.458%201.401%204.726%203.86%205.057%206.352-0.265%205.107-9.398%205.057%201.223-0.3312%202.458%201.401%204.726%203.86%205.057%204.281-2.589%204.384%206.516%207.599%208.173%200.8025%202.051%2010.28-0.168%2011.56-0.1043%204.928%202.479%2012.18-2.03%2010.32-4.553%200.05095-0.3949%200.05095-8.165%200-8.56%200.1783-2.076%201.185-13.71-0.6751-15.16z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m32.48%2046.77c-0.293%200.5095-0.7006%200.9426-1.172%201.287%200.2165-0.4331%200.5987-0.8789%201.172-1.287z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m33.13%2041.53c0.03821%200.8789%200.02548%202.879-0.01274%203.401z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m32.48%2046.77c-0.293%200.5095-0.7006%200.9426-1.172%201.287%200.2165-0.4331%200.5987-0.8789%201.172-1.287z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m33.12%2044.93%200.01274-3.401c0.03821%200.8789%200.02548%202.879-0.01274%203.401z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m33.19%2025.31h-0.01274l0.01274-1.223c0.05095%200.3949%200.05095%200.8025%200%201.223z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m42.11%2024.11v-1.172c0.05095%200.3694%200.05095%200.777%200%201.172z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m39.17%2056.81c-2.577%200-9.977%204.548-8.467-7.881z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m57.31%2033.52c0-1.9%200-4.118-2.011-4.118z%22%2F%3E%3C%2Fg%3E%3Cg%20id%3D%22line%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22m41.94%2037.24v7.074c-0.3346%202.512%201.428%204.82%203.936%205.156%202.509%200.3352%204.813-1.43%205.148-3.942%200.0536-0.4028%200.0536-0.8107%200-1.213l-5.19e-4%20-20.48c0.3346-2.512-1.428-4.82-3.936-5.156s-4.813%201.43-5.148%203.942v1.301c0.3346-2.512-1.428-4.82-3.936-5.156s-4.813%201.43-5.148%203.942v2.427c0.3346-2.512-1.428-4.82-3.936-5.156s-4.813%201.43-5.148%203.942c-0.02619%200.8746-0.02488%201.613-0.08098%202.513%200.3346-2.512-1.428-4.82-3.936-5.156s-4.813%201.43-5.148%203.942c-0.0536%200.4028-0.0536%200.8107-0.02011%201.214l0.02064%2011.19c-0.3346%202.512%201.428%204.82%203.936%205.156%202.509%200.3352%204.813-1.43%205.148-3.942%200.0536-0.4028%200.0536-0.8107%200-1.213v-1.341l0.04022-3.517-0.04023%2011.27c-0.3346%202.512%201.428%204.82%203.936%205.156s4.813-1.43%205.148-3.942c0.0536-0.4028%200.0536-3.548%200-3.951v-5.012l-0.04075-4.248%200.04075%2014.6c-0.3346%202.512%201.428%204.82%203.936%205.156s4.813-1.43%205.148-3.942c0.0536-0.4028%200.0536-0.8107%200-1.213l0.08046-15.82z%22%2F%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22m57.43%2052.08c-0.2117%202.896-2.598%205.149-5.497%205.19h-12.98%22%2F%3E%3Cline%20x1%3D%2257.43%22%20x2%3D%2257.43%22%20y1%3D%2252.08%22%20y2%3D%2233.52%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-miterlimit%3D%2210%22%20stroke-width%3D%222%22%20d%3D%22m38.95%2057.27c-2.625%200-7.445%200.6149-7.445-3.105%22%2F%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-miterlimit%3D%2210%22%20stroke-width%3D%222%22%20d%3D%22m57.43%2033.52c0-1.938%200-4.201-2.049-4.201%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 16 16, grabbing !important;
+        }
+
         .ccs-focus-pause-glass {
           --glass-accent-rgb: 167 139 250;
           display: grid !important;
@@ -836,9 +1577,72 @@ function LayoutContent({ children }) {
           will-change: transform, opacity;
         }
 
+        .ccs-topbar-layout {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          grid-template-areas: "brand menu" "utilities utilities";
+          align-items: center;
+          gap: 6px 10px;
+        }
+        .ccs-topbar-brand { grid-area: brand; justify-self: start; min-width: 150px; }
+        .ccs-topbar-brand [data-shell-view-controls] { min-height: 24px; }
+        .ccs-topbar-brand [data-shell-view-controls] button { font-size: 11px; }
+        .ccs-topbar-layout[data-compact="true"] .ccs-topbar-brand {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          min-width: 0;
+        }
+        .ccs-topbar-layout[data-compact="true"] .ccs-topbar-brand [data-shell-view-controls] {
+          margin-top: 0;
+          min-width: 132px;
+          flex-shrink: 0;
+        }
+        .ccs-topbar-menu { grid-area: menu; }
+        .ccs-topbar-utilities { grid-area: utilities; justify-self: end; min-width: 0; max-width: 100%; }
+        .ccs-topbar-utilities .ccs-glass-control > span { font-size: 12px; }
+        .ccs-topbar-links { grid-area: links; min-width: 0; }
+        .ccs-topbar-links .ccs-glass-nav-item span { font-size: 12px; }
+
+        @media (max-width: 1399px) {
+          .ccs-topbar-links[data-manual-compact="false"] .ccs-glass-nav-item {
+            gap: 4px;
+            padding: 4px 6px;
+          }
+        }
+        @media (max-height: 600px) {
+          .ccs-topbar-menu-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+        @media (max-height: 720px) {
+          .side-nav > div:first-child { padding: 6px; }
+          .side-nav .ccs-glass-panel { padding: 4px 6px; gap: 4px; }
+          .side-nav .ccs-glass-panel p { display: none; }
+          .side-nav .mb-4 { margin-bottom: 8px; }
+          .side-nav .mb-2 { margin-bottom: 6px; }
+          .side-nav .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 4px; }
+          .side-nav .space-y-1 > :not([hidden]) ~ :not([hidden]) { margin-top: 2px; }
+          .side-nav .ccs-glass-nav-item { padding-top: 3px; padding-bottom: 3px; gap: 6px; }
+          .side-nav .ccs-glass-nav-item span { font-size: 11px; }
+        }
+        @media (min-width: 1024px) {
+          .ccs-topbar-layout {
+            grid-template-columns: auto minmax(0, 1fr);
+            grid-template-areas: "brand utilities" "links links";
+          }
+        }
+        @media (min-width: 1600px) {
+          .ccs-topbar-layout {
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            grid-template-areas: "brand links utilities";
+          }
+        }
+
         .side-nav {
           will-change: transform, opacity, width;
         }
+
+        .ccs-scrollbar-hidden { scrollbar-width: none; -ms-overflow-style: none; }
+        .ccs-scrollbar-hidden::-webkit-scrollbar { display: none; }
 
         @media (prefers-reduced-motion: reduce) {
           .ccs-glass-control,
@@ -959,7 +1763,7 @@ function LayoutContent({ children }) {
               {/* Brand + tiny shell view controls */}
               <div className={compactView ? "mb-1.5" : "mb-4"}>
                 <div className={`ccs-glass-panel flex items-center ${compactView ? "gap-1.5 rounded-xl px-1.5 py-1" : "gap-2 rounded-2xl px-3 py-2"}`}>
-                  <button
+                  <button type="button"
                     onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
                     className={`ccs-glass-control ccs-glass-purple flex flex-shrink-0 items-center justify-center text-violet-200 ${compactView ? "h-6 w-6 rounded-lg" : "h-8 w-8 rounded-xl"}`}
                     title="Switch to Top Bar"
@@ -987,7 +1791,7 @@ function LayoutContent({ children }) {
               <div className={`${compactView ? "mb-2 space-y-1" : "mb-4 space-y-2"}`}>
                 {/* Login / Logout button */}
                 {!currentUser ? (
-                  <button
+                  <button type="button"
                     data-login-gate-allow
                     onClick={showLoginDialog}
                     className={`ccs-glass-control ccs-glass-purple w-full flex items-center justify-center rounded-xl text-violet-200 ${compactView ? "h-7 gap-1 text-xs" : "h-9 gap-2 text-sm"}`}
@@ -997,7 +1801,7 @@ function LayoutContent({ children }) {
                     <span className="font-bold text-sm text-violet-100">Sign In</span>
                   </button>
                 ) : (
-                  <button
+                  <button type="button"
                     data-login-gate-allow
                     onClick={logout}
                     className={`ccs-glass-control ccs-glass-neutral w-full flex items-center justify-center rounded-xl text-slate-100 ${compactView ? "h-7 gap-1 text-xs" : "h-9 gap-2 text-sm"}`}
@@ -1011,14 +1815,14 @@ function LayoutContent({ children }) {
                 {currentUser && <FocusPausePair currentUser={currentUser} fullWidth compact={compactView} />}
 
                 {currentUser && (
-                  <div className="mt-2 flex justify-center">
+                  <div className="mt-2 flex w-full min-w-0 justify-center overflow-hidden">
                     <TimeTracker position="side" hasSideBar hasTopBar={!isSideNav} />
                   </div>
                 )}
 
                 {/* Announcement button - admin only, above Time Clock */}
                 {isUserAdmin(currentUser) && (
-                  <button
+                  <button type="button"
                     onClick={() => setShowAnnouncementManager(true)}
                     className={`ccs-glass-control ccs-glass-red w-full flex items-center justify-center rounded-xl text-red-200 ${compactView ? "h-7 gap-1 text-xs" : "h-9 gap-2 text-sm"}`}
                     title="Announcements (Admin)"
@@ -1036,7 +1840,7 @@ function LayoutContent({ children }) {
                     <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Time Clock</span>
                   </Link>
 
-                  <button
+                  <button type="button"
                     onClick={() => setShowAddTaskDialog(true)}
                     className={`ccs-glass-control ccs-glass-blue flex flex-1 items-center justify-center rounded-xl text-blue-200 ${compactView ? "h-7 gap-1 px-1.5 text-[11px]" : "gap-2 px-3 py-2 text-sm"}`}
                   >
@@ -1053,58 +1857,83 @@ function LayoutContent({ children }) {
             </div>
 
             {/* Navigation Links */}
-            <div className={`flex-1 overflow-y-auto ${compactView ? "px-1.5 py-1" : "px-3 py-2"}`}>
-              <div className={compactView ? "space-y-0.5" : "space-y-1"}>
-                {navigationItems.map((item) => {
-                  const isActive = location.pathname === item.url;
-                  const isInSplit = additionalPages.find(p => item.url.includes(p.name));
-                  return (
-                    <Link
-                      key={item.title}
-                      to={item.url}
-                      onClick={(e) => handleNavClick(e, item)}
-                      className={`ccs-glass-nav-item flex items-center border ${compactView ? "gap-1.5 rounded-lg px-1.5 py-1" : "gap-2 rounded-xl px-3 py-2"} ${
-                        isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""
-                      }`}
-                      style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
-                      title="Ctrl+Click to open in split view"
+            <div
+              className={`flex-1 overflow-y-auto ${compactView ? "px-1.5 py-1" : "px-3 py-2"}`}
+              onContextMenu={handleBarContextMenu}
+            >
+              <DragDropContext onDragEnd={handleNavReorder} onDragStart={handleNavDragStart}>
+                <Droppable droppableId="page-nav-side" direction="vertical" isCombineEnabled>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={compactView ? "space-y-0.5" : "space-y-1"}
                     >
-                      <item.icon className={`${compactView ? "h-3 w-3" : "h-4 w-4"} flex-shrink-0`} style={{ color: item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }} />
-                      <span className={`${compactView ? "text-[11px]" : "text-sm"} min-w-0 truncate font-medium text-slate-100 ${isActive ? "font-bold text-white" : ""}`}>
-                        {item.title}
-                      </span>
-                      {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
-                      </Link>
-                      );
+                      {topEntries.map((entry, index) => {
+                        const dndId = entry.type === "folder" ? `sfolder:${entry.id}` : `side-${entry.url}`;
+                        if (entry.type === "folder") {
+                          const folder = entry.folder;
+                          return (
+                            <Fragment key={dndId}>
+                              <Draggable draggableId={dndId} index={index}>
+                                {(dragProvided, dragSnapshot) => (
+                                  <div
+                                    ref={dragProvided.innerRef}
+                                    {...dragProvided.draggableProps}
+                                    {...dragProvided.dragHandleProps}
+                                  >
+                                    <SidebarNavGroup
+                                      label={folder.name}
+                                      items={folderItems(folder)}
+                                      collapsed={!!collapsedGroups[folder.id] || isShortShell}
+                                      onToggle={() => toggleNavGroup(folder.id)}
+                                      compactView={compactView}
+                                      activePath={location.pathname}
+                                      isInSplitUrl={isInSplitView}
+                                      onNavigate={handleNavClick}
+                                      accent={folder.color}
+                                      stylePreset={folder.style}
+                                      onContextMenuGroup={({ x, y }) =>
+                                        setNavMenu({ x, y, kind: "folder", folderId: folder.id })}
+                                      onContextMenuItem={(item, { x, y }) =>
+                                        setNavMenu({ x, y, kind: "page", url: item.url })}
+                                    />
+                                  </div>
+                                )}
+                              </Draggable>
+                            </Fragment>
+                          );
+                        }
+                        const item = styledPage(entry.url);
+                        if (!item) return null;
+                        return (
+                          <Fragment key={dndId}>
+                            <Draggable draggableId={dndId} index={index}>
+                              {(dragProvided, dragSnapshot) => (
+                                <NavPageLink
+                                  item={item}
+                                  variant="side"
+                                  compactView={compactView}
+                                  isActive={location.pathname === item.url}
+                                  isInSplit={isInSplitView(item)}
+                                  onNavigate={(event) => handleNavClick(event, item)}
+                                  onContextMenuItem={(itm, { x, y }) =>
+                                    setNavMenu({ x, y, kind: "page", url: itm.url })}
+                                  dragRef={dragProvided.innerRef}
+                                  dragProps={dragProvided.draggableProps}
+                                  dragSnapshot={dragSnapshot}
+                                  dragHandleProps={dragProvided.dragHandleProps}
+                                />
+                              )}
+                            </Draggable>
+                          </Fragment>
+                        );
                       })}
-
-                      {/* Meetings Section */}
-                <div className={`${compactView ? "mt-1 pt-1" : "mt-2 pt-2"} border-t border-gray-200/50 dark:border-white/10`}>
-                  <span className={`${compactView ? "px-1.5 text-[10px]" : "px-3 text-xs"} font-medium text-slate-300`}>Meetings</span>
-                  {meetingsDropdownItems.map((item) => {
-                    const isActive = location.pathname === item.url;
-                    const isInSplit = additionalPages.find(p => item.url.includes(p.name));
-                    return (
-                      <Link
-                        key={item.title}
-                        to={item.url}
-                        onClick={(e) => handleNavClick(e, item)}
-                        className={`ccs-glass-nav-item flex items-center border ${compactView ? "gap-1.5 rounded-lg px-1.5 py-1" : "gap-2 rounded-xl px-3 py-2"} ${
-                          isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""
-                        }`}
-                        style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
-                        title="Ctrl+Click to open in split view"
-                      >
-                        <item.icon className={`${compactView ? "h-3 w-3" : "h-4 w-4"} flex-shrink-0`} style={{ color: item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }} />
-                        <span className={`${compactView ? "text-[11px]" : "text-sm"} min-w-0 truncate font-medium text-slate-100 ${isActive ? "font-bold text-white" : ""}`}>
-                          {item.title}
-                        </span>
-                        {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
             </div>
           </motion.nav>
         )}
@@ -1121,21 +1950,21 @@ function LayoutContent({ children }) {
             transition={shellTransition}
             className="top-nav ccs-glass-shell fixed left-0 right-0 top-0 z-50 overflow-visible"
           >
-            <div className={compactView ? "px-2 py-1" : "px-4 py-2"}>
-              <div className={`flex justify-between ${compactView ? "items-center" : "items-start"}`}>
+            <div className={topBarCompact ? "px-2 py-1" : "px-4 py-2"}>
+              <div className="ccs-topbar-layout" data-compact={compactView}>
                 {/* Brand + tiny shell view controls */}
-                <div className="flex-shrink-0">
-                  <div className={`ccs-glass-panel flex items-center ${compactView ? "gap-1.5 rounded-xl px-1.5 py-1" : "gap-2 rounded-2xl px-3 py-2 sm:gap-3 sm:px-4"}`}>
-                    <button
+                <div className="ccs-topbar-brand">
+                  <div className={`ccs-glass-panel flex items-center ${topBarCompact ? "gap-1.5 rounded-xl px-1.5 py-1" : "gap-2 rounded-2xl px-3 py-2 sm:gap-3 sm:px-4"}`}>
+                    <button type="button"
                       onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
-                      className={`ccs-glass-control ccs-glass-purple flex items-center justify-center text-violet-200 ${compactView ? "h-6 w-6 rounded-lg" : "h-8 w-8 rounded-xl sm:h-10 sm:w-10 sm:rounded-2xl"}`}
+                      className={`ccs-glass-control ccs-glass-purple flex items-center justify-center text-violet-200 ${topBarCompact ? "h-6 w-6 rounded-lg" : "h-8 w-8 rounded-xl sm:h-10 sm:w-10 sm:rounded-2xl"}`}
                       title="Switch to Sidebar"
                     >
-                      <PanelLeft className={compactView ? "h-3.5 w-3.5" : "h-4 w-4 sm:h-5 sm:w-5"} />
+                      <PanelLeft className={topBarCompact ? "h-3.5 w-3.5" : "h-4 w-4 sm:h-5 sm:w-5"} />
                     </button>
                     <div className="hidden sm:block">
-                      <h2 className={`${compactView ? "text-xs" : "text-lg"} font-bold leading-tight text-white`}>Sign Shop</h2>
-                      {!compactView && <p className="text-xs text-slate-300">Workflow Manager</p>}
+                      <h2 className={`${topBarCompact ? "text-xs" : "text-lg"} font-bold leading-tight text-white`}>Sign Shop</h2>
+                      {!topBarCompact && <p className="text-xs text-slate-300">Workflow Manager</p>}
                     </div>
                   </div>
                   <ShellViewControls
@@ -1151,159 +1980,168 @@ function LayoutContent({ children }) {
                 </div>
 
                 {/* Mobile Menu Button */}
-                <button 
-                  className="lg:hidden clay-button p-3 min-h-[48px] min-w-[48px]"
+                <button type="button"
+                  className="ccs-topbar-menu lg:hidden clay-button p-2 min-h-[40px] min-w-[40px]"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  aria-expanded={mobileMenuOpen}
+                  aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
                   title={mobileMenuOpen ? "Close menu" : "Open menu"}
                 >
                   {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </button>
 
-                {/* Desktop Navigation Links */}
-                <div
-                  data-top-navigation-links
-                  className={`hidden lg:flex self-center items-center flex-nowrap overflow-x-auto flex-1 [scrollbar-width:thin] ${compactView ? "ml-2 max-w-[calc(100%-470px)] gap-0.5" : "ml-4 max-w-[calc(100%-400px)] gap-1"}`}
-                >
-                  {navigationItems.map((item) => {
-                    const isActive = location.pathname === item.url;
-                    const isInSplit = additionalPages.find(p => item.url.includes(p.name));
-                    return (
-                      <Link
-                        key={item.title}
-                        to={item.url}
-                        onClick={(e) => handleNavClick(e, item)}
-                        className={`ccs-glass-nav-item flex items-center whitespace-nowrap border ${compactView ? "gap-1 rounded-lg px-1 py-0.5" : "gap-1.5 rounded-lg px-2 py-1.5"} ${
-                          isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""
-                        }`}
-                        style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
-                        title="Ctrl+Click to open in split view"
-                      >
-                        <item.icon className={`${compactView ? "h-3 w-3" : "h-3.5 w-3.5"} flex-shrink-0`} style={{ color: item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }} />
-                        <span className={`${compactView ? "text-[10px]" : "text-xs"} font-medium text-slate-100 ${isActive ? "font-bold text-white" : ""}`}>
-                          {item.title}
-                        </span>
-                        {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
-                        </Link>
-                        );
-                        })}
-
-                        {/* Meetings Dropdown */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setMeetingsDropdownOpen(!meetingsDropdownOpen)}
-                      onBlur={() => setTimeout(() => setMeetingsDropdownOpen(false), 150)}
-                      className={`ccs-glass-nav-item flex items-center whitespace-nowrap border ${compactView ? "gap-1 rounded-lg px-1 py-0.5" : "gap-1.5 rounded-lg px-2 py-1.5"}`}
-                      style={{ "--glass-accent-rgb": hexToRgbTuple("#FACC15") }}
-                    >
-                      <Calendar className={`${compactView ? "h-3 w-3" : "h-3.5 w-3.5"} flex-shrink-0`} style={{ color: "#FACC15" }} />
-                      <span className={`${compactView ? "text-[10px]" : "text-xs"} font-medium text-slate-100`}>
-                        Meetings
-                      </span>
-                      <ChevronDown className={`w-3 h-3 transition-transform ${meetingsDropdownOpen ? 'rotate-180' : ''}`} style={{ color: meetingsDropdownItems.some(item => location.pathname === item.url) ? '#6B46C1' : '#9CA3AF' }} />
-                    </button>
-                    
-                    {meetingsDropdownOpen && (
-                      <div className="ccs-glass-panel absolute left-0 top-full z-50 mt-1 min-w-[160px] overflow-hidden rounded-xl p-1 text-slate-100">
-                        {meetingsDropdownItems.map((item) => {
-                          const isActive = location.pathname === item.url;
-                          const isInSplit = additionalPages.find(p => item.url.includes(p.name));
-                          return (
-                            <Link
-                              key={item.title}
-                              to={item.url}
-                              onClick={(e) => {
-                                if (e.ctrlKey || e.metaKey) {
-                                  e.preventDefault();
-                                  const pageName = item.url.split('/').pop();
-                                  addPage(pageName, item.title);
-                                }
-                                setMeetingsDropdownOpen(false);
-                              }}
-                              className={`ccs-glass-nav-item flex items-center gap-2 rounded-lg px-3 py-2 ${isActive ? "font-bold" : ""}`}
-                              style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
-                              title="Ctrl+Click to open in split view"
-                            >
-                              <item.icon className="h-4 w-4" style={{ color: item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }} />
-                              <span className={`text-sm font-medium text-slate-100 ${isActive ? "font-bold text-white" : ""}`}>
-                                {item.title}
-                              </span>
-                              {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Utility controls stay within the same glass material as the navigation shell. */}
-                <div className={`hidden lg:flex ${compactView ? "flex-row items-center gap-1" : "flex-col gap-1"}`}>
-                  <div className={`flex items-stretch ${compactView ? "gap-1" : "gap-2"}`}>
+                {/* Keep utilities available at tablet widths as well as desktop. */}
+                <div className={`ccs-topbar-utilities hidden md:flex flex-wrap items-center ${topBarCompact ? "gap-1" : "gap-2"}`}>
+                  <div className={`flex flex-wrap items-stretch ${topBarCompact ? "gap-1" : "gap-2"}`}>
                     {/* Login / Logout button */}
                     {!currentUser ? (
-                      <button
+                      <button type="button"
                         data-login-gate-allow
                         onClick={showLoginDialog}
-                        className={`ccs-glass-control ccs-glass-purple flex items-center rounded-xl text-violet-200 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
+                        className={`ccs-glass-control ccs-glass-purple flex items-center rounded-xl text-violet-200 ${topBarCompact ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
                         title="Sign In"
                       >
-                        <LogIn className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                        <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Sign In</span>
+                        <LogIn className={topBarCompact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                        <span className={`${topBarCompact ? "text-[11px]" : "text-sm"} font-bold`}>Sign In</span>
                       </button>
                     ) : (
-                      <button
+                      <button type="button"
                         data-login-gate-allow
                         onClick={logout}
-                        className={`ccs-glass-control ccs-glass-neutral flex items-center rounded-xl text-slate-100 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
+                        className={`ccs-glass-control ccs-glass-neutral flex items-center rounded-xl text-slate-100 ${topBarCompact ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
                         title={`Logout ${getUserFirstName()}`}
                       >
-                        <LogOut className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                        <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Logout</span>
+                        <LogOut className={topBarCompact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                        <span className={`${topBarCompact ? "text-[11px]" : "text-sm"} font-bold`}>Logout</span>
                       </button>
                     )}
 
-                    {currentUser && <FocusPausePair currentUser={currentUser} compact={compactView} />}
+                    {currentUser && <FocusPausePair currentUser={currentUser} compact={topBarCompact} />}
                     {currentUser && <TimeTracker position="top" hasTopBar hasSideBar={isSideNav || isMobile} />}
 
-                    {/* Announcement button - admin only, square, two rows tall */}
+                    {/* Announcement button - admin only */}
                     {isUserAdmin(currentUser) && (
-                      <button
+                      <button type="button"
                         onClick={() => setShowAnnouncementManager(true)}
-                        className={`ccs-glass-control ccs-glass-red flex flex-shrink-0 items-center justify-center rounded-xl text-red-200 ${compactView ? "h-7 w-8" : "w-11 self-stretch"}`}
+                        className={`ccs-glass-control ccs-glass-red flex flex-shrink-0 items-center justify-center rounded-xl text-red-200 ${topBarCompact ? "h-7 w-8" : "w-11 self-stretch"}`}
                         title="Announcements (Admin)"
                       >
-                        <Megaphone className={compactView ? "h-3.5 w-3.5" : "h-5 w-5"} />
+                        <Megaphone className={topBarCompact ? "h-3.5 w-3.5" : "h-5 w-5"} />
                       </button>
                     )}
                     <Link
                       to={createPageUrl("TimeClock")}
-                      className={`ccs-glass-control ccs-glass-green flex items-center rounded-xl text-emerald-200 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
+                      className={`ccs-glass-control ccs-glass-green flex items-center rounded-xl text-emerald-200 ${topBarCompact ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
                     >
-                      <Home className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                      <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Time Clock</span>
+                      <Home className={topBarCompact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                      <span className={`${topBarCompact ? "text-[11px]" : "text-sm"} font-bold`}>Time Clock</span>
                     </Link>
-                    
-                    <button
+
+                    <button type="button"
                       onClick={() => setShowAddTaskDialog(true)}
-                      className={`ccs-glass-control ccs-glass-blue flex items-center rounded-xl text-blue-200 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
+                      className={`ccs-glass-control ccs-glass-blue flex items-center rounded-xl text-blue-200 ${topBarCompact ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
                     >
-                      <ClipboardList className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                      <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>+ Task</span>
+                      <ClipboardList className={topBarCompact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                      <span className={`${topBarCompact ? "text-[11px]" : "text-sm"} font-bold`}>+ Task</span>
                     </button>
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <GlobalSearch className={compactView ? "w-[116px] justify-center" : "w-full justify-center"} compact={compactView} shellGlass />
-                    <AttentionBell compact={compactView} shellGlass />
+                    <GlobalSearch className={topBarCompact ? "w-[116px] justify-center" : "w-56 justify-center"} compact={topBarCompact} shellGlass />
+                    <AttentionBell compact={topBarCompact} shellGlass />
                   </div>
+                </div>
+
+                {/* Links use the space between the brand and utilities when available. */}
+                <div
+                  data-top-navigation-links
+                  data-manual-compact={compactView}
+                  onContextMenu={handleBarContextMenu}
+                  className={`ccs-topbar-links hidden lg:flex flex-wrap items-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
+                >
+                  <DragDropContext onDragEnd={handleNavReorder} onDragStart={handleNavDragStart}>
+                    <Droppable droppableId="page-nav-top" direction="horizontal" isCombineEnabled>
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className={`flex flex-wrap items-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
+                        >
+                          {topEntries.map((entry, index) => {
+                            const dndId = entry.type === "folder" ? folderToken(entry.id) : `top-${entry.url}`;
+                            if (entry.type === "folder") {
+                              const folder = entry.folder;
+                              const FolderIcon = folderIconFor(folder.icon);
+                              return (
+                                <Fragment key={dndId}>
+                                  <Draggable draggableId={dndId} index={index}>
+                                    {(dragProvided, dragSnapshot) => (
+                                      <div
+                                        ref={dragProvided.innerRef}
+                                        {...dragProvided.draggableProps}
+                                        {...dragProvided.dragHandleProps}
+                                        className="rounded-lg"
+                                      >
+                                        <NavFlyoutMenu
+                                          label={folder.name}
+                                          icon={FolderIcon}
+                                          accent={folder.color}
+                                          stylePreset={folder.style}
+                                          folderId={folder.id}
+                                          items={folderItems(folder)}
+                                          compactView={compactView}
+                                          activePath={location.pathname}
+                                          isInSplitUrl={isInSplitView}
+                                          onNavigate={handleNavClick}
+                                          onContextMenuPill={({ x, y }) =>
+                                            setNavMenu({ x, y, kind: "folder", folderId: folder.id })}
+                                          onContextMenuItem={(item, { x, y }) =>
+                                            setNavMenu({ x, y, kind: "page", url: item.url })}
+                                        />
+                                      </div>
+                                    )}
+                                  </Draggable>
+                                </Fragment>
+                              );
+                            }
+                            const item = styledPage(entry.url);
+                            if (!item) return null;
+                            return (
+                              <Fragment key={dndId}>
+                                <Draggable draggableId={dndId} index={index}>
+                                  {(dragProvided, dragSnapshot) => (
+                                    <NavPageLink
+                                      item={item}
+                                      variant="top"
+                                      compactView={compactView}
+                                      isActive={location.pathname === item.url}
+                                      isInSplit={isInSplitView(item)}
+                                      onNavigate={(event) => handleNavClick(event, item)}
+                                      onContextMenuItem={(itm, { x, y }) =>
+                                        setNavMenu({ x, y, kind: "page", url: itm.url })}
+                                      dragRef={dragProvided.innerRef}
+                                      dragProps={dragProvided.draggableProps}
+                                      dragSnapshot={dragSnapshot}
+                                      dragHandleProps={dragProvided.dragHandleProps}
+                                    />
+                                  )}
+                                </Draggable>
+                              </Fragment>
+                            );
+                          })}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
                 </div>
               </div>
 
               {/* Mobile Navigation Menu */}
               {mobileMenuOpen && (
-                <div className="lg:hidden mt-2 pb-4 border-t border-gray-200 pt-4 max-h-[calc(100vh-120px)] overflow-y-auto">
-                  <div className="grid grid-cols-1 gap-2 px-2">
-                    {[...navigationItems, ...meetingsDropdownItems].map((item) => {
+                <div className="lg:hidden mt-2 border-t border-gray-200 pt-2">
+                  <div className="ccs-topbar-menu-grid grid grid-cols-3 gap-1">
+                    {[...ALL_NAV_PAGES.keys()].map((u) => styledPage(u)).filter((item) => item && !navHidden.includes(item.url)).map((item) => {
                       const isActive = location.pathname === item.url;
                       const isInSplit = additionalPages.find(p => item.url.includes(p.name));
                       return (
@@ -1318,7 +2156,7 @@ function LayoutContent({ children }) {
                             }
                             setMobileMenuOpen(false);
                           }}
-                          className={`ccs-glass-nav-item flex min-h-[48px] items-center gap-3 rounded-xl px-4 py-3 ${isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""}`}
+                          className={`ccs-glass-nav-item flex min-h-[36px] min-w-0 items-center gap-2 rounded-xl px-2 py-1.5 ${isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""}`}
                           style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
                           title="Ctrl+Click to open in split view"
                         >
@@ -1342,7 +2180,7 @@ function LayoutContent({ children }) {
           <div className="fixed top-0 left-0 right-0 z-50 flex items-center px-3 bg-white/95 backdrop-blur-sm border-b border-gray-200"
             style={{ height: '48px', paddingTop: 'env(safe-area-inset-top)', background: darkMode ? 'rgba(20,20,40,0.97)' : undefined, borderColor: darkMode ? 'rgba(255,255,255,0.1)' : undefined }}
           >
-            <button
+            <button type="button"
               onClick={() => navigate(-1)}
               className="flex items-center gap-1 text-purple-700 font-medium text-sm min-h-[44px] min-w-[44px] -ml-1"
               style={{ userSelect: 'none' }}
@@ -1417,10 +2255,66 @@ function LayoutContent({ children }) {
         />
 
         {/* Add Task Dialog */}
-        <AddTaskDialog 
-          isOpen={showAddTaskDialog} 
-          onClose={() => setShowAddTaskDialog(false)} 
+        <AddTaskDialog
+          isOpen={showAddTaskDialog}
+          onClose={() => setShowAddTaskDialog(false)}
         />
+
+        {/* Nav customization: right-click menus + folder/page editors */}
+        {navMenu && (
+          <NavContextMenu
+            x={navMenu.x}
+            y={navMenu.y}
+            onClose={() => setNavMenu(null)}
+            items={
+              navMenu.kind === "bar"
+                ? [{ icon: FolderPlus, label: "New folder", onClick: () => openFolderEditor(null, true) }]
+                : navMenu.kind === "folder"
+                  ? [
+                      { icon: PencilLine, label: "Edit folder", onClick: () => openFolderEditor(navMenu.folderId) },
+                      { icon: Trash2, label: "Delete folder", danger: true, onClick: () => handleDeleteFolder(navMenu.folderId) },
+                    ]
+                  : [
+                      { icon: PencilLine, label: "Edit button", onClick: () => openPageEditor(navMenu.url) },
+                    ]
+            }
+          />
+        )}
+        {navEditor && navEditor.mode === "folder" && (() => {
+          const folder = navEditor.isNew ? null : effectiveFolders.find((f) => f.id === navEditor.folderId);
+          return (
+            <NavItemEditor
+              mode="folder"
+              title={navEditor.isNew ? "New folder" : `Edit folder`}
+              name={folder?.name || "New Folder"}
+              color={folder?.color || "#8B5CF6"}
+              style={folder?.style || "glass"}
+              icon={folder?.icon || "Folder"}
+              allowDelete={!navEditor.isNew}
+              onSave={(patch) => handleSaveFolder(navEditor.folderId, navEditor.isNew, patch)}
+              onDelete={() => handleDeleteFolder(navEditor.folderId)}
+              onClose={() => setNavEditor(null)}
+            />
+          );
+        })()}
+        {navEditor && navEditor.mode === "page" && (() => {
+          const base = ALL_NAV_PAGES.get(navEditor.url);
+          if (!base) return null;
+          const override = pageStyles[navEditor.url] || {};
+          return (
+            <NavItemEditor
+              mode="page"
+              title={`Edit “${base.title}” button`}
+              name={override.name || base.title}
+              color={override.color || base.accent}
+              style={override.style || "glass"}
+              allowReset={Boolean(pageStyles[navEditor.url])}
+              onSave={(patch) => handleSavePage(navEditor.url, patch)}
+              onReset={() => handleResetPage(navEditor.url)}
+              onClose={() => setNavEditor(null)}
+            />
+          );
+        })()}
 
         {/* Announcement Manager - admin only */}
         {isUserAdmin(currentUser) && (
@@ -1441,7 +2335,7 @@ function LayoutContent({ children }) {
             style={{ marginLeft: isSideNav ? (effectiveCollapsed ? `${collapsedRail}px` : `${sideNavWidth}px`) : '0' }}
           >
             {/* Full Screen Toggle */}
-            <button
+            <button type="button"
               onClick={toggleFullScreen}
               className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
               style={{ background: 'rgba(191, 219, 254, 0.8)', color: '#1e40af' }}
@@ -1491,7 +2385,7 @@ function LayoutContent({ children }) {
               />
             </div>
             {additionalPages.length > 0 && (
-              <button
+              <button type="button"
                 onClick={clearPages}
                 className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
                 style={{ background: 'rgba(254, 202, 202, 0.8)', color: '#991b1b' }}
@@ -1526,7 +2420,7 @@ function LayoutContent({ children }) {
                   ].map((item) => {
                     if (item.action) {
                       return (
-                        <button
+                        <button type="button"
                           key={item.label}
                           data-login-gate-allow
                           onClick={item.action}
@@ -1560,7 +2454,7 @@ function LayoutContent({ children }) {
                     );
                   })}
               {/* More button */}
-              <button
+              <button type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
                 style={{ minHeight: '44px', userSelect: 'none', color: mobileMenuOpen ? '#7C3AED' : '#6B7280' }}
@@ -1579,14 +2473,14 @@ function LayoutContent({ children }) {
                 <div className="h-full overflow-y-auto p-4 pt-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-bold text-white">All Pages</h2>
-                    <button onClick={() => setMobileMenuOpen(false)} className="ccs-glass-control ccs-glass-neutral rounded-lg p-2 text-slate-100">
+                    <button type="button" onClick={() => setMobileMenuOpen(false)} className="ccs-glass-control ccs-glass-neutral rounded-lg p-2 text-slate-100">
                       <X className="h-5 w-5" />
                     </button>
                   </div>
                   {currentUser && (
                     <div className="mb-3 space-y-2">
                       <FocusPausePair currentUser={currentUser} fullWidth compact />
-                      <div className="flex justify-center">
+                      <div className="flex w-full min-w-0 justify-center overflow-hidden">
                         <TimeTracker position="side" hasSideBar hasTopBar={!isSideNav} />
                       </div>
                     </div>
@@ -1612,7 +2506,7 @@ function LayoutContent({ children }) {
                     </div>
                   )}
                   <div className="grid grid-cols-1 gap-2">
-                    {[...navigationItems, ...meetingsDropdownItems].map((item) => {
+                    {[...ALL_NAV_PAGES.keys()].map((u) => styledPage(u)).filter((item) => item && !navHidden.includes(item.url)).map((item) => {
                       const isActive = location.pathname === item.url;
                       return (
                         <Link
@@ -1670,7 +2564,9 @@ function LayoutContentWrapper({ children, currentPageName }) {
 export default function Layout({ children, currentPageName }) {
   return (
     <AuthProvider>
-      <LayoutContentWrapper currentPageName={currentPageName}>{children}</LayoutContentWrapper>
+      <WorkspacePreferencesProvider>
+        <LayoutContentWrapper currentPageName={currentPageName}>{children}</LayoutContentWrapper>
+      </WorkspacePreferencesProvider>
     </AuthProvider>
   );
 }

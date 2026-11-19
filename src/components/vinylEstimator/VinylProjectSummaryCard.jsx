@@ -31,7 +31,7 @@ export default function VinylProjectSummaryCard({ rollup, project, onUpdateProje
 
         <div className="border-t pt-2 space-y-1">
           <Line label="Machine Time" value={fmt(rollup.machineCost)} />
-          <Line label={`Labor Â· ${rollup.laborHours.toFixed(2)} hr`} value={fmt(rollup.laborCost)} />
+          <Line label={`Labor · ${rollup.laborHours.toFixed(2)} hr`} value={fmt(rollup.laborCost)} />
         </div>
 
         {(rollup.equipmentCost > 0 || rollup.personnelCost > 0 || rollup.travelCost > 0) && (

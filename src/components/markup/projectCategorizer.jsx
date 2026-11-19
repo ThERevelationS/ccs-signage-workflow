@@ -29,7 +29,21 @@
 
 const num = (v) => Number(v) || 0;
 
-export function categorizeChannelLetterProject(p) {
+// Per-project memoization (#412): categorize output depends only on the
+// project payload. A WeakMap keyed on the project object skips recompute when
+// React re-renders pass the same object, and entries GC with the object.
+const _catCache = new WeakMap();
+const _catMemo = (p, compute) => {
+  if (!p || typeof p !== "object") return compute(p);
+  let byFn = _catCache.get(p);
+  if (byFn && byFn.has(compute)) return byFn.get(compute);
+  const out = compute(p);
+  if (!byFn) { byFn = new Map(); _catCache.set(p, byFn); }
+  byFn.set(compute, out);
+  return out;
+};
+
+function _impl_categorizeChannelLetterProject(p) {
   if (!p) return [];
   const lines = [];
 
@@ -105,7 +119,7 @@ export function categorizeChannelLetterProject(p) {
   return lines;
 }
 
-export function categorizeFoundationProject(p) {
+function _impl_categorizeFoundationProject(p) {
   if (!p) return [];
   const lines = [];
   const concrete = num(p.total_concrete_cost) + num(p.total_rebar_cost) + num(p.total_forming_materials_cost);
@@ -140,7 +154,7 @@ export function categorizeFoundationProject(p) {
   return lines;
 }
 
-export function categorizePaintProject(p) {
+function _impl_categorizePaintProject(p) {
   if (!p) return [];
   const lines = [];
   const mats = num(p.total_paint_mask_cost) + num(p.total_liquid_paint_and_supplies_cost);
@@ -150,7 +164,7 @@ export function categorizePaintProject(p) {
   return lines;
 }
 
-export function categorizeLaserProject(p) {
+function _impl_categorizeLaserProject(p) {
   if (!p) return [];
   const lines = [];
   const machine = num(p.total_machine_cost);
@@ -162,7 +176,7 @@ export function categorizeLaserProject(p) {
   return lines;
 }
 
-export function categorizeCNCProject(p) {
+function _impl_categorizeCNCProject(p) {
   if (!p) return [];
   const lines = [];
   const machine = num(p.total_machine_cost);
@@ -172,7 +186,7 @@ export function categorizeCNCProject(p) {
   return lines;
 }
 
-export function categorizeMetalProject(p) {
+function _impl_categorizeMetalProject(p) {
   if (!p) return [];
   const lines = [];
   const mat = num(p.total_material_cost) + num(p.total_supplies_cost);
@@ -182,7 +196,7 @@ export function categorizeMetalProject(p) {
   return lines;
 }
 
-export function categorizeBrickStoneProject(p) {
+function _impl_categorizeBrickStoneProject(p) {
   if (!p) return [];
   const lines = [];
   const materials = num(p.material_cost) + num(p.mortar_cost);
@@ -192,7 +206,7 @@ export function categorizeBrickStoneProject(p) {
   return lines;
 }
 
-export function categorizeMaintenanceProject(p) {
+function _impl_categorizeMaintenanceProject(p) {
   if (!p) return [];
   const lines = [];
   const labor = num(p.labor_cost) + num(p.total_personnel_cost);
@@ -210,7 +224,7 @@ export function categorizeMaintenanceProject(p) {
 //   Operator + Designer + Installer labor → inhouse_labor
 //   Install equipment rental (lifts) → outsourced_services
 //   Travel → outsourced_services
-export function categorizeVinylProject(p) {
+function _impl_categorizeVinylProject(p) {
   if (!p) return [];
   const lines = [];
   const materials =
@@ -233,6 +247,16 @@ export function categorizeVinylProject(p) {
 
   return lines;
 }
+
+export const categorizeChannelLetterProject = (p) => _catMemo(p, _impl_categorizeChannelLetterProject);
+export const categorizeFoundationProject = (p) => _catMemo(p, _impl_categorizeFoundationProject);
+export const categorizePaintProject = (p) => _catMemo(p, _impl_categorizePaintProject);
+export const categorizeLaserProject = (p) => _catMemo(p, _impl_categorizeLaserProject);
+export const categorizeCNCProject = (p) => _catMemo(p, _impl_categorizeCNCProject);
+export const categorizeMetalProject = (p) => _catMemo(p, _impl_categorizeMetalProject);
+export const categorizeBrickStoneProject = (p) => _catMemo(p, _impl_categorizeBrickStoneProject);
+export const categorizeMaintenanceProject = (p) => _catMemo(p, _impl_categorizeMaintenanceProject);
+export const categorizeVinylProject = (p) => _catMemo(p, _impl_categorizeVinylProject);
 
 export const MODULE_CATEGORIZERS = {
   channel_letter_installation: categorizeChannelLetterProject,

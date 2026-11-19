@@ -11,7 +11,7 @@ async function authorizeFleetUser(base44: any, sessionToken: unknown) {
     return { user };
   } catch (error: any) {
     const status = Number(error?.status || 500);
-    const safeStatus = [401, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [401, 409, 429, 503].includes(status) ? status : 500;
     return { error: Response.json({ error: safeStatus === 401 ? 'Authentication required' : error?.message || 'Fleet authentication failed.' }, { status: safeStatus }) };
   }
 }
@@ -71,6 +71,9 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unsupported Fleet Bouncie notification action.' }, { status: 400 });
   } catch (error: any) {
     console.error('fleetBouncieNotificationAction error:', error);
+    if (Number(error?.status || error?.response?.status) === 429 || /rate limit|too many requests/i.test(String(error?.message || ''))) {
+      return Response.json({ error: 'Fleet Bouncie notification operation is busy. Try again shortly.', retry_after_ms: 3000 }, { status: 429, headers: { 'Retry-After': '3' } });
+    }
     return Response.json({ error: error?.message || 'Fleet Bouncie notification operation failed.' }, { status: 500 });
   }
 });

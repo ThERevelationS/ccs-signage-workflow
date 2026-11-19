@@ -6,9 +6,9 @@ import { pagesConfig } from "@/pages.config";
 import { Calculator, FileDiff, FileText, GitBranch, KanbanSquare, Loader2, Package, Receipt, Search, ShoppingCart, Users } from "lucide-react";
 
 const RECORD_GROUPS = [
-  ["customers", "Customers", Users, (r) => `${r.contact_name || "—"} · ${(r.customer_status || "").replace(/_/g, " ")}`, (r) => `/EstimatorCustomers?customer=${r.id}`],
+  ["customers", "Customers", Users, (r) => `${r.contact_name || "—"} · ${(r.customer_status || "").replace(/_/g, " ")}`, (r) => `/Customer360?id=${r.id}`],
   ["opportunities", "Opportunities", GitBranch, (r) => `${r.customer_display_name || "—"} · ${(r.stage || "").replace(/_/g, " ")}`, (r) => `/Opportunities?open=${r.id}`],
-  ["work_orders", "Work Orders", KanbanSquare, (r) => `${r.client_name || "—"} · ${(r.current_stage || "").replace(/_/g, " ")}`, (r) => `/MainWorkflow?wo=${r.id}`],
+  ["work_orders", "Work Orders", KanbanSquare, (r) => `${r.client_name || "—"} · ${(r.current_stage || "").replace(/_/g, " ")}`, (r) => `/JobWorkspace?wo=${r.id}`],
   ["orders", "Orders", ShoppingCart, (r) => `${r.customer_name || "—"} · ${(r.status || "").replace(/_/g, " ")}${r.vendor ? ` · ${r.vendor}` : ""}`, (r) => `/OrderForm?order=${r.id}`],
   ["estimates", "Estimates", Calculator, (r) => `${r.client_name || "—"} · ${r.estimate_number || r.status || "—"}`, (r) => `/EstimateDetail?id=${r.id}`],
   ["invoices", "Invoices", Receipt, (r) => `${r.customer_display_name || "—"} · ${r.status || "—"}`, (r) => `/Invoices?invoice=${r.id}`],
@@ -17,6 +17,8 @@ const RECORD_GROUPS = [
 ];
 
 const PAGE_LABEL_OVERRIDES = {
+  CrmEvents: "CRM Events", WalkIn: "Walk-in Sale", CustomerStatements: "Statements",
+  CommsFollowups: "Follow-ups", Customer360: "Customer 360", CbMigration: "CB Migration",
   Home: "Home", MainWorkflow: "Main Workflow", Opportunities: "Sales Opportunities",
   EstimatorCustomers: "Customers", Invoices: "Invoices", PurchaseOrders: "Purchase Orders",
   ChangeOrders: "Change Orders", JobCosting: "Job Costing", Inventory: "Inventory",
@@ -26,6 +28,7 @@ const PAGE_LABEL_OVERRIDES = {
   QuickPrice: "Quick Price", SalesHome: "Sales Home", EstimatorQueues: "Estimator Queues",
   EstimatorProducts: "Products", EstimatorParts: "Parts", MasterInventory: "Master Inventory",
   QuoteSettings: "Quote Settings", WorkOrderTraveler: "WO Traveler", ProductionSchedule: "Production Schedule",
+  InstallRouteMap: "Install Route Map",
   VinylEstimator: "Vinyl Estimator", ChannelLetterEstimator: "Channel Letter Estimator",
   CNCEstimator: "CNC Estimator", LaserEstimator: "Laser Estimator", MetalEstimator: "Metal Estimator",
   PaintingEstimator: "Painting Estimator", FoundationEstimator: "Foundation Estimator",
@@ -44,7 +47,9 @@ const EXTRA_PAGE_NAMES = [
   "FleetOverview", "FleetSearch", "FleetNotifications", "FleetTracking", "FleetEquipment",
   "FleetEquipmentDetail", "FleetMaintenance", "FleetInspections", "FleetWorkOrders", "FleetParts",
   "FleetFluids", "FleetFuel", "FleetWarranties", "FleetReservations",
-  "WorkOrderTraveler", "ProductionSchedule",
+  "WorkOrderTraveler", "ProductionSchedule", "InstallRouteMap",
+  "ProductQueues", "JobWorkspace", "WalkIn", "OpsReports", "CrmEvents", "Imports",
+  "Reconciliation", "CustomerStatements", "PricingAdmin", "CommsFollowups", "Customer360", "CbMigration",
 ];
 
 const pageLabel = (name) =>
@@ -116,7 +121,7 @@ export default function CommandPalette() {
       for (const [key, group, Icon, sub, href] of RECORD_GROUPS) {
         for (const r of (records[key] || []).slice(0, 4)) {
           const title = r.title || r.company_name || r.project_name || r.invoice_number || r.po_number || r.change_order_number || r.estimate_number || r.description || "Record";
-          out.push({ kind: "record", label: title, sub: `${group} · ${sub(r)}`, path: href(r), icon: Icon });
+          out.push({ kind: "record", label: title, sub: `${group} · ${sub(r)}${r.legacy_source_id ? ` · CB #${r.legacy_source_id}` : ""}`, path: href(r), icon: Icon });
         }
       }
     }
@@ -163,7 +168,7 @@ export default function CommandPalette() {
             <p className="py-8 text-center text-sm text-slate-400">{query ? "No matches." : "Type to search pages and records."}</p>
           )}
           {items.map((item, i) => (
-            <button
+            <button type="button"
               key={`${item.path}-${i}`}
               data-idx={i}
               onMouseEnter={() => setCursor(i)}

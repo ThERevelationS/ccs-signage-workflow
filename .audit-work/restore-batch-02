@@ -1,0 +1,13 @@
+src/components/estimator/foundation/wallCapCalculator.js
+src/components/estimator/metal/metalPricingAvailability.js
+src/components/estimator/workOrderConversion.js
+src/pages/CNCEstimator.jsx
+src/pages/CNCSettings.jsx
+src/pages/EstimateDetail.jsx
+src/pages/EstimatorCustomers.jsx
+src/pages/EstimatorQueues.jsx
+src/pages/FoundationEstimator.jsx
+src/pages/MaintenanceEstimator.jsx
+src/pages/MetalEstimator.jsx
+src/pages/NewAllInOneEstimate.jsx
+scripts/test-foundation-material-ui.mjs

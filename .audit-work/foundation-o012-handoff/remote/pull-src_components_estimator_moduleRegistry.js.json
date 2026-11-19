@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/estimator/moduleRegistry.js",
+      "content": "// Registry of estimator modules. Each section of an All-In-One estimate is a\n// sub-estimate record living in its module's own entity.\nexport const ESTIMATOR_MODULES = [\n  { key: \"foundation\", label: \"Concrete | Masonry | Poles\", entity: \"FoundationProject\", page: \"FoundationEstimator\" },\n  { key: \"channel_letters\", label: \"Channel & Dimensional Letters\", entity: \"ChannelLetterInstallation\", page: \"ChannelLetterEstimator\" },\n  { key: \"vinyl\", label: \"Vinyl & Graphics\", entity: \"VinylProject\", page: \"VinylEstimator\" },\n  { key: \"cnc\", label: \"CNC Router\", entity: \"CNCProject\", page: \"CNCEstimator\" },\n  { key: \"laser\", label: \"Laser\", entity: \"LaserProject\", page: \"LaserEstimator\" },\n  { key: \"metal\", label: \"Metal Fabrication\", entity: \"MetalProject\", page: \"MetalEstimator\" },\n  { key: \"brick_stone\", label: \"Brick & Stone\", entity: \"BrickStoneProject\", page: \"BrickStoneEstimator\" },\n  { key: \"maintenance\", label: \"Sign Maintenance\", entity: \"MaintenanceProject\", page: \"MaintenanceEstimator\" },\n  { key: \"painting\", label: \"Painting\", entity: \"Project\", page: \"PaintingEstimator\" },\n  { key: \"custom_items\", label: \"Custom line items\", entity: \"CustomItemsProject\", page: \"CustomItemsEstimator\" },\n];\n\n// Field on the sub-estimate record holding its grand total. Foundation projects\n// keep their totals split across several fields, so their snapshot is written by\n// the Foundation estimator itself and is not refreshed here.\n// Modules absent from this map have no single total field. sourceProjectTotal\n// handles them explicitly (e.g. painting sums its mask/supplies/labor totals,\n// foundation derives its total from grand_total or its known cost fields).\nexport const MODULE_TOTAL_FIELD = {\n  channel_letters: \"total_cost\",\n  vinyl: \"total_cost\",\n  cnc: \"total_cost\",\n  laser: \"total_cost\",\n  metal: \"total_cost\",\n  brick_stone: \"total_cost\",\n  maintenance: \"total_cost\",\n  custom_items: \"total_cost\",\n};\n\nconst LEGACY_MODULES = {};\n\nexport const getModule = (key) => ESTIMATOR_MODULES.find((m) => m.key === key) || LEGACY_MODULES[key];\n\nexport const getModuleLabel = (key) => getModule(key)?.label || key;",
+      "startLine": 1,
+      "endLine": 37,
+      "totalLines": 37,
+      "truncated": false
+    }
+  ]
+}

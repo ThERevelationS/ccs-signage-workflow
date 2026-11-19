@@ -1,0 +1,29 @@
+{
+ "synthetic": true,
+ "note": "no Base44 SDK/services/records; UI stubs only",
+ "results": [
+  {
+   "case": "empty catalog: authored pole+cap rows, selects, costs, warnings, add disabled",
+   "ok": true,
+   "rowsVisible": true,
+   "warnings": [
+    1,
+    1
+   ]
+  },
+  {
+   "case": "parent reassign with empty catalog: emits onChange, material+cost unchanged",
+   "ok": true,
+   "reassigned": true
+  },
+  {
+   "case": "catalog reload: labels resolve, warnings gone, zero data mutation",
+   "ok": true,
+   "resolved": true
+  },
+  {
+   "case": "external-requests-blocked",
+   "ok": true
+  }
+ ]
+}

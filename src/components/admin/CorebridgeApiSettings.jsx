@@ -1,11 +1,52 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, ClipboardCheck, Download, FileSpreadsheet, Loader2, ShieldCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 // The legacy component name is retained because AdminSettings already mounts it.
 // This page does not call CoreBridge, Gmail, or any historical importer.
+function SyncHealthStrip() {
+  const [rows, setRows] = useState([]);
+  useEffect(() => {
+    let alive = true;
+    const latest = async (entity, sort) => {
+      try { const r = await staffEntities[entity].list(sort, 1); return Array.isArray(r) && r[0] ? r[0] : null; }
+      catch { return null; }
+    };
+    const countWhere = async (entity, query) => {
+      try { return await staffEntities[entity].count(query); } catch { return null; }
+    };
+    Promise.all([
+      latest("CorebridgeLog", "-run_at").then((r) => ({ name: "CoreBridge", status: r?.status || "no runs", at: r?.run_at })),
+      latest("SmartsheetSyncTrace", "-created_date").then((r) => ({ name: "Smartsheet", status: r?.status || "no runs", at: r?.created_date })),
+      latest("PermittingScanRun", "-started_at").then((r) => ({ name: "Permitting scan", status: r?.status || "no runs", at: r?.started_at })),
+      countWhere("FleetNotificationQueue", { status: "failed" }).then((n) => ({ name: "Fleet alerts", status: n === null ? "unknown" : n > 0 ? `${n} failed` : "ok", at: null })),
+      countWhere("SyncConflict", { status: "open" }).then((n) => ({ name: "Conflicts", status: n === null ? "unknown" : n > 0 ? `${n} open` : "none", at: null })),
+    ]).then((list) => { if (alive) setRows(list); });
+    return () => { alive = false; };
+  }, []);
+  const tone = (status) =>
+    /fail|error|open/i.test(status) ? "bg-red-100 text-red-800"
+    : /ok|none|complete|success|done/i.test(status) ? "bg-emerald-100 text-emerald-800"
+    : "bg-gray-100 text-gray-600";
+  return (
+    <div className="clay-card p-3" aria-label="Sync health">
+      <p className="text-xs font-semibold text-gray-700">Sync health</p>
+      <div className="mt-1 flex flex-wrap gap-1.5">
+        {rows.map((r) => (
+          <span key={r.name} className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${tone(r.status)}`}
+            title={r.at ? `Last run: ${r.at}` : undefined}>
+            {r.name}: {r.status}
+          </span>
+        ))}
+        {!rows.length && <span className="text-[11px] text-gray-400">Checking integrations…</span>}
+      </div>
+    </div>
+  );
+}
+
 export default function CorebridgeApiSettings({ sessionToken }) {
   const [scope, setScope] = useState("all");
   const [busy, setBusy] = useState(false);
@@ -17,6 +58,31 @@ export default function CorebridgeApiSettings({ sessionToken }) {
   const [verifyingBackup, setVerifyingBackup] = useState(false);
   const [backupError, setBackupError] = useState("");
   const [backupComparison, setBackupComparison] = useState(null);
+  const [logRows, setLogRows] = useState(null);
+  const [expandedLogId, setExpandedLogId] = useState(null);
+  const [logLoading, setLogLoading] = useState(false);
+  const [logError, setLogError] = useState("");
+  const [logSearch, setLogSearch] = useState("");
+  const [logStatus, setLogStatus] = useState("all");
+
+  const loadLog = async () => {
+    if (logLoading) return;
+    setLogLoading(true); setLogError("");
+    try {
+      const rows = await staffEntities.CorebridgeLog.filter({}, "-run_at", 50);
+      setLogRows(Array.isArray(rows) ? rows : []);
+    } catch (e) { setLogError(e?.message || "Log could not be loaded."); }
+    finally { setLogLoading(false); }
+  };
+  const visibleLogs = (logRows || []).filter((r) => {
+    if (logStatus !== "all" && r.status !== logStatus) return false;
+    if (logSearch.trim()) {
+      const q = logSearch.trim().toLowerCase();
+      const hay = `${r.status || ""} ${r.trigger || ""} ${r.error_message || ""} ${r.run_at || ""}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
 
   const verifyBackup = async () => {
     if (!sessionToken || busy || auditing || verifyingBackup) return;
@@ -98,6 +164,7 @@ export default function CorebridgeApiSettings({ sessionToken }) {
 
   return (
     <div className="space-y-4">
+      <SyncHealthStrip />
       <div className="clay-card p-5 space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="font-semibold text-gray-800 flex items-center gap-2">
@@ -351,6 +418,63 @@ export default function CorebridgeApiSettings({ sessionToken }) {
           Historical CoreBridge import records and audit logs remain preserved.
           This CSV is a snapshot of CCS records, not a fresh export from CoreBridge.
         </p>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-gray-200 bg-white/60 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-semibold text-gray-800">Import run log</h3>
+          <Button type="button" variant="outline" size="sm" disabled={logLoading} onClick={loadLog}>
+            {logLoading ? "Loading…" : logRows === null ? "Load log" : "Refresh"}
+          </Button>
+        </div>
+        {logRows !== null && (
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <input type="text" value={logSearch} onChange={(e) => setLogSearch(e.target.value)}
+                placeholder="Search errors, status, dates…" aria-label="Search import log"
+                className="h-9 flex-1 min-w-40 rounded-md border border-input bg-transparent px-3 text-xs" />
+              <select value={logStatus} onChange={(e) => setLogStatus(e.target.value)}
+                className="h-9 rounded-md border bg-transparent px-2 text-xs" aria-label="Filter by status">
+                <option value="all">All statuses</option>
+                <option value="success">Success</option>
+                <option value="error">Error</option>
+                <option value="partial">Partial</option>
+                <option value="no_emails">No emails</option>
+              </select>
+            </div>
+            {visibleLogs.length === 0 ? (
+              <p className="py-4 text-center text-xs text-gray-500">No log entries match.</p>
+            ) : (
+              <div className="max-h-80 space-y-1 overflow-y-auto">
+                {visibleLogs.map((row) => (
+                  <div key={row.id} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-gray-800">{row.run_at || "—"}</span>
+                      <span className={`rounded-full px-2 py-0.5 ${row.status === "success" ? "bg-green-100 text-green-700" : row.status === "error" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>
+                        {row.status || "unknown"}
+                      </span>
+                      <span className="text-gray-500">{row.trigger || ""}</span>
+                      <span className="text-gray-400">{row.emails_found ?? "—"} found · {row.processed ?? "—"} processed</span>
+                    </div>
+                    {row.error_message && <p className="mt-1 text-red-700">{row.error_message}</p>}
+                    {row.results && (
+                      <div className="mt-1">
+                        <button type="button" className="text-[10px] font-medium text-sky-700 underline"
+                          onClick={() => setExpandedLogId(expandedLogId === row.id ? null : row.id)}>
+                          {expandedLogId === row.id ? "Hide details" : "Show details"}
+                        </button>
+                        {expandedLogId === row.id && (
+                          <pre className="mt-1 max-h-40 overflow-auto rounded bg-gray-50 p-2 text-[10px] text-gray-700">{JSON.stringify(row.results, null, 2)}</pre>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {logError && <p className="mt-2 text-xs text-red-600">{logError}</p>}
       </div>
     </div>
   );

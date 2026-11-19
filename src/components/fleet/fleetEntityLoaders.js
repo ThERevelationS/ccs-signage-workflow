@@ -27,15 +27,28 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // Identical concurrent loads share one in-flight promise. The mutation epoch
 // rides inside each signature so a read issued after a mutation can never
 // consume a snapshot that predates it — post-mutation reloads always fetch
-// fresh. Settled loads are never cached; the entry drops on settle.
+// fresh. Settled loads are never cached unless the caller passes ttlMs —
+// reserved for slow-changing catalogs (parts/fluids), never edit surfaces.
 const inFlight = new Map();
+const responseCache = new Map();
+const RESPONSE_CACHE_MAX = 100;
 
 const epoch = () => getFleetMutationEpoch();
 
-function deduped(signature, run) {
+function deduped(signature, run, ttlMs = 0) {
   const existing = inFlight.get(signature);
   if (existing) return existing;
-  const promise = run().finally(() => {
+  if (ttlMs > 0) {
+    const hit = responseCache.get(signature);
+    if (hit && Date.now() - hit.at < ttlMs) return Promise.resolve(hit.rows);
+  }
+  const promise = run().then((rows) => {
+    if (ttlMs > 0) {
+      if (responseCache.size >= RESPONSE_CACHE_MAX) responseCache.delete(responseCache.keys().next().value);
+      responseCache.set(signature, { at: Date.now(), rows });
+    }
+    return rows;
+  }).finally(() => {
     if (inFlight.get(signature) === promise) inFlight.delete(signature);
   });
   inFlight.set(signature, promise);
@@ -90,10 +103,11 @@ async function collectPages(fetchPage, { batchSize = DEFAULT_BATCH_SIZE, maxPage
 
 // Single-page read — replaces direct entity.list/filter calls that do not
 // need collectPages' paginate-all behavior (detail lookups, capped panels).
-export function readFleetRows(entityName, { query, sort, limit = 100, skip = 0 } = {}) {
+export function readFleetRows(entityName, { query, sort, limit = 100, skip = 0, ttlMs = 0 } = {}) {
   return deduped(
     `page|${entityName}|${epoch()}|${JSON.stringify({ query, sort, limit, skip })}`,
     () => fetchFleetPage(entityName, { query, sort, limit, skip }),
+    ttlMs,
   );
 }
 
@@ -104,6 +118,7 @@ export function listAllFleetRows(entityName, sort, options = {}) {
       (limit, skip) => fetchFleetPage(entityName, { sort, limit, skip }),
       options,
     ),
+    Number(options.ttlMs) || 0,
   );
 }
 
@@ -114,5 +129,6 @@ export function filterAllFleetRows(entityName, query, sort, options = {}) {
       (limit, skip) => fetchFleetPage(entityName, { query, sort, limit, skip }),
       options,
     ),
+    Number(options.ttlMs) || 0,
   );
 }

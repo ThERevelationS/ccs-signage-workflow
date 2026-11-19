@@ -1,0 +1,117 @@
+./src/components/estimator/aio/AddProductGrid.jsx:139:      .catch((error) => setQuickError(error?.message || "Quick Product Library could not be verified."))
+./src/components/estimator/aio/AddProductGrid.jsx:143:      .catch(() => setKitsError("Inventory kits could not be loaded."));
+./src/components/estimator/aio/BuilderPartsPanel.jsx:307:      const current = await base44.entities.BuilderPartGroup.get(group.id).catch(() => null);
+./src/components/estimator/aio/BuilderPartsPanel.jsx:318:      }).catch(() => null);
+./src/components/estimator/aio/BuilderPartsPanel.jsx:360:      await Promise.resolve(onChanged?.()).catch(() => null);
+./src/components/estimator/aio/BuilderPartsPanel.jsx:449:                    await Promise.resolve(onChanged?.()).catch(() => null);
+./src/components/estimator/aio/BuilderPartsPanel.jsx:539:            await Promise.resolve(onChanged?.()).catch(() => null);
+./src/components/estimator/aio/BuilderPartsPanel.jsx:705:      await Promise.resolve(onProductRefresh?.()).catch(() => null);
+./src/components/estimator/aio/BuilderPartsPanel.jsx:781:        await staffEntities.BuilderPartGroup.updateMany({ id: g.id }, { sort_order: i }).catch(() => null);
+./src/components/estimator/aio/CreateQuickProductModal.jsx:28:      loadAllEntityRows({ entity: base44.entities.QuickProductCategory, sort: "category_name", label: "Quick Product categories" }).catch(() => []),
+./src/components/estimator/aio/CreateQuickProductModal.jsx:29:      base44.auth.me().catch(() => null),
+./src/components/estimator/aio/CreateQuickProductModal.jsx:33:      .catch(() => setAvailableCategories([]));
+./src/components/estimator/aio/NewCustomerDialog.jsx:57:      .catch((err) => {
+./src/components/estimator/aio/NewCustomerDialog.jsx:74:      .catch(() => {
+./src/components/estimator/aio/ProductPriceHistoryModal.jsx:44:      .catch((err) => active && setError(err?.message || "Price history could not be loaded."))
+./src/components/estimator/aio/Step1EstimateDetails.jsx:80:        ? entity.filter({ customer_id: form.customer_id }).catch(() => [])
+./src/components/estimator/builder/builderEntityPersistence.js:98:      const afterError = await entity.get(recordId).catch(() => null);
+./src/components/estimator/builder/builderEntityPersistence.js:107:      const saved = await entity.get(recordId).catch(() => null);
+./src/components/estimator/builder/builderService.js:53:  return staffEntities[mod.entity].get(line.project_id).catch(() => null);
+./src/components/estimator/builder/builderService.js:132:    const direct = await staffEntities.BuilderProduct.get(line.builder_product_id).catch(() => null);
+./src/components/estimator/builder/builderService.js:246:        ? await staffEntities.BuilderProduct.get(line.builder_product_id).catch(() => null)
+./src/components/estimator/builder/historicalBackfill.js:19:  const products = await staffEntities.BuilderProduct.filter({ estimate_id: estimate.id }).catch(() => []);
+./src/components/estimator/builder/historicalBackfill.js:107:  const me = await base44.auth.me().catch(() => null);
+./src/components/estimator/builder/legacyBomReconcile.js:427:  const me = await base44.auth.me().catch(() => null);
+./src/components/estimator/builder/legacyBomReconcile.js:458:      const project = await staffEntities[builder.source_entity].get(builder.source_project_id).catch(() => null);
+./src/components/estimator/builder/partSync.js:3847:  const me = await base44.auth.me().catch(() => null);
+./src/components/estimator/builder/partSync.js:4199:        ? await staffEntities[builder.source_entity].get(builder.source_project_id).catch(() => null)
+./src/components/estimator/builder/sourceProjectPersistence.js:75:    const current = await entity.get(sourceId).catch(() => null);
+./src/components/estimator/builder/sourceProjectPersistence.js:85:    const saved = await entity.get(sourceId).catch(() => null);
+./src/components/estimator/builder/sourceProjectPersistence.js:91:  const current = await entity.get(sourceId).catch(() => null);
+./src/components/estimator/ConvertToWorkOrder.jsx:31:      .catch(() => {
+./src/components/estimator/ConvertToWorkOrder.jsx:84:      const post = await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => null);
+./src/components/estimator/customerLocationService.js:69:  const existing = await entity.filter({ customer_id: id }).catch(() => []);
+./src/components/estimator/customerPersistence.js:109:      const afterError = await entity.get(id).catch(() => null);
+./src/components/estimator/customerPersistence.js:120:      const saved = await entity.get(id).catch(() => null);
+./src/components/estimator/CustomerQuotePanel.jsx:153:      .catch(() => { if (active) setCurrentVersionDelivered(false); });
+./src/components/estimator/CustomerQuotePanel.jsx:164:      loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: QUOTE_APPROVAL_THRESHOLD_KEY, label: "Quote approval threshold" }).catch(() => null),
+./src/components/estimator/CustomerQuotePanel.jsx:165:      loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: MARGIN_FLOOR_KEY, label: "Margin floor percent" }).catch(() => null),
+./src/components/estimator/CustomerQuotePanel.jsx:166:      loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: MIN_QUOTE_FLOOR_KEY, label: "Minimum quote total" }).catch(() => null),
+./src/components/estimator/CustomerQuotePanel.jsx:167:      sessionEmail ? staffEntities.AuthorizedEmail.filter({ email: sessionEmail }).catch(() => []) : Promise.resolve([]),
+./src/components/estimator/CustomerQuotePanel.jsx:273:        const customer = await base44.entities.Customer.get(estimate.customer_id).catch(() => null);
+./src/components/estimator/CustomerQuotePanel.jsx:429:            onClick={() => openSendDialog().catch((e) => setSendError(e?.message || "Could not open the send dialog."))}
+./src/components/estimator/customerSync.js:154:    const fetched = await staffEntities.Customer.get(linkedId).catch(() => null);
+./src/components/estimator/EstimateAcceptancePanel.jsx:102:      .catch(() => { /* threshold stays at the server default */ });
+./src/components/estimator/EstimateAcceptancePanel.jsx:130:        }).catch(() => []),
+./src/components/estimator/EstimateActivityPanel.jsx:21:            ? base44.entities.OpportunityActivity.filter({ opportunity_id: estimate.opportunity_id }, "-created_date", 100).catch(() => [])
+./src/components/estimator/EstimateActivityPanel.jsx:23:          base44.entities.PortalMessage.filter({ related_kind: "estimate", related_id: estimateId }, "-created_date", 100).catch(() => []),
+./src/components/estimator/EstimateCard.jsx:19:    .catch((error) => {
+./src/components/estimator/estimateConversionService.js:254:      const linked = await WorkOrder.get(linkedId).catch(() => null);
+./src/components/estimator/estimateConversionService.js:540:    const wo = await WorkOrder.get(woId).catch(() => null);
+./src/components/estimator/estimateConversionService.js:549:      const wo = await WorkOrder.get(woId).catch(() => null);
+./src/components/estimator/estimatePersistence.js:120:      const afterError = await entity.get(id).catch(() => null);
+./src/components/estimator/estimatePersistence.js:131:      const saved = await entity.get(id).catch(() => null);
+./src/components/estimator/estimatePersistence.js:205:  const current = await entity.get(id).catch(() => null);
+./src/components/estimator/estimatePersistence.js:213:    const afterError = await entity.get(id).catch(() => null);
+./src/components/estimator/estimatePersistence.js:217:  const after = await entity.get(id).catch(() => null);
+./src/components/estimator/EstimateQuoteDeliveryPanel.jsx:48:      .catch((error) => {
+./src/components/estimator/EstimateRevisionPanel.jsx:109:      .catch((err) => { if (!stale) setRevisionReadError(err?.message || "Revision history could not be loaded."); })
+./src/components/estimator/estimateRevisionService.js:20:  }).catch(() => null);
+./src/components/estimator/EstimatorAuditPanel.jsx:48:          type === "activity" || type === "admin" ? Promise.resolve([]) : base44.entities.EstimateRevision.filter({}, "-updated_date", 150).catch(() => []),
+./src/components/estimator/EstimatorAuditPanel.jsx:49:          type === "revision" || type === "admin" ? Promise.resolve([]) : base44.entities.OpportunityActivity.filter({}, "-created_date", 150).catch(() => []),
+./src/components/estimator/EstimatorAuditPanel.jsx:53:          type === "revision" || type === "activity" ? Promise.resolve([]) : staffEntities.AdminAuditLog.filter({}, "-at", 150).catch(() => []),
+./src/components/estimator/foundation/foundationSyncRecovery.js:106:    .catch((error) => (Number(error?.status) === 404 ? null : undefined));
+./src/components/estimator/foundation/FoundationTemplateDialog.jsx:72:      .catch((e) => {
+./src/components/estimator/importEstimates.js:386:        ? await entity.filter({ idempotency_key: t.idempotencyKey }).catch(() => [])
+./src/components/estimator/moduleShared/moduleTemplateService.js:32:  const current = await base44.entities.ProjectTemplate.get(id).catch(() => null);
+./src/components/estimator/NewEstimateDialog.jsx:25:    loadAllCustomers().then((res) => setCustomers(res || [])).catch((err) => setError(err?.message || "Customers could not be loaded."));
+./src/components/estimator/parts/MasterPartPickerModal.jsx:40:      .catch((error) => active && setLoadError(error?.message || "Master Inventory could not be verified."))
+./src/components/estimator/parts/PartLibraryPickerModal.jsx:28:      .catch((err) => active && setError(err?.message || "Part Library could not be loaded."))
+./src/components/estimator/parts/partTemplateService.js:167:    base44.auth.me().catch(() => null),
+./src/components/estimator/parts/partTemplateService.js:182:    base44.auth.me().catch(() => null),
+./src/components/estimator/productionProductTypes.js:11:  }).catch(() => null);
+./src/components/estimator/products/clipboardService.js:194:      const current = await staffEntities.EstimateClipboardItem.get(row.id).catch(() => null);
+./src/components/estimator/products/clipboardService.js:206:  const current = await staffEntities.EstimateClipboardItem.get(itemId).catch(() => null);
+./src/components/estimator/products/kitService.js:34:    const row = await staffEntities.Inventory.get(item.id).catch(() => null);
+./src/components/estimator/products/quickProductService.js:1019:    base44.auth.me().catch(() => null),
+./src/components/estimator/products/quickProductService.js:1077:    base44.auth.me().catch(() => null),
+./src/components/estimator/quickPricePersistence.js:48:    const verified = typeof entity.get === "function" ? await entity.get(created.id).catch(() => null) : null;
+./src/components/estimator/useSectionSync.js:17:      const record = await base44.entities[mod.entity].get(line.project_id).catch(() => null);
+./src/components/estimator/useSectionSync.js:62:  await base44.entities[mod.entity].delete(line.project_id).catch(() => null);
+./src/components/estimator/workOrderConversion.js:68:    (await Part.filter({ estimate_id: estimateId }, "created_date", 500).catch(() => []))
+./src/components/estimator/workOrderConversion.js:73:    (await Part.filter({ builder_product_id: bpid }, "created_date", 500).catch(() => []))
+./src/components/estimator/workOrderConversion.js:640:  const live = await entity.get(id).catch(() => null);
+./src/components/estimator/workOrderConversion.js:645:  const result = await entity.updateMany({ id, updated_date: live.updated_date }, { $set: apply }).catch(() => null);
+./src/components/estimator/workOrderConversion.js:670:      : await staffEntities.WorkOrder.get(String(workOrderId || "").trim()).catch(() => null);
+./src/components/estimator/workOrderConversion.js:687:    }).catch(() => ({ synced: false, reason: "error" }));
+./src/components/masterInventory/ExcelImporterDialog.jsx:290:              const recoveredRows = await conf.entity.filter({ [conf.nameField]: r.name }).catch(() => []);
+./src/components/masterInventory/InventoryFormModal.jsx:60:      .catch(() => {});
+./src/components/masterInventory/inventoryPersistence.js:57:    const verified = typeof entity.get === "function" ? await entity.get(created.id).catch(() => null) : null;
+./src/components/masterInventory/inventoryPersistence.js:124:    const product = await base44.entities.BuilderProduct.get(productId).catch(() => null);
+./src/components/masterInventory/inventoryPersistence.js:152:    }).catch(() => { /* audit must not fail the save */ });
+./src/components/masterInventory/inventoryPersistence.js:163:  const rows = await staffEntities.InventoryCostHistory.filter(query).catch(() => []);
+./src/components/masterInventory/InventoryTable.jsx:24:      .catch(() => {});
+./src/components/masterInventory/InventoryTable.jsx:33:        const row = await base44.entities.AllInOneEstimate.get(id).catch(() => null);
+./src/components/masterInventory/legacyInventoryMigrator.jsx:287:        const sourceAfter = await Inventory.get(row.id).catch(() => null);
+./src/components/masterInventory/legacyInventoryMigrator.jsx:288:        const targetAfter = await targetEntity.get(created.id).catch(() => null);
+./src/components/masterInventory/legacyInventoryMigrator.jsx:294:        const sourceStillExists = await Inventory.get(row.id).catch(() => null);
+./src/components/masterInventory/legacyInventoryMigrator.jsx:297:            const recoveredReceipts = await migrationReceipts(row.id).catch(() => []);
+./src/pages/Estimator.jsx:88:          .catch((error) => {
+./src/pages/EstimatorCustomers.jsx:84:    }).catch((e) => { if (live) setError(e?.response?.data?.error || e?.message || "Load failed."); });
+./src/pages/EstimatorCustomers.jsx:315:          loadAllCustomers().catch((e) => { setLoadError(e?.message || "Customer list could not be loaded. Try again."); return []; }),
+./src/pages/EstimatorCustomers.jsx:316:          loadAllEntityRows({ entity: staffEntities.MarkupTier, sort: "sort_order", label: "Customer markup tiers" }).catch(() => []),
+./src/pages/EstimatorCustomers.jsx:317:          base44.auth.me().catch(() => null),
+./src/pages/EstimatorCustomers.jsx:327:    load().catch(() => {});
+./src/pages/EstimatorCustomers.jsx:334:      .catch(() => setPortalInbox([]));
+./src/pages/EstimatorCustomers.jsx:416:      const fresh = await loadAllCustomers().catch(() => null);
+./src/pages/EstimatorCustomers.jsx:449:      const refreshed = await staffEntities.Customer.get(customerId).catch(() => null);
+./src/pages/EstimatorCustomers.jsx:780:        <CustomerMergeDialog open={mergeOpen} customers={customers} onClose={() => setMergeOpen(false)} onMerged={() => { loadAllCustomers().then((rows) => setCustomers(rows || [])).catch(() => {}); }} />
+./src/pages/EstimatorParts.jsx:162:    Promise.all([listPartTemplates({ includeInactive: true }), base44.auth.me().catch(() => null)])
+./src/pages/EstimatorParts.jsx:164:      .catch((err) => { if (!active) return; setTemplates([]); setLibraryError(err?.message || "Part Library could not be verified."); })
+./src/pages/EstimatorProducts.jsx:183:      base44.auth.me().catch(() => null),
+./src/pages/EstimatorProducts.jsx:190:    }).catch((err) => {
+./src/pages/EstimatorQueues.jsx:94:    ).catch(() => {});
+./src/pages/EstimatorQueues.jsx:161:  useEffect(() => { base44.auth.me().then(setMe).catch(() => {}); }, []);
+./src/pages/EstimatorQueues.jsx:178:      .catch(() => {});
+./src/pages/EstimatorQueues.jsx:373:      .catch(() => []);
+./src/pages/FoundationEstimator.jsx:283:      .catch((error) => {

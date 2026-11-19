@@ -1,0 +1,10 @@
+export const useMemo = (fn) => fn();
+export const useState = (v) => [v, () => {}];
+export const useRef = (v) => ({ current: v });
+export const useEffect = () => {};
+export const useCallback = (fn) => fn;
+export const useContext = () => ({});
+export const createContext = (v) => ({ Provider: "ContextProvider", Consumer: "ContextConsumer", _currentValue: v });
+export const createElement = (type, props, ...children) => ({ type, props: { ...(props || {}), children: children.length <= 1 ? children[0] : children } });
+export const Fragment = Symbol("Fragment");
+export default { useMemo, useState, useRef, useEffect, useCallback, useContext, createContext, createElement, Fragment };

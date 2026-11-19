@@ -1,0 +1,119 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "3258e9b244991711e965b65f566d420b204f3144",
+  "baselineFile": "o030-baseline.json",
+  "fixtureArtifact": "o030-fixture.json",
+  "flowSpec": "o030-flow-proof-spec.json",
+  "workItem": "O-030 (CMP-B16)",
+  "jsonProofs": [
+    {
+      "file": "o030-model-verification.json",
+      "resultCount": 24,
+      "mustBeAllOk": true
+    },
+    {
+      "file": "o030-model-red-verification.json",
+      "resultCount": 1,
+      "channelAbsentAgainstPreChangeSource": true,
+      "totalsStillCompute": true
+    },
+    {
+      "file": "o030-page-verification.json",
+      "resultCount": 6,
+      "mustBeAllOk": true
+    },
+    {
+      "file": "o030-browser-verification.json",
+      "resultCount": 8,
+      "mustBeAllOk": true,
+      "modes": ["advisory-spoil", "advisory-set", "advisory-bagged", "blocked-advisory"],
+      "viewports": [{"width": 1280, "height": 900}, {"width": 390, "height": 844}],
+      "screenshots": 8,
+      "snapshotPrefix": "o030-browser-"
+    },
+    {
+      "file": "o030-esbuild-parse.json",
+      "checkCount": 3,
+      "allPassed": true
+    },
+    {
+      "file": "o030-page-import-edges.json",
+      "externalOnly": true
+    },
+    {
+      "file": "o030-page-meta.json",
+      "containsRealSources": [
+        "foundationConstructionChecks.js",
+        "foundationCalc.js",
+        "foundationSaveSession.js",
+        "foundationInputValidation.js",
+        "foundationCatalogIntegrity.js"
+      ]
+    }
+  ],
+  "allResultsMustHaveOkTrue": true,
+  "scopedLintLogs": [
+    {
+      "file": "lint/foundationConstructionChecks.js.log",
+      "line": "exit=0"
+    },
+    {
+      "file": "lint/foundationCalc.js.log",
+      "line": "exit=0"
+    },
+    {
+      "file": "lint/FoundationEstimator.jsx.log",
+      "line": "exit=0"
+    }
+  ],
+  "esbuildParseChecks": {
+    "file": "o030-esbuild-parse.json",
+    "count": 3,
+    "allPassed": true
+  },
+  "candidateHashes": {
+    "foundationConstructionChecks.js": "148cec3163665cd6ea24941560263ebda8fedc6d40c3aa0e6ddfc28272cf9c80",
+    "foundationCalc.js": "de9e1990aeaed3c0aff3d0a47780e6af649a455c2b21846e79496279928fa1ed",
+    "FoundationEstimator.jsx": "916ade2203f927b694b24b59d58fabdbbfac16fe6fcdeb3ec0056b42f0e8db79"
+  },
+  "candidateFiles": {
+    "foundationConstructionChecks.js": "o030-candidate-foundationConstructionChecks.js",
+    "foundationCalc.js": "o030-candidate-foundationCalc.js",
+    "FoundationEstimator.jsx": "o030-candidate-FoundationEstimator.jsx"
+  },
+  "remotePaths": {
+    "foundationConstructionChecks.js": "src/components/estimator/foundation/foundationConstructionChecks.js",
+    "foundationCalc.js": "src/components/estimator/foundation/foundationCalc.js",
+    "FoundationEstimator.jsx": "src/pages/FoundationEstimator.jsx"
+  },
+  "warningCodesCovered": [
+    "excavation_spoil_unaccounted",
+    "excavation_method_unspecified",
+    "excavation_equipment_unpriced",
+    "forming_without_finishing",
+    "finishing_without_forming",
+    "pillar_forming_straight_stock",
+    "concrete_mix_unspecified",
+    "admixture_rebar_corrosion",
+    "admixture_set_pace_conflict",
+    "mix_admixture_pace_conflict",
+    "admixture_weather_conflict",
+    "admixtures_without_ready_mix"
+  ],
+  "nonBlockingContract": "constructionWarnings is a separate calcProject output channel; it never joins inputIssues/catalogIssues, never marks itemPricing/polePricing/etc. unavailable, and never enters pricingBlocked/inputBlocked — page cases 1, 2 and 5 prove saves succeed with warnings present and still block only on real issues.",
+  "designNote": "Advisory warnings only (the item says 'warn', not 'block'). Messages state what the ported priced model already assumes (125% spoil factor, labor-only excavation, straight 16-ft forming stock, 4000-AE fallback mix) or contradictions the supplier catalog itself documents (calcium chloride vs. rebar; accelerator vs. retarder; FAST SET vs. retarder; winter service vs. hot-weather retarder; admixtures on an all-bagged order). No invented engineering numbers or code minimums.",
+  "dormancyNote": "FoundationEstimator.jsx load path materializes `excavation_method || \"hand_dig\"` and `project_concrete_type || \"4000_ae\"` into editor state (remote L226-227), so `excavation_method_unspecified` and `concrete_mix_unspecified` are dormant inside the mounted editor — they still fire for unnormalized calcProject callers (raw records, future backend use). Verified: page case 6 proves dormancy + raw-record firing.",
+  "candidateLineEndings": "LF",
+  "screenshotDirectory": ".audit-work/foundation-o030-diagnostics",
+  "screenshotCount": 8,
+  "screenshotNaming": "o030-browser-<mode>-<width>.png",
+  "browserProof": "verify-o030-browser.mjs — real calcProject candidate chain drives the candidate page's diagnostics markup (catalog alert / input alert / construction-checks status), ConcreteDeliveryPanel, FoundationItemCard, FoundationBOM in chromium headless-shell; per mode x viewport asserts warning codes/order, advisory text never inside role=alert, held pricing only in blocked mode, no overflow, __M stable, zero network/XHR, zero console errors.",
+  "remoteWritesPerformed": false,
+  "checkpointsCreated": false,
+  "businessRecordOperationsPerformed": false,
+  "entityOperationsPerformed": false,
+  "publishDeployPerformed": false,
+  "candidatesApplied": false,
+  "status": "candidates-verified-local-only"
+}

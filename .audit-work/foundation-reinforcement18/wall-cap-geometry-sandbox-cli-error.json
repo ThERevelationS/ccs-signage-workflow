@@ -1,0 +1,17 @@
+{
+  "kind": [
+    "sandbox",
+    "edit",
+    "src/components/estimator/foundation/wallCapCalculator.js"
+  ],
+  "exit": 1,
+  "data": {
+    "error": "Error editing file \"src/components/estimator/foundation/wallCapCalculator.js\": fetch failed",
+    "code": "API_ERROR",
+    "hints": [
+      {
+        "message": "Check your network connection and try again"
+      }
+    ]
+  }
+}

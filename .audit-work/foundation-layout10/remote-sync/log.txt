@@ -1,0 +1,6 @@
+panel baseline match 1b38208d8d67
+helper NOT_FOUND confirmed
+helper written
+panel edited
+OK readback src/components/estimator/foundation/FoundationLayoutCanvas.jsx remote=fdd5945053598311 local=ac4f9e0cc6f948f9
+OK readback src/components/estimator/foundation/foundationLayoutModel.js remote=45c7e58e9770a878 local=a2178910f6a564cc

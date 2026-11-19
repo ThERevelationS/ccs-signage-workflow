@@ -47,38 +47,47 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import AdminPermittingSettings from './pages/AdminPermittingSettings';
-import AdminSettings from './pages/AdminSettings';
-import CompletedReports from './pages/CompletedReports';
-import Design from './pages/Design';
-import Estimating from './pages/Estimating';
-import Fabrication from './pages/Fabrication';
-import FeatureReports from './pages/FeatureReports';
-import Financials from './pages/Financials';
-import Home from './pages/Home';
-import InstallationDeliver from './pages/InstallationDeliver';
-import MainWorkflow from './pages/MainWorkflow';
-import MondayMorningMeeting from './pages/MondayMorningMeeting';
-import MyWorkflow from './pages/MyWorkflow';
-import NewUserSetup from './pages/NewUserSetup';
-import ChangeOrders from './pages/ChangeOrders';
-import PurchaseOrders from './pages/PurchaseOrders';
-import Invoices from './pages/Invoices';
-import JobCosting from './pages/JobCosting';
-import Inventory from './pages/Inventory';
-import Opportunities from './pages/Opportunities';
-import OrderForm from './pages/OrderForm';
-import Permitting from './pages/Permitting';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import Production from './pages/Production';
-import ReportingDashboard from './pages/ReportingDashboard';
-import ResourcePlanning from './pages/ResourcePlanning';
-import SIPs from './pages/SIPs';
-import SalesPipeline from './pages/SalesPipeline';
-import TemplateBuilder from './pages/TemplateBuilder';
-import TimeClock from './pages/TimeClock';
-import UserSettings from './pages/UserSettings';
-import __Layout from './Layout.jsx';
+import { lazyPage } from './lib/lazyPage';
+const AdminPermittingSettings = lazyPage(() => import('./pages/AdminPermittingSettings'));
+const AdminSettings = lazyPage(() => import('./pages/AdminSettings'));
+const CompletedReports = lazyPage(() => import('./pages/CompletedReports'));
+const Design = lazyPage(() => import('./pages/Design'));
+const Estimating = lazyPage(() => import('./pages/Estimating'));
+const Fabrication = lazyPage(() => import('./pages/Fabrication'));
+const FeatureReports = lazyPage(() => import('./pages/FeatureReports'));
+const Financials = lazyPage(() => import('./pages/Financials'));
+const Home = lazyPage(() => import('./pages/Home'));
+const InstallationDeliver = lazyPage(() => import('./pages/InstallationDeliver'));
+const MainWorkflow = lazyPage(() => import('./pages/MainWorkflow'));
+const MondayMorningMeeting = lazyPage(() => import('./pages/MondayMorningMeeting'));
+const MyWorkflow = lazyPage(() => import('./pages/MyWorkflow'));
+const NewUserSetup = lazyPage(() => import('./pages/NewUserSetup'));
+const ChangeOrders = lazyPage(() => import('./pages/ChangeOrders'));
+const PurchaseOrders = lazyPage(() => import('./pages/PurchaseOrders'));
+const Invoices = lazyPage(() => import('./pages/Invoices'));
+const JobCosting = lazyPage(() => import('./pages/JobCosting'));
+const Inventory = lazyPage(() => import('./pages/Inventory'));
+const Opportunities = lazyPage(() => import('./pages/Opportunities'));
+const OrderForm = lazyPage(() => import('./pages/OrderForm'));
+const Permitting = lazyPage(() => import('./pages/Permitting'));
+const PrivacyPolicy = lazyPage(() => import('./pages/PrivacyPolicy'));
+const Production = lazyPage(() => import('./pages/Production'));
+const ReportingDashboard = lazyPage(() => import('./pages/ReportingDashboard'));
+const ResourcePlanning = lazyPage(() => import('./pages/ResourcePlanning'));
+// Layout is lazy like every page — the ~2.5k-line shell (framer-motion,
+// @hello-pangea/dnd, the feature-component tree) ships as its own chunk and
+// downloads in parallel with the page instead of inflating the entry bundle.
+// The route-level <Suspense> in App.jsx covers the one-time wait; subsequent
+// navigations reuse the resolved module. NOTE: this file is auto-generated —
+// if a regen restores "import __Layout from './Layout.jsx'", re-apply this.
+const __Layout = lazyPage(() => import('./Layout.jsx'));
+const SOP = lazyPage(() => import('./pages/SOP'));
+const SIPs = lazyPage(() => import('./pages/SIPs'));
+const SalesPipeline = lazyPage(() => import('./pages/SalesPipeline'));
+const ServerFiles = lazyPage(() => import('./pages/ServerFiles'));
+const TemplateBuilder = lazyPage(() => import('./pages/TemplateBuilder'));
+const TimeClock = lazyPage(() => import('./pages/TimeClock'));
+const UserSettings = lazyPage(() => import('./pages/UserSettings'));
 
 
 export const PAGES = {
@@ -108,8 +117,10 @@ export const PAGES = {
     "Production": Production,
     "ReportingDashboard": ReportingDashboard,
     "ResourcePlanning": ResourcePlanning,
+    "SOP": SOP,
     "SIPs": SIPs,
     "SalesPipeline": SalesPipeline,
+    "ServerFiles": ServerFiles,
     "TemplateBuilder": TemplateBuilder,
     "TimeClock": TimeClock,
     "UserSettings": UserSettings,

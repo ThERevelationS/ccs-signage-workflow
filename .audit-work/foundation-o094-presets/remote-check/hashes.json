@@ -1,0 +1,57 @@
+{
+ "candidates/src/components/estimator/foundation/foundationAssemblyPresets.js": {
+  "sha256": "46c13668cfb5",
+  "bytes": 16184,
+  "lines": 472
+ },
+ "candidates/src/components/estimator/foundation/foundationDuplicateMirror.js": {
+  "sha256": "5485997911ea",
+  "bytes": 18954,
+  "lines": 398
+ },
+ "candidates/src/components/estimator/foundation/foundationBulkMaterialChange.js": {
+  "sha256": "57460b5d8c64",
+  "bytes": 7591,
+  "lines": 182
+ },
+ "candidates/src/components/estimator/foundation/FoundationTemplateDialog.jsx": {
+  "sha256": "f18dff763daf",
+  "bytes": 13832,
+  "lines": 336
+ },
+ "baseline/foundationTemplateModel.js": {
+  "sha256": "42fedbe65f08",
+  "bytes": 10057,
+  "lines": 205
+ },
+ "baseline/FoundationTemplateDialog.jsx": {
+  "sha256": "3abbe70b4618",
+  "bytes": 10978,
+  "lines": 276
+ },
+ "baseline/foundationAssemblyModel.js": {
+  "sha256": "94e3bb9303c7",
+  "bytes": 22454,
+  "lines": 399
+ },
+ "baseline/foundationLayoutModel.js": {
+  "sha256": "45c7e58e9770",
+  "bytes": 2838,
+  "lines": 74
+ },
+ "baseline/wallCalculator.js": {
+  "sha256": "009aec4ac632",
+  "bytes": 32207,
+  "lines": 607
+ },
+ "baseline/foundationPreliminaryNotice.js": {
+  "sha256": "726408722c88",
+  "bytes": 4351,
+  "lines": 87
+ },
+ "baseline/foundationTemplateService.js": {
+  "sha256": "9e238ed1490b",
+  "bytes": 1984,
+  "lines": 53
+ }
+}

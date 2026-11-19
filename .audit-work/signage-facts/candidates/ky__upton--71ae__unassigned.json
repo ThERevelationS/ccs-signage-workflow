@@ -1,0 +1,38 @@
+{
+ "jurisdiction_id": "6adf6102f01095af917471ae",
+ "jurisdiction_name": "Upton",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "KENTUCKY BUILDING CODE Fee Schedule Effective Date: 1 January 2015 W:\\Fee Information and Research\\2015 BUILDING PERMIT FEE SCHEDULE - RES AND NON-RES.doc RESIDENTIAL FEES Single Family Dwelling*** Based on square footage Unfinished Basement Residential fee chart roofed area Minimum permit fee-$150 $50 for unfinished basement Plan Review for Single Family Dwellings 2,000 sq feet or above Plan Review Fee $200 ( 5,000 sq feet or above requires plans with Architect Stamp) $200 Residential Addition *** Residential fee chart-Minimum -$150 Residential Remodeling/Finished Basement / Modular Home** Plan Review Fee (finished basements) 2/3 Residential fee chart Minimum-$100 $100 Porches, Decks, Roofs and Carports ** $100 Residential Fences (over 7 $50 Manufactured Home (Double Wide / Single Wide) (check zoning) $100 Swimming Pools (In-ground) * (check for fencing and building set-back compliance)",
+   "tags": [
+    "fee",
+    "area",
+    "billboard",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "388975fd99c3f0239306edeb6f97069d5045d9348c81a170ada9e23546dd3b23",
+   "source_document_id": null,
+   "source_title": "388975fd99c3f0239306edeb6f97069d5045d9348c81a170ada9e23546dd3b23.pdf",
+   "official_url": "https://www.hcpdc.com/_files/ugd/67a6e3_3b79824c2f3c4a14bfed6578997046f1.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "18 shall not exceed 4 inches (102 mm) in width. 5. Where the barrier is composed of horizontal and vertical members, and the distance between the tops of the horizontal members is 24 inches (610 mm) or more, spacing between vertical members shall not exceed 4 inches (102 mm). Where there are decorative cutouts within vertical members, spacing within the cutouts shall not exceed I 3/4 inches (44 mm) in width. 6. Maximum mesh size for chain link fences shall be a 2 1/4-inch (57 mm) square, unless the fence has slats fastened at the top or the bottom which reduce the openings to not more than I 3/4 inches (44 mm). 7. Where the barrier is composed of diagonal members, such as a lattice fence, the maximum opening formed by the diagonal members shall not be more than 1 3/4 inches (44 mm). 8. Access gates shall comply with the requirements of items I through 7, and shall be equipped to accommod",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 5,
+   "source_sha256": "b312952b37c8876e71ab430b72e472c3d90a49f861784cdfa1dcf4dda498f620",
+   "source_document_id": null,
+   "source_title": "b312952b37c8876e71ab430b72e472c3d90a49f861784cdfa1dcf4dda498f620.pdf",
+   "official_url": "https://www.hcpdc.com/_files/ugd/67a6e3_d8749661fd75480993797688a3a1a85f.pdf"
+  }
+ ]
+}

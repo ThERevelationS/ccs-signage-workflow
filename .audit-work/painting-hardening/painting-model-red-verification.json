@@ -1,0 +1,16 @@
+{
+ "suite": "painting-red",
+ "passed": 8,
+ "failed": 0,
+ "result": "PASS",
+ "defects": [
+  "explicit-0 mask rate resurrected to 0.75 ($8.50 instead of $0)",
+  "malformed thickness silently priced with no edge area",
+  "malformed settings silently defaulted with confident totals",
+  "blank supplies rate laundered to $0 via Number('')",
+  "quantity 0 silently repriced as 1",
+  "coverage 0 exploded the liquid-paint rate ~350x via ||1",
+  "labor rate 0 resurrected to 60",
+  "no issues/pricingUnavailable channel existed at all"
+ ]
+}

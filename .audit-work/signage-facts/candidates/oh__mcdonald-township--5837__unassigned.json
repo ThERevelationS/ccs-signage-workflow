@@ -1,0 +1,48 @@
+{
+ "jurisdiction_id": "6aea628285bb706ab4825837",
+ "jurisdiction_name": "McDonald Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "Page 2 Sign Application BILLBOARD : Applies to and includes for advertising purposes and display boards, fences and screens used as such, having an area of at least 100 square feet and used for placing letters or illustrations painted, printed, cut or pasted thereon. PERMANENT SIGNS : Applies to and includes structures for advertising purposes and display boards, fences and screens used as such, having an area of less than 100 square feet and used for placing letters or illustrations painted, printed, cut or pasted thereon. TEMPORARY SIGNS : Applies to display boards of no more than 32 square feet and is used for placing letters or illustrations, painted, printed, cut or pasted thereon. ROOF SIGNS : Any billboard, permanent or temporary sign located on or attached to roofs or structures. PENALTY : Whoever owns, operates, or maintains, or is in charge, possession or control of any sign wi",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "billboard",
+    "temporary",
+    "type",
+    "penalties",
+    "process"
+   ],
+   "weight": 15,
+   "source_sha256": "467f3e8257eccf62476c5818fb6cdf1d098bcb555d0a7e41c727e7c1197a3fab",
+   "source_document_id": null,
+   "source_title": "467f3e8257eccf62476c5818fb6cdf1d098bcb555d0a7e41c727e7c1197a3fab.pdf",
+   "official_url": "https://mcdonaldvillage.com/wp-content/uploads/2021/05/Sign_Permit.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "SIGN PERMIT PRECONSTRUCTION APPLICATION Billboard, permanent sign, temporary sign, roof sign McDonald, Ohio 44437 Application No. The undersigned is applying for a permit to erect a sign. Said permit may be issued on the basis the information contained on the application is correct. The applicant hereby certifies that all information and attachments to this application are true and correct. Once the information on the application is completed and the fee, established by the Council of the Village of McDonald, is paid, a permit may be issued by the office of the Building Inspector. The applicant is also made aware of the penalties in case the sign is erected without complying with all the provisions of Chapter 1325 relating to Signs and Billboards of the McDonald Village Zoning Ordinance. 1. Owner of sign 2. Address of owner Phone No. (home) (work) 3. Location of sign 4. Cost and size of ",
+   "tags": [
+    "sign",
+    "permit_required",
+    "billboard",
+    "temporary",
+    "type",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 13,
+   "source_sha256": "467f3e8257eccf62476c5818fb6cdf1d098bcb555d0a7e41c727e7c1197a3fab",
+   "source_document_id": null,
+   "source_title": "467f3e8257eccf62476c5818fb6cdf1d098bcb555d0a7e41c727e7c1197a3fab.pdf",
+   "official_url": "https://mcdonaldvillage.com/wp-content/uploads/2021/05/Sign_Permit.pdf"
+  }
+ ]
+}

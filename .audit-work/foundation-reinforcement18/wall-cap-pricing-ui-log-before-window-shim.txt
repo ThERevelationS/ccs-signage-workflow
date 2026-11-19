@@ -1,0 +1,13 @@
+file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/wall-cap-pricing-ui.mjs:3141
+var isIframe = window.self !== window.top;
+               ^
+
+ReferenceError: window is not defined
+    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/wall-cap-pricing-ui.mjs:3141:16
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async node:internal/modules/esm/loader:650:26
+    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-pricing-ui.mjs:15:28
+
+Node.js v26.13.0
+exit=1

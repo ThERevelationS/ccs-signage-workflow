@@ -1,0 +1,41 @@
+{
+  "matches": [
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 136,
+      "text": "      const BATCH_READ_LIMIT = 500;"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 138,
+      "text": "        { entity: \"PermitLineItem\", sort: \"-updated_date\", limit: BATCH_READ_LIMIT },"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 139,
+      "text": "        { entity: \"PermitLocality\", limit: BATCH_READ_LIMIT },"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 140,
+      "text": "        { entity: \"AuthorizedEmail\", limit: BATCH_READ_LIMIT },"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 143,
+      "text": "        Array.isArray(batched?.PermitLineItem) && batched.PermitLineItem.length < BATCH_READ_LIMIT"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 146,
+      "text": "        Array.isArray(batched?.PermitLocality) && batched.PermitLocality.length < BATCH_READ_LIMIT"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 154,
+      "text": "        Array.isArray(batched?.AuthorizedEmail) && batched.AuthorizedEmail.length < BATCH_READ_LIMIT"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 7
+}

@@ -1,0 +1,22 @@
+{
+ "src/components/estimator/metal/metalPricingAvailability.js": {
+  "candidateFile": "candidates/src/components/estimator/metal/metalPricingAvailability.js",
+  "sha256": "68c228ec0d2196ff6fba4575ade6c24cde6629d25b27ff347063ebbf4a329984",
+  "bytes": 18089,
+  "lines": 394,
+  "lineEndings": "LF",
+  "terminalLF": true,
+  "existsOnRemote": false,
+  "remoteSha256": null
+ },
+ "src/pages/MetalEstimator.jsx": {
+  "candidateFile": "candidates/src/pages/MetalEstimator.jsx",
+  "sha256": "f0e72afd6d37502d5552e98e4bad62f43f40b65b2796f5484ba4e3395b9d6a6d",
+  "bytes": 63542,
+  "lines": 1475,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "044d4e7d44156a2b6b94a122a0de5b7d2e82770733a2b6d25658df253b0d7cff"
+ }
+}

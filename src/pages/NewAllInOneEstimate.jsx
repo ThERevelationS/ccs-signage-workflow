@@ -11,8 +11,9 @@ import { addRecentCustomerId, loadRecentCustomerIds, resolveRecentCustomers, sav
 import { ensureNewEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
 import { ensureEstimateCustomerLocation } from "@/components/estimator/customerLocationService";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 
 const TERMS_OPTIONS = ["Due on Receipt", "Net 15", "Net 30", "Net 60", "50% Deposit"];
 const SALES_CENTERS = ["Cincinnati Custom Signs"];
@@ -20,7 +21,7 @@ const SALES_CENTERS = ["Cincinnati Custom Signs"];
 // Header-level fields copied when the user picks a "duplicate from" source
 // estimate. Every key is a real AllInOneEstimate schema field. Some are not
 // rendered by Step 1 (site_address, payment_terms, quote_valid_days,
-// deposit_percent, scope_*, hide_section_prices, company_*) â€” they still ride
+// deposit_percent, scope_*, hide_section_prices, company_*) — they still ride
 // through handleSave's `...form` spread into the created estimate. Schema has
 // no separate tax group id: tax_group is the TaxGroup name and pairs with
 // tax_percent.
@@ -77,7 +78,7 @@ const EMPTY = {
 
 export default function NewAllInOneEstimate() {
   const navigate = useNavigate();
-  const { sessionToken } = useAuth();
+  const { sessionToken, currentUser } = useAuth();
   const [form, setForm] = useState(EMPTY);
   const [customers, setCustomers] = useState([]);
   const [recentCustomerIds, setRecentCustomerIds] = useState(() => loadRecentCustomerIds());
@@ -89,7 +90,6 @@ export default function NewAllInOneEstimate() {
   };
   const [taxGroups, setTaxGroups] = useState([]);
   const [users, setUsers] = useState([]);
-  const [me, setMe] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveSiteAsLocation, setSaveSiteAsLocation] = useState(false);
   const savingRef = useRef(false);
@@ -112,10 +112,20 @@ export default function NewAllInOneEstimate() {
       } catch {}
     }).catch((err) => setError(err?.message || "Customers could not be loaded."));
     loadAllEntityRows({ entity: staffEntities.TaxGroup, sort: null, label: "New Estimate tax groups" }).then((r) => setTaxGroups(r || [])).catch((err) => setError(err?.message || "Tax groups could not be loaded."));
-    loadAllEntityRows({ entity: base44.entities.User, sort: null, label: "New Estimate app users" }).then((r) => setUsers(r || [])).catch((err) => setError(err?.message || "Users could not be loaded."));
     loadAllEntityRows({ entity: staffEntities.AllInOneEstimate, sort: "-created_date", label: "New Estimate duplicate sources" }).then((r) => setDupSources(r || [])).catch(() => {});
-    base44.auth.me().then(setMe).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!sessionToken) {
+      setUsers([]);
+      return;
+    }
+    let cancelled = false;
+    loadAuthorizedUserDirectory({ sessionToken })
+      .then((d) => { if (!cancelled) setUsers(d.users || []); })
+      .catch(() => { if (!cancelled) setUsers([]); });
+    return () => { cancelled = true; };
+  }, [sessionToken]);
 
   const patch = (changes) => setForm((prev) => ({ ...prev, ...changes }));
 
@@ -213,6 +223,7 @@ export default function NewAllInOneEstimate() {
             customerId: customer.id,
             siteAddress: form.site_address,
             estimateId: estimate.id,
+            sessionToken,
           });
         } catch (locationError) {
           window.alert(`Estimate was created, but its Customer location could not be saved: ${locationError?.message || "unknown error"}`);
@@ -276,14 +287,14 @@ export default function NewAllInOneEstimate() {
         <div className="flex-1 min-w-0">
           <div className="bg-white border border-gray-200 rounded-md px-3 py-2 mb-2 max-w-4xl">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-700 whitespace-nowrap">Duplicate from existingâ€¦</span>
+              <span className="text-xs text-slate-700 whitespace-nowrap">Duplicate from existing…</span>
               <div className="relative flex-1">
                 {dupSources.some((e) => e?.is_template === true && e?.deleted !== true) && (
                   <div className="flex flex-wrap items-center gap-1 mb-1.5">
                     <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mr-1">Templates</span>
                     {dupSources.filter((e) => e?.is_template === true && e?.deleted !== true).slice(0, 8).map((t) => (
                       <button key={t.id} type="button" onClick={() => applyDuplicateSource(t)} className="h-6 px-2 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-semibold hover:border-indigo-300">
-                        {t.project_name || `#${t.estimate_number || "â€”"}`}
+                        {t.project_name || `#${t.estimate_number || "—"}`}
                       </button>
                     ))}
                   </div>
@@ -314,9 +325,9 @@ export default function NewAllInOneEstimate() {
                           }}
                           className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-lime-50 border-b border-slate-100 last:border-0"
                         >
-                          <span className="font-semibold text-gray-800">#{e.estimate_number || "â€”"}</span>
-                          <span className="text-slate-600"> Â· {e.client_name || "No customer"}</span>
-                          <span className="text-slate-400"> Â· {e.project_name || ""}</span>
+                          <span className="font-semibold text-gray-800">#{e.estimate_number || "—"}</span>
+                          <span className="text-slate-600"> · {e.client_name || "No customer"}</span>
+                          <span className="text-slate-400"> · {e.project_name || ""}</span>
                         </button>
                       ))
                     )}
@@ -334,11 +345,11 @@ export default function NewAllInOneEstimate() {
               )}
             </div>
             <p className="text-[10px] text-gray-400 mt-1">
-              Prefills customer &amp; quote settings â€” sections are not copied.
+              Prefills customer &amp; quote settings — sections are not copied.
               {dupSource && (
                 <span className="text-slate-500">
-                  {" "}Source: #{dupSource.estimate_number || "â€”"}
-                  {dupSource.client_name ? ` â€” ${dupSource.client_name}` : ""}
+                  {" "}Source: #{dupSource.estimate_number || "—"}
+                  {dupSource.client_name ? ` — ${dupSource.client_name}` : ""}
                 </span>
               )}
             </p>
@@ -361,18 +372,18 @@ export default function NewAllInOneEstimate() {
             salesCenters={SALES_CENTERS}
             onGenerateNumber={handleGenerate}
             generating={generating}
-            enteredBy={me?.full_name || me?.email}
+            enteredBy={currentUser?.full_name || currentUser?.email}
             onCustomerCreated={(c) => setCustomers((prev) => [c, ...prev])}
             saveSiteAsLocation={saveSiteAsLocation}
             onSaveSiteAsLocationChange={setSaveSiteAsLocation}
           />
           <div className="flex justify-end mt-3">
-            <button
+            <button type="button"
               onClick={handleSave}
               disabled={saving}
               className="h-[30px] px-4 rounded bg-lime-200 border border-lime-300 text-[13px] font-semibold text-gray-800 disabled:opacity-60"
             >
-              Next Step â†’
+              Next Step →
             </button>
           </div>
         </div>

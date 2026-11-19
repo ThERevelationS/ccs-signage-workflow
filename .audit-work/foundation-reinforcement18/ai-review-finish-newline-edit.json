@@ -1,0 +1,5 @@
+{
+  "path": "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+  "diff": "--- a/src/components/estimator/foundation/AiEngineeringAssistant.jsx\n+++ b/src/components/estimator/foundation/AiEngineeringAssistant.jsx\n@@ -105,4 +105,4 @@\n       )}\r\n     </div>\r\n   );\r\n-}+}\r\n",
+  "applied": true
+}

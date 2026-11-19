@@ -1,0 +1,59 @@
+{
+  "synthetic": true,
+  "liveAuthorizationVerified": false,
+  "realBase44StorageVerified": false,
+  "results": [
+    {
+      "name": "source schema adds exactly twelve optional fields without modifying old fields, RLS or defaults",
+      "ok": true
+    },
+    {
+      "name": "catalog adds only explicit optional diameter and weight; missing metadata stays missing",
+      "ok": true
+    },
+    {
+      "name": "existing BuilderPart containers explicitly preserve opaque source, calculation and frozen-basis data",
+      "ok": true
+    },
+    {
+      "name": "unapplied incomplete draft survives transport without changing legacy version or stored amounts",
+      "ok": true
+    },
+    {
+      "name": "acceptance receipt records exact origin component and source, never engineering approval",
+      "ok": true
+    },
+    {
+      "name": "real conditional-update helper exactly reads back version, design, material, split, basis and receipt",
+      "ok": false,
+      "error": "Error: Synthetic source changed in another session. Reload it before saving.\n    at conflict (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/persistence-io-bundle.mjs:60:26)\n    at Module.updateBuilderSourceProject (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/persistence-io-bundle.mjs:78:33)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-versioned-persistence.mjs:143:42\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-versioned-persistence.mjs:98:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-versioned-persistence.mjs:142:1"
+    },
+    {
+      "name": "a backend dropping undeclared versioned metadata fails client readback instead of acknowledging partial data",
+      "ok": true
+    },
+    {
+      "name": "stale source CAS cannot overwrite a different current description or versioned basis",
+      "ok": true
+    },
+    {
+      "name": "authored zero rate and separate labor remain exact after acceptance and schema-projected readback",
+      "ok": false,
+      "error": "Error: Synthetic source changed in another session. Reload it before saving.\n    at conflict (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/persistence-io-bundle.mjs:60:26)\n    at Module.updateBuilderSourceProject (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/persistence-io-bundle.mjs:78:33)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-versioned-persistence.mjs:165:17\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-versioned-persistence.mjs:98:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-versioned-persistence.mjs:162:1"
+    },
+    {
+      "name": "newly edited raw proposals persist at source but never enter authoritative Builder definitions",
+      "ok": false,
+      "error": "Error: Synthetic source changed in another session. Reload it before saving.\n    at conflict (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/persistence-io-bundle.mjs:60:26)\n    at Module.updateBuilderSourceProject (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/persistence-io-bundle.mjs:78:33)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-versioned-persistence.mjs:175:42\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-versioned-persistence.mjs:98:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-versioned-persistence.mjs:172:1"
+    },
+    {
+      "name": "disabled v2 needs no material/design and removes old live steel snapshot in JSON replacement",
+      "ok": false,
+      "error": "Error: Synthetic source changed in another session. Reload it before saving.\n    at conflict (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/persistence-io-bundle.mjs:60:26)\n    at Module.updateBuilderSourceProject (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/persistence-io-bundle.mjs:78:33)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-versioned-persistence.mjs:191:43\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-versioned-persistence.mjs:98:9)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-versioned-persistence.mjs:186:1"
+    },
+    {
+      "name": "template copies retain raw draft and historical origin receipt without inventing a new acceptance",
+      "ok": true
+    }
+  ]
+}

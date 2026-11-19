@@ -1,0 +1,35 @@
+--- wall-cap-remote-foundationCatalogIntegrity.js	2026-11-06 18:42:50.906816600 -0500
++++ wall-cap-candidate-foundationCatalogIntegrity.js	2026-11-06 18:42:50.904534100 -0500
+@@ -1,4 +1,5 @@
+ import { foundationEquipmentCatalogIssues } from "./foundationEquipmentBindings";
++import { foundationWallCapCatalogIssues } from "./wallCapCalculator";
+ 
+ export function foundationItemCatalogIssues(item, inventory = [], index = 0) {
+   const issues = [];
+@@ -29,7 +30,7 @@
+   return issues;
+ }
+ 
+-// Availability only: this does not validate rates, geometry, or engineering.
++// Check catalog availability and the explicit wall-cap full-stock price basis.
+ export function foundationAssemblyCatalogIssues(project, inventory = []) {
+   const available = new Set(inventory.map((row) => row.id));
+   const issues = [];
+@@ -51,9 +52,6 @@
+   for (const [index, pole] of (project?.poles || []).entries()) {
+     check(pole, index, "pole", "pole_id", "Pole");
+   }
+-  for (const [index, cap] of (project?.wall_caps || []).entries()) {
+-    check(cap, index, "wall_cap", "cap_inventory_id", "Wall cap");
+-  }
+   for (const [index, wall] of (project?.walls || []).entries()) {
+     check(wall, index, "wall", "materialId", "Wall");
+     if (wall.includeInternalWall) {
+@@ -62,6 +60,7 @@
+   }
+   return [
+     ...issues,
++    ...foundationWallCapCatalogIssues(project?.wall_caps || [], inventory),
+     ...(project?.items || []).flatMap((item, index) => foundationItemCatalogIssues(item, inventory, index)),
+     ...foundationEquipmentCatalogIssues(project?.selected_equipment || [], inventory),
+   ];

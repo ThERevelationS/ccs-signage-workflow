@@ -1,0 +1,3 @@
+src/pages/MetalEstimator.jsx
+src/pages/MetalSettings.jsx
+src/components/estimator/metal/metalSellPricing.js

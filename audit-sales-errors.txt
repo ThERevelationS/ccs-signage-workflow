@@ -1,0 +1,19 @@
+Total messages: 17 (Errors: 16, Warnings: 1)
+Returning 16 messages for level "error"
+
+[ERROR] Failed to load resource: the server responded with a status of 403 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/staffDataRead:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/timeClockAction:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/timeClockAction:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/timeClockAction:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/manageAnnouncements:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/staffDataRead:0
+[ERROR] Failed to load resource: the server responded with a status of 503 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/manageSalesFilters:0
+[ERROR] Failed to load resource: the server responded with a status of 503 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/manageSalesFilters:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/staffDataRead:0
+[ERROR] Failed to load resource: the server responded with a status of 403 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/staffDataRead:0
+[ERROR] Failed to load resource: the server responded with a status of 403 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/staffDataRead:0
+[ERROR] Failed to load resource: the server responded with a status of 403 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/staffDataRead:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/timeClockAction:0
+[ERROR] Failed to load resource: the server responded with a status of 503 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/manageSalesFilters:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/timeClockAction:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/timeClockAction:0

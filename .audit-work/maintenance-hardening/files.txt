@@ -1,0 +1,36 @@
+# Maintenance hardening baseline pull — HEAD e42dfea5
+src/pages/MaintenanceEstimator.jsx
+src/components/signMaintenance/ActionPicker.jsx
+src/components/signMaintenance/ActionRateCard.jsx
+src/components/signMaintenance/DimLetterPaintSubPanel.jsx
+src/components/signMaintenance/MaintenanceDimensionalSheetsTab.jsx
+src/components/signMaintenance/MaintenanceMaterialItem.jsx
+src/components/signMaintenance/MaintenanceMaterialRulesTab.jsx
+src/components/signMaintenance/MaintenanceMaterialsByAxis.jsx
+src/components/signMaintenance/MaintenanceMaterialsTab.jsx
+src/components/signMaintenance/MinimumsTab.jsx
+src/components/signMaintenance/RatesBySignTypeTab.jsx
+src/components/signMaintenance/RepaintMonumentPanel.jsx
+src/components/signMaintenance/RepaintSettingsTab.jsx
+src/components/signMaintenance/SectionCard.jsx
+src/components/signMaintenance/ServiceItemRow.jsx
+src/components/signMaintenance/SettingInput.jsx
+src/components/signMaintenance/SignTypePicker.jsx
+src/components/signMaintenance/SiteConditionsTab.jsx
+src/components/signMaintenance/TravelTab.jsx
+src/components/signMaintenance/constants.jsx
+src/components/signMaintenance/defaults.jsx
+src/components/signMaintenance/dimLetterPaintCalculator.jsx
+src/components/signMaintenance/maintenanceActionRatePersistence.js
+src/components/signMaintenance/maintenanceCalculator.jsx
+src/components/signMaintenance/maintenanceMaterialRulePersistence.js
+src/components/signMaintenance/maintenanceMaterialRules.js
+src/components/signMaintenance/maintenanceTravelSiteDefs.jsx
+src/components/signMaintenance/repaintCalculator.jsx
+src/components/signMaintenance/repaintDefaults.jsx
+# Reference: painting pattern (landed)
+src/components/estimator/paint/paintPricingAvailability.js
+src/components/estimator/paint/paintCalc.js
+src/pages/PaintingEstimator.jsx
+# Reference: vinyl pattern
+src/components/vinylEstimator/vinylPricingAvailability.js

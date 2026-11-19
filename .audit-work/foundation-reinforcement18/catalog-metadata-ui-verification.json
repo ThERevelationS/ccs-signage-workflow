@@ -1,0 +1,51 @@
+{
+  "synthetic": true,
+  "realBase44StorageVerified": false,
+  "explicitNullClearReadbackVerified": false,
+  "results": [
+    {
+      "name": "catalog unknown metadata stays blank and absent on ordinary Save, never defaulted from #4",
+      "ok": true
+    },
+    {
+      "name": "catalog raw decimal text is preserved until Save then sent as finite numeric metadata",
+      "ok": true
+    },
+    {
+      "name": "explicit clearing of recorded metadata emits null unknowns rather than zero",
+      "ok": true
+    },
+    {
+      "name": "malformed and zero metadata blocks button and direct Save callback before any API request",
+      "ok": true
+    },
+    {
+      "name": "imported zero remains visibly invalid until an explicit positive repair",
+      "ok": true
+    },
+    {
+      "name": "non-rebar type Save ignores temporary metadata text while preserving the original record",
+      "ok": true
+    },
+    {
+      "name": "changing the dialog record resets metadata buffers instead of leaking the previous item's measurements",
+      "ok": true
+    },
+    {
+      "name": "catalog Save captures one immutable update and disables all inputs while its response is pending",
+      "ok": true
+    },
+    {
+      "name": "legacy rebar editor also keeps unrecorded metadata absent instead of adding generic numeric zero defaults",
+      "ok": true
+    },
+    {
+      "name": "legacy rebar editor sends parsed numeric measurements and rejects raw partial/zero values",
+      "ok": true
+    },
+    {
+      "name": "legacy forming editor exposes no reinforcement inputs and retains its existing fields and values",
+      "ok": true
+    }
+  ]
+}

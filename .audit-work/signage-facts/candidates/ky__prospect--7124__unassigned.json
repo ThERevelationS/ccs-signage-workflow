@@ -1,0 +1,29 @@
+{
+ "jurisdiction_id": "6adf618a793177f8755f7124",
+ "jurisdiction_name": "Prospect",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Prospect City Hall  9200 US Highway 42  P.O. Box 1  Prospect KY 40059  (502)228-1121  FAX (502) 228-9542 rev. 2024-07-08 City of Prospect SIGN PERMIT PLEASE READ CAREFULLY BEFORE SIGNING! Prospect’s city sign ordinance requires applicants to furnish specifications of construction materials, structural design, location of sign on property, color samples, height, perimeter and area dimension, means of support, method of illumination (if any) and any other significant aspect of the proposed sign by which the city can determine whether the proposed sign conforms to the city’s sign ordinance. Please attach additional information as necessary to expedite the application process. Permanent sign permits are valid on a permanent basis, subject to regulations defined by the city’s sign ordinance. Signature of real property owner and/or sign owner acknowledges that a copy of the sign ordinance",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "temporary",
+    "penalties",
+    "process"
+   ],
+   "weight": 15,
+   "source_sha256": "37cb7d983dc8ff9e1e3fd8f991477ca73ef5b0a80cf62f7d785f272022d8ee99",
+   "source_document_id": null,
+   "source_title": "37cb7d983dc8ff9e1e3fd8f991477ca73ef5b0a80cf62f7d785f272022d8ee99.pdf",
+   "official_url": "https://www.prospectky.gov/assets/files/uploads/_20241209110639375_7606ac7e498c4cebaa08eb882fd69f78.pdf"
+  }
+ ]
+}

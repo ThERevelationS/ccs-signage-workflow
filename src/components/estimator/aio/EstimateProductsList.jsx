@@ -7,7 +7,13 @@ import { acceptedCustomerUnitPrice } from "@/components/estimator/customerPricin
 import { money } from "@/components/estimator/aioPricing";
 import { loadProductionProductTypes } from "@/components/estimator/productionProductTypes";
 
-export default function EstimateProductsList({ lines = [], rawTotal = 0, onChange, onRemove, onEdit, onUpdatePrice, onProductRefresh, onClone, onSaveNotes, onCreateQuickProduct, onPersistSettings, onSplit, readOnly = false }) {
+// (#408) Long product lists render in chunks so a 200-line estimate doesn't
+// mount every ProductRow at once. "Show more" grows the window; deep links
+// expand it as needed to reach their target row.
+const ROW_PAGE = 50;
+const EMPTY_LINES = [];
+
+export default function EstimateProductsList({ lines = EMPTY_LINES, rawTotal = 0, onChange, onRemove, onEdit, onUpdatePrice, onProductRefresh, onClone, onSaveNotes, onCreateQuickProduct, onPersistSettings, onSplit, readOnly = false }) {
   const [query, setQuery] = useState("");
   const [splitMode, setSplitMode] = useState(false);
   const [splitIds, setSplitIds] = useState(() => new Set());
@@ -40,6 +46,8 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
   const toggleSplitId = (id) => setSplitIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const [moduleFilter, setModuleFilter] = useState("all");
   const [productionProductTypes, setProductionProductTypes] = useState([]);
+  const [rowWindow, setRowWindow] = useState(ROW_PAGE);
+  useEffect(() => { setRowWindow(ROW_PAGE); }, [query, moduleFilter]);
 
   useEffect(() => {
     let active = true;
@@ -70,6 +78,53 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
     return sum + acceptedCustomerUnitPrice(line) * quantity * (1 + Number(line.adjustment_percent || 0) / 100);
   }, 0);
 
+  // #311/#323 — ?open=<product_id> / ?line=<id> deep links: make the target
+  // row visible (clearing search/module filters when they would hide it),
+  // then scroll it into view with a highlight flash. `open` matches the
+  // same id set EstimateDetail uses (project_id / id) plus line-level ids.
+  const rowRefs = useRef({});
+  const deepLinkedLineRef = useRef(false);
+  useEffect(() => {
+    if (deepLinkedLineRef.current || lines.length === 0) return;
+    let wantOpen = "", wantLine = "";
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      wantOpen = sp.get("open") || "";
+      wantLine = sp.get("line") || "";
+    } catch {}
+    if (!wantOpen && !wantLine) return;
+    const matchIndex = lines.findIndex((line, index) => {
+      const lineId = estimateLineSelectionKey(line, index);
+      if (wantLine && (lineId === wantLine || line?.line_id === wantLine || line?.id === wantLine)) return true;
+      if (wantOpen && [line?.project_id, line?.id, line?.line_id, line?.builder_product_id, line?.product_id, line?.quick_product_source_id].includes(wantOpen)) return true;
+      return false;
+    });
+    if (matchIndex < 0) { deepLinkedLineRef.current = true; return; }
+    const targetKey = estimateLineSelectionKey(lines[matchIndex], matchIndex);
+    const isVisible = visible.some(({ line, index }) => estimateLineSelectionKey(line, index) === targetKey);
+    if (!isVisible) {
+      if (query) setQuery("");
+      if (moduleFilter !== "all") setModuleFilter("all");
+      return;
+    }
+    // The target may sit past the render window — expand the window first,
+    // then let the effect re-run once the row is actually mounted.
+    const visibleIndex = visible.findIndex(({ line, index }) => estimateLineSelectionKey(line, index) === targetKey);
+    if (visibleIndex >= rowWindow) {
+      setRowWindow(visibleIndex + 1);
+      return;
+    }
+    deepLinkedLineRef.current = true;
+    const el = rowRefs.current[targetKey];
+    if (el) {
+      window.setTimeout(() => {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("ring-4", "ring-blue-400", "rounded-md");
+        window.setTimeout(() => el.classList.remove("ring-4", "ring-blue-400", "rounded-md"), 3500);
+      }, 150);
+    }
+  }, [lines, visible, query, moduleFilter, rowWindow]);
+
   return (
     <div className="bg-white border border-gray-200 rounded-md">
       <div className="px-4 py-2 border-b border-gray-200 flex items-center justify-between gap-2">
@@ -77,23 +132,25 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
           ESTIMATE PRODUCTS ({lines.length})
         </span>
         <span className="text-[10px] px-2 py-0.5 rounded bg-green-50 text-green-700 border border-green-100">
-          â‡„ Live-synced with source estimators
+          ⇄ Live-synced with source estimators
         </span>
       </div>
 
       <div className="px-4 py-2 flex flex-wrap items-center gap-2 border-b border-gray-100">
         <div className="flex-1 relative">
-          <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" aria-hidden="true" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search products..."
+            aria-label="Search products in this estimate"
             className="w-full h-[30px] pl-7 pr-2 border border-gray-200 rounded text-[12px]"
           />
         </div>
         <select
           value={moduleFilter}
           onChange={(e) => setModuleFilter(e.target.value)}
+          aria-label="Filter by product type"
           className="h-[30px] px-2 border border-gray-200 rounded text-[12px] text-gray-600 bg-white"
         >
           <option value="all">All product types</option>
@@ -114,7 +171,7 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
               <button type="button" disabled={splitting} onClick={() => { setSplitMode(false); setSplitIds(new Set()); setSplitError(""); }} className="h-[30px] px-2 rounded border border-gray-300 bg-white text-[11px] text-gray-600">Cancel</button>
             </span>
           ) : (
-            <button type="button" onClick={() => setSplitMode(true)} className="h-[30px] px-2 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 hover:border-indigo-300">Splitâ€¦</button>
+            <button type="button" onClick={() => setSplitMode(true)} className="h-[30px] px-2 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 hover:border-indigo-300">Split…</button>
           )
         )}
       </div>
@@ -128,15 +185,15 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
       {visible.length === 0 ? (
         <div className="py-10 text-center text-[12px] text-gray-400">
           {lines.length === 0
-            ? "No products yet â€” add one above to start pricing this estimate."
+            ? "No products yet — add one above to start pricing this estimate."
             : "No products match this search or filter."}
         </div>
       ) : (
         <div className="p-2 space-y-2 bg-gray-50">
-          {visible.map(({ line, index }) => {
+          {visible.slice(0, rowWindow).map(({ line, index }) => {
             const lineId = estimateLineSelectionKey(line, index);
             return (
-            <div key={lineId} className="relative">
+            <div key={lineId} data-line-id={lineId} ref={(el) => { if (el) rowRefs.current[lineId] = el; else delete rowRefs.current[lineId]; }} className="relative">
               {splitMode && !readOnly && (
                 <label className="absolute left-1 top-1 z-10 flex items-center justify-center w-5 h-5 rounded border border-indigo-300 bg-white cursor-pointer">
                   <input type="checkbox" disabled={splitting} checked={splitIds.has(lineId)} onChange={() => toggleSplitId(lineId)} className="w-3.5 h-3.5 accent-indigo-600" aria-label={`Select ${line.client_product_name || line.project_name || line.description || `product ${index + 1}`} to split`} />
@@ -163,6 +220,15 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
             </div>
             );
           })}
+          {visible.length > rowWindow && (
+            <button
+              type="button"
+              onClick={() => setRowWindow((n) => n + ROW_PAGE)}
+              className="w-full h-[30px] rounded border border-gray-300 bg-white text-[11px] font-bold text-gray-600 hover:bg-gray-50"
+            >
+              Show {Math.min(ROW_PAGE, visible.length - rowWindow)} more products ({visible.length - rowWindow} remaining)
+            </button>
+          )}
         </div>
       )}
 

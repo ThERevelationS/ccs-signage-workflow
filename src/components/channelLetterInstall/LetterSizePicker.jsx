@@ -72,7 +72,7 @@ export default function LetterSizePicker({ value, onChange }) {
       {SIZES.map(s => {
         const selected = value === s.id;
         return (
-          <button
+          <button type="button"
             key={s.id}
             type="button"
             onClick={() => onChange(s.id)}

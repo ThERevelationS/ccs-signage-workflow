@@ -1,0 +1,2449 @@
+{
+  "proof": [
+    {
+      "caseId": "held-missing-price-blocks-save",
+      "saveOutcome": {
+        "status": "failed",
+        "error": "Save paused: fix highlighted design inputs or catalog selections."
+      },
+      "rawDraft": {
+        "id": "synthetic-pole-project",
+        "updated_date": "synthetic-v1",
+        "project_name": "P",
+        "items": [],
+        "poles": [
+          {
+            "component_id": "synthetic-pole-stock",
+            "pole_id": "synthetic-pole-stock",
+            "height_inches": 120,
+            "y_offset_inches": 36,
+            "include_pole_painting": false,
+            "pole_name": "Stock pole 20ft",
+            "pole_cost": 999,
+            "pole_painting_cost": 0,
+            "total_cost": 999,
+            "foundation_component_id": ""
+          },
+          {
+            "component_id": "synthetic-pole-lf",
+            "pole_id": "synthetic-pole-lf",
+            "height_inches": 96,
+            "y_offset_inches": 24,
+            "include_pole_painting": true,
+            "pole_name": "LF pole",
+            "pole_cost": 888,
+            "pole_painting_cost": 111,
+            "total_cost": 999,
+            "foundation_component_id": ""
+          }
+        ],
+        "wall_caps": [],
+        "selected_equipment": [],
+        "signage_cabinets": [],
+        "walls": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "total_pole_cost": 1887,
+        "total_pole_painting_cost": 111,
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "assembly_schema_version": 1
+      },
+      "acknowledged": {
+        "id": "synthetic-pole-project",
+        "updated_date": "synthetic-v1",
+        "project_name": "P",
+        "items": [],
+        "poles": [
+          {
+            "component_id": "synthetic-pole-stock",
+            "pole_id": "synthetic-pole-stock",
+            "height_inches": 120,
+            "y_offset_inches": 36,
+            "include_pole_painting": false,
+            "pole_name": "Stock pole 20ft",
+            "pole_cost": 999,
+            "pole_painting_cost": 0,
+            "total_cost": 999
+          },
+          {
+            "component_id": "synthetic-pole-lf",
+            "pole_id": "synthetic-pole-lf",
+            "height_inches": 96,
+            "y_offset_inches": 24,
+            "include_pole_painting": true,
+            "pole_name": "LF pole",
+            "pole_cost": 888,
+            "pole_painting_cost": 111,
+            "total_cost": 999
+          }
+        ],
+        "wall_caps": [],
+        "selected_equipment": [],
+        "signage_cabinets": [],
+        "walls": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "total_pole_cost": 1887,
+        "total_pole_painting_cost": 111
+      },
+      "renderedPoles": [
+        {
+          "component_id": "synthetic-pole-stock",
+          "pole_id": "synthetic-pole-stock",
+          "height_inches": 120,
+          "y_offset_inches": 36,
+          "pole_cost": 999,
+          "pole_painting_cost": 0,
+          "total_cost": 999
+        },
+        {
+          "component_id": "synthetic-pole-lf",
+          "pole_id": "synthetic-pole-lf",
+          "height_inches": 96,
+          "y_offset_inches": 24,
+          "pole_cost": 120,
+          "pole_painting_cost": 75,
+          "total_cost": 195
+        }
+      ],
+      "polePricing": [
+        {
+          "available": false,
+          "issues": [
+            {
+              "kind": "pole",
+              "index": 0,
+              "componentId": "synthetic-pole-stock",
+              "field": "pole_stock_price",
+              "inventoryId": "synthetic-pole-stock",
+              "code": "pole_price_unavailable",
+              "message": "Pole 1: record a finite, nonnegative pole price before repricing."
+            }
+          ]
+        },
+        {
+          "available": true,
+          "issues": []
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 0,
+        "concrete_delivery_cost": 0,
+        "concrete_delivered_yards": 0,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 0,
+        "total_pole_cost": 1119,
+        "total_pole_painting_cost": 75,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0,
+        "total_excavation_volume_cy": 0,
+        "total_labor_hours": 0,
+        "grand_total": 1194
+      },
+      "pricingUnavailable": true,
+      "inventory": [
+        {
+          "id": "synthetic-pole-stock",
+          "material_type": "pole",
+          "material_name": "Stock pole 20ft",
+          "pole_pricing_mode": "stock_price",
+          "pole_stock_length_ft": 20,
+          "pole_width_inches": 8
+        },
+        {
+          "id": "synthetic-pole-lf",
+          "material_type": "pole",
+          "material_name": "LF pole",
+          "cost_per_unit": 12,
+          "pole_width_inches": 6
+        },
+        {
+          "id": "synthetic-wall-material",
+          "material_type": "wall_material",
+          "material_name": "Synthetic wall units",
+          "cost_per_unit": 2
+        }
+      ],
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-pole-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ]
+      ]
+    },
+    {
+      "caseId": "held-blank-height-blocks-save",
+      "saveOutcome": {
+        "status": "failed",
+        "error": "Save paused: fix highlighted design inputs or catalog selections."
+      },
+      "rawDraft": {
+        "id": "synthetic-pole-project",
+        "updated_date": "synthetic-v1",
+        "project_name": "P",
+        "items": [],
+        "poles": [
+          {
+            "component_id": "synthetic-pole-stock",
+            "pole_id": "synthetic-pole-stock",
+            "height_inches": "",
+            "y_offset_inches": 36,
+            "include_pole_painting": false,
+            "pole_name": "Stock pole 20ft",
+            "pole_cost": 999,
+            "pole_painting_cost": 0,
+            "total_cost": 999,
+            "foundation_component_id": ""
+          },
+          {
+            "component_id": "synthetic-pole-lf",
+            "pole_id": "synthetic-pole-lf",
+            "height_inches": 96,
+            "y_offset_inches": 24,
+            "include_pole_painting": true,
+            "pole_name": "LF pole",
+            "pole_cost": 888,
+            "pole_painting_cost": 111,
+            "total_cost": 999,
+            "foundation_component_id": ""
+          }
+        ],
+        "wall_caps": [],
+        "selected_equipment": [],
+        "signage_cabinets": [],
+        "walls": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "total_pole_cost": 1887,
+        "total_pole_painting_cost": 111,
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "assembly_schema_version": 1
+      },
+      "acknowledged": {
+        "id": "synthetic-pole-project",
+        "updated_date": "synthetic-v1",
+        "project_name": "P",
+        "items": [],
+        "poles": [
+          {
+            "component_id": "synthetic-pole-stock",
+            "pole_id": "synthetic-pole-stock",
+            "height_inches": "",
+            "y_offset_inches": 36,
+            "include_pole_painting": false,
+            "pole_name": "Stock pole 20ft",
+            "pole_cost": 999,
+            "pole_painting_cost": 0,
+            "total_cost": 999
+          },
+          {
+            "component_id": "synthetic-pole-lf",
+            "pole_id": "synthetic-pole-lf",
+            "height_inches": 96,
+            "y_offset_inches": 24,
+            "include_pole_painting": true,
+            "pole_name": "LF pole",
+            "pole_cost": 888,
+            "pole_painting_cost": 111,
+            "total_cost": 999
+          }
+        ],
+        "wall_caps": [],
+        "selected_equipment": [],
+        "signage_cabinets": [],
+        "walls": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "total_pole_cost": 1887,
+        "total_pole_painting_cost": 111
+      },
+      "renderedPoles": [
+        {
+          "component_id": "synthetic-pole-stock",
+          "pole_id": "synthetic-pole-stock",
+          "height_inches": "",
+          "y_offset_inches": 36,
+          "pole_cost": 999,
+          "pole_painting_cost": 0,
+          "total_cost": 999
+        },
+        {
+          "component_id": "synthetic-pole-lf",
+          "pole_id": "synthetic-pole-lf",
+          "height_inches": 96,
+          "y_offset_inches": 24,
+          "pole_cost": 120,
+          "pole_painting_cost": 75,
+          "total_cost": 195
+        }
+      ],
+      "polePricing": [
+        {
+          "available": false,
+          "issues": [
+            {
+              "kind": "pole",
+              "index": 0,
+              "componentId": "synthetic-pole-stock",
+              "field": "height_inches",
+              "inventoryId": "synthetic-pole-stock",
+              "code": "pole_height_unavailable",
+              "message": "Pole 1: record a positive, finite height above grade in inches before repricing."
+            }
+          ]
+        },
+        {
+          "available": true,
+          "issues": []
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 0,
+        "concrete_delivery_cost": 0,
+        "concrete_delivered_yards": 0,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 0,
+        "total_pole_cost": 1119,
+        "total_pole_painting_cost": 75,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0,
+        "total_excavation_volume_cy": 0,
+        "total_labor_hours": 0,
+        "grand_total": 1194
+      },
+      "pricingUnavailable": true,
+      "inventory": [
+        {
+          "id": "synthetic-pole-stock",
+          "material_type": "pole",
+          "material_name": "Stock pole 20ft",
+          "pole_pricing_mode": "stock_price",
+          "pole_stock_price": 250,
+          "pole_stock_length_ft": 20,
+          "pole_width_inches": 8
+        },
+        {
+          "id": "synthetic-pole-lf",
+          "material_type": "pole",
+          "material_name": "LF pole",
+          "cost_per_unit": 12,
+          "pole_width_inches": 6
+        },
+        {
+          "id": "synthetic-wall-material",
+          "material_type": "wall_material",
+          "material_name": "Synthetic wall units",
+          "cost_per_unit": 2
+        }
+      ],
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-pole-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ]
+      ]
+    },
+    {
+      "caseId": "new-pole-strips-rendered-cost",
+      "saveOutcome": {
+        "status": "failed",
+        "error": "Save paused: fix highlighted design inputs or catalog selections."
+      },
+      "rawDraft": {
+        "id": "synthetic-pole-project",
+        "updated_date": "synthetic-v1",
+        "project_name": "P",
+        "items": [],
+        "poles": [
+          {
+            "component_id": "synthetic-pole-stock",
+            "pole_id": "synthetic-pole-stock",
+            "height_inches": 120,
+            "y_offset_inches": 36,
+            "include_pole_painting": false,
+            "pole_name": "Stock pole 20ft",
+            "pole_cost": 250,
+            "pole_painting_cost": 0,
+            "total_cost": 250,
+            "foundation_component_id": ""
+          },
+          {
+            "component_id": "synthetic-pole-lf",
+            "pole_id": "synthetic-pole-lf",
+            "height_inches": 96,
+            "y_offset_inches": 24,
+            "include_pole_painting": true,
+            "pole_name": "LF pole",
+            "pole_cost": 120,
+            "pole_painting_cost": 75,
+            "total_cost": 195,
+            "foundation_component_id": ""
+          },
+          {
+            "component_id": "synthetic-pole-new",
+            "pole_id": "gone-pole",
+            "height_inches": 120,
+            "y_offset_inches": 36,
+            "include_pole_painting": false,
+            "pole_name": "rendered junk",
+            "pole_cost": 555,
+            "pole_painting_cost": 0,
+            "total_cost": 555,
+            "foundation_component_id": ""
+          }
+        ],
+        "wall_caps": [],
+        "selected_equipment": [],
+        "signage_cabinets": [],
+        "walls": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "total_pole_cost": 1887,
+        "total_pole_painting_cost": 111,
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "assembly_schema_version": 1
+      },
+      "acknowledged": {
+        "id": "synthetic-pole-project",
+        "updated_date": "synthetic-v1",
+        "project_name": "P",
+        "items": [],
+        "poles": [
+          {
+            "component_id": "synthetic-pole-stock",
+            "pole_id": "synthetic-pole-stock",
+            "height_inches": 120,
+            "y_offset_inches": 36,
+            "include_pole_painting": false,
+            "pole_name": "Stock pole 20ft",
+            "pole_cost": 999,
+            "pole_painting_cost": 0,
+            "total_cost": 999
+          },
+          {
+            "component_id": "synthetic-pole-lf",
+            "pole_id": "synthetic-pole-lf",
+            "height_inches": 96,
+            "y_offset_inches": 24,
+            "include_pole_painting": true,
+            "pole_name": "LF pole",
+            "pole_cost": 888,
+            "pole_painting_cost": 111,
+            "total_cost": 999
+          }
+        ],
+        "wall_caps": [],
+        "selected_equipment": [],
+        "signage_cabinets": [],
+        "walls": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "total_pole_cost": 1887,
+        "total_pole_painting_cost": 111
+      },
+      "renderedPoles": [
+        {
+          "component_id": "synthetic-pole-stock",
+          "pole_id": "synthetic-pole-stock",
+          "height_inches": 120,
+          "y_offset_inches": 36,
+          "pole_cost": 250,
+          "pole_painting_cost": 0,
+          "total_cost": 250
+        },
+        {
+          "component_id": "synthetic-pole-lf",
+          "pole_id": "synthetic-pole-lf",
+          "height_inches": 96,
+          "y_offset_inches": 24,
+          "pole_cost": 120,
+          "pole_painting_cost": 75,
+          "total_cost": 195
+        },
+        {
+          "component_id": "synthetic-pole-new",
+          "pole_id": "gone-pole",
+          "height_inches": 120,
+          "y_offset_inches": 36
+        }
+      ],
+      "polePricing": [
+        {
+          "available": true,
+          "issues": []
+        },
+        {
+          "available": true,
+          "issues": []
+        },
+        {
+          "available": false,
+          "issues": [
+            {
+              "kind": "pole",
+              "index": 2,
+              "componentId": "synthetic-pole-new",
+              "field": "pole_id",
+              "inventoryId": "gone-pole",
+              "code": "catalog_item_unavailable",
+              "message": "Pole 3: selected catalog material is unavailable."
+            }
+          ]
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 0,
+        "concrete_delivery_cost": 0,
+        "concrete_delivered_yards": 0,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 0,
+        "total_pole_cost": 1887,
+        "total_pole_painting_cost": 111,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0,
+        "total_excavation_volume_cy": 0,
+        "total_labor_hours": 0,
+        "grand_total": null
+      },
+      "pricingUnavailable": true,
+      "inventory": [
+        {
+          "id": "synthetic-pole-stock",
+          "material_type": "pole",
+          "material_name": "Stock pole 20ft",
+          "pole_pricing_mode": "stock_price",
+          "pole_stock_price": 250,
+          "pole_stock_length_ft": 20,
+          "pole_width_inches": 8
+        },
+        {
+          "id": "synthetic-pole-lf",
+          "material_type": "pole",
+          "material_name": "LF pole",
+          "cost_per_unit": 12,
+          "pole_width_inches": 6
+        },
+        {
+          "id": "synthetic-wall-material",
+          "material_type": "wall_material",
+          "material_name": "Synthetic wall units",
+          "cost_per_unit": 2
+        }
+      ],
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-pole-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ]
+      ]
+    },
+    {
+      "caseId": "valid-poles-save-then-new-acknowledged-holds",
+      "phase": "afterValidSave",
+      "saveOutcome": {
+        "status": "saved"
+      },
+      "rawDraft": {
+        "id": "synthetic-pole-project",
+        "updated_date": "synthetic-v2",
+        "project_name": "Edited",
+        "items": [],
+        "poles": [
+          {
+            "component_id": "synthetic-pole-stock",
+            "pole_id": "synthetic-pole-stock",
+            "height_inches": 120,
+            "y_offset_inches": 36,
+            "include_pole_painting": false,
+            "pole_name": "Stock pole 20ft",
+            "pole_cost": 999,
+            "pole_painting_cost": 0,
+            "total_cost": 999,
+            "foundation_component_id": ""
+          },
+          {
+            "component_id": "synthetic-pole-lf",
+            "pole_id": "synthetic-pole-lf",
+            "height_inches": 96,
+            "y_offset_inches": 24,
+            "include_pole_painting": true,
+            "pole_name": "LF pole",
+            "pole_cost": 888,
+            "pole_painting_cost": 111,
+            "total_cost": 999,
+            "foundation_component_id": ""
+          }
+        ],
+        "wall_caps": [],
+        "selected_equipment": [],
+        "signage_cabinets": [],
+        "walls": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "total_pole_cost": 1887,
+        "total_pole_painting_cost": 111,
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "assembly_schema_version": 1,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "key-foundation_sync-3",
+          "source_project_id": "synthetic-pole-project",
+          "estimate_id": "synthetic-pole-estimate",
+          "requested_at": "2026-11-11T09:27:00.936Z"
+        }
+      },
+      "acknowledged": {
+        "id": "synthetic-pole-project",
+        "updated_date": "synthetic-v2",
+        "project_name": "Edited",
+        "items": [],
+        "poles": [
+          {
+            "component_id": "synthetic-pole-stock",
+            "pole_id": "synthetic-pole-stock",
+            "height_inches": 120,
+            "y_offset_inches": 36,
+            "include_pole_painting": false,
+            "pole_name": "Stock pole 20ft",
+            "pole_cost": 250,
+            "pole_painting_cost": 0,
+            "total_cost": 250,
+            "foundation_component_id": ""
+          },
+          {
+            "component_id": "synthetic-pole-lf",
+            "pole_id": "synthetic-pole-lf",
+            "height_inches": 96,
+            "y_offset_inches": 24,
+            "include_pole_painting": true,
+            "pole_name": "LF pole",
+            "pole_cost": 120,
+            "pole_painting_cost": 75,
+            "total_cost": 195,
+            "foundation_component_id": ""
+          }
+        ],
+        "wall_caps": [],
+        "selected_equipment": [],
+        "signage_cabinets": [],
+        "walls": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "total_pole_cost": 370,
+        "total_pole_painting_cost": 75,
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 0,
+          "rounded_yards": 0,
+          "rate_per_yard": 201,
+          "additional_stops_cost": 0,
+          "trucks": []
+        },
+        "total_concrete_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_labor_cost": 0,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "key-foundation_sync-3",
+          "source_project_id": "synthetic-pole-project",
+          "estimate_id": "synthetic-pole-estimate",
+          "requested_at": "2026-11-11T09:27:00.936Z"
+        }
+      },
+      "renderedPoles": [
+        {
+          "component_id": "synthetic-pole-stock",
+          "pole_id": "synthetic-pole-stock",
+          "height_inches": 120,
+          "y_offset_inches": 36,
+          "pole_cost": 250,
+          "pole_painting_cost": 0,
+          "total_cost": 250
+        },
+        {
+          "component_id": "synthetic-pole-lf",
+          "pole_id": "synthetic-pole-lf",
+          "height_inches": 96,
+          "y_offset_inches": 24,
+          "pole_cost": 120,
+          "pole_painting_cost": 75,
+          "total_cost": 195
+        }
+      ],
+      "polePricing": [
+        {
+          "available": true,
+          "issues": []
+        },
+        {
+          "available": true,
+          "issues": []
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 0,
+        "concrete_delivery_cost": 0,
+        "concrete_delivered_yards": 0,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 0,
+        "total_pole_cost": 370,
+        "total_pole_painting_cost": 75,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0,
+        "total_excavation_volume_cy": 0,
+        "total_labor_hours": 0,
+        "grand_total": 445
+      },
+      "pricingUnavailable": false,
+      "inventory": [
+        {
+          "id": "synthetic-pole-stock",
+          "material_type": "pole",
+          "material_name": "Stock pole 20ft",
+          "pole_pricing_mode": "stock_price",
+          "pole_stock_price": 250,
+          "pole_stock_length_ft": 20,
+          "pole_width_inches": 8
+        },
+        {
+          "id": "synthetic-pole-lf",
+          "material_type": "pole",
+          "material_name": "LF pole",
+          "cost_per_unit": 12,
+          "pole_width_inches": 6
+        },
+        {
+          "id": "synthetic-wall-material",
+          "material_type": "wall_material",
+          "material_name": "Synthetic wall units",
+          "cost_per_unit": 2
+        }
+      ],
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-pole-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ],
+        [
+          "saveSource",
+          {
+            "query": {
+              "id": "synthetic-pole-project",
+              "updated_date": "synthetic-v1"
+            },
+            "patch": {
+              "$set": {
+                "project_name": "Edited",
+                "status": "calculated",
+                "assembly_schema_version": 1,
+                "items": [],
+                "selected_equipment": [],
+                "walls": [],
+                "wall_caps": [],
+                "poles": [
+                  {
+                    "component_id": "synthetic-pole-stock",
+                    "pole_id": "synthetic-pole-stock",
+                    "height_inches": 120,
+                    "y_offset_inches": 36,
+                    "include_pole_painting": false,
+                    "pole_name": "Stock pole 20ft",
+                    "pole_cost": 250,
+                    "pole_painting_cost": 0,
+                    "total_cost": 250,
+                    "foundation_component_id": ""
+                  },
+                  {
+                    "component_id": "synthetic-pole-lf",
+                    "pole_id": "synthetic-pole-lf",
+                    "height_inches": 96,
+                    "y_offset_inches": 24,
+                    "include_pole_painting": true,
+                    "pole_name": "LF pole",
+                    "pole_cost": 120,
+                    "pole_painting_cost": 75,
+                    "total_cost": 195,
+                    "foundation_component_id": ""
+                  }
+                ],
+                "signage_cabinets": [],
+                "landscape": {
+                  "cell_size_inches": 12,
+                  "cells": {}
+                },
+                "total_signage_cabinet_cost": 0,
+                "total_landscape_cost": 0,
+                "customer_markup_percent": 0,
+                "customer_pricing": {
+                  "applied": false
+                },
+                "excavation_method": "hand_dig",
+                "project_concrete_type": "4000_ae",
+                "project_concrete_admixtures": [],
+                "concrete_delivery_snapshot": {
+                  "version": 1,
+                  "concrete_total": 0,
+                  "rounded_yards": 0,
+                  "rate_per_yard": 201,
+                  "additional_stops_cost": 0,
+                  "trucks": []
+                },
+                "total_concrete_cost": 0,
+                "total_rebar_cost": 0,
+                "total_excavation_cost": 0,
+                "total_labor_cost": 0,
+                "total_equipment_cost": 0,
+                "total_forming_materials_cost": 0,
+                "total_pole_cost": 370,
+                "total_pole_painting_cost": 75,
+                "total_brick_cost": 0,
+                "total_fill_cost": 0,
+                "total_wall_cost": 0,
+                "total_wall_cap_cost": 0,
+                "builder_sync_attempt": {
+                  "schema_version": 1,
+                  "key": "key-foundation_sync-3",
+                  "source_project_id": "synthetic-pole-project",
+                  "estimate_id": "synthetic-pole-estimate",
+                  "requested_at": "2026-11-11T09:27:00.936Z"
+                }
+              }
+            }
+          }
+        ],
+        [
+          "projectGet",
+          "synthetic-pole-project"
+        ],
+        [
+          "recordBuilderSave",
+          {
+            "estimateId": "synthetic-pole-estimate",
+            "line": {
+              "project_id": "synthetic-pole-project",
+              "module_key": "foundation"
+            },
+            "sourceProject": {
+              "id": "synthetic-pole-project",
+              "updated_date": "synthetic-v2",
+              "project_name": "Edited",
+              "items": [],
+              "poles": [
+                {
+                  "component_id": "synthetic-pole-stock",
+                  "pole_id": "synthetic-pole-stock",
+                  "height_inches": 120,
+                  "y_offset_inches": 36,
+                  "include_pole_painting": false,
+                  "pole_name": "Stock pole 20ft",
+                  "pole_cost": 250,
+                  "pole_painting_cost": 0,
+                  "total_cost": 250,
+                  "foundation_component_id": ""
+                },
+                {
+                  "component_id": "synthetic-pole-lf",
+                  "pole_id": "synthetic-pole-lf",
+                  "height_inches": 96,
+                  "y_offset_inches": 24,
+                  "include_pole_painting": true,
+                  "pole_name": "LF pole",
+                  "pole_cost": 120,
+                  "pole_painting_cost": 75,
+                  "total_cost": 195,
+                  "foundation_component_id": ""
+                }
+              ],
+              "wall_caps": [],
+              "selected_equipment": [],
+              "signage_cabinets": [],
+              "walls": [],
+              "landscape": {
+                "cell_size_inches": 12,
+                "cells": {}
+              },
+              "customer_pricing": {
+                "applied": false
+              },
+              "total_pole_cost": 370,
+              "total_pole_painting_cost": 75,
+              "status": "calculated",
+              "assembly_schema_version": 1,
+              "total_signage_cabinet_cost": 0,
+              "total_landscape_cost": 0,
+              "customer_markup_percent": 0,
+              "excavation_method": "hand_dig",
+              "project_concrete_type": "4000_ae",
+              "project_concrete_admixtures": [],
+              "concrete_delivery_snapshot": {
+                "version": 1,
+                "concrete_total": 0,
+                "rounded_yards": 0,
+                "rate_per_yard": 201,
+                "additional_stops_cost": 0,
+                "trucks": []
+              },
+              "total_concrete_cost": 0,
+              "total_rebar_cost": 0,
+              "total_excavation_cost": 0,
+              "total_labor_cost": 0,
+              "total_equipment_cost": 0,
+              "total_forming_materials_cost": 0,
+              "total_brick_cost": 0,
+              "total_fill_cost": 0,
+              "total_wall_cost": 0,
+              "total_wall_cap_cost": 0,
+              "builder_sync_attempt": {
+                "schema_version": 1,
+                "key": "key-foundation_sync-3",
+                "source_project_id": "synthetic-pole-project",
+                "estimate_id": "synthetic-pole-estimate",
+                "requested_at": "2026-11-11T09:27:00.936Z"
+              },
+              "builder_calculation": {
+                "totals": {
+                  "total_concrete_cost": 0,
+                  "concrete_delivery_cost": 0,
+                  "concrete_delivered_yards": 0,
+                  "concrete_rate_per_yard": 201,
+                  "concrete_trucks": [],
+                  "additional_stops_cost": 0,
+                  "total_rebar_cost": 0,
+                  "total_excavation_cost": 0,
+                  "total_forming_materials_cost": 0,
+                  "total_labor_cost": 0,
+                  "total_pole_cost": 370,
+                  "total_pole_painting_cost": 75,
+                  "total_brick_cost": 0,
+                  "total_fill_cost": 0,
+                  "total_equipment_cost": 0,
+                  "total_wall_cost": 0,
+                  "total_wall_cap_cost": 0,
+                  "wall_caps_by_material": [],
+                  "total_concrete_volume_cy": 0,
+                  "total_excavation_volume_cy": 0,
+                  "total_labor_hours": 0,
+                  "grand_total": 445
+                },
+                "delivery": {
+                  "concreteTotal": 0,
+                  "roundedYards": 0,
+                  "ratePerYard": 201,
+                  "trucksList": [],
+                  "additionalStopsCost": 0,
+                  "availableMixes": [
+                    {
+                      "id": "3500_ae",
+                      "name": "3500 AIR ENTRAINED (AE)",
+                      "price": 195.4,
+                      "desc": "Often used for driveways, slabs, and moderate-load footings."
+                    },
+                    {
+                      "id": "4000_ae",
+                      "name": "4000 AIR ENTRAINED (AE)",
+                      "price": 201,
+                      "desc": "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability."
+                    },
+                    {
+                      "id": "4500_ae",
+                      "name": "4500 AIR ENTRAINED (AE)",
+                      "price": 208.7,
+                      "desc": "Used for heavy-duty commercial slabs and heavy traffic areas."
+                    },
+                    {
+                      "id": "5000_ae",
+                      "name": "5000 AIR ENTRAINED (AE)",
+                      "price": 214.6,
+                      "desc": "High-strength mix for heavy structural columns, pillars, and extreme load conditions."
+                    },
+                    {
+                      "id": "fast_set",
+                      "name": "FAST SET",
+                      "price": 248,
+                      "desc": "Quick-curing concrete used when rapid strength gain is needed to minimize downtime."
+                    }
+                  ],
+                  "availableAdmixes": [
+                    {
+                      "id": "calcium_chloride",
+                      "name": "Calcium Chloride",
+                      "price": 8.5,
+                      "desc": "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!"
+                    },
+                    {
+                      "id": "set_retarding",
+                      "name": "Set-Retarding Admix (Type D)",
+                      "price": 4.5,
+                      "desc": "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site."
+                    },
+                    {
+                      "id": "water_reducing",
+                      "name": "Water-Reducing Admix (Type A)",
+                      "price": 4.25,
+                      "desc": "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar."
+                    },
+                    {
+                      "id": "fibers",
+                      "name": "Fibers",
+                      "price": 12.5,
+                      "desc": "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse."
+                    },
+                    {
+                      "id": "winter_service",
+                      "name": "Winter Service",
+                      "price": 5.5,
+                      "desc": "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing."
+                    }
+                  ]
+                },
+                "cabinet_cost": 0,
+                "landscape_cost": 0,
+                "section_total": 445
+              }
+            },
+            "liveTotal": 445
+          }
+        ]
+      ]
+    },
+    {
+      "caseId": "valid-poles-save-then-new-acknowledged-holds",
+      "phase": "heldOnNewBasis",
+      "saveOutcome": {
+        "status": "failed",
+        "error": "Save paused: fix highlighted design inputs or catalog selections."
+      },
+      "rawDraft": {
+        "id": "synthetic-pole-project",
+        "updated_date": "synthetic-v2",
+        "project_name": "Edited",
+        "items": [],
+        "poles": [
+          {
+            "component_id": "synthetic-pole-stock",
+            "pole_id": "synthetic-pole-stock",
+            "height_inches": 120,
+            "y_offset_inches": 36,
+            "include_pole_painting": false,
+            "pole_name": "Stock pole 20ft",
+            "pole_cost": 250,
+            "pole_painting_cost": 0,
+            "total_cost": 250,
+            "foundation_component_id": ""
+          },
+          {
+            "component_id": "synthetic-pole-lf",
+            "pole_id": "synthetic-pole-lf",
+            "height_inches": 96,
+            "y_offset_inches": 24,
+            "include_pole_painting": true,
+            "pole_name": "LF pole",
+            "pole_cost": 120,
+            "pole_painting_cost": 75,
+            "total_cost": 195,
+            "foundation_component_id": ""
+          }
+        ],
+        "wall_caps": [],
+        "selected_equipment": [],
+        "signage_cabinets": [],
+        "walls": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "total_pole_cost": 370,
+        "total_pole_painting_cost": 75,
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 0,
+          "rounded_yards": 0,
+          "rate_per_yard": 201,
+          "additional_stops_cost": 0,
+          "trucks": []
+        },
+        "total_concrete_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_labor_cost": 0,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "key-foundation_sync-3",
+          "source_project_id": "synthetic-pole-project",
+          "estimate_id": "synthetic-pole-estimate",
+          "requested_at": "2026-11-11T09:27:00.936Z"
+        }
+      },
+      "acknowledged": {
+        "id": "synthetic-pole-project",
+        "updated_date": "synthetic-v2",
+        "project_name": "Edited",
+        "items": [],
+        "poles": [
+          {
+            "component_id": "synthetic-pole-stock",
+            "pole_id": "synthetic-pole-stock",
+            "height_inches": 120,
+            "y_offset_inches": 36,
+            "include_pole_painting": false,
+            "pole_name": "Stock pole 20ft",
+            "pole_cost": 250,
+            "pole_painting_cost": 0,
+            "total_cost": 250,
+            "foundation_component_id": ""
+          },
+          {
+            "component_id": "synthetic-pole-lf",
+            "pole_id": "synthetic-pole-lf",
+            "height_inches": 96,
+            "y_offset_inches": 24,
+            "include_pole_painting": true,
+            "pole_name": "LF pole",
+            "pole_cost": 120,
+            "pole_painting_cost": 75,
+            "total_cost": 195,
+            "foundation_component_id": ""
+          }
+        ],
+        "wall_caps": [],
+        "selected_equipment": [],
+        "signage_cabinets": [],
+        "walls": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "total_pole_cost": 370,
+        "total_pole_painting_cost": 75,
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 0,
+          "rounded_yards": 0,
+          "rate_per_yard": 201,
+          "additional_stops_cost": 0,
+          "trucks": []
+        },
+        "total_concrete_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_labor_cost": 0,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "key-foundation_sync-3",
+          "source_project_id": "synthetic-pole-project",
+          "estimate_id": "synthetic-pole-estimate",
+          "requested_at": "2026-11-11T09:27:00.936Z"
+        }
+      },
+      "renderedPoles": [
+        {
+          "component_id": "synthetic-pole-stock",
+          "pole_id": "synthetic-pole-stock",
+          "height_inches": 120,
+          "y_offset_inches": 36,
+          "pole_cost": 250,
+          "pole_painting_cost": 0,
+          "total_cost": 250
+        },
+        {
+          "component_id": "synthetic-pole-lf",
+          "pole_id": "synthetic-pole-lf",
+          "height_inches": 96,
+          "y_offset_inches": 24,
+          "pole_cost": 120,
+          "pole_painting_cost": 75,
+          "total_cost": 195
+        }
+      ],
+      "polePricing": [
+        {
+          "available": false,
+          "issues": [
+            {
+              "kind": "pole",
+              "index": 0,
+              "componentId": "synthetic-pole-stock",
+              "field": "pole_stock_price",
+              "inventoryId": "synthetic-pole-stock",
+              "code": "pole_price_unavailable",
+              "message": "Pole 1: record a finite, nonnegative pole price before repricing."
+            }
+          ]
+        },
+        {
+          "available": true,
+          "issues": []
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 0,
+        "concrete_delivery_cost": 0,
+        "concrete_delivered_yards": 0,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 0,
+        "total_pole_cost": 370,
+        "total_pole_painting_cost": 75,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0,
+        "total_excavation_volume_cy": 0,
+        "total_labor_hours": 0,
+        "grand_total": 445
+      },
+      "pricingUnavailable": true,
+      "inventory": [
+        {
+          "id": "synthetic-pole-stock",
+          "material_type": "pole",
+          "material_name": "Stock pole 20ft",
+          "pole_pricing_mode": "stock_price",
+          "pole_stock_length_ft": 20,
+          "pole_width_inches": 8
+        },
+        {
+          "id": "synthetic-pole-lf",
+          "material_type": "pole",
+          "material_name": "LF pole",
+          "cost_per_unit": 12,
+          "pole_width_inches": 6
+        },
+        {
+          "id": "synthetic-wall-material",
+          "material_type": "wall_material",
+          "material_name": "Synthetic wall units",
+          "cost_per_unit": 2
+        }
+      ],
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-pole-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ]
+      ]
+    },
+    {
+      "caseId": "free-pole-zero-price-saves",
+      "saveOutcome": {
+        "status": "saved"
+      },
+      "rawDraft": {
+        "id": "synthetic-pole-project",
+        "updated_date": "synthetic-v2",
+        "project_name": "Edited",
+        "items": [],
+        "poles": [
+          {
+            "component_id": "synthetic-pole-stock",
+            "pole_id": "synthetic-pole-stock",
+            "height_inches": 120,
+            "y_offset_inches": 36,
+            "include_pole_painting": false,
+            "pole_name": "Stock pole 20ft",
+            "pole_cost": 999,
+            "pole_painting_cost": 0,
+            "total_cost": 999,
+            "foundation_component_id": ""
+          },
+          {
+            "component_id": "synthetic-pole-lf",
+            "pole_id": "synthetic-pole-lf",
+            "height_inches": 96,
+            "y_offset_inches": 24,
+            "include_pole_painting": true,
+            "pole_name": "LF pole",
+            "pole_cost": 888,
+            "pole_painting_cost": 111,
+            "total_cost": 999,
+            "foundation_component_id": ""
+          }
+        ],
+        "wall_caps": [],
+        "selected_equipment": [],
+        "signage_cabinets": [],
+        "walls": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "total_pole_cost": 1887,
+        "total_pole_painting_cost": 111,
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "assembly_schema_version": 1,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "key-foundation_sync-5",
+          "source_project_id": "synthetic-pole-project",
+          "estimate_id": "synthetic-pole-estimate",
+          "requested_at": "2026-11-11T09:27:00.953Z"
+        }
+      },
+      "acknowledged": {
+        "id": "synthetic-pole-project",
+        "updated_date": "synthetic-v2",
+        "project_name": "Edited",
+        "items": [],
+        "poles": [
+          {
+            "component_id": "synthetic-pole-stock",
+            "pole_id": "synthetic-pole-stock",
+            "height_inches": 120,
+            "y_offset_inches": 36,
+            "include_pole_painting": false,
+            "pole_name": "Stock pole 20ft",
+            "pole_cost": 0,
+            "pole_painting_cost": 0,
+            "total_cost": 0,
+            "foundation_component_id": ""
+          },
+          {
+            "component_id": "synthetic-pole-lf",
+            "pole_id": "synthetic-pole-lf",
+            "height_inches": 96,
+            "y_offset_inches": 24,
+            "include_pole_painting": true,
+            "pole_name": "LF pole",
+            "pole_cost": 120,
+            "pole_painting_cost": 75,
+            "total_cost": 195,
+            "foundation_component_id": ""
+          }
+        ],
+        "wall_caps": [],
+        "selected_equipment": [],
+        "signage_cabinets": [],
+        "walls": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "total_pole_cost": 120,
+        "total_pole_painting_cost": 75,
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 0,
+          "rounded_yards": 0,
+          "rate_per_yard": 201,
+          "additional_stops_cost": 0,
+          "trucks": []
+        },
+        "total_concrete_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_labor_cost": 0,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "key-foundation_sync-5",
+          "source_project_id": "synthetic-pole-project",
+          "estimate_id": "synthetic-pole-estimate",
+          "requested_at": "2026-11-11T09:27:00.953Z"
+        }
+      },
+      "renderedPoles": [
+        {
+          "component_id": "synthetic-pole-stock",
+          "pole_id": "synthetic-pole-stock",
+          "height_inches": 120,
+          "y_offset_inches": 36,
+          "pole_cost": 0,
+          "pole_painting_cost": 0,
+          "total_cost": 0
+        },
+        {
+          "component_id": "synthetic-pole-lf",
+          "pole_id": "synthetic-pole-lf",
+          "height_inches": 96,
+          "y_offset_inches": 24,
+          "pole_cost": 120,
+          "pole_painting_cost": 75,
+          "total_cost": 195
+        }
+      ],
+      "polePricing": [
+        {
+          "available": true,
+          "issues": []
+        },
+        {
+          "available": true,
+          "issues": []
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 0,
+        "concrete_delivery_cost": 0,
+        "concrete_delivered_yards": 0,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 0,
+        "total_pole_cost": 120,
+        "total_pole_painting_cost": 75,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0,
+        "total_excavation_volume_cy": 0,
+        "total_labor_hours": 0,
+        "grand_total": 195
+      },
+      "pricingUnavailable": false,
+      "inventory": [
+        {
+          "id": "synthetic-pole-stock",
+          "material_type": "pole",
+          "material_name": "Stock pole 20ft",
+          "pole_pricing_mode": "stock_price",
+          "pole_stock_price": 0,
+          "pole_stock_length_ft": 20,
+          "pole_width_inches": 8
+        },
+        {
+          "id": "synthetic-pole-lf",
+          "material_type": "pole",
+          "material_name": "LF pole",
+          "cost_per_unit": 12,
+          "pole_width_inches": 6
+        },
+        {
+          "id": "synthetic-wall-material",
+          "material_type": "wall_material",
+          "material_name": "Synthetic wall units",
+          "cost_per_unit": 2
+        }
+      ],
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-pole-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ],
+        [
+          "saveSource",
+          {
+            "query": {
+              "id": "synthetic-pole-project",
+              "updated_date": "synthetic-v1"
+            },
+            "patch": {
+              "$set": {
+                "project_name": "Edited",
+                "status": "calculated",
+                "assembly_schema_version": 1,
+                "items": [],
+                "selected_equipment": [],
+                "walls": [],
+                "wall_caps": [],
+                "poles": [
+                  {
+                    "component_id": "synthetic-pole-stock",
+                    "pole_id": "synthetic-pole-stock",
+                    "height_inches": 120,
+                    "y_offset_inches": 36,
+                    "include_pole_painting": false,
+                    "pole_name": "Stock pole 20ft",
+                    "pole_cost": 0,
+                    "pole_painting_cost": 0,
+                    "total_cost": 0,
+                    "foundation_component_id": ""
+                  },
+                  {
+                    "component_id": "synthetic-pole-lf",
+                    "pole_id": "synthetic-pole-lf",
+                    "height_inches": 96,
+                    "y_offset_inches": 24,
+                    "include_pole_painting": true,
+                    "pole_name": "LF pole",
+                    "pole_cost": 120,
+                    "pole_painting_cost": 75,
+                    "total_cost": 195,
+                    "foundation_component_id": ""
+                  }
+                ],
+                "signage_cabinets": [],
+                "landscape": {
+                  "cell_size_inches": 12,
+                  "cells": {}
+                },
+                "total_signage_cabinet_cost": 0,
+                "total_landscape_cost": 0,
+                "customer_markup_percent": 0,
+                "customer_pricing": {
+                  "applied": false
+                },
+                "excavation_method": "hand_dig",
+                "project_concrete_type": "4000_ae",
+                "project_concrete_admixtures": [],
+                "concrete_delivery_snapshot": {
+                  "version": 1,
+                  "concrete_total": 0,
+                  "rounded_yards": 0,
+                  "rate_per_yard": 201,
+                  "additional_stops_cost": 0,
+                  "trucks": []
+                },
+                "total_concrete_cost": 0,
+                "total_rebar_cost": 0,
+                "total_excavation_cost": 0,
+                "total_labor_cost": 0,
+                "total_equipment_cost": 0,
+                "total_forming_materials_cost": 0,
+                "total_pole_cost": 120,
+                "total_pole_painting_cost": 75,
+                "total_brick_cost": 0,
+                "total_fill_cost": 0,
+                "total_wall_cost": 0,
+                "total_wall_cap_cost": 0,
+                "builder_sync_attempt": {
+                  "schema_version": 1,
+                  "key": "key-foundation_sync-5",
+                  "source_project_id": "synthetic-pole-project",
+                  "estimate_id": "synthetic-pole-estimate",
+                  "requested_at": "2026-11-11T09:27:00.953Z"
+                }
+              }
+            }
+          }
+        ],
+        [
+          "projectGet",
+          "synthetic-pole-project"
+        ],
+        [
+          "recordBuilderSave",
+          {
+            "estimateId": "synthetic-pole-estimate",
+            "line": {
+              "project_id": "synthetic-pole-project",
+              "module_key": "foundation"
+            },
+            "sourceProject": {
+              "id": "synthetic-pole-project",
+              "updated_date": "synthetic-v2",
+              "project_name": "Edited",
+              "items": [],
+              "poles": [
+                {
+                  "component_id": "synthetic-pole-stock",
+                  "pole_id": "synthetic-pole-stock",
+                  "height_inches": 120,
+                  "y_offset_inches": 36,
+                  "include_pole_painting": false,
+                  "pole_name": "Stock pole 20ft",
+                  "pole_cost": 0,
+                  "pole_painting_cost": 0,
+                  "total_cost": 0,
+                  "foundation_component_id": ""
+                },
+                {
+                  "component_id": "synthetic-pole-lf",
+                  "pole_id": "synthetic-pole-lf",
+                  "height_inches": 96,
+                  "y_offset_inches": 24,
+                  "include_pole_painting": true,
+                  "pole_name": "LF pole",
+                  "pole_cost": 120,
+                  "pole_painting_cost": 75,
+                  "total_cost": 195,
+                  "foundation_component_id": ""
+                }
+              ],
+              "wall_caps": [],
+              "selected_equipment": [],
+              "signage_cabinets": [],
+              "walls": [],
+              "landscape": {
+                "cell_size_inches": 12,
+                "cells": {}
+              },
+              "customer_pricing": {
+                "applied": false
+              },
+              "total_pole_cost": 120,
+              "total_pole_painting_cost": 75,
+              "status": "calculated",
+              "assembly_schema_version": 1,
+              "total_signage_cabinet_cost": 0,
+              "total_landscape_cost": 0,
+              "customer_markup_percent": 0,
+              "excavation_method": "hand_dig",
+              "project_concrete_type": "4000_ae",
+              "project_concrete_admixtures": [],
+              "concrete_delivery_snapshot": {
+                "version": 1,
+                "concrete_total": 0,
+                "rounded_yards": 0,
+                "rate_per_yard": 201,
+                "additional_stops_cost": 0,
+                "trucks": []
+              },
+              "total_concrete_cost": 0,
+              "total_rebar_cost": 0,
+              "total_excavation_cost": 0,
+              "total_labor_cost": 0,
+              "total_equipment_cost": 0,
+              "total_forming_materials_cost": 0,
+              "total_brick_cost": 0,
+              "total_fill_cost": 0,
+              "total_wall_cost": 0,
+              "total_wall_cap_cost": 0,
+              "builder_sync_attempt": {
+                "schema_version": 1,
+                "key": "key-foundation_sync-5",
+                "source_project_id": "synthetic-pole-project",
+                "estimate_id": "synthetic-pole-estimate",
+                "requested_at": "2026-11-11T09:27:00.953Z"
+              },
+              "builder_calculation": {
+                "totals": {
+                  "total_concrete_cost": 0,
+                  "concrete_delivery_cost": 0,
+                  "concrete_delivered_yards": 0,
+                  "concrete_rate_per_yard": 201,
+                  "concrete_trucks": [],
+                  "additional_stops_cost": 0,
+                  "total_rebar_cost": 0,
+                  "total_excavation_cost": 0,
+                  "total_forming_materials_cost": 0,
+                  "total_labor_cost": 0,
+                  "total_pole_cost": 120,
+                  "total_pole_painting_cost": 75,
+                  "total_brick_cost": 0,
+                  "total_fill_cost": 0,
+                  "total_equipment_cost": 0,
+                  "total_wall_cost": 0,
+                  "total_wall_cap_cost": 0,
+                  "wall_caps_by_material": [],
+                  "total_concrete_volume_cy": 0,
+                  "total_excavation_volume_cy": 0,
+                  "total_labor_hours": 0,
+                  "grand_total": 195
+                },
+                "delivery": {
+                  "concreteTotal": 0,
+                  "roundedYards": 0,
+                  "ratePerYard": 201,
+                  "trucksList": [],
+                  "additionalStopsCost": 0,
+                  "availableMixes": [
+                    {
+                      "id": "3500_ae",
+                      "name": "3500 AIR ENTRAINED (AE)",
+                      "price": 195.4,
+                      "desc": "Often used for driveways, slabs, and moderate-load footings."
+                    },
+                    {
+                      "id": "4000_ae",
+                      "name": "4000 AIR ENTRAINED (AE)",
+                      "price": 201,
+                      "desc": "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability."
+                    },
+                    {
+                      "id": "4500_ae",
+                      "name": "4500 AIR ENTRAINED (AE)",
+                      "price": 208.7,
+                      "desc": "Used for heavy-duty commercial slabs and heavy traffic areas."
+                    },
+                    {
+                      "id": "5000_ae",
+                      "name": "5000 AIR ENTRAINED (AE)",
+                      "price": 214.6,
+                      "desc": "High-strength mix for heavy structural columns, pillars, and extreme load conditions."
+                    },
+                    {
+                      "id": "fast_set",
+                      "name": "FAST SET",
+                      "price": 248,
+                      "desc": "Quick-curing concrete used when rapid strength gain is needed to minimize downtime."
+                    }
+                  ],
+                  "availableAdmixes": [
+                    {
+                      "id": "calcium_chloride",
+                      "name": "Calcium Chloride",
+                      "price": 8.5,
+                      "desc": "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!"
+                    },
+                    {
+                      "id": "set_retarding",
+                      "name": "Set-Retarding Admix (Type D)",
+                      "price": 4.5,
+                      "desc": "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site."
+                    },
+                    {
+                      "id": "water_reducing",
+                      "name": "Water-Reducing Admix (Type A)",
+                      "price": 4.25,
+                      "desc": "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar."
+                    },
+                    {
+                      "id": "fibers",
+                      "name": "Fibers",
+                      "price": 12.5,
+                      "desc": "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse."
+                    },
+                    {
+                      "id": "winter_service",
+                      "name": "Winter Service",
+                      "price": 5.5,
+                      "desc": "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing."
+                    }
+                  ]
+                },
+                "cabinet_cost": 0,
+                "landscape_cost": 0,
+                "section_total": 195
+              }
+            },
+            "liveTotal": 195
+          }
+        ]
+      ]
+    },
+    {
+      "caseId": "string-dims-normalize-and-persist",
+      "saveOutcome": {
+        "status": "saved"
+      },
+      "rawDraft": {
+        "id": "synthetic-pole-project",
+        "updated_date": "synthetic-v2",
+        "project_name": "Edited",
+        "items": [],
+        "poles": [
+          {
+            "component_id": "synthetic-pole-stock",
+            "pole_id": "synthetic-pole-stock",
+            "height_inches": "120",
+            "y_offset_inches": "36",
+            "include_pole_painting": false,
+            "pole_name": "Stock pole 20ft",
+            "pole_cost": 999,
+            "pole_painting_cost": 0,
+            "total_cost": 999,
+            "foundation_component_id": ""
+          },
+          {
+            "component_id": "synthetic-pole-lf",
+            "pole_id": "synthetic-pole-lf",
+            "height_inches": 96,
+            "y_offset_inches": 24,
+            "include_pole_painting": true,
+            "pole_name": "LF pole",
+            "pole_cost": 888,
+            "pole_painting_cost": 111,
+            "total_cost": 999,
+            "foundation_component_id": ""
+          }
+        ],
+        "wall_caps": [],
+        "selected_equipment": [],
+        "signage_cabinets": [],
+        "walls": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "total_pole_cost": 1887,
+        "total_pole_painting_cost": 111,
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "assembly_schema_version": 1,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "key-foundation_sync-7",
+          "source_project_id": "synthetic-pole-project",
+          "estimate_id": "synthetic-pole-estimate",
+          "requested_at": "2026-11-11T09:27:00.965Z"
+        }
+      },
+      "acknowledged": {
+        "id": "synthetic-pole-project",
+        "updated_date": "synthetic-v2",
+        "project_name": "Edited",
+        "items": [],
+        "poles": [
+          {
+            "component_id": "synthetic-pole-stock",
+            "pole_id": "synthetic-pole-stock",
+            "height_inches": "120",
+            "y_offset_inches": "36",
+            "include_pole_painting": false,
+            "pole_name": "Stock pole 20ft",
+            "pole_cost": 250,
+            "pole_painting_cost": 0,
+            "total_cost": 250,
+            "foundation_component_id": ""
+          },
+          {
+            "component_id": "synthetic-pole-lf",
+            "pole_id": "synthetic-pole-lf",
+            "height_inches": 96,
+            "y_offset_inches": 24,
+            "include_pole_painting": true,
+            "pole_name": "LF pole",
+            "pole_cost": 120,
+            "pole_painting_cost": 75,
+            "total_cost": 195,
+            "foundation_component_id": ""
+          }
+        ],
+        "wall_caps": [],
+        "selected_equipment": [],
+        "signage_cabinets": [],
+        "walls": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "total_pole_cost": 370,
+        "total_pole_painting_cost": 75,
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 0,
+          "rounded_yards": 0,
+          "rate_per_yard": 201,
+          "additional_stops_cost": 0,
+          "trucks": []
+        },
+        "total_concrete_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_labor_cost": 0,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "key-foundation_sync-7",
+          "source_project_id": "synthetic-pole-project",
+          "estimate_id": "synthetic-pole-estimate",
+          "requested_at": "2026-11-11T09:27:00.965Z"
+        }
+      },
+      "renderedPoles": [
+        {
+          "component_id": "synthetic-pole-stock",
+          "pole_id": "synthetic-pole-stock",
+          "height_inches": "120",
+          "y_offset_inches": "36",
+          "pole_cost": 250,
+          "pole_painting_cost": 0,
+          "total_cost": 250
+        },
+        {
+          "component_id": "synthetic-pole-lf",
+          "pole_id": "synthetic-pole-lf",
+          "height_inches": 96,
+          "y_offset_inches": 24,
+          "pole_cost": 120,
+          "pole_painting_cost": 75,
+          "total_cost": 195
+        }
+      ],
+      "polePricing": [
+        {
+          "available": true,
+          "issues": []
+        },
+        {
+          "available": true,
+          "issues": []
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 0,
+        "concrete_delivery_cost": 0,
+        "concrete_delivered_yards": 0,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 0,
+        "total_pole_cost": 370,
+        "total_pole_painting_cost": 75,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0,
+        "total_excavation_volume_cy": 0,
+        "total_labor_hours": 0,
+        "grand_total": 445
+      },
+      "pricingUnavailable": false,
+      "inventory": [
+        {
+          "id": "synthetic-pole-stock",
+          "material_type": "pole",
+          "material_name": "Stock pole 20ft",
+          "pole_pricing_mode": "stock_price",
+          "pole_stock_price": 250,
+          "pole_stock_length_ft": 20,
+          "pole_width_inches": 8
+        },
+        {
+          "id": "synthetic-pole-lf",
+          "material_type": "pole",
+          "material_name": "LF pole",
+          "cost_per_unit": 12,
+          "pole_width_inches": 6
+        },
+        {
+          "id": "synthetic-wall-material",
+          "material_type": "wall_material",
+          "material_name": "Synthetic wall units",
+          "cost_per_unit": 2
+        }
+      ],
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-pole-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-pole-estimate"
+        ],
+        [
+          "saveSource",
+          {
+            "query": {
+              "id": "synthetic-pole-project",
+              "updated_date": "synthetic-v1"
+            },
+            "patch": {
+              "$set": {
+                "project_name": "Edited",
+                "status": "calculated",
+                "assembly_schema_version": 1,
+                "items": [],
+                "selected_equipment": [],
+                "walls": [],
+                "wall_caps": [],
+                "poles": [
+                  {
+                    "component_id": "synthetic-pole-stock",
+                    "pole_id": "synthetic-pole-stock",
+                    "height_inches": "120",
+                    "y_offset_inches": "36",
+                    "include_pole_painting": false,
+                    "pole_name": "Stock pole 20ft",
+                    "pole_cost": 250,
+                    "pole_painting_cost": 0,
+                    "total_cost": 250,
+                    "foundation_component_id": ""
+                  },
+                  {
+                    "component_id": "synthetic-pole-lf",
+                    "pole_id": "synthetic-pole-lf",
+                    "height_inches": 96,
+                    "y_offset_inches": 24,
+                    "include_pole_painting": true,
+                    "pole_name": "LF pole",
+                    "pole_cost": 120,
+                    "pole_painting_cost": 75,
+                    "total_cost": 195,
+                    "foundation_component_id": ""
+                  }
+                ],
+                "signage_cabinets": [],
+                "landscape": {
+                  "cell_size_inches": 12,
+                  "cells": {}
+                },
+                "total_signage_cabinet_cost": 0,
+                "total_landscape_cost": 0,
+                "customer_markup_percent": 0,
+                "customer_pricing": {
+                  "applied": false
+                },
+                "excavation_method": "hand_dig",
+                "project_concrete_type": "4000_ae",
+                "project_concrete_admixtures": [],
+                "concrete_delivery_snapshot": {
+                  "version": 1,
+                  "concrete_total": 0,
+                  "rounded_yards": 0,
+                  "rate_per_yard": 201,
+                  "additional_stops_cost": 0,
+                  "trucks": []
+                },
+                "total_concrete_cost": 0,
+                "total_rebar_cost": 0,
+                "total_excavation_cost": 0,
+                "total_labor_cost": 0,
+                "total_equipment_cost": 0,
+                "total_forming_materials_cost": 0,
+                "total_pole_cost": 370,
+                "total_pole_painting_cost": 75,
+                "total_brick_cost": 0,
+                "total_fill_cost": 0,
+                "total_wall_cost": 0,
+                "total_wall_cap_cost": 0,
+                "builder_sync_attempt": {
+                  "schema_version": 1,
+                  "key": "key-foundation_sync-7",
+                  "source_project_id": "synthetic-pole-project",
+                  "estimate_id": "synthetic-pole-estimate",
+                  "requested_at": "2026-11-11T09:27:00.965Z"
+                }
+              }
+            }
+          }
+        ],
+        [
+          "projectGet",
+          "synthetic-pole-project"
+        ],
+        [
+          "recordBuilderSave",
+          {
+            "estimateId": "synthetic-pole-estimate",
+            "line": {
+              "project_id": "synthetic-pole-project",
+              "module_key": "foundation"
+            },
+            "sourceProject": {
+              "id": "synthetic-pole-project",
+              "updated_date": "synthetic-v2",
+              "project_name": "Edited",
+              "items": [],
+              "poles": [
+                {
+                  "component_id": "synthetic-pole-stock",
+                  "pole_id": "synthetic-pole-stock",
+                  "height_inches": "120",
+                  "y_offset_inches": "36",
+                  "include_pole_painting": false,
+                  "pole_name": "Stock pole 20ft",
+                  "pole_cost": 250,
+                  "pole_painting_cost": 0,
+                  "total_cost": 250,
+                  "foundation_component_id": ""
+                },
+                {
+                  "component_id": "synthetic-pole-lf",
+                  "pole_id": "synthetic-pole-lf",
+                  "height_inches": 96,
+                  "y_offset_inches": 24,
+                  "include_pole_painting": true,
+                  "pole_name": "LF pole",
+                  "pole_cost": 120,
+                  "pole_painting_cost": 75,
+                  "total_cost": 195,
+                  "foundation_component_id": ""
+                }
+              ],
+              "wall_caps": [],
+              "selected_equipment": [],
+              "signage_cabinets": [],
+              "walls": [],
+              "landscape": {
+                "cell_size_inches": 12,
+                "cells": {}
+              },
+              "customer_pricing": {
+                "applied": false
+              },
+              "total_pole_cost": 370,
+              "total_pole_painting_cost": 75,
+              "status": "calculated",
+              "assembly_schema_version": 1,
+              "total_signage_cabinet_cost": 0,
+              "total_landscape_cost": 0,
+              "customer_markup_percent": 0,
+              "excavation_method": "hand_dig",
+              "project_concrete_type": "4000_ae",
+              "project_concrete_admixtures": [],
+              "concrete_delivery_snapshot": {
+                "version": 1,
+                "concrete_total": 0,
+                "rounded_yards": 0,
+                "rate_per_yard": 201,
+                "additional_stops_cost": 0,
+                "trucks": []
+              },
+              "total_concrete_cost": 0,
+              "total_rebar_cost": 0,
+              "total_excavation_cost": 0,
+              "total_labor_cost": 0,
+              "total_equipment_cost": 0,
+              "total_forming_materials_cost": 0,
+              "total_brick_cost": 0,
+              "total_fill_cost": 0,
+              "total_wall_cost": 0,
+              "total_wall_cap_cost": 0,
+              "builder_sync_attempt": {
+                "schema_version": 1,
+                "key": "key-foundation_sync-7",
+                "source_project_id": "synthetic-pole-project",
+                "estimate_id": "synthetic-pole-estimate",
+                "requested_at": "2026-11-11T09:27:00.965Z"
+              },
+              "builder_calculation": {
+                "totals": {
+                  "total_concrete_cost": 0,
+                  "concrete_delivery_cost": 0,
+                  "concrete_delivered_yards": 0,
+                  "concrete_rate_per_yard": 201,
+                  "concrete_trucks": [],
+                  "additional_stops_cost": 0,
+                  "total_rebar_cost": 0,
+                  "total_excavation_cost": 0,
+                  "total_forming_materials_cost": 0,
+                  "total_labor_cost": 0,
+                  "total_pole_cost": 370,
+                  "total_pole_painting_cost": 75,
+                  "total_brick_cost": 0,
+                  "total_fill_cost": 0,
+                  "total_equipment_cost": 0,
+                  "total_wall_cost": 0,
+                  "total_wall_cap_cost": 0,
+                  "wall_caps_by_material": [],
+                  "total_concrete_volume_cy": 0,
+                  "total_excavation_volume_cy": 0,
+                  "total_labor_hours": 0,
+                  "grand_total": 445
+                },
+                "delivery": {
+                  "concreteTotal": 0,
+                  "roundedYards": 0,
+                  "ratePerYard": 201,
+                  "trucksList": [],
+                  "additionalStopsCost": 0,
+                  "availableMixes": [
+                    {
+                      "id": "3500_ae",
+                      "name": "3500 AIR ENTRAINED (AE)",
+                      "price": 195.4,
+                      "desc": "Often used for driveways, slabs, and moderate-load footings."
+                    },
+                    {
+                      "id": "4000_ae",
+                      "name": "4000 AIR ENTRAINED (AE)",
+                      "price": 201,
+                      "desc": "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability."
+                    },
+                    {
+                      "id": "4500_ae",
+                      "name": "4500 AIR ENTRAINED (AE)",
+                      "price": 208.7,
+                      "desc": "Used for heavy-duty commercial slabs and heavy traffic areas."
+                    },
+                    {
+                      "id": "5000_ae",
+                      "name": "5000 AIR ENTRAINED (AE)",
+                      "price": 214.6,
+                      "desc": "High-strength mix for heavy structural columns, pillars, and extreme load conditions."
+                    },
+                    {
+                      "id": "fast_set",
+                      "name": "FAST SET",
+                      "price": 248,
+                      "desc": "Quick-curing concrete used when rapid strength gain is needed to minimize downtime."
+                    }
+                  ],
+                  "availableAdmixes": [
+                    {
+                      "id": "calcium_chloride",
+                      "name": "Calcium Chloride",
+                      "price": 8.5,
+                      "desc": "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!"
+                    },
+                    {
+                      "id": "set_retarding",
+                      "name": "Set-Retarding Admix (Type D)",
+                      "price": 4.5,
+                      "desc": "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site."
+                    },
+                    {
+                      "id": "water_reducing",
+                      "name": "Water-Reducing Admix (Type A)",
+                      "price": 4.25,
+                      "desc": "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar."
+                    },
+                    {
+                      "id": "fibers",
+                      "name": "Fibers",
+                      "price": 12.5,
+                      "desc": "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse."
+                    },
+                    {
+                      "id": "winter_service",
+                      "name": "Winter Service",
+                      "price": 5.5,
+                      "desc": "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing."
+                    }
+                  ]
+                },
+                "cabinet_cost": 0,
+                "landscape_cost": 0,
+                "section_total": 445
+              }
+            },
+            "liveTotal": 445
+          }
+        ]
+      ]
+    }
+  ]
+}

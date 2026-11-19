@@ -1,0 +1,40 @@
+{
+  "synthetic": true,
+  "actualPageUndoVerified": true,
+  "liveAuthorizationVerified": false,
+  "realBase44StorageVerified": false,
+  "results": [
+    {
+      "name": "actual page draft edits and acknowledgments leave live legacy steel and section prices unchanged with no backend writes",
+      "ok": true
+    },
+    {
+      "name": "actual page preview distinguishes saved, current and proposed prices and includes full section delta",
+      "ok": true
+    },
+    {
+      "name": "real page acceptance is one Undo and Redo, consumes its exact ID, and never saves immediately",
+      "ok": true
+    },
+    {
+      "name": "manual Save uses real CAS/readback helper and persists accepted geometry, split and origin receipt",
+      "ok": true
+    },
+    {
+      "name": "Undo after successful save retains latest acknowledged CAS version instead of rewriting from the old version",
+      "ok": true
+    },
+    {
+      "name": "accepted infeasible edit displays acknowledged price, blocks Save and allows controlled repair without source writes",
+      "ok": true
+    },
+    {
+      "name": "old proposal callback cannot accept after route change, return or reload of the same source",
+      "ok": true
+    },
+    {
+      "name": "raw proposal survives close and explicit browser restore without restoring a stale preview or acknowledgment",
+      "ok": true
+    }
+  ]
+}

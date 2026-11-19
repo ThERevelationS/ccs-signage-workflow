@@ -1,0 +1,26 @@
+{
+ "synthetic": true,
+ "telemetry": {
+  "foreign": [],
+  "consoleErrors": [],
+  "pageErrors": []
+ },
+ "results": [
+  {
+   "case": "S1: missing catalog shell — alert, saved amounts, all write paths blocked",
+   "ok": true
+  },
+  {
+   "case": "S2: reload failure -> retry -> success -> explicit save CAS v1",
+   "ok": true
+  },
+  {
+   "case": "S3: old A reload settling (success) during NEW A flight cannot hijack it",
+   "ok": true
+  },
+  {
+   "case": "S4: old A reload failing during NEW A flight leaves new busy + draft intact",
+   "ok": true
+  }
+ ]
+}

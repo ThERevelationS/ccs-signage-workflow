@@ -83,7 +83,7 @@ export default function AlertSettingsModal({ open, onClose, vehicle }) {
             <h2 className="font-bold text-slate-900 dark:text-slate-100">CCS Local Alert Rules</h2>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{vehicle?.nickName || vehicle?.model?.name || "Vehicle"}{vin ? ` · ${vin}` : ""}</p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800" aria-label="Close alert settings"><X className="h-4 w-4" /></button>
+          <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800" aria-label="Close alert settings"><X className="h-4 w-4" /></button>
         </div>
 
         <div className="max-h-[calc(90vh-70px)] overflow-y-auto p-4 sm:p-5 space-y-4">
@@ -126,8 +126,8 @@ export default function AlertSettingsModal({ open, onClose, vehicle }) {
           </div>
 
           <div className="flex justify-end gap-2 pt-1">
-            <button onClick={onClose} disabled={saving} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Cancel</button>
-            <button onClick={save} disabled={loading || saving || !vin} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{saving ? "Saving…" : "Save CCS Alerts"}</button>
+            <button type="button" onClick={onClose} disabled={saving} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Cancel</button>
+            <button type="button" onClick={save} disabled={loading || saving || !vin} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{saving ? "Saving…" : "Save CCS Alerts"}</button>
           </div>
         </div>
       </div>

@@ -1,0 +1,23 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "beforeHead": "6c06175812c0d5e078a2f7b23c25b4d7f7e711cb",
+  "files": [
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "lfSha256": "686ba80fb8fd15f1e973066d2e5a577433312fee81d13febc66bc6e180b54a3b"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationItemCard.jsx",
+      "lfSha256": "4807e9d816fdd75547e85285b7ad0b6015858f7f56bd1777acf8c30faed9de98"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "lfSha256": "d4493957101e38cd0aa0b7ad3a9a8ec97fb0def5bee2d8f0f19ac68eacdd0b6a"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "lfSha256": "2122ac7088ff291c4421e5f61dab375223cb54c777a27bdfb6a0f686098ca972"
+    }
+  ]
+}

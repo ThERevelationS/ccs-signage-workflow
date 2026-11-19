@@ -1,0 +1,36 @@
+{
+ "jurisdiction_id": "6ac1ebc39ac89ef356b07d09",
+ "jurisdiction_name": "Lake County",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "COMMERCIAL BUILDING PERMIT SUBMITTAL CHECKLIST THIS CHECKLIST MUST BE COMPLETED PRIOR TO ISSUANCE OF A COMMERCIAL PERMIT APPLICATION & PLAN SUBMITTAL (Please allow 3 to 4 week s for review . OBC Allows up to 30 business days) . ☐ Completed Application for Commercial Building Permit Plan Review ☐ Electronic plan submission through www.lakecountyohio.gov/building - inspection or emailed to lcbd@lakecountyohio.gov ☐ Plans sealed by a State of Ohio Registered Design Professional ☐ Plans comply with 20 24 Ohio Building Code (OBC) Section 106 Plans must include: ☐ Site plan ☐ Building elevations ☐ Floor plans ☐ Elevator enclosures (if applicable) ☐ Wall sections showing foot ers , foundation, floors, walls and roof construction indicating all s tructural member details (size, spacing, materials) ☐ Square footage of structure and project ☐ Mechanical , Electrical and Plumbing ☐ Energy complianc",
+   "tags": [
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "9090acabff733d986ab95515d6c24a124fa2c4cbece21aea959ede84ff13cb65",
+   "source_document_id": null,
+   "source_title": "9090acabff733d986ab95515d6c24a124fa2c4cbece21aea959ede84ff13cb65.pdf",
+   "official_url": "https://wpassets.lakecountyohio.gov/wp-content/uploads/sites/10/2026/03/30144727/COMMERCIAL-BUILDING-PERMIT-SUBMITTAL-CHECKLIST-2.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "REVISIONS (IF APPLICABLE) ☐ Revised documents submitted electronically ☐ New Commercial Building Permit Plan Review Application submitted clearly describing proposed changes to include a full set of revised plans FEES ☐ State 3% Fee per Ohio Revised Code 3781.102(F)(1)",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "9090acabff733d986ab95515d6c24a124fa2c4cbece21aea959ede84ff13cb65",
+   "source_document_id": null,
+   "source_title": "9090acabff733d986ab95515d6c24a124fa2c4cbece21aea959ede84ff13cb65.pdf",
+   "official_url": "https://wpassets.lakecountyohio.gov/wp-content/uploads/sites/10/2026/03/30144727/COMMERCIAL-BUILDING-PERMIT-SUBMITTAL-CHECKLIST-2.pdf"
+  }
+ ]
+}

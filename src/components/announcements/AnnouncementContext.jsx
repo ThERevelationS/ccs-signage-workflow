@@ -1,14 +1,18 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { fetchActiveAnnouncementFeed, acknowledgeAnnouncement } from "./announcementPersistence";
+import { isPlatformRateLimit } from "@/api/requestGovernor.mjs";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 import { usePolling } from "@/lib/usePolling";
 
 const AnnouncementContext = createContext(null);
 
 export function useAnnouncements() {
-  return useContext(AnnouncementContext);
+  // Null-safe: when the provider can't mount (backend unreachable), callers
+  // destructuring the context must not take the whole app down with them.
+  return useContext(AnnouncementContext) || { activeAnnouncement: null, dismiss: () => {}, acknowledge: () => {} };
 }
 
 // Stock sound generators using Web Audio API
@@ -107,7 +111,11 @@ export function AnnouncementProvider({ children, currentPageName }) {
       let rows;
       try {
         rows = await fetchActiveAnnouncementFeed();
-      } catch {
+      } catch (feedError) {
+        // A rate-limited feed must not fall back to a paged entity read —
+        // the fallback doubles spend inside the same storm it is meant to
+        // survive. Keep the last fetched rows; the next tick retries.
+        if (isPlatformRateLimit(feedError) || isFleetCoolingDown()) return;
         rows = await loadAllEntityRows({
           entity: base44.entities.Announcement,
           query: { is_active: true },
@@ -128,7 +136,9 @@ export function AnnouncementProvider({ children, currentPageName }) {
     } catch {}
   }, []);
 
-  usePolling(fetchActive, 300000);
+  // 5-minute ambient poll — first fire waits out the mount burst so the
+  // banner load doesn't pay a 429 + retry stack on every page open.
+  usePolling(fetchActive, 300000, { initialDelayMs: 70000 });
 
   useEffect(() => {
     let unsubscribe = null;

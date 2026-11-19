@@ -1,0 +1,205 @@
+{
+ "mode": "candidate",
+ "generatedAt": "2026-11-11T07:31:34.349Z",
+ "totalChecks": 47,
+ "passed": 47,
+ "failed": 0,
+ "candidateBundleInputs": [
+  "frozen:/app/src/components/vinylInventory/vinylConstants.jsx",
+  "frozen:/app/src/components/vinylEstimator/vinylNestingCalculator.jsx",
+  "frozen:/app/src/components/vinylEstimator/vinylPricingAvailability.js",
+  "frozen:/app/src/components/vinylEstimator/vinylProjectHelpers.jsx",
+  "frozen:/app/src/components/vinylEstimator/vinylCostHelpers.jsx",
+  "frozen:/app/model-entry.js"
+ ],
+ "results": [
+  {
+   "id": "parser: numbers + numeric strings pass",
+   "ok": true
+  },
+  {
+   "id": "parser: malformed → null",
+   "ok": true
+  },
+  {
+   "id": "parser: nonneg/positive gates",
+   "ok": true
+  },
+  {
+   "id": "snapshot: only real finite numbers count",
+   "ok": true
+  },
+  {
+   "id": "draft value: blank preserved, numbers parsed, junk kept raw",
+   "ok": true
+  },
+  {
+   "id": "valid: clean workflow produces identical calc + no issues",
+   "ok": true
+  },
+  {
+   "id": "valid: explicit $0 price is still a real, valid zero",
+   "ok": true
+  },
+  {
+   "id": "valid: explicit $0 ink rate is still a real, valid zero",
+   "ok": true
+  },
+  {
+   "id": "held: missing vinyl price → flagged + null vinyl/material/total, geometry kept",
+   "ok": true
+  },
+  {
+   "id": "held: missing roll width → layout poison + issue",
+   "ok": true
+  },
+  {
+   "id": "held: malformed waste factor → price hold only",
+   "ok": true
+  },
+  {
+   "id": "held: malformed machine hourly rate → machine hold, vinyl price stays real",
+   "ok": true
+  },
+  {
+   "id": "held: absent machine hourly rate → same (missing is not free)",
+   "ok": true
+  },
+  {
+   "id": "held: missing ink rate → ink hold",
+   "ok": true
+  },
+  {
+   "id": "held: missing laminate price → laminate hold only",
+   "ok": true
+  },
+  {
+   "id": "held: zero width → dimension issue, part row retained",
+   "ok": true
+  },
+  {
+   "id": "held: malformed width string → dimension issue",
+   "ok": true
+  },
+  {
+   "id": "held: blank width → dimension issue (blank is not 0)",
+   "ok": true
+  },
+  {
+   "id": "held: fractional quantity → quantity issue (floor would silently reprice)",
+   "ok": true
+  },
+  {
+   "id": "held: zero quantity → quantity issue",
+   "ok": true
+  },
+  {
+   "id": "held: malformed gutter override → layout hold",
+   "ok": true
+  },
+  {
+   "id": "held: malformed setup fee floor → floor hold only",
+   "ok": true
+  },
+  {
+   "id": "held: malformed weeding override → labor hold",
+   "ok": true
+  },
+  {
+   "id": "held: unsupported weeding difficulty → labor hold",
+   "ok": true
+  },
+  {
+   "id": "held: personnel row hours>0 + missing rate → labor hold",
+   "ok": true
+  },
+  {
+   "id": "held: personnel row hours>0 + zero rate → labor hold ($0 labor is unavailable)",
+   "ok": true
+  },
+  {
+   "id": "valid: dormant personnel row (no hours) does not flag",
+   "ok": true
+  },
+  {
+   "id": "held: malformed operator rate + no personnel → catalog labor hold",
+   "ok": true
+  },
+  {
+   "id": "held: applied machine unassigned → machine unassigned issue",
+   "ok": true
+  },
+  {
+   "id": "held: dangling vinyl id → material unavailable",
+   "ok": true
+  },
+  {
+   "id": "held: unplaced part → parts_unplaced issue + layout hold",
+   "ok": true
+  },
+  {
+   "id": "valid: empty workflow is dormant — no issues",
+   "ok": true
+  },
+  {
+   "id": "held: malformed floor still flags on an empty workflow (floor is consumed)",
+   "ok": true
+  },
+  {
+   "id": "project: malformed equipment total → equipment issue + null rollup",
+   "ok": true
+  },
+  {
+   "id": "project: missing personnel total → personnel issue",
+   "ok": true
+  },
+  {
+   "id": "project: malformed install rate setting + crew row → setting issue",
+   "ok": true
+  },
+  {
+   "id": "project: miles set + malformed fuel price → travel setting issue",
+   "ok": true
+  },
+  {
+   "id": "project: miles set + owned vehicle missing mpg → vehicle issue",
+   "ok": true
+  },
+  {
+   "id": "project: malformed miles → travel miles issue",
+   "ok": true
+  },
+  {
+   "id": "project: malformed supplies % + markup → issues + null supplies/subtotal",
+   "ok": true
+  },
+  {
+   "id": "snapshot: held workflow falls back to SAVED totals, never invents $0",
+   "ok": true
+  },
+  {
+   "id": "snapshot: held workflow with NO saved totals → honest nulls",
+   "ok": true
+  },
+  {
+   "id": "snapshot: live finite value always beats the saved snapshot",
+   "ok": true
+  },
+  {
+   "id": "snapshot: explicit saved $0 stays a real zero",
+   "ok": true
+  },
+  {
+   "id": "metrics: held calc → null costPerSqFt, real yield",
+   "ok": true
+  },
+  {
+   "id": "metrics: stock usage returns null on a held calc",
+   "ok": true
+  },
+  {
+   "id": "issue shape: kind/index/field/code/message/hold on every record",
+   "ok": true
+  }
+ ]
+}

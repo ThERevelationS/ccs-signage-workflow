@@ -1,0 +1,16 @@
+import { readFileSync } from 'node:fs';
+import { login, read, call } from './cb-mm.mjs';
+const D = 'imports/corebridge-2026-11-16/';
+const lines = JSON.parse(readFileSync(D + 'rows-estimate-lines.json', 'utf8'));
+const done = readFileSync(D + 'estimate-lines-done.jsonl', 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+console.log(done);
+await login();
+const d = done.find((x) => x.source_id === process.argv[2]);
+const r = await read({ entity: 'AllInOneEstimate', id: d.target_id }); const e = r.item || r.items?.[0] || r;
+console.log('before', e.updated_date, (e.line_items || []).length);
+const li = lines[d.source_id];
+const w = await call('staffEntityWrite', { entity: 'AllInOneEstimate', op: 'updateMany', id: e.id, query: { id: e.id, updated_date: e.updated_date }, update: { $set: { line_items: li } } });
+console.log('write', JSON.stringify(w).slice(0, 600));
+await new Promise((s) => setTimeout(s, 3000));
+const r2 = await read({ entity: 'AllInOneEstimate', id: d.target_id }); const e2 = r2.item || r2.items?.[0] || r2;
+console.log('after', e2.updated_date, (e2.line_items || []).length, JSON.stringify((e2.line_items || [])[0] || {}).slice(0, 400));

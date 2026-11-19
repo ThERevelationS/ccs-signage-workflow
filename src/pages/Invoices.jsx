@@ -1,7 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { Link } from "react-router-dom";
 import SavedViews from "@/components/workflow/SavedViews";
+import {
+  DataTableShell,
+  FilterBar,
+  FilterSearchInput,
+  KpiStrip,
+  PageHeader,
+  RecordLink,
+  StatusChip,
+  Td,
+  Th,
+  Tr,
+  filterInputCls,
+} from "@/components/kit";
 import {
   AlertCircle,
   ChevronRight,
@@ -17,8 +31,20 @@ import {
   RefreshCw,
   Search,
   Send,
+  Ticket,
   X,
 } from "lucide-react";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
+import { IssueCreditDialog, RefundPaymentDialog } from "@/components/invoicing/CreditRefundDialogs";
+import {
+  creditableAmount,
+  creditedTotal,
+  isCreditMemoRow,
+  isRefundRow,
+  paymentRefundable,
+  refundedTotal,
+  usdSigned,
+} from "@/components/invoicing/refundMath";
 
 const clean = (v) => String(v ?? "").trim();
 const uuid = () => crypto.randomUUID();
@@ -32,16 +58,10 @@ const STATUS_LABELS = {
   paid: "Paid",
   void: "Void",
 };
-const STATUS_STYLES = {
-  draft: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  sent: "bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300",
-  partially_paid: "bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300",
-  paid: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300",
-  void: "bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300",
-};
 const METHOD_LABELS = { cash: "Cash", check: "Check", card: "Card", ach: "ACH", financing: "Financing", other: "Other" };
 
-const inputCls = "min-h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-violet-400 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100";
+// Shared kit input vocabulary (adds placeholder styling over the old copy).
+const inputCls = filterInputCls;
 const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400";
 
 const invokeAction = async (sessionToken, body) => {
@@ -127,7 +147,7 @@ function PortalLinks({ sessionToken, invoiceId }) {
             </button>
           </div>
           <p className="text-[11px] text-blue-800/70 dark:text-blue-300/60">
-            Read-only invoice view Â· {active.open_count > 0 ? `opened ${active.open_count}Ã—` : "not opened yet"}{active.last_opened_at ? ` Â· last ${new Date(active.last_opened_at).toLocaleDateString()}` : ""} Â· expires {active.expires_at ? new Date(active.expires_at).toLocaleDateString() : "never"}
+            Read-only invoice view · {active.open_count > 0 ? `opened ${active.open_count}×` : "not opened yet"}{active.last_opened_at ? ` · last ${new Date(active.last_opened_at).toLocaleDateString()}` : ""} · expires {active.expires_at ? new Date(active.expires_at).toLocaleDateString() : "never"}
           </p>
         </div>
       )}
@@ -138,11 +158,7 @@ function PortalLinks({ sessionToken, invoiceId }) {
 
 function StatusBadge({ status }) {
   const s = clean(status) || "draft";
-  return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLES[s] || STATUS_STYLES.draft}`}>
-      {STATUS_LABELS[s] || s}
-    </span>
-  );
+  return <StatusChip status={s} label={STATUS_LABELS[s] || s} />;
 }
 
 function CustomerPicker({ sessionToken, selected, onSelect }) {
@@ -177,9 +193,9 @@ function CustomerPicker({ sessionToken, selected, onSelect }) {
       )}
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input className={`${inputCls} pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search customersâ€¦" />
+        <input className={`${inputCls} pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search customers…" />
       </div>
-      {loading && <div className="mt-1 text-xs text-slate-500">Searchingâ€¦</div>}
+      {loading && <div className="mt-1 text-xs text-slate-500">Searching…</div>}
       {!loading && results.length > 0 && !selected && (
         <div className="mt-1 max-h-40 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700">
           {results.map((c) => (
@@ -291,7 +307,7 @@ function InvoiceForm({ sessionToken, invoice, onClose, onSaved }) {
       <div className="my-8 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">{editing ? `Edit ${invoice.invoice_number}` : "New Invoice"}</h2>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -302,8 +318,8 @@ function InvoiceForm({ sessionToken, invoice, onClose, onSaved }) {
           <div className="grid grid-cols-2 gap-3">
             <div><label className={labelCls}>Invoice #</label><input className={inputCls} value={form.invoice_number} onChange={set("invoice_number")} placeholder="Auto" /></div>
             <div><label className={labelCls}>Terms</label><input className={inputCls} value={form.terms} onChange={set("terms")} placeholder="Net 30" /></div>
-            <div><label className={labelCls}>Issue date</label><input className={inputCls} type="date" value={form.issue_date} onChange={set("issue_date")} /></div>
-            <div><label className={labelCls}>Due date</label><input className={inputCls} type="date" value={form.due_date} onChange={set("due_date")} /></div>
+            <div><label className={labelCls}>Issue date</label><CcsDateField className={inputCls} value={form.issue_date} onChange={set("issue_date")} /></div>
+            <div><label className={labelCls}>Due date</label><CcsDateField className={inputCls} value={form.due_date} onChange={set("due_date")} /></div>
           </div>
         </div>
 
@@ -332,8 +348,8 @@ function InvoiceForm({ sessionToken, invoice, onClose, onSaved }) {
 
         {error && <div className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
         <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onClose} className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Cancel</button>
-          <button onClick={save} disabled={saving}
+          <button type="button" onClick={onClose} className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Cancel</button>
+          <button type="button" onClick={save} disabled={saving}
             className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60">
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
             {editing ? "Save changes" : "Create invoice"}
@@ -352,7 +368,11 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
   const [editing, setEditing] = useState(false);
   const [notice, setNotice] = useState("");
   const [pay, setPay] = useState({ amount: "", method: "check", paid_date: "", reference_number: "", notes: "" });
+  const [creditOpen, setCreditOpen] = useState(false);
+  const [refundTarget, setRefundTarget] = useState(null);
   const payKeyRef = useRef(uuid());
+  const creditKeyRef = useRef(uuid());
+  const refundKeyRef = useRef(uuid());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -371,6 +391,12 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
   const inv = detail?.invoice;
   const payments = detail?.payments || [];
   const openBalance = Number(inv?.balance_due) || 0;
+  // Credit/refund affordances ride on the ledger rows: net money still held is
+  // creditable; each positive recorded payment is refundable up to its own
+  // un-returned remainder (also capped by the net held balance).
+  const collected = creditableAmount(payments);
+  const credits = creditedTotal(payments);
+  const refunds = refundedTotal(payments);
 
   const run = async (label, body, after) => {
     if (busy) return;
@@ -399,13 +425,13 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
     paid_date: clean(pay.paid_date),
     reference_number: clean(pay.reference_number),
     notes: clean(pay.notes),
-  });
+  }, () => setPay((p) => ({ amount: "", method: p.method, paid_date: "", reference_number: "", notes: "" })));
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4" onClick={onClose}>
       <div className="my-8 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         {loading && !detail ? (
-          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loadingâ€¦</div>
+          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading…</div>
         ) : !inv ? (
           <div className="py-8 text-center text-sm text-red-600">{error || "Invoice not found."}</div>
         ) : (
@@ -415,13 +441,22 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{inv.invoice_number}</h2>
                   <StatusBadge status={inv.status} />
+                  {credits > 0 && <StatusChip tone="violet" label={`Credit ${usdSigned(-credits)}`} />}
+                  {refunds > 0 && <StatusChip tone="red" label={`Refunded ${usdSigned(-refunds)}`} />}
                 </div>
-                <div className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">{inv.customer_display_name || inv.customer_name || inv.customer_id || "Unknown customer"}</div>
+                <div className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
+                  {clean(inv.customer_id) ? (
+                    <RecordLink kind="customer" id={inv.customer_id}>{inv.customer_display_name || inv.customer_name || inv.customer_id}</RecordLink>
+                  ) : (inv.customer_display_name || inv.customer_name || "Unknown customer")}
+                  {clean(inv.customer_id) && (
+                    <Link className="ml-2 text-xs font-semibold text-sky-600 hover:underline dark:text-sky-400" to={`/CustomerStatements?customer=${inv.customer_id}`}>Statement</Link>
+                  )}
+                </div>
                 <div className="mt-0.5 text-xs text-slate-500">
-                  {inv.issue_date ? `Issued ${inv.issue_date}` : "Not issued"}{inv.due_date ? ` Â· Due ${inv.due_date}` : ""}{inv.terms ? ` Â· ${inv.terms}` : ""}
+                  {inv.issue_date ? `Issued ${inv.issue_date}` : "Not issued"}{inv.due_date ? ` · Due ${inv.due_date}` : ""}{inv.terms ? ` · ${inv.terms}` : ""}
                 </div>
               </div>
-              <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+              <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
             </div>
 
             <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
@@ -436,7 +471,7 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                       <td className="px-3 py-2 text-right">{r.quantity}</td>
                       <td className="px-3 py-2 text-right">{usd(r.unit_price)}</td>
                       <td className="px-3 py-2 text-right font-medium">{usd((Number(r.quantity) || 0) * (Number(r.unit_price) || 0))}</td>
-                      <td className="px-3 py-2 text-center">{r.taxable ? "âœ“" : ""}</td>
+                      <td className="px-3 py-2 text-center">{r.taxable ? "✓" : ""}</td>
                     </tr>
                   ))}
                   {(inv.line_items || []).length === 0 && <tr><td colSpan={5} className="px-3 py-4 text-center text-slate-400">No line items.</td></tr>}
@@ -450,9 +485,9 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                 {inv.internal_notes && <div><span className="text-xs font-semibold uppercase text-slate-400">Internal:</span> {inv.internal_notes}</div>}
                 {(inv.estimate_id || inv.work_order_id || inv.opportunity_id) && (
                   <div className="text-xs text-slate-500">
-                    {inv.estimate_id && <div>Estimate: <a className="text-violet-600 hover:underline dark:text-violet-300" href={`/EstimateDetail?id=${inv.estimate_id}`}>{inv.estimate_id}</a></div>}
-                    {inv.work_order_id && <div>WorkOrder: {inv.work_order_id}</div>}
-                    {inv.opportunity_id && <div>Opportunity: {inv.opportunity_id}</div>}
+                    {inv.estimate_id && <div>Estimate: <RecordLink kind="estimate" id={inv.estimate_id} /></div>}
+                    {inv.work_order_id && <div>WorkOrder: <RecordLink kind="workorder" id={inv.work_order_id} /></div>}
+                    {inv.opportunity_id && <div>Opportunity: <RecordLink kind="opportunity" id={inv.opportunity_id} /></div>}
                   </div>
                 )}
               </div>
@@ -470,25 +505,44 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
             <div className="mt-4 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Payments</h3>
               {payments.length === 0 && <div className="mt-1 text-xs text-slate-500">None recorded.</div>}
-              {payments.map((p) => (
-                <div key={p.id} className="mt-1.5 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5 text-sm dark:bg-slate-800/60">
-                  <span className={p.status === "void" ? "text-slate-400 line-through" : ""}>
-                    {usd(p.amount)} Â· {METHOD_LABELS[p.method] || p.method}{p.paid_date ? ` Â· ${p.paid_date}` : ""}{p.reference_number ? ` Â· ${p.reference_number}` : ""}
-                  </span>
-                  {p.status === "recorded" && (
-                    <button type="button" disabled={Boolean(busy)} onClick={() => run("voidpay", { action: "void_payment", payment_id: p.id, void_reason: "Voided from Invoices" })}
-                      className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50 dark:text-red-400">Void</button>
-                  )}
-                  {p.status === "void" && <span className="text-xs text-slate-400">void</span>}
-                </div>
-              ))}
+              {payments.map((p) => {
+                const negative = Number(p.amount) < 0;
+                const refundable = p.status === "recorded" && Number(p.amount) > 0 && paymentRefundable(p, payments) > 0;
+                const canVoid = p.status === "recorded" || (p.status === "refunded" && clean(p.refund_of_payment_id));
+                return (
+                  <div key={p.id} className="mt-1.5 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5 text-sm dark:bg-slate-800/60">
+                    <span className={p.status === "void" ? "text-slate-400 line-through" : ""}>
+                      <span className={negative ? "font-medium text-red-600 dark:text-red-400" : ""}>{usdSigned(p.amount)}</span>
+                      {" · "}{p.method === "credit_memo" ? "Credit memo" : (METHOD_LABELS[p.method] || p.method)}
+                      {p.paid_date ? ` · ${p.paid_date}` : ""}{p.reference_number ? ` · ${p.reference_number}` : ""}
+                      {Number(p.refunded_amount) > 0 && p.status === "recorded" && (
+                        <span className="ml-1 text-xs text-amber-600 dark:text-amber-400">partially refunded {usdSigned(-p.refunded_amount)}</span>
+                      )}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      {isCreditMemoRow(p) && <StatusChip size="sm" tone="violet" label="CREDIT" />}
+                      {isRefundRow(p) && <StatusChip size="sm" tone="red" label="REFUND" />}
+                      {p.status === "refunded" && !clean(p.refund_of_payment_id) && <StatusChip size="sm" tone="red" label="REFUNDED" />}
+                      {refundable && (
+                        <button type="button" disabled={Boolean(busy)} onClick={() => { refundKeyRef.current = uuid(); setRefundTarget(p); }}
+                          className="text-xs font-semibold text-rose-600 hover:underline disabled:opacity-50 dark:text-rose-400">Refund</button>
+                      )}
+                      {canVoid && (
+                        <button type="button" disabled={Boolean(busy)} onClick={() => run("voidpay", { action: "void_payment", payment_id: p.id, void_reason: "Voided from Invoices" })}
+                          className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50 dark:text-red-400">Void</button>
+                      )}
+                      {p.status === "void" && <span className="text-xs text-slate-400">void</span>}
+                    </span>
+                  </div>
+                );
+              })}
               {["sent", "partially_paid"].includes(inv.status) && (
                 <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-[110px_110px_130px_1fr_auto]">
                   <input className={inputCls} type="number" min="0" step="any" placeholder={`Balance ${usd(openBalance)}`} value={pay.amount} onChange={(e) => setPay((p) => ({ ...p, amount: e.target.value }))} />
                   <select className={inputCls} value={pay.method} onChange={(e) => setPay((p) => ({ ...p, method: e.target.value }))}>
                     {Object.entries(METHOD_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                   </select>
-                  <input className={inputCls} type="date" value={pay.paid_date} onChange={(e) => setPay((p) => ({ ...p, paid_date: e.target.value }))} />
+                  <CcsDateField className={inputCls} value={pay.paid_date} onChange={(e) => setPay((p) => ({ ...p, paid_date: e.target.value }))} />
                   <input className={inputCls} placeholder="Check # / reference" value={pay.reference_number} onChange={(e) => setPay((p) => ({ ...p, reference_number: e.target.value }))} />
                   <button type="button" onClick={recordPayment} disabled={Boolean(busy) || !(Number(pay.amount) > 0)}
                     className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
@@ -521,7 +575,7 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                   </button>
                 )}
                 {!["draft", "void"].includes(inv.status) && (
-                  <button type="button" onClick={() => run("stmt", { action: "email_statement", invoice_id: invoiceId, portal_base: window.location.origin }, (d) => { if (d?.sent_to) setNotice(`Statement emailed to ${d.sent_to} (${d.open_invoices} open Â· $${Number(d.open_total || 0).toFixed(2)}).`); })} disabled={Boolean(busy)}
+                  <button type="button" onClick={() => run("stmt", { action: "email_statement", invoice_id: invoiceId, portal_base: window.location.origin }, (d) => { if (d?.sent_to) setNotice(`Statement emailed to ${d.sent_to} (${d.open_invoices} open · $${Number(d.open_total || 0).toFixed(2)}).`); })} disabled={Boolean(busy)}
                     className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-sky-300 px-4 text-sm font-semibold text-sky-700 hover:bg-sky-50 disabled:opacity-60 dark:border-sky-800 dark:text-sky-400">
                     {busy === "stmt" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}Email statement
                   </button>
@@ -530,6 +584,12 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                   <button type="button" onClick={() => run("remind", { action: "send_past_due_reminder", invoice_id: invoiceId, portal_base: window.location.origin }, (d) => { if (d?.sent_to) setNotice(`Past-due reminder sent to ${d.sent_to}.`); })} disabled={Boolean(busy)}
                     className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-amber-300 px-4 text-sm font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-60 dark:border-amber-800 dark:text-amber-400">
                     {busy === "remind" ? <Loader2 className="h-4 w-4 animate-spin" /> : <AlertCircle className="h-4 w-4" />}Send past-due reminder
+                  </button>
+                )}
+                {collected > 0.005 && inv.status !== "void" && (
+                  <button type="button" onClick={() => { creditKeyRef.current = uuid(); setCreditOpen(true); }} disabled={Boolean(busy)}
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-violet-300 px-4 text-sm font-semibold text-violet-700 hover:bg-violet-50 disabled:opacity-60 dark:border-violet-800 dark:text-violet-300">
+                    <Ticket className="h-4 w-4" />Issue credit
                   </button>
                 )}
                 {!["void", "paid"].includes(inv.status) && (
@@ -549,6 +609,49 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
       {editing && inv && (
         <InvoiceForm sessionToken={sessionToken} invoice={inv} onClose={() => setEditing(false)}
           onSaved={async () => { setEditing(false); await load(); onChanged?.(); }} />
+      )}
+      {creditOpen && inv && (
+        <IssueCreditDialog
+          payments={payments}
+          busy={busy === "credit"}
+          onClose={() => setCreditOpen(false)}
+          onSubmit={({ amount, reason }) =>
+            run("credit", {
+              action: "issue_credit_memo",
+              invoice_id: invoiceId,
+              creation_request_key: creditKeyRef.current,
+              amount,
+              reason,
+            }, (d) => {
+              setCreditOpen(false);
+              creditKeyRef.current = uuid();
+              setNotice(`Credit memo issued for ${usdSigned(d?.credited_amount ?? amount)} — the invoice balance reopened by that amount.`);
+            })
+          }
+        />
+      )}
+      {refundTarget && inv && (
+        <RefundPaymentDialog
+          payment={refundTarget}
+          payments={payments}
+          busy={busy === "refund"}
+          onClose={() => setRefundTarget(null)}
+          onSubmit={({ amount, reason, restock }) =>
+            run("refund", {
+              action: "refund_payment",
+              payment_id: refundTarget.id,
+              creation_request_key: refundKeyRef.current,
+              amount,
+              reason,
+              restock,
+            }, (d) => {
+              setRefundTarget(null);
+              refundKeyRef.current = uuid();
+              const restockNote = d?.restock?.note ? ` ${d.restock.note}` : "";
+              setNotice(`Refund of ${usdSigned(d?.refunded_amount ?? amount)} recorded.${restockNote}`);
+            })
+          }
+        />
       )}
     </div>
   );
@@ -622,25 +725,25 @@ function FromEstimateDialog({ sessionToken, onClose, onSaved }) {
       <div className="my-8 w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Invoice from estimate</h2>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
         </div>
 
         {!selected ? (
           <>
             <div className="relative mt-3">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input className={`${inputCls} pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search approved estimatesâ€¦" />
+              <input className={`${inputCls} pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search approved estimates…" />
             </div>
             <div className="mt-2 max-h-72 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700">
               {loading ? (
-                <div className="flex items-center justify-center py-10 text-sm text-slate-500"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loadingâ€¦</div>
+                <div className="flex items-center justify-center py-10 text-sm text-slate-500"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading…</div>
               ) : estimates.length === 0 ? (
                 <div className="py-10 text-center text-sm text-slate-500">No approved estimates found.</div>
               ) : estimates.map((e) => (
-                <button key={e.id} onClick={() => setSelected(e)} className="flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm hover:bg-violet-50/60 last:border-0 dark:border-slate-800 dark:hover:bg-slate-800/60">
+                <button type="button" key={e.id} onClick={() => setSelected(e)} className="flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm hover:bg-violet-50/60 last:border-0 dark:border-slate-800 dark:hover:bg-slate-800/60">
                   <div>
                     <div className="font-semibold text-slate-900 dark:text-slate-100">{e.project_name || e.estimate_number}</div>
-                    <div className="text-xs text-slate-500">{e.client_name} Â· {e.estimate_number}</div>
+                    <div className="text-xs text-slate-500">{e.client_name} · {e.estimate_number}</div>
                   </div>
                   <div className="text-right">
                     <div className="font-semibold">{usd(e.quote_total)}</div>
@@ -655,9 +758,9 @@ function FromEstimateDialog({ sessionToken, onClose, onSaved }) {
             <div className="mt-3 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800">
               <div>
                 <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">{selected.project_name || selected.estimate_number}</div>
-                <div className="text-xs text-slate-500">{selected.client_name} Â· {usd(selected.quote_total)} quote Â· {usd(selected.remaining_billable)} unbilled</div>
+                <div className="text-xs text-slate-500">{selected.client_name} · {usd(selected.quote_total)} quote · {usd(selected.remaining_billable)} unbilled</div>
               </div>
-              <button onClick={() => setSelected(null)} className="text-xs font-semibold text-violet-600">Change</button>
+              <button type="button" onClick={() => setSelected(null)} className="text-xs font-semibold text-violet-600">Change</button>
             </div>
 
             <div className="mt-3 space-y-2">
@@ -676,7 +779,7 @@ function FromEstimateDialog({ sessionToken, onClose, onSaved }) {
                   <input className={inputCls} type="number" min="1" max="100" placeholder={String(selected.deposit_percent || 50)} value={depositPercent} onChange={(e) => setDepositPercent(e.target.value)} />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-500">â€¦or flat amount</label>
+                  <label className="text-xs font-semibold text-slate-500">…or flat amount</label>
                   <input className={inputCls} type="number" min="0" step="0.01" placeholder={depositPreview.toFixed(2)} value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} />
                 </div>
                 <div className="col-span-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
@@ -697,7 +800,7 @@ function FromEstimateDialog({ sessionToken, onClose, onSaved }) {
 
             <div className="mt-3">
               <label className="text-xs font-semibold text-slate-500">Due date (optional)</label>
-              <input className={inputCls} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              <CcsDateField className={inputCls} value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </div>
           </>
         )}
@@ -705,9 +808,9 @@ function FromEstimateDialog({ sessionToken, onClose, onSaved }) {
         {error && <div className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
 
         <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onClose} className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Cancel</button>
+          <button type="button" onClick={onClose} className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Cancel</button>
           {selected && (
-            <button onClick={submit} disabled={saving} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white disabled:opacity-60 hover:bg-violet-700">
+            <button type="button" onClick={submit} disabled={saving} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white disabled:opacity-60 hover:bg-violet-700">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}Create invoice
             </button>
           )}
@@ -778,7 +881,7 @@ export default function Invoices() {
       } catch { failed += 1; }
     }
     setBusy("");
-    setNotice(`Reminders sent: ${sent}${failed ? ` Â· failed/skipped: ${failed}` : ""}`);
+    setNotice(`Reminders sent: ${sent}${failed ? ` · failed/skipped: ${failed}` : ""}`);
   };
 
   const downloadCsv = (filename, text) => {
@@ -831,137 +934,144 @@ export default function Invoices() {
 
   return (
     <div className="mx-auto max-w-6xl p-4 md:p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Invoices</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Accounts receivable â€” invoices, payments, aging.</p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={load} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh
-          </button>
-          <button onClick={exportCsv} disabled={exporting} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 disabled:opacity-60 dark:border-slate-600 dark:text-slate-300">
-            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}Export CSV
-          </button>
-          <button onClick={() => setShowFromEstimate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-violet-500 px-3 text-sm font-semibold text-violet-700 dark:text-violet-300">
-            <Receipt className="h-4 w-4" />From Estimate
-          </button>
-          <button onClick={() => setShowCreate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700">
-            <Plus className="h-4 w-4" />New Invoice
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Financials", to: "/Financials" }, { label: "Invoices" }]}
+        icon={Receipt}
+        title="Invoices"
+        subtitle="Accounts receivable — invoices, payments, aging."
+        actions={(
+          <>
+            <button type="button" onClick={load} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh
+            </button>
+            <button type="button" onClick={exportCsv} disabled={exporting} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 disabled:opacity-60 dark:border-slate-600 dark:text-slate-300">
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}Export CSV
+            </button>
+            <button type="button" onClick={() => setShowFromEstimate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-violet-500 px-3 text-sm font-semibold text-violet-700 dark:text-violet-300">
+              <Receipt className="h-4 w-4" />From Estimate
+            </button>
+            <button type="button" onClick={() => setShowCreate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700">
+              <Plus className="h-4 w-4" />New Invoice
+            </button>
+          </>
+        )}
+      />
 
       {aging && (
-        <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-5">
-          {[
-            ["Open", aging.open_balance, `${aging.open_invoices} invoice${aging.open_invoices === 1 ? "" : "s"}`, "text-slate-900 dark:text-slate-100"],
-            ["Current", aging.buckets?.current, "", "text-emerald-600"],
-            ["1â€“30 days", aging.buckets?.days_1_30, "", "text-amber-600"],
-            ["31â€“60 days", aging.buckets?.days_31_60, "", "text-orange-600"],
-            ["60+ days", (aging.buckets?.days_61_90 || 0) + (aging.buckets?.days_90_plus || 0), "", "text-red-600"],
-          ].map(([label, val, sub, cls]) => (
-            <div key={label} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</div>
-              <div className={`text-lg font-bold ${cls}`}>{usd(val)}</div>
-              {sub && <div className="text-xs text-slate-500">{sub}</div>}
-            </div>
-          ))}
-        </div>
+        <KpiStrip
+          tiles={[
+            { label: "Open", value: usd(aging.open_balance), hint: `${aging.open_invoices} invoice${aging.open_invoices === 1 ? "" : "s"}` },
+            { label: "Current", value: usd(aging.buckets?.current), tone: "emerald" },
+            { label: "1–30 days", value: usd(aging.buckets?.days_1_30), tone: "amber" },
+            { label: "31–60 days", value: <span className="text-orange-600 dark:text-orange-400">{usd(aging.buckets?.days_31_60)}</span> },
+            { label: "60+ days", value: usd((aging.buckets?.days_61_90 || 0) + (aging.buckets?.days_90_plus || 0)), tone: "red" },
+          ]}
+        />
       )}
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-52 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input className={`${inputCls} pl-9`} value={query} onChange={(e) => { setViewName(""); setQuery(e.target.value); }} placeholder="Search invoice # or customerâ€¦" />
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {["", "draft", "sent", "partially_paid", "paid", "void"].map((s) => (
-            <button key={s || "all"} onClick={() => { setViewName(""); setStatus(s); }}
-              className={`min-h-9 rounded-full px-3 text-xs font-semibold ${status === s ? "bg-violet-600 text-white" : "border border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300"}`}>
-              {s ? STATUS_LABELS[s] : "All"}
+      <FilterBar
+        search={(
+          <FilterSearchInput value={query} onChange={(e) => { setViewName(""); setQuery(e.target.value); }} placeholder="Search invoice # or customer…" />
+        )}
+        presets={(
+          <>
+            <div className="flex flex-wrap gap-1.5">
+              {["", "draft", "sent", "partially_paid", "paid", "void"].map((s) => (
+                <button type="button" key={s || "all"} onClick={() => { setViewName(""); setStatus(s); }}
+                  className={`min-h-9 rounded-full px-3 text-xs font-semibold ${status === s ? "bg-violet-600 text-white" : "border border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300"}`}>
+                  {s ? STATUS_LABELS[s] : "All"}
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={() => { setViewName(""); setOverdueOnly((v) => !v); }}
+              className={`min-h-9 rounded-full px-3 text-xs font-semibold ${overdueOnly ? "bg-red-600 text-white" : "border border-red-300 text-red-600 dark:border-red-800 dark:text-red-400"}`}>
+              Overdue
             </button>
-          ))}
-        </div>
-        <button type="button" onClick={() => { setViewName(""); setOverdueOnly((v) => !v); }}
-          className={`min-h-9 rounded-full px-3 text-xs font-semibold ${overdueOnly ? "bg-red-600 text-white" : "border border-red-300 text-red-600 dark:border-red-800 dark:text-red-400"}`}>
-          Overdue
-        </button>
-        {overdueCount > 0 && (
-          <button type="button" onClick={remindAllOverdue} disabled={Boolean(busy)}
-            title={`Email a past-due reminder for all ${overdueCount} overdue invoice${overdueCount === 1 ? "" : "s"}`}
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-amber-300 px-3 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-60 dark:border-amber-800 dark:text-amber-400">
-            {busy === "remindAll" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
-            Remind all ({overdueCount})
-          </button>
+          </>
         )}
-        {selected.size > 0 && (
-          <button type="button" onClick={bulkIssue} disabled={Boolean(busy)}
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-blue-300 px-3 text-xs font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-60 dark:border-blue-800 dark:text-blue-400">
-            {busy === "issueAll" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-            Issue selected ({selected.size})
-          </button>
+        views={(
+          <SavedViews
+            storageKey="views.invoices"
+            getState={() => ({ status, query, overdueOnly })}
+            activeName={viewName}
+            onApply={(s, name) => { setStatus(s.status || ""); setQuery(s.query || ""); setOverdueOnly(s.overdueOnly === true); setViewName(name || ""); }}
+          />
         )}
-        <SavedViews
-          storageKey="views.invoices"
-          getState={() => ({ status, query, overdueOnly })}
-          activeName={viewName}
-          onApply={(s, name) => { setStatus(s.status || ""); setQuery(s.query || ""); setOverdueOnly(s.overdueOnly === true); setViewName(name || ""); }}
-        />
-      </div>
+        actions={(
+          <>
+            {overdueCount > 0 && (
+              <button type="button" onClick={remindAllOverdue} disabled={Boolean(busy)}
+                title={`Email a past-due reminder for all ${overdueCount} overdue invoice${overdueCount === 1 ? "" : "s"}`}
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-amber-300 px-3 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-60 dark:border-amber-800 dark:text-amber-400">
+                {busy === "remindAll" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                Remind all ({overdueCount})
+              </button>
+            )}
+            {selected.size > 0 && (
+              <button type="button" onClick={bulkIssue} disabled={Boolean(busy)}
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-blue-300 px-3 text-xs font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-60 dark:border-blue-800 dark:text-blue-400">
+                {busy === "issueAll" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                Issue selected ({selected.size})
+              </button>
+            )}
+          </>
+        )}
+      />
 
       {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
       {notice && <div className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">{notice}</div>}
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-        {loading && invoices.length === 0 ? (
-          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading invoicesâ€¦</div>
-        ) : invoices.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-slate-500">
-            <FileText className="mb-2 h-8 w-8 text-slate-300 dark:text-slate-600" />
-            No invoices yet.
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-              <tr>
-                <th className="w-8 px-2 py-2.5">
-                  <input type="checkbox" title="Select all drafts" className="h-4 w-4 align-middle accent-blue-600"
-                    checked={draftIds.length > 0 && draftIds.every((id) => selected.has(id))}
-                    onChange={(e) => setSelected(e.target.checked ? new Set(draftIds) : new Set())} />
-                </th>
-                <th className="px-4 py-2.5">Invoice</th><th className="px-4 py-2.5">Customer</th>
-                <th className="px-4 py-2.5">Due</th><th className="px-4 py-2.5 text-right">Total</th>
-                <th className="px-4 py-2.5 text-right">Balance</th><th className="px-4 py-2.5">Status</th><th className="px-2 py-2.5" />
-              </tr>
-            </thead>
-            <tbody>
-              {(overdueOnly ? invoices.filter((i) => Number(i.balance_due) > 0 && ["sent", "partially_paid"].includes(i.status) && i.due_date && i.due_date < today()) : invoices).map((inv) => {
-                const overdue = Number(inv.balance_due) > 0 && ["sent", "partially_paid"].includes(inv.status) && inv.due_date && inv.due_date < today();
-                return (
-                <tr key={inv.id} onClick={() => setOpenId(inv.id)} className={`cursor-pointer border-t border-slate-100 hover:bg-violet-50/50 dark:border-slate-800 dark:hover:bg-slate-800/50 ${overdue ? "bg-red-50/60 dark:bg-red-950/20" : ""}`}>
-                  <td className="w-8 px-2 py-2.5" onClick={(e) => e.stopPropagation()}>
-                    {clean(inv.status) === "draft" ? (
-                      <input type="checkbox" className="h-4 w-4 accent-blue-600" checked={selected.has(inv.id)}
-                        onChange={(e) => setSelected((s) => { const n = new Set(s); e.target.checked ? n.add(inv.id) : n.delete(inv.id); return n; })} />
-                    ) : null}
-                  </td>
-                  <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{inv.invoice_number}</td>
-                  <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{inv.customer_display_name || inv.customer_name || inv.customer_id || "Unknown customer"}</td>
-                  <td className="px-4 py-2.5 text-slate-500">
-                    {inv.due_date || "â€”"}
-                    {overdue && <span className="ml-1.5 inline-flex rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-950/60 dark:text-red-300">Overdue</span>}
-                  </td>
-                  <td className="px-4 py-2.5 text-right font-medium">{usd(inv.total)}</td>
-                  <td className={`px-4 py-2.5 text-right font-medium ${overdue ? "text-red-700 dark:text-red-300" : ""}`}>{usd(inv.balance_due)}</td>
-                  <td className="px-4 py-2.5"><StatusBadge status={inv.status} /></td>
-                  <td className="px-2 py-2.5 text-slate-400"><ChevronRight className="h-4 w-4" /></td>
-                </tr>
-              );})}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {loading && invoices.length === 0 ? (
+        <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white py-16 text-slate-500 dark:border-slate-700 dark:bg-slate-900"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading invoices…</div>
+      ) : (
+        <DataTableShell
+          head={[
+            <Th key="sel" className="w-8 px-2">
+              <input type="checkbox" title="Select all drafts" className="h-4 w-4 align-middle accent-blue-600"
+                checked={draftIds.length > 0 && draftIds.every((id) => selected.has(id))}
+                onChange={(e) => setSelected(e.target.checked ? new Set(draftIds) : new Set())} />
+            </Th>,
+            "Invoice", "Customer", "Due",
+            { label: "Total", className: "text-right" },
+            { label: "Balance", className: "text-right" },
+            "Status",
+            { label: "", className: "px-2" },
+          ]}
+          isEmpty={(overdueOnly ? overdueRows : invoices).length === 0}
+          emptyState={overdueOnly && invoices.length > 0
+            ? { icon: FileText, title: "No overdue invoices.", message: "Nothing past due right now — clear the Overdue filter to see all invoices." }
+            : { icon: FileText, title: "No invoices yet.", message: "Create one directly or start from an approved estimate.", actionLabel: "New invoice", onAction: () => setShowCreate(true) }}
+        >
+          {(overdueOnly ? overdueRows : invoices).map((inv) => {
+            const overdue = Number(inv.balance_due) > 0 && ["sent", "partially_paid"].includes(inv.status) && inv.due_date && inv.due_date < today();
+            return (
+            <Tr key={inv.id} onClick={() => setOpenId(inv.id)} className={`cursor-pointer ${overdue ? "bg-red-50/60 dark:bg-red-950/20" : ""}`}>
+              <Td className="w-8 px-2" onClick={(e) => e.stopPropagation()}>
+                {clean(inv.status) === "draft" ? (
+                  <input type="checkbox" className="h-4 w-4 accent-blue-600" checked={selected.has(inv.id)}
+                    onChange={(e) => setSelected((s) => { const n = new Set(s); e.target.checked ? n.add(inv.id) : n.delete(inv.id); return n; })} />
+                ) : null}
+              </Td>
+              <Td className="font-semibold text-slate-900 dark:text-slate-100">{inv.invoice_number}</Td>
+              <Td className="text-slate-700 dark:text-slate-300">
+                {clean(inv.customer_id) ? (
+                  <RecordLink kind="customer" id={inv.customer_id} onClick={(e) => e.stopPropagation()}>
+                    {inv.customer_display_name || inv.customer_name || inv.customer_id}
+                  </RecordLink>
+                ) : (inv.customer_display_name || inv.customer_name || "Unknown customer")}
+              </Td>
+              <Td className="text-slate-500">
+                {inv.due_date || "—"}
+                {overdue && <StatusChip status="overdue" size="sm" className="ml-1.5" />}
+              </Td>
+              <Td className="text-right font-medium">{usd(inv.total)}</Td>
+              <Td className={`text-right font-medium ${overdue ? "text-red-700 dark:text-red-300" : ""}`}>{usd(inv.balance_due)}</Td>
+              <Td><StatusBadge status={inv.status} /></Td>
+              <Td className="px-2 text-slate-400"><ChevronRight className="h-4 w-4" /></Td>
+            </Tr>
+          );})}
+        </DataTableShell>
+      )}
 
       {showCreate && <InvoiceForm sessionToken={sessionToken} onClose={() => setShowCreate(false)} onSaved={() => { setShowCreate(false); load(); }} />}
       {showFromEstimate && <FromEstimateDialog sessionToken={sessionToken} onClose={() => setShowFromEstimate(false)} onSaved={() => { setShowFromEstimate(false); load(); }} />}

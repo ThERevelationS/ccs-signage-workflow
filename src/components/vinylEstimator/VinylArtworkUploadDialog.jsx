@@ -2,13 +2,14 @@
 // Hybrid pipeline: free metadata first (SVG viewBox / PDF MediaBox / image px+DPI),
 // AI vision (InvokeLLM) as fallback.
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { UploadCloud, FileImage, Wand2, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { ESTIMATOR_AI_MODEL } from "../../../base44/shared/estimatorAiModelPolicy.js";
 
 const svgDims = async (file) => {
   const text = await file.text();
@@ -45,6 +46,7 @@ const pdfDims = async (file) => {
 const aiDims = async (file) => {
   const { file_url } = await base44.integrations.Core.UploadFile({ file });
   const response = await base44.integrations.Core.InvokeLLM({
+    model: ESTIMATOR_AI_MODEL,
     prompt:
       "Look at this artwork file. Return the width and height of the printable artwork " +
       "bounding box in INCHES. If the file shows real-world dimensions or has a known " +

@@ -1,0 +1,17 @@
+{
+ "head": "eb1d1833386cc8b74e64359172fd47dc081904b3",
+ "dirty": "",
+ "changed": "base44/functions/staffDataRead/entry.ts\nsrc/App.jsx\nsrc/components/admin/TaskAssignmentRules.jsx\nsrc/components/permitting/JurisdictionsView.jsx\nsrc/components/permitting/LocalityPickerDialog.jsx\nsrc/components/timeclock/AdminRosterPanels.jsx\nsrc/components/timeclock/MissedPunchResolutionDialog.jsx\nsrc/components/timeclock/QuickClockSection.jsx\nsrc/components/workflow/EnhancedSipChecklist.jsx\nsrc/pages/AdminSettings.jsx\nsrc/pages/EstimatorCustomers.jsx\nsrc/pages/LaserEstimator.jsx\nsrc/pages/MetalEstimator.jsx\n",
+ "headAfter": "eb1d1833386cc8b74e64359172fd47dc081904b3",
+ "dirtyAfter": "",
+ "app": {
+  "id": "68dfcc5e57bbbc35387da97c",
+  "name": "CCS Signage Workflow",
+  "status": "ready",
+  "git_repo_pending": null,
+  "dev_environment_enabled": false
+ },
+ "drift": [
+  "base44/functions/staffDataRead/entry.ts"
+ ]
+}

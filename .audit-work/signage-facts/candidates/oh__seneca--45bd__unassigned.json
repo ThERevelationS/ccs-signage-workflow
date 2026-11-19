@@ -1,0 +1,43 @@
+{
+ "jurisdiction_id": "6adf96c7fde3fb74e58045bd",
+ "jurisdiction_name": "Seneca",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "PERMIT NUMBER: A UTHORITY ACT 230, PA 1972, as Amended COMPLETION: Installation Shall Not Be Started Until Application Is Filed PENALTY: Written Order To Stop Constructio n Seneca Township Electrical Application and Permit I. JOB LOCATION Name of Owner/Agent Street Address & Job Location (Street No. & Name) Has a building permit been issued for this project? YES NOT REQUIRED NO City Township County II. CONTRACTOR/HOMEOWNER INFORMATION Homeowner Contractor (Check appropriate box) State License Number Expiration Date Address State Registration Number Local Licensing Jurisdiction City State Zip Code Local License Number Expiration Date Telephone Number Social Security Number Federal Employer ID Number Workers Compensation Insurance Carrier MESC Employee Number ( ) I II. TYPE OF JOB 3. Service Only 4. Special Inspection 5. Mobile Home Setup 6. Modular Home Setup 7. Other 1. New 2. Remodel IV",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 12,
+   "source_sha256": "9f55108dd74ad3483c1f638be7283d923c67ced4fe245313eb4775b25fdf3074",
+   "source_document_id": null,
+   "source_title": "9f55108dd74ad3483c1f638be7283d923c67ced4fe245313eb4775b25fdf3074.pdf",
+   "official_url": "http://twnshpseneca.wpengine.com/wp-content/uploads/2019/08/Seneca-elec-permit.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Zoning Compliance Form Property ID #:_______________________________________________________ Name: ____________________________________________________________ Address: __________________________________________________________ Property Location: __________________________________________________ Phone Number: ____________________________________________________ Project: (size, use): ____________________________________________________________________________________ ____________________________________________________________________________________ ____________________________________________________________________________________ ____________________________________________________________________________________ **Must have a site plan review. Must show placement of the new construction on the property and all measurements to the lines. Signature: ___________________________________",
+   "tags": [
+    "fee",
+    "penalties",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "ef260551932d4fd961c2e4b7ef0decabe824938e4680fec097b0529d41c92cf3",
+   "source_document_id": null,
+   "source_title": "ef260551932d4fd961c2e4b7ef0decabe824938e4680fec097b0529d41c92cf3.pdf",
+   "official_url": "https://townshipofseneca.com/wp-content/uploads/2021/06/Zoning-Compliance-Form.pdf"
+  }
+ ]
+}

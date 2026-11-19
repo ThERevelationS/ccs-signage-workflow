@@ -1,0 +1,5 @@
+{
+  "path": "src/components/estimator/foundation/poleCalculator.js",
+  "diff": "--- a/src/components/estimator/foundation/poleCalculator.js\n+++ b/src/components/estimator/foundation/poleCalculator.js\n@@ -26,7 +26,9 @@\n export function calcPoles(poles = [], inventory = [], settings = {}) {\n   return (poles || []).map((p) => {\n     const inv = inventory.find((i) => i.id === p.pole_id);\n-    if (!inv) return { ...p, pole_cost: 0, pole_painting_cost: 0, total_cost: 0, pole_name: \"\" };\n+    // Preserve the last saved amounts, not a fabricated free pole. The project\n+    // availability gate prevents these historical values becoming a new quote.\n+    if (!inv) return { ...p };\n \n     const totalPoleInches = (p.height_inches || 0) + (p.y_offset_inches || 0);\n     let poleCost;\n",
+  "applied": false
+}

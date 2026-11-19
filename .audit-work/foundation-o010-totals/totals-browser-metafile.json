@@ -1,0 +1,31 @@
+{
+ "inputs": [
+  "node_modules/react/cjs/react.development.js",
+  "node_modules/react/index.js",
+  "node_modules/scheduler/cjs/scheduler.development.js",
+  "node_modules/scheduler/index.js",
+  "node_modules/react-dom/cjs/react-dom.development.js",
+  "node_modules/react-dom/index.js",
+  "node_modules/react-dom/client.js",
+  ".audit-work/foundation-o010-totals/fixture-browser/src/components/estimator/foundation/legacyFoundationCalc.js",
+  ".audit-work/foundation-o010-totals/fixture-browser/src/components/estimator/foundation/wallCalculator.js",
+  ".audit-work/foundation-o010-totals/fixture-browser/src/components/estimator/foundation/poleCalculator.js",
+  ".audit-work/foundation-o010-totals/fixture-browser/src/components/estimator/foundation/wallCapCalculator.js",
+  ".audit-work/foundation-o010-totals/fixture-browser/src/components/estimator/foundation/foundationEquipmentBindings.js",
+  ".audit-work/foundation-o010-totals/fixture-browser/src/components/estimator/foundation/foundationCatalogIntegrity.js",
+  ".audit-work/foundation-o010-totals/fixture-browser/src/components/estimator/foundation/landscapeMaterials.js",
+  ".audit-work/foundation-o010-totals/fixture-browser/src/components/estimator/foundation/foundationInputValidation.js",
+  ".audit-work/foundation-o010-totals/fixture-browser/src/components/estimator/foundation/foundationConstructionChecks.js",
+  ".audit-work/foundation-o010-totals/fixture-browser/src/components/estimator/foundation/foundationCalc.js",
+  "node_modules/react/cjs/react-jsx-runtime.development.js",
+  "node_modules/react/jsx-runtime.js",
+  ".audit-work/foundation-o010-totals/fixture-browser/src/components/estimator/foundation/FoundationTotals.jsx",
+  "ui:input-stub",
+  ".audit-work/foundation-o010-totals/fixture-browser/base44/shared/pricingEngine.ts",
+  ".audit-work/foundation-o010-totals/fixture-browser/base44/shared/pricingTemplateModel.ts",
+  ".audit-work/foundation-o010-totals/fixture-browser/base44/shared/foundationPricingWire.ts",
+  ".audit-work/foundation-o010-totals/fixture-browser/src/components/estimator/foundation/foundationSellPricing.js",
+  ".audit-work/foundation-o010-totals/fixture-browser/src/components/estimator/foundation/CustomerPricingPanel.jsx",
+  "h:harness"
+ ]
+}

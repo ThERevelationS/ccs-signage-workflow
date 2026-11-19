@@ -104,4 +104,3 @@ export default function WorkflowSourceEvidenceDialog({ citation, draftRow, trigg
     </DialogPortal>
   </Dialog>;
 }
-

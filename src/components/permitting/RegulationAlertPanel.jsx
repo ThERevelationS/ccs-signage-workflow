@@ -5,24 +5,26 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, Clock, Trash2, Loader2, RefreshCw, Bell } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/components/auth/EmailGate";
+import { usePolling } from "@/lib/usePolling";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function RegulationAlertPanel() {
-  const { sessionToken } = useAuth();
+  const { sessionToken, currentUser } = useAuth();
   const [alerts, setAlerts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [filter, setFilter] = useState("unread"); // unread, all, critical, high
 
+  usePolling(() => loadAlerts(), 300000, { runOnMount: false });
+
   useEffect(() => {
     loadAlerts();
-    const interval = setInterval(loadAlerts, 60000); // Refresh every minute
-    return () => clearInterval(interval);
   }, []);
 
   const loadAlerts = async () => {
     try {
       const query = filter === "unread" ? { is_read: false } : filter === "critical" ? { severity: "critical" } : filter === "high" ? { severity: "high" } : {};
-      const loaded = await base44.entities.RegulationAlert.filter(query, "-detected_at", 100);
+      const loaded = await staffEntities.RegulationAlert.filter(query, "-detected_at", 100);
       setAlerts(Array.isArray(loaded) ? loaded : []);
     } catch (e) {
       console.error("Load alerts error:", e);
@@ -45,10 +47,10 @@ export default function RegulationAlertPanel() {
 
   const handleMarkAsRead = async (alertId) => {
     try {
-      await base44.entities.RegulationAlert.update(alertId, {
+      await staffEntities.RegulationAlert.update(alertId, {
         is_read: true,
         read_at: new Date().toISOString(),
-        read_by: (await base44.auth.me()).email
+        read_by: currentUser?.email || "unknown"
       });
       await loadAlerts();
     } catch (e) {
@@ -58,7 +60,7 @@ export default function RegulationAlertPanel() {
 
   const handleDelete = async (alertId) => {
     try {
-      await base44.entities.RegulationAlert.delete(alertId);
+      await staffEntities.RegulationAlert.delete(alertId);
       setAlerts(alerts.filter(a => a.id !== alertId));
     } catch (e) {
       console.error("Delete error:", e);
@@ -102,7 +104,7 @@ export default function RegulationAlertPanel() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Bell className="w-5 h-5 text-blue-600" />
-            <h2 className="font-bold text-lg text-gray-900">Regulation Alerts</h2>
+            <h2 className="font-bold text-lg text-gray-900">Rule changes</h2>
             {unreadCount > 0 && (
               <Badge className="bg-red-500 text-white ml-2">{unreadCount} new</Badge>
             )}
@@ -115,18 +117,18 @@ export default function RegulationAlertPanel() {
             {isMonitoring ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Monitoring...
+                Checking...
               </>
             ) : (
               <>
                 <RefreshCw className="w-4 h-4" />
-                Run Monitor
+                Check now
               </>
             )}
           </Button>
         </div>
         <p className="text-sm text-gray-600">
-          Track changes in permitting regulations across all jurisdictions. Alerts are sent automatically when significant changes are detected.
+          Watches permit rules across all the offices we track. You get an alert when something important changes.
         </p>
       </div>
 
@@ -153,8 +155,8 @@ export default function RegulationAlertPanel() {
       {alerts.length === 0 ? (
         <div className="clay-card p-12 text-center text-gray-500">
           <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-500" />
-          <p className="font-medium">No alerts to display</p>
-          <p className="text-xs">All regulation changes are up to date</p>
+          <p className="font-medium">Nothing to show</p>
+          <p className="text-xs">All caught up — no rule changes right now</p>
         </div>
       ) : (
         <div className="space-y-3">

@@ -1,0 +1,30 @@
+{
+ "src/components/estimator/foundation/foundationCalc.js": {
+  "hash": "88f9e4a77a5461d2036e35aabfbae4c73918e98042a7799500baa17e1abfc185",
+  "file": "cabinets-landscape-candidate-foundationCalc.js"
+ },
+ "src/components/estimator/foundation/foundationInputValidation.js": {
+  "hash": "593ee4bcb6475331aca1468f618e0ac5b4cf183b35958ebcff58d1897db026df",
+  "file": "cabinets-landscape-candidate-foundationInputValidation.js"
+ },
+ "src/components/estimator/foundation/landscapeMaterials.js": {
+  "hash": "ba13081706de2a5e2e1f6429c1e8a058ecb11f72535ed2fefd40b31927ab906a",
+  "file": "cabinets-landscape-candidate-landscapeMaterials.js"
+ },
+ "src/components/estimator/foundation/foundationAssemblyModel.js": {
+  "hash": "8e197f9559b4bfbc4861040ee323ea526fb0fcfd84341ca9c7ece78efd57ac79",
+  "file": "cabinets-landscape-candidate-foundationAssemblyModel.js"
+ },
+ "src/components/estimator/foundation/SignageCabinetsPanel.jsx": {
+  "hash": "7cc8d401338d284fd0e24483eebf79cd75c31930aed6d91d476d60cb21d73ff5",
+  "file": "cabinets-landscape-candidate-SignageCabinetsPanel.jsx"
+ },
+ "src/components/estimator/foundation/LandscapeDesigner.jsx": {
+  "hash": "4956450d189584ffdfcaf190aeef79c03953e8678840657c4a346c7915f0fd23",
+  "file": "cabinets-landscape-candidate-LandscapeDesigner.jsx"
+ },
+ "src/pages/FoundationEstimator.jsx": {
+  "hash": "680c4a45e3db7af339dd5e3a775c7322e4dbf8277aea5d97b3c8c1a74f1375d6",
+  "file": "cabinets-landscape-candidate-FoundationEstimator.jsx"
+ }
+}

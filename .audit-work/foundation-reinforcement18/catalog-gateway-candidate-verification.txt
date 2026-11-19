@@ -1,0 +1,107 @@
+▲ [WARNING] Duplicate key "SignageFact" in object literal [duplicate-object-key]
+
+    base44/functions/staffEntityWrite/entry.ts:39:2:
+      39 │   SignageFact: new Set(['create', 'update']),
+         ╵   ~~~~~~~~~~~
+
+  The original key "SignageFact" is here:
+
+    base44/functions/staffEntityWrite/entry.ts:37:2:
+      37 │   SignageFact: new Set(['create', 'update']),
+         ╵   ~~~~~~~~~~~
+
+▲ [WARNING] Duplicate key "SignageFactIndex" in object literal [duplicate-object-key]
+
+    base44/functions/staffEntityWrite/entry.ts:40:2:
+      40 │   SignageFactIndex: new Set(['create', 'update', 'updateMany']),
+         ╵   ~~~~~~~~~~~~~~~~
+
+  The original key "SignageFactIndex" is here:
+
+    base44/functions/staffEntityWrite/entry.ts:38:2:
+      38 │   SignageFactIndex: new Set(['create', 'update', 'updateMany']),
+         ╵   ~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate key "SignageFact" in object literal [duplicate-object-key]
+
+    base44/functions/staffEntityWrite/entry.ts:41:2:
+      41 │   SignageFact: new Set(['create', 'update']),
+         ╵   ~~~~~~~~~~~
+
+  The original key "SignageFact" is here:
+
+    base44/functions/staffEntityWrite/entry.ts:39:2:
+      39 │   SignageFact: new Set(['create', 'update']),
+         ╵   ~~~~~~~~~~~
+
+▲ [WARNING] Duplicate key "SignageFactIndex" in object literal [duplicate-object-key]
+
+    base44/functions/staffEntityWrite/entry.ts:42:2:
+      42 │   SignageFactIndex: new Set(['create', 'update', 'updateMany']),
+         ╵   ~~~~~~~~~~~~~~~~
+
+  The original key "SignageFactIndex" is here:
+
+    base44/functions/staffEntityWrite/entry.ts:40:2:
+      40 │   SignageFactIndex: new Set(['create', 'update', 'updateMany']),
+         ╵   ~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate key "SignageFact" in object literal [duplicate-object-key]
+
+    base44/functions/staffEntityWrite/entry.ts:43:2:
+      43 │   SignageFact: new Set(['create', 'update']),
+         ╵   ~~~~~~~~~~~
+
+  The original key "SignageFact" is here:
+
+    base44/functions/staffEntityWrite/entry.ts:41:2:
+      41 │   SignageFact: new Set(['create', 'update']),
+         ╵   ~~~~~~~~~~~
+
+▲ [WARNING] Duplicate key "SignageFactIndex" in object literal [duplicate-object-key]
+
+    base44/functions/staffEntityWrite/entry.ts:44:2:
+      44 │   SignageFactIndex: new Set(['create', 'update', 'updateMany']),
+         ╵   ~~~~~~~~~~~~~~~~
+
+  The original key "SignageFactIndex" is here:
+
+    base44/functions/staffEntityWrite/entry.ts:42:2:
+      42 │   SignageFactIndex: new Set(['create', 'update', 'updateMany']),
+         ╵   ~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate key "SignageFact" in object literal [duplicate-object-key]
+
+    base44/functions/staffEntityWrite/entry.ts:45:2:
+      45 │   SignageFact: new Set(['create', 'update']),
+         ╵   ~~~~~~~~~~~
+
+  The original key "SignageFact" is here:
+
+    base44/functions/staffEntityWrite/entry.ts:43:2:
+      43 │   SignageFact: new Set(['create', 'update']),
+         ╵   ~~~~~~~~~~~
+
+▲ [WARNING] Duplicate key "SignageFactIndex" in object literal [duplicate-object-key]
+
+    base44/functions/staffEntityWrite/entry.ts:46:2:
+      46 │   SignageFactIndex: new Set(['create', 'update', 'updateMany']),
+         ╵   ~~~~~~~~~~~~~~~~
+
+  The original key "SignageFactIndex" is here:
+
+    base44/functions/staffEntityWrite/entry.ts:44:2:
+      44 │   SignageFactIndex: new Set(['create', 'update', 'updateMany']),
+         ╵   ~~~~~~~~~~~~~~~~
+
+ok fresh page/facade create reaches gateway and permits admin only
+ok fresh page/facade updateMany reaches gateway and permits admin only
+ok fresh page/facade deleteMany reaches gateway and permits admin only
+ok ordinary staff cannot mutate catalog even when bypassing UI controls
+ok missing session fails before facade invoke and direct gateway returns401 with no entity access
+ok unconditional and unsupported catalog operations stay denied for admin
+ok stale conditional updates report0 and never overwrite a newer catalog edit
+ok facade conditional delete honors the loaded version and preserves newer catalog records
+ok catalog delete rejects conflicting envelope/query identities and malformed anchors before entity access
+ok catalog writes reject unanchored update/delete queries and nested operators before mutation
+exit=0

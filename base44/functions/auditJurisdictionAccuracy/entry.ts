@@ -1,11 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { ensureConvergentRegulationAlertCreate } from '../../shared/regulationAlertPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const isScheduledRun = await hasWorkflowInvocationCapability(body, 'auditJurisdictionAccuracy');
 
@@ -99,7 +100,7 @@ async function auditSingleJurisdiction(base44, jurisdiction, options) {
     if (options.checkContact) checkSections.push('3. Is the contact information (department, phone, email) still accurate?');
 
     // Fetch fresh data from the research agent, then compare against stored data
-    const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+    const agentResult = await base44.asServiceRole.functions.invoke('jurisdiction_research', {
       jurisdictionName: jurisdiction.name,
       jurisdictionState: jurisdiction.state,
       jurisdictionType: jurisdiction.type,

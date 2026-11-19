@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Hourglass, Loader2, CheckCircle, AlertCircle, Info, Plus, X, Timer,
+  Hourglass, Loader2, CheckCircle, AlertCircle, Info, Plus, X, Timer, ClipboardCopy, ClipboardPaste,
 } from "lucide-react";
 import { TimeTrackerPreview, ACCENT_PRESETS, resolveAccent } from "@/components/timeclock/TimeTracker";
 
@@ -71,6 +71,7 @@ const DISPLAY_CHOICES = [
   { value: "ring", label: "Progress ring", hint: "Circular ring fills toward your goal" },
   { value: "donut", label: "Donut", hint: "Thick ring with the % in the center" },
   { value: "arc", label: "Arc", hint: "Half-arc gauge beside the time" },
+  { value: "dual", label: "Dual ring", hint: "Daily inner ring + weekly outer ring" },
   { value: "bar", label: "Gradient bar", hint: "Time over a slim progress bar" },
   { value: "badge", label: "Badge", hint: "Time inside a solid accent chip" },
   { value: "minimal", label: "Minimal digits", hint: "Just the time, no visual" },
@@ -121,6 +122,9 @@ const DEFAULT_PREFS = {
   alert_minutes: [],
   reminders: [],
   time_format: "hh_mm_ss",
+  hide_when_idle_minutes: 0,
+  daily_goal_overrides: null,
+  hide_on_weekend: false,
 };
 
 function newRequestId() {
@@ -170,6 +174,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState(0);
+  const [importNotice, setImportNotice] = useState("");
   const [error, setError] = useState("");
   const [reminderMinutes, setReminderMinutes] = useState("");
   const [reminderLabel, setReminderLabel] = useState("");
@@ -259,6 +264,48 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
     update("reminders", reminders.filter((r) => Number(r.minutes) !== Number(minutes)));
   };
 
+  // Presets: role defaults + 3 localStorage save slots per device (#101/#119).
+  const ROLE_PRESETS = {
+    shop: { label: "Shop default", patch: { display_style: "bar", count_mode: "paid", accent_color: "orange", animation_style: "none", privacy_blur: false, daily_goal_minutes: 480, milestone_sound: "ding" } },
+    office: { label: "Office default", patch: { display_style: "ring", count_mode: "paid", accent_color: "indigo", animation_style: "pulse", privacy_blur: true, daily_goal_minutes: 480, milestone_sound: "chime" } },
+    field: { label: "Field default", patch: { display_style: "dual", count_mode: "elapsed", accent_color: "green", animation_style: "none", privacy_blur: false, low_data_mode: true, milestone_sound: "bell" } },
+  };
+  const SOUND_THEMES = {
+    celebration: { label: "Celebration", patch: { milestone_sound: "fanfare", animation_style: "pulse", accent_color: "gold" } },
+    calm: { label: "Calm", patch: { milestone_sound: "none", animation_style: "none", accent_color: "teal" } },
+    focus: { label: "Focus", patch: { milestone_sound: "ding", animation_style: "sweep", accent_color: "violet" } },
+  };
+  const PRESET_SLOT_KEY = "ccs_tracker_presets";
+  const readSlots = () => { try { return JSON.parse(localStorage.getItem(PRESET_SLOT_KEY) || "{}"); } catch { return {}; } };
+  const [presetSlots, setPresetSlots] = useState(readSlots);
+  const applyPatch = (patch) => { setPrefs((cur) => ({ ...cur, ...patch })); setImportNotice("Preset applied - review and Save to keep it."); };
+  const saveSlot = (i) => {
+    const next = { ...readSlots(), [i]: { name: p.custom_label || `Preset ${i}`, patch: { ...p }, at: Date.now() } };
+    try { localStorage.setItem(PRESET_SLOT_KEY, JSON.stringify(next)); } catch {}
+    setPresetSlots(next); setImportNotice(`Saved as preset ${i} on this device.`);
+  };
+  const applySlot = (i) => { const s = readSlots()[i]; if (s?.patch) { setPrefs({ ...DEFAULT_PREFS, ...s.patch }); setImportNotice(`Loaded preset ${i} - Save to keep it.`); } };
+
+  const exportPrefs = async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(p, null, 2));
+      setImportNotice("Settings copied - paste them on another machine to import.");
+    } catch {
+      setImportNotice("Clipboard copy failed - select and copy the text manually.");
+    }
+  };
+  const importPrefs = async () => {
+    try {
+      const raw = await navigator.clipboard.readText();
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("bad json");
+      setPrefs({ ...DEFAULT_PREFS, ...parsed });
+      setImportNotice("Settings imported - review and Save to keep them.");
+    } catch {
+      setImportNotice("No valid settings JSON found on the clipboard.");
+    }
+  };
+
   return (
     <div className="clay-card p-5">
       <div className="flex items-center justify-between mb-1">
@@ -266,13 +313,39 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
           <Hourglass className="w-5 h-5 text-indigo-600" />
           Time Tracker
         </h3>
-        <Switch
-          checked={p.tracker_enabled === true}
-          onCheckedChange={set("tracker_enabled")}
-          disabled={loading || saving}
-          aria-label="Enable Time Tracker"
+        <div className="mt-2 mb-1 flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Presets</span>
+          {Object.entries(ROLE_PRESETS).map(([k, r]) => (
+            <button key={k} type="button" onClick={() => applyPatch(r.patch)} className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-600 hover:bg-slate-50" title={r.label}>{r.label}</button>
+          ))}
+          {Object.entries(SOUND_THEMES).map(([k, t]) => (
+            <button key={k} type="button" onClick={() => applyPatch(t.patch)} className="rounded-full border border-indigo-200 px-2 py-0.5 text-[10px] font-medium text-indigo-600 hover:bg-indigo-50" title={`${t.label} theme`}>{t.label}</button>
+          ))}
+          {[1, 2, 3].map((i) => (
+            <span key={i} className="inline-flex gap-0.5">
+              <button type="button" onClick={() => applySlot(i)} className="rounded-l-full border border-emerald-200 px-2 py-0.5 text-[10px] font-medium text-emerald-700 hover:bg-emerald-50" title={presetSlots[i]?.name || `Empty slot ${i}`}>{presetSlots[i] ? `P${i}` : `P${i}·`}</button>
+              <button type="button" onClick={() => saveSlot(i)} className="rounded-r-full border-y border-r border-emerald-200 px-1.5 py-0.5 text-[10px] text-emerald-500 hover:bg-emerald-50" title={`Save current as preset ${i}`}>+</button>
+            </span>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button type="button" onClick={exportPrefs} disabled={saving}
+            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" title="Copy settings JSON to clipboard">
+            <ClipboardCopy className="h-4 w-4" />
+          </button>
+          <button type="button" onClick={importPrefs} disabled={saving}
+            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" title="Import settings JSON from clipboard">
+            <ClipboardPaste className="h-4 w-4" />
+          </button>
+          <Switch
+            checked={p.tracker_enabled === true}
+            onCheckedChange={set("tracker_enabled")}
+            disabled={loading || saving}
+            aria-label="Enable Time Tracker"
         />
+        </div>
       </div>
+      {importNotice && <p className="mb-2 text-[11px] font-medium text-indigo-600">{importNotice}</p>}
       <p className="text-sm text-gray-600 mb-4">
         A live count-up timer on your navigation bars showing today's time against your daily goal.
       </p>
@@ -311,13 +384,48 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
                 />
               </Field>
             </div>
+            <Field label="Per-day goal overrides (hours)" hint="Blank days use the daily goal above — e.g. set Friday to 6 for a short day" info>
+              <div className="grid grid-cols-7 gap-1.5 mt-2">
+                {["sun", "mon", "tue", "wed", "thu", "fri", "sat"].map((d) => (
+                  <div key={d} className="text-center">
+                    <div className="text-[10px] font-bold uppercase text-slate-400 mb-1">{d}</div>
+                    <input
+                      type="number" min={0} max={14} step={0.5}
+                      value={Number(p.daily_goal_overrides?.[d]) ? p.daily_goal_overrides[d] / 60 : ""}
+                      placeholder="-"
+                      onChange={(e) => {
+                        const hours = e.target.value === "" ? null : Number(e.target.value);
+                        const next = { ...(p.daily_goal_overrides || {}) };
+                        if (Number.isFinite(hours) && hours > 0) next[d] = Math.round(hours * 60);
+                        else delete next[d];
+                        update("daily_goal_overrides", Object.keys(next).length ? next : null);
+                      }}
+                      disabled={saving}
+                      className="w-full rounded-md border border-slate-200 px-1 py-1 text-center text-xs"
+                    />
+                  </div>
+                ))}
+              </div>
+            </Field>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+              <Field label="Rounding" hint="Display only - rounds the shown minutes; the raw punch time is never changed">
+                <Select value={p.display_rounding || "0"} onValueChange={set("display_rounding")} disabled={saving}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Exact (no rounding)</SelectItem>
+                    <SelectItem value="5">Nearest 5 minutes</SelectItem>
+                    <SelectItem value="10">Nearest 10 minutes</SelectItem>
+                    <SelectItem value="15">Nearest 15 minutes</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
               <Field label="Counts" hint="Paid time excludes unpaid breaks and work pauses; elapsed is raw wall-clock">
                 <Select value={p.count_mode} onValueChange={set("count_mode")} disabled={saving}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="paid">Paid time only</SelectItem>
                     <SelectItem value="elapsed">Raw elapsed</SelectItem>
+                    <SelectItem value="pomodoro">Pomodoro cycles (25m)</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>
@@ -398,7 +506,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
               </Label>
               <div className="mt-2 grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                 {BACKGROUND_CHOICES.map((bg) => (
-                  <button
+                  <button type="button"
                     key={bg.value}
                     type="button"
                     onClick={() => update("background_style", bg.value)}
@@ -425,7 +533,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
               </Label>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {ACCENT_CHOICES.map((choice) => (
-                  <button
+                  <button type="button"
                     key={choice.value}
                     type="button"
                     onClick={() => { update("accent_color", choice.value); setHexInput(""); }}
@@ -674,6 +782,9 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
                   disabled={saving} className="mt-2"
                 />
               </Field>
+              <Field label="Low-data mode" hint="Polls at 2-minute minimum and skips secondary lookups on metered connections">
+                <Switch checked={p.low_data_mode === true} onCheckedChange={set("low_data_mode")} />
+              </Field>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-2 gap-x-4 gap-y-3 mt-3">
               {[
@@ -681,6 +792,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
                 ["hide_when_unfocused", "Hide when unfocused", "Tracker fades when the window loses focus"],
                 ["timeclock_page_only", "Time Clock page only", "Shows only on Time Clock routes"],
                 ["privacy_blur", "Privacy blur", "Digits blur until hover — for shared screens"],
+                ["hide_on_weekend", "Hide on weekends", "Tracker stays hidden on Saturday and Sunday"],
               ].map(([key, label, hint]) => (
                 <label key={key} className="flex items-center justify-between gap-2 text-sm">
                   <span className="flex items-center gap-1.5">{label}<InfoDot text={hint} /></span>
@@ -688,6 +800,13 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
                 </label>
               ))}
             </div>
+            <Field label={`Hide when idle — ${Number(p.hide_when_idle_minutes) > 0 ? `${p.hide_when_idle_minutes}m` : "off"}`} hint="Tracker disappears after this much mouse/keyboard inactivity (0 = never hide)" info>
+              <Slider
+                value={[Number(p.hide_when_idle_minutes) || 0]} min={0} max={120} step={5}
+                onValueChange={([v]) => update("hide_when_idle_minutes", v)}
+                disabled={saving} className="mt-2"
+              />
+            </Field>
           </Section>
 
           {/* ---------------- DETAILS ---------------- */}

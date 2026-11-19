@@ -1,0 +1,7 @@
+{
+  "stdout": "{\"ok\":true,\"inputs\":[\"base44/shared/constantTime.ts\",\"base44/shared/ownerRole.ts\",\"base44/shared/signShopSession.ts\",\"base44/shared/smartsheetTraceContext.ts\",\"base44/shared/entityRateLimitRetry.ts\",\"base44/functions/staffEntityWrite/entry.ts\"],\"outputs\":1,\"warnings\":[{\"text\":\"Duplicate key \\\"SignageFact\\\" in object literal\",\"file\":\"base44/functions/staffEntityWrite/entry.ts\",\"line\":39},{\"text\":\"Duplicate key \\\"SignageFactIndex\\\" in object literal\",\"file\":\"base44/functions/staffEntityWrite/entry.ts\",\"line\":40},{\"text\":\"Duplicate key \\\"SignageFact\\\" in object literal\",\"file\":\"base44/functions/staffEntityWrite/entry.ts\",\"line\":41},{\"text\":\"Duplicate key \\\"SignageFactIndex\\\" in object literal\",\"file\":\"base44/functions/staffEntityWrite/entry.ts\",\"line\":42},{\"text\":\"Duplicate key \\\"SignageFact\\\" in object literal\",\"file\":\"base44/functions/staffEntityWrite/entry.ts\",\"line\":43},{\"text\":\"Duplicate key \\\"SignageFactIndex\\\" in object literal\",\"file\":\"base44/functions/staffEntityWrite/entry.ts\",\"line\":44},{\"text\":\"Duplicate key \\\"SignageFact\\\" in object literal\",\"file\":\"base44/functions/staffEntityWrite/entry.ts\",\"line\":45},{\"text\":\"Duplicate key \\\"SignageFactIndex\\\" in object literal\",\"file\":\"base44/functions/staffEntityWrite/entry.ts\",\"line\":46}]}\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 1319
+}

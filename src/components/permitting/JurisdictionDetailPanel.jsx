@@ -3,6 +3,8 @@ import OfficeResearchFindings from './OfficeResearchFindings';
 import OfficialSourceRescans from "./OfficialSourceRescans";
 import ExternalPermittingReferrals from "./ExternalPermittingReferrals";
 import LocalityApprovedEvidence from "./LocalityApprovedEvidence";
+import SignageFactsPanel from "./SignageFactsPanel";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +30,8 @@ import CAGISSearchBar from "./CAGISSearchBar";
 import { documentSearchSnippet, splitDocumentSearchMatches, documentSearchContent, documentSearchContentSource, findDocumentMatchPositions, documentMatchSnippet, stepDocumentMatchIndex } from "./documentSearchSnippet";
 import { buildJurisdictionQuestionContext } from "./jurisdictionQuestionContext";
 import { documentHeaderTargetIndex } from "./documentHeaderNavigation";
+import { downloadPermitPack } from "./permitPack";
+import OfficeChangeLog from "./OfficeChangeLog";
 import DocumentAnalysisPanel from "./DocumentAnalysisPanel";
 import ExtractedContentDisplay from "./ExtractedContentDisplay";
 import { generateJurisdictionPDF } from "./JurisdictionPDFReport";
@@ -36,7 +40,7 @@ import JurisdictionAuthorityStatus from "./JurisdictionAuthorityStatus";
 import JurisdictionRequirements from "./JurisdictionRequirements";
 import SourceMonitorPanel from "./SourceMonitorPanel";
 import DocumentRepositoryBrowser from './DocumentRepositoryBrowser';
-import PermitWorkflowDesigner from "./PermitWorkflowDesigner";
+import PermitWorkflowDesigner from "./PermitWorkflowDesigner.jsx";
 import { createElectricalPlanningHandoff } from "./permitWorkflowDesigner";
 import { appendJurisdictionActivitySafely } from "./jurisdictionPersistence";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";
@@ -50,7 +54,7 @@ const DOC_TYPE_LABELS = {
   other: "Other"
 };
 
-export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount = 1, onSetVerification, onClose, onUpdate, onSaveOfficeResearch }) {
+export default function JurisdictionDetailPanel({ jurisdiction, permitLines = [], onOpenJob, duplicateCount = 1, onSetVerification, onClose, onUpdate, onSaveOfficeResearch }) {
   const { currentUser } = useAuth();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState(null);
@@ -88,16 +92,22 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [clearedDocSearchId, setClearedDocSearchId] = useState(null);
   const [isResearching, setIsResearching] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [docVisibleCount, setDocVisibleCount] = useState(8);
   const workspaceSections = useRef({});
   const [sourceRequest, setSourceRequest] = useState(null);
+  const SECTION_TAB = { documents: 'documents', offices: 'offices', monitoring: 'offices', requirements: 'overview' };
   const navigateWorkspace = (section, sourceId) => {
     if (section === 'documents') {
       setSourceRequest(previous => typeof sourceId === 'string' && sourceId.trim()
         ? { jurisdictionId: jurisdiction.id, sourceId: sourceId.trim(), token: (previous?.token || 0) + 1 }
         : null);
     }
-    const target=workspaceSections.current[section];
-    if(target){target.scrollIntoView({block:"start",behavior:"auto"});target.focus({preventScroll:true});}
+    const tab = SECTION_TAB[section];
+    if (tab) setActiveTab(tab);
+    setTimeout(() => {
+      const target=workspaceSections.current[section];
+      if(target){target.scrollIntoView({block:"start",behavior:"auto"});target.focus({preventScroll:true});}
+    }, 60);
   };
   const [verificationTarget, setVerificationTarget] = useState(null);
   const [verificationNote, setVerificationNote] = useState("");
@@ -634,6 +644,27 @@ Answer only from the provided excerpts and cite the document title and official 
                 <span className="min-w-0 break-words">Official Permitting Page</span>
               </a>
             )}
+            {permitLines.length > 0 && (
+              <div className="mt-2 rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-900">
+                <p className="font-semibold">Jobs using this office ({permitLines.length})</p>
+                <ul className="mt-1 space-y-0.5">
+                  {permitLines.slice(0, 6).map((li) => {
+                    const status = li.permit_received_date ? "Permit issued" : li.denial_date ? "Denied" : li.submitted_date ? "Submitted" : "Not submitted yet";
+                    return (
+                      <li key={li.id} className="flex items-center justify-between gap-2">
+                        {onOpenJob ? (
+                          <button type="button" onClick={() => onOpenJob(li.work_order_title || "")} className="min-w-0 truncate font-medium text-indigo-800 underline decoration-dotted hover:text-indigo-950" title="Open this job in the tracker">{li.work_order_title || "Unnamed job"}</button>
+                        ) : (
+                          <span className="min-w-0 truncate">{li.work_order_title || "Unnamed job"}</span>
+                        )}
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${status === "Permit issued" ? "bg-green-100 text-green-800" : status === "Denied" ? "bg-red-100 text-red-800" : status === "Submitted" ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-700"}`}>{status}</span>
+                      </li>
+                    );
+                  })}
+                  {permitLines.length > 6 && <li className="text-indigo-700">…and {permitLines.length - 6} more</li>}
+                </ul>
+              </div>
+            )}
           </div>
           <div className="flex w-full gap-2 sm:w-auto sm:justify-end">
             <Button
@@ -645,6 +676,24 @@ Answer only from the provided excerpts and cite the document title and official 
             >
               <Download className="w-4 h-4" />
               Report
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                // MP-11.5 — fetch the PermitLocality's offices then build the
+                // filing bundle PDF (contacts, forms, fees, docs, code).
+                try {
+                  const locs = await base44.entities.PermitLocality.filter({ jurisdiction_profile_id: jurisdiction.id }).catch(() => []);
+                  const locality = (Array.isArray(locs) ? locs : [])[0] || null;
+                  downloadPermitPack({ jurisdiction, locality });
+                } catch { downloadPermitPack({ jurisdiction, locality: null }); }
+              }}
+              title="Download the filing bundle — contacts, forms, fees, documents, sign code"
+              className="min-h-11 flex-1 gap-1.5 text-xs sm:flex-none"
+            >
+              <Download className="w-4 h-4" />
+              Permit pack
             </Button>
             <Button
               size="sm"
@@ -661,6 +710,20 @@ Answer only from the provided excerpts and cite the document title and official 
                 <RefreshCw className="w-4 h-4" />
               )}
               <span className="sm:hidden">{isResearching ? "Refreshing" : "Refresh"}</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              title="Export this jurisdiction's offices + evidence as JSON"
+              onClick={() => {
+                const url = URL.createObjectURL(new Blob([JSON.stringify(jurisdiction, null, 2)], { type: "application/json" }));
+                const a = document.createElement("a");
+                a.href = url; a.download = `jurisdiction-${String(jurisdiction.name || "export").replace(/\s+/g, "-")}.json`; a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="min-h-11 min-w-11 gap-1.5 px-3 sm:px-2.5"
+            >
+              <Download className="w-4 h-4" />
             </Button>
             <Button
               variant="ghost"
@@ -697,6 +760,23 @@ Answer only from the provided excerpts and cite the document title and official 
                 )}
               </div>
             </div>
+            {onUpdate && (
+              <Button
+                variant="outline"
+                size="sm"
+                title="Suggest an office we don't know about — the research queue gets the signal"
+                onClick={async () => {
+                  const suggestion = window.prompt("What office is missing here? (e.g. 'Electrical inspector is the county building dept')");
+                  if (!suggestion || !suggestion.trim()) return;
+                  const notes = `${jurisdiction.notes || ""}\n[Staff suggestion ${new Date().toISOString().slice(0, 10)}]: ${suggestion.trim()}`.trim();
+                  const saved = await staffEntities.JurisdictionProfile.update(jurisdiction.id, { notes });
+                  if (saved?.id) onUpdate(saved);
+                }}
+                className="min-h-11 gap-1 text-xs"
+              >
+                <MessageSquare className="w-3.5 h-3.5" /> Suggest an office
+              </Button>
+            )}
             {onSetVerification && (
               <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:flex-shrink-0">
                 {trust.key !== "verified" && (
@@ -707,7 +787,7 @@ Answer only from the provided excerpts and cite the document title and official 
                     disabled={trust.verificationBlocked}
                     onClick={() => { setVerificationError(""); setVerificationNote(jurisdiction.verification_notes || ""); setVerificationTarget("verified"); }}
                     className="min-h-11 w-full justify-center border-green-300 px-3 text-xs text-green-800 hover:bg-green-50 sm:w-auto"
-                    title={trust.verificationBlocked ? "Resolve duplicate, placeholder, or unusable-source issues first" : "Confirm staff verification against official/current sources"}
+                    title={trust.verificationBlocked ? "Fix the duplicate or bad-source issues first" : "Mark this checked — you looked at the office's real page"}
                   >
                     Mark Verified
                   </Button>
@@ -772,14 +852,14 @@ Answer only from the provided excerpts and cite the document title and official 
         <AlertDialogContent className="clay-card w-[calc(100%-2rem)] max-w-lg border-none p-4 sm:p-6">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {verificationTarget === "verified" ? "Mark this jurisdiction verified?" : verificationTarget === "historical" ? "Mark this jurisdiction historical?" : "Require re-verification?"}
+              {verificationTarget === "verified" ? "Mark this office checked?" : verificationTarget === "historical" ? "Mark this office as old info?" : "Ask for a re-check?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {verificationTarget === "verified"
-                ? "Use Verified only after staff has checked the current permitting information against official jurisdiction sources. This does not freeze the record or guarantee future rules remain unchanged."
+                ? "Only mark this after you looked at the office's real page and the info matches. Rules can change — check again on the next job."
                 : verificationTarget === "historical"
-                  ? "Historical keeps this profile available for prior-job reference but clearly warns staff to verify current requirements before using it on new work."
-                  : "This keeps the existing research and prior verification history, but marks the profile as needing a fresh staff review before it should be relied on."}
+                  ? "Old info stays for past jobs, but everyone gets warned to re-check before filing anything new."
+                  : "Keeps the research and history, but flags this office as needing a fresh look before anyone relies on it."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2">
@@ -817,7 +897,7 @@ Answer only from the provided excerpts and cite the document title and official 
                 }
               }}
             >
-              {verificationSaving ? "Saving…" : verificationTarget === "verified" ? "Mark Verified" : verificationTarget === "historical" ? "Mark Historical" : "Require Re-verification"}
+              {verificationSaving ? "Saving…" : verificationTarget === "verified" ? "Mark Checked" : verificationTarget === "historical" ? "Mark Old" : "Ask for Re-check"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -834,6 +914,14 @@ Answer only from the provided excerpts and cite the document title and official 
           className={`min-h-11 flex-1 px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500 ${activeTab === "overview" ? "border-b-2 border-purple-600 text-purple-700 bg-white" : "text-gray-500 hover:text-gray-700"}`}
         >
           Overview
+        </button>
+        <button type="button" role="tab" aria-selected={activeTab === "documents"} aria-controls="jurisdiction-overview-panel" onClick={() => setActiveTab("documents")} className={`min-h-11 flex-1 px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500 ${activeTab === "documents" ? "border-b-2 border-purple-600 text-purple-700 bg-white" : "text-gray-500 hover:text-gray-700"}`}>
+          Documents
+          {(jurisdiction.documents?.length > 0) && (<span className="ml-1 bg-purple-100 text-purple-700 text-[10px] rounded-full px-1.5 py-0.5 font-bold">{jurisdiction.documents.length}</span>)}
+        </button>
+        <button type="button" role="tab" aria-selected={activeTab === "offices"} aria-controls="jurisdiction-overview-panel" onClick={() => setActiveTab("offices")} className={`min-h-11 flex-1 px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500 ${activeTab === "offices" ? "border-b-2 border-purple-600 text-purple-700 bg-white" : "text-gray-500 hover:text-gray-700"}`}>
+          Offices
+          {(jurisdiction.office_research?.offices?.length > 0) && (<span className="ml-1 bg-purple-100 text-purple-700 text-[10px] rounded-full px-1.5 py-0.5 font-bold">{jurisdiction.office_research.offices.length}</span>)}
         </button>
         <button
           type="button"
@@ -857,9 +945,15 @@ Answer only from the provided excerpts and cite the document title and official 
         </div>
       )}
 
-      {activeTab === "overview" && <><JurisdictionWorkspaceNavigation jurisdiction={jurisdiction} onNavigate={navigateWorkspace}/><div id="jurisdiction-overview-panel" role="tabpanel" className="flex-1 overflow-y-auto p-4 space-y-4">
+      {activeTab !== "activity" && <><div id="jurisdiction-overview-panel" role="tabpanel" className="flex-1 overflow-y-auto p-4 space-y-4">
+        {activeTab === "overview" && <>
+        <JurisdictionWorkspaceNavigation jurisdiction={jurisdiction} onNavigate={navigateWorkspace}/>
         <LocalityApprovedEvidence jurisdiction={jurisdiction} isAdmin={currentUser?.role === "admin"} />
 
+        <OfficeChangeLog jurisdiction={jurisdiction} />
+        </>}
+
+        {activeTab === "offices" && <>
         <section ref={node=>{workspaceSections.current.offices=node;}} tabIndex={-1} aria-label="Office and electrical research workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
           <OfficeResearchFindings key={jurisdiction.id} research={jurisdiction.office_research} canEdit={currentUser?.role === "admin"} actor={currentUser?.full_name || currentUser?.email || "CCS Staff"} onSave={updated => onSaveOfficeResearch?.(jurisdiction, updated)} onNavigate={navigateWorkspace} onPreviewWorkflow={() => { setElectricalPlanningHandoff(createElectricalPlanningHandoff(jurisdiction.office_research, jurisdiction)); setShowWorkflowDesigner(true); }}/>
         </section>
@@ -885,15 +979,17 @@ Answer only from the provided excerpts and cite the document title and official 
 
         {/* Source monitor health */}
         <section ref={node=>{workspaceSections.current.monitoring=node;}} tabIndex={-1} aria-label="Source monitoring workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600"><SourceMonitorPanel key={jurisdiction.id} jurisdictionName={jurisdiction.name} jurisdictionId={jurisdiction.id} onNavigate={navigateWorkspace} /></section>
+        </>}
 
+        {activeTab === "overview" && <>
         <section ref={node=>{workspaceSections.current.requirements=node;}} tabIndex={-1} aria-label="Requirements workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
         <JurisdictionRequirements key={jurisdiction.id} jurisdictionId={jurisdiction.id} onDocuments={sourceId => navigateWorkspace("documents", sourceId)} />
         <p className="mb-2 text-xs text-gray-600">Collected requirements are references. Use approved evidence and the current official documents to confirm what applies to the proposed sign.</p>
         {/* Key Requirements & Rules */}
         {(Object.keys(req).some(k => req[k] !== undefined && req[k] !== null && req[k] !== "") || jurisdiction.sqft_width_height_rules || jurisdiction.height_allowances || jurisdiction.setback_rules || jurisdiction.lighting_allowances) && (
-          <div className="bg-red-50 rounded-lg p-3 border-l-4 border-l-red-400 space-y-3">
+          <div className="bg-amber-50 rounded-lg p-3 border-l-4 border-l-amber-400 space-y-3">
             <div>
-              <p className="text-xs font-semibold text-red-800 mb-2">Collected profile notes · unverified summary</p>
+              <p className="text-xs font-semibold text-amber-800 mb-2">Collected profile notes · unverified summary</p>
               <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
                 {req.requires_permit !== undefined && (
                   <div className="flex min-w-0 items-start gap-1.5">
@@ -922,31 +1018,31 @@ Answer only from the provided excerpts and cite the document title and official 
             </div>
 
             {(jurisdiction.sqft_width_height_rules || jurisdiction.height_allowances || jurisdiction.setback_rules || jurisdiction.lighting_allowances) && (
-              <div className="border-t border-red-200 pt-3">
-                <p className="text-xs font-semibold text-red-800 mb-2">Detailed Rules</p>
+              <details className="border-t border-amber-200 pt-2">
+                <summary className="cursor-pointer select-none text-xs font-semibold text-amber-800 hover:text-amber-950">Detailed rules — size, height, setbacks, lighting</summary>
                 <div className="space-y-2 text-xs text-gray-700">
                   {jurisdiction.sqft_width_height_rules && (
                     <div className="min-w-0 break-words leading-relaxed">
-                      <span className="font-medium text-red-700">SQFT/Width/Height:</span> {jurisdiction.sqft_width_height_rules}
+                      <span className="font-medium text-amber-800">SQFT/Width/Height:</span> {jurisdiction.sqft_width_height_rules}
                     </div>
                   )}
                   {jurisdiction.height_allowances && (
                     <div className="min-w-0 break-words leading-relaxed">
-                      <span className="font-medium text-red-700">Height Allowances:</span> {jurisdiction.height_allowances}
+                      <span className="font-medium text-amber-800">Height Allowances:</span> {jurisdiction.height_allowances}
                     </div>
                   )}
                   {jurisdiction.setback_rules && (
                     <div className="min-w-0 break-words leading-relaxed">
-                      <span className="font-medium text-red-700">Setback Rules:</span> {jurisdiction.setback_rules}
+                      <span className="font-medium text-amber-800">Setback Rules:</span> {jurisdiction.setback_rules}
                     </div>
                   )}
                   {jurisdiction.lighting_allowances && (
                     <div className="min-w-0 break-words leading-relaxed">
-                      <span className="font-medium text-red-700">Lighting Allowances:</span> {jurisdiction.lighting_allowances}
+                      <span className="font-medium text-amber-800">Lighting Allowances:</span> {jurisdiction.lighting_allowances}
                     </div>
                   )}
                 </div>
-              </div>
+              </details>
             )}
           </div>
         )}
@@ -991,11 +1087,15 @@ Answer only from the provided excerpts and cite the document title and official 
         {currentUser?.role === "admin" && <OfficialSourceRescans key={jurisdiction.id} jurisdiction={jurisdiction} onUpdate={onUpdate} />}
         <ExternalPermittingReferrals key={jurisdiction.id} jurisdiction={jurisdiction} isAdmin={currentUser?.role === "admin"} onUpdate={onUpdate} disabled={isResearching || Boolean(downloadingDocId)} />
 
+        </>}
+
+        {activeTab === "documents" && <>
         {/* Documents */}
          <div ref={node=>{workspaceSections.current.documents=node;}} tabIndex={-1} aria-label="Documents workspace" className="scroll-mt-3 bg-green-50 rounded-lg p-3 border border-green-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
            <p className="text-xs font-semibold text-green-800 mb-2">
              Documents ({jurisdiction.documents?.length || 0} collected links)
            </p>
+           <SignageFactsSection jurisdiction={jurisdiction} />
           <DocumentRepositoryBrowser key={jurisdiction.id} jurisdictionId={jurisdiction.id} sourceRequest={sourceRequest} documents={jurisdiction.documents || []} onNavigate={navigateWorkspace} onOpenCollected={id => {
             if (expandedDoc === id) {
               const header = documentHeaderRefs.current.get(id);
@@ -1122,7 +1222,7 @@ Answer only from the provided excerpts and cite the document title and official 
             <p id={`document-header-navigation-${jurisdiction.id}`} className="sr-only">
               Use Up and Down arrows to move between document headings, Home and End for the first and last heading, and Enter or Space to expand a document.
             </p>
-             {(jurisdiction.documents || []).map(doc => (
+             {(docSearchTerm.trim() ? (jurisdiction.documents || []) : (jurisdiction.documents || []).slice(0, docVisibleCount)).map(doc => (
                <div key={doc.id} className={`border-l-4 rounded-lg overflow-hidden ${doc.source === 'ai_discovered' ? 'bg-purple-50 border-l-purple-400' : 'bg-amber-50 border-l-amber-400'}`}>
                  <button
                    type="button"
@@ -1436,14 +1536,21 @@ Answer only from the provided excerpts and cite the document title and official 
             {(!jurisdiction.documents || jurisdiction.documents.length === 0) && (
               <p className="text-xs text-gray-400 italic">No documents yet. Use the AI refresh to discover documents.</p>
             )}
+            {!docSearchTerm.trim() && (jurisdiction.documents?.length || 0) > docVisibleCount && (
+              <button type="button" onClick={() => setDocVisibleCount((jurisdiction.documents || []).length)} className="w-full rounded border border-dashed border-gray-300 bg-white py-2 text-xs font-medium text-purple-700 hover:bg-purple-50 focus-visible:outline focus-visible:ring-2 focus-visible:ring-purple-500">
+                Show all {(jurisdiction.documents || []).length} documents
+              </button>
+            )}
           </div>
         </div>
-
+        </>}
 
       </div>
 
       {/* AI Permit Workflow Designer entry — preselects this jurisdiction */}
-      <div className="border-t p-3 bg-violet-50 border-l-4 border-l-violet-400">
+      {activeTab === "overview" && <>
+      <div className="border-t bg-slate-50 p-3">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">AI tools</p>
         <Button
           type="button"
           variant="outline"
@@ -1478,9 +1585,9 @@ Answer only from the provided excerpts and cite the document title and official 
       )}
 
       {/* Chat Interface */}
-      <div className="border-t p-3 bg-cyan-50 border-l-4 border-l-cyan-400">
-        <p className="text-xs font-semibold text-cyan-800 mb-2 flex items-center gap-1">
-          <MessageSquare className="w-3 h-3" /> Ask AI about this jurisdiction
+      <div className="bg-slate-50 px-3 pb-3">
+        <p className="mb-2 text-xs font-semibold text-slate-600 flex items-center gap-1">
+          <MessageSquare className="w-3 h-3" /> Ask AI about this office
         </p>
         {(chatHistory.length > 0 || asking) && (
           <div
@@ -1526,6 +1633,25 @@ Answer only from the provided excerpts and cite the document title and official 
         </div>
       </div>
       </>}
+      </>}
+    </div>
+  );
+}
+function SignageFactsSection({ jurisdiction }) {
+  const [facts, setFacts] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    if (!jurisdiction?.id) { setFacts([]); return; }
+    staffEntities.SignageFact.filter({ jurisdiction_id: jurisdiction.id, active: true }, { limit: 500 })
+      .then(r => { if (alive) setFacts(r?.items || r || []); })
+      .catch(() => { if (alive) setFacts([]); });
+    return () => { alive = false; };
+  }, [jurisdiction?.id]);
+  if (!facts || !facts.length) return null;
+  return (
+    <div className="mb-3 bg-white/70 border border-green-200 rounded-lg p-2">
+      <p className="text-[11px] font-semibold text-green-900 mb-1">Signage facts — pulled from official sources</p>
+      <SignageFactsPanel facts={facts} jurisdictionName={jurisdiction.name} compact />
     </div>
   );
 }

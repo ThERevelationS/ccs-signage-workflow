@@ -9,8 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Box, Router, Zap, Paintbrush, Calculator, AlertCircle, Sparkles, Link as LinkIcon, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { DimensionalLetterMaterial, Settings as SettingsEntity } from "@/entities/all";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { DimensionalLetterMaterial, Settings as SettingsEntity } from "@/api/gatedEntities";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { getActiveRates, getPaintRates, lookupCutSpeed, lookupCutMultiplier, materialCostPerSqin, PAINT_SIDES_LABELS, CUTTING_METHOD_LABELS } from "./dimensionalFabCalculator";
 
 const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;

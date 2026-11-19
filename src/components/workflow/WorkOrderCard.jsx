@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   Circle,
   Eye,
-  EyeOff } from
+  EyeOff,
+  Package } from
 "lucide-react";
 import { useAuth } from "@/components/auth/EmailGate";
 import {
@@ -50,7 +51,6 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import { base44 } from "@/api/base44Client";
 import TaskTemplateDialog from "./TaskTemplateDialog";
 import ProjectHealthBadge from "./ProjectHealthBadge";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
@@ -61,6 +61,11 @@ import {
   mutateWorkOrderArrayField,
   replaceWorkOrderFieldsIfUnchanged,
 } from "@/components/workflow/workOrderPersistence";
+import {
+  openProductsBlockingCompletion,
+  productStatusRollup,
+  productStatusRollupLabel,
+} from "@/components/estimator/productStageSync";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -86,7 +91,7 @@ export default function WorkOrderCard({
   onRestore,
   onUpdate,
   onDelete,
-  showMoveOptions = true,
+  showMoveOptions: _showMoveOptions = true,
   priorityNumber,
   dragHandleProps = null
 }) {
@@ -94,9 +99,9 @@ export default function WorkOrderCard({
   const isTopPriority = priorityNumber === 1;
   const isAsap = workOrder.asap || false;
   
-  const { isRegistered, promptForEmail, sessionToken } = useAuth();
+  const { isRegistered, promptForEmail, sessionToken, currentUser } = useAuth();
   
-  const requireAuth = (callback) => {
+  const _requireAuth = (callback) => {
     return (e) => {
       if (!isRegistered) {
         e?.preventDefault();
@@ -130,7 +135,6 @@ export default function WorkOrderCard({
   const [editedNoteText, setEditedNoteText] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [newNoteText, setNewNoteText] = useState("");
-  const [currentUser, setCurrentUser] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
   const [showRiderWarning, setShowRiderWarning] = useState(false);
@@ -179,10 +183,23 @@ export default function WorkOrderCard({
   const activeNotes = notes.filter((note) => !note.completed);
   const completedNotes = notes.filter((note) => note.completed);
 
-  React.useEffect(() => {
-    loadUser();
-  }, []);
+  // Per-product operational status rollup — one quiet line on the card so
+  // boards can see product progress without opening the workspace.
+  const productRollup = React.useMemo(
+    () => productStatusRollup(workOrder.products),
+    [workOrder.products]
+  );
+  const productRollupLabel = productStatusRollupLabel(productRollup);
+  // Products still in a non-terminal status — listed inside the complete
+  // confirm so a job with open product work is never closed silently.
+  const openProducts = React.useMemo(
+    () => openProductsBlockingCompletion(workOrder.products),
+    [workOrder.products]
+  );
 
+  // currentUser now comes from useAuth() — the per-card base44.auth.me()
+  // call used to fire once per card per mount and always 401 for staff
+  // sessions (EmailGate is not platform auth).
   React.useEffect(() => {
     if (!sessionToken) {
       setAllUsers([]);
@@ -231,15 +248,6 @@ export default function WorkOrderCard({
     };
     checkForRidersAndParent();
   }, [workOrder.id, workOrder.is_rider, workOrder.parent_work_order_id]);
-
-  const loadUser = async () => {
-    try {
-      const user = await base44.auth.me();
-      setCurrentUser(user);
-    } catch (error) {
-      console.error("Error loading user:", error);
-    }
-  };
 
   const handleImageUpload = async (e) => {
     if (!isRegistered) {
@@ -794,7 +802,7 @@ export default function WorkOrderCard({
     if (onUpdate) onUpdate();
   };
 
-  const handleCompleteClick = async () => {
+  const _handleCompleteClick = async () => {
     // Check if this work order has incomplete riders
     if (!workOrder.is_rider && onComplete) {
       if (riders.length > 0) {
@@ -815,7 +823,7 @@ export default function WorkOrderCard({
   };
 
   // Added delete functionality handlers
-  const handleDeleteClick = async () => {
+  const _handleDeleteClick = async () => {
     // Check if this work order has riders before deleting
     if (!workOrder.is_rider) {
       // Re-fetch the exact relationship in case local rider state is stale.
@@ -1004,14 +1012,14 @@ export default function WorkOrderCard({
                 className={`h-5 px-2 text-xs font-bold rounded-full transition-all ${
                 isAsap ?
                 'bg-red-600 hover:bg-red-700 text-white' :
-                'bg-transparent hover:bg-gray-100 text-gray-400'}`
+                'bg-transparent hover:bg-gray-100 text-gray-500'}`
                 }
                 style={isAsap ? {
                   fontSize: '10px',
                   boxShadow: '0 0 8px rgba(220, 38, 38, 0.4), inset 0 1px 2px rgba(255,255,255,0.3)'
                 } : {
                   fontSize: '10px',
-                  opacity: 0.4
+                  opacity: 0.75
                 }}
               >
                 <span className={!isAsap ? 'line-through' : ''}>ASAP</span>
@@ -1029,6 +1037,12 @@ export default function WorkOrderCard({
               <div className="flex items-center gap-1 text-gray-600">
                   <Calendar className="w-3 h-3 flex-shrink-0 text-orange-600" />
                   <span className="text-xs font-medium">{format(parseLocalDate(workOrder.due_date), "MMM d")}</span>
+                </div>
+              }
+              {productRollupLabel &&
+              <div className="flex items-center gap-1 text-gray-500" title={`${productRollup.total} product${productRollup.total === 1 ? "" : "s"} by operational status`}>
+                  <Package className="w-3 h-3 flex-shrink-0 text-violet-500" />
+                  <span className="text-[10px] font-medium">{productRollupLabel}</span>
                 </div>
               }
               {riders.length > 0 && !workOrder.is_rider &&
@@ -1622,6 +1636,22 @@ export default function WorkOrderCard({
               This will send an email notification to the team.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {openProducts.length > 0 && (
+            <div className="mx-1 mb-2 rounded border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
+              <span className="font-semibold">
+                {openProducts.length} product{openProducts.length === 1 ? "" : "s"} still open:
+              </span>
+              <ul className="mt-1 list-disc pl-4">
+                {openProducts.slice(0, 6).map((p) => (
+                  <li key={p.id || p.name}>
+                    {p.name}{p.status !== "none" ? ` (${p.status.replace(/_/g, " ")})` : ""}
+                  </li>
+                ))}
+              </ul>
+              {openProducts.length > 6 && <div className="mt-1">+{openProducts.length - 6} more</div>}
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel
               className="clay-button border-none text-gray-800"

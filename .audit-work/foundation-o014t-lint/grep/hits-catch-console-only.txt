@@ -1,0 +1,27 @@
+src/components/estimator/aio/CustomerSearchDialog.jsx:28 EMPTY-BODY
+src/components/estimator/aio/EstimateProductsList.jsx:94 EMPTY-BODY
+src/components/estimator/brick/BrickGeometryPanel.jsx:29 EMPTY-BODY
+src/components/estimator/brick/BrickGeometryPanel.jsx:42 EMPTY-BODY
+src/components/estimator/builder/historicalBackfill.js:41 EMPTY-BODY
+src/components/estimator/customerLocationService.js:126 EMPTY-BODY
+src/components/estimator/CustomerQuotePanel.jsx:275 EMPTY-BODY
+src/components/estimator/customerSync.js:395 CONSOLE-ONLY: console.warn("Estimate sales_stage stamp skipped:", stampError?.message || stampError);
+src/components/estimator/customerSync.js:414 CONSOLE-ONLY: console.warn("Permit line auto-seed skipped:", e?.message || e);
+src/components/estimator/customerSync.js:431 CONSOLE-ONLY: console.warn("Opportunity compatibility WorkOrder link could not be saved:", linkError?.message || l
+src/components/estimator/deepLinks.js:30 EMPTY-BODY
+src/components/estimator/deepLinks.js:128 EMPTY-BODY
+src/components/estimator/EstimateAcceptancePanel.jsx:222 EMPTY-BODY
+src/components/estimator/estimateConversionService.js:316 EMPTY-BODY
+src/components/estimator/foundation/FoundationLayoutCanvas.jsx:81 EMPTY-BODY
+src/components/estimator/moduleShared/ModuleTemplateDialog.jsx:69 EMPTY-BODY
+src/components/estimator/workOrderConversion.js:704 EMPTY-BODY
+src/pages/Estimator.jsx:86 EMPTY-BODY
+src/pages/EstimatorQueues.jsx:170 EMPTY-BODY
+src/pages/EstimatorQueues.jsx:171 EMPTY-BODY
+src/pages/EstimatorQueues.jsx:218 EMPTY-BODY
+src/pages/EstimatorQueues.jsx:302 EMPTY-BODY
+src/pages/EstimatorQueues.jsx:315 EMPTY-BODY
+src/pages/EstimatorQueues.jsx:471 EMPTY-BODY
+src/pages/FoundationEstimator.jsx:430 EMPTY-BODY
+src/pages/FoundationEstimator.jsx:437 EMPTY-BODY
+TOTAL: 26

@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { MapPin, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { ESTIMATOR_AI_MODEL } from "../../../base44/shared/estimatorAiModelPolicy.js";
+import { getSessionToken } from "@/components/auth/EmailGate";
 
 const SCHEMA = {
   type: "object",
@@ -54,20 +56,31 @@ export default function AddressAutocomplete({ value, onChange, placeholder, clas
     if (lastFetchedRef.current === q) return;
     lastFetchedRef.current = q;
     setLoading(true);
-    try {
-      const res = await base44.integrations.Core.InvokeLLM({
+    const llmFallback = async () => {
+      const llm = await base44.integrations.Core.InvokeLLM({
         prompt: `Return up to 5 plausible US street-address autocomplete completions for: "${q}".
 Each must look like a real mailing address (street number + street, city, state abbr, ZIP).
 Prefer well-known streets/cities. Be FAST — do not search the web. JSON only.`,
         response_json_schema: SCHEMA,
-        model: "gemini_3_flash"
+        model: ESTIMATOR_AI_MODEL
       });
-      setSuggestions(res?.suggestions || []);
-      setOpen(true);
-      setHighlight(-1);
+      return llm?.suggestions || [];
+    };
+    let list = null;
+    try {
+      // Primary: real Google Places autocomplete (backend proxy).
+      const res = await base44.functions.invoke("placesAutocomplete", {
+        input: q,
+        session_token: getSessionToken(),
+      });
+      list = res?.data?.suggestions || null;
     } catch (e) {
-      setSuggestions([]);
+      list = null;
     }
+    if (!list) list = await llmFallback().catch(() => []);
+    setSuggestions(list);
+    setOpen(true);
+    setHighlight(-1);
     setLoading(false);
   };
 
@@ -121,7 +134,7 @@ Prefer well-known streets/cities. Be FAST — do not search the web. JSON only.`
       {open && suggestions.length > 0 && (
         <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden max-h-72 overflow-y-auto">
           {suggestions.map((s, i) => (
-            <button
+            <button type="button"
               key={i}
               type="button"
               onMouseDown={(e) => { e.preventDefault(); selectSuggestion(s); }}
@@ -131,7 +144,10 @@ Prefer well-known streets/cities. Be FAST — do not search the web. JSON only.`
               }`}
             >
               <MapPin className="w-3.5 h-3.5 text-purple-600 mt-0.5 flex-shrink-0" />
-              <span className="text-slate-800">{s.full_address}</span>
+              <span className="min-w-0">
+                <span className="block text-slate-800 truncate">{s.label || s.full_address}</span>
+                {s.secondary && <span className="block text-xs text-slate-500 truncate">{s.secondary}</span>}
+              </span>
             </button>
           ))}
         </div>

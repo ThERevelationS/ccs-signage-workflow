@@ -1,0 +1,15 @@
+--- baseline/FoundationTemplateDialog.jsx	2026-11-08 02:26:11.345869200 -0500
++++ candidates/src/components/estimator/foundation/FoundationTemplateDialog.jsx	2026-11-08 02:32:28.592682400 -0500
+@@ -243,6 +243,12 @@
+                   <div className="text-[11px] text-gray-500">
+                     {(t.project_data?.items || []).length} foundations
+                   </div>
++                  {typeof t.project_data?.ai_engineering_recommendation === "string" &&
++                  t.project_data.ai_engineering_recommendation.trim() ? (
++                    <div className="text-[10px] text-violet-600">
++                      Includes an AI review note — stale on this project
++                    </div>
++                  ) : null}
+                 </div>
+                 <button type="button"
+                   onClick={() => apply(t)}

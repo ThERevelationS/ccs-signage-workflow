@@ -1,0 +1,40 @@
+ok one explicit top mat: 8 straight bars, 20ft, 16 crossings, NO vertical ties
+ok maximum spacing uses ceil and evenly distributed edge centerlines
+ok two mats remain horizontal-only until an explicit inter-mat tie is authored
+ok pillar one hoop keeps all four independently authored longitudinal bars
+ok version2 explicit zero longitudinal bars means hoop-only, NOT fallback four
+ok longitudinal-only steel is not removed by an explicit empty hoop list
+ok authored hoop allowance contributes cut length, not invented default hooks
+ok spread invalid top cover: no partial or fabricated totals
+ok spread invalid bottom cover: no partial or fabricated totals
+ok spread invalid side clearance: no partial or fabricated totals
+ok spread invalid overlapping mats: no partial or fabricated totals
+ok spread invalid duplicate mat IDs: no partial or fabricated totals
+ok spread invalid empty enabled mats: no partial or fabricated totals
+ok spread invalid unsafe spacing-derived count: no partial or fabricated totals
+ok spread invalid partial spacing string: no partial or fabricated totals
+ok spread invalid empty enabled design: no partial or fabricated totals
+ok pillar invalid oversized hoop: no partial or fabricated totals
+ok pillar invalid hoop self-overlap: no partial or fabricated totals
+ok pillar invalid hoop top cover: no partial or fabricated totals
+ok pillar invalid overlapping hoops: no partial or fabricated totals
+ok pillar invalid overlapping longitudinal bars: no partial or fabricated totals
+ok pillar invalid longitudinal hoop collision: no partial or fabricated totals
+ok pillar invalid reversed longitudinal ends: no partial or fabricated totals
+ok pillar invalid fractional count: no partial or fabricated totals
+ok pillar invalid negative count: no partial or fabricated totals
+ok pillar invalid explicit empty steel: no partial or fabricated totals
+ok preview budget zero/three preserves COMPLETE quantities and exact omitted count
+ok instance scaling does not duplicate preview geometry or lose safe-count checks
+ok zero centerline span yields one bar in that direction, no division by zero
+ok supports unknown/manual/auto never masquerade as zero
+ok missing explicit design/cover/tie lists is incomplete, unsupported version invalid
+ok invalid basic shapes/counts/null input never produce preview or quantities
+ok rebar off requires no design, yields real zeros and no support requirement
+ok proposal geometry is independent of legacy steel inputs, never reprices them
+ok manual ties require distinct valid parents, fitting positions and adequate cut length
+ok CPU list bounds reject oversized designs without partial calculations
+ok hoop identifier cannot collide with fixed longitudinal group identities
+ok disconnected pillar steel is visible and never counted as proved connections
+ok all model authoring inputs remain unchanged and results have no shared mutable state
+Version2 local geometry model: 39/39 passed; failed=0

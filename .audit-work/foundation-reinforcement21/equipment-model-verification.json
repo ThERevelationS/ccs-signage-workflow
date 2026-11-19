@@ -1,0 +1,196 @@
+{
+  "results": [
+    {
+      "name": "valid equipment prices identically to ported formulas; no authored mutation",
+      "ok": true
+    },
+    {
+      "name": "calcProject totals match ported math for valid equipment + item",
+      "ok": true
+    },
+    {
+      "name": "weekly period multiplies every rented row by the weekly catalog rate",
+      "ok": true
+    },
+    {
+      "name": "include_delivery adds the catalog delivery charge once",
+      "ok": true
+    },
+    {
+      "name": "custom_qty overrides duration for the base and every rented row",
+      "ok": true
+    },
+    {
+      "name": "custom_rate prices the base only — attachments keep catalog rates",
+      "ok": true
+    },
+    {
+      "name": "explicit-zero custom rate is a legitimate free rental (base only)",
+      "ok": true
+    },
+    {
+      "name": "explicit-zero custom delivery charge is a legitimate free delivery",
+      "ok": true
+    },
+    {
+      "name": "blank or absent duration keeps the ported one-period default",
+      "ok": true
+    },
+    {
+      "name": "numeric-string duration/qty/rate normalize on the calculation copy only",
+      "ok": true
+    },
+    {
+      "name": "invalid rental_duration holds acknowledged amounts (zero)",
+      "ok": true
+    },
+    {
+      "name": "invalid rental_duration holds acknowledged amounts (negative)",
+      "ok": true
+    },
+    {
+      "name": "invalid rental_duration holds acknowledged amounts (malformed)",
+      "ok": true
+    },
+    {
+      "name": "invalid rental_duration holds acknowledged amounts (unit-suffixed)",
+      "ok": true
+    },
+    {
+      "name": "invalid rental_duration holds acknowledged amounts (NaN)",
+      "ok": true
+    },
+    {
+      "name": "invalid rental_duration holds acknowledged amounts (Infinity)",
+      "ok": true
+    },
+    {
+      "name": "invalid rental_duration holds acknowledged amounts (record)",
+      "ok": true
+    },
+    {
+      "name": "rental_duration 0 with custom_qty set is not consumed — no hold",
+      "ok": true
+    },
+    {
+      "name": "invalid custom_qty holds (zero)",
+      "ok": true
+    },
+    {
+      "name": "invalid custom_qty holds (negative)",
+      "ok": true
+    },
+    {
+      "name": "invalid custom_qty holds (malformed)",
+      "ok": true
+    },
+    {
+      "name": "invalid custom_qty holds (NaN)",
+      "ok": true
+    },
+    {
+      "name": "invalid custom_rate holds (negative)",
+      "ok": true
+    },
+    {
+      "name": "invalid custom_rate holds (malformed)",
+      "ok": true
+    },
+    {
+      "name": "invalid custom_rate holds (NaN)",
+      "ok": true
+    },
+    {
+      "name": "invalid custom_rate holds (record)",
+      "ok": true
+    },
+    {
+      "name": "invalid custom_delivery_charge holds when delivery included (negative)",
+      "ok": true
+    },
+    {
+      "name": "invalid custom_delivery_charge holds when delivery included (malformed)",
+      "ok": true
+    },
+    {
+      "name": "invalid custom_delivery_charge holds when delivery included (NaN)",
+      "ok": true
+    },
+    {
+      "name": "dormant overrides are not consumed — inactive malformed delivery/rate values do not hold",
+      "ok": true
+    },
+    {
+      "name": "missing catalog day price produces equipment_price_unavailable + hold",
+      "ok": true
+    },
+    {
+      "name": "missing catalog price on a rented attachment row holds",
+      "ok": true
+    },
+    {
+      "name": "custom rate covers the base — missing catalog base price is not consumed",
+      "ok": true
+    },
+    {
+      "name": "missing pickup_delivery_cost holds only when delivery is included",
+      "ok": true
+    },
+    {
+      "name": "custom delivery charge covers missing catalog delivery price",
+      "ok": true
+    },
+    {
+      "name": "unrecognized rental period holds when the period drives pricing",
+      "ok": true
+    },
+    {
+      "name": "unrecognized period with a custom rate and no rented attachments is not consumed",
+      "ok": true
+    },
+    {
+      "name": "invalid attachment quantity holds (malformed)",
+      "ok": true
+    },
+    {
+      "name": "invalid attachment quantity holds (negative)",
+      "ok": true
+    },
+    {
+      "name": "invalid attachment quantity holds (NaN)",
+      "ok": true
+    },
+    {
+      "name": "zero-count legacy attachment rows price as skipped (not held)",
+      "ok": true
+    },
+    {
+      "name": "new held equipment row has no acknowledged amount — no equipment_cost",
+      "ok": true
+    },
+    {
+      "name": "non-explicit snapshot keeps authored equipment_cost on held rows",
+      "ok": true
+    },
+    {
+      "name": "duplicate component ids cannot restore an ambiguous saved row",
+      "ok": true
+    },
+    {
+      "name": "calcProject exposes equipmentPricing, merges issues once, blocks via catalogIssues",
+      "ok": true
+    },
+    {
+      "name": "new unsaved held row nulls the equipment total and grand total",
+      "ok": true
+    },
+    {
+      "name": "missing equipment assignment is a bindings issue routed through the pricing gate",
+      "ok": true
+    },
+    {
+      "name": "equipmentCostTotal returns null when any priced row lacks a cost snapshot",
+      "ok": true
+    }
+  ]
+}

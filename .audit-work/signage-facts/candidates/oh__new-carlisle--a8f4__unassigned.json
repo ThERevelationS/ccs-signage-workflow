@@ -1,0 +1,28 @@
+{
+ "jurisdiction_id": "6adf5d6ad0394695bdfba8f4",
+ "jurisdiction_name": "New Carlisle",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Permit No. Authorized City Signature (Office Use) Received: (Office Use -REVISED 11/25 ) City of New Carlisle, Planning Department 331 South Church Street, New Carlisle, Ohio 45344 Phone: (93 7) 845-9492 • planning @newcarlisleohio.gov SIGN PERMIT APPLICATION APPLICANT INFORMATION 1) Name (Please Print): 2) Phone: 3) Email: 4) Address of Sign Location: 5) Name of Land owner : 6) Phone: STREET INFORMATION 1) Zoning District: 2) Company Name: 4) Type of Sign: 5) Width of Sign: 6) Height of Sign: 7) Total Sq. Ft. (Width x Height): 8) Projection of Sign (If applicable): 9) Elevation of Sign: 10) Illumination None Internal External 11) Electrical Service Required: Yes No 12) Sign Erector: 13) Phone: 14) Liability Insurance or Bond (Name of Company): 15) Phone: 16) If Temporary, sign will be: Erected (Date) Removed (Date) REQUIRED ATTACHMENTS (ALL NEEDED AND NECESSARY) 1) A sketch, drawn to sc",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 14,
+   "source_sha256": "3efb07b212e2bd8632aea37fe82216cf49856b0e4b5a104735a25dd4dc6c5692",
+   "source_document_id": null,
+   "source_title": "3efb07b212e2bd8632aea37fe82216cf49856b0e4b5a104735a25dd4dc6c5692.pdf",
+   "official_url": "https://newcarlisleohio.gov/wp-content/uploads/2025/11/Sign_Permit_11.6.25.pdf"
+  }
+ ]
+}

@@ -1,0 +1,18 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "head": "6c06175812c0d5e078a2f7b23c25b4d7f7e711cb",
+  "files": [
+    "src/components/estimator/foundation/foundationDraftRecovery.js",
+    "src/pages/FoundationEstimator.jsx"
+  ],
+  "remoteClean": true,
+  "checkpoint": "6aed818c8e4b552cf32a811e",
+  "checkpointName": "Concrete-browser-tab-design-draft-recovery-verified",
+  "readbackNormalization": "LF-equivalent source; optional final newline for new helper",
+  "remoteBuildExit": 0,
+  "state": "ready",
+  "published": false,
+  "businessRecordsTested": false,
+  "paidAiCalls": 0
+}

@@ -1,0 +1,41 @@
+{
+  "synthetic": true,
+  "results": [
+    {
+      "name": "recorded material shows exact frozen and last-calculated basis with physical quantity",
+      "ok": true
+    },
+    {
+      "name": "recorded labor uses hours and60per-hour, not72per-hour",
+      "ok": true
+    },
+    {
+      "name": "unrecorded legacy labor retains72amount without inventing a frozen hourly rate",
+      "ok": true
+    },
+    {
+      "name": "zero priced footage remains distinct from20physical feet",
+      "ok": true
+    },
+    {
+      "name": "invalid frozen context never displays an asserted per-unit rate",
+      "ok": true
+    },
+    {
+      "name": "missing current values display unavailable rather than zero or copied frozen rates",
+      "ok": true
+    },
+    {
+      "name": "pending removal displays proposed zero amount without a fake zero-rate recipe",
+      "ok": true
+    },
+    {
+      "name": "stale catalog is identified without replacing saved projection amounts",
+      "ok": true
+    },
+    {
+      "name": "independent origin metadata does not render as a live reinforcement definition",
+      "ok": true
+    }
+  ]
+}

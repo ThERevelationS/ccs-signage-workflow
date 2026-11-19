@@ -1,0 +1,22 @@
+{
+ "editor": [
+  {
+   "p": "src/components/estimator/foundation/WallShapeEditor.jsx",
+   "b": 5194,
+   "e": null
+  }
+ ],
+ "app": {
+  "id": "68dfcc5e57bbbc35387da97c",
+  "status": "ready",
+  "git_repo_pending": null,
+  "dev_environment_enabled": false
+ },
+ "git": {
+  "stdout": "77101a44e4b449a2d1d74b59efa24e1e30849d1b\n0\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 1152
+ }
+}

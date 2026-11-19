@@ -1,0 +1,125 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "12a41a3ac89f45e775886d33af4fbf7f4dca178a",
+  "sourceArtifact": "equipment-pricing-baseline.json",
+  "dependencyArtifact": "equipment-pricing-dependency-source.json",
+  "fixtureArtifact": "equipment-pricing-fixture.json",
+  "sourceId": "synthetic-equipment-project",
+  "estimateId": "synthetic-equipment-estimate",
+  "sourceVersion": "synthetic-v1",
+  "savedVersion": "synthetic-v2",
+  "candidates": {
+    "foundationCalc.js": "equipment-pricing-candidate-foundationCalc.js",
+    "FoundationEquipmentTab.jsx": "equipment-pricing-candidate-FoundationEquipmentTab.jsx"
+  },
+  "candidateHashes": {
+    "foundationCalc.js": "845a45841f415a5eb9f7f7cd6553ad38044e713b534035a99358f83657a1abe1",
+    "FoundationEquipmentTab.jsx": "e621b4959702d1e6ad825a919bbf5a0afefe1d87682b9c2a21764dfc9ab7cfe9"
+  },
+  "acknowledgedSnapshot": {
+    "equipment": {
+      "equipment_cost": 680
+    },
+    "item": {
+      "item_total_cost": 111.11
+    },
+    "delivery": {
+      "concrete_total": 330.75
+    },
+    "total_equipment_cost": 680
+  },
+  "validCurrentSnapshot": {
+    "equipment": {
+      "baseCost": 500,
+      "totalCost": 680,
+      "withDelivery": 755
+    },
+    "total_equipment_cost": 680
+  },
+  "blockedSaveMessage": "Save paused: fix highlighted design inputs or catalog selections.",
+  "pageCaseCount": 7,
+  "browserCaseCount": 12,
+  "browserModes": [
+    {
+      "id": "valid",
+      "pricingUnavailable": false,
+      "panelTexts": [
+        "$680.00",
+        "Total Equipment Cost",
+        "Mini excavator",
+        "24in digging bucket"
+      ],
+      "durationInteraction": true
+    },
+    {
+      "id": "held-bad-duration",
+      "pricingUnavailable": true,
+      "panelTexts": [
+        "Saved amounts (not current pricing)",
+        "$680.00",
+        "finite, positive rental duration"
+      ],
+      "equipmentIssueCodes": [
+        "equipment_duration_unavailable"
+      ],
+      "invalidField": {
+        "selector": "input[aria-label=\"Rental duration\"]",
+        "describedBy": "equipment-0-pricing"
+      }
+    },
+    {
+      "id": "held-missing-price",
+      "pricingUnavailable": true,
+      "panelTexts": [
+        "Saved amounts (not current pricing)",
+        "$680.00",
+        "nonnegative catalog day rental price"
+      ],
+      "equipmentIssueCodes": [
+        "equipment_price_unavailable"
+      ]
+    },
+    {
+      "id": "held-bad-custom-qty",
+      "pricingUnavailable": true,
+      "panelTexts": [
+        "Saved amounts (not current pricing)",
+        "$680.00",
+        "positive custom quantity"
+      ],
+      "equipmentIssueCodes": [
+        "custom_qty_unavailable"
+      ]
+    },
+    {
+      "id": "held-unsaved-row",
+      "pricingUnavailable": true,
+      "panelTexts": [
+        "Saved amounts (not current pricing)",
+        "Not saved"
+      ],
+      "equipmentIssueCodes": [
+        "equipment_duration_unavailable"
+      ]
+    },
+    {
+      "id": "free-rate-zero",
+      "pricingUnavailable": false,
+      "panelTexts": [
+        "$180.00",
+        "Custom rate: $0.00"
+      ]
+    }
+  ],
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 900
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ]
+}

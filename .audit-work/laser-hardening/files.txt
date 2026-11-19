@@ -1,0 +1,13 @@
+# Laser surface (targets)
+src/pages/LaserEstimator.jsx
+src/pages/LaserSettings.jsx
+src/components/estimator/laser/laserCalc.js
+src/components/estimator/laser/laserSellPricing.js
+# Reference implementations (landed conventions)
+src/components/estimator/paint/paintPricingAvailability.js
+src/components/estimator/paint/paintCalc.js
+src/components/channelLetterInstall/channelLetterPricingAvailability.js
+src/components/vinylEstimator/vinylPricingAvailability.js
+src/components/estimator/foundation/foundationInputValidation.js
+# Supporting
+src/components/estimator/settings/moduleSettingDefaults.js

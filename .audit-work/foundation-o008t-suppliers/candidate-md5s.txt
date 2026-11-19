@@ -1,0 +1,7 @@
+af7323e0a3bc947b8dfb6f9f870231af *candidates/src/components/masterInventory/inventoryNormalization.js
+869f00a9b1b175cc942009bb0d59efb9 *candidates/src/components/estimator/foundation/legacyFoundationCalc.js
+fd8aaa9336e4e989b1674582b39be67c *candidates/src/pages/FoundationInventory.jsx
+7c2457f50d0990a7a26441dca6f43841 *candidates/src/components/masterInventory/MasterSuppliesTab.jsx
+2e6831c35ef1138ff63e235d0896d097 *candidates/src/components/foundation/EquipmentInventoryTab.jsx
+516d9882064cf01640974301e132cff1 *candidates/src/components/foundation/WallCapsInventoryTab.jsx
+e2a5f876548d3ab785684d3b65454b99 *candidates/src/components/masterInventory/foundationFieldSchema.js

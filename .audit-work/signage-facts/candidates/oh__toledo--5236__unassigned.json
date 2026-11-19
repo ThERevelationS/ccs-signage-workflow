@@ -1,0 +1,24 @@
+{
+ "jurisdiction_id": "6ad6f5dcac154b3612e75236",
+ "jurisdiction_name": "Toledo",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "CITY OF TOLEDO Division of Building Inspection BUILDING PERMIT APPLICATION One Government Center, Suite 1600 ● Toledo, OH 43604 ● Phone (419) 245-1220 ● Fax (419) 245-1329 ● www.toledo.oh.gov JOB ADDRESS: _____________________________ Occupancy: Residential Commercial Class of Work: New Alterations Addition Replacement Occupancy Owner Information Name: ____________________________ Address: __________________________ City: __________ State: ____ Zip: ______ Phone #: __________________________ Email Address: _____________________ Contractor Information License #: _________________________ Business Name: ____________________ Name: ____________________________ Address: __________________________ City: __________ State: ____ Zip: ______ Phone #: __________________________ Email Address: _____________________ Warning: The approval of plans by any officer or employee of this department procured",
+   "tags": [
+    "fee",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "0acd10eca1bd39050ec11a439fa26fcd4e0812812ae6d645f2b2ed7eb55f1f22",
+   "source_document_id": null,
+   "source_title": "0acd10eca1bd39050ec11a439fa26fcd4e0812812ae6d645f2b2ed7eb55f1f22.pdf",
+   "official_url": "https://cdn.toledo.oh.gov/uploads/documents/Building-Inspection/City-of-Toledo-Building-Permit-Application.pdf"
+  }
+ ]
+}

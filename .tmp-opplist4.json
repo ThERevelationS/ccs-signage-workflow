@@ -1,0 +1,660 @@
+{
+ "success": true,
+ "action": "list_opportunities",
+ "opportunities": [
+  {
+   "schema_version": 1,
+   "creation_request_key": "e2e-intake-2:opportunity",
+   "customer_id": "",
+   "customer_display_name": "",
+   "contact_id": null,
+   "location_id": null,
+   "compatibility_work_order_id": null,
+   "primary_estimating_request_id": null,
+   "source_primary_intake_id": null,
+   "title": "New opportunity",
+   "job_description": "",
+   "stage": "new",
+   "opened_at": "2026-11-02T04:32:54.460Z",
+   "stage_changed_at": "2026-11-02T04:32:54.460Z",
+   "last_activity_at": "2026-11-02T04:32:54.460Z",
+   "closed_at": null,
+   "lost_reason": null,
+   "salesperson": "",
+   "lead_source": "",
+   "origination": "",
+   "budget_amount": null,
+   "budget_note": "",
+   "desired_completion_date": "",
+   "desired_install_date": "",
+   "priority": "normal",
+   "survey_requirement": "unknown",
+   "permit_requirement": "unknown",
+   "installation_requirement": "unknown",
+   "removal_requirement": "unknown",
+   "electrical_requirement": "unknown",
+   "electrical_details": "",
+   "property_relationship": "unknown",
+   "next_action": "",
+   "next_action_due": "",
+   "next_action_assignee": "",
+   "notes": "",
+   "attachment_refs": [],
+   "source_summary": {
+    "capture_source": "manual",
+    "captured_by": "brett@cincisigns.com",
+    "captured_at": "2026-11-02T04:32:54.460Z"
+   },
+   "automation_deadline_fired": null,
+   "id": "6ae812787fdadfae4566b425",
+   "created_date": "2026-11-02T04:32:56.132000",
+   "updated_date": "2026-11-02T04:32:56.132000",
+   "created_by_id": "service_5d4754aa-ccfd-4c35-992a-f7a6cf45a828",
+   "created_by": "service+5d4754aa-ccfd-4c35-992a-f7a6cf45a828@no-reply.base44.com",
+   "is_sample": false
+  },
+  {
+   "schema_version": 1,
+   "creation_request_key": "e2e-chain-1:opportunity",
+   "customer_id": "6ae80beaa942daf331fa3feb",
+   "customer_display_name": "ZZ E2E TEST Co - delete me",
+   "contact_id": null,
+   "location_id": null,
+   "compatibility_work_order_id": null,
+   "primary_estimating_request_id": "6ae80c1cb0e50330fd14a836",
+   "source_primary_intake_id": null,
+   "title": "ZZ E2E TEST - delete me",
+   "job_description": "lifecycle chain verification",
+   "stage": "quoted",
+   "opened_at": "2026-11-02T04:03:58.065Z",
+   "stage_changed_at": "2026-11-02T04:28:31.079Z",
+   "last_activity_at": "2026-11-02T04:28:31.079Z",
+   "closed_at": null,
+   "lost_reason": null,
+   "salesperson": "Brett",
+   "lead_source": "",
+   "origination": "",
+   "budget_amount": null,
+   "budget_note": "",
+   "desired_completion_date": "",
+   "desired_install_date": "",
+   "priority": "normal",
+   "survey_requirement": "unknown",
+   "permit_requirement": "unknown",
+   "installation_requirement": "unknown",
+   "removal_requirement": "unknown",
+   "electrical_requirement": "unknown",
+   "electrical_details": "",
+   "property_relationship": "unknown",
+   "next_action": "",
+   "next_action_due": "",
+   "next_action_assignee": "",
+   "notes": "",
+   "attachment_refs": [],
+   "source_summary": {
+    "capture_source": "manual",
+    "captured_by": "brett@cincisigns.com",
+    "captured_at": "2026-11-02T04:03:58.065Z"
+   },
+   "automation_deadline_fired": null,
+   "id": "6ae80bafe3c4683e0ae7afd4",
+   "created_date": "2026-11-02T04:03:59.769000",
+   "updated_date": "2026-11-02T04:28:31.216000",
+   "created_by_id": "service_5d4754aa-ccfd-4c35-992a-f7a6cf45a828",
+   "created_by": "service+5d4754aa-ccfd-4c35-992a-f7a6cf45a828@no-reply.base44.com",
+   "is_sample": false
+  }
+ ],
+ "total": 2,
+ "matched_total": 2,
+ "total_loaded": 2,
+ "truncated": false,
+ "funnel": {
+  "estimate_funnel": {
+   "status_counts": {
+    "approved": 1,
+    "draft": 7,
+    "calculated": 15
+   },
+   "total": null,
+   "won_count": 1,
+   "decided_count": 1,
+   "win_rate": 100,
+   "won_value": 1579.35,
+   "decided_value": 1579.35,
+   "by_module": [
+    {
+     "module": "foundation",
+     "count": 13,
+     "estimates": 12,
+     "decided": 0,
+     "won": 0,
+     "value": 7288.37,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "module": "channel_letters",
+     "count": 7,
+     "estimates": 7,
+     "decided": 0,
+     "won": 0,
+     "value": 5067.35,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "module": "unassigned",
+     "count": 0,
+     "estimates": 3,
+     "decided": 1,
+     "won": 1,
+     "value": 1579.35,
+     "won_value": 1579.35,
+     "win_rate": 100
+    },
+    {
+     "module": "cnc",
+     "count": 4,
+     "estimates": 4,
+     "decided": 0,
+     "won": 0,
+     "value": 2.93,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "module": "custom",
+     "count": 1,
+     "estimates": 1,
+     "decided": 0,
+     "won": 0,
+     "value": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "module": "painting",
+     "count": 3,
+     "estimates": 3,
+     "decided": 0,
+     "won": 0,
+     "value": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "module": "laser",
+     "count": 5,
+     "estimates": 5,
+     "decided": 0,
+     "won": 0,
+     "value": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "module": "maintenance",
+     "count": 1,
+     "estimates": 1,
+     "decided": 0,
+     "won": 0,
+     "value": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "module": "vinyl",
+     "count": 2,
+     "estimates": 2,
+     "decided": 0,
+     "won": 0,
+     "value": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "module": "metal",
+     "count": 2,
+     "estimates": 2,
+     "decided": 0,
+     "won": 0,
+     "value": 0,
+     "won_value": 0,
+     "win_rate": null
+    }
+   ],
+   "by_salesperson_monthly": [
+    {
+     "salesperson": "Brett",
+     "month": "2026-11",
+     "created": 1,
+     "quote_value": 1579.35,
+     "decided_count": 1,
+     "won_count": 1,
+     "avg_quote_value": 1579.35
+    },
+    {
+     "salesperson": "Unassigned",
+     "month": "2026-10",
+     "created": 1,
+     "quote_value": 0,
+     "decided_count": 0,
+     "won_count": 0,
+     "avg_quote_value": 0
+    },
+    {
+     "salesperson": "Unassigned",
+     "month": "2026-09",
+     "created": 3,
+     "quote_value": 0,
+     "decided_count": 0,
+     "won_count": 0,
+     "avg_quote_value": 0
+    },
+    {
+     "salesperson": "Unassigned",
+     "month": "2026-08",
+     "created": 18,
+     "quote_value": 12358.65,
+     "decided_count": 0,
+     "won_count": 0,
+     "avg_quote_value": 686.59
+    }
+   ],
+   "weekly_throughput": [
+    {
+     "week": "2026-05-11",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-05-18",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-05-25",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-06-01",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-06-08",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-06-15",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-06-22",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-06-29",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-07-06",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-07-13",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-07-20",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-07-27",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-08-03",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-08-10",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-08-17",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-08-24",
+     "created": 2,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-08-31",
+     "created": 16,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-09-07",
+     "created": 1,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-09-14",
+     "created": 2,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-09-21",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-09-28",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-10-05",
+     "created": 1,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-10-12",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-10-19",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-10-26",
+     "created": 0,
+     "sent": 0,
+     "approved": 0
+    },
+    {
+     "week": "2026-11-02",
+     "created": 1,
+     "sent": 1,
+     "approved": 1
+    }
+   ],
+   "by_customer": [
+    {
+     "customer": "ZZ E2E TEST Co - delete me",
+     "customer_id": "6ae80beaa942daf331fa3feb",
+     "estimates": 1,
+     "quote_value": 1579.35,
+     "decided_count": 1,
+     "won_count": 1,
+     "lost_count": 0,
+     "won_value": 1579.35,
+     "win_rate": 100
+    },
+    {
+     "customer": "wqer",
+     "customer_id": "",
+     "estimates": 1,
+     "quote_value": 10734.5,
+     "decided_count": 0,
+     "won_count": 0,
+     "lost_count": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "customer": "Test",
+     "customer_id": "",
+     "estimates": 5,
+     "quote_value": 1579.35,
+     "decided_count": 0,
+     "won_count": 0,
+     "lost_count": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "customer": "Battery Men",
+     "customer_id": "6a8dcda83531d3f7bf6b12b2",
+     "estimates": 1,
+     "quote_value": 44.8,
+     "decided_count": 0,
+     "won_count": 0,
+     "lost_count": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "customer": "(The) Spot on Main",
+     "customer_id": "6a958582ba45a19e934400e0",
+     "estimates": 1,
+     "quote_value": 0,
+     "decided_count": 0,
+     "won_count": 0,
+     "lost_count": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "customer": "360 Property  Advantage",
+     "customer_id": "6a958582ba45a19e9344015c",
+     "estimates": 1,
+     "quote_value": 0,
+     "decided_count": 0,
+     "won_count": 0,
+     "lost_count": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "customer": "asdf",
+     "customer_id": "",
+     "estimates": 3,
+     "quote_value": 0,
+     "decided_count": 0,
+     "won_count": 0,
+     "lost_count": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "customer": "asdf",
+     "customer_id": "6a8e2e05666424ab7fa77e65",
+     "estimates": 1,
+     "quote_value": 0,
+     "decided_count": 0,
+     "won_count": 0,
+     "lost_count": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "customer": "asdfasdf",
+     "customer_id": "6aa84c1b9c5e4de2fe659fee",
+     "estimates": 1,
+     "quote_value": 0,
+     "decided_count": 0,
+     "won_count": 0,
+     "lost_count": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "customer": "sdfg",
+     "customer_id": "",
+     "estimates": 3,
+     "quote_value": 0,
+     "decided_count": 0,
+     "won_count": 0,
+     "lost_count": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "customer": "Test",
+     "customer_id": "6a8df536f7e2c7b74a218c27",
+     "estimates": 2,
+     "quote_value": 0,
+     "decided_count": 0,
+     "won_count": 0,
+     "lost_count": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "customer": "Unknown Customer",
+     "customer_id": "",
+     "estimates": 1,
+     "quote_value": 0,
+     "decided_count": 0,
+     "won_count": 0,
+     "lost_count": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "customer": "vgh",
+     "customer_id": "",
+     "estimates": 1,
+     "quote_value": 0,
+     "decided_count": 0,
+     "won_count": 0,
+     "lost_count": 0,
+     "won_value": 0,
+     "win_rate": null
+    },
+    {
+     "customer": "wert",
+     "customer_id": "",
+     "estimates": 1,
+     "quote_value": 0,
+     "decided_count": 0,
+     "won_count": 0,
+     "lost_count": 0,
+     "won_value": 0,
+     "win_rate": null
+    }
+   ],
+   "portal_engagement": [],
+   "portal_engagement_matched": 0,
+   "portal_engagement_truncated": false,
+   "avg_margin_pct": -320.4,
+   "total_margin": 665,
+   "aging_buckets": {
+    "expired": 0,
+    "expiring_7d": 0,
+    "valid_14d": 0,
+    "valid_30d": 0,
+    "valid_30d_plus": 0
+   },
+   "aging_rows": [],
+   "by_salesperson": [
+    {
+     "salesperson": "Unassigned",
+     "count": 22,
+     "quote_value": 12358.64899865311,
+     "won_count": 0,
+     "decided_count": 0,
+     "avg_quote_value": 561.76,
+     "win_rate": null
+    },
+    {
+     "salesperson": "Brett",
+     "count": 1,
+     "quote_value": 1579.35,
+     "won_count": 1,
+     "decided_count": 1,
+     "avg_quote_value": 1579.35,
+     "win_rate": 100
+    }
+   ],
+   "lost_reasons": [],
+   "markup_usage": {
+    "discount": 0,
+    "none": 38,
+    "0-10%": 0,
+    "10-25%": 0,
+    "25-50%": 0,
+    "50%+": 0
+   },
+   "avg_part_cost_ratio": 537.4,
+   "request_conversion": {
+    "total_requests_30d": 0,
+    "converted": 0,
+    "conversion_rate": null
+   }
+  },
+  "stage_counts": {
+   "new": 1,
+   "quoted": 1
+  },
+  "total": 2,
+  "open_pipeline_value": 0,
+  "won_value": 0,
+  "won_count": 0,
+  "decided_count": 0,
+  "win_rate": null,
+  "by_salesperson": [
+   {
+    "salesperson": "Unassigned",
+    "open_count": 1,
+    "open_value": 0,
+    "won_count": 0,
+    "won_value": 0,
+    "decided_count": 0,
+    "win_rate": null
+   },
+   {
+    "salesperson": "Brett",
+    "open_count": 1,
+    "open_value": 0,
+    "won_count": 0,
+    "won_value": 0,
+    "decided_count": 0,
+    "win_rate": null
+   }
+  ],
+  "lost_reasons": []
+ }
+}

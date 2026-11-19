@@ -1,0 +1,80 @@
+{
+  "unit": "O-009u / CMP-A09 remainder — sibling Foundation emitters adopt foundationCatalogRowAvailability",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "mode": "candidate-only (no remote writes, no publish/deploy/entity ops)",
+  "source_of_truth": "remote sandbox pulls taken this session; remote files re-read post-implementation and verified byte-identical (poleCalculator/wallCalculator/foundationCatalogIntegrity re-pulled: IDENTICAL content)",
+  "remote_head_observed": "dc5a48f94 (task stated 778eb1d1f; the newer commit touched only src/components/masterInventory/inventoryNormalization.js — the O-008t transport landing supplier_key grouping + null-preserving normalizeConcreteSupplier — none of this unit's files)",
+
+  "candidate_files": [
+    "src/components/estimator/foundation/poleCalculator.js",
+    "src/components/estimator/foundation/wallCalculator.js",
+    "src/components/estimator/foundation/wallCapCalculator.js",
+    "src/components/estimator/foundation/foundationEquipmentBindings.js"
+  ],
+  "candidate_copies": ".audit-work/foundation-o009u-siblings/candidates/",
+  "remote_baselines": ".audit-work/foundation-o009u-siblings/remote/",
+  "unified_diffs": ".audit-work/foundation-o009u-siblings/diffs/",
+  "remote_baseline_md5": {
+    "note": "remote on-disk md5sums (CRLF on pole/wall/integrity — the read API returns LF-normalized content; LF-normalized md5 in parens). Content re-verified identical by re-pull.",
+    "poleCalculator.js": "48f64dc72c962d59f222d9b80efc37eb (lf c0448f920eb8a98b1cce811aff36e71f)",
+    "wallCalculator.js": "e5449518e3a6205be7c64757bb4e22c1 (lf 2a7eb0bd3f0d7e5a74c96d1b44bbdeac)",
+    "wallCapCalculator.js": "f6b83599116695e3c06b096915968bbe",
+    "foundationEquipmentBindings.js": "8b4993156327c70047add4bcdb4e4188",
+    "foundationCatalogIntegrity.js": "67c2df9c9e94c5748bf2a8b421b49c22 (lf 87f22af2ffac6dcd6ef046076e01aca2)",
+    "foundationCalc.js": "75a9ae5c456ebb7be8785808ba016e2e",
+    "legacyFoundationCalc.js": "869f00a9b1b175cc942009bb0d59efb9",
+    "inventoryNormalization.js": "af7323e0a3bc947b8dfb6f9f870231af"
+  },
+
+  "adoption_sites": {
+    "poleCalculator.js polePricing()": "resolution chain was unassigned -> unavailable -> ambiguous -> type_mismatch -> inv=matches[0] -> price. Adds lifecycle between type and the consumed basis per the item scan's precedence: foundationCatalogRowAvailability(matches[0]) !== 'active' emits catalog_item_deleted/catalog_item_inactive on field pole_id and leaves inv null — the row is held via the unchanged issues->held() path (acknowledged pole_cost/painting/total/stock_pieces/required_length retained). Price-basis check (pole_price_unavailable on the consumed override/stock/unit basis) unchanged.",
+    "wallCalculator.js wallPricing().check()": "per-material chain was unassigned -> unavailable -> ambiguous -> type_mismatch -> price -> subtype -> unit -> dimensions. Adds lifecycle immediately after the type gate (existence -> type -> lifecycle -> consumed basis): emits catalog_item_deleted/catalog_item_inactive on materialId/internalMaterialId and returns null -> the wall holds its acknowledged calculatedCosts. Covers BOTH outer (materialId) and internal fill (internalMaterialId) walls — same check() drives both, kind preserved.",
+    "wallCapCalculator.js calcWallCaps()": "per-cap chain was assigned/matches -> type_mismatch -> stock price/length/cut checks. Adds lifecycle after the type gate: emits catalog_item_deleted/catalog_item_inactive on cap_inventory_id and returns held(cap) — acknowledged cost/cap_name/stock_length_inches retained under explicitSnapshot, never repriced to $0.",
+    "foundationEquipmentBindings.js resolveFoundationEquipment().check()": "resolved-row path was `assigned(id) && record -> return` (silent consume for equipment, normalized attachments, attachment_counts, legacy_ids, sub_attachment_counts). Adds lifecycle classification on the resolved record: emits catalog_item_deleted/catalog_item_inactive on the same {kind,index,field,inventoryId} channel the unassigned/unavailable codes feed -> equipmentPricing (foundationCalc, untouched) sees issues.length>0 -> held(entry) keeps acknowledged equipment_cost, attachment rows cost null. Zero-quantity count-map rows stay skipped exactly as unavailable rows were — check() is not reached for them (unconsumed)."
+  },
+
+  "import_cycles": {
+    "note": "wallCalculator/wallCapCalculator/foundationEquipmentBindings import foundationCatalogRowAvailability from ./foundationCatalogIntegrity while the integrity module already imports foundationWallCatalogIssues/foundationWallCapCatalogIssues/foundationEquipmentCatalogIssues back — the O-009t author designed it this way ('exported for their adoption'). Every cross-reference in both directions is an `export function` declaration used at call time (never module-eval time), so the ESM cycles are instantiation-safe; verified by esbuild bundling + executing the full calc graph. poleCalculator has no cycle (integrity never imports it; its assembly guard is inline)."
+  },
+
+  "unpriced_adoption_finding": "No new unpriced sites existed to flag — every sibling emitter already held unpriced-consumed rows on its own established code: pole_price_unavailable (override/pole_stock_price/cost_per_unit), wall_material_price_unavailable (override-or-cost_per_unit), wall_cap_stock_price_unavailable (cap_stock_price, incl. negatives via the finite basis), equipment_price_unavailable / equipment_delivery_price_unavailable (cost_per_<period>/pickup_delivery_cost + per-attachment period rate, in foundationCalc — owned file, not touched). Recorded explicit 0 still prices as deliberate free everywhere (foundationCatalogPriceClass 'free' parity). Existing codes preserved verbatim — no code renamed, so downstream surfaces/tests keep parity.",
+  "unassigned_default_finding": "No implicit catalog-default consumption exists in the siblings (no `|| '<default id>'` catalog picks — pole/wall/cap/equipment selections are explicit ids or unassigned). The only implicit defaults are O-009t-owned (pillar '#4' rebar, '4000_ae' mix) and already flag catalog_item_unassigned_default through the item/assembly scans.",
+
+  "labor_supplier_bypass": {
+    "spec_note": "O-009t SPEC flagged that LaborServiceInventory suppliers bypass the page's show_in_foundation:true query — they merge via {service_category:'concrete_service', is_active:true} + normalizeConcreteSupplier client-side.",
+    "coverage": "dc5a48f94 (O-008t) made normalizeConcreteSupplier null-preserving and it still carries show_in_foundation verbatim — a supplier row marked show_in_foundation:false enters the merged inventory flagged-but-present. The O-009t-landed item scan flags such a selection catalog_item_inactive -> item held -> calcProject deliveryCheck === null -> saved concrete-delivery snapshot retained, so the supplier's mixes/admixes/fees are never repriced while inactive. The siblings' emitters only meet a labor row via cross-type id selection (e.g. a service id authored as equipment_id): type-first precedence reports type_mismatch for pole/wall/cap; equipment's check has no type gate (pre-existing) and now reports the lifecycle flag instead of consuming silently.",
+    "delivery_scan_residual": "calcConcreteDelivery + calcItemCost live in legacyFoundationCalc.js — O-008t transport in flight, explicitly out of this unit's ownership. Its per-mix/fee price checks are inside that file. Reaching it with an inactive supplier is already impossible via the item-level hold described above."
+  },
+
+  "non_adoption_reviewed": [
+    "foundationAssemblyModel.js — structural parent graph (dangling mounts); never reads inventory rows.",
+    "foundationConstructionChecks.js — advisory warnings channel (severity advisory, never gates). readyMixItem only reads material_type to choose which assumption to warn about; prices nothing.",
+    "foundationInputValidation.js / signageCabinetInputIssues — cabinets price authored unit_cost*quantity; no catalog row resolution exists to classify.",
+    "landscapeMaterials.js — static in-module LANDSCAPE_MATERIALS catalog (no FoundationInventory rows; show_in_foundation N/A); landscape_material_price_unavailable already flags missing price.",
+    "foundationSellPricing.js — sells the priced outputs; no catalog reads.",
+    "foundationReinforcementItemProjection.js (foundationReinforcement* — owned elsewhere) — already delegates foundationItemCatalogIssues(commonItem, inventory); O-009t codes flow through its issue channel unchanged.",
+    "FoundationInventory pages/admin tabs, partSync.js, partCatalog.js, FoundationBOM.jsx — excluded by ownership or display-only surfaces (BOM reads calculatedCosts; partCatalog is the builder part picker, not a Foundation calc emitter).",
+    "src/components/estimator/brick/* + BrickStoneEstimator.jsx — separate owned module with its own code family (brick_material_unavailable); its page filters show_in_foundation!==false at load so a deactivated selection already flags unavailable rather than silently pricing — the same page/caller residual the O-009t SPEC documented.",
+    "signMaintenance/maintenanceMaterialRules.js — maintenance module; out of estimator scope."
+  ],
+
+  "parity_contract": {
+    "previously_priced_but_inactive": "now holds — the new code enters the emitter's existing issues->held channel so acknowledged snapshot amounts (pole_cost/total_cost, calculatedCosts, cap cost, equipment_cost) are retained verbatim under explicitSnapshot; the row never reprices to $0 and category totals withhold (null) rather than fabricate.",
+    "previously_correct_rows": "byte-identical — asserted by diffing candidate vs remote-baseline bundle output (JSON.stringify equality) on calcPoles/calcWalls/calcWallCaps/calcEquipmentPricing clean fixtures AND a fully-priced calcProject, plus issue-object equality on the missing-row held path.",
+    "issue_field_order": "existence -> material_type -> lifecycle -> consumed price basis — mirrors the landed item scan; lifecycle beats the consumed basis so an inactive+unpriced row reports the single lifecycle code, matching O-009t early-return semantics."
+  },
+
+  "verification": {
+    "harness": ".audit-work/foundation-o009u-siblings/verify-o009u.mjs — 46 assertions, all pass (verify-output.txt)",
+    "method": "esbuild bundles of the FRESH remote calc graph (HEAD dc5a48f94: foundationCalc, legacyFoundationCalc, pole/wall/wallCap calculators, equipment bindings, input validation, construction checks, landscape, geometry inputs, reinforcement model + stubbed foundationReinforcementItemProjection, fresh inventoryNormalization incl. supplier_key) with the four candidates substituted — bundle/verify-bundle.mjs vs an identical remote-baseline bundle (bundle-remote/verify-bundle-remote.mjs) for byte-parity diffs.",
+    "coverage_per_site": "inactive->hold+catalog_item_inactive (pole, outer+internal wall, cap, equipment + normalized attachments + attachment_counts + sub_attachment_counts); deleted->catalog_item_deleted (all sites incl. sub_attachment); unpriced->existing *_unavailable codes (parity, all sites); deliberate-0->free (parity); missing/ambiguous/type_mismatch/unassigned codes unchanged; zero-quantity attachment stays unconsumed; lifecycle-beats-price single-issue precedence; acknowledged-snapshot retention under explicitSnapshot for every emitter; assembly scan keeps its inline pole guard for non-calcProject callers; calcProject reports each lifecycle issue exactly once through the priced channel (assembly duplicates filtered).",
+    "bundle_caveat": "foundationReinforcementItemProjection stubbed to null in the harness (v1-only through calcProject; its own catalog delegation is O-009t-landed and untouched)."
+  },
+
+  "residual_gaps_documented_not_fixed": [
+    "Page-level filtering still lumps 'filtered out' with 'absent' for FoundationInventory rows: show_in_foundation:false rows are query-filtered before reaching the emitters on the page path, so a referenced one still classifies catalog_item_unavailable (deleted-or-deactivated message) on the live load — distinguishing inactive vs deleted requires an unfiltered catalog reference, the same page/caller residual O-009t recorded. The emitters now classify correctly for every caller that does pass the row through (labor merge, unfiltered callers, admin surfaces writing generic markers).",
+    "Equipment bindings' main-row check has no material_type gate (pre-existing): an active wrong-type id still resolves as equipment — out of this unit's scope; the lifecycle flag now covers its inactive/deleted cases.",
+    "brick module (estimator/brick/) keeps its own code family + page filter — separate owned unit, flagged for its masterplan."
+  ]
+}

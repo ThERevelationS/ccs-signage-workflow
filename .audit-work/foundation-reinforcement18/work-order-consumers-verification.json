@@ -1,0 +1,66 @@
+{
+  "synthetic": true,
+  "results": [
+    {
+      "name": "conversion manifest serializes frozen material40 and labor72 with separate physical metadata",
+      "ok": true
+    },
+    {
+      "name": "embedded and manifest-catalog parts retain identical112-dollar frozen rollups",
+      "ok": true
+    },
+    {
+      "name": "raw embedded Builder Parts use frozen20 even when the last calculation prices40",
+      "ok": true
+    },
+    {
+      "name": "unknown legacy hourly basis stays absent through JSON and both normalization paths",
+      "ok": true
+    },
+    {
+      "name": "catalog enrichment cannot invent missing historical hours or a72-per-hour rate",
+      "ok": true
+    },
+    {
+      "name": "priced zero never erases physical20 or becomes one priced foot in the Work Order",
+      "ok": true
+    },
+    {
+      "name": "ordinary and independent manifests and normalized rows match their frozen pre-change behavior",
+      "ok": true
+    },
+    {
+      "name": "local shop print preserves ordinary rows and unrelated fields while keeping unknown Product costs unknown",
+      "ok": true
+    },
+    {
+      "name": "local shop print separates priced0 and physical20 and escapes the review note",
+      "ok": true
+    },
+    {
+      "name": "local shop print retains72 without creating hourly pricing for unknown history",
+      "ok": true
+    },
+    {
+      "name": "sandbox-candidate shop print preserves ordinary rows and unrelated fields while keeping unknown Product costs unknown",
+      "ok": true
+    },
+    {
+      "name": "sandbox-candidate shop print separates priced0 and physical20 and escapes the review note",
+      "ok": true
+    },
+    {
+      "name": "sandbox-candidate shop print retains72 without creating hourly pricing for unknown history",
+      "ok": true
+    },
+    {
+      "name": "manifest and normalization reject corrupt v2 state instead of silently using generic pricing",
+      "ok": true
+    },
+    {
+      "name": "pure integration never reads or writes SDK records",
+      "ok": true
+    }
+  ],
+  "unexpectedOperations": []
+}

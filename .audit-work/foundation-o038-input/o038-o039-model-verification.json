@@ -1,0 +1,19 @@
+{
+  "suite": "verify-o038-o039-model",
+  "seed": "0x038039",
+  "assertions": 34,
+  "failures": [],
+  "coverage": {
+    "remoteParitySweepPoints": 20000,
+    "commitGestureCorpus": 5000,
+    "dragMoveCorpus": 2000,
+    "scenePointerToPlanCorpus": 2000,
+    "elementRectRoundTrips": 3000,
+    "viewportFitRoundTrips": 2880,
+    "frameLocalRoundTrips": 1200,
+    "worldRoundTrips": 1000,
+    "keyboardMatrixCases": 72,
+    "hitTestFixtures": "items(face/edge x4/vertex/pillar-rim/rotated-90/miss/invalid-dim/invalid-pos) + poles + walls(vertex/segment/wrap/face/open/closed/zero-length-seg/single-point/bad-vertex/collinear) + z-order + tolerances + labels"
+  },
+  "status": "PASS"
+}

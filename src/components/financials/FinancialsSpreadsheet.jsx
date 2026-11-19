@@ -9,8 +9,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Loader2, Link as LinkIcon } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
-import * as XLSX from "xlsx";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+// xlsx (~1MB) loads on demand inside the export handler — not at page load.
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -54,13 +55,9 @@ const FinancialsSpreadsheet = React.forwardRef(({
     setReadError("");
     try {
       const [orders, usersData] = await Promise.all([
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { is_rider: false, completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Financial spreadsheet Work Orders",
-        }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Financial spreadsheet authorized users" })
+        fetchAllWorkOrders().then((rows) =>
+          (rows || []).filter((wo) => wo.is_rider !== true && wo.completed !== true && wo.deleted !== true)),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Financial spreadsheet authorized users" })
       ]);
       setWorkOrders(orders.map((order) => ({
         ...order,
@@ -320,6 +317,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
     });
     exportData.push(totalsRow);
 
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Financials");
@@ -393,7 +391,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
                 <tr key={wo.id} className="border-b hover:bg-gray-50">
                   {isColumnVisible("client_name") && (
                     <td className="px-1 py-0.5 border-r">
-                      <button
+                      <button type="button"
                         onClick={() => setSelectedWorkOrder(wo)}
                         className="h-6 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600"
                       >
@@ -411,7 +409,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
 
                   {isColumnVisible("title") && (
                     <td className="px-1 py-0.5 border-r">
-                      <button
+                      <button type="button"
                         onClick={() => setSelectedWorkOrder(wo)}
                         className="h-6 w-full text-xs text-left px-1 hover:bg-blue-50 rounded truncate text-blue-600"
                       >
@@ -459,7 +457,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
                     <td className="px-1 py-0.5 border-r">
                       <Popover open={openDatePopover === `install-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `install-${wo.id}` : null)}>
                         <PopoverTrigger asChild disabled={!isRegistered}>
-                          <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          <button type="button" className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
                             {wo.project_install_date ? format(parseLocalDate(wo.project_install_date), "M/d/yyyy") : "-"}
                           </button>
                         </PopoverTrigger>

@@ -212,3 +212,62 @@ export function addressLocalityIdentityMatches(locality, candidate) {
   if (sourceKind === 'municipality') return stored.kind !== 'township' && incoming.kind !== 'township';
   return stored.kind === incoming.kind;
 }
+
+const RESEARCH_ROLE_LABELS = {
+  sign_permit: 'sign',
+  zoning: 'zoning',
+  building: 'building',
+  electrical: 'electrical',
+  electrical_permit: 'electrical issuer',
+  electrical_inspection: 'electrical inspection',
+  right_of_way: 'right-of-way',
+  historic_review: 'historic review',
+  planning: 'planning',
+  transportation: 'transportation',
+  other: 'other',
+};
+
+function officeHasRole(office, role) {
+  return (office?.authority_roles || []).includes(role);
+}
+
+/**
+ * One-line, live description of where an office research/verify pass stands
+ * for a locality — what has landed so far and what is still being looked for.
+ * Recomputed on every poll; this is a current-state line, not a log.
+ */
+export function officeResearchStatusLine(locality, profile) {
+  const name = String(locality?.name || 'This office').trim();
+  const offices = Array.isArray(locality?.offices) ? locality.offices : [];
+  const roles = Array.isArray(profile?.office_research?.roles) ? profile.office_research.roles : [];
+  const researchedRoles = new Set(
+    roles.map((r) => String(r?.role || r?.name || r || '').trim()).filter(Boolean)
+  );
+  const verified = (role) => offices.some((o) => o?.authority_verification_status === 'staff_verified' && officeHasRole(o, role));
+  const onFile = (role) => offices.some((o) => officeHasRole(o, role)) || researchedRoles.has(role);
+  const sign = verified('sign_permit');
+  const zoning = verified('zoning');
+
+  const parts = [];
+  if (!roles.length && !offices.length) {
+    parts.push('scanning official sources for permit offices');
+  } else {
+    if (roles.length) parts.push(`${roles.length} office role${roles.length === 1 ? '' : 's'} found`);
+    if (offices.length) parts.push(`${offices.length} office${offices.length === 1 ? '' : 's'} saved`);
+    const verifiedCount = offices.filter((o) => o?.authority_verification_status === 'staff_verified').length;
+    if (verifiedCount) parts.push(`${verifiedCount} verified`);
+  }
+
+  const missingGate = [!sign ? 'sign office' : '', !zoning ? 'zoning office' : ''].filter(Boolean).join(' + ');
+  if (missingGate) parts.push(`verifying ${missingGate}…`);
+  else parts.unshift('sign + zoning verified');
+
+  const ep = onFile('electrical_permit') || onFile('electrical');
+  const ei = onFile('electrical_inspection') || onFile('electrical');
+  if (ep && ei) parts.push('electrical issuer + inspection provider on file');
+  else if (ep) parts.push('electrical issuer on file · still checking inspection provider');
+  else if (ei) parts.push('electrical inspection provider on file · still checking issuer');
+  else if (roles.length) parts.push('checking who issues electrical permits + who inspects');
+
+  return `${name}: ${parts.join(' · ')}`;
+}

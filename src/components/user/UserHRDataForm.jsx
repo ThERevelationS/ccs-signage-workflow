@@ -25,6 +25,7 @@ import {
   Shirt
 } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL"];
 const HOODIE_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL"];
@@ -361,8 +362,7 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
 
         <div>
           <Label>Date of Birth</Label>
-          <Input
-            type="date"
+          <CcsDateField
             value={hrData.date_of_birth || ""}
             onChange={(e) => updateField("date_of_birth", e.target.value)}
             className="mt-1"
@@ -390,8 +390,7 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
           <>
             <div>
               <Label>Hire Date</Label>
-              <Input
-                type="date"
+              <CcsDateField
                 value={hrData.hire_date || ""}
                 onChange={(e) => updateField("hire_date", e.target.value)}
                 className="mt-1"
@@ -399,8 +398,7 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
             </div>
             <div>
               <Label>Start Date</Label>
-              <Input
-                type="date"
+              <CcsDateField
                 value={hrData.start_date || ""}
                 onChange={(e) => updateField("start_date", e.target.value)}
                 className="mt-1"

@@ -1,5 +1,6 @@
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 function normalize(value) {
   if (Array.isArray(value)) return value.map(normalize);
@@ -132,7 +133,7 @@ const COST_FIELD_RX = /cost|rate|price/i;
 // value changed between the loaded row and the saved payload. Best-effort:
 // failures are swallowed so the audit never blocks an inventory save.
 export async function recordInventoryCostChanges({ itemId, entityKey, before = {}, after = {}, fields = [], note = "Inventory edit", changedBy = "" } = {}) {
-  if (!itemId || typeof base44?.entities?.InventoryCostHistory?.create !== "function") return 0;
+  if (!itemId || typeof staffEntities?.InventoryCostHistory?.create !== "function") return 0;
   const costFields = new Set((fields || []).filter((f) => f?.name && COST_FIELD_RX.test(f.name)).map((f) => f.name));
   const candidates = new Set([...costFields, ...Object.keys(after).filter((k) => COST_FIELD_RX.test(k))]);
   let written = 0;
@@ -140,7 +141,7 @@ export async function recordInventoryCostChanges({ itemId, entityKey, before = {
     const oldVal = Number(before[field]);
     const newVal = Number(after[field]);
     if (!Number.isFinite(oldVal) || !Number.isFinite(newVal) || Math.abs(oldVal - newVal) <= 0.000001) continue;
-    await base44.entities.InventoryCostHistory.create({
+    await staffEntities.InventoryCostHistory.create({
       inventory_item_id: String(itemId),
       entity_key: String(entityKey || ""),
       cost_field: String(field),
@@ -155,11 +156,11 @@ export async function recordInventoryCostChanges({ itemId, entityKey, before = {
 }
 
 export async function loadInventoryCostHistory({ itemId, entityKey = "", limit = 5 } = {}) {
-  if (!itemId || typeof base44?.entities?.InventoryCostHistory?.filter !== "function") return [];
+  if (!itemId || typeof staffEntities?.InventoryCostHistory?.filter !== "function") return [];
   const query = entityKey
     ? { inventory_item_id: String(itemId), entity_key: String(entityKey) }
     : { inventory_item_id: String(itemId) };
-  const rows = await base44.entities.InventoryCostHistory.filter(query).catch(() => []);
+  const rows = await staffEntities.InventoryCostHistory.filter(query).catch(() => []);
   const list = Array.isArray(rows) ? rows : [];
   return list
     .sort((a, b) => String(b?.created_date || "").localeCompare(String(a?.created_date || "")))

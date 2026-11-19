@@ -10,8 +10,18 @@ import { DollarSign, Filter, Search, Download, Settings, ChevronLeft, ChevronRig
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format as dateFnsFormat } from "date-fns";
 import { format } from "date-fns";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { staffEntities } from "@/components/staff/staffEntities";
+
+// due_date is stored date-only ("YYYY-MM-DD"); a bare new Date(str) parses it
+// as UTC midnight and shifts it one day back in local time. Parse as local
+// midnight the same way MyWorkflow/SIPs do.
+const parseLocalDate = (dateString) => {
+  if (!dateString) return undefined;
+  const [year, month, day] = String(dateString).split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 
 // Workflow reporting constants
 const STAGES = ["estimating", "sales", "permitting", "design", "production", "fabrication", "installation"];
@@ -36,12 +46,9 @@ function WorkflowReportingTab() {
     let active = true;
     setLoading(true);
     setReadError("");
-    loadAllEntityRows({
-      entity: base44.entities.WorkOrder,
-      query: { deleted: false },
-      sort: "created_date",
-      label: "Workflow reporting Work Orders",
-    }).then((wos) => {
+    // Shares the boardFeed snapshot every other surface reads — snapshot-first
+    // paint plus cross-tab dedupe instead of a second full WorkOrder pull.
+    fetchAllWorkOrders({ preferSnapshot: true }).then((wos) => {
       if (!active) return;
       setAllWorkOrders(wos || []);
     }).catch((error) => {
@@ -52,13 +59,15 @@ function WorkflowReportingTab() {
     return () => { active = false; };
   }, []);
 
-  const active = allWorkOrders.filter(wo => !wo.completed && !wo.deleted);
-  const completed = allWorkOrders.filter(wo => wo.completed && !wo.deleted);
-  const completionRate = allWorkOrders.length > 0
-    ? Math.round((completed.length / allWorkOrders.length) * 100) : 0;
+  const visible = allWorkOrders.filter(wo => !wo.deleted);
+  const active = visible.filter(wo => !wo.completed);
+  const completed = visible.filter(wo => wo.completed);
+  const completionRate = visible.length > 0
+    ? Math.round((completed.length / visible.length) * 100) : 0;
   const asapCount = active.filter(wo => wo.asap).length;
   const today = new Date();
-  const overdueCount = active.filter(wo => wo.due_date && new Date(wo.due_date) < today).length;
+  const startOfToday = new Date(today); startOfToday.setHours(0, 0, 0, 0);
+  const overdueCount = active.filter(wo => wo.due_date && parseLocalDate(wo.due_date) < startOfToday).length;
 
   const stageData = STAGES.map(stage => ({
     name: STAGE_LABEL[stage],
@@ -77,7 +86,7 @@ function WorkflowReportingTab() {
   });
   const timelineData = next30.map(label => ({
     date: label,
-    count: active.filter(wo => wo.due_date && dateFnsFormat(new Date(wo.due_date), "MMM d") === label).length
+    count: active.filter(wo => wo.due_date && dateFnsFormat(parseLocalDate(wo.due_date), "MMM d") === label).length
   })).filter(d => d.count > 0);
 
   const assigneeCounts = {};
@@ -204,7 +213,7 @@ import TeamLeaderboard from "@/components/financials/TeamLeaderboard";
 import PerformanceSummaryReport from "@/components/financials/PerformanceSummaryReport";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 export default function Financials() {
@@ -262,13 +271,11 @@ export default function Financials() {
     setDataReadError("");
     try {
       const [orders, usersData] = await Promise.all([
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { is_rider: false, completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Financial Work Orders",
-        }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Financials authorized users" })
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.is_rider !== true && wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Financials authorized users" })
       ]);
       setWorkOrders(orders);
       setUsers(usersData);
@@ -282,7 +289,7 @@ export default function Financials() {
 
   const loadActiveFilters = async () => {
     const SalesFilter = base44.entities.SalesFilter;
-    const allFilters = await loadAllEntityRows({ entity: SalesFilter, sort: null, label: "Financials saved filters" });
+    const allFilters = await loadAllEntityRows({ entity: SalesFilter, sort: null, cacheTtlMs: 30000, label: "Financials saved filters" });
     const userEmail = currentUser?.email || "";
     const selected = allFilters.filter(f => f.selected_by?.includes(userEmail));
     setActiveFilters(selected);
@@ -533,7 +540,7 @@ export default function Financials() {
 
             {/* Project Manager Filter */}
             <Select value={filterPM} onValueChange={setFilterPM}>
-              <SelectTrigger className="w-40 h-8">
+              <SelectTrigger className="w-48 h-8">
                 <SelectValue placeholder="All PMs" />
               </SelectTrigger>
               <SelectContent>

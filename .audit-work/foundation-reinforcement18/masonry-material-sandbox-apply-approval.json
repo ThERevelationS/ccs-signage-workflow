@@ -1,0 +1,15 @@
+{
+  "authorized": true,
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "892c701aedae039ae03ad8b160ae42175ad99e40",
+  "restoreCheckpointId": "6aee9592890e87734428fbd6",
+  "candidateHashes": {
+    "wallCalculator.js": "19f986b158ecd651b0dfd64b306e765dcedb42aa52b5e032f020288f7b080686",
+    "foundationCatalogIntegrity.js": "702f1405b1cae1256da4eda2e7ed4d50085a5be1b4cd3324cf232a84938eca4e",
+    "foundationCalc.js": "74d8b5a0ff5dd7d677c9e060879298f673530bfb7b15e83c7a16d45dc8fd9747",
+    "FoundationWallsPanel.jsx": "e52d718d8f0c3c906bdce073ca83c65effca9fd96de7e93d5be0923a2b1c7f57",
+    "FoundationBOM.jsx": "688323df8427d019f1b9da8371b4f6a30f65d24963fb913589ce84ae93fc5432"
+  },
+  "reviewedProtocolHash": "450f5de9c7a5940a4ea5e85b3a6d44048780b3e90a47a75317843e63f1f5b2f5"
+}

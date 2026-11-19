@@ -1,0 +1,27 @@
+{
+ "jurisdiction_id": "6aea62c120add61f3a105799",
+ "jurisdiction_name": "Lostcreek Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "LOSTCREEK TOWNSHIP Zoning Permit Fee Schedule This Fee Schedule has been adopted by Resolution No. 2022-29 and approved by the Lostcreek Township Board of Trustees in accordance with the regulations and requirements of the Lostcreek Township Zoning Resolution. All fees adopted prior to this Resolution shall be null and void and the following listed fees are effective as of January 1, 2023, until further revised, by subsequent resolution. New Residential Construction $0.10/Sq. Ft of Living Area Includes additions (Min. $100 to Max. $500) Accessory Structure Permit $50.00 Includes detached garages, pole barns, pools, porches, decks, etc. New Commercial Construction $0.15/Sq. Ft of Area Includes additions & accessory structures (Min. $150 to Max. $550) Lot Split Review/Zoning Confirmation Letters $20.00 Commercial Sign Permit $150.00 Variance/Appeal Application $250.00 Conditional Use Appli",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "dimension",
+    "process",
+    "authority"
+   ],
+   "weight": 12,
+   "source_sha256": "3ec647a53e9d8abc59f8e98a8a5746587c06e507c8f5a7c3193235277e06be9d",
+   "source_document_id": null,
+   "source_title": "3ec647a53e9d8abc59f8e98a8a5746587c06e507c8f5a7c3193235277e06be9d.pdf",
+   "official_url": "https://lostcreektownshipoh.gov/wp-content/uploads/2026/03/ZONING-PERMIT-FEE-SCHEDULE.pdf"
+  }
+ ]
+}

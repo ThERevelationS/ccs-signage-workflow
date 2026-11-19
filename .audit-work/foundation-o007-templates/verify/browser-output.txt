@@ -1,0 +1,8 @@
+ok desktop template save stores extended allowlist (links, AI brief, pricing selection, rates); forbidden fields absent 
+ok desktop page-wired gate: saveDisabled + reason renders amber note, disabled action, zero service calls 
+ok desktop save -> stored -> apply -> merge round-trips all covered fields with remapped ids and preserved identity 
+ok mobile template save stores extended allowlist (links, AI brief, pricing selection, rates); forbidden fields absent 
+ok mobile page-wired gate: saveDisabled + reason renders amber note, disabled action, zero service calls 
+ok mobile save -> stored -> apply -> merge round-trips all covered fields with remapped ids and preserved identity 
+
+6/6 browser cases pass

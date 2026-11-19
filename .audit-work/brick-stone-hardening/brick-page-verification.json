@@ -1,0 +1,16 @@
+{
+ "suite": "brick-page",
+ "scenarios": 9,
+ "result": "PASS",
+ "checks": [
+  "S1 clean project: no banner, finite totals persisted, one saveSource write, no estimate handoff without estimateId",
+  "S2 malformed mortar_bag_cost: banner + aria-invalid + saved-fallback shown; Save AND Save-As-Copy each zero writes (the mop-up guard gap)",
+  "S3 held without acknowledged totals: 'Not saved' shown, no fabricated $0.00, zero writes",
+  "S4 dangling selected material: catalog hold, 'masonry catalog' pause message, zero writes on both paths",
+  "S5 explicit zeros honored (markup/mortar/labor): no banner, save proceeds, zeros persisted",
+  "S6 waste_factor=0 (positive-required) flagged and blocked on both paths",
+  "S7 blank rate input preserved mid-edit, field flagged, zero writes",
+  "S8 clean project: Save-As-Copy still works end-to-end (one copy write, real totals cloned)",
+  "S9 estimate handoff gated: held → zero recordBuilderSave; clean → one recordBuilderSave"
+ ]
+}

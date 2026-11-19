@@ -1,0 +1,22 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "head": "0727ffe5a7e7c9fdccbfd9998b61a6094ae2b2af",
+  "files": [
+    "src/components/estimator/foundation/foundationInputValidation.js",
+    "src/components/estimator/foundation/FoundationItemCard.jsx",
+    "src/pages/FoundationEstimator.jsx",
+    "src/components/estimator/foundation/foundationCalc.js"
+  ],
+  "checkpoint": {
+    "checkpointId": "6aed8aaf73b8085aacddf128",
+    "name": "Concrete-basic-input-validation-saved-price-preservation-verified",
+    "gitCommitHash": "0727ffe5a7e7c9fdccbfd9998b61a6094ae2b2af"
+  },
+  "remoteClean": true,
+  "readbackNormalization": "LF-equivalent exact content; optional final LF for new helper only",
+  "remoteBuildExit": 0,
+  "published": false,
+  "businessRecordsTested": false,
+  "paidAiCalls": 0
+}

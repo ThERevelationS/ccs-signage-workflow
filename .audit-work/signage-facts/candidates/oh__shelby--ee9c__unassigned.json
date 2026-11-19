@@ -1,0 +1,44 @@
+{
+ "jurisdiction_id": "6adf09020fd606d7aabcee9c",
+ "jurisdiction_name": "Shelby",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "1262.08 FEES, PERMIT. (a) City Council may, from time to time, prescribe and amend by ordinance a schedule of fees to be charged to applicants for all applications and permits as indicated in division (e) hereof. (b) City Council shall, by ordinance, establish a schedule of fees, charges and expenses and a collection procedure for zoning certificates, amendments, appeals, exceptions, variances, conditional use certificates, plan approvals and other matters pertaining to the administration and enforcement of this Zoning Code and requiring investigations, inspections, legal advertising, postage and other expenses. The schedule of fees shall be posted in the City Hall and the office of the Zoning Inspector and may be altered or amended only by City Council. Until all applicable fees, charges and expenses have been paid in full, no action shall be taken on any application or appeal. (c) When",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "illumination",
+    "process",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 16,
+   "source_sha256": "dc11cbc598a1d19cd5fb948e2f044818d3248115431de4ba24def280cc66cbb2",
+   "source_document_id": null,
+   "source_title": "dc11cbc598a1d19cd5fb948e2f044818d3248115431de4ba24def280cc66cbb2.pdf",
+   "official_url": "https://shelbycity.oh.gov/wp-content/uploads/2020/05/Zoning_Permit_Fees.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Conditional Zoning Permits Residential $60 Business $60 Industrial $60 Variance $60 Appeal to Board of Zoning Appeals $60 Appeals of Zoning Inspector's Decision $60 Application for amendment to resolution $60",
+   "tags": [
+    "fee",
+    "dimension",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "dc11cbc598a1d19cd5fb948e2f044818d3248115431de4ba24def280cc66cbb2",
+   "source_document_id": null,
+   "source_title": "dc11cbc598a1d19cd5fb948e2f044818d3248115431de4ba24def280cc66cbb2.pdf",
+   "official_url": "https://shelbycity.oh.gov/wp-content/uploads/2020/05/Zoning_Permit_Fees.pdf"
+  }
+ ]
+}

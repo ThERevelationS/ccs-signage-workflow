@@ -1,0 +1,39 @@
+{
+ "jurisdiction_id": "6adf9786077de279d0174211",
+ "jurisdiction_name": "Meigsville",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Morgan County Office of the Engineer 155 East Main Street Room 208 McConnelsville, OH 43756 OFFICE(740)962-3171 OFFICE FAX(740)962-3703 GARAGE(740)962-2041 GARAGE FAX(740)962-2440 March 28, 2024 John Telesz, PE, PS Morgan County Floodplain Administrator 155 East Main Street McConnelsville, OH 43756 Morgan County Herald 25 N. 5th Street P.O. Box 268 McConnelsville, OH 43756 In re: DEVELOPMENT PERMITS REQUIRED by Morgan County Special Purpose Flood Damage Reduction Regulations - Resolution 23-549 Dear Sir/Madam, My name is John Telesz, I am the new Morgan County Floodplain Administrator. The Morgan County Special Purpose Flood Damage Reduction Regulations have recently been updated and approved by the Morgan County Commissioners. The updated regulations do not differ significantly from the previous regulations approved in 2013. What has changed are the fees for the review of development pe",
+   "tags": [
+    "fee",
+    "dimension",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "da51d64a6a93dd97dff31e66fc05399e36e37605980c56e9f97777f8eb005ce4",
+   "source_document_id": null,
+   "source_title": "da51d64a6a93dd97dff31e66fc05399e36e37605980c56e9f97777f8eb005ce4.pdf",
+   "official_url": "https://morgancounty-oh.gov/documents/building_permits_2024.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Morgan County Office of the Engineer 155 East Main Street Room 208 McConnelsville, OH 43756 OFFICE(740)962-3171 OFFICE FAX(740)962-3703 GARAGE(740)962-2041 GARAGE FAX(740)962-2440 Our office will be sending out notifications to all landowners affected by the floodplain regulations in the future. If you are unsure if your property is partially or fully within the floodplain hazard area, you may come to the Engineer’s Office on the second floor of the Riecker Building at 155 East Main Street in McConnelsville and ask us. Or you may access the Morgan County GIS system yourself online at: https://arcg.is/0zLbrO click the bright yellow link for our new GIS site, make sure to hit the icon which resembles a stack of papers in the upper right hand corner of the screen and turn on the “Flood Hazard Areas, FEMA-River Mark, and FEMA-Flood Hazard Lines” by clicking the box in front of each of those ",
+   "tags": [
+    "area",
+    "illumination",
+    "temporary"
+   ],
+   "weight": 6,
+   "source_sha256": "da51d64a6a93dd97dff31e66fc05399e36e37605980c56e9f97777f8eb005ce4",
+   "source_document_id": null,
+   "source_title": "da51d64a6a93dd97dff31e66fc05399e36e37605980c56e9f97777f8eb005ce4.pdf",
+   "official_url": "https://morgancounty-oh.gov/documents/building_permits_2024.pdf"
+  }
+ ]
+}

@@ -1,0 +1,113 @@
+{
+  "name": "EstimateAcceptance",
+  "type": "object",
+  "description": "Immutable audit record that a customer accepted a specific issued customer quote version. This records the acceptance evidence/method; EstimateRevision continues to record the resulting whole-estimate lifecycle transition to approved.",
+  "properties": {
+    "estimate_id": {
+      "type": "string"
+    },
+    "work_order_id": {
+      "type": "string"
+    },
+    "delivery_id": {
+      "type": "string",
+      "description": "Optional exact EstimateQuoteDelivery record the customer accepted; blank when acceptance is not tied to a specific delivery."
+    },
+    "quote_issue_key": {
+      "type": "string",
+      "description": "Stable identity shared with the issued quote version, its deliveries, and related EstimateRevision records."
+    },
+    "quote_version": {
+      "type": "number",
+      "minimum": 1
+    },
+    "quote_issue_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "quote_expiration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Valid-through date of the customer quote version that was accepted."
+    },
+    "quote_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Customer quote total accepted; never internal cost."
+    },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "accepted_by_name": {
+      "type": "string"
+    },
+    "accepted_by_email": {
+      "type": "string"
+    },
+    "acceptance_method": {
+      "type": "string",
+      "enum": [
+        "signed_quote",
+        "email",
+        "verbal",
+        "in_person",
+        "portal",
+        "other"
+      ]
+    },
+    "evidence_reference": {
+      "type": "string",
+      "description": "Short reference to the evidence, such as signed quote received, customer email, PO, or conversation reference."
+    },
+    "notes": {
+      "type": "string"
+    },
+    "recorded_by_email": {
+      "type": "string",
+      "description": "Internal staff email that recorded the acceptance through the authenticated acceptance service."
+    },
+    "recorded_by_name": {
+      "type": "string",
+      "description": "Internal staff display name that recorded the acceptance."
+    }
+  },
+  "required": [
+    "estimate_id",
+    "quote_version",
+    "accepted_at",
+    "accepted_by_name",
+    "acceptance_method"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__estimate_audit_backend_only__"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "__estimate_audit_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__estimate_audit_backend_only__"
+      }
+    }
+  }
+}

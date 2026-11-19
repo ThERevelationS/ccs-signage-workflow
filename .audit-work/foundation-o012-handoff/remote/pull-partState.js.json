@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/estimator/parts/partState.js",
+      "content": "export function requiresBuilderReattach(part) {\n  if (!part || part.is_active === false) return false;\n  if (part.builder_sync_state === \"detached_override\") return true;\n  if (part.builder_sync_state === \"manual_addon\") return false;\n  return [\"detached\", \"reattach_available\"].includes(part.inventory_link_state);\n}\n\nexport function countBuilderReattachParts(parts = []) {\n  return (parts || []).filter(requiresBuilderReattach).length;\n}",
+      "startLine": 1,
+      "endLine": 10,
+      "totalLines": 10,
+      "truncated": false
+    }
+  ]
+}

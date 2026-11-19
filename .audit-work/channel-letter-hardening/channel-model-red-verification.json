@@ -1,0 +1,77 @@
+{
+ "mode": "red",
+ "generatedAt": "2026-11-07T14:35:53.485Z",
+ "totalChecks": 13,
+ "passed": 13,
+ "failed": 0,
+ "candidateBundleInputs": [
+  "frozen:/app/src/components/channelLetterInstall/lettersCalculator.jsx",
+  "frozen:/app/src/components/channelLetterInstall/wallMaterials.jsx",
+  "frozen:/app/src/components/channelLetterInstall/installSizeRates.jsx",
+  "frozen:/app/src/components/channelLetterInstall/installCalculator.jsx",
+  "frozen:/app/src/components/channelLetterInstall/channelLetterPricingAvailability.js",
+  "frozen:/app/model-entry.js"
+ ],
+ "frozenBundleInputs": [
+  "frozen:/app/src/components/channelLetterInstall/lettersCalculator.jsx",
+  "frozen:/app/src/components/channelLetterInstall/wallMaterials.jsx",
+  "frozen:/app/src/components/channelLetterInstall/installSizeRates.jsx",
+  "frozen:/app/src/components/channelLetterInstall/installCalculator.jsx",
+  "frozen:/app/model-entry.js"
+ ],
+ "availabilitySha256": "559cd862b1562025ddf74277634727e466ccdd3a9bdaffd07d8bf9c8e0c5efe1",
+ "results": [
+  {
+   "id": "RED: remote letters calc silently uses hidden per-inch default",
+   "ok": true
+  },
+  {
+   "id": "RED: remote purchase calc launders blank qty to $0",
+   "ok": true
+  },
+  {
+   "id": "RED: remote purchase calc launders blank raceway length to $0",
+   "ok": true
+  },
+  {
+   "id": "RED: remote letters calc drops a malformed fee silently",
+   "ok": true
+  },
+  {
+   "id": "RED: remote line item uses hidden 65/hr labor default",
+   "ok": true
+  },
+  {
+   "id": "RED: remote line item launders blank qty_letters to $0 labor",
+   "ok": true
+  },
+  {
+   "id": "RED: remote line item uses hidden size-rate defaults",
+   "ok": true
+  },
+  {
+   "id": "RED: remote line item launders malformed material cost to $0",
+   "ok": true
+  },
+  {
+   "id": "RED: remote rollup launders malformed equipment total to $0",
+   "ok": true
+  },
+  {
+   "id": "RED: remote rollup launders malformed supplies % to the 10% default",
+   "ok": true
+  },
+  {
+   "id": "RED: remote rollup launders malformed travel cost to $0",
+   "ok": true
+  },
+  {
+   "id": "RED: remote rollup launders missing letters total to $0",
+   "ok": true
+  },
+  {
+   "id": "RED: remote line item prices unknown type at flush-mount defaults",
+   "ok": true
+  }
+ ]
+}

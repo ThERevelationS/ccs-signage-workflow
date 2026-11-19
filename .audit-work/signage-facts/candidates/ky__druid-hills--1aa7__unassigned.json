@@ -1,0 +1,38 @@
+{
+ "jurisdiction_id": "6adf63418e0630eadbd91aa7",
+ "jurisdiction_name": "Druid Hills",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "City of Druid Hills Summary of Ordinances P a g e | 2 Revised: 2019 In 2016 the City Commissioners approved an amendment to this Ordinance implementing a Tree Rebate program to encourage residents to plant trees. A $50.00 per tree rebate is available to residents who meet the program criteria. Ordinance 10 -This ordinance requires all residents to submit detailed plans and specifications for the construction of any buildings, additions to buildings, porches, swimming pools, additional out-buildings or additional paving to the City of Druid Hills' Review Committee prior to the start of construction. Approval by this Committee is required before Metro Louisville will issue a building permit. Note: This ordinance does not supersede any Metro Louisville laws or regulations. All current zoning laws and building code requirements must be met. Ordinance No. 10 also specifies the time limit allo",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "174c9c199937cb7ffa597fbdebf39ce87f6dd1f320bd5b76b621b1578524665a",
+   "source_document_id": null,
+   "source_title": "174c9c199937cb7ffa597fbdebf39ce87f6dd1f320bd5b76b621b1578524665a.pdf",
+   "official_url": "https://druidhillsky.gov/wp-content/uploads/2019/07/Summary-of-Ordinances-2019.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMIT APPLICATION DATE OF APPLICATION: RESIDENT/OWNER: ADDRESS: PHONE: E - MAIL: GENERAL DESCRIPTION OF JOB: ADDED SQUARE FOOTAGE: ESTIMATED COST: REQUIRED ATTACHMENTS: PLOT PLAN (must show new project and distance to property lines) EVALUATION DRAWING (must show or list finish details) DRUID HILLS TREE PERMIT (required if any tree larger than 12” in diameter two feet above the ground will need to be removed) NOTE: Electrical, Plumbing, and Foundations drawings are not required. APPROVAL DENIED REASON FOR DENIAL: DRUID HILLS OFFICIAL: SIGNATURE: TITLE: DATE:",
+   "tags": [
+    "area",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "017703cee82ed195320d24a140c609513bae55d7fa2c06b32b0beaf2333b3e2e",
+   "source_document_id": null,
+   "source_title": "017703cee82ed195320d24a140c609513bae55d7fa2c06b32b0beaf2333b3e2e.pdf",
+   "official_url": "https://druidhillsky.gov/wp-content/uploads/2018/06/Building-Permit-Form.pdf"
+  }
+ ]
+}

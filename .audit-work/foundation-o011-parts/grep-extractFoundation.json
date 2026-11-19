@@ -1,0 +1,16 @@
+{
+  "matches": [
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 1999,
+      "text": "function extractFoundation(project, catalogs) {\r"
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 2914,
+      "text": "    case \"foundation\": return extractFoundation(project, catalogs);\r"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 2
+}

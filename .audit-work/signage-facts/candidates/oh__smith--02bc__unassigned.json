@@ -1,0 +1,40 @@
+{
+ "jurisdiction_id": "6ae046116b3eacda0fae02bc",
+ "jurisdiction_name": "Smith",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR SIGN PERMIT FOR SMITH TOWNSHIP Date: _______________ Name or Character Display: ____________________________________________ Site Address: ___________________________________________________________ Applicant: __________________________________________ Address: _______________________________________________________________ Phone: __________________ Fax: ___________________ Sign Data: Distance from Street: ____________________________________________ Gross Area: ________________________________________________Sq. Ft. Accessory To: ___________________________________ Building Type *Attach Copy of Sign Proposal Applicant: I hereby agree to install the sign described by this application in conformance with the Zoning Regulations and of Smith Township. The applicant shall notify the Zoning Office when the installation is ready for inspection. _________________________________",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "94fe6b531cbf5d2edcd3e74be6a19f8bbc96c7aa93ca5f6a1111978a7cadd266",
+   "source_document_id": null,
+   "source_title": "94fe6b531cbf5d2edcd3e74be6a19f8bbc96c7aa93ca5f6a1111978a7cadd266.pdf",
+   "official_url": "https://irp.cdn-website.com/3c6a5956/files/uploaded/83.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "> > > > > ? \" ) \" ) \" ) \" ) X CR RR CR RR CR RR CR RR CR RR CR RR CR RR CR RR CR RR CR RR HELSEL RD SMITH NORTHWEST RD BANDY RD NORTH BENTON WEST RD BEVERLY AVE CLEVELAND-EAST LIVERPOOL RD JOHNSON RD MARTIN RD BEST RD BEST RD HEISLER RD 12TH ST BANDY RD WEST MIDDLETOWN RD WEST MIDDLETOWN RD JOHNSON RD BELOIT SNODES RD BANDY RD MARTIN RD WEST SOUTH RANGE RD WEST SOUTH RANGE RD 12TH ST COURTNEY RD COURTNEY RD ALLIED DR BELOIT SNODES RD 17TH ST VERMONT AVE JOHNSON RD 13TH ST 12TH ST 14TH ST 16TH ST 15TH ST CIRCLE ROYAL OAK RACE RD MAIN ST LEXINGTON RD 18TH ST 19TH ST AVE STANLEY OHIO AVE NOBLE OHIO AVE ST ST 4TH ST WILLIAMS ST 3RD ST OREGON AVE 2ND ST JERSEY ST OYSTER RD URMSON AVE STANLEY AVE CALDWELL AVE MORGAN AVE BRACE AVE SMITH ST ASH ST DERR AVE NEW YORK AVE GEORGIA AVE PENN AVE FLORIDA THOMPSON ST FLORIDA AVE AVE TEXAS AVE SHADY FRANCIS AVE Mc KINLEY AVE OAK ST ST ST JEFFERSON ALDEN ",
+   "tags": [
+    "dimension",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "f4c69afa8d5512eb38784d8b4b6e967fdc4509d739ac7c018c92d1c37902ba91",
+   "source_document_id": null,
+   "source_title": "f4c69afa8d5512eb38784d8b4b6e967fdc4509d739ac7c018c92d1c37902ba91.pdf",
+   "official_url": "https://img1.wsimg.com/blobby/go/e4b87dfb-9ecd-4042-b88e-a3e7afa17749/downloads/Smith%20Township%20Zoning%20Map%20Official.pdf?ver=1792072166203"
+  }
+ ]
+}

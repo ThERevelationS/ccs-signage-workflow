@@ -1,0 +1,187 @@
+{
+  "name": "EstimateQuoteDelivery",
+  "type": "object",
+  "description": "Immutable delivery audit for customer quote versions. One record is created after a quote email is successfully accepted by Gmail. Delivery history is separate from EstimateRevision lifecycle history and BuilderPriceRevision pricing history.",
+  "properties": {
+    "estimate_id": {
+      "type": "string",
+      "description": "AllInOneEstimate id whose customer quote was delivered."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Stable internal receipt for retry-safe persistence of a Gmail-confirmed delivery audit."
+    },
+    "work_order_id": {
+      "type": "string",
+      "description": "Optional linked WorkOrder id at the time of delivery."
+    },
+    "quote_issue_key": {
+      "type": "string",
+      "description": "Stable identity shared by all deliveries, lifecycle revisions, and acceptance records for one issued customer quote version."
+    },
+    "quote_version": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Customer-facing quote version actually attached to this delivery."
+    },
+    "quote_issue_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Issue date printed on the attached customer quote."
+    },
+    "quote_valid_days": {
+      "type": "number",
+      "minimum": 0,
+      "default": 30,
+      "description": "Validity period printed on this delivered quote version."
+    },
+    "quote_expiration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Exact valid-through date printed on this delivered quote version."
+    },
+    "quote_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Customer quote total delivered; never internal cost."
+    },
+    "recipient_email": {
+      "type": "string"
+    },
+    "cc_emails": {
+      "type": "string"
+    },
+    "bcc_emails": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "delivery_method": {
+      "type": "string",
+      "enum": [
+        "email"
+      ],
+      "default": "email"
+    },
+    "delivery_status": {
+      "type": "string",
+      "enum": [
+        "sent",
+        "failed"
+      ],
+      "default": "sent"
+    },
+    "transport": {
+      "type": "string",
+      "description": "Send-time transport that produced the outcome (gmail_api, smtp)."
+    },
+    "failure_reason": {
+      "type": "string",
+      "description": "Send-time failure detail when delivery_status is failed."
+    },
+    "delivery_events": {
+      "type": "array",
+      "description": "Append-only send-time event trail (sent/failed + timestamp + transport). Provider webhook/bounce telemetry is unavailable — this is send-time outcome only.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "transport": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "telemetry_note": {
+      "type": "string",
+      "description": "Fixed note marking the telemetry boundary: send-time outcome only; provider webhook/bounce data is unavailable."
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "gmail_message_id": {
+      "type": "string",
+      "description": "Gmail API message id returned after successful delivery submission."
+    },
+    "attachment_filename": {
+      "type": "string"
+    },
+    "attachment_file_url": {
+      "type": "string",
+      "description": "Base44 file-storage URL for the exact PDF bytes attached to this delivery."
+    },
+    "attachment_sha256": {
+      "type": "string",
+      "description": "SHA-256 fingerprint of the exact archived/emailed PDF bytes."
+    },
+    "attachment_size_bytes": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Exact PDF attachment size in bytes."
+    },
+    "is_resend": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when an already-issued quote version is delivered again without creating a new customer quote version."
+    },
+    "delivery_n": {
+      "type": "number",
+      "minimum": 1,
+      "description": "Ordinal count of deliveries for this quote issue \u2014 1 on first send, then 2, 3... on resends."
+    },
+    "source_status": {
+      "type": "string",
+      "description": "Persisted estimate status immediately before this delivery."
+    }
+  },
+  "required": [
+    "estimate_id",
+    "quote_version",
+    "recipient_email",
+    "delivery_method",
+    "delivery_status",
+    "sent_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__estimate_audit_backend_only__"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "__estimate_audit_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__estimate_audit_backend_only__"
+      }
+    }
+  }
+}

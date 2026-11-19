@@ -1,0 +1,37 @@
+{
+ "jurisdiction_id": "6ae9e347c84622020f16f8a7",
+ "jurisdiction_name": "Nebo",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Zoning & Permits Office 67 North Main Street Madisonville, KY 42431 270 - 824 - 2108 dtodd@madisonvillegov.com www.madisonvilleliving.com Location where the applicant plans to operate ____________ __________________________________________________ __________________________________________________ Business Name _____________________________________ Contact Name _____________________________________ Address ___________________________________________ ___________________________________________ Phone ___________________________________________ Email ___________________________________________ Business Entity: ___ Sole Proprietor ___ Corporation ___ Partnership ___ LLC - Individual ___ LLC - Partnership Federal ID# _________________ or SS# __________________ Has the business or entity ever had a permit denied or revoked to operate with the City of Madisonville? ___ No ___ Yes, explain when ",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "4322ca40bf56febf93b00d3efee79ad61e1d7cd87495f8161ebd4012692bbb01",
+   "source_document_id": null,
+   "source_title": "4322ca40bf56febf93b00d3efee79ad61e1d7cd87495f8161ebd4012692bbb01.pdf",
+   "official_url": "https://hopkinscounty.ky.gov/images/Mobile_Food_Vendor_Application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Business Name Address City, State, Zip Phone # A. Check Appropriate Classification: ( ) C Corporation ( ) S Corporation ( ) Partnership ( ) Sole Proprietorship ( ) Fiduciary ( ) Other B. Social Security and/or Federal ID Numbers C. Nature of Business D. Did you have employees working in Hopkins County this year? ( ) Yes ( ) No If Yes, you must also file HCFC FORM 01 - Employers Return of License Fee Withheld E. Have Federal Authorities changed net income as originally reported in prior years? ( ) Yes ( ) No If Yes, attach Schedule of Changes for each year. F. Business Dates Started Discontinued If Sold, Successor G. List additional businesses operated subject to Hopkins County License Fee 1. Gross Income per attached Federal Return 2. Total Deductions per attached Federal Return 3. Net Income per attached Federal Return 4. Add items not deductible (Section C, Line 23) 5. Total (Line 3 pl",
+   "tags": [
+    "fee",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "a0014534c37fe91979b4a410825003db05e3f37b1852cc1192753e14dd000490",
+   "source_document_id": null,
+   "source_title": "a0014534c37fe91979b4a410825003db05e3f37b1852cc1192753e14dd000490.pdf",
+   "official_url": "https://hopkinscounty.ky.gov/images/HopCo_Net_Profit_License_Fee_Return.pdf"
+  }
+ ]
+}

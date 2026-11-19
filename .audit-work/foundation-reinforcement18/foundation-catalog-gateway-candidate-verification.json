@@ -1,0 +1,50 @@
+{
+  "results": [
+    {
+      "name": "fresh page/facade create reaches gateway and permits admin only",
+      "ok": true
+    },
+    {
+      "name": "fresh page/facade updateMany reaches gateway and permits admin only",
+      "ok": true
+    },
+    {
+      "name": "fresh page/facade deleteMany reaches gateway and permits admin only",
+      "ok": true
+    },
+    {
+      "name": "ordinary staff cannot mutate catalog even when bypassing UI controls",
+      "ok": true
+    },
+    {
+      "name": "missing session fails before facade invoke and direct gateway returns401 with no entity access",
+      "ok": true
+    },
+    {
+      "name": "unconditional and unsupported catalog operations stay denied for admin",
+      "ok": true
+    },
+    {
+      "name": "stale conditional updates report0 and never overwrite a newer catalog edit",
+      "ok": true
+    },
+    {
+      "name": "facade conditional delete honors the loaded version and preserves newer catalog records",
+      "ok": true
+    },
+    {
+      "name": "catalog delete rejects conflicting envelope/query identities and malformed anchors before entity access",
+      "ok": true
+    },
+    {
+      "name": "catalog writes reject unanchored update/delete queries and nested operators before mutation",
+      "ok": true
+    }
+  ],
+  "source": "Fresh sandbox source snapshot",
+  "actualStaffFacade": true,
+  "authenticationMocked": true,
+  "syntheticEntitiesOnly": true,
+  "realStorageVerified": false,
+  "schemaChanged": false
+}

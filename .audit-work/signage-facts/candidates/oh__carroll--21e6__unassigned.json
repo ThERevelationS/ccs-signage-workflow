@@ -1,0 +1,24 @@
+{
+ "jurisdiction_id": "6ae043901a744011e07321e6",
+ "jurisdiction_name": "Carroll",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "CARROLL TOWNSHIP STORMWATER PERMIT APPLICATION Review and Inspection Fee (Code of Carroll Township Section 428-15) Minor earth disturbance (Section 428-5)  Regulated activities that create Earth Disturbance Activities greater than 2,000 square feet and equal to or less than 5,000 square feet. $150.00  Construction of an Impervious or Semi-Impervious Surface, whether initially or cumulatively, that is less than (i) 5% of Lot Area or (ii) greater than 200 square feet but less than 5,000 square feet. o 200 to 299 square feet of impervious or semi-impervious $75.00 o 300 to 5,000 square feet of impervious or semi-impervious $150.00 o Impervious or semi-impervious from 200 to 5,000 square feet associated with new residential dwelling $300.00  May require Escrow of $1,000.00 for more in-depth projects. Major earth disturbance (Section 428-5) – Escrow $1,000.00  Removal of ground cover, gra",
+   "tags": [
+    "fee",
+    "area",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "182a888c83d2fd39a4bcb630fd13a6894679d70de95c6161607749297fd6510b",
+   "source_document_id": null,
+   "source_title": "182a888c83d2fd39a4bcb630fd13a6894679d70de95c6161607749297fd6510b.pdf",
+   "official_url": "https://www.carrolltownship.com/wp-content/uploads/STORMWATER-PERMIT-APPLICATION-2019-code.pdf"
+  }
+ ]
+}

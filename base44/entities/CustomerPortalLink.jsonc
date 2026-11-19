@@ -1,7 +1,7 @@
 {
   "name": "CustomerPortalLink",
   "type": "object",
-  "description": "Bearer-token share link for the customer portal. The token itself is the capability — whoever holds it can read the linked record's sanitized view. Backend-only; created/revoked by staff through customerPortalAction.",
+  "description": "Bearer-token share link for the customer portal. The token itself is the capability \u2014 whoever holds it can read the linked record's sanitized view. Backend-only; created/revoked by staff through customerPortalAction.",
   "properties": {
     "schema_version": {
       "type": "number",

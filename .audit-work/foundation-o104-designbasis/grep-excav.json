@@ -1,0 +1,176 @@
+{
+  "matches": [
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementProposal.js",
+      "line": 85,
+      "text": "      excavationMethod: project.excavation_method, quantityOverride, rateOverride });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 42,
+      "text": "  if (record.excavation_method !== undefined && record.excavation_method !== null && record.excavation_method !== \"\""
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 43,
+      "text": "    && record.excavation_method !== \"hand_dig\" && record.excavation_method !== \"equipment_excavation\") {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 44,
+      "text": "    add(\"excavation_method\", \"foundation_excavation_method_invalid\","
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 189,
+      "text": "  const method = project?.excavation_method;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 195,
+      "text": "      field: \"excavation_method\", code: \"foundation_excavation_method_invalid\","
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 217,
+      "text": "        && (item?.excavation_method === undefined || item?.excavation_method === null || item?.excavation_method === \"\")) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 220,
+      "text": "          field: \"excavation_method\", code: \"foundation_excavation_method_invalid\","
+    },
+    {
+      "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+      "line": 92,
+      "text": "      item?.excavation_method === \"hand_dig\" || !item?.excavation_method"
+    },
+    {
+      "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+      "line": 301,
+      "text": "  if (item.excavation_method === 'hand_dig' || !item.excavation_method) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationConstructionChecks.js",
+      "line": 35,
+      "text": "// method on the hand-dig branch (`item.excavation_method === 'hand_dig' ||"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationConstructionChecks.js",
+      "line": 36,
+      "text": "// !item.excavation_method`)."
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationConstructionChecks.js",
+      "line": 38,
+      "text": "  blank(item?.excavation_method) ? (blank(project?.excavation_method) ? null : project.excavation_method) : item.excavation_method;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationConstructionChecks.js",
+      "line": 88,
+      "text": "      \"excavation_method\", \"excavation_spoil_unaccounted\","
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationConstructionChecks.js",
+      "line": 98,
+      "text": "    if (blank(item?.excavation_method) && blank(project?.excavation_method)) unspecified.push(index);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationConstructionChecks.js",
+      "line": 104,
+      "text": "      \"excavation_method\", \"excavation_method_unspecified\","
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationConstructionChecks.js",
+      "line": 119,
+      "text": "      \"excavation_method\", \"excavation_equipment_unpriced\","
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationItemCard.jsx",
+      "line": 168,
+      "text": "            value={item.excavation_method || \"\"}"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationItemCard.jsx",
+      "line": 169,
+      "text": "            onChange={(e) => set({ excavation_method: e.target.value })}"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationRatesPanel.jsx",
+      "line": 41,
+      "text": "          value={project.excavation_method || \"hand_dig\"}\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationRatesPanel.jsx",
+      "line": 42,
+      "text": "          onChange={(e) => onChange({ excavation_method: e.target.value })}\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+      "line": 46,
+      "text": "  \"excavation_method\","
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 56,
+      "text": "  const effectiveItem = { ...item, excavation_method: item.excavation_method || project?.excavation_method };"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 63,
+      "text": "      inventory, settings, excavationMethod: project?.excavation_method,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 106,
+      "text": "  const effectiveItem = { ...item, excavation_method: item.excavation_method || project?.excavation_method };"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 464,
+      "text": "      { ...item, excavation_method: item.excavation_method || project.excavation_method }, settings, index)),"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 512,
+      "text": "      excavation_method: i.excavation_method || project.excavation_method,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementItemProjection.js",
+      "line": 42,
+      "text": "  const commonItem = { ...item, include_rebar: false, excavation_method: item.excavation_method || excavationMethod };"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementItemProjection.js",
+      "line": 47,
+      "text": "    commonItem.excavation_method === \"hand_dig\" || !commonItem.excavation_method"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationDraftRecovery.js",
+      "line": 6,
+      "text": "  \"project_concrete_type\", \"project_concrete_admixtures\", \"excavation_method\", \"selected_concrete_id\","
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 2150,
+      "text": "        subtype: item.excavation_method || \"excavation\",\r"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 88,
+      "text": "  excavation_method: \"hand_dig\","
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 229,
+      "text": "          excavation_method: proj.excavation_method || \"hand_dig\","
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 670,
+      "text": "    excavation_method: project.excavation_method,"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 34
+}

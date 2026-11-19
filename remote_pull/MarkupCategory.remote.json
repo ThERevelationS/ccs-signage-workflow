@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "base44/entities/MarkupCategory.jsonc",
+      "content": "{\n  \"name\": \"MarkupCategory\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"category_key\": {\n      \"type\": \"string\",\n      \"description\": \"Stable key used by MarkupTier.markups and the categorization library.\"\n    },\n    \"category_name\": {\n      \"type\": \"string\",\n      \"description\": \"Display label, e.g. 'Outsourced Fabrication and Sign Components'.\"\n    },\n    \"description\": {\n      \"type\": \"string\"\n    },\n    \"sort_order\": {\n      \"type\": \"number\",\n      \"default\": 0\n    },\n    \"volume_discount_eligible\": {\n      \"type\": \"boolean\",\n      \"description\": \"When false, this category is excluded from volume discounts even if listed in the global eligible-keys setting.\"\n    }\n  },\n  \"required\": [\n    \"category_key\",\n    \"category_name\"\n  ],\n  \"rls\": {\n    \"read\": {\n      \"$or\": [\n        {\n          \"user_condition\": {\n            \"role\": \"admin\"\n          }\n        },\n        {\n          \"user_condition\": {\n            \"role\": \"user\"\n          }\n        }\n      ]\n    },\n    \"create\": {\n      \"user_condition\": {\n        \"role\": \"admin\"\n      }\n    },\n    \"update\": {\n      \"user_condition\": {\n        \"role\": \"admin\"\n      }\n    },\n    \"delete\": {\n      \"user_condition\": {\n        \"role\": \"admin\"\n      }\n    }\n  }\n}",
+      "startLine": 1,
+      "endLine": 60,
+      "totalLines": 60,
+      "truncated": false
+    }
+  ]
+}

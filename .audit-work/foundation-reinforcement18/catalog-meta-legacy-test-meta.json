@@ -1,0 +1,368 @@
+{
+  "inputs": {
+    "offline:@/api/base44Client": {
+      "bytes": 178,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/ui/button": {
+      "bytes": 113,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "offline:@/components/ui/input": {
+      "bytes": 78,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "offline:@/components/ui/label": {
+      "bytes": 78,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "offline:@/components/ui/select": {
+      "bytes": 223,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/ui/card": {
+      "bytes": 170,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/ui/badge": {
+      "bytes": 39,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/ui/tabs": {
+      "bytes": 170,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/ui/dialog": {
+      "bytes": 224,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:lucide-react": {
+      "bytes": 232,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/foundation/EquipmentInventoryTab": {
+      "bytes": 49,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/foundation/WallCapsInventoryTab": {
+      "bytes": 49,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/loadAllEntityRows": {
+      "bytes": 105,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/builder/builderEntityPersistence": {
+      "bytes": 388,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/masterInventory/inventoryPersistence": {
+      "bytes": 140,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/staff/staffEntities": {
+      "bytes": 52,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationGeometryInputs.js": {
+      "bytes": 2674,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementCatalogMetadata.js": {
+      "bytes": 1781,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/ReinforcementDraftField.jsx": {
+      "bytes": 1217,
+      "imports": [
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationReinforcementCatalogMetadataFields.jsx": {
+      "bytes": 1636,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementCatalogMetadata.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementCatalogMetadata"
+        },
+        {
+          "path": "src/components/estimator/foundation/ReinforcementDraftField.jsx",
+          "kind": "import-statement",
+          "original": "./ReinforcementDraftField"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/pages/FoundationInventory.jsx": {
+      "bytes": 43132,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "offline:@/api/base44Client",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "offline:@/components/ui/button",
+          "kind": "import-statement",
+          "original": "@/components/ui/button"
+        },
+        {
+          "path": "offline:@/components/ui/input",
+          "kind": "import-statement",
+          "original": "@/components/ui/input"
+        },
+        {
+          "path": "offline:@/components/ui/label",
+          "kind": "import-statement",
+          "original": "@/components/ui/label"
+        },
+        {
+          "path": "offline:@/components/ui/select",
+          "kind": "import-statement",
+          "original": "@/components/ui/select"
+        },
+        {
+          "path": "offline:@/components/ui/card",
+          "kind": "import-statement",
+          "original": "@/components/ui/card"
+        },
+        {
+          "path": "offline:@/components/ui/badge",
+          "kind": "import-statement",
+          "original": "@/components/ui/badge"
+        },
+        {
+          "path": "offline:@/components/ui/tabs",
+          "kind": "import-statement",
+          "original": "@/components/ui/tabs"
+        },
+        {
+          "path": "offline:@/components/ui/dialog",
+          "kind": "import-statement",
+          "original": "@/components/ui/dialog"
+        },
+        {
+          "path": "offline:lucide-react",
+          "kind": "import-statement",
+          "original": "lucide-react"
+        },
+        {
+          "path": "offline:@/components/foundation/EquipmentInventoryTab",
+          "kind": "import-statement",
+          "original": "@/components/foundation/EquipmentInventoryTab"
+        },
+        {
+          "path": "offline:@/components/foundation/WallCapsInventoryTab",
+          "kind": "import-statement",
+          "original": "@/components/foundation/WallCapsInventoryTab"
+        },
+        {
+          "path": "offline:@/components/estimator/loadAllEntityRows",
+          "kind": "import-statement",
+          "original": "@/components/estimator/loadAllEntityRows"
+        },
+        {
+          "path": "offline:@/components/estimator/builder/builderEntityPersistence",
+          "kind": "import-statement",
+          "original": "@/components/estimator/builder/builderEntityPersistence"
+        },
+        {
+          "path": "offline:@/components/masterInventory/inventoryPersistence",
+          "kind": "import-statement",
+          "original": "@/components/masterInventory/inventoryPersistence"
+        },
+        {
+          "path": "offline:@/components/staff/staffEntities",
+          "kind": "import-statement",
+          "original": "@/components/staff/staffEntities"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementCatalogMetadata.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationReinforcementCatalogMetadata"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationReinforcementCatalogMetadataFields.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationReinforcementCatalogMetadataFields"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    ".audit-work/foundation-reinforcement18/catalog-meta-legacy-test.mjs": {
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "exports": [
+        "GenericItemForm",
+        "default"
+      ],
+      "entryPoint": "src/pages/FoundationInventory.jsx",
+      "inputs": {
+        "src/pages/FoundationInventory.jsx": {
+          "bytesInOutput": 47345
+        },
+        "offline:@/api/base44Client": {
+          "bytesInOutput": 196
+        },
+        "offline:@/components/ui/button": {
+          "bytesInOutput": 116
+        },
+        "offline:@/components/ui/input": {
+          "bytesInOutput": 81
+        },
+        "offline:@/components/ui/label": {
+          "bytesInOutput": 81
+        },
+        "offline:@/components/ui/select": {
+          "bytesInOutput": 223
+        },
+        "offline:@/components/ui/card": {
+          "bytesInOutput": 170
+        },
+        "offline:@/components/ui/badge": {
+          "bytesInOutput": 39
+        },
+        "offline:@/components/ui/tabs": {
+          "bytesInOutput": 170
+        },
+        "offline:@/components/ui/dialog": {
+          "bytesInOutput": 178
+        },
+        "offline:lucide-react": {
+          "bytesInOutput": 200
+        },
+        "offline:@/components/foundation/EquipmentInventoryTab": {
+          "bytesInOutput": 40
+        },
+        "offline:@/components/foundation/WallCapsInventoryTab": {
+          "bytesInOutput": 41
+        },
+        "offline:@/components/estimator/loadAllEntityRows": {
+          "bytesInOutput": 104
+        },
+        "offline:@/components/estimator/builder/builderEntityPersistence": {
+          "bytesInOutput": 384
+        },
+        "offline:@/components/masterInventory/inventoryPersistence": {
+          "bytesInOutput": 140
+        },
+        "offline:@/components/staff/staffEntities": {
+          "bytesInOutput": 49
+        },
+        "src/components/estimator/foundation/foundationGeometryInputs.js": {
+          "bytesInOutput": 307
+        },
+        "src/components/estimator/foundation/foundationReinforcementCatalogMetadata.js": {
+          "bytesInOutput": 1534
+        },
+        "src/components/estimator/foundation/ReinforcementDraftField.jsx": {
+          "bytesInOutput": 1288
+        },
+        "src/components/estimator/foundation/FoundationReinforcementCatalogMetadataFields.jsx": {
+          "bytesInOutput": 1557
+        }
+      },
+      "bytes": 55365
+    }
+  }
+}

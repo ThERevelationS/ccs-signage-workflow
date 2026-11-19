@@ -1,0 +1,11 @@
+{
+  "engine": "425aba288111e4e0304ee0e88ce36f7fe99b1a01b0f95adba9a3be0af77ba7d5",
+  "sources": {
+    "src/components/estimator/foundation/foundationCalc.js": "7326d886735670f20385e1aa58706d344becba32c4494a47511a01f37483d01c",
+    "src/components/estimator/foundation/legacyFoundationCalc.js": "29c7fc9e8bd8e7d692005a1c23c091c30f2e413dcabde1a0fddfb356f89b6b20",
+    "src/components/estimator/foundation/poleCalculator.js": "84d59e2313b38439ba99c68c0141e191d85e24d33dc47f78db766b374d9fdb4c",
+    "src/components/estimator/foundation/wallCalculator.js": "604f8d6ac657d6b09c55314368ceec8c34182c03143784172789648b556cfbd6",
+    "src/components/estimator/foundation/wallCapCalculator.js": "6c6e428d7bc07e007c12ac58cc566f82b385161590a8a8485fd7bc1862d85695",
+    "src/components/estimator/foundation/foundationCatalogIntegrity.js": "ce41b357b59be0ad1f5b995ba3636217662c6dda2a1e66c71f030c432de9041b"
+  }
+}

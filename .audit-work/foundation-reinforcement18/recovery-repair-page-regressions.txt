@@ -1,0 +1,10 @@
+ok actual page draft edits and acknowledgments leave live legacy steel and section prices unchanged with no backend writes
+ok actual page preview distinguishes saved, current and proposed prices and includes full section delta
+ok real page acceptance is one Undo and Redo, consumes its exact ID, and never saves immediately
+ok manual Save uses real CAS/readback helper and persists accepted geometry, split and origin receipt
+ok Undo after successful save retains latest acknowledged CAS version instead of rewriting from the old version
+ok accepted infeasible edit displays acknowledged price, blocks Save and allows controlled repair without source writes
+ok old proposal callback cannot accept after route change, return or reload of the same source
+ok raw proposal survives close and explicit browser restore without restoring a stale preview or acknowledgment
+Foundation page reinforcement: 8/8; failed=0
+exit=0

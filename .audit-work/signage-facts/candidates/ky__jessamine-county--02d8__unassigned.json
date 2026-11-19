@@ -1,0 +1,24 @@
+{
+ "jurisdiction_id": "6ac1a2aa3e564c8548d302d8",
+ "jurisdiction_name": "Jessamine County",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "IF NO WAGES WERE PAID THIS PERIOD, MARK “NONE”, SIGN AND RETURN THIS FORM IF NO WAGES WERE PAID THIS PERIOD, MARK “NONE”, SIGN AND RETURN THIS FORM JESSAMINE COUNTY OCCUPATIONAL TAX FORM JCOT 1 EMPLOYERS’ RETURN OF LICENSE FEE WITHHELD 1. Total salaries, wages, commissions and other compensation paid to all employees for services within Jessamine County 1 _____________ 2. Tax due this period at 1% (Line 1 x 1%) 2 _____________ 3. Adjustment for preceding quarters Credit/Balance Due 3 _____________ 4. Penalty for late filing/payment 5% per month not to exceed 25% $25.00 minimum 4 _____________ 5. Interest 12 % per annum 5 _____________ 6. Balance Due 6______________ 7. Overpayment credited to next quarter 7______________ I hereby certify that the information, schedules, statements and exhibits filed herewith are true and correct. Signed __________________________ Date ___________ Title __",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "c6c396873cc12f917e0932f7c9ec4f15713ac2bab3950834dc336cf4e5658805",
+   "source_document_id": null,
+   "source_title": "c6c396873cc12f917e0932f7c9ec4f15713ac2bab3950834dc336cf4e5658805.pdf",
+   "official_url": "https://jessamineky.gov/wp-content/uploads/2024/12/Payroll-withholding-form.pdf"
+  }
+ ]
+}

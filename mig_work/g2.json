@@ -1,0 +1,1006 @@
+{
+  "matches": [
+    {
+      "path": "src/api/permittingReviewClient.js",
+      "line": 4,
+      "text": "  const sessionToken = typeof window === \"undefined\" ? \"\" : window.localStorage.getItem(\"sss_session_token\") || \"\";"
+    },
+    {
+      "path": "src/api/permittingReviewClient.js",
+      "line": 7,
+      "text": "    ...(sessionToken ? { session_token: sessionToken } : {}),"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 78,
+      "text": "      session_token: sessionToken, action: \"get_customer_360\", customer_id: customerId,"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 298,
+      "text": "      const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"bulk_remarkup\", tier_number: tier });"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 379,
+      "text": "          const res = await base44.functions.invoke(\"ensureEstimateCustomer\", { company_name: companyName, fields, session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1212,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1480,
+      "text": "              const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"set_watch\", entity: \"AllInOneEstimate\", record_id: estimate.id, field: \"status\", value: \"approved\", label: estimate.project_name || estimate.estimate_number || \"this estimate\" });"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1491,
+      "text": "              const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"export_estimate\", estimate_id: estimate.id });"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1517,
+      "text": "              const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"copy_bom\", from_estimate_id: srcRow.id, to_estimate_id: estimate.id });"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1536,
+      "text": "              const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"copy_sections\", from_estimate_id: srcRow.id, to_estimate_id: estimate.id });"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 132,
+      "text": "      const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"import_estimate\", bundle });"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 434,
+      "text": "      const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { action: \"full_backup\", session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 485,
+      "text": "              const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"estimate_from_module\", module_key: moduleKey.trim(), project_id: projectId.trim() });"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 395,
+      "text": "          session_token: sessionToken,"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 653,
+      "text": "      const r = await base44.functions.invoke(\"accessRequestAction\", { session_token: sessionToken, action: \"submit\" });"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 1108,
+      "text": "          const accessRes = await base44.functions.invoke(\"issueAdminSettingsAccess\", { session_token: loginData.token });"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 2300,
+      "text": "      const accessRes = await base44.functions.invoke(\"issueAdminSettingsAccess\", { session_token: sessionToken, face_descriptor: descriptor });"
+    },
+    {
+      "path": "src/pages/Inventory.jsx",
+      "line": 24,
+      "text": "  const r = await base44.functions.invoke(\"inventoryAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 68,
+      "text": "        base44.functions.invoke(\"invoicingAction\", { session_token: sessionToken, action: \"revenue_summary\", months: 12 }).catch(() => null),\r"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 69,
+      "text": "        base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"list_opportunities\", include_closed: true }).catch(() => null),\r"
+    },
+    {
+      "path": "src/pages/JobCosting.jsx",
+      "line": 40,
+      "text": "  const r = await base44.functions.invoke(\"jobCostingAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/TimeClock.jsx",
+      "line": 238,
+      "text": "      const r = await base44.functions.invoke(\"shiftSwapAction\", { session_token: timeClockSessionToken, action: \"submit\", partner_email: swapPartner.trim(), reason: swapReason.trim() });\r"
+    },
+    {
+      "path": "src/pages/TimeClock.jsx",
+      "line": 340,
+      "text": "            session_token: requestToken,\r"
+    },
+    {
+      "path": "src/pages/TimeClock.jsx",
+      "line": 372,
+      "text": "        session_token: timeClockSessionToken,\r"
+    },
+    {
+      "path": "src/pages/TimeClock.jsx",
+      "line": 442,
+      "text": "        session_token: token,\r"
+    },
+    {
+      "path": "src/pages/TimeClock.jsx",
+      "line": 543,
+      "text": "        session_token: timeClockSessionToken,\r"
+    },
+    {
+      "path": "src/pages/OrderForm.jsx",
+      "line": 87,
+      "text": "          session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/pages/Reconciliation.jsx",
+      "line": 40,
+      "text": "  const r = await base44.functions.invoke(\"manageReconciliation\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 86,
+      "text": "      const { data } = await base44.functions.invoke(\"bouncieStatus\", { session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 101,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 117,
+      "text": "      const { data } = await invokeFleet(\"fleetBouncieNotificationAction\", { action: \"list\", session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 146,
+      "text": "          session_token: sessionToken,"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 240,
+      "text": "      const { data } = await base44.functions.invoke(\"bouncieAuthInitiate\", { session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 279,
+      "text": "      const { data } = await invokeFleet(\"fleetBouncieNotificationAction\", { action: \"mark_read\", id, session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 304,
+      "text": "      const results = await Promise.all(selectedNotificationVins.map((vin) => invokeFleet(\"fleetBouncieNotificationAction\", { action: \"mark_vehicle_read\", vehicle_vin: vin, session_token: sessionToken })));"
+    },
+    {
+      "path": "src/pages/PurchaseOrders.jsx",
+      "line": 50,
+      "text": "  const r = await base44.functions.invoke(\"purchaseOrderAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/PurchaseOrders.jsx",
+      "line": 131,
+      "text": "    base44.functions.invoke(\"inventoryAction\", { session_token: sessionToken, action: \"list_stock\" })"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 164,
+      "text": "      const res = await base44.functions.invoke(\"generateDocNumber\", { doc_type: \"estimate\", session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/EstimatorSettings.jsx",
+      "line": 111,
+      "text": "        session_token: getSessionToken(),"
+    },
+    {
+      "path": "src/pages/ChangeOrders.jsx",
+      "line": 44,
+      "text": "  const r = await base44.functions.invoke(\"changeOrderAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/UserSettings.jsx",
+      "line": 135,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 88,
+      "text": "  const r = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 115,
+      "text": "          session_token: sessionToken, action: \"search_customers\", query: q,"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 186,
+      "text": "          session_token: sessionToken, action: \"search_customers\", query: q,"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 205,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 366,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 404,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 792,
+      "text": "        session_token: sessionToken, action: \"get_opportunity\", opportunity_id: opportunity.id,"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 828,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 851,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 1256,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 68,
+      "text": "  const r = await base44.functions.invoke(\"invoicingAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 75,
+      "text": "  const r = await base44.functions.invoke(\"customerPortalAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 176,
+      "text": "          session_token: sessionToken, action: \"search_customers\", query: query.trim(),"
+    },
+    {
+      "path": "src/pages/FleetSettings.jsx",
+      "line": 82,
+      "text": "            base44.functions.invoke(\"bouncieStatus\", { session_token: sessionToken }).catch(() => null),"
+    },
+    {
+      "path": "src/pages/FleetSettings.jsx",
+      "line": 244,
+      "text": "        base44.functions.invoke(\"bouncieStatus\", { session_token: sessionToken }).catch(() => null),"
+    },
+    {
+      "path": "src/pages/FleetSettings.jsx",
+      "line": 440,
+      "text": "      const { data } = await base44.functions.invoke(\"bouncieAuthInitiate\", { session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/CustomerStatements.jsx",
+      "line": 47,
+      "text": "  const r = await base44.functions.invoke(\"invoicingAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/CommsFollowups.jsx",
+      "line": 180,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/pages/Customer360.jsx",
+      "line": 51,
+      "text": "    session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/resourcePlanning/userCapacityPersistence.js",
+      "line": 45,
+      "text": "      session_token: token,\r"
+    },
+    {
+      "path": "src/components/reports/featureReportPersistence.js",
+      "line": 22,
+      "text": "    session_token: String(sessionToken || \"\").trim(),"
+    },
+    {
+      "path": "src/components/reports/featureReportPersistence.js",
+      "line": 32,
+      "text": "    session_token: requireSessionToken(sessionToken, label),"
+    },
+    {
+      "path": "src/components/reports/featureReportPersistence.js",
+      "line": 45,
+      "text": "    session_token: requireSessionToken(sessionToken, label),"
+    },
+    {
+      "path": "src/components/reports/featureReportPersistence.js",
+      "line": 57,
+      "text": "    session_token: requireSessionToken(sessionToken, label),"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 185,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 202,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 254,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 267,
+      "text": "            session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/customerSummary/upsertCustomerSummary.jsx",
+      "line": 37,
+      "text": "      session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/fleet/loadGoogleMaps.js",
+      "line": 12,
+      "text": "    const { data } = await base44.functions.invoke(\"getGoogleMapsKey\", { session_token: sessionToken });"
+    },
+    {
+      "path": "src/components/fleet/fleetInvoke.js",
+      "line": 45,
+      "text": "        session_token: getSessionToken(),"
+    },
+    {
+      "path": "src/components/permitting/AIOfficeResearchDialog.jsx",
+      "line": 41,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/permitting/googleMapsLoader.js",
+      "line": 18,
+      "text": " const request=(async()=>{const response=await bounded(base44.functions.invoke('getGoogleMapsKey',{session_token:sessionToken}),'Map configuration connection timed out.');const key=response?.data?.apiKey;if(!key)throw Error('Map configuration is unavailable.');"
+    },
+    {
+      "path": "src/components/permitting/AutomaticAddressScanResults.jsx",
+      "line": 42,
+      "text": "   const response=await base44.functions.invoke('getAddressResearchCollections',{collection_ids:ids,review:archives?.review_mode===true,session_token:sessionToken});"
+    },
+    {
+      "path": "src/components/permitting/AutomaticAddressScanResults.jsx",
+      "line": 54,
+      "text": "   const response=await base44.functions.invoke('getAddressResearchCollections',{collection_ids:ids,review:archives?.review_mode===true,session_token:sessionToken});"
+    },
+    {
+      "path": "src/components/permitting/RegulationAlertPanel.jsx",
+      "line": 38,
+      "text": "      const res = await base44.functions.invoke('monitorJurisdictionChanges', { session_token: sessionToken });"
+    },
+    {
+      "path": "src/components/permitting/LocalityPickerDialog.jsx",
+      "line": 221,
+      "text": "        try{ ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); break; }\r"
+    },
+    {
+      "path": "src/components/permitting/LocalityPickerDialog.jsx",
+      "line": 235,
+      "text": "        try{({data}=await lookup({address:normalizeAddress(address),session_token:sessionToken}));}catch{break;}\r"
+    },
+    {
+      "path": "src/components/permitting/LocalityPickerDialog.jsx",
+      "line": 244,
+      "text": "              address: normalizeAddress(address), session_token: sessionToken, census_hint: hint,\r"
+    },
+    {
+      "path": "src/components/permitting/LocalityPickerDialog.jsx",
+      "line": 272,
+      "text": "            const retry=await invoke('resolvePermittingAddress',{address:normalizeAddress(address),session_token:sessionToken,census_hint:hint},`Looking up ${address.trim()}`);\r"
+    },
+    {
+      "path": "src/components/permitting/ResearchProgressContext.jsx",
+      "line": 17,
+      "text": "  const statusPayload=()=>({action_token:id,...(typeof window!=='undefined'&&window.localStorage?.getItem('sss_session_token')?{session_token:window.localStorage.getItem('sss_session_token')}:{})});"
+    },
+    {
+      "path": "src/components/permitting/ResearchProgressContext.jsx",
+      "line": 31,
+      "text": " const refreshAction=useCallback(async id=>{if(dismissedActions.current.has(id))return;const version=nextStatusVersion(id);try{const res=await base44.functions.invoke('permittingScanStatus',{action_token:id,...(typeof window!=='undefined'&&window.localStorage?.getItem('sss_session_token')?{session_token:window.localStorage.getItem('sss_session_token')}:{})});if(statusVersions.current.get(id)!==version)return;if(res?.data?.run){savedRuns.current.set(id,res.data.run);put(id,{...res.data.run,id,response_lost:false,activity_warning:null,tracking_paused:false});}else put(id,{status:'unknown',stage:'No saved activity found — execution unconfirmed',response_lost:true,activity_warning:null,tracking_paused:false});}catch(error){if(statusVersions.current.get(id)!==version)return;const signInRejected=error?.status===401||error?.response?.status===401;put(id,{response_lost:true,tracking_paused:signInRejected,activity_warning:signInRejected?'Sign in again, then choose Check saved action status. Your scan may still be running.':'Saved activity could not be checked. Try Check saved action status again; your scan may still be running.'});}},[put,nextStatusVersion]);"
+    },
+    {
+      "path": "src/components/permitting/SavedAddressResearch.jsx",
+      "line": 16,
+      "text": " async function load(cursor){if(pending.current)return;pending.current=true;const attempt=++version.current;setBusy(true);setError('');try{const response=await base44.functions.invoke('getAddressResearchCollections',{browse:true,review,...(cursor?{cursor}:{}),session_token:sessionToken});if(attempt!==version.current)return;if(!Array.isArray(response.data?.collections))throw Error('Invalid response');setPage(response.data);}catch{if(attempt===version.current)setError('Saved research could not load. Try again.');}finally{if(attempt===version.current){pending.current=false;setBusy(false);}}}"
+    },
+    {
+      "path": "src/components/permitting/AddressDocumentLink.jsx",
+      "line": 22,
+      "text": "   const response=save?await runAction('linkAddressResearchDocument',input,'Link reviewed original — '+document.title):await base44.functions.invoke('linkAddressResearchDocument',{...input,session_token:sessionToken});"
+    },
+    {
+      "path": "src/components/walkin/WalkInSale.jsx",
+      "line": 31,
+      "text": "  const r = await base44.functions.invoke(\"invoicingAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/components/walkin/WalkInSale.jsx",
+      "line": 212,
+      "text": "        const res = await generateDocNumber({ doc_type: \"order\", session_token: sessionToken });"
+    },
+    {
+      "path": "src/components/timeclock/QuickClockSection.jsx",
+      "line": 501,
+      "text": "      session_token: credential?.sessionToken || \"\",\r"
+    },
+    {
+      "path": "src/components/timeclock/QuickClockSection.jsx",
+      "line": 620,
+      "text": "        session_token: authoritativeSessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/GlobalWorkPauseControl.jsx",
+      "line": 177,
+      "text": "        payload: { request_id: requestId, session_token: sessionToken, target_email: email },"
+    },
+    {
+      "path": "src/components/timeclock/GlobalWorkPauseControl.jsx",
+      "line": 247,
+      "text": "        payload: { request_id: requestId, session_token: sessionToken, target_email: email, started_at, resumed_at, note },"
+    },
+    {
+      "path": "src/components/timeclock/EmployeeTodayCard.jsx",
+      "line": 45,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/timeclock/UserSettingsTab.jsx",
+      "line": 40,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/timeclock/TimeTracker.jsx",
+      "line": 181,
+      "text": "          action: \"list_correction_requests\", payload: { session_token: sessionToken, request_id: newRequestId() },"
+    },
+    {
+      "path": "src/components/timeclock/TimeTracker.jsx",
+      "line": 208,
+      "text": "          payload: { session_token: sessionToken, target_email: requestEmail },"
+    },
+    {
+      "path": "src/components/timeclock/TimeTracker.jsx",
+      "line": 997,
+      "text": "                    const res = await invokeTimeClockAction({ action: \"my_history\", payload: { session_token: sessionToken, request_id: newRequestId() } });"
+    },
+    {
+      "path": "src/components/timeclock/timeClockReadCache.js",
+      "line": 38,
+      "text": "      .invoke(\"timeClockAction\", { action, session_token: sessionToken, ...payload })"
+    },
+    {
+      "path": "src/components/timeclock/TimeTrackerSettings.jsx",
+      "line": 193,
+      "text": "        session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeTrackerSettings.jsx",
+      "line": 228,
+      "text": "        session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/CorrectionRequestAdminPanel.jsx",
+      "line": 83,
+      "text": "        session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/CorrectionRequestAdminPanel.jsx",
+      "line": 150,
+      "text": "      payload = { ...retryReview.payload, session_token: sessionToken };\r"
+    },
+    {
+      "path": "src/components/timeclock/CorrectionRequestAdminPanel.jsx",
+      "line": 155,
+      "text": "        session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/CorrectionRequestAdminPanel.jsx",
+      "line": 195,
+      "text": "        const { session_token, ...frozenPayload } = payload;\r"
+    },
+    {
+      "path": "src/components/timeclock/CorrectionRequestAdminPanel.jsx",
+      "line": 196,
+      "text": "        void session_token;\r"
+    },
+    {
+      "path": "src/components/timeclock/CorrectionRequestAdminPanel.jsx",
+      "line": 251,
+      "text": "          session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeOffRequestDialog.jsx",
+      "line": 154,
+      "text": "        session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/CorrectionCoordinatorDiagnostics.jsx",
+      "line": 192,
+      "text": "        action: \"admin_correction_gate_diagnostics\", session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/timeclock/AdminRosterPanels.jsx",
+      "line": 37,
+      "text": "      const res = await base44.functions.invoke(\"timeClockAction\", { action: \"send_timeclock_announcement\", mode, session_token: sessionToken, scope: \"admin\", request_id: newRequestId() });"
+    },
+    {
+      "path": "src/components/timeclock/AdminRosterPanels.jsx",
+      "line": 48,
+      "text": "        base44.functions.invoke(\"timeClockAction\", { action: \"who_is_in\", session_token: sessionToken, scope: \"admin\", request_id: newRequestId() }).catch(() => null),"
+    },
+    {
+      "path": "src/components/timeclock/AdminRosterPanels.jsx",
+      "line": 49,
+      "text": "        base44.functions.invoke(\"timeClockAction\", { action: \"list_face_enrollment\", session_token: sessionToken, scope: \"admin\", request_id: newRequestId() }).catch(() => null),"
+    },
+    {
+      "path": "src/components/timeclock/AdminRosterPanels.jsx",
+      "line": 50,
+      "text": "        base44.functions.invoke(\"timeClockAction\", { action: \"list_timeclock_audit\", session_token: sessionToken, scope: \"admin\", request_id: newRequestId() }).catch(() => null),"
+    },
+    {
+      "path": "src/components/timeclock/AdminRosterPanels.jsx",
+      "line": 51,
+      "text": "        base44.functions.invoke(\"timeClockAction\", { action: \"list_shift_templates\", session_token: sessionToken, scope: \"admin\", request_id: newRequestId() }).catch(() => null),"
+    },
+    {
+      "path": "src/components/timeclock/AdminRosterPanels.jsx",
+      "line": 52,
+      "text": "        base44.functions.invoke(\"timeClockAction\", { action: \"list_pending_requests\", session_token: sessionToken, scope: \"admin\", request_id: newRequestId() }).catch(() => null),"
+    },
+    {
+      "path": "src/components/timeclock/AdminRosterPanels.jsx",
+      "line": 53,
+      "text": "        base44.functions.invoke(\"timeClockAction\", { action: \"pto_liability_report\", session_token: sessionToken, scope: \"admin\", request_id: newRequestId() }).catch(() => null),"
+    },
+    {
+      "path": "src/components/timeclock/AdminRosterPanels.jsx",
+      "line": 54,
+      "text": "        base44.functions.invoke(\"timeClockAction\", { action: \"admin_period_compare\", session_token: sessionToken, scope: \"admin\", request_id: newRequestId() }).catch(() => null),"
+    },
+    {
+      "path": "src/components/timeclock/AdminRosterPanels.jsx",
+      "line": 55,
+      "text": "        base44.functions.invoke(\"timeClockAction\", { action: \"list_devices\", session_token: sessionToken, scope: \"admin\", request_id: newRequestId() }).catch(() => null),"
+    },
+    {
+      "path": "src/components/timeclock/AdminRosterPanels.jsx",
+      "line": 231,
+      "text": "                    const res = await base44.functions.invoke(\"timeClockAction\", { action: \"upsert_shift_template\", session_token: sessionToken, scope: \"admin\", request_id: newRequestId(), template: { user_email: schedForm.email, start_time: schedForm.start, end_time: schedForm.end, days: schedForm.days, label: schedForm.label } });"
+    },
+    {
+      "path": "src/components/timeclock/AdminRosterPanels.jsx",
+      "line": 250,
+      "text": "                        await base44.functions.invoke(\"timeClockAction\", { action: \"delete_shift_template\", session_token: sessionToken, scope: \"admin\", request_id: newRequestId(), template_id: t.id }).catch(() => null);"
+    },
+    {
+      "path": "src/components/timeclock/UserQRCode.jsx",
+      "line": 96,
+      "text": "        session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/PayPeriodManager.jsx",
+      "line": 286,
+      "text": "          await invoke({ ...stored.payload, session_token: sessionToken, request_id: stored.request_id });\r"
+    },
+    {
+      "path": "src/components/timeclock/PayPeriodManager.jsx",
+      "line": 330,
+      "text": "      await invoke({ ...payload, session_token: sessionToken, request_id: requestId });\r"
+    },
+    {
+      "path": "src/components/timeclock/PayPeriodManager.jsx",
+      "line": 349,
+      "text": "      const result = await invoke({ action: \"pay_period_history_verify\", pay_period_id: period.id, session_token: sessionToken });\r"
+    },
+    {
+      "path": "src/components/timeclock/PayPeriodManager.jsx",
+      "line": 416,
+      "text": "      await invoke({ ...payload, session_token: sessionToken, request_id: requestId });\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockStatusContext.jsx",
+      "line": 60,
+      "text": "          session_token: requestToken,"
+    },
+    {
+      "path": "src/components/timeclock/CorrectionRequestDialog.jsx",
+      "line": 122,
+      "text": "        session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeOffApprovalPanel.jsx",
+      "line": 51,
+      "text": "        session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeOffApprovalPanel.jsx",
+      "line": 89,
+      "text": "      payload = { ...retryDecision.payload, session_token: sessionToken };\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeOffApprovalPanel.jsx",
+      "line": 93,
+      "text": "        session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeOffApprovalPanel.jsx",
+      "line": 120,
+      "text": "        const { session_token, ...frozenPayload } = payload;\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeOffApprovalPanel.jsx",
+      "line": 121,
+      "text": "        void session_token;\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAdmin.jsx",
+      "line": 210,
+      "text": "      const r = await base44.functions.invoke(\"shiftSwapAction\", { session_token: sessionToken, action: \"list\" });\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAdmin.jsx",
+      "line": 217,
+      "text": "      const r = await base44.functions.invoke(\"shiftSwapAction\", { session_token: sessionToken, action: decision, request_id: requestId });\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAdmin.jsx",
+      "line": 277,
+      "text": "            session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAdmin.jsx",
+      "line": 554,
+      "text": "        session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAdmin.jsx",
+      "line": 649,
+      "text": "          session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAdmin.jsx",
+      "line": 681,
+      "text": "          session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAdmin.jsx",
+      "line": 743,
+      "text": "        session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAdmin.jsx",
+      "line": 793,
+      "text": "        action: \"toggle_payroll_hold\", session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAdmin.jsx",
+      "line": 837,
+      "text": "        session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAdmin.jsx",
+      "line": 937,
+      "text": "      const res = await base44.functions.invoke(\"timeClockAction\", { action: \"payroll_export\", from: format(start, \"yyyy-MM-dd\"), to: format(end, \"yyyy-MM-dd\"), session_token: sessionToken, scope: \"admin\", request_id: newRequestId() });\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockAdmin.jsx",
+      "line": 1714,
+      "text": "                        action: \"admin_correct_entry\", session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/timeclock/CurrentWorkCard.jsx",
+      "line": 56,
+      "text": "        const res = await base44.functions.invoke(\"timeClockAction\", { action: \"my_labor_history\", session_token: sessionToken, request_id: crypto.randomUUID() });\r"
+    },
+    {
+      "path": "src/components/timeclock/WorkPauseOverlay.jsx",
+      "line": 36,
+      "text": "        session_token: credentialOverride?.sessionToken || sessionToken,"
+    },
+    {
+      "path": "src/components/timeclock/WorkPauseOverlay.jsx",
+      "line": 39,
+      "text": "  const hasCredential = Boolean(credentialPayload.badge_code || credentialPayload.session_token);"
+    },
+    {
+      "path": "src/components/timeclock/WorkPauseOverlay.jsx",
+      "line": 45,
+      "text": "    credentialPayload.session_token || \"\","
+    },
+    {
+      "path": "src/components/timeclock/WorkPauseOverlay.jsx",
+      "line": 124,
+      "text": "  }, [currentUser?.email, hasCredential, credentialPayload.badge_code, credentialPayload.session_token, disabled, scopeKey]);"
+    },
+    {
+      "path": "src/components/workflow/GlobalSearch.jsx",
+      "line": 115,
+      "text": "          session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/workflow/AttentionBell.jsx",
+      "line": 32,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/workflow/NotificationService.jsx",
+      "line": 262,
+      "text": "          session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/workflow/GoogleDriveFileBrowser.jsx",
+      "line": 71,
+      "text": "  const runDriveOperation = (payload) => googleDriveOperations({ ...payload, session_token: sessionToken });"
+    },
+    {
+      "path": "src/components/workflow/AttentionFeed.jsx",
+      "line": 86,
+      "text": "    try { await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"send_digest\" }); } catch { /* fail-soft */ } finally { setDigestSending(false); }"
+    },
+    {
+      "path": "src/components/workflow/AttentionFeed.jsx",
+      "line": 133,
+      "text": "      soft(base44.functions.invoke(\"invoicingAction\", { session_token: sessionToken, action: \"list_invoices\" })),"
+    },
+    {
+      "path": "src/components/workflow/AttentionFeed.jsx",
+      "line": 134,
+      "text": "      soft(base44.functions.invoke(\"purchaseOrderAction\", { session_token: sessionToken, action: \"list_purchase_orders\" })),"
+    },
+    {
+      "path": "src/components/workflow/AttentionFeed.jsx",
+      "line": 135,
+      "text": "      soft(base44.functions.invoke(\"manageReconciliation\", { session_token: sessionToken, action: \"bootstrap\" })),"
+    },
+    {
+      "path": "src/components/workflow/AttentionFeed.jsx",
+      "line": 162,
+      "text": "          session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/workflow/AttentionFeed.jsx",
+      "line": 169,
+      "text": "          session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/workflow/AttentionFeed.jsx",
+      "line": 210,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/jobs/JobWorkspace.jsx",
+      "line": 57,
+      "text": "  const r = await base44.functions.invoke(\"invoicingAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/components/auth/EmailGate.jsx",
+      "line": 9,
+      "text": "const TOKEN_KEY = \"sss_session_token\";"
+    },
+    {
+      "path": "src/components/admin/SyncConflictAlert.jsx",
+      "line": 19,
+      "text": "    const response = await base44.functions.invoke('smartsheetSyncAction', { action: 'conflict_count', session_token: sessionToken });\r"
+    },
+    {
+      "path": "src/components/admin/BackupManager.jsx",
+      "line": 85,
+      "text": "      const response = await backupToGoogleDrive({ action: 'getSettings', session_token: sessionToken });"
+    },
+    {
+      "path": "src/components/admin/BackupManager.jsx",
+      "line": 101,
+      "text": "      const response = await backupToGoogleDrive({ action: 'getHistory', session_token: sessionToken });"
+    },
+    {
+      "path": "src/components/admin/BackupManager.jsx",
+      "line": 123,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/admin/BackupManager.jsx",
+      "line": 162,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/admin/corebridgeApiPersistence.js",
+      "line": 17,
+      "text": "      session_token: requireSessionToken(sessionToken),"
+    },
+    {
+      "path": "src/components/admin/WipImporter.jsx",
+      "line": 31,
+      "text": "      const res = await importWipSheet({ fileUrl: file_url, mode, session_token: sessionToken });"
+    },
+    {
+      "path": "src/components/admin/SmartsheetSyncWidget.jsx",
+      "line": 177,
+      "text": "        const response=await base44.functions.invoke('smartsheetSyncAction',{action:'recover_stale_sales_run',session_token:sessionToken,expected_started_at:status.started_at});"
+    },
+    {
+      "path": "src/components/admin/GmailConnector.jsx",
+      "line": 22,
+      "text": "      const response = await checkGmailConnection({ session_token: sessionToken });"
+    },
+    {
+      "path": "src/components/admin/SyncAlertSettings.jsx",
+      "line": 26,
+      "text": "      const res = await base44.functions.invoke(\"smartsheetSyncAction\", { action: \"sync_alert_get\", session_token: sessionToken });"
+    },
+    {
+      "path": "src/components/admin/SyncAlertSettings.jsx",
+      "line": 47,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/admin/SyncAlertSettings.jsx",
+      "line": 67,
+      "text": "      const res = await base44.functions.invoke(\"smartsheetSyncAction\", { action: \"sync_alert_test\", session_token: sessionToken });"
+    },
+    {
+      "path": "src/components/admin/smartsheetSyncPersistence.js",
+      "line": 17,
+      "text": "      session_token: requireSessionToken(sessionToken),"
+    },
+    {
+      "path": "src/components/admin/JurisdictionMonitoringSettings.jsx",
+      "line": 106,
+      "text": "      const res = await base44.functions.invoke('monitorJurisdictionChanges', { session_token: sessionToken });"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 174,
+      "text": "      const r = await base44.functions.invoke(\"sessionAdminAction\", { session_token: sessionToken, action: \"list\", target_email: user.email });"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 183,
+      "text": "      const r = await base44.functions.invoke(\"sessionAdminAction\", { session_token: sessionToken, action: \"revoke\", session_id: sessionId });"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 230,
+      "text": "      const r = await base44.functions.invoke(\"accessRequestAction\", { session_token: sessionToken, action: \"list\" });"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 237,
+      "text": "      const r = await base44.functions.invoke(\"accessRequestAction\", { session_token: sessionToken, action: decision, request_id: requestId });"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 839,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 875,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 1107,
+      "text": "            session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 1420,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 1506,
+      "text": "          session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 1525,
+      "text": "          session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/admin/DataExportPanel.jsx",
+      "line": 55,
+      "text": "      const r = await base44.functions.invoke(\"dataIntegrityAction\", { session_token: sessionToken, action: \"scan\" });\r"
+    },
+    {
+      "path": "src/components/admin/DataExportPanel.jsx",
+      "line": 65,
+      "text": "      const r = await base44.functions.invoke(\"dataIntegrityAction\", { session_token: sessionToken, action: \"list_orphans\", check_name: checkName });\r"
+    },
+    {
+      "path": "src/components/admin/DataExportPanel.jsx",
+      "line": 73,
+      "text": "      const r = await base44.functions.invoke(\"dataIntegrityAction\", { session_token: sessionToken, action: \"relink\", check_name: checkName, orphan_value: orphanValue, new_parent_value: target });\r"
+    },
+    {
+      "path": "src/components/admin/PasswordMigrationButton.jsx",
+      "line": 19,
+      "text": "      const res = await migrateCredentials({ session_token: sessionToken });"
+    },
+    {
+      "path": "src/components/admin/authorizedUserAdminPersistence.js",
+      "line": 25,
+      "text": "    session_token: requireSessionToken(sessionToken),\r"
+    },
+    {
+      "path": "src/components/admin/authorizedUserAdminPersistence.js",
+      "line": 34,
+      "text": "    session_token: requireSessionToken(sessionToken),\r"
+    },
+    {
+      "path": "src/components/admin/authorizedUserAdminPersistence.js",
+      "line": 51,
+      "text": "    session_token: token,\r"
+    },
+    {
+      "path": "src/components/admin/authorizedUserAdminPersistence.js",
+      "line": 72,
+      "text": "    session_token: requireSessionToken(sessionToken),\r"
+    },
+    {
+      "path": "src/components/admin/authorizedUserAdminPersistence.js",
+      "line": 102,
+      "text": "    session_token: requireSessionToken(sessionToken),\r"
+    },
+    {
+      "path": "src/components/admin/authorizedUserAdminPersistence.js",
+      "line": 118,
+      "text": "    session_token: requireSessionToken(sessionToken),\r"
+    },
+    {
+      "path": "src/components/admin/authorizedUserAdminPersistence.js",
+      "line": 139,
+      "text": "    session_token: requireSessionToken(sessionToken),\r"
+    },
+    {
+      "path": "src/components/admin/authorizedUserAdminPersistence.js",
+      "line": 153,
+      "text": "    session_token: requireSessionToken(sessionToken),\r"
+    },
+    {
+      "path": "src/components/admin/authorizedUserAdminPersistence.js",
+      "line": 168,
+      "text": "    session_token: requireSessionToken(sessionToken),\r"
+    },
+    {
+      "path": "src/components/admin/SmartsheetMissingOwnersCard.jsx",
+      "line": 17,
+      "text": "        session_token: sessionToken,"
+    },
+    {
+      "path": "src/components/admin/CorebridgeApiSettings.jsx",
+      "line": 95,
+      "text": "        session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/admin/CorebridgeApiSettings.jsx",
+      "line": 117,
+      "text": "        session_token: sessionToken,\r"
+    },
+    {
+      "path": "src/components/admin/CorebridgeApiSettings.jsx",
+      "line": 139,
+      "text": "        session_token: sessionToken,\r"
+    }
+  ],
+  "truncated": true,
+  "returnedMatches": 200
+}

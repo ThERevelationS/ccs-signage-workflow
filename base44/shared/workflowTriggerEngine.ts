@@ -2,6 +2,21 @@ import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from './wo
 import { loadAllEntityRows } from './pagedEntityRows.ts';
 import { matchesRecordFilters, supportsRecordDestination } from './automationRecordPolicy.mjs';
 
+// ---- per-isolate read caches (shared entity budget) ----
+// Every emitted event used to pay >=4 entity reads before any rule matched
+// (pause flag + quiet hours + full enabled-rule table) plus a full roster
+// read per send_email action. These short TTL caches collapse that to ~zero
+// on warm isolates. Errors are never cached — a failed read falls through
+// to the existing fail-open handling and the next event retries the fetch.
+const wteReadCache: Record<string, { at: number; value: any }> = {};
+async function wteCached<T>(key: string, ttlMs: number, loader: () => Promise<T>): Promise<T> {
+  const hit = wteReadCache[key];
+  if (hit && Date.now() - hit.at < ttlMs) return hit.value;
+  const value = await loader();
+  wteReadCache[key] = { at: Date.now(), value };
+  return value;
+}
+
 const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 const PERMIT_CONTEXT_FIELDS = [
@@ -67,6 +82,11 @@ const RECORD_CONTEXT_EVENTS: Record<string, string> = {
   jurisdiction_profile_created: 'JurisdictionProfile',
   jurisdiction_profile_updated: 'JurisdictionProfile',
   regulation_alert_created: 'RegulationAlert',
+  crm_event_completed: 'OpportunityActivity',
+  po_received: 'PurchaseOrder',
+  po_backordered: 'PurchaseOrder',
+  invoice_overdue: 'Invoice',
+  recon_variance: 'ReconciliationBatch',
 };
 
 // Human labels for record-bearing domains — drives the default email subject.
@@ -81,11 +101,15 @@ const RECORD_LABELS: Record<string, string> = {
   AuthorizedEmail: 'User Account',
   JurisdictionProfile: 'Jurisdiction Profile',
   RegulationAlert: 'Regulation Alert',
+  OpportunityActivity: 'CRM Event',
+  PurchaseOrder: 'Purchase Order',
+  Invoice: 'Invoice',
+  ReconciliationBatch: 'Reconciliation Batch',
 };
 
 // Named events arrive with event_type === the UI's trigger vocabulary; the
 // legacy 'create'/'update' vocabulary is still honored for field-diff checks.
-function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData: any, extra: any, order?: any, record?: any) {
+async function matchesTrigger(base44: any, trigger: any, eventType: string, workOrder: any, oldData: any, extra: any, order?: any, record?: any) {
   const condition = trigger?.trigger_condition || {};
 
   switch (trigger?.trigger_type) {
@@ -260,6 +284,14 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
     case 'jurisdiction_profile_created':
     case 'jurisdiction_profile_updated':
     case 'regulation_alert_created':
+    case 'proof_sent':
+    case 'proof_approved':
+    case 'product_transition':
+    case 'crm_event_completed':
+    case 'po_received':
+    case 'po_backordered':
+    case 'invoice_overdue':
+    case 'recon_variance':
     case 'pto_balance_low':
     case 'permit_submitted':
     case 'permit_received':
@@ -289,6 +321,21 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
     if (condition.min_quantity != null && !(Number(order.quantity) >= Number(condition.min_quantity))) return false;
     if (condition.max_quantity != null && !(Number(order.quantity) <= Number(condition.max_quantity))) return false;
   }
+
+  // Cross-entity guard — 'related_*' fields load a row from another entity and
+  // require a field match. Fail-closed: a lookup error or missing row stops
+  // the trigger rather than firing actions from a broken config.
+  if (condition.related_entity && condition.related_match_field && condition.related_field) {
+    const sourceValue = workOrder?.[condition.related_match_field] ?? order?.[condition.related_match_field] ?? record?.[condition.related_match_field];
+    if (sourceValue == null || sourceValue === '') return false;
+    try {
+      const rows = await base44.asServiceRole.entities[condition.related_entity]?.filter({ [condition.related_match_field]: sourceValue });
+      if (!Array.isArray(rows)) return false;
+      const related = rows.find((r: any) => r?.[condition.related_match_field] === sourceValue) || rows[0];
+      if (!related || String(related[condition.related_field] ?? '') !== String(condition.related_value ?? '')) return false;
+    } catch { return false; }
+  }
+
   return matchesRecordFilters(condition, record);
 }
 
@@ -473,7 +520,24 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
   }
 
   const sent: string[] = [];
-  for (const to of [...new Set(recipients)]) {
+  // Per-user notification preferences — admins/staff with
+  // notification_prefs.automation_emails === false are skipped. The lookup is
+  // fail-open: a prefs read failure must never block a configured send.
+  let sendList = [...new Set(recipients)];
+  try {
+    const optedOut: Set<string> = await wteCached('pref_optout_emails', 60_000, async () => {
+      const prefUsers = await base44.asServiceRole.entities.AuthorizedEmail.list('-created_date', 500);
+      return new Set(
+        (prefUsers || [])
+          .filter((u: any) => u?.notification_prefs?.automation_emails === false)
+          .map((u: any) => String(u?.email || '').trim().toLowerCase()),
+      );
+    });
+    sendList = sendList.filter((to) => !optedOut.has(String(to).trim().toLowerCase()));
+  } catch { /* prefs lookup is best-effort */ }
+  if (sendList.length === 0) return { skipped: true, reason: 'All recipients opted out' };
+
+  for (const to of sendList) {
     try {
       await base44.integrations.Core.SendEmail({ to, subject, body });
       sent.push(to);
@@ -663,24 +727,58 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
   const changedBy = String(changedByOverride || payload?.changed_by || 'System').trim() || 'System';
   const context = { workOrder: eventWorkOrder, order: orderRecord, record: contextRecord, recordEntity, extras, eventType };
 
-  const automations = await loadAllEntityRows({ entity: base44.asServiceRole.entities.AutomationRule, query: { enabled: true }, sort: null, label: 'Enabled workflow automation rules' });
+  // Global kill switch: a GlobalSettings row {setting_key:'automations_paused',
+  // setting_value:{paused:true}} halts every rule until resumed. Read failures
+  // fail OPEN so a settings hiccup never silently disables automation.
+  try {
+    const pauseRows = await wteCached('automations_paused', 30_000, () => base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'automations_paused' }));
+    if (Array.isArray(pauseRows) && pauseRows.some((r) => r?.setting_value?.paused === true)) {
+      return { success: true, paused: true, triggered_count: 0, actions: [] };
+    }
+  } catch { /* fail open */ }
+
+  // Quiet hours: a GlobalSettings row {setting_key:'notificationQuietHours',
+  // setting_value:{enabled:true,start:'20:00',end:'07:00'}} skips send_email
+  // actions inside the window (overnight ranges wrap). Fail OPEN.
+  let quietHoursActive = false;
+  try {
+    const qhRows = await wteCached('notificationQuietHours', 60_000, () => base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'notificationQuietHours' }));
+    const qh = qhRows?.[0]?.setting_value;
+    if (qh?.enabled === true && qh.start && qh.end) {
+      const now = new Date();
+      const mins = now.getHours() * 60 + now.getMinutes();
+      const toMin = (t) => { const [h, m] = String(t).split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+      const start = toMin(qh.start), end = toMin(qh.end);
+      quietHoursActive = start <= end ? (mins >= start && mins < end) : (mins >= start || mins < end);
+    }
+  } catch { /* fail open */ }
+
+  const automations = await wteCached('automation_rules_enabled', 60_000, () => loadAllEntityRows({ entity: base44.asServiceRole.entities.AutomationRule, query: { enabled: true }, sort: null, label: 'Enabled workflow automation rules' }));
   const triggeredActions: any[] = [];
+  const runStampWarnings: string[] = [];
   const orderedRules = automations.filter(Boolean).sort((a: any, b: any) => (Number(a.priority) || 0) - (Number(b.priority) || 0));
   for (const rule of orderedRules) {
-    if (!rule || rule.enabled !== true || !Array.isArray(rule.triggers) || !Array.isArray(rule.actions)) continue;
+    // Approval-gated automations: a pending rule is a proposal — it never fires
+    // until an administrator approves it, even if it is enabled.
+    if (!rule || rule.enabled !== true || rule.approval_status === 'pending' || !Array.isArray(rule.triggers) || !Array.isArray(rule.actions)) continue;
     // Triggers combine with each row's declared logic (and/or). AND only
     // holds when several trigger rows can match the same event — the same
     // semantics the Admin editor warns about for mixed event types.
     let triggered: boolean | null = null;
     for (const trigger of rule.triggers || []) {
-      const m = matchesTrigger(trigger, eventType, eventWorkOrder, oldData, extras, orderRecord, contextRecord);
+      const m = await matchesTrigger(base44, trigger, eventType, eventWorkOrder, oldData, extras, orderRecord, contextRecord);
       if (triggered === null) triggered = m;
       else triggered = trigger?.logic === 'and' ? (triggered && m) : (triggered || m);
     }
     if (triggered !== true) continue;
+    const runStampStart = triggeredActions.length;
     for (const [actionIndex, action] of rule.actions.entries()) {
       if (!action?.action_type) continue;
       try {
+        if (quietHoursActive && action.action_type === 'send_email') {
+          triggeredActions.push({ rule: rule.name, action: 'send_email', result: 'skipped_quiet_hours' });
+          continue;
+        }
         const source = contextRecord || orderRecord;
         if (!actionWorkOrder?.id && ['add_task', 'add_note'].includes(action.action_type) && supportsRecordDestination(eventType) &&
             (!source?.updated_date || !rule.id)) throw new Error('Record action requires a verified source version and rule identity.');
@@ -692,6 +790,24 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
         triggeredActions.push({ rule: rule.name, action: action.action_type, error: error?.message || 'Action failed' });
       }
     }
+    // Best-effort run stamp for the Admin list's last-run health display.
+    // A failed stamp must never break automation execution.
+    const ran = triggeredActions.slice(runStampStart);
+    const failed = ran.filter((a) => a.error).length;
+    const ranAt = new Date().toISOString();
+    const recentRuns = [...(Array.isArray(rule.recent_runs) ? rule.recent_runs : []), {
+      at: ranAt,
+      status: failed === 0 ? 'success' : failed === ran.length ? 'error' : 'partial',
+      detail: `${ran.length - failed} succeeded, ${failed} failed`,
+      actions: ran.map((a) => a.error ? `${a.action} failed: ${a.error}` : `${a.action} ok`),
+    }].slice(-20);
+    await base44.asServiceRole.entities.AutomationRule.update(rule.id, {
+      last_run_at: ranAt,
+      last_run_status: recentRuns[recentRuns.length - 1].status,
+      last_run_detail: recentRuns[recentRuns.length - 1].detail,
+      run_count: (Number(rule.run_count) || 0) + 1,
+      recent_runs: recentRuns,
+    }).catch((e: any) => { runStampWarnings.push(`${rule.name || rule.id}: ${String(e?.message || e)}`); return null; });
   }
-  return { success: true, triggered_count: triggeredActions.length, actions: triggeredActions };
+  return { success: true, triggered_count: triggeredActions.length, actions: triggeredActions, run_stamp_warning: runStampWarnings.length ? runStampWarnings.join("; ") : undefined };
 }

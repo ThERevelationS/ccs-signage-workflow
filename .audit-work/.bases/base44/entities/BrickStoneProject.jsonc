@@ -1,0 +1,198 @@
+{
+  "name": "BrickStoneProject",
+  "type": "object",
+  "description": "Brick & Stone estimator project \u2014 hollow rectangular masonry base with course/layer geometry, mortar and waste factors.",
+  "properties": {
+    "project_name": {
+      "type": "string",
+      "description": "Name of the project"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "estimate_number": {
+      "type": "string",
+      "description": "Unique estimate number"
+    },
+    "hyperlink": {
+      "type": "string",
+      "description": "Project reference link"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "base_type": {
+      "type": "string",
+      "enum": [
+        "hollow_rectangular"
+      ],
+      "default": "hollow_rectangular"
+    },
+    "base_length": {
+      "type": "number",
+      "default": 0,
+      "description": "Base length in inches"
+    },
+    "base_width": {
+      "type": "number",
+      "default": 0,
+      "description": "Base width in inches"
+    },
+    "base_height": {
+      "type": "number",
+      "default": 0,
+      "description": "Base height in inches"
+    },
+    "bricks_along_length": {
+      "type": "number",
+      "default": 6
+    },
+    "bricks_along_width": {
+      "type": "number",
+      "default": 9
+    },
+    "courses_high": {
+      "type": "number",
+      "default": 5
+    },
+    "layers": {
+      "type": "number",
+      "default": 1,
+      "description": "Number of brick layers for depth"
+    },
+    "mortar_gap": {
+      "type": "number",
+      "default": 0.375,
+      "description": "Mortar gap in inches (3/8\" standard)"
+    },
+    "waste_factor": {
+      "type": "number",
+      "default": 1.1,
+      "description": "Waste factor multiplier (1.1 = 10% waste)"
+    },
+    "selected_material_id": {
+      "type": "string",
+      "description": "ID of selected brick/stone from inventory"
+    },
+    "material_name": {
+      "type": "string",
+      "description": "Name of material"
+    },
+    "material_dimensions": {
+      "type": "object",
+      "properties": {
+        "length": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        }
+      }
+    },
+    "mortar_bag_cost": {
+      "type": "number",
+      "default": 12
+    },
+    "bricks_per_hour": {
+      "type": "number",
+      "default": 40
+    },
+    "labor_rate_per_hour": {
+      "type": "number",
+      "default": 55
+    },
+    "markup_percent": {
+      "type": "number",
+      "default": 0
+    },
+    "calculated_bricks": {
+      "type": "number",
+      "description": "Total number of bricks/stones needed"
+    },
+    "calculated_surface_area": {
+      "type": "number",
+      "description": "Total surface area in sq ft"
+    },
+    "mortar_bags_needed": {
+      "type": "number",
+      "description": "Number of 60lb mortar bags"
+    },
+    "material_cost": {
+      "type": "number",
+      "description": "Total material cost"
+    },
+    "mortar_cost": {
+      "type": "number",
+      "description": "Total mortar cost"
+    },
+    "labor_hours": {
+      "type": "number"
+    },
+    "labor_cost": {
+      "type": "number"
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "markup_amount": {
+      "type": "number"
+    },
+    "total_cost": {
+      "type": "number",
+      "description": "Grand total"
+    },
+    "customer_pricing": {
+      "type": "object",
+      "description": "Optional saved customer sell-price snapshot from the shared Markup Tier engine. Existing Brick & Stone markup_percent remains the fallback until a tier is explicitly applied.",
+      "additionalProperties": true
+    },
+    "pricing_engine": {
+      "type": "object",
+      "description": "F-23c: optional pricing-engine context block \u2014 {customer_tier, tier_rules[], templates[], default_markup_pct, tax_percent, setup_fee, minimum_charge}. When present, brickPricingWire routes the sell side through the shared engine; absent = legacy pricing verbatim.",
+      "additionalProperties": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__brickstoneproject_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__brickstoneproject_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__brickstoneproject_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__brickstoneproject_backend_only__"
+      }
+    }
+  }
+}

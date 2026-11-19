@@ -11,10 +11,11 @@ const require=createRequire(import.meta.url),code=(await transform(await fs.read
 async function harness({profiles=[]}={}){
  let auth={currentUser:{id:'first',role:'admin'},sessionToken:'same'},tree;const requests=[],drafts=[],applied=[],module={exports:{}};
  const ui=new Proxy({}, {get:(_,name)=>props=>{if((name==='Dialog'||name==='AlertDialog')&&!props.open)return null;return React.createElement(name==='Input'?'input':name==='Button'?'button':'div',props,name==='Input'?undefined:props.children);}});
- vm.runInNewContext(code,{module,console,setTimeout:()=>0,require:name=>{
+ vm.runInNewContext(code,{module,console,setTimeout:()=>0,clearTimeout:()=>{},require:name=>{
   if(name==='react'||name==='react/jsx-runtime')return require(name);
   if(name==='@/components/auth/EmailGate')return {useAuth:()=>auth};
   if(name==='@/api/base44Client')return {base44:{entities:{JurisdictionProfile:{},PermitLocality:{}}}};
+  if(name==='@/components/staff/staffEntities')return {staffEntities:{JurisdictionProfile:{},PermitLocality:{}}};
   if(name.includes('/ui/'))return ui;
   if(name==='lucide-react')return new Proxy({}, {get:()=>()=>null});
   if(name==='./ResearchProgressContext')return {useResearchProgress:()=>({runAction:()=>new Promise((resolve,reject)=>requests.push({resolve,reject}))})};
@@ -29,7 +30,8 @@ async function harness({profiles=[]}={}){
  const render=()=>React.createElement(module.exports.default,{isOpen:true,onClose:()=>{},localities:[],onApply:(...args)=>applied.push(args)});
  await act(async()=>{tree=Renderer.create(render());});
  return {tree,requests,drafts,applied,async type(){await act(async()=>tree.root.findAllByType('input').find(n=>n.props.placeholder?.startsWith('e.g.')).props.onChange({target:{value:'Private address'}}));},
- async search(){await act(async()=>{tree.root.findAllByType('button').find(n=>n.children.includes('Find my jurisdiction')).props.onClick();});},
+ async search(){await act(async()=>{tree.root.findAllByType('button').find(n=>n.children.includes('Find my office')).props.onClick();});},
+ async advanced(){await act(async()=>{tree.root.findAllByType('button').find(n=>n.children.includes('Advanced view')||n.children.includes('Simple view'))?.props.onClick();});},
  async change(actor){auth=actor;await act(async()=>tree.update(render()));},async close(){await act(async()=>tree.unmount());}};
 }
 test('account and role changes reset the entered address and discard late search results',async()=>{
@@ -43,7 +45,7 @@ test('same-account rerender preserves entered address; signout hides picker',asy
 
 test('two immediate address-search clicks start one scan',async()=>{
  const h=await harness();try{
-  await h.type();const click=h.tree.root.findAllByType('button').find(n=>n.children.includes('Find my jurisdiction')).props.onClick;
+  await h.type();const click=h.tree.root.findAllByType('button').find(n=>n.children.includes('Find my office')).props.onClick;
   await act(async()=>{click();click();});assert.equal(h.requests.length,1);
   await act(async()=>h.requests[0].resolve({data:{success:false,error:'Current error'}}));assert.match(JSON.stringify(h.tree.toJSON()),/Current error/);
   await h.search();assert.equal(h.requests.length,2);await act(async()=>h.requests[1].resolve({data:{success:false,error:'Retry error'}}));
@@ -52,7 +54,7 @@ test('two immediate address-search clicks start one scan',async()=>{
 test('editing the address permits a new scan and the old result cannot release its busy state',async()=>{
  const h=await harness();try{
   await h.type();await h.search();await h.type();await h.search();assert.equal(h.requests.length,2);
-  await act(async()=>h.requests[0].resolve({data:{success:false,error:'OLD RESULT'}}));assert.doesNotMatch(JSON.stringify(h.tree.toJSON()),/OLD RESULT/);assert.match(JSON.stringify(h.tree.toJSON()),/Searching/);
+  await act(async()=>h.requests[0].resolve({data:{success:false,error:'OLD RESULT'}}));assert.doesNotMatch(JSON.stringify(h.tree.toJSON()),/OLD RESULT/);assert.match(JSON.stringify(h.tree.toJSON()),/Cancel search|Looking/);
   await act(async()=>h.requests[1].resolve({data:{success:false,error:'NEW RESULT'}}));assert.match(JSON.stringify(h.tree.toJSON()),/NEW RESULT/);
  }finally{await h.close();}
 });
@@ -61,9 +63,10 @@ test('manual repository selection uses exact ID, confirms once, and cannot apply
  const profiles=[{id:'oh',name:'Same name',state:'OH',type:'city'},{id:'ky',name:'Same name',state:'KY',type:'city'}];
  for(const stale of [false,true]){
   const h=await harness({profiles});try{
+   await h.advanced();
    await act(async()=>h.tree.root.findByType('select').props.onChange({target:{value:'oh'}}));
-   await act(async()=>h.tree.root.findAllByType('button').find(n=>n.children.includes('Review draft creation')).props.onClick());
-   const confirm=h.tree.root.findAll(n=>typeof n.props.onClick==='function'&&n.children.some(child=>typeof child==='string'&&child.trim()==='Create Draft & Apply')).at(-1).props.onClick;
+   await act(async()=>h.tree.root.findAllByType('button').find(n=>n.children.includes('Check the draft before making it')).props.onClick());
+   const confirm=h.tree.root.findAll(n=>typeof n.props.onClick==='function'&&n.children.some(child=>typeof child==='string'&&child.trim()==='Make it & use it')).at(-1).props.onClick;
    await act(async()=>{confirm({preventDefault:()=>{}});confirm({preventDefault:()=>{}});});assert.equal(h.drafts.length,1);assert.equal(h.drafts[0].input.data.state,'OH');assert.equal(h.applied.length,0);
    if(stale)await h.change({currentUser:{id:'second',role:'admin'},sessionToken:'same'});
    await act(async()=>h.drafts[0].resolve({record:{id:'draft-oh',name:'Same name',state:'OH'}}));assert.equal(h.applied.length,stale?0:1);
@@ -81,10 +84,11 @@ test('confirmation reloads the repository and blocks changed or deleted reviewed
  for(const deleted of [false,true]){
   const profiles=[{id:'oh',name:'Fixture',state:'OH',type:'city'}],h=await harness({profiles});
   try{
+   await h.advanced();
    await act(async()=>h.tree.root.findByType('select').props.onChange({target:{value:'oh'}}));
-   await act(async()=>h.tree.root.findAllByType('button').find(n=>n.children.includes('Review draft creation')).props.onClick());
+   await act(async()=>h.tree.root.findAllByType('button').find(n=>n.children.includes('Check the draft before making it')).props.onClick());
    profiles.splice(0,1,...(deleted?[]:[{id:'oh',name:'Changed',state:'OH',type:'city'}]));
-   const confirm=h.tree.root.findAll(n=>typeof n.props.onClick==='function'&&n.children.some(child=>typeof child==='string'&&child.trim()==='Create Draft & Apply')).at(-1).props.onClick;
+   const confirm=h.tree.root.findAll(n=>typeof n.props.onClick==='function'&&n.children.some(child=>typeof child==='string'&&child.trim()==='Make it & use it')).at(-1).props.onClick;
    await act(async()=>confirm({preventDefault:()=>{}}));
    assert.equal(h.drafts.length,0);assert.equal(h.applied.length,0);assert.match(JSON.stringify(h.tree.toJSON()),/review it again/);
   }finally{await h.close();}

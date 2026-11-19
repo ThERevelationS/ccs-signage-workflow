@@ -1,0 +1,751 @@
+{
+  "matches": [
+    {
+      "path": "src/components/permitting/PermitSpreadsheetRow.jsx",
+      "line": 26,
+      "text": "const parseLocalDate = (dateString) => {\r"
+    },
+    {
+      "path": "src/components/permitting/PermitSpreadsheetRow.jsx",
+      "line": 160,
+      "text": "    const fd = parseLocalDate(followupDate);\r"
+    },
+    {
+      "path": "src/components/permitting/PermitSpreadsheetRow.jsx",
+      "line": 161,
+      "text": "    const td = parseLocalDate(today);\r"
+    },
+    {
+      "path": "src/components/permitting/PermitSpreadsheetRow.jsx",
+      "line": 174,
+      "text": "    const ed = parseLocalDate(lineItem.expected_response_date);\r"
+    },
+    {
+      "path": "src/components/permitting/PermitSpreadsheetRow.jsx",
+      "line": 175,
+      "text": "    const td = parseLocalDate(today);\r"
+    },
+    {
+      "path": "src/components/permitting/PermitSpreadsheetRow.jsx",
+      "line": 180,
+      "text": "    const ed = parseLocalDate(lineItem.permit_expiration_date);\r"
+    },
+    {
+      "path": "src/components/permitting/PermitSpreadsheetRow.jsx",
+      "line": 181,
+      "text": "    const td = parseLocalDate(today);\r"
+    },
+    {
+      "path": "src/components/permitting/PermitSpreadsheetRow.jsx",
+      "line": 186,
+      "text": "    const ed = parseLocalDate(lineItem.permit_expiration_date);\r"
+    },
+    {
+      "path": "src/components/permitting/PermitSpreadsheetRow.jsx",
+      "line": 187,
+      "text": "    const id = parseLocalDate(installDate);\r"
+    },
+    {
+      "path": "src/components/permitting/PermitSpreadsheetRow.jsx",
+      "line": 580,
+      "text": "                        {dateVal ? (() => { const d = parseLocalDate(dateVal); return d && !isNaN(d) ? format(d, \"MM/dd/yy\") : \"—\"; })() : \"—\"}\r"
+    },
+    {
+      "path": "src/components/permitting/PermitSpreadsheetRow.jsx",
+      "line": 586,
+      "text": "                        selected={parseLocalDate(dateVal)}\r"
+    },
+    {
+      "path": "src/components/permitting/PermitLineLifecycleDetails.jsx",
+      "line": 10,
+      "text": "function parseLocalDate(value) {"
+    },
+    {
+      "path": "src/components/permitting/PermitLineLifecycleDetails.jsx",
+      "line": 18,
+      "text": "  const date = parseLocalDate(value);"
+    },
+    {
+      "path": "src/components/permitting/PermitLineLifecycleDetails.jsx",
+      "line": 116,
+      "text": "  const canUseToday = showTodayShortcut && !disabled && !value && !!parseLocalDate(today);"
+    },
+    {
+      "path": "src/components/permitting/PermitLineLifecycleDetails.jsx",
+      "line": 171,
+      "text": "    const expiration = parseLocalDate(lineItem?.expiration_date);"
+    },
+    {
+      "path": "src/components/permitting/PermitLineLifecycleDetails.jsx",
+      "line": 172,
+      "text": "    const todayDate = parseLocalDate(today);"
+    },
+    {
+      "path": "src/components/orders/WorkOrderOrders.jsx",
+      "line": 66,
+      "text": "const parseLocalDate = (dateString) => {\r"
+    },
+    {
+      "path": "src/components/orders/WorkOrderOrders.jsx",
+      "line": 697,
+      "text": "                        {order.date_needed ? format(parseLocalDate(order.date_needed), \"MM/dd/yy\") : \"-\"}\r"
+    },
+    {
+      "path": "src/components/orders/WorkOrderOrders.jsx",
+      "line": 718,
+      "text": "                        selected={parseLocalDate(order.date_needed)}\r"
+    },
+    {
+      "path": "src/components/orders/WorkOrderOrders.jsx",
+      "line": 734,
+      "text": "                        {order.date_ordered ? format(parseLocalDate(order.date_ordered), \"MM/dd/yy\") : \"-\"}\r"
+    },
+    {
+      "path": "src/components/orders/WorkOrderOrders.jsx",
+      "line": 755,
+      "text": "                        selected={parseLocalDate(order.date_ordered)}\r"
+    },
+    {
+      "path": "src/components/orders/WorkOrderOrders.jsx",
+      "line": 790,
+      "text": "                        {order.date_received ? format(parseLocalDate(order.date_received), \"MM/dd/yy\") : \"-\"}\r"
+    },
+    {
+      "path": "src/components/orders/WorkOrderOrders.jsx",
+      "line": 811,
+      "text": "                        selected={parseLocalDate(order.date_received)}\r"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 27,
+      "text": "const parseLocalDate = (dateString) => {"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 54,
+      "text": "  const date = parseLocalDate(dateString);"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 2404,
+      "text": "                      selected={parseLocalDate(order.date_needed)}"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 2472,
+      "text": "                              selected={parseLocalDate(order.date_ordered)}"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 2608,
+      "text": "                              selected={parseLocalDate(order.date_received)}"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 2619,
+      "text": "                                  if (order.date_ordered && date < parseLocalDate(order.date_ordered)) {"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 2624,
+      "text": "                                  if (order.date_needed && date < parseLocalDate(order.date_needed)) {"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 2658,
+      "text": "                                  const orderedDate = parseLocalDate(order.date_ordered);"
+    },
+    {
+      "path": "src/components/queues/productQueueModel.js",
+      "line": 36,
+      "text": "export function parseLocalDate(str) {"
+    },
+    {
+      "path": "src/components/queues/productQueueModel.js",
+      "line": 49,
+      "text": "  const due = parseLocalDate(dueStr);"
+    },
+    {
+      "path": "src/components/queues/productQueueModel.js",
+      "line": 181,
+      "text": "  const due = parseLocalDate(row?.due || row?.woDue);"
+    },
+    {
+      "path": "src/components/queues/productQueueModel.js",
+      "line": 188,
+      "text": "  const changed = parseLocalDate(row?.statusChangedAt);"
+    },
+    {
+      "path": "src/components/queues/ProductQueue.jsx",
+      "line": 25,
+      "text": "  parseLocalDate,"
+    },
+    {
+      "path": "src/components/queues/ProductQueue.jsx",
+      "line": 627,
+      "text": "                    {r.due && parseLocalDate(r.due) ? parseLocalDate(r.due).toLocaleDateString() : <span className=\"text-gray-400\">—</span>}"
+    },
+    {
+      "path": "src/components/shared/ColumnHeaderContextMenu.jsx",
+      "line": 31,
+      "text": "const parseLocalDate = (dateString) => {\r"
+    },
+    {
+      "path": "src/components/shared/ColumnHeaderContextMenu.jsx",
+      "line": 631,
+      "text": "          const date = parseLocalDate(value);\r"
+    },
+    {
+      "path": "src/components/workflow/CreateRiderDialog.jsx",
+      "line": 354,
+      "text": "  const parseLocalDate = (dateString) => {\r"
+    },
+    {
+      "path": "src/components/workflow/CreateRiderDialog.jsx",
+      "line": 432,
+      "text": "                  {dueDate ? format(parseLocalDate(dueDate), \"PPP\") : \"Select date (optional)\"}\r"
+    },
+    {
+      "path": "src/components/workflow/CreateRiderDialog.jsx",
+      "line": 438,
+      "text": "                  selected={parseLocalDate(dueDate)}\r"
+    },
+    {
+      "path": "src/components/workflow/EnhancedSipChecklist.jsx",
+      "line": 216,
+      "text": "  const parseLocalDate = (dateString) => {\r"
+    },
+    {
+      "path": "src/components/workflow/EnhancedSipChecklist.jsx",
+      "line": 417,
+      "text": "                {selectedRider.due_date && <div>Due: {format(parseLocalDate(selectedRider.due_date), \"MMM d, yyyy\")}</div>}\r"
+    },
+    {
+      "path": "src/components/workflow/EnhancedSipChecklist.jsx",
+      "line": 484,
+      "text": "                      {newRiderDueDate ? format(parseLocalDate(newRiderDueDate), \"MMM d, yyyy\") : \"Select date...\"}\r"
+    },
+    {
+      "path": "src/components/workflow/EnhancedSipChecklist.jsx",
+      "line": 490,
+      "text": "                      selected={parseLocalDate(newRiderDueDate)}\r"
+    },
+    {
+      "path": "src/components/workflow/EnhancedSipChecklist.jsx",
+      "line": 541,
+      "text": "  const parseLocalDate = (dateString) => {\r"
+    },
+    {
+      "path": "src/components/workflow/EnhancedSipChecklist.jsx",
+      "line": 679,
+      "text": "                      {newRiderDueDate ? format(parseLocalDate(newRiderDueDate), \"MMM d, yyyy\") : \"Select date...\"}\r"
+    },
+    {
+      "path": "src/components/workflow/EnhancedSipChecklist.jsx",
+      "line": 685,
+      "text": "                      selected={parseLocalDate(newRiderDueDate)}\r"
+    },
+    {
+      "path": "src/components/workflow/WorkOrderCard.jsx",
+      "line": 40,
+      "text": "const parseLocalDate = (dateString) => {"
+    },
+    {
+      "path": "src/components/workflow/WorkOrderCard.jsx",
+      "line": 1040,
+      "text": "                  <span className=\"text-xs font-medium\">{format(parseLocalDate(workOrder.due_date), \"MMM d\")}</span>"
+    },
+    {
+      "path": "src/components/workflow/WorkOrderDetailsDialog.jsx",
+      "line": 49,
+      "text": "const parseLocalDate = (dateString) => {"
+    },
+    {
+      "path": "src/components/workflow/WorkOrderDetailsDialog.jsx",
+      "line": 1746,
+      "text": "                          {workOrder.due_date ? format(parseLocalDate(workOrder.due_date), \"MMM d, yyyy\") : 'No due date'}"
+    },
+    {
+      "path": "src/components/jobs/JobWorkspace.jsx",
+      "line": 16,
+      "text": "import { FULFILLMENT_LABELS, overdueDays, parseLocalDate } from \"@/components/queues/productQueueModel\";"
+    },
+    {
+      "path": "src/components/jobs/JobWorkspace.jsx",
+      "line": 82,
+      "text": "  const d = parseLocalDate(v);"
+    },
+    {
+      "path": "src/components/jobs/JobWorkspace.jsx",
+      "line": 86,
+      "text": "  const d = parseLocalDate(v);"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 14,
+      "text": "const parseLocalDate = (dateString) => {"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 208,
+      "text": "  const created = parseLocalDate(createdStamp);"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 209,
+      "text": "  const today = parseLocalDate(todayStamp);"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 226,
+      "text": "    const quoteAge = getQuoteAgeDays(workOrder, parseLocalDate(todayStamp));"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 230,
+      "text": "    return isOperational && isQuoteAwaitingResponse(workOrder) && getQuoteAgeDays(workOrder, parseLocalDate(todayStamp)) === null;"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 232,
+      "text": "  if (attentionFilter === \"needs_attention\") return isOperational && hasSalesAttention(workOrder, parseLocalDate(todayStamp));"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 244,
+      "text": "  if (attentionFilter === \"stage_aged\") return isOperational && isStageAgedOpportunity(workOrder, parseLocalDate(todayStamp));"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 245,
+      "text": "  if (attentionFilter === \"stage_untracked\") return isOperational && getStageAgeDays(workOrder, parseLocalDate(todayStamp)) === null;"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 819,
+      "text": "      const from = parseLocalDate(fromDate);"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 830,
+      "text": "        to = parseLocalDate(toDate);"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 1740,
+      "text": "    const deadline = parseLocalDate(deadlineDate);"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2187,
+      "text": "  const nearCloseDate = parseLocalDate(todayStamp);"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2190,
+      "text": "  const staleCutoffDate = parseLocalDate(todayStamp);"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2197,
+      "text": "    const cutoff = parseLocalDate(todayStamp);"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2252,
+      "text": "      const stageAgeDays = getStageAgeDays(wo, parseLocalDate(todayStamp));"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2258,
+      "text": "        if (isStageAgedOpportunity(wo, parseLocalDate(todayStamp))) summary.stageAgedCount += 1;"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2301,
+      "text": "      if (hasSalesAttention(wo, parseLocalDate(todayStamp))) summary.needsAttentionCount += 1;"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2306,
+      "text": "      const quoteAging = getQuoteAgingState(wo, parseLocalDate(todayStamp));"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2464,
+      "text": "        const quoteAging = getQuoteAgingState(wo, parseLocalDate(todayStamp));"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2480,
+      "text": "      const stageAgeDays = getStageAgeDays(wo, parseLocalDate(todayStamp));"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2484,
+      "text": "        if (isStageAgedOpportunity(wo, parseLocalDate(todayStamp))) stageRow.agedCount += 1;"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 2678,
+      "text": "          const scoreDiff = getSalesAttentionScore(viewB, parseLocalDate(todayStamp)) - getSalesAttentionScore(viewA, parseLocalDate(todayStamp));"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineRow.jsx",
+      "line": 30,
+      "text": "const parseLocalDate = (dateString) => {\r"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineRow.jsx",
+      "line": 44,
+      "text": "    const parsed = parseLocalDate(value);\r"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineRow.jsx",
+      "line": 65,
+      "text": "        <Calendar mode=\"single\" selected={parseLocalDate(value)} disabled={preventsFutureDate ? { after: today } : undefined}\r"
+    },
+    {
+      "path": "src/components/financials/FinancialsSpreadsheet.jsx",
+      "line": 20,
+      "text": "const parseLocalDate = (dateString) => {\r"
+    },
+    {
+      "path": "src/components/financials/FinancialsSpreadsheet.jsx",
+      "line": 242,
+      "text": "    const date = parseLocalDate(installDate);\r"
+    },
+    {
+      "path": "src/components/financials/FinancialsSpreadsheet.jsx",
+      "line": 464,
+      "text": "                            {wo.project_install_date ? format(parseLocalDate(wo.project_install_date), \"M/d/yyyy\") : \"-\"}\r"
+    },
+    {
+      "path": "src/components/financials/FinancialsSpreadsheet.jsx",
+      "line": 470,
+      "text": "                            selected={parseLocalDate(wo.project_install_date)}\r"
+    },
+    {
+      "path": "src/components/financials/FinancialsDashboard.jsx",
+      "line": 7,
+      "text": "const parseLocalDate = (dateString) => {"
+    },
+    {
+      "path": "src/components/financials/FinancialsDashboard.jsx",
+      "line": 30,
+      "text": "      const installDate = parseLocalDate(wo.project_install_date);"
+    },
+    {
+      "path": "src/components/financials/FinancialsDashboard.jsx",
+      "line": 45,
+      "text": "      const date = parseLocalDate(wo.project_install_date);"
+    },
+    {
+      "path": "src/components/financials/FinancialsDashboard.jsx",
+      "line": 133,
+      "text": "      const date = parseLocalDate(wo.project_install_date);"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 34,
+      "text": "  parseLocalDate,"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 398,
+      "text": "    const from = parseLocalDate(filters.from);"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 399,
+      "text": "    const to = parseLocalDate(filters.to);"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 403,
+      "text": "      const d = parseLocalDate(dateStr);"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 49,
+      "text": "  parseLocalDate,"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 63,
+      "text": "  const d = parseLocalDate(value);"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 68,
+      "text": "  const d = parseLocalDate(`${key}-01`);"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 153,
+      "text": "  if (fulfilledAt) return parseLocalDate(fulfilledAt);"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 154,
+      "text": "  if (wo?.completed === true) return parseLocalDate(wo?.updated_date);"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 288,
+      "text": "    const created = parseLocalDate(wo.created_date);"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 292,
+      "text": "      const due = parseLocalDate(productDueDate(product, wo));"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 462,
+      "text": "    const basis = parseLocalDate(inv?.due_date) || parseLocalDate(inv?.issue_date) || parseLocalDate(inv?.created_date);"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1060,
+      "text": "  const d = parseLocalDate(value);"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1070,
+      "text": "  const d = parseLocalDate(key);"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 16,
+      "text": "const parseLocalDate = (dateString) => {"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 116,
+      "text": "      return format(parseLocalDate(wo.due_date), \"MMM d\") === label;\r"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 177,
+      "text": "    return parseLocalDate(wo.due_date) < startOfToday;\r"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 29,
+      "text": "const parseLocalDate = (dateString) => {"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 166,
+      "text": "                {task.due_date && (() => { const d = parseLocalDate(task.due_date); return d && !isNaN(d) ? <span className=\"shrink-0 text-xs text-gray-500\">due {format(d, \"M/d\")}</span> : null; })()}"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 190,
+      "text": "                  {taskDueDate ? `Due ${format(parseLocalDate(taskDueDate), \"M/d\")}` : \"Due date\"}"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 196,
+      "text": "                  selected={parseLocalDate(taskDueDate)}"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 493,
+      "text": "    const d = parseLocalDate(wo.mmm_defer_until);"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 682,
+      "text": "    const deadline = parseLocalDate(dateString);"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 1036,
+      "text": "                              selected={parseLocalDate(wo.mmm_defer_until)}"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 1091,
+      "text": "                              {wo.project_install_date ? (() => { const d = parseLocalDate(wo.project_install_date); return d && !isNaN(d) ? format(d, \"MM/dd/yy\") : \"-\"; })() : \"-\"}"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 1097,
+      "text": "                              selected={parseLocalDate(wo.project_install_date)}"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 1116,
+      "text": "                              <span>{wo.current_task_deadline ? (() => { const d = parseLocalDate(wo.current_task_deadline); return d && !isNaN(d) ? format(d, \"MM/dd/yy\") : \"-\"; })() : \"-\"}</span>"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 1123,
+      "text": "                              selected={parseLocalDate(wo.current_task_deadline)}"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 1274,
+      "text": "                              {wo.site_survey_date ? (() => { const d = parseLocalDate(wo.site_survey_date); return d && !isNaN(d) ? format(d, \"MM/dd/yy\") : \"-\"; })() : \"-\"}"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 1280,
+      "text": "                              selected={parseLocalDate(wo.site_survey_date)}"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 1347,
+      "text": "                  const deferDate = deferred ? parseLocalDate(wo.mmm_defer_until) : null;"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 1379,
+      "text": "                        {wo.current_task_deadline ? (() => { const d = parseLocalDate(wo.current_task_deadline); return d && !isNaN(d) ? format(d, \"MM/dd/yy\") : \"-\"; })() : \"-\"}"
+    },
+    {
+      "path": "src/pages/Financials.jsx",
+      "line": 20,
+      "text": "const parseLocalDate = (dateString) => {"
+    },
+    {
+      "path": "src/pages/Financials.jsx",
+      "line": 72,
+      "text": "  const overdueCount = active.filter(wo => wo.due_date && parseLocalDate(wo.due_date) < startOfToday).length;"
+    },
+    {
+      "path": "src/pages/Financials.jsx",
+      "line": 91,
+      "text": "    count: active.filter(wo => wo.due_date && dateFnsFormat(parseLocalDate(wo.due_date), \"MMM d\") === label).length"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 30,
+      "text": "const parseLocalDate = (dateString) => {"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 434,
+      "text": "    const d = parseLocalDate(wo.sip_revisit_date);"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 600,
+      "text": "    ? parseLocalDate(futureRevisitOrders[0].sip_revisit_date)"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 622,
+      "text": "    const deadline = parseLocalDate(dateString);"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1028,
+      "text": "                    <div><span className=\"text-gray-400 block\">Deadline</span><span className=\"font-medium text-gray-700\">{wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), \"MM/dd/yy\") : \"—\"}</span></div>"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1031,
+      "text": "                    <div><span className=\"text-gray-400 block\">Revisit</span><span className=\"font-medium text-amber-700\">{wo.sip_revisit_date ? format(parseLocalDate(wo.sip_revisit_date), \"MM/dd/yy\") : \"—\"}</span></div>"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1063,
+      "text": "                        selected={parseLocalDate(wo.sip_revisit_date)}"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1216,
+      "text": "                            <span>{wo.current_task_deadline ? (() => { const d = parseLocalDate(wo.current_task_deadline); return d && !isNaN(d) ? format(d, \"MM/dd/yy\") : \"-\"; })() : \"-\"}</span>"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1224,
+      "text": "                            selected={parseLocalDate(wo.current_task_deadline)}"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1346,
+      "text": "                            {isQuickEditSaving(wo.id, \"site_survey_date\") ? \"Saving…\" : (wo.site_survey_date ? (() => { const d = parseLocalDate(wo.site_survey_date); return d && !isNaN(d) ? format(d, \"MM/dd/yy\") : \"-\"; })() : \"-\")}"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1352,
+      "text": "                            selected={parseLocalDate(wo.site_survey_date)}"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1372,
+      "text": "                            {savingRevisitIds.has(wo.id) ? \"Saving…\" : (wo.sip_revisit_date ? (() => { const d = parseLocalDate(wo.sip_revisit_date); return d && !isNaN(d) ? format(d, \"MM/dd/yy\") : \"-\"; })() : \"-\")}"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1379,
+      "text": "                            selected={parseLocalDate(wo.sip_revisit_date)}"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1438,
+      "text": "                const revisitDate = parseLocalDate(wo.sip_revisit_date);"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1462,
+      "text": "                      <div><span className=\"text-gray-400 block\">Deadline</span><span className=\"font-medium text-gray-700\">{wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), \"MM/dd/yy\") : \"—\"}</span></div>"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1496,
+      "text": "                          selected={parseLocalDate(wo.sip_revisit_date)}"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1559,
+      "text": "                      <td className=\"px-2 py-2 border-r text-sm\">{wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), \"MM/dd/yy\") : \"-\"}</td>"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1569,
+      "text": "                              {savingRevisitIds.has(wo.id) ? \"Saving…\" : (wo.sip_revisit_date ? (() => { const d = parseLocalDate(wo.sip_revisit_date); return d && !isNaN(d) ? format(d, \"MM/dd/yy\") : \"-\"; })() : \"-\")}"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1576,
+      "text": "                              selected={parseLocalDate(wo.sip_revisit_date)}"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1651,
+      "text": "                    <div><span className=\"text-gray-400 block\">Deadline</span><span className=\"font-medium text-gray-700\">{wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), \"MM/dd/yy\") : \"—\"}</span></div>"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1714,
+      "text": "                      {wo.current_task_deadline ? (() => { const d = parseLocalDate(wo.current_task_deadline); return d && !isNaN(d) ? format(d, \"MM/dd/yy\") : \"-\"; })() : \"-\"}"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 66,
+      "text": "const parseLocalDate = (dateString) => {"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 95,
+      "text": "            {wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), \"M/d/yy\") : \"—\"}"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 101,
+      "text": "            selected={wo.current_task_deadline ? parseLocalDate(wo.current_task_deadline) : undefined}"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 820,
+      "text": "                        {wo.due_date ? format(parseLocalDate(wo.due_date), \"M/d/yy\") : \"-\"}"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 149
+}

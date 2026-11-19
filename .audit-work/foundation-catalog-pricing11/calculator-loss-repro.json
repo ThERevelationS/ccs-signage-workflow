@@ -1,0 +1,97 @@
+{
+  "synthetic": true,
+  "observedAt": "2026-11-05T17:20:46.662Z",
+  "scope": "Direct actual calculator outputs; fresh sandbox/local sources matched. No SDK/services/records.",
+  "inputs": {
+    "pole": {
+      "component_id": "pole-synthetic",
+      "pole_id": "unavailable-pole",
+      "height_inches": 120,
+      "y_offset_inches": 24,
+      "pole_cost": 42,
+      "pole_painting_cost": 3,
+      "total_cost": 45
+    },
+    "cap": {
+      "component_id": "cap-synthetic",
+      "cap_inventory_id": "unavailable-cap",
+      "cut_length_inches": 48,
+      "stock_length_inches": 48,
+      "cost": 17
+    },
+    "wall": {
+      "component_id": "wall-synthetic",
+      "materialId": "unavailable-wall",
+      "heightInches": 24,
+      "shape": {
+        "segments": [
+          {
+            "length": 96
+          }
+        ]
+      },
+      "calculatedCosts": {
+        "totalBricks": 18,
+        "materialCost": 36,
+        "mortarCost": 10,
+        "laborCost": 150,
+        "totalCost": 196
+      }
+    },
+    "inventory": []
+  },
+  "outputs": {
+    "pole": {
+      "component_id": "pole-synthetic",
+      "pole_id": "unavailable-pole",
+      "height_inches": 120,
+      "y_offset_inches": 24,
+      "pole_cost": 0,
+      "pole_painting_cost": 0,
+      "total_cost": 0,
+      "pole_name": ""
+    },
+    "cap": {
+      "component_id": "cap-synthetic",
+      "cap_inventory_id": "unavailable-cap",
+      "cut_length_inches": 48,
+      "stock_length_inches": 0,
+      "cost": 0,
+      "cap_name": ""
+    },
+    "wall": {
+      "component_id": "wall-synthetic",
+      "materialId": "unavailable-wall",
+      "heightInches": 24,
+      "shape": {
+        "segments": [
+          {
+            "length": 96
+          }
+        ]
+      },
+      "calculatedCosts": {
+        "totalBricks": 0,
+        "materialCost": 0,
+        "mortarCost": 0,
+        "laborHours": 0,
+        "laborCost": 0,
+        "totalCost": 0,
+        "totalLinearInches": 0,
+        "numCourses": 0,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      }
+    }
+  },
+  "asserted": {
+    "poleSnapshotOverridden": true,
+    "capSnapshotOverridden": true,
+    "wallSnapshotOverridden": true,
+    "inputObjectsUnchanged": true
+  },
+  "pagePath": "FoundationEstimator calcProject -> calcPoles/calcWallCaps/calcWalls -> panel props and payload. Save uses calculated outputs."
+}

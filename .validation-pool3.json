@@ -1,0 +1,418 @@
+{
+  "partial": true,
+  "done": 20,
+  "results": [
+    {
+      "address": "588 S South St, Wilmington, OH 45177",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Wilmington",
+        "ai_name": "Wilmington",
+        "targets": "Wilmington (municipality) + Clinton County (county)",
+        "trace": "google rooftop pin → checked state municipality + municipality + county boundaries → inside Wilmington + Clinton County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 9191,
+      "worker": 1
+    },
+    {
+      "address": "315 Garrison St, Fremont, OH 43420",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Fremont",
+        "ai_name": "Fremont",
+        "targets": "Fremont (municipality) + Sandusky County (county)",
+        "trace": "google rooftop pin → checked state municipality + county + municipality boundaries → inside Fremont + Sandusky County → offices: 0 checked · 2 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 7979,
+      "worker": 1
+    },
+    {
+      "address": "220 American Way, Monroe, OH 45050",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Monroe",
+        "ai_name": "Monroe",
+        "targets": "Monroe (municipality) + Butler County (county)",
+        "trace": "google rooftop pin → checked municipality + state municipality + county boundaries → inside Monroe + Butler County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 8323,
+      "worker": 1
+    },
+    {
+      "address": "9910 OH-269, Bellevue, OH 44811",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Groton township — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Groton township",
+        "targets": "Groton township (township) + Erie County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality + state township + township boundaries → inside Groton township + Erie County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 33637,
+      "worker": 1
+    },
+    {
+      "address": "25 E Ogle St, Bellville, OH 44813",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "server_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Bellville",
+        "ai_name": "Bellville",
+        "targets": "Bellville (municipality) + Richland County (county)",
+        "trace": "google rooftop pin → checked state municipality + municipality + county boundaries → inside Bellville + Richland County → offices: 0 checked · 7 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 32373,
+      "worker": 1
+    },
+    {
+      "address": "880 S Market St, Loudonville, OH 44842",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Loudonville — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Loudonville",
+        "targets": "Loudonville (municipality) + Ashland County (county)",
+        "trace": "google rooftop pin → checked state municipality + municipality + county boundaries → inside Loudonville + Ashland County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 34724,
+      "worker": 1
+    },
+    {
+      "address": "250 Jefferson St, Greenfield, OH 45123",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "server_waits": 3,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Greenfield",
+        "ai_name": "Greenfield",
+        "targets": "Greenfield (municipality) + Highland County (county)",
+        "trace": "google rooftop pin → checked county + state municipality + municipality boundaries → inside Greenfield + Highland County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 101326,
+      "worker": 1
+    },
+    {
+      "address": "116 W Streetsboro St, Hudson, OH 44236",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Hudson — no saved office matched",
+      "server_waits": 4,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Hudson",
+        "targets": "Hudson (municipality) + Summit County (county)",
+        "trace": "approx pin (google_approx) → checked state municipality + municipality + county boundaries → inside Hudson + Summit County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 249695,
+      "worker": 1
+    },
+    {
+      "address": "119 Birdseye St, Clyde, OH 43410",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "server_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Clyde",
+        "ai_name": "Clyde",
+        "targets": "Clyde (municipality) + Sandusky County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Clyde + Sandusky County → offices: 0 checked · 6 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 26537,
+      "worker": 1
+    },
+    {
+      "address": "5705 OH-48, Maineville, OH 45039",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "server_waits": 4,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Hamilton township",
+        "ai_name": "Hamilton township",
+        "targets": "Hamilton township (township) + Warren County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality + township + state township boundaries → inside Hamilton township + Warren County → offices: 0 checked · 1 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 130878,
+      "worker": 1
+    },
+    {
+      "address": "772 South Main Street, Akron, OH 44311",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Akron — no saved office matched",
+      "server_waits": 2,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Akron",
+        "targets": "Akron (municipality) + Summit County (county)",
+        "trace": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Akron + Summit County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 372513,
+      "worker": 1
+    },
+    {
+      "address": "2258 E Main St, Bexley, OH 43209",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Bexley",
+        "ai_name": "Bexley",
+        "targets": "Bexley (municipality) + Franklin County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Bexley + Franklin County → offices: 0 checked · 3 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 9633,
+      "worker": 1
+    },
+    {
+      "address": "298 Main St, Jackson, OH 45640",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "server_waits": 3,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Jackson",
+        "ai_name": "Jackson",
+        "targets": "Jackson (municipality) + Jackson County (county)",
+        "trace": "google rooftop pin → checked county + state municipality + municipality boundaries → inside Jackson + Jackson County → offices: 0 checked · 7 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 90861,
+      "worker": 1
+    },
+    {
+      "address": "2567 US-40, Lewisburg, OH 45338",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Harrison township — no saved office matched",
+      "server_waits": 2,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Harrison township",
+        "targets": "Harrison township (township) + Preble County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality + township + state township boundaries → inside Harrison township + Preble County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 70934,
+      "worker": 1
+    },
+    {
+      "address": "305 W Main St, Fairborn, OH 45324",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Fairborn",
+        "ai_name": "Fairborn",
+        "targets": "Fairborn (municipality) + Greene County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Fairborn + Greene County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 9022,
+      "worker": 1
+    },
+    {
+      "address": "1112 Castalia St, Bellevue, OH 44811",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "server_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Bellevue",
+        "ai_name": "Bellevue",
+        "targets": "Bellevue (municipality) + Huron County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Bellevue + Huron County → offices: 0 checked · 5 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 25954,
+      "worker": 1
+    },
+    {
+      "address": "161 Maule Rd, Tiffin, OH 44883",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Tiffin — no saved office matched",
+      "server_waits": 5,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Tiffin",
+        "targets": "Tiffin (municipality) + Seneca County (county)",
+        "trace": "google rooftop pin → checked county + state municipality + municipality boundaries → inside Tiffin + Seneca County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 282878,
+      "worker": 1
+    },
+    {
+      "address": "49 S Miami Ave, Cleves, OH 45002",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "server_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Cleves",
+        "ai_name": "Cleves",
+        "targets": "Cleves (municipality) + Hamilton County (county)",
+        "trace": "google rooftop pin → checked municipality + state municipality + county boundaries → inside Cleves + Hamilton County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 29563,
+      "worker": 1
+    },
+    {
+      "address": "31 E Granville St, Sunbury, OH 43074",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Sunbury",
+        "ai_name": "Sunbury",
+        "targets": "Sunbury (municipality) + Delaware County (county)",
+        "trace": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Sunbury + Delaware County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 7590,
+      "worker": 1
+    },
+    {
+      "address": "700 Nilles Rd, Fairfield, OH 45014",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "server_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Fairfield",
+        "ai_name": "Fairfield",
+        "targets": "Fairfield (municipality) + Butler County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Fairfield + Butler County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 29192,
+      "worker": 1
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+ "synthetic": true,
+ "telemetry": {
+  "foreign": [],
+  "consoleErrors": [],
+  "pageErrors": []
+ },
+ "results": [
+  {
+   "case": "R1 invalid spread steel: raw/cache/prices preserved, all writes blocked, correction saves",
+   "ok": true
+  },
+  {
+   "case": "R2 pillar counts and hoop bounds: no silent defaults/clamping, explicit repair saves",
+   "ok": true
+  },
+  {
+   "case": "R3 rebar disabled: inactive invalid steel fields do not block or change on save",
+   "ok": false,
+   "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Save', exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"button\" class=\"h-[28px] px-3 rounded-sm border border-gray-300 text-[12px] font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40\">Save</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    58 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+  },
+  {
+   "case": "R4 legacy null defaults preserved, explicit empty spacing requires correction",
+   "ok": true
+  }
+ ]
+}

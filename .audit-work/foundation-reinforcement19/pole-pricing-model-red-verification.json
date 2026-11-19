@@ -1,0 +1,214 @@
+{
+  "results": [
+    {
+      "name": "valid legacy poles price identically to ported formulas",
+      "ok": true
+    },
+    {
+      "name": "numeric-string dimensions normalize on the calculation copy, never concatenated",
+      "ok": false,
+      "error": "120+36 as numbers, not '12036'\n\n12750 !== 250\n"
+    },
+    {
+      "name": "explicit-zero catalog prices are valid free poles, not unavailable",
+      "ok": true
+    },
+    {
+      "name": "zero depth is legitimate surface mount; string zero normalizes",
+      "ok": false,
+      "error": "8ft * $12\n\n960 !== 96\n"
+    },
+    {
+      "name": "custom_cost_per_unit override prices and explicit zero override is honored",
+      "ok": true
+    },
+    {
+      "name": "explicit-zero paint settings are honored, not defaulted",
+      "ok": false,
+      "error": "free paint at explicit 0 rates\n\n43.75 !== 0\n"
+    },
+    {
+      "name": "missing paint settings fall back to module defaults",
+      "ok": true
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (blank)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (whitespace)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (zero)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (negative)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (NaN)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (Infinity)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (malformed)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (record)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid height holds acknowledged amounts (array)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (blank)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (whitespace)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (negative)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (NaN)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (Infinity)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (malformed)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (record)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid depth holds acknowledged amounts (array)",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "missing pole_stock_price is unavailable, never $0",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "missing cost_per_unit is unavailable, never $0",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "malformed and negative catalog prices hold",
+      "ok": false,
+      "error": "v=abc\n\ntrue !== false\n"
+    },
+    {
+      "name": "NaN and negative custom_cost_per_unit hold",
+      "ok": false,
+      "error": "v=NaN\n\ntrue !== false\n"
+    },
+    {
+      "name": "unassigned pole_id holds",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'catalog_item_unassigned'\n"
+    },
+    {
+      "name": "unavailable catalog pole holds",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'catalog_item_unavailable'\n"
+    },
+    {
+      "name": "ambiguous catalog id holds",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'catalog_item_ambiguous'\n"
+    },
+    {
+      "name": "type-mismatched catalog row holds",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'catalog_item_type_mismatch'\n"
+    },
+    {
+      "name": "missing stock length defaults to 20ft; malformed/zero stock length holds",
+      "ok": false,
+      "error": "v=abc\n\ntrue !== false\n"
+    },
+    {
+      "name": "malformed catalog pole width holds when painting; missing width defaults",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "malformed/negative paint settings hold; ignored when painting off",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "new held pole has no acknowledged amounts — snapshot fields removed",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "non-explicit snapshot keeps stored amounts on held poles",
+      "ok": false,
+      "error": "no snapshot arg → authored basis kept\n\n250 !== 999\n"
+    },
+    {
+      "name": "held pole keeps saved name and amounts on all issue paths",
+      "ok": true
+    },
+    {
+      "name": "foundationPoleCatalogIssues and foundationPolePricingIssues exports",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\n0 !== 2\n"
+    },
+    {
+      "name": "calcProject wires pole issues once, holds totals, nulls grand total",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading '0')"
+    },
+    {
+      "name": "calcProject valid poles produce current totals, not saved",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'map')"
+    },
+    {
+      "name": "calcProject held pole without saved project falls null",
+      "ok": false,
+      "error": "no acknowledged basis → null\n\n1119 !== null\n"
+    },
+    {
+      "name": "calcPolePaintingCost export still prices valid inputs identically",
+      "ok": false,
+      "error": "explicit 0 honored: 10*(0+2.5)*1.25\n\n75 !== 31.25\n"
+    }
+  ]
+}

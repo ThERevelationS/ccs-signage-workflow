@@ -1,0 +1,362 @@
+{
+  "synthetic": true,
+  "results": [
+    {
+      "name": "frozen complete-model parity: bag spread",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 2.5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: bag spread all options single layer",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 2.6875,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 252.8,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: bag spread multilayer",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 2.5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 505.6,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: bag pillar default size",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 0.9381144729469522,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 60.75516081914557,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: bag pillar size5 hoops and quantity",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 4.09061543436171,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 568.7123708937727,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: ready spread",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 1,\n    concrete_delivery_cost: 380,\n    concrete_rate_per_yard: 200,\n...\n    total_labor_hours: 2.5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: ready pillar",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0.5,\n    concrete_delivery_cost: 280,\n    concrete_rate_per_yard: 200,\n...\n    total_labor_hours: 0.8726646259971648,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 60.75516081914557,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: ready mix and admixtures",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 1,\n    concrete_delivery_cost: 375,\n    concrete_rate_per_yard: 195,\n...\n    total_labor_hours: 2.5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: three delivery trucks",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 19,\n    concrete_delivery_cost: 4040,\n    concrete_rate_per_yard: 200,\n...\n    total_labor_hours: 47.5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: quarter yard order",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 4.25,\n    concrete_delivery_cost: 960,\n    concrete_rate_per_yard: 200,\n...\n    total_labor_hours: 10.625,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: multiple service foundations",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 1.25,\n    concrete_delivery_cost: 430,\n    concrete_rate_per_yard: 200,\n...\n    total_labor_hours: 2.8125,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: mixed bag and ready foundations",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 1,\n    concrete_delivery_cost: 380,\n    concrete_rate_per_yard: 200,\n...\n    total_labor_hours: 5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: legacy two supplier grouping unchanged",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 2,\n    concrete_delivery_cost: 550,\n    concrete_rate_per_yard: 200,\n...\n    total_labor_hours: 5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: manual zero rebar and quantity",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 2.5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 48,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: all explicit zero overrides",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 0,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 48,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: free bag catalog rate",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 2.5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: free ready supplier explicit zero fields",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 1,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 0,\n...\n    total_labor_hours: 2.5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: inactive dangling selections",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 2.5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: manual rebar without matching catalog",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 2.5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 252.8,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: manual zero rebar without matching catalog",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 2.5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 124.80000000000001,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: bag manual quantity legacy units unchanged",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 112.5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: unassigned project delivery assumptions unchanged",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 1,\n    concrete_delivery_cost: 381,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 2.5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: new sign stops",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 100,\n    concrete_delivered_yards: 2,\n    concrete_delivery_cost: 650,\n    concrete_rate_per_yard: 200,\n...\n    total_labor_hours: 5,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: project equipment excavation",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 0.625,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 0,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "frozen complete-model parity: custom settings",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: totals\n+ actual - expected\n... Skipped lines\n\n  {\n    additional_stops_cost: 0,\n    concrete_delivered_yards: 0,\n    concrete_delivery_cost: 0,\n    concrete_rate_per_yard: 201,\n...\n    total_labor_hours: 2.115,\n+   total_landscape_cost: 0,\n    total_pole_cost: 0,\n    total_pole_painting_cost: 0,\n    total_rebar_cost: 284,\n+   total_signage_cabinet_cost: 0,\n    total_wall_cap_cost: 0,\n    total_wall_cost: 0,\n    wall_caps_by_material: []\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:66:53\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/seam-checks/basic/verify.mjs:64:25"
+    },
+    {
+      "name": "invalid input preserves acknowledged amounts: zero instance quantity",
+      "ok": true
+    },
+    {
+      "name": "invalid input preserves acknowledged amounts: negative instance quantity",
+      "ok": true
+    },
+    {
+      "name": "invalid input preserves acknowledged amounts: fractional instance quantity",
+      "ok": true
+    },
+    {
+      "name": "invalid input preserves acknowledged amounts: negative footing length",
+      "ok": true
+    },
+    {
+      "name": "invalid input preserves acknowledged amounts: zero footing depth",
+      "ok": true
+    },
+    {
+      "name": "invalid input preserves acknowledged amounts: trailing junk in width",
+      "ok": true
+    },
+    {
+      "name": "invalid input preserves acknowledged amounts: unsupported foundation type",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 0: reject 0",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 1: reject -1",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 2: reject NaN",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 3: reject Infinity",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 4: reject -Infinity",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 5: reject null",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 6: reject undefined",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 7: reject ",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 8: reject  ",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 9: reject 36oops",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 10: reject 36 in",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 11: reject 0x24",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 12: reject 1e2",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 13: reject true",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 14: reject false",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 15: reject ",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 16: reject 36",
+      "ok": true
+    },
+    {
+      "name": "dimension boundary 17: reject [object Object]",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 0: reject 0",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 1: reject -1",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 2: reject 0.5",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 3: reject 1.5",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 4: reject NaN",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 5: reject Infinity",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 6: reject 9007199254740992",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 7: reject ",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 8: reject 1e2",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 9: reject 2ft",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 10: reject true",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 11: reject ",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 12: reject 1",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 13: reject [object Object]",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 14: reject 1.00000000000000001",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 15: reject 9007199254740991.1",
+      "ok": true
+    },
+    {
+      "name": "instance-count boundary 16: reject 2.0000000000000000001",
+      "ok": true
+    },
+    {
+      "name": "legacy missing/null quantity retains one-instance semantics",
+      "ok": true
+    },
+    {
+      "name": "full decimal strings accepted without partial coercion",
+      "ok": true
+    },
+    {
+      "name": "inactive dimensions, layout and grade do not invalidate spread",
+      "ok": true
+    },
+    {
+      "name": "pillar uses diameter/depth, not inactive length/width",
+      "ok": true
+    },
+    {
+      "name": "unsupported/missing type never silently falls through to pillar",
+      "ok": true
+    },
+    {
+      "name": "arithmetic overflow/underflow pauses pricing, no engineering minimum",
+      "ok": true
+    },
+    {
+      "name": "project issues preserve row/stable-ID attribution and reject malformed arrays",
+      "ok": true
+    },
+    {
+      "name": "explicit zero overrides remain current and saveable inputs",
+      "ok": true
+    },
+    {
+      "name": "no-rebar design is valid without rebar metadata",
+      "ok": true
+    },
+    {
+      "name": "missing/foreign source acknowledgment cannot borrow draft cached prices",
+      "ok": true
+    },
+    {
+      "name": "new or duplicate current component identity cannot borrow a saved row",
+      "ok": true
+    },
+    {
+      "name": "ambiguous acknowledged identity cannot supply a cached amount",
+      "ok": true
+    },
+    {
+      "name": "invalid rows use their stable-ID saved prices after reordering",
+      "ok": true
+    },
+    {
+      "name": "valid zero snapshot survives; absent delivery snapshot is not fabricated",
+      "ok": true
+    },
+    {
+      "name": "correcting inputs restores exact current pricing without mutating saved source",
+      "ok": true
+    },
+    {
+      "name": "simultaneous catalog and input defects are separate and both unavailable",
+      "ok": true
+    }
+  ]
+}

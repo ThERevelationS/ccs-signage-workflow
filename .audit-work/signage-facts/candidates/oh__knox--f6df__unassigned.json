@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6ae037f41ed4d8c83407f6df",
+ "jurisdiction_name": "Knox",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "S:/ shared/ Regional Planning/Forms/Steps Required for Building a Home.rev. 02 - 16 - 201 8 STEPS REQUIRED TO BUILD A HOME PROPERTY OWNER ’S NAME ________________________________ ____________________ TOWNSHIP _____________________________ The following steps are required prior to construction of a new home on an existing approved lot in Knox County. Township zoning requires minimum square footage for a house and setbacks for the road, side, and rear property lines. 18 out of 22 township s have zoning. Please contact the zoning inspector in the township to which you intend to build to apply for a zoning permit. If you intend to build on a new lot that has not received prior approval, please see the attached Minor Subdivision/Lot Split Administrative Review Application to start the approval process. [ 1 ] Site Evaluation Contact the Knox Public Heath to schedule a site evaluation and recei",
+   "tags": [
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "34773aa1c64d5530927b30acd2ff9d68fae1e001664574a11b1882802fd23211",
+   "source_document_id": null,
+   "source_title": "34773aa1c64d5530927b30acd2ff9d68fae1e001664574a11b1882802fd23211.pdf",
+   "official_url": "https://co.knox.oh.us/wp-content/uploads/2024/12/Steps-Required-to-Build-a-Home.pdf"
+  }
+ ]
+}

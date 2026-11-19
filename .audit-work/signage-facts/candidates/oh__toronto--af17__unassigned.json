@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6adf5c200a52bac9cf32af17",
+ "jurisdiction_name": "Toronto",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "BUILDING INSPECTOR RANDY HENRY 416 Clark St., P.O. Box 189 Toronto OH 43964 Office: 740 - 537 - 3695 Cell: 740 - 219 - 2838 Fax: 740 - 537 - 5010 CITY OF TORONTO, OHIO DEPARTMENT OF PUBLIC SAFETY BUILDING PERMIT APPLICATION Property Owner: _________________________________________________________ Owner's Address: _________________________________________________________ Owner's Phone: _________________________________________________________ Contractor : _____________________________________ ____________________ Contrac tor A ddress : _________________________________________________________ Contractor Phone : _ ________________________________________________________ Work Location : _________________________________________________________ Planned Work: _________________________________________________________ _________________________ ________________________________ __________ _______",
+   "tags": [
+    "dimension",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "868bad7b70a2052343507776093a19cca8164a65c52168989c06b7969c5f2a49",
+   "source_document_id": null,
+   "source_title": "868bad7b70a2052343507776093a19cca8164a65c52168989c06b7969c5f2a49.pdf",
+   "official_url": "https://torontooh.gov/wp-content/uploads/2026/04/BuildingPermitApp2026.pdf"
+  }
+ ]
+}

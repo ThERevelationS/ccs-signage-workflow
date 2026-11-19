@@ -1,0 +1,2 @@
+FAIL unknown 390 Stock and cost need visible separation
+exit=1

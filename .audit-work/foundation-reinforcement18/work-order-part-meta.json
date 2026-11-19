@@ -1,0 +1,52 @@
+{
+  "inputs": {
+    "src/components/estimator/foundation/foundationReinforcementPartDescriptors.js": {
+      "bytes": 12700,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementFrozenPricing.js": {
+      "bytes": 9593,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementWorkOrderPart.js": {
+      "bytes": 10902,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementPartDescriptors.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementPartDescriptors"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementFrozenPricing.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementFrozenPricing"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "out/foundationReinforcementWorkOrderPart.js": {
+      "imports": [],
+      "exports": [
+        "projectFoundationReinforcementWorkOrderPart",
+        "readFoundationReinforcementWorkOrderPart"
+      ],
+      "entryPoint": "src/components/estimator/foundation/foundationReinforcementWorkOrderPart.js",
+      "inputs": {
+        "src/components/estimator/foundation/foundationReinforcementPartDescriptors.js": {
+          "bytesInOutput": 12065
+        },
+        "src/components/estimator/foundation/foundationReinforcementFrozenPricing.js": {
+          "bytesInOutput": 7993
+        },
+        "src/components/estimator/foundation/foundationReinforcementWorkOrderPart.js": {
+          "bytesInOutput": 9754
+        }
+      },
+      "bytes": 30155
+    }
+  }
+}

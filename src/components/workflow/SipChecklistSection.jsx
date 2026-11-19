@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp, ChevronRight, Save, ClipboardList, Loader2 } from "lucide-react";
 import { replaceWorkOrderArrayFieldIfUnchanged } from "@/components/workflow/workOrderPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -41,7 +41,7 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
     try {
       const [freshWO, usersData, dropdownsSetting] = await Promise.all([
         WorkOrder.filter({ id: workOrder.id }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "SIP checklist authorized users" }),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "SIP checklist authorized users" }),
         loadSingleGlobalSetting({
           entity: base44.entities.GlobalSettings,
           settingKey: "dropdownConditions",
@@ -135,7 +135,7 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
     setExpandedItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
   };
 
-  const getDropdownName = (dropdownId) => {
+  const _getDropdownName = (dropdownId) => {
     if (!dropdownId) return null;
     const dd = dropdownConditions.find(d => d.id === dropdownId);
     return dd?.name || null;
@@ -375,7 +375,7 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
                           <div key={item.id} className="bg-white rounded p-2 border">
                             <div className="flex items-center gap-2">
                               {hasChildren ? (
-                                <button 
+                                <button type="button" 
                                   onClick={() => toggleExpanded(item.id)}
                                   className="p-0.5 hover:bg-gray-100 rounded"
                                 >

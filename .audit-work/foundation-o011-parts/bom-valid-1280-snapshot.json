@@ -1,0 +1,35 @@
+{
+ "rows": [
+  [
+   "Bagged concrete",
+   "27 bags",
+   "$216.00"
+  ],
+  [
+   "Main ID Cabinet",
+   "2 pcs",
+   "$300.00"
+  ],
+  [
+   "Directional Cabinet",
+   "1 pcs",
+   "$80.00"
+  ],
+  [
+   "Site — Grass",
+   "2 sq ft",
+   "$1.50"
+  ],
+  [
+   "Site — Concrete",
+   "1 sq ft",
+   "$8.00"
+  ],
+  [
+   "Site — Mulch",
+   "1 sq ft",
+   "$1.25"
+  ]
+ ],
+ "subtotal": "Bill of MaterialsMaterialQuantityCostBagged concrete27 bags$216.00Main ID Cabinet2 pcs$300.00Directional Cabinet1 pcs$80.00Site — Grass2 sq ft$1.50Site — Concrete1 sq ft$8.00Site — Mulch1 sq ft$1.25Listed cost subtotal$606.75"
+}

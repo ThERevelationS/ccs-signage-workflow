@@ -1,0 +1,14 @@
+{
+  "id": "68dfcc5e57bbbc35387da97c",
+  "status": {
+    "state": "ready",
+    "details": null,
+    "request_id": "1b2b0193-a041-493e-b705-4ca7eeb2a1c3",
+    "turn_id": null,
+    "last_updated_date": "2026-11-06T12:00:27.081000",
+    "error_source": null,
+    "paywall_context": null
+  },
+  "devEnvironmentEnabled": false,
+  "lastGitCommit": "e99a089ff3b1e0bf7bfdcd7259bddd354ad767b6"
+}

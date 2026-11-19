@@ -1,0 +1,22 @@
+{
+ "jurisdiction_id": "6ae9ebeb4c1565de19e5b8cc",
+ "jurisdiction_name": "Druid Hills",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMIT APPLICATION DATE OF APPLICATION: RESIDENT/OWNER: ADDRESS: PHONE: E - MAIL: GENERAL DESCRIPTION OF JOB: ADDED SQUARE FOOTAGE: ESTIMATED COST: REQUIRED ATTACHMENTS: PLOT PLAN (must show new project and distance to property lines) EVALUATION DRAWING (must show or list finish details) DRUID HILLS TREE PERMIT (required if any tree larger than 12” in diameter two feet above the ground will need to be removed) NOTE: Electrical, Plumbing, and Foundations drawings are not required. APPROVAL DENIED REASON FOR DENIAL: DRUID HILLS OFFICIAL: SIGNATURE: TITLE: DATE:",
+   "tags": [
+    "area",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "017703cee82ed195320d24a140c609513bae55d7fa2c06b32b0beaf2333b3e2e",
+   "source_document_id": null,
+   "source_title": "017703cee82ed195320d24a140c609513bae55d7fa2c06b32b0beaf2333b3e2e.pdf",
+   "official_url": "https://druidhillsky.gov/wp-content/uploads/2018/06/Building-Permit-Form.pdf"
+  }
+ ]
+}

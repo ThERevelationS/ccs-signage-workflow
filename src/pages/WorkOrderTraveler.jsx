@@ -63,21 +63,16 @@ export default function WorkOrderTraveler() {
     (async () => {
       if (!woId) { setError("No work order specified."); setLoading(false); return; }
       try {
-        const record = await base44.entities.WorkOrder.get(woId);
+        const res = await base44.functions.invoke("workOrderTraveler", { work_order_id: woId });
+        const data = res?.data || res;
         if (cancelled) return;
-        if (!record?.id) throw new Error("Work order not found.");
+        const record = data?.work_order;
+        if (!record?.id) throw new Error(data?.error || "Work order not found.");
         setWo(record);
         document.title = `Traveler — ${clean(record.title) || woId}`;
-        const [kids, permitItems, pulls] = await Promise.all([
-          base44.entities.WorkOrder.filter({ parent_work_order_id: woId }).catch(() => []),
-          base44.entities.PermitLineItem.filter({ work_order_id: woId }).catch(() => []),
-          base44.entities.InventoryMovement.filter({ work_order_id: woId }).catch(() => []),
-        ]);
-        if (!cancelled) {
-          setRiders(listRows(kids).filter((r) => r?.id && !r.deleted));
-          setPermits(listRows(permitItems).filter((p) => p?.id));
-          setMaterials(listRows(pulls).filter((m) => m?.id && ["issue", "return"].includes(clean(m.reason))));
-        }
+        setRiders(listRows(data?.riders).filter((r) => r?.id && !r.deleted));
+        setPermits(listRows(data?.permits).filter((p) => p?.id));
+        setMaterials(listRows(data?.materials).filter((m) => m?.id && ["issue", "return"].includes(clean(m.reason))));
       } catch (e) {
         if (!cancelled) setError(e?.message || "Could not load work order.");
       } finally {

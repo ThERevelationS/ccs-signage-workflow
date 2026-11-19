@@ -1,0 +1,7 @@
+{
+  "stdout": "src/components/estimator/foundation/FoundationItemCard.jsx\ndiff --git a/src/components/estimator/foundation/FoundationItemCard.jsx b/src/components/estimator/foundation/FoundationItemCard.jsx\nindex 00a14535d..621b88959 100644\n--- a/src/components/estimator/foundation/FoundationItemCard.jsx\n+++ b/src/components/estimator/foundation/FoundationItemCard.jsx\n@@ -70,7 +70,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR\n           ))}\n         </div>\n       )}\n-      <div className=\"flex items-start justify-between gap-3 mb-3\">\n+      <div className=\"flex flex-wrap items-start justify-between gap-3 mb-3\">\n         <div className=\"flex items-center gap-2\">\n           <Box className=\"w-4 h-4 text-amber-500\" aria-hidden=\"true\" />\n           <span className=\"text-[12px] font-bold text-gray-700\">Foundation #{index + 1}</span>\n4899e67917b06e29bddf69a5db825f45fca72718\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 1521
+}

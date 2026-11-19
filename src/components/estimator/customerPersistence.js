@@ -7,6 +7,22 @@ function normalize(value) {
   }, {});
 }
 
+/**
+ * CAS field compare — intended null / undefined / "" semantics:
+ * - The three empty-ish values are DISTINCT: a stored null never equals a
+ *   missing key (undefined) or an empty string. Clearing a field to null
+ *   therefore counts as a change vs both absent and "" — deliberate, so a
+ *   concurrent clear is never silently treated as "already unchanged".
+ * - Inside objects, a key explicitly set to undefined serializes identically
+ *   to a missing key (JSON.stringify drops both) — only top-level undefined
+ *   is distinguishable.
+ * - Numeric tolerance: when BOTH sides are non-empty and coerce to finite
+ *   numbers, compare with a 1e-6 epsilon, so "12.5" equals 12.5 but the
+ *   empty-ish values never take the numeric branch.
+ * - Everything else compares JSON.stringify of the normalize tree, whose
+ *   object keys are sorted recursively — object key order never affects
+ *   equality; array order still does (arrays are positional).
+ */
 function sameValue(a, b) {
   if (a !== null && a !== undefined && a !== "" && b !== null && b !== undefined && b !== "") {
     if (Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
@@ -17,9 +33,18 @@ function sameValue(a, b) {
 }
 
 export function expectedCustomerFields(record = {}, nextFields = {}) {
-  return Object.fromEntries(
+  const expected = Object.fromEntries(
     Object.keys(nextFields || {}).map((field) => [field, record?.[field]])
   );
+  // `company_name` is the Customer identity/dedupe key: carry its baseline so
+  // a concurrent rename fails the CAS closed even when this write does not
+  // itself touch the name. Enforced by an explicit check inside
+  // replaceCustomerFieldsIfUnchanged (expected-only keys are not otherwise
+  // compared). Rows loaded before a name was stored simply skip the guard.
+  if (!Object.prototype.hasOwnProperty.call(expected, "company_name") && Object.prototype.hasOwnProperty.call(record || {}, "company_name")) {
+    expected.company_name = record?.company_name;
+  }
+  return expected;
 }
 
 export async function replaceCustomerFieldsIfUnchanged({
@@ -47,6 +72,19 @@ export async function replaceCustomerFieldsIfUnchanged({
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const current = await entity.get(id);
     if (!current?.id) throw new Error(`${label} could not verify its Customer before saving.`);
+
+    // `company_name` is the Customer identity/dedupe key. expectedCustomerFields
+    // always carries its baseline when the loaded row stored a name, so a
+    // concurrent rename — even on a write that does not itself touch the name —
+    // fails closed instead of silently syncing fields onto a renamed record.
+    // Rename writes declare `company_name` in nextFields and compare normally.
+    if (
+      Object.prototype.hasOwnProperty.call(expected, "company_name") &&
+      !sameValue(current.company_name, expected.company_name) &&
+      !sameValue(current.company_name, desired.company_name)
+    ) {
+      throw new Error(`${label} changed in another session (company_name). Reload before saving. No Customer fields were overwritten.`);
+    }
 
     const alreadyDesired = fieldNames.every((fieldName) => sameValue(current[fieldName], desired[fieldName]));
     if (alreadyDesired) return current;

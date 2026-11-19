@@ -1,0 +1,37 @@
+{
+ "jurisdiction_id": "6ae046a707c83ba73534f160",
+ "jurisdiction_name": "Medina",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "Site Plan Items  Building Setbacks ▪ Shown relative to structures on plan with dimensions from property lines (front, sides, rear)  Right - of - Way Marked  Building Exterior Dimensions ▪ New & Existing  Interior Gross/Net Square Footage ▪ Restaurants: also show seating capacity ▪ Office Buildings: also show number of employees  Parking Spaces ▪ Number & Size (10’x 19’ minimum) ▪ Type of Surface  Access Drive Widths ▪ Width between all drives at entrances ▪ Aisle widths  Dumpster Location ▪ Must be screened and have doors  Ou tdoor Storage ▪ Must be screened  Outdoor Display Area  Landscape Plan ▪ Attach to Site Plan ( MTZR §306J )  Signage Location ▪ Submit separate S IGN P ERMIT  Address Markers  Elevation Drawings (Commercial Property Only) ▪ New & Existing Structures  Open Areas ▪ Acreage calculated removing rights - of - way, streets, drives, sidewalks, structures  Li",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "9124d17f1454ccc641d5fd4d671828c85bc639c454929d9025bdb55e445c15fd",
+   "source_document_id": null,
+   "source_title": "9124d17f1454ccc641d5fd4d671828c85bc639c454929d9025bdb55e445c15fd.pdf",
+   "official_url": "https://medinatownship.com/wp-content/uploads/2020/01/Medina-Township-Site-Plan-Checklist.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Site Plan Review Checklist All items must be included for S ite P lan R eview, unless otherwise determined by the Zoning Commission. Omission of items will result in tabling the site plan until the next regularly scheduled meeting. - - Please collate all submissions into 19 * packets . Do not staple . - - * Please note: If new construction is located on S tate R oute 3, 18, or 42, twenty - one (21) copies are required by the Township . Checklist  Tax Map ▪ www.medinacountyauditor.org ▪ Show all lot dimensions  Site Plan ( SEE NEXT PAGE ) ▪ Drawn to legible scale ▪ Show location, North arrow, type/use of buildings, use/divisions of all land, and location of structures on all surrounding properties  Letter from Owner ▪ Allowing individuals other than owner to represent  Substance of Covenants ▪ ( Change of Use requires f irst & l ast page only ) ▪ Leases, grants of easements, or restri",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "9124d17f1454ccc641d5fd4d671828c85bc639c454929d9025bdb55e445c15fd",
+   "source_document_id": null,
+   "source_title": "9124d17f1454ccc641d5fd4d671828c85bc639c454929d9025bdb55e445c15fd.pdf",
+   "official_url": "https://medinatownship.com/wp-content/uploads/2020/01/Medina-Township-Site-Plan-Checklist.pdf"
+  }
+ ]
+}

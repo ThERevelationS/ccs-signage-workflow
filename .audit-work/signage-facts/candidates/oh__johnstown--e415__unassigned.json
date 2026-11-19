@@ -1,0 +1,59 @@
+{
+ "jurisdiction_id": "6adf5e55b99b9a220d8ee415",
+ "jurisdiction_name": "Johnstown",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "SIGN PERMIT APPLICATION: CHAPTER #1177 Application Number: ______________________________________ Date: _____/_____/_____ FEES: Base fee: $150 - Sign size in sq. ft.: ______ @ $.50 = $_______ Total Amount: $___________ Paid: Check #: __________ Cash: _$__________ 1. Applicant: ____________________________________________________________ 2. Address: _________________________City:_________________State:____Zip:_________ 3. Phone:_(_____)_________-_____________ 4. E-mail Address: _________________________________Zoning District: _____________ 5. Business Address:_______________________________________Johnstown, OH. 43031 6. Existing Use of Property: ____________________________________________________ 7. Proposed Use of Property: ____________________________________________________ 8. Type of Sign: - Canopy / Awning: _____________________________Size: ________________________ - Identificati",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "33681337965e5be5eeae7558e2e6848e6fda3689dcd9279572772468206404ba",
+   "source_document_id": null,
+   "source_title": "33681337965e5be5eeae7558e2e6848e6fda3689dcd9279572772468206404ba.pdf",
+   "official_url": "https://static.showit.co/file/zlPGF2pCsD4buYWVdtPNNw/273542/sign_permit.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "11. Contractor Information: Name: _______________________________________________________________________ Address: __________________________City: ________________State:____Zip:_________ E-mail: __________________________________________________________ Contractor Business Phone Number: _(_____)______-__________ IN ADDITION, THE FOLLOWING ITEMS MUST ACCOMPANY THIS APPLICATION: - Attach two (2) sets of sign drawings, scaled and with colors of all signs and their locations on the building. If the sign is free standing include a plot plan. - Attach Certificate of Liability Insurance. The undersigned is applying for a Sign Permit for the following use: said permit to be issued based on information contained within this application. The applicant hereby certifies that all information and attachments to this application are true and correct and agrees to follow all applicable regulations, refe",
+   "tags": [
+    "sign",
+    "permit_required",
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "33681337965e5be5eeae7558e2e6848e6fda3689dcd9279572772468206404ba",
+   "source_document_id": null,
+   "source_title": "33681337965e5be5eeae7558e2e6848e6fda3689dcd9279572772468206404ba.pdf",
+   "official_url": "https://static.showit.co/file/zlPGF2pCsD4buYWVdtPNNw/273542/sign_permit.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Electronic Sign Request Form The message sign located in Bigelow Park is intended to provide messages that have a community-wide benefit. The sign is available to governmental groups, 501(c)(3) organizations, youth groups and other non-profit organizations directly impacting the greater Johnstown community. Any use for private business, for-profit organizations, commercial messages, political candidates or issues, or religious messages is prohibited. Permissible messages include, but are not limited to, the following: community event messages, government and organizational meetings, weather alerts and public safety or service announcements. The fee to display a message will be $5.00 (effective May 1, 2019) and may be displayed for up to two weeks prior to the event. YOUR MESSAGE: Each sign allows messages with a maximum of five lines of twenty characters each, including spaces. Shorter m",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "a09d1a77e1c191006857baeee944af234f55411022174a21b574bad1a71c8b42",
+   "source_document_id": null,
+   "source_title": "a09d1a77e1c191006857baeee944af234f55411022174a21b574bad1a71c8b42.pdf",
+   "official_url": "https://static.showit.co/file/Pfo1sx1B0B12H9Vb7u7MhQ/273542/electronic_sign_request_form.pdf"
+  }
+ ]
+}

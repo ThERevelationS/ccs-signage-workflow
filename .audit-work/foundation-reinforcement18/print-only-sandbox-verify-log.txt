@@ -1,0 +1,2 @@
+Exact readback, actual remote dependency bundle, clean two-file scope and app ready verified.
+exit=0

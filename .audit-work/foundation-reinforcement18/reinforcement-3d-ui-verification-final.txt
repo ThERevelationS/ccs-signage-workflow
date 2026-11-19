@@ -1,0 +1,12 @@
+ok actual overview mounts eight physical bars under their concrete and leaves all pricing/proposal inputs unchanged
+ok concrete and ground fade only around visible versioned steel with shared rotation/grade coordinates
+ok reinforcement visibility restores opaque concrete/ground and disposes each old renderer without writing a design
+ok hide/show releases and recreates canvas, listeners, observer and animation ownership
+ok unsupported versions remain visibly rejected while ordinary legacy foundations acquire no invented steel
+ok unavailable WebGL retains the mount and Retry actually creates a renderer without a false shown count
+ok failure after listener registration is fully cleaned and can be retried without duplicate listeners
+ok resize and existing camera/mode controls stay functional without altering the project
+ok invalid counts draw no replacement foundation; valid large quantities are explicitly preview-limited only
+ok unknown supports and fabrication omissions remain explicit instead of advertising zero supports or engineering approval
+Reinforcement 3D widget: 10/10; failed=0
+exit=0

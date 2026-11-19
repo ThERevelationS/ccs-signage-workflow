@@ -1,0 +1,22 @@
+[
+ {
+  "name": "whoami",
+  "ok": true,
+  "exit": 0
+ },
+ {
+  "name": "git-status",
+  "ok": true,
+  "exit": 0
+ },
+ {
+  "name": "bindings-read",
+  "ok": true,
+  "exit": 0
+ },
+ {
+  "name": "page-read",
+  "ok": true,
+  "exit": 0
+ }
+]

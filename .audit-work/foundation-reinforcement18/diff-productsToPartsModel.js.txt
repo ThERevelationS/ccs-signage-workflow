@@ -1,0 +1,11 @@
+diff --git a/.audit-work/foundation-reinforcement18/remote-productsToPartsModel.js b/src/components/jobs/productsToPartsModel.js
+index ad27b7266..f7fe3d7b4 100644
+--- a/.audit-work/foundation-reinforcement18/remote-productsToPartsModel.js
++++ b/src/components/jobs/productsToPartsModel.js
+@@ -490,4 +490,4 @@ export function missingPartRefs(product, catalog) {
+     }
+   }
+   return out;
+-}
+\ No newline at end of file
++}

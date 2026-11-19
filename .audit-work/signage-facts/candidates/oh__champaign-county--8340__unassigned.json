@@ -1,0 +1,37 @@
+{
+ "jurisdiction_id": "6ae99e1953c1a2cb2f938340",
+ "jurisdiction_name": "Champaign County",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "CHAMPAIGN COUNTY BUILDING REGULATIONS PLEASE FILL OUT COMPLETELY. OMISSIONS MAY DELAY PERMIT PROCESS. Application No. _______________________________ (1)Project Information Name of Business: ____________________________________ Site Address:__________ _______________________________ City:________________________________________________ (2) Project Description ___________________________________________________ ___________________________________________________ ___________________________________________ ________ (3) Square Footage _________________________________ Proposed Use Code ______________________ (4) Property Owner Owner/Representative:_________________________________ Address:____________________________________________ (if different fro m site address) City: _________________ State: ________ Zip:_____________ Phone /Cell ______________________________________ (5) Responsible D",
+   "tags": [
+    "area",
+    "temporary",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "afa5c9ec0bcd202e940eb1055c9b9bbaf8b4667bb52742e6616df1c316c8ad77",
+   "source_document_id": null,
+   "source_title": "afa5c9ec0bcd202e940eb1055c9b9bbaf8b4667bb52742e6616df1c316c8ad77.pdf",
+   "official_url": "https://www.co.champaign.oh.us/Building-Regulations/Applications/Commercial_Application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CHAMPAIGN COUNTY BUILDING REGULATIONS RESIDENTIAL BUILDING PERMIT – APPLICATION FORM PHONE : 937 - 484 - 1602 ADDRESS : 1512 S. US Hwy 68 Bay 13 mhall @co.champaign.oh.us Urbana, OH 43078 THIS APPLICATION MUST BE FILLED OUT COMPLETELY TO BE ACCEPTED FOR PROCESSING NOTE: Permit approval certifies compliance with building codes based upon the information submitted by the owner/applicant. MUST HAVE ZONING PERMIT AND HEALTH DEPARTMENT APPROVAL WHERE APPLICABLE PRIOR TO PERMIT BEING ISSUED. NOTE: The applicant warrants the truthfulness of the information provided on submitted application and plans. Any information provided that is incorrect may result in the permit being REVOKED. NOTE: All Residential Building Applications must be accompanied with 2 sets detailed construction drawings 1. Date Submitted: ____________ 2. Estimated Project Cost: $___________ ___________ _ 3. Square Foota ge: Liv",
+   "tags": [
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "f82dec89b7c187c6ae117036429473c1595fd4168498c39f7d689bdb01b96674",
+   "source_document_id": null,
+   "source_title": "f82dec89b7c187c6ae117036429473c1595fd4168498c39f7d689bdb01b96674.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Applications/Residential_Building_Permit-Application.pdf"
+  }
+ ]
+}

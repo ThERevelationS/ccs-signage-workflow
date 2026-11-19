@@ -1,0 +1,14 @@
+{
+  "authorized": true,
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "71b65186f4df1159193acceb91db50ea50946a7a",
+  "restoreCheckpointId": "6aef387675eab787ebc215f6",
+  "candidateHashes": {
+    "paintCalc.js": "49fc1502d9072e6adf96bad1360bc448e7e50928d96fd7a6bc249a43a1178dde",
+    "paintPricingAvailability.js": "da5a648bfe4bbda3e7ee1f3de798afe1bf6dc4f2b024314167083e46b6e384fc",
+    "PaintingEstimator.jsx": "96e45eb0954746cbbaadf0af67085b0997131b15dfb4252053f72b055e34ffcc"
+  },
+  "reviewedProtocolHash": "5d5f1146191279b859db020d7a61ebe3663000cf1e22ca3a584702f16b7ba645",
+  "createdAt": "2026-11-07T14:41:41.123Z"
+}

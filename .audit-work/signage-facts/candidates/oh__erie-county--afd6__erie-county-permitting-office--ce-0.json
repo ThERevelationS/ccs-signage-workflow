@@ -1,0 +1,188 @@
+{
+ "jurisdiction_id": "6ac1f9820e6a276b4e90afd6",
+ "jurisdiction_name": "Erie County",
+ "state": "OH",
+ "office_id": "scan-6ac1f9820e6a276b4e90afd6-office-0",
+ "office_name": "Erie County permitting office",
+ "snippets": [
+  {
+   "page": 5,
+   "snippet": "VIII. $25.00 APPLICATION FEE NOTICE By submitting this Financial Disclosure Form, you will be assessed a non-refundable $25.00 application fee unless waived or reduced by the court. If assessed, the fee is to be paid to the clerk of courts within 7 days of submitting this form to the entity that will make a determination regarding your indigency. No applicant may be denied counsel based upon failure or inability to pay this fee. IX. APPLICANT CERTIFICATION I, _______________________________________________ (applicant or alleged delinquent child) state: 1. I am financially unable to retain private counsel without substantial hardship to me or my family. 2. I understand that I must inform the public defender or appointed attorney if my financial situation should change before the disposition of the case(s) for which representation is being provided. 3. I understand that if it is determined",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "65fbee957ec160da5ccbdb5c1d9f315d5f85ab2f2288221eda0716b601568454",
+   "source_document_id": null,
+   "source_title": "65fbee957ec160da5ccbdb5c1d9f315d5f85ab2f2288221eda0716b601568454.pdf",
+   "official_url": "https://www.eriecounty.oh.gov/Downloads/2021_PD_APPLICATION_FILLABLE3_ADA.pdf?v=60"
+  },
+  {
+   "page": 1,
+   "snippet": "Lot Split Process Checklist Lot Split Affidavit L OT S PLIT P ROCE SS ERIE COUNTY, OHIO Lot Split Process Checklist The following steps must be completed in order for a parcel of land less than five (5) acres to be subdivided: □ Check with your township zoning inspector for lot size and lot width requirements of the zoning district in which your proposed lot split(s) will be located. All lots must have frontage on an approved public right-of-way, not a private access easement. □ In areas without sanitary sewer, check with the Erie County Health Department at 419-626-5623 to verify that a sewage system installation permit can be obtained for your proposed lot(s). □ Have a survey prepared by a registered surveyor . All survey plats and legal descriptions must conform to the Ohio Administrative Code Sections 4733-37 to 4733-37-07. □ Submit the survey plats and legal descriptions for your pr",
+   "tags": [
+    "sign",
+    "fee",
+    "dimension",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "909d4e3a47e3a2d31072b417b5a719a5986ba93e961c74f61e9cae665ddc103d",
+   "source_document_id": null,
+   "source_title": "909d4e3a47e3a2d31072b417b5a719a5986ba93e961c74f61e9cae665ddc103d.pdf",
+   "official_url": "https://www.eriecounty.oh.gov/Downloads/Lot%20Split%20Brochure%2020173_ADA.pdf?v=47"
+  },
+  {
+   "page": 1,
+   "snippet": "APPEAL FOR PERMIT TO DEVELOP IN A FLOOD HAZARD AREA The undersigned hereby makes application for appealing a denied permit and/or variance from the approved Erie County Flood Damage Prevention and Flood Plain Regulations. Owner’s Name: ________________________________ Address: ________________________________ Telephone: ________________________________ Builder: ________________________________ Address: ________________________________ Telephone: ________________________________ Address of Property:______________________________________________________________ A. DESCRIPTION OF WORK Check appropriate boxes. All references to elevations are in mean sea level. 1. Kind of development proposed: ____ New Building; ____Filling; _____ Mining; _____ Dredging; ____ Mobile Home; _____Improvement to Existing Building; ____Other (specify)__________________ 2. Size and Location of proposed development",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "a14e79c456a57cb2c5abe04102ebf3fcd74bd08a1bd11d1588d0a9fd2db0d094",
+   "source_document_id": null,
+   "source_title": "a14e79c456a57cb2c5abe04102ebf3fcd74bd08a1bd11d1588d0a9fd2db0d094.pdf",
+   "official_url": "https://www.eriecounty.oh.gov/Downloads/Flood%20Plain%20Appeal_ADA.pdf?v=256"
+  },
+  {
+   "page": 12,
+   "snippet": "Instructions for Completing the Elevation Certificate The Elevation Certificate is to be completed by a land surveyor, engineer, or architect who is authorized by law to certify elevation information when elevation information is required for Zones A1–A30, AE, AH, A (with BFE), VE, V1–V30, V (with BFE), AR, AR/A, AR/AE, AR/A1–A30, AR/AH, or AR/AO. Community officials who are authorized by law or ordinance to provide floodplain management information may also complete this form. For Zones AO and A (without BFE), a community official, a property owner, or an owner's representative may provide information on this certificate, unless the elevations are intended for use in supporting a request for a LOMA or LOMR-F. Certified elevations must be included if the purpose of completing the Elevation Certificate is to obtain a LOMA or LOMR-F. The property owner, the owner's representative, or local",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 5,
+   "source_sha256": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a",
+   "source_document_id": null,
+   "source_title": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a.pdf",
+   "official_url": "https://www.eriecounty.oh.gov/Downloads/Flood%20Plain%20Permit%20Application%20For%20Website3_ADA.pdf?v=256"
+  },
+  {
+   "page": 14,
+   "snippet": "Item B2. County Name. Enter the name of the county or counties in which the community is located. For an unincorporated area of a county, enter \"unincorporated area.\" For an independent city, enter \"independent city.\" Item B3. State. Enter the 2-letter state abbreviation (for example, VA, TX, CA). Items B4–B5. Map/Panel Number and Suffix. Enter the 10-character \"Map Number\" or \"Community Panel Number\" shown on the FIRM where the building or manufactured (mobile) home is located. For maps in a county-wide format, the sixth character of the \"Map Number\" is the letter \"C\" followed by a 4-digit map number. For maps not in a county- wide format, enter the \"Community Panel Number\" shown on the FIRM. Item B6. FIRM Index Date. Enter the effective date or the map revised date shown on the FIRM Index. Item B7. FIRM Panel Effective/Revised Date. Enter the map effective date or the map revised date ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a",
+   "source_document_id": null,
+   "source_title": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a.pdf",
+   "official_url": "https://www.eriecounty.oh.gov/Downloads/Flood%20Plain%20Permit%20Application%20For%20Website3_ADA.pdf?v=256"
+  },
+  {
+   "page": 3,
+   "snippet": "_____________________________________________ _______________________ _____________ Charge Case Number Court _____________________________________________ _______________________ _____________ Charge Case Number Court _____________________________________________ _______________________ _____________ Charge Case Number Court _____________________________________________ _______________________ _____________ Charge Case Number Court _____________________________________________ _______________________ _____________ Charge Case Number Court If you are not out on bond please provide us with any information that may help us to get you out on bond. ____________ __________________________________________________________________________________________________ Co-Defendants: Please list the names of anyone who may have be en charged with you: ___________________________ ________________________",
+   "tags": [
+    "sign",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "65fbee957ec160da5ccbdb5c1d9f315d5f85ab2f2288221eda0716b601568454",
+   "source_document_id": null,
+   "source_title": "65fbee957ec160da5ccbdb5c1d9f315d5f85ab2f2288221eda0716b601568454.pdf",
+   "official_url": "https://www.eriecounty.oh.gov/Downloads/2021_PD_APPLICATION_FILLABLE3_ADA.pdf?v=60"
+  },
+  {
+   "page": 5,
+   "snippet": "U.S. DEPARTMENT OF HOMELAND SECURITY Federal Emergency Management Agency National Flood Insurance Program ELEVATION CERTIFICATE AND INSTRUCTIONS Paperwork Reduction Act Notice Public reporting burden for this data collection is estimated to average 3.75 hours per response. The burden estimate includes the time for reviewing instructions, searching existing data sources, gathering and maintaining the data needed, and completing and submitting this form. You are not required to respond to this collection of information unless a valid OMB control number is displayed on this form. Send comments regarding the accuracy of the burden estimate and any suggestions for reducing the burden to: Information Collections Management, Department of Homeland Security, Federal Emergency Management Agency, 500 C Street SW, Washington, DC 20742, Paperwork Reduction Project (1660-0008). NOTE: Do not send your",
+   "tags": [
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a",
+   "source_document_id": null,
+   "source_title": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a.pdf",
+   "official_url": "https://www.eriecounty.oh.gov/Downloads/Flood%20Plain%20Permit%20Application%20For%20Website3_ADA.pdf?v=256"
+  },
+  {
+   "page": 15,
+   "snippet": "crawlspace, use the exterior grade next to the structure to measure the height of the crawlspace to the \"next higher floor.\" • Contact the local floodplain administrator of the community in which the building is located. The community may have documentation of the elevation of the crawlspace floor as part of the permit issued for the building. • If the property owner has documentation or knows the height of the crawlspace floor to the next higher floor, try to verify this by looking inside the crawlspace through any openings or vents. In all 3 cases, use the Comments area of Section D to provide the elevation and a brief description of how the elevation was obtained. Item C1. Indicate whether the elevations to be entered in this section are based on construction drawings, a building under construction, or finished construction. For either of the first 2 choices, a post-construction Eleva",
+   "tags": [
+    "dimension",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a",
+   "source_document_id": null,
+   "source_title": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a.pdf",
+   "official_url": "https://www.eriecounty.oh.gov/Downloads/Flood%20Plain%20Permit%20Application%20For%20Website3_ADA.pdf?v=256"
+  },
+  {
+   "page": 17,
+   "snippet": "Item E5. For those communities where this base flood depth is not available, the community will need to determine whether the top of the bottom floor is elevated in accordance with the community's floodplain management ordinance. SECTION F – PROPERTY OWNER (OR OWNER'S REPRESENTATIVE) CERTIFICATION Complete as indicated. This section is provided for certification of measurements taken by a property owner or property owner's representative when responding to Sections A, B, and E. The address entered in this section must be the actual mailing address of the property owner or property owner's representative who provided the information on the certificate. SECTION G – COMMUNITY INFORMATION (OPTIONAL) Complete as indicated. The community official who is authorized by law or ordinance to administer the community's floodplain management ordinance can complete Sections A, B, C (or E), and G of th",
+   "tags": [
+    "sign",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a",
+   "source_document_id": null,
+   "source_title": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a.pdf",
+   "official_url": "https://www.eriecounty.oh.gov/Downloads/Flood%20Plain%20Permit%20Application%20For%20Website3_ADA.pdf?v=256"
+  },
+  {
+   "page": 7,
+   "snippet": "ELEVATION CERTIFICATE OMB No. 1660-0008 Expiration Date: November 30, 2022 IMPORTANT: In these spaces, copy the corresponding information from Section A. FOR INSURANCE COMPANY USE FEMA Form 086-0-33 (12/19) Replaces all previous editions. Building Street Address (including Apt., Unit, Suite, and/or Bldg. No.) or P.O. Route and Box No. City State ZIP Code Policy Number: Company NAIC Number SECTION C – BUILDING ELEVATION INFORMATION (SURVEY REQUIRED) C1. Building elevations are based on: *A new Elevation Certificate will be required when construction of the building is complete. Construction Drawings* Building Under Construction* Finished Construction C2. Elevations – Zones A1–A30, AE, AH, A (with BFE), VE, V1–V30, V (with BFE), AR, AR/A, AR/AE, AR/A1–A30, AR/AH, AR/AO. Complete Items C2.a–h below according to the building diagram specified in Item A7. In Puerto Rico only, enter meters. Be",
+   "tags": [
+    "illumination",
+    "penalties"
+   ],
+   "weight": 3,
+   "source_sha256": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a",
+   "source_document_id": null,
+   "source_title": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a.pdf",
+   "official_url": "https://www.eriecounty.oh.gov/Downloads/Flood%20Plain%20Permit%20Application%20For%20Website3_ADA.pdf?v=256"
+  },
+  {
+   "page": 8,
+   "snippet": "ELEVATION CERTIFICATE OMB No. 1660-0008 Expiration Date: November 30, 2022 IMPORTANT: In these spaces, copy the corresponding information from Section A. FOR INSURANCE COMPANY USE FEMA Form 086-0-33 (12/19) Replaces all previous editions. State ZIP Code City Building Street Address (including Apt., Unit, Suite, and/or Bldg. No.) or P.O. Route and Box No. Company NAIC Number Policy Number: SECTION E – BUILDING ELEVATION INFORMATION (SURVEY NOT REQUIRED) FOR ZONE AO AND ZONE A (WITHOUT BFE) For Zones AO and A (without BFE), complete Items E1–E5. If the Certificate is intended to support a LOMA or LOMR-F request, complete Sections A, B,and C. For Items E1–E4, use natural grade, if available. Check the measurement used. In Puerto Rico only, enter meters. E1. Provide elevation information for the following and check the appropriate boxes to show whether the elevation is above or below the hig",
+   "tags": [
+    "sign",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a",
+   "source_document_id": null,
+   "source_title": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a.pdf",
+   "official_url": "https://www.eriecounty.oh.gov/Downloads/Flood%20Plain%20Permit%20Application%20For%20Website3_ADA.pdf?v=256"
+  },
+  {
+   "page": 9,
+   "snippet": "ELEVATION CERTIFICATE OMB No. 1660-0008 Expiration Date: November 30, 2022 IMPORTANT: In these spaces, copy the corresponding information from Section A. FOR INSURANCE COMPANY USE FEMA Form 086-0-33 (12/19) Replaces all previous editions. ZIP Code State City Company NAIC Number Policy Number: Building Street Address (including Apt., Unit, Suite, and/or Bldg. No.) or P.O. Route and Box No. SECTION G – COMMUNITY INFORMATION (OPTIONAL) The local official who is authorized by law or ordinance to administer the community's floodplain management ordinance can complete Sections A, B, C (or E), and G of this Elevation Certificate. Complete the applicable item(s) and sign below. Check the measurement used in Items G8–G10. In Puerto Rico only, enter meters. G1. The information in Section C was taken from other documentation that has been signed and sealed by a licensed surveyor, engineer, or archi",
+   "tags": [
+    "sign",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a",
+   "source_document_id": null,
+   "source_title": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a.pdf",
+   "official_url": "https://www.eriecounty.oh.gov/Downloads/Flood%20Plain%20Permit%20Application%20For%20Website3_ADA.pdf?v=256"
+  },
+  {
+   "page": 16,
+   "snippet": "of the top of the crawlspace floor in Item C2.a, whether or not the crawlspace has permanent flood openings (flood vents). If any item does not apply to the building, enter \"N/A\" for not applicable. Item C2.e. Enter the lowest platform elevation of at least 1 of the following machinery and equipment items: elevators and their associated equipment, furnaces, hot water heaters, heat pumps, and air conditioners in an attached garage or enclosure or on an open utility platform that provides utility services for the building. Note that elevations for these specific machinery and equipment items are required in order to rate the building for flood insurance. Local floodplain management officials are required to ensure that all machinery and equipment servicing the building are protected from flooding. Thus, local officials may require that elevation information for all machinery and equipment,",
+   "tags": [
+    "dimension",
+    "penalties"
+   ],
+   "weight": 3,
+   "source_sha256": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a",
+   "source_document_id": null,
+   "source_title": "ab90ec7cd0fe48ef0d1ceaa5c53b47a3bee65b231dc1894d781135bdb2f4239a.pdf",
+   "official_url": "https://www.eriecounty.oh.gov/Downloads/Flood%20Plain%20Permit%20Application%20For%20Website3_ADA.pdf?v=256"
+  }
+ ]
+}

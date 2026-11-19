@@ -1,0 +1,937 @@
+{
+ "jurisdiction_id": "6adeebe03c9f93efc0c36f76",
+ "jurisdiction_name": "Convoy",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 37,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 37 a) Signs not exceeding 12 square feet in area and advertising the sale, rental or lease of the premises on which the sign is located shall be permitted on any property. b) Announcement or professional signs for home occupations and professional activities where permitted shall not exceed 2 square feet in area in an R District and not more than 4 square feet in other districts. c) Bulletin boards and signs for a church, school, community or other public or semipublic institutional buildings shall be permitted provided the area of such bulletin board or sign shall not exceed 15 square feet in area. d) Wall signs pertaining to a nonconforming use shall be permitted on the same premises of such use, provided the area of such sign does not exceed 20 square feet. e) No building wall shall be used for display",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "prohibited",
+    "temporary",
+    "type",
+    "process"
+   ],
+   "weight": 13,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 88,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 88 With the exception of agriculture, no building or other structure shall be erected, moved, added to, structurally altered, nor shall any building, structure, or land be established or changed in use without a permit therefore, issued by the Zoning Commissioner. Zoning permits shall be issued only in conformity with the provisions of this Ordinance unless the Zoning Commissioner receives a written order from the Board of Zoning Appeals deciding an appeal, conditional use, or variance. C. Contents of Application for Zoning Permit : The application for zoning permit shall be made in writing and be signed by the owner or applicant attesting to the truth and exactness of all information supplied on the application. Each application shall clearly state that the permit shall expire and may be revoked if work ",
+   "tags": [
+    "sign",
+    "permit_required",
+    "dimension",
+    "process",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 12,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 7 3. ALLEY : A special public right-of-way affording only secondary access to abutting properties. 4. ARTERIAL STREET : A public street or highway used or intended to be used primarily for fast or heavy through traffic and generally permitting access only at intersecting streets. 5. BASEMENT : That portion of any structure located partly below the average adjoining lot grade. 6. BEGINNING OF CONSTRUCTION : The incorporation of labor or materials necessary for the erection, enlargement, alteration, repair, moving, removing, conversion or demolition of any building, system, or facility. 7. BOARD : The Board of Zoning Appeals. 8. BOARDING HOUSE(ROOMING OR LODGING HOUSE) : A residential building, or portion thereof - other than a motel, apartment hotel, or hotel containing lodging rooms for accommodation of t",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "process",
+    "temporary"
+   ],
+   "weight": 11,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 38,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 38 sign area for each lineal foot of width of a building or part of a building, occupied by such enterprise, but shall not exceed a maximum area of 100 square feet, except that a larger sign may be permitted in an industrial district where the extent and acreage of the industrial enterprise warrants an exception. In computing the area of free- standing or protruding signs all faces on which advertising is displayed are considered sign area. d) Free-standing signs not over 30 feet in height, having a maximum total sign area of 150 square feet and located not closer than 10 feet to any street right-of-way line and not closer than 100 feet to any adjoining lot line may be erected to serve a group of business establishments. 4. Pole or logo signs of symbolical design shall be permitted for business establishm",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "prohibited",
+    "type",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "VILLAGE OF CONVOY BUILDING PERMIT APPLICATION P.O. Box 310 Convoy, Ohio 45832 (419) 749-2266 LOCATION:_________________________________________________________LOT# __________________ ZONING ____ OWNER: ____________________________________________________________PHONE ____________________________ ADDRESS: _________________________________________________CITY _______________ STATE _______ZIP ______ The undersigned owner of real estate property within the Village of Convoy, Ohio, Van Wert County, acknowledges that they have acquainted themselves with the Zoning Regulations of the Village of Convoy, Ohio, and states that the improvements which will be made to the real property specified in this application will not change the use of the real property in such a way that there will result a violation or violations of said Zoning Regulations. DATE SIGNATURE OF OWNER SIGNATURE OF OWNER IS REQUIR",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "03f2ba478cc0faaad958c19af4b8ba59db0725b704f317e5c1f23cbed36ae652",
+   "source_document_id": null,
+   "source_title": "03f2ba478cc0faaad958c19af4b8ba59db0725b704f317e5c1f23cbed36ae652.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/BuildingPermitApplication.pdf"
+  },
+  {
+   "page": 37,
+   "snippet": "37 or otherwise become subject to the tax levied by the municipal corporation during the taxable year. If the affiant does become subject to the tax levied by the municipal corporation for the taxable year, the affiant agrees to be considered a taxpayer and to properly register as a taxpayer with the municipal corporation, if such a registration is required by the municipal corporation’s resolutions, ordinances, or rules.” The person s hall sign the a ffidavit under penalty of perjur y. (c) If a person submits an affidavit described in division (N)(2) of this section, the tax administrator shall not require the person to file any tax return for the taxable year unless the tax administrat or possesses information that conflicts with the affidavit or if the circumstances described in the affidavit change, or the taxpayer has engaged in activity which results in work being performed, servic",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 39,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 39 structure shall not be less than 100 feet from the established right-of- way of each highway or street. c) Real estate signs and bulletin boards for a church, school, or any other public or semipublic, religious or educational institution may be erected within ten feet from the established right-of-way line of any street or highway, provided such sign or bulletin board does not obstruct traffic visibility at street or highway intersections. 6. Special yard provisions . The following special provisions shall be observed in the erection or placement of signs and outdoor advertising structures. a) No such sign or advertising structure shall be permitted which faces the front or side lot line of any lot in any R District within 100 feet of such lot line, or which faces any public parkway, public square or ",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 10,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 46,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 46 5. All goods for sale by a motor fuel station convenience store, other than those generally required for the operation and maintenance of motor vehicles, shall be displayed within the principal motor fuel station structure. 6. Each motor fuel station shall be architecturally designed so as to be as compatible as possible with the general architectural intent of the area in which it is located. 7. For the purpose of architectural appropriateness each and every side of a motor fuel station shall be considered as a front face. 8. The entire motor fuel station site, other than that part devoted to landscaping and structures, shall be surfaced with concrete or bituminous surfacing to control dust and provide adequate drainage and such surfaces shall be designed to meet the requirements of a minimum four (4)",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 47,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 47 have no more than two (2) faces and shall not exceed more than thirty (30) square feet per face. The top of said sign shall not be more than twenty (20) feet in height. 16. Notwithstanding anything to the contrary in other sections of this Ordinance, the following minimum requirements shall be observed for yards and setbacks for motor fuel stations: Lot Width Front Yard Side Yard Adjacent to Another Lot Side Yard Adjacent to Street Rear Yard Pump Set-back 150 feet 60 feet 30 feet 60 feet 30 feet 25 feet K. Private Swimming Pools (amended 5/2006) 1. A private swimming pool, as regulated herein, shall be any pool, pond, lake or open tank, not located within a completely enclosed building and containing or normally capable of containing water to a depth at any point greater than twenty four (24) inches. N",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "dimension",
+    "prohibited",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 44,
+   "snippet": "44 compromise and settlement of tax claims; (F) Exercise the authority provided by law relative to the use of alternative apportionment methods b y taxpayers in accordance with S ection 6.2 of this Ordinance ; (G) Make all tax findings, determinations, computations, assessments and orders the Tax Administrator is by law authorized and required to make and, pursuant to time limitations provided by law, on the Tax Administrator 's own motion, review, re - determine, or correct any tax findings, determinations, computations, assessments or orders the Tax Administrato r has made, but the Tax Administrator shall not review, re - determine, or correct any tax finding, determination, computation, assessment or order which the Tax Administrator has made for which an appeal has been filed with the Local Board of Tax Review or other appropriate tribunal, unless such appeal or application is withdr",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 50,
+   "snippet": "50 of the Local Board of Tax Review may remove such documentation, copies of returns or reports, final determinations, or working papers from the hearing. Hearings requested by a taxpayer before a Local Board of Tax Review created pursuant to this section are not meetings of a public body subject to section 121.22 of the Ohio Revised Code. For this reason, such hearings shall not be open to the public, and only those parties to the case may be present during the hearing. (Source: ORC 718.11) SECTION 19 ACTIONS TO RECOVER ; STATUTE OF LIMITATIONS (A) (1) (a) Civil actions to recover municipal income taxes and penalties and interest on municipal income taxes shall be brought within the latter of: (i) Three (3) years after the tax was due or the return was filed, whichever is later; or (ii) One (1) year after the conclusion of the qualifying deferral period, if any. (b) The time limit descr",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 51,
+   "snippet": "51 appellant or to the appellant's assigns or legal representative a refund in the a mount of the overpayment as provided by Section 9.6 of this Ordinance , with interest on that amount as provided by division (D) of this section. ( E) No civil action to recover municipal income tax or related penalties or interest shall be brought during either of the following time periods: (1) The period during which a taxpayer has a right to appeal the imposition of that tax or interest or those penalties; (2) The period during which an appeal related to the imposition of that ta x or interest or those penalties is pending. (Source: ORC 718.12) SECTION 20 ADOPTION OF RULES (A) Pursuant to Section 718.30 of the Revised Code, the Municipality , pursuant to this Ordinance, grants auth ority to the Tax Administrator with the approval of Council to adopt rules to administer the income tax imposed by the M",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 13 buildings and one or more principal uses planned and constructed as a unified development. 53. RECREATION SPACE : Total area in square feet which is countable as open space but is not paved in streets, walks or driveways and is suitable for recreational pursuits. The smallest countable recreation area is one thousand (1000) square feet. That part of a recreation area having a dimension of less than twenty (20) feet shall not be included as countable recreation space nor shall any required yards be countable. 54. RETAIL SALES : Sale of any product or merchandise to customers for their own personal consumption or use, not for resale. 55. RIGHT-OF-WAY : A strip of land taken or dedicated for use as a public way. In addition to the roadway, it normally incorporates the curbs, lawn strips, sidewalks, lighti",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 9,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 31,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 31 welfare, comfort and safety or cause injury to property or business, public health, welfare, comfort and safety or cause injury to property or business. 2. Glare Any lighting used to illuminate an off-street parking area or sign shall be arranged so as to deflect light away from any adjoining residential property or from the public streets. Direct or sky-reflected glare, whether from flood lights or from high temperature processes such as combustion or welding, shall not be directed into any adjoining property. 3. Explosives No activities involving the storage, utilization or manufacture of materials, goods or products which could decompose by detonation shall be permitted except such as are specifically licensed by the Legislative Authority. 4. Vibration No activity or operation shall cause earth vibr",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 40,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 40 less than 2 square feet. Announcement signs, except those for professional and home occupations, shall be removed by the person or persons responsible for posting same within 30 days after erection. b) Each application for a sign permit shall be accompanied by a drawing showing the design proposed, the size, character and color of letters, lines and symbols, method of illumination, the exact location of the sign in relation to the building and property and the details and specifications for construction. 9. Exemptions. Public notices, traffic control signs and other official signs and notices are exempt from the provisions of this section. 10. Adult foster care homes . No signs shall be permitted upon any premises designated as adult foster care homes. F. Dwelling Below Ground Level No interior space b",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 69,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 69 D. Conditional Use Radio, television, or microwave towers and similar commercial structures shall be conditional uses within all zoning districts. E. Design New communication towers in excess of one hundred fifty (150) feet, excluding monopoles, shall be designed structurally to accommodate the maximum amount of additional antenna reasonably practicable to promote shared use of towers. F. Placement and Height 1. Unless the Federal Communications Commission promulgates rules to the contrary, all personal wireless service facilities shall be a distance of not less than 350 feet from the nearest property line of a school, day-care center, camp, or playground and, if installed in a cemetery, shall be at least 500 feet from the nearest property line. 2. Setback shall be equal to the height of the tower unle",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 70,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 70 constructed around each communication tower and around related support or guy anchors. Access shall only be through a locked gate. J. Warning signs All warning signs shall use at least six-inch lettering and be installed five (5) feet above finished grade of the fence. \"NO TRESPASSING\" warning signs shall be attached to the fence and shall be spaced no more than forty (40) feet apart. If high voltage (above 220 volts) is necessary for the operation of the tower and is present at the base of the tower, signs located no more than forty (40) feet apart and attached to the fence or wall shall indicate \"DANGER-HIGH VOLTAGE\". In the event that warning signs intended to be attached to a fence should be obstructed by landscaping, then the applicant shall attach warning signs to free-standing poles that are sit",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 74,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 74 interest where, owing to special conditions, a literal enforcement of the provisions of this Ordinance would result in unnecessary hardship. No nonconforming use of neighboring lands, structures, or buildings in the same district and no permitted o r nonconforming use of lands, structures or buildings in other districts shall be considered grounds for issuance of a variance. Variances shall not be granted on the grounds of convenience or profit, but only where strict application of the provisions of this Ordinance would result in unnecessary hardship. E. Application and Standards for Variances Except as otherwise permitted in this Ordinance, no variance in the strict application of the provisions of this Ordinance shall be granted by the Board of Zoning Appeals unless the Legislative Authority shall fi",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 76,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 76 No order of the Zoning Board of Appeals granting a variance shall be valid for a period longer than twelve (12) months from the date of such order unless the building permit or zoning approval is obtained within such period, and the erection or alteration of a building is started or the use is commenced within such period. L. Authorized Variances Variances from the regulations of this Ordinance shall not be granted unless the Legislative Authority makes specific findings of fact, based directly on the particular evidence presented to it, which support conclusions that the standards and conditions imposed in Section X, E, and Section X, F, if applicable, have been met by the applicant. Variances may be granted as guided by the following: 1. To permit any yard or setback less than the yard or setback req",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 85,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 85 Commission on the administration of this Ordinance, setting forth such information as may be of interest and value in advancing and furthering the purpose of this Ordinance. Such report shall include recommendations concerning the fees. E. Zoning Commission : The Zoning Commission shall consist of five(5) members who must be residents of the Municipality and these members cannot serve on the Board of Zoning Appeals. The Zoning Commission has the power to recommend the enactment and changes and supplements to zoning and any other powers conferred by the Ohio Revised Code and this Ordinance. F. Village Board of Zoning Appeals; Compensation and Expenses : The Legislative Authority shall appoint a Board of Zoning Appeals of five (5) members who shall be residents of the incorporated territory in the Munici",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 38,
+   "snippet": "38 extension of time in which to make any payment of taxes required by the Municipality in accordance with this or dinance . The length of any extension granted under division (C)(2)(a) of this section shall be equal to the length of the corresponding extension that the taxpayer receives under the Internal Revenue Code. As used in this section, \"qualifying taxpayer\" mea ns a member of the national guard or a member of a reserve component of the armed forces of the United States called to active duty pursuant to either an executive order issued by the P resident of the United States or an act of the C ongress of the United S tates, or a civilian serving as support personnel in a combat zone or contingency operation in support of the armed forces. (b) Taxes the payment of which is extended in accordance with division (C)(2)(a) of this section are not delinquent during the extension period.",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 16 stations, water storage tanks, power and communication transmission lines, electrical power substations, static transformer stations, telephone and telegraph exchanges, microwave radio relays and gas regulation stations, but not including sewage disposal plants, municipal incinerators, warehouses, shops and storage yards. 81. VARIANCE : A variance is a modification of the strict terms of the relevant regulations where such modification will not be contrary to the public interest and where owing to conditions peculiar to the property and not the result of the action of the applicant, a literal enforcement of the regulations would result in unnecessary and undue hardship. 82. VISION CLEARANCE : An unoccupied triangular space at the corner of a corner lot which is bounded by the street lines and a setback",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 43,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 43 essentially constructed or assembled prior to its delivery to and installation upon a site. For the purposes of this Ordinance, \"factory-built housing\" shall include the following: a) Manufactured Home : Any nonself-propelled vehicle transportable in one or more sections which, in the traveling mode, is eight (8) body feet or more in width or forty (40) body feet or more in length, or, when erected on site, is three hundred twenty (320) or more square feet, and which is built on a permanent chassis and designed to be used as a permanent dwelling unit with or without a permanent foundation when connected to the required utilities, and includes the plumbing, heating, air conditioning, and electrical systems contained therein, and which bears a label certifying that it is built in compliance with the Fede",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "temporary"
+   ],
+   "weight": 8,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 44,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 44 6. Single-Family Design and Appearance Standards : Single-family residential homes, whether of modular, manufactured, or site-built construction, shall comply with the following design and appearance standards. a) The structure shall be in conformance with the siting requirements contained in Section VII, H.4. b) The structure and any accessory structures or uses will conform to all other regulations in effect for the district in which it is located. 7. Uniformity With Respect to Granting of Variances : The granting of variances from the requirements of this Ordinance with respect to the siting of single-family home structures, their design or appearance, shall be uniformly and equitably done, irrespective of the fact that the structure proposed for such siting is a site-built structure, modular or man",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 50,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 50 3. There shall be no change in the outside appearance of the building or premises, or other visible evidence of the conduct of such home occupation other than one sign, not exceeding four square feet in area, non-illuminated, and mounted flat against the wall of the principal building. 4. No traffic shall be generated by such home occupation in greater volume than would normally be expected in a residential neighbor- hood, and any need for parking generated by the conduct of such home occupation shall meet the off-street parking requirements as specified in this Ordinance, and shall not be located in a required front yard; 5. No equipment or process shall be used in such home occupation which creates noise, vibration, glare, fumes, odors, or electrical interference detectable to the normal senses off t",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 71,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 71 A twelve-foot-wide stabilized access driveway is acceptable, unless it is determined, based on public safety concerns, that circumstances require paved access. The turnaround area must be found to be acceptable for public safety usage. P. Parking For new towers exceeding one hundred fifty (150) feet in height, a minimum of one on-site parking space shall be provided. The parking area shall be paved if the access road is paved. After evaluation of the proposed tower and related facilities, it may be determined that additional spaces are required as a condition of approval. Q. Occupancy Communication towers and accessory structures shall be unoccupied. R. Signs and Advertising. The use of any portion of a tower for signs or advertising purposes is prohibit. S. Submittal Requirements A development plan/ap",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 72,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 72 U. Tower Removal Any tower that is no longer in use for its original communications purpose shall be removed at the owner's expense. The owner shall provide the Municipality with a copy of the notice to the FCC of intent to cease operations and shall be given ninety (90) days from the date of ceasing operations to remove the obsolete tower and accessory structures. In the case of multiple operators sharing use of single tower, this provision shall not become effective until all users cease operations. The equipment on the ground is not to be removed, however, until the tower structure has first been dismantled and removed. If such antenna or tower is not removed within said ninety (90) days, the Legislative Authority may, in the manner provided in the Ohio Revised Code , remove such antenna or tower at",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "6 (I) Deduct any net profit of a pass - through entity owned directly or indirectly by the taxpayer and included in the taxpayer's federal taxable income unless an affiliated group of corporations includes that net profit in the group's federal taxable income in accordance with division (E) (3)(b) of Section 6.3 of this Ordinance . (J) Add any loss incurred by a pass - through entity owned directly or indirectly by the taxpayer and included in the taxpayer's federal taxable income unless an affiliated group of corporations includes that loss in the group's federal taxable income in accorda nce with division (E) (3)(b) of Section 6.3 of this Ordinance . If the taxpayer is not a C corporation, is not a disregarded entity that has made the election described in division (47)(B ) of this section, is not a publicly traded partnership that has made the election described in division (23)(D) of",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 39,
+   "snippet": "39 automatically receiv e an extension for the filing of a municipal income tax return. The taxpayer may submit to the Tax Administrator a copy of the federal extension request, and documentation that such request was granted on or before the fifteenth(15 th ) day of the fourth (4 t h ) month after the last day of the taxable year to which the return relates. The extended due date of the municipal income tax return shall be the same as that of the extended federal income tax return. (C) A taxpayer that has not requested or received a s ix (6) - month extension for filing the taxpayer’s federal income tax return may request that the T ax A dministrator grant the taxpayer a six (6) - month extension of the date for filing the taxpayer’s municipal income tax return. If the request is received by the tax administrator on or before the date the municipal income tax return is due, the Tax A dm",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 40,
+   "snippet": "40 figures, co mputations, or attachments required in the taxpayer's annual return that are affected, either directly or indirectly, by the adjustment to the taxpayer's federal or state income tax return unless it is also filed within the time prescribed in S ection 9.6 o f this Ordinance . Except as set forth in division (C)(2) of this section, the request shall not reopen those facts, figures, computations, or attachments that are not affected, either directly or indirectly, by the adjustment to the taxpayer's federal or s tate income tax return. (2) The amount to be refunded shall not exceed the amount of refund that would be due if all facts, figures, computations, and attachments were reopened. (Source: ORC 718.12, 718.41) SECTION 9.6 REFUNDS (A) Upon receipt of a request for refund, the Tax Administrator of the Municipality , in accordance with this section, shall refund to employe",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 45,
+   "snippet": "45 SECTION 13.3 AUTHORITY OF TAX ADMINISTRATOR ; RIGHT TO EXAMINE (A) The Tax Administrator , or any authorized agent or employee thereof may examine the books, papers, records, and federal and state income tax returns of any employer, taxpayer, or other person that is subject to, or that the Tax Administrator believes is subject to, the provisio ns of this Ordinance for the purpose of verifying the accuracy of any return made or, if no return was filed, to ascertain the tax due under this Ordinance . Upon written request by the Tax Administrator or a duly authorized agent or employee thereof, every employer, taxpayer, or other person subject to this section is required to furnish the opportunity for the Tax Administrator , authorized agent, or employee to investigate and examine such books, papers , records, and federal and state income tax returns at a reasonable time and place designa",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 45,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 45 3. General Standards for Manufactured Home Parks : The Zoning Commis- sion and the Village Council shall review the particular facts and circumstance of each proposed manufactured home park development in terms of the following standards and shall find adequate evidence that such development meets these standards: a) The proposed park will be served adequately by essential public facilities and services such as highways, streets, drainage, refuse disposal, schools, police and fire protection, or that the persons or agencies proposing the establishment of the park shall be able to provide any such services adequately. b) The vehicular approaches to the proposed park property will be so designed as not to create traffic interference or congestion on sur- rounding public streets or roads. c) The establish",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "temporary",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 48,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 48 structures adjacent thereto, closer than six (6) feet to any property line of the property in which it is located. 4. Every pool shall be completely surrounded by a fence or wall not less than 4 feet in height, which shall be so constructed as not to have openings, holes or gaps larger than 4 inches in any dimension, except for doors and gates; and if a picket, board or other like fence is erected or maintained, the distance between members thereof shall not exceed 4 inches. A dwelling-house or accessory building may be used as part of such enclosure. a) All gates or doors opening through such enclosure shall be equipped with a self-closing and self latching device for keeping the gate or door securely closed and locked at all times when not in actual use, except that door of any dwelling which forms a",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 7,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 53,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 53 Conditionally Districts Permitted Use Wherein Permitted Adult Book Store \"C\" and \"I\" Adult Motion Picture Theater \"C\" and \"I\" Adult Motion Picture Drive-In Theater \"C\" and \"I\" Adults Only Entertainment Establishment \"C\" and \"I\" Q. Poultry Farm 1. Any building housing poultry shall be distant not less than two hundred (200) feet from every lot line. 2. Proponent shall show that odor, dust, noise, drainage, shall not constitute a nuisance or hazard to adjoining property or uses. R. Animal Feed Yards Animal feed yards, animal sales yards, riding academies and public stables shall be located no closer than two hundred (200) feet from any property line, shall provide automobile and truck egress, shall provide parking and loading spaces, so designed as to minimize traffic hazard and congestion. Proponent sha",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 56,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 56 amusement arcade to the Zoning Commissioner. The notice of complaint shall include the name and address of the complainant, the address of the location of the amusement arcade, and the specific reasons why the individual is complaining. If the Zoning Commissioner determines, after interviewing both the complainant and the amusement arcade exhibitor, that the specific reasons in the complaint appear to be proper grounds for suspension or revocation of the conditional use permit, he shall issue a warning tag as notice of violation. Failure to correct the issue shall result in referral of the matter to the Board of Zoning Appeals. 8. Revocation of Conditional Use Permit : The Zoning Commissioner shall revoke the conditional use permit for any amusement arcade in the event that the license to operate such ",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 73,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 73 conformity with the regulations of this Ordinance. 4. Abandonment A non-conforming use of a building which has been discontinued for a period of six (6) months shall not be re-established and any future use shall be in conformity with the regulations of this Ordinance. B. Non-conforming Use of Building or Land 1. Extension a. A non-conforming use of a building may be extended throughout said building provided no structural alterations are made therein except as required by other codes or ordinances. b. A non-conforming use of land shall not be expanded or enlarged. 2. Relocation A non-conforming use shall not be moved to any other part of the parcel of land upon which the same was conducted at the time of passage of this Ordinance. SECTION X - PROCEDURES AND REQUIREMENTS FOR APPEALS AND VARIANCES A. Ge",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 77,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 77 manner, while safeguarding both the property rights of all individuals and the health, safety, and general welfare of the community. Toward these ends, it is recognized that this Ordinance should provide for more detailed evaluation of each use conditionally permissible in a specific district with respect to such considerations as location, design, size, method(s) of operation, intensity of use, public facilities requirements, and traffic generation. Accordingly, conditional use permits shall conform to the procedures and requirements of Sections XI, A.2 to A.9. 2. Contents of Conditional Use Permit Application : Any owner, or agent thereof, of property for which a conditional use is proposed shall make an application for a conditional use permit by filing it with the Zoning Commissioner, who shall wit",
+   "tags": [
+    "sign",
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 118,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 118 A. The lengths, widths and shapes of blocks shall be appropriate for the topography and the type of development contemplated. B. To provide access and circulation to community facilities, sidewalks shall be provided by the subdivider and where a block exceeds 1,000 feet in length a crosswalk through the center of blocks shall be provided. Center crosswalks shall not be less than ten feet wide. SECTION VII - REQUIRED IMPROVEMENTS A. Grading After installation of temporary block corner monuments by the subdivder and establishment of street grades by the Legislative Authority, the subdivider shall grade the full width of the right-of-way of all streets proposed to be dedicated in accordance with plans and standard specifications approved by the Legislative Authority. The subdivider shall grade the roadbe",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 7,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "SECTION ITEM TITLE PAGE VIII H Lighting 63 I Fencing 63 J Warning Signs 63 K Maintenance of Facilities 63 L Shared Use 63 M Dedication of Tower Use 63 N Landscape Buffers 64 O Access 64 P Parking 64 Q Occupancy 64 R Signs and Advertising 64 S Submittal Requirements 64 T Fire Protection 64 U Tower Removal 65 V Tower Replacement 65 IX NON-CONFORMING USES AND STRUCTURES 65 A Non-Conforming Buildings 65 B Non-Conforming Use of Building or Land 66 X PROCEDURES AND REQUIREMENTS FOR APPEALS AND VARIANCES 66 A General 66 B Appeals 66 C Stay of Proceedings Under Appeals 66 D Variances 66 E Application and Standards for Variances 67 F Additional Conditions and Safeguards 68 G Public Hearing by the Board of Zoning Appeals 68",
+   "tags": [
+    "sign",
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "94ffcb4330df2b34630a223a8570900aa1e909b58723a61464cabd959d4ac8e5",
+   "source_document_id": null,
+   "source_title": "94ffcb4330df2b34630a223a8570900aa1e909b58723a61464cabd959d4ac8e5.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoneCodeIndex.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "2 SECTION 8 CREDIT FOR TAX PAID 8.1 CREDIT FOR TAX PAID TO ANOTHER MUNICIPALITY 8.2 REFUNDABLE CREDIT FOR QUALIFYING LOSS 8.3 CREDIT FOR PERSON WORKING IN JOINT ECONOMIC DEVELOPMENT DISTRICT OR ZONE 8.4 CREDIT FOR TAX BEYOND STATUTE FOR OBTAINING REFUND SECTION 9 ANNUAL RETURN 9.1 RETURN AND PAYMENT OF TAX 9.2 RETURN AND PAYMENT OF TAX; INDIVIDUALS SERVING IN COMBAT ZONE 9.3 USE OF OHIO BUSINESS GATEWAY; TYPES OF FILINGS AUTHORIZED 9.4 EXTENSION OF TIME TO FILE 9.5 AMENDED RETURNS 9.6 REFUNDS SECTION 10 PENALTY, INTEREST, FEES AND CHARGES SECTION 11 AUDIT SECTION 12 ROUNDING SECTION 13 AUTHORITY AND POWERS OF THE TAX ADMINISTRATOR 13.1 AUTHORITY OF TAX ADMINISTRATOR ; ADMINISTRATIVE POWERS OF THE TAX ADMINISTRATOR 13.2 AUTHORITY OF TAX ADMINISTRATOR ; COMPROMISE OF CLAIM AND PAYMENT OVER TIME 13.3 AUTHORITY OF TAX ADMINISTRATOR ; RIGHT TO EXAMINE 13.4 AUTHORITY OF TAX ADMINISTRATOR ; REQ",
+   "tags": [
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 24,
+   "snippet": "24 (4) “Pre - 2017 Net Operating Loss Carryforward” is defined in Section 3(3 2 ) of this Ordinance . ( S ource: ORC 718.01) SECTION 6.2 NET PROFIT; INCOME SUBJECT TO NET PROFIT TAX; ALTERNATIVE APPORTIONMENT This section applies to any taxpayer engaged in a business or profession in the Municipality unless the taxpayer is an individual who resides in the Municipality or the taxpayer is an electric company, combined company, or telephone company that is subject to and required to file reports under Chapter 5745 of the Ohio Revised Code. (A) N et profit from a business or profession conducted both within and outside the boundaries of the Municipality shall be considered as having a taxable situs in the Municipality for purposes of municipal income taxation in the same proportion as the average ratio of t he following: (1) The average original cost of the real property and tangible persona",
+   "tags": [
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 26,
+   "snippet": "26 accounting for the purpose of calculating net profit sitused under this division to the municipal corporation in which the property is located. (F) (1) Except as provided in divis ion (F)(2) of this section, commissions received by a real estate agent or broker relating to the sale, purchase, or lease of real estate shall be sitused to the municipal corporation in which the real estate is located. Net profit reported by the real es tate agent or broker shall be allocated to a municipal corporation based upon the ratio of the commissions the agent or broker received from the sale, purchase, or lease of real estate located in the municipal corporation to the commissions received from t he sale, purchase, or lease of real estate everywhere in the taxable year. (2) An individual who is a resident of a municipal corporation that imposes a municipal income tax shall report the individual’s ",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 28,
+   "snippet": "28 this Ordinance , exclude the property, payroll, and gross receipts of the pass - through entity in the computation of the affiliated group's net profit sitused to a municipal corporation. If the entity's net profit or loss is so excluded, the entity shall be subject to taxation as a separate taxpayer on the basis of the entity's net profits that would otherwise be included in the consolidated federal taxable income of the affiliated group. (b) Include the pass - through entity's net profit or loss in the consolidated federal taxable income of the affiliated group and, for the purpose of making the computations required in Section 6.2 of this Ordinance , include the property, payroll, and gross receipts of the pass - through entity in the comput ation of the affiliated group's net profit sitused to a municipal corporation. If the entity's net profit or loss is so included, the entity s",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 30,
+   "snippet": "30 (a) On or before the fifteenth day of the fourth month after the beginning of the taxable year, twenty - two and one - half per cent of the tax liability for the taxable year; (b) On or before the fifteenth day of the sixth month after the beginning of the taxable year, forty - five per cent of the tax liability for the taxable year; (c) On or before the fifteenth day of the ninth month after the beginning of the taxable year, sixty - seven and one - half per cent of the tax liability for the taxable year; (d) On or before the fifteenth day of the twelfth month of the taxable year, ninety per cent of the tax liability for the taxable year. (2) A taxpayer may amend a declarati on under rules prescribed by the Tax Administrator. When an amended declaration has been filed, the unpaid balance shown due on the amended declaration shall be paid in equal installments on or before the remaini",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 42,
+   "snippet": "42 (C) The Municipality shall impose on a taxpayer, employer, any agent of t he employer, and any other payer, and will attempt to collect, the interest amounts and penalties prescribed in this section when the taxpayer, employer, any agent of the employer, or any other payer for any reason fails, in whole or in part, to make to th e Municipality timely and full payment or remittance of income tax, estimated income tax, or withholding tax or to file timely with the Municipality any return required to be filed. (1) Interest shall be imposed at the rate defined as “interest rate as d escribed in division (A) of this section”, per annum, on all unpaid income tax, unpaid estimated income tax, and unpaid withholding tax. This imposition of interest shall be assessed per month, or fraction of a month. (2) With respect to unpaid income ta x and unpaid estimated income tax, a penalty equal to fi",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 46,
+   "snippet": "46 information does not notify the Tax Administrator of a change with respect to that information as required under division (A) of this section within thirty days after filing the next tax document requiring such identifying information, not hing in this Ordinance prohibits the Tax Administrator from imposing a penalty pursuant to S ection 10 of this Ordinance . (3) The penalties provided for under divisions ( B )(1) and (2) of this section may be billed and imposed in the same manner as the t ax or fee with respect to which the identifying information is sought and are in addition to any applicable criminal penalties described in S ection 99 of this Ordinance for a violation of Section 15 of this Ordinance and any other penalties that may be imposed by the Tax Administrator by law. (Source: ORC 718.26) SECTION 14 CONFIDENTIALITY (A) Any information gained as a result of returns, invest",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489",
+   "source_document_id": null,
+   "source_title": "52fbbe74d94241af80f3d6cac62d5784856c55162617a5b58e0b2c148d3f8489.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/taxes/2020/2020Ordinance653TaxCreditAdj.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 11 subdivision plat having principal frontage on a street which comprises a site occupied by, or intended for occupancy by one principal building or principal use together with accessory buildings and uses, yards and other spaces required by the Ordinance. 33. LOT, CORNER : A lot abutting on two streets at their juncture, when the interior angle formed is less than one hundred thirty five (135) degrees. 34. LOT COVERAGE : The ratio of enclosed ground floor area of all buildings on a lot to the horizontally projected area of the lot, expressed as a percentage. 35. LOT LINES AND AREA : The peripheral boundaries of a parcel of land and the total area lying within such boundaries. 36. LOT, INTERIOR : A lot other than a corner lot . 37. LOT, RECORDED : A lot designed on a subdivision plat or deed duly recorded",
+   "tags": [
+    "dimension",
+    "illumination",
+    "temporary"
+   ],
+   "weight": 6,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 21,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 21 District Area (f) (Square Feet) Bldg. Hght. (Ft.) Width (Ft.) Yard Front (a) Yard Rear (Ft.) Yard Inside (b) RD 87,120 35 270 35 35 100 R1 12,150 35 90 25 25c 10 R2 7,350 35 70 25 20c 8 R3 & R4 6,000 35 60 25 20c 6 R5 14,400dg 40 120 25 20c 10 B1 None 30 None None None None B2 21,780 30 100 50c 30c 20 I 12,000 None 90 20 30 10 a) Where adjacent structures have front yard setbacks different from those required the minimum front yard setback shall be the average setback of such structures, but in no case shall the front yard setback be less than 20 feet. b) Buildings over two and one-half stories in height shall require five (5) feet for each additional story in addition to the required minimum side yard. c) Detached residential garages or utility building shall have a minimum rear yard of five (5) feet.",
+   "tags": [
+    "area",
+    "dimension",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 36,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 36 to control dust and shall be graded so as to dispose of all surface water. C. Handicapped Parking Parking facilities serving buildings and activities required to be accessible to the physically handicapped shall have conveniently located designated spaces provided as follows: Total Spaces in Number of Designated Lot/Structure Accessible Spaces Up to 100 One space per 25 parking spaces 101 to 200 4 spaces, plus one per 50 spaces over 100 201 to 500 6 spaces, plus one per 75 spaces over 200 Over 500 10 spaces, plus one per 100 spaces over 500 D. Off-Street Loading and Unloading Requirements 1. Minimum Number of Off-Street Loading Spaces Required: Gross Floor Area (Sq.Ft.) Loading and Unloading Space Required in Terms of Square Feet of Gross Floor Area 0-1,500 None 1,501 - 10,000 One (1) space 10,000 and ",
+   "tags": [
+    "sign",
+    "area",
+    "dimension"
+   ],
+   "weight": 6,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 49,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 49 a. An above ground pool with decking will require the same gate provisions as section VII, K,4,a. b. Inflatable pools where the water depth exceeds 24 inches and sides are less than 48 inches must be empty of water when not in use or fenced in. c. Inflatable pools where the water depth exceeds 24 inches and sides are greater than or equal to 48 inches may remove the ladder when not in use. 6. Portable pools . All portable pools of less than 24 inches in depth of water or less than 250 square feet of top water surface area, shall be exempt from the requirements of this section. L. Animal Hospital Animal Hospital shall be located no closer than one hundred (100) feet to any residential district, restaurant, hotel or motel in any district and shall show that adequate measures and controls shall be taken t",
+   "tags": [
+    "area",
+    "dimension",
+    "temporary",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 55,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 55 on the premises and supervising the amusement arcade at all times during its hours of operation. c) Amusement arcades shall have necessary security personnel as required by the appropriate law enforcement agency to police the interior and exterior of the premises. d) The interior of the amusement arcades shall provide a minimum area per coin-operated amusement device equal to the size of the device plus two (2) feet of area on each side plus an area of four (4) feet in front of the device. e) Prior to the issuance of a conditional use permit the applicant shall provide evidence that the structure meets the minimum requirements of the appropriate electrical and fire codes. f) If the place of business or premises for which an amusement arcade is proposed is a free standing building, the application for t",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 57,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 57 feet from any adjacent Residence District except the RD Residence District or existing dwelling. A temporary certificate may be renewed for a period of one year at the expiration of such certificate, provided all requirements of this Ordinance have been and can continue to be complied with. W. Cemeteries Cemetery, crematory, mausoleum, columbarium shall provide entrance on a major street or road with ingress and egress so designed as to minimize traffic congestion, shall provide required off-street parking space and shall provide a minimum six (6) foot high wall or minimum three (3) foot thick six (6) foot high evergreen hedge or provide a minimum twenty (20) feet of permanently maintained planting strip on all property lines abutting any R-District or residential street. X. Community Building, Social ",
+   "tags": [
+    "area",
+    "dimension",
+    "temporary",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 58,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 58 Ohio, which provides rehabilitative or habilitative services. There are two classes of Group Residential Facilities: \"Class I\": Any state, federal, or locally approved dwelling or place used as a foster home for children or adults (not including nursing homes) or as a home for the care or rehabilitation of dependent or predelinquent children, the physically handicapped or disabled, or those with development disabilities or mental illnesses. A Class I Type A group residential facility contains six (6) or more residents, exclusive of staff. A Class I Type B group residential facility contains five (5) or less residents, exclusive of staff. \"Class II\": Any state, federal, or locally approved dwelling or place used as a home for juvenile offenders; a halfway house providing residential care or rehabilitati",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 60,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 60 Residence District, except the RD Residence District, shall provide automobile parking and truck loading area together with ingress and egress so designed to minimize traffic hazard and congestion, shall show that odor, dust, noise and drainage shall not constitute a nuisance to surrounding properties. EE. Inflammable Liquid Storage in I-Districts Above ground storage of materials or products rated as fast-burning, or which produce flammable or explosive vapors or gases in quantities over one thousand (1,000) gallons will only be permitted in the I-Districts provided that such storage area is not less than six hundred (600) feet distant from any other zoning district. Such storage area must be provided with adequate safety devices against the hazard of fire and explosion and adequate fire suppression a",
+   "tags": [
+    "area",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 6,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 62,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 62 The district height limitations stipulated elsewhere in this Ordinance may be exceeded, but such modifications shall be in accord with the following: a) Architectural projections, such as spires, belfries, parapet walls, cupolas, domes, flues and chimneys, are exempt from the height limitations of this Ordinance. b) Special structures, such as elevator penthouses, gas tanks, grain elevators, scenery lofts, radio and television receiving antennas, manufacturing equipment and necessary mechanical appurtenances, cooling towers, fire towers, substations, smoke stacks, and flag poles, are exempt from the height limitations of this Ordinance. c) Essential services, utilities, water towers, electric power and communi- cation transmission lines are exempt from the height limitations of this Ordinance. d) Commu",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 6,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 75,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 75 land or building, and the variance as granted is the minimum variance that will accomplish this purpose. f) The proposed variance will not impair an adequate supply of light and air to adjacent property, substantially increase the congestion in the public roads, increase the danger of fire, endanger the public safety, or substantially diminish or impair property values of the adjacent area. g) The granting of the variance requested will not confer on the applicant any special privilege that is denied by this regulation to other lands, structures, or buildings in the same district. F. Additional Conditions and Safeguards The Legislative Authority may further prescribe any conditions and safeguards that it deems necessary to insure that the objectives of the regulations or provisions to which the varianc",
+   "tags": [
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 79,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 79 8. Upon making an affirmative finding, the Board shall direct the Zoning Commissioner to issue a conditional use permit for such use which shall list all conditions and safeguards specified by the Board for approval. b) Make a written finding that the application is deficient in information or is in need of modification and is being returned to the applicant. Such finding shall specify the information and/or modifications which are deemed necessary. c) Make a written finding that the application is denied, such finding specifying the reason(s) for disapproval. If an application is disapproved by the Board, the applicant may seek relief through the Court of Common Pleas. Appeals from Board decisions shall be made in the manner specified in Section XIII, I. 8. Supplementary Conditions and Safeguards : In",
+   "tags": [
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 82,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 82 G. Submission to County Regional Planning Commission : Within five (5) days after the adoption of a motion by the Zoning Commission, transmittal of a resolution by the Legislative Authority, or the filing of an application by at least one (1) owner or lessee, the Zoning Commission shall transmit a copy of such motion, resolution, or application, together with the text and map pertaining to the case in question, to the County Regional Planning Commission. The County Regional Planning Commission shall recommend the approval or denial of the proposed amendment or the approval of some modification thereof and shall submit such recommendation to the Zoning Commission. Such recommendation shall be considered at the public hearing held by the Zoning Commission. H. Submission to Director of Transportation : Be",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 86,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 86 a time and place for the hearing, and notify the holder. At the hearing, the holder may appear in person, by his attorney or other representative, or he may present his position in writing. He may present evidence and examine witnesses appearing for or against him. If no hearing is requested, the Board may revoke the variance or certificate without a hearing. The authority to revoke a variance or certificate is in addition to any other means of zoning enforcement provided by law. In exercising the above-mentioned powers, such Board may, in conformity with such Sections, reverse or affirm, wholly or partly, or may modify the order, requirement, decision, or determination appealed from, and may make such order, requirement, decision, or determination as ought to be made, and to that end has all powers of",
+   "tags": [
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  },
+  {
+   "page": 89,
+   "snippet": "VILLAGE OF CONVOY INCORPORATED 1874 Van Wert County P.O. Box 310 Convoy, Ohio 45832 89 Before any zoning permit is issued affecting any land within three-hundred (300) feet of the centerline of a proposed new highway or a highway for which changes are proposed as described in the certification to local officials by the Director of Transportation or any land within a radius of five-hundred (500) feet from the point of intersection of said centerline with any public road or highway, the Zoning Commissioner shall give notice, by registered mail, to the Director of Transportation that he shall not issue a zoning permit for one-hundred twenty (120) days from the date the notice is received by the Director of Transportation. If the Director of Transportation notifies the Zoning Commissioner that he shall proceed to acquire the land needed, then the Zoning Commissioner shall refuse to issue the",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2",
+   "source_document_id": null,
+   "source_title": "707313a6ee4916fcfe4c0ee13d241f4052a332e49287cc2e3f075f90d15873f2.pdf",
+   "official_url": "https://www.villageofconvoy.com/files/forms/permits/ZoningCode.pdf"
+  }
+ ]
+}

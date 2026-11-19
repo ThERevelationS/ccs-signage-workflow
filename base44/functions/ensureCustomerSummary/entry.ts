@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 const MODULE_PROJECT_ENTITIES: Record<string, string> = {
   channel_letter_installation: 'ChannelLetterInstallation',
@@ -229,9 +230,13 @@ async function deleteVerified(Summary: any, row: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
-    const user = await authenticateSignShopSession(base44, body?.session_token);
+    // Fall back to auth.me() when no sign-shop session token is supplied so
+    // request-context users can still complete the guarded summary write.
+    let user = null;
+    try { user = await authenticateSignShopSession(base44, body?.session_token); }
+    catch { user = await base44.auth.me().catch(() => null); }
     if (!user?.id) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     const clientName = String(body?.client_name || '').trim();
     const normalizedName = norm(clientName);
@@ -357,7 +362,7 @@ Deno.serve(async (req) => {
     return Response.json({ summary: finalSummary, reused: !createdByThisRequest });
   } catch (error) {
     const status = Number(error?.status || error?.statusCode || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('ensureCustomerSummary error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Customer Summary could not be updated safely.' : error.message,

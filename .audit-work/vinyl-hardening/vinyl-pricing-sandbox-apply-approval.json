@@ -1,0 +1,25 @@
+{
+  "authorized": true,
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "7a52b96f7d00987e55605f66aa63a2b4f1aebc3d",
+  "restoreCheckpointId": "6aef23f397424c1f424993a6",
+  "candidateHashes": {
+    "vinylPricingAvailability.js": "0bb8c5813dbccf63b5b6a39dee437993ddd1baaaa8f45142a4c437d8fc9a5f8a",
+    "vinylProjectHelpers.jsx": "ed2ceb7acef7942c0e1a68e441a1460c741389852ee0d42b7f35a57886d41512",
+    "vinylCostHelpers.jsx": "0a5c6b9d9ebdeb32724db2785acafd43a69b4ce3201d75637cc87f8b88bfdde5",
+    "VinylWorkflowCard.jsx": "4dc9bd8fc215cdd39c7860369e2862dea8527e7f547c8461831a33c6f480a8d1",
+    "VinylWorkflowCardHeader.jsx": "b6d4d27fecbd341b52442435e89fe24cb73b7aff3d247729d0e1a548a03a5fbe",
+    "VinylWorkflowMetricsBadge.jsx": "54d100d43fd3c33d744712fb3d41162c0a5f28355b82b1c259c619ce127b4271",
+    "VinylPartsTable.jsx": "03b900f0634b09806810bb8410b2c42a256c567801d9341302bd01b9c91eed2a",
+    "VinylCuttingExtrasCard.jsx": "7602b55138e3b5c29784196a8712b3cb3cfdd3fe0b2b26dfb23c1fc4972e9da4",
+    "VinylWorkflowPersonnel.jsx": "6c00c3bf54a27a5b8ea28f5db184a8f447d69911b55c41770f438162afcaf0f4",
+    "VinylMaterialPicker.jsx": "b7f2b2182b0d1e3d37bebf66f676d793594c61533b29d105c7b5d4e2ace0e30c",
+    "VinylMachinePicker.jsx": "3a10f3ea188e53f45e00c3a7a29d72c3f495862d785a309ec15a7470723ce371",
+    "VinylRollWidthRecommender.jsx": "d6b779c92e3cb9f1396e202a8e4ed32d9f90f536f95dea0a0abc3ad9faf7dd78",
+    "VinylProjectSummaryCard.jsx": "fb78a1c4a258c16a1128aee6e8083520a86870cb5394e16ab7f8c2e75921da5d",
+    "VinylEstimator.jsx": "a31428b6b864128902ac89a998c870cf0ccd9b5bcd403461c4f24ec84a944eb3"
+  },
+  "reviewedProtocolHash": "dec563244b15d2fd56e8f8ece2cad5fc82886b801b52fbdda6714c23f02f1f26",
+  "createdAt": "2026-11-07T13:13:50.740Z"
+}

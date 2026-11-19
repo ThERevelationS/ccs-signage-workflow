@@ -1,0 +1,50 @@
+{
+ "synthetic": true,
+ "telemetry": {
+  "foreign": [],
+  "consoleErrors": [],
+  "pageErrors": []
+ },
+ "results": [
+  {
+   "case": "c1 mount: zero callbacks, no mutation, Unknown metadata",
+   "ok": true
+  },
+  {
+   "case": "c2 raw \"-oops\" cover: exact string delivered, other fields unchanged",
+   "ok": true
+  },
+  {
+   "case": "c3 mats add/delete: unique prefixed ids, empty fields, undo restores",
+   "ok": true
+  },
+  {
+   "case": "c4 manual/catalog switch retains raw; unavailable id stays visible",
+   "ok": true
+  },
+  {
+   "case": "c5 override clear -> null; \"0\" stays \"0\"; no item field writes",
+   "ok": true
+  },
+  {
+   "case": "c6 accept gating: stale/canAccept:false/busy/disabled block; eligible fires once",
+   "ok": true
+  },
+  {
+   "case": "c7 orphan tie refs visible; deleting mat does not remap/delete tie",
+   "ok": true
+  },
+  {
+   "case": "c8 pillar controls edit raw; type change preserves inactive spread",
+   "ok": true
+  },
+  {
+   "case": "c9 21 rows paginate; second-page edit changes only that row",
+   "ok": true
+  },
+  {
+   "case": "c10 mobile 375px + desktop: no overflow, no API requests",
+   "ok": true
+  }
+ ]
+}

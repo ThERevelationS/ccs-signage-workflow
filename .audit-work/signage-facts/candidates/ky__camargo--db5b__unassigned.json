@@ -1,0 +1,51 @@
+{
+ "jurisdiction_id": "6adef9df2b72927be7f6db5b",
+ "jurisdiction_name": "Camargo",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "City of Camargo 4406-B Camargo Road Mt. Sterling, KY 40353 (859) 498-9075 City Clerk, Kimberly Kirby Mayor, Clayton Neal BUSINESS LICENSE APPLICATION Application for: Withholding Account Only Net Profit Account Only Both Accounts Name of Business: _______________________________________________________________________________________________________ Business Owner(s) Name(s): ______________________________________________________________________________________________ EIN of Social Security Number: ____________________________________________________________________________________________ (This will be your Account Number) Local Mailing Address: ___________________________________________________________ P.O. Box: _______________________________ ___________________________________________________________ Home Mailing Address: ___________________________________________________________ ",
+   "tags": [
+    "fee",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "5373e3f984210219c1593191405f9027ef8715791182f4d864a34180e9926708",
+   "source_document_id": null,
+   "source_title": "5373e3f984210219c1593191405f9027ef8715791182f4d864a34180e9926708.pdf",
+   "official_url": "https://camargo.ky.gov/Documents/business-license-application.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "The City of Camargo Net Profits License Fee was levied at the annual rate of 2% effective 7-1-19, of the net profits of All occupations, trades, professions, or other business engaged in said activities within the city. The fee is levied against a Partnership or association as a business entity, therefore the individual partners or members are not required to file a return On the distributive share of the profits. The City of Camargo Form 3 to be filed by all subject businesses (business having Some receipts and/or payroll within the City of Camaro area) must be based on the net income as reported to the Federal Government; therefore the basis used (i.e cash or accrual) must be consistent for bot Federal Income Tax and City of Camargo License Fee Return. The 3 forms must be filed before April 15, if taxpayer is on a calendar year or 135 days after The end of the fiscal year, sale, liquid",
+   "tags": [
+    "dimension",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "6c89be1c762320a315f1b9708a62a3ea1243c28917bbf51ab66c1a1090991731",
+   "source_document_id": null,
+   "source_title": "6c89be1c762320a315f1b9708a62a3ea1243c28917bbf51ab66c1a1090991731.pdf",
+   "official_url": "https://camargo.ky.gov/Documents/net-profits-license-fee-return.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Due at the End of Federal Filing Date_______________ City of Camargo Fiscal Year End Net Profit License Fee Return Mo. Day Year NAME AND ADDRESS OF BUSINESS: _____________ ____________________________________ ____________________________________ ACCOUNT NO.___________ ____________________________________ PLEASE NOTIFY THIS OFFICE OF ANY CHANGE IN OWNERSHIP OR NAME AND ADDRESS SHOWN ABOVE QUESTIONS (ANSWER FULLY) 1. Nature of Business: 6. Check which ( )Corporation ( )Sub-Chapter ( )Partnership 2. Date Business Started in Camargo: ( )Individual Owner ( )Fiduciary 3. If Organization was Discontinued, State When 7. Basis on which this Return is prepared: Cash( ) Accrual( ) Dissolution( ) or sale( ), Give Name and Address of Successor 8. Have Federal Authorities Changed the Net Income as Originally Reported 4. Did you have employees in Camargo during the year? Yes( ) No( ) for any prior year",
+   "tags": [
+    "illumination",
+    "penalties"
+   ],
+   "weight": 3,
+   "source_sha256": "6c89be1c762320a315f1b9708a62a3ea1243c28917bbf51ab66c1a1090991731",
+   "source_document_id": null,
+   "source_title": "6c89be1c762320a315f1b9708a62a3ea1243c28917bbf51ab66c1a1090991731.pdf",
+   "official_url": "https://camargo.ky.gov/Documents/net-profits-license-fee-return.pdf"
+  }
+ ]
+}

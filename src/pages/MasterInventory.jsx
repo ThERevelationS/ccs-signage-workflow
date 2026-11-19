@@ -17,7 +17,11 @@ import MasterConcreteStoneTab from "@/components/masterInventory/MasterConcreteS
 import VinylInventoryTab from "@/components/vinylInventory/VinylInventoryTab";
 import ExcelImporterDialog from "@/components/masterInventory/ExcelImporterDialog";
 import { deleteInventoryRecordIfUnchanged, findInventoryPartReferences } from "@/components/masterInventory/inventoryPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
+import { staffEntities } from "@/components/staff/staffEntities";
+
+const EMPTY_ITEMS = [];
 
 export default function MasterInventory() {
   const [user, setUser] = useState(null);
@@ -34,6 +38,15 @@ export default function MasterInventory() {
   const [itemsBySource, setItemsBySource] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("q") || "");
+  // #319 — ?status= / ?sort= read at load and written back via writeParam.
+  // Items have no status field; is_active is the honest stand-in (rows that
+  // simply lack the column count as active).
+  const [statusFilter, setStatusFilter] = useState(() => {
+    try { const v = new URLSearchParams(window.location.search).get("status") || ""; return ["active", "inactive"].includes(v) ? v : ""; } catch { return ""; }
+  });
+  const [sort, setSort] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("sort") || ""; } catch { return ""; }
+  });
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [showImporter, setShowImporter] = useState(false);
@@ -43,6 +56,36 @@ export default function MasterInventory() {
 
   const activeSource = SOURCE_BY_KEY[activeKey];
   const isAdmin = user?.role === "admin";
+  const linkPartsRef = useRef(null);
+  const [linkBusy, setLinkBusy] = useState(false);
+  // Bulk-link inventory→parts (#470): a CSV of {part_id, inventory_item_id}
+  // sets the part's inventory link via a per-part CAS update (id+updated_date).
+  const linkPartsCsv = async (file) => {
+    if (!file || linkBusy) return;
+    setLinkBusy(true);
+    try {
+      const text = await file.text();
+      const lines = text.split(/[\n\r]+/).map((l) => l.trim()).filter(Boolean).slice(0, 500);
+      let linked = 0, alreadyLinked = 0, failed = 0;
+      for (const line of lines) {
+        const [partId, invId] = line.split(",").map((s) => s.trim());
+        if (!partId || !invId || partId.toLowerCase() === "part_id") continue;
+        try {
+          const part = await staffEntities.BuilderPart.get(partId);
+          if (!part?.id || !part?.updated_date) { failed += 1; continue; }
+          // Dedupe by inventory_item_id: a part already linked to this
+          // inventory row is a no-op, not a second write.
+          if (String(part.inventory_item_id || "") === invId) { alreadyLinked += 1; continue; }
+          await staffEntities.updateMany("BuilderPart", { id: part.id, updated_date: part.updated_date }, { $set: { inventory_item_id: invId } });
+          linked += 1;
+        } catch { failed += 1; }
+      }
+      window.alert(`Linked ${linked} part(s) to inventory.${alreadyLinked ? ` ${alreadyLinked} already linked.` : ""}${failed ? ` ${failed} row(s) skipped.` : ""}`);
+    } catch (e) { window.alert(e?.message || "Link failed."); } finally {
+      setLinkBusy(false);
+      if (linkPartsRef.current) linkPartsRef.current.value = "";
+    }
+  };
   const isCustomTab = !!activeSource?.custom;
 
   // Load current user once
@@ -58,9 +101,18 @@ export default function MasterInventory() {
       });
   }, []);
 
-  // Load items for the active declarative source (skip for custom tabs)
-  const loadActive = useCallback(async () => {
+  // Load items for the active declarative source (skip for custom tabs).
+  // (#409) Once a source has loaded, switching back to its tab reuses the
+  // cached rows in itemsBySource instead of re-fetching the same entity.
+  // Post-mutation refreshes pass force=true to bypass the cache.
+  const loadedSourcesRef = useRef(new Set());
+  const loadActive = useCallback(async (force = false) => {
     if (!activeSource || isCustomTab) return;
+    if (force !== true && loadedSourcesRef.current.has(activeKey)) {
+      setInventoryLoadError("");
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setInventoryLoadError("");
     try {
@@ -69,6 +121,7 @@ export default function MasterInventory() {
         sort: null,
         label: `${activeSource.label} Master Inventory`,
       });
+      loadedSourcesRef.current.add(activeKey);
       setItemsBySource((prev) => ({ ...prev, [activeKey]: items }));
     } catch (err) {
       console.error("Failed to load inventory:", err);
@@ -82,20 +135,46 @@ export default function MasterInventory() {
     loadActive();
   }, [loadActive]);
 
-  const items = itemsBySource[activeKey] || [];
+  const items = itemsBySource[activeKey] || EMPTY_ITEMS;
 
   const filteredItems = useMemo(() => {
-    if (!search.trim()) return items;
-    const q = search.toLowerCase();
-    return items.filter((it) =>
-      Object.values(it).some(
-        (v) => v !== null && v !== undefined && String(v).toLowerCase().includes(q)
-      )
-    );
-  }, [items, search]);
+    let list = items;
+    if (statusFilter === "active") list = list.filter((it) => it.is_active !== false);
+    else if (statusFilter === "inactive") list = list.filter((it) => it.is_active === false);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter((it) =>
+        Object.values(it).some(
+          (v) => v !== null && v !== undefined && String(v).toLowerCase().includes(q)
+        )
+      );
+    }
+    const nameOf = (it) => String(it?.[activeSource?.nameField] ?? "");
+    const sorted = [...list];
+    if (sort === "name_asc") sorted.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
+    else if (sort === "name_desc") sorted.sort((a, b) => nameOf(b).localeCompare(nameOf(a)));
+    else if (sort === "newest") sorted.sort((a, b) => String(b.created_date || "").localeCompare(String(a.created_date || "")));
+    else if (sort === "oldest") sorted.sort((a, b) => String(a.created_date || "").localeCompare(String(b.created_date || "")));
+    return sorted;
+  }, [items, search, statusFilter, sort, activeSource]);
 
   const exportCsvFor = (source) => {
-    const cols = (source?.fields || []).filter((f) => f?.table && f?.name);
+    // #458 — include ALL fields: declared table columns first, then every
+    // other stored/custom field present on the exported rows so no custom
+    // data is silently dropped from the CSV.
+    const declared = (source?.fields || []).filter((f) => f?.name);
+    const tableCols = declared.filter((f) => f?.table);
+    const declaredNames = new Set(declared.map((f) => f.name));
+    const customKeys = [];
+    for (const it of filteredItems) {
+      for (const k of Object.keys(it || {})) {
+        if (!declaredNames.has(k) && !customKeys.includes(k)) customKeys.push(k);
+      }
+    }
+    const cols = [
+      ...(tableCols.length ? tableCols : declared).map((f) => ({ name: f.name, label: f.label || f.name })),
+      ...customKeys.map((k) => ({ name: k, label: k })),
+    ];
     if (!cols.length || !filteredItems.length) return;
     const esc = (v) => {
       const s = v === null || v === undefined ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
@@ -136,9 +215,9 @@ export default function MasterInventory() {
         entity: activeSource.entity,
         record: item,
         nameField: activeSource.nameField,
-        label: `${activeSource.label || "Inventory"} item “${label}”`,
+        label: `${activeSource.label || "Inventory"} item "${label}"`,
       });
-      await loadActive();
+      await loadActive(true);
     } catch (err) {
       console.error("Delete failed:", err);
       alert(err?.message || "Failed to delete item.");
@@ -156,13 +235,13 @@ export default function MasterInventory() {
   const handleSaved = async () => {
     setShowForm(false);
     setEditingItem(null);
-    await loadActive();
+    await loadActive(true);
   };
 
   // Admin-only gate — non-admins (and unauthenticated users) cannot view this page.
   if (!userLoaded) {
     return (
-      <div className="p-12 text-center text-slate-500">Loading…</div>
+      <div role="status" className="p-12 text-center text-slate-500">Loading…</div>
     );
   }
   if (!isAdmin) {
@@ -171,7 +250,7 @@ export default function MasterInventory() {
         <div className="max-w-2xl mx-auto mt-20">
           <Card className="bg-white border-amber-200 shadow-sm">
             <CardContent className="p-8 text-center space-y-3">
-              <ShieldAlert className="w-12 h-12 text-amber-500 mx-auto" />
+              <ShieldAlert className="w-12 h-12 text-amber-500 mx-auto" aria-hidden="true" />
               <h2 className="text-xl font-semibold text-slate-900">Admin Access Required</h2>
               <p className="text-sm text-slate-600">
                 The Master Inventory page is restricted to administrators. Please contact your admin
@@ -191,7 +270,7 @@ export default function MasterInventory() {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-              <Boxes className="w-8 h-8 text-slate-700" />
+              <Boxes className="w-8 h-8 text-slate-700" aria-hidden="true" />
               Master Inventory
             </h1>
             <p className="text-slate-600 mt-1">
@@ -205,12 +284,20 @@ export default function MasterInventory() {
               variant="outline"
               className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
             >
-              <Upload className="w-4 h-4 mr-2" />
+              <Upload className="w-4 h-4 mr-2" aria-hidden="true" />
               Import from Excel
             </Button>
+            {isAdmin && (
+              <>
+                <Button onClick={() => linkPartsRef.current?.click()} disabled={linkBusy} variant="outline" className="border-violet-300 text-violet-700 hover:bg-violet-50" title="CSV: part_id,inventory_item_id — links parts to inventory rows (#470)">
+                  {linkBusy ? "Linking…" : "Link parts (CSV)"}
+                </Button>
+                <input ref={linkPartsRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => linkPartsCsv(e.target.files?.[0])} />
+              </>
+            )}
             {!isCustomTab && (
               <Button onClick={handleAdd} className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                 Add Item
               </Button>
             )}
@@ -219,7 +306,7 @@ export default function MasterInventory() {
 
         {/* Importer banner */}
         <div className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-          <Upload className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+          <Upload className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
           <div className="text-sm text-slate-700">
             <p className="font-semibold text-slate-900 mb-0.5">Bulk import from your external inventory system</p>
             <p className="text-xs text-slate-600">
@@ -242,7 +329,7 @@ export default function MasterInventory() {
                     value={s.key}
                     className="data-[state=active]:bg-slate-900 data-[state=active]:text-white gap-2"
                   >
-                    <Icon className={`w-4 h-4 ${activeKey === s.key ? "text-white" : s.color}`} />
+                    <Icon className={`w-4 h-4 ${activeKey === s.key ? "text-white" : s.color}`} aria-hidden="true" />
                     <span>{s.label}</span>
                   </TabsTrigger>
                 );
@@ -265,7 +352,7 @@ export default function MasterInventory() {
                   <CardHeader className="border-b">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <CardTitle className="flex items-center gap-2">
-                        <s.icon className={`w-5 h-5 ${s.color}`} />
+                        <s.icon className={`w-5 h-5 ${s.color}`} aria-hidden="true" />
                         {s.label}
                         <Badge variant="outline" className="ml-2 font-normal">
                           {filteredItems.length} of {items.length}
@@ -273,14 +360,37 @@ export default function MasterInventory() {
                       </CardTitle>
                       <div className="flex items-center gap-2 flex-wrap">
                         <div className="relative w-full sm:w-64">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" aria-hidden="true" />
                           <Input
                             placeholder="Search items..."
+                            aria-label="Search inventory items"
                             value={search}
                             onChange={(e) => { const v = e.target.value; setSearch(v); try { const next = new URLSearchParams(window.location.search); if (v) next.set("q", v); else next.delete("q"); window.history.replaceState(null, "", `${window.location.pathname}?${next}`); } catch {} }}
                             className="pl-9"
                           />
                         </div>
+                        <select
+                          aria-label="Active status filter"
+                          value={statusFilter}
+                          onChange={(e) => { const v = e.target.value; setStatusFilter(v); writeParam("status", v); }}
+                          className="h-9 rounded-md border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-600"
+                        >
+                          <option value="">All statuses</option>
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                        </select>
+                        <select
+                          aria-label="Sort items"
+                          value={sort}
+                          onChange={(e) => { const v = e.target.value; setSort(v); writeParam("sort", v); }}
+                          className="h-9 rounded-md border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-600"
+                        >
+                          <option value="">Default order</option>
+                          <option value="name_asc">Name A-Z</option>
+                          <option value="name_desc">Name Z-A</option>
+                          <option value="newest">Newest</option>
+                          <option value="oldest">Oldest</option>
+                        </select>
                         <Button
                           type="button"
                           variant="outline"
@@ -289,7 +399,7 @@ export default function MasterInventory() {
                           className="h-9 whitespace-nowrap"
                           title="Export visible rows to CSV"
                         >
-                          <Download className="w-4 h-4 mr-1" />
+                          <Download className="w-4 h-4 mr-1" aria-hidden="true" />
                           Export
                         </Button>
                         {isAdmin && (
@@ -297,7 +407,7 @@ export default function MasterInventory() {
                             onClick={handleAdd}
                             className="bg-blue-600 hover:bg-blue-700 text-white h-9 whitespace-nowrap"
                           >
-                            <Plus className="w-4 h-4 mr-1" />
+                            <Plus className="w-4 h-4 mr-1" aria-hidden="true" />
                             Add {s.label.replace(/\s*\|.*$/, "")}
                           </Button>
                         )}
@@ -306,12 +416,12 @@ export default function MasterInventory() {
                   </CardHeader>
                   <CardContent className="p-0">
                     {isLoading ? (
-                      <div className="p-12 text-center text-slate-500">Loading…</div>
+                      <TableSkeleton columns={6} rows={8} />
                     ) : inventoryLoadError ? (
-                      <div className="p-8 text-center bg-red-50 border border-red-200 text-red-700">
+                      <div role="alert" className="p-8 text-center bg-red-50 border border-red-200 text-red-700">
                         <div className="font-semibold">Inventory could not be verified.</div>
                         <div className="mt-1 text-xs">{inventoryLoadError}</div>
-                        <Button variant="outline" className="mt-3" onClick={loadActive}>Retry</Button>
+                        <Button variant="outline" className="mt-3" onClick={() => loadActive(true)}>Retry</Button>
                       </div>
                     ) : (
                       <InventoryTable

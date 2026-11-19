@@ -1,0 +1,9 @@
+src/components/jobcosting/ProgressBillingPanel.jsx
+src/components/pricing/MatrixSuggestPanel.jsx
+src/components/procurement/VendorStatement.jsx
+src/components/procurement/progressBillingModel.js
+src/components/proofs/ProofPanel.jsx
+src/components/reconciliation/CloseBatchDialog.jsx
+src/components/reports/OpsReportView.jsx
+src/components/reports/ReportCatalogPanel.jsx
+src/components/reports/reportEngine.js

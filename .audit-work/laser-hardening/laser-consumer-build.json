@@ -1,0 +1,51 @@
+{
+  "inputs": [
+    "frozen:/app/src/components/estimator/laser/laserPricingAvailability.js",
+    "frozen:/app/src/pages/LaserEstimator.jsx",
+    "frozen:/app/src/pages/LaserSettings.jsx",
+    "frozen:/app/consumer-entry.js"
+  ],
+  "loaded": {
+    "/app/consumer-entry.js": "df56c844efce16cc5817d1473a5b5c28837e5a34905e3f5f29afeacf78e92533",
+    "/app/src/pages/LaserEstimator.jsx": "0f996fd442ad9361a38820f63078966e5ba85016171e965d890be8f0fcac54cc",
+    "/app/src/pages/LaserSettings.jsx": "82861d094e03cf4e9b367f4cbb1f28ca94ff9fcae8b8fea12bf6a931e8b7d986",
+    "/app/src/components/estimator/laser/laserPricingAvailability.js": "82275a855f3cc2d2058a8416a62ccf40a52a0c8cebacac573232bf22e55cd380"
+  },
+  "candidateHashes": {
+    "laserPricingAvailability.js": "82275a855f3cc2d2058a8416a62ccf40a52a0c8cebacac573232bf22e55cd380",
+    "LaserEstimator.jsx": "0f996fd442ad9361a38820f63078966e5ba85016171e965d890be8f0fcac54cc"
+  },
+  "externals": [
+    "react",
+    "@/api/gatedEntities",
+    "react-router-dom",
+    "@/api/base44Client",
+    "@/components/ui/button",
+    "@/components/ui/card",
+    "@/components/ui/input",
+    "@/components/ui/label",
+    "@/components/ui/select",
+    "@/components/ui/textarea",
+    "lucide-react",
+    "@/components/ui/tabs",
+    "@/components/channelLetterInstall/TabBadgeTrigger",
+    "@/components/markup/CustomerPricingTab",
+    "@/components/markup/projectCategorizer",
+    "@/components/markup/savedCustomerPricing",
+    "@/components/estimator/builder/builderService",
+    "@/components/estimator/loadAllEntityRows",
+    "@/components/estimator/builder/sourceProjectPersistence",
+    "@/components/estimator/builder/itemIdentity",
+    "@/components/estimator/idempotentEntityCreate",
+    "@/components/estimator/moduleShared/ModuleActionBar",
+    "@/components/estimator/moduleShared/ModuleTemplateDialog",
+    "@/components/estimator/moduleShared/moduleProjectActions",
+    "@/components/staff/staffEntities",
+    "@/components/estimator/laser/laserPricingAvailability",
+    "react/jsx-runtime",
+    "@/entities/all",
+    "@/components/estimator/settings/settingsSaveGuard",
+    "@/components/estimator/settings/SettingsTransferBar",
+    "@/components/estimator/settings/moduleSettingDefaults"
+  ]
+}

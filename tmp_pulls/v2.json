@@ -1,0 +1,21 @@
+{
+  "matches": [
+    {
+      "path": "src/lib/workOrderCache.js",
+      "line": 217,
+      "text": "export function useBoardFeedMeta(entity) {"
+    },
+    {
+      "path": "src/pages/MainWorkflow.jsx",
+      "line": 10,
+      "text": "import { useAllWorkOrders, refreshAllWorkOrders, useBoardFeedMeta } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/pages/MainWorkflow.jsx",
+      "line": 18,
+      "text": "  const boardMeta = useBoardFeedMeta(\"WorkOrder\");"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 3
+}

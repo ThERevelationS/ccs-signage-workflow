@@ -1,0 +1,15 @@
+{
+ "suite": "brick-model",
+ "passed": 121,
+ "failed": 0,
+ "result": "PASS",
+ "sections": {
+  "A_valid_path_byte_parity_no_mutation": 8,
+  "B_strict_parsers": 15,
+  "C_material_catalog_scanner": 17,
+  "D_project_field_scanner": 46,
+  "E_held_calc_semantics": 10,
+  "F_explicit_zero_byte_parity": 14,
+  "G_ui_helpers": 7
+ }
+}

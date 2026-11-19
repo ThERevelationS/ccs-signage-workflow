@@ -1,0 +1,12 @@
+{"entity":"Invoice","submitted":20,"total":86,"ambiguous":0}
+{"entity":"Invoice","submitted":40,"total":86,"ambiguous":0}
+{"entity":"Invoice","submitted":60,"total":86,"ambiguous":0}
+{"entity":"Invoice","submitted":80,"total":86,"ambiguous":0}
+{"entity":"Invoice","submitted":86,"total":86,"ambiguous":0}
+{"entity":"Payment","submitted":20,"total":84,"ambiguous":0}
+{"entity":"Payment","submitted":40,"total":84,"ambiguous":0}
+{"entity":"Payment","submitted":60,"total":84,"ambiguous":0}
+{"entity":"Payment","submitted":80,"total":84,"ambiguous":0}
+{"entity":"Payment","submitted":84,"total":84,"ambiguous":0}
+{"entity":"Payment","submitted":4,"total":4,"ambiguous":0}
+{"apply_invoices":4631,"missing_invoices":0,"missing_payments":0,"ambiguous":0,"batch_payment_ids":4920}

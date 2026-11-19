@@ -1,0 +1,68 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "71b65186f4df1159193acceb91db50ea50946a7a",
+  "jsonProofs": [
+    {
+      "file": "painting-model-verification.json",
+      "resultCount": 167
+    },
+    {
+      "file": "painting-model-red-verification.json",
+      "resultCount": 8
+    },
+    {
+      "file": "painting-page-verification.json",
+      "resultCount": 7
+    },
+    {
+      "file": "painting-browser-results.json",
+      "resultCount": 4
+    },
+    {
+      "file": "painting-consumer-build.json",
+      "resultCount": 5
+    },
+    {
+      "file": "painting-lint-results.json",
+      "resultCount": 3
+    },
+    {
+      "file": "painting-page-import-edges.json",
+      "resultCount": "see file"
+    },
+    {
+      "file": "painting-page-meta.json",
+      "resultCount": "see file"
+    }
+  ],
+  "allResultsMustHaveOkTrue": true,
+  "scopedLintLogs": [
+    {
+      "file": "painting-lint-results.json",
+      "line": "0 errors / 0 warnings over 3 candidate files"
+    }
+  ],
+  "candidateHashes": {
+    "src/components/estimator/paint/paintCalc.js": "49fc1502d9072e6adf96bad1360bc448e7e50928d96fd7a6bc249a43a1178dde",
+    "src/components/estimator/paint/paintPricingAvailability.js": "da5a648bfe4bbda3e7ee1f3de798afe1bf6dc4f2b024314167083e46b6e384fc",
+    "src/pages/PaintingEstimator.jsx": "96e45eb0954746cbbaadf0af67085b0997131b15dfb4252053f72b055e34ffcc"
+  },
+  "remoteBaselineHashes": {
+    "src/components/estimator/paint/paintCalc.js": "d6785bf2cb5676603c299528acc446de3202c6691ee47a7260e7699e984e1761",
+    "src/pages/PaintingEstimator.jsx": "ec3e893f942fed3a0adb0787834c9017f3e9ef8e9f45dd27e530a45b7b1d8bfb"
+  },
+  "allowedBuildWarningCount": 0,
+  "remoteOperationsPermitted": [
+    "sandbox read",
+    "sandbox run (read-only shell)"
+  ],
+  "remoteMutationsPerformed": 0,
+  "applyRequiresLeadApproval": true,
+  "remoteWriteAuthorized": false,
+  "checkpointAuthorized": false,
+  "entityOperationsAuthorized": false,
+  "schemaOrMetadataAuthorized": false,
+  "publishOrDeployAuthorized": false,
+  "baselineFile": "painting-pricing-baseline-v2.json"
+}

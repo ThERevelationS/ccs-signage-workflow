@@ -1,0 +1,67 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "eb1d1833386cc8b74e64359172fd47dc081904b3",
+  "baselineFile": "masonry-outline-continuation-source-v2.json",
+  "proofSpec": "masonry-outline-proof-spec.json",
+  "targetOrder": [
+    "src/components/estimator/foundation/wallCalculator.js",
+    "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+    "src/components/estimator/foundation/WallShapeEditor.jsx"
+  ],
+  "candidatePrefix": "masonry-outline-candidate-",
+  "atomicEditPerFile": true,
+  "editInput": "stdin",
+  "editsPerFile": 1,
+  "candidateLineEndings": "any",
+  "candidateTerminalLF": {
+    "wallCalculator.js": false,
+    "FoundationWallsPanel.jsx": false,
+    "WallShapeEditor.jsx": true
+  },
+  "protectedFiles": [
+    "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/components/estimator/foundation/FoundationBOM.jsx",
+    "base44/shared/estimatorAiModelPolicy.js",
+    "base44/entities/FoundationProject.jsonc",
+    "base44/entities/FoundationInventory.jsonc",
+    "base44/entities/WorkOrder.jsonc",
+    "src/components/estimator/foundation/legacyFoundationCalc.js",
+    "src/pages/FoundationEstimator.jsx",
+    "src/components/estimator/workOrderConversion.js",
+    "base44/functions/staffEntityWrite/entry.ts",
+    "base44/functions/staffDataRead/entry.ts",
+    "src/components/estimator/builder/builderEntityPersistence.js",
+    "src/components/estimator/foundation/Foundation3DPreview.jsx",
+    "src/components/estimator/foundation/foundationAiReview.js",
+    "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+    "src/components/estimator/foundation/FoundationTotals.jsx",
+    "src/components/estimator/foundation/wallCapCalculator.js",
+    "src/components/estimator/foundation/FoundationWallCapsPanel.jsx"
+  ],
+  "buildEntries": [
+    "src/components/estimator/foundation/wallCalculator.js",
+    "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+    "src/components/estimator/foundation/WallShapeEditor.jsx",
+    "src/pages/FoundationEstimator.jsx"
+  ],
+  "buildAlias": {
+    "@": "/app/src"
+  },
+  "forbiddenExternalImportPrefix": "@/",
+  "pageOutputMustContainAllTargets": true,
+  "stageBase64ChunkLength": 3000,
+  "remoteTempPrefix": "/tmp/ccs-masonry-outline-",
+  "restoreCheckpointName": "Before Masonry Wall Outlines and Rectangle Input",
+  "finalCheckpointName": "Masonry Wall Outlines and Rectangle Input Verified",
+  "checkpointAuthority": "lead",
+  "applyRequiresLeadApproval": true,
+  "deleteOrRestoreAuthorization": false,
+  "businessRecordOperationsAuthorized": false,
+  "schemaOrMetadataActivationAuthorized": false,
+  "publishOrDeployAuthorized": false,
+  "candidateCRLF": {
+    "WallShapeEditor.jsx": true
+  }
+}

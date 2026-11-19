@@ -1,0 +1,347 @@
+{
+  "entries": [
+    {
+      "name": "AiEngineeringAssistant.jsx",
+      "path": "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+      "type": "file",
+      "size": 4708
+    },
+    {
+      "name": "foundationReinforcementModel.js",
+      "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "type": "file",
+      "size": 16449
+    },
+    {
+      "name": "foundationReinforcementCost.js",
+      "path": "src/components/estimator/foundation/foundationReinforcementCost.js",
+      "type": "file",
+      "size": 7643
+    },
+    {
+      "name": "foundationReinforcementProposal.js",
+      "path": "src/components/estimator/foundation/foundationReinforcementProposal.js",
+      "type": "file",
+      "size": 11613
+    },
+    {
+      "name": "foundationReinforcementBasis.js",
+      "path": "src/components/estimator/foundation/foundationReinforcementBasis.js",
+      "type": "file",
+      "size": 6986
+    },
+    {
+      "name": "FoundationEquipmentTab.jsx",
+      "path": "src/components/estimator/foundation/FoundationEquipmentTab.jsx",
+      "type": "file",
+      "size": 23009
+    },
+    {
+      "name": "WallShapeEditor.jsx",
+      "path": "src/components/estimator/foundation/WallShapeEditor.jsx",
+      "type": "file",
+      "size": 7671
+    },
+    {
+      "name": "foundationEquipmentBindings.js",
+      "path": "src/components/estimator/foundation/foundationEquipmentBindings.js",
+      "type": "file",
+      "size": 7041
+    },
+    {
+      "name": "foundationReinforcementDraft.js",
+      "path": "src/components/estimator/foundation/foundationReinforcementDraft.js",
+      "type": "file",
+      "size": 4626
+    },
+    {
+      "name": "useFoundationReinforcementEditor.js",
+      "path": "src/components/estimator/foundation/useFoundationReinforcementEditor.js",
+      "type": "file",
+      "size": 932
+    },
+    {
+      "name": "foundationInputValidation.js",
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "type": "file",
+      "size": 11756
+    },
+    {
+      "name": "wallCalculator.js",
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "type": "file",
+      "size": 32207
+    },
+    {
+      "name": "foundationAssemblyModel.js",
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "type": "file",
+      "size": 22455
+    },
+    {
+      "name": "foundationLayoutModel.js",
+      "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+      "type": "file",
+      "size": 2839
+    },
+    {
+      "name": "FoundationReinforcementProposalPanel.jsx",
+      "path": "src/components/estimator/foundation/FoundationReinforcementProposalPanel.jsx",
+      "type": "file",
+      "size": 8122
+    },
+    {
+      "name": "FoundationTemplateDialog.jsx",
+      "path": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+      "type": "file",
+      "size": 10535
+    },
+    {
+      "name": "foundationSyncRecovery.js",
+      "path": "src/components/estimator/foundation/foundationSyncRecovery.js",
+      "type": "file",
+      "size": 6364
+    },
+    {
+      "name": "legacyFoundationCalc.js",
+      "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+      "type": "file",
+      "size": 25413
+    },
+    {
+      "name": "foundationReinforcementBasisKey.js",
+      "path": "src/components/estimator/foundation/foundationReinforcementBasisKey.js",
+      "type": "file",
+      "size": 2913
+    },
+    {
+      "name": "foundationConstructionChecks.js",
+      "path": "src/components/estimator/foundation/foundationConstructionChecks.js",
+      "type": "file",
+      "size": 12102
+    },
+    {
+      "name": "FoundationPolesPanel.jsx",
+      "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+      "type": "file",
+      "size": 14554
+    },
+    {
+      "name": "ReinforcementDraftGeometry.jsx",
+      "path": "src/components/estimator/foundation/ReinforcementDraftGeometry.jsx",
+      "type": "file",
+      "size": 8601
+    },
+    {
+      "name": "foundationAiReview.js",
+      "path": "src/components/estimator/foundation/foundationAiReview.js",
+      "type": "file",
+      "size": 8572
+    },
+    {
+      "name": "LandscapeDesigner.jsx",
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "type": "file",
+      "size": 6522
+    },
+    {
+      "name": "foundationGeometryInputs.js",
+      "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+      "type": "file",
+      "size": 2674
+    },
+    {
+      "name": "foundationSaveSession.js",
+      "path": "src/components/estimator/foundation/foundationSaveSession.js",
+      "type": "file",
+      "size": 2391
+    },
+    {
+      "name": "foundationBuilderRecovery.js",
+      "path": "src/components/estimator/foundation/foundationBuilderRecovery.js",
+      "type": "file",
+      "size": 2698
+    },
+    {
+      "name": "wallCapCalculator.js",
+      "path": "src/components/estimator/foundation/wallCapCalculator.js",
+      "type": "file",
+      "size": 7108
+    },
+    {
+      "name": "FoundationLayoutCanvas.jsx",
+      "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "type": "file",
+      "size": 9883
+    },
+    {
+      "name": "FoundationSectionBanner.jsx",
+      "path": "src/components/estimator/foundation/FoundationSectionBanner.jsx",
+      "type": "file",
+      "size": 1317
+    },
+    {
+      "name": "landscapeMaterials.js",
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "type": "file",
+      "size": 5020
+    },
+    {
+      "name": "Foundation3DPreview.jsx",
+      "path": "src/components/estimator/foundation/Foundation3DPreview.jsx",
+      "type": "file",
+      "size": 11055
+    },
+    {
+      "name": "foundationTemplateService.js",
+      "path": "src/components/estimator/foundation/foundationTemplateService.js",
+      "type": "file",
+      "size": 1985
+    },
+    {
+      "name": "ReinforcementDraftMaterial.jsx",
+      "path": "src/components/estimator/foundation/ReinforcementDraftMaterial.jsx",
+      "type": "file",
+      "size": 5789
+    },
+    {
+      "name": "FoundationToolbar.jsx",
+      "path": "src/components/estimator/foundation/FoundationToolbar.jsx",
+      "type": "file",
+      "size": 4519
+    },
+    {
+      "name": "SignageCabinetsPanel.jsx",
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "type": "file",
+      "size": 13219
+    },
+    {
+      "name": "convertToBrickStone.js",
+      "path": "src/components/estimator/foundation/convertToBrickStone.js",
+      "type": "file",
+      "size": 1919
+    },
+    {
+      "name": "ReinforcementDraftList.jsx",
+      "path": "src/components/estimator/foundation/ReinforcementDraftList.jsx",
+      "type": "file",
+      "size": 5859
+    },
+    {
+      "name": "poleCalculator.js",
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "type": "file",
+      "size": 30874
+    },
+    {
+      "name": "ReinforcementDraftField.jsx",
+      "path": "src/components/estimator/foundation/ReinforcementDraftField.jsx",
+      "type": "file",
+      "size": 1217
+    },
+    {
+      "name": "CustomerPricingPanel.jsx",
+      "path": "src/components/estimator/foundation/CustomerPricingPanel.jsx",
+      "type": "file",
+      "size": 4972
+    },
+    {
+      "name": "foundationReinforcementEditorSession.js",
+      "path": "src/components/estimator/foundation/foundationReinforcementEditorSession.js",
+      "type": "file",
+      "size": 10700
+    },
+    {
+      "name": "FoundationWallCapsPanel.jsx",
+      "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+      "type": "file",
+      "size": 9647
+    },
+    {
+      "name": "FoundationBOM.jsx",
+      "path": "src/components/estimator/foundation/FoundationBOM.jsx",
+      "type": "file",
+      "size": 11288
+    },
+    {
+      "name": "foundationSellPricing.js",
+      "path": "src/components/estimator/foundation/foundationSellPricing.js",
+      "type": "file",
+      "size": 5357
+    },
+    {
+      "name": "FoundationItemCard.jsx",
+      "path": "src/components/estimator/foundation/FoundationItemCard.jsx",
+      "type": "file",
+      "size": 13789
+    },
+    {
+      "name": "FoundationRatesPanel.jsx",
+      "path": "src/components/estimator/foundation/FoundationRatesPanel.jsx",
+      "type": "file",
+      "size": 2630
+    },
+    {
+      "name": "foundationReinforcementProjection.js",
+      "path": "src/components/estimator/foundation/foundationReinforcementProjection.js",
+      "type": "file",
+      "size": 1642
+    },
+    {
+      "name": "foundationTemplateModel.js",
+      "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+      "type": "file",
+      "size": 8577
+    },
+    {
+      "name": "foundationCalc.js",
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "type": "file",
+      "size": 32316
+    },
+    {
+      "name": "ConcreteDeliveryPanel.jsx",
+      "path": "src/components/estimator/foundation/ConcreteDeliveryPanel.jsx",
+      "type": "file",
+      "size": 4784
+    },
+    {
+      "name": "FoundationWallsPanel.jsx",
+      "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+      "type": "file",
+      "size": 12010
+    },
+    {
+      "name": "FoundationTotals.jsx",
+      "path": "src/components/estimator/foundation/FoundationTotals.jsx",
+      "type": "file",
+      "size": 13703
+    },
+    {
+      "name": "foundationReinforcementItemProjection.js",
+      "path": "src/components/estimator/foundation/foundationReinforcementItemProjection.js",
+      "type": "file",
+      "size": 7862
+    },
+    {
+      "name": "foundationCatalogIntegrity.js",
+      "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+      "type": "file",
+      "size": 18671
+    },
+    {
+      "name": "foundationDraftRecovery.js",
+      "path": "src/components/estimator/foundation/foundationDraftRecovery.js",
+      "type": "file",
+      "size": 11338
+    },
+    {
+      "name": "foundationTotalsSummary.js",
+      "path": "src/components/estimator/foundation/foundationTotalsSummary.js",
+      "type": "file",
+      "size": 20533
+    }
+  ],
+  "truncated": false
+}

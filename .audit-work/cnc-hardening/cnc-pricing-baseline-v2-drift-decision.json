@@ -1,0 +1,22 @@
+{
+ "decision": "PROCEED — EOL-only drift accepted",
+ "capturedHead": "d4e979d30b9885f7506c1e11d083eed38b6a0ddc",
+ "targetDrift": {
+  "src/pages/CNCEstimator.jsx": {
+   "kind": "EOL-only (LF -> CRLF) by external agent — +1472 bytes = exactly one CR per line (CR count 1472 == LF count 1472)",
+   "semanticMatchV1": true,
+   "byteMatchV1": false,
+   "v1Hash": "c5e8e6a13c06e5f9e07e59ac89917abab88ea81c7dfe22273163438c7ff1a571",
+   "currentHash": "64961cb44b078775a58af3974b15caae1e87e965ffdc284b86817d16aed2080d",
+   "normalizedEquality": "current remote text with CRLF collapsed === implementer v1 api-view text, exact",
+   "postApplyNote": "candidate is LF per spec contract (candidateLineEndingsByFile=LF, verified on disk, hash-pinned); whole-file replace lands the exact verified candidate bytes — transport contract is byte-exact candidate, independent of pre-image EOL"
+  }
+ },
+ "otherTargets": {
+  "src/components/estimator/cnc/cncPricingAvailability.js": "absent (new-remote, expected)"
+ },
+ "externalCommitsSincePriorHead": "12 files — brick transport (4), maintenance transport (5, just landed), staffEntityWrite, Permitting — all expected/preserved; maintenancePricingAvailability.js now present inside the CNC-guarded signMaintenance/ dir and recaptured as guard baseline",
+ "specRepair": "protectedFiles entry 'src/components/laser' (nonexistent on remote — would crash guard assertions) corrected to 'src/components/estimator/laser/' (exists; matches brick spec intent)",
+ "rationale": "Identical to maintenance unit: byte-gate exists to detect semantic divergence; only EOL normalization found, logical content provably identical.",
+ "attempt2": "re-captured after foreign laser-transport commits (9900a1d6 laserPricingAvailability.js, d4e979d30b LaserEstimator.jsx) — both now baselined as guards; same EOL-only page drift persists (hash 64961cb…, untouched by laser commits)"
+}

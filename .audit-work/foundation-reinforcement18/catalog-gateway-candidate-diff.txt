@@ -1,0 +1,3 @@
+lines a 371 b 373
++23:   FoundationInventory: new Set(['create', 'updateMany', 'deleteMany']),
++91:   'FoundationInventory',

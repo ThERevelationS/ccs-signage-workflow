@@ -123,6 +123,10 @@
       "type": "string",
       "description": "Issued permit number for this individual permit/office line. Line-level; does not overwrite the legacy WorkOrder permit_number field."
     },
+    "permit_document_url": {
+      "type": "string",
+      "description": "Link to the issued permit document (PDF/image) for this line \u2014 staff pastes the file or portal URL here."
+    },
     "approval_date": {
       "type": "string",
       "format": "date",
@@ -210,6 +214,132 @@
       "type": "string",
       "description": "Notes for this line item"
     },
+    "next_action": {
+      "type": "string",
+      "description": "The next thing someone should do on this permit line \u2014 e.g. 'Call the office Friday to chase approval'. Free text, staff-entered."
+    },
+    "inspector_contact": {
+      "type": "string",
+      "description": "Inspector name/phone for the scheduled inspection."
+    },
+    "submission_method": {
+      "type": "string",
+      "enum": [
+        "",
+        "portal",
+        "email",
+        "fax",
+        "in_person",
+        "mail",
+        "other"
+      ],
+      "description": "How the application was submitted to the office \u2014 portal / email / fax / in-person / mail."
+    },
+    "urgent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Staff-marked urgent \u2014 rises to the top of the permit queue."
+    },
+    "follow_up_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Staff-set 'check back on this' date \u2014 the chase reminder."
+    },
+    "expected_response_date": {
+      "type": "string",
+      "format": "date",
+      "description": "The office's stated turnaround \u2014 'expected reply/decision by this date'."
+    },
+    "fee_payment_link": {
+      "type": "string",
+      "description": "The office's online-payment URL for this permit's fee \u2014 saved so staff never hunt it down twice."
+    },
+    "application_revision": {
+      "type": "number",
+      "default": 1,
+      "description": "How many times this application has been sent back and resubmitted \u2014 starts at 1."
+    },
+    "denial_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the office denied the application, when applicable."
+    },
+    "denial_reason": {
+      "type": "string",
+      "description": "The office's stated reason for denial \u2014 recorded verbatim so resubmission learns from it."
+    },
+    "appeal_deadline": {
+      "type": "string",
+      "format": "date",
+      "description": "Appeal/resubmission deadline after a denial, when one applies."
+    },
+    "applied_by": {
+      "type": "string",
+      "description": "Who applied this jurisdiction to the job \u2014 the accountability field."
+    },
+    "applied_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the jurisdiction was applied."
+    },
+    "application_document_url": {
+      "type": "string",
+      "format": "url",
+      "description": "The application packet/PDF filed (or drafted) for this line \u2014 the document rides with the record."
+    },
+    "site_photo_url": {
+      "type": "string",
+      "format": "url",
+      "description": "Site photo of the posted sign \u2014 rides with the permit for final inspection."
+    },
+    "office_contacted_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date staff last contacted the office (call/email)."
+    },
+    "office_responded_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the office last replied \u2014 the response loop closes visibly."
+    },
+    "note_attachment_url": {
+      "type": "string",
+      "format": "url",
+      "description": "Photo/scan attached to the line's notes \u2014 the record stays visual."
+    },
+    "variance_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "The office requires a variance (sign exceeds the standard rules) \u2014 a separate approval path."
+    },
+    "variance_status": {
+      "type": "string",
+      "description": "Variance tracking: applied / hearing date / approved / denied."
+    },
+    "variance_hearing_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the variance hearing, when scheduled."
+    },
+    "correction_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "Office issued a correction notice \u2014 something must be fixed before the permit clears."
+    },
+    "correction_deadline": {
+      "type": "string",
+      "format": "date",
+      "description": "Deadline to fix the correction notice before the application lapses."
+    },
+    "correction_resolved_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the correction was fixed and resubmitted."
+    },
+    "confirmation_number": {
+      "type": "string",
+      "description": "The office's submission reference/confirmation number, recorded at submit time."
+    },
     "assigned_to": {
       "type": "string",
       "description": "Person responsible"
@@ -217,5 +347,11 @@
   },
   "required": [
     "work_order_id"
-  ]
+  ],
+  "rls": {
+    "create": { "user_condition": { "role": "__permitlineitem_backend_only__" } },
+    "read": { "user_condition": { "role": "__permitlineitem_backend_only__" } },
+    "update": { "user_condition": { "role": "__permitlineitem_backend_only__" } },
+    "delete": { "user_condition": { "role": "__permitlineitem_backend_only__" } }
+  }
 }

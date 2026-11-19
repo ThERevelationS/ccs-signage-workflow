@@ -1,0 +1,17 @@
+{
+  "results": [
+    {
+      "scenario": "linked-acceptance-and-save",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\n'partial' !== 'saved'\n"
+    },
+    {
+      "scenario": "linked-revision-failure-and-retry",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n"
+    }
+  ],
+  "actualPageAndBusinessHelpers": true,
+  "realStorageVerified": false,
+  "backendAuthorizationVerified": false
+}

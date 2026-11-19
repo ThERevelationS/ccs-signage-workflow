@@ -1,0 +1,870 @@
+{
+ "jurisdiction_id": "6adf92f98377419ed85c71d3",
+ "jurisdiction_name": "Newton",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 55,
+   "snippet": "13.12 Wind projects as defined herein shall be permitted in all zoning districts within the Township as a conditional use, subject to the following conditions: A. Wind projects of 5 MW or more shall be required to submit an application with the Ohio Power Siting Board (OPSB) and at the Public Utilities Commission of Ohio (PUCO) shall be required to meet all OPSB regulations. Small wind projects consisting of one unit less than SMW and used solely for Agriculture will be exempt from zoning permit fees as an Agricultural Use. B. Maximum Height: the maximum heights of any turbine tower shall be determined by the size of the lot on which it is to be sited; however, no wind turbine shall exceed 125 feet. For the purposes of this Resolution, the maximum height shall be considered to be the total height of the turbine system, including the tower and the maximum height of the turbine’s blades. M",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 12,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 48,
+   "snippet": "13.5 13.8 These General Standards Are Applicable To All Conditional Zoning Certificates : The Board of Appeals shall review the particular facts and circumstances of each proposed use in terms of the following standards and shall find adequate evidence showing that such a use at the proposed location. Conditionally Permitted Use Regulations Regulations applicable to conditionally permitted uses are as follows: 1) Loudspeakers which cause a hazard or annoyance shall not be permitted. 2) All points of entrance or exit should be located no closer than 200 feet from the intersection of two major thoroughfares, or no closer than 100 feet from the intersection of a major thoroughfare and a local or collector thoroughfare. 3) There shall be no more than one advertisement oriented to each abutting road identifying the activity. The sign or outdoor advertisement shall comply with the requirements",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "temporary"
+   ],
+   "weight": 11,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 22,
+   "snippet": "4. 3 4.1 MINIMUM FLOOR SPACE 1) There shall be minimum living area per dwelling unit of not less than one thousand two hundred (1,200) square feet for any single - family dwelling. 2) The minimum living area per two family dwelling shall be nine hundred (900) square feet per family unit. 3) The minimum living area per multi - family dwelling unit in excess of a two family dwelling (inclu ding condominium units) shall not be less than seven hundred fifty (750) square feet. 4) The minimum size for private garage shall be 12 feet wide and 20 feet long. 5) The minimum size business, commercial or industrial building permitted shall have a first floor area not less than six hundred twenty (620) square feet, outside measurement. 6) No overall dimension of any size of a residential structure shall be less than 20 feet. 7) All living areas in paragraphs 1, 2, 3, 4, and 5 of this section sha ll b",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 32,
+   "snippet": "8. 1 SECTION 8 OUTDOOR ADVERTISING For the purpose of this resolution, outdoor advertising shall be classified as a business use and shall be permitted in all “B” and “I” Districts and on all lands used for agricultural pu rposes, subject to the regulations contained in this resolution: Advertising signs and billboards over ten (10) square feet in size shall be deemed a structure and the same building lines will be observed and a zoning certificate procured before erectio n. Any illuminated sign shall be so shaded as not to interfere with the vision of persons on the highway or to annoy neighboring property owners. The Board of Appeals may issue a Conditional Zoning Certificate under special conditions listed in Section 1 3.",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "process",
+    "billboard",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 37,
+   "snippet": "11. 1 SECTION 11 - PROCEDURES AND REQUIREMENTS FOR APPEALS AND VARIANCES 11 - 00 General Appeals and variances shall conform to the procedures and requirements of Sections 11 - 01 to 11 - 11 inclusive, of this Ordinance (Resolution). As specified in Section 519.14 of the Ohio Revised Code, the Board of Zoning Appeals has appellate jurisdiction relative to appeals and variances. 11 - 01 Appeals Appeals to the Board of Zoning Appeals may be taken by any person, firm, or corporation, or by any officer of the township affected by any decision of the Zoning Inspector regarding the interpretation of this resolution. Such appeal shall be taken within twenty (20) days after the original decision by filing, with the Zoning Inspector and the Board of Appeals, a Notice of Appeal on forms provided by the Zoning Inspector, specifying the grounds of appeal. The appeal shall be filed along with a filin",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 56,
+   "snippet": "13.13 G. Fencing: the wind turbine shall be fenced with a minimum 6 feet and maximum 10 feet in height fence, in such a manner as to prevent unauthorized persons from having access to the structure and equipment. H. Warning signs: appropriate warning signs to address voltage and trespassing issues shall be posted in a visible location on the fence surrounding the turbine tower and shall conform to all existing sign requirements. Signage shall also display current emergency contact numbers. I. Other signage: other signage than that described in “G” above, including advertising on the wind turbine tower or surrounding fence is strictly prohibited. J. Lighting: the only permitted lighting on a wind turbine tower is that required by the Federal Aviation Association (FAA) and the Federal Communications Commission (FCC). K. Building permits: all small wind projects and parts thereof shall obta",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 40,
+   "snippet": "11. 4 The Board of Zoning Appeals shall fur ther make a finding in writing that the reasons set forth in the application justify the granting of the variance that will make possible a reasonable use of the land, building or structure. In the application justify the granting of the variance that will make possible a reasonable use of the land, building or structure. Appeals from Board decision shall be made in the manner specified in Section 519.14 of the Ohio Revised Code. 11 - 10 Term of Variance No order of the Zoning Board of appeals granting a variance shall be valid f or a period longer than twelve (12) months from the date of such order unless the building permit or zoning approval is obtained within such period, and the erection or alteration of a building is started or the use is commenced within such period. 11 - 1 1 Authorized Variances ( Amended 10/25/04 Resolution #4.10.05 - ",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 9,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 47,
+   "snippet": "13.4 Said person provides an on-site network of two-lane roads that provides for the adequate and efficient ingress and egress of emergency vehicles; or one-lane one way circuitous roads adequate as defined by the Chief of Police. There shall be no public parking on said roads. Said person provides at least two, two-lane entrances and exits that are readily accessible to all participating or attending the mass gathering, unless waived by the Chief of Police as provided in Ohio Revised Code 2917.40. All admission gates are at least 500 feet from the nearest public road. No person shall sell, offer to sell, or offer in return for a donation any ticket that is not numbered, except as otherwise provided in Ohio Revised Code 2917.40. The off-site noise level from said concert shall not exceed 70 decibels; on the A scale sound level meter which meets the specifications of the American National",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 58,
+   "snippet": "13.15 All costs associated with the erection of a wind tunnel shall be borne by the property owner including, but not limited to permits, engineering, and meter installation. 13.14 NATURAL RESOURCES: MINING/EXCAVATING (17.04.01 adopted 4-17 ) A. Purpose It is declared to be the policy of Newton Township to provide for the reclamation of lands disturbed by mining in order to encourage productive use thereof, and for the conservation, development, management and appropriate use of all the natural resources of such areas for compatible multiple purposes; and protecting the health, safety and general welfare of the people, as well as the natural beauty and aesthetic values, in the affected areas of the township. B. Operations / Site Management 1) Topsoil Removal: Mining. Any excavations for the removal of topsoil or other earth products must be adequately drained to prevent the formation of ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "II. ALL CEMETERIES, EXCEPT NEWTON FALLS - WEST [SECTION E] Part A. SPECIFICATIONS 1. The dimensions of a grave site for burial are 36 inches x 8 feet. 2. The size of an upright monument for a double grave cannot exceed a maximum of 14 inches x 56 inches. On a single grave, the monument cannot exceed a maximum of 14 inches x 30 inches. Upright monuments will not exceed a height of 36 inches. 3. Peat moss or mulch must not exceed 12 inches in front of the monument. Part B. GROWING SEASON DECORATIONS 1. Artificial decorations are not permitted except for Easter, Mother’s Day, Memorial Day, and Father’s Day. They must be removed five days after each holiday. 2. No flowers, vases, urns, or any growth on the sides or rear of the monuments are permitted. 3. No shrubs, bushes, trees, wood chips, decorative stones/gravel or border ornaments/fixtures are permitted around the monuments. 4. At the u",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 9,
+   "source_sha256": "5b4c7b81e3dbed46bec022a02604801060bd79955b8c0306cbf0424e640f569e",
+   "source_document_id": null,
+   "source_title": "5b4c7b81e3dbed46bec022a02604801060bd79955b8c0306cbf0424e640f569e.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/1faa27_24e39902a2714636997bb4e2f7139906.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "3. 7 vibration except any uses expressly prohibited by this resolution. Adequate facilities for the temporary storage of refuse, waste, junk and objects to be repaired must be provi ded and the same screened from view. Chemical works, fertilizer plants, tanneries, slaughterhouses shall not be allowed; garbage and refuse dumps and junkyards shall be prohibited. 3.1.08 “MH” Districts (Mobile Home Parks) The following uses and no other shall be deemed “MH” District uses and shall be permitted in all “MH” Districts: Mobile Home Parks shall be constructed to comply with the State of Ohio Regulations except that the minimum lot size per living unit shall be 50’ x 90’ excluding easements. The fee shall be $50.00 per family unit. Mobile Homes shall be prohibited except in designated Mobile Home Parks . A Conditional Zoning Certificate may be issued by The Board of Appeals under special condition",
+   "tags": [
+    "fee",
+    "prohibited",
+    "process",
+    "temporary",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 17,
+   "snippet": "3. 9 A minimum of fifty (50) feet from a public highway shall be required from the public or private road right - of - way to any residential or accessory structure A building set back of fifty (50) feet s hall be required from the centerline of the development access road and/or access drive. 7. Distance Between Building and Property Lines: The minimum distance between any building or parts thereof and the property line of the parcel or boundary of the development area shall be sixty (60) feet. If any building exceeds twenty (20) feet in height, the width of each rear yard and distance between buildings shall be increased by one (1) foot for each one (1) foot of height of building over t wenty (20) feet from the established grade level. 8. All permitted residential structures shall have frontage along the primary access drive or roadway of the development. 9. No overall dimension of any",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 8,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 26,
+   "snippet": "6. 3 Soil and Erosio n control Resolution to require compliance of Article XVI of Trumbull County Erosion and Sediment Control Rules and adopt as written sections 1600.0 through 1603.0 of Article XVI - 1, XVI - 2, and XVI - 3. These Articles and the application for approval are in Section 17 of this Zoning Regulation Book. A complete copy of the Trumbull County Erosion and Sediment Control Rules can be obtained at the Newton Township Zoning Office, and the Newton Falls Public Library . And according to EPA Rules and Regulations, a ll construction sites that disturb an acre of land or more must have a NDPES permit. Silt Fences must be installed along property lines, ditches and water courses to prevent construction site runoff. All off lot discharges must be identified on the build ing plans as to the location and type. ( Revised 8/23/04 Resolution #04.08.02) SWIMMING POOL CONSTRUCTION A ",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 29,
+   "snippet": "7. 1 SECTION 7 - PARKING FACILITIES VEHICULAR ACCESS POINTS A driveway permit indicating the access point as approved by the Zoning Inspector and Township Road Supervisor must be obtained. A fee of $25.00 residential A fee of $50.00 commercial A fee of $50.00 industrial Must be paid at time of application and before inspection. Applicant must follow and construct all driveways. Parking and access ways to the following standards: Ditch pipe installed must be a minimum of t welve inches (12”) in diameter and a minimum length of sixteen feet (16’) double walled plastic. A larger pipe may be requested to meet standard C.F.P.S. peak discharge minimum for a 25 and 50 year flood, using standard engineering calculations. All driv eway access points must be maintained at owner cost at or below road grade for the life of the access point. Any access point deemed not to meet this standard will be c",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 38,
+   "snippet": "11. 2 11 - 04 Application and Standard for Variances Except as otherwise permitted in this Ordinance (Resolution), no variance in the strict application of the provisions of this Ordinance (Resolution) shall be granted by the Board of Zoning Appeals unless the Board shall find that the written application for the requested variance contains all of the following requirements: Name, addre ss, and phone number of applicant(s); Legal description of property; Description or nature of variance requested; A fee as established by ordinance (resolution); Narrative statements establishing and substantiating that the variance conforms to the followi ng standards: The granting of the variance shall be in accord with the general purpose and intent of the regulations imposed by this Ordinance (Resolution) on the district in which it is located, and shall not be injurious to the area or otherwise detri",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 52,
+   "snippet": "13.9 (1). Wood that has been painted, varnished, or coated with similar material and/or has been pressure treated with preservatives and contains resins or glues as in plywood or other composite wood products. (2). Rubbish or garbage, including but not limited to food wastes, food packaging, food wraps (3). Any plastic materials including but not limited to nylon, PVC, ABS, polystyrene or urethane foam, and synthetic fabrics, plastic films and plastic containers. (4). Rubber including tires or other synthetic rubber-like products. (5). Newspaper, cardboard, or any paper with ink or dye products. (6). Any other items not specifically allowed by the manufacturer or this provision. C. Setbacks for any new non-qualified outdoor wood furnace model: (1). The outdoor wood furnace shall be located at least 50 feet from either side property line. (2). The outdoor wood furnace shall be located at ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 53,
+   "snippet": "13.10 (1). Whether an undesirable change will be produced in the character of the neighborhood or a detriment to nearby properties will be created by the granting of the variance; (2). Whether the benefit sought by the applicant can be achieved by some method, feasible for the applicant to pursue, other than a variance; (3). Whether the requested variance is substantial; (4). Whether the alleged difficulty was self-created, which consideration shall be relevant to the decision of the Board of Appeals, but shall not necessarily preclude the granting of the variance. 5 Violations and penalties. Any person who shall violate any provision of this local law shall be guilty of a violation as defined in Section 10 of the Newton Township Zoning Regulation. 7 Severability. The provisions of this local law are severable and the invalidity of a particular provision shall not invalidate any other pr",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 21,
+   "snippet": "4. 2 NEWTON TOWNSHIP LOT SIZES AND DIMENSIONS Development Type Public Water Available Central Sewage Treatment Available Min. Lot width (ft) & Street Frontage Min. Lot Area Total (sq. ft. or acre) Single Family Yes Yes 90 12,000 No No 150 1 1/2 AC. Yes No 150 1 1/2 AC. No Yes 100 13,500 Multi - Family Yes Yes 100 16,000 (2 family) No No 200 3 AC. Yes No 200 3 AC. No Yes 150 20,000 Commercial Yes Yes 150 20,000 No No 150 1 1/2 AC. Yes No 150 1 1/2 AC. No Yes 150 20,000 Industrial Yes Yes 150 1 AC. No No 200 2 AC. Yes No 200 2 AC. No Yes 150 1AC. NOTE: Lot area specified does not include the area within the road right - of - way Lot areas may be increased by recommendation of the Trumbull County Health Department The more stringent will apply with regards to Trumbull County Sub - Division Regulations and the Newton Township Zoning Regulations . The Board of health requirements must be met ",
+   "tags": [
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 39,
+   "snippet": "11. 3 c . The proposed variance will not impair an adequate supply of light and air to adjacent property, substantially increase the congestion in the public streets, increase the danger of fire, endanger the public safety, or substantially diminish or impair property values of the adjacent area. d . The granting of the variance requested will not confer on the applicant any special privilege that is denied by this regulation to other lands, structures, or buildings in the same district. 11 - 05 Additional Conditions and Safeguards The Board may further prescribe any conditions and safeguards that it deems necessary to insure that the objectives of the regulations or provisions to which the variance applies will be met Any violation of such conditions and safeguards, when they have been made a part of the terms un der which the variance has been granted, shall be deemed a punishable viol",
+   "tags": [
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 57,
+   "snippet": "13.14 7. A site drawing showing the location of the unit in relation to existing structures on the property, roads and other public rights of way, and neighboring property lines. 8. Evidence of an established setback of 1.1 times the height of the unit and clear fall zone. 9. A maintenance schedule as well as dismantling plan that outlines how the unit will be dismantled shall be required as part of the permit application and permit. 10. Verification from the County Building Inspector that no additional regulations apply to the wind project. 11. Utility company documentation as to what will happen to any excess power that may be generated. 12. Documentation that addresses ice throw, with engineering data that the setbacks and/or composition of the rotors will be sufficient to prevent damage from ice throw from the blades. 13. Total size and depth of the concrete mounting pad, and any oth",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 60,
+   "snippet": "13.17 D. Reclamation During mining and reclamation, insure that contamination, resulting from mining of underground water supplied is prevented. Maximum depth of excavation shall not be below existing ground water in the area, for protecting the health, safety and general welfare of the people. Upon completion of reclamation, insure that any lake or pond located within the site boundaries are free of substances resulting from mining in amounts or concentrations that are harmful to persons, fish, waterfowl, or other beneficial species of aquatic life. The permittee shall establish contingency plans for the immediate furnishing of potable water to affected residents for such period as may be required to reestablish property potability on any polluted or contaminated well or wells. The permit holder shall be responsible for the obligation to provide potable water, without cost to the reside",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Addendum “A” ( Amended 10/25/04 Resolution #4.10.06) FEES The fees for permits for building; including new buildings or additions to existing buildings shall be as follows: The following schedule will apply based on the square footage of the living area plus garage and porches for dwelling. Square Footage Permit Fee 0 to 200……………………………………………….. $30.00 201 to 2499.. ………………………………………....... $00.15 Sq. Ft. Over 2500……. ……………………………………....... $00.20 Sq. Ft. Any new construction not covered by square footage $30.00 Fence, Carport Patio, Porch, Greenhouse Fee….. $30.00 Swimming pool fee………………………………….. $50.00 One Family unit in Mobil Home Park Fee………… $50.00 Oil & Gas Well Fee…………………………………. $200.00 Commercial Tower Fee…………………………….. $1000.00 Zone Change Petition Fee…………………………. $200.00 plus legal costs Zoning Appeal Petition Fee………………………… $200.00 plus legal costs Use Variance Change Fee…………………………. ",
+   "tags": [
+    "fee",
+    "area",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "2ca9afee74eb7b90297d27e9c29a60265cdbcc8b8e8b62b6a879f82db89a57d8",
+   "source_document_id": null,
+   "source_title": "2ca9afee74eb7b90297d27e9c29a60265cdbcc8b8e8b62b6a879f82db89a57d8.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_6434889a8b684a86a362b9c8e1c8ff04.pdf"
+  },
+  {
+   "page": 9,
+   "snippet": "3. 1 SECTION 3 - CLASSIFICATION OF USES For the purpose of this resolution, the various uses of buildings and premises shall be classified as follows: 3.1.01 \" R1\" Districts (Residential) The following uses, and no other, shall be deemed Class “R1” uses and permitted in all “R1” Districts: Single and two family dwellings, and buildings accessory thereto. Single and two family dwellings shall not be deemed to include tents, cabins designed for transient tourist trade, motor homes, camping trailers or mobile homes. The taking of boarders or leasing of rooms by a resident family provided the total number of boarders or roomers does not exceed two, in addition to the members of the family, in a dwelling containing one bathroom, a maximum of four boarders or roomers for each additional bathroom in the dwelling. A home office maintained to carry on a customary home occupation in a dwelling hou",
+   "tags": [
+    "sign",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "3. 2 Churches and other places of religious worship Minimum Lot Area Maximum Building Coverage of Total Lot Area Minimum Lot Width Minimum Front Yard Setback Minimum Side Yar d Setback Minimum Rear Yard Setback Maximum Building Height Two (2) Acres 25 percent (25%) One Hundred - Fifty Feet (150’) Fifty Feet (50’) Fifteen Feet (15’) Forty Feet (40’) Two (2) Stories 1. No loudspeakers shall be allowed outside of any building nor sh all they be permitted to be used inside any building in such a manner that they are designed or intended to be used to broadcast outside any building. 2. All exterior lighting shall be shielded so as not to shine into adjourning properties nor building. 3. Poi nts of ingress and egress shall be available only from major collector thoroughfares and all driveways shall exit onto such streets. 4. All points of ingress and egress shall be located no closer than one ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "3. 6 3.1.06 “B2” Districts (Business and Commercial) The following uses and no other shall be deemed Class “B2” and permitted in all “B2” Districts: Any use permitted in “R1” and “R2” Districts shall be permitted i n “B2” Districts. Any use permitted in Class “B1” Districts shall be permitted in Class “B2” Districts. Repair garages Gasoline service stations Outdoor drive - in theaters Ice storage and sales Retail and wholesale lumber and building supply sales Small an imal hospitals Golf driving ranges Golf courses For the purpose of this resolution, a Golf Course shall be defined as a course for playing golf and upon which the only merchandise sold shall be directly connected with the game of golf. The sale of soft dr inks, candy, and cigarettes shall be permitted at golf courses, driving ranges, private and public parks, and community centers. The minimum distance from tee to hole, sid",
+   "tags": [
+    "dimension",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 19,
+   "snippet": "3. 11 3.2 PROHIBITED USES ( Amended 10/25/04 Resolution #4.10.05 - 3 ) The following shall not be permitted in any district: Drag strips. Auto racetracks. Manufacture or storage of explosives or fireworks for commercial purposes. (Refer to the Ohio Revised Code and the Bureau of Alcohol, Tobacco and Firearms.) Garbage, construction debris and refuse dumps. Junk yards. Auto graveyards, any place wherein automotive vehicles (or parts thereof) are kept, which are unlicensed and whose condition is such that they are unable to move under their own power without th e necessity of repair in the form of replacement or mechanical parts or motor adjustments and/or rehabilitation.) All vehicles of this nature must be kept in an enclosed building. No Adult - oriented businesses. (as defined in O.R.C. Section 503.65.) All Race Tracks (Horse, dog, Auto, Go - Cart, Motor Bikes, etc.) The keeping and ra",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 30,
+   "snippet": "7. 2 higher than the values shown. Minimum acute angle is measured from edge of pavement and generally based on one - way operation. For two - way driveways and in high pedestrian activity areas, the minimum angle should be seventy (70) degrees. Number of Spaces An adequate number of off - street parking spaces shall be required in all developments to accommodate resid ents and visitors. Because the parking requirements included in Table 8 are for peak needs, the Planning Commission may designate areas that will serve as temporary parking areas. These would include grassy areas with an adequate aggregate base to be use d as overflow parking during peak parking needs. Size of Spaces Each off - street parking space shall measure nine (9) feet in width by eighteen (18) feet in length. Parking spaces for the physically handicapped shall measure twelve (12) feet in width. F or every 25 spaces",
+   "tags": [
+    "dimension",
+    "illumination",
+    "temporary"
+   ],
+   "weight": 6,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 44,
+   "snippet": "13.1 SECTION 13 - MISCELLANEOUS 13.1 ANTENNAS AND TOWERS All antennas and towers must follow FCC rules and regulations. Antennas must be co-located where possible. Applicant must certify reasons for not co- locating. There is a $1000.00 fee for anything over seventy-five (75) feet. The property must be zoned commercial. The setback from all property lines and the road right of way is one hundred (100) feet. The maximum dimensions to be fenced in are one hundred by one hundred (100x100) feet. The minimum distance from a tower to an existing structure is one hundred and fifty (150) feet. 13.2 PUBLIC NUISANCE The existence of tents, cabins, motor homes and campers and other structures of like nature, used for dwelling purposes shall be considered a public nuisance and it shall be the duty of the Newton Township Zoning Inspector, under this code, to order removal and discontinuance of all su",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 51,
+   "snippet": "13.8 H. Natural Wood: Wood, which has not been painted, varnished or coated with a similar material, has not been pressure treated with preservatives and does not contain resins or glues as in plywood or other composite wood products. 2 Regulations for Outdoor Wood Furnaces A. No person shall, from the effective date of this local law, construct, install, establish, operate or maintain an outdoor wood furnace other than in compliance with the applicable sections of this local law. B. No person shall, from the effective date of this local law, operate an existing outdoor wood furnace unless such operation conforms to the manufacturer’s instructions and the requirements of this local law regarding proper fuel use as set forth in Sections 3.A and 3.B. C. All new outdoor wood furnaces shall be constructed, established, installed, operated and maintained in conformance with the manufacturer’s",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 63,
+   "snippet": "Addendum “A” ( Amended 10/25/04 Resolution #4.10.06) FEES The fees for permits for building; including new buildings or additions to existing buildings shall be as follows: The following schedule will apply based on the square footage of the living area plus garage and porches for dwelling. Square Footage Permit Fee 0 to 200 ……………………………………………… .. $30.00 201 to 2499.. ………………………………………....... $00.15 Sq. Ft. Over 2500 …… . ……………………………………....... $00.20 Sq. Ft. Any new construction not covered by square footage $30.00 Fence, Carport Patio, Porch, Greenhouse Fee … .. $30.00 Swimming pool fee ………………………………… .. $50.00 One Family unit in Mobil Home Park Fee ………… $50.00 Oil & Gas Well Fee ………………………………… . $200.00 Commercial Tower Fee …………………………… .. $1000.00 Zone Change Petition Fee ………………………… . $200.00 plus legal costs Zoning Appeal Petition Fee ………………………… $200 .00 plus legal costs Use Variance Chang",
+   "tags": [
+    "fee",
+    "area",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 73,
+   "snippet": "Application for Approval Under the Trumbull County Erosion and Sediment Control Rules Trumbull Soil and Water Conservation District ALL NECESSARY INFORMATION MUST BE PROVIDED ON THIS FORM. THE REVIEW AND INSPECTION FEE SHALL BE SUBMITTED WITH THE EROSION AND SEDIMENT CONTROL (ESC) PLANS. ESC PLANS SHALL NOT BE REVIEWED UNTIL THE FEE HAS BEEN PAID. 1. Owner Information Name Phone: Address Fax: City State Zip 2. Agent/Contractor/Homebuilder Information Name Phone: Contact Pers on Phone: Address Fax: City State Zip 3. Site Location Information Facility/Site Name: Township: Address: Project Type: City: State: (subdivision, commercial, single lot, etc.) Zip: 4. Soil - Disturbing Activity Infor mation Total Project Area (in acres) Proposed Start Date (mo/day/yr) Estimated Completion Date (mo/day/yr) 5. Receiving Water Information Receiving Water Body: Watershed Name: 6. Additional Natural Reso",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "III. NEWTON FALLS CEMET ERY - WEST [SECTION E] Part A. SPECIFICATIONS 2. Effec tive January 25, 1988, above ground memorials will not be permitted. Only flat, ground level memorials will be permitted in this section. 3. The dimensions of a grave site for burial are 36 inches x 8 feet. 4. The size of a flat monument for a double grave ca nnot exceed a maximum of 14 inches x 56 inches. On a single grave site, the flat monument cannot exceed a maximum of 14 inches x 30 inches. 5. Peat moss or mulch must not exceed 12 inches in front of the monument. 5. An unneeded grave site can be returned to the Trustees for its original purchase price, as required by law. Part B. DECORATIONS 6. No planted flowers in the ground are permitted at the flat monuments. 2. Fresh cut or artificial flowers in reversible urns are perm itted at all times. Arrangements will be removed when they become unsightly, at ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "5b4c7b81e3dbed46bec022a02604801060bd79955b8c0306cbf0424e640f569e",
+   "source_document_id": null,
+   "source_title": "5b4c7b81e3dbed46bec022a02604801060bd79955b8c0306cbf0424e640f569e.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/1faa27_24e39902a2714636997bb4e2f7139906.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "3. 3 6. Development features including principal and accessory buildings and structures shall be so located and related as to minimize the possibilities of any adverse effects upon adjacent house lot. This shall mean that all principal or acce ssory buildings shall be located not less than one hundred feet (100’) from any property line abutting a house lot. 7. All plans for storm sewers, sanitary sewers and water lines shall be reviewed and approved by the Trumbull County Engineer. 8. Golf Courses s hall be regulation size. Home Occupations 1. Does not employ more than one employee other then family members living at the residence. 2. Is clearly incidental and secondary to the use of the property for dwelling purposes, with the floor area devoted to the home occupation not exceeding twenty percent (20%) of the living area of the dwelling unit. 3. All signage shall have a maximum area of ",
+   "tags": [
+    "area",
+    "prohibited",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "3. 4 exceed two and one - half (2 1/2) stories above ground level. Each dwelling unit shall contain no less than three (3) rooms and kitchen as outlined in the State Code, Section BB53. Church School College University Public library Public museum Community Center Fire station Township hall Publicly owned park Publicly owned playground Funeral homes Office buildings for doctors, dentists, optometrists, or allied profes sions Privately - owned playgrounds. Hospital - Sanitarium - Rest Home for other than the insane or mental cases, providing that such hospital, sanitarium, or rest home shall have a lot area of not less than five (5) acres and a frontage on public thoroughf are of not less than five hundred feet (500ft), and providing that any such hospital, sanitarium, or rest home catering primarily to patients with contagious diseases also shall have a lot area of not less than one (1) ",
+   "tags": [
+    "dimension",
+    "illumination"
+   ],
+   "weight": 5,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "3. 10 15. All sewer systems shall conform t o the Trumbull County Sanitation regulations. D. Project Review: Prior to development, the project plans must be reviewed and approved by the Newton Township Zoning Commission. 1. Site Plan Review Policies and Procedures. The following policies, requirements, and procedures shall be applied to properties within the RAC District. 2. Permit Required. A Zoning Certificate shall be obtained prior to the alteration of any structure of the property within the RAC District. A Zoning Certifi cate shall be issued only upon the review and approval of the required application and plan as specified herein. 3. Information Required: A. Map. A map, drawn to a scale acceptable to the Township showing the location of existing structures directly adjacent to the site, off - street parking areas, existing major vegetation, access points, location of any building ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 23,
+   "snippet": "5. 1 SECTION 5 SET BACKS 5.1 SET - BACK BUILDING LINES No building or part thereof, exclusive of open porches, steps and overhanging eaves and cornices, shall extend nearer to the front street property line t han the mean distance of set back of the nearest building or buildings within one hundred fifty feet (150’) on each side of said building and fronting on the same side of the street in an “R1” District or within one hundred thirty five feet (135’) on each side of said building and frontage on the same side of the street in an “R2” district. In no instance shall a building or part thereof be placed nearer to a front street property line than fifty feet (50’). No building or utility building shall be erect ed less than ten feet (10’) from either side or rear property line. Utility buildings must be constructed at the rear of a dwelling. The depth of commercial parcels unless otherwise",
+   "tags": [
+    "dimension",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 28,
+   "snippet": "6. 5 Copies of all lease agreements for the subject property. A copy of any and all permits issued by the state agencies. The date on which any work whatsoever shall begin on the subject property. The type of material to be used in construction of the ingress and egress points. In the application, the a pplicant shall provide a map of the property on which the well is to be drilled. The map required in Regulation 2(d) shall include the location of the proposed well all supporting buildings (including, but not limited to, separator tanks and storage tanks) and all points of exiting and proposed ingress and egress. Said map shall also denominate the distance between all wells and buildings and the property lines of the subject property. There shall be a ten (10) day waiting period from the date of applicati on to the date of issuance of the permit. Furthermore, any change in the locations ",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 33,
+   "snippet": "9. 1 SECTION 9 - PERMITS It shall be unlawful to commence or proceed with an operation included under or regulated by the provisions of this resolution without first obtaining a permit from the Township Zoning Inspector and paying the f ee hereinafter prescribed for same. Permits for the building proper shall be secured from the Township Zoning Inspector. APPLICATION FOR PERMITS The owner of the building involved, or his authorized agent shall make app lication to the Township Zoning Inspector. Applications shall be accompanied by a set of plans of the work to be accomplished, and must include the written consent of the Trumbull County Health Department to the proposed water supply and sewage disposal sy stem, before a building permit may be issued, until final inspection and written approval has been received from the Trumbull County Health Department. Each application shall state the s",
+   "tags": [
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 36,
+   "snippet": "10. 2 declared to be an indep endent section and part of a section and the holding of a section of part thereof to be void or ineffective for any cause, shall not be deemed to affect any other section or part thereof. ENFORCEMENT It shall be unlawful to constru ct, reconstruct, enlarge, change, or use any building or to use any land in violation of any regulation or any provision of these Resolutions or Amendments thereto. Any person, firm or corporation violating these Resolutions or any regulation, provision or amendment thereto, shall be fined not more than five hundred dollars ($500.00). Each and every day during which such illegal erection, construction, reconstruction, enlargement, change, maintenance, or use continues may be deemed a separate offense. In c ase any building is, or is proposed to be, located, erected, constructed, enlarged, changed, maintained or used or any land is",
+   "tags": [
+    "fee",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 71,
+   "snippet": "specific problems and p rocedures violated and the procedures for filing a revised Plan to ensure compliance with the Trumbull County Erosion and Sediment Control Rules. At the time the zoning inspector receives a revised Plan, another thirty (30) day review period shall begin. Soil disturbing activities shall not begin and zoning certificates or conditional zoning certificates shall not be issued without a ESC Plan approved by the zoning inspector in accordance with these regulations. Any addition or alteration to the site desi gn as shown on the approved ESC Plan may require the resubmission of said Plan in accordance with these regulations. In making a determination regarding such resubmission, the zoning inspector may consult with the Trumbull SWCD. The zoning inspector shall determine if any addition or alteration requires the issuance, of a new zoning certificate or conditional zon",
+   "tags": [
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CURRENT AS OF 5 -0 7 -2 6 NEWTON TOWNSHIP BOARD OF ZONING APPEALS The Newton Township Board of Zoning Appeals consists of five residents from the unincorporated area of the township appointed by the trustees to five year terms. Alternates may also be appointed to stand in when any of the five appointed Board members are absent from proceedings. The terms are staggered so the term of one member expires each year. This board will hold public hearings for administrative appeals, variance appeals, and conditional use zoning permits. These hearings will be called on an as needed basis with the required notification. 2025 NEWTON TOWNSHIP BOARD OF ZONING APPEALS Term expires 12-31-25 12-31-26 12-31-27 12-31-28 12-31-29 Tom Vickers Ryan Shaulis (Vice-Chair) Aaron Perkins Richard Lantz Allison Augusta (Chair) ZONING INSPECTOR Timothy Irons (330) 872-7411 Office Hours Wednesday 3:30 pm to 5 :30 pm",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "9e12e799327d7b0dad62daa8bff4a1685d2d11b8d3145e7ebc21212df5ea4c32",
+   "source_document_id": null,
+   "source_title": "9e12e799327d7b0dad62daa8bff4a1685d2d11b8d3145e7ebc21212df5ea4c32.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_c0a3d9a1ecd44d35b8c02843a4aa1446.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Zoning Resolutions for Newton Township Table of Contents MISSION STATEMENT......................................................................................... …….. PREFACE ……………………………………………………………………………….. SECTION 1 – PURPOSES..............................................................................................… 1.1 SECTION 2 – DISTRICTS...........................................................................................….. 2.1 2.1 Agriculture SECTION 3 – CLASSIFICATION OF USES...............................................................… 3.1 3.1.01 R1 Districts (Residential)………………………………………………. 3.1 3.1.02 R2 Districts (Residential)………………………………………………. 3.3 3.1.03 A1 Districts (Agriculture)………………………………………………. 3.4 3.1.04 A2 Districts (Agriculture Security Areas)………………………………. 3.5 3.1.05 B1 Districts (Business)………………………………………………….. 3.5 3.1.06 B2 Districts (Business and Comm",
+   "tags": [
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "MISSION STATEMENT We, the Zoning Board of Newton Township due here by pledge to the residents of this community that we, a s a board, will establish a criteria of open, fair and conservative review of all zoning regulations. We will strive to set standards for all future board members to emulate. We will work hard to maintain property values to assure that all incompatible l and uses will be kept apart, that harmony between residential and industrial property exist with all considership of individual rights. This board’s concept of zoning will be one of general welfare equally shared by agricultural, residential, commercial, industrial and public use lands. However, this board will not allow itself to become static or incompatible with constantly evolving progress. We are aware that zoning will never solve all land use problems, nor will it prevent all future problems. With your support,",
+   "tags": [
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "3. 8 The number of dwelling units permitted in an \"RAC\" District development shall be calculated by deduc ting the following development limiting factors from the total project area and multiplying the result by the maximum unit density permitted per acre as set forth in this section; Development Limiting Factors • Designated wetlands, lakes, ponds or other w ater body's • Area within a floodway and the 100 year flood boundary as identified on the Federal Emergency Management Agency (FEMA) - Flood Hazard Boundary Maps • Slopes exceeding fifteen percent (15%) Maximum Unit Density • Single - Family residential struct ure: 6 dwelling units per acre • Two - Family residential structure: 6 dwelling units per acre • Multi - Family residential structure: 8 dwelling units per acre 2. Minimum Square Foot per Unit: no dwelling unit shall have less than 750 square feet of livi ng area. 3. Height Re",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 41,
+   "snippet": "11. 5 To increase the maximum distance gross floor area of any use so limited by the applicable regulations, but general ly not more than twenty - five (25) percent. 11 - 12 Continuances Upon written request a continuance may be granted. All requests must be submitted to the Zoning Office no later than ten (10) days prior to the scheduled meeting. The requesting party sha ll pay all expenses incurred including but not limited to legal notices and mailings relating to the appeal and continuance.",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 45,
+   "snippet": "13.2 A: Native Animals The following Native Animals are prohibited in captivity in all districts in the township: Black Bear, Bobcat, Coyote, Fox, Skunk, and Raccoon and all Poisonous Reptiles. B: Non-native Animals The following Non-native Animals may be kept in the Township provided they are kept in escape resistant pens and conform to Sec 519.21 of the Ohio Revised Code. Bovidae-cattle, sheep, goats, buffalo, Cervidae-deer; Equidae-horses, asses, zebras, Camelidae-alpacas, llamas, and Fowl. Except for the above stated non-native animals, the following will be prohibited in all districts in the Township: Any non-native animal, bird, reptile, fish, or insect which if released or escaped could cause serious injury or death to humans, create a threat to local ecology or proliferate to nuisance proportions. This includes all hybrids except Diploid Amours. 13.4 SOLICITING No soliciting with",
+   "tags": [
+    "fee",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 49,
+   "snippet": "13.6 13.9 PROCEDURE FOR HEARING NOTICE Upon receipt of the application for a conditional use permit, the Board of Zoning Appeals shall hold a public hearing within forty days (40) from receipt of said application, publish notice in newspaper, and give written notice to adjoining property owners. Action by the Board of Zoning Appeals: Within thirty (30) days after the public hearing the Board shall approve, approve with supplementary conditions or disapprove the application as presented. If the application is approved or approved with modifications, the Board shall direct the Zoning Inspector to issue a conditional use permit listing the specific conditions specified by the Board of Appeals. Any person or persons separately or jointly adversely affected by the decision of the Board of Appeals may appeal to the Court of Common Pleas of Trumbull County. The Court may affirm, reverse, vacate",
+   "tags": [
+    "process",
+    "authority"
+   ],
+   "weight": 4,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 59,
+   "snippet": "13.16 property. The Zoning Inspector shall make such determination or upon complaint from citizens. Plans shall be submitted indicating the proposed stages of operation and the future uses or rehabilitation to be carried out on the site. A bond or bonds may be required to be posted guaranteeing that the above plans will be carried out. Routes for truck movement shall be established and followed such a way that traffic and other hazards and damage to other properties shall be minimized. Movement of any vehicles shall not exceed the legal weight limits set forth by state and local engineer on any and all township roads without prior written approval by the Trumbull County Engineers Office. All areas shall be rehabilitated progressively as they are worked out and left in a condition entirely lacking in hazards, inconspicuous, and blended with the general surrounding ground form so as to app",
+   "tags": [
+    "fee",
+    "prohibited",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "NEWTON TOWNSHIP ZONING GUIDELINES FOR ZONING PERMIT APPLICATIONS 1. Apply well before you want to build or construct as this process may take time. 2. An application must be completed, dated, and signed by the property owner or his/her Agent. The Zoning Inspector will be available to assist you if needed. 3. A separate lot plan drawing is required. An example is on the reverse side of the application. Zoning deals with where structures are placed within your property boundary lines. These dimensions must be clearly marked on the drawing. Please sign or initial your drawing. 4. The building site and property boundaries or survey markers must be identified and marked for inspection by the Zoning Inspector. 5. All zoning requirements must be met. A copy of the Newton Township Zoning Resolution is available at the Newton Falls Public Library and also at the Zoning Office. 6. Please show a se",
+   "tags": [
+    "sign",
+    "authority",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "3e80bc500bee401845899ff21b7c6fba9b24c621c5294947bd03473c07758517",
+   "source_document_id": null,
+   "source_title": "3e80bc500bee401845899ff21b7c6fba9b24c621c5294947bd03473c07758517.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_2c61b628516343d588a4b783da1a4bce.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "NEWTON TOWNSHIP ZONING PERMIT APPLICATION TYPE OF STRUCTURE _____________________________________________________ DIMENSIONS-Length______________ Width_____________ Height________________ MAIN MATERIAL TYPE____________________________________________________ NUMBER OF STORIES_________________ NUMBER OF ROOMS_________________ NUMBER OF BATHROOMS_________________________________________________ SEPTIC PERMIT NUMBER__________________________________________________ ESTIMATED COST/VALUE_________________________________________________ ZONING DISTRICT________________________________________________________ PARCEL ID NUMBER______________________________________________________ CONTRACTOR’S NAME ____________________________________________________ CONTRACTOR’S ADDRESS _________________________________________________ PROPOSED DATE OF CONSTRUCTION_______________________________________ OWNER: NA",
+   "tags": [
+    "dimension",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "3e80bc500bee401845899ff21b7c6fba9b24c621c5294947bd03473c07758517",
+   "source_document_id": null,
+   "source_title": "3e80bc500bee401845899ff21b7c6fba9b24c621c5294947bd03473c07758517.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_2c61b628516343d588a4b783da1a4bce.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "SECTION 11 – PROCEDURES AND REQUIREMENTS FOR APPEALS AND VARIANCES. 11-00 General………………………………………………………………… 11.1 11-01 Appeals………………………………………………………………… 11.1 11-02 Stay of Proceedings……………………………………………………. 11.1 11-03 Variances………………………………………………………………. 11.1 11-04 Application and Standard for Variances………………………………. 11.2 11-05 Additions Conditions and Safeguards…………………………………. 11.3 11-06 Public Hearing by the Board of Zoning Appeals……………………… 11.3 11-07 Notice of Public Hearing in Newspaper ………………………………. 11.3 11-08 Notice to Parties in Interest…………………………………………….. 11.3 11-09 Action by Board of Zoning Appeals……………………………………. 11.3 11-10 Term of Variance……………………………………………………….. 11.4 11-11 Authorized Variances…………………………………………………… 11.4 11-12 Continuances……………………………………………………………. 11.5 SECTION 12 – ZONING INSPECTOR………………………………………………… 12.1 12.1 Appointment of Zoning Inspector……………………………………… 12.1 12.2 Compen",
+   "tags": [
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 20,
+   "snippet": "4. 1 SECTION 4 - MINIMUM LOT AREA AND WIDTH PER FAMILY Amended March 2006 Resolution #06.03.05 (1) Regulation Governing Individual Sewage Disposal and/or Treatment Systems (a) State and County Building Code to be followed. No Zoning Certificate for structures which require a Sanitary Permit from Trumbull County Health Department may be issued until proof is presented to the Newton Township Zoning Inspector that the applicant has obtained from the Trumbull Coun ty Health Department Sanitary permit. (b) The minimum size lot for a detached one or two family dwelling on an unimproved plotted lot recorded prior to or separately owned at the time this resolution took effect, and cannot practically be enlarged to conform with this requirement shall have an area not less than twenty thousand (20,000) square feet. The minimum width for a recorded plotted lot shall be One Hundred Twenty (120) feet",
+   "tags": [
+    "area",
+    "authority"
+   ],
+   "weight": 3,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 25,
+   "snippet": "6. 2 evergreens, mounds, or combinations thereof to achieve the same objectives. Every business shall provide sufficient buffering when topographical or other barriers do not provide reasonable screening. ALL LOTS R2, B1, B2 AND I DISTRICTS THAT ABUTS ALL DISTRICTS SHALL HAVE A BUFFER ZONE. Commercial or multi - family district abutting a single - family residential district: 30 ft. Industrial District abutting a commercial district: 25 ft. Industrial District abutting a residential district: 50 ft. Special Use District abutting a residential use or district: 50 ft. Commercial uses within a commercial district: 10 ft. B1 and B2 districts that adjoin a residential district not less than 30 ft. In width and running the length of the side and/or rear yards adjacent to the residential district. A. Side yard buffer strips shall begin at the front yard setback line and extend the full length o",
+   "tags": [
+    "dimension"
+   ],
+   "weight": 3,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 34,
+   "snippet": "9. 2 Whenever in the opinion of the Township Zoning Inspector the person having charge of the work is incompetent. Whenever any false statements or misrepresentation has been made in the application pla ns or specifications on which the issuance of the permit or approval was based. 2. The notice of revocation of the permit shall, in every instance, be in writing and shall be served upon the owner, his agent or the person having charge of the work. The Township Zoning Inspector shall also post a revocation notice upon the building in question. After the notice is received or posted, it shall be unlawful for any person to proceed with any operation for which such permit was issued. No part of the fees for such permit shall be returned. PERMIT FEES The Newton Township Zoning Inspector shall issue no permit until the fees hereinafter prescribed have been paid to him. Refer to Addendum “ A” f",
+   "tags": [
+    "fee",
+    "authority",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 42,
+   "snippet": "12. 1 SECTION 12 – ZONING INSPECTOR 12.1 APPOINTMENT OF ZONING INSPECTOR This Building Resolution shall be administered by the Newton Township Zoning Inspector as may fro m time to time be authorized and appointed by the Board of Trustees of Newton Township, Trumbull County, Ohio. Neither the Newton Township Zoning Inspector shall, during the term of his (or her) office, be employed or engaged, directly or indirectly, in a ny building construction business for others, or for furnishing materials, plans, specifications or for furnishing materials, plans, specifications or equipment for others. Nor shall any duly Licensed Real Estate Broker or Salesman be appointed to the posi tion of Township Zoning Inspector, Assistant Zoning Inspector, or Clerk. 12.2 COMPENSATION FOR ZONING INSPECTOR The Newton Township Zoning Inspector shall receive such compensation for his ser vices as the Newton Tow",
+   "tags": [
+    "sign",
+    "authority",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 43,
+   "snippet": "12. 2 properly filed for permanent record. At the beginning of each calendar month, the Township Zoning Inspector shall prepare and file with the Township Trustees a report covering the activities of his office during the preceding calendar month. This report shall show for the period covered, the number, type and kind of buildings, structures or other work for which permits have been issued, the number of family units to be accommodated, the estimated value of the completed work and the fees collec ted therefore. When requested by the Township Trustees, an interim report for a period of days or for a partial month and conveying the same information shall be furnished. At the beginning of each calendar year, the Township Zoning Inspector shall prepar e and file with the Township Trustees an annual report summarizing the activities of his office for the preceding calendar year and contain",
+   "tags": [
+    "illumination",
+    "penalties"
+   ],
+   "weight": 3,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 70,
+   "snippet": "ARTICLE XVI EROSION AND SEDIMENT CONTROL (ESC) Note: It is recommended that the board of Township Trustees enter into a memorandum of understanding with the Trumbull SWCD with respect to these regulations. Section 1600.0 Purpose and Intent A. The purpose of these regulations is to establish technically feasible and reasonable standards to achieve a level of water management and sediment control that will minimize damage to property and degradation of water resources and wetlands, and will promote and maint ain the public health and safety. B. These regulations are intended to: 1. Allow development while minimizing increases in downstream flooding, erosion, and sedimentation. 2. Reduce water quality impacts to receiving water resources and wetlands that may be c aused by new development or redevelopment activities. C. These regulations apply to all of the permitted and conditional buildin",
+   "tags": [
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Current as of 5 -0 7 -2 6 NEWTON TOWNSHIP ZONING COMMISSION The Township Zoning Commission consists of five residents appointed by the trustees to five-year terms. Alternates may also be appointed to fill in for any board member not present at proceedings. The terms are staggered so the term of one member expires each year. The Zoning Commission meets monthly for the purpose of developing and maintaining a plan regulating land use within the unincorporated areas of the township. This plan, set forth both in texts and maps, indicates permitted and prohibited uses of all land within the township. Actions of the Zoning Commission are subject to the approval of the Board of Trustees. 2025 NEWTON TOWNSHIP ZONING COMMISSION Term expires 12-31-25 12-31-26 12-31-27 12-31-28 12-31-29 VACANT (Hanzes resignation) Edward Wood Troy Heckathorn (Chair) Shara Sullivan Randy Knopsnider (Vice-Chair) ZONIN",
+   "tags": [
+    "prohibited",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "a7b160df12d2e9e38eadec7fd3666a20a7250c21167790d543c1a100dd3b55af",
+   "source_document_id": null,
+   "source_title": "a7b160df12d2e9e38eadec7fd3666a20a7250c21167790d543c1a100dd3b55af.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_a2acaee8ad664f5a87bc69b42dd988ea.pdf"
+  },
+  {
+   "page": 61,
+   "snippet": "13.18 1) All sales to include patio, porch, basement, yard, lawn, garage and block sales. B. Hours of Operation 1) No sale shall start before 8 a.m. 2) All sales shall end by 8 p.m. C. Length of Sales 1) No more than 2 sales per calendar year per residence. 2) No more than 4 consecutive days. D. Signs 1) No signs shall be placed within the right-of-way or on utility poles. 2) No sign shall be displayed more than 48 hours prior to the day of the sale. 3) All signs must be removed at the end of the last day. 13.16 DATE EFFECTIVE ( 17.04.01 revised 4-17) The regulations prescribed by this resolution will become effective on or after the earliest day allowed by law. This Zoning Resolution and amendments effective December 1, 1954, and revised December 6, 1966, November 21, 1974, July 24, 1979, December 3, 2002, April 2007, 2011, and May 08, 2017.",
+   "tags": [
+    "sign",
+    "authority"
+   ],
+   "weight": 2,
+   "source_sha256": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade",
+   "source_document_id": null,
+   "source_title": "52940e266a05431ab290fd306619dcaff66be6ab2123674ed5e8c523965ebade.pdf",
+   "official_url": "https://www.newtontwptc.org/_files/ugd/c8a414_03f651b02b1c4d959a20dca1dccbbec5.pdf"
+  }
+ ]
+}

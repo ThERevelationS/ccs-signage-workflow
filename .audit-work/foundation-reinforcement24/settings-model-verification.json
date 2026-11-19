@@ -1,0 +1,112 @@
+{
+  "results": [
+    {
+      "name": "valid settings produce byte-identical item math; no authored mutation",
+      "ok": true
+    },
+    {
+      "name": "numeric-string settings stay valid on the calculation copy only",
+      "ok": true
+    },
+    {
+      "name": "explicit-0 settings are honored — the ported `|| def` overrode them",
+      "ok": true
+    },
+    {
+      "name": "explicit-0 main labor is free labor when it only multiplies",
+      "ok": true
+    },
+    {
+      "name": "explicit-0 main labor as the finishing-hours divisor is unavailable, not free",
+      "ok": true
+    },
+    {
+      "name": "invalid consumed setting holds (malformed string)",
+      "ok": true
+    },
+    {
+      "name": "invalid consumed setting holds (partial numeric)",
+      "ok": true
+    },
+    {
+      "name": "invalid consumed setting holds (negative)",
+      "ok": true
+    },
+    {
+      "name": "invalid consumed setting holds (record)",
+      "ok": true
+    },
+    {
+      "name": "invalid consumed setting holds (negative number)",
+      "ok": true
+    },
+    {
+      "name": "malformed settings flow through the input-issues scan as the same contract",
+      "ok": true
+    },
+    {
+      "name": "a malformed setting the item does not consume is never checked",
+      "ok": true
+    },
+    {
+      "name": "pillar item consumes the pillar forming multiplier, not the spread-foot one",
+      "ok": true
+    },
+    {
+      "name": "missing/blank Settings rows keep the ported module default",
+      "ok": true
+    },
+    {
+      "name": "custom overrides cover their settings — no false unavailable",
+      "ok": true
+    },
+    {
+      "name": "explicit-0 custom quantities and hours mean exactly zero",
+      "ok": true
+    },
+    {
+      "name": "explicit-0 custom rates mean free labor, not fallback",
+      "ok": true
+    },
+    {
+      "name": "item excavation_method outside the enum is an input issue, not equipment math",
+      "ok": true
+    },
+    {
+      "name": "project excavation_method outside the enum holds every inheriting item",
+      "ok": true
+    },
+    {
+      "name": "non-record landscape holds (string)",
+      "ok": true
+    },
+    {
+      "name": "non-record landscape holds (number)",
+      "ok": true
+    },
+    {
+      "name": "non-record landscape holds (array)",
+      "ok": true
+    },
+    {
+      "name": "non-record landscape holds (boolean)",
+      "ok": true
+    },
+    {
+      "name": "valid landscape record behavior is unchanged",
+      "ok": true
+    },
+    {
+      "name": "a recorded 0 attachment quantity bills nothing and is ignored — `|| 1` repriced it",
+      "ok": true
+    },
+    {
+      "name": "setting issues carry the catalog-issue shape and per-item index",
+      "ok": true
+    },
+    {
+      "name": "setting issues merge once into catalogIssues — delivery gated, not double-scanned",
+      "ok": true
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "path": "src/components/estimator/foundation/foundationCalc.js",
+  "diff": "--- a/src/components/estimator/foundation/foundationCalc.js\n+++ b/src/components/estimator/foundation/foundationCalc.js\n@@ -15,6 +15,7 @@\n import { calcWalls } from \"./wallCalculator\";\n import { calcPoles } from \"./poleCalculator\";\n import { calcWallCaps } from \"./wallCapCalculator\";\n+import { foundationAssemblyCatalogIssues } from \"./foundationCatalogIntegrity\";\n \n const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);\n \n@@ -159,7 +160,10 @@\n \n   totals.grand_total = itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;\n \n-  return { items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery };\n+  return {\n+    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery,\n+    catalogIssues: foundationAssemblyCatalogIssues(project, inventory),\n+  };\n }\n \n export const money = (n) =>\n",
+  "applied": false
+}

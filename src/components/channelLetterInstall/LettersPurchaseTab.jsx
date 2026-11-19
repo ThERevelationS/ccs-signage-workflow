@@ -9,9 +9,11 @@ import { Plus, Type, Truck, Receipt, Info, Settings, Sparkles, ChevronDown, Arro
 import LetterPurchaseRow from "./LetterPurchaseRow";
 import AIScopeWriterModal from "./AIScopeWriterModal";
 import { emptyLetterPurchase, LETTER_TYPE_LABELS, groupPurchasesBySet, newSetId } from "./lettersCalculator";
+import { channelDraftValue, channelNumber, issuesForField } from "./channelLetterPricingAvailability";
 import { Layers } from "lucide-react";
 
-const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
+// Held/blank values render an em-dash instead of laundering into $0.00.
+const fmt = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 
 const QUICK_ADD = [
   { type: "channel_raceway_mounted", label: "+ Raceway Mounted Letters", color: "bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200" },
@@ -21,7 +23,7 @@ const QUICK_ADD = [
   { type: "dimensional_letters", label: "+ Dimensional Letters", color: "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200" },
 ];
 
-export default function LettersPurchaseTab({ project, settings, onUpdateProject, incompleteDimensionalIds = [] }) {
+export default function LettersPurchaseTab({ project, settings, onUpdateProject, incompleteDimensionalIds = [], issues = [] }) {
   const purchases = project.letter_purchases || [];
   const [aiOpen, setAiOpen] = React.useState(false);
   const [feesOpen, setFeesOpen] = React.useState(false);
@@ -38,6 +40,12 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
   // Delivery / Shipping does NOT apply to dimensional lettering (fabricated in-house).
   // Hide the fee + rollup row when every letter product on the project is dimensional.
   const onlyDimensional = purchases.length > 0 && purchases.every(p => p.letter_type === "dimensional_letters");
+
+  // P-08: channel/capsule rows must declare purchased-vs-fabricated explicitly —
+  // unset stays visibly flagged rather than defaulting silently. (Raceway is
+  // hardware and dimensional is inherently fabricated — neither counts.)
+  const MODE_ELIGIBLE = new Set(["channel_raceway_mounted", "channel_flush_mounted", "channel_halo_lit", "capsule_logo_pillbox"]);
+  const unsetModeCount = purchases.filter(p => MODE_ELIGIBLE.has(p.letter_type) && !p.fabrication).length;
 
   // Enable a backer on the first dimensional row that doesn't already have one
   const addBackerToFirstDimensional = () => {
@@ -155,7 +163,12 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
     onUpdateProject({ letter_purchases: purchases.filter(p => !ids.has(p.id)) });
   };
 
-  const purchasesTotal = purchases.reduce((s, p) => s + (parseFloat(p.total_cost) || 0), 0);
+  // Null-propagating: a held row makes the subtotal unavailable, not $0.
+  const purchasesTotal = purchases.reduce((s, p) => {
+    if (s === null || p.__held) return null;
+    const v = channelNumber(p.total_cost);
+    return v === null ? null : s + v;
+  }, 0);
 
   // Aggregate dimensional-letter cost breakdown across all dimensional rows.
   // Pulls Material / Cutting (CNC or Laser) / Paint / Backer totals from each row's fab_config.
@@ -215,7 +228,7 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
           </div>
           <div id="clp-add-letter-row" className="flex flex-wrap gap-2 pt-1">
             {QUICK_ADD.map(qa => (
-              <button
+              <button type="button"
                 key={qa.type}
                 onClick={() => addPurchase(qa.type)}
                 className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${qa.color}`}
@@ -225,7 +238,7 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
             ))}
             {/* Backer Panel — only visible when there's a Dimensional Letters row */}
             {hasDimensional && (
-              <button
+              <button type="button"
                 onClick={addBackerToFirstDimensional}
                 disabled={allDimensionalHaveBacker}
                 title={allDimensionalHaveBacker ? "All Dimensional Letter rows already have a backer" : "Add a backer panel to the first Dimensional Letter row"}
@@ -241,6 +254,14 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
           </div>
         </CardContent>
       </Card>
+
+      {unsetModeCount > 0 && (
+        <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-amber-800 text-xs">
+          {unsetModeCount} letter row{unsetModeCount === 1 ? "" : "s"} ha{unsetModeCount === 1 ? "s" : "ve"} no
+          source mode — set <span className="font-medium">Source</span> to Purchased or Fabricated on each row so
+          the takeoff/export doesn't guess.
+        </div>
+      )}
 
       {/* Purchase rows */}
       {purchases.length === 0 ? (
@@ -274,6 +295,7 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
                     onDuplicate={() => duplicatePurchase(idx)}
                     onAddToSet={addToSet}
                     fabHighlight={incompleteSet.has(p.id)}
+                    issues={issues}
                   />
                 </div>
               );
@@ -282,8 +304,9 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
             const { parent, children } = group;
             const parentIdx = purchases.findIndex(x => x.id === parent.id);
             const setSize = 1 + children.length;
-            const setTotal = (parseFloat(parent.total_cost) || 0)
-              + children.reduce((s, c) => s + (parseFloat(c.total_cost) || 0), 0);
+            const setMembers = [parent, ...children];
+            const setTotal = setMembers.some(m => m.__held) ? null
+              : setMembers.reduce((s, m) => s + (channelNumber(m.total_cost) ?? 0), 0);
             return (
               <div key={parent.id || gi} className="space-y-2 bg-purple-50/40 rounded-2xl p-2 border border-purple-100">
                 <LetterPurchaseRow
@@ -297,6 +320,7 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
                   fabHighlight={incompleteSet.has(parent.id)}
                   setRole="parent"
                   setSize={setSize}
+                  issues={issues}
                 />
                 {children.map((c, ci) => {
                   const cidx = purchases.findIndex(x => x.id === c.id);
@@ -313,6 +337,7 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
                       setRole="child"
                       setSize={setSize}
                       setIndex={ci + 1}
+                      issues={issues}
                     />
                   );
                 })}
@@ -366,6 +391,8 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
                 <FeeInput
                   icon={Truck}
                   label="Delivery / Shipping"
+                  field="letters_delivery_fee"
+                  issues={issues}
                   value={project.letters_delivery_fee}
                   onChange={(v) => onUpdateProject({ letters_delivery_fee: v })}
                 />
@@ -373,6 +400,8 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
               <FeeInput
                 icon={Receipt}
                 label="Other"
+                field="letters_other_fee"
+                issues={issues}
                 value={project.letters_other_fee}
                 onChange={(v) => onUpdateProject({ letters_other_fee: v })}
               />
@@ -384,6 +413,11 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
       {/* Rollup */}
       <Card className="bg-gradient-to-r from-slate-900 to-slate-800 text-white border-0">
         <CardContent className="p-4 space-y-2">
+          {project.__held && (
+            <p className="text-[11px] text-amber-300">
+              Saved amounts (not current pricing) — fix the flagged values to reprice.
+            </p>
+          )}
           {/* Dimensional letter cost breakdown — Material / CNC / Laser / Paint / Backer */}
           {dimensionalBreakdown.hasAny && (
             <div className="bg-white/5 rounded-lg p-3 mb-1 space-y-1 border border-white/10">
@@ -425,7 +459,9 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
             <div className="flex justify-between text-xs text-slate-400">
               <span>Markup ({parseFloat(project.letters_markup_percent).toFixed(1)}%)</span>
               <span className="tabular-nums">
-                {fmt((project.total_letters_cost || 0) - (project.letters_subtotal || 0))}
+                {fmt(Number.isFinite(project.total_letters_cost) && Number.isFinite(project.letters_subtotal)
+                  ? project.total_letters_cost - project.letters_subtotal
+                  : null)}
               </span>
             </div>
           )}
@@ -449,36 +485,47 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
   );
 }
 
-const FeeInput = ({ icon: Icon, label, value, onChange }) => (
-  <div>
-    <Label className="text-xs flex items-center gap-1">
-      <Icon className="w-3 h-3 text-slate-500" />
-      {label}
-    </Label>
-    <div className="relative mt-1">
-      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
-      <Input
-        type="number"
-        min="0"
-        step="0.01"
-        value={value ?? 0}
-        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-        className="h-9 pl-6"
-      />
+const FeeInput = ({ icon: Icon, label, value, onChange, field, issues = [] }) => {
+  const fi = issuesForField(issues, field);
+  const invalid = fi.length > 0;
+  const id = `clp-fee-${field}`;
+  return (
+    <div>
+      <Label className="text-xs flex items-center gap-1" htmlFor={id}>
+        <Icon className="w-3 h-3 text-slate-500" />
+        {label}
+      </Label>
+      <div className="relative mt-1">
+        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+        <Input
+          id={id}
+          type="number"
+          min="0"
+          step="0.01"
+          value={value ?? ""}
+          onChange={(e) => onChange(channelDraftValue(e.target.value))}
+          className={`h-9 pl-6 ${invalid ? "border-red-500" : ""}`}
+          aria-invalid={invalid || undefined}
+          aria-describedby={invalid ? `${id}-issue` : undefined}
+        />
+      </div>
+      {invalid && (
+        <p id={`${id}-issue`} className="text-[10px] text-red-600 mt-0.5" role="alert">{fi[0].message}</p>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 const RollupRow = ({ label, value }) => (
   <div className="flex justify-between text-xs text-slate-400">
     <span>{label}</span>
-    <span className="tabular-nums">{`$${(parseFloat(value) || 0).toFixed(2)}`}</span>
+    <span className="tabular-nums">{fmt(value)}</span>
   </div>
 );
 
 const BreakdownRow = ({ label, value }) => (
   <div className="flex justify-between text-xs">
     <span className="text-slate-300">{label}</span>
-    <span className="tabular-nums text-slate-100 font-medium">{`$${(parseFloat(value) || 0).toFixed(2)}`}</span>
+    <span className="tabular-nums text-slate-100 font-medium">{fmt(value)}</span>
   </div>
 );

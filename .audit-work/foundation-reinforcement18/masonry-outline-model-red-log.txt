@@ -1,0 +1,215 @@
+ok unchanged: concrete material, positive settings
+ok unchanged: genuine zero material price
+ok unchanged: brick, explicit dry joint
+ok unchanged: brick_stone type and mortar joint
+ok unchanged: stone units, two unequal segments
+ok unchanged: closed outline with internal brick
+ok unchanged: open outline with internal brick
+ok unchanged: internal concrete units
+ok unchanged: outer explicit price override
+ok unchanged: outer explicit free override
+ok unchanged: internal explicit price override
+ok unchanged: internal explicit free override
+ok unchanged: outer explicit quantity override
+ok unchanged: outer explicit zero quantity
+ok unchanged: internal explicit quantity override
+ok unchanged: internal explicit zero quantity
+ok unchanged: fractional explicit material price
+ok unchanged: numeric-string material price
+ok unchanged: numeric-string free price
+ok unchanged: irrelevant catalog row cannot change wall calculation
+FAIL unknown outline: missing: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: null: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: empty record: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: array: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: nonarray segments: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: empty segments: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: nonrecord segment: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: nonfinite perimeter: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: undefined length: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: null length: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: blank length: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: whitespace length: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: zero length: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: negative length: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: boolean length: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: array length: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: record length: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: NaN length: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: Infinity length: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: malformed length: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: nonboolean closed: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: nonarray points: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: string coordinate: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: invalid coordinate: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: points disagree: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: missing point closure: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: closed two-point shape: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL unknown outline: missing point segment: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory).some(i => i.field === "shape"))
+
+FAIL rectangle length: undefined: api.foundationWallRectangle is not a function
+FAIL rectangle width: undefined: api.foundationWallRectangle is not a function
+FAIL rectangle length: null: api.foundationWallRectangle is not a function
+FAIL rectangle width: null: api.foundationWallRectangle is not a function
+FAIL rectangle length: blank: api.foundationWallRectangle is not a function
+FAIL rectangle width: blank: api.foundationWallRectangle is not a function
+FAIL rectangle length: whitespace: api.foundationWallRectangle is not a function
+FAIL rectangle width: whitespace: api.foundationWallRectangle is not a function
+FAIL rectangle length: zero: api.foundationWallRectangle is not a function
+FAIL rectangle width: zero: api.foundationWallRectangle is not a function
+FAIL rectangle length: negative: api.foundationWallRectangle is not a function
+FAIL rectangle width: negative: api.foundationWallRectangle is not a function
+FAIL rectangle length: boolean: api.foundationWallRectangle is not a function
+FAIL rectangle width: boolean: api.foundationWallRectangle is not a function
+FAIL rectangle length: array: api.foundationWallRectangle is not a function
+FAIL rectangle width: array: api.foundationWallRectangle is not a function
+FAIL rectangle length: record: api.foundationWallRectangle is not a function
+FAIL rectangle width: record: api.foundationWallRectangle is not a function
+FAIL rectangle length: NaN: api.foundationWallRectangle is not a function
+FAIL rectangle width: NaN: api.foundationWallRectangle is not a function
+FAIL rectangle length: Infinity: api.foundationWallRectangle is not a function
+FAIL rectangle width: Infinity: api.foundationWallRectangle is not a function
+FAIL rectangle length: malformed: api.foundationWallRectangle is not a function
+FAIL rectangle width: malformed: api.foundationWallRectangle is not a function
+FAIL canonical eight-inch rectangle uses existing financial formulas: api.foundationWallRectangle is not a function
+FAIL numeric-string segment lengths normalize only the calculation copy: Expected values to be strictly equal:
+
+'016' !== 16
+
+FAIL negative coordinates remain valid recorded positions: api.foundationWallOutlineBasis is not a function
+FAIL one-point draft remains drawable but not priceable: api.foundationWallOutlineBasis is not a function
+FAIL malformed points never produce partial invented preview geometry: api.foundationWallOutlineBasis is not a function
+FAIL legacy positive segments with empty points preserve the recorded length basis: api.foundationWallOutlineBasis is not a function
+FAIL new unknown outline cannot adopt rendered cost history: Expected values to be strictly deep-equal:
++ actual - expected
+
++ {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 1,
++   laborHours: 0,
++   materialCost: 0,
++   mortarCost: 0,
++   numCourses: 2.25,
++   totalBricks: 0,
++   totalCost: 1,
++   totalLinearInches: 0
++ }
+- {}
+
+FAIL unknown outline labels saved BOM material: Expected values to be strictly equal:
+
+false !== true
+
+ok genuinely free known outline remains zero without quantity changes
+FAIL machine-precision-only point length roundoff is tolerated: api.foundationWallOutlineBasis is not a function
+FAIL rounded physical disagreement is not silently chosen over recorded points: api.foundationWallOutlineBasis is not a function
+masonry-outline-model passed=21 failed=63
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(results.every(r => r.ok))
+
+    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-masonry-outline-model.mjs:129:8 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.13.0

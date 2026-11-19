@@ -1,0 +1,13 @@
+ok material replacement keeps the authored cut and all raw snapshot fields
+ok shorter stock does not silently shorten a requested cut
+ok clearing a cut stays blank and cannot revert to an explicit legacy hint
+ok a negative cut is not changed into a one-inch cut
+ok valid decimal input keeps numeric storage and source identity
+ok adding with unrecorded stock dimensions does not invent a 48-inch cut
+ok explicit Add may initialize a full cut from a genuinely recorded stock length
+ok a recorded legacy-only cut is displayed without auto-migration or a change on mount
+ok an unrecorded saved cut stays blank rather than displaying a fabricated full-stock cut
+ok a malformed stored cut is not passed as an object into a number control
+ok oversized input remains visible with an accessible stock-fit diagnostic
+ok unknown live stock is clearly distinct from a saved 48-inch snapshot
+exit=0

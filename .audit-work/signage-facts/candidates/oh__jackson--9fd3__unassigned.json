@@ -1,0 +1,44 @@
+{
+ "jurisdiction_id": "6aea7876b840d6b0f5ef9fd3",
+ "jurisdiction_name": "Jackson",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Zoning permit applications for permits are accepted electronically by clicking on the citizen’s portal link, https://jacksontwp.portal.iworq.net/por talhome/jacksontwp , that can be found on the zoning department page of our website. Everyone is encourage to utilize this link when submitting an application because it not only eliminates trips to the office but also allows the zoning department to process the permit more effic iently. When submitting electronically it allows you to upload any required documentation such as site plans, house numbering slips, construction plans, etc. Always remember to fill out the application correctly, upload the required documents and include y our phone number and email address so you can be contacted if more information is required or to notify you of your permit request status. Once you are notified the permit is ready you can call our office and pay ",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "process",
+    "temporary"
+   ],
+   "weight": 16,
+   "source_sha256": "9e96d038fdc04a36c1b8f6350ce44dc0a70f2bc3bf5e878feb417f17ee48d356",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\jackson--9fd3\\unassigned\\sources\\9e96d038fdc04a36c1b8f6350ce44dc0a70f2bc3bf5e878feb417f17ee48d356.pdf",
+   "official_url": "https://jacksontwp.com/wp-content/uploads/2023/06/CITIZENS-PORTAL-LINK-BROCHURE.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "lines. If the sign is being located on a building wall the site plan must include the wall of the building and the length of wall in which the sign will be located as well as any other existing signage on the wall. Vendor Applications: 1. Transient/Stationary Vendor - A transient vendor permit is required for any person who opens a temporary place of business for the sale of goods or who, on the streets or while traveling about the township, sells or offers for sale goods, solicits orders for future delivery of goods or attempts to arrang e an appointment for a future estimate or sales call. This includes including leaving brochures or other information on the property. The permit is valid for 90 days. Any door to door sales and/or solicitor who represents any entity exempted from taxatio n under section 5709.04 of the Ohio Revised Code shall not be required to obtain a transient vendor ",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "process",
+    "temporary",
+    "authority"
+   ],
+   "weight": 11,
+   "source_sha256": "9e96d038fdc04a36c1b8f6350ce44dc0a70f2bc3bf5e878feb417f17ee48d356",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\jackson--9fd3\\unassigned\\sources\\9e96d038fdc04a36c1b8f6350ce44dc0a70f2bc3bf5e878feb417f17ee48d356.pdf",
+   "official_url": "https://jacksontwp.com/wp-content/uploads/2023/06/CITIZENS-PORTAL-LINK-BROCHURE.pdf"
+  }
+ ]
+}

@@ -1,0 +1,2 @@
+ac4f9e0cc6f948f9000fa2f740f5532817e9d00fc9baf929a71414090163125c src/components/estimator/foundation/FoundationLayoutCanvas.jsx
+a2178910f6a564ccb2662c9d1a7fce4c91fbaacea4f9e7ced8cb786c61380fb3 src/components/estimator/foundation/foundationLayoutModel.js

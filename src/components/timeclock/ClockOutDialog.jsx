@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home, FileText, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import CurrentWorkCard from "@/components/timeclock/CurrentWorkCard";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -232,12 +232,9 @@ export default function ClockOutDialog({
   const searchWorkOrders = async () => {
     setIsSearching(true);
     try {
-      const allWorkOrders = await loadAllEntityRows({
-        entity: WorkOrder,
-        query: { completed: false, deleted: { $ne: true } },
-        sort: "created_date",
-        label: "Clock Out Work Orders",
-      });
+      const allWorkOrders = (await fetchAllWorkOrders({ preferSnapshot: true }))
+        .filter((wo) => wo.completed !== true && wo.deleted !== true)
+        .sort((a, b) => String(a.created_date || "").localeCompare(String(b.created_date || "")));
       const search = searchTerm.toLowerCase();
       const filtered = allWorkOrders.filter(wo => {
         const searchable = [wo.title, wo.client_name, wo.description].filter(Boolean).join(' ').toLowerCase();
@@ -861,6 +858,16 @@ export default function ClockOutDialog({
             <div className="flex items-center gap-2 mb-3">
               <FileText className="w-4 h-4 text-blue-600" />
               <Label className="font-semibold">Notes for Admin (Optional)</Label>
+            </div>
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] text-slate-500">Leaving early?</span>
+              {["Appointment", "Site call", "Sick", "Family", "Slow day"].map((r) => (
+                <button type="button"
+                  key={r} type="button"
+                  onClick={() => setNotes((prev) => (prev.includes(`Early out: ${r}`) ? prev : `${prev.trim() ? prev.trim() + " " : ""}Early out: ${r}.`))}
+                  className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600 hover:border-blue-300 hover:text-blue-700"
+                >{r}</button>
+              ))}
             </div>
             <Textarea
               value={notes}

@@ -1,0 +1,63 @@
+{
+  "synthetic": true,
+  "actualPageUndoVerified": false,
+  "noSDKGraph": true,
+  "results": [
+    {
+      "name": "starting and editing raw proposal are source-only commits that preserve legacy prices and design",
+      "ok": true
+    },
+    {
+      "name": "preview shows fresh full-section and foundation deltas including signage and landscape without committing",
+      "ok": true
+    },
+    {
+      "name": "acceptance consumes active ID before exactly one parent commit and one Undo restores the whole prior proposal",
+      "ok": true
+    },
+    {
+      "name": "acknowledgments neither commit nor edit the source and require explicit fresh preview",
+      "ok": true
+    },
+    {
+      "name": "raw parent edits invalidate previews and a superseded opaque ID cannot accept a refreshed amount",
+      "ok": true
+    },
+    {
+      "name": "same-reference catalog mutation is caught by fresh core acceptance rather than trusting preview anchors",
+      "ok": true
+    },
+    {
+      "name": "blocked save/recovery context refuses all mutating proposal actions without history or backend writes",
+      "ok": true
+    },
+    {
+      "name": "component reordering never redirects an acceptance or proposal edit to another index",
+      "ok": true
+    },
+    {
+      "name": "missing or duplicate component identity cannot generate commits, previews or borrowed acknowledgment",
+      "ok": true
+    },
+    {
+      "name": "route generation changes clear opaque previews and warning acknowledgments, including return to same source",
+      "ok": true
+    },
+    {
+      "name": "unconfigured supports remain visible and cannot replace live prices even with all warnings acknowledged",
+      "ok": true
+    },
+    {
+      "name": "full-section unavailability in another component blocks an otherwise valid target replacement",
+      "ok": true
+    },
+    {
+      "name": "discard removes only the raw draft and keeps accepted definition and historical origin receipt unchanged",
+      "ok": true
+    },
+    {
+      "name": "browser-restored raw draft never restores preview authority or warning acknowledgments",
+      "ok": true
+    }
+  ]
+}

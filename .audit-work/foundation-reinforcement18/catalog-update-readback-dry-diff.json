@@ -1,0 +1,5 @@
+{
+  "path": "src/components/estimator/builder/builderEntityPersistence.js",
+  "diff": "--- a/src/components/estimator/builder/builderEntityPersistence.js\n+++ b/src/components/estimator/builder/builderEntityPersistence.js\n@@ -106,6 +106,9 @@\n     if (result.updated === 1) {\n       const saved = await entity.get(recordId).catch(() => null);\n       if (!saved) throw new Error(`${label} was updated but could not be re-read.`);\n+      if (!fieldNames.every((fieldName) => sameValue(saved[fieldName], desired[fieldName]))) {\n+        throw new Error(`${label} was updated but its stored values do not match this save. Reload and review the record before retrying.`);\n+      }\n       return saved;\n     }\n   }\n",
+  "applied": false
+}

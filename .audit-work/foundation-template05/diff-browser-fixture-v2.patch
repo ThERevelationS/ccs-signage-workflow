@@ -1,0 +1,234 @@
+--- /dev/null	2026-11-05 11:14:13.000000000 -0500
++++ scripts/foundation-template-browser-fixture.mjs	2026-11-05 11:13:59.114947900 -0500
+@@ -0,0 +1,231 @@
++// Contained synthetic fixture for O-007 template/panel behaviors.
++// Real panels + real dialog + real assembly/template model. Stub entities only.
++// No Base44 SDK/network; fails on any non-local request. 127.0.0.1:5172 only.
++import esbuild from 'esbuild';
++import assert from 'node:assert/strict';
++import fs from 'node:fs';
++import http from 'node:http';
++import path from 'node:path';
++import { chromium } from 'playwright-core';
++
++const OUT = '.audit-work/foundation-template05';
++fs.mkdirSync(OUT, { recursive: true });
++
++const STUBS = {
++  '@/api/base44Client': `export const base44={entities:{ProjectTemplate:{get:(id)=>window.__api.get(id)}}};`,
++  '@/components/ui/dialog': `import React from 'react';export const Dialog=(p)=>p.open?React.createElement('div',{'data-dialog':'1'},p.children):null;export const DialogContent=(p)=>React.createElement('div',{},p.children);export const DialogHeader=(p)=>React.createElement('div',{},p.children);export const DialogTitle=(p)=>React.createElement('h2',{},p.children);`,
++  'lucide-react': `export const Trash2=()=>null;export const X=()=>null;export const Plus=()=>null;export const HelpCircle=()=>null;`,
++  '@/components/estimator/products/reusableSaveIdempotency': `export const ensureReusableRecord=(a)=>window.__api.save(a);`,
++  '@/components/estimator/builder/builderEntityPersistence': `export const deleteEntityIfUnchanged=async(a)=>{window.__calls.push(['delete',a.record.id]);return true;};`,
++  '@/components/estimator/loadAllEntityRows': `export const loadAllEntityRows=async()=>{if(window.__loadErr)throw window.__loadErr;return window.__tplRows||[];};`,
++  '@/components/estimator/idempotentEntityCreate': `let __n=0;export const newCreationRequestKey=(k)=>'k-'+(k||'x')+'-'+(++__n);export const ensureIdempotentEntityCreate=(a)=>window.__api.save(a);`,
++};
++
++const harness = `
++import React, { useState } from 'react';
++import { createRoot } from 'react-dom/client';
++import SignageCabinetsPanel from '@/components/estimator/foundation/SignageCabinetsPanel';
++import FoundationPolesPanel from '@/components/estimator/foundation/FoundationPolesPanel';
++import FoundationWallCapsPanel from '@/components/estimator/foundation/FoundationWallCapsPanel';
++import FoundationTemplateDialog from '@/components/estimator/foundation/FoundationTemplateDialog';
++import { prepareFoundationTemplatePatch } from '@/components/estimator/foundation/foundationTemplateModel';
++import { normalizeFoundationAssembly, foundationAssemblyIssues } from '@/components/estimator/foundation/foundationAssemblyModel';
++
++let __mid = 0;
++const mint = (k) => 'mint_' + k + '_' + (++__mid);
++
++const base = () => normalizeFoundationAssembly({
++  items: [{ id: 'i_a', description: 'Foundation A' }, { id: 'i_b', description: 'Foundation B' }],
++  poles: [{ id: 'po0', foundation_idx: 1, description: 'Pole on B', signs: [{ label: 'S' }] }],
++  walls: [{ id: 'w0', shape: { points: [{ x: 0, z: 0 }, { x: 96, z: 0 }, { x: 96, z: 48 }], closed: false, segments: [{ length: 96 }, { length: 48 }] } }],
++  wall_caps: [{ wall_index: 0, segment_index: 0, cap_inventory_id: 'cap_1' }],
++  signage_cabinets: [
++    { id: 'c0', mount: 'foundation', foundation_index: 0, unit_cost: 100, quantity: 1 },
++    { id: 'c1', mount: 'pole', pole_index: 0, unit_cost: 25, quantity: 1 },
++    { id: 'c2', mount: 'portal', unit_cost: 50, quantity: 1, description: 'Orphan cabinet' },
++  ],
++  landscape: { beds: [{ plant: 'boxwood' }] },
++  ai_engineering_data: { note: 'annotation' },
++  notes: 'fixture notes',
++}, { createId: mint }).project;
++
++function App() {
++  const [proj, setProj] = useState(base);
++  const [dlg, setDlg] = useState({ open: false, mode: 'load' });
++  const [applied, setApplied] = useState(null);
++  window.__proj = proj; window.__applied = applied; window.__issues = foundationAssemblyIssues(proj);
++  window.__normalize = (next, prev) => normalizeFoundationAssembly(next, { previous: prev || proj, createId: mint });
++  window.__openSave = () => setDlg({ open: true, mode: 'save' });
++  window.__openLoad = () => setDlg({ open: true, mode: 'load' });
++  window.__setProj = setProj;
++  const onApply = (data) => {
++    try { const p = prepareFoundationTemplatePatch(data, { createId: mint }); setApplied(p); window.__applyOk = true; return true; }
++    catch (e) { window.__applyErr = e.message; return false; }
++  };
++  return React.createElement('div', {},
++    React.createElement('h1', { id: 'fx' }, 'SYNTHETIC FIXTURE - not Base44'),
++    React.createElement('div', { id: 'cab' }, React.createElement(SignageCabinetsPanel, { cabinets: proj.signage_cabinets, items: proj.items, poles: proj.poles, onChange: (v) => setProj({ ...proj, signage_cabinets: v }) })),
++    React.createElement('div', { id: 'pol' }, React.createElement(FoundationPolesPanel, { poles: proj.poles, options: [{ id: 'pole_1', material_name: 'Steel pole' }], items: proj.items, onChange: (v) => setProj({ ...proj, poles: v }) })),
++    React.createElement('div', { id: 'caps' }, React.createElement(FoundationWallCapsPanel, { caps: proj.wall_caps, walls: proj.walls.concat([{ component_id: 'w_x', name: 'Wall X', shape: { points: [{ x: 0, z: 0 }, { x: 10, z: 0 }], closed: false, segments: [{ component_id: 'sx', length: 10 }] } }]), options: [{ id: 'cap_1', material_name: 'Cap' }], onChange: (v) => setProj({ ...proj, wall_caps: v }) })),
++    React.createElement(FoundationTemplateDialog, { open: dlg.open, mode: dlg.mode, onClose: () => { window.__closed = (window.__closed || 0) + 1; setDlg({ open: false, mode: dlg.mode }); }, project: proj, onApply }));
++}
++createRoot(document.getElementById('root')).render(React.createElement(App));
++`;
++
++const plugin = { name: 's', setup(b) {
++  b.onResolve({ filter: /^harness$/ }, () => ({ path: 'harness', namespace: 'h' }));
++  b.onResolve({ filter: /.*/ }, a => (STUBS[a.path] ? { path: path.resolve('stub-' + a.path.replace(/[^a-z0-9]/gi, '_')), namespace: 's' } : undefined));
++  b.onLoad({ filter: /.*/, namespace: 'h' }, () => ({ contents: harness, loader: 'jsx', resolveDir: path.resolve('.') }));
++  b.onLoad({ filter: /.*/, namespace: 's' }, a => { const key = Object.keys(STUBS).find(k => path.resolve('stub-' + k.replace(/[^a-z0-9]/gi, '_')) === a.path); return { contents: STUBS[key], loader: 'js', resolveDir: path.resolve('.') }; });
++}};
++const built = await esbuild.build({ entryPoints: ['harness'], bundle: true, format: 'iife', platform: 'browser', write: false, plugins: [plugin], loader: { '.js': 'jsx', '.jsx': 'jsx' }, jsx: 'automatic', alias: { '@': path.resolve('src') }, metafile: true });
++const sdkReal = Object.keys(built.metafile.inputs).filter(i => /node_modules.*base44|@base44|api\/base44Client\.(js|ts)/i.test(i));
++fs.writeFileSync(`${OUT}/metafile-v2.json`, JSON.stringify({ inputs: Object.keys(built.metafile.inputs) }, null, 1));
++if (sdkReal.length) { console.error('BUNDLE CONTAINS BASE44 SDK:', sdkReal); process.exit(1); }
++
++const server = http.createServer((req, res) => {
++  if (req.url !== '/') { res.writeHead(404); res.end(); return; }
++  res.writeHead(200, { 'content-type': 'text/html' });
++  res.end(`<!doctype html><meta charset=utf-8><title>SYNTHETIC non-Base44 fixture</title><body><div id=root></div><script>${built.outputFiles[0].text}</script>`);
++});
++await new Promise(r => server.listen(5172, '127.0.0.1', r));
++
++const results = [];
++const browser = await chromium.launch({ channel: 'chrome', headless: true });
++const page = await browser.newPage();
++const foreignReqs = [];
++page.on('request', (r) => { if (!r.url().startsWith('http://127.0.0.1:5172')) foreignReqs.push(r.url()); });
++page.on('pageerror', (e) => results.push({ case: 'pageerror', ok: false, error: String(e) }));
++await page.route('**/*', (r) => { if (r.request().url().startsWith('http://127.0.0.1:5172')) r.continue(); else r.abort(); });
++await page.goto('http://127.0.0.1:5172/');
++await page.waitForTimeout(800);
++
++const S = async (name, fn) => {
++  try { const out = await fn() || {}; results.push({ case: name, ok: true, ...out }); }
++  catch (e) { results.push({ case: name, ok: false, error: String(e) }); }
++};
++
++await S('orphan cabinet visible; reassign leaves orphan group, cost kept', async () => {
++  const sel = page.getByLabel('Reassign cabinet');
++  assert.ok(await sel.count() >= 1, 'orphan reassignment select missing');
++  const orphanCab = await page.evaluate(() => window.__proj.signage_cabinets.find(c => c.mount === 'portal'));
++  assert.ok(orphanCab, 'orphan cabinet not in state');
++  const val = await sel.first().locator('option').evaluateAll(os => os.find(o => o.value.startsWith('foundation:'))?.value);
++  assert.ok(val, 'no foundation reassignment option');
++  await sel.first().selectOption(val);
++  await page.waitForTimeout(200);
++  const after = await page.evaluate(() => window.__proj.signage_cabinets.find(c => c.id === 'c2'));
++  assert.equal(after.mount, 'foundation', 'orphan reassigned to foundation');
++  assert.ok(after.foundation_component_id, 'canon parent set');
++  assert.equal(after.unit_cost, 50, 'cost preserved through reassign');
++  await page.screenshot({ path: `${OUT}/fixture-reassign.png` });
++  return { reassigned: true, costKept: after.unit_cost };
++});
++
++await S('cap wall change clears segment to explicit unassigned', async () => {
++  const wallSel = page.getByLabel('Cap wall');
++  await wallSel.selectOption('w_x');
++  await page.waitForTimeout(200);
++  const cap = await page.evaluate(() => window.__proj.wall_caps[0]);
++  assert.equal(cap.wall_component_id, 'w_x');
++  assert.equal(cap.segment_component_id, '', 'segment cleared to explicit unassigned');
++  assert.equal(cap.segment_index, undefined);
++  const uiVal = await page.getByLabel('Cap segment').inputValue();
++  assert.equal(uiVal, '', 'UI shows unassigned segment');
++  return { wall: cap.wall_component_id, seg: cap.segment_component_id };
++});
++
++await S('pole parent: reorder retains canon+index, delete -> dangling+issue, reassign resolves', async () => {
++  const r = await page.evaluate(() => {
++    const prev = window.__proj;
++    const reordered = { ...prev, items: [prev.items[1], prev.items[0]] };
++    const n1 = window.__normalize(reordered, prev).project;
++    const pole1 = n1.poles[0];
++    const removed = { ...n1, items: n1.items.filter(i => i.component_id !== pole1.foundation_component_id) };
++    const n2 = window.__normalize(removed, n1);
++    return { pole1, n2: n2.project, issues2: n2.issues };
++  });
++  const ibId = await page.evaluate(() => window.__proj.poles[0].foundation_component_id);
++  assert.equal(r.pole1.foundation_component_id, ibId, 'reorder retains canon target');
++  const dbg = await page.evaluate((id) => { const n = window.__normalize({ ...window.__proj, items: [window.__proj.items[1], window.__proj.items[0]] }, window.__proj).project; return { idx: n.items.findIndex(i => i.component_id === id), itemIds: n.items.map(i => i.component_id), poleCanon: n.poles[0].foundation_component_id, poleIdx: n.poles[0].foundation_index }; }, ibId);
++  assert.equal(r.pole1.foundation_idx, dbg.idx, 'index recomputed to canonical parent position ' + JSON.stringify(dbg) + ' ibId=' + ibId);
++  assert.ok(r.n2.poles[0].foundation_component_id, 'canon retained after delete (dangling)');
++  assert.ok(r.issues2.some(i => i.kind === 'pole' && i.code === 'dangling-parent'), 'dangling issue emitted');
++  await page.evaluate((n2) => window.__setProj(n2), r.n2);
++  await page.waitForTimeout(200);
++  const sel = page.getByLabel('Pole foundation');
++  const dbg2 = await page.evaluate(() => ({ poles: window.__proj.poles?.length, selCount: document.querySelectorAll('#pol select').length, hasSetter: typeof window.__setProj }));
++  const nopts = await sel.locator('option').count();
++  const polHtml = JSON.stringify(dbg2) + '|' + (await page.locator('#pol').innerHTML()).slice(0, 200);
++  assert.ok(nopts >= 2, `expected reassignment options, got ${nopts} | html=${polHtml}`);
++  const optVals = await sel.locator('option').evaluateAll(os => os.map(o => o.value).filter(v => v && !v.startsWith('unresolved')));
++  assert.ok(optVals.length >= 1, 'no valid parent option for reassign');
++  await sel.selectOption(optVals[optVals.length - 1]);
++  await page.waitForTimeout(200);
++  const fixed = await page.evaluate(() => window.__proj.poles[0]);
++  assert.ok(fixed.foundation_component_id && fixed.foundation_component_id !== r.n2.poles[0].foundation_component_id || fixed.foundation_idx !== undefined, 'reassignment resolves dangling');
++  return { reorderOk: true, danglingAfterDelete: r.n2.poles[0].foundation_component_id, issue: true, reassigned: fixed.foundation_component_id };
++});
++
++await S('template save snapshot then load+apply: full fields, fresh ids, close once', async () => {
++  await page.evaluate(() => {
++    window.__closed = 0; window.__tplSaves = []; window.__calls = [];
++    window.__api = {
++      get: async () => { const e = new Error('nf'); e.status = 404; throw e; },
++      save: async (a) => { window.__tplSaves.push(a); window.__tplRows = [{ id: 't1', template_name: a.data.template_name, project_data: a.data.project_data }]; return { id: 't1' }; },
++    };
++    window.__openSave();
++  });
++  await page.waitForTimeout(300);
++  await page.locator('input[placeholder*=\"Pylon\"], [data-dialog] input').first().fill('Fixture T');
++  await page.locator('button:has-text("Save Template")').click();
++  await page.waitForTimeout(400);
++  const saves = await page.evaluate(() => window.__tplSaves);
++  const dbg = await page.evaluate(() => ({ err: document.querySelector('[role=alert]')?.textContent, btns: [...document.querySelectorAll('button')].map(b => b.textContent) }));
++  assert.equal(saves.length, 1, 'one save call ' + JSON.stringify(dbg));
++  const pd = saves[0].data.project_data;
++  assert.equal(pd.assembly_schema_version, 1);
++  assert.ok(pd.signage_cabinets?.length === 3 && pd.landscape && pd.ai_engineering_data && pd.wall_caps?.length && pd.poles?.length, 'full snapshot');
++  assert.equal(pd.builder_sync_attempt, undefined);
++  const closed = await page.evaluate(() => window.__closed);
++  assert.equal(closed, 1, 'saved dialog closed once');
++  await page.evaluate(() => window.__openLoad());
++  await page.waitForTimeout(400);
++  await page.locator('button:has-text("Apply")').first().click();
++  await page.waitForTimeout(400);
++  const applied = await page.evaluate(() => window.__applied);
++  assert.ok(applied, 'apply produced patch');
++  assert.ok(applied.landscape && applied.ai_engineering_data && applied.wall_caps?.length && applied.poles?.length, 'patch preserves full fields');
++  const ids = applied.items.map(i => i.component_id);
++  assert.ok(ids.every(Boolean), 'fresh item ids minted');
++  // scenario 2 moved this cap to panel-only wall w_x (not in project walls): clone must leave it dangling, not retarget
++  assert.equal(applied.wall_caps[0].wall_component_id, 'w_x', 'external cap ref left dangling, not silently retargeted');
++  assert.notEqual(applied.walls[0].component_id, 'w_x', 'wall id is freshly minted');
++  const closed2 = await page.evaluate(() => window.__closed);
++  assert.equal(closed2, 2, 'apply closed once');
++  await page.screenshot({ path: `${OUT}/fixture-applied.png` });
++  return { saved: true, appliedFreshIds: ids.length, remapped: true };
++});
++
++await S('bad-schema apply: alert, stays open, design unchanged', async () => {
++  await page.evaluate(() => { window.__closed = 0; window.__tplRows = [{ id: 't2', template_name: 'Bad', project_data: { assembly_schema_version: 9 } }]; window.__openLoad(); });
++  await page.waitForTimeout(400);
++  const before = await page.evaluate(() => JSON.stringify(window.__proj));
++  await page.locator('button:has-text("Apply")').first().click();
++  await page.waitForTimeout(300);
++  assert.ok(await page.locator('[role=alert]').count() >= 1, 'alert visible');
++  assert.equal(await page.evaluate(() => window.__closed), 0, 'dialog stayed open');
++  assert.equal(await page.evaluate(() => JSON.stringify(window.__proj)), before, 'project unchanged');
++  return { rejected: true };
++});
++
++if (foreignReqs.length) results.push({ case: 'external-requests-blocked', ok: false, error: `non-local requests attempted: ${foreignReqs.join(',')}` });
++else results.push({ case: 'external-requests-blocked', ok: true });
++
++fs.writeFileSync(`${OUT}/browser-results-v2.json`, JSON.stringify({ synthetic: true, note: 'no Base44 SDK/services/records; stub entity fakes only', results }, null, 1));
++await browser.close();
++server.close();
++const fails = results.filter(r => r.ok === false);
++console.log(`browser-fixture cases=${results.length} failed=${fails.length}`);
++results.forEach(r => console.log(r.ok === false ? 'FAIL' : 'ok', r.case));
++process.exit(fails.length ? 1 : 0);

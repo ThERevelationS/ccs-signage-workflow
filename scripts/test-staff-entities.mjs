@@ -11,14 +11,27 @@ globalThis.__calls = [];
 globalThis.__response = {};
 export const invokeFleet = async (fn, body) => {
   globalThis.__calls.push({ fn, body });
-  return globalThis.__response;
+  const res = globalThis.__response;
+  // Batched reads arrive as { entities: [{entity, ...}] } and expect the
+  // gateway's keyed-by-entity response shape back.
+  if (Array.isArray(body?.entities)) {
+    const entities = {};
+    for (const e of body.entities) entities[e.entity] = res.items ?? [];
+    return { entities };
+  }
+  return res;
 };
+export const isFleetCoolingDown = () => false;
+`);
+const gateStub = resolve(here, '.tmp-email-gate.mjs');
+writeFileSync(gateStub, `
+export const getSessionToken = () => 'test-session-token';
 `);
 const out = resolve(here, '.tmp-staff-entities.mjs');
 buildSync({
   entryPoints: [resolve(here, '../src/components/staff/staffEntities.js')],
   bundle: true, format: 'esm', outfile: out, logLevel: 'silent',
-  alias: { '@/components/fleet/fleetInvoke': stub },
+  alias: { '@/components/fleet/fleetInvoke': stub, '@/components/auth/EmailGate': gateStub },
 });
 const { staffEntities } = await import(pathToFileURL(out).href);
 const calls = globalThis.__calls;
@@ -28,8 +41,8 @@ const setRes = (r) => { globalThis.__response = r; calls.length = 0; };
 setRes({ items: [{ id: 'a' }, { id: 'b' }] });
 assert.deepEqual(await staffEntities.Customer.filter({ company_name: 'X' }, '-created_date', 10), [{ id: 'a' }, { id: 'b' }]);
 assert.equal(calls[0].fn, 'staffDataRead');
-assert.equal(calls[0].body.entity, 'Customer');
-assert.equal(calls[0].body.query.company_name, 'X');
+assert.equal(calls[0].body.entities[0].entity, 'Customer');
+assert.equal(calls[0].body.entities[0].query.company_name, 'X');
 
 // get -> staffDataRead, returns item ?? null.
 setRes({ item: { id: 'c' } });
@@ -45,7 +58,7 @@ assert.equal(calls[0].body.count, true);
 // list -> staffDataRead, returns items.
 setRes({ items: [{ id: 'd' }] });
 assert.equal((await staffEntities.Customer.list('-company_name', 50))[0].id, 'd');
-assert.equal(calls[0].body.sort, '-company_name');
+assert.equal(calls[0].body.entities[0].sort, '-company_name');
 
 // create/update/delete -> staffEntityWrite with op.
 setRes({ record: { id: 'new1' } });

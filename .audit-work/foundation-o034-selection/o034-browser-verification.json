@@ -1,0 +1,20 @@
+{
+  "suite": "verify-o034-browser",
+  "scenarios": [
+    "A: click selects — id + part + highlight + handles",
+    "B: ctrl/shift additive + toggle + primary",
+    "C: empty click clears / additive keeps",
+    "D: marquee region select",
+    "E: additive marquee union",
+    "F: drag keeps selection / wiggle clicks",
+    "G: keyboard cycle/focus/delete-hook/Escape",
+    "H: z-top-wins pole-over-item",
+    "I: reconcile delete/reorder",
+    "J: read-only select + marquee",
+    "K: O-039/O-040 seams intact (drag = one command)"
+  ],
+  "count": 11,
+  "status": "PASS",
+  "viewport": "1280x900",
+  "engine": "chromium (system chrome channel)"
+}

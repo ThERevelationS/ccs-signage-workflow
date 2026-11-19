@@ -15,16 +15,56 @@ async function invokeSalesFilter(payload) {
   }
 }
 
+// Every Sales Pipeline mount, live-filter event, and preference save used to
+// invoke manageSalesFilters again — under load that function 503s and the
+// screens retry it back into the same wall. Cache the read briefly, share one
+// in-flight call per session, and wait out failures instead of re-invoking.
+const PREFERENCES_CACHE_MS = 5 * 60 * 1000;
+const PREFERENCES_FAILURE_COOLDOWN_MS = 60 * 1000;
+let preferencesCache = { token: "", at: 0, value: null };
+let preferencesInFlight = null;
+let preferencesCooldownUntil = 0;
+let preferencesLastError = null;
+
+const cachedPreferencesFor = (token) =>
+  preferencesCache.token === token && preferencesCache.value ? preferencesCache.value : null;
+
 export async function loadSalesPipelinePreferencesSafely({ sessionToken, label = "Sales Pipeline preferences" } = {}) {
-  const result = await invokeSalesFilter({
-    action: "preferences_get",
-    session_token: requireSessionToken(sessionToken, label),
-  });
-  const preferences = result?.preferences;
-  if (!preferences || typeof preferences !== "object" || Array.isArray(preferences)) {
-    throw new Error(`${label} could not be verified.`);
+  const token = requireSessionToken(sessionToken, label);
+  const now = Date.now();
+  const cached = cachedPreferencesFor(token);
+  if (cached && now - preferencesCache.at < PREFERENCES_CACHE_MS) return { ...cached };
+  if (preferencesInFlight && preferencesInFlight.token === token) {
+    return preferencesInFlight.promise.then((value) => ({ ...value }));
   }
-  return preferences;
+  if (now < preferencesCooldownUntil) {
+    if (cached) return { ...cached };
+    throw preferencesLastError || new Error(`${label} is busy. Try again shortly.`);
+  }
+
+  const promise = (async () => {
+    const result = await invokeSalesFilter({ action: "preferences_get", session_token: token });
+    const preferences = result?.preferences;
+    if (!preferences || typeof preferences !== "object" || Array.isArray(preferences)) {
+      throw new Error(`${label} could not be verified.`);
+    }
+    return preferences;
+  })();
+
+  preferencesInFlight = { token, promise };
+  try {
+    const value = await promise;
+    preferencesCache = { token, at: Date.now(), value };
+    return { ...value };
+  } catch (error) {
+    preferencesCooldownUntil = Date.now() + PREFERENCES_FAILURE_COOLDOWN_MS;
+    preferencesLastError = error;
+    const stale = cachedPreferencesFor(token);
+    if (stale) return { ...stale };
+    throw error;
+  } finally {
+    if (preferencesInFlight?.promise === promise) preferencesInFlight = null;
+  }
 }
 
 export async function saveSalesPipelinePreferencesSafely({
@@ -44,6 +84,9 @@ export async function saveSalesPipelinePreferencesSafely({
   if (!saved || typeof saved !== "object" || Array.isArray(saved)) {
     throw new Error(`${label} saved but could not be verified.`);
   }
+  // The save is authoritative — keep the read cache in step so the next
+  // preference load serves the just-saved value instead of a stale snapshot.
+  preferencesCache = { token: payload.session_token, at: Date.now(), value: saved };
   return saved;
 }
 
@@ -66,13 +109,72 @@ export async function saveSalesDefaultSortSafely({ sessionToken, record, value, 
   return result;
 }
 
+// Several Sales screens need the same roster at once. Share one request and
+// reuse the answer briefly, and wait out "busy" responses instead of failing.
+const ROSTER_TTL_MS = 5 * 60 * 1000;
+const ROSTER_STORAGE_KEY = "ccsSalesPersonRoster";
+let rosterCache = { token: "", at: 0, promise: null };
+const isBusyError = (error) => /busy|rate limit|429|too many/i.test(String(error?.message || ""));
+
+// The roster survives a reload so a busy window on a fresh mount still renders
+// the names this session already loaded instead of failing the screen.
+function readStoredRoster(token) {
+  try {
+    const parsed = JSON.parse(sessionStorage.getItem(ROSTER_STORAGE_KEY) || "null");
+    if (parsed?.token !== token || !Array.isArray(parsed.users)) return [];
+    return parsed.users;
+  } catch {
+    return [];
+  }
+}
+
+function storeRoster(token, users) {
+  try {
+    sessionStorage.setItem(ROSTER_STORAGE_KEY, JSON.stringify({ token, users }));
+  } catch {
+    // Storage full or unavailable — the in-memory cache still covers this session.
+  }
+}
+
+async function fetchRoster(token, label) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      const result = await invokeSalesFilter({ action: "roster", session_token: token });
+      if (!Array.isArray(result?.users)) throw new Error(`${label} could not be verified.`);
+      return result.users;
+    } catch (error) {
+      if (!isBusyError(error) || attempt >= 3) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 1500 * 2 ** attempt + Math.random() * 500));
+    }
+  }
+}
+
 export async function loadSalesPersonRosterSafely({ sessionToken, label = "Sales person roster" } = {}) {
-  const result = await invokeSalesFilter({
-    action: "roster",
-    session_token: requireSessionToken(sessionToken, label),
-  });
-  if (!Array.isArray(result?.users)) throw new Error(`${label} could not be verified.`);
-  return result.users;
+  const token = requireSessionToken(sessionToken, label);
+  const fresh = rosterCache.promise && rosterCache.token === token && Date.now() - rosterCache.at < ROSTER_TTL_MS;
+  if (!fresh) {
+    const promise = fetchRoster(token, label);
+    rosterCache = { token, at: Date.now(), promise };
+    promise
+      .then((users) => {
+        if (rosterCache.promise === promise) storeRoster(token, users);
+      })
+      .catch(() => {
+        if (rosterCache.promise === promise) rosterCache = { token: "", at: 0, promise: null };
+      });
+  }
+  const active = rosterCache.promise;
+  if (!active) return readStoredRoster(token).map((user) => ({ ...user }));
+  try {
+    const users = await active;
+    return users.map((user) => ({ ...user }));
+  } catch (error) {
+    // A busy window must not break the Sales screens — the roster this session
+    // already loaded is still accurate enough to keep assigning people.
+    const stored = readStoredRoster(token);
+    if (stored.length) return stored.map((user) => ({ ...user }));
+    throw error;
+  }
 }
 
 export async function createSalesFilterIfAbsent({ data, sessionToken, label = "Sales filter" } = {}) {

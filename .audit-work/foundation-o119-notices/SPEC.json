@@ -1,0 +1,109 @@
+{
+  "unit": "foundation-o119-notices",
+  "item": "O-119 (CMP-I18) — persistent \"Preliminary estimating only - final engineering required\" on generated structural concepts, client estimate notes, and handoff exports",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remote_head_verified": "8b0fcf92171373ea3dec071399f10e203135c00f (git log -1 via sandbox run, clean porcelain status)",
+  "mode": "LOCAL candidates only - no remote write, no checkpoint, no deploy, no business-record or paid-AI calls. All baselines are fresh `sandbox read` pulls at the verified HEAD; local worktree src/ was never read for content.",
+  "acceptance_text": "Make \"Preliminary estimating only - final engineering required\" persistent on generated structural concepts, client estimate notes as appropriate, and handoff exports. (ESTIMATOR_MASTERPLAN.md:714; canonical string uses the ASCII hyphen form exactly as written there.)",
+  "surface_map": {
+    "concept_surface": "FoundationSectionBanner.jsx mounts <PreliminaryNotice/> as a SIBLING of the collapsible explainer — 'Collapse Section' toggles only the section text; the notice stays rendered while the page is mounted. Non-dismissible = persistent per concept on-screen.",
+    "client_estimate_notes": "FoundationProject.notes (entity field {\"type\":\"string\"}) is the module's client-notes channel: it is persisted by the page payload, carried verbatim by save-as-copy, browser drafts, and template snapshots, and is the text a staff member copies into estimate notes / sees on the record. Two authoring paths stamp the preamble: (a) template notes on BOTH snapshot (stored template carries it at rest) and apply (pre-change/external templates covered) — stampTemplateNotesNotice, mirroring the O-007t stampTemplateAppliedAiData fail-closed/idempotent pattern; (b) convertFoundationToBrickStone wraps its authored note with ensurePreliminaryNotice. apply never injects notes when the template omits the key (absent keys preserve the target's own notes).",
+    "handoff_exports": "Shared constant + component exported so owned-elsewhere surfaces adopt with one line: FoundationBOM.jsx print block (Phase B-3 owns), page notes mounts (FoundationEstimator.jsx), and handoff text builders (estimateConversionService generatedDescription consumes Estimate.notes — stamping foundation notes keeps the sentence available to that chain). Deferred as documented wiring remainders — NOT landed here (file ownership).",
+    "ai_review_channel_checked_not_touched": "foundationAiReview.js already self-labels: prompt requires 'clearly label it preliminary', stored ai_engineering_data carries review_status:'preliminary_only' + engineering_approved:false, and AiEngineeringAssistant renders 'AI Preliminary Review' + the O-007t guaranteed-stale banner. Stamping the canonical sentence INTO ai_engineering_recommendation markdown was rejected — it would interleave non-AI text into AI-authored content; the UI banner + notes stamps cover persistence."
+  },
+  "targets": [
+    {
+      "path": "src/components/estimator/foundation/foundationPreliminaryNotice.js",
+      "status": "NEW FILE",
+      "candidate": "candidates/src/components/estimator/foundation/foundationPreliminaryNotice.js (sha256 01f2fdc970b1..., 87 lines)",
+      "exports": {
+        "PRELIMINARY_NOTICE_TEXT": "verbatim acceptance sentence — single source of truth so every surface shows one wording",
+        "hasPreliminaryNotice(text)": "true only when the string already contains the canonical sentence",
+        "ensurePreliminaryNotice(notes)": "prepends 'NOTICE\\n\\n' unless already present; undefined/null/blank -> notice alone; non-string fails closed (throw); idempotent by design",
+        "PreliminaryNotice (named + default)": "React component via createElement (keeps .js extension build-safe under @vitejs/plugin-react and esbuild --loader:.js=jsx; React import is safe — only importers are React surfaces): role='status' ALWAYS (never role='alert'), amber caution styling + AlertTriangle icon, optional dismissible prop (per-view dismissal via useState; remount restores)"
+      }
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+      "baseline": "baseline/foundationTemplateModel.js (fresh sandbox read at 8b0fcf921, sha256 80d947f016fe — identical to the O-007t landed candidate)",
+      "candidate": "candidates/src/components/estimator/foundation/foundationTemplateModel.js (sha256 42fedbe65f08, +27 lines, four hunks)",
+      "diff": "verify/diff-foundationTemplateModel.js.patch",
+      "changes": [
+        "import ensurePreliminaryNotice from ./foundationPreliminaryNotice.js",
+        "new stampTemplateNotesNotice(v): undefined->undefined, null->null, non-string->throw (fail closed, same semantics as sanitizeTemplateCustomerPricing / stampTemplateAppliedAiData), string->ensurePreliminaryNotice",
+        "wired at BOTH gates: createFoundationTemplateSnapshot stamps out.notes (stored template leads with the notice at rest) and prepareFoundationTemplatePatch stamps provided.notes (covers pre-change/external templates; idempotent — no double-stamp)",
+        "O-007 field-semantics comment extended with the notes decision"
+      ]
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationSectionBanner.jsx",
+      "baseline": "baseline/FoundationSectionBanner.jsx (fresh sandbox read at 8b0fcf921, sha256 2b039becf64c)",
+      "candidate": "candidates/src/components/estimator/foundation/FoundationSectionBanner.jsx (sha256 f04f2339cdd9, +7/-1 surgical — original div kept byte-identical inside a fragment)",
+      "diff": "verify/diff-FoundationSectionBanner.jsx.patch",
+      "changes": [
+        "mounts <PreliminaryNotice className='-mt-2 mb-3'/> as a fragment sibling AFTER the banner div — 'Collapse Section' never hides it (persistent per concept); the page needs zero edits because the notice rides inside the banner component the page already mounts"
+      ]
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+      "baseline": "baseline/FoundationTemplateDialog.jsx (fresh sandbox read at 8b0fcf921, sha256 82d1874cb594)",
+      "candidate": "candidates/src/components/estimator/foundation/FoundationTemplateDialog.jsx (sha256 3abbe70b4618, +7 lines, two hunks)",
+      "diff": "verify/diff-FoundationTemplateDialog.jsx.patch",
+      "changes": [
+        "display-only: save mode shows 'Saved template notes lead with \"Preliminary estimating only - final engineering required\".' — discloses the snapshot-time stamp before the user commits",
+        "display-only: load rows carrying non-empty project_data.notes show 'Includes project notes' (mirrors the O-007t 'Includes an AI review note' indicator pattern)"
+      ]
+    },
+    {
+      "path": "src/components/estimator/foundation/convertToBrickStone.js",
+      "baseline": "baseline/convertToBrickStone.js (fresh sandbox read at 8b0fcf921, sha256 3979d2d368ce)",
+      "candidate": "candidates/src/components/estimator/foundation/convertToBrickStone.js (sha256 a4b4940032fa, +2/-1)",
+      "diff": "verify/diff-convertToBrickStone.js.patch",
+      "changes": [
+        "authored notes wrapped with ensurePreliminaryNotice — the Brick & Stone draft created from a foundation concept is itself a generated structural concept; its notes now lead with the notice. Signature/payload determinism and the idempotent-create key are unchanged."
+      ]
+    }
+  ],
+  "deferred_wiring_remainders": [
+    "src/components/estimator/foundation/FoundationBOM.jsx (Phase B-3 OWNS): add `<PreliminaryNotice />` at the top of the BOM/print-export container — one line, no props needed.",
+    "src/pages/FoundationEstimator.jsx (page owner): mount `<PreliminaryNotice />` beside any future notes entry surface; no page edit was needed for the banner mount because the notice ships inside FoundationSectionBanner.",
+    "handoff/export text builders (e.g. estimateConversionService generatedDescription, quote/WO description authors): append PRELIMINARY_NOTICE_TEXT or run authored text through ensurePreliminaryNotice before persisting.",
+    "AiEngineeringAssistant.jsx (consumer owner): may mount <PreliminaryNotice/> under the 'AI Preliminary Review' header if a future unit wants the canonical banner inside the review card; not required — the channel already self-labels preliminary_only."
+  ],
+  "protected_not_touched": [
+    "src/pages/FoundationEstimator.jsx (page owner — apply handler already routes stored project_data through prepareFoundationTemplatePatch, the single gate; no page edit needed)",
+    "foundationCalc.js, foundationReinforcement*, partSync.js (Phase B-3 owns)",
+    "FoundationBOM.jsx (Phase B-3 print surface — deferred mount documented)",
+    "FoundationProject.jsonc / FoundationSettings.jsx (O-104 unit owns)",
+    "foundationAiReview.js, AiEngineeringAssistant.jsx (AI-review channel already self-labels; stamping AI markdown rejected as provenance-muddying)",
+    "foundationSellPricing.js (checked — pricing wire only, authors no client text)",
+    "foundationTemplateService.js (checked — save/delete transport only, no notes handling)",
+    "foundationDraftRecovery.js (drafts carry notes verbatim — a draft restored on the SAME project keeps its own text; stamping draft-restored content would duplicate the payload stamp which already landed via the page payload when the record was authored)"
+  ],
+  "verification": {
+    "unit_harness": "verify/test-o119-notices.mjs — esbuild-bundles CANDIDATE notice (standalone), CANDIDATE model (assembly dep -> baseline, notice dep -> candidate), CANDIDATE convertToBrickStone (staff/idempotency stubbed), CANDIDATE dialog (service -> baseline, model -> candidate) and CANDIDATE banner via react-test-renderer; 17/17 PASS (verify/test-output.txt)",
+    "browser_harness": "verify/verify-o119-browser.mjs — esbuild IIFE bundle of candidates + playwright-core real Chromium; desktop 1280px + mobile 390px; 8/8 PASS (verify/o119-browser-verification.json; screenshots notice-stack-1280/390.png, notice-collapsed-1280/390.png, dialog-save-1280.png, dialog-load-390.png; zero foreign requests/console errors/page errors asserted)",
+    "cases": [
+      "PRELIMINARY_NOTICE_TEXT === 'Preliminary estimating only - final engineering required' (verbatim acceptance string)",
+      "ensurePreliminaryNotice: blank/undefined/null -> notice alone; plain -> preamble; already-stamped/mid-string -> verbatim; double application idempotent; number/object/array -> throws",
+      "snapshot: notes lead with notice; absent stays absent; null->null; blank->notice; already-stamped verbatim; source object not mutated; malformed fails closed",
+      "apply: legacy unstamped note stamped; stamped stays verbatim; absent key absent (target's own notes preserved — verified against the page's {...prev,...patch} merge semantics read from remote); null->null; malformed throws",
+      "chained save->apply->merge->re-save contains 'final engineering required' exactly once",
+      "apply keeps O-007t ai_engineering_data stamp + fresh component_ids alongside the notes stamp",
+      "convertFoundationToBrickStone payload.notes leads with notice, original 'Converted from Foundation project ...' text preserved, idempotent path untouched",
+      "PreliminaryNotice: exactly one role='status', zero role='alert', canonical text; non-dismissible default has no dismiss control; dismissible -> click hides (per-view), remount restores",
+      "FoundationSectionBanner (real component): notice visible expanded AND collapsed — persistence survives the banner's own collapse",
+      "FoundationTemplateDialog (real component): save-mode disclosure quotes the sentence; load list shows 'Includes project notes' exactly once across a carrying + a bare row",
+      "browser: role=status + exact text + zero role=alert at 1280px and 390px; collapse persistence; per-view dismiss; screenshots captured"
+    ],
+    "syntax": "npx esbuild clean on all five candidates (jsx loader for .jsx and the component-bearing .js)"
+  },
+  "followups_noted": [
+    "scripts/test-foundation-template.mjs + the o007-templates verify suite deep-equal notes verbatim — after landing, their template-notes expectations need the same allowlist exception class the O-007t unit noted for provenance fields (notes now gain the preamble on snapshot/apply)",
+    "LF normalization: baselines pulled via sandbox read were written locally with LF line endings; remote files are CRLF — candidate diffs are computed on normalized content",
+    "pre-landing reviewer should grep for any OTHER module-authored notes strings (none found: only convertToBrickStone authors notes text outside the page; the page payload itself is owned elsewhere)",
+    "if a future unit adds a notes entry UI to the page, mounting <PreliminaryNotice/> beside it (documented remainder) keeps the on-screen surface consistent with the stamped data"
+  ],
+  "ledger_paragraph": "O-119 (CMP-I18) preliminary-notice unit LOCAL-ONLY at remote HEAD 8b0fcf921 (clean worktree; all baselines fresh sandbox reads — never local src/). New foundationPreliminaryNotice.js is the shared source of truth: PRELIMINARY_NOTICE_TEXT (verbatim acceptance sentence), hasPreliminaryNotice, idempotent+fail-closed ensurePreliminaryNotice, and the PreliminaryNotice component (role='status' always, never role='alert'; dismissible is opt-in per-view via useState). Three adoptions landed as candidates: foundationTemplateModel stamps template-authored notes on BOTH snapshot and apply (stampTemplateNotesNotice mirrors the O-007t provenance-stamp pattern — absent stays absent so a target's own notes are never clobbered, null travels, malformed fails closed); FoundationSectionBanner mounts the notice as a collapse-proof sibling (persistent per concept, zero page edits); convertToBrickStone stamps its authored notes so the converted masonry concept carries it. FoundationTemplateDialog gains display-only disclosure (save-mode preamble note) + a carried-notes row indicator. Deferred by file ownership, documented in-file: FoundationBOM print mount + any future page notes mount adopt via one-line <PreliminaryNotice/>. Verified: 17/17 esbuild+react-test-renderer cases on candidates + 8/8 real-Chromium browser cases at 1280px/390px (collapse persistence, per-view dismiss, zero foreign requests/console/page errors; screenshots). AI-review channel left verbatim — it already self-labels preliminary_only; stamping AI-authored markdown was rejected. Not touched: FoundationEstimator.jsx, FoundationBOM.jsx, foundationCalc/foundationReinforcement*/partSync (Phase B-3), FoundationProject.jsonc/FoundationSettings.jsx (O-104), foundationAiReview, entities. No remote write/checkpoint/deploy/business records/paid AI."
+}

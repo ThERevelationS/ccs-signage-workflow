@@ -1,0 +1,41 @@
+{
+ "head": "1c45c69736370edc7389bba5686bf6c69f4787c0",
+ "dirty": "",
+ "changed": ".audit-tmp/fixrls.py\n.audit-tmp/scan.py\nbase44/entities/PermitResolutionRule.jsonc\nbase44/entities/ProofShareLink.jsonc\nbase44/entities/SignageFact.jsonc\nbase44/entities/SignageFactIndex.jsonc\nbase44/functions/timeClockAction/entry.ts\nbase44/functions/timeClockAction/function.jsonc\nbase44/shared/timeClockStatusLite.ts\nsrc/components/timeclock/QuickClockSection.jsx\nsrc/components/timeclock/faceScanRuntime.js\nsrc/pages/TimeClock.jsx\n",
+ "headAfter": "1c45c69736370edc7389bba5686bf6c69f4787c0",
+ "dirtyAfter": "",
+ "drift": [
+  "src/components/estimator/foundation/wallCalculator.js",
+  "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+  "base44/functions/staffDataRead/entry.ts",
+  "src/components/estimator/foundation/WallShapeEditor.jsx",
+  "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+  "src/components/estimator/foundation/poleCalculator.js"
+ ],
+ "roles": {
+  "src/components/estimator/foundation/wallCalculator.js": "reference",
+  "src/components/estimator/foundation/foundationCatalogIntegrity.js": "reference",
+  "src/components/estimator/foundation/foundationCalc.js": "target",
+  "src/components/estimator/foundation/FoundationWallsPanel.jsx": "reference",
+  "src/components/estimator/foundation/FoundationBOM.jsx": "target",
+  "base44/shared/estimatorAiModelPolicy.js": "protected",
+  "base44/entities/FoundationProject.jsonc": "protected",
+  "base44/entities/FoundationInventory.jsonc": "protected",
+  "base44/entities/WorkOrder.jsonc": "protected",
+  "src/components/estimator/foundation/legacyFoundationCalc.js": "protected",
+  "src/pages/FoundationEstimator.jsx": "reference",
+  "src/components/estimator/workOrderConversion.js": "protected",
+  "base44/functions/staffEntityWrite/entry.ts": "protected",
+  "base44/functions/staffDataRead/entry.ts": "protected",
+  "src/components/estimator/builder/builderEntityPersistence.js": "protected",
+  "src/components/estimator/foundation/Foundation3DPreview.jsx": "protected",
+  "src/components/estimator/foundation/foundationAiReview.js": "protected",
+  "src/components/estimator/foundation/AiEngineeringAssistant.jsx": "protected",
+  "src/components/estimator/foundation/FoundationTotals.jsx": "target",
+  "src/components/estimator/foundation/wallCapCalculator.js": "reference",
+  "src/components/estimator/foundation/FoundationWallCapsPanel.jsx": "reference",
+  "src/components/estimator/foundation/WallShapeEditor.jsx": "protected",
+  "src/components/estimator/foundation/FoundationPolesPanel.jsx": "target",
+  "src/components/estimator/foundation/poleCalculator.js": "target"
+ }
+}

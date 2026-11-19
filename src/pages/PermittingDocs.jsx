@@ -8,7 +8,7 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import SourceTextEvidenceBrowser, { hasSavedPhysicalPageText } from "@/components/permitting/SourceTextEvidenceBrowser";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import {
   BookOpen, ChevronDown, ChevronUp, ShieldCheck, FileSearch, RefreshCw,
   AlertTriangle, MapPin, Search, Sparkles, ClipboardCheck, BarChart3,
@@ -23,7 +23,7 @@ function DocSection({ icon: Icon, title, children, defaultOpen = false }) {
   return (
     <Card>
       <CardHeader>
-        <button
+        <button type="button"
           onClick={() => setOpen(!open)}
           className="flex w-full items-center justify-between text-left"
         >
@@ -59,7 +59,7 @@ function SavedPhysicalTextAcceptance() {
   useEffect(() => {
     let active = true;
     loadAllEntityRows({
-      entity: base44.entities.JurisdictionProfile,
+      entity: staffEntities.JurisdictionProfile,
       sort: null,
       label: "Permitting text reader jurisdiction catalog",
     }).then(rows => {

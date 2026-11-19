@@ -1,0 +1,30 @@
+{
+  "ledger_counts": {
+    "reconciliation_batches": 1,
+    "invoices": 4545,
+    "payments": 4696,
+    "refunds": 136
+  },
+  "expected_counts": {
+    "invoices": 4545,
+    "payments": 4696,
+    "refunds": 136,
+    "reconciliation_batches": 1
+  },
+  "duplicate_source_ids": 0,
+  "invalid_ledger_rows": 0,
+  "missing_ledger_rows": 0,
+  "unexpected_ledger_rows": 0,
+  "orphans": 0,
+  "reference_errors": 0,
+  "checked": 9378,
+  "totals": {
+    "invoice_total": 14542062.24,
+    "payment_total": 8748542.96,
+    "refund_total": -376152.66
+  },
+  "archive_payment_total": 8910277.02,
+  "archive_refund_total": -398668.54,
+  "totals_match_plan": true,
+  "unresolved_customers": 86
+}

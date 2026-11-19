@@ -39,12 +39,39 @@
       "type": "string",
       "description": "Optional linked WorkOrder id \u2014 ties this estimate to a job in the workflow."
     },
+    "sales_stage": {
+      "type": "string",
+      "enum": [
+        "lead",
+        "quoted",
+        "follow_up",
+        "won",
+        "lost",
+        "on_hold"
+      ],
+      "description": "Mirror of the linked WorkOrder's sales_status, written back when the pipeline stage changes (WorkOrder to estimate reverse sync). Distinct from the estimate lifecycle status field; absent on estimates that were never pipeline-linked."
+    },
+    "sales_stage_changed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the most recent sales_stage write-back from the linked WorkOrder."
+    },
     "estimate_number": {
       "type": "string"
     },
     "po_number": {
       "type": "string",
       "description": "Customer purchase order number, shown on the customer quote."
+    },
+    "delivery_method": {
+      "type": "string",
+      "enum": [
+        "pickup",
+        "installation",
+        "shipping",
+        "delivery"
+      ],
+      "description": "Requested fulfillment/delivery method captured at quote time (A-28); seeds WorkOrder.fulfillment_method on conversion."
     },
     "terms": {
       "type": "string",
@@ -108,10 +135,18 @@
       "items": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "url": { "type": "string" },
-          "source": { "type": "string" }
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
         }
       }
     },
@@ -183,6 +218,46 @@
       "type": "boolean",
       "default": false,
       "description": "Persisted mirror of the computed expiry check (sent past quote_issue_date + quote_valid_days) so expired quotes are reportable by filter without recomputing per row."
+    },
+    "quote_valid_until": {
+      "type": "string",
+      "description": "Derived expiry alias read by quote delivery + workspace views (K-10); mirrors quote_expiration_date/computed expiry."
+    },
+    "email_signature": {
+      "type": "string",
+      "description": "Per-estimate copy of the QuoteDefaults email signature snapshot for delivery emails (K-10)."
+    },
+    "email_subject_template": {
+      "type": "string",
+      "description": "Per-estimate email subject template snapshot (K-10)."
+    },
+    "email_message_template": {
+      "type": "string",
+      "description": "Per-estimate email body template snapshot (K-10)."
+    },
+    "default_tax_group": {
+      "type": "string",
+      "description": "TaxGroup name resolved for this estimate when no manual tax pick exists (K-10 chain: manual > customer > defaults > TaxGroup.is_default)."
+    },
+    "signature_text": {
+      "type": "string",
+      "description": "Print-surface signature block text snapshot (K-10)."
+    },
+    "disclaimer_text": {
+      "type": "string",
+      "description": "Print-footer disclaimer line snapshot (K-10)."
+    },
+    "tax_rate_source": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "customer_default",
+        "shop_default",
+        "group_default",
+        "manual",
+        "none"
+      ],
+      "description": "Which hop of the tax-rate resolution chain this estimate used (K-10)."
     },
     "quote_version": {
       "type": "number",
@@ -610,15 +685,19 @@
       "items": {
         "type": "object",
         "properties": {
-          "min_subtotal": { "type": "number" },
-          "discount_percent": { "type": "number" }
+          "min_subtotal": {
+            "type": "number"
+          },
+          "discount_percent": {
+            "type": "number"
+          }
         }
       },
       "description": "Snapshot of the linked customer's volume discount tiers captured at customer-select time."
     },
     "category_adjustments": {
       "type": "object",
-      "description": "Per-category price adjustments for this estimate only — {"Category": percent} stacked on top of each section's own adjustment_percent."
+      "description": "Per-category price adjustments for this estimate only \u2014 {'Category': percent} stacked on top of each section's own adjustment_percent."
     },
     "pricing_tier": {
       "type": "number",
@@ -627,7 +706,7 @@
     },
     "personal_tags": {
       "type": "object",
-      "description": "Per-user color/label tags for personal organization — keyed by staff email, e.g. {"brett@cincisigns.com": {"color": "red"}}. Not customer-visible; each user only sees their own tag."
+      "description": "Per-user color/label tags for personal organization \u2014 keyed by staff email, e.g. {'brett@cincisigns.com': {'color': 'red'}}. Not customer-visible; each user only sees their own tag."
     },
     "notes": {
       "type": "string"
@@ -637,12 +716,18 @@
       "items": {
         "type": "object",
         "properties": {
-          "text": { "type": "string" },
-          "by": { "type": "string" },
-          "at": { "type": "string" }
+          "text": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          }
         }
       },
-      "description": "Timestamped internal note entries appended over the estimate's life — the single notes field stays the freeform scratch field."
+      "description": "Timestamped internal note entries appended over the estimate's life \u2014 the single notes field stays the freeform scratch field."
     },
     "edit_reason": {
       "type": "string",
@@ -679,6 +764,62 @@
     },
     "deleted_by": {
       "type": "string"
+    },
+    "entered_by_display": {
+      "type": "string",
+      "description": "Display name of the staff member who entered the order (CoreBridge 'Entered By')."
+    },
+    "follow_up_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Scheduled sales follow-up date (YYYY-MM-DD)."
+    },
+    "follow_up_state": {
+      "type": "object",
+      "description": "Follow-up state machine snapshot (H-04): {stage: none|fu1_sent|fu2_sent|answered|closed, last_sent_at, next_due_at, anchor_at, fu1_sent_at, fu2_sent_at, answered_at, closed_reason}."
+    },
+    "payment_terms_label": {
+      "type": "string",
+      "description": "Payment terms display label printed on documents (e.g. 'Balance Due Upon Receipt'). Complements the payment_terms/terms text fields."
+    },
+    "internal_discount": {
+      "type": "number",
+      "description": "Internal (non-customer-facing) discount amount tracked for margin reporting; separate from the customer-facing discount_percent waterfall."
+    },
+    "fee_lines": {
+      "type": "array",
+      "description": "Canonical OrderFee lines (shipping, postage, discount, misc fee) carried through order-to-invoice. Each line: {label, kind, amount, taxable, income_account_code}. Mirrored identically on AllInOneEstimate and Invoice.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Display label for the fee line."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "shipping",
+              "postage",
+              "discount",
+              "fee"
+            ],
+            "description": "Fee classification."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Signed amount; discounts are negative."
+          },
+          "taxable": {
+            "type": "boolean",
+            "description": "Whether this line is included in the taxable base."
+          },
+          "income_account_code": {
+            "type": "string",
+            "description": "GL income account code for accounting export."
+          }
+        }
+      }
     }
   },
   "required": [

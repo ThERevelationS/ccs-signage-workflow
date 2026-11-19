@@ -1,0 +1,37 @@
+{
+ "jurisdiction_id": "6adef32f5736180dccf56a44",
+ "jurisdiction_name": "Grand Rapids",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "1) The Zoning Inspector will have access to the property for on - site inspections prior to, during, and after construction. 2) There may be deed restrictions on the property that differ fro m the Village of Grand Rapids Zoning Ordinance . The applicant is responsible for checking the deed and ensuring that any proposed project meets any restrictions that may be in effect. 3) There may be utility and/or ditch easements upon the property. The applicant is responsible for knowing if such easements exist. (Easement information is available in the Wood County Recorder’s Office). 4) Any fence, structure or planting placed within a utility and/or ditch easement may be subject to damage or removal at the property owner’s expense in the event that the utility company requires access. 5) The Village of Grand Rapids has no responsibility for the correct placement of a fence on the applicant’s prop",
+   "tags": [
+    "dimension",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "ac2e1a6f5091f706e520b66a043e277eaa0e823e7e8a075e3c1b098a69010c89",
+   "source_document_id": null,
+   "source_title": "ac2e1a6f5091f706e520b66a043e277eaa0e823e7e8a075e3c1b098a69010c89.pdf",
+   "official_url": "https://grandrapidsohio.com/wp-content/uploads/2026/06/Zoning-Permit.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "APPLICATION for ZONING PERMIT VILLAGE of GRAND RAPIDS, WOOD COUNTY, OHIO (PLEASE PRINT or TYPE INFORMATION) Property Owner: Location: Name ___________________________________ Address ___________________________________ Address _________________________________ Tax Parcel ID _______________________________ Contractor __________________________________________________________________________ Contractor’s Address __________________________________________________________________ Pre sent Use: Proposed Use: ____ Single - Family ____ Accessory Building ___ Conditional Use ____ Two - Family ____ Additio n ( including deck) ___ Patio ____ Multi - Family ____ Additional Units (#) ___ ___ Driveway/Parking ____ Commercial ____ A lteration ___ Home Occupation ____ Industrial ____ Change in Roof Pitch ___ Change - in - Use ____ Institutional ____ Sign(s) ___ Fence ____ Non - Conforming Use ____ New ",
+   "tags": [
+    "sign",
+    "process"
+   ],
+   "weight": 2,
+   "source_sha256": "ac2e1a6f5091f706e520b66a043e277eaa0e823e7e8a075e3c1b098a69010c89",
+   "source_document_id": null,
+   "source_title": "ac2e1a6f5091f706e520b66a043e277eaa0e823e7e8a075e3c1b098a69010c89.pdf",
+   "official_url": "https://grandrapidsohio.com/wp-content/uploads/2026/06/Zoning-Permit.pdf"
+  }
+ ]
+}

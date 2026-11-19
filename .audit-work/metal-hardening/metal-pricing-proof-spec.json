@@ -1,0 +1,74 @@
+{
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "019b114582de9ffd5f51eecc7f69f5a530177245",
+ "jsonProofs": [
+  {
+   "file": "metal-model-verification.json",
+   "resultCount": 93
+  },
+  {
+   "file": "metal-red-verification.json",
+   "resultCount": 7
+  },
+  {
+   "file": "metal-page-verification.json",
+   "resultCount": 11
+  },
+  {
+   "file": "metal-browser-results.json",
+   "resultCount": 4
+  },
+  {
+   "file": "metal-consumer-build.json",
+   "resultCount": 4
+  },
+  {
+   "file": "metal-lint-results.json",
+   "resultCount": 2
+  },
+  {
+   "file": "metal-page-import-edges.json",
+   "resultCount": "see file"
+  },
+  {
+   "file": "metal-page-meta.json",
+   "resultCount": "see file"
+  },
+  {
+   "file": "metal-zero-legitimacy-decisions.md",
+   "resultCount": "see file"
+  },
+  {
+   "file": "MetalEstimator.diff",
+   "resultCount": "see file"
+  }
+ ],
+ "allResultsMustHaveOkTrue": true,
+ "scopedLintLogs": [
+  {
+   "file": "metal-lint-results.json",
+   "line": "0 errors / 0 warnings over 2 candidate files"
+  }
+ ],
+ "candidateHashes": {
+  "src/components/estimator/metal/metalPricingAvailability.js": "68c228ec0d2196ff6fba4575ade6c24cde6629d25b27ff347063ebbf4a329984",
+  "src/pages/MetalEstimator.jsx": "f0e72afd6d37502d5552e98e4bad62f43f40b65b2796f5484ba4e3395b9d6a6d"
+ },
+ "remoteBaselineHashes": {
+  "src/pages/MetalEstimator.jsx": "044d4e7d44156a2b6b94a122a0de5b7d2e82770733a2b6d25658df253b0d7cff"
+ },
+ "allowedBuildWarningCount": 0,
+ "remoteOperationsPermitted": [
+  "sandbox read",
+  "sandbox run (read-only shell)"
+ ],
+ "remoteMutationsPerformed": 0,
+ "applyRequiresLeadApproval": true,
+ "remoteWriteAuthorized": false,
+ "checkpointAuthorized": false,
+ "entityOperationsAuthorized": false,
+ "schemaOrMetadataAuthorized": false,
+ "publishOrDeployAuthorized": false,
+ "baselineFile": "metal-pricing-baseline-v2.json"
+}

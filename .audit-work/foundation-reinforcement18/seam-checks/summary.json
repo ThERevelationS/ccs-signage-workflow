@@ -1,0 +1,23 @@
+{
+  "synthetic": true,
+  "results": [
+    {
+      "name": "basic",
+      "cases": 83,
+      "exit": 0,
+      "output": ".audit-work/foundation-reinforcement18/seam-checks/basic/financial-verification.json"
+    },
+    {
+      "name": "reinforcement",
+      "cases": 111,
+      "exit": 0,
+      "output": ".audit-work/foundation-reinforcement18/seam-checks/reinforcement/financial-verification.json"
+    },
+    {
+      "name": "model",
+      "cases": 39,
+      "exit": 0,
+      "output": ".audit-work/foundation-reinforcement18/seam-checks/model/model-verification.json"
+    }
+  ]
+}

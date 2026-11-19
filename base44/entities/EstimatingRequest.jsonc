@@ -181,6 +181,10 @@
       "type": "string",
       "format": "date",
       "description": "Optional estimate-request due date; the attention feed flags open requests past this date as overdue."
+    },
+    "request_kind": {
+      "type": "string",
+      "description": "Optional machine-readable classification for why the request exists (e.g. quote_rejection_followup for a staff quote rejection follow-up, portal_decline / portal_revision for customer-portal follow-ups)."
     }
   },
   "required": [

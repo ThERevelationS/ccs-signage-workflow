@@ -1,0 +1,68 @@
+{
+  "results": [
+    {
+      "name": "unchanged baseline is eligible",
+      "ok": true
+    },
+    {
+      "name": "own committed partial state permits explicit resume",
+      "ok": true
+    },
+    {
+      "name": "all three committed candidate files verify",
+      "ok": true
+    },
+    {
+      "name": "partial application cannot claim verification",
+      "ok": true
+    },
+    {
+      "name": "protected file mutation is rejected",
+      "ok": true
+    },
+    {
+      "name": "unrecognized target edits are rejected",
+      "ok": true
+    },
+    {
+      "name": "missing protected source is rejected",
+      "ok": true
+    },
+    {
+      "name": "unrelated committed changes are rejected",
+      "ok": true
+    },
+    {
+      "name": "dirty source cannot claim readiness",
+      "ok": true
+    },
+    {
+      "name": "unrelated net-zero commits invalidate the baseline",
+      "ok": true
+    },
+    {
+      "name": "HEAD races during capture are rejected",
+      "ok": true
+    },
+    {
+      "name": "worktree races during capture are rejected",
+      "ok": true
+    },
+    {
+      "name": "lossy raw-text decoding is rejected",
+      "ok": true
+    },
+    {
+      "name": "forged target hashes are rejected",
+      "ok": true
+    },
+    {
+      "name": "uncommitted target content cannot claim committed scope",
+      "ok": true
+    },
+    {
+      "name": "duplicate source entries are rejected",
+      "ok": true
+    }
+  ]
+}

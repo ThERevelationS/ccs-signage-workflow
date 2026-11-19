@@ -1,0 +1,1455 @@
+{
+ "at": "2026-11-10T06:40:47.349Z",
+ "updates": [
+  {
+   "key": "terrace park|oh|village|hamilton",
+   "id": "6ae9b53cc4d1fcba86587d4b",
+   "name": "Terrace Park",
+   "state": "OH",
+   "winner": "6ae9aa7ae1f1beec365ce9ee"
+  },
+  {
+   "key": "guilford township|oh|township|medina",
+   "id": "6ae9b40a67bb0f401489964e",
+   "name": "Guilford township",
+   "state": "OH",
+   "winner": "6ae9a787c34f95de4b23692a"
+  },
+  {
+   "key": "seven hills|oh|city|cuyahoga",
+   "id": "6ae9afdcb7ec77ac413c9b71",
+   "name": "Seven Hills",
+   "state": "OH",
+   "winner": "6ae9aa3135b1f2f74d032aba"
+  },
+  {
+   "key": "somers township|oh|township|preble",
+   "id": "6ae9aabf7bd0c7110d93ea2d",
+   "name": "Somers township",
+   "state": "OH",
+   "winner": "6ae9a83007d47237b4b4fe4f"
+  },
+  {
+   "key": "greenville township|oh|township|darke",
+   "id": "6ae9aa5889f7bbf4ada275a0",
+   "name": "Greenville township",
+   "state": "OH",
+   "winner": "6ae9aa87657ca441accdf3b7"
+  },
+  {
+   "key": "bellville|oh|village|richland",
+   "id": "6ae9aa0c27a351e8863a50c3",
+   "name": "Bellville",
+   "state": "OH",
+   "winner": "6ae80e1c17d6fe8fe300d8d5"
+  },
+  {
+   "key": "seville|oh|village|medina",
+   "id": "6ae9aa04bd846d768c587ea3",
+   "name": "Seville",
+   "state": "OH",
+   "winner": "6ae80e120cad30a28bb3c6d3"
+  },
+  {
+   "key": "copley township|oh|township|summit",
+   "id": "6ae9a9eaad833fd21b80f1df",
+   "name": "Copley township",
+   "state": "OH",
+   "winner": "6ae80ded9f5bd8edc6fb003d"
+  },
+  {
+   "key": "fairlawn|oh|city|",
+   "id": "6ae9a9dc21c6cdcab8f1e264",
+   "name": "Fairlawn",
+   "state": "OH",
+   "winner": "6ae80def0be0d812dfbab6af"
+  },
+  {
+   "key": "hudson|oh|city|",
+   "id": "6ae9a9c93c546fea6ea5e82f",
+   "name": "Hudson",
+   "state": "OH",
+   "winner": "6ae80dd13fd4e427cfdd689b"
+  },
+  {
+   "key": "tallmadge|oh|city|",
+   "id": "6ae9a9b28159b27c941f7b2e",
+   "name": "Tallmadge",
+   "state": "OH",
+   "winner": "6ae80dd66ba6fd56318a2706"
+  },
+  {
+   "key": "freedom township|oh|township|portage",
+   "id": "6ae9a9a7c99139ec363522a8",
+   "name": "Freedom township",
+   "state": "OH",
+   "winner": "6ae80d9d807b06551fbfb410"
+  },
+  {
+   "key": "bellevue|oh|city|huron",
+   "id": "6ae9a9984d1b753273fc1e36",
+   "name": "Bellevue",
+   "state": "OH",
+   "winner": "6ae80e8dea5e1fe0fd577702"
+  },
+  {
+   "key": "ravenna|oh|city|portage",
+   "id": "6ae9a980d057258e6220ee1f",
+   "name": "Ravenna",
+   "state": "OH",
+   "winner": "6ae80d87126fe098e59371db"
+  },
+  {
+   "key": "kent|oh|city|portage",
+   "id": "6ae9a96a1fdd01f0bc925ab3",
+   "name": "Kent",
+   "state": "OH",
+   "winner": "6ae80d85fafdb5760d0317af"
+  },
+  {
+   "key": "aurora|oh|city|portage",
+   "id": "6ae9a924d057258e6220edf6",
+   "name": "Aurora",
+   "state": "OH",
+   "winner": "6ae80d58d234c45f6b8e1e47"
+  },
+  {
+   "key": "twinsburg|oh|city|",
+   "id": "6ae9a91b2c3a71421eefdd7e",
+   "name": "Twinsburg",
+   "state": "OH",
+   "winner": "6ae80d4a88d1059144002375"
+  },
+  {
+   "key": "bainbridge township|oh|township|geauga",
+   "id": "6ae9a8e00e17e687c5f70183",
+   "name": "Bainbridge township",
+   "state": "OH",
+   "winner": "6ae80d158101afb7639958b7"
+  },
+  {
+   "key": "twinsburg township|oh|township|summit",
+   "id": "6ae9a8b45610a6279b4ec093",
+   "name": "Twinsburg township",
+   "state": "OH",
+   "winner": "6ae80d283a801c7c9eb1e23b"
+  },
+  {
+   "key": "maple heights|oh|city|cuyahoga",
+   "id": "6ae9a86d8d1e45ec3f5c2357",
+   "name": "Maple Heights",
+   "state": "OH",
+   "winner": "6ae80beebc564b991e1b685f"
+  },
+  {
+   "key": "brunswick|oh|city|medina",
+   "id": "6ae9a84fdd30574a787da51c",
+   "name": "Brunswick",
+   "state": "OH",
+   "winner": "6ae80bb7550c89a7930c501e"
+  },
+  {
+   "key": "medina|oh|city|medina",
+   "id": "6ae9a84ca3a1afdf18041f8e",
+   "name": "Medina",
+   "state": "OH",
+   "winner": "6ae80be3da8c92185e3cea53"
+  },
+  {
+   "key": "norton|oh|city|",
+   "id": "6ae9a840caf42eb74b67eb6d",
+   "name": "Norton",
+   "state": "OH",
+   "winner": "6ae80bb45422bc94af11d939"
+  },
+  {
+   "key": "north canton|oh|city|",
+   "id": "6ae9a835c87fe81dc2062fe0",
+   "name": "North Canton",
+   "state": "OH",
+   "winner": "6ae82b16c676eeabb2bdd21e"
+  },
+  {
+   "key": "russell county|ky|county|russell",
+   "id": "6ae99fad25d1d73523ff2279",
+   "name": "Russell County",
+   "state": "KY",
+   "winner": "6ae82b040b9f3bbb93f04bcd"
+  },
+  {
+   "key": "russell county|ky|county|russell",
+   "id": "6ae9a82fbc18aec0deee3d17",
+   "name": "Russell County",
+   "state": "KY",
+   "winner": "6ae82b040b9f3bbb93f04bcd"
+  },
+  {
+   "key": "fulton county|ky|county|fulton",
+   "id": "6ae9a801838b54cf2028d1a5",
+   "name": "Fulton County",
+   "state": "KY",
+   "winner": "6ae99e3b190114c60fdc2629"
+  },
+  {
+   "key": "fulton county|ky|county|fulton",
+   "id": "6ae82a7a1d5d505a5fd87b12",
+   "name": "Fulton County",
+   "state": "KY",
+   "winner": "6ae99e3b190114c60fdc2629"
+  },
+  {
+   "key": "trotwood|oh|city|montgomery",
+   "id": "6ae9a7d261856a5c792d1591",
+   "name": "Trotwood",
+   "state": "OH",
+   "winner": "6ae82a49ea4a35878aa07356"
+  },
+  {
+   "key": "christian county|ky|county|christian",
+   "id": "6ae9a7a8f63844abf7e492ba",
+   "name": "Christian County",
+   "state": "KY",
+   "winner": "6ae99ecbeaa199b76614be0b"
+  },
+  {
+   "key": "christian county|ky|county|christian",
+   "id": "6ae8295204fb260a9aace627",
+   "name": "Christian County",
+   "state": "KY",
+   "winner": "6ae99ecbeaa199b76614be0b"
+  },
+  {
+   "key": "logan county|oh|county|logan",
+   "id": "6ae99d9a9bb2797a1f609331",
+   "name": "Logan County",
+   "state": "OH",
+   "winner": "6ae828fe86808d337ca8aef8"
+  },
+  {
+   "key": "logan county|oh|county|logan",
+   "id": "6ae9a790b7ba51e3d5417c0b",
+   "name": "Logan County",
+   "state": "OH",
+   "winner": "6ae828fe86808d337ca8aef8"
+  },
+  {
+   "key": "pike county|oh|county|pike",
+   "id": "6ae99da3841126ff2b932c88",
+   "name": "Pike County",
+   "state": "OH",
+   "winner": "6ae8085a7ba0a7db327252bd"
+  },
+  {
+   "key": "pike county|oh|county|pike",
+   "id": "6ae9a71c81bfe3c14abcf404",
+   "name": "Pike County",
+   "state": "OH",
+   "winner": "6ae8085a7ba0a7db327252bd"
+  },
+  {
+   "key": "lancaster|oh|city|fairfield",
+   "id": "6ae9a7040d79545fba5ac438",
+   "name": "Lancaster",
+   "state": "OH",
+   "winner": "6ae808262c1de27462537587"
+  },
+  {
+   "key": "hillsboro|oh|city|highland",
+   "id": "6ae9a6f5e82d8fcdf9968b02",
+   "name": "Hillsboro",
+   "state": "OH",
+   "winner": "6ae807ee8b84fc01ec0480a3"
+  },
+  {
+   "key": "west jefferson|oh|village|madison",
+   "id": "6ae9a68b92fb843c673c2aec",
+   "name": "West Jefferson",
+   "state": "OH",
+   "winner": "6ae82664cdf3ded3e570449f"
+  },
+  {
+   "key": "pataskala|oh|city|licking",
+   "id": "6ae9a618f80abb3d87bfe5d5",
+   "name": "Pataskala",
+   "state": "OH",
+   "winner": "6ae82c108705e870410353ec"
+  },
+  {
+   "key": "canal winchester|oh|city|",
+   "id": "6ae9a5d8d35533af465ca203",
+   "name": "Canal Winchester",
+   "state": "OH",
+   "winner": "6ae807365145c5b367a4c368"
+  },
+  {
+   "key": "fairfield county|oh|county|fairfield",
+   "id": "6ae9a5d281c5ced9dba26623",
+   "name": "Fairfield County",
+   "state": "OH",
+   "winner": "6ae99e0e34ba4fc410e4e742"
+  },
+  {
+   "key": "fairfield county|oh|county|fairfield",
+   "id": "6ae8073212cf06acc9bdc3a7",
+   "name": "Fairfield County",
+   "state": "OH",
+   "winner": "6ae99e0e34ba4fc410e4e742"
+  },
+  {
+   "key": "london|oh|city|madison",
+   "id": "6ae9a59be92271041089ef0c",
+   "name": "London",
+   "state": "OH",
+   "winner": "6ae82483899ca5565f428529"
+  },
+  {
+   "key": "madison county|oh|county|madison",
+   "id": "6ae8247296e1d4b3dc78047a",
+   "name": "Madison County",
+   "state": "OH",
+   "winner": "6ae99d6b61c4d2325e1c407e"
+  },
+  {
+   "key": "madison county|oh|county|madison",
+   "id": "6ae9a5638dce98cc8c5aa498",
+   "name": "Madison County",
+   "state": "OH",
+   "winner": "6ae99d6b61c4d2325e1c407e"
+  },
+  {
+   "key": "union county|oh|county|union",
+   "id": "6ae9a4e2b0564b651b6afa69",
+   "name": "Union County",
+   "state": "OH",
+   "winner": "6ae99d633c2c81482c84c400"
+  },
+  {
+   "key": "union county|oh|county|union",
+   "id": "6ae806ea6c240ca237ebbc0e",
+   "name": "Union County",
+   "state": "OH",
+   "winner": "6ae99d633c2c81482c84c400"
+  },
+  {
+   "key": "delaware|oh|city|delaware",
+   "id": "6ae9a4966b30d53b0bab084e",
+   "name": "Delaware",
+   "state": "OH",
+   "winner": "6ae817c907dea1548c231b75"
+  },
+  {
+   "key": "delaware county|oh|county|delaware",
+   "id": "6ae9a47404b000e45460a4a7",
+   "name": "Delaware County",
+   "state": "OH",
+   "winner": "6ae99d916d69892fb13aa15f"
+  },
+  {
+   "key": "delaware county|oh|county|delaware",
+   "id": "6ae817cf6ee272dc59242696",
+   "name": "Delaware County",
+   "state": "OH",
+   "winner": "6ae99d916d69892fb13aa15f"
+  },
+  {
+   "key": "orange township|oh|township|delaware",
+   "id": "6ae9a441118517d624cb38ba",
+   "name": "Orange township",
+   "state": "OH",
+   "winner": "6ae817f56b22b39f86f36e9c"
+  },
+  {
+   "key": "hilliard|oh|city|franklin",
+   "id": "6ae9a3fe18dde29337c8f230",
+   "name": "Hilliard",
+   "state": "OH",
+   "winner": "6ae817739a112eebb83fbac5"
+  },
+  {
+   "key": "reynoldsburg|oh|city|franklin",
+   "id": "6ae9a3e9a36461aa12ed4379",
+   "name": "Reynoldsburg",
+   "state": "OH",
+   "winner": "6ae803228ed7c4b1fbc30766"
+  },
+  {
+   "key": "westerville|oh|city|franklin",
+   "id": "6ae9a3c946f492c02d28323d",
+   "name": "Westerville",
+   "state": "OH",
+   "winner": "6ae81754357fdde577f607bf"
+  },
+  {
+   "key": "champaign county|oh|county|champaign",
+   "id": "6ae9a391e90b70b3593d6fcb",
+   "name": "Champaign County",
+   "state": "OH",
+   "winner": "6ae99e1b63ea57e21fd0334a"
+  },
+  {
+   "key": "champaign county|oh|county|champaign",
+   "id": "6ae81709d4a8963095b613d0",
+   "name": "Champaign County",
+   "state": "OH",
+   "winner": "6ae99e1b63ea57e21fd0334a"
+  },
+  {
+   "key": "urbana|oh|city|champaign",
+   "id": "6ae9a37fa7d6850d74948fb6",
+   "name": "Urbana",
+   "state": "OH",
+   "winner": "6ae81707649453123d81f5f7"
+  },
+  {
+   "key": "darke county|oh|county|darke",
+   "id": "6ae9a37416e777a10319400f",
+   "name": "Darke County",
+   "state": "OH",
+   "winner": "6ae99d8e657b9eec4e40bb14"
+  },
+  {
+   "key": "darke county|oh|county|darke",
+   "id": "6ae816fd068945aceec4ccd1",
+   "name": "Darke County",
+   "state": "OH",
+   "winner": "6ae99d8e657b9eec4e40bb14"
+  },
+  {
+   "key": "greenville|oh|city|darke",
+   "id": "6ae9a36761c32e247f3be570",
+   "name": "Greenville",
+   "state": "OH",
+   "winner": "6ae816e8eb540786f547e487"
+  },
+  {
+   "key": "circleville|oh|city|pickaway",
+   "id": "6ae9a23d020d5d11934d782d",
+   "name": "Circleville",
+   "state": "OH",
+   "winner": "6ae816658dd9db870860a04d"
+  },
+  {
+   "key": "wilmington|oh|city|clinton",
+   "id": "6ae9a18d54466108baef488b",
+   "name": "Wilmington",
+   "state": "OH",
+   "winner": "6ae816557123022f623d6b5d"
+  },
+  {
+   "key": "lawrence county|oh|county|lawrence",
+   "id": "6ae9a17a274960c534ec7ccc",
+   "name": "Lawrence County",
+   "state": "OH",
+   "winner": "6ae99d6f0347586bc5db196d"
+  },
+  {
+   "key": "lawrence county|oh|county|lawrence",
+   "id": "6ae81647cae12f7f1b3193fe",
+   "name": "Lawrence County",
+   "state": "OH",
+   "winner": "6ae99d6f0347586bc5db196d"
+  },
+  {
+   "key": "ironton|oh|city|lawrence",
+   "id": "6ae9a16834e417d16d3b48e4",
+   "name": "Ironton",
+   "state": "OH",
+   "winner": "6ae816401ecbf48a91d05eae"
+  },
+  {
+   "key": "coshocton|oh|city|coshocton",
+   "id": "6ae9a14ef5a654bf27276fb4",
+   "name": "Coshocton",
+   "state": "OH",
+   "winner": "6ae81606b00023294a9eeb3a"
+  },
+  {
+   "key": "cambridge|oh|city|guernsey",
+   "id": "6ae9a0ca8355457355819926",
+   "name": "Cambridge",
+   "state": "OH",
+   "winner": "6ae815e9a58984a0a098618f"
+  },
+  {
+   "key": "coshocton county|oh|county|coshocton",
+   "id": "6ae99ebddb3e065aa9a9f629",
+   "name": "Coshocton County",
+   "state": "OH",
+   "winner": "6ae8161502c52489359f7f9a"
+  },
+  {
+   "key": "coshocton county|oh|county|coshocton",
+   "id": "6ae9a0b40801ea76cf76caf2",
+   "name": "Coshocton County",
+   "state": "OH",
+   "winner": "6ae8161502c52489359f7f9a"
+  },
+  {
+   "key": "west lafayette|oh|village|coshocton",
+   "id": "6ae9a0adb31efd7ce3514908",
+   "name": "West Lafayette",
+   "state": "OH",
+   "winner": "6ae8161a3e9c017216a7f06a"
+  },
+  {
+   "key": "van wert county|oh|county|van wert",
+   "id": "6ae9a0a3f3fb50cc9ee55e4a",
+   "name": "Van Wert County",
+   "state": "OH",
+   "winner": "6ae99d960a7def53e3cf03df"
+  },
+  {
+   "key": "van wert county|oh|county|van wert",
+   "id": "6ae81577b84e22579b147a01",
+   "name": "Van Wert County",
+   "state": "OH",
+   "winner": "6ae99d960a7def53e3cf03df"
+  },
+  {
+   "key": "van wert|oh|city|",
+   "id": "6ae9a09ff2c1815a5c5684ea",
+   "name": "Van Wert",
+   "state": "OH",
+   "winner": "6ae815dda9634a20aad83642"
+  },
+  {
+   "key": "crawford county|oh|county|crawford",
+   "id": "6ae9a091347c85b240b76692",
+   "name": "Crawford County",
+   "state": "OH",
+   "winner": "6ae99e71280b42c7107ca4c0"
+  },
+  {
+   "key": "crawford county|oh|county|crawford",
+   "id": "6ae815e30619b17184b667ea",
+   "name": "Crawford County",
+   "state": "OH",
+   "winner": "6ae99e71280b42c7107ca4c0"
+  },
+  {
+   "key": "celina|oh|city|mercer",
+   "id": "6ae9a044bd353d798ceb2c1c",
+   "name": "Celina",
+   "state": "OH",
+   "winner": "6ae815cc4537694614c393d9"
+  },
+  {
+   "key": "duchouquet township|oh|township|auglaize",
+   "id": "6ae9a02cb061260564976c03",
+   "name": "Duchouquet township",
+   "state": "OH",
+   "winner": "6ae80b7cc291e1387daee494"
+  },
+  {
+   "key": "wapakoneta|oh|city|auglaize",
+   "id": "6ae9a01a9c7144be28409d52",
+   "name": "Wapakoneta",
+   "state": "OH",
+   "winner": "6ae81526eec6159548383190"
+  },
+  {
+   "key": "norwalk|oh|city|huron",
+   "id": "6ae99ff5e56369ad568b5667",
+   "name": "Norwalk",
+   "state": "OH",
+   "winner": "6ae80521eec6159548380f7b"
+  },
+  {
+   "key": "kenton county|ky|county|kenton",
+   "id": "6ae831ba836d2c310f134b9a",
+   "name": "Kenton County",
+   "state": "KY",
+   "winner": "6ae99ff4d1fae54325d07827"
+  },
+  {
+   "key": "boyle county|ky|county|boyle",
+   "id": "6ae99ff205f2a1a952291384",
+   "name": "Boyle County",
+   "state": "KY",
+   "winner": "6ae8314c10f7ebab227c3c07"
+  },
+  {
+   "key": "metcalfe county|ky|county|metcalfe",
+   "id": "6ae84c5812105c4f35c39c56",
+   "name": "Metcalfe County",
+   "state": "KY",
+   "winner": "6ae99fe3e5f5cad0596742e9"
+  },
+  {
+   "key": "bath county|ky|county|bath",
+   "id": "6ae83216cba055f3c5004466",
+   "name": "Bath County",
+   "state": "KY",
+   "winner": "6ae99fccc83dbf4dff0491cb"
+  },
+  {
+   "key": "rowan county|ky|county|rowan",
+   "id": "6ae8436b7cdc1a1ac8c507f3",
+   "name": "Rowan County",
+   "state": "KY",
+   "winner": "6ae99fc9d9b37a1542585781"
+  },
+  {
+   "key": "owen county|ky|county|owen",
+   "id": "6ae99fc7c55548d901b74d02",
+   "name": "Owen County",
+   "state": "KY",
+   "winner": "6ae845e2f8c533a6aee3a1ba"
+  },
+  {
+   "key": "franklin county|ky|county|franklin",
+   "id": "6ae83a60ce184129c9c56924",
+   "name": "Franklin County",
+   "state": "KY",
+   "winner": "6ae99fc5a8c177f115c28450"
+  },
+  {
+   "key": "sandusky county|oh|county|sandusky",
+   "id": "6ae99fc3cc39825a6bb6e6b9",
+   "name": "Sandusky County",
+   "state": "OH",
+   "winner": "6ae99ec18091bc30c08b7ae7"
+  },
+  {
+   "key": "sandusky county|oh|county|sandusky",
+   "id": "6ae804f584d55fe64c33b940",
+   "name": "Sandusky County",
+   "state": "OH",
+   "winner": "6ae99ec18091bc30c08b7ae7"
+  },
+  {
+   "key": "breathitt county|ky|county|breathitt",
+   "id": "6ae84693ad114ad9b4c48d37",
+   "name": "Breathitt County",
+   "state": "KY",
+   "winner": "6ae99fc24534f85eca4e2bac"
+  },
+  {
+   "key": "scott county|ky|county|scott",
+   "id": "6ae99fc19c70f0dfd4c194ac",
+   "name": "Scott County",
+   "state": "KY",
+   "winner": "6ae84e3af09cdf2d1b3060c9"
+  },
+  {
+   "key": "green county|ky|county|green",
+   "id": "6ae841abaee2e972892bdbf0",
+   "name": "Green County",
+   "state": "KY",
+   "winner": "6ae99fbfa6e5ed29f43cff03"
+  },
+  {
+   "key": "powell county|ky|county|powell",
+   "id": "6ae99fbf6faab071050852fc",
+   "name": "Powell County",
+   "state": "KY",
+   "winner": "6ae83740c8c23fa2ed7297d3"
+  },
+  {
+   "key": "daviess county|ky|county|daviess",
+   "id": "6ae849122e13a1be4fc8d67d",
+   "name": "Daviess County",
+   "state": "KY",
+   "winner": "6ae99fbb28632d16776d5c89"
+  },
+  {
+   "key": "shelby county|ky|county|shelby",
+   "id": "6ae99fbaed9c6243b7ed78b4",
+   "name": "Shelby County",
+   "state": "KY",
+   "winner": "6ae83552a4327e01a24eea7c"
+  },
+  {
+   "key": "fremont|oh|city|sandusky",
+   "id": "6ae99fbab65be949051eb1fb",
+   "name": "Fremont",
+   "state": "OH",
+   "winner": "6ae804f30ee74ef4d22944fd"
+  },
+  {
+   "key": "henderson county|ky|county|henderson",
+   "id": "6ae99fb4709f3e01bb87d427",
+   "name": "Henderson County",
+   "state": "KY",
+   "winner": "6ae8424c84e4504f4098c98b"
+  },
+  {
+   "key": "morrow county|oh|county|morrow",
+   "id": "6ae99fb3c6f8f3df9ab1c142",
+   "name": "Morrow County",
+   "state": "OH",
+   "winner": "6ae8463369e6051fa635a06c"
+  },
+  {
+   "key": "seneca county|oh|county|seneca",
+   "id": "6ae99fb0f889fba7645b7d37",
+   "name": "Seneca County",
+   "state": "OH",
+   "winner": "6ae99d968adc5b470d80a495"
+  },
+  {
+   "key": "seneca county|oh|county|seneca",
+   "id": "6ae804b7357fdde577f5e786",
+   "name": "Seneca County",
+   "state": "OH",
+   "winner": "6ae99d968adc5b470d80a495"
+  },
+  {
+   "key": "harrison county|oh|county|harrison",
+   "id": "6ae99fb0735cf7d27006ff34",
+   "name": "Harrison County",
+   "state": "OH",
+   "winner": "6ae83004e86393a5b694a0ac"
+  },
+  {
+   "key": "madison county|ky|county|madison",
+   "id": "6ae99faf699f3359377f233b",
+   "name": "Madison County",
+   "state": "KY",
+   "winner": "6ae8392bdc2a9bc409066e2d"
+  },
+  {
+   "key": "harrison county|ky|county|harrison",
+   "id": "6ae99faa7d8f20616956104c",
+   "name": "Harrison County",
+   "state": "KY",
+   "winner": "6ae83eb58ff6f5555444943f"
+  },
+  {
+   "key": "butler county|oh|county|butler",
+   "id": "6ae99fa9fa1319c0c46518f0",
+   "name": "Butler County",
+   "state": "OH",
+   "winner": "6ae80abbd04667dd2562a5e2"
+  },
+  {
+   "key": "shelby county|oh|county|shelby",
+   "id": "6ae99d5a4619ee1cb2a6951a",
+   "name": "Shelby County",
+   "state": "OH",
+   "winner": "6ae8049b4282c8d7eced12e2"
+  },
+  {
+   "key": "shelby county|oh|county|shelby",
+   "id": "6ae99fa968af12dd3b5f76dd",
+   "name": "Shelby County",
+   "state": "OH",
+   "winner": "6ae8049b4282c8d7eced12e2"
+  },
+  {
+   "key": "adams county|oh|county|adams",
+   "id": "6ae99fa70923effe037a4133",
+   "name": "Adams County",
+   "state": "OH",
+   "winner": "6ae83cf7c5e04fad85db18d6"
+  },
+  {
+   "key": "wyandot county|oh|county|wyandot",
+   "id": "6ae83c19e82a05e92530c3c5",
+   "name": "Wyandot County",
+   "state": "OH",
+   "winner": "6ae99fa6c4361c714c40f1d1"
+  },
+  {
+   "key": "preble county|oh|county|preble",
+   "id": "6ae83f30e49c6601ff0b5469",
+   "name": "Preble County",
+   "state": "OH",
+   "winner": "6ae99fa2302df1a66f784cd2"
+  },
+  {
+   "key": "greene county|oh|county|greene",
+   "id": "6ae82f2f8436ac2e3377b4f4",
+   "name": "Greene County",
+   "state": "OH",
+   "winner": "6ae99f9d3204a2b02b9b2095"
+  },
+  {
+   "key": "gallatin county|ky|county|gallatin",
+   "id": "6ae99f9ca6417bed9ee54b45",
+   "name": "Gallatin County",
+   "state": "KY",
+   "winner": "6ae84331604f7bc922ab47e8"
+  },
+  {
+   "key": "ottawa county|oh|county|ottawa",
+   "id": "6ae83e3d8520618af38df7db",
+   "name": "Ottawa County",
+   "state": "OH",
+   "winner": "6ae99f9b901c306c49ca0f20"
+  },
+  {
+   "key": "anderson county|ky|county|anderson",
+   "id": "6ae84440b114726f1f9b34bd",
+   "name": "Anderson County",
+   "state": "KY",
+   "winner": "6ae99f99b8ebbe64453a6a3f"
+  },
+  {
+   "key": "calloway county|ky|county|calloway",
+   "id": "6ae84ba9f74c3f180c5c4cbe",
+   "name": "Calloway County",
+   "state": "KY",
+   "winner": "6ae99f950d88283e67593807"
+  },
+  {
+   "key": "mclean county|ky|county|mclean",
+   "id": "6ae99f92fb59cbc9696be8b5",
+   "name": "McLean County",
+   "state": "KY",
+   "winner": "6ae829e75aa59dfc70a800dc"
+  },
+  {
+   "key": "whitley county|ky|county|whitley",
+   "id": "6ae843dde466eb69e5172c1d",
+   "name": "Whitley County",
+   "state": "KY",
+   "winner": "6ae99f8fb4aa7fa8e37627b1"
+  },
+  {
+   "key": "mason county|ky|county|mason",
+   "id": "6ae99f8e485df89ab8ac7c79",
+   "name": "Mason County",
+   "state": "KY",
+   "winner": "6ae839ab81463c6fddc4ca0e"
+  },
+  {
+   "key": "hardin county|oh|county|hardin",
+   "id": "6ae83ba32a8db78eb4d89ff3",
+   "name": "Hardin County",
+   "state": "OH",
+   "winner": "6ae99f8cfce0a35bb71ab0f1"
+  },
+  {
+   "key": "hopkins county|ky|county|hopkins",
+   "id": "6ae84185330ddadcd93f0008",
+   "name": "Hopkins County",
+   "state": "KY",
+   "winner": "6ae99f8b91ea45f7a2353826"
+  },
+  {
+   "key": "defiance county|oh|county|defiance",
+   "id": "6ae99f8827491d60da3ecd17",
+   "name": "Defiance County",
+   "state": "OH",
+   "winner": "6ae99d7328a69cb1fd122e46"
+  },
+  {
+   "key": "defiance county|oh|county|defiance",
+   "id": "6ae8048deaa6a247baca6a45",
+   "name": "Defiance County",
+   "state": "OH",
+   "winner": "6ae99d7328a69cb1fd122e46"
+  },
+  {
+   "key": "marion county|ky|county|marion",
+   "id": "6ae99f880d23a64708e5f485",
+   "name": "Marion County",
+   "state": "KY",
+   "winner": "6ae849bc02533845e506e5b9"
+  },
+  {
+   "key": "hardin county|ky|county|hardin",
+   "id": "6ae99f867a66ff4a82959960",
+   "name": "Hardin County",
+   "state": "KY",
+   "winner": "6ae8375b549c2177b3067eaa"
+  },
+  {
+   "key": "campbell county|ky|county|campbell",
+   "id": "6ae99f82582e8a9e470f26ec",
+   "name": "Campbell County",
+   "state": "KY",
+   "winner": "6ae83d2efee9838d45eebbab"
+  },
+  {
+   "key": "defiance|oh|city|defiance",
+   "id": "6ae99f41c1cf2c4a193aa107",
+   "name": "Defiance",
+   "state": "OH",
+   "winner": "6ae8048b96e1722b2013e002"
+  },
+  {
+   "key": "east union township|oh|township|wayne",
+   "id": "6ae99f331fd57aa9476c3605",
+   "name": "East Union township",
+   "state": "OH",
+   "winner": "6ae80b79842199f8e748e6b5"
+  },
+  {
+   "key": "breckinridge county|ky|county|breckinridge",
+   "id": "6ae83083b8f12e76b020a757",
+   "name": "Breckinridge County",
+   "state": "KY",
+   "winner": "6ae99f2832528dc5f92bdefd"
+  },
+  {
+   "key": "jessamine county|ky|county|jessamine",
+   "id": "6ae99f1cc726b28119a12086",
+   "name": "Jessamine County",
+   "state": "KY",
+   "winner": "6ae82a24b973adfbf528f30a"
+  },
+  {
+   "key": "muhlenberg county|ky|county|muhlenberg",
+   "id": "6ae99f13431e17d92c531c4b",
+   "name": "Muhlenberg County",
+   "state": "KY",
+   "winner": "6ae82dc63476e4aee3694681"
+  },
+  {
+   "key": "wayne county|oh|county|wayne",
+   "id": "6ae99ef6795d2b565bc87069",
+   "name": "Wayne County",
+   "state": "OH",
+   "winner": "6ae99e253f71e52924dd4ba1"
+  },
+  {
+   "key": "wayne county|oh|county|wayne",
+   "id": "6ae8045defaa66d60995a362",
+   "name": "Wayne County",
+   "state": "OH",
+   "winner": "6ae99e253f71e52924dd4ba1"
+  },
+  {
+   "key": "logan county|ky|county|logan",
+   "id": "6ae99ed5a75d8bc6991cf7be",
+   "name": "Logan County",
+   "state": "KY",
+   "winner": "6ae835c4297a8cd521572fcc"
+  },
+  {
+   "key": "washington county|oh|county|washington",
+   "id": "6ae99ec00d88283e675936fb",
+   "name": "Washington County",
+   "state": "OH",
+   "winner": "6ae99e59179952ea44f7a616"
+  },
+  {
+   "key": "washington county|oh|county|washington",
+   "id": "6ae8043ccb4e17a7ea5d2f64",
+   "name": "Washington County",
+   "state": "OH",
+   "winner": "6ae99e59179952ea44f7a616"
+  },
+  {
+   "key": "brown county|oh|county|brown",
+   "id": "6ae8271e32f3c96027af1f02",
+   "name": "Brown County",
+   "state": "OH",
+   "winner": "6ae99eb7582e8a9e470f2622"
+  },
+  {
+   "key": "geauga county|oh|county|geauga",
+   "id": "6ae8037f43f59da0fdaf28a1",
+   "name": "Geauga County",
+   "state": "OH",
+   "winner": "6ae99eac3e3907ba84259f36"
+  },
+  {
+   "key": "jefferson county|oh|county|jefferson",
+   "id": "6ae816cb5422bc94af11f3d0",
+   "name": "Jefferson County",
+   "state": "OH",
+   "winner": "6ae99e980c4f143169f2ff61"
+  },
+  {
+   "key": "marietta|oh|city|",
+   "id": "6ae99e96f317e22d12907a7e",
+   "name": "Marietta",
+   "state": "OH",
+   "winner": "6ae8043a0619b17184b6359e"
+  },
+  {
+   "key": "hamilton county|oh|county|hamilton",
+   "id": "6ae82ba77ffdc8af2a1d7a93",
+   "name": "Hamilton County",
+   "state": "OH",
+   "winner": "6ae99e930bafaed428bd27d5"
+  },
+  {
+   "key": "fayette county|oh|county|fayette",
+   "id": "6ae99e89ce8a4da9ae3ef1d8",
+   "name": "Fayette County",
+   "state": "OH",
+   "winner": "6ae8166267a2fc6b811f2287"
+  },
+  {
+   "key": "guernsey county|oh|county|guernsey",
+   "id": "6ae815ef068945aceec4cbd1",
+   "name": "Guernsey County",
+   "state": "OH",
+   "winner": "6ae99e7674fabab1cf2281fa"
+  },
+  {
+   "key": "medina county|oh|county|medina",
+   "id": "6ae80bab013ccff59863c3ff",
+   "name": "Medina County",
+   "state": "OH",
+   "winner": "6ae99e6b8e0548a2ac13ad17"
+  },
+  {
+   "key": "mercer county|oh|county|mercer",
+   "id": "6ae815590466ec760514af4f",
+   "name": "Mercer County",
+   "state": "OH",
+   "winner": "6ae99e41bf8bb5dea7d4b6be"
+  },
+  {
+   "key": "clermont county|oh|county|clermont",
+   "id": "6ae99e2b8091bc30c08b7a88",
+   "name": "Clermont County",
+   "state": "OH",
+   "winner": "6ae80fe20cf575491f04a297"
+  },
+  {
+   "key": "clay township|oh|township|scioto",
+   "id": "6ae99dda3899f7de9aaa5069",
+   "name": "Clay township",
+   "state": "OH",
+   "winner": "6ae80b6f3dc3af1930bce64a"
+  },
+  {
+   "key": "jackson county|oh|county|jackson",
+   "id": "6ae99dd1c8ecc7f46e4e4c12",
+   "name": "Jackson County",
+   "state": "OH",
+   "winner": "6ae82797cf1578a38482a516"
+  },
+  {
+   "key": "lucas county|oh|county|lucas",
+   "id": "6ae80f8159a893bcaccf5ac8",
+   "name": "Lucas County",
+   "state": "OH",
+   "winner": "6ae99dae971b454249077c91"
+  },
+  {
+   "key": "erie county|oh|county|erie",
+   "id": "6ae816d8cf5ff9ae41c769fa",
+   "name": "Erie County",
+   "state": "OH",
+   "winner": "6ae99da93c3e5fb5fad0c952"
+  },
+  {
+   "key": "marion county|oh|county|marion",
+   "id": "6ae8035268bf93e5ac64cda6",
+   "name": "Marion County",
+   "state": "OH",
+   "winner": "6ae99da1903f0939326958bf"
+  },
+  {
+   "key": "hancock county|oh|county|hancock",
+   "id": "6ae80347c5d3da0fd44473df",
+   "name": "Hancock County",
+   "state": "OH",
+   "winner": "6ae99d9e971b454249077c83"
+  },
+  {
+   "key": "chillicothe|oh|city|ross",
+   "id": "6ae99d9c180872ed3e5357c8",
+   "name": "Chillicothe",
+   "state": "OH",
+   "winner": "6ae803845a8d088eadcedb23"
+  },
+  {
+   "key": "trumbull county|oh|county|trumbull",
+   "id": "6ae99d9ac2bb7ff6b1395d8d",
+   "name": "Trumbull County",
+   "state": "OH",
+   "winner": "6ae82e19002b37c930b98bb9"
+  },
+  {
+   "key": "miami county|oh|county|miami",
+   "id": "6ae805c4196035aa12c88d7b",
+   "name": "Miami County",
+   "state": "OH",
+   "winner": "6ae99d8d23f5c2eb64505432"
+  },
+  {
+   "key": "summit county|oh|county|summit",
+   "id": "6ae99d870a8881f312d2a613",
+   "name": "Summit County",
+   "state": "OH",
+   "winner": "6ae80baf135d4be1c434091c"
+  },
+  {
+   "key": "ross county|oh|county|ross",
+   "id": "6ae80386462f4fbe8a4434df",
+   "name": "Ross County",
+   "state": "OH",
+   "winner": "6ae99d7cc04186f067149aab"
+  },
+  {
+   "key": "pickaway county|oh|county|pickaway",
+   "id": "6ae8168638cd05504bfb997b",
+   "name": "Pickaway County",
+   "state": "OH",
+   "winner": "6ae99d7c1902e6521469f3b9"
+  },
+  {
+   "key": "zanesville|oh|city|muskingum",
+   "id": "6ae99d7a6bdd750c6604834b",
+   "name": "Zanesville",
+   "state": "OH",
+   "winner": "6ae80356d885b4165f89033e"
+  },
+  {
+   "key": "hocking county|oh|county|hocking",
+   "id": "6ae828a88762fcf3d0a1751a",
+   "name": "Hocking County",
+   "state": "OH",
+   "winner": "6ae99d6d5c308503afdafd6a"
+  },
+  {
+   "key": "marion township|oh|township|marion",
+   "id": "6ae99d5f9afbfc9580b44cd4",
+   "name": "Marion township",
+   "state": "OH",
+   "winner": "6ae80b6239ee56c901c62e40"
+  },
+  {
+   "key": "clinton county|oh|county|clinton",
+   "id": "6ae81657b9d8514e1a9aac0a",
+   "name": "Clinton County",
+   "state": "OH",
+   "winner": "6ae99d5854e96f94f7d950b4"
+  },
+  {
+   "key": "auglaize township|oh|township|allen",
+   "id": "6ae99d4d4b5acbb4f7997aea",
+   "name": "Auglaize township",
+   "state": "OH",
+   "winner": "6ae80b4f76613cd384916e6f"
+  },
+  {
+   "key": "allen county|oh|county|allen",
+   "id": "6ae99d2ed5ea4f661e6f0a0f",
+   "name": "Allen County",
+   "state": "OH",
+   "winner": "6ae8034f404b64ca0b837f75"
+  },
+  {
+   "key": "bowling green|oh|city|wood",
+   "id": "6ae99d24d7e0d071b8c635d6",
+   "name": "Bowling Green",
+   "state": "OH",
+   "winner": "6ae8033b07fbf1a0fe25e3e1"
+  },
+  {
+   "key": "ontario|oh|city|richland",
+   "id": "6ae99cee9683b13f8af2685a",
+   "name": "Ontario",
+   "state": "OH",
+   "winner": "6ae8030d75c934464bf977d9"
+  },
+  {
+   "key": "lorain county|oh|county|lorain",
+   "id": "6ae99cc028fd9fce18637dfd",
+   "name": "Lorain County",
+   "state": "OH",
+   "winner": "6ae802e66d1b054ca9fdb542"
+  },
+  {
+   "key": "lorain|oh|city|lorain",
+   "id": "6ae99cb32b2b1c7988aaefb8",
+   "name": "Lorain",
+   "state": "OH",
+   "winner": "6ae802fa70e06543b5e16f92"
+  },
+  {
+   "key": "mahoning county|oh|county|mahoning",
+   "id": "6ae99cb0f70190d623bfa2f5",
+   "name": "Mahoning County",
+   "state": "OH",
+   "winner": "6ae802e326e353abc0e63255"
+  },
+  {
+   "key": "parma|oh|city|cuyahoga",
+   "id": "6ae99cab54f48380aab9596a",
+   "name": "Parma",
+   "state": "OH",
+   "winner": "6ae802d9a17b82aec16636e5"
+  },
+  {
+   "key": "portage county|oh|county|portage",
+   "id": "6ae99c147dc7bf37ef0541cc",
+   "name": "Portage County",
+   "state": "OH",
+   "winner": "6ae80d5b61c21a73eafc2e38"
+  },
+  {
+   "key": "streetsboro|oh|city|portage",
+   "id": "6ae99beda43345b007da0a92",
+   "name": "Streetsboro",
+   "state": "OH",
+   "winner": "6ae80d5e535c7e0e3765bb08"
+  },
+  {
+   "key": "franklin county|oh|county|franklin",
+   "id": "6ae8031d14957b2b0447ea58",
+   "name": "Franklin County",
+   "state": "OH",
+   "winner": "6ae99bb966463edf30252bff"
+  },
+  {
+   "key": "ross|oh|township|greene",
+   "id": "6ae8a6a3781ad2e58a836823",
+   "name": "ROSS",
+   "state": "OH",
+   "winner": "6ae8a69f05a663fd2c1ec3f5"
+  },
+  {
+   "key": "st. matthews|ky|city|",
+   "id": "6ae8a67948b05d383fd7edda",
+   "name": "St. Matthews",
+   "state": "KY",
+   "winner": "6ae8a6768951f547afc30905"
+  },
+  {
+   "key": "highland county|oh|county|highland",
+   "id": "6ae8a2bd1c8b85fe8f422a7a",
+   "name": "Highland County",
+   "state": "OH",
+   "winner": "6ae8082029066bf78d4e472d"
+  },
+  {
+   "key": "waverly|oh|village|pike",
+   "id": "6ae8a28ad61646ee8e573d47",
+   "name": "Waverly",
+   "state": "OH",
+   "winner": "6ae8082881ba43fb2b4619d1"
+  },
+  {
+   "key": "heath|oh|city|licking",
+   "id": "6ae8a274b7125bc426f6fbf5",
+   "name": "Heath",
+   "state": "OH",
+   "winner": "6ae80768e3c4683e0ae7a3ae"
+  },
+  {
+   "key": "pickerington|oh|city|fairfield",
+   "id": "6ae8a2706f63da7812a23ad1",
+   "name": "Pickerington",
+   "state": "OH",
+   "winner": "6ae8072d81aa87b7dcbd4e3d"
+  },
+  {
+   "key": "auglaize county|oh|county|auglaize",
+   "id": "6ae8a247967d0b90a16ea2a0",
+   "name": "Auglaize County",
+   "state": "OH",
+   "winner": "6ae80538e7a6f499d2c14c76"
+  },
+  {
+   "key": "tiffin|oh|city|seneca",
+   "id": "6ae8a245cd3b0ccd47416a7e",
+   "name": "Tiffin",
+   "state": "OH",
+   "winner": "6ae804b5062c7b6488df65d3"
+  },
+  {
+   "key": "huron county|oh|county|huron",
+   "id": "6ae8a23cd14c844ae88e2aab",
+   "name": "Huron County",
+   "state": "OH",
+   "winner": "6ae80523f2384bd661a4bcb4"
+  },
+  {
+   "key": "sidney|oh|city|shelby",
+   "id": "6ae8a21c9190e2062efe75c7",
+   "name": "Sidney",
+   "state": "OH",
+   "winner": "6ae8049962060946ba9892ae"
+  },
+  {
+   "key": "athens county|oh|county|athens",
+   "id": "6ae8a2183b241f2bd8d60e8f",
+   "name": "Athens County",
+   "state": "OH",
+   "winner": "6ae80b73fb8c5db63a2e42db"
+  },
+  {
+   "key": "russell township|oh|township|geauga",
+   "id": "6ae8a1ccdec3c15fc4c963a1",
+   "name": "Russell township",
+   "state": "OH",
+   "winner": "6ae80b6b9acc157c8e3b832b"
+  },
+  {
+   "key": "ashland county|oh|county|ashland",
+   "id": "6ae8a1c0f794a249d9c7cff4",
+   "name": "Ashland County",
+   "state": "OH",
+   "winner": "6ae80b71b3e3d6c217b54d58"
+  },
+  {
+   "key": "scioto county|oh|county|scioto",
+   "id": "6ae803b593a9b63f96cc7f1e",
+   "name": "Scioto County",
+   "state": "OH",
+   "winner": "6ae8a1b3ef48591505393624"
+  },
+  {
+   "key": "falls township|oh|township|muskingum",
+   "id": "6ae8a19689556eab94f78830",
+   "name": "Falls township",
+   "state": "OH",
+   "winner": "6ae80b67abb853b8db27dea7"
+  },
+  {
+   "key": "muskingum county|oh|county|muskingum",
+   "id": "6ae8a181b377a155c8ac39ac",
+   "name": "Muskingum County",
+   "state": "OH",
+   "winner": "6ae803596ed4e4a7fd6ec445"
+  },
+  {
+   "key": "marion|oh|city|marion",
+   "id": "6ae8a17aab54edb4607e6a8e",
+   "name": "Marion",
+   "state": "OH",
+   "winner": "6ae803546122ac88a329fc3b"
+  },
+  {
+   "key": "american township|oh|township|allen",
+   "id": "6ae8a17939f029024f924795",
+   "name": "American township",
+   "state": "OH",
+   "winner": "6ae80b3f42cb635a629878f5"
+  },
+  {
+   "key": "wood county|oh|county|wood",
+   "id": "6ae8a15a655245f537a73407",
+   "name": "Wood County",
+   "state": "OH",
+   "winner": "6ae8033d61067be15cbeab2b"
+  },
+  {
+   "key": "lakewood|oh|city|cuyahoga",
+   "id": "6ae8a1593c4e98e43d28bc15",
+   "name": "Lakewood",
+   "state": "OH",
+   "winner": "6ae80319dbbb5e12b5ecf43a"
+  },
+  {
+   "key": "richland county|oh|county|richland",
+   "id": "6ae8a156b9020e4907df2d98",
+   "name": "Richland County",
+   "state": "OH",
+   "winner": "6ae80311e4ca6e04e13682e4"
+  },
+  {
+   "key": "warren county|oh|county|warren",
+   "id": "6ae8a152614fc527ad24a43f",
+   "name": "Warren County",
+   "state": "OH",
+   "winner": "6ae80b37e35bc6fbdcdd7bdd"
+  },
+  {
+   "key": "clark county|oh|county|clark",
+   "id": "6ae8a1436c351177bfecfc27",
+   "name": "Clark County",
+   "state": "OH",
+   "winner": "6ae80309d66bd71d131c1595"
+  },
+  {
+   "key": "springfield|oh|city|clark",
+   "id": "6ae8a13fd750a44db7c2bbb7",
+   "name": "Springfield",
+   "state": "OH",
+   "winner": "6ae803006661410d0cec2022"
+  },
+  {
+   "key": "licking county|oh|county|licking",
+   "id": "6ae8a13cfae7035368c4f69a",
+   "name": "Licking County",
+   "state": "OH",
+   "winner": "6ae8032e46abac7cd7f2b9a0"
+  },
+  {
+   "key": "canton|oh|city|",
+   "id": "6ae8a10d1cf28039cf8cdd57",
+   "name": "Canton",
+   "state": "OH",
+   "winner": "6ae802df87d786b6dc9fb775"
+  },
+  {
+   "key": "hamilton|oh|city|butler",
+   "id": "6ae8a101559e4115071b00f5",
+   "name": "Hamilton",
+   "state": "OH",
+   "winner": "6ae802fc49a576177a23f418"
+  },
+  {
+   "key": "stark county|oh|county|stark",
+   "id": "6ae8a0fb1d329f6a812101fb",
+   "name": "Stark County",
+   "state": "OH",
+   "winner": "6ae802dd745d2bfe3405e12e"
+  },
+  {
+   "key": "youngstown|oh|city|mahoning",
+   "id": "6ae8a0e72e032a4b8dd6eeac",
+   "name": "Youngstown",
+   "state": "OH",
+   "winner": "6ae802e1ab16778b51cb4c85"
+  },
+  {
+   "key": "dayton|oh|city|montgomery",
+   "id": "6ae8a0e658b7d4185920c29c",
+   "name": "Dayton",
+   "state": "OH",
+   "winner": "6ae802d731aa9ec2e0b356b8"
+  },
+  {
+   "key": "cuyahoga county|oh|county|cuyahoga",
+   "id": "6ae8a0e1ca66d9c0ff0c589d",
+   "name": "Cuyahoga County",
+   "state": "OH",
+   "winner": "6ae802db76d7a3faf4050c7d"
+  },
+  {
+   "key": "cleveland|oh|city|cuyahoga",
+   "id": "6ae8a0de3bf19f8406eb173c",
+   "name": "Cleveland",
+   "state": "OH",
+   "winner": "6ae80317f374ae66ff4e75a7"
+  },
+  {
+   "key": "columbus|oh|city|franklin",
+   "id": "6ae8a0d96ad3beea6aa19f05",
+   "name": "Columbus",
+   "state": "OH",
+   "winner": "6ae8031bab036cc6e1763e04"
+  },
+  {
+   "key": "jackson township|oh|township|stark",
+   "id": "6ae8a0d342d35878991aff45",
+   "name": "Jackson township",
+   "state": "OH",
+   "winner": "6ae80a928bcc6453dd74bfc9"
+  },
+  {
+   "key": "washington township|oh|township|montgomery",
+   "id": "6ae8a0cd51efb1e72b3a249f",
+   "name": "Washington township",
+   "state": "OH",
+   "winner": "6ae80a80d278e8db473ffcb7"
+  },
+  {
+   "key": "montgomery county|oh|county|montgomery",
+   "id": "6ae8a0c525b26f4697b3001b",
+   "name": "Montgomery County",
+   "state": "OH",
+   "winner": "6ae802d4e766ae2ff3ee529c"
+  },
+  {
+   "key": "pierce township|oh|township|clermont",
+   "id": "6ae84747d7e63dce99ffc909",
+   "name": "Pierce township",
+   "state": "OH",
+   "winner": "6ae847287b846677082bf03a"
+  }
+ ],
+ "skips": []
+}

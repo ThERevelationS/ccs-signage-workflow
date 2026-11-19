@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { cva } from "class-variance-authority";
 
 import { cn } from "@/lib/utils"
@@ -22,12 +23,16 @@ const badgeVariants = cva(
   }
 )
 
-function Badge({
+// forwardRef: Radix Slot/asChild triggers (Tooltip, DropdownMenu, Popover)
+// need to attach a ref for anchor positioning — without it they warn and
+// the tooltip can't position against the badge.
+const Badge = forwardRef(function Badge({
   className,
   variant,
   ...props
-}) {
-  return (<div className={cn(badgeVariants({ variant }), className)} {...props} />);
-}
+}, ref) {
+  return (<div ref={ref} className={cn(badgeVariants({ variant }), className)} {...props} />);
+});
+Badge.displayName = "Badge";
 
 export { Badge, badgeVariants }

@@ -1,0 +1,16 @@
+{"event":"start","label":"invoice-plan","at":"2026-11-18T15:41:03.280Z"}
+{"event":"exit","label":"invoice-plan","exit":0,"at":"2026-11-18T15:41:14.472Z"}
+{"event":"start","label":"invoice-apply-1","at":"2026-11-18T15:41:14.505Z"}
+{"event":"exit","label":"invoice-apply-1","exit":0,"at":"2026-11-18T15:44:13.713Z"}
+{"event":"start","label":"invoice-reconcile-1","at":"2026-11-18T15:44:13.721Z"}
+{"event":"exit","label":"invoice-reconcile-1","exit":0,"at":"2026-11-18T15:47:13.716Z"}
+{"event":"start","label":"invoice-verify","at":"2026-11-18T15:47:13.790Z"}
+{"event":"exit","label":"invoice-verify","exit":0,"at":"2026-11-18T15:52:42.933Z"}
+{"event":"start","label":"workorder-estimate-plan","at":"2026-11-18T15:52:42.939Z"}
+{"event":"exit","label":"workorder-estimate-plan","exit":0,"at":"2026-11-18T15:53:26.247Z"}
+{"event":"start","label":"workorder-estimate-apply","at":"2026-11-18T15:53:26.257Z"}
+{"event":"exit","label":"workorder-estimate-apply","exit":0,"at":"2026-11-18T15:54:43.550Z"}
+{"event":"start","label":"workorder-estimate-verify","at":"2026-11-18T15:54:43.551Z"}
+{"event":"exit","label":"workorder-estimate-verify","exit":0,"at":"2026-11-18T15:54:45.354Z"}
+{"event":"start","label":"leads-apply","at":"2026-11-18T15:54:45.354Z"}
+{"event":"exit","label":"leads-apply","exit":1,"at":"2026-11-18T16:00:08.430Z"}

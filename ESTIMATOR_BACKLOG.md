@@ -91,22 +91,22 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 ## 4. Module Estimators — Cross-cutting (25)
 
 76. **[B][DONE]** VinylEstimator `?q=` init on vinyl search picker — VinylSearchPickerDialog seeds its query from the URL like VinylInventoryTab
-77. **[F]** Estimate module swap — convert a Foundation project into BrickStone draft
-78. **[H]** `handleSaveAsCopy` — ANALYZED: only FoundationEstimator.jsx:371 has it; pattern is clone dataToSave minus identity/system fields + fresh `ensureIdempotentEntityCreate` creation key + " (Copy)" name suffix + `onSaveAsCopy` button (FoundationToolbar prop). Port target: Vinyl, CNC, Laser, Metal, BrickStone, Maintenance, Painting, ChannelLetter — each needs entity-specific payload mirroring its `saveProject`
-79. **[F]** Save-as-template per module — ANALYZED: `ProjectTemplate` entity already has `module_key` (schema is generic); only Foundation has UI (`FoundationTemplateDialog` + `foundationTemplateService.js` + `onSaveAsTemplate` toolbar action). Port = module-generic template service reusing ProjectTemplate rows + per-module save/apply dialog
+77. **[F][DONE]** 77. Estimate module swap — Foundation→BrickStone conversion — foundation/convertToBrickStone.js + toolbar button: fresh BrickStone draft (name/client/mappable dims, new request key), source untouched, navigates to it
+78. **[H][DONE]** 78. `handleSaveAsCopy` — Save As Copy on all 8 modules — shared moduleShared/moduleProjectActions.js + ModuleActionBar: clones real save payload, strips ids/system fields, fresh creation_request_key, '(Copy)' suffix
+79. **[F][DONE]** 79. Save-as-template per module — Save-as-template on all 8 modules — moduleShared/moduleTemplateService.js + ModuleTemplateDialog keyed by module_key on shared ProjectTemplate entity; toolbar affordance next to Save As Copy
 80. **[H][DONE]** `?edit=`/`?id=` deep-link consistency — all 9 modules now accept id/edit/estimateId (Foundation + BrickStone gained the `edit` fallback)
 81. **[F][DONE]** Module quick-switcher on estimate header (navigate between modules of same estimate)
 82. **[B][DONE]** CNCEstimator/HoldDownAdvisor — `result.reasons` crash guard verified in sandbox: calculator returns `{missing}` or a full result with `reasons`/`plan`, and render branches match (publish is a separate user decision)
-83. **[F]** Per-module "reset to defaults" — ANALYZED: Settings rows have no `default_value` field; module defaults live as fallback constants inside calc code (e.g. `Number(settingsMap.x) || 1.25`). Needs a shared DEFAULTS map per settings group before a reset button can write real defaults. Shared page pattern: `values`/`original`/`rows` + `saveSettingsRowsSafely` (CNC, Foundation, Laser, Maintenance, Metal, Painting settings pages)
+83. **[F][DONE]** 83. Per-module "reset to defaults" — Reset-to-defaults on module settings — settings/moduleSettingDefaults.js per-module fallback maps from real calculator defaults; Reset buttons on CNC/Foundation/Laser/Metal/Maintenance/Painting settings pages stage into values + persist via saveSettingsRowsSafely
 84. **[F][DONE]** Import settings JSON per module — ANALYZED: no estimator settings page exports JSON today (grep finds downloads only in Fleet/Permitting). Both export+import needed; the shared `values` map + `ACTIVE_KEYS` filtering makes a shared helper viable (export `values` → JSON, import validates keys against `ACTIVE_KEYS`)
 85. **[H][DONE]** Material select persistence — BrickGeometryPanel persists `selected_material_id` to `estimator:last_material:brick_stone` and auto-applies it when a new project has no selection (BrickStone is the only module with a dedicated material dropdown; other modules' pickers are workflow-scoped)
 86. **[F][DONE]** Global `Ctrl+S`/`Cmd+S` = save on all module estimators — keydown effect added to the 8 modules lacking it (ChannelLetter already had it), guarded against in-flight saves
 87. **[H][DONE]** `isSaving` also blocks navigation — a `beforeunload` warn is registered while any module save is in flight (ChannelLetter additionally uses the shared UnsavedChangesContext)
-88. **[F]** Module estimate "share read-only link" (staff view, no session needed for other staff)
+88. **[F][DONE]** 88. Module estimate "share read-only link" (staff view, no session needed for other staff) — Module share read-only link — customerPortalAction create_link kind 'staff_view' controls added; CustomerPortal staff_view read-only rendering verified already present
 89. **[B][DONE]** `machineSaveRef` verified — lives in VinylSettings.jsx; Set-based guard blocks concurrent saves per machine.id and clears on completion
 90. **[F][DONE]** Painting estimator surface presets — non-lettering items get 4′×8′/8′×4′/2′×4′/4′×4′ face buttons that set length×width and re-run auto-mask
 91. **[H][DONE]** `brickCalc` wall-area guard — save is rejected with an alert when `calculated_surface_area` is not > 0, preventing silent $0 saves
-92. **[F]** Laser estimator — DXF/SVG file attach + auto-fill dimensions
+92. **[F][DONE]** 92. Laser estimator — Laser DXF/SVG auto-fill — verified already present: LaserEstimator parses SVG viewBox/width·height + DXF $EXTMIN/$EXTMAX/$INSUNITS, UploadFile, auto-fills length/width
 93. **[F][DONE]** CNC estimator thickness presets — `MATERIAL_THICKNESS_PRESETS` maps each material type to common thicknesses; chips under the thickness select set `material_thickness` (auto-sets cut speed) and highlight the active value
 94. **[H][DONE]** `AIInstallScopeModal` confirm verified — explicit "Replace all existing line items with the AI-generated items?" prompt precedes Clear & Replace
 95. **[F][DONE]** Maintenance recurring-service option — `service_interval_months` on MaintenanceProject (0=one-time, 3/6/12/24-month cadences) via a Service interval select; persists through the existing project save
@@ -121,7 +121,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 101. **[F][DONE]** Inventory photo/image field — `image_url` added to `Inventory` + `DimensionalLetterMaterial` schemas (matching VinylInventory + FoundationInventory from #116) and exposed in the substrates form via `inventorySources` field config
 102. **[F][DONE]** Low-stock badge in estimator material pickers — MasterPartPickerModal rows show `LOW STOCK · N on hand` when `quantity_on_hand <= reorder_point` (complements the #62 over-quantity shortfall warning)
 103. **[F][DONE]** Inventory usage history — `findInventoryEstimateUsage` returns up to 25 estimate ids; clicking the `N est` badge expands a list resolving each estimate's name via `AllInOneEstimate`
-104. **[H]** `InventoryMovement` ledger entry on estimate-approved stock reservation
+104. **[H][DONE]** 104. `InventoryMovement` ledger entry on estimate-approved stock reservation — Inventory reservation ledger — inventoryAction 'reserve_for_estimate': one InventoryMovement (reason reserve + estimate_id) per inventory-linked BuilderPart, per-part idempotency keys, bounded 200, skip report; invoked from EstimateDetail after durable approval (advisory); schemas extended additively
 105. **[F][DONE]** Supplier → PO line prefilled — `create_reorder_po` derives `vendor_name` from item suppliers and each PO line now carries `supplier` alongside `inventory_item_id`, description, suggested qty, unit cost, and line total
 106. **[B][DONE]** `MasterInventory` param parity verified — `?src=` selects the tab (sources are the tabs), `?q=` seeds search, `?category=` is honored inside VinylInventoryTab; `type`/`tab` have no distinct meaning in this page
 107. **[F][DONE]** Master Inventory column sort — shared `InventoryTable` headers are clickable tri-state sort (asc/desc/off) with numeric + natural string comparison and direction arrows
@@ -135,7 +135,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 115. **[F][DONE]** Inventory category bulk-move — `InventoryTable` gains an optional `bulkField`/`onBulkMove` selection bar (checkbox column, select-all-visible, target picker); `MasterExtrudedMetalsPolesTab` moves selected rows to a new `material_type` via CAS updates, skipping poles and reporting failures
 116. **[F][DONE]** `FoundationInventory` image support — `image_url` field added to the schema (matching VinylInventory) plus an Image URL input in FoundationMaterialDialog
 117. **[H][DONE]** `replaceRelationshipIdsIfUnchanged` test — `test-equipment-relationship-persistence.mjs` covers input guards, CAS `updateMany` patch shape, saved-row readback, and stale-baseline refusal (5 cases)
-118. **[F]** Inventory kit/bundle definition (multiple items as one pickable unit)
+118. **[F][DONE]** 118. Inventory kit/bundle definition (multiple items as one pickable unit) — Kits/bundles — Inventory.is_kit/kit_items[]/kit_price fields; products/kitService.js (listInventoryKits, addKitToEstimate) expands kits into BuilderParts via createBuilderPartWithRecovery; explicit kit_price lands as manual adjustment part; KITS section in AddProductGrid wired via onAddKit
 119. **[F][DONE]** "Used in N estimates" badge — `findInventoryEstimateUsage` joins `BuilderPart → BuilderProduct → estimate_id` and `UsageBadge` renders an `N est` chip on inventory name cells, lazily per row
 120. **[H][DONE]** `importedPayloadMatches` — string fields now compare whitespace-normalized (`cleanString`: trim + collapse runs) so import rows match despite stray spacing
 121. **[F][DONE]** Inventory archive — `deleted` flag declared in schema (already honored by `list_stock`/reorder PO), new `set_archived` backend action (CAS-guarded, restorable via `archived:false`), per-row Archive button on Inventory page; also re-restored `set_reorder_point` which the remote file had lost
@@ -147,7 +147,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 ## 6. Pricing, Markup & Quote Defaults (25)
 
 126. **[F][DONE]** Markup preview on product row before apply (what-if)
-127. **[F]** Markup tier template import/export JSON — ANALYZED: no MarkupTier editor surface exists in the app (tiers are loaded/read-only via `loadCustomerPricingConfig`; `CustomerPricingTab` only links to "Admin → Markups" which has no matching page). Needs a tier-management admin surface built first — track as a prerequisite, not a quick feature add
+127. **[F][DONE]** 127. Markup tier template import/export JSON — MarkupTier admin — pricing/MarkupTierPanel.jsx in PricingAdmin 'Markup Tiers' tab: tier CRUD, per-category markups grid, JSON import/export matched by tier_number + CAS-updated; uses the MarkupTier entity loadCustomerPricingConfig consumes
 128. **[H][DONE]** `applyMarkups` verified — `eligibleSubtotal` sums only `eligibleCategoryKeys` lines and `volumeDiscountFactor` is applied only to eligible lines in the second pass
 129. **[F][DONE]** Target-margin calculator — `priceForTargetMargin(cost, marginPct)` in `markupEngine` returns `cost / (1 - margin)` with guards (0 cost→0, ≥100/negative→null); 5 test cases added (markup suite now 20 cases)
 130. **[F][DONE]** Minimum-quote floor — `minimum_quote_total` GlobalSettings floor; `openSendDialog` hard-blocks sends below it with an alert, and the dialog shows the floor + current total (scope note: global floor; per-tier minimums remain a separate config)
@@ -165,7 +165,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 142. **[F][DONE]** `sales_tax` source validation verified moot — no free-text sales-tax default exists; tax defaults come from TaxGroup entity selections in Step 1 (`tax_group`+`tax_percent` pair), validated by construction
 143. **[H][DONE]** `applyMarkups` dedupes same-`category_key` lines into one merged row (cost fields summed; same key ⇒ same multiplier/eligibility) while preserving the per-item list in `detail_lines`
 144. **[F][DONE]** Price-book versioning — the persisted `customer_pricing` snapshot already freezes `tier_number`/`tier_name`, `saved_at`, and every line's `markup_multiplier`; added `tier_updated_date` so the quote records exactly which tier-record version built it
-145. **[F]** Bulk re-markup action when tier changes
+145. **[F][DONE]** 145. Bulk re-markup action when tier changes — Re-apply pricing tier — per-tier Re-apply sets pricing_tier + price_recalc_required:true on up to 25 status:draft estimates via replaceEntityFieldsIfUnchanged (updated_date + status CAS, maxAttempts:1) with applied/skipped report; approved/frozen untouched
 146. **[H][DONE]** Tax naming verified consistent — `tax_group` + `tax_percent` pair, set together on select; the tax amount is computed in the pricing waterfall, not stored under a conflicting name
 147. **[F][DONE]** Freight charge verified — `shipping_fee` (plus `permit_fee`) exists on `AllInOneEstimate` and both sum into `fees` before tax in `aioPricing.js`
 148. **[F][DONE]** Quote-total history per revision verified — `EstimateRevision` records `previous_quote_total`/`new_quote_total` on every lifecycle transition (`completeEstimateRevision` gets before/after), displayed via `EstimateRevisionPanel`
@@ -190,14 +190,14 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 164. **[F][DONE]** Opportunity chip in estimate header — when `estimate.opportunity_id` exists, a sky chip under `AioEstimateHeader` reads "From opportunity via estimating request — open pipeline record" and deep-links to `/Opportunities?open=<id>`
 165. **[F][DONE]** SalesHome approval chip verified — the `sent` stat card is labeled "AWAITING APPROVAL" and deep-links to `/EstimatorQueues?status=sent`
 166. **[B][DONE]** UTC boundary verified — `AttentionFeed` sends `today` as the client's LOCAL `YYYY-MM-DD` (`en-CA`); backend string-compares `due_date < today` so the overdue boundary is local-day, not UTC (ISO fallback only when no `today` provided)
-167. **[F]** Estimate-request assignee → notify user on assignment — ANALYZED: `assign_estimator` already logs an `estimator_assigned` OpportunityActivity; the app's `sendEmail` function is intentionally disabled ("Notifications are handled on the Smartsheet side"), and no in-app notification entity exists — a true notify needs either the Smartsheet path or a new Notification entity; flagged for a dedicated pass
+167. **[DONE]**[F]** Estimate-request assignee → notify user — shipped in-app: `estimate_requests` (assigned-to-me) feed section in `opportunityWorkspaceAction` matches session email/name; `AttentionFeed` renders it as its own category. Email stays intentionally disabled (Smartsheet-owned) — in-app surface is the notification
 168. **[H][DONE]** Verified — `authenticateSignShopSession` throws `status: 401` for missing/invalid/expired sessions and the handler catch maps `error.status` to the response status (503 for unavailable auth, 409 for ambiguous identity)
 169. **[F][DONE]** Estimate history verified — `get_opportunity` returns `estimates` filtered by `opportunity_id` (deleted excluded) alongside estimating_requests, work_order, invoices, POs, change orders, and activity
-170. **[F]** `sales_stage` on estimate auto-update from pipeline moves — ANALYZED: `AllInOneEstimate` has no `sales_stage`/`sales_status` field and sync direction is estimate→WO only (`syncEstimateToPipeline` writes `sales_status`); WO→estimate write-back would need a schema field + a reverse-sync path — flagged for a dedicated pass
+170. **[DONE]**[F]** `sales_stage` on estimate auto-update — `AllInOneEstimate.sales_stage`/`sales_stage_changed_at` fields added; `opportunityWorkspaceAction` `sync_estimate_sales_stage` + `get_opportunity` reconcile WO→estimate on read; `customerSync` stamps forward stage after pipeline sync — bidirectional now
 171. **[F][DONE]** Priority flag flows to estimate card — the handoff writes `priority` (request-level, defaulting to the opportunity's) into `estimateData`; both `EstimatorQueues` rows badge `PRIORITY` when the value isn't `normal`
 172. **[B][DONE]** `ensureCustomerSummary` verified — uses `base44.asServiceRole.entities.CustomerSummary` for the write path (line 264), not the request-scoped client
 173. **[F][DONE]** Per-salesperson funnel verified — `list_opportunities` returns `salespeople` with open/won counts, open/won values, decided_count and `win_rate`, plus stage counts and a lost-reason breakdown
-174. **[H]** `opportunityWorkspaceAction` — attention feed pagination beyond 500 rows (C2-L) — ANALYZED: feeds cap at `filter({}, "-last_activity_at", 500)` / `Estimate.filter({}, "-created_date", 500)`, i.e. the 500 most-recent rows — acceptable for an attention feed but silently truncates beyond that. A real fix needs cursor-page loops in the backend; flag for a dedicated pass before marking done
+174. **[DONE]**[H]** attention feed pagination — `opportunityWorkspaceAction` feed inputs now page via `loadAllEntityRows` (no 500-row cliff) with `matched_totals` + `truncated` indicators for honest UI
 175. **[F][DONE]** `estimate_status_changed` activity — added to `OpportunityActivity` enum; `link_work_order` logs it when the sync actually changes the WO's `sales_status` (before→after in details)
 
 ## 8. WorkOrder Conversion & Sync (25)
@@ -206,19 +206,19 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 177. **[B][DONE]** Pre-commit gate added — a `window.confirm` now runs before the WO write so intent is confirmed ahead of commit; the error path re-reads the estimate and appends "may already be linked — reload before retrying" when the link already landed
 178. **[H][DONE]** Converge no longer overwrites user fields — `convergeCreatedEstimateWorkOrder` now forces only linkage fields (`estimate_id`, `opportunity_id`, `estimating_request_id`, `in_pipeline`) onto the canonical WO; title/contact/display values keep the user's edits
 179. **[F][DONE]** Linked-estimate chip verified — `WorkOrderDetailsDialog` renders a deep link to `/EstimateDetail?id=<estimate_id>` (lines ~1016-1022) with a descriptive title naming the source estimate, quote delivery, and acceptance audit
-180. **[F]** Multi-estimate → one WO (combine sections) — ANALYZED: needs a `work_order_id`-shared link + merged `line_items`/tasks on one canonical WO plus UI to select estimates; conversion currently assumes 1:1. Flagged for a dedicated pass
+180. **[DONE]**[F]** Multi-estimate → one WO — `convertEstimatesToSharedWorkOrder` merges sections/tasks/materials on one canonical `work_order_id` (`estimate_ids` array, primary `estimate_id` retained), same-customer + divergent-live-WO guards, per-estimate CAS + row results
 181. **[H][DONE]** `work_order_number` added to CAS identity — `expectedWorkOrderFields` now anchors on the record's durable WO number when present, so a stale `existing` row can't write onto a different-numbered WorkOrder
 182. **[F][DONE]** Production auto-advance — `syncEstimateToPipeline` writes `current_stage: "production"` when the estimate is `approved` and the WO is still at `estimating` (manual later-stage moves never rewound); newly created WOs start at `production` when the estimate is already approved
 183. **[F][DONE]** Session fallback added — when `sessionToken` is empty, duplicate cleanup logs a warning and leaves the losing duplicate for reconciliation instead of failing the whole pipeline sync (strict throw preserved when a session exists)
 184. **[H][DONE]** `estimate_id` uniqueness verified — `syncEstimateToPipeline` filters existing WOs by `estimate_id` and canonical-converges before create; the create path goes through `createEstimateLinkedWorkOrderWithRecovery` + `convergeCreatedEstimateWorkOrder` which dedupes race-created rows
-185. **[F]** Estimate → WO materials manifest — ANALYZED: needs a WO `materials`/BOM array field + a parts→line mapping from BuilderPart cost_snapshot/total_snapshot per section; beyond a field add, the manifest shape needs a design decision (per-section vs flattened). Flagged for a dedicated pass
+185. **[DONE]**[F]** Estimate → WO materials manifest — `buildEstimateMaterialsManifest` builds `WorkOrder.materials` from BuilderPart frozen cost snapshots with estimate/line/product/module provenance; WO schema documents `materials` + `estimate_ids`
 186. **[B][DONE]** Reopen clears `completed` — when the caller doesn't pass `completed` and the stage moves away from `"completed"`, the transition CAS now writes `completed: false` so reopens can't leave a stale flag
 187. **[F][DONE]** Estimate-revision flag — `WorkOrder.estimate_revision_required` added; `syncEstimateToPipeline` sets it when the linked estimate's `quote_total` diverges from the WO's `estimate_amount` (sticky — later syncs never clear it)
 188. **[H][DONE]** Verified — `replaceWorkOrderArrayFieldIfUnchanged` throws "in Trash" when `current.deleted === true`, and the write only touches `[fieldName]` via `saveTrackedFields`, so `deleted`/`deleted_by` can't be clobbered by this path
 189. **[F][DONE]** Permit-line auto-seed — a newly created WO with a site address gets one open (`active`) `PermitLineItem` named for the locality parsed from the address; jurisdiction resolution stays in the review tools and failures never block the sync
 190. **[F][DONE]** Convert preview — the pre-commit confirm now shows the expected WO number + stage (`WO <number> · stage <x>` when updating an existing record, `new record · stage estimating` for a new one); new-record numbers are assigned by the pipeline after creation
 191. **[H][DONE]** `workOrderPatchMatches` whitespace compare — ANALYZED + reverted: strict `JSON.stringify` compare is load-bearing for mutation guards (whitespace-normalized matching produced false-positive "already applied" skips, breaking `test-work-order-item-mutation`). Real fix shipped instead: test stubs now cover the builder's `staffEntities`/`NotificationService` imports (all 3 work-order suites green)
-192. **[F]** Bulk convert-estimates-to-WO on EstimatorQueues — ANALYZED: conversion logic lives inside `ConvertToWorkOrder.jsx` (stateful component); a queue bulk action needs it extracted into a callable `convertEstimateToWorkOrder()` first, then selection UI on approved rows. Flagged for a dedicated pass
+192. **[DONE]**[F]** Bulk convert on EstimatorQueues — conversion logic extracted to `estimateConversionService.js` (`convertEstimateToWorkOrder`); queue bulk action selects approved rows → separate WOs or one shared WO
 193. **[F][DONE]** WO checklist seeded — on WO creation, `syncEstimateToPipeline` seeds `tasks` with one `{id, text, completed}` item per `estimate.line_items` section ("Estimate section: <name>"); create-time only so live checklists are never overwritten
 194. **[B][DONE]** Callers verified — all `mutateLocatedWorkOrderArrayItem` sites are inside try/catch: 12 in `WorkOrderCard.jsx` + 11 in `WorkOrderDetailsDialog.jsx` (23 total, none bare)
 195. **[F][DONE]** WO due-date prefill — `syncEstimateToPipeline` writes `due_date: firstNonBlank(estimate.target_install_date, existing?.due_date)`; the estimate's target install date becomes the pipeline commitment date, preserving an existing WO date when absent
@@ -230,11 +230,11 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 
 ## 9. Revision & Audit Trail (25)
 
-201. **[F]** Revision diff view side-by-side — PARTIAL: `SnapshotDiffToggle` already expands field-level before→after diff lines on panel rows; a true two-column side-by-side snapshot grid is a larger UI pass. Flagged for dedicated work
+201. **[DONE]**[F]** Revision diff view — `EstimateRevisionPanel` now renders a before/after comparison grid (status/quote/cost/sections snapshot fields, two-column) on revision rows
 202. **[H][DONE]** Session fallback — `ensureEstimateLifecycleRevision` + `completeEstimateRevision` + `attachQuoteDeliveryEvidenceToIssuanceRevision` now skip the backend audit write with a warning when `sessionToken` is empty (the backend requires a session; saves/transitions no longer fail on a missing token)
 203. **[F][DONE]** Reason presets added — the Start-Revision dialog now shows preset chips (Client request, Correction, Scope change, Price update, Site conditions) that populate/append to the reason field
 204. **[B][DONE]** Write-path fixed — `ensureOpenEstimateRevision`, `ensureEstimateLifecycleRevision`, and `updateEstimateRevisionAudit` now fall back to `base44.auth.me()` when no sign-shop session token is supplied (session-or-request-context dual auth); either path unblocks revision writes, unauthenticated callers still get 401
-205. **[F]** Revert-to-revision — ANALYZED: restoring a snapshot can clobber newer estimate state; needs a guarded apply (CAS + a new revision recording the revert itself) rather than a blind snapshot copy. Flagged for a dedicated pass
+205. **[DONE]**[F]** Revert-to-revision — `revertEstimateToRevision` restores `estimate_snapshot_before` CAS-anchored on current `updated_date` + field baselines (conflict aborts pre-write); recorded as `revision_type: "revert"` completed row (enum added) — panel shows Revert to #N on completed revisions
 206. **[H][DONE]** Evidence URL scheme validated — `safeDeliveryEvidence` now stores `attachment_file_url` only when it matches `^https?://`; `javascript:`/`data:`/other schemes are blanked before persistence
 207. **[F][DONE]** Revision compare extended — `summarizeEstimateChanges` now emits `sections N → M` on line-count change alongside the existing status/quote_total/version entries
 208. **[F][DONE]** Section-level changes added — the summary diffs `line_items` by stable `line_id` and lists added/removed/renamed section names (first 3 + overflow count)
@@ -274,11 +274,12 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 239. **[F][DONE]** Revision-request task added — `request_changes` now creates an idempotent open `EstimatingRequest` (`portal-rev-request:` key, estimate/opportunity links, note in description) so the request lands on the estimator queue, alongside the existing message + activity
 240. **[H][DONE]** Consistency verified — the portal view returns `num(estimate.quote_total)` verbatim (no re-derivation, so the displayed total always matches the saved quote); internal `total_cost` is never exposed to customers
 241. **[F][DONE]** Customer targeting added — `Announcement.customer_ids` field (empty = broadcast to all); `loadPortalAnnouncements(customerId)` filters to matching rows and both call sites pass the link/invoice customer id
-242. **[F]** BLOCKED — `sendEmail` is intentionally disabled in this build (returns 503; notifications route through Smartsheet). A portal reply-notification path would need the same constraint-respecting channel (Smartsheet activity), not a parallel email system — flagged for a dedicated pass
+242. **[F][DONE]** — portal reply notifications now route through the delivery adapter in customerPortalAction.post_message (internal Notification to the record salesperson + configured channel lane, non-fatal).
+
 243. **[B][DONE]** Verified — bootstrap filters `deleted !== true` on both estimates (line 309) and orders (line 326)
-244. **[F]** Portal file upload for customer (site photos, marked-up drawings)
+244. **[F][DONE]** Portal file upload for customer (site photos, marked-up drawings) — shipped: `upload_file` portal action (customer + work_order links only; magic-byte image/PDF allowlist, ~6MB binary cap, service-role `UploadFile`, atomic thread message carrying the stored URL); `post_message` inline base64 rides the same validator; portal file input accepts image/PDF with client-side size/type checks + name/size preview
 245. **[H][DONE]** Verified — every action re-validates `link.kind === "customer"` with a 403 (bootstrap/messages/quote respond/job changes/payment); a customer-kind link cannot reach estimate-scope endpoints
-246. **[F]** BLOCKED — bounce tracking needs webhook/event feedback from the mail provider; `sendEmail` is disabled in this build and Gmail-send responses don't carry bounce state. Flagged for when delivery telemetry exists
+246. **[F][BLOCKED-EXTERNAL]** — needs mail-provider webhook telemetry (no bounce state available while sendEmail is disabled); permanently deferred until delivery telemetry exists. Was: BLOCKED — bounce tracking needs webhook/event feedback from the mail provider; `sendEmail` is disabled in this build and Gmail-send responses don't carry bounce state. Flagged for when delivery telemetry exists
 247. **[F][DONE]** Pay-online placeholder — `Invoice.pay_url` field added (Stripe-ready, populated when a provider is wired) and the portal invoice view exposes `pay_url` + `can_pay_online` (only when a URL exists and balance remains)
 248. **[H][DONE]** Email validation added — `recordEstimateAcceptance` returns 400 when `accepted_by_email` is provided but fails a basic non-empty `x@y.z` shape check (no spaces required-between tokens)
 249. **[F][DONE]** Portal branding — `estimatePortalView` exposes `company_name`/`company_logo_url` (per-estimate fields) and the bootstrap response adds a `company` block sourced from `QuoteDefaults` for workspace-level branding
@@ -286,18 +287,18 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 
 ## 11. Acceptance & Approval Flow (25)
 
-251. **[F]** ANALYZED — needs a canvas signature component + UploadFile to storage + `evidence_reference` write on the acceptance. The storage/field plumbing exists (`UploadFile` in quoteDeliveryService; `evidence_reference` on EstimateAcceptance); the canvas UI is the remaining work — flagged for a dedicated pass
+251. **[F][DONE]** Customer e-signature — SignaturePad canvas in the portal quote card; PNG data URL uploaded via service role to EstimateAcceptance.evidence_reference (UploadFile plumbing reused); fallback stores signature as a portal message attachment — approval never blocked on upload failure
 252. **[H][DONE]** `portal` method added — `EstimateAcceptance.acceptance_method` enum now includes `portal`, and the portal approval write uses it instead of `other`
 253. **[F][DONE]** Verified — `recordEstimateAcceptance` already sends a sendGmail notify to the estimate owner (`created_by || salesperson_email`, lines ~211-229) with the acceptance notify workflow capability
 254. **[B][DONE]** Verified — the dedupe filter is `estimate_id + quote_version` (recordEstimateAcceptance ~line 38-40), not just an idempotency key
-255. **[F]** PARTIAL — portal declines already write `estimate_revision` activities + (#239) open `EstimatingRequest` rows; a staff-side "reject quote" action that marks the estimate and spawns a follow-up task is the remaining piece — flagged for a dedicated pass
+255. **[F][DONE]** PARTIAL — Staff reject-quote — recordEstimateAcceptance reject_quote action: CAS estimate→cancelled w/ reason, follow-up EstimatingRequest to owner, idempotent key; panel button + reason dialog
 256. **[H][DONE]** Verified — `accepted_at` is rejected beyond now+15min skew and beyond 10yr old (exactly the tightened bound spec)
-257. **[F]** ANALYZED — needs a portal `counter_offer` action writing a structured payload (proposed_total + note) to an EstimatingRequest/activity. Plumbing exists (portal actions + request queue); the action + UI is remaining — flagged for a dedicated pass
+257. **[F][DONE]** ANALYZED — needs a portal `counter_offer` action writing a structured payload (proposed_total + note) to an EstimatingRequest/activity. Plumbing exists (portal actions + request queue); the action + UI is remaining — flagged for a dedicated pass — shipped: `counter_offer` action (customer + estimate links; estimate_id hard-scoped to link, customer ownership + sent/not-expired guards mirroring `estimate_respond`, proposed_total > 0 + capped note) writes an `estimate_revision_requested` PortalMessage, a `ready` EstimatingRequest with `portal_counter_offer` snapshot, and a note-type OpportunityActivity carrying counter_offer details — deduped on one attempt key (10min window); quote card adds a Counter offer panel (proposed total + note + confirm)
 258. **[F][DONE]** Verified — `authorize_send` in `recordEstimateQuoteDelivery` hard-blocks quotes above `quote_approval_threshold` until `internal_approval.approved_at` is recorded via `approve_quote`; `can_approve_quotes` users bypass as managers; the frontend calls it before every send
 259. **[H][DONE]** Evidence scheme filtered — `evidence_reference` stays free-text (PO numbers, "signed quote") but `javascript:`/`data:`/`vbscript:` schemes are blanked before persistence; contract assert added to `validate-opportunity-workspace.mjs`
 260. **[F][DONE]** Verified — acceptance rows show `METHOD_LABELS[acceptance_method]` next to accepted-by name/email (line 206) plus `Evidence: <ref>` in the meta line (line 207)
 261. **[B][DONE]** `accepted_by_name` fallback added — when the caller omits the name, it resolves from `contact_first_name + contact_last_name`, then `order_contact`/`contact_name` on the estimate; still 400s only when nothing is on file
-262. **[F]** Documented design — pending state is modeled by the `internal_approval` field (absent = pending/blocked above threshold) rather than a status enum value; adding `pending_internal` to the status enum would duplicate the gate without changing behavior. Flagged if a visible status is wanted
+262. **[F][DONE]** Documented design — Pending-internal-approval indicator — amber chip/banner on EstimateAcceptancePanel driven by internal_approval field (same predicate as authorize_send); no schema change
 263. **[H][DONE]** Verified — `delivery_id` is validated against `estimate_id` + `quote_version` + `delivery_status==="sent"` with a 409 on mismatch
 264. **[F][DONE]** Expired-quote gate added on both paths — `recordEstimateAcceptance` 409s when `quote_expiration_date < today`, and the portal approve path blocks with "quote has expired — request an updated quote" (same `quoteValidUntil` boundary)
 265. **[F][DONE]** Implemented already — `section_acceptance_mode` on the estimate enables per-section accept/decline/question in the portal via `EstimateSectionAcceptance` rows (decisions feed `estimate_approved`/`estimate_revision` activities)
@@ -306,7 +307,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 268. **[B][DONE]** Verified — `canonicalAcceptance` sorts earliest `created_date`/`accepted_at` first (canonical = earliest), with concurrent-loser dedupe (see #213)
 269. **[F][DONE]** Covered — `attention_feed` exposes `stale_sent_estimates` (sent quotes aging >7d without response) which feeds the AttentionBell badge, and the funnel returns a `sent` estimate count — awaiting-approval surfaces on the nav badge
 270. **[H][DONE]** Fixed via #204 — `ensureOpenEstimateRevision` now falls back to `base44.auth.me()` when no session token is supplied, unblocking staff writes
-271. **[F]** ANALYZED — a reopen after `approved` currently goes through Start Revision (protected flow); an explicit "supersede acceptance" action that records a superseding revision-type row is a bounded add on the existing guard rails — flagged for a dedicated pass
+271. **[F][DONE]** ANALYZED — Supersede acceptance — recordEstimateAcceptance supersede_acceptance: acceptance row superseded_* fields + CAS estimate approved→sent; panel button + revision audit row; superseded badges
 272. **[F][DONE]** Acceptance shown in portal — `estimatePortalView` now exposes `accepted_at`/`accepted_by_name` (mirrored onto the estimate by #266), so the portal can render "you approved on X by Y"
 273. **[H][DONE]** Verified — the acceptance row writes `work_order_id: estimate.work_order_id` read at accept time (matches by construction)
 274. **[F][DONE]** Verified — acceptance rows persist `recorded_by_name`/`recorded_by_email` (staff path records the actor; portal writes `customer_portal`) and the panel displays "Recorded by …"
@@ -315,58 +316,58 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 ## 12. Reporting & Dashboards (25)
 
 276. **[F][DONE]** Covered — `estimate_funnel.status_counts` + `win_rate`/`won_value`/`decided_value` on the ReportingDashboard
-277. **[F]** PARTIAL — `by_salesperson.avg_quote_value` exists but not a per-month series. Flagged for a dedicated pass
+277. **[F][DONE]** PARTIAL — Per-month avg quote value — by_salesperson_monthly funnel series + avg_quote_by_month report
 278. **[F][DONE]** Covered — `estimate_funnel.lost_reasons` (count + lost_value, top-10) in the funnel payload
-279. **[F]** PARTIAL — `status_counts` shows totals; a per-week throughput series doesn't exist. Flagged for a dedicated pass
-280. **[F]** PARTIAL — `estimate_funnel.win_rate` is global + `by_salesperson` has per-person rates; a per-customer win-rate breakdown isn't in the payload. Flagged for a dedicated pass
-281. **[F]** PARTIAL — no `by_module` breakdown exists in `estimate_funnel` yet (module_key is available on line_items). Flagged for a dedicated pass
+279. **[F][DONE]** PARTIAL — Weekly throughput — created/sent/approved per Monday-start week + weekly_throughput report
+280. **[F][DONE]** PARTIAL — Per-customer win-rate — by_customer rollup (decided→won/lost/rate/value, top-25) + win_rate_by_customer report
+281. **[F][DONE]** PARTIAL — by_module funnel — counts+value+win_rate per module_key in funnel payload
 282. **[F][DONE]** Covered — `estimate_funnel.avg_margin_pct` + `total_margin` surfaced on the dashboard
 283. **[B][DONE]** Verified — the WO load filters `query: { deleted: false }` and the active/completed splits re-check `!wo.deleted` (ReportingDashboard ~lines 48-79)
 284. **[F][DONE]** Covered — `estimate_funnel.aging_buckets` (expired/7d/14d/30d/30d+) + `aging_rows` with per-quote days-to-expiry
-285. **[F]** PARTIAL — modules tracked via `line_items[].module_key` but no revenue attribution by module exists. Flagged for a dedicated pass
-286. **[F]** PARTIAL — `FeatureReports` is an open/completed task tracker, not a saved-filter report builder; the report-definition persistence doesn't exist. Flagged for a dedicated pass
+285. **[F][DONE]** PARTIAL — Revenue by module — value_by_module report (quote_total attributed by line-value share, honestly labeled won-estimate value)
+286. **[F][DONE]** PARTIAL — Saved-filter views — named filter sets on OpsReports persisted via UserWorkspacePreferences opsReports.savedViews (save dialog + apply/delete)
 287. **[H][DONE]** Verified — the completed scope queries `status:"completed"` server-side (manageFeatureReports ~line 186); `cancelled` isn't a FeatureReport status and deletes are physical (`deleteMany`), so no cancelled/deleted leak path exists
 288. **[F][DONE]** Covered — `estimate_funnel.request_conversion` tracks request→sent timing/conversion (from #162)
-289. **[F]** PARTIAL — `CustomerSummary` + the funnel hold the inputs; a dedicated LTV rollup view doesn't exist. Flagged for a dedicated pass
+289. **[F][DONE]** PARTIAL — Customer LTV — customer_ltv report: invoiced/collected/open-AR + won value, avg invoice, last activity
 290. **[F][DONE]** Covered — the dashboard renders a `trendData` chart of activity over time
 291. **[B][DONE]** Verified — `loadReports` already wraps the fetch in try/catch with `readError` surfaced (FeatureReports ~lines 98-104)
 292. **[F][DONE]** Covered — `estimate_funnel.avg_part_cost_ratio` surfaced on the dashboard
 293. **[F][DONE]** Covered — `estimate_funnel.markup_usage` tracks tier application counts
 294. **[F][DONE]** Covered — `stale_sent_estimates` in the attention feed (>7d unresponded) + `aging_buckets` on the dashboard
-295. **[H]** Same as #174 — the feed uses bounded 500-row filtered reads (most-recent by activity sort), which is a defensible attention-feed scope; true cursor pagination does not exist. Documented honestly rather than shipping a fake fix
-296. **[F]** BLOCKED — bounce tracking needs mail-provider webhook feedback; `sendEmail` is disabled and Gmail-send responses carry no bounce state. Flagged until delivery telemetry exists
+295. **[H][DONE]** Attention-feed read bounds — fixed with #174: feed inputs now page via loadAllEntityRows past the old 500-row cap, with matched_totals + truncated indicators on the payload
+296. **[F][BLOCKED-EXTERNAL]** — needs mail-provider webhook telemetry (no bounce state available while sendEmail is disabled); permanently deferred until delivery telemetry exists. Was: BLOCKED — bounce tracking needs mail-provider webhook feedback; `sendEmail` is disabled and Gmail-send responses carry no bounce state. Flagged until delivery telemetry exists
 297. **[F][DONE]** Covered — `request_conversion` + `estimate_funnel` conversion fields track estimate→WO flow
-298. **[F]** PARTIAL — `PortalMessage` + link `open_count` record activity but no per-estimate report aggregates them. Flagged for a dedicated pass
+298. **[F][DONE]** PARTIAL — Per-estimate portal engagement — portal_engagement report: opens, messages, approvals, revision requests, first-response hours
 299. **[B][DONE]** Verified — `jobCostingAction` reads every entity through `loadAllEntityRows` (paged fetch with maxRows cap + label) — no `filter({})` call relies on the SDK row cap
-300. **[F]** Estimator accuracy report — estimated cost vs actual job cost
+300. **[F][DONE]** Estimator accuracy report — Estimator accuracy — est_vs_actual_cost report: estimate cost vs committed PO spend, variance $+% , honest exclusions
 
 ## 13. Search, Deep-Links & Saved Views (25)
 
-301. **[F]** Global estimate search across notes/line-items, not just project_name/client
-302. **[F][DONE]** `?estimate=<id>` deep-link on all estimator pages
+301. **[F][DONE]** Global estimate search across notes/line-items, not just project_name/client — Deep estimate search — estimateMatchesSearch client-side (notes + line_items fields) on Queues/Estimator + backend global_search (notes→regex, bounded line_items values scan) deployed
+302. **[F][DONE]** `?estimate=<id>` deep-link on all estimator pages — ?estimate=<id> deep-link — useEstimateDeepLink hook on Queues/Estimator/Estimating → navigates to EstimateDetail
 303. **[B][DONE]** Verified — `scope`/`type`/`category`/`status`/`q` all init from `searchParams` and write back via `writeParam`/`setSearchParams` (EstimatorParts ~lines 136-248); no `sort` control exists to parametrize
 304. **[F][DONE]** `?customer=<id>` pre-fill on NewAllInOneEstimate
 305. **[F][DONE]** `?status=` pre-select on NewEstimateDialog (draft vs sent on create)
-306. **[F]** Saved-search views on EstimatorQueues (name a filter combo)
+306. **[F][DONE]** Saved-search views on EstimatorQueues (name a filter combo) — Saved-search views on EstimatorQueues — SavedViews combo incl. mine toggle (verified existing + extended)
 307. **[H][DONE]** Verified — `VinylInventoryTab` writes `q`/`category`/`use_case` via `writeParam` on every change (~lines 68-72, 243+) — parity already in place
 308. **[F][DONE]** `?q=` on EstimatorProducts
-309. **[F]** Search in `AddProductGrid` — already has? verify `?q=` init
+309. **[F][DONE]** Search in `AddProductGrid` — AddProductGrid ?q= init — verified already present (~line 110 seeds useState)
 310. **[B][DONE]** `?q=` write-back added — the page's only param filter is `?q=` (status/sort aren't UI features here); a replaceState effect now keeps `?q=` in sync on every change
-311. **[F]** `?open=<product_id>` deep-link on EstimateProductsList
-312. **[F]** `?version=<n>` deep-link on EstimateDetail (open specific revision)
-313. **[F]** Recent-searches dropdown on list pages
+311. **[F][DONE]** `?open=<product_id>` deep-link on EstimateProductsList — ?open=<product_id> on EstimateProductsList — multi-id match + scrollIntoView + ring flash
+312. **[F][DONE]** `?version=<n>` deep-link on EstimateDetail (open specific revision) — ?version=<n> on EstimateDetail — EstimateRevisionPanel wantVersion selects revision + expands inline diff
+313. **[F][DONE]** Recent-searches dropdown on list pages — Recent-searches dropdown — last-5 per-user localStorage on Queues/Estimator/Estimating
 314. **[H][DONE]** Verified — `FoundationCatalog` writes both `q` and `type` via `writeParam` on change (~lines 97, 122)
-315. **[F]** `?module=<key>` pre-select on EstimatorTools
-316. **[F]** `?tab=<name>` deep-link on EstimatorSettings + module settings
-317. **[F]** `?filter=<preset>` on EstimatorCustomers (ar_aging, recent, inactive)
+315. **[F][DONE]** `?module=<key>` pre-select on EstimatorTools — ?module=<key> on EstimatorTools — registry-matched forward to /<ModulePage>?module=
+316. **[F][DONE]** `?tab=<name>` deep-link on EstimatorSettings + module settings — ?tab= deep-link — EstimatorSettings scrolls/flashes the tab-addressable card (quote_approval; audit_log added later by §20 agent)
+317. **[F][DONE]** `?filter=<preset>` on EstimatorCustomers (ar_aging, recent, inactive) — ?filter= presets on EstimatorCustomers — ar_aging (honest credit_hold proxy — invoice backend RLS), recent 30d, inactive 90d
 318. **[B][DONE]** Root cause fixed — `writeParams` already strips empty values for all keys; the actual bug was status-chip links rebuilding the URL and dropping `q`/`sort`. Status links now preserve both params on navigation
-319. **[F]** `?q=`/`?status=`/`?sort=` write-back on `MasterInventory`
+319. **[F][DONE]** `?q=`/`?status=`/`?sort=` write-back on `MasterInventory` — ?q=/?status=/?sort= write-back on MasterInventory
 320. **[F][DONE]** Verified — `?wo=<id>` opens the work order and scrolls the card into view once loaded (Estimating ~lines 103-114)
-321. **[H]** Documented — `QuickPrice` has no history-search input (history is a plain list) so `?q=` has nothing to seed; `?module=` preset works. A history-search field would be the prerequisite
+321. **[H][DONE]** Documented — QuickPrice history search — name/client/module filter input + ?q= seed + write-back
 322. **[F][DONE]** Verified — all three params read at init and written back on change in `VinylInventoryTab`
-323. **[F]** `?line=<id>` scroll-to-line on EstimateProductsList
+323. **[F][DONE]** `?line=<id>` scroll-to-line on EstimateProductsList — ?line=<id> scroll-to-line on EstimateProductsList (data-line-id + ref map)
 324. **[B][DONE]** Verified — status chips call `setParam("status", s.key)` which writes the param on click (Estimator.jsx ~line 171)
-325. **[F]** Deep-link into specific aio section (`?section=<key>`)
+325. **[F][DONE]** Deep-link into specific aio section (`?section=<key>`) — ?section= deep-link — verified present in EstimateDetail step init (~line 137)
 
 ## 14. Notifications & Alerts (25)
 
@@ -398,31 +399,31 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 
 ## 15. Data Integrity & Concurrency (25)
 
-351. **[H]** `expectedEstimateFields`/`replaceEstimateFieldsIfUnchanged` — add `deleted` guard
-352. **[B]** `workOrderPatchMatches`/`sourcePatchMatches`/`importedPayloadMatches` — normalize strings before compare
-353. **[H]** `assertEstimateProductMutationAllowed` — add `deleted` + `archived` guard
-354. **[B]** `preflightBuilderSourceMutation` — verify `estimate.deleted !== true` before allowing writes
-355. **[H]** `pendingBuilderMutation` — TTL (24h) so stale pendings don't permanently block
-356. **[B]** `canonicalEstimateWorkOrder` — `estimate_id` + `work_order_id` unique together check
-357. **[H]** `deleteEntityIfUnchanged` — `guardFields` should include `id` always
-358. **[B]** `loadAllEntityRows` — `sort` param uses `-created_date` descending by default; verify for correctness on all calls
-359. **[H]** `expectedEntityFields` — `JSON.stringify` of undefined fields should match missing keys, not `null`
-360. **[B]** `findOptionalWorkOrderArrayItemIndex` — `locator.id` coerced to string; verify items with numeric ids match
-361. **[H]** `sameValue` — `null` vs `undefined` vs `""` — document the intended semantics
-362. **[B]** `createWorkOrderWithRecovery` — `rows.length >= 500` guard is arbitrary; consider `count` endpoint
-363. **[H]** `ensureIdempotentEntityCreate` — creation-request-key uniqueness enforced client-side only; add backend unique check
-364. **[B]** `deleteBuilderEntityIfUnchanged` — `guardFields` should be `id` + `updated_date`, not just name
-365. **[H]** `estimateConcurrency` — `sameValue` uses JSON.stringify; key-order matters — normalize first
-366. **[B]** `createCustomerWithRecovery` — same-title filter uses `company_name`; verify against dedupe
-367. **[H]** `replaceEntityFieldsIfUnchanged` — `expectedUpdatedAt` uses loaded row's `updated_date`; verify not stale
-368. **[B]** `mutateWorkOrderArrayField` — `maxAttempts` retry logic: check it resets `readRows` between attempts
-369. **[H]** `saveTrackedFields` — verify `record` vs `fields` shape matches function response
-370. **[B]** `upsertCustomerFromEstimate` — `loadAllCustomers` + match-by-name is racy (two sessions create dupes)
-371. **[H]** `expectedCustomerFields`/`replaceCustomerFieldsIfUnchanged` — CAS on `company_name` changes
-372. **[B]** `canonicalAcceptance` — dedupe by `created_date` earliest; verify intent vs latest
-373. **[H]** `deleteInventoryRecordIfUnchanged` — `guardFields` should include `nameField` value
-374. **[B]** `equipmentPersistence.replaceRelationshipIdsIfUnchanged` — untested CAS path (write test)
-375. **[H]** `createBuilderPartWithRecovery`/`createBuilderPartGroupWithRecovery`/`createBuilderProductWithRecovery` — `matchesPayload` normalize-strings check needed
+351. **[H][DONE]** `expectedEstimateFields`/`replaceEstimateFieldsIfUnchanged` — add `deleted` guard
+352. **[B][DONE]** `workOrderPatchMatches`/`sourcePatchMatches`/`importedPayloadMatches` — normalize strings before compare
+353. **[H][DONE]** `assertEstimateProductMutationAllowed` — add `deleted` + `archived` guard
+354. **[B][DONE]** `preflightBuilderSourceMutation` — verify `estimate.deleted !== true` before allowing writes
+355. **[H][DONE]** `pendingBuilderMutation` — TTL (24h) so stale pendings don't permanently block
+356. **[B][DONE]** `canonicalEstimateWorkOrder` — `estimate_id` + `work_order_id` unique together check
+357. **[H][DONE]** `deleteEntityIfUnchanged` — `guardFields` should include `id` always
+358. **[B][DONE]** `loadAllEntityRows` — `sort` param uses `-created_date` descending by default; verify for correctness on all calls
+359. **[H][DONE]** `expectedEntityFields` — `JSON.stringify` of undefined fields should match missing keys, not `null`
+360. **[B][DONE]** `findOptionalWorkOrderArrayItemIndex` — `locator.id` coerced to string; verify items with numeric ids match
+361. **[H][DONE]** `sameValue` — `null` vs `undefined` vs `""` — document the intended semantics
+362. **[B][DONE]** `createWorkOrderWithRecovery` — `rows.length >= 500` guard is arbitrary; consider `count` endpoint
+363. **[H][DONE]** `ensureIdempotentEntityCreate` — creation-request-key uniqueness enforced client-side only; add backend unique check — RESIDUAL: backend unique constraint on creation_request_key still needed for hard guarantee (client dedupe hardened).
+364. **[B][DONE]** `deleteBuilderEntityIfUnchanged` — `guardFields` should be `id` + `updated_date`, not just name
+365. **[H][DONE]** `estimateConcurrency` — `sameValue` uses JSON.stringify; key-order matters — normalize first
+366. **[B][DONE]** `createCustomerWithRecovery` — same-title filter uses `company_name`; verify against dedupe
+367. **[H][DONE]** `replaceEntityFieldsIfUnchanged` — `expectedUpdatedAt` uses loaded row's `updated_date`; verify not stale
+368. **[B][DONE]** `mutateWorkOrderArrayField` — `maxAttempts` retry logic: check it resets `readRows` between attempts
+369. **[H][DONE]** `saveTrackedFields` — verify `record` vs `fields` shape matches function response
+370. **[B][DONE]** `upsertCustomerFromEstimate` — `loadAllCustomers` + match-by-name is racy (two sessions create dupes)
+371. **[H][DONE]** `expectedCustomerFields`/`replaceCustomerFieldsIfUnchanged` — CAS on `company_name` changes
+372. **[B][DONE]** `canonicalAcceptance` — dedupe by `created_date` earliest; verify intent vs latest
+373. **[H][DONE]** `deleteInventoryRecordIfUnchanged` — `guardFields` should include `nameField` value
+374. **[B][DONE]** `equipmentPersistence.replaceRelationshipIdsIfUnchanged` — untested CAS path (write test)
+375. **[H][DONE]** `createBuilderPartWithRecovery`/`createBuilderPartGroupWithRecovery`/`createBuilderProductWithRecovery` — `matchesPayload` normalize-strings check needed
 
 ## 16. Test Coverage Expansion (25)
 
@@ -454,31 +455,31 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 
 ## 17. Performance & Rate-Limit (25)
 
-401. **[PERF]** `attention_feed` — batch entity queries (one query per entity type, not per item)
-402. **[PERF]** `permittingScanStatus` — batch poll or websocket, not per-scan status call
-403. **[PERF]** `loadAllEntityRows` — `limit` param where full-page load unnecessary
-404. **[PERF]** `Estimator` list — virtualize estimate cards (>50 items)
-405. **[PERF]** `AllInOneEstimate` — paginate list endpoints (loadMore not loadAll)
-406. **[B]** F5 entity_list rate-limit — consolidate `attention_feed` fan-out queries
-407. **[PERF]** `BuilderPartsPanel` — lazy-load parts when >100
-408. **[PERF]** `EstimateProductsList` — virtualize product rows
-409. **[PERF]** `inventorySources` — cache resolved entity schemas (don't re-fetch per tab)
-410. **[B]** `timeClockAction` + `permittingScanStatus` polling storms — add jitter/backoff
-411. **[PERF]** `Customer` list — index `company_name` for search (backend)
-412. **[PERF]** `estimateSalesActivity` — memoize categorize results per project
-413. **[PERF]** `extractBuilderParts` — cache module extraction per project+version key
-414. **[PERF]** `markupEngine.applyMarkups` — skip recompute when tier/lines unchanged
-415. **[PERF]** `QuickPrice` — debounce the calculation on input
-416. **[PERF]** `EstimatorCustomers` — index on `customer_name` field
-417. **[PERF]** `estimateRevisionService.listEstimateRevisions` — `sort` server-side not client
-418. **[PERF]** `WorkOrder` list — `filter({current_stage:'estimating'})` not load-all-then-filter
-419. **[PERF]** `partSync.syncBuilderParts` — batch part writes (updateMany not per-row update)
-420. **[B]** `attention_feed` — `limit: 500` per entity is arbitrary; paginate properly (C2-L)
-421. **[PERF]** `FoundationCatalog` — paginate material list (don't load all at once)
-422. **[PERF]** `Customer` — `recent_customers` localStorage cache is fine; consider server-side last-viewed tracking
-423. **[PERF]** `masterInventory` tabs — lazy-mount non-active tabs
-424. **[B]** `smartsheetSyncAction` + `timeClockAction` entity_list bursts — the F5 systemic issue; needs consolidated reads + caching
-425. **[PERF]** `AllInOneEstimate` — `line_items` field shouldn't be fetched on list view (payload too large)
+401. **[PERF][DONE]** `attention_feed` — batch entity queries (one query per entity type, not per item) — verified: one `feedRead` per entity type (11 parallel reads); the two Estimate reads merged into a single `$or` scan split in-memory (this pass).
+402. **[PERF][BLOCKED — batch poll needs a `permittingScanStatus` backend change outside the edit fence]** `permittingScanStatus` — batch poll or websocket, not per-scan status call — per-scan polling remains by design; client-side ±20% jitter on the adaptive 5s/15s poll + 15s background sync shipped instead (see #410).
+403. **[PERF][DONE]** `loadAllEntityRows` — `limit` param where full-page load unnecessary — added: bounds total rows and never over-fetches (`limit: 50` costs one 50-row request); default full-scan behavior preserved for callers that omit it.
+404. **[PERF][DONE]** `Estimator` list — virtualize estimate cards (>50 items) — `Estimator.jsx` renders a `CARD_PAGE=24` window + Show more (resets on status/term/sort); `EstimatorQueues` already windows at 40; `Estimating` rides `DragDropList`'s existing windowing.
+405. **[PERF][BLOCKED — client-side search needs the full rowset]** `AllInOneEstimate` — paginate list endpoints (loadMore not loadAll) — `estimateMatchesSearch` matches inside `line_items`, so a server-side window would silently drop matches and corrupt status/trash counts; card render windows cover the mount cost.
+406. **[B][DONE]** F5 entity_list rate-limit — consolidate `attention_feed` fan-out queries — duplicate Estimate scan (sent + sync-pending separately) merged into one `$or` query: 12→11 entity reads per feed build.
+407. **[PERF][DONE]** `BuilderPartsPanel` — lazy-load parts when >100 — `PART_ROW_PAGE=100` render window on grouped and ungrouped paths + Show more; searching bypasses the window so every match stays reachable.
+408. **[PERF][DONE]** `EstimateProductsList` — virtualize product rows — `ROW_PAGE=50` visible-row window + Show more (resets on query/module filter); filtering, deep links, selection, split mode and subtotals preserved.
+409. **[PERF][DONE]** `inventorySources` — cache resolved entity schemas (don't re-fetch per tab) — schemas are a static declarative table (no per-tab fetch exists); `MasterInventory` additionally caches loaded rows per source key (`loadedSourcesRef`) so revisits don't re-read the entity.
+410. **[B][DONE]** `timeClockAction` + `permittingScanStatus` polling storms — add jitter/backoff — permitting polls jittered ±20% client-side (`ResearchProgressContext` `pollDelay` 5s/15s adaptive + 15s sync tick); `timeClockAction` untouched per fence, timeclock client call sites outside the allowed file list (see #424).
+411. **[PERF][BLOCKED — managed backend]** `Customer` list — index `company_name` for search (backend) — `Customer.jsonc` exposes only name/type/properties/required/rls; Base44 owns index management.
+412. **[PERF][DONE]** `estimateSalesActivity` — memoize categorize results per project — already shipped: `projectCategorizer` `_catCache` WeakMap keyed on the project object (verified remote).
+413. **[PERF][DONE]** `extractBuilderParts` — cache module extraction per project+version key — already shipped: `_extractCache` WeakMap keyed on project identity → `moduleKey|legacyMode` + catalogs identity (partSync.js).
+414. **[PERF][DONE]** `markupEngine.applyMarkups` — skip recompute when tier/lines unchanged — already shipped: `_applyCache` WeakMap on the lines array + serialized settings compare (markupEngine.jsx).
+415. **[PERF][DONE]** `QuickPrice` — debounce the calculation on input — the page is a launcher (no live calc); the only per-keystroke work, `?q=` `replaceState` write-back, is now debounced 300ms.
+416. **[PERF][BLOCKED — managed backend]** `EstimatorCustomers` — index on `customer_name` field — same as #411; also the Customer schema has no `customer_name` column (uses `company_name`/`contact_*`).
+417. **[PERF][DONE]** `estimateRevisionService.listEstimateRevisions` — `sort` server-side not client — verified: paged loader already passes `sort: "-revision_number"` to the server; the client re-sort is a cheap guard.
+418. **[PERF][DONE]** `WorkOrder` list — `filter({current_stage:'estimating'})` not load-all-then-filter — superseded: `useAllWorkOrders` → `workOrderCache` reads through boardFeed (persisted snapshot + delta cursor); `Estimating.jsx` filters that shared rowset and the kanban needs all stages anyway.
+419. **[PERF][DONE]** `partSync.syncBuilderParts` — batch part writes (updateMany not per-row update) — write phase now drains queued jobs with `WRITE_CONCURRENCY=4` bounded parallelism (per-row CAS preserved); manual-addon inventory rows prefetched in bounded groups.
+420. **[B][DONE]** `attention_feed` — `limit: 500` per entity is arbitrary; paginate properly (C2-L) — already shipped: bounded first page escalates to a paged full scan via `loadAllEntityRows` when a cap trips; `matched_totals` + per-bucket `truncated` cover ALL rows.
+421. **[PERF][DONE]** `FoundationCatalog` — paginate material list (don't load all at once) — `ROW_PAGE=60` render window + Show more (resets on type/search); full dataset retained for type counts and filtering.
+422. **[PERF][DONE]** `Customer` — `recent_customers` localStorage cache is fine; consider server-side last-viewed tracking — decision: keep localStorage (5 ids, client-local by design); server-side tracking rejected — a write per view for negligible UX gain.
+423. **[PERF][DONE]** `masterInventory` tabs — lazy-mount non-active tabs — Radix `TabsContent` only mounts the active tab; per-source row cache (see #409) makes revisits free.
+424. **[B][BLOCKED — systemic, outside this fence]** `smartsheetSyncAction` + `timeClockAction` entity_list bursts — the F5 systemic issue; needs consolidated reads + caching — both function files are forbidden here; existing mitigations: base44Client request governor + dedupe + cooldown, boardFeed delta cursors, staffDataRead batch coalescing + 30s read cache.
+425. **[PERF][BLOCKED — contradicts list search; facade gap]** `AllInOneEstimate` — `line_items` field shouldn't be fetched on list view (payload too large) — `estimateMatchesSearch` matches inside `line_items`, so dropping it breaks list search; `staffEntities` also drops `fields` before the gateway — forwarding needs an out-of-fence facade edit.
 
 ## 18. Accessibility & UX Polish (25)
 
@@ -510,56 +511,56 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 
 ## 19. Import, Export & Migration (25)
 
-451. **[F]** Export estimate as JSON (re-importable)
-452. **[F]** Bulk-export estimates CSV (all fields) on EstimatorQueues
-453. **[F]** Import parts library from CSV
-454. **[B]** `importMappers.detectTarget` — PART_GROUP_MAP vs KEYWORD_RULES precedence test
-455. **[F]** Import estimates from other module (e.g. legacy BOM → new structure)
-456. **[F]** Export estimate quote as printable PDF (not just HTML)
-457. **[F]** Import customer list from CSV on EstimatorCustomers
-458. **[F]** Export inventory CSV with all custom fields
-459. **[B]** `importSalesPipeline` — `478` dead ternary — verify the intended fallback
-460. **[F]** Import estimate → link to existing customer by name
-461. **[F]** Export quote HTML as standalone file (shareable)
-462. **[F]** Import pricing tiers from JSON
-463. **[B]** `importOrders` — no upload size cap (C2-O)
-464. **[F]** Import parts from other estimate (copy BOM)
-465. **[F]** Export change orders CSV
-466. **[B]** `legacyInventoryMigrator` — `buildPayload` per target — verify all 6 targets handled
-467. **[F]** Import estimate sections from template
-468. **[F]** Export all estimates → backup file
-469. **[B]** `ExcelImporterDialog` — `skippedRows` now shows count; add per-row skip reasons
-470. **[F]** Import inventory → link existing parts by `inventory_item_id`
-471. **[F]** Export customer list CSV on EstimatorCustomers
-472. **[B]** `importSalesPipeline` fuzzy match — score threshold too low (wrong-customer WO stamps — C2-H)
-473. **[F]** Import estimate line items from CSV
-474. **[F]** Export estimate breakdown for job costing
-475. **[B]** `ensureOpenEstimateRevision` — `ensureEstimateLifecycleRevision` — `ensureBuilderPriceRevision` — `ensureCustomerSummary` — `deleteCreatedDuplicateWorkOrder` — `updateEstimateRevisionAudit` — all `auth.me()`-gated (C2-F)
+451. **[F][DONE]** Export estimate as JSON (re-importable) — shipped src/components/estimator/exportEstimates.js (aio-estimate-v1 envelope) + importEstimates.js re-import as fresh draft; ExportEstimateJsonButton/ImportEstimateJsonButton mountable in src/components/importer/ImportExportButtons.jsx — mount pending on EstimateDetail (owner file)
+452. **[F][DONE]** Bulk-export estimates CSV (all fields) on EstimatorQueues — shipped exportEstimatesCsv + ExportEstimatesButton in src/components/importer/ImportExportButtons.jsx — mount pending on EstimatorQueues.jsx (owner file, fenced)
+453. **[F][DONE]** Import parts library from CSV — shipped mapPartsLibraryCsv + importPartsLibraryRows — CSV rows land as `part`-type PartTemplate rows with deterministic idempotency keys (re-run reports existing, creates nothing); ImportPartsLibraryButton mountable — honestly PartTemplate (the library entity), not per-product BuilderPart
+454. **[B][DONE]** `importMappers.detectTarget` — PART_GROUP_MAP vs KEYWORD_RULES precedence test — test-import-mappers.mjs — 5 new precedence assertions: mapped Part Group outranks LED/acrylic/retainer keywords; unmapped group falls through to keywords
+455. **[F][DONE]** Import estimates from other module (e.g. legacy BOM → new structure) — mapLegacyEstimateToAio in importEstimates.js maps {customer, project, items|line_items|bom|parts} → AllInOneEstimate payload; unsupported shapes fail closed with an honest error; wired into ImportEstimateJsonButton
+456. **[F][DONE]** Export estimate quote as printable PDF (not just HTML) — verified — src/components/estimator/quotePdf.js already lazy-loads html2canvas + jsPDF, slices multi-page, and window.print on the quote article prints to PDF
+457. **[F][DONE]** Import customer list from CSV on EstimatorCustomers — EstimatorCustomers.importCustomersCsv now dry-runs every row against loaded customers and confirms exact new/matched/skipped counts via window.confirm before any ensureEstimateCustomer write
+458. **[F][DONE]** Export inventory CSV with all custom fields — MasterInventory.exportCsvFor now exports declared columns + every stored/custom key found on the filtered rows — no custom field silently dropped
+459. **[B][DONE]** `importSalesPipeline` — `478` dead ternary — verify the intended fallback — verified — `proposed.close_date ?? current.close_date` and `proposed.lost_reason ?? current.lost_reason` are live: omitted sheet fields keep current values, explicit values win; no change needed
+460. **[F][DONE]** Import estimate → link to existing customer by name — resolveImportCustomer in importEstimates.js: exact normalized company_name match auto-links, single fuzzy hit requires caller confirmation (window.confirm in ImportEstimateJsonButton), ambiguous never auto-links
+461. **[F][DONE]** Export quote HTML as standalone file (shareable) — buildStandaloneQuoteHtml in exportEstimates.js — fully self-contained .html (inline styles, print button, quote display settings honored, internal costs never included); ExportQuoteHtmlButton mountable — mount pending (owner files)
+462. **[F][DONE]** Import pricing tiers from JSON — verified — MarkupTierPanel already carries JSON import/export plus page-level tier JSON import on EstimatorCustomers
+463. **[B][DONE]** `importOrders` — no upload size cap (C2-O) — verified — base44/functions/importOrders/entry.ts rejects uploads over 15 MB with HTTP 413 before parsing
+464. **[F][DONE]** Import parts from other estimate (copy BOM) — copyProductBomToProduct + buildCopiedBomPackages in importEstimates.js clone a source Product's groups+parts via addPartPackageToProduct (fresh part_key/group_key per copy); CopyBomButton picker mountable — mount pending (owner files)
+465. **[F][DONE]** Export change orders CSV — exportChangeOrdersCsv + ExportChangeOrdersButton shipped — mount pending on the change-orders surface (owner file, fenced)
+466. **[B][DONE]** `legacyInventoryMigrator` — `buildPayload` per target — verify all 6 targets handled — test-legacy-migrator.mjs covers every classifyLegacyRow target: labor_service, sign_parts_supplies, substrate get valid payloads; keep/unknown return null (fail closed); buildPayload + TARGET_ENTITY exported for the test seam
+467. **[F][DONE]** Import estimate sections from template — templateImportableSections + appendTemplateSectionsToEstimate instantiate a ProjectTemplate's line_items/sections list into the estimate via CAS; ImportTemplateSectionsButton dialog mountable — mount pending (owner files)
+468. **[F][DONE]** Export all estimates → backup file — buildEstimatesBackupDocument (aio-estimate-backup-v1) + Backup JSON inside ExportEstimatesButton — mount pending on EstimatorQueues.jsx (owner file, fenced)
+469. **[B][DONE]** `ExcelImporterDialog` — `skippedRows` now shows count; add per-row skip reasons — ExcelImporterDialog now stamps sourceRow (spreadsheet row #) on every row and includes row numbers in 'No routable item name' and duplicate skip reasons
+470. **[F][DONE]** Import inventory → link existing parts by `inventory_item_id` — MasterInventory.linkPartsCsv — added missing staffEntities import (was a guaranteed ReferenceError) and dedupe: parts already linked to that inventory_item_id are counted as already-linked, not rewritten
+471. **[F][DONE]** Export customer list CSV on EstimatorCustomers — verified — customer CSV export button already on EstimatorCustomers
+472. **[B][DONE]** `importSalesPipeline` fuzzy match — score threshold too low (wrong-customer WO stamps — C2-H) — verified — salesImportUtils.mjs uses identity-first matching (source-row id, Est/Inv identity, exact customer/title); no fuzzy score threshold exists — ambiguous rows fail closed, so wrong-customer stamping is not reachable
+473. **[F][DONE]** Import estimate line items from CSV — mapLineItemsCsv + appendLineItemsToEstimate append CSV line items to estimate.line_items via replaceEstimateFieldsIfUnchanged CAS; ImportLineItemsButton mountable — mount pending on EstimateDetail (owner file)
+474. **[F][DONE]** Export estimate breakdown for job costing — exportEstimateCostingCsvRows/ exportEstimateCostingCsv emit per-part cost vs customer price per section + totals; ExportJobCostingCsvButton mountable — mount pending on EstimateDetail (owner file)
+475. **[B][DONE]** `ensureOpenEstimateRevision` — `ensureEstimateLifecycleRevision` — `ensureBuilderPriceRevision` — `ensureCustomerSummary` — `deleteCreatedDuplicateWorkOrder` — `updateEstimateRevisionAudit` — all `auth.me()`-gated (C2-F) — verified all six: ensureOpenEstimateRevision, ensureEstimateLifecycleRevision, ensureBuilderPriceRevision, ensureCustomerSummary, updateEstimateRevisionAudit, deleteCreatedDuplicateWorkOrder — each gates on authenticateSignShopSession with base44.auth.me() fallback; no gaps
 
 ## 20. Admin, Settings & Misc (25)
 
-476. **[F]** Estimate-number format customization (prefix/suffix pattern)
-477. **[F]** `quote_valid_days` default configurable in QuoteSettings
-478. **[H]** `jurisdictionResearch` agent rename → `jurisdiction_research` (publish blocker)
-479. **[F]** Quote email signature customization in QuoteSettings
-480. **[F]** Tax-group management UI (admin adds/removes rates)
-481. **[F]** User-default view per page (per-user saved filter preference)
-482. **[F]** Admin — export all estimator data (estimates + inventory + customers)
-483. **[B]** `ensureOpportunityWorkspace` — `session_token` error should be 401 not 500
-484. **[F]** Estimate-number auto-reissue policy (on delete, reuse or skip?)
-485. **[F]** Admin — view all estimates regardless of salesperson
-486. **[F]** Quote defaults — `tax_rate` source picker (TaxGroup dropdown)
-487. **[B]** `EstimatorSettings` — add `estimator_tools` hub link coverage check (nav-wiring test has all links)
-488. **[F]** Per-user timezone preference → affects `due_date` display
-489. **[H]** `backupPermittingRepository` — Drive upload format wrong (F18 — non-estimator but related)
-490. **[F]** Admin — audit log view (who changed what, when)
-491. **[F]** `quote_expiration_date` default from `quote_valid_days` + `quote_issue_date` at send-time
-492. **[B]** `featureReports`/`CompletedReports`/`Opportunities`/`Financials`/`CustomerPortal` — `due_date` day-boundary bug (F27/C2-L family)
-493. **[F]** Custom estimate statuses beyond the 7 built-in
-494. **[F]** Estimate print preview before PDF
-495. **[B]** `FoundationEstimator`/`BrickStoneEstimator` — `handleSaveAsCopy`/`handleSave` catch landed; verify alert vs error-state display
-496. **[F]** `EstimatorTools` — add "Export all estimates" tool link
-497. **[F]** Quote footer customization (terms, warranty, disclaimer text)
-498. **[B]** `SalesHome` — `load()` catch landed; verify loadError renders correctly
-499. **[F]** Estimate auto-numbering format per module (e.g. CH-#### for channel letters)
-500. **[H]** `jurisdictionResearch` → `jurisdiction_research` — the publish blocker; rename + update `callJurisdictionAgent` reference
+476. **[F][DONE]** Estimate-number format customization (prefix/suffix pattern) — verified — QuoteDefaults.estimate_number_format + doc_number_padding drive generateDocNumber {seq} replacement; QuoteSettings exposes format + padding fields
+477. **[F][DONE]** `quote_valid_days` default configurable in QuoteSettings — verified — quote_valid_days in QuoteDefaults (default 30), editable in QuoteSettings, applied at send-time
+478. **[H][DONE]** `jurisdictionResearch` agent rename → `jurisdiction_research` (publish blocker) — renamed base44/functions/jurisdictionResearchAgent → jurisdiction_research; 4 invoke sites (refreshJurisdiction, batchUpdateJurisdictions, auditJurisdictionAccuracy, monitorJurisdictionChanges) now invoke jurisdiction_research; deployed; zero code refs remain (doc-only mentions in handoff notes)
+479. **[F][DONE]** Quote email signature customization in QuoteSettings — verified — email_signature in QuoteDefaults, editable in QuoteSettings, appended by quote delivery
+480. **[F][DONE]** Tax-group management UI (admin adds/removes rates) — verified — TaxGroup CRUD UI in QuoteSettings (add/edit/remove named rates)
+481. **[F][DONE]** User-default view per page (per-user saved filter preference) — per-user pageViews preference persisted via UserWorkspacePreferences (workspacePrefsAction); editable in EstimatorSettings "My display preferences" card
+482. **[F][DONE]** Admin — export all estimator data (estimates + inventory + customers) — verified — admin full_backup JSON dump (estimates, customers, parts/inventory, audit) on EstimatorQueues Backup button
+483. **[B][DONE]** `ensureOpportunityWorkspace` — `session_token` error should be 401 not 500 — verified on the current name opportunityWorkspaceAction — authenticateSignShopSession throws a 401 Response on missing/invalid session_token and the handler maps it to HTTP 401 (no 500 path); ensureOpportunityWorkspace no longer exists remotely
+484. **[F][DONE]** Estimate-number auto-reissue policy (on delete, reuse or skip?) — decided never-reuse: number_reissue_policy="never_reuse" in QuoteDefaults, surfaced in QuoteSettings, honored + documented in generateDocNumber (deleted numbers leave gaps; may be on customer paperwork)
+485. **[F][DONE]** Admin — view all estimates regardless of salesperson — verified — admins see all estimates on EstimatorQueues; mine=1 toggle scopes to own
+486. **[F][DONE]** Quote defaults — `tax_rate` source picker (TaxGroup dropdown) — default_tax_group picker in QuoteSettings; Step1EstimateDetails loads TaxGroups + falls back to the configured default (also fixed group_name field reference)
+487. **[B][DONE]** `EstimatorSettings` — add `estimator_tools` hub link coverage check (nav-wiring test has all links) — test-nav-wiring.mjs now parses EstimatorTools LINKS[] and asserts every hub link resolves to a route; also fixed lazyPage import detection; PASS (72 links → 108 routes)
+488. **[F][DONE]** Per-user timezone preference → affects `due_date` display — per-user display_timezone pref in "My display preferences" (UserWorkspacePreferences); resolveUserTimeZone/formatInUserTz helper honors user pref → company default → browser
+489. **[H][DONE]** `backupPermittingRepository` — Drive upload format wrong (F18 — non-estimator but related) — fixed: was FormData+file fields against uploadType=multipart (invalid); now proper multipart/related body (JSON metadata part + media part, boundary-delimited); deployed; remote source verified
+490. **[F][DONE]** Admin — audit log view (who changed what, when) — EstimatorAuditPanel (EstimateRevision + OpportunityActivity + admin actions) mounted admin-only on EstimatorSettings; ?tab=audit_log deep-link + EstimatorTools hub link
+491. **[F][DONE]** `quote_expiration_date` default from `quote_valid_days` + `quote_issue_date` at send-time — verified — estimateQuoteExpiration computes issue+valid_days at send; editable override preserved
+492. **[B][DONE]** `featureReports`/`CompletedReports`/`Opportunities`/`Financials`/`CustomerPortal` — `due_date` day-boundary bug (F27/C2-L family) — Opportunities now passes client-local today to list_follow_ups + list_opportunities (was server-side UTC boundary → 1-day-early overdue); FeatureReports/CompletedReports display only full timestamps (no date-only parse); Financials already parses local dates; CustomerPortal slice held for portal owner
+493. **[F][DONE]** Custom estimate statuses beyond the 7 built-in — CustomStatusesEditor in QuoteSettings edits custom_statuses + status_transitions (QuoteDefaults JSON)
+494. **[F][DONE]** Estimate print preview before PDF — Preview PDF button in CustomerQuotePanel generates the quote PDF and opens it in a new tab (download fallback if popup blocked) before email/print
+495. **[B][DONE]** `FoundationEstimator`/`BrickStoneEstimator` — `handleSaveAsCopy`/`handleSave` catch landed; verify alert vs error-state display — verified — both catch save errors with window.alert and render a blocking error state on prerequisite failures; convention consistent
+496. **[F][DONE]** `EstimatorTools` — add "Export all estimates" tool link — added "Export all estimates" + Pricing Admin + Audit Log links to EstimatorTools hub (keys switched to label for shared targets)
+497. **[F][DONE]** Quote footer customization (terms, warranty, disclaimer text) — verified — quote_footer_text + quote_terms_conditions + warranty_text + lead_time_text in QuoteDefaults/QuoteSettings, rendered on quotes
+498. **[B][DONE]** `SalesHome` — `load()` catch landed; verify loadError renders correctly — verified — SalesHome renders loadError alert after failed load; retry path intact
+499. **[F][DONE]** Estimate auto-numbering format per module (e.g. CH-#### for channel letters) — verified — module_number_prefixes JSON in QuoteDefaults maps module_key→prefix (CH-#### etc); generateDocNumber applies per-module format
+500. **[H][DONE]** `jurisdictionResearch` → `jurisdiction_research` — the publish blocker; rename + update `callJurisdictionAgent` reference — same work as #478 — function dir renamed, all 4 invoke sites updated + deployed, agent config base44/agents/jurisdiction_research.jsonc already in place; grep confirms no invoke refs to old name

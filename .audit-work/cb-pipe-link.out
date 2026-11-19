@@ -1,0 +1,12 @@
+{
+  workorders: 3192,
+  already_linked: 13,
+  to_link: 2742,
+  byHow: { exact: 2286, prefix: 456 },
+  ambiguous: 43,
+  no_match: 394,
+  customers: 4166
+}
+prefix samples: Colite: 181 Progress Place Springdale => Colite | Colite: 1 newmann Way Evendale Winter Paint => Colite | Colite: 740 East National Road Vandalia => Colite | Colite: 201 West Crescentville Road Springdale => Colite | Colite: 2060 Heller Drive Beavercreek => Colite | Lee &  Associates / Columbia Square => Lee & Associates | Fit Body Boot Camp - Mason - Interior => Fit Body Boot Camp | Colite - GE 4230 Research Blvd Miami Valley Research Park Dayton - REV. 1 => Colite | Diamond Properties/Michael Levy => Diamond Properties | Colite - GE 191 Rosa Parks Exterior => Colite | Fit Body Boot Camp - Mason - Exterior => Fit Body Boot Camp | Colite- GE 1200 Jaybird => Colite
+linked 100 skipped 0linked 200 skipped 0linked 300 skipped 0linked 400 skipped 0linked 500 skipped 0linked 600 skipped 0linked 700 skipped 0linked 800 skipped 0linked 900 skipped 0linked 1000 skipped 0linked 1100 skipped 0linked 1200 skipped 0linked 1300 skipped 0linked 1400 skipped 0linked 1500 skipped 0linked 1600 skipped 0linked 1700 skipped 0linked 1800 skipped 0linked 1900 skipped 0linked 2000 skipped 0linked 2100 skipped 0linked 2200 skipped 0linked 2300 skipped 0linked 2400 skipped 0linked 2500 skipped 0linked 2600 skipped 0linked 2700 skipped 0
+linked=2742 skipped=0

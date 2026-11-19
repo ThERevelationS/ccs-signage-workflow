@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { verifyAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
@@ -436,6 +437,7 @@ async function assignBalance(Balance: any, Policy: any, Authorized: any, Audit: 
       details: {
         payload_hash: payloadHash,
         previous_policy_id: balance?.policy_id || null,
+        previous_balances: Array.isArray(balance?.balances) ? balance.balances : [],
         policy_id: policyId,
         expected_updated_date: expectedUpdatedDate || null,
       },
@@ -610,7 +612,7 @@ async function deletePolicy(Policy: any, Balance: any, Audit: any, body: any, ad
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const admin = await verifyAdminSettingsCapability(base44, body?.admin_capability);
 
@@ -627,7 +629,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Invalid PTO configuration action.' }, { status: 400 });
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('managePTOConfig error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'PTO configuration could not be changed safely.' : error?.message,

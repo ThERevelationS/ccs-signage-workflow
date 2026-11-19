@@ -1,0 +1,7 @@
+{
+  "stdout": "base44/entities/FoundationProject.jsonc\nsrc/components/estimator/foundation/ConcreteDeliveryPanel.jsx\nsrc/components/estimator/foundation/FoundationBOM.jsx\nsrc/components/estimator/foundation/FoundationItemCard.jsx\nsrc/components/estimator/foundation/FoundationTotals.jsx\nsrc/components/estimator/foundation/foundationCalc.js\nsrc/components/estimator/foundation/foundationCatalogIntegrity.js\nsrc/pages/FoundationEstimator.jsx\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 864
+}

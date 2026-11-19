@@ -1,0 +1,50 @@
+{
+  "results": [
+    {
+      "case": "model: pricing fields are drafted and restored verbatim",
+      "ok": true
+    },
+    {
+      "case": "model: identity/link/computed/internal fields stay out of the draft",
+      "ok": true
+    },
+    {
+      "case": "model: allowlist stays explicit (no catch-all)",
+      "ok": true
+    },
+    {
+      "case": "model: quota failure on empty storage leaves loss marker -> read warns invalid",
+      "ok": true
+    },
+    {
+      "case": "model: quota failure with existing draft retains prior draft (no tombstone clobber)",
+      "ok": true
+    },
+    {
+      "case": "model: oversize write on empty storage -> tombstone, on existing -> retained",
+      "ok": true
+    },
+    {
+      "case": "model: tombstone is a valid CAS revision — write over marker proceeds",
+      "ok": true
+    },
+    {
+      "case": "model: CAS conflict / context isolation / identity gates unchanged",
+      "ok": true
+    },
+    {
+      "case": "model: draft stores pricing only when present (absent keys absent)",
+      "ok": true
+    },
+    {
+      "case": "model: corrupt stored envelope still surfaces invalid (unchanged path)",
+      "ok": true
+    },
+    {
+      "case": "model RED: baseline store drops pricing fields (discrimination)",
+      "ok": true
+    }
+  ],
+  "okCount": 11,
+  "total": 11
+}

@@ -1,0 +1,1006 @@
+{
+  "matches": [
+    {
+      "path": "src/components/estimator/foundation/FoundationEquipmentTab.jsx",
+      "line": 16,
+      "text": "// Blank-preserving draft coercion (same rule as the wall/pole panels): a blank"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationSectionBanner.jsx",
+      "line": 12,
+      "text": "            <b>All-In-One section:</b> {sectionName || \"Untitled\"} — <b>Concrete | Masonry | Poles</b> — save\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+      "line": 67,
+      "text": "  for (const [index, pole] of (project?.poles || []).entries()) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+      "line": 68,
+      "text": "    check(pole, index, \"pole\", \"pole_id\", \"Pole\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "line": 13,
+      "text": "export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveItem }) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "line": 203,
+      "text": "          {poles.map((pole, index) => ("
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "line": 205,
+      "text": "              key={layoutItemKey(pole, index)}"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "line": 208,
+      "text": "                left: pctW(pole.x_inches || 0),"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "line": 209,
+      "text": "                top: pctD(pole.z_inches || 0),"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "line": 213,
+      "text": "              title={`Pole ${index + 1}`}"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 1,
+      "text": "const ARRAYS = [\"items\", \"walls\", \"poles\", \"wall_caps\", \"signage_cabinets\"];"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 7,
+      "text": "  pole: `${UNRESOLVED_PREFIX}legacy-pole`,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 54,
+      "text": "  (project?.poles || []).forEach((p) => walk(p?.signs));"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 61,
+      "text": "  (project?.poles || []).forEach((p) => add(p?.foundation_component_id));"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 63,
+      "text": "  (project?.signage_cabinets || []).forEach((c) => { add(c?.foundation_component_id); add(c?.pole_component_id); });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 103,
+      "text": "    const kinds = [\"items\", \"walls\", \"poles\", \"wall_caps\", \"signage_cabinets\"];"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 106,
+      "text": "      for (const [f, kind] of [[\"foundation_component_id\",\"foundation\"],[\"pole_component_id\",\"pole\"],[\"wall_component_id\",\"wall\"],[\"segment_component_id\",\"segment\"]]) validateRef(r[f], kind);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 109,
+      "text": "    for (const p of src?.poles || []) for (const s of p?.signs || []) check(s?.component_id);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 194,
+      "text": "const normalizePoles = (poles, items, prevItems, createId, used, seen) =>"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 195,
+      "text": "  (poles || []).map((p) => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 196,
+      "text": "    const n = ensureNodeId(p, createId, \"pole\", used, seen);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 202,
+      "text": "    if (signs !== undefined && !Array.isArray(signs)) throw new Error(\"foundation assembly: pole signs must be an array\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 203,
+      "text": "    if (Array.isArray(signs)) n.signs = signs.map((s) => ensureNodeId(s, createId, \"pole_sign\", used, seen));"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 222,
+      "text": "const normalizeCabinets = (cabinets, items, poles, prevItems, prevPoles, createId, used, seen) =>"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 226,
+      "text": "    if (mount === \"pole\") {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 227,
+      "text": "      const res = resolveParent(n.pole_component_id, Object.prototype.hasOwnProperty.call(c, \"pole_component_id\"), legacyIndexOf(c, [\"pole_index\"]), poles, prevPoles, UNRESOLVED.pole);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 228,
+      "text": "      n.pole_component_id = res.canon === undefined ? \"\" : res.canon;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 229,
+      "text": "      n.pole_index = res.index;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 236,
+      "text": "      n.pole_component_id = n.pole_component_id ?? \"\";"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 237,
+      "text": "      n.pole_index = undefined;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 241,
+      "text": "      if (n.pole_component_id === undefined) n.pole_component_id = \"\";"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 243,
+      "text": "      n.pole_index = undefined;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 262,
+      "text": "  next.poles = normalizePoles(project.poles, next.items, previous?.items, createId, used, seen);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 264,
+      "text": "  next.signage_cabinets = normalizeCabinets(project.signage_cabinets, next.items, next.poles, previous?.items, previous?.poles, createId, used, seen);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 273,
+      "text": "  const poles = project.poles || [];"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 275,
+      "text": "  for (const p of poles) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 278,
+      "text": "    if (isReserved(canon)) issues.push({ code: \"unresolved-parent\", kind: \"pole\", componentId: p?.component_id, parentId: canon, message: \"Pole legacy foundation index could not be resolved; left unresolved until reassigned.\" });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 279,
+      "text": "    else if (!byId(items, canon)) issues.push({ code: \"dangling-parent\", kind: \"pole\", componentId: p?.component_id, parentId: canon, message: \"Pole references a foundation that is not present; it stays priced until reassigned.\" });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 294,
+      "text": "    if (c?.mount === \"pole\") {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 295,
+      "text": "      const canon = c?.pole_component_id;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 296,
+      "text": "      if (canon === \"\" || canon === undefined || canon === null) issues.push({ code: \"missing-mount\", kind: \"signage_cabinet\", componentId: c?.component_id, parentId: undefined, message: \"Cabinet has no pole or foundation assigned; it stays priced until assigned.\" });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 297,
+      "text": "      else if (isReserved(canon)) issues.push({ code: \"unresolved-parent\", kind: \"signage_cabinet\", componentId: c?.component_id, parentId: canon, message: \"Cabinet pole could not be resolved; left unresolved until reassigned.\" });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 298,
+      "text": "      else if (!byId(poles, canon)) issues.push({ code: \"dangling-parent\", kind: \"signage_cabinet\", componentId: c?.component_id, parentId: canon, message: \"Cabinet references a pole that is not present; it stays priced until reassigned.\" });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 301,
+      "text": "      if (canon === \"\" || canon === undefined || canon === null) issues.push({ code: \"missing-mount\", kind: \"signage_cabinet\", componentId: c?.component_id, parentId: undefined, message: \"Cabinet has no pole or foundation assigned; it stays priced until assigned.\" });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 363,
+      "text": "  if (project.poles !== undefined) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 364,
+      "text": "    components.poles = copyRows(normalized.poles, \"pole\").map((p) => ({"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 367,
+      "text": "      signs: (p.signs || []).map((s) => ({ ...s, component_id: remap(s.component_id, \"pole_sign\") })),"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 381,
+      "text": "      pole_component_id: isId(c.pole_component_id) && idMap.has(c.pole_component_id) ? idMap.get(c.pole_component_id) : c.pole_component_id,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 386,
+      "text": "  const poleRows = components.poles || [];"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 387,
+      "text": "  (components.poles || []).forEach((p) => { p.foundation_idx = rebuildIndex(p.foundation_component_id, parents); });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 395,
+      "text": "    if (c.mount === \"pole\") { c.pole_index = rebuildIndex(c.pole_component_id, poleRows); c.foundation_index = undefined; }"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 396,
+      "text": "    else { c.foundation_index = rebuildIndex(c.foundation_component_id, parents); c.pole_index = undefined; }"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 11,
+      "text": "  pole_index: mount === \"pole\" ? index : undefined,"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 12,
+      "text": "  pole_component_id: mount === \"pole\" ? canonId || \"\" : \"\","
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 21,
+      "text": "// Blank-preserving draft coercion (same rule as the wall/pole/equipment"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 102,
+      "text": "export default function SignageCabinetsPanel({ cabinets = [], items = [], poles = [], onChange }) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 112,
+      "text": "    const parent = mount === \"foundation\" ? items[index] : poles[index];"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 116,
+      "text": "  const canonParentId = (c) => (c.mount === \"pole\" ? c.pole_component_id : c.foundation_component_id);"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 117,
+      "text": "  const hasCanonProp = (c) => (c.mount === \"pole\" ? Object.prototype.hasOwnProperty.call(c, \"pole_component_id\") : Object.prototype.hasOwnProperty.call(c, \"foundation_component_id\"));"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 124,
+      "text": "        const parent = mount === \"foundation\" ? items[index] : poles[index];"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 127,
+      "text": "        return mount === \"foundation\" ? c.foundation_index === index : c.pole_index === index;"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 133,
+      "text": "      if (c.mount !== \"pole\" && c.mount !== \"foundation\") return true;"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 135,
+      "text": "      const pool = c.mount === \"pole\" ? poles : items;"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 140,
+      "text": "      const legacy = c.mount === \"pole\" ? c.pole_index : c.foundation_index;"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 146,
+      "text": "    const pool = mount === \"pole\" ? poles : items;"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 148,
+      "text": "    if (mount === \"pole\") update(i, { mount: \"pole\", pole_component_id: canonId, pole_index: canonId === \"\" || index < 0 ? undefined : index, foundation_component_id: \"\", foundation_index: undefined });"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 149,
+      "text": "    else update(i, { mount: \"foundation\", foundation_component_id: canonId, foundation_index: canonId === \"\" || index < 0 ? undefined : index, pole_component_id: \"\", pole_index: undefined });"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 162,
+      "text": "          Add cabinets directly on a foundation or mount them on a placed pole."
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 207,
+      "text": "        <h3 className=\"text-[13px] font-bold text-gray-900\">Signage Cabinets on Poles</h3>"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 209,
+      "text": "          Add cabinets to placed poles. Place poles in the \"Walls &amp; Poles\" tab."
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 211,
+      "text": "        {poles.length === 0 ? ("
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 213,
+      "text": "            No poles placed. To mount cabinets on a pole, add poles in the \"Walls &amp; Poles\" tab. (Or skip this and"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 217,
+      "text": "          poles.map((pole, index) => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 218,
+      "text": "            const rows = group(\"pole\", index);"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 222,
+      "text": "                  <span className=\"text-[12px] font-semibold text-gray-700\">Pole {index + 1}</span>"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 224,
+      "text": "                    onClick={() => add(\"pole\", index)}"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 231,
+      "text": "                  <p className=\"text-[11px] text-gray-400\">No cabinets on this pole.</p>"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 273,
+      "text": "                        if (v.startsWith(\"pole:\")) reassign(i, \"pole\", v.slice(5));"
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 281,
+      "text": "                      {poles.map((po, ix) => ("
+    },
+    {
+      "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "line": 282,
+      "text": "                        <option key={po.component_id || ix} value={`pole:${po.component_id}`}>{po.description || `Pole ${ix + 1}`}</option>"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 1,
+      "text": "// Pole + pole-painting math — ported VERBATIM from SignEstimate Pro"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 2,
+      "text": "// (NewFoundationEstimate.jsx: polesTotal / calcPolePaintingCost /"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 3,
+      "text": "//  getPolePaintingSizeMultiplier). Poles are PROJECT-level, not per foundation item."
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 6,
+      "text": "// painting setting is not a free pole — the row is held with its acknowledged"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 15,
+      "text": "//   poleSettingValue      — explicit-0-respecting pick (same semantics as wallSettingValue)"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 16,
+      "text": "//   polePriceNumber       — catalog/customer price basis: finite, nonnegative"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 18,
+      "text": "//   poleDimensionNumber   — positive finite dimension in inches/feet (height"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 19,
+      "text": "//                           above grade, stock length, pole width)"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 20,
+      "text": "//   poleOffsetNumber      — finite nonnegative measurement (depth in ground may"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 22,
+      "text": "//   poleSettingNumber / polePositiveSettingNumber — setting compositions;"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 26,
+      "text": "  inventorySettingValue as poleSettingValue,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 27,
+      "text": "  inventoryNonnegativeNumber as polePriceNumber,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 28,
+      "text": "  inventoryPositiveNumber as poleDimensionNumber,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 29,
+      "text": "  inventoryNonnegativeMeasurement as poleOffsetNumber,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 30,
+      "text": "  inventorySettingNumber as poleSettingNumber,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 31,
+      "text": "  inventoryPositiveSettingNumber as polePositiveSettingNumber,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 34,
+      "text": "const setting = (settings, key, def) => parseFloat(poleSettingValue(settings?.[key], def));"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 36,
+      "text": "const POLE_PAINT_SETTING_DEFAULTS = {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 37,
+      "text": "  pole_paint_cost_per_lf: 3.5,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 38,
+      "text": "  pole_paint_labor_per_lf: 2.5,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 39,
+      "text": "  pole_paint_size_multiplier_12in: 2.0,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 40,
+      "text": "  pole_paint_size_multiplier_10in: 1.75,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 41,
+      "text": "  pole_paint_size_multiplier_8in: 1.5,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 42,
+      "text": "  pole_paint_size_multiplier_6in: 1.25,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 43,
+      "text": "  pole_paint_size_multiplier_4in: 1.0,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 46,
+      "text": "const polePaintMultiplierKey = (widthInches) => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 48,
+      "text": "  if (w >= 12) return \"pole_paint_size_multiplier_12in\";"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 49,
+      "text": "  if (w >= 10) return \"pole_paint_size_multiplier_10in\";"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 50,
+      "text": "  if (w >= 8) return \"pole_paint_size_multiplier_8in\";"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 51,
+      "text": "  if (w >= 6) return \"pole_paint_size_multiplier_6in\";"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 52,
+      "text": "  return \"pole_paint_size_multiplier_4in\";"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 55,
+      "text": "const getPolePaintingSizeMultiplier = (inv, settings) => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 56,
+      "text": "  const w = inv?.pole_width_inches || 6;"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 57,
+      "text": "  if (w >= 12) return setting(settings, \"pole_paint_size_multiplier_12in\", 2.0);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 58,
+      "text": "  if (w >= 10) return setting(settings, \"pole_paint_size_multiplier_10in\", 1.75);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 59,
+      "text": "  if (w >= 8) return setting(settings, \"pole_paint_size_multiplier_8in\", 1.5);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 60,
+      "text": "  if (w >= 6) return setting(settings, \"pole_paint_size_multiplier_6in\", 1.25);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 61,
+      "text": "  return setting(settings, \"pole_paint_size_multiplier_4in\", 1.0);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 64,
+      "text": "export const calcPolePaintingCost = (p, inv, settings) => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 65,
+      "text": "  if (!p.include_pole_painting || !inv) return 0;"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 66,
+      "text": "  // Total pole length = height above ground + depth in ground."
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 68,
+      "text": "  const paintCostPerLf = setting(settings, \"pole_paint_cost_per_lf\", 3.5);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 69,
+      "text": "  const paintLaborPerLf = setting(settings, \"pole_paint_labor_per_lf\", 2.5);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 70,
+      "text": "  const sizeMult = getPolePaintingSizeMultiplier(inv, settings);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 76,
+      "text": "function polePricing(pole, inventory = [], index = 0, settings = {}) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 78,
+      "text": "  const id = pole?.pole_id;"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 80,
+      "text": "    kind: \"pole\", index, componentId: pole?.component_id ?? pole?.id ?? null,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 82,
+      "text": "    message: `Pole ${index + 1}: ${message}.`,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 86,
+      "text": "    add(\"pole_id\", \"catalog_item_unassigned\", \"select a catalog material\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 90,
+      "text": "      add(\"pole_id\", \"catalog_item_unavailable\", \"selected catalog material is unavailable\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 92,
+      "text": "      add(\"pole_id\", \"catalog_item_ambiguous\", \"selected catalog material is ambiguous\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 93,
+      "text": "    } else if (matches[0].material_type !== \"pole\") {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 94,
+      "text": "      add(\"pole_id\", \"catalog_item_type_mismatch\", \"selected catalog material is not a pole\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 99,
+      "text": "  const heightInches = poleDimensionNumber(pole?.height_inches);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 101,
+      "text": "    add(\"height_inches\", \"pole_height_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 104,
+      "text": "  const depthInches = poleOffsetNumber(pole?.y_offset_inches);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 106,
+      "text": "    add(\"y_offset_inches\", \"pole_depth_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 114,
+      "text": "    const override = pole?.custom_cost_per_unit;"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 116,
+      "text": "    const stockMode = inv.pole_pricing_mode === \"stock_price\";"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 117,
+      "text": "    rate = polePriceNumber(hasOverride ? override : (stockMode ? inv.pole_stock_price : inv.cost_per_unit));"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 119,
+      "text": "      add(hasOverride ? \"custom_cost_per_unit\" : stockMode ? \"pole_stock_price\" : \"cost_per_unit\","
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 120,
+      "text": "        \"pole_price_unavailable\", \"record a finite, nonnegative pole price before repricing\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 123,
+      "text": "      const stockLengthFt = polePositiveSettingNumber(inv.pole_stock_length_ft, 20);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 125,
+      "text": "        add(\"pole_stock_length_ft\", \"pole_stock_length_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 131,
+      "text": "    if (pole?.include_pole_painting) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 132,
+      "text": "      widthInches = polePositiveSettingNumber(inv.pole_width_inches, 6);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 134,
+      "text": "        add(\"pole_width_inches\", \"pole_width_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 135,
+      "text": "          \"the selected catalog pole width must be a recorded finite positive number\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 138,
+      "text": "        const value = poleSettingNumber(settings?.[key], POLE_PAINT_SETTING_DEFAULTS[key]);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 140,
+      "text": "          add(key, \"pole_paint_setting_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 145,
+      "text": "      paint.costPerLf = paintSetting(\"pole_paint_cost_per_lf\", \"pole paint cost per LF\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 146,
+      "text": "      paint.laborPerLf = paintSetting(\"pole_paint_labor_per_lf\", \"pole paint labor per LF\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 147,
+      "text": "      paint.sizeMultiplier = paintSetting(polePaintMultiplierKey(widthInches), \"pole paint size multiplier\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 153,
+      "text": "export function foundationPolePricingIssues(pole, inventory = [], index = 0, settings = {}) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 154,
+      "text": "  return polePricing(pole, inventory, index, settings).issues;"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 157,
+      "text": "export function foundationPoleCatalogIssues(poles = [], inventory = [], settings = {}) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 158,
+      "text": "  return (poles || []).flatMap((pole, index) => foundationPolePricingIssues(pole, inventory, index, settings));"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 161,
+      "text": "export function calcPoles(poles = [], inventory = [], settings = {}, options = {}) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 162,
+      "text": "  const explicitSnapshot = options != null && Object.prototype.hasOwnProperty.call(options, \"savedPoles\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 163,
+      "text": "  const savedPoles = Array.isArray(options?.savedPoles) ? options.savedPoles : [];"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 172,
+      "text": "  const currentCounts = counts(poles), savedCounts = counts(savedPoles);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 173,
+      "text": "  const savedById = new Map(savedPoles.filter((row) => assignedId(row?.component_id))"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 175,
+      "text": "  // Preserve the last saved amounts, not a fabricated free pole. The project"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 177,
+      "text": "  const held = pole => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 178,
+      "text": "    const id = pole?.component_id;"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 182,
+      "text": "      : pole;"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 183,
+      "text": "    const result = { ...pole };"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 185,
+      "text": "      for (const field of [\"pole_name\", \"pole_cost\", \"pole_painting_cost\", \"total_cost\"]) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 192,
+      "text": "  const results = (poles || []).map((pole, index) => polePricing(pole, inventory, index, settings));"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 194,
+      "text": "    poles: results.map((check, index) => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 195,
+      "text": "      const pole = poles[index];"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 196,
+      "text": "      if (check.issues.length) return held(pole);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 198,
+      "text": "      const totalPoleInches = heightInches + depthInches;"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 199,
+      "text": "      let poleCost;"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 200,
+      "text": "      if (inv.pole_pricing_mode === \"stock_price\") {"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 201,
+      "text": "        const pieces = Math.ceil(totalPoleInches / stockLengthInches);"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 202,
+      "text": "        poleCost = pieces * rate;"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 204,
+      "text": "        poleCost = (totalPoleInches / 12) * rate;"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 208,
+      "text": "      const paintingCost = pole?.include_pole_painting"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 209,
+      "text": "        ? calcPolePaintingCost("
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 210,
+      "text": "            { include_pole_painting: true, height_inches: heightInches, y_offset_inches: depthInches },"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 211,
+      "text": "            { ...inv, pole_width_inches: widthInches },"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 213,
+      "text": "              pole_paint_cost_per_lf: paint.costPerLf,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 214,
+      "text": "              pole_paint_labor_per_lf: paint.laborPerLf,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 215,
+      "text": "              [polePaintMultiplierKey(widthInches)]: paint.sizeMultiplier,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 219,
+      "text": "        ...pole,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 220,
+      "text": "        pole_name: inv.material_name || \"\","
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 221,
+      "text": "        pole_cost: poleCost,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 222,
+      "text": "        pole_painting_cost: paintingCost,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 223,
+      "text": "        total_cost: poleCost + paintingCost,"
+    },
+    {
+      "path": "src/components/estimator/foundation/poleCalculator.js",
+      "line": 226,
+      "text": "    polePricing: results.map((check) => ({ available: check.issues.length === 0, issues: check.issues })),"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 1,
+      "text": "// Cost engine for the Concrete | Masonry | Poles estimator."
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 7,
+      "text": "//  - poles + pole painting                                                  → poleCalculator.js"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 11,
+      "text": "//   grand = itemsTotal(+concrete delivery) + wallTotal + polesTotal + equipmentTotal + wallCapTotal"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 12,
+      "text": "// Poles, walls, caps and fill are PROJECT-level — they are never charged on a foundation item."
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 16,
+      "text": "import { calcPoles } from \"./poleCalculator\";"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 109,
+      "text": "  // held with its acknowledged amounts, the same contract as the wall/pole"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 430,
+      "text": "  // their canonical spellings and legacy inch-denominated pole stock lengths"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 445,
+      "text": "  // Pole and wall availability issues come from their pricing checks; the"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 448,
+      "text": "  const poleCalc = calcPoles(project.poles, inventory, settings,"
+    }
+  ],
+  "truncated": true,
+  "returnedMatches": 200
+}

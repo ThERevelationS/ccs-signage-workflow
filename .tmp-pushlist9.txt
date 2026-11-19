@@ -1,0 +1,17 @@
+base44/entities/Customer.jsonc
+src/components/estimator/poRequiredModel.js
+scripts/test-po-required.mjs
+base44/shared/templateRender.ts
+scripts/test-template-render.mjs
+base44/shared/followUpMachine.ts
+scripts/test-follow-up-machine.mjs
+src/components/jobs/completedVsPaidModel.js
+scripts/test-completed-vs-paid.mjs
+src/components/queues/queueCountersModel.js
+scripts/test-queue-counters.mjs
+base44/shared/delivery.ts
+scripts/test-delivery-adapter.mjs
+base44/shared/setupFeeCompose.ts
+scripts/test-setup-fee-compose.mjs
+src/components/jobs/orderEntryOverrideModel.js
+scripts/test-order-entry-override.mjs

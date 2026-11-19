@@ -1,0 +1,39 @@
+{
+  "result": [
+    {
+      "name": "deployment selection leaves every conversion and persisted Product field unchanged",
+      "ok": true
+    },
+    {
+      "name": "historical-unknown model and HTML exactly match the already-reviewed frozen browser documents",
+      "ok": true
+    },
+    {
+      "name": "new-accepted-costs model and HTML exactly match the already-reviewed frozen browser documents",
+      "ok": true
+    },
+    {
+      "name": "partially known cost and partially known prices cannot claim complete profit",
+      "ok": true
+    },
+    {
+      "name": "explicit supplied extended zero and historical total-only72 stay authoritative",
+      "ok": true
+    },
+    {
+      "name": "strict missing-money handling and recorded zero remain distinct without any SDK calls",
+      "ok": true
+    }
+  ],
+  "deploymentTargets": [
+    "src/components/jobs/printTemplates/workOrderPrintModel.js",
+    "src/components/jobs/printTemplates/templates/original.js"
+  ],
+  "sourceHead": "e99a089ff3b1e0bf7bfdcd7259bddd354ad767b6",
+  "conversionUnchanged": true,
+  "costCaptureHeld": true,
+  "schemaChanged": false,
+  "realStorageVerified": false,
+  "backendAuthorizationVerified": false,
+  "reinforcementV2Activated": false
+}

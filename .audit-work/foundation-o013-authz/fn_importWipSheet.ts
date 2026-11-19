@@ -1,0 +1,492 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
+import * as XLSX from 'npm:xlsx@0.18.5';
+import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
+import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+
+const MAX_WIP_FILE_BYTES = 50 * 1024 * 1024;
+
+const parseSheetDate = (name) => {
+  const match = name.match(/WIP\s+(\d+)-(\d+)-(\d+)/);
+  if (!match) return null;
+  let [, month, day, year] = match;
+  year = parseInt(year);
+  if (year < 100) year += 2000;
+  return new Date(year, parseInt(month) - 1, parseInt(day));
+};
+
+const parseSheetRows = (workbook, sheetName) => {
+  const ws = workbook.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+
+  let headerRowIdx = -1;
+  for (let i = 0; i < Math.min(5, rows.length); i++) {
+    const row = rows[i];
+    if (row && row.some(cell => typeof cell === 'string' && cell.includes('Order Number'))) {
+      headerRowIdx = i;
+      break;
+    }
+  }
+  if (headerRowIdx === -1) return { rows: [], headers: [] };
+
+  const headers = rows[headerRowIdx];
+  const findCol = (...names) => {
+    for (const name of names) {
+      const idx = headers.findIndex(h => h && typeof h === 'string' && h.trim().toLowerCase().includes(name.toLowerCase()));
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+
+  const orderNumCol = findCol('Order Number');
+  const descCol = findCol('Order Description');
+  const installDateCol = findCol('Proj./Actual Install Date', 'Proj. Install Date', 'Install Date');
+  const customerCol = findCol('Customer Name', 'Customer', 'Client');
+
+  if (orderNumCol === -1) return { rows: [], headers: headers.filter(Boolean).map(String) };
+
+  const results = [];
+  for (let i = headerRowIdx + 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || !row[orderNumCol]) continue;
+    const orderNum = String(row[orderNumCol]).trim();
+    if (!orderNum || orderNum === 'Order Number') continue;
+
+    const desc = descCol !== -1 ? row[descCol] : null;
+    const customer = customerCol !== -1 ? row[customerCol] : null;
+    let installDate = installDateCol !== -1 ? row[installDateCol] : null;
+
+    if (installDate !== null && installDate !== undefined) {
+      if (typeof installDate === 'number') {
+        const d = XLSX.SSF.parse_date_code(installDate);
+        installDate = d ? `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}` : null;
+      } else if (typeof installDate === 'string') {
+        const dateMatch = installDate.match(/(\d{4}-\d{2}-\d{2})/);
+        installDate = dateMatch ? dateMatch[1] : null;
+      }
+    }
+
+    results.push({
+      orderNumber: orderNum,
+      description: desc ? String(desc).trim() : null,
+      customerName: customer ? String(customer).trim() : null,
+      installDate: installDate || null,
+    });
+  }
+  return { rows: results, headers: headers.filter(Boolean).map(String) };
+};
+
+// Normalize for matching
+const normalize = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const normalizeFuzzy = (str) => {
+  return (str || '').toLowerCase()
+    .replace(/\b(inc|llc|ltd|co|corp|corporation|company|the|of|and|&|dba|sign|signs|signage|group|enterprises|services|service)\b/gi, '')
+    .replace(/[^a-z0-9]/g, '')
+    .trim();
+};
+
+// Extract significant words (>=3 chars) from a name
+const getWords = (str) => (str || '').toLowerCase().split(/[\s\/\-\(\)\.,&]+/).filter(w => w.length >= 3 && !['the','and','inc','llc','ltd','for'].includes(w));
+
+// Score how well a WIP row matches a work order (higher = better)
+const scoreMatch = (wipData, wo) => {
+  let score = 0;
+  const wipName = (wipData.customerName || '').toLowerCase();
+  const woName = (wo.client_name || '').toLowerCase();
+  const normWip = normalize(wipName);
+  const normWo = normalize(woName);
+  const fuzzyWip = normalizeFuzzy(wipName);
+  const fuzzyWo = normalizeFuzzy(woName);
+
+  // Exact normalized match
+  if (normWip && normWo && normWip === normWo) score += 100;
+  // Exact fuzzy match
+  else if (fuzzyWip && fuzzyWo && fuzzyWip === fuzzyWo) score += 90;
+  // One contains the other (normalized)
+  else if (normWip.length >= 4 && normWo.length >= 4) {
+    if (normWo.includes(normWip) || normWip.includes(normWo)) score += 70;
+    else if (fuzzyWo.includes(fuzzyWip) || fuzzyWip.includes(fuzzyWo)) score += 60;
+  }
+
+  // Word overlap scoring
+  const wipWords = getWords(wipName);
+  const woWords = getWords(woName);
+  if (wipWords.length > 0 && woWords.length > 0) {
+    const commonWords = wipWords.filter(w => woWords.some(ww => ww === w || ww.includes(w) || w.includes(ww)));
+    const wordRatio = commonWords.length / Math.max(wipWords.length, woWords.length);
+    score += Math.round(wordRatio * 40);
+    // Bonus if first word matches (usually the most important)
+    if (wipWords[0] === woWords[0]) score += 20;
+  }
+
+  // Description similarity bonus
+  if (wipData.description && (wo.description || wo.title)) {
+    const wipDesc = normalize(wipData.description);
+    const woDesc = normalize(wo.description || '') + ' ' + normalize(wo.title || '');
+    if (wipDesc.length >= 5) {
+      // Check word overlap in descriptions
+      const wipDescWords = getWords(wipData.description);
+      const woDescWords = getWords((wo.description || '') + ' ' + (wo.title || ''));
+      const descCommon = wipDescWords.filter(w => woDescWords.some(ww => ww === w));
+      if (descCommon.length >= 2) score += 25;
+      else if (descCommon.length === 1) score += 10;
+    }
+  }
+
+  // Install date match bonus
+  if (wipData.installDate && wo.project_install_date && wipData.installDate === wo.project_install_date) {
+    score += 15;
+  }
+
+  return score;
+};
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+async function readWipBytes(response) {
+  const declaredLength = Number(response.headers.get('content-length') || 0);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_WIP_FILE_BYTES) {
+    throw Object.assign(new Error('WIP file exceeds the 50 MB safety limit.'), { status: 413 });
+  }
+  const reader = response.body?.getReader();
+  if (!reader) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.byteLength > MAX_WIP_FILE_BYTES) throw Object.assign(new Error('WIP file exceeds the 50 MB safety limit.'), { status: 413 });
+    return bytes;
+  }
+  const chunks = [];
+  let total = 0;
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    total += value.byteLength;
+    if (total > MAX_WIP_FILE_BYTES) {
+      await reader.cancel().catch(() => {});
+      throw Object.assign(new Error('WIP file exceeds the 50 MB safety limit.'), { status: 413 });
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+}
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
+    const body = await req.json().catch(() => ({}));
+    const actor = await authenticateSignShopSession(base44, body?.session_token);
+    if (actor?.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+
+    const { fileUrl, mode } = body;
+
+    if (!fileUrl) {
+      return Response.json({ error: 'Missing required field: fileUrl' }, { status: 400 });
+    }
+
+    // Download and parse only from a public external URL, with a hard byte cap.
+    const fileRes = await safeExternalFetch(fileUrl);
+    if (!fileRes.ok) throw Object.assign(new Error(`Failed to download WIP file (HTTP ${fileRes.status})`), { status: 400 });
+    const fileBytes = await readWipBytes(fileRes);
+    const workbook = XLSX.read(fileBytes, { type: 'array' });
+
+    const wipSheets = workbook.SheetNames.filter(name =>
+      /^WIP\s+\d/.test(name) && name !== 'Formulas'
+    );
+
+    if (wipSheets.length === 0) {
+      return Response.json({ error: 'No WIP sheets found in this file' }, { status: 400 });
+    }
+
+    let sheetsToProcess = [];
+    if (mode === 'latest') {
+      let latestSheet = null;
+      let latestDate = null;
+      for (const sheetName of wipSheets) {
+        const d = parseSheetDate(sheetName);
+        if (d && (!latestDate || d > latestDate)) {
+          latestDate = d;
+          latestSheet = sheetName;
+        }
+      }
+      if (!latestSheet) return Response.json({ error: 'Could not parse dates from WIP sheet names' }, { status: 400 });
+      sheetsToProcess = [latestSheet];
+    } else {
+      sheetsToProcess = wipSheets;
+    }
+
+    let allHeaders = [];
+    const allRows = [];
+    for (const sheetName of sheetsToProcess) {
+      const { rows, headers } = parseSheetRows(workbook, sheetName);
+      allRows.push(...rows);
+      if (headers.length > 0 && allHeaders.length === 0) allHeaders = headers;
+    }
+
+    if (allRows.length === 0) {
+      return Response.json({ 
+        error: 'No data rows found in selected sheets',
+        debug: { sheetsToProcess, allHeaders, sheetNames: workbook.SheetNames }
+      }, { status: 400 });
+    }
+
+    // Deduplicate - later sheet wins
+    const orderMap = new Map();
+    for (const row of allRows) orderMap.set(row.orderNumber, row);
+
+    // Fetch all work orders using pagination with retry
+    let allWorkOrders = [];
+    let skip = 0;
+    const pageSize = 200;
+    while (true) {
+      let page = null;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        try {
+          page = await base44.asServiceRole.entities.WorkOrder.list('created_date', pageSize, skip);
+          break;
+        } catch (e) {
+          if (e.message && e.message.includes('429') && attempt < 3) {
+            await sleep(1000 * (attempt + 1));
+          } else {
+            throw e;
+          }
+        }
+      }
+      if (!Array.isArray(page) || page.length === 0) break;
+      allWorkOrders = allWorkOrders.concat(page);
+      if (page.length < pageSize) break;
+      skip += pageSize;
+    }
+
+    // Exclude deleted, completed and rider rows from matching — a dead record
+    // must never absorb an update meant for a live order.
+    allWorkOrders = allWorkOrders.filter(wo => !wo.deleted && !wo.completed && !wo.is_rider);
+
+    // Build lookup indexes for faster matching
+    const byInvoiceNum = new Map();
+    const byEstInvAt = new Map();
+    const byNormalizedClient = new Map();
+
+    for (const wo of allWorkOrders) {
+      // Index by corbridge_invoice_number
+      if (wo.corbridge_invoice_number) {
+        byInvoiceNum.set(wo.corbridge_invoice_number, wo);
+        // Also index the numeric part (strip EST-/INV- prefix)
+        const numPart = wo.corbridge_invoice_number.replace(/^(INV|EST)-?/i, '');
+        if (numPart !== wo.corbridge_invoice_number) byInvoiceNum.set(numPart, wo);
+      }
+      // Index by est_inv_at
+      if (wo.est_inv_at) {
+        byEstInvAt.set(wo.est_inv_at, wo);
+        const numPart = wo.est_inv_at.replace(/^(INV|EST)-?/i, '');
+        if (numPart !== wo.est_inv_at) byEstInvAt.set(numPart, wo);
+      }
+      // Index by normalized client name (for fallback matching)
+      const normClient = normalize(wo.client_name);
+      if (normClient) {
+        if (!byNormalizedClient.has(normClient)) byNormalizedClient.set(normClient, []);
+        byNormalizedClient.get(normClient).push(wo);
+      }
+      // Also index by fuzzy-normalized name
+      const fuzzyClient = normalizeFuzzy(wo.client_name);
+      if (fuzzyClient && fuzzyClient !== normClient) {
+        if (!byNormalizedClient.has(fuzzyClient)) byNormalizedClient.set(fuzzyClient, []);
+        byNormalizedClient.get(fuzzyClient).push(wo);
+      }
+    }
+
+    // Match and collect updates
+    let updated = 0;
+    let failed = 0;
+    let conflicts = 0;
+    let notFound = 0;
+    let matchedByOrderNum = 0;
+    let matchedByClient = 0;
+    const notFoundOrders = [];
+    const debugMatches = [];
+    const pendingUpdates = [];
+
+    for (const [orderNumber, wipData] of orderMap.entries()) {
+      const numericPart = orderNumber.replace(/^(INV|EST)-?/i, '');
+
+      // Strategy 1: Match by corbridge_invoice_number or est_inv_at (exact)
+      let match = byInvoiceNum.get(orderNumber) || byInvoiceNum.get(numericPart)
+                || byEstInvAt.get(orderNumber) || byEstInvAt.get(numericPart);
+
+      // Strategy 2: Check corbridge_link contains order number
+      if (!match) {
+        match = allWorkOrders.find(wo => {
+          const link = wo.corbridge_link || '';
+          return link.includes(orderNumber) || link.includes(numericPart);
+        });
+      }
+
+      // Strategy 3: Score-based matching — first check fuzzy index, then full scan only if needed
+      if (!match && wipData.customerName) {
+        const MIN_SCORE = 50;
+        let bestScore = 0;
+        let bestMatch = null;
+        let secondBestScore = 0;
+
+        // Quick check: see if normalized/fuzzy client name hits the index
+        const normWipClient = normalize(wipData.customerName);
+        const fuzzyWipClient = normalizeFuzzy(wipData.customerName);
+        const quickCandidates = [
+          ...(byNormalizedClient.get(normWipClient) || []),
+          ...(byNormalizedClient.get(fuzzyWipClient) || []),
+        ];
+
+        // If we have quick candidates, score only those
+        const candidates = quickCandidates.length > 0 ? quickCandidates : allWorkOrders;
+
+        for (const wo of candidates) {
+          const score = scoreMatch(wipData, wo);
+          if (score > bestScore) {
+            secondBestScore = bestScore;
+            bestScore = score;
+            bestMatch = wo;
+          } else if (score > secondBestScore) {
+            secondBestScore = score;
+          }
+        }
+
+        if (bestMatch && bestScore >= MIN_SCORE && (bestScore - secondBestScore >= 20 || bestScore >= 90)) {
+          match = bestMatch;
+          matchedByClient++;
+        }
+      }
+
+      if (!match) {
+        notFound++;
+        notFoundOrders.push(orderNumber + (wipData.customerName ? ` (${wipData.customerName})` : ''));
+        continue;
+      }
+
+      if (match && !match._matchedByClient) matchedByOrderNum++;
+
+      // Only include fields that actually changed
+      const updateData = {};
+      if (wipData.description && wipData.description !== match.description) {
+        updateData.description = wipData.description;
+      }
+      if (wipData.installDate && wipData.installDate !== match.project_install_date) {
+        updateData.project_install_date = wipData.installDate;
+      }
+      if (!match.corbridge_invoice_number && orderNumber) {
+        updateData.corbridge_invoice_number = orderNumber;
+      }
+      if (!match.est_inv_at && orderNumber) {
+        updateData.est_inv_at = orderNumber;
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        pendingUpdates.push({
+          id: match.id,
+          data: updateData,
+          expectedFields: expectedWorkOrderFields(match, updateData),
+          orderNumber,
+          wipData,
+          match,
+        });
+      }
+    }
+
+    // Process updates in smaller batches with less parallelism to avoid timeouts
+    const PARALLEL_BATCH = 5;
+    for (let i = 0; i < pendingUpdates.length; i += PARALLEL_BATCH) {
+      const batch = pendingUpdates.slice(i, i + PARALLEL_BATCH);
+      const results = await Promise.allSettled(batch.map(async (item) => {
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const saved = await replaceWorkOrderFieldsIfUnchanged({
+              entity: base44.asServiceRole.entities.WorkOrder,
+              workOrderId: item.id,
+              expectedFields: item.expectedFields,
+              nextFields: item.data,
+              label: `WIP import ${item.orderNumber}`,
+            });
+            Object.assign(item.match, saved);
+            return item;
+          } catch (e) {
+            if (e.message && e.message.includes('429') && attempt < 2) {
+              await sleep(2000 * (attempt + 1));
+            } else {
+              throw e;
+            }
+          }
+        }
+      }));
+      for (const r of results) {
+        if (r.status === 'fulfilled' && r.value) {
+          updated++;
+          const item = r.value;
+          if (debugMatches.length < 5) {
+            debugMatches.push({
+              orderNumber: item.orderNumber,
+              wipCustomer: item.wipData.customerName,
+              matchedClient: item.match.client_name,
+              matchedId: item.id,
+              fieldsUpdated: Object.keys(item.data)
+            });
+          }
+        } else if (r.status === 'rejected') {
+          failed++;
+          if (r.reason?.code === 'WORK_ORDER_FIELD_CONFLICT') conflicts++;
+        }
+      }
+      // Small delay between batches
+      if (i + PARALLEL_BATCH < pendingUpdates.length) await sleep(200);
+    }
+
+    // Collect debug info
+    const sampleWipRows = Array.from(orderMap.entries()).slice(0, 5).map(([num, data]) => ({
+      orderNumber: num,
+      customer: data.customerName,
+      description: data.description?.substring(0, 80)
+    }));
+
+    const sampleWorkOrders = allWorkOrders.slice(0, 5).map(wo => ({
+      id: wo.id,
+      client_name: wo.client_name,
+      corbridge_invoice_number: wo.corbridge_invoice_number,
+      est_inv_at: wo.est_inv_at,
+    }));
+
+    return Response.json({
+      success: true,
+      sheetsProcessed: sheetsToProcess.length,
+      totalRows: orderMap.size,
+      updated,
+      notFound,
+      matchedByOrderNum,
+      matchedByClient,
+      notFoundOrders,
+      failed,
+      conflicts,
+      message: `Updated ${updated} work orders (${matchedByOrderNum} by order#, ${matchedByClient} by client name). ${notFound} not matched.${failed ? ` ${failed} update${failed === 1 ? '' : 's'} blocked/failed${conflicts ? ` (${conflicts} concurrency conflict${conflicts === 1 ? '' : 's'})` : ''}.` : ''}`,
+      debug: {
+        totalWorkOrdersInDB: allWorkOrders.length,
+        headers: allHeaders,
+        sampleWipRows,
+        sampleWorkOrders,
+        sampleMatches: debugMatches,
+      }
+    });
+
+  } catch (error) {
+    const status = Number(error?.status || 500);
+    const safeStatus = [400, 401, 403, 413, 429].includes(status) ? status : 500;
+    console.error('importWipSheet error:', error?.message || error);
+    return Response.json({
+      error: safeStatus === 500 ? 'WIP import could not be completed safely' : error.message,
+    }, { status: safeStatus });
+  }
+});

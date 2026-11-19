@@ -1,14 +1,9 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
+
 import {
   Popover,
   PopoverContent,
@@ -23,6 +18,8 @@ import {
   GitBranch
 } from "lucide-react";
 
+const EMPTY_DEPS = [];
+
 export default function TaskDependencyManager({ 
   tasks, 
   currentTaskId, 
@@ -33,7 +30,7 @@ export default function TaskDependencyManager({
   const [isOpen, setIsOpen] = useState(false);
   
   const currentTask = tasks.find(t => t.id === currentTaskId) || tasks[currentTaskIndex];
-  const currentDeps = currentTask?.depends_on || [];
+  const currentDeps = currentTask?.depends_on || EMPTY_DEPS;
   
   // Get available tasks (all except current)
   const availableTasks = useMemo(() => {
@@ -210,7 +207,7 @@ export default function TaskDependencyManager({
               const willCycle = wouldCreateCycle(taskId);
               
               return (
-                <button
+                <button type="button"
                   key={taskId}
                   className={`w-full text-left p-2 rounded text-xs hover:bg-gray-100 flex items-center gap-2 ${
                     willCycle ? 'opacity-50 cursor-not-allowed' : ''

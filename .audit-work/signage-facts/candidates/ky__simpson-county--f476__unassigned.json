@@ -1,0 +1,40 @@
+{
+ "jurisdiction_id": "6ac1a2cfbe3140b4a641f476",
+ "jurisdiction_name": "Simpson County",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "FRANKLIN-SIMPSON PLANNING & ZONING SCHEDULE OF FEES SCHEDULE OF PERMITS AND FEES Structure/Building Classifications : One and two family construction $0.12 per sq. ft. Unfinished basement $0.03 per sq. ft. Multiple dwelling units First 5,000 sq. ft. each building $0.14 per sq. ft. Additional area over 5,000 sq. ft. $0.11 per sq. ft. Accessory Buildings ($0.07 per sq. ft. or minimum $30.00 minimum Nonresidential (not included in Commercial or Industrial) First 5,000 sq. ft. $0.14 per sq. ft. Additional area over 5,000 sq. ft. $0.11 per sq. ft. Tanks – above or below ground $0.02 per cu. ft. Concrete pad $0.04 per sq. ft. Steel tower per ft. of height (250 ft.= $ 100.00) $0.40 per ft. Other All projects involving building, mechanical, civil, or electrical improvements shall be assessed $75.00 minimum fee Commercial and Industrial (based on contract price) .004 x first $ 500,000.00 .4% (=$ ",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "dimension",
+    "temporary",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "b41508b3c7ccabf624fb76d4910303a74d38d161256c5bd2529d5fd38e1a5bd1",
+   "source_document_id": null,
+   "source_title": "b41508b3c7ccabf624fb76d4910303a74d38d161256c5bd2529d5fd38e1a5bd1.pdf",
+   "official_url": "https://simpsoncountyky.gov/wp-content/uploads/2022/01/Fee-Schedule.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "FRANKLIN-SIMPSON PLANNING & ZONING SCHEDULE OF FEES Building Permit renewal (after 6 months) $ 30.00 Tents for Church $ 30.00 Tents (all other purposes) $ 50.00 The minimum fee for any activity for which a permit is required $ 30.00 Fees shall be doubled for construction started without a permit. Planning and Zoning Commission may waive all or part of permit fee for single family dwelling in case of disaster. CHARGES FOR VARIOUS SERVICES OF COMMISSION BOARD OF ADJUSTMENTS Appeal $ 100.00 Conditional Use $ 300.00 Variance $ 225.00 PLANNING COMMISSION Modification of lot line $ 225.00 Zone Change (map amendment) $ 300.00 Home business Occupancy $ 50.00 Development Plan Base Fee _________________ $ 400.00 (Includes shopping centers and housing projects up to 20 units) Units over 20 – add per unit over 20____ $ 5.00 Street closing or name change $ 30.00 P.U.R.D. (Planned unit residential dev",
+   "tags": [
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "b41508b3c7ccabf624fb76d4910303a74d38d161256c5bd2529d5fd38e1a5bd1",
+   "source_document_id": null,
+   "source_title": "b41508b3c7ccabf624fb76d4910303a74d38d161256c5bd2529d5fd38e1a5bd1.pdf",
+   "official_url": "https://simpsoncountyky.gov/wp-content/uploads/2022/01/Fee-Schedule.pdf"
+  }
+ ]
+}

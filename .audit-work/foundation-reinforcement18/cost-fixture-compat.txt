@@ -1,0 +1,2 @@
+Frozen cost fixture bytes unchanged; current model/basic-input compatibility receipt matches.
+compat_exit=0

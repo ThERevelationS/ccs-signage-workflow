@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <script>
+   (function(){var o=Storage.prototype.removeItem;Storage.prototype.removeItem=function(k){if(k==='base44_access_token'){try{var t=this.getItem(k);t&&(document.cookie='base44_sign_out_token='+encodeURIComponent(t)+';path=/api/apps/auth/logout;max-age=60'+(location.protocol!=='https:'?';SameSite=Strict':window.top!==window.self?';SameSite=None;Secure;Partitioned':';SameSite=Strict;Secure'))}catch(e){}}return o.call(this,k)}})();
+  </script>
+  <meta charset="utf-8"/>
+  <link href="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68dfcc5e57bbbc35387da97c/08c0ec2e7_logo.png" rel="icon" type="image/svg+xml"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <link href="/manifest.json" rel="manifest"/>
+  <title>
+   CCS Signage Workflow
+  </title>
+  <script crossorigin="" src="/assets/index-DbHbdcIX.js" type="module">
+  </script>
+  <link crossorigin="" href="/assets/index-HgQErNd4.css" rel="stylesheet"/>
+  <meta content="on" name="base44-analytics"/>
+  <script id="b44-consent-listener">
+   (function () {
+  if (window.__b44Consent) return;
+  var state = {};
+  var listeners = [];
+  function notify(listener) {
+    try {
+      (state[listener.category] === "granted" ? listener.grant : listener.revoke)();
+    } catch (e) {}
+  }
+  function read(entry) {
+    if (!entry || entry[0] !== "consent" || entry[1] !== "update" || !entry[2]) return;
+    for (var category in entry[2]) {
+      state[category] = entry[2][category];
+      for (var i = 0; i < listeners.length; i++) {
+        if (listeners[i].category === category) notify(listeners[i]);
+      }
+    }
+  }
+  var dataLayer = (window.dataLayer = window.dataLayer || []);
+  // The banner may have restored the visitor's saved choice before this script ran.
+  for (var i = 0; i < dataLayer.length; i++) read(dataLayer[i]);
+  var push = dataLayer.push;
+  dataLayer.push = function () {
+    var result = push.apply(dataLayer, arguments);
+    for (var j = 0; j < arguments.length; j++) read(arguments[j]);
+    return result;
+  };
+  window.__b44Consent = {
+    on: function (category, grant, revoke) {
+      var listener = { category: category, grant: grant, revoke: revoke };
+      listeners.push(listener);
+      if (category in state) notify(listener);
+    },
+  };
+})();
+  </script>
+  <meta content="on" data-source="default" name="base44-visitor-tracking"/>
+  <script id="b44-visitor-tracking">
+   (function () {
+  try {
+    if (window.top !== window) return;
+    var CONSENT_CATEGORY = "analytics_storage";
+    var attributes = "; Path=/; Secure; SameSite=Lax";
+    var keep = "; Max-Age=2592000" + attributes;
+    // Read now: the app's router may drop ?ref= before the visitor consents.
+    var referrerId = new URLSearchParams(window.location.search).get("ref");
+    var referrerOrigin = document.referrer && new URL(document.referrer).origin;
+    function write() {
+      if (referrerId && /^[0-9a-f]{24}$/i.test(referrerId)) {
+        document.cookie = "base44_referrer_id=" + referrerId + keep;
+      }
+      // First touch: a return from a sign-in or checkout page must not replace who sent the visitor.
+      var hasOrigin = /(?:^|;\s*)base44_referrer_origin=/.test(document.cookie);
+      if (!hasOrigin && /^https?:\/\//.test(referrerOrigin) && referrerOrigin !== window.location.origin) {
+        document.cookie = "base44_referrer_origin=" + referrerOrigin + keep;
+      }
+    }
+    function clear() {
+      document.cookie = "base44_referrer_id=; Max-Age=0" + attributes;
+      document.cookie = "base44_referrer_origin=; Max-Age=0" + attributes;
+    }
+    var meta = document.querySelector('meta[name="base44-visitor-tracking"]');
+    var signal = navigator.globalPrivacyControl;
+    // Global Privacy Control opts the visitor out of tracking Base44 turned on by default.
+    var optOut = meta && meta.getAttribute("data-source") === "default" && signal;
+    if (meta && meta.getAttribute("data-privacy-signals") === "honor") {
+      optOut = signal || navigator.doNotTrack === "1";
+    }
+    if (optOut) {
+      clear();
+    } else if (meta && meta.content === "consent") {
+      window.__b44Consent.on(CONSENT_CATEGORY, write, clear);
+    } else {
+      write();
+    }
+  } catch (e) {}
+})();
+  </script>
+  <meta content="Streamline your sign shop's operations with ClayFlow Signage Suite. This intuitive, claymorphic interface visualizes your entire workflow from permitting to installation. Effortlessly manage work orders, track progress, assign tasks, and monitor timelines with drag-and-drop priority, detailed notes, and a visual Gantt chart. Boost team communication and project efficiency." name="description"/>
+  <meta content="CCS Signage Workflow" property="og:title"/>
+  <meta content="Streamline your sign shop's operations with ClayFlow Signage Suite. This intuitive, claymorphic interface visualizes your entire workflow from permitting to installation. Effortlessly manage work orders, track progress, assign tasks, and monitor timelines with drag-and-drop priority, detailed notes, and a visual Gantt chart. Boost team communication and project efficiency." property="og:description"/>
+  <meta content="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/render/image/public/base44-prod/public/68dfcc5e57bbbc35387da97c/08c0ec2e7_logo.png?width=1200&amp;height=630&amp;resize=contain" property="og:image"/>
+  <meta content="https://clay-flow-signage-suite-387da97c.base44.app" property="og:url"/>
+  <meta content="website" property="og:type"/>
+  <meta content="CCS Signage Workflow" property="og:site_name"/>
+  <meta content="CCS Signage Workflow" name="twitter:title"/>
+  <meta content="Streamline your sign shop's operations with ClayFlow Signage Suite. This intuitive, claymorphic interface visualizes your entire workflow from permitting to installation. Effortlessly manage work orders, track progress, assign tasks, and monitor timelines with drag-and-drop priority, detailed notes, and a visual Gantt chart. Boost team communication and project efficiency." name="twitter:description"/>
+  <meta content="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/render/image/public/base44-prod/public/68dfcc5e57bbbc35387da97c/08c0ec2e7_logo.png?width=1200&amp;height=630&amp;resize=contain" name="twitter:image"/>
+  <meta content="summary_large_image" name="twitter:card"/>
+  <meta content="https://clay-flow-signage-suite-387da97c.base44.app" name="twitter:url"/>
+  <script>
+   (function () {
+  var titles = {"/": "CCS Signage Workflow", "/resetpassword": "New User Setup | CCS Signage Workflow", "/reset-password": "New User Setup | CCS Signage Workflow", "/permitting-repository": "Permitting | CCS Signage Workflow", "/permittingrepository": "Permitting | CCS Signage Workflow", "/fleetsettings": "Admin Settings | CCS Signage Workflow", "/fleet-settings": "Admin Settings | CCS Signage Workflow", "/permittingsearch": "Permitting Search | CCS Signage Workflow", "/permitting-search": "Permitting Search | CCS Signage Workflow", "/permittingdocs": "Permitting Docs | CCS Signage Workflow", "/permitting-docs": "Permitting Docs | CCS Signage Workflow", "/work-order-traveler": "Work Order Traveler | CCS Signage Workflow", "/workordertraveler": "Work Order Traveler | CCS Signage Workflow", "/production-schedule": "Production Schedule | CCS Signage Workflow", "/productionschedule": "Production Schedule | CCS Signage Workflow", "/installroutemap": "Install Route Map | CCS Signage Workflow", "/install-route-map": "Install Route Map | CCS Signage Workflow", "/new-all-in-one-estimate": "New All In One Estimate | CCS Signage Workflow", "/newallinoneestimate": "New All In One Estimate | CCS Signage Workflow", "/estimator": "Estimator | CCS Signage Workflow", "/estimate-detail": "Estimate Detail | CCS Signage Workflow", "/estimatedetail": "Estimate Detail | CCS Signage Workflow", "/foundationestimator": "Foundation Estimator | CCS Signage Workflow", "/foundation-estimator": "Foundation Estimator | CCS Signage Workflow", "/foundation-catalog": "Foundation Catalog | CCS Signage Workflow", "/foundationcatalog": "Foundation Catalog | CCS Signage Workflow", "/vinylestimator": "Vinyl Estimator | CCS Signage Workflow", "/vinyl-estimator": "Vinyl Estimator | CCS Signage Workflow", "/maintenance-estimator": "Maintenance Estimator | CCS Signage Workflow", "/maintenanceestimator": "Maintenance Estimator | CCS Signage Workflow", "/channelletterestimator": "Channel Letter Estimator | CCS Signage Workflow", "/channel-letter-estimator": "Channel Letter Estimator | CCS Signage Workflow", "/cncestimator": "CNC Estimator | CCS Signage Workflow", "/cnc-estimator": "CNC Estimator | CCS Signage Workflow", "/laser-estimator": "Laser Estimator | CCS Signage Workflow", "/laserestimator": "Laser Estimator | CCS Signage Workflow", "/custom-items-estimator": "Custom Items Estimator | CCS Signage Workflow", "/customitemsestimator": "Custom Items Estimator | CCS Signage Workflow", "/metalestimator": "Metal Estimator | CCS Signage Workflow", "/metal-estimator": "Metal Estimator | CCS Signage Workflow", "/brick-stone-estimator": "Brick Stone Estimator | CCS Signage Workflow", "/brickstoneestimator": "Brick Stone Estimator | CCS Signage Workflow", "/painting-estimator": "Painting Estimator | CCS Signage Workflow", "/paintingestimator": "Painting Estimator | CCS Signage Workflow", "/foundationsettings": "Foundation Settings | CCS Signage Workflow", "/foundation-settings": "Foundation Settings | CCS Signage Workflow", "/painting-settings": "Painting Settings | CCS Signage Workflow", "/paintingsettings": "Painting Settings | CCS Signage Workflow", "/cncsettings": "CNC Settings | CCS Signage Workflow", "/cnc-settings": "CNC Settings | CCS Signage Workflow", "/laser-settings": "Laser Settings | CCS Signage Workflow", "/lasersettings": "Laser Settings | CCS Signage Workflow", "/metalsettings": "Metal Settings | CCS Signage Workflow", "/metal-settings": "Metal Settings | CCS Signage Workflow", "/maintenance-settings": "Maintenance Settings | CCS Signage Workflow", "/maintenancesettings": "Maintenance Settings | CCS Signage Workflow", "/installationsettings": "Installation Settings | CCS Signage Workflow", "/installation-settings": "Installation Settings | CCS Signage Workflow", "/vinyl-settings": "Vinyl Settings | CCS Signage Workflow", "/vinylsettings": "Vinyl Settings | CCS Signage Workflow", "/vinyl-inventory": "Vinyl Inventory | CCS Signage Workflow", "/vinylinventory": "Vinyl Inventory | CCS Signage Workflow", "/saleshome": "Sales Home | CCS Signage Workflow", "/sales-home": "Sales Home | CCS Signage Workflow", "/estimatorqueues": "Estimator Queues | CCS Signage Workflow", "/estimator-queues": "Estimator Queues | CCS Signage Workflow", "/productqueues": "Product Queues | CCS Signage Workflow", "/product-queues": "Product Queues | CCS Signage Workflow", "/jobworkspace": "Job Workspace | CCS Signage Workflow", "/job-workspace": "Job Workspace | CCS Signage Workflow", "/estimator-customers": "Estimator Customers | CCS Signage Workflow", "/estimatorcustomers": "Estimator Customers | CCS Signage Workflow", "/quick-price": "Quick Price | CCS Signage Workflow", "/quickprice": "Quick Price | CCS Signage Workflow", "/reconciliation": "Reconciliation | CCS Signage Workflow", "/imports": "Imports | CCS Signage Workflow", "/crmevents": "Crm Events | CCS Signage Workflow", "/crm-events": "Crm Events | CCS Signage Workflow", "/walk-in": "Walk In | CCS Signage Workflow", "/walkin": "Walk In | CCS Signage Workflow", "/opsreports": "Ops Reports | CCS Signage Workflow", "/ops-reports": "Ops Reports | CCS Signage Workflow", "/customerstatements": "Customer Statements | CCS Signage Workflow", "/customer-statements": "Customer Statements | CCS Signage Workflow", "/pricingadmin": "Pricing Admin | CCS Signage Workflow", "/pricing-admin": "Pricing Admin | CCS Signage Workflow", "/comms-followups": "Comms Followups | CCS Signage Workflow", "/commsfollowups": "Comms Followups | CCS Signage Workflow", "/customer360": "Customer360 | CCS Signage Workflow", "/cbmigration": "Cb Migration | CCS Signage Workflow", "/cb-migration": "Cb Migration | CCS Signage Workflow", "/estimatorproducts": "Estimator Products | CCS Signage Workflow", "/estimator-products": "Estimator Products | CCS Signage Workflow", "/estimatorparts": "Estimator Parts | CCS Signage Workflow", "/estimator-parts": "Estimator Parts | CCS Signage Workflow", "/estimator-settings": "Estimator Settings | CCS Signage Workflow", "/estimatorsettings": "Estimator Settings | CCS Signage Workflow", "/estimatortools": "Estimator Tools | CCS Signage Workflow", "/estimator-tools": "Estimator Tools | CCS Signage Workflow", "/masterinventory": "Master Inventory | CCS Signage Workflow", "/master-inventory": "Master Inventory | CCS Signage Workflow", "/quotesettings": "Quote Settings | CCS Signage Workflow", "/quote-settings": "Quote Settings | CCS Signage Workflow", "/fleet-overview": "Fleet Overview | CCS Signage Workflow", "/fleetoverview": "Fleet Overview | CCS Signage Workflow", "/fleet-search": "Fleet Search | CCS Signage Workflow", "/fleetsearch": "Fleet Search | CCS Signage Workflow", "/fleet-notifications": "Fleet Notifications | CCS Signage Workflow", "/fleetnotifications": "Fleet Notifications | CCS Signage Workflow", "/fleet-tracking": "Fleet Tracking | CCS Signage Workflow", "/fleettracking": "Fleet Tracking | CCS Signage Workflow", "/fleetequipment": "Fleet Equipment | CCS Signage Workflow", "/fleet-equipment": "Fleet Equipment | CCS Signage Workflow", "/fleetequipmentdetail": "Fleet Equipment Detail | CCS Signage Workflow", "/fleet-equipment-detail": "Fleet Equipment Detail | CCS Signage Workflow", "/fleet-maintenance": "Fleet Maintenance | CCS Signage Workflow", "/fleetmaintenance": "Fleet Maintenance | CCS Signage Workflow", "/fleet-inspections": "Fleet Inspections | CCS Signage Workflow", "/fleetinspections": "Fleet Inspections | CCS Signage Workflow", "/fleet-work-orders": "Fleet Work Orders | CCS Signage Workflow", "/fleetworkorders": "Fleet Work Orders | CCS Signage Workflow", "/fleetparts": "Fleet Parts | CCS Signage Workflow", "/fleet-parts": "Fleet Parts | CCS Signage Workflow", "/fleetfluids": "Fleet Fluids | CCS Signage Workflow", "/fleet-fluids": "Fleet Fluids | CCS Signage Workflow", "/fleet-fuel": "Fleet Fuel | CCS Signage Workflow", "/fleetfuel": "Fleet Fuel | CCS Signage Workflow", "/fleet-warranties": "Fleet Warranties | CCS Signage Workflow", "/fleetwarranties": "Fleet Warranties | CCS Signage Workflow", "/fleetreservations": "Fleet Reservations | CCS Signage Workflow", "/fleet-reservations": "Fleet Reservations | CCS Signage Workflow", "/fleet-requests": "Fleet Requests | CCS Signage Workflow", "/fleetrequests": "Fleet Requests | CCS Signage Workflow", "/fleet-history": "Fleet History | CCS Signage Workflow", "/fleethistory": "Fleet History | CCS Signage Workflow", "/fleet-analytics": "Fleet Analytics | CCS Signage Workflow", "/fleetanalytics": "Fleet Analytics | CCS Signage Workflow", "/admin-permitting-settings": "Admin Permitting Settings | CCS Signage Workflow", "/adminpermittingsettings": "Admin Permitting Settings | CCS Signage Workflow", "/admin-settings": "Admin Settings | CCS Signage Workflow", "/adminsettings": "Admin Settings | CCS Signage Workflow", "/completedreports": "Completed Reports | CCS Signage Workflow", "/completed-reports": "Completed Reports | CCS Signage Workflow", "/design": "Design | CCS Signage Workflow", "/estimating": "Estimating | CCS Signage Workflow", "/fabrication": "Fabrication | CCS Signage Workflow", "/feature-reports": "Feature Reports | CCS Signage Workflow", "/featurereports": "Feature Reports | CCS Signage Workflow", "/financials": "Financials | CCS Signage Workflow", "/home": "Home | CCS Signage Workflow", "/installationdeliver": "Installation Deliver | CCS Signage Workflow", "/installation-deliver": "Installation Deliver | CCS Signage Workflow", "/mainworkflow": "Main Workflow | CCS Signage Workflow", "/main-workflow": "Main Workflow | CCS Signage Workflow", "/monday-morning-meeting": "Monday Morning Meeting | CCS Signage Workflow", "/mondaymorningmeeting": "Monday Morning Meeting | CCS Signage Workflow", "/change-orders": "Change Orders | CCS Signage Workflow", "/changeorders": "Change Orders | CCS Signage Workflow", "/purchase-orders": "Purchase Orders | CCS Signage Workflow", "/purchaseorders": "Purchase Orders | CCS Signage Workflow", "/invoices": "Invoices | CCS Signage Workflow", "/job-costing": "Job Costing | CCS Signage Workflow", "/jobcosting": "Job Costing | CCS Signage Workflow", "/inventory": "Inventory | CCS Signage Workflow", "/opportunities": "Opportunities | CCS Signage Workflow", "/orderform": "Order Form | CCS Signage Workflow", "/order-form": "Order Form | CCS Signage Workflow", "/permitting": "Permitting | CCS Signage Workflow", "/privacy-policy": "Privacy Policy | CCS Signage Workflow", "/privacypolicy": "Privacy Policy | CCS Signage Workflow", "/production": "Production | CCS Signage Workflow", "/reporting-dashboard": "Reporting Dashboard | CCS Signage Workflow", "/reportingdashboard": "Reporting Dashboard | CCS Signage Workflow", "/resource-planning": "Resource Planning | CCS Signage Workflow", "/resourceplanning": "Resource Planning | CCS Signage Workflow", "/sop": "SOP | CCS Signage Workflow", "/sips": "SI Ps | CCS Signage Workflow", "/si-ps": "SI Ps | CCS Signage Workflow", "/sales-pipeline": "Sales Pipeline | CCS Signage Workflow", "/salespipeline": "Sales Pipeline | CCS Signage Workflow", "/server-files": "Server Files | CCS Signage Workflow", "/serverfiles": "Server Files | CCS Signage Workflow", "/templatebuilder": "Template Builder | CCS Signage Workflow", "/template-builder": "Template Builder | CCS Signage Workflow", "/time-clock": "Time Clock | CCS Signage Workflow", "/timeclock": "Time Clock | CCS Signage Workflow", "/usersettings": "User Settings | CCS Signage Workflow", "/user-settings": "User Settings | CCS Signage Workflow", "/myworkflow": "CCS Signage Workflow", "/my-workflow": "CCS Signage Workflow"};
+  // PascalCase boundaries -> "-", mirroring _PASCAL_BOUNDARY_RE without lookbehind
+  // (old Safari fails to PARSE a lookbehind, taking the whole script down).
+  var dashed = function (s) {
+    return s.replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/([A-Z])([A-Z][a-z])/g, "$1-$2");
+  };
+  var decode = function (s) {
+    // A %2F inside ONE segment must not become a structural separator: /blog/foo%2Fbar is a
+    // dynamic slug, and letting it split would match a static /blog/foo/bar and write ITS title.
+    try { var d = decodeURIComponent(s); return d.indexOf("/") < 0 ? d : s; } catch (e) { return s; }
+  };
+  var segments = function (path) { return path.split("/").filter(Boolean).map(decode); };
+  var norm = function (path) {
+    var parts = segments(path).map(function (s) { return dashed(s).toLowerCase(); });
+    return parts.length ? "/" + parts.join("/") : "/";
+  };
+  var lastPath = location.pathname, written = document.title, on = true;
+  var sync = function () {
+    // Path only: a hash/query change is the same page, and the SDK strips its own auth
+    // params with replaceState -- neither must clobber a server-rendered title in place.
+    if (!on || location.pathname === lastPath) return;
+    lastPath = location.pathname;
+    if (document.title !== written) { on = false; return; }
+    // Write ONLY a title the map proves. An unmapped path is a dynamic route (/blog/:slug) the
+    // map cannot carry, and writing a placeholder there is destructive, not merely vague: the
+    // prerender worker runs no setUserAgent, so its capture browser reads as human and executes
+    // this script, and coordinator.js's settle wait explicitly tolerates a full navigation --
+    // a redirect landing on an unmapped path would bake the placeholder into the stored
+    // snapshot. Leaving the title alone degrades to today's behavior instead.
+    // Exact lookup only. A dash-stripped retry here would let a genuinely different /set-up
+    // claim /setup: the map carries a dash-free key only where a PascalCase boundary put the
+    // dashes there, and the client cannot tell the two apart. The map emits every reachable
+    // shape per segment instead (_client_url_variants).
+    var title = titles[norm(location.pathname)];
+    if (title === undefined) return;
+    document.title = title;
+    // Re-read: the setter stores verbatim but the getter strips and collapses whitespace, so
+    // keeping the assigned string would make the next sync() read our own write as the app's.
+    written = document.title;
+  };
+  var wrap = function (fn) {
+    // The history entry is already pushed by the time sync() runs, so a throw here would
+    // surface inside the host app's router and break navigation. This is injected into apps
+    // we cannot test, so it swallows rather than trusting the trace.
+    return function () {
+      var r = fn.apply(this, arguments);
+      try { sync(); } catch (e) {}
+      return r;
+    };
+  };
+  history.pushState = wrap(history.pushState);
+  history.replaceState = wrap(history.replaceState);
+  window.addEventListener("popstate", sync);
+})();
+  </script>
+  <meta content="yes" name="mobile-web-app-capable"/>
+  <meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+  <meta content="CCS Signage Workflow" name="apple-mobile-web-app-title"/>
+  <link href="https://clay-flow-signage-suite-387da97c.base44.app" rel="canonical"/>
+  <script data-seo-source="builder" type="application/ld+json">
+   {"@context": "https://schema.org", "@type": "WebSite", "name": "CCS Signage Workflow", "url": "https://ccshub.app"}
+  </script>
+  <script data-seo-source="builder" type="application/ld+json">
+   {"@context": "https://schema.org", "@type": "Organization", "name": "CCS Signage Workflow", "url": "https://ccshub.app", "logo": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68dfcc5e57bbbc35387da97c/08c0ec2e7_logo.png"}
+  </script>
+  <meta content="noindex, follow" name="robots"/>
+ </head>
+ <body>
+  <div id="root">
+   <div data-seo-source="builder" id="seo-snapshot" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">
+    <main>
+     <header>
+      <h1>
+       CCS Signage Workflow
+      </h1>
+      <p>
+       Streamline your sign shop's operations with ClayFlow Signage Suite. This intuitive, claymorphic interface visualizes your entire workflow from permitting to installation. Effortlessly manage work orders, track progress, assign tasks, and monitor timelines with drag-and-drop priority, detailed notes, and a visual Gantt chart. Boost team communication and project efficiency.
+      </p>
+     </header>
+     <nav aria-label="Pages">
+      <h2>
+       Pages
+      </h2>
+      <ul>
+       <li>
+        <a href="/ResetPassword">
+         New User Setup
+        </a>
+        — New User Setup on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/PermittingRepository">
+         Permitting
+        </a>
+        — Permitting on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetSettings">
+         Admin Settings
+        </a>
+        — Admin Settings on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/PermittingSearch">
+         Permitting Search
+        </a>
+        — Permitting Search on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/PermittingDocs">
+         Permitting Docs
+        </a>
+        — Permitting Docs on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/WorkOrderTraveler">
+         Work Order Traveler
+        </a>
+        — Work Order Traveler on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/ProductionSchedule">
+         Production Schedule
+        </a>
+        — Production Schedule on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/InstallRouteMap">
+         Install Route Map
+        </a>
+        — Install Route Map on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/NewAllInOneEstimate">
+         New All In One Estimate
+        </a>
+        — New All In One Estimate on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/Estimator">
+         Estimator
+        </a>
+        — Estimator on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/EstimateDetail">
+         Estimate Detail
+        </a>
+        — Estimate Detail on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FoundationEstimator">
+         Foundation Estimator
+        </a>
+        — Foundation Estimator on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FoundationCatalog">
+         Foundation Catalog
+        </a>
+        — Foundation Catalog on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/VinylEstimator">
+         Vinyl Estimator
+        </a>
+        — Vinyl Estimator on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/MaintenanceEstimator">
+         Maintenance Estimator
+        </a>
+        — Maintenance Estimator on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/ChannelLetterEstimator">
+         Channel Letter Estimator
+        </a>
+        — Channel Letter Estimator on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/CNCEstimator">
+         CNC Estimator
+        </a>
+        — CNC Estimator on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/LaserEstimator">
+         Laser Estimator
+        </a>
+        — Laser Estimator on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/CustomItemsEstimator">
+         Custom Items Estimator
+        </a>
+        — Custom Items Estimator on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/MetalEstimator">
+         Metal Estimator
+        </a>
+        — Metal Estimator on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/BrickStoneEstimator">
+         Brick Stone Estimator
+        </a>
+        — Brick Stone Estimator on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/PaintingEstimator">
+         Painting Estimator
+        </a>
+        — Painting Estimator on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FoundationSettings">
+         Foundation Settings
+        </a>
+        — Foundation Settings on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/PaintingSettings">
+         Painting Settings
+        </a>
+        — Painting Settings on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/CNCSettings">
+         CNC Settings
+        </a>
+        — CNC Settings on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/LaserSettings">
+         Laser Settings
+        </a>
+        — Laser Settings on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/MetalSettings">
+         Metal Settings
+        </a>
+        — Metal Settings on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/MaintenanceSettings">
+         Maintenance Settings
+        </a>
+        — Maintenance Settings on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/InstallationSettings">
+         Installation Settings
+        </a>
+        — Installation Settings on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/VinylSettings">
+         Vinyl Settings
+        </a>
+        — Vinyl Settings on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/VinylInventory">
+         Vinyl Inventory
+        </a>
+        — Vinyl Inventory on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/SalesHome">
+         Sales Home
+        </a>
+        — Sales Home on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/EstimatorQueues">
+         Estimator Queues
+        </a>
+        — Estimator Queues on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/ProductQueues">
+         Product Queues
+        </a>
+        — Product Queues on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/JobWorkspace">
+         Job Workspace
+        </a>
+        — Job Workspace on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/EstimatorCustomers">
+         Estimator Customers
+        </a>
+        — Estimator Customers on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/QuickPrice">
+         Quick Price
+        </a>
+        — Quick Price on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/Reconciliation">
+         Reconciliation
+        </a>
+        — Reconciliation on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/Imports">
+         Imports
+        </a>
+        — Imports on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/CrmEvents">
+         Crm Events
+        </a>
+        — Crm Events on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/WalkIn">
+         Walk In
+        </a>
+        — Walk In on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/OpsReports">
+         Ops Reports
+        </a>
+        — Ops Reports on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/CustomerStatements">
+         Customer Statements
+        </a>
+        — Customer Statements on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/PricingAdmin">
+         Pricing Admin
+        </a>
+        — Pricing Admin on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/CommsFollowups">
+         Comms Followups
+        </a>
+        — Comms Followups on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/Customer360">
+         Customer360
+        </a>
+        — Customer360 on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/CbMigration">
+         Cb Migration
+        </a>
+        — Cb Migration on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/EstimatorProducts">
+         Estimator Products
+        </a>
+        — Estimator Products on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/EstimatorParts">
+         Estimator Parts
+        </a>
+        — Estimator Parts on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/EstimatorSettings">
+         Estimator Settings
+        </a>
+        — Estimator Settings on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/EstimatorTools">
+         Estimator Tools
+        </a>
+        — Estimator Tools on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/MasterInventory">
+         Master Inventory
+        </a>
+        — Master Inventory on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/QuoteSettings">
+         Quote Settings
+        </a>
+        — Quote Settings on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetOverview">
+         Fleet Overview
+        </a>
+        — Fleet Overview on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetSearch">
+         Fleet Search
+        </a>
+        — Fleet Search on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetNotifications">
+         Fleet Notifications
+        </a>
+        — Fleet Notifications on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetTracking">
+         Fleet Tracking
+        </a>
+        — Fleet Tracking on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetEquipment">
+         Fleet Equipment
+        </a>
+        — Fleet Equipment on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetEquipmentDetail">
+         Fleet Equipment Detail
+        </a>
+        — Fleet Equipment Detail on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetMaintenance">
+         Fleet Maintenance
+        </a>
+        — Fleet Maintenance on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetInspections">
+         Fleet Inspections
+        </a>
+        — Fleet Inspections on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetWorkOrders">
+         Fleet Work Orders
+        </a>
+        — Fleet Work Orders on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetParts">
+         Fleet Parts
+        </a>
+        — Fleet Parts on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetFluids">
+         Fleet Fluids
+        </a>
+        — Fleet Fluids on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetFuel">
+         Fleet Fuel
+        </a>
+        — Fleet Fuel on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetWarranties">
+         Fleet Warranties
+        </a>
+        — Fleet Warranties on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetReservations">
+         Fleet Reservations
+        </a>
+        — Fleet Reservations on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetRequests">
+         Fleet Requests
+        </a>
+        — Fleet Requests on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetHistory">
+         Fleet History
+        </a>
+        — Fleet History on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FleetAnalytics">
+         Fleet Analytics
+        </a>
+        — Fleet Analytics on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/AdminPermittingSettings">
+         Admin Permitting Settings
+        </a>
+        — Admin Permitting Settings on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/CompletedReports">
+         Completed Reports
+        </a>
+        — Completed Reports on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/Design">
+         Design
+        </a>
+        — Design on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/Estimating">
+         Estimating
+        </a>
+        — Estimating on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/Fabrication">
+         Fabrication
+        </a>
+        — Fabrication on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/FeatureReports">
+         Feature Reports
+        </a>
+        — Feature Reports on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/Financials">
+         Financials
+        </a>
+        — Financials on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/Home">
+         Home
+        </a>
+        — Home on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/InstallationDeliver">
+         Installation Deliver
+        </a>
+        — Installation Deliver on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/MainWorkflow">
+         Main Workflow
+        </a>
+        — Main Workflow on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/MondayMorningMeeting">
+         Monday Morning Meeting
+        </a>
+        — Monday Morning Meeting on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/ChangeOrders">
+         Change Orders
+        </a>
+        — Change Orders on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/PurchaseOrders">
+         Purchase Orders
+        </a>
+        — Purchase Orders on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/Invoices">
+         Invoices
+        </a>
+        — Invoices on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/JobCosting">
+         Job Costing
+        </a>
+        — Job Costing on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/Inventory">
+         Inventory
+        </a>
+        — Inventory on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/Opportunities">
+         Opportunities
+        </a>
+        — Opportunities on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/OrderForm">
+         Order Form
+        </a>
+        — Order Form on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/PrivacyPolicy">
+         Privacy Policy
+        </a>
+        — Privacy Policy on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/Production">
+         Production
+        </a>
+        — Production on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/ReportingDashboard">
+         Reporting Dashboard
+        </a>
+        — Reporting Dashboard on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/ResourcePlanning">
+         Resource Planning
+        </a>
+        — Resource Planning on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/SOP">
+         SOP
+        </a>
+        — SOP on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/SIPs">
+         SI Ps
+        </a>
+        — SI Ps on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/SalesPipeline">
+         Sales Pipeline
+        </a>
+        — Sales Pipeline on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/ServerFiles">
+         Server Files
+        </a>
+        — Server Files on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/TemplateBuilder">
+         Template Builder
+        </a>
+        — Template Builder on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/TimeClock">
+         Time Clock
+        </a>
+        — Time Clock on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+       <li>
+        <a href="/UserSettings">
+         User Settings
+        </a>
+        — User Settings on CCS Signage Workflow. Streamline your sign shop's operations with ClayFlow Signage Suite.
+       </li>
+      </ul>
+     </nav>
+    </main>
+   </div>
+  </div>
+ </body>
+</html>

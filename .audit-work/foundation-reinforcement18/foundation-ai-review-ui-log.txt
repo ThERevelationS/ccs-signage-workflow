@@ -1,0 +1,14 @@
+ok manual review invokes only flagship Base44 request and emits advisory-only fields with no approval
+ok synchronous duplicate callbacks share one paid-call boundary rather than relying only on disabled render state
+ok geometry edited during review discards stale response and asks for a fresh explicit run
+ok same geometry under another project identity cannot receive the previous project review
+ok unmount invalidates in-flight response without callback or silent backend write
+ok unexpected AI money or adequacy fields reject the response without touching the estimate
+ok transport failure surfaces an error and never retries the model automatically
+ok malformed or empty design inputs disable paid invocation and show an actionable reason
+ok a parent refusing the advisory patch does not look like a successful review attachment
+ok historical note stays readable but is explicitly unverified regardless of old adequate true metadata
+ok recorded advisory note is visibly stale after physical edits with no automatic reanalysis
+ok manual retry after a failure makes exactly one new request and clears the previous error
+ok pending response calls the latest allowed callback rather than an obsolete parent closure
+exit=0

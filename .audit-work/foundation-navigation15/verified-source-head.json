@@ -1,0 +1,10 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "head": "6c06175812c0d5e078a2f7b23c25b4d7f7e711cb",
+  "files": [
+    "src/components/estimator/foundation/foundationDraftRecovery.js",
+    "src/pages/FoundationEstimator.jsx"
+  ],
+  "remoteClean": true
+}

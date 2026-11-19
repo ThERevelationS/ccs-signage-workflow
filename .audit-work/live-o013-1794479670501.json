@@ -1,0 +1,188 @@
+{
+  "stamp": 1794479670501,
+  "probes": [
+    {
+      "name": "verifyLogin",
+      "pass": true
+    },
+    {
+      "name": "anon:staffDataRead",
+      "pass": true,
+      "status": 401,
+      "error": "Authentication required"
+    },
+    {
+      "name": "anon:staffEntityWrite",
+      "pass": true,
+      "status": 401,
+      "error": "Authentication required"
+    },
+    {
+      "name": "anon:revisionAudit",
+      "pass": true,
+      "status": 401,
+      "error": "Authentication required."
+    },
+    {
+      "name": "anon:jurisdiction_research",
+      "pass": true,
+      "status": 500,
+      "error": "Jurisdiction research could not be completed safely"
+    },
+    {
+      "name": "anon:estimatorDesignAction",
+      "pass": true,
+      "status": 404,
+      "error": "Backend function 'estimatorDesignAction' not found or not deployed"
+    },
+    {
+      "name": "anon:portal create_link",
+      "pass": true,
+      "status": 401,
+      "error": "Authentication required"
+    },
+    {
+      "name": "complete_manual_revision routed",
+      "pass": true,
+      "status": 400,
+      "body": {
+        "error": "Revision id is required."
+      }
+    },
+    {
+      "name": "session row visible",
+      "pass": false,
+      "sessions_seen": 0,
+      "fresh": 0
+    },
+    {
+      "name": "revoked token rejected",
+      "pass": false,
+      "note": "no fresh session row to revoke"
+    },
+    {
+      "name": "re-login",
+      "pass": true
+    },
+    {
+      "name": "portal fixture estimate",
+      "pass": true,
+      "customerId": "6af5963a3484fa480b8aad10",
+      "estimateId": "6af5963a42fa578680e6be4b"
+    },
+    {
+      "name": "create_link",
+      "pass": true,
+      "linkId": "6af5963b6ad1a2f317296f79"
+    },
+    {
+      "name": "bootstrap bogus token rejected",
+      "pass": true,
+      "status": 404,
+      "body": {
+        "success": false,
+        "error": "This portal link is invalid, expired, or revoked."
+      }
+    },
+    {
+      "name": "bootstrap valid",
+      "pass": true,
+      "kind": "estimate",
+      "estimate_id": "6af5963a42fa578680e6be4b"
+    },
+    {
+      "name": "scope-confusion safe",
+      "pass": true,
+      "returned_id": "6af5963a42fa578680e6be4b"
+    },
+    {
+      "name": "staff_view mutation rejected",
+      "pass": true,
+      "status": 403,
+      "body": {
+        "success": false,
+        "error": "This portal link cannot respond to quotes."
+      }
+    },
+    {
+      "name": "revoke_link",
+      "pass": true,
+      "body": {
+        "success": true,
+        "action": "revoke_link",
+        "link": {
+          "schema_version": 1,
+          "creation_request_key": "portal-link:estimate:6af5963a42fa578680e6be4b:1794479675447",
+          "token": "4264af6f31764f9ba39673cc79d4cdd958ee25b7393748f3a35203aecf7f2a3e",
+          "kind": "estimate",
+          "record_id": "6af5963a42fa578680e6be4b",
+          "customer_id": "6af5963a3484fa480b8aad10",
+          "label": "Quote 6af5963a42fa578680e6be4b",
+          "created_by": "service+5d4754aa-ccfd-4c35-992a-f7a6cf45a828@no-reply.base44.com",
+          "expires_at": "2027-02-10T10:34:35.447Z",
+          "revoked": true,
+          "revoked_at": "2026-11-12T10:34:38.662Z",
+          "last_opened_at": "2026-11-12T10:34:36.901Z",
+          "open_count": 2,
+          "id": "6af5963b6ad1a2f317296f79",
+          "created_date": "2026-11-12T10:34:35.566000",
+          "updated_date": "2026-11-12T10:34:38.751000",
+          "created_by_id": "service_5d4754aa-ccfd-4c35-992a-f7a6cf45a828",
+          "is_sample": false
+        }
+      }
+    },
+    {
+      "name": "revoked link rejected",
+      "pass": true,
+      "status": 404,
+      "body": {
+        "success": false,
+        "error": "This portal link is invalid, expired, or revoked."
+      }
+    },
+    {
+      "name": "fileBridgeMaintenance anon posture",
+      "pass": true,
+      "status": 200,
+      "ran_without_auth": true,
+      "body": {
+        "at": "2026-11-12T10:34:39.203Z",
+        "sweeps": {
+          "commands": {
+            "expired": 0,
+            "requeued": 0
+          },
+          "health": {
+            "marked": 0
+          },
+          "retention": {
+            "events_deleted": 0,
+            "recent_deleted": 0,
+            "chunks_deleted": 0,
+            "commands_deleted": 0
+          },
+          "delivered": {
+            "rows": 0,
+            "kept_mb": 0,
+            "derefed": 0
+          },
+          "link_match": {
+            "candidates": 0,
+            "created": 0,
+            "auto_confirmed": 0,
+            "skipped_existing": 0,
+            "errors": 0
+          },
+          "link_reconcile": {
+            "checked": 0,
+            "broken": 0,
+            "healed": 0,
+            "cid_updates": 0
+          }
+        }
+      }
+    }
+  ],
+  "ok": false
+}

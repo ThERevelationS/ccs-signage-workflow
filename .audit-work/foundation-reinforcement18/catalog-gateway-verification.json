@@ -1,0 +1,67 @@
+{
+  "ok": true,
+  "target": "base44/functions/staffEntityWrite/entry.ts",
+  "sourceHead": "ff1958c2ad823ce83caadb91797c8ec9f01e8d47",
+  "verifiedHead": "a78d9b057084f3692a22297d00cbf2ca7463aa7c",
+  "exactHash": "002db67b5c19bd3a2718a61cb2ef9ab4d2347ab15b73df83cade641ba899663b",
+  "protectedSourcesUnchanged": [
+    "base44/entities/FoundationInventory.jsonc",
+    "base44/entities/FoundationProject.jsonc",
+    "base44/entities/WorkOrder.jsonc",
+    "src/components/estimator/workOrderConversion.js",
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/pages/FoundationEstimator.jsx",
+    "src/components/staff/staffEntities.js",
+    "base44/functions/staffDataRead/entry.ts"
+  ],
+  "clean": true,
+  "remoteDependencyBuild": true,
+  "offlineRoleAndCASCases": 10,
+  "realStorageVerified": false,
+  "realAuthenticationVerified": false,
+  "schemaChanged": false,
+  "catalogMetadataActivated": false,
+  "reinforcementV2Activated": false,
+  "warnings": [
+    {
+      "text": "Duplicate key \"SignageFact\" in object literal",
+      "file": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 39
+    },
+    {
+      "text": "Duplicate key \"SignageFactIndex\" in object literal",
+      "file": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 40
+    },
+    {
+      "text": "Duplicate key \"SignageFact\" in object literal",
+      "file": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 41
+    },
+    {
+      "text": "Duplicate key \"SignageFactIndex\" in object literal",
+      "file": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 42
+    },
+    {
+      "text": "Duplicate key \"SignageFact\" in object literal",
+      "file": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 43
+    },
+    {
+      "text": "Duplicate key \"SignageFactIndex\" in object literal",
+      "file": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 44
+    },
+    {
+      "text": "Duplicate key \"SignageFact\" in object literal",
+      "file": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 45
+    },
+    {
+      "text": "Duplicate key \"SignageFactIndex\" in object literal",
+      "file": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 46
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "name": "ReconciliationBatch",
+  "type": "object",
+  "description": "CoreBridge-style batched cash close. One batch groups the recorded (non-void) Payments collected since the prior close into a numbered, dated, per-location deposit group with counted totals, a cash adjustment, and a computed variance. Always written by manageReconciliation so Payment.reconciliation_batch_id stays consistent \u2014 never edited directly.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one batch close."
+    },
+    "batch_number": {
+      "type": "string",
+      "description": "Human-facing batch/group number (e.g. REC-0042). Generated server-side from the DocNumberCounter 'reconciliation' sequence."
+    },
+    "location": {
+      "type": "string",
+      "description": "Store/drawer location this close covers. Free text \u2014 there is no shop-locations list in GlobalSettings yet."
+    },
+    "closed_at": {
+      "type": "string",
+      "description": "ISO timestamp of when the batch was closed."
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Staff email of the closer."
+    },
+    "expected_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of the recorded Payments included in this batch."
+    },
+    "collected_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Total actually counted/collected across all tenders."
+    },
+    "cash_adjustment": {
+      "type": "number",
+      "default": 0,
+      "description": "Signed over/short cash adjustment applied to the counted total (e.g. starting-till correction)."
+    },
+    "adjustment_note": {
+      "type": "string",
+      "description": "Required explanation whenever cash_adjustment is non-zero."
+    },
+    "variance": {
+      "type": "number",
+      "default": 0,
+      "description": "collected_total + cash_adjustment - expected_total. Positive = over, negative = short."
+    },
+    "payment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Payment ids swept into this close; each carries reconciliation_batch_id back to this batch."
+    },
+    "method_totals": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Expected vs counted totals per tender bucket (cash/check/card/other) for the close audit trail."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "closed"
+      ],
+      "default": "closed",
+      "description": "Reserved for a future draft-then-close flow; created batches are closed immediately."
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "batch_number",
+    "closed_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__reconciliationbatch_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__reconciliationbatch_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__reconciliationbatch_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__reconciliationbatch_backend_only__"
+      }
+    }
+  }
+}

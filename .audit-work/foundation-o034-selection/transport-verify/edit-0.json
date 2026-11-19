@@ -1,0 +1,1 @@
+[{"old_text":"import { createSceneHistory, sceneLayoutAnchor } from \"@/components/estimator/foundation/foundationSceneHistory\";","new_text":"import { createSceneHistory, sceneLayoutAnchor } from \"@/components/estimator/foundation/foundationSceneHistory\";\nimport { createSceneSelection } from \"@/components/estimator/foundation/foundationSceneSelection\";"}]

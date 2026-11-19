@@ -1,0 +1,104 @@
+{
+  "synthetic": true,
+  "localOnly": true,
+  "activeDispatchIntegrated": false,
+  "sourceSha256": "774b553d67bcd2f782c6a65e377c645c5763c692461153f7d7233d21f0be50a9",
+  "results": [
+    {
+      "name": "independent1CY common costs176.25 plus112steel =288.25",
+      "ok": true
+    },
+    {
+      "name": "three instances common528.75 andsteel336 =864.75, no double scaling",
+      "ok": true
+    },
+    {
+      "name": "bagged/forming keep common legacy economics independent of new steel",
+      "ok": true
+    },
+    {
+      "name": "stale/invalid legacy rebar settings do not leak into version2 costing",
+      "ok": true
+    },
+    {
+      "name": "zero aggregate quantity is0ft plus48connectionlabor, not1ft",
+      "ok": true
+    },
+    {
+      "name": "explicit0 price is0material plus72labor, not a catalog fallback",
+      "ok": true
+    },
+    {
+      "name": "unknown weight remains null and gates application, known price remains visible",
+      "ok": true
+    },
+    {
+      "name": "unconfigured supports retain preliminary price but block replacement",
+      "ok": true
+    },
+    {
+      "name": "missing manual basis reason blocks replacement despite calculable money",
+      "ok": true
+    },
+    {
+      "name": "missing selected bagged material never becomes a replacement ready-mix amount",
+      "ok": true
+    },
+    {
+      "name": "missing active forming row blocks total, disabled forming selection is ignored",
+      "ok": true
+    },
+    {
+      "name": "duplicate concrete/forming IDs fail closed",
+      "ok": true
+    },
+    {
+      "name": "failed catalog/settings reads and malformed records don't infer defaults",
+      "ok": true
+    },
+    {
+      "name": "active invalid/negative common overrides block; no partial parse or plausible total",
+      "ok": true
+    },
+    {
+      "name": "inactive malformed forming/finishing override text stays preserved and ignored",
+      "ok": true
+    },
+    {
+      "name": "strict common numeric override text is typed without changing the raw item",
+      "ok": true
+    },
+    {
+      "name": "legacy common zero-rate finishing Infinity is unavailable, never silently repaired",
+      "ok": true
+    },
+    {
+      "name": "numeric0 labor settings match explicit textual0; no false default60",
+      "ok": true
+    },
+    {
+      "name": "active common settings reject partial parsing and null instead of inventing defaults",
+      "ok": true
+    },
+    {
+      "name": "negative/nonfinite catalog costs don't produce a replacement price",
+      "ok": true
+    },
+    {
+      "name": "rebaroff preserves common price176.25 with0steel and no inactive design/material",
+      "ok": true
+    },
+    {
+      "name": "invalid foundation geometry cannot gain a price from stored totals",
+      "ok": true
+    },
+    {
+      "name": "project excavation fallback is explicit; item method takes precedence",
+      "ok": true
+    },
+    {
+      "name": "all frozen raw inputs and outputs remain isolated across fresh calculations",
+      "ok": true
+    }
+  ]
+}

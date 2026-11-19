@@ -1,0 +1,18 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "head": "0a01139628455aa8a0a6dac3e155513bb2d35fab",
+  "checkpoint": {
+    "checkpointId": "6aed8d8a8e452a83c24e5abe",
+    "name": "Concrete-active-reinforcement-input-guard-verified",
+    "gitCommitHash": "0a01139628455aa8a0a6dac3e155513bb2d35fab"
+  },
+  "files": [
+    "src/components/estimator/foundation/foundationInputValidation.js"
+  ],
+  "remoteClean": true,
+  "remoteBuildExit": 0,
+  "published": false,
+  "businessRecordsTested": false,
+  "paidAiCalls": 0
+}

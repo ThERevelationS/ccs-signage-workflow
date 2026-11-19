@@ -1,0 +1,1997 @@
+[
+ {
+  "f": "test-accounting-alerts.mjs",
+  "ok": true,
+  "last": "PASS accounting-alerts"
+ },
+ {
+  "f": "test-accounting-export.mjs",
+  "ok": true,
+  "last": "PASS accounting-export"
+ },
+ {
+  "f": "test-accounting-suite.mjs",
+  "ok": true,
+  "last": "PASS accounting-suite (474 assertions)"
+ },
+ {
+  "f": "test-admin-account-changed-fields.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-admin-account-draft-exit-guard.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-account-field-resolution.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 9.6412"
+ },
+ {
+  "f": "test-admin-account-password-partial-recovery.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 14.0623"
+ },
+ {
+  "f": "test-admin-account-server-conflict.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 12.2026"
+ },
+ {
+  "f": "test-admin-automation-honesty.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 10.4165"
+ },
+ {
+  "f": "test-admin-automation-loading.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-automation-operations.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 5.7067"
+ },
+ {
+  "f": "test-admin-automation-pre-dispatch.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-automation-read-deadline.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 44.3056"
+ },
+ {
+  "f": "test-admin-automation-recovered-list.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-automation-recovery-guidance.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 5.2707"
+ },
+ {
+  "f": "test-admin-automation-uncertain-save.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-category-keyboard.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-credential-request-session-fencing.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-deletion-impact-backend-parity.mjs",
+  "ok": false,
+  "last": "FAIL:       at Test.runInAsyncScope (node:async_hooks:226:14)"
+ },
+ {
+  "f": "test-admin-deletion-impact-bounded-progress.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 132.1094"
+ },
+ {
+  "f": "test-admin-deletion-impact-retry-coordination.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-deletion-impact-retry.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 6.3736"
+ },
+ {
+  "f": "test-admin-deletion-impact-timeout.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-deletion-impact-validation.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 7.7103"
+ },
+ {
+  "f": "test-admin-deletion-request-loading.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 16.9723"
+ },
+ {
+  "f": "test-admin-deletion-resolution-concurrency.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-admin-deletion-resolution-session-fencing.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 6.1425"
+ },
+ {
+  "f": "test-admin-email-group-loading.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-hr-conflict-recovery.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 10.1195"
+ },
+ {
+  "f": "test-admin-hr-draft-exit-guard.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-hr-field-merge.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 12.208"
+ },
+ {
+  "f": "test-admin-hr-resolution-preview.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 11.0848"
+ },
+ {
+  "f": "test-admin-hr-session-fencing.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-invitation-session-fencing.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-navigation-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-admin-navigation-persistence.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-panel-boundary.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-panel-capability-freshness.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 13.192"
+ },
+ {
+  "f": "test-admin-search-keyboard.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 18.8893"
+ },
+ {
+  "f": "test-admin-settings-conflict-reload.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-settings-search.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-tab-navigation.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-unverified-account-save.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 18.2883"
+ },
+ {
+  "f": "test-admin-user-deletion-session-fencing.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-user-directory-loading.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 6.3051"
+ },
+ {
+  "f": "test-admin-user-update-session-fencing.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-admin-write-authorization.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-aio-pricing.mjs",
+  "ok": true,
+  "last": "PASS aio pricing waterfall (7 cases)"
+ },
+ {
+  "f": "test-alert-subscriptions.mjs",
+  "ok": true,
+  "last": "PASS alert-subscriptions"
+ },
+ {
+  "f": "test-ar-aging-reports.mjs",
+  "ok": true,
+  "last": "PASS ar-aging-reports"
+ },
+ {
+  "f": "test-audit-log.mjs",
+  "ok": true,
+  "last": "PASS audit-log (125 asserts)"
+ },
+ {
+  "f": "test-automation-behavior.mjs",
+  "ok": false,
+  "last": "FAIL: [read-budget] Enabled workflow automation rules: 1 page(s), 1 rows, 0ms"
+ },
+ {
+  "f": "test-automation-builder-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-bouncie-connection-singleton-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 11.1374"
+ },
+ {
+  "f": "test-brick-pricing-wire.mjs",
+  "ok": true,
+  "last": "PASS brick-pricing-wire (211 asserts: line projection, detection truth table, verbatim passthrough incl. float"
+ },
+ {
+  "f": "test-broadcast.mjs",
+  "ok": true,
+  "last": "PASS broadcast (194 assertions)"
+ },
+ {
+  "f": "test-builder-part-identity.mjs",
+  "ok": true,
+  "last": "PASS builder part identity + persistence (9 cases)"
+ },
+ {
+  "f": "test-builder-persistence.mjs",
+  "ok": true,
+  "last": "PASS builder persistence (8 cases)"
+ },
+ {
+  "f": "test-builder-product.mjs",
+  "ok": true,
+  "last": "PASS builder product persistence (7 cases)"
+ },
+ {
+  "f": "test-builder-recovery.mjs",
+  "ok": true,
+  "last": "PASS builder recovery + pricing snapshot (22 cases)"
+ },
+ {
+  "f": "test-builder-service.mjs",
+  "ok": true,
+  "last": "PASS builder service totals (12 cases)"
+ },
+ {
+  "f": "test-canonical-compares.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-cas-key-parity.mjs",
+  "ok": true,
+  "last": "PASS cas-key-parity"
+ },
+ {
+  "f": "test-catalog-import.mjs",
+  "ok": true,
+  "last": "PASS catalog-import (155 asserts)"
+ },
+ {
+  "f": "test-channel-pricing-wire.mjs",
+  "ok": true,
+  "last": "PASS channel-pricing-wire (153 asserts: config detection, context blocks, cost-line projection parity, verbati"
+ },
+ {
+  "f": "test-cnc-pricing-wire.mjs",
+  "ok": true,
+  "last": "PASS cnc-pricing-wire (193 asserts)"
+ },
+ {
+  "f": "test-completed-vs-paid.mjs",
+  "ok": true,
+  "last": "PASS completed-vs-paid"
+ },
+ {
+  "f": "test-contact-roles.mjs",
+  "ok": true,
+  "last": "PASS contact-roles (273 asserts)"
+ },
+ {
+  "f": "test-conversion-seeding.mjs",
+  "ok": true,
+  "last": "PASS conversion-seeding (104 asserts)"
+ },
+ {
+  "f": "test-credit-memo.mjs",
+  "ok": true,
+  "last": "PASS credit-memo (226 assertions)"
+ },
+ {
+  "f": "test-credit-terms.mjs",
+  "ok": true,
+  "last": "PASS credit-terms"
+ },
+ {
+  "f": "test-crm-event-queue.mjs",
+  "ok": true,
+  "last": "PASS crm-event-queue"
+ },
+ {
+  "f": "test-crm-events.mjs",
+  "ok": true,
+  "last": "PASS crm-events (taxonomy, classification, queue filtering/sorting, completion patch)"
+ },
+ {
+  "f": "test-crm-suggestion.mjs",
+  "ok": true,
+  "last": "PASS crm-suggestion"
+ },
+ {
+  "f": "test-crm-suite.mjs",
+  "ok": true,
+  "last": "430 assertions"
+ },
+ {
+  "f": "test-custom-items-pricing-wire.mjs",
+  "ok": true,
+  "last": "PASS custom-items-pricing-wire (189 asserts)"
+ },
+ {
+  "f": "test-custom-status.mjs",
+  "ok": true,
+  "last": "PASS custom-status"
+ },
+ {
+  "f": "test-customer-analytics.mjs",
+  "ok": true,
+  "last": "PASS customer-analytics"
+ },
+ {
+  "f": "test-customer-import.mjs",
+  "ok": true,
+  "last": "PASS customer-import"
+ },
+ {
+  "f": "test-customer-lifecycle.mjs",
+  "ok": true,
+  "last": "PASS customer-lifecycle"
+ },
+ {
+  "f": "test-customer-location-opt-in.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-customer-merge.mjs",
+  "ok": true,
+  "last": "PASS customer merge (226 cases)"
+ },
+ {
+  "f": "test-customer-persistence.mjs",
+  "ok": true,
+  "last": "PASS customer persistence (7 cases)"
+ },
+ {
+  "f": "test-customer-pricing-config.mjs",
+  "ok": true,
+  "last": "PASS customer pricing config (12 cases)"
+ },
+ {
+  "f": "test-customer-pricing.mjs",
+  "ok": true,
+  "last": "PASS customer pricing helpers (21 cases)"
+ },
+ {
+  "f": "test-customer-quote.mjs",
+  "ok": true,
+  "last": "PASS pipeline status + quote rows (18 cases)"
+ },
+ {
+  "f": "test-customer-reports.mjs",
+  "ok": true,
+  "last": "PASS customer-reports"
+ },
+ {
+  "f": "test-customer-statement.mjs",
+  "ok": true,
+  "last": "PASS Customer 360 customer-statement contract (11 assertions)"
+ },
+ {
+  "f": "test-customer-summary-service-role.mjs",
+  "ok": true,
+  "last": "PASS CustomerSummary service-role authorization contract (5 assertions)"
+ },
+ {
+  "f": "test-customer-sync.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-customer-tier.mjs",
+  "ok": true,
+  "last": "PASS customer-tier"
+ },
+ {
+  "f": "test-customer-warning.mjs",
+  "ok": true,
+  "last": "PASS customer-warning"
+ },
+ {
+  "f": "test-customer360-page.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-data-export.mjs",
+  "ok": true,
+  "last": "PASS data-export"
+ },
+ {
+  "f": "test-deep-links.mjs",
+  "ok": true,
+  "last": "PASS deep-links"
+ },
+ {
+  "f": "test-delivery-adapter.mjs",
+  "ok": true,
+  "last": "PASS delivery-adapter"
+ },
+ {
+  "f": "test-delivery-telemetry.mjs",
+  "ok": true,
+  "last": "PASS delivery-telemetry"
+ },
+ {
+  "f": "test-digest-batch.mjs",
+  "ok": true,
+  "last": "PASS digest-batch"
+ },
+ {
+  "f": "test-double-sided.mjs",
+  "ok": true,
+  "last": "PASS double-sided (125+ asserts: mode vocabulary + freeze, flag aliases incl spec triple, all six modes, scala"
+ },
+ {
+  "f": "test-due-date-engine.mjs",
+  "ok": true,
+  "last": "PASS due-date-engine"
+ },
+ {
+  "f": "test-due-date-suite.mjs",
+  "ok": true,
+  "last": "PASS due-date-suite (388 asserts)"
+ },
+ {
+  "f": "test-due-date-wiring.mjs",
+  "ok": true,
+  "last": "PASS due-date-wiring"
+ },
+ {
+  "f": "test-duplicate-estimate.mjs",
+  "ok": true,
+  "last": "PASS duplicate estimate builder and split selection regression cases"
+ },
+ {
+  "f": "test-email-settings.mjs",
+  "ok": true,
+  "last": "PASS email-settings"
+ },
+ {
+  "f": "test-entity-persistence.mjs",
+  "ok": true,
+  "last": "PASS entity persistence (16 cases)"
+ },
+ {
+  "f": "test-equipment-relationship-persistence.mjs",
+  "ok": true,
+  "last": "PASS equipment relationship persistence (5 cases)"
+ },
+ {
+  "f": "test-estimate-card-customer-note.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-estimate-cas.mjs",
+  "ok": true,
+  "last": "PASS estimate CAS persistence (10 cases)"
+ },
+ {
+  "f": "test-estimate-import-export.mjs",
+  "ok": true,
+  "last": "PASS estimate import/export (~55 assertions)"
+ },
+ {
+  "f": "test-estimate-lifecycle.mjs",
+  "ok": true,
+  "last": "PASS estimate lifecycle (14 cases)"
+ },
+ {
+  "f": "test-estimate-reports.mjs",
+  "ok": true,
+  "last": "PASS estimate-reports"
+ },
+ {
+  "f": "test-estimate-save-recovery.mjs",
+  "ok": true,
+  "last": "PASS estimate save recovery (11 cases)"
+ },
+ {
+  "f": "test-estimator-workflow-batch.mjs",
+  "ok": true,
+  "last": "(Use `node --trace-warnings ...` to show where the warning was created)"
+ },
+ {
+  "f": "test-exclusive-toggle.mjs",
+  "ok": true,
+  "last": "PASS exclusive toggle (10 cases)"
+ },
+ {
+  "f": "test-extract-parts.mjs",
+  "ok": true,
+  "last": "PASS extract builder parts (8 cases)"
+ },
+ {
+  "f": "test-face-scan-browser.mjs",
+  "ok": false,
+  "last": "FAIL: [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, "
+ },
+ {
+  "f": "test-file-bridge.mjs",
+  "ok": true,
+  "last": "PASS file-bridge"
+ },
+ {
+  "f": "test-financial-reports.mjs",
+  "ok": true,
+  "last": "PASS financial-reports"
+ },
+ {
+  "f": "test-fleet-analytics-detail-load-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 179.7912"
+ },
+ {
+  "f": "test-fleet-component-load-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 9.9848"
+ },
+ {
+  "f": "test-fleet-cutover-reader-election.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 15.3025"
+ },
+ {
+  "f": "test-fleet-cutover-singleton-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 14.123"
+ },
+ {
+  "f": "test-fleet-entity-loader-resilience.mjs",
+  "ok": false,
+  "last": "FAIL: (Use `node --trace-deprecation ...` to show where the warning was created)"
+ },
+ {
+  "f": "test-fleet-equipment-scoped-load-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 184.3051"
+ },
+ {
+  "f": "test-fleet-history-equipment-load-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 124.2944"
+ },
+ {
+  "f": "test-fleet-history-status-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 5.7647"
+ },
+ {
+  "f": "test-fleet-inspections-load-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 6.7722"
+ },
+ {
+  "f": "test-fleet-inventory-load-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 7.6383"
+ },
+ {
+  "f": "test-fleet-inventory-update-version-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 4.6223"
+ },
+ {
+  "f": "test-fleet-maintenance-load-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 5.3475"
+ },
+ {
+  "f": "test-fleet-mechanic-bootstrap-authorization.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 3.9295"
+ },
+ {
+  "f": "test-fleet-mechanic-estimate-handoff-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 12.9391"
+ },
+ {
+  "f": "test-fleet-mechanic-estimate-response-race.mjs",
+  "ok": false,
+  "last": "FAIL:     at async data:text/javascript;base64,Y29uc3QgY3JlYXRlQ2xpZW50RnJvbVJlcXVlc3QgPSAoKSA9PiBnbG9iYWxUaGlzLl9fZ"
+ },
+ {
+  "f": "test-fleet-mechanic-last-save-guard.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 6.3833"
+ },
+ {
+  "f": "test-fleet-mechanic-mutation-recovery.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 6.8551"
+ },
+ {
+  "f": "test-fleet-mechanic-post-commit-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 6.8093"
+ },
+ {
+  "f": "test-fleet-mechanic-recovery-selection-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 14.6265"
+ },
+ {
+  "f": "test-fleet-mechanic-repair-estimate-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-fleet-mechanic-started-receipt-race.mjs",
+  "ok": false,
+  "last": "FAIL:     at async data:text/javascript;base64,Y29uc3QgY3JlYXRlQ2xpZW50RnJvbVJlcXVlc3QgPSAoKSA9PiBnbG9iYWxUaGlzLl9fZ"
+ },
+ {
+  "f": "test-fleet-mechanic-status-authorization.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-fleet-mechanic-work-handoff-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 7.2035"
+ },
+ {
+  "f": "test-fleet-mechanic-work-order-commit-gate.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 42.0309"
+ },
+ {
+  "f": "test-fleet-mechanic-work-recovery-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-fleet-mechanic-work-recovery-selection-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 18.5451"
+ },
+ {
+  "f": "test-fleet-part-lookup-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-fleet-part-lookup-upgrade.mjs",
+  "ok": true,
+  "last": "24/24 part-lookup upgrade contract checks passed"
+ },
+ {
+  "f": "test-fleet-record-delete-persistence.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 7.0772"
+ },
+ {
+  "f": "test-fleet-repair-approval-policies-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-fleet-repair-approval-policy-create-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 175.5286"
+ },
+ {
+  "f": "test-fleet-repair-estimate-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-fleet-repair-estimate-create-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 299.9051"
+ },
+ {
+  "f": "test-fleet-repair-estimate-refresh.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 7.3296"
+ },
+ {
+  "f": "test-fleet-request-unit-cost-validation.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 7.5537"
+ },
+ {
+  "f": "test-fleet-requests-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-fleet-requests-load-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 38.255"
+ },
+ {
+  "f": "test-fleet-session-read-gateway.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 49.7505"
+ },
+ {
+  "f": "test-fleet-settings-load-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 93.0131"
+ },
+ {
+  "f": "test-fleet-settings-reader-election.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 15.9914"
+ },
+ {
+  "f": "test-fleet-start-work-focus.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 19.0059"
+ },
+ {
+  "f": "test-fleet-tracking-load-race.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 6.886"
+ },
+ {
+  "f": "test-fleet-tracking-trip-race-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-fleet-work-order-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-fleet-work-order-refresh.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 8.1276"
+ },
+ {
+  "f": "test-fleet-work-order-save-focus.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 9.4324"
+ },
+ {
+  "f": "test-focus-layout-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-focus-timer-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-follow-up-machine.mjs",
+  "ok": true,
+  "last": "PASS follow-up-machine"
+ },
+ {
+  "f": "test-follow-up-sweep.mjs",
+  "ok": true,
+  "last": "PASS follow-up-sweep"
+ },
+ {
+  "f": "test-followups.mjs",
+  "ok": true,
+  "last": "PASS followups (rules, eligibility, stage thresholds, dedupe, balance gate, ordering, templates)"
+ },
+ {
+  "f": "test-formula-eval.mjs",
+  "ok": true,
+  "last": "PASS formula eval (117 cases: arithmetic/precedence/unary/parens/cmp/logical/ternary/fns/env/errors/injection/"
+ },
+ {
+  "f": "test-foundation-pricing-wire.mjs",
+  "ok": true,
+  "last": "PASS foundation-pricing-wire (239 asserts: split-total projection + walls breakdown, detection truth table, ve"
+ },
+ {
+  "f": "test-foundation-reorder.mjs",
+  "ok": true,
+  "last": "PASS foundation reorder (8 cases)"
+ },
+ {
+  "f": "test-foundation-schema.mjs",
+  "ok": true,
+  "last": "PASS foundation schema (48 assertions)"
+ },
+ {
+  "f": "test-fulfillment.mjs",
+  "ok": true,
+  "last": "PASS fulfillment"
+ },
+ {
+  "f": "test-gl-account-admin.mjs",
+  "ok": true,
+  "last": "PASS gl-account-admin"
+ },
+ {
+  "f": "test-gl-splits.mjs",
+  "ok": true,
+  "last": "PASS gl-splits"
+ },
+ {
+  "f": "test-hard-due.mjs",
+  "ok": true,
+  "last": "PASS hard-due"
+ },
+ {
+  "f": "test-hours-of-operation.mjs",
+  "ok": true,
+  "last": "PASS hours-of-operation"
+ },
+ {
+  "f": "test-import-mappers.mjs",
+  "ok": true,
+  "last": "PASS import mappers (21 cases)"
+ },
+ {
+  "f": "test-imports.mjs",
+  "ok": true,
+  "last": "PASS imports (25 cases)"
+ },
+ {
+  "f": "test-integrations-status.mjs",
+  "ok": true,
+  "last": "PASS integrations-status (249 assertions)"
+ },
+ {
+  "f": "test-integrations-surface.mjs",
+  "ok": true,
+  "last": "PASS integrations-surface (350 asserts)"
+ },
+ {
+  "f": "test-inventory-persistence.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-inventory-sources.mjs",
+  "ok": true,
+  "last": "PASS inventory sources (10 sources)"
+ },
+ {
+  "f": "test-invoice-customer-display.mjs",
+  "ok": true,
+  "last": "PASS legacy Invoice customer display compatibility (8 assertions)"
+ },
+ {
+  "f": "test-job-workspace-tabs.mjs",
+  "ok": true,
+  "last": "PASS job-workspace-tabs (D-03 tabs / D-04 margin / D-07 actions)"
+ },
+ {
+  "f": "test-job-workspace.mjs",
+  "ok": true,
+  "last": "PASS job-workspace"
+ },
+ {
+  "f": "test-labor-levels.mjs",
+  "ok": true,
+  "last": "PASS labor-levels"
+ },
+ {
+  "f": "test-labor-schema.mjs",
+  "ok": true,
+  "last": "PASS labor schema (14 categories, 123 fields)"
+ },
+ {
+  "f": "test-laser-pricing-wire.mjs",
+  "ok": true,
+  "last": "PASS laser-pricing-wire (191 asserts)"
+ },
+ {
+  "f": "test-legacy-migrator.mjs",
+  "ok": true,
+  "last": "PASS legacy migrator (33 cases)"
+ },
+ {
+  "f": "test-lump-sync.mjs",
+  "ok": true,
+  "last": "PASS lump-sync"
+ },
+ {
+  "f": "test-machine-costs.mjs",
+  "ok": true,
+  "last": "PASS machine costs (70+ asserts: normalize/aliases/clamps/profiles/idempotent, use-cost components, setup_bill"
+ },
+ {
+  "f": "test-maintenance-pricing-wire.mjs",
+  "ok": true,
+  "last": "PASS maintenance-pricing-wire (216 asserts)"
+ },
+ {
+  "f": "test-margin.mjs",
+  "ok": true,
+  "last": "PASS margin (185 asserts)"
+ },
+ {
+  "f": "test-markup-engine.mjs",
+  "ok": true,
+  "last": "PASS markup engine (20 cases)"
+ },
+ {
+  "f": "test-master-account.mjs",
+  "ok": true,
+  "last": "PASS master-account"
+ },
+ {
+  "f": "test-metal-pricing-wire.mjs",
+  "ok": true,
+  "last": "PASS metal-pricing-wire (206 asserts)"
+ },
+ {
+  "f": "test-migration.mjs",
+  "ok": true,
+  "last": "PASS migration"
+ },
+ {
+  "f": "test-mmm-board-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-modifier-pricing.mjs",
+  "ok": true,
+  "last": "PASS modifier pricing (127 asserts: normalize/pricing-gate+order/option+rate resolution/var names/waste/rate k"
+ },
+ {
+  "f": "test-module-registry.mjs",
+  "ok": true,
+  "last": "PASS module registry (22 assertions)"
+ },
+ {
+  "f": "test-mutation-guard.mjs",
+  "ok": false,
+  "last": "[Base44 SDK Error] undefined: Cannot read properties of undefined (reading 'split')"
+ },
+ {
+  "f": "test-my-queue.mjs",
+  "ok": true,
+  "last": "PASS my-queue"
+ },
+ {
+  "f": "test-nav-wiring.mjs",
+  "ok": true,
+  "last": "PASS nav wiring (81 links → 111 routes)"
+ },
+ {
+  "f": "test-notes-override.mjs",
+  "ok": true,
+  "last": "PASS notes-override"
+ },
+ {
+  "f": "test-notification-center.mjs",
+  "ok": true,
+  "last": "PASS notification-center (dedupe, transitions, prefs, overlays, digest, contracts)"
+ },
+ {
+  "f": "test-notification-suite.mjs",
+  "ok": true,
+  "last": "PASS notification-suite"
+ },
+ {
+  "f": "test-notification-templates.mjs",
+  "ok": true,
+  "last": "PASS notification-templates (183 checks)"
+ },
+ {
+  "f": "test-numbering-format.mjs",
+  "ok": true,
+  "last": "PASS numbering-format (148 asserts)"
+ },
+ {
+  "f": "test-ops-reports.mjs",
+  "ok": true,
+  "last": "PASS ops-reports"
+ },
+ {
+  "f": "test-order-entry-override.mjs",
+  "ok": true,
+  "last": "PASS order-entry-override"
+ },
+ {
+  "f": "test-order-fees.mjs",
+  "ok": true,
+  "last": "PASS order-fees"
+ },
+ {
+  "f": "test-order-header.mjs",
+  "ok": true,
+  "last": "PASS order-header"
+ },
+ {
+  "f": "test-order-waterfall-history.mjs",
+  "ok": true,
+  "last": "PASS order-waterfall-history"
+ },
+ {
+  "f": "test-origination.mjs",
+  "ok": true,
+  "last": "PASS origination (entity schema, normalize/pathLevels, cycle-safe tree build, fullPathOf, groupByLevel, resolv"
+ },
+ {
+  "f": "test-override-report.mjs",
+  "ok": true,
+  "last": "PASS override-report"
+ },
+ {
+  "f": "test-paint-pricing-wire.mjs",
+  "ok": true,
+  "last": "PASS paint-pricing-wire (206 asserts)"
+ },
+ {
+  "f": "test-parent-sizes.mjs",
+  "ok": true,
+  "last": "PASS parent-sizes"
+ },
+ {
+  "f": "test-part-group.mjs",
+  "ok": true,
+  "last": "PASS part-group inheritance (65 asserts: both link modes, membership-wins, precedence chain, propagate plan/sk"
+ },
+ {
+  "f": "test-part-template-versioning.mjs",
+  "ok": true,
+  "last": "PASS part-template versioning contract (16 assertions)"
+ },
+ {
+  "f": "test-payment-register.mjs",
+  "ok": true,
+  "last": "PASS payment-register"
+ },
+ {
+  "f": "test-payment-reminders.mjs",
+  "ok": true,
+  "last": "PASS payment-reminders"
+ },
+ {
+  "f": "test-permitting-address-canonical-profile.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-permitting-approved-evidence-search.mjs",
+  "ok": false,
+  "last": "FAIL: Approved evidence panel acceptance passed: quotes/links, uncertainty, loaded-page search, pagination, single-f"
+ },
+ {
+  "f": "test-permitting-authority-verification.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 13.7186"
+ },
+ {
+  "f": "test-permitting-catalog-office-link.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-permitting-county-choices.mjs",
+  "ok": false,
+  "last": "FAIL: County choices passed: 1500 values without cap, dedupe/blanks, stuck-cursor rejection and stale-read cancellat"
+ },
+ {
+  "f": "test-permitting-coverage-reader.mjs",
+  "ok": false,
+  "last": "FAIL: Repeated identities rejected within a page and across pages, including changed electrical authority snapshots."
+ },
+ {
+  "f": "test-permitting-coverage-sdk-adapter.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-documents-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-draft-follow-up-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-draft-library-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-draft-revision-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-electrical-identity-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-electrical-inquiry-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-electrical-source-audit.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 67.3481"
+ },
+ {
+  "f": "test-permitting-external-referral-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-government-office-catalog.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 9.0629"
+ },
+ {
+  "f": "test-permitting-locality-authority-selection.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-permitting-locality-evidence.mjs",
+  "ok": false,
+  "last": "FAIL: Locality evidence acceptance passed: manual-only retrieval, scoped authenticated request, locality reset, coll"
+ },
+ {
+  "f": "test-permitting-locality-office-evidence.mjs",
+  "ok": false,
+  "last": "FAIL: Office evidence component acceptance passed: manual read, single-flight, quote/source display, coverage bounda"
+ },
+ {
+  "f": "test-permitting-map-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-metrics-lifecycle.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-office-evidence-reconciliation.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 85.1039"
+ },
+ {
+  "f": "test-permitting-office-identity-preservation.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 6.0433"
+ },
+ {
+  "f": "test-permitting-office-identity-preview-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-office-response-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-office-response-handoff-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-official-inventory.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-pdf-delegation-ui.mjs",
+  "ok": false,
+  "last": "FAIL: PDF delegation UI acceptance passed: explicit mode payloads, scoped roles/target, separate identities, preview"
+ },
+ {
+  "f": "test-permitting-pdf-keyboard.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-picker-overview-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-queue-browse.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-recorded-coverage.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-requirements-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-retained-electrical-page-check.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 19.2131"
+ },
+ {
+  "f": "test-permitting-retained-electrical-page-ui.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-review-event-reconciliation.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 56.7332"
+ },
+ {
+  "f": "test-permitting-reviewed-office-mirror.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 73.9224"
+ },
+ {
+  "f": "test-permitting-rule-card-render.mjs",
+  "ok": false,
+  "last": "FAIL: Conflict card render acceptance passed: disabled approval/resolution, rationale and acknowledgement, both cita"
+ },
+ {
+  "f": "test-permitting-saved-profile-links.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 32.4143"
+ },
+ {
+  "f": "test-permitting-scan-activity-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-selector-electrical-office-handoff.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-selector-electrical-research-outcome.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 9.2128"
+ },
+ {
+  "f": "test-permitting-selector-saved-source-review.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-selector-scan-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-selector-source-review-refs.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 36.3338"
+ },
+ {
+  "f": "test-permitting-selector-source-review-ui.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-source-navigation-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-source-pdf-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-source-review-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-workflow-draft-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-workflow-planning-review-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-workflow-review-packet-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-workflow-source-evidence-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-permitting-workspace-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-po-required.mjs",
+  "ok": true,
+  "last": "PASS po-required (36 asserts)"
+ },
+ {
+  "f": "test-poll-registry.mjs",
+  "ok": true,
+  "last": "PASS poll-registry (93 assertions)"
+ },
+ {
+  "f": "test-portal-payment.mjs",
+  "ok": true,
+  "last": "PASS portal-payment"
+ },
+ {
+  "f": "test-portal-products.mjs",
+  "ok": true,
+  "last": "PASS portal-products"
+ },
+ {
+  "f": "test-portal-upload.mjs",
+  "ok": true,
+  "last": "PASS portal upload + counter offer (52 assertions)"
+ },
+ {
+  "f": "test-preflight-source-mutation.mjs",
+  "ok": true,
+  "last": "PASS preflight source mutation (7 cases)"
+ },
+ {
+  "f": "test-pricing-admin.mjs",
+  "ok": true,
+  "last": "PASS pricing-admin (284 asserts: registry/schema-parity/write-ops/enums/validators/drafts/CAS/cells/variables/"
+ },
+ {
+  "f": "test-pricing-engine.mjs",
+  "ok": true,
+  "last": "PASS pricing engine (124 assertions)"
+ },
+ {
+  "f": "test-pricing-matrix.mjs",
+  "ok": true,
+  "last": "PASS pricing matrix (140 assertions)"
+ },
+ {
+  "f": "test-pricing-regression.mjs",
+  "ok": true,
+  "last": "PASS pricing-regression (70 cases, 0 flagged divergences)"
+ },
+ {
+  "f": "test-pricing-template.mjs",
+  "ok": true,
+  "last": "PASS pricing-template (169 asserts)"
+ },
+ {
+  "f": "test-pricing-variables.mjs",
+  "ok": true,
+  "last": "PASS pricing variables (146 asserts: builtins/normalize/dedupe/reserved/env precedence/case-normalization/engi"
+ },
+ {
+  "f": "test-print-templates.mjs",
+  "ok": true,
+  "last": "PASS print-templates"
+ },
+ {
+  "f": "test-priority-reorder.mjs",
+  "ok": true,
+  "last": "PASS priority reorder (9 cases)"
+ },
+ {
+  "f": "test-procurement.mjs",
+  "ok": true,
+  "last": "PASS procurement (70 assertions)"
+ },
+ {
+  "f": "test-product-audit-stage.mjs",
+  "ok": true,
+  "last": "PASS product-audit-stage"
+ },
+ {
+  "f": "test-product-operational-status.mjs",
+  "ok": true,
+  "last": "PASS product-operational-status"
+ },
+ {
+  "f": "test-product-queue-model.mjs",
+  "ok": true,
+  "last": "PASS product-queue-model"
+ },
+ {
+  "f": "test-product-stage-sync.mjs",
+  "ok": true,
+  "last": "PASS product-stage-sync"
+ },
+ {
+  "f": "test-product-status-model.mjs",
+  "ok": true,
+  "last": "PASS product-status-model"
+ },
+ {
+  "f": "test-product-timer.mjs",
+  "ok": true,
+  "last": "PASS product-timer"
+ },
+ {
+  "f": "test-production-reports.mjs",
+  "ok": true,
+  "last": "PASS production-reports"
+ },
+ {
+  "f": "test-products-to-parts.mjs",
+  "ok": true,
+  "last": "PASS products-to-parts"
+ },
+ {
+  "f": "test-profitability.mjs",
+  "ok": true,
+  "last": "PASS estimate profitability (8 cases)"
+ },
+ {
+  "f": "test-project-categorizer.mjs",
+  "ok": true,
+  "last": "PASS project categorizer (14 cases)"
+ },
+ {
+  "f": "test-proof-batch.mjs",
+  "ok": true,
+  "last": "PASS proof-batch"
+ },
+ {
+  "f": "test-proof-change-request.mjs",
+  "ok": true,
+  "last": "PASS proof-change-request"
+ },
+ {
+  "f": "test-proof-due-recalc.mjs",
+  "ok": true,
+  "last": "PASS proof-due-recalc"
+ },
+ {
+  "f": "test-proof-follow-up.mjs",
+  "ok": true,
+  "last": "PASS proof-follow-up"
+ },
+ {
+  "f": "test-proof-pipeline.mjs",
+  "ok": true,
+  "last": "PASS proof-pipeline"
+ },
+ {
+  "f": "test-proof-share-link.mjs",
+  "ok": true,
+  "last": "PASS proof-share-link"
+ },
+ {
+  "f": "test-proof-transitions.mjs",
+  "ok": true,
+  "last": "PASS proof-transitions"
+ },
+ {
+  "f": "test-proof-workflow.mjs",
+  "ok": true,
+  "last": "PASS proof-workflow"
+ },
+ {
+  "f": "test-qbo-adapter.mjs",
+  "ok": true,
+  "last": "PASS qbo-adapter (314 assertions)"
+ },
+ {
+  "f": "test-queue-auto-refresh.mjs",
+  "ok": true,
+  "last": "PASS queue-auto-refresh"
+ },
+ {
+  "f": "test-queue-counters.mjs",
+  "ok": true,
+  "last": "PASS queue-counters"
+ },
+ {
+  "f": "test-queue-feed.mjs",
+  "ok": true,
+  "last": "PASS queue-feed"
+ },
+ {
+  "f": "test-queue-grouping.mjs",
+  "ok": true,
+  "last": "PASS queue-grouping"
+ },
+ {
+  "f": "test-queue-rows.mjs",
+  "ok": true,
+  "last": "PASS queue-rows"
+ },
+ {
+  "f": "test-queue-url-state.mjs",
+  "ok": true,
+  "last": "PASS queue-url-state"
+ },
+ {
+  "f": "test-quick-price-persistence.mjs",
+  "ok": true,
+  "last": "PASS quick-price persistence (5 cases)"
+ },
+ {
+  "f": "test-quote-defaults.mjs",
+  "ok": true,
+  "last": "PASS quote-defaults (416 asserts)"
+ },
+ {
+  "f": "test-quote-lifecycle.mjs",
+  "ok": true,
+  "last": "PASS quote lifecycle (17 cases)"
+ },
+ {
+  "f": "test-quote-recipient-contact.mjs",
+  "ok": true,
+  "last": "PASS quote recipient contact handoff (10 assertions)"
+ },
+ {
+  "f": "test-ready-triggers.mjs",
+  "ok": true,
+  "last": "PASS ready-triggers"
+ },
+ {
+  "f": "test-recent-customers.mjs",
+  "ok": true,
+  "last": "PASS recent customer history (15 assertions)"
+ },
+ {
+  "f": "test-reconciliation-ui.mjs",
+  "ok": true,
+  "last": "PASS reconciliation-ui (117 asserts)"
+ },
+ {
+  "f": "test-reconciliation.mjs",
+  "ok": true,
+  "last": "PASS reconciliation (161 assertions)"
+ },
+ {
+  "f": "test-refunds.mjs",
+  "ok": true,
+  "last": "PASS refunds + credit memos (45 assertions)"
+ },
+ {
+  "f": "test-relationship-ids.mjs",
+  "ok": true,
+  "last": "PASS test-relationship-ids"
+ },
+ {
+  "f": "test-report-catalog.mjs",
+  "ok": true,
+  "last": "PASS report-catalog"
+ },
+ {
+  "f": "test-report-drilldown.mjs",
+  "ok": true,
+  "last": "PASS report-drilldown"
+ },
+ {
+  "f": "test-report-engine-suite.mjs",
+  "ok": true,
+  "last": "1010 assertions"
+ },
+ {
+  "f": "test-report-engine.mjs",
+  "ok": true,
+  "last": "PASS report-engine"
+ },
+ {
+  "f": "test-revision-reads.mjs",
+  "ok": true,
+  "last": "PASS revision reads (8 cases)"
+ },
+ {
+  "f": "test-revision-service.mjs",
+  "ok": true,
+  "last": "PASS revision service (5 cases)"
+ },
+ {
+  "f": "test-sales-activity.mjs",
+  "ok": true,
+  "last": "PASS sales activity detection (10 cases)"
+ },
+ {
+  "f": "test-sales-funnel.mjs",
+  "ok": true,
+  "last": "PASS sales-funnel"
+ },
+ {
+  "f": "test-sales-reports.mjs",
+  "ok": true,
+  "last": "PASS sales-reports"
+ },
+ {
+  "f": "test-samevalue-emptyclass.mjs",
+  "ok": true,
+  "last": "PASS samevalue-emptyclass (55 cases)"
+ },
+ {
+  "f": "test-saved-queue-views.mjs",
+  "ok": true,
+  "last": "PASS saved-queue-views"
+ },
+ {
+  "f": "test-saved-report-runs.mjs",
+  "ok": true,
+  "last": "PASS saved-report-runs"
+ },
+ {
+  "f": "test-scale-frontend.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-scale-invoicing.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-scale-reads.mjs",
+  "ok": true,
+  "last": "PASS scale-reads"
+ },
+ {
+  "f": "test-schema-additions.mjs",
+  "ok": true,
+  "last": "PASS schema-additions"
+ },
+ {
+  "f": "test-schema-crm-fields.mjs",
+  "ok": true,
+  "last": "PASS schema-crm-fields"
+ },
+ {
+  "f": "test-schema-crmevent.mjs",
+  "ok": true,
+  "last": "PASS schema-crmevent"
+ },
+ {
+  "f": "test-schema-featurereport.mjs",
+  "ok": true,
+  "last": "PASS schema-featurereport"
+ },
+ {
+  "f": "test-schema-globalsettings.mjs",
+  "ok": true,
+  "last": "PASS schema-globalsettings"
+ },
+ {
+  "f": "test-schema-income-cogs.mjs",
+  "ok": true,
+  "last": "PASS schema-income-cogs"
+ },
+ {
+  "f": "test-schema-invoice-fields.mjs",
+  "ok": true,
+  "last": "PASS schema-invoice-fields"
+ },
+ {
+  "f": "test-schema-machine-tax.mjs",
+  "ok": true,
+  "last": "PASS machine + tax schema (Machine 13 fields + profiles shape, TaxAgency 6 fields, TaxGroup.agency_id, backend"
+ },
+ {
+  "f": "test-schema-order-fields.mjs",
+  "ok": true,
+  "last": "PASS schema-order-fields"
+ },
+ {
+  "f": "test-schema-part-fields.mjs",
+  "ok": true,
+  "last": "PASS test-schema-part-fields"
+ },
+ {
+  "f": "test-schema-partgroups-modifiers.mjs",
+  "ok": true,
+  "last": "PASS partgroups + modifiers schema (3 entities, 21 fields, backend-only RLS)"
+ },
+ {
+  "f": "test-schema-payment-fields.mjs",
+  "ok": true,
+  "last": "PASS schema-payment-fields"
+ },
+ {
+  "f": "test-schema-pricing-entities.mjs",
+  "ok": true,
+  "last": "PASS pricing entity schemas (PricingTemplate: 7 fields; GlobalPricingTier: 4 fields; backend-only RLS)"
+ },
+ {
+  "f": "test-schema-savedqueueview.mjs",
+  "ok": true,
+  "last": "PASS schema-savedqueueview"
+ },
+ {
+  "f": "test-schema-vendor.mjs",
+  "ok": true,
+  "last": "PASS schema-vendor"
+ },
+ {
+  "f": "test-sendstaffemail.mjs",
+  "ok": true,
+  "last": "PASS sendstaffemail (28 assertions)"
+ },
+ {
+  "f": "test-setup-fee-compose.mjs",
+  "ok": true,
+  "last": "PASS setup-fee-compose (97 asserts: applyMinimum/largest-wins/additive fees/inclusive+exclusive floor scope/qt"
+ },
+ {
+  "f": "test-sips-checklist-reload-focus-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-sips-clear-revisit-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-sips-template-selection-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-sips-template-unsaved-navigation-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-size-discounts.mjs",
+  "ok": true,
+  "last": "PASS size-discounts"
+ },
+ {
+  "f": "test-sop-module.mjs",
+  "ok": true,
+  "last": "PASS sop-module (155 assertions)"
+ },
+ {
+  "f": "test-stable-hook-defaults.mjs",
+  "ok": false,
+  "last": "FAIL:   … scanned 150/1131\r  … scanned 300/1131\r  … scanned 450/1131\r  … scanned 600/1131\r  … scanned 750/1131\r  … s"
+ },
+ {
+  "f": "test-staff-entities.mjs",
+  "ok": true,
+  "last": "PASS staff entities facade (18 cases)"
+ },
+ {
+  "f": "test-staff-read-gateway.mjs",
+  "ok": false,
+  "last": "FAIL: ℹ duration_ms 2399.339"
+ },
+ {
+  "f": "test-statement-batch.mjs",
+  "ok": true,
+  "last": "PASS statement-batch (77 assertions)"
+ },
+ {
+  "f": "test-statement-depth.mjs",
+  "ok": true,
+  "last": "PASS statement-depth (208 assertions)"
+ },
+ {
+  "f": "test-statements.mjs",
+  "ok": true,
+  "last": "PASS statements"
+ },
+ {
+  "f": "test-store-credit.mjs",
+  "ok": true,
+  "last": "PASS store-credit"
+ },
+ {
+  "f": "test-suite-conventions.mjs",
+  "ok": false,
+  "last": "FAIL: FAIL suite-conventions"
+ },
+ {
+  "f": "test-tag-responsibility.mjs",
+  "ok": true,
+  "last": "PASS tag-responsibility"
+ },
+ {
+  "f": "test-tax-exempt.mjs",
+  "ok": true,
+  "last": "PASS tax-exempt (60 asserts)"
+ },
+ {
+  "f": "test-tax-liability.mjs",
+  "ok": true,
+  "last": "PASS tax-liability"
+ },
+ {
+  "f": "test-template-render.mjs",
+  "ok": true,
+  "last": "PASS template-render (74 asserts: paths/array-index/formatters/money/date/upper/lower/title/default+pipe order"
+ },
+ {
+  "f": "test-timeclock-admin-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-timeclock-pay-period-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-timeclock-quickclock-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-timeclock-subtabs-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-timeclock-timeoff-browser.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-timeclock-timeoff-decision.mjs",
+  "ok": false,
+  "last": "    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/scripts/test-timecloc"
+ },
+ {
+  "f": "test-training-module.mjs",
+  "ok": true,
+  "last": "PASS training-module (122 assertions)"
+ },
+ {
+  "f": "test-ui-pass-financial.mjs",
+  "ok": false,
+  "last": "FAIL: Node.js v26.13.0"
+ },
+ {
+  "f": "test-unified-alerts.mjs",
+  "ok": true,
+  "last": "PASS unified-alerts"
+ },
+ {
+  "f": "test-user-defaults.mjs",
+  "ok": true,
+  "last": "PASS user-defaults (77 assertion groups)"
+ },
+ {
+  "f": "test-user-prefs.mjs",
+  "ok": true,
+  "last": "PASS user-prefs"
+ },
+ {
+  "f": "test-vendor-cost.mjs",
+  "ok": true,
+  "last": "PASS vendor-cost (130 asserts)"
+ },
+ {
+  "f": "test-vendor-notify.mjs",
+  "ok": true,
+  "last": "PASS vendor-notify"
+ },
+ {
+  "f": "test-verify-login-lockout.mjs",
+  "ok": false,
+  "last": "FAIL:   }"
+ },
+ {
+  "f": "test-vinyl-helpers.mjs",
+  "ok": true,
+  "last": "PASS vinyl helpers (14 cases)"
+ },
+ {
+  "f": "test-vinyl-persistence.mjs",
+  "ok": true,
+  "last": "PASS vinyl persistence (8 cases)"
+ },
+ {
+  "f": "test-vinyl-pricing-wire.mjs",
+  "ok": true,
+  "last": "PASS vinyl-pricing-wire (147 asserts)"
+ },
+ {
+  "f": "test-walk-in.mjs",
+  "ok": true,
+  "last": "PASS walk-in"
+ },
+ {
+  "f": "test-work-order-array-mutations.mjs",
+  "ok": true,
+  "last": "[Base44 SDK Error] undefined: Cannot read properties of undefined (reading 'split')"
+ },
+ {
+  "f": "test-work-order-item-mutation.mjs",
+  "ok": true,
+  "last": "PASS work order item mutation (9 cases)"
+ },
+ {
+  "f": "test-work-order-persistence.mjs",
+  "ok": true,
+  "last": "PASS work order persistence (16 cases)"
+ },
+ {
+  "f": "test-write-swallow-audit.mjs",
+  "ok": false,
+  "last": "FAIL: FAIL write-swallow-audit — 190 write-swallow violation(s)"
+ }
+]

@@ -1,0 +1,890 @@
+{
+  "inputs": {
+    "synthetic:@/api/base44Client": {
+      "bytes": 305,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/moduleRegistry.js": {
+      "bytes": 2162,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/lib/loadAllEntityRows.js": {
+      "bytes": 8105,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/loadAllEntityRows.js": {
+      "bytes": 121,
+      "imports": [
+        {
+          "path": "src/lib/loadAllEntityRows.js",
+          "kind": "import-statement",
+          "original": "@/lib/loadAllEntityRows"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/parts/partState.js": {
+      "bytes": 448,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/vinylInventory/vinylConstants.jsx": {
+      "bytes": 6295,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/vinylEstimator/vinylNestingCalculator.jsx": {
+      "bytes": 13445,
+      "imports": [
+        {
+          "path": "src/components/vinylInventory/vinylConstants.jsx",
+          "kind": "import-statement",
+          "original": "@/components/vinylInventory/vinylConstants"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/brick/brickCalc.js": {
+      "bytes": 2406,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/signMaintenance/constants.jsx": {
+      "bytes": 6331,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/signMaintenance/repaintDefaults.jsx": {
+      "bytes": 2313,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/signMaintenance/dimLetterPaintCalculator.jsx": {
+      "bytes": 6867,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/signMaintenance/repaintCalculator.jsx": {
+      "bytes": 6258,
+      "imports": [
+        {
+          "path": "src/components/signMaintenance/repaintDefaults.jsx",
+          "kind": "import-statement",
+          "original": "./repaintDefaults"
+        },
+        {
+          "path": "src/components/signMaintenance/dimLetterPaintCalculator.jsx",
+          "kind": "import-statement",
+          "original": "./dimLetterPaintCalculator"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/signMaintenance/maintenanceCalculator.jsx": {
+      "bytes": 9336,
+      "imports": [
+        {
+          "path": "src/components/signMaintenance/constants.jsx",
+          "kind": "import-statement",
+          "original": "./constants"
+        },
+        {
+          "path": "src/components/signMaintenance/repaintCalculator.jsx",
+          "kind": "import-statement",
+          "original": "./repaintCalculator"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/pricingEngine.ts": {
+      "bytes": 38417,
+      "imports": [],
+      "format": "esm"
+    },
+    "base44/shared/pricingTemplateModel.ts": {
+      "bytes": 57789,
+      "imports": [],
+      "format": "esm"
+    },
+    "base44/shared/channelPricingWire.ts": {
+      "bytes": 47873,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/channel/channelSellPricing.js": {
+      "bytes": 2002,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/channelPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/channelPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/vinylPricingWire.ts": {
+      "bytes": 36344,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/vinyl/vinylEnginePricing.js": {
+      "bytes": 4752,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/vinylPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/vinylPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/brickPricingWire.ts": {
+      "bytes": 46600,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/brick/brickSellPricing.js": {
+      "bytes": 4930,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/brickPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/brickPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/cncPricingWire.ts": {
+      "bytes": 36756,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/cnc/cncSellPricing.js": {
+      "bytes": 4719,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/cncPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/cncPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/metalPricingWire.ts": {
+      "bytes": 43545,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/metal/metalSellPricing.js": {
+      "bytes": 4776,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/metalPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/metalPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/laserPricingWire.ts": {
+      "bytes": 36982,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/laser/laserSellPricing.js": {
+      "bytes": 4779,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/laserPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/laserPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/paintPricingWire.ts": {
+      "bytes": 41330,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/paint/paintSellPricing.js": {
+      "bytes": 4929,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/paintPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/paintPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/foundationPricingWire.ts": {
+      "bytes": 58030,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationSellPricing.js": {
+      "bytes": 5357,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/foundationPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/foundationPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/customItemsPricingWire.ts": {
+      "bytes": 37390,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/customItems/customItemsSellPricing.js": {
+      "bytes": 4969,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/customItemsPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/customItemsPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/maintenancePricingWire.ts": {
+      "bytes": 41110,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/maintenance/maintenanceSellPricing.js": {
+      "bytes": 4967,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/maintenancePricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/maintenancePricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/customerPricing.js": {
+      "bytes": 12016,
+      "imports": [
+        {
+          "path": "src/components/estimator/channel/channelSellPricing.js",
+          "kind": "import-statement",
+          "original": "./channel/channelSellPricing"
+        },
+        {
+          "path": "src/components/estimator/vinyl/vinylEnginePricing.js",
+          "kind": "import-statement",
+          "original": "./vinyl/vinylEnginePricing"
+        },
+        {
+          "path": "src/components/estimator/brick/brickSellPricing.js",
+          "kind": "import-statement",
+          "original": "./brick/brickSellPricing"
+        },
+        {
+          "path": "src/components/estimator/cnc/cncSellPricing.js",
+          "kind": "import-statement",
+          "original": "./cnc/cncSellPricing"
+        },
+        {
+          "path": "src/components/estimator/metal/metalSellPricing.js",
+          "kind": "import-statement",
+          "original": "./metal/metalSellPricing"
+        },
+        {
+          "path": "src/components/estimator/laser/laserSellPricing.js",
+          "kind": "import-statement",
+          "original": "./laser/laserSellPricing"
+        },
+        {
+          "path": "src/components/estimator/paint/paintSellPricing.js",
+          "kind": "import-statement",
+          "original": "./paint/paintSellPricing"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSellPricing.js",
+          "kind": "import-statement",
+          "original": "./foundation/foundationSellPricing"
+        },
+        {
+          "path": "src/components/estimator/customItems/customItemsSellPricing.js",
+          "kind": "import-statement",
+          "original": "./customItems/customItemsSellPricing"
+        },
+        {
+          "path": "src/components/estimator/maintenance/maintenanceSellPricing.js",
+          "kind": "import-statement",
+          "original": "./maintenance/maintenanceSellPricing"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/estimateLifecycle.js": {
+      "bytes": 4669,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/estimatePersistence.js": {
+      "bytes": 9666,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/estimateRevisionService.js": {
+      "bytes": 12439,
+      "imports": [
+        {
+          "path": "synthetic:@/api/base44Client",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "src/components/estimator/estimateLifecycle.js",
+          "kind": "import-statement",
+          "original": "./estimateLifecycle"
+        },
+        {
+          "path": "src/components/estimator/loadAllEntityRows.js",
+          "kind": "import-statement",
+          "original": "./loadAllEntityRows"
+        },
+        {
+          "path": "src/components/estimator/estimatePersistence.js",
+          "kind": "import-statement",
+          "original": "./estimatePersistence"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/estimateMutationGuard.js": {
+      "bytes": 3160,
+      "imports": [
+        {
+          "path": "src/components/estimator/estimateLifecycle.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimateLifecycle"
+        },
+        {
+          "path": "src/components/estimator/estimateRevisionService.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimateRevisionService"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/builderEntityPersistence.js": {
+      "bytes": 7332,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/builderPartGroupPersistence.js": {
+      "bytes": 4026,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:@/components/staff/staffEntities": {
+      "bytes": 103,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/builderMutationRecovery.js": {
+      "bytes": 23728,
+      "imports": [
+        {
+          "path": "synthetic:@/api/base44Client",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "src/components/estimator/estimateMutationGuard.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimateMutationGuard"
+        },
+        {
+          "path": "src/components/estimator/loadAllEntityRows.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/loadAllEntityRows"
+        },
+        {
+          "path": "src/components/estimator/estimatePersistence.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimatePersistence"
+        },
+        {
+          "path": "src/components/estimator/builder/builderEntityPersistence.js",
+          "kind": "import-statement",
+          "original": "./builderEntityPersistence"
+        },
+        {
+          "path": "src/components/estimator/builder/builderPartGroupPersistence.js",
+          "kind": "import-statement",
+          "original": "./builderPartGroupPersistence"
+        },
+        {
+          "path": "synthetic:@/components/staff/staffEntities",
+          "kind": "import-statement",
+          "original": "@/components/staff/staffEntities"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/builderPartPersistence.js": {
+      "bytes": 3975,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementPartDescriptors.js": {
+      "bytes": 12700,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationGeometryInputs.js": {
+      "bytes": 15113,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementBasis.js": {
+      "bytes": 6986,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementFrozenPricing.js": {
+      "bytes": 9593,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/partSync.js": {
+      "bytes": 199035,
+      "imports": [
+        {
+          "path": "synthetic:@/api/base44Client",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "src/components/estimator/loadAllEntityRows.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/loadAllEntityRows"
+        },
+        {
+          "path": "src/components/estimator/parts/partState.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/parts/partState"
+        },
+        {
+          "path": "src/components/vinylEstimator/vinylNestingCalculator.jsx",
+          "kind": "import-statement",
+          "original": "@/components/vinylEstimator/vinylNestingCalculator"
+        },
+        {
+          "path": "src/components/estimator/brick/brickCalc.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/brick/brickCalc"
+        },
+        {
+          "path": "src/components/signMaintenance/maintenanceCalculator.jsx",
+          "kind": "import-statement",
+          "original": "@/components/signMaintenance/maintenanceCalculator"
+        },
+        {
+          "path": "src/components/estimator/customerPricing.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/customerPricing"
+        },
+        {
+          "path": "src/components/estimator/estimateMutationGuard.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimateMutationGuard"
+        },
+        {
+          "path": "src/components/estimator/builder/builderMutationRecovery.js",
+          "kind": "import-statement",
+          "original": "./builderMutationRecovery"
+        },
+        {
+          "path": "src/components/estimator/builder/builderEntityPersistence.js",
+          "kind": "import-statement",
+          "original": "./builderEntityPersistence"
+        },
+        {
+          "path": "src/components/estimator/builder/builderPartPersistence.js",
+          "kind": "import-statement",
+          "original": "./builderPartPersistence"
+        },
+        {
+          "path": "synthetic:@/components/staff/staffEntities",
+          "kind": "import-statement",
+          "original": "@/components/staff/staffEntities"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementPartDescriptors.js",
+          "kind": "import-statement",
+          "original": "../foundation/foundationReinforcementPartDescriptors"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementBasis.js",
+          "kind": "import-statement",
+          "original": "../foundation/foundationReinforcementBasis"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementFrozenPricing.js",
+          "kind": "import-statement",
+          "original": "../foundation/foundationReinforcementFrozenPricing"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/builderProductPersistence.js": {
+      "bytes": 4661,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/builderService.js": {
+      "bytes": 57838,
+      "imports": [
+        {
+          "path": "synthetic:@/api/base44Client",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "src/components/estimator/moduleRegistry.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/moduleRegistry"
+        },
+        {
+          "path": "src/components/estimator/builder/partSync.js",
+          "kind": "import-statement",
+          "original": "./partSync"
+        },
+        {
+          "path": "src/components/estimator/customerPricing.js",
+          "kind": "import-statement",
+          "original": "../customerPricing"
+        },
+        {
+          "path": "src/components/estimator/estimateMutationGuard.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimateMutationGuard"
+        },
+        {
+          "path": "src/components/estimator/builder/builderMutationRecovery.js",
+          "kind": "import-statement",
+          "original": "./builderMutationRecovery"
+        },
+        {
+          "path": "src/components/estimator/loadAllEntityRows.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/loadAllEntityRows"
+        },
+        {
+          "path": "src/components/estimator/estimatePersistence.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimatePersistence"
+        },
+        {
+          "path": "src/components/estimator/builder/builderEntityPersistence.js",
+          "kind": "import-statement",
+          "original": "./builderEntityPersistence"
+        },
+        {
+          "path": "src/components/estimator/builder/builderProductPersistence.js",
+          "kind": "import-statement",
+          "original": "./builderProductPersistence"
+        },
+        {
+          "path": "synthetic:@/components/staff/staffEntities",
+          "kind": "import-statement",
+          "original": "@/components/staff/staffEntities"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    ".audit-work/foundation-reinforcement18/coupled-builder-pilot-bundle.mjs": {
+      "imports": [],
+      "exports": [
+        "acceptBuilderPrice",
+        "canReuseReconciledLegacyBuilder",
+        "deleteBuilderProductCascade",
+        "ensureBuilderProductForLine",
+        "ensureEstimateBuilderProducts",
+        "getSourceProject",
+        "makeStableId",
+        "recordBuilderSave",
+        "snapshotHash",
+        "sourceProjectTotal",
+        "stableStringify"
+      ],
+      "entryPoint": "src/components/estimator/builder/builderService.js",
+      "inputs": {
+        "synthetic:@/api/base44Client": {
+          "bytesInOutput": 270
+        },
+        "src/components/estimator/moduleRegistry.js": {
+          "bytesInOutput": 1488
+        },
+        "src/lib/loadAllEntityRows.js": {
+          "bytesInOutput": 4903
+        },
+        "src/components/estimator/loadAllEntityRows.js": {
+          "bytesInOutput": 0
+        },
+        "src/components/vinylInventory/vinylConstants.jsx": {
+          "bytesInOutput": 575
+        },
+        "src/components/vinylEstimator/vinylNestingCalculator.jsx": {
+          "bytesInOutput": 10744
+        },
+        "src/components/estimator/brick/brickCalc.js": {
+          "bytesInOutput": 1993
+        },
+        "src/components/signMaintenance/constants.jsx": {
+          "bytesInOutput": 3856
+        },
+        "src/components/signMaintenance/repaintDefaults.jsx": {
+          "bytesInOutput": 649
+        },
+        "src/components/signMaintenance/dimLetterPaintCalculator.jsx": {
+          "bytesInOutput": 4884
+        },
+        "src/components/signMaintenance/repaintCalculator.jsx": {
+          "bytesInOutput": 4776
+        },
+        "src/components/signMaintenance/maintenanceCalculator.jsx": {
+          "bytesInOutput": 7054
+        },
+        "base44/shared/pricingEngine.ts": {
+          "bytesInOutput": 17827
+        },
+        "base44/shared/pricingTemplateModel.ts": {
+          "bytesInOutput": 29097
+        },
+        "base44/shared/channelPricingWire.ts": {
+          "bytesInOutput": 25248
+        },
+        "src/components/estimator/channel/channelSellPricing.js": {
+          "bytesInOutput": 340
+        },
+        "base44/shared/vinylPricingWire.ts": {
+          "bytesInOutput": 19616
+        },
+        "src/components/estimator/vinyl/vinylEnginePricing.js": {
+          "bytesInOutput": 1138
+        },
+        "base44/shared/brickPricingWire.ts": {
+          "bytesInOutput": 23825
+        },
+        "src/components/estimator/brick/brickSellPricing.js": {
+          "bytesInOutput": 1138
+        },
+        "base44/shared/cncPricingWire.ts": {
+          "bytesInOutput": 19377
+        },
+        "src/components/estimator/cnc/cncSellPricing.js": {
+          "bytesInOutput": 1128
+        },
+        "base44/shared/metalPricingWire.ts": {
+          "bytesInOutput": 22437
+        },
+        "src/components/estimator/metal/metalSellPricing.js": {
+          "bytesInOutput": 1138
+        },
+        "base44/shared/laserPricingWire.ts": {
+          "bytesInOutput": 19406
+        },
+        "src/components/estimator/laser/laserSellPricing.js": {
+          "bytesInOutput": 1138
+        },
+        "base44/shared/paintPricingWire.ts": {
+          "bytesInOutput": 20785
+        },
+        "src/components/estimator/paint/paintSellPricing.js": {
+          "bytesInOutput": 1138
+        },
+        "base44/shared/foundationPricingWire.ts": {
+          "bytesInOutput": 29797
+        },
+        "src/components/estimator/foundation/foundationSellPricing.js": {
+          "bytesInOutput": 1223
+        },
+        "base44/shared/customItemsPricingWire.ts": {
+          "bytesInOutput": 19550
+        },
+        "src/components/estimator/customItems/customItemsSellPricing.js": {
+          "bytesInOutput": 1168
+        },
+        "base44/shared/maintenancePricingWire.ts": {
+          "bytesInOutput": 19944
+        },
+        "src/components/estimator/maintenance/maintenanceSellPricing.js": {
+          "bytesInOutput": 1170
+        },
+        "src/components/estimator/customerPricing.js": {
+          "bytesInOutput": 5748
+        },
+        "src/components/estimator/estimateLifecycle.js": {
+          "bytesInOutput": 193
+        },
+        "src/components/estimator/estimatePersistence.js": {
+          "bytesInOutput": 4454
+        },
+        "src/components/estimator/estimateRevisionService.js": {
+          "bytesInOutput": 378
+        },
+        "src/components/estimator/estimateMutationGuard.js": {
+          "bytesInOutput": 2200
+        },
+        "src/components/estimator/builder/builderEntityPersistence.js": {
+          "bytesInOutput": 6693
+        },
+        "src/components/estimator/builder/builderPartGroupPersistence.js": {
+          "bytesInOutput": 3751
+        },
+        "synthetic:@/components/staff/staffEntities": {
+          "bytesInOutput": 106
+        },
+        "src/components/estimator/builder/builderMutationRecovery.js": {
+          "bytesInOutput": 18772
+        },
+        "src/components/estimator/builder/builderPartPersistence.js": {
+          "bytesInOutput": 3713
+        },
+        "src/components/estimator/foundation/foundationReinforcementPartDescriptors.js": {
+          "bytesInOutput": 12065
+        },
+        "src/components/estimator/foundation/foundationGeometryInputs.js": {
+          "bytesInOutput": 11230
+        },
+        "src/components/estimator/foundation/foundationReinforcementBasis.js": {
+          "bytesInOutput": 7028
+        },
+        "src/components/estimator/foundation/foundationReinforcementFrozenPricing.js": {
+          "bytesInOutput": 7999
+        },
+        "src/components/estimator/builder/partSync.js": {
+          "bytesInOutput": 155292
+        },
+        "src/components/estimator/builder/builderProductPersistence.js": {
+          "bytesInOutput": 4345
+        },
+        "src/components/estimator/builder/builderService.js": {
+          "bytesInOutput": 51526
+        }
+      },
+      "bytes": 617249
+    }
+  }
+}

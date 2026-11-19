@@ -1,0 +1,159 @@
+{
+  "results": [
+    {
+      "mode": "saved",
+      "width": 1280,
+      "ok": false,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('heading', { name: 'Wall Caps', exact: true }) to be visible\u001b[22m\n\n    at D:\\DevinProjects\\ccs-signage-workflow-clean\\.audit-work\\foundation-reinforcement18\\verify-wall-cap-pricing-browser.mjs:49:77",
+      "screenshot": ".audit-work/foundation-reinforcement18/wall-cap-pricing-browser-saved-1280.png",
+      "telemetry": {
+        "errors": [
+          "The above error occurred in the <FoundationBOM> component:\n\n    at FoundationBOM (http://127.0.0.1:55489/fixture.js:35729:3)\n    at section\n    at main\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://reactjs.org/link/error-boundaries to learn more about error boundaries."
+        ],
+        "pageErrors": [
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined"
+        ],
+        "requestFailures": [],
+        "external": []
+      }
+    },
+    {
+      "mode": "saved",
+      "width": 390,
+      "ok": false,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('heading', { name: 'Wall Caps', exact: true }) to be visible\u001b[22m\n\n    at D:\\DevinProjects\\ccs-signage-workflow-clean\\.audit-work\\foundation-reinforcement18\\verify-wall-cap-pricing-browser.mjs:49:77",
+      "screenshot": ".audit-work/foundation-reinforcement18/wall-cap-pricing-browser-saved-390.png",
+      "telemetry": {
+        "errors": [
+          "The above error occurred in the <FoundationBOM> component:\n\n    at FoundationBOM (http://127.0.0.1:55489/fixture.js:35729:3)\n    at section\n    at main\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://reactjs.org/link/error-boundaries to learn more about error boundaries."
+        ],
+        "pageErrors": [
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined"
+        ],
+        "requestFailures": [],
+        "external": []
+      }
+    },
+    {
+      "mode": "unknown",
+      "width": 1280,
+      "ok": false,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('heading', { name: 'Wall Caps', exact: true }) to be visible\u001b[22m\n\n    at D:\\DevinProjects\\ccs-signage-workflow-clean\\.audit-work\\foundation-reinforcement18\\verify-wall-cap-pricing-browser.mjs:49:77",
+      "screenshot": ".audit-work/foundation-reinforcement18/wall-cap-pricing-browser-unknown-1280.png",
+      "telemetry": {
+        "errors": [
+          "The above error occurred in the <FoundationBOM> component:\n\n    at FoundationBOM (http://127.0.0.1:55489/fixture.js:35729:3)\n    at section\n    at main\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://reactjs.org/link/error-boundaries to learn more about error boundaries."
+        ],
+        "pageErrors": [
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined"
+        ],
+        "requestFailures": [],
+        "external": []
+      }
+    },
+    {
+      "mode": "unknown",
+      "width": 390,
+      "ok": false,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('heading', { name: 'Wall Caps', exact: true }) to be visible\u001b[22m\n\n    at D:\\DevinProjects\\ccs-signage-workflow-clean\\.audit-work\\foundation-reinforcement18\\verify-wall-cap-pricing-browser.mjs:49:77",
+      "screenshot": ".audit-work/foundation-reinforcement18/wall-cap-pricing-browser-unknown-390.png",
+      "telemetry": {
+        "errors": [
+          "The above error occurred in the <FoundationBOM> component:\n\n    at FoundationBOM (http://127.0.0.1:55489/fixture.js:35729:3)\n    at section\n    at main\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://reactjs.org/link/error-boundaries to learn more about error boundaries."
+        ],
+        "pageErrors": [
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined"
+        ],
+        "requestFailures": [],
+        "external": []
+      }
+    },
+    {
+      "mode": "zero",
+      "width": 1280,
+      "ok": false,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('heading', { name: 'Wall Caps', exact: true }) to be visible\u001b[22m\n\n    at D:\\DevinProjects\\ccs-signage-workflow-clean\\.audit-work\\foundation-reinforcement18\\verify-wall-cap-pricing-browser.mjs:49:77",
+      "screenshot": ".audit-work/foundation-reinforcement18/wall-cap-pricing-browser-zero-1280.png",
+      "telemetry": {
+        "errors": [
+          "The above error occurred in the <FoundationBOM> component:\n\n    at FoundationBOM (http://127.0.0.1:55489/fixture.js:35729:3)\n    at section\n    at main\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://reactjs.org/link/error-boundaries to learn more about error boundaries."
+        ],
+        "pageErrors": [
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined"
+        ],
+        "requestFailures": [],
+        "external": []
+      }
+    },
+    {
+      "mode": "zero",
+      "width": 390,
+      "ok": false,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('heading', { name: 'Wall Caps', exact: true }) to be visible\u001b[22m\n\n    at D:\\DevinProjects\\ccs-signage-workflow-clean\\.audit-work\\foundation-reinforcement18\\verify-wall-cap-pricing-browser.mjs:49:77",
+      "screenshot": ".audit-work/foundation-reinforcement18/wall-cap-pricing-browser-zero-390.png",
+      "telemetry": {
+        "errors": [
+          "The above error occurred in the <FoundationBOM> component:\n\n    at FoundationBOM (http://127.0.0.1:55489/fixture.js:35729:3)\n    at section\n    at main\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://reactjs.org/link/error-boundaries to learn more about error boundaries."
+        ],
+        "pageErrors": [
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined"
+        ],
+        "requestFailures": [],
+        "external": []
+      }
+    },
+    {
+      "mode": "current",
+      "width": 1280,
+      "ok": false,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('heading', { name: 'Wall Caps', exact: true }) to be visible\u001b[22m\n\n    at D:\\DevinProjects\\ccs-signage-workflow-clean\\.audit-work\\foundation-reinforcement18\\verify-wall-cap-pricing-browser.mjs:49:77",
+      "screenshot": ".audit-work/foundation-reinforcement18/wall-cap-pricing-browser-current-1280.png",
+      "telemetry": {
+        "errors": [
+          "The above error occurred in the <FoundationBOM> component:\n\n    at FoundationBOM (http://127.0.0.1:55489/fixture.js:35729:3)\n    at section\n    at main\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://reactjs.org/link/error-boundaries to learn more about error boundaries."
+        ],
+        "pageErrors": [
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined"
+        ],
+        "requestFailures": [],
+        "external": []
+      }
+    },
+    {
+      "mode": "current",
+      "width": 390,
+      "ok": false,
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('heading', { name: 'Wall Caps', exact: true }) to be visible\u001b[22m\n\n    at D:\\DevinProjects\\ccs-signage-workflow-clean\\.audit-work\\foundation-reinforcement18\\verify-wall-cap-pricing-browser.mjs:49:77",
+      "screenshot": ".audit-work/foundation-reinforcement18/wall-cap-pricing-browser-current-390.png",
+      "telemetry": {
+        "errors": [
+          "The above error occurred in the <FoundationBOM> component:\n\n    at FoundationBOM (http://127.0.0.1:55489/fixture.js:35729:3)\n    at section\n    at main\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://reactjs.org/link/error-boundaries to learn more about error boundaries."
+        ],
+        "pageErrors": [
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined"
+        ],
+        "requestFailures": [],
+        "external": []
+      }
+    }
+  ],
+  "syntheticOnly": true,
+  "realStorageVerified": false,
+  "sdkCalls": 0
+}

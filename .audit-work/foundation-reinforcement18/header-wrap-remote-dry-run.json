@@ -1,0 +1,5 @@
+{
+  "path": "src/components/estimator/foundation/FoundationItemCard.jsx",
+  "diff": "--- a/src/components/estimator/foundation/FoundationItemCard.jsx\n+++ b/src/components/estimator/foundation/FoundationItemCard.jsx\n@@ -70,7 +70,7 @@\n           ))}\n         </div>\n       )}\n-      <div className=\"flex items-start justify-between gap-3 mb-3\">\n+      <div className=\"flex flex-wrap items-start justify-between gap-3 mb-3\">\n         <div className=\"flex items-center gap-2\">\n           <Box className=\"w-4 h-4 text-amber-500\" aria-hidden=\"true\" />\n           <span className=\"text-[12px] font-bold text-gray-700\">Foundation #{index + 1}</span>\n",
+  "applied": false
+}

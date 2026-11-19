@@ -1,0 +1,25 @@
+{
+ "jurisdiction_id": "6adf84fd9d7a7d8d5ab4ec3e",
+ "jurisdiction_name": "Paris",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR RESIDENTIAL ELECTRIC PERMIT STARK COUNTY BUILDING DEPT . 7235 Whipple Ave NW Ste A Canton, OH 44720 330-451-1770 / FAX: 330-451-1779 buildingdept@starkcountyohio.gov LOCATION ADDRESS: (PLEASE INCLUDE ADDRESS DIRECTION. N, S, E, W, ETC.) CITY, ZIP POWER COMPANY _________________________ AMPS ___________ TOTAL SQUARE FOOT ________ CONTRACTOR ADDRESS CITY STATE ZIP CELL PHONE EMAIL ADDRESS ( PLEASE PROVIDE) PHONE ____________ STARK CO REGISTRATION #: ______ PROPERTY OWNER ADDRESS CITY STATE ZIP PHONE TENANT NAME ______________________________ TENANT PHONE ___________________ EQUIPMENT INSTALLED: *New and Addition include 4 inspections* ___ New Dwelling (per unit) - 0-5000 ft2 $300.00 5001-8000 ft2 $500.00 8000 + ft2 $700.00 + $50 app fee ___ Addition or Alteration - 0-5000 ft2 $300.00 5001-8000 ft2 $500.00 8000 + ft2 $700.00 +$50 app fee ___ Temp Service for new construction",
+   "tags": [
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "281c4c78a286fa62d353570ced6453e60da124d7bd22dc4c9a5ab14d7fe1ebd6",
+   "source_document_id": null,
+   "source_title": "281c4c78a286fa62d353570ced6453e60da124d7bd22dc4c9a5ab14d7fe1ebd6.pdf",
+   "official_url": "https://www.starkcountyohio.gov/Building%20Inspection/RESIDENTIAL%20ELECTRIC%20PERMIT.pdf"
+  }
+ ]
+}

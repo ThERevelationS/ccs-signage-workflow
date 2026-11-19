@@ -1,0 +1,4 @@
+{
+  "name": "sendStaffEmail",
+  "entry": "entry.ts"
+}

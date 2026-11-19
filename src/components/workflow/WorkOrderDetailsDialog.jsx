@@ -40,8 +40,10 @@ import {
   Pencil,
   FolderOpen,
   ExternalLink,
-  Copy
+  Copy,
+  Printer
 } from "lucide-react";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 import { format } from "date-fns";
 
 // Helper to parse date string as local date (not UTC)
@@ -57,7 +59,6 @@ import { ActivityActions } from "./ActivityLogger";
 import WorkOrderOrders from "../orders/WorkOrderOrders";
 import GoogleDriveFileBrowser from "./GoogleDriveFileBrowser";
 
-import { base44 } from "@/api/base44Client";
 import { List } from "lucide-react";
 import TaskTemplateDialog from "./TaskTemplateDialog";
 import WorkOrderTimeEntries from "./WorkOrderTimeEntries";
@@ -71,10 +72,13 @@ import ProjectHealthBadge from "./ProjectHealthBadge";
 import TaskDependencyManager from "./TaskDependencyManager";
 import MilestoneManager from "./MilestoneManager";
 import MultiUserSelect from "@/components/shared/MultiUserSelect";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { openProductsBlockingCompletion } from "@/components/estimator/productStageSync";
+import { PRINT_TEMPLATES, renderWorkOrderPrint } from "@/components/jobs/printTemplates";
+import { loadQuoteDefaults } from "@/components/estimator/quoteDefaults";
 import {
   createWorkOrderArrayItemLocator,
   createWorkOrderWithRecovery,
@@ -112,9 +116,9 @@ export default function WorkOrderDetailsDialog({
   isOpen,
   onClose,
   workOrder,
-  onEdit,
-  onMove,
-  onSplit,
+  onEdit: _onEdit,
+  onMove: _onMove,
+  onSplit: _onSplit,
   onComplete,
   onRestore,
   onUpdate,
@@ -131,7 +135,7 @@ export default function WorkOrderDetailsDialog({
   const [deletingWorkOrder, setDeletingWorkOrder] = useState(false);
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [showCompletedNotes, setShowCompletedNotes] = useState(false);
-  const [isEditingDependency, setIsEditingDependency] = useState(false);
+  const [_isEditingDependency, setIsEditingDependency] = useState(false);
   const [allUsers, setAllUsers] = useState([]);
 
   // Edit states
@@ -165,6 +169,8 @@ export default function WorkOrderDetailsDialog({
   const [showCreateRiderDialog, setShowCreateRiderDialog] = useState(false);
   const [showDuplicateForm, setShowDuplicateForm] = useState(false);
   const [duplicateData, setDuplicateData] = useState(null);
+  const [printTemplateId, setPrintTemplateId] = useState("original");
+  const [printingWorkOrder, setPrintingWorkOrder] = useState(false);
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -199,12 +205,9 @@ export default function WorkOrderDetailsDialog({
     setRelatedDataReadError("");
     setRelatedDataVerified(false);
     try {
-      const all = await loadAllEntityRows({
-        entity: WorkOrder,
-        query: { completed: false, deleted: { $ne: true } },
-        sort: "created_date",
-        label: "Work Order Details related Work Orders"
-      });
+      const all = (await fetchAllWorkOrders())
+        .filter((wo) => wo.completed !== true && wo.deleted !== true)
+        .sort((a, b) => String(a.created_date || "").localeCompare(String(b.created_date || "")));
       setAllWorkOrders(all);
 
       // Find riders
@@ -238,7 +241,7 @@ export default function WorkOrderDetailsDialog({
     }
   };
 
-  const handleAddDependency = async () => {
+  const _handleAddDependency = async () => {
     if (!newDependency.trigger_value || !newDependency.action_value) return;
 
     const dependencyToAdd = { ...newDependency, id: Date.now() };
@@ -268,7 +271,7 @@ export default function WorkOrderDetailsDialog({
     }
   };
 
-  const handleDeleteDependency = async (depId) => {
+  const _handleDeleteDependency = async (depId) => {
     const dependencyToDelete = dependencies.find((dependency) => dependency.id === depId);
     if (!dependencyToDelete) {
       setInlineEditError("The dependency could not be identified safely. Reload before deleting it.");
@@ -746,7 +749,7 @@ export default function WorkOrderDetailsDialog({
   };
 
   // Local state to force re-render when notes change
-  const [localNotesVersion, setLocalNotesVersion] = useState(0);
+  const [_localNotesVersion, setLocalNotesVersion] = useState(0);
 
   const handleDeleteWorkNote = async (noteId) => {
     try {
@@ -765,7 +768,7 @@ export default function WorkOrderDetailsDialog({
     }
   };
 
-  const handleAddSubTask = async (noteId, subTaskText) => {
+  const _handleAddSubTask = async (noteId, subTaskText) => {
     const newSubTask = {
       id: Date.now(),
       text: subTaskText,
@@ -793,7 +796,7 @@ export default function WorkOrderDetailsDialog({
     }
   };
 
-  const handleToggleSubTask = async (noteId, subTaskId) => {
+  const _handleToggleSubTask = async (noteId, subTaskId) => {
     const originalSubTask = workNotes.find((note) => note.id === noteId)?.sub_tasks?.find((subTask) => subTask.id === subTaskId);
     if (!originalSubTask) return;
     const targetCompleted = !originalSubTask.completed;
@@ -819,7 +822,7 @@ export default function WorkOrderDetailsDialog({
     }
   };
 
-  const handleDeleteSubTask = async (noteId, subTaskId) => {
+  const _handleDeleteSubTask = async (noteId, subTaskId) => {
     try {
       const saved = await mutateWorkOrderArrayField({
         workOrderId: workOrder.id,
@@ -948,11 +951,43 @@ export default function WorkOrderDetailsDialog({
   const activeTasks = tasks.filter((n) => !n.completed);
   const completedTasks = tasks.filter((n) => n.completed);
 
+  // Products still in a non-terminal status — listed inside the complete
+  // confirm so a job with open product work is never closed silently.
+  const openProducts = React.useMemo(
+    () => openProductsBlockingCompletion(workOrder?.products),
+    [workOrder?.products]
+  );
+
   const workNotes = React.useMemo(() => {
     if (!workOrder?.work_notes) return [];
     if (Array.isArray(workOrder.work_notes)) return workOrder.work_notes;
     return [];
   }, [workOrder?.work_notes]);
+
+  // D-09 details print — builds the selected template's standalone HTML and
+  // opens it in a print window (window.open + document.write, same as the
+  // punch-sheet/permit-packet print paths). "Print Traveler" stays on the
+  // separate /WorkOrderTraveler page — that document is the production
+  // checklist traveler, not this order-details sheet.
+  const handlePrintWorkOrder = async () => {
+    if (printingWorkOrder) return;
+    setPrintingWorkOrder(true);
+    try {
+      const company = await loadQuoteDefaults().catch(() => null);
+      const html = renderWorkOrderPrint(workOrder, {
+        templateId: printTemplateId,
+        company: company || undefined,
+      });
+      const printWindow = window.open("", "_blank", "width=1100,height=850");
+      if (!printWindow) return;
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (error) {
+      console.error("Could not render the Work Order print document:", error);
+    } finally {
+      setPrintingWorkOrder(false);
+    }
+  };
 
   if (!workOrder) return null;
 
@@ -1023,6 +1058,12 @@ export default function WorkOrderDetailsDialog({
                       <FileText className="w-3.5 h-3.5" /> Source Estimate <ExternalLink className="w-3 h-3" />
                     </Link>
                     }
+                    <Link
+                      to={`/JobWorkspace?wo=${workOrder.id}`}
+                      className="h-7 px-2.5 inline-flex items-center gap-1.5 rounded border border-sky-200 bg-sky-50 text-[11px] font-semibold text-sky-700 hover:bg-sky-100"
+                      title="Open the job workspace for this work order">
+                      <FolderOpen className="w-3.5 h-3.5" /> Job Workspace
+                    </Link>
                       </>
                   }
                 </div>
@@ -1666,8 +1707,7 @@ export default function WorkOrderDetailsDialog({
                   <PopoverContent className="clay-card w-80">
                     <Label>Start Date</Label>
                     <div className="flex gap-2 mt-2 mb-3">
-                      <Input
-                        type="date"
+                      <CcsDateField
                         value={editValues.start_date || workOrder.start_date || ''}
                         onChange={(e) => setEditValues({ ...editValues, start_date: e.target.value })} />
                       <Button size="sm" onClick={() => saveEdit('start_date')}>
@@ -1676,8 +1716,7 @@ export default function WorkOrderDetailsDialog({
                     </div>
                     <Label>Due Date</Label>
                     <div className="flex gap-2 mt-2">
-                      <Input
-                        type="date"
+                      <CcsDateField
                         value={editValues.due_date || workOrder.due_date || ''}
                         onChange={(e) => setEditValues({ ...editValues, due_date: e.target.value })} />
                       <Button size="sm" onClick={() => saveEdit('due_date')}>
@@ -1737,8 +1776,7 @@ export default function WorkOrderDetailsDialog({
                     <PopoverContent className="clay-card w-64">
                       <Label>Due Date</Label>
                       <div className="flex gap-2 mt-2">
-                        <Input
-                          type="date"
+                        <CcsDateField
                           value={editValues.due_date || workOrder.due_date || ''}
                           onChange={(e) => setEditValues({ ...editValues, due_date: e.target.value })} />
 
@@ -1943,6 +1981,33 @@ export default function WorkOrderDetailsDialog({
                       Print Traveler
                     </Button>
 
+                    {/* D-09: order-details print — separate document from the
+                        shop traveler above. Picker chooses the template, the
+                        button opens a standalone print window. */}
+                    <div className="flex gap-1.5">
+                      <Select value={printTemplateId} onValueChange={setPrintTemplateId}>
+                        <SelectTrigger className="h-9 flex-1 text-xs" title="Print template">
+                          <SelectValue placeholder="Print template" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PRINT_TEMPLATES.map((template) => (
+                            <SelectItem key={template.id} value={template.id} className="text-xs">
+                              {template.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        className="clay-button shrink-0 px-2.5"
+                        variant="ghost"
+                        size="sm"
+                        disabled={printingWorkOrder}
+                        title="Print the work order with the selected template"
+                        onClick={handlePrintWorkOrder}>
+                        <Printer className="w-4 h-4 text-violet-600" />
+                      </Button>
+                    </div>
+
                     <Button
                       className="w-full justify-start clay-button"
                       variant="ghost"
@@ -1950,7 +2015,7 @@ export default function WorkOrderDetailsDialog({
                       title={!relatedDataVerified ? "Related Work Orders must be verified before duplicate checking is available." : undefined}
                       onClick={() => {
                         // Copy all fields from current work order for duplicating
-                        const { id, created_date, updated_date, created_by, notes, work_notes, follow_up, ...dataWithoutId } = workOrder;
+                        const { id: _id, created_date: _cd, updated_date: _ud, created_by: _cb, notes: _n, work_notes: _wn, follow_up: _fu, ...dataWithoutId } = workOrder;
                         setDuplicateData({
                           ...dataWithoutId,
                           title: "", // Clear title so user must enter new one
@@ -2041,6 +2106,22 @@ export default function WorkOrderDetailsDialog({
               This will send an email notification to the team.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {openProducts.length > 0 && (
+            <div className="mx-1 mb-2 rounded border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
+              <span className="font-semibold">
+                {openProducts.length} product{openProducts.length === 1 ? "" : "s"} still open:
+              </span>
+              <ul className="mt-1 list-disc pl-4">
+                {openProducts.slice(0, 6).map((p) => (
+                  <li key={p.id || p.name}>
+                    {p.name}{p.status !== "none" ? ` (${p.status.replace(/_/g, " ")})` : ""}
+                  </li>
+                ))}
+              </ul>
+              {openProducts.length > 6 && <div className="mt-1">+{openProducts.length - 6} more</div>}
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
             <AlertDialogAction 
@@ -2100,7 +2181,7 @@ export default function WorkOrderDetailsDialog({
         isOpen={showCreateRiderDialog}
         onClose={() => setShowCreateRiderDialog(false)}
         parentWorkOrder={workOrder}
-        onCreated={(rider) => {
+        onCreated={(_rider) => {
           if (onUpdate) onUpdate();
           loadRelatedData();
         }}

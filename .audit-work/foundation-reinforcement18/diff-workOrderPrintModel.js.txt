@@ -1,0 +1,594 @@
+diff --git a/.audit-work/foundation-reinforcement18/remote-workOrderPrintModel.js b/src/components/jobs/printTemplates/workOrderPrintModel.js
+index 4a8b61d75..5382ba818 100644
+--- a/.audit-work/foundation-reinforcement18/remote-workOrderPrintModel.js
++++ b/src/components/jobs/printTemplates/workOrderPrintModel.js
+@@ -1,19 +1,21 @@
+-// Pure, React-free model builder for the work-order print templates (D-09).
+-// Every template renders from one normalized shape — rows, materials, tasks,
+-// totals, meta, company/bill-to/ship-to blocks — so adding a template never
+-// re-derives WorkOrder fields. Customer prices and internal cost/margin live in
+-// SEPARATE properties (row.unit_price vs row.internal.unit_cost, totals.subtotal
+-// vs totals.internal.*) so a customer-facing template can simply never read the
+-// internal side and cannot leak shop costs onto the sheet.
++// Pure work-order print model — normalizes a WorkOrder record (+ optional
++// company identity) into the single `model` shape every template in
++// src/components/jobs/printTemplates/templates/ consumes.
++//
++// Kept React/base44-free so the model is unit-testable under Node and a page,
++// dialog, or deployed function can build the same document without extra
++// dependencies. Follows the same pure-model convention as
++// src/components/jobs/packingSlipTemplate.js (D-08) — WorkOrder field names
++// match base44/entities/WorkOrder.jsonc and src/pages/WorkOrderTraveler.jsx.
++//
++// Monetary rule: ALL templates print customer-facing prices (quoted_unit_price
++// / quoted_total / totals). The `streamlined` variant additionally hides
++// per-product INTERNAL fields (unit_cost / ext_cost / margin / estimator
++// provenance) — the model still carries them under `row.internal` and
++// `totals.internal` so templates that want the shop copy can show them.
+ 
++const num = (v, fallback = 0) => (Number.isFinite(Number(v)) ? Number(v) : fallback);
+ const clean = (v) => String(v ?? "").trim();
+-
+-const num = (v, fallback = null) => {
+-  if (v === "" || v == null) return fallback;
+-  const n = Number(v);
+-  return Number.isFinite(n) ? n : fallback;
+-};
+-
+ const firstText = (...vals) => {
+   for (const v of vals) {
+     const s = clean(v);
+@@ -22,8 +24,6 @@ const firstText = (...vals) => {
+   return "";
+ };
+ 
+-// Accepts a string ("line1\nline2"), an array of strings, or an array of
+-// objects with name/label/line/text — anything reasonable becomes a line.
+ const textLines = (v) => {
+   if (v == null) return [];
+   const items = Array.isArray(v) ? v : [v];
+@@ -42,8 +42,8 @@ const textLines = (v) => {
+ };
+ 
+ const fmtQty = (v) => {
+-  const n = num(v, null);
+-  if (n == null) return "";
++  const n = num(v, NaN);
++  if (!Number.isFinite(n)) return "";
+   return Number.isInteger(n) ? n : Math.round(n * 100) / 100;
+ };
+ 
+@@ -56,14 +56,25 @@ const fmtDate = (v) => {
+     : d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+ };
+ 
+-const formatUsd = (n) => {
+-  const value = num(n, null);
+-  return value == null
+-    ? ""
+-    : `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
++// Money is normalized to a number-or-null on the model; templates call
++// model.fmt.usd() so every template formats currency identically.
++const moneyOrNull = (v) => {
++  const s = clean(v);
++  if (!s && s !== "0") {
++    const n = num(v, NaN);
++    return Number.isFinite(n) ? n : null;
++  }
++  const n = num(v, NaN);
++  return Number.isFinite(n) ? n : null;
+ };
+ 
+-export const PRINT_STAGE_LABELS = {
++const usd = (n) =>
++  n == null || !Number.isFinite(Number(n))
++    ? ""
++    : `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
++
++// WorkOrder.current_stage enum → display label (same map as the traveler).
++export const WO_PRINT_STAGE_LABELS = {
+   estimating: "Estimating",
+   sales: "Sales",
+   permitting: "Permitting",
+@@ -74,219 +85,337 @@ export const PRINT_STAGE_LABELS = {
+   completed: "Completed",
+ };
+ 
+-// WorkOrder.products[].operational_status → readable print label. Printed
+-// statuses stay English in every template (the Spanish sheet translates its
+-// own headers, not the underlying record data).
+-export const PRINT_PRODUCT_STATUS_LABELS = {
+-  order_review: "Order Review",
+-  site_survey: "Site Survey",
+-  awaiting_customer_action: "Awaiting Customer",
+-  awaiting_proof_approval: "Awaiting Proof Approval",
+-  proof_changes_requested: "Proof Changes Requested",
+-  permitting: "Permitting",
+-  proof_approved: "Proof Approved",
+-  design_review: "Design Review",
++// Product.operational_status enum → display label for the status column.
++export const WO_PRINT_PRODUCT_STATUS_LABELS = {
++  queued: "Queued",
+   in_design: "In Design",
++  design_review: "Design Review",
++  ready_for_production: "Ready for Production",
+   in_production: "In Production",
+-  quality_control: "Quality Control",
+-  service_repair: "Service Repair",
+-  install_or_removal_only: "Install / Removal Only",
+-  vended: "Vended",
+-  none: "",
++  in_fabrication: "In Fabrication",
++  ready_for_install: "Ready for Install",
++  in_installation: "In Installation",
++  completed: "Completed",
++  on_hold: "On Hold",
+ };
+ 
+-const titleCase = (v) => {
+-  const s = clean(v).replace(/[_-]+/g, " ");
+-  return s ? s.replace(/\b[a-z]/g, (c) => c.toUpperCase()) : "";
++// Placeholder shop identity — callers should pass { company: {...} } built
++// from loadQuoteDefaults() ({company_name, company_address, company_phone,
++// company_email, company_website, company_logo_url}) or GlobalSettings.
++export const WO_PRINT_DEFAULT_COMPANY = {
++  name: "CCS Signage",
++  address_lines: [],
++  phone: "",
++  email: "",
++  website: "",
++  license: "",
++  logo_url: "",
++};
++
++const buildCompany = (wo, options) => {
++  const src = options.company || wo.company || {};
++  // Accept both the quote-defaults shape (company_name / company_logo_url)
++  // and the packing-slip shape (name / logo_url).
++  return {
++    name: firstText(src.name, src.company_name, wo.company_name, WO_PRINT_DEFAULT_COMPANY.name),
++    address_lines: textLines(
++      src.address_lines ?? src.company_address ?? src.address ?? WO_PRINT_DEFAULT_COMPANY.address_lines,
++    ),
++    phone: firstText(src.phone, src.company_phone, WO_PRINT_DEFAULT_COMPANY.phone),
++    email: firstText(src.email, src.company_email, WO_PRINT_DEFAULT_COMPANY.email),
++    website: firstText(src.website, src.company_website, WO_PRINT_DEFAULT_COMPANY.website),
++    license: firstText(src.license, src.company_license, WO_PRINT_DEFAULT_COMPANY.license),
++    logo_url: firstText(
++      options.logoUrl,
++      options.logo_url,
++      src.logo_url,
++      src.company_logo_url,
++      src.logo,
++      WO_PRINT_DEFAULT_COMPANY.logo_url,
++    ),
++  };
+ };
+ 
+-const productStatus = (product) =>
+-  (PRINT_PRODUCT_STATUS_LABELS[clean(product?.operational_status)]
+-    ?? titleCase(product?.operational_status))
+-    || clean(product?.customer_facing_status);
++const cityStateZip = (wo) => {
++  const cityState = [
++    firstText(wo.city, wo.township_city),
++    firstText(wo.state, wo.county),
++  ].filter(Boolean).join(", ");
++  return [cityState, firstText(wo.zip, wo.postal_code, wo.zip_code)]
++    .filter(Boolean).join(" ");
++};
+ 
+-// Customer-facing product notes only. Estimator notes are INTERNAL and must
+-// never travel into a print model.
+-const customerNotes = (product) => {
+-  const rows = Array.isArray(product?.notes) ? product.notes : [];
+-  return rows
+-    .filter((n) => ["customer", "client"].includes(clean(n?.channel).toLowerCase()))
+-    .map((n) => clean(n?.text))
+-    .filter(Boolean)
+-    .join(" · ");
++// Bill-to: explicit billing address when present, else client name only.
++const buildBillTo = (wo, options) => {
++  const ov = options.billTo || options.bill_to || {};
++  return {
++    name: firstText(ov.name, wo.bill_to_name, wo.client_name, wo.customer_name),
++    attention: firstText(ov.attention, wo.contact_name, wo.additional_contact),
++    address_lines: [
++      ...textLines(ov.address_lines),
++      ...textLines(ov.address),
++      ...textLines(wo.billing_address),
++      ...textLines(wo.billing_address_line_2),
++    ],
++    phone: firstText(ov.phone, wo.contact_phone),
++    email: firstText(ov.email, wo.contact_email),
++  };
+ };
+ 
+-// Quote-defaults record (company_name / company_logo_url / company_address …)
+-// maps to the print company block; an already-mapped company passes through.
+-export function mapPrintCompany(source) {
+-  const c = source || {};
++// Install site: install_location + address_line_2 + city/state/zip.
++const buildShipTo = (wo, options) => {
++  const ov = options.shipTo || options.ship_to || {};
++  const lines = [
++    ...textLines(ov.address_lines),
++    ...textLines(ov.address),
++    ...textLines(wo.install_location),
++    ...textLines(wo.address_line_2),
++    ...textLines(cityStateZip(wo)),
++  ];
+   return {
+-    name: firstText(c.name, c.company_name),
+-    logo_url: firstText(c.logo_url, c.company_logo_url),
+-    address_lines: textLines(c.address_lines?.length ? c.address_lines : c.company_address),
+-    phone: firstText(c.phone, c.company_phone),
+-    email: firstText(c.email, c.company_email),
+-    website: firstText(c.website, c.company_website),
+-    license: firstText(c.license, c.company_license),
+-    footer_note: firstText(c.footer_note, c.quote_footer_text),
++    name: firstText(ov.name, wo.ship_to_name, wo.client_name, wo.customer_name),
++    attention: firstText(ov.attention, wo.contact_name, wo.additional_contact),
++    address_lines: lines,
++    phone: firstText(ov.phone, wo.contact_phone),
++    email: firstText(ov.email, wo.contact_email),
+   };
+-}
++};
+ 
+-export function buildWorkOrderPrintModel(workOrder, opts = {}) {
+-  const wo = workOrder || {};
+-  const company = mapPrintCompany(opts.company || opts.companyDefaults);
++// One row per product line. Customer price fields (unit_price / ext_price)
++// are ALWAYS populated; internal shop fields (unit_cost / ext_cost / margin /
++// estimator provenance) live under `internal` so streamlined/customer-facing
++// templates can drop them by construction.
++const buildRows = (wo, options) => {
++  const rows = [];
++  const srcProducts = Array.isArray(options.products)
++    ? options.products
++    : Array.isArray(wo.products)
++      ? wo.products
++      : [];
++  for (const p of srcProducts) {
++    if (!p) continue;
++    const name = firstText(
++      p.customer_description,
++      p.description,
++      p.client_product_name,
++      p.product_type,
++      p.category,
++    );
++    const qty = fmtQty(p.quantity);
++    // Same cut-list rule as the traveler/packing slip: skip rows with neither
++    // a label nor a non-zero quantity.
++    if (!name && !num(qty)) continue;
+ 
+-  const rows = (Array.isArray(wo.products) ? wo.products : []).map((p, i) => {
+-    const qty = fmtQty(p?.quantity);
+-    const unitPrice = num(p?.quoted_unit_price);
+-    const extPrice = num(p?.quoted_total) ?? (
+-      unitPrice != null && qty !== "" ? unitPrice * qty : null
++    const unitPrice = moneyOrNull(p.quoted_unit_price);
++    const extPrice = moneyOrNull(
++      p.quoted_total ?? (unitPrice != null && num(qty) ? unitPrice * num(qty) : null),
+     );
+-    const unitCost = num(p?.unit_cost);
+-    const extCost = unitCost != null && qty !== "" ? unitCost * qty : null;
+-    return {
+-      line: i + 1,
+-      name: firstText(p?.customer_description, p?.description) || "Item",
+-      type: clean(p?.product_type),
++    const unitCost = moneyOrNull(p.unit_cost ?? p.cost ?? p.est_unit_cost);
++    const extCost = moneyOrNull(
++      p.ext_cost ?? p.extended_cost ?? (unitCost != null && num(qty) ? unitCost * num(qty) : null),
++    );
++    const margin = moneyOrNull(
++      p.margin ?? (extPrice != null && extCost != null ? extPrice - extCost : null),
++    );
++    const status = firstText(
++      WO_PRINT_PRODUCT_STATUS_LABELS[clean(p.operational_status)],
++      clean(p.operational_status),
++      clean(p.fulfillment_state),
++    );
++
++    rows.push({
++      line: rows.length + 1,
++      product_id: clean(p.id),
+       qty,
++      name: name || "Item",
++      type: firstText(p.product_type, p.category),
++      description: firstText(p.customer_description) && firstText(p.description) !== name
++        ? firstText(p.description)
++        : "",
++      notes: firstText(p.packing_notes, p.production_notes, p.notes),
++      status,
++      due_date: fmtDate(firstText(p.product_due_date, p.design_due_date)),
+       unit_price: unitPrice,
+       ext_price: extPrice,
+       internal: {
+         unit_cost: unitCost,
+         ext_cost: extCost,
+-        margin: extPrice != null && extCost != null ? extPrice - extCost : null,
++        margin,
++        estimator_notes: firstText(p.estimator_notes),
++        source_estimate_number: firstText(p.source_estimate_number),
++        module_key: firstText(p.module_key),
++        responsibility: firstText(p.responsibility),
++        assigned_to: firstText(p.assigned_to, p.designer),
++      },
++    });
++  }
++  // Legacy flat product_1..product_6 columns predate the products[] array.
++  for (let i = 1; i <= 6; i += 1) {
++    const name = clean(wo[`product_${i}`]);
++    if (!name) continue;
++    rows.push({
++      line: rows.length + 1,
++      product_id: "",
++      qty: "",
++      name,
++      type: "",
++      description: "",
++      notes: "",
++      status: "",
++      due_date: "",
++      unit_price: null,
++      ext_price: null,
++      internal: {
++        unit_cost: null, ext_cost: null, margin: null,
++        estimator_notes: "", source_estimate_number: "", module_key: "",
++        responsibility: "", assigned_to: "",
+       },
+-      status: productStatus(p),
+-      notes: customerNotes(p),
+-      due_date: fmtDate(p?.product_due_date || p?.design_due_date),
+-    };
+-  });
++    });
++  }
++  return rows;
++};
+ 
+-  const materials = (Array.isArray(wo.materials) ? wo.materials : []).map((mat) => {
+-    const qty = fmtQty(mat?.quantity);
+-    const unitCost = num(mat?.unit_cost);
+-    return {
+-      name: firstText(mat?.part_name, mat?.name, mat?.inventory_item_name) || "Part",
+-      type: clean(mat?.part_type),
+-      section: clean(mat?.section_name),
++// Flattened materials manifest — internal-only section (unit_cost / ext_cost
++// are shop costs, never customer prices). Templates that print a materials
++// table are shop copies by definition.
++const buildMaterials = (wo, options) => {
++  const src = Array.isArray(options.materials)
++    ? options.materials
++    : Array.isArray(wo.materials)
++      ? wo.materials
++      : [];
++  const rows = [];
++  for (const m of src) {
++    if (!m) continue;
++    const name = firstText(m.part_name, m.name, m.item_label, m.part_key);
++    const qty = fmtQty(m.quantity);
++    if (!name && !num(qty)) continue;
++    rows.push({
++      name: name || "Material",
++      type: firstText(m.part_type, m.part_subtype),
+       qty,
+-      unit: clean(mat?.unit),
+-      unit_cost: unitCost,
+-      ext_cost: num(mat?.extended_cost) ?? (unitCost != null && qty !== "" ? unitCost * qty : null),
+-    };
+-  });
+-
+-  const tasks = (Array.isArray(wo.notes) ? wo.notes : [])
+-    .map((task) => ({
+-      text: clean(task?.text),
+-      completed: !!task?.completed,
+-      is_milestone: !!task?.is_milestone,
+-      assigned_to: clean(task?.assigned_to),
+-      due_date: fmtDate(task?.due_date),
+-    }))
+-    .filter((task) => task.text);
+-
+-  const subtotal = rows.reduce(
+-    (sum, row) => (row.ext_price == null ? sum : sum + row.ext_price),
+-    0,
+-  );
+-  const totalCost = rows.reduce(
+-    (sum, row) => (row.internal.ext_cost == null ? sum : sum + row.internal.ext_cost),
+-    0,
+-  );
+-  const hasCost = rows.some((row) => row.internal.ext_cost != null);
+-  const totalMargin = hasCost ? subtotal - totalCost : null;
++      unit: clean(m.unit),
++      unit_cost: moneyOrNull(m.unit_cost),
++      ext_cost: moneyOrNull(m.ext_cost ?? m.extended_cost ??
++        (moneyOrNull(m.unit_cost) != null && num(qty) ? moneyOrNull(m.unit_cost) * num(qty) : null)),
++      section: firstText(m.section_name, m.module_key),
++    });
++  }
++  return rows;
++};
+ 
+-  const estimateAmount = num(wo.estimate_amount);
+-  const depositAmount = num(wo.deposit_amount);
+-  const contractTotal = estimateAmount ?? subtotal;
+-  const balanceDue = contractTotal == null
+-    ? null
+-    : contractTotal - (depositAmount || 0);
++const buildTasks = (wo) => {
++  const src = Array.isArray(wo.notes) ? wo.notes : [];
++  return src
++    .filter((t) => t && clean(t.text))
++    .map((t) => ({
++      text: clean(t.text),
++      completed: t.completed === true,
++      is_milestone: t.is_milestone === true,
++      is_critical_path: t.is_critical_path === true,
++      assigned_to: clean(t.assigned_to),
++      due_date: fmtDate(t.due_date),
++      checklist_context: clean(t.checklist_context),
++    }));
++};
+ 
+-  const billToLines = textLines(
+-    Array.isArray(wo.billing_address) || wo.billing_address
+-      ? wo.billing_address
+-      : wo.install_location,
+-  ).concat(textLines(wo.billing_address_line_2));
+-  const siteLines = textLines(wo.install_location).concat(textLines(wo.address_line_2));
+-  const locality = [clean(wo.township_city), clean(wo.county)].filter(Boolean).join(", ");
+-  if (locality) siteLines.push(locality);
++export function buildWorkOrderPrintModel(workOrder, options = {}) {
++  const wo = workOrder || {};
++  const rows = buildRows(wo, options);
++  const materials = buildMaterials(wo, options);
++  const tasks = buildTasks(wo);
+ 
+-  const clientName = firstText(wo.client_name, wo.contact_name);
+-  const contactName = clean(wo.contact_name);
++  const orderNumber = firstText(
++    wo.corbridge_invoice_number,
++    wo.order_number,
++    wo.work_order_number,
++    wo.invoice_number,
++    wo.id,
++  );
++  const workOrderId = clean(wo.id);
+ 
+   const meta = [
+-    { key: "stage", label: "Stage", value: PRINT_STAGE_LABELS[clean(wo.current_stage)] || titleCase(wo.current_stage) },
++    { key: "stage", label: "Stage", value: WO_PRINT_STAGE_LABELS[clean(wo.current_stage)] || clean(wo.current_stage) },
+     { key: "start_date", label: "Start Date", value: fmtDate(wo.start_date) },
+     { key: "due_date", label: "Due Date", value: fmtDate(wo.due_date) },
+     { key: "install_date", label: "Install Date", value: fmtDate(wo.project_install_date) },
++    { key: "sales_rep", label: "Sales Rep", value: firstText(wo.sales_rep, wo.representative) },
+     { key: "project_manager", label: "Project Manager", value: clean(wo.project_manager) },
+-    { key: "sales_rep", label: "Sales Rep", value: clean(wo.sales_rep) },
+-    { key: "estimator", label: "Estimator", value: clean(wo.estimator) },
+     { key: "designer", label: "Designer", value: clean(wo.designer) },
++    { key: "estimator", label: "Estimator", value: clean(wo.estimator) },
++    { key: "assigned_to", label: "Assigned To", value: clean(wo.assigned_to) },
+     { key: "project_type", label: "Project Type", value: clean(wo.project_type) },
+     { key: "permit_number", label: "Permit #", value: clean(wo.permit_number) },
++    { key: "po_number", label: "Customer PO", value: clean(wo.po_number) },
+   ].filter((entry) => entry.value);
+ 
+-  const pieceCount = rows.reduce(
+-    (sum, row) => (row.qty === "" ? sum : sum + Number(row.qty)),
+-    0,
+-  );
++  // Totals — customer-facing money. subtotal is the sum of printed product
++  // ext prices; estimate_amount is the WO's stored contract amount when it
++  // disagrees with (or stands in for) the product sum.
++  const subtotal = rows.reduce((sum, r) => sum + (r.ext_price != null ? r.ext_price : 0), 0);
++  const estimateAmount = moneyOrNull(wo.estimate_amount);
++  const depositAmount = moneyOrNull(wo.deposit_amount);
++  const totalCost = rows.reduce((sum, r) => sum + (r.internal.ext_cost != null ? r.internal.ext_cost : 0), 0);
++  const totalMargin = subtotal - totalCost;
++  const hasCost = rows.some((r) => r.internal.ext_cost != null) ||
++    materials.some((m) => m.ext_cost != null);
++
++  const pieceCount = rows.reduce((sum, r) => sum + (r.qty === "" ? 0 : num(r.qty)), 0);
+ 
+   return {
+-    template_id: firstText(opts.templateId, opts.template_id),
+-    order_number: firstText(wo.order_number, wo.order_id, wo.id),
+-    job_code: clean(wo.job_code),
+-    document_title: clean(opts.documentTitle) || "Work Order",
+-    document_title_es: clean(opts.documentTitleEs) || "Orden de Trabajo",
+-    printed_at: opts.printedAt || new Date().toISOString(),
+-    footer_note: firstText(opts.footerNote, company.footer_note),
++    template_id: clean(options.templateId ?? options.template_id),
++    document_title: firstText(options.documentTitle, "Work Order"),
++    order_number: orderNumber || workOrderId || "—",
++    job_code: workOrderId ? `WO-${workOrderId.toUpperCase()}` : orderNumber,
++    work_order_id: workOrderId,
+     work_order_title: clean(wo.title),
+     description: clean(wo.description),
+-    asap: !!wo.asap,
+-    completed: !!wo.completed,
+-    piece_count: pieceCount || null,
+-    company,
+-    bill_to: {
+-      name: clientName,
+-      attention: contactName && contactName !== clientName ? contactName : "",
+-      address_lines: billToLines,
+-      phone: clean(wo.contact_phone),
+-      email: clean(wo.contact_email),
+-    },
+-    ship_to: {
+-      attention: contactName,
+-      address_lines: siteLines.length ? siteLines : billToLines,
+-    },
++    image_url: clean(wo.image_url),
++    asap: wo.asap === true,
++    is_rider: wo.is_rider === true,
++    completed: wo.completed === true,
++    printed_at: firstText(options.printedAt, options.printed_at, new Date().toISOString()),
++    company: buildCompany(wo, options),
++    bill_to: buildBillTo(wo, options),
++    ship_to: buildShipTo(wo, options),
++    meta,
+     rows,
+-    materials,
+-    tasks,
+-    task_counts: {
+-      done: tasks.filter((task) => task.completed).length,
+-      total: tasks.length,
+-    },
++    row_count: rows.length,
++    piece_count: pieceCount,
+     totals: {
+       subtotal,
+       estimate_amount: estimateAmount,
+-      contract_total: contractTotal,
+-      deposit_required: !!wo.deposit_required,
++      // The headline contract total: stored estimate_amount when present,
++      // else the product subtotal.
++      contract_total: estimateAmount != null ? estimateAmount : subtotal,
++      deposit_required: wo.deposit_required === true,
+       deposit_amount: depositAmount,
+-      deposit_invoiced: !!wo.deposit_invoiced,
+-      balance_due: balanceDue,
++      deposit_invoiced: wo.deposit_invoiced === true,
++      balance_due: estimateAmount != null && depositAmount != null
++        ? estimateAmount - depositAmount
++        : estimateAmount,
+       internal: {
+         total_cost: hasCost ? totalCost : null,
+-        total_margin: totalMargin,
+-        margin_pct: totalMargin != null && subtotal > 0
+-          ? Math.round((totalMargin / subtotal) * 100)
++        total_margin: hasCost ? totalMargin : null,
++        margin_pct: hasCost && subtotal ? Math.round((totalMargin / subtotal) * 1000) / 10 : null,
++        actual_cost: moneyOrNull(wo.actual_cost),
++        profit_margin: moneyOrNull(wo.profit_margin),
++        materials_cost: materials.some((m) => m.ext_cost != null)
++          ? materials.reduce((sum, m) => sum + (m.ext_cost != null ? m.ext_cost : 0), 0)
+           : null,
+-        actual_cost: num(wo.actual_cost),
+-        profit_margin: num(wo.profit_margin),
+       },
+     },
+-    meta,
+-    fmt: { usd: formatUsd },
++    materials,
++    tasks,
++    task_counts: {
++      total: tasks.length,
++      done: tasks.filter((t) => t.completed).length,
++      milestones: tasks.filter((t) => t.is_milestone).length,
++    },
++    fmt: { usd, fmtDate, fmtQty },
++    footer_note: firstText(
++      options.footerNote,
++      "This work order lists customer pricing — production details travel on the shop traveler.",
++    ),
+   };
+ }
+-
+-export default buildWorkOrderPrintModel;
+\ No newline at end of file

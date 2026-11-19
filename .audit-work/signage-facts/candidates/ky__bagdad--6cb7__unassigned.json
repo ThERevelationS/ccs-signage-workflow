@@ -1,0 +1,915 @@
+{
+ "jurisdiction_id": "6ac1a1fc64996a420caa6cb7",
+ "jurisdiction_name": "Bagdad",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 19,
+   "snippet": "Alcoholic Beverages 18C (C) Forfeitures. If any license issued under this chapter is revoked or cancelled for any reason by the County A.B.C. Administrator, the licensee shall forfeit any and all claims, which the licensee might otherwise have had to any portion of the license fee paid by the licensee on the issuing of the license. (D) Refund of license fees. Should any licensee under this chapter be prohibited from conducting business for the full period covered by the license because of any changes that may hereafter be made in the laws of the state with reference to alcoholic beverages or other cause outside licensee's control, the Fiscal Court shall refund to it the proportionate part of the license fee for the period during which it is prevented from carrying on the business, if the licensee provides sufficient proof to the County A.B.C. Administrator that the period of inactivity w",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3",
+   "source_document_id": null,
+   "source_title": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/110%20-%20Alcoholic%20Beverages.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "26 Shelby County - General Regulations (D) Higher reportable quantity. Notwithstanding any other provision of this subchapter, the administering agency, after review of the “Shelby County Hazardo us Materials Use and Spill Prevention Control Plan” (HMPC) required to be submitted pursuant to the further provisions of this subchapter, may designate a reportable quantity for a hazardous material in excess of the quantity determined under this section if the administering agency determines that the higher reportable quantity is consistent with the purpose and objectives of this subchapter. (E) Releases to sanitary sewer system. Notwithstanding any other provision of this subchapter, any release of a hazardous material to a sanitary sewer system which is prohibited under applicable pretreatment or other regulations of any sanitation district operating within Shelby County governing discharges",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "1eaa53434748ab38cdc7638ea3ac5a4a17ac31494de3d478f37decdb17c48d26",
+   "source_document_id": null,
+   "source_title": "1eaa53434748ab38cdc7638ea3ac5a4a17ac31494de3d478f37decdb17c48d26.pdf",
+   "official_url": "https://shelbycounty.ky.gov/General%20Regulations/92%20-%20%20Hazardous%20Materials.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "32 Shelby County - General Regulations (12) Provisions for periodic review and amendments to the Plan; (13) Certification of the plan by a registered professional engineer or an officer of the company; and (14) For the purposes of this subchapter, only 1 plan need be submitted by the owner of electrical equipment at multiple locations when the equipment contains hazardous materials as a coolant, lubricant, or insulation for the operation of the equipment. Section 92.12 (C)(3) and (5) above shall not apply to single plans authorized under this subchapter. (D) Plan submittal deadlines. Those persons and facilities required to submit a HMPC Plan under this subchapter shall submit the plans in duplicate to the administering agency within 180 days following the effective date of this subchapter provided, however, that persons required to submit the HMPC Plans may request in writing for extens",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "1eaa53434748ab38cdc7638ea3ac5a4a17ac31494de3d478f37decdb17c48d26",
+   "source_document_id": null,
+   "source_title": "1eaa53434748ab38cdc7638ea3ac5a4a17ac31494de3d478f37decdb17c48d26.pdf",
+   "official_url": "https://shelbycounty.ky.gov/General%20Regulations/92%20-%20%20Hazardous%20Materials.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "Adult Entertainment Establishments 33 (F) An employee = s station shall not exceed 32 square feet of floor area, and no single dimension of an employee = s station shall exceed 8 feet. (G) The view from the employee = s station(s) shall remain unobstructed by any doors, curtains, partitions, walls, merchandise, display racks or other materials. (H) No patron may at any time be permitted access to any area of the premises which has been designated in the license application filed pursuant to this chapter as an area in which patrons will not be permitted. (I) No viewing booth may be occupied by more than 1 person at any time. (J) The premises shall be equipped with overhead lighting fixtures of sufficient intensity to illuminate every place to which patrons are permitted access, including both the interior of viewing booths and restrooms, at an illumination level of not less than 5.0 foot-",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517",
+   "source_document_id": null,
+   "source_title": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/111%20-%20Adult%20Entertainment%20Establishments.pdf"
+  },
+  {
+   "page": 19,
+   "snippet": "Adult Entertainment Establishments 37 (e) A set of the applicant = s fingerprints or a copy of a government-issued photo identification card; (f) A recent photograph of the applicant; (g) The required fee; (3) Any information required under this section deemed to be private and/or confidential within the meaning of KRS 61.878, or within the constitutional right to privacy, shall not be disclosed to any person other than law enforcement agencies or other governmental agency. (D) The Sheriff or his or her designee, and/or the Shelby County Health Department, are empowered to enact from time to time whatever rules and regulations are deemed necessary for the orderly and complete administration of this chapter at such times, in the discretion of the Sheriff and/or Shelby County Health Department as the need arises for such rules and regulations. All regulations shall be submitted to the Fisc",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "temporary",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517",
+   "source_document_id": null,
+   "source_title": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/111%20-%20Adult%20Entertainment%20Establishments.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "56 Shelby County - General Regulations § 97.07 ROAD ENCROACHMENT PERMrr REQUIREMENTS. (A) Any person that desires to conduct any of the activities outlined in § 97.03 shall obtain a road encroaclunent permit from the County Road Department prior to conducting the activities within the county right-of-way . (B) Application for a road encroachment permit shall be made on the form prescribed by the county . The application shall be filled out in its entirety and shall contain all of the infmnation required by the county for the type of activity being conducted. Depending on the scope of work, information required by the county may include, but not be limited to, the following: contact information and address of the person applying for the permit, activity location, location of approximate property boundaries, location of county right-of-way, location of other existing utilities in the area,",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb",
+   "source_document_id": null,
+   "source_title": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2003-04-01%20Series%202025.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "Street Names and Addresses 46C (B) The E-911 Address Coordinator may visually inspect any property prior to issuing an address in order to ensure that all requirements of this chapter have been complied with. (C) Each residential developer shall pay a filing fee in an amount to be determined by the E- 911 board for each new address applied for. (Ord. 08-04-14, passed 8-4-2009) § 93.11 POSTING OF ADDRESSES. (A) All persons must clearly display the address on any property they own as follows: (1) On both sides of the mailbox to the property in numerals 4 to 6 inches in height made of reflective material or in a color that contrasts with the mailbox; or (2) On the structure on the front side of the structure or at the entrance way to the structure so that the number is visible from the roadway during both the day time and night time. The numbers shall also be of a size and contrasting color",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "921904d3b040d4c651ccc4582b67b09698e458b9a7ba8620e3955875b812e2c7",
+   "source_document_id": null,
+   "source_title": "921904d3b040d4c651ccc4582b67b09698e458b9a7ba8620e3955875b812e2c7.pdf",
+   "official_url": "https://shelbycounty.ky.gov/General%20Regulations/93%20-%20Street%20Names%20and%20Addresses.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "Alcoholic Beverages 17 (H) Lost or destroyed licenses. When a license is lost or destroyed without fault on the part of the licensee or his or her agent or employee, a duplicate in lieu of the original license shall be issued by the County A.B.C. Administrator, after the Administrator shall be satisfied as to the facts; provided, however, that the person applying for the duplicate license shall pay a fee of $10 for the duplicate. (Ord. 12-06-04, passed 12-6-2016) ' 110.22 LICENSES: SPECIAL CONDITIONS AND OTHER ALLOWED SALES. (A) Special conditions for patio and other outdoor sales. (1) Patio and outdoor sales of alcoholic beverages shall be permitted only on premises licensed for sales of alcoholic beverages by the drink. (2) No licensee shall offer alcoholic beverages for sale in a patio or outdoor area of the licensee's premises, except in a clearly defined patio or outdoor area. All o",
+   "tags": [
+    "fee",
+    "dimension",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3",
+   "source_document_id": null,
+   "source_title": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/110%20-%20Alcoholic%20Beverages.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "18 Shelby County - Business Regulations (b) No tables, chairs or any other furnishings, except plant tubs, shall be placed in the area used for the sidewalk café during any period when the sidewalk café is not open and being operated. Tables, chairs and other portable appurtenances shall be confined to the area named or shown on the approved permit. While the café is in operation, all tables and chairs shall be kept in a clean, sanitary condition; (c) The use of a portion of the public sidewalk as a sidewalk café shall not be an exclusive use. All public improvements, including but not limited to, trees, light poles, traffic signals, pull boxes or manholes, or any public-initiated maintenance procedures, shall take precedence over the use of the public sidewalk at all times; (d) In addition to all other requirements of law, the licensee shall take reasonable steps to insure that alcoholi",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3",
+   "source_document_id": null,
+   "source_title": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/110%20-%20Alcoholic%20Beverages.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Section 7 Road Encroachment Permit Requirements. 1. Any person that desires to conduct any of the activities outlined in Section 3 of this ordinance shall obtain a \"Road Encroachment Permit\" from the Shelby County Road Department prior to conducting the activities within the Shelby County right-of-way. 2. Application for a road encroachment permit shall be made on the form prescribed by the County. The application shall be filled out in its entirety and shall contain all of the information required by the County for the type of activity being conducted. Depending on the scope of work, information required by the County may include, but not be lirnited to, the following: contact information and address of the person applying for the permit, activity location, location of approximate property boundaries, location of county right-of- way, location of other existing utilities in the area, ro",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "d95b4132d3b84f662d5ecf85703b92961bb51fe76f72059beb67b805231f932c",
+   "source_document_id": null,
+   "source_title": "d95b4132d3b84f662d5ecf85703b92961bb51fe76f72059beb67b805231f932c.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2007-02-05%20Series%202024.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "32 Shelby County - Business Regulations (37) VIEWING BOOTH. Live viewing booth or video booth, and VIEWING BOOTHS means live viewing booths, video booths, or any combination thereof. (Ord. 05-17-06, passed 5-17-2005) ' 111.04 REGULATIONS PERTAINING TO THE EXHIBITION OF SEXUALLY EXPLICIT FILMS, VIDEOS OR LIVE ENTERTAINMENT IN VIEWING BOOTHS. No person may operate or cause to be operated an Adult Entertainment Business which exhibits on the premises in a viewing booth, as defined in ' 111.03, films, video cassettes, other video or image reproduction, or live entertainment which are distinguished or characterized by an emphasis on the description or depiction of specified sexual activities or specified anatomical areas, without complying with the following requirements: (A) The Adult Entertainment Business license application required under this chapter shall be accompanied by a diagram of ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517",
+   "source_document_id": null,
+   "source_title": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/111%20-%20Adult%20Entertainment%20Establishments.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "12 Shelby County - General Regulations (C) Persons adopting a dog(s) from the Animal Shelter shall be required to pay all fees as determined by the Shelby County Fiscal Court. (Ord. 7-6-04, passed 7-6-2004) § 90.11 EXHIBITIONS OF WILD OR VICIOUS ANIMALS PROHIBITED. (A) No person shall keep, or permit to be kept, on his or her premises, any wild or vicious animal as defined in KRS 65.877, and as amended, 301 K.A.R. 2:082, and as amended, and as defined in this chapter for display or exhibition purposes, whether gratuitously or for a fee, or as a pet. This section shall not be construed so as to apply to a zoological garden or circus. (B) Any dog determined to be vicious by a court and allowed to be returned to an owner shall be confined in a locked enclosure at least 7 feet high or a locked kennel run with a secured top. The dog may leave the enclosure only to visit the veterinarian or to",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "750da394031e7c96275ef6e1f1751781abd4408386e138834ad978304fb1cfbc",
+   "source_document_id": null,
+   "source_title": "750da394031e7c96275ef6e1f1751781abd4408386e138834ad978304fb1cfbc.pdf",
+   "official_url": "https://shelbycounty.ky.gov/General%20Regulations/90%20-%20General%20Regulations.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Peddlers, Solicitors and Transient Merchants 63 (19) The license plate number, registration information, vehicle identification number (VIN) and physical description for any vehicles to be used in conjunction with the licensed business operation; (20) An official records check conducted by the Records Unit of the Administrative Office of the Courts for applicant and all agents, employees or other persons who will be assisting applicant in conjunction with the licensed/registered business operation. (D) Fee. All applications for a license under this chapter shall be accompanied by the nonrefundable license fee established by the Shelby County fee schedule as it may be amended from time to time except that transient merchants who pay a fee pursuant to KRS 365.665 shall not have to pay a license fee as well. (E) Procedure. Upon receipt of the application and payment of the nonrefundable lic",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "7ce89c1d3830fb50c93e00bc6ae009c1f660da3d415004bbc30bf1223f12cc0b",
+   "source_document_id": null,
+   "source_title": "7ce89c1d3830fb50c93e00bc6ae009c1f660da3d415004bbc30bf1223f12cc0b.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/113%20-%20Peddlers,%20Solicitors%20and%20Transient%20Merchants.pdf"
+  },
+  {
+   "page": 23,
+   "snippet": "Building Regulations 6A /H'\\ § 150.06 DEFINITIONS/CLARIFICATIONS/POLICIES. For the purpose of this chapter, the following definitions shall apply unless the context clearly indicates or requires a different meaning. ACCESSORY STRUCTURE. Accessory structures include barns, garages, tool sheds, storage sheds, retaining walls and other types of residential-use structures. One-story detached accessory structures that are under 200 square feet do not require a building permit. APPLICATION . A form that the Building Inspection Department provides that must be completed. The application must be submitted with the project drawings and applicable permit fees. BUILDING COST OR COST OF CONSTRUCTION . The estimated total construction cost to complete the permitted project. The cost of land, lot or real estate can be excluded. REINSPE C:TION FEE. The first of each type of inspection is included in th",
+   "tags": [
+    "fee",
+    "area",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb",
+   "source_document_id": null,
+   "source_title": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2003-04-01%20Series%202025.pdf"
+  },
+  {
+   "page": 30,
+   "snippet": "6 Shelby County - Index CODE ENFORCEMENT BOARD Appeals, 31.18 Appointment of members; term of office; removal from office; oath; compensation, 31. 13 Creation and membership, 31.11 Definitions, 31. 10 Enforcement proceedings, 31. 16 Hearing; notice; failure to appear; procedure; order, 31.17 Jurisdiction of the Code Enforcement Board, 31. 12 Lien; recording; responsibility for fines, charges, and fees, 31.19 Organization of Board; meetings; quorum; minutes; administrative personnel, 31.14 Powers of the Code Enforcernent Board, 31. 15 System for notification of lienholder; requirements; correction of violation; precedent of lien, 31.20 CODE OF ORDINANCES, RULES OF CONSTRUCTION, GENERAL PENALTY Application to future ordinances, 10.03 Captions, 10.CH Definitions, 10.05 Effective date of ordinances, 10. 15 Errors and omissions, 10.10 General penalty, 10.99 10.02 Interpretation 9 Official tim",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb",
+   "source_document_id": null,
+   "source_title": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2003-04-01%20Series%202025.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CHAPTER 110: ALCOHOLIC BEVERAGES Section General Provisions 110.01 Purpose 110.02 Adoption of State Alcoholic Beverage Control Law 110.03 Administration 110.04 Definitions 110.05 County Alcoholic Beverage Control Administrator 110.06 Hours for sale and delivery 110.07 General prohibitions and restrictions 110.08 Enforcement 110.09 Mandatory STAR training 110.10 Product signs and advertising 110.11 Implementation Licensing 110.20 Licenses: types, fees, and definitions 110.21 Licenses: applications, renewals, transfers and general conditions 110.22 Licenses: special conditions and other allowed sales 110.23 Revocation or suspension: grounds and procedures 110.99 Penalty Cross-reference: Alcohol and controlled substances offenses involving minors, ' 130.03 GENERAL PROVISIONS ' 110.01 PURPOSE. The purpose of this chapter is to establish uniform requirements for the licensing and regulation o",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3",
+   "source_document_id": null,
+   "source_title": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/110%20-%20Alcoholic%20Beverages.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Alcoholic Beverages 5 (4) The functions of the County A.B.C. Administrator shall be the same with respect to county licenses and regulations as the functions of the Alcoholic Beverage Control Board of the state (hereinafter referred to as the A.B.C. Board) with respect to state licenses and regulations, except that no amendment to these regulations proposed by the County A.B.C. Administrator may be less stringent than the statutes relating to alcoholic beverage control, or than the regulations of the A.B.C. Board. No regulation of the County A.B.C. Administrator shall become effective until it has first been approved by the Fiscal Court. (5) If the County Judge-Executive appoints the County A.B.C. Administrator that individual shall take the oath as prescribed in Section 228 of the Constitution, and shall execute a bond with a good corporate surety in the penal sum of not less than $1,00",
+   "tags": [
+    "fee",
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3",
+   "source_document_id": null,
+   "source_title": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/110%20-%20Alcoholic%20Beverages.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "12 Shelby County - Business Regulations (2) All licenses granted under this chapter shall be approved by the County A.B.C. Administrator. Applications for the issuance of new licenses and for renewals of existing licenses shall be in writing and upon the forms provided by the A.B.C. Board and the county, as amended and supplemented from time to time. (3) The application shall be verified and shall set forth in detailed information concerning the applicant and the premises for which the license is sought as required by the KRS 243.390 and any other information required by the A.B.C. Board and the county A.B.C. Administrator. (4) A nonrefundable application fee of $50 shall be paid with the filing of the application for a county license. If the license is granted, the application fee shall be credited against the initial license fee. (5) Each application shall be collected by the County A.",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3",
+   "source_document_id": null,
+   "source_title": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/110%20-%20Alcoholic%20Beverages.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "General Provisions IOA in\\ the Northern boundarY line of Spring Valley Farms Northeasterly the Southwestern boundary line for the 164 Rest Area; Thence following this boundary line/Simpsonville City Limits (as of 7/1/2023) NonhwesterIY to the Southern Right-of-Way line of 164, thence follow Simpsonville City limits line along and across 164 West, North and East, thence follow Simpsonville City Ihnits line North9 West and South to KY 1848 (Buck Creek Road) , thence follow Simpsonville City limits line along KY 1848 North to the centerline of the Norfolk Southern Railroad. Follow Simpsonville City limits line along Railroad (Kingbrook Commerce Park) East, thence follow Simpsonville City limits line along Kingbrook Commerce Park North to US 60 (Shelbyville Road) . Follow Simpsonvi11e City limits line along US 60 West, thence follow Simpsonville City limits line North to the centerline of th",
+   "tags": [
+    "sign",
+    "fee",
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "d7d30caa23b9d9a88397f889a40f3f61814f2a668c2a27590474740ee7ddebea",
+   "source_document_id": null,
+   "source_title": "d7d30caa23b9d9a88397f889a40f3f61814f2a668c2a27590474740ee7ddebea.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%20No.%2003-05-01%20Series%202024.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "Hazardous Materials 33 (H) Training and educational programs. (1) Each employer who uses hazardous materials as herein defined and who is required to prepare an HMPC Plan shall be required to have an initial and ongoing safety and accident prevention training program for all employees. This training and education shall include, but not be limited to, appropriate work practices, protective measures and emergency procedures. The details and frequency of the training program should be provided as a part of the HMPC Plan for the facility. (2) The administering agency shall have the authority to require different frequencies of training for industries with frequent spills and/or spill histories. (Ord. passed 9-27-1998) § 92.13 INSPECTIONS. (A) The administering agency and the response authority shall have the authority to jointly conduct the periodic inspections of any facilities, for the pur",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "1eaa53434748ab38cdc7638ea3ac5a4a17ac31494de3d478f37decdb17c48d26",
+   "source_document_id": null,
+   "source_title": "1eaa53434748ab38cdc7638ea3ac5a4a17ac31494de3d478f37decdb17c48d26.pdf",
+   "official_url": "https://shelbycounty.ky.gov/General%20Regulations/92%20-%20%20Hazardous%20Materials.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CHAPTER 111: ADULT ENTERTAINMENT ESTABLISHMENTS Section 111.01 Findings, declaration of policy 111.02 Purpose 111.03 Definitions 111.04 Regulations pertaining to the exhibition of sexually explicit films, videos or live entertainment in viewing booths 111.05 Restrictions, signage and operating requirements for all Adult Entertainment Establishments 111.06 Location restrictions 111.07 Administration 111.08 Issuance of license or denial of license 111.09 Fees 111.10 Inspection 111.11 License suspension 111.12 License revocation 111.13 Procedure for denial, suspension or revocation 111.14 Transfer of license 111.15 Scienter necessary to prove liability 111.16 Failure of official to meet time frame not to risk applicant or licensee rights 111.99 Penalty ' 111.01 FINDINGS, DECLARATION OF PUBLIC POLICY. (A) The Shelby County Fiscal Court finds it has been the experience of other communities th",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517",
+   "source_document_id": null,
+   "source_title": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/111%20-%20Adult%20Entertainment%20Establishments.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "34 Shelby County - Business Regulations ' 111.05 RESTRICTIONS, SIGNAGE AND OPERATING REQUIREMENTS FOR ALL ADULT ENTERTAINMENT ESTABLISHMENTS. (A) An Adult Entertainment Establishment shall not permit its stock in trade, adult media or other adult entertainment activities, including the depiction of specified anatomical areas or specified sexual activities to be visible from outside the premises subject to public view, including from public sidewalks, streets, parking lots, hallways or passageways. (B) The Adult Entertainment Establishment operator shall, at all times, cause the entrance of such establishments to be attended so as to prevent persons under the age of 18 from admittance and to ensure compliance with other requirements of this chapter. (C) Adult Entertainment Establishments shall be closed to the public between the hours of 12:00 a.m. to 6:00 a.m., 7 days a week. (D) Adult E",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 6,
+   "source_sha256": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517",
+   "source_document_id": null,
+   "source_title": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/111%20-%20Adult%20Entertainment%20Establishments.pdf"
+  },
+  {
+   "page": 25,
+   "snippet": "Adult Entertainment Establishments 43 certified mail or personal delivery, of the Hearing Officer = s decision denying, suspending or revoking the license, the license shall expire at the end of said 30 calendar days, in conformity with the Hearing Officer = s decision denying, suspending, or revoking the permit. (D) If the licensee files an action in a court of competent jurisdiction within the aforementioned 30-day calendar period, the County Judge Executive shall issue a temporary license to maintain the status quo during the pendency of the court proceedings until a final judgment is rendered in the courts. (E) Within 10 working days of receiving notice of the filing of a court action, the County Judge Executive shall cause the complete record of the hearing, including a transcript, to be filed with the court. (Ord. 05-17-06, passed 5-17-2005) ' 111.14 TRANSFER OF LICENSE. (A) An Adu",
+   "tags": [
+    "illumination",
+    "temporary",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517",
+   "source_document_id": null,
+   "source_title": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/111%20-%20Adult%20Entertainment%20Establishments.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "16 Shelby County - General Regulations DWELLING. Any building or part of a building or its premises used as a place of residence or habitation and/or sleeping by any person that is situated on 6 acres or less. GARBAGE. Putrescrible animal or vegetable waste resulting from the handling, preparation, cooking and consumption of food. LITTER. Rubbish, refuse, waste material, offal, paper, glass cans, bottles, trash, debris or any foreign substance of whatever kind or description whether or not it is of value which is not contained or disposed of in accordance with this chapter or Shelby County Code of Ordinances Chapter 50: Solid Waste. NUISANCE. Public nuisance or health hazard. OBNOXIOUS GROWTH. Any plant growth exceeding 12 inches in height. This definition does not include crops, trees, bushes, flowers or other ornamental plants. Further, it is not the intent of this section to cause any",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "5ede63d820283640bdb934a6f914be1b9705541057ed48d35a407f8648068991",
+   "source_document_id": null,
+   "source_title": "5ede63d820283640bdb934a6f914be1b9705541057ed48d35a407f8648068991.pdf",
+   "official_url": "https://shelbycounty.ky.gov/General%20Regulations/91%20-%20Nuisances.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Animals 7 for revocation of any license. License revocations shall be in writing and shall state the grounds therefore. Any person whose license is revoked under this section may appeal the revocation to the Shelby County Fiscal Court Animal Shelter Committee within 10 days following the date of the revocation. The appeal shall be in writing and shall state the grounds therefore, and shall be signed by either the person bringing the appeal or his or her authorized representative. If requested by the appellant, a hearing shall be held before the Shelby County Fiscal Court Animal Shelter Committee which shall be the sole arbiter of the appeal. The decision of the Committee shall be final. (Ord. 7-6-04, passed 7-6-2004) § 90.05 IMPOUNDING. (A) Unrestrained dogs or other animals pursuant to § 90.09 may be taken by the Animal Control Officer or peace officers, and impounded in the Animal Shel",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "750da394031e7c96275ef6e1f1751781abd4408386e138834ad978304fb1cfbc",
+   "source_document_id": null,
+   "source_title": "750da394031e7c96275ef6e1f1751781abd4408386e138834ad978304fb1cfbc.pdf",
+   "official_url": "https://shelbycounty.ky.gov/General%20Regulations/90%20-%20General%20Regulations.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "Peddlers, Solicitors and Transient Merchants 65 ' 113.05 LICENSE SUSPENSION AND REVOCATION. (A) Generally. Any license issued under this ordinance may be suspended or revoked at the discretion of the Shelby County Clerk = s office for violation of the following: (1) Subsequently obtained knowledge by the Shelby County Clerk = s office of fraud, misrepresentation or incorrect information provided by an applicant on an application form; (2) Fraud, misrepresentation or false statements by the applicant made during the course of the licensed activity; (3) Subsequent conviction of any offense to which would have resulted in denial of the license during the application process under ' 113.04; (4) Engaging in any prohibited activity as provided in ' 113.08; (5) Violation of any other provision of this chapter. (B) Multiple persons under 1 license. The suspension or revocation of any license iss",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "7ce89c1d3830fb50c93e00bc6ae009c1f660da3d415004bbc30bf1223f12cc0b",
+   "source_document_id": null,
+   "source_title": "7ce89c1d3830fb50c93e00bc6ae009c1f660da3d415004bbc30bf1223f12cc0b.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/113%20-%20Peddlers,%20Solicitors%20and%20Transient%20Merchants.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "General Regulations 7 KNOWINGLY. When with respect to conduct or to a circumstance described by this section a person is aware that his or her conduct is of that nature or that the circumstance exist. PARENT. A person who is a natural parent, adoptive parent, legal custodian, or step-parent of another person. PARTY, GATHERING OR EVENT. A group of persons who have assembled or are assembling for a social occasion or social activity. (B) Hosting, permitting or allowing a party, gathering, or event where minors are consuming/using alcohol and/or controlled substances prohibited . Except as permitted by the free exercise and enjoyment of religion, it shall be unlawful for any person to knowingly permit or allow a minor to use or consume controlled substances and/or alcoholic beverages at that person = s place of residence or other private property, place, or premises under that person = s co",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "8d7f60cfb2494c74e39adc8c16f7244930a9fed1f9ef8b673926740ce139bbc2",
+   "source_document_id": null,
+   "source_title": "8d7f60cfb2494c74e39adc8c16f7244930a9fed1f9ef8b673926740ce139bbc2.pdf",
+   "official_url": "https://shelbycounty.ky.gov/General%20Offenses/130%20-%20General%20Regulations.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "Road Encroachment Permits 57 /A\\ (D) II)cation of encroachment . The location of the encroachment shall not have the potential to adversely affect any adjacent or nearby drainage structures . (E) SheLb) County engineering requirements . Any additional engineering, design, or construction standards promulgated by the County Fiscal Court. Additional county engineering requirements, other than those provided within this chapter, shall be adopted by resolution. (F) Temporary road encroachments . The county may issue temporary road encroaclunents Temporary road encroachments are generally issued for vehicle ingress and egress associated with land-disturbing activities requiring alternative access. All temporary road encroachment permits will indicate an expiration date. The county right-of-way shall be restored to pre-existing conditions when the temporary road encroachment permit expires . (",
+   "tags": [
+    "prohibited",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb",
+   "source_document_id": null,
+   "source_title": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2003-04-01%20Series%202025.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "58 Shelby County - General Regulations g 97.10 ENCROACHMENT MAINTENANCE. Any person owning property fronting on the county right-of-way shall keep in repair and properly maintain any associated road, alley, driveway, or other vehicle access to and from the county road that is located in the county right-of-way. This includes any associated culvert required under § 97.08. (Ord. 07-02-05, passed 7-2-2024) § 97.11 FEES. (A) Proposed amendments to the fee schedule may be submitted at any time by the County Fiscal Court. Any new or revised fees will become effective on the first day of the month following the month in which the amended fee schedule is adopted. (B) The fees for permits and inspections shall be as provided below: (1) Residential or farm encroachment/entrance pennits: $50. (2) Inspection of residential or farm encroachment/entrance of pipe not installed by Road Department $50 pe",
+   "tags": [
+    "fee",
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb",
+   "source_document_id": null,
+   "source_title": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2003-04-01%20Series%202025.pdf"
+  },
+  {
+   "page": 9,
+   "snippet": "Street Names and Addresses 46A (C) The departments or persons listed above shall be responsible for ensuring that all road signs are of the correct size and appearance, contain the correct spelling of the road name as assigned by the E-911 Address Coordinator, and are placed in an appropriate location. In the event of theft, vandalism, damage, or any other incident that affects the visibility of a road sign, the above departments or persons shall repair or replace those road signs. The E-911 Address Coordinator shall promptly notify the appropriate agency of any missing or damaged road signs that may be brought to the E-911 Address Coordinator’s attention. (Ord. 08-04-14, passed 8-4-2009) § 93.07 RESERVING ROAD NAMES. Any person may reserve a road name for a proposed road. Persons wishing to reserve a road name must contact the E-911 Address Coordinator in writing. The road name must mee",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "921904d3b040d4c651ccc4582b67b09698e458b9a7ba8620e3955875b812e2c7",
+   "source_document_id": null,
+   "source_title": "921904d3b040d4c651ccc4582b67b09698e458b9a7ba8620e3955875b812e2c7.pdf",
+   "official_url": "https://shelbycounty.ky.gov/General%20Regulations/93%20-%20Street%20Names%20and%20Addresses.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "Alcoholic Beverages 13 (9) Any licenses issued after January 1 of any year shall be assessed a fee equal to one-half of the annual fee for the remainder of the license period. (10) In the event that any license issued pursuant to this chapter is revoked the licensee shall not be entitled to a refund of any license fee. (B) General conditions for all licenses. All licenses granted under this chapter shall be granted subject to the following conditions, and all other conditions of other ordinances and regulations applicable thereto. (1) Each licensed premises shall at all times be conducted in an orderly manner, and no disorderly, riotous or indecent conduct shall be allowed at any time on any licensed premises, and no nuisance suffered, permitted or maintained thereon. (2) It shall be unlawful for any licensee under this chapter to sell, keep or permit to be sold or kept on the licensed p",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3",
+   "source_document_id": null,
+   "source_title": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/110%20-%20Alcoholic%20Beverages.pdf"
+  },
+  {
+   "page": 8,
+   "snippet": "8. Any owner, occupant or person having control or management of a premises found to have committed a civil offense in violation of this ordinance pursuant to a final order or a final court judgment shall be fined not less than two hundred ($200) dollars nor more than five hundred ($500) doILars and shall pay all costs and expenses incurred by the county in pursuing and, if necessary in remedying the vioLation. Each day constitutes a new violation. 9. Pursuant to KRS 65.8835, SheLby County Fiscal Court shall possess a lien on property owned by the person found by a final order, as defined by KRS 65.8805(8), or by a final judgment of the court, to have committed a violation of this Ordinance. The lien shaLL be for aLL civil fines assessed for the violation and for all charges and fees incurred by the local government in connection with the enforcement of the ordinance, including abatement",
+   "tags": [
+    "fee",
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "bec20e994ae92ddb805bbdf1b72641083a7ccc441a46b1e02f2326e94cdbee64",
+   "source_document_id": null,
+   "source_title": "bec20e994ae92ddb805bbdf1b72641083a7ccc441a46b1e02f2326e94cdbee64.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2003-04-02%20Series%202025.pdf"
+  },
+  {
+   "page": 9,
+   "snippet": "General Provisions 7 /-\"-\\ (2) Records confidentially disclosed to an agency and compiled and maintained for scientific research, the regulation of commercial enterprise, including mineral exploration records, unpatented secret commercially-valuable plans , appliances , formulae, or processes which are used for the making, preparing, compounding, treating, or processing of articles or materials which are trade commodities obtained from a person and which are generally recognized as confidential, or for the grant or review of a license to do business, and if openly disclosed, would permit an unfair advantage to competitors of the subject’s enterprise. This exemption shall not, however, apply to records the disclosure or publication of which is directed by other statute . (Res. 9, passed 9-10-1991) § 30.03 ADOPTION OF ADMINISTRATIVE CODE. (A) Shelby County) Kentuckyp through the Shelby Cou",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "d7d30caa23b9d9a88397f889a40f3f61814f2a668c2a27590474740ee7ddebea",
+   "source_document_id": null,
+   "source_title": "d7d30caa23b9d9a88397f889a40f3f61814f2a668c2a27590474740ee7ddebea.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%20No.%2003-05-01%20Series%202024.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "Section 10 Encroachment Maintenance. Any person owning property fronting on Shelby County right-of-way shall keep in repair and properly maintain any associated road, alley, driveway, or other vehicle access to and from the county road that is located in the Shelby County right-of-way. This includes any associated culvert required under Section 8 of this ordinance. Section 11 - Fees. Proposed amendments to the fee schedule may be submitted at any time by the Shelby County Fiscal Court. Any new or revised fees will become effective on the first day of the month following the month in which the amended fee schedule is adopted. The fees for permits and inspections shall be as provided below: Residential or Farm encroachment/entrance Permits: $50.00 Inspection of residential or farm encroachment/entrance of pipe not installed by Road Department $50.00 per entrance inspection Road Department ",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "d95b4132d3b84f662d5ecf85703b92961bb51fe76f72059beb67b805231f932c",
+   "source_document_id": null,
+   "source_title": "d95b4132d3b84f662d5ecf85703b92961bb51fe76f72059beb67b805231f932c.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2007-02-05%20Series%202024.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "COMMONWEALTH OF KENTUCKY SHELBY COUNTY FISCAL COURT ORDINANCE NO. 04-02-03, SERIES 2024 AN ORDINANCE REPEALiNG SHELBY COUNTY CODE OF ORDINANCES CHAPTER 150: BUILDING REGULATION AND SIMULTANEOUSLY ENACTING A NEW ORDINANCE ADDRESSING BUILDING REGULATIONS IN SHELBY COUNTY, KENTUCKY WHEREAS, Shelby County, Kentucky, acting through the Shelby County Fiscal Court, previously adopted the uniform state building code as promulgated in 815 KAR 7: 120 and 125 by the Board of Housing, Buildings and Construction of the Commonwealth of Kentucky, in Ordinance No. 04- 19-04, Series 2005, as amended in Ordinance No. 07-07.1 1, Series 2009, which was codified in Title XV, Chapter 150, of the Shelby County, Kentucky Code of Ordinances, and WHEREAS, the Shelby County Fiscal Court has reviewed that ordinance and determined that it is necessary to repeal that ordinance and simultaneously enact a new ordinance",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "ffebc35c6a3d40bfbea9100850880ac1b81a90c386d7a9d00f2f1b77627bf686",
+   "source_document_id": null,
+   "source_title": "ffebc35c6a3d40bfbea9100850880ac1b81a90c386d7a9d00f2f1b77627bf686.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2004-02-03%20%20Series%202024.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "SECTION 6: DEFUVITIONS/CLARIFICATIONS/POLICIES 1. Accessory Structure: Accessory structures include barns, garages, tool sheds, storage sheds, retaining walls and other types of residential-use structures. One-story detached accessory structures that are under two hundred square feet do not require a building permit. Reinspection fee: The first of each type of inspection is included in the permit fee. A follow-up inspection would take place if the inspector issued a correction notice. This inspection will also be included in the permit fee. If any additional inspections are required, a $50 fee will be accessed. This fee must be paid prior to the next inspection being scheduled. The fee will double for each follow-up inspection. Types of Inspections: Footing, Block Foundation (crawlspaces), &aming, insulation and final. FOOTER- Call the morning that you are going to pour the footer. Inspe",
+   "tags": [
+    "fee",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "ffebc35c6a3d40bfbea9100850880ac1b81a90c386d7a9d00f2f1b77627bf686",
+   "source_document_id": null,
+   "source_title": "ffebc35c6a3d40bfbea9100850880ac1b81a90c386d7a9d00f2f1b77627bf686.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2004-02-03%20%20Series%202024.pdf"
+  },
+  {
+   "page": 8,
+   "snippet": "26 Shelby County - Business Regulations 3. It advertises or holds itself out in any forum as an Adult Entertainment Business by use of such terms as sex toys, X-rated, XXX, adult, sex, nude, or otherwise advertises or holds itself out as a sexually oriented business. (b) ADULT NOVELTY STORE shall not include any establishment which, as a substantial portion of its business, offers for sale or rental to persons employed in the medical, legal or education professions anatomical models, including representations of human genital organs or female breasts, or other models, displays, and exhibits produced and marketed primarily for use in the practice of medicine or law or for use by an educational institution. (8) ADULT THEATER. A theater, concert hall, auditorium, or similar commercial establishment that as a substantial or significant portion of its business regularly features persons who a",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517",
+   "source_document_id": null,
+   "source_title": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/111%20-%20Adult%20Entertainment%20Establishments.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "46 Shelby County - Business Regulations COMPENSATION. Means wages, salaries, commissions, or any other form of remuneration paid or payable by an employer for services performed by an employee, which are required to be reported for federal income tax purposes and adjusted as follows: (1) Include any amounts contributed by an employee to any retirement, profit sharing, or deferred compensation plan, which are deferred for federal income tax purposes under a salary reduction agreement or similar arrangement, including but not limited to salary reduction arrangements under Section 401(a), 401(k), 402(e), 403(a), 403(b), 408, 414(h), or 457 of the Internal Revenue Code; and (2) Include any amounts contributed by an employee to any welfare benefit, fringe benefit, or other benefit plan made by salary reduction or other payment method which permits employees to elect to reduce federal taxable ",
+   "tags": [
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "78458232980380eed95d3eabd7c4572c6408146404aaca29b75dcfff580def33",
+   "source_document_id": null,
+   "source_title": "78458232980380eed95d3eabd7c4572c6408146404aaca29b75dcfff580def33.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/112%20-%20Business%20and%20Occupation%20License%20Fees.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "64 Shelby County - Business Regulations (3) Participants in fairs and convention center activities when the participants = businesses are conducted for amusement, entertainment or in conjunction with said fairs or convention center activities. (4) Any general sale, fair, auction or bazaar sponsored by any religious, educational, public service or charitable organization. (Ord. 09-06-02, passed 9-6-2011) ' 113.04 LICENSE INELIGIBILITY. The following shall be grounds for denying a peddler or transient merchant license: (A) The failure of an applicant to obtain and demonstrate proof of having obtained any required state license; (B) The failure of an applicant to truthfully provide any information required as part of the application process; (C) The failure of an applicant to sign the license application; (D) The failure of an applicant to pay the required fee at the time of application; (E",
+   "tags": [
+    "sign",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "7ce89c1d3830fb50c93e00bc6ae009c1f660da3d415004bbc30bf1223f12cc0b",
+   "source_document_id": null,
+   "source_title": "7ce89c1d3830fb50c93e00bc6ae009c1f660da3d415004bbc30bf1223f12cc0b.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/113%20-%20Peddlers,%20Solicitors%20and%20Transient%20Merchants.pdf"
+  },
+  {
+   "page": 19,
+   "snippet": "/Hb\\\\ CHAPTER 150: BUILDING REGULATIONS Section 150.01 150.02 150.03 150.04 150.05 150.06 Adoption of Kentucky Building Code Designated enforcement officer Building inspection program Permits and fees Per eost schedule Definitions/clarifications/policies § 150.01 ADOPTION OF KENTUCKY BUILDING CODE. (A) The International Building Code, International Residential Code and Kentucky Building Code; and any fhture editions or amendments as promulgated in 815 KAR 7: 120 and 125 6y the Board of Housing, Buildings and Construction. , Commonwealth of Kentucky, are hereby adopted in full as a chapter of Shelby County of the Commonwealth of Kentucky as if set out at length herein. /'-\"\"\\ (B) A copy of the International Building Code and Kentucky Building Codes shall be filed with the Shelby County Clerk where they can be kept for public reference purposes . (C) An attested copy of this newly enacted ",
+   "tags": [
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb",
+   "source_document_id": null,
+   "source_title": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2003-04-01%20Series%202025.pdf"
+  },
+  {
+   "page": 20,
+   "snippet": "4 Shelby County - Land Usage § ISO.03 BUILDING INSPECTION PROGRAM. Pursuant to KRS 198B.060(8), a building inspection program is hereby established in Shelby County, Kentucky, for application to all buildings, including single-family dwellings as provided in the adopted codes. (Ord. 05-18-02, passed 5-17-2021; Am. Ord. 04-02-03 , passed 4-2-2024) § 150.04 PERMITS AND FEES. (A) Below is the initial fee schedule which shan be effective when this chapter is adopted. Proposed amendments to the schedule may be submitted at any time by the County Fiscal Court. Any new or revised fees will become effective on the first day of the month following the adoption of the amended fee schedule, Construction T)pe New home (including all areas under roof) Townhome or condominium (including all areas under roof) Additions Alterations/remodels Basement finish Under roof non-air-conditioned deck or porch Un",
+   "tags": [
+    "fee",
+    "area",
+    "authority",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb",
+   "source_document_id": null,
+   "source_title": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2003-04-01%20Series%202025.pdf"
+  },
+  {
+   "page": 21,
+   "snippet": "Building Regulations 5 ./-\"---\\. (B) Commercial permit and inspection fees shall be as follows: Construction Type Fee New Based upon building cost as reflected in § 150.05 Fit ups/renovations Based upon building cost as reflected in § 150.05 Additions Based upon building cost as reflected in § 150.05 Accessory structures Based upon building cost as reflected in § 150.05 Demolitions Based upon building cost as reflected in § 150.05 Electrical permit $50 Moving a commercial structure $ 100 State reviewed/issued permits Based upon half the building cost as reflected in § 150.05 Range hood/suppression $225 Sprinkler systems with 1-199 sprinkler heads $200 $200 $250 $50 $50 /+-- Other fire suppression systems Fire alarm Construction trailer Temporary tents (C) Other fees . ( 1) Second re-inspection. The cost of the preliminary footing, block foundation (crawl space) , framing, insulation and ",
+   "tags": [
+    "fee",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb",
+   "source_document_id": null,
+   "source_title": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2003-04-01%20Series%202025.pdf"
+  },
+  {
+   "page": 29,
+   "snippet": "Index 5 ANIMALS (Cont’d) Nuisance, 90.08 Penalty, 90.99 Sale of rabies vaccine, 90.14 Vaccinations , 90.03 BAGDAD VOLUNTEER FIRE PROTECTION DISTRICT (See FIRE PREVENTION AND PROTECTION) BUILDING REGULATIONS Adoption of Kentucky Building Code, 150.01 Building inspection program, 150.03 Definitions/clarifications/policies, 150.06 Designated enforcement officer, 150.02 Per cost schedule, 150.05 Permits and fees, 150.04 BUSINESS LICENSING Administrative provisions, 112.10 Apportionment, 112.04 Definitions , 112.01 Employers to withhold, 112.05 Extensions , 112.07 Federal audit provisions , 112.09 General business certificate required, 112.13 Information to remain confidential. 112. 11 Occupational license application required, 112.02 Occupational license tax payment required, 112.03 Penalty, 112.99 Refunds, 112.08 Returns required, 112.06 Use of occupational tax, 112.12 .A\\ CANNABINOIDS , SY",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb",
+   "source_document_id": null,
+   "source_title": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2003-04-01%20Series%202025.pdf"
+  },
+  {
+   "page": 31,
+   "snippet": "Index IOA ,'---'\\. PUBLIC RECORDS Access to public records, 30.02 PUBLIC SAFETY COMMUNICATION CENTER (See HAZARDOUS MATERIALS) RABIES (See ANIMALS) RECREATION (See PARKS AND RECREATION; RECREATION BOARD) RECREATIONAL BOARD (See also PARKS AND RECREATION) Establishment, 31.50 REFUSE (See NUISANCES; SOLID WASTE; SOLID WASTE DISPOSAL DISTRICT BOARD) ROAD ENCROACHMENT PERMITS Administering authorities of Shelby County, 97.06 Applicability, 97.03 Definitions , 97.02 Encroachment maintenance , 97. 10 Enforcernent, 97. 12 Exemptions, 97.04 Fees. 97.11 Permit holder requirements , 97.09 Relationships and conflicts , 97.05 Road encroachment permit requirements , 97.07 Standards , requirements , and criteria, 97.08 Title, authority, purpose, and jurisdiction, 97.01 ./-~\\ SEWERS (See also SUBDIVISION REGULATIONS; ZONING REGULATIONS) Building Sewers and Connections Design and installation, 51.047 In",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb",
+   "source_document_id": null,
+   "source_title": "914c68a3ce250e1230655701fc173a283768de68e9b6c5eef60febc2aa38b6bb.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2003-04-01%20Series%202025.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "CHAPTER 94: PARKS AND RECREATION Section 94.01 Operation of motor vehicles within the parks system 94.99 Penalty § 94.01 OPERATION OF MOTOR VEHICLES WITHIN THE PARKS SYSTEM. (A) It shall be unlawful without a Parks System permit to operate any motorized vehicle in any facility within the Shelbyville/Shelby County Parks and Recreation System except on designated roadways and in designated parking areas. (B) It shall be unlawful without a Parks System permit to park any motorized vehicle in any facility within the Shelbyville/Shelby County Parks and Recreation System except in designated parking areas, provided, however, it shall be permissible to parallel park along the entrance road to Lake Shelby and in Clear Creek Park at the softball facility, should all parking areas be filled then, in that event, it shall be permissible to parallel park along the back road of the park. (C) There sha",
+   "tags": [
+    "fee",
+    "illumination",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "921904d3b040d4c651ccc4582b67b09698e458b9a7ba8620e3955875b812e2c7",
+   "source_document_id": null,
+   "source_title": "921904d3b040d4c651ccc4582b67b09698e458b9a7ba8620e3955875b812e2c7.pdf",
+   "official_url": "https://shelbycounty.ky.gov/General%20Regulations/93%20-%20Street%20Names%20and%20Addresses.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CHAPTER 94: PARKS AND RECREATION Section 94.01 Operation of motor vehicles within the parks system 94.99 Penalty § 94.01 OPERATION OF MOTOR VEHICLES WITHIN THE PARKS SYSTEM. (A) It shall be unlawful without a Parks System permit to operate any motorized vehicle in any facility within the Shelbyville/Shelby County Parks and Recreation System except on designated roadways and in designated parking areas. (B) It shall be unlawful without a Parks System permit to park any motorized vehicle in any facility within the Shelbyville/Shelby County Parks and Recreation System except in designated parking areas, provided, however, it shall be permissible to parallel park along the entrance road to Lake Shelby and in Clear Creek Park at the softball facility, should all parking areas be filled then, in that event, it shall be permissible to parallel park along the back road of the park. (C) There sha",
+   "tags": [
+    "fee",
+    "illumination",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "9bc9b631265494c9a4fd167fac56df214c87fd6240bc1f2963aef348b90b639b",
+   "source_document_id": null,
+   "source_title": "9bc9b631265494c9a4fd167fac56df214c87fd6240bc1f2963aef348b90b639b.pdf",
+   "official_url": "https://shelbycounty.ky.gov/General%20Regulations/94%20-%20Parks%20and%20Recreation.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "4 Shelby County - Land Usage § 150.03 BUILDING INSPECTION PROGRAM. Pursuant to KRS 198B.060(8), a building inspection program is hereby established in Shelby County for application to all buildings, including single-family dwellings as provided in the adopted codes. (Ord. 4-19-04, passed 4-19-2005) § 150.04 PERMITS AND FEES. The fees for permits and inspections shall be as provided below: (A) Local construction fees: Building Type Fee Residential con struction $.14 per square foot Non - residential construction $.06 per square foot Detached garages $100 (B) Fees for other required permits shall be as follows: Residential additions $.14 per square foot Non - residential additions $.06 per square foot Non - residential re - habitations $.03 per square foot Demolitions $25 Moving of structure $100 Blasting permit $50 Re - inspection fee $50 Issuing elec. permit for elec. insp. $25 HVAC perm",
+   "tags": [
+    "fee",
+    "area",
+    "authority",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "a7b8a854f635ddbd3048e36dcb8c0524e104bf2e87901ae2aa129a78995a15e1",
+   "source_document_id": null,
+   "source_title": "a7b8a854f635ddbd3048e36dcb8c0524e104bf2e87901ae2aa129a78995a15e1.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Land%20Usage/150%20-%20Building%20Regulations.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Alcoholic Beverages 7 (C) Drinking contests, all-you-can-drink specials and free drinks. No licensee shall sponsor, offer or permit drinking contests, all-you-can-drink specials or free drinks on any licensed premises in the county. (D) Radio-receiving apparatus adjusted to police band. It shall be unlawful for any licensee licensed under this chapter to have or maintain any radio-receiving apparatus on the premises that is intentionally adjusted so as to receive police messages broadcast from any law enforcement agency in the county, as it is now or may hereafter be operated. In addition to other penalties provided for the violation of this section, the County A.B.C. Administrator, or the Administrator's designated investigator, shall have the authority to confiscate any and all such radio-receiving apparatus. (E) Security. (1) The licensee shall be responsible for maintaining security ",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3",
+   "source_document_id": null,
+   "source_title": "bb1075f121c9469e13841b3f088ccceee5981500a680533ce7a4d48d50d00da3.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/110%20-%20Alcoholic%20Beverages.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "2. Clean Community Coordinator: an employee of the County tasked with receiving and investigating complaints and issuing Notices of Violation. 3. Code Enforcement Officer: a citation officer, county sheriff, deputy sheriff, or other public law enforcement officer with the authority to issue a citation, 4. Ordinary Public View: a sight line within normal visual range by a person on a public street or sidewalk adjacent to real property. 5. Nuisance: anything that endangers life or health, gives offense to the senses, violates the laws of decency and obstructs the reasonable and comfortable use or enjoyment of property, including the unreasonabLe, unwarrantabLe, or unlawful use by a person of his own real or personal property. 6. Refuse: all putrescible and non-putrescible solid waste (except body waste) including, but not limited to, garbage, litter, rubbish, ashes, street cleanings, dead ",
+   "tags": [
+    "illumination",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "bec20e994ae92ddb805bbdf1b72641083a7ccc441a46b1e02f2326e94cdbee64",
+   "source_document_id": null,
+   "source_title": "bec20e994ae92ddb805bbdf1b72641083a7ccc441a46b1e02f2326e94cdbee64.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2003-04-02%20Series%202025.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "coverage or paYment of insurance proceeds, the time period for properLy disposing of the sald mobile home maY be extended with the approval of the SheLby County Code Enforcement Officer or other authorized pubLic official pending the outcome of the insurance controversy. Permanent structures: i. AnY structure, including but not limited to homes and outbuildings1 that is constructed on a permanent foundation or otherwise cannot be considered a “mobile home” under the definitions contained herein that has been abandoned and is no longer fit for human habitation shall be deemed a nuisance under this Ordinance. The owner of said home shall take all necessary steps to abate the nuisance and properly dispose of the home or in the aLternative board the home and post No Trespassing signs thereto. Notwithstanding the terms of this section, if a structure, under this section, has been damaged or d",
+   "tags": [
+    "sign",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "bec20e994ae92ddb805bbdf1b72641083a7ccc441a46b1e02f2326e94cdbee64",
+   "source_document_id": null,
+   "source_title": "bec20e994ae92ddb805bbdf1b72641083a7ccc441a46b1e02f2326e94cdbee64.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2003-04-02%20Series%202025.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CHAPTER 71: PARKING Section 71.01 Shelby County Road Supervisor 71.99 Penalty ' 70.01 SHELBY COUNTY ROAD SUPERVISOR. (A) The Shelby County Road Supervisor is hereby authorized to establish no stopping, time-limit, or no parking zones on any street in the unincorporated areas of Shelby County, Kentucky where he or she determines particular hazards exist or where unusual delays in traffic exist. (B) The Shelby County Road Supervisor, or his or her designee, is hereby authorized to erect signs or place signs indicating no stopping, time-limit parking, or no parking on any street in the unincorporated areas of Shelby County, Kentucky upon making a determination that particular hazards exist or where unusual delays in traffic exist. (Ord. 10-02-05, passed 10-2-2012) Penalty, see ' 71.99 ' 71.99 PENALTY. Any person found in violation of this chapter shall be guilty of violation and fined not l",
+   "tags": [
+    "sign",
+    "fee",
+    "authority",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "04105db96771a9038b195199e7eec24b9c31329c02ce6ddf1b0d0d66466c0b73",
+   "source_document_id": null,
+   "source_title": "04105db96771a9038b195199e7eec24b9c31329c02ce6ddf1b0d0d66466c0b73.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Traffic%20Code/71%20-%20Parking.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Hazardous Materials 23 EMPLOYER. Any person, firm, corporation, partnership, association, government agency, or other entity engaged in a business or providing service which has employees. ENVIRONMENT. The navigable waters of the United States and any other surface water, ground water, drinking water supply, soil surface, subsurface strata, storm sewer or publicly-owned sanitary sewer or treatment works (other than those handling only wastewater generated at a facility) within Shelby County, Kentucky. The terms shall include air only for purposes of reporting releases pursuant to the further provisions of this subchapter. FACILITY. Any building, structure, installation, equipment, pipe or pipeline (including any pipe into a sewer or publicly-owned treatment works), well, pit, pond, lagoon, impoundment, ditch, landfill, storage container, tank, motor vehicle, truck trailer, rolling stock,",
+   "tags": [
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "1eaa53434748ab38cdc7638ea3ac5a4a17ac31494de3d478f37decdb17c48d26",
+   "source_document_id": null,
+   "source_title": "1eaa53434748ab38cdc7638ea3ac5a4a17ac31494de3d478f37decdb17c48d26.pdf",
+   "official_url": "https://shelbycounty.ky.gov/General%20Regulations/92%20-%20%20Hazardous%20Materials.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "COMMONWEALTH OF KENTUCKY SIDELBY COUNTY FISCAL COURT ORDDVANCE NO. 02-20-02, SERIES 2024 AN ORDINANCE RELATED TO A zoNnqG CLASSIFICATION CHANGE FOR PROPERTY LOCATED IN SHELBY COUNTY, KENrUCKY WHEREAS, Jonathan Martin Co., LLC made application with the Triple S Planning & Zoning Commission requesting that the zoning classification of the hereinaRer property be changed aom Residential (R) to Multi-Family Residential (Rd) on property located on Robin Road in Shelby County, Kentucky, and WHEREAS, the Triple S Planning & Zoning Commission, subsequent to a public hearing held on November 21, 2023, as reflected in its Findings of Fact and Recommendation signed by its chairman on December 19, 2023, recommended that the zoning classification of the hereinafter described property be changed aom Residential (R) to Multi-Family Residential (R-4) on property located on Robin Road in Shelby County, Ke",
+   "tags": [
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "3b61e45f0bb6f2a8c224a7627e484e9b529a87d7faad3cdad7aab7bc4d3b96d2",
+   "source_document_id": null,
+   "source_title": "3b61e45f0bb6f2a8c224a7627e484e9b529a87d7faad3cdad7aab7bc4d3b96d2.pdf",
+   "official_url": "https://shelbycounty.ky.gov/fiscal-court/PublishingImages/Pages/ordinances/Ordinance%2002-20-02%20Series%202024.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "Adult Entertainment Establishments 29 (27) PRINCIPAL USE. A substantial or significant use, but not necessarily a majority of the business activity or stock in trade. The fact that a business may have 1 or more other principal uses unrelated to adult entertainment shall not relieve the business from the provisions of this chapter applicable to Adult Entertainment Establishments. PRINCIPAL USE shall exist in the following circumstances: (a) Where a business establishment dedicates, or permits the use of, at least 25% of the utilized square footage of its premises for adult entertainment activity or activities; or (b) Where at least 25% of the gross receipts of a business establishment, excluding food and beverage receipts, result from adult entertainment activity or activities. (28) SEMI-NUDITY or SEMI-NUDE CONDITION or SEMI-NUDE. Exposing to view, with less than a fully opaque covering, ",
+   "tags": [
+    "area",
+    "prohibited"
+   ],
+   "weight": 4,
+   "source_sha256": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517",
+   "source_document_id": null,
+   "source_title": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/111%20-%20Adult%20Entertainment%20Establishments.pdf"
+  },
+  {
+   "page": 20,
+   "snippet": "38 Shelby County - Business Regulations (b) An applicant is delinquent in the payment to Shelby County of taxes, fees, fines or penalties assessed against or imposed upon the applicant in relation to the Adult Entertainment Establishment. (c) An applicant, including any principal owner of the Adult Entertainment Establishment, has been convicted of a specified criminal activity, as defined in ' 111.03. (d) The proposed Adult Entertainment Establishment is located in a zoning district other than a district in which Adult Entertainment Businesses are allowed to operate under the applicable Shelby County zoning regulations or is not in compliance with the location restrictions established for Adult Entertainment Establishments under this chapter. (e) The applicant = s premises have been found to not be in compliance with Shelby County zoning, building, safety, health or fire codes. (f) The ",
+   "tags": [
+    "temporary",
+    "penalties",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517",
+   "source_document_id": null,
+   "source_title": "4bee0ed61d9e93694e2e07977da4b29dcafea55317d6f789632132252cec6517.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/111%20-%20Adult%20Entertainment%20Establishments.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "Animals 9 (B) Peace officers or Animal Control Officers shall seize and impound any dog which does not bear a valid rabies tag or other legible identification which is found running at large. Where violations of the licensing requirements of this chapter are observed, the Animal Control Officer may issue a violation notice in lieu of a uniform citation. The violation notice will stipulate a compliance date and associated fee and late fee, as well as a waiver provision providing that the person to whom the violation notice is issued waives all rights to protest the violation and waives all right to a hearing on the issues relating to that violation. All associated fees and late fees shall be paid to the Shelby County Animal Shelter. Failure to pay associated fees and/or late fees and failure to waive rights by the compliance date may result in the issuance of a uniform citation. (Ord. 7-6",
+   "tags": [
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "750da394031e7c96275ef6e1f1751781abd4408386e138834ad978304fb1cfbc",
+   "source_document_id": null,
+   "source_title": "750da394031e7c96275ef6e1f1751781abd4408386e138834ad978304fb1cfbc.pdf",
+   "official_url": "https://shelbycounty.ky.gov/General%20Regulations/90%20-%20General%20Regulations.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Business and Occupation License Fees 49 (D) If a business entity makes, or is required to make, a federal income tax return, the occupational license tax shall be computed for the purposes of this ordinance on the basis of the same calendar or fiscal year required by the federal government, and shall employ the same methods of accounting required for federal income tax purposes. (E) The occupational license tax imposed in this section shall not apply to the following persons or business entities: (1) Any bank, trust company, combined bank and trust company, combined trust, banking and title business organized and doing business in this state, any savings and loan association whether state or federally chartered. (2) Any compensation received by members of the Kentucky national guard for active duty training, unit training assemblies and annual field training. (3) Any compensation receive",
+   "tags": [
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 4,
+   "source_sha256": "78458232980380eed95d3eabd7c4572c6408146404aaca29b75dcfff580def33",
+   "source_document_id": null,
+   "source_title": "78458232980380eed95d3eabd7c4572c6408146404aaca29b75dcfff580def33.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/112%20-%20Business%20and%20Occupation%20License%20Fees.pdf"
+  },
+  {
+   "page": 9,
+   "snippet": "Peddlers, Solicitors and Transient Merchants 67 (B) Obstructing the free flow of traffic, either vehicular or pedestrian, on any street, sidewalk, alleyway, or other public right-of-way; (C) Conducting business in a way as to create a threat to the health, safety or welfare of any specific individual or the general public; (D) Conducting business before 8:00 a.m. or after 8:00 p.m.; (E) Failing to provide proof of license, or registration, and identification when requested; (F) Using the license or registration of another person; (G) Alleging false or misleading statements about the products or services being sold, including untrue statements of endorsement or cost. No peddler, solicitor, professional fundraiser or transient merchant shall claim to have the endorsement of the county based on the county having issued a license or certificate of registration to that person; (H) Remaining o",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited"
+   ],
+   "weight": 4,
+   "source_sha256": "7ce89c1d3830fb50c93e00bc6ae009c1f660da3d415004bbc30bf1223f12cc0b",
+   "source_document_id": null,
+   "source_title": "7ce89c1d3830fb50c93e00bc6ae009c1f660da3d415004bbc30bf1223f12cc0b.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Business%20Regulations/113%20-%20Peddlers,%20Solicitors%20and%20Transient%20Merchants.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "46B Shelby County - General Regulations (G) Properties located on roads running north and south shall have even address numbers assigned for properties situated on the east side of the road and odd address numbers for properties situated on the west side of the road. Properties located on roads running east and west shall have even address numbers for properties situated on the north side of the road and odd address numbers for properties situated on the south side of the road. (H) The E- 911 Address Coordinator shall assign each road a “one hundred block” designation. The address assigned to any property within that block shall be within that 100-block range. (Ord. 08-04-14, passed 8-4-2009) § 93.09 ADDRESS ASSIGNMENTS FOR UNIMPROVED PROPERTY OWNED BY PRIVATE INDIVIDUALS. (A) Persons who own unimproved property that is not located within a commercial development may apply for an address",
+   "tags": [
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "921904d3b040d4c651ccc4582b67b09698e458b9a7ba8620e3955875b812e2c7",
+   "source_document_id": null,
+   "source_title": "921904d3b040d4c651ccc4582b67b09698e458b9a7ba8620e3955875b812e2c7.pdf",
+   "official_url": "https://shelbycounty.ky.gov/General%20Regulations/93%20-%20Street%20Names%20and%20Addresses.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Building Regulations 5 (C) Note. (1) The minimum fee for any activity for which a permit is required: $25 (2) The minimum fee for any commercial or industrial permit shall be: $50. (D) Starting without permit. The fee shall be doubled for construction started without a permit. (Ord. 4-19-04, passed 4-19-2005) § 150.05 EFFECTIVE DATE. This chapter shall take effect and be in full force when passed, published and recorded according to law. (Ord. 4-19-04, passed 4-19-2005)",
+   "tags": [
+    "fee",
+    "illumination",
+    "authority"
+   ],
+   "weight": 4,
+   "source_sha256": "a7b8a854f635ddbd3048e36dcb8c0524e104bf2e87901ae2aa129a78995a15e1",
+   "source_document_id": null,
+   "source_title": "a7b8a854f635ddbd3048e36dcb8c0524e104bf2e87901ae2aa129a78995a15e1.pdf",
+   "official_url": "https://shelbycounty.ky.gov/Land%20Usage/150%20-%20Building%20Regulations.pdf"
+  }
+ ]
+}

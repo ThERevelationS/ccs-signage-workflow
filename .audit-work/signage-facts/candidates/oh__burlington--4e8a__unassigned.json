@@ -1,0 +1,24 @@
+{
+ "jurisdiction_id": "6adf8fdaea3592ed4d134e8a",
+ "jurisdiction_name": "Burlington",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Burlington Township Zoning Fees Updated 1/18/2023 ZONING: 2023 Zoning Fee Rates (effective as of 01/18/2023) are as follows: The Board of Trustees reserve the right to increase/decrease zoning fee rates at any time during the year as deemed necessary. Rezoning Application for Hearing Notices $500 payable to Burlington Township Appeal to Board of Zoning Appeals $500 Outdoor Advertising Signs $10 plus additional $0.50 per sq. ft. of sign Residence (1 to 2 family) $0.15 per square foot Oc cupancy Permit (Final Inspection) No Charge Relocation of Structure Permit $20 Garages and Accessory Buildings $0.15 per square foot, $75 minimum Additions to Existing Structure $75 minimum plus $1 per sq. ft in excess 200 sq. ft Commercial and Indus trial Permit $1000 minimum plus $1 per sq. ft in excess of 5000 sq. ft Swimming Pool Permit $20 Trailer - Visitor Permit (Article 5.12) $10 Lot Split $100",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "4cfa304eea0eec58e0151f092a1b2fed148e79d2b8577eff2e08446d28dda088",
+   "source_document_id": null,
+   "source_title": "4cfa304eea0eec58e0151f092a1b2fed148e79d2b8577eff2e08446d28dda088.pdf",
+   "official_url": "https://burlington-township.com/wp-content/uploads/2025/04/Zoning-Fees-1-18-2023.pdf"
+  }
+ ]
+}

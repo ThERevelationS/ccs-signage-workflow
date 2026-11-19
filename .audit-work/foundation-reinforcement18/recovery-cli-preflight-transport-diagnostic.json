@@ -1,0 +1,28 @@
+{
+ "simple": {
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "{\n  \"stdout\": \"fa3b174d70482c8f4e5329ee0e9acf28ec287a50\\n\",\n  \"stderr\": \"\",\n  \"exitCode\": 0,\n  \"truncated\": false,\n  \"durationMs\": 1119\n}\n",
+  "stderr": "Running command\nRunning command\nRan command\n"
+ },
+ "inspect": {
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "{\n  \"stdout\": \"\",\n  \"stderr\": \"[stdin]:1\\nconst fs=require(\\\"fs\\\"),cp=require(\\\"child_process\\\"),crypto=require(\\\"crypto\\\");const paths=[\\\"src/pages/FoundationEstimator.jsx\\\",\\\"src/components/estimator/builder/builderService.js\\\"];console.log(JSON.stringify({head:cp.execSync(\\\"git rev-parse HEAD\\\").toString().trim(),dirty:cp.execSync(\\\"git status --porcelain\\\").toString().trim(),helperExists:fs.existsSync(\\\"src/components/estimator/foundation/foundationBuilderRecovery.js\\\"),files:paths.map(p=>{const s=fs.readFileSync(p,\\\"utf8\\\");return {path:p,crlf:s.includes(\\\"\\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          ^\\nExpected ',', got 'string literal'\\n\\nSyntaxError: Invalid or unexpected token\\n    at makeContextifyScript (node:internal/vm:194:14)\\n    at compileScript (node:internal/process/execution:388:10)\\n    at evalTypeScript (node:internal/process/execution:260:22)\\n    at node:internal/main/eval_stdin:51:5\\n    at Socket.<anonymous> (node:internal/process/execution:205:5)\\n    at Socket.emit (node:events:526:24)\\n    at endReadableNT (node:internal/streams/readable:1783:12)\\n    at process.processTicksAndRejections (nod",
+  "stderr": "Running command\nRunning command\nRan command\n"
+ },
+ "inspect2": {
+  "status": 0,
+  "error": null,
+  "stdout": "{\n  \"stdout\": \"\",\n  \"stderr\": \"/tmp/p.cjs:1\\nconst fs=require(\\\"fs\\\"),cp=require(\\\"child_process\\\"),crypto=require(\\\"crypto\\\");const paths=[\\\"src/pages/FoundationEstimator.jsx\\\",\\\"src/components/estimator/builder/builderService.js\\\"];console.log(JSON.stringify({head:cp.execSync(\\\"git rev-parse HEAD\\\").toString().trim(),dirty:cp.execSync(\\\"git status --porcelain\\\").toString().trim(),helperExists:fs.existsSync(\\\"src/components/estimator/foundation/foundationBuilderRecovery.js\\\"),files:paths.map(p=>{const s=fs.readFileSync(p,\\\"utf8\\\");return {path:p,crlf:s.includes(String.fromCharCode(13,10)),hash:crypto.createHash(\\\"sha256\\\").update(s.split(String.fromCharCode(13,10)).join(\\\"\\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       ^\\n\\nSyntaxError: Invalid or unexpected token\\n    at wrapSafe (node:internal/modules/cjs/loader:1861:18)\\n    at Module._compile (node:internal/modules/cjs/loader:1903:20)\\n    at Object..js (node:internal/modules/cjs/loader:2060:10)\\n    at Module.load (node:internal/modules/cjs/loader:1651:32)\\n    at Module._load (node:internal/modules/cjs/loader:1443:12)\\n    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)\\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\\n    at node:internal/main/run_main_module:33:47\\n\\nNode.js v24.22.1\\n\",\n  \"exitCode\": 1,\n  \"truncated\": false,\n  \"durationMs\": 870\n}\n",
+  "stderr": "Running command\nRunning command\nRan command\n"
+ },
+ "inspect3": {
+  "status": 0,
+  "error": null,
+  "stdout": "{\n  \"stdout\": \"{\\\"head\\\":\\\"fa3b174d70482c8f4e5329ee0e9acf28ec287a50\\\",\\\"dirty\\\":\\\"\\\",\\\"helperExists\\\":false,\\\"files\\\":[{\\\"path\\\":\\\"src/pages/FoundationEstimator.jsx\\\",\\\"crlf\\\":false,\\\"hash\\\":\\\"d4493957101e38cd0aa0b7ad3a9a8ec97fb0def5bee2d8f0f19ac68eacdd0b6a\\\"},{\\\"path\\\":\\\"src/components/estimator/builder/builderService.js\\\",\\\"crlf\\\":false,\\\"hash\\\":\\\"c4ff8a65e632110a0e19ab6f8e76e4b0d9bc2a0d9b16d5212367af6735805daf\\\"}]}\\n\",\n  \"stderr\": \"\",\n  \"exitCode\": 0,\n  \"truncated\": false,\n  \"durationMs\": 1309\n}\n",
+  "stderr": "Running command\nRunning command\nRan command\n"
+ }
+}

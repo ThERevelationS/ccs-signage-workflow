@@ -1,0 +1,323 @@
+{
+  "legacy": {
+    "id": "synthetic-persistence-source",
+    "updated_date": "2026-11-07T12:00:00.000Z",
+    "project_name": "Synthetic persistence only",
+    "items": [
+      {
+        "component_id": "synthetic",
+        "foundation_type": "spread_foot",
+        "quantity": 1,
+        "length_inches": 36,
+        "width_inches": 36,
+        "depth_inches": 36,
+        "include_rebar": true,
+        "include_finishing": true,
+        "custom_rebar_qty": null,
+        "custom_rebar_cost_per_ft": 2,
+        "concrete_volume_cy": 1,
+        "excavation_volume_cy": 1.25,
+        "concrete_bags": null,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_feet": 20,
+        "rebar_rate": 2,
+        "rebar_weight_lbs": 13.36,
+        "rebar_cost": 262.8,
+        "pouring_cost": 15,
+        "finishing_cost": 11.25,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "excavation_cost": 150,
+        "excavation_hours": 2.5,
+        "finishing_hours": 0.1875,
+        "item_total_cost": 439.05,
+        "reinforcement_calculation_version": 1
+      }
+    ]
+  },
+  "rawDraft": {
+    "schema_version": 1,
+    "design": {
+      "version": 2,
+      "bar_diameter_inches": 0.5,
+      "cover_inches": {
+        "side": "3",
+        "top": 3,
+        "bottom": 3
+      },
+      "supports": {
+        "mode": "off",
+        "reason": "Synthetic explicit exclusion, not structural advice."
+      },
+      "spread": {
+        "mats": [
+          {
+            "id": "top",
+            "bearing_elevation_inches": 32,
+            "max_spacing_x_inches": 12,
+            "max_spacing_z_inches": 12
+          }
+        ],
+        "inter_mat_ties": []
+      }
+    },
+    "material": {
+      "kind": "manual",
+      "name": "Synthetic",
+      "reason": "Synthetic explicit per-foot basis",
+      "unit": "ft",
+      "bar_diameter_inches": 0.5,
+      "weight_lb_per_ft": 0.668,
+      "cost_per_ft": 2
+    },
+    "overrides": {
+      "quantity_ft": null,
+      "cost_per_ft": 2
+    }
+  },
+  "adopted": {
+    "id": "synthetic-persistence-source",
+    "updated_date": "2026-11-07T12:00:00.000Z",
+    "project_name": "Synthetic persistence only",
+    "items": [
+      {
+        "component_id": "synthetic",
+        "foundation_type": "spread_foot",
+        "quantity": 1,
+        "length_inches": 36,
+        "width_inches": 36,
+        "depth_inches": 36,
+        "include_rebar": true,
+        "include_finishing": true,
+        "custom_rebar_qty": null,
+        "custom_rebar_cost_per_ft": 2,
+        "concrete_volume_cy": 1,
+        "excavation_volume_cy": 1.25,
+        "concrete_bags": null,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_feet": 20,
+        "rebar_rate": 2,
+        "rebar_weight_lbs": 13.360000000000001,
+        "rebar_cost": 112.00000000000001,
+        "pouring_cost": 15,
+        "finishing_cost": 11.25,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "excavation_cost": 150,
+        "excavation_hours": 2.5,
+        "finishing_hours": 0.1875,
+        "item_total_cost": 288.25,
+        "reinforcement_calculation_version": 2,
+        "rebar_material_cost": 40,
+        "rebar_labor_cost": 72.00000000000001,
+        "rebar_labor_hours": 1.2000000000000002,
+        "rebar_geometry_feet": 20,
+        "rebar_geometry_weight_lbs": 13.360000000000001,
+        "rebar_connection_count": 16,
+        "support_count": 0,
+        "support_purchased_units": 0,
+        "support_packs": 0,
+        "support_material_cost": 0,
+        "support_labor_cost": 0,
+        "support_labor_hours": 0,
+        "support_cost": 0,
+        "reinforcement_design": {
+          "version": 2,
+          "bar_diameter_inches": 0.5,
+          "cover_inches": {
+            "side": 3,
+            "top": 3,
+            "bottom": 3
+          },
+          "supports": {
+            "mode": "off",
+            "reason": "Synthetic explicit exclusion, not structural advice."
+          },
+          "spread": {
+            "mats": [
+              {
+                "id": "top",
+                "bearing_elevation_inches": 32,
+                "max_spacing_x_inches": 12,
+                "max_spacing_z_inches": 12
+              }
+            ],
+            "inter_mat_ties": []
+          },
+          "pillar": {
+            "longitudinal": {}
+          }
+        },
+        "reinforcement_material": {
+          "kind": "manual",
+          "name": "Synthetic",
+          "reason": "Synthetic explicit per-foot basis",
+          "unit": "ft",
+          "bar_diameter_inches": 0.5,
+          "weight_lb_per_ft": 0.668,
+          "cost_per_ft": 2
+        },
+        "reinforcement_cost_snapshot": {
+          "version": 1,
+          "calculation_version": 2,
+          "engineering_approved": false,
+          "amounts": {
+            "geometry_feet": 20,
+            "priced_feet": 20,
+            "connection_count": 16,
+            "material_cost": 40,
+            "labor_hours": 1.2000000000000002,
+            "labor_cost": 72.00000000000001,
+            "steel_cost": 112.00000000000001,
+            "priced_weight_lbs": 13.360000000000001,
+            "geometry_weight_lbs": 13.360000000000001
+          },
+          "material": {
+            "kind": "manual",
+            "inventory_id": null,
+            "inventory_updated_date": null,
+            "name": "Synthetic",
+            "reason": "Synthetic explicit per-foot basis",
+            "pricing_unit": "ft",
+            "original_unit": "ft",
+            "bar_diameter_inches": 0.5,
+            "weight_lb_per_ft": 0.668,
+            "cost_per_ft": 2,
+            "rate_source": "custom_rebar_cost_per_ft"
+          },
+          "basis": {
+            "unit": "ft",
+            "bar_diameter_inches": 0.5,
+            "weight_lb_per_ft": 0.668,
+            "cost_per_ft": 2,
+            "quantity_override_ft": null,
+            "labor_rate_per_hour": 60,
+            "labor_hours_per_ft": 0.02,
+            "labor_hours_per_connection": 0.05,
+            "labor_hours_per_support": 0.05
+          },
+          "rate_sources": [
+            {
+              "key": "foundation_main_labor_rate",
+              "source": "legacy_default",
+              "value": 60
+            },
+            {
+              "key": "foundation_rebar_time_linear_ft",
+              "source": "legacy_default",
+              "value": 0.02
+            },
+            {
+              "key": "foundation_rebar_time_cross_section",
+              "source": "legacy_default",
+              "value": 0.05
+            },
+            {
+              "key": "foundation_rebar_support_time_each",
+              "source": "legacy_default",
+              "value": 0.05
+            }
+          ],
+          "supports": {
+            "version": 1,
+            "status": "off_explained",
+            "mode": null,
+            "count": 0,
+            "per_instance_count": 0,
+            "selections": [],
+            "amounts": {
+              "support_count": 0,
+              "support_purchased_units": 0,
+              "support_packs": 0,
+              "support_material_cost": 0,
+              "support_labor_hours": 0,
+              "support_labor_cost": 0,
+              "support_cost": 0
+            },
+            "issues": []
+          },
+          "cut_schedule": {
+            "version": 1,
+            "status": "unresolved",
+            "bar_size": null,
+            "bar_diameter_inches": 0.5,
+            "instance_count": 1,
+            "cut_lines": [
+              {
+                "source_run_id": "top/x",
+                "role": "horizontal",
+                "mat_id": "top",
+                "bar_size": null,
+                "bar_diameter_inches": 0.5,
+                "cut_length_inches": 30,
+                "shape": "straight",
+                "bend_code": null,
+                "quantity_per_instance": 4,
+                "quantity_total": 4
+              },
+              {
+                "source_run_id": "top/z",
+                "role": "horizontal",
+                "mat_id": "top",
+                "bar_size": null,
+                "bar_diameter_inches": 0.5,
+                "cut_length_inches": 30,
+                "shape": "straight",
+                "bend_code": null,
+                "quantity_per_instance": 4,
+                "quantity_total": 4
+              }
+            ],
+            "piece_count_total": 8,
+            "stock": null,
+            "elevation_summary": [
+              {
+                "kind": "mat",
+                "index": 0,
+                "tier": 0,
+                "mat_id": "top",
+                "bearing_elevation_inches": 32,
+                "x_bars": {
+                  "count": 4,
+                  "cut_length_inches": 30,
+                  "elevation_inches": 32.25
+                },
+                "z_bars": {
+                  "count": 4,
+                  "cut_length_inches": 30,
+                  "elevation_inches": 32.75
+                },
+                "crossings": 16
+              }
+            ],
+            "issues": [
+              {
+                "field": "stock_lengths",
+                "code": "reinforcement_stock_length_unconfigured",
+                "message": "A manual rebar basis carries no catalog stock lengths; the cut lines stand but the stock/waste plan is unresolved — record stock lengths or pin a catalog row.",
+                "severity": "warning"
+              }
+            ]
+          }
+        },
+        "reinforcement_acceptance": {
+          "version": 1,
+          "proposal_id": "synthetic-persistence-preview",
+          "accepted_at": "2026-11-07T12:00:00.000Z",
+          "owner_id": "synthetic-owner",
+          "source_id": "synthetic-persistence-source",
+          "component_id": "synthetic",
+          "source_updated_at": "2026-11-07T12:00:00.000Z",
+          "acknowledged_warning_codes": [
+            "reinforcement_geometry_truncated",
+            "reinforcement_stock_length_unconfigured",
+            "reinforcement_supports_off_explained"
+          ],
+          "engineering_approved": false
+        }
+      }
+    ]
+  }
+}

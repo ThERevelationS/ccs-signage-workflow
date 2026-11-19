@@ -1,0 +1,687 @@
+{
+  "synthetic": true,
+  "engine": ".audit-work/foundation-materials14/calc-before.mjs",
+  "inputs": {
+    "original": {
+      "id": "synthetic-material-project",
+      "updated_date": "v1",
+      "project_concrete_type": "4000_ae",
+      "items": [
+        {
+          "_id": "foundation-1",
+          "foundation_type": "spread_foot",
+          "quantity": 1,
+          "length_inches": 36,
+          "width_inches": 36,
+          "depth_inches": 36,
+          "selected_concrete_id": "bag",
+          "include_rebar": true,
+          "rebar_size": "#4",
+          "rebar_layers": 1,
+          "rebar_spacing_width": 12,
+          "rebar_spacing_length": 12,
+          "include_forming": true,
+          "selected_forming_id": "form"
+        }
+      ]
+    },
+    "inventory": [
+      {
+        "id": "bag",
+        "material_type": "bagged_concrete",
+        "material_name": "Synthetic bag",
+        "cost_per_unit": 5
+      },
+      {
+        "id": "bar",
+        "material_type": "rebar",
+        "rebar_size": "#4",
+        "material_name": "Synthetic rebar",
+        "cost_per_unit": 2
+      },
+      {
+        "id": "form",
+        "material_type": "forming_material",
+        "material_name": "Synthetic form",
+        "cost_per_unit": 10
+      }
+    ]
+  },
+  "full": {
+    "items": [
+      {
+        "_id": "foundation-1",
+        "foundation_type": "spread_foot",
+        "quantity": 1,
+        "length_inches": 36,
+        "width_inches": 36,
+        "depth_inches": 36,
+        "selected_concrete_id": "bag",
+        "include_rebar": true,
+        "rebar_size": "#4",
+        "rebar_layers": 1,
+        "rebar_spacing_width": 12,
+        "rebar_spacing_length": 12,
+        "include_forming": true,
+        "selected_forming_id": "form",
+        "concrete_volume_cy": 1,
+        "excavation_volume_cy": 1.25,
+        "concrete_bags": 45,
+        "rebar_feet": 64,
+        "rebar_weight_lbs": 42.752,
+        "concrete_cost": 225,
+        "concrete_rate": 5,
+        "rebar_cost": 252.8,
+        "rebar_rate": 2,
+        "excavation_cost": 150,
+        "excavation_hours": 2.5,
+        "forming_cost": 212.5,
+        "forming_qty": 1,
+        "pouring_cost": 15,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 855.3
+      }
+    ],
+    "equipment": [],
+    "walls": [],
+    "poles": [],
+    "wallCaps": [],
+    "totals": {
+      "total_concrete_cost": 225,
+      "concrete_delivery_cost": 0,
+      "concrete_delivered_yards": 0,
+      "concrete_rate_per_yard": 201,
+      "concrete_trucks": [],
+      "additional_stops_cost": 0,
+      "total_rebar_cost": 252.8,
+      "total_excavation_cost": 150,
+      "total_forming_materials_cost": 212.5,
+      "total_labor_cost": 15,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_equipment_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "wall_caps_by_material": [],
+      "total_concrete_volume_cy": 1,
+      "total_excavation_volume_cy": 1.25,
+      "total_labor_hours": 2.5,
+      "grand_total": 855.3
+    },
+    "delivery": {
+      "concreteTotal": 0,
+      "roundedYards": 0,
+      "ratePerYard": 201,
+      "trucksList": [],
+      "additionalStopsCost": 0,
+      "availableMixes": [
+        {
+          "id": "3500_ae",
+          "name": "3500 AIR ENTRAINED (AE)",
+          "price": 195.4,
+          "desc": "Often used for driveways, slabs, and moderate-load footings."
+        },
+        {
+          "id": "4000_ae",
+          "name": "4000 AIR ENTRAINED (AE)",
+          "price": 201,
+          "desc": "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability."
+        },
+        {
+          "id": "4500_ae",
+          "name": "4500 AIR ENTRAINED (AE)",
+          "price": 208.7,
+          "desc": "Used for heavy-duty commercial slabs and heavy traffic areas."
+        },
+        {
+          "id": "5000_ae",
+          "name": "5000 AIR ENTRAINED (AE)",
+          "price": 214.6,
+          "desc": "High-strength mix for heavy structural columns, pillars, and extreme load conditions."
+        },
+        {
+          "id": "fast_set",
+          "name": "FAST SET",
+          "price": 248,
+          "desc": "Quick-curing concrete used when rapid strength gain is needed to minimize downtime."
+        }
+      ],
+      "availableAdmixes": [
+        {
+          "id": "calcium_chloride",
+          "name": "Calcium Chloride",
+          "price": 8.5,
+          "desc": "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!"
+        },
+        {
+          "id": "set_retarding",
+          "name": "Set-Retarding Admix (Type D)",
+          "price": 4.5,
+          "desc": "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site."
+        },
+        {
+          "id": "water_reducing",
+          "name": "Water-Reducing Admix (Type A)",
+          "price": 4.25,
+          "desc": "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar."
+        },
+        {
+          "id": "fibers",
+          "name": "Fibers",
+          "price": 12.5,
+          "desc": "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse."
+        },
+        {
+          "id": "winter_service",
+          "name": "Winter Service",
+          "price": 5.5,
+          "desc": "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing."
+        }
+      ]
+    },
+    "catalogIssues": []
+  },
+  "saved": {
+    "id": "synthetic-material-project",
+    "updated_date": "v1",
+    "project_concrete_type": "4000_ae",
+    "items": [
+      {
+        "_id": "foundation-1",
+        "foundation_type": "spread_foot",
+        "quantity": 1,
+        "length_inches": 36,
+        "width_inches": 36,
+        "depth_inches": 36,
+        "selected_concrete_id": "bag",
+        "include_rebar": true,
+        "rebar_size": "#4",
+        "rebar_layers": 1,
+        "rebar_spacing_width": 12,
+        "rebar_spacing_length": 12,
+        "include_forming": true,
+        "selected_forming_id": "form",
+        "concrete_volume_cy": 1,
+        "excavation_volume_cy": 1.25,
+        "concrete_bags": 45,
+        "rebar_feet": 64,
+        "rebar_weight_lbs": 42.752,
+        "concrete_cost": 225,
+        "concrete_rate": 5,
+        "rebar_cost": 252.8,
+        "rebar_rate": 2,
+        "excavation_cost": 150,
+        "excavation_hours": 2.5,
+        "forming_cost": 212.5,
+        "forming_qty": 1,
+        "pouring_cost": 15,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 855.3
+      }
+    ],
+    "total_concrete_cost": 225,
+    "concrete_delivery_cost": 0,
+    "concrete_delivered_yards": 0,
+    "concrete_rate_per_yard": 201,
+    "concrete_trucks": [],
+    "additional_stops_cost": 0,
+    "total_rebar_cost": 252.8,
+    "total_excavation_cost": 150,
+    "total_forming_materials_cost": 212.5,
+    "total_labor_cost": 15,
+    "total_pole_cost": 0,
+    "total_pole_painting_cost": 0,
+    "total_brick_cost": 0,
+    "total_fill_cost": 0,
+    "total_equipment_cost": 0,
+    "total_wall_cost": 0,
+    "total_wall_cap_cost": 0,
+    "wall_caps_by_material": [],
+    "total_concrete_volume_cy": 1,
+    "total_excavation_volume_cy": 1.25,
+    "total_labor_hours": 2.5,
+    "grand_total": 855.3
+  },
+  "results": [
+    {
+      "removed": "bag",
+      "current": {
+        "items": [
+          {
+            "_id": "foundation-1",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_layers": 1,
+            "rebar_spacing_width": 12,
+            "rebar_spacing_length": 12,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "concrete_volume_cy": 1,
+            "excavation_volume_cy": 1.25,
+            "concrete_bags": null,
+            "rebar_feet": 64,
+            "rebar_weight_lbs": 42.752,
+            "concrete_cost": 0,
+            "concrete_rate": 0,
+            "rebar_cost": 252.8,
+            "rebar_rate": 2,
+            "excavation_cost": 150,
+            "excavation_hours": 2.5,
+            "forming_cost": 100,
+            "forming_qty": 1,
+            "pouring_cost": 15,
+            "finishing_cost": 0,
+            "finishing_hours": 0,
+            "item_total_cost": 517.8
+          }
+        ],
+        "equipment": [],
+        "walls": [],
+        "poles": [],
+        "wallCaps": [],
+        "totals": {
+          "total_concrete_cost": 381,
+          "concrete_delivery_cost": 381,
+          "concrete_delivered_yards": 1,
+          "concrete_rate_per_yard": 201,
+          "concrete_trucks": [
+            {
+              "yards": 1,
+              "roundedYards": 1,
+              "cost": 381,
+              "smallOrderFee": 150,
+              "fuelFee": 30
+            }
+          ],
+          "additional_stops_cost": 0,
+          "total_rebar_cost": 252.8,
+          "total_excavation_cost": 150,
+          "total_forming_materials_cost": 100,
+          "total_labor_cost": 15,
+          "total_pole_cost": 0,
+          "total_pole_painting_cost": 0,
+          "total_brick_cost": 0,
+          "total_fill_cost": 0,
+          "total_equipment_cost": 0,
+          "total_wall_cost": 0,
+          "total_wall_cap_cost": 0,
+          "wall_caps_by_material": [],
+          "total_concrete_volume_cy": 1,
+          "total_excavation_volume_cy": 1.25,
+          "total_labor_hours": 2.5,
+          "grand_total": 898.8
+        },
+        "delivery": {
+          "concreteTotal": 381,
+          "roundedYards": 1,
+          "ratePerYard": 201,
+          "trucksList": [
+            {
+              "yards": 1,
+              "roundedYards": 1,
+              "cost": 381,
+              "smallOrderFee": 150,
+              "fuelFee": 30
+            }
+          ],
+          "additionalStopsCost": 0,
+          "availableMixes": [
+            {
+              "id": "3500_ae",
+              "name": "3500 AIR ENTRAINED (AE)",
+              "price": 195.4,
+              "desc": "Often used for driveways, slabs, and moderate-load footings."
+            },
+            {
+              "id": "4000_ae",
+              "name": "4000 AIR ENTRAINED (AE)",
+              "price": 201,
+              "desc": "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability."
+            },
+            {
+              "id": "4500_ae",
+              "name": "4500 AIR ENTRAINED (AE)",
+              "price": 208.7,
+              "desc": "Used for heavy-duty commercial slabs and heavy traffic areas."
+            },
+            {
+              "id": "5000_ae",
+              "name": "5000 AIR ENTRAINED (AE)",
+              "price": 214.6,
+              "desc": "High-strength mix for heavy structural columns, pillars, and extreme load conditions."
+            },
+            {
+              "id": "fast_set",
+              "name": "FAST SET",
+              "price": 248,
+              "desc": "Quick-curing concrete used when rapid strength gain is needed to minimize downtime."
+            }
+          ],
+          "availableAdmixes": [
+            {
+              "id": "calcium_chloride",
+              "name": "Calcium Chloride",
+              "price": 8.5,
+              "desc": "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!"
+            },
+            {
+              "id": "set_retarding",
+              "name": "Set-Retarding Admix (Type D)",
+              "price": 4.5,
+              "desc": "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site."
+            },
+            {
+              "id": "water_reducing",
+              "name": "Water-Reducing Admix (Type A)",
+              "price": 4.25,
+              "desc": "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar."
+            },
+            {
+              "id": "fibers",
+              "name": "Fibers",
+              "price": 12.5,
+              "desc": "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse."
+            },
+            {
+              "id": "winter_service",
+              "name": "Winter Service",
+              "price": 5.5,
+              "desc": "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing."
+            }
+          ]
+        },
+        "catalogIssues": []
+      }
+    },
+    {
+      "removed": "bar",
+      "current": {
+        "items": [
+          {
+            "_id": "foundation-1",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_layers": 1,
+            "rebar_spacing_width": 12,
+            "rebar_spacing_length": 12,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "concrete_volume_cy": 1,
+            "excavation_volume_cy": 1.25,
+            "concrete_bags": 45,
+            "rebar_feet": 64,
+            "rebar_weight_lbs": 42.752,
+            "concrete_cost": 225,
+            "concrete_rate": 5,
+            "rebar_cost": 124.80000000000001,
+            "rebar_rate": 0,
+            "excavation_cost": 150,
+            "excavation_hours": 2.5,
+            "forming_cost": 212.5,
+            "forming_qty": 1,
+            "pouring_cost": 15,
+            "finishing_cost": 0,
+            "finishing_hours": 0,
+            "item_total_cost": 727.3
+          }
+        ],
+        "equipment": [],
+        "walls": [],
+        "poles": [],
+        "wallCaps": [],
+        "totals": {
+          "total_concrete_cost": 225,
+          "concrete_delivery_cost": 0,
+          "concrete_delivered_yards": 0,
+          "concrete_rate_per_yard": 201,
+          "concrete_trucks": [],
+          "additional_stops_cost": 0,
+          "total_rebar_cost": 124.80000000000001,
+          "total_excavation_cost": 150,
+          "total_forming_materials_cost": 212.5,
+          "total_labor_cost": 15,
+          "total_pole_cost": 0,
+          "total_pole_painting_cost": 0,
+          "total_brick_cost": 0,
+          "total_fill_cost": 0,
+          "total_equipment_cost": 0,
+          "total_wall_cost": 0,
+          "total_wall_cap_cost": 0,
+          "wall_caps_by_material": [],
+          "total_concrete_volume_cy": 1,
+          "total_excavation_volume_cy": 1.25,
+          "total_labor_hours": 2.5,
+          "grand_total": 727.3
+        },
+        "delivery": {
+          "concreteTotal": 0,
+          "roundedYards": 0,
+          "ratePerYard": 201,
+          "trucksList": [],
+          "additionalStopsCost": 0,
+          "availableMixes": [
+            {
+              "id": "3500_ae",
+              "name": "3500 AIR ENTRAINED (AE)",
+              "price": 195.4,
+              "desc": "Often used for driveways, slabs, and moderate-load footings."
+            },
+            {
+              "id": "4000_ae",
+              "name": "4000 AIR ENTRAINED (AE)",
+              "price": 201,
+              "desc": "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability."
+            },
+            {
+              "id": "4500_ae",
+              "name": "4500 AIR ENTRAINED (AE)",
+              "price": 208.7,
+              "desc": "Used for heavy-duty commercial slabs and heavy traffic areas."
+            },
+            {
+              "id": "5000_ae",
+              "name": "5000 AIR ENTRAINED (AE)",
+              "price": 214.6,
+              "desc": "High-strength mix for heavy structural columns, pillars, and extreme load conditions."
+            },
+            {
+              "id": "fast_set",
+              "name": "FAST SET",
+              "price": 248,
+              "desc": "Quick-curing concrete used when rapid strength gain is needed to minimize downtime."
+            }
+          ],
+          "availableAdmixes": [
+            {
+              "id": "calcium_chloride",
+              "name": "Calcium Chloride",
+              "price": 8.5,
+              "desc": "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!"
+            },
+            {
+              "id": "set_retarding",
+              "name": "Set-Retarding Admix (Type D)",
+              "price": 4.5,
+              "desc": "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site."
+            },
+            {
+              "id": "water_reducing",
+              "name": "Water-Reducing Admix (Type A)",
+              "price": 4.25,
+              "desc": "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar."
+            },
+            {
+              "id": "fibers",
+              "name": "Fibers",
+              "price": 12.5,
+              "desc": "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse."
+            },
+            {
+              "id": "winter_service",
+              "name": "Winter Service",
+              "price": 5.5,
+              "desc": "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing."
+            }
+          ]
+        },
+        "catalogIssues": []
+      }
+    },
+    {
+      "removed": "form",
+      "current": {
+        "items": [
+          {
+            "_id": "foundation-1",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "selected_concrete_id": "bag",
+            "include_rebar": true,
+            "rebar_size": "#4",
+            "rebar_layers": 1,
+            "rebar_spacing_width": 12,
+            "rebar_spacing_length": 12,
+            "include_forming": true,
+            "selected_forming_id": "form",
+            "concrete_volume_cy": 1,
+            "excavation_volume_cy": 1.25,
+            "concrete_bags": 45,
+            "rebar_feet": 64,
+            "rebar_weight_lbs": 42.752,
+            "concrete_cost": 225,
+            "concrete_rate": 5,
+            "rebar_cost": 252.8,
+            "rebar_rate": 2,
+            "excavation_cost": 150,
+            "excavation_hours": 2.5,
+            "forming_cost": 202.5,
+            "forming_qty": 1,
+            "pouring_cost": 15,
+            "finishing_cost": 0,
+            "finishing_hours": 0,
+            "item_total_cost": 845.3
+          }
+        ],
+        "equipment": [],
+        "walls": [],
+        "poles": [],
+        "wallCaps": [],
+        "totals": {
+          "total_concrete_cost": 225,
+          "concrete_delivery_cost": 0,
+          "concrete_delivered_yards": 0,
+          "concrete_rate_per_yard": 201,
+          "concrete_trucks": [],
+          "additional_stops_cost": 0,
+          "total_rebar_cost": 252.8,
+          "total_excavation_cost": 150,
+          "total_forming_materials_cost": 202.5,
+          "total_labor_cost": 15,
+          "total_pole_cost": 0,
+          "total_pole_painting_cost": 0,
+          "total_brick_cost": 0,
+          "total_fill_cost": 0,
+          "total_equipment_cost": 0,
+          "total_wall_cost": 0,
+          "total_wall_cap_cost": 0,
+          "wall_caps_by_material": [],
+          "total_concrete_volume_cy": 1,
+          "total_excavation_volume_cy": 1.25,
+          "total_labor_hours": 2.5,
+          "grand_total": 845.3
+        },
+        "delivery": {
+          "concreteTotal": 0,
+          "roundedYards": 0,
+          "ratePerYard": 201,
+          "trucksList": [],
+          "additionalStopsCost": 0,
+          "availableMixes": [
+            {
+              "id": "3500_ae",
+              "name": "3500 AIR ENTRAINED (AE)",
+              "price": 195.4,
+              "desc": "Often used for driveways, slabs, and moderate-load footings."
+            },
+            {
+              "id": "4000_ae",
+              "name": "4000 AIR ENTRAINED (AE)",
+              "price": 201,
+              "desc": "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability."
+            },
+            {
+              "id": "4500_ae",
+              "name": "4500 AIR ENTRAINED (AE)",
+              "price": 208.7,
+              "desc": "Used for heavy-duty commercial slabs and heavy traffic areas."
+            },
+            {
+              "id": "5000_ae",
+              "name": "5000 AIR ENTRAINED (AE)",
+              "price": 214.6,
+              "desc": "High-strength mix for heavy structural columns, pillars, and extreme load conditions."
+            },
+            {
+              "id": "fast_set",
+              "name": "FAST SET",
+              "price": 248,
+              "desc": "Quick-curing concrete used when rapid strength gain is needed to minimize downtime."
+            }
+          ],
+          "availableAdmixes": [
+            {
+              "id": "calcium_chloride",
+              "name": "Calcium Chloride",
+              "price": 8.5,
+              "desc": "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!"
+            },
+            {
+              "id": "set_retarding",
+              "name": "Set-Retarding Admix (Type D)",
+              "price": 4.5,
+              "desc": "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site."
+            },
+            {
+              "id": "water_reducing",
+              "name": "Water-Reducing Admix (Type A)",
+              "price": 4.25,
+              "desc": "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar."
+            },
+            {
+              "id": "fibers",
+              "name": "Fibers",
+              "price": 12.5,
+              "desc": "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse."
+            },
+            {
+              "id": "winter_service",
+              "name": "Winter Service",
+              "price": 5.5,
+              "desc": "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing."
+            }
+          ]
+        },
+        "catalogIssues": []
+      }
+    }
+  ]
+}

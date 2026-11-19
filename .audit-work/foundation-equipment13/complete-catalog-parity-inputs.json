@@ -1,0 +1,1959 @@
+{
+  "synthetic": true,
+  "note": "Frozen original economics, not approval of legacy invalid values; three existing diagnostic results reused, new cases checked with literal anchors on original real engine.",
+  "cases": [
+    {
+      "name": "existing-render-conflict",
+      "entry": {
+        "_id": "selected-eq",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "attachment_ids": [
+          "att"
+        ],
+        "equipment_cost": 100
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ]
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true
+        }
+      ],
+      "expected": {
+        "_id": "selected-eq",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "attachment_ids": [
+          "att"
+        ],
+        "equipment_cost": 100
+      }
+    },
+    {
+      "name": "existing-normalized",
+      "entry": {
+        "_id": "selected-eq",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "attachment_ids": [],
+        "equipment_cost": 100,
+        "attachments": [
+          {
+            "id": "att",
+            "qty": 2
+          }
+        ]
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ]
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true
+        }
+      ],
+      "expected": {
+        "_id": "selected-eq",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "attachment_ids": [],
+        "equipment_cost": 130,
+        "attachments": [
+          {
+            "id": "att",
+            "qty": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "existing-zero-overrides",
+      "entry": {
+        "_id": "selected-eq",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": true,
+        "attachment_counts": {},
+        "attachment_ids": [],
+        "equipment_cost": 100,
+        "custom_rate": 0,
+        "custom_qty": 2,
+        "custom_delivery_charge": 0
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ]
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true
+        }
+      ],
+      "expected": {
+        "_id": "selected-eq",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": true,
+        "attachment_counts": {},
+        "attachment_ids": [],
+        "equipment_cost": 0,
+        "custom_rate": 0,
+        "custom_qty": 2,
+        "custom_delivery_charge": 0
+      }
+    },
+    {
+      "name": "daily",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 100,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      }
+    },
+    {
+      "name": "weekly-two",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "week",
+        "rental_duration": 2,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "week",
+        "rental_duration": 2,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 1000,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      }
+    },
+    {
+      "name": "monthly",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "month",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "month",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 1500,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      }
+    },
+    {
+      "name": "legacy-duration-zero-fallback",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 0,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 0,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 100,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      }
+    },
+    {
+      "name": "custom-quantity-zero",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "custom_qty": 0
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 0,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "custom_qty": 0
+      }
+    },
+    {
+      "name": "custom-quantity-two",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "custom_qty": 2
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 200,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "custom_qty": 2
+      }
+    },
+    {
+      "name": "custom-rate-zero",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "custom_rate": 0
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 0,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "custom_rate": 0
+      }
+    },
+    {
+      "name": "custom-rate-and-quantity",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "custom_rate": 7.5,
+        "custom_qty": 2
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 15,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "custom_rate": 7.5,
+        "custom_qty": 2
+      }
+    },
+    {
+      "name": "flat-delivery",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 2,
+        "include_delivery": true,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 2,
+        "include_delivery": true,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 220,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      }
+    },
+    {
+      "name": "delivery-override-zero",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": true,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "custom_delivery_charge": 0
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": true,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 100,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "custom_delivery_charge": 0
+      }
+    },
+    {
+      "name": "legacy-negative-rate-preserved-not-approved",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "custom_rate": -3,
+        "custom_qty": 2
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": -6,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "custom_rate": -3,
+        "custom_qty": 2
+      }
+    },
+    {
+      "name": "counts-two",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {
+          "att": 2
+        },
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {
+          "att": 2
+        },
+        "sub_attachment_counts": {},
+        "equipment_cost": 130,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      }
+    },
+    {
+      "name": "counts-zero",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {
+          "att": 0
+        },
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {
+          "att": 0
+        },
+        "sub_attachment_counts": {},
+        "equipment_cost": 100,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      }
+    },
+    {
+      "name": "counts-numeric-string",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {
+          "att": "2"
+        },
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {
+          "att": "2"
+        },
+        "sub_attachment_counts": {},
+        "equipment_cost": 130,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      }
+    },
+    {
+      "name": "legacy-id",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": null,
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachment_ids": [
+          "att"
+        ]
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": null,
+        "sub_attachment_counts": {},
+        "equipment_cost": 115,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachment_ids": [
+          "att"
+        ]
+      }
+    },
+    {
+      "name": "legacy-id-duplicates",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": null,
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachment_ids": [
+          "att",
+          "att"
+        ]
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": null,
+        "sub_attachment_counts": {},
+        "equipment_cost": 130,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachment_ids": [
+          "att",
+          "att"
+        ]
+      }
+    },
+    {
+      "name": "normalized-over-shadows",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {
+          "att": 99
+        },
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachments": [
+          {
+            "id": "att",
+            "qty": 2
+          }
+        ],
+        "attachment_ids": [
+          "att"
+        ]
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {
+          "att": 99
+        },
+        "sub_attachment_counts": {},
+        "equipment_cost": 130,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachments": [
+          {
+            "id": "att",
+            "qty": 2
+          }
+        ],
+        "attachment_ids": [
+          "att"
+        ]
+      }
+    },
+    {
+      "name": "normalized-inventory-id",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachments": [
+          {
+            "inventory_id": "att",
+            "qty": 2
+          }
+        ]
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 130,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachments": [
+          {
+            "inventory_id": "att",
+            "qty": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "legacy-normalized-zero-is-one",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachments": [
+          {
+            "id": "att",
+            "qty": 0
+          }
+        ]
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 115,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachments": [
+          {
+            "id": "att",
+            "qty": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "normalized-default-one",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachments": [
+          {
+            "id": "att"
+          }
+        ]
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 115,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachments": [
+          {
+            "id": "att"
+          }
+        ]
+      }
+    },
+    {
+      "name": "normalized-duplicates",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachments": [
+          {
+            "id": "att",
+            "qty": 1
+          },
+          {
+            "id": "att",
+            "qty": 2
+          }
+        ]
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 145,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachments": [
+          {
+            "id": "att",
+            "qty": 1
+          },
+          {
+            "id": "att",
+            "qty": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "sub-without-parent-still-priced",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {
+          "sub": 2
+        },
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {
+          "sub": 2
+        },
+        "equipment_cost": 114,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      }
+    },
+    {
+      "name": "attachment-plus-sub",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {
+          "att": 1
+        },
+        "sub_attachment_counts": {
+          "sub": 3
+        },
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {
+          "att": 1
+        },
+        "sub_attachment_counts": {
+          "sub": 3
+        },
+        "equipment_cost": 136,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      }
+    },
+    {
+      "name": "null-duration-and-quantity",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": null,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "custom_qty": null
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": null,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 100,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "custom_qty": null
+      }
+    },
+    {
+      "name": "unknown-period-legacy-flat-delivery",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "hour",
+        "rental_duration": 1,
+        "include_delivery": true,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "hour",
+        "rental_duration": 1,
+        "include_delivery": true,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 20,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        }
+      }
+    },
+    {
+      "name": "empty-counts-win-over-ids",
+      "entry": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 123,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachment_ids": [
+          "att"
+        ]
+      },
+      "inventory": [
+        {
+          "id": "eq",
+          "material_type": "excavation_equipment",
+          "material_name": "Synthetic drill",
+          "cost_per_day": 100,
+          "pickup_delivery_cost": 20,
+          "is_spread_foot_excavation": true,
+          "compatible_attachment_ids": [
+            "att"
+          ],
+          "cost_per_week": 500,
+          "cost_per_month": 1500
+        },
+        {
+          "id": "att",
+          "material_type": "attachment",
+          "material_name": "Synthetic bit",
+          "cost_per_day": 15,
+          "allow_multiple": true,
+          "cost_per_week": 60,
+          "cost_per_month": 180,
+          "compatible_sub_attachment_ids": [
+            "sub"
+          ]
+        },
+        {
+          "id": "sub",
+          "material_type": "sub_attachment",
+          "material_name": "Synthetic extension",
+          "cost_per_day": 7,
+          "cost_per_week": 30,
+          "cost_per_month": 90
+        }
+      ],
+      "expected": {
+        "_id": "row-parity",
+        "equipment_id": "eq",
+        "rental_period": "day",
+        "rental_duration": 1,
+        "include_delivery": false,
+        "attachment_counts": {},
+        "sub_attachment_counts": {},
+        "equipment_cost": 100,
+        "authored_metadata": {
+          "preserve": "unchanged"
+        },
+        "attachment_ids": [
+          "att"
+        ]
+      }
+    }
+  ]
+}

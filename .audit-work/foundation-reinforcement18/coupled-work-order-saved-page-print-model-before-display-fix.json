@@ -1,0 +1,212 @@
+{
+  "template_id": "",
+  "document_title": "Work Order",
+  "order_number": "SYN-COUPLED",
+  "job_code": "WO-WORKORDER-SYNTHETIC-39",
+  "work_order_id": "WorkOrder-synthetic-39",
+  "work_order_title": "",
+  "description": "• Painting — undefined\n• Concrete | Masonry | Poles — undefined",
+  "image_url": "",
+  "asap": false,
+  "is_rider": false,
+  "completed": false,
+  "printed_at": "2026-11-07T12:00:00.000Z",
+  "company": {
+    "name": "Synthetic company",
+    "address_lines": [],
+    "phone": "",
+    "email": "",
+    "website": "",
+    "license": "",
+    "logo_url": ""
+  },
+  "bill_to": {
+    "name": "Synthetic",
+    "attention": "",
+    "address_lines": [],
+    "phone": "",
+    "email": ""
+  },
+  "ship_to": {
+    "name": "Synthetic",
+    "attention": "",
+    "address_lines": [],
+    "phone": "",
+    "email": ""
+  },
+  "meta": [
+    {
+      "key": "stage",
+      "label": "Stage",
+      "value": "Sales"
+    }
+  ],
+  "rows": [
+    {
+      "line": 1,
+      "product_id": "unrelated-line",
+      "qty": 1,
+      "name": "Painting",
+      "type": "",
+      "description": "",
+      "notes": "",
+      "status": "order_review",
+      "due_date": "",
+      "unit_price": 345,
+      "ext_price": 345,
+      "internal": {
+        "unit_cost": null,
+        "ext_cost": 0,
+        "margin": 345,
+        "estimator_notes": "",
+        "source_estimate_number": "SYN-COUPLED",
+        "module_key": "painting",
+        "responsibility": "",
+        "assigned_to": ""
+      }
+    },
+    {
+      "line": 2,
+      "product_id": "coupled-foundation-builder",
+      "qty": 1,
+      "name": "Concrete | Masonry | Poles",
+      "type": "",
+      "description": "",
+      "notes": "",
+      "status": "order_review",
+      "due_date": "",
+      "unit_price": 694,
+      "ext_price": 694,
+      "internal": {
+        "unit_cost": null,
+        "ext_cost": 0,
+        "margin": 694,
+        "estimator_notes": "",
+        "source_estimate_number": "SYN-COUPLED",
+        "module_key": "foundation",
+        "responsibility": "",
+        "assigned_to": ""
+      }
+    }
+  ],
+  "row_count": 2,
+  "piece_count": 2,
+  "totals": {
+    "subtotal": 1039,
+    "estimate_amount": 1039,
+    "contract_total": 1039,
+    "deposit_required": false,
+    "deposit_amount": null,
+    "deposit_invoiced": false,
+    "balance_due": 1039,
+    "internal": {
+      "total_cost": 0,
+      "total_margin": 1039,
+      "margin_pct": 100,
+      "actual_cost": null,
+      "profit_margin": null,
+      "materials_cost": 694
+    }
+  },
+  "materials": [
+    {
+      "name": "Concrete Finishing Labor",
+      "type": "labor",
+      "qty": 0.19,
+      "unit": "hour",
+      "unit_cost": 60,
+      "ext_cost": 11.25,
+      "section": "Concrete | Masonry | Poles"
+    },
+    {
+      "name": "Concrete Pour Labor",
+      "type": "labor",
+      "qty": 1,
+      "unit": "cy",
+      "unit_cost": 15,
+      "ext_cost": 15,
+      "section": "Concrete | Masonry | Poles"
+    },
+    {
+      "name": "Concrete Truck 1 — Fuel Surcharge",
+      "type": "service",
+      "qty": 1,
+      "unit": "truck",
+      "unit_cost": 30,
+      "ext_cost": 30,
+      "section": "Concrete | Masonry | Poles"
+    },
+    {
+      "name": "Concrete Truck 1 — Small Load Fee",
+      "type": "service",
+      "qty": 1,
+      "unit": "truck",
+      "unit_cost": 150,
+      "ext_cost": 150,
+      "section": "Concrete | Masonry | Poles"
+    },
+    {
+      "name": "Excavation Labor",
+      "type": "labor",
+      "qty": 2.5,
+      "unit": "hour",
+      "unit_cost": 60,
+      "ext_cost": 150,
+      "section": "Concrete | Masonry | Poles"
+    },
+    {
+      "name": "Landscape Materials",
+      "type": "material",
+      "qty": 1,
+      "unit": "job",
+      "unit_cost": 0.75,
+      "ext_cost": 0.75,
+      "section": "Concrete | Masonry | Poles"
+    },
+    {
+      "name": "Ready-Mix Concrete — 4000 AIR ENTRAINED (AE)",
+      "type": "material",
+      "qty": 1,
+      "unit": "cy",
+      "unit_cost": 201,
+      "ext_cost": 201,
+      "section": "Concrete | Masonry | Poles"
+    },
+    {
+      "name": "Reinforcement labor",
+      "type": "labor",
+      "qty": 1.2000000000000002,
+      "unit": "hr",
+      "unit_cost": 60,
+      "ext_cost": 72.00000000000001,
+      "section": "Concrete | Masonry | Poles",
+      "reinforcement_note": "Frozen priced quantity: 1.2000000000000002 hr. Last-calculated labor: 1.2000000000000002 hr. Pricing and physical quantities are not a purchasing plan. Engineering and purchasing review required."
+    },
+    {
+      "name": "Signage Cabinet",
+      "type": "fabrication",
+      "qty": 2,
+      "unit": "each",
+      "unit_cost": 12,
+      "ext_cost": 24,
+      "section": "Concrete | Masonry | Poles"
+    },
+    {
+      "name": "Synthetic",
+      "type": "material",
+      "qty": 20,
+      "unit": "ft",
+      "unit_cost": 2,
+      "ext_cost": 40,
+      "section": "Concrete | Masonry | Poles",
+      "reinforcement_note": "Frozen priced quantity: 20 ft. Physical steel (last calculated): 20 ft; 13.360000000000001 lb. Last-calculated material: Synthetic. Pricing and physical quantities are not a purchasing plan. Engineering and purchasing review required."
+    }
+  ],
+  "tasks": [],
+  "task_counts": {
+    "total": 0,
+    "done": 0,
+    "milestones": 0
+  },
+  "footer_note": "This work order lists customer pricing — production details travel on the shop traveler."
+}

@@ -1,0 +1,3018 @@
+{
+ "at": "2026-11-10T06:36:43.275Z",
+ "plan": [
+  {
+   "key": "terrace park|oh|village|hamilton",
+   "winner": "6ae9aa7ae1f1beec365ce9ee",
+   "winnerScore": [
+    1,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9b53cc4d1fcba86587d4b"
+   ],
+   "loserProfiles": [
+    "6ac19f1d4b1acf561e90a09a"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "guilford township|oh|township|medina",
+   "winner": "6ae9a787c34f95de4b23692a",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9b40a67bb0f401489964e"
+   ],
+   "loserProfiles": [
+    "6ae9b3f18ed5ca22f1f900a1"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "seven hills|oh|city|cuyahoga",
+   "winner": "6ae9aa3135b1f2f74d032aba",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9afdcb7ec77ac413c9b71"
+   ],
+   "loserProfiles": [
+    "6acc7085c0d4c796b0fa5185"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "somers township|oh|township|preble",
+   "winner": "6ae9a83007d47237b4b4fe4f",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9aabf7bd0c7110d93ea2d"
+   ],
+   "loserProfiles": [
+    "6ae9aabd264103069383facf"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "greenville township|oh|township|darke",
+   "winner": "6ae9aa87657ca441accdf3b7",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9aa5889f7bbf4ada275a0"
+   ],
+   "loserProfiles": [
+    "6ae9aa57dd30574a787dabb1"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "bellville|oh|village|richland",
+   "winner": "6ae80e1c17d6fe8fe300d8d5",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9aa0c27a351e8863a50c3"
+   ],
+   "loserProfiles": [
+    "6adee9e0449691d0c9eb4844"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "seville|oh|village|medina",
+   "winner": "6ae80e120cad30a28bb3c6d3",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9aa04bd846d768c587ea3"
+   ],
+   "loserProfiles": [
+    "6ad9adf71f4097fcfe1c876e"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "copley township|oh|township|summit",
+   "winner": "6ae80ded9f5bd8edc6fb003d",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a9eaad833fd21b80f1df"
+   ],
+   "loserProfiles": [
+    "6ae80de1924a9205c979b029"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "fairlawn|oh|city|",
+   "winner": "6ae80def0be0d812dfbab6af",
+   "winnerScore": [
+    9,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a9dc21c6cdcab8f1e264"
+   ],
+   "loserProfiles": [
+    "6adeeef82614fd658e53d929"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "hudson|oh|city|",
+   "winner": "6ae80dd13fd4e427cfdd689b",
+   "winnerScore": [
+    9,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a9c93c546fea6ea5e82f"
+   ],
+   "loserProfiles": [
+    "6adeeda9b7ed4a22705af0c2"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "tallmadge|oh|city|",
+   "winner": "6ae80dd66ba6fd56318a2706",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a9b28159b27c941f7b2e"
+   ],
+   "loserProfiles": [
+    "6adeeeed820dee8db3a4b856"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "freedom township|oh|township|portage",
+   "winner": "6ae80d9d807b06551fbfb410",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a9a7c99139ec363522a8"
+   ],
+   "loserProfiles": [
+    "6ae80d99a9cbf07bbe14aabb"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "bellevue|oh|city|huron",
+   "winner": "6ae80e8dea5e1fe0fd577702",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a9984d1b753273fc1e36"
+   ],
+   "loserProfiles": [
+    "6ad5b2539e2b100c0da61a6f"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "ravenna|oh|city|portage",
+   "winner": "6ae80d87126fe098e59371db",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a980d057258e6220ee1f"
+   ],
+   "loserProfiles": [
+    "6adef13f4f23d0b54925892f"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "kent|oh|city|portage",
+   "winner": "6ae80d85fafdb5760d0317af",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a96a1fdd01f0bc925ab3"
+   ],
+   "loserProfiles": [
+    "6adef129c4ad25b65afbe583"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "aurora|oh|city|portage",
+   "winner": "6ae80d58d234c45f6b8e1e47",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a924d057258e6220edf6"
+   ],
+   "loserProfiles": [
+    "6adef1aa127687e20b2cdb3f"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "twinsburg|oh|city|",
+   "winner": "6ae80d4a88d1059144002375",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a91b2c3a71421eefdd7e"
+   ],
+   "loserProfiles": [
+    "6adeed9edb4866cb72c7f031"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "bainbridge township|oh|township|geauga",
+   "winner": "6ae80d158101afb7639958b7",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a8e00e17e687c5f70183"
+   ],
+   "loserProfiles": [
+    "6ae80d09fe70f67e284e8f39"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "twinsburg township|oh|township|summit",
+   "winner": "6ae80d283a801c7c9eb1e23b",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a8b45610a6279b4ec093"
+   ],
+   "loserProfiles": [
+    "6ae80d208f240201757ad116"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "maple heights|oh|city|cuyahoga",
+   "winner": "6ae80beebc564b991e1b685f",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a86d8d1e45ec3f5c2357"
+   ],
+   "loserProfiles": [
+    "6acdb78c6a9deff9840a45c3"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "brunswick|oh|city|medina",
+   "winner": "6ae80bb7550c89a7930c501e",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a84fdd30574a787da51c"
+   ],
+   "loserProfiles": [
+    "6adae6cd26cdf8cfe52d7b70"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "medina|oh|city|medina",
+   "winner": "6ae80be3da8c92185e3cea53",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a84ca3a1afdf18041f8e"
+   ],
+   "loserProfiles": [
+    "6ad98ab79b6711042bd9fd27"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "norton|oh|city|",
+   "winner": "6ae80bb45422bc94af11d939",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a840caf42eb74b67eb6d"
+   ],
+   "loserProfiles": [
+    "6adeeee25f37a7e2b460ee92"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "north canton|oh|city|",
+   "winner": "6ae82b16c676eeabb2bdd21e",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a835c87fe81dc2062fe0"
+   ],
+   "loserProfiles": [
+    "6adeee35b2b01e0bb95eaa05"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "russell county|ky|county|russell",
+   "winner": "6ae82b040b9f3bbb93f04bcd",
+   "winnerScore": [
+    1,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99fad25d1d73523ff2279",
+    "6ae9a82fbc18aec0deee3d17"
+   ],
+   "loserProfiles": [
+    "6ae82b02caabb464e419a91e"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "fulton county|ky|county|fulton",
+   "winner": "6ae99e3b190114c60fdc2629",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a801838b54cf2028d1a5",
+    "6ae82a7a1d5d505a5fd87b12"
+   ],
+   "loserProfiles": [
+    "6ae99e39395c267a71731a40",
+    "6ac1a25531f47c919cb7baee"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "trotwood|oh|city|montgomery",
+   "winner": "6ae82a49ea4a35878aa07356",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a7d261856a5c792d1591"
+   ],
+   "loserProfiles": [
+    "6ad851d84a1c31c59afacc9b"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "christian county|ky|county|christian",
+   "winner": "6ae99ecbeaa199b76614be0b",
+   "winnerScore": [
+    2,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a7a8f63844abf7e492ba",
+    "6ae8295204fb260a9aace627"
+   ],
+   "loserProfiles": [
+    "6ae99ec9fa36e69808d630ab",
+    "6ac1a26338e96876bea297d4"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "logan county|oh|county|logan",
+   "winner": "6ae828fe86808d337ca8aef8",
+   "winnerScore": [
+    1,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99d9a9bb2797a1f609331",
+    "6ae9a790b7ba51e3d5417c0b"
+   ],
+   "loserProfiles": [
+    "6ae99d9853b3651a9ab3debb"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "pike county|oh|county|pike",
+   "winner": "6ae8085a7ba0a7db327252bd",
+   "winnerScore": [
+    1,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99da3841126ff2b932c88",
+    "6ae9a71c81bfe3c14abcf404"
+   ],
+   "loserProfiles": [
+    "6ae99da1a8600ffe1e98a66c"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "lancaster|oh|city|fairfield",
+   "winner": "6ae808262c1de27462537587",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a7040d79545fba5ac438"
+   ],
+   "loserProfiles": [
+    "6acb0a4546dde91443ba6f69"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "hillsboro|oh|city|highland",
+   "winner": "6ae807ee8b84fc01ec0480a3",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a6f5e82d8fcdf9968b02"
+   ],
+   "loserProfiles": [
+    "6ac1a171be123c60cc162d2e"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "west jefferson|oh|village|madison",
+   "winner": "6ae82664cdf3ded3e570449f",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a68b92fb843c673c2aec"
+   ],
+   "loserProfiles": [
+    "6adb063fcad68e8b651c8895"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "pataskala|oh|city|licking",
+   "winner": "6ae82c108705e870410353ec",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a618f80abb3d87bfe5d5"
+   ],
+   "loserProfiles": [
+    "6adf5d0f7de2ba1473d8f861"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "canal winchester|oh|city|",
+   "winner": "6ae807365145c5b367a4c368",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a5d8d35533af465ca203"
+   ],
+   "loserProfiles": [
+    "6adf5f96c8218ad334853e5b"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "fairfield county|oh|county|fairfield",
+   "winner": "6ae99e0e34ba4fc410e4e742",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a5d281c5ced9dba26623",
+    "6ae8073212cf06acc9bdc3a7"
+   ],
+   "loserProfiles": [
+    "6ae99e0642ffe2de9ab643ec",
+    "6ac1f97c68e505ccab417827"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "london|oh|city|madison",
+   "winner": "6ae82483899ca5565f428529",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a59be92271041089ef0c"
+   ],
+   "loserProfiles": [
+    "6ad999086be09c2f90301c3b"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "madison county|oh|county|madison",
+   "winner": "6ae99d6b61c4d2325e1c407e",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8247296e1d4b3dc78047a",
+    "6ae9a5638dce98cc8c5aa498"
+   ],
+   "loserProfiles": [
+    "6ac1e82292835ff5d7698023",
+    "6ae9a56166320623c2661a8a"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "union county|oh|county|union",
+   "winner": "6ae99d633c2c81482c84c400",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a4e2b0564b651b6afa69",
+    "6ae806ea6c240ca237ebbc0e"
+   ],
+   "loserProfiles": [
+    "6ae99d5ebc9a1db1a4c9d118",
+    "6ac33987430e254d0d2d7250"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "delaware|oh|city|delaware",
+   "winner": "6ae817c907dea1548c231b75",
+   "winnerScore": [
+    1,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a4966b30d53b0bab084e"
+   ],
+   "loserProfiles": [
+    "6acb260da18c5513fde6dc65"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "delaware county|oh|county|delaware",
+   "winner": "6ae99d916d69892fb13aa15f",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a47404b000e45460a4a7",
+    "6ae817cf6ee272dc59242696"
+   ],
+   "loserProfiles": [
+    "6ae99d8f4fbcf6bfa50174bb",
+    "6ac1f987825646a50d67f29f"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "orange township|oh|township|delaware",
+   "winner": "6ae817f56b22b39f86f36e9c",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a441118517d624cb38ba"
+   ],
+   "loserProfiles": [
+    "6ae817f461c21a73eafc4312"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "hilliard|oh|city|franklin",
+   "winner": "6ae817739a112eebb83fbac5",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a3fe18dde29337c8f230"
+   ],
+   "loserProfiles": [
+    "6ad056ee0699db3e600961b0"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "reynoldsburg|oh|city|franklin",
+   "winner": "6ae803228ed7c4b1fbc30766",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a3e9a36461aa12ed4379"
+   ],
+   "loserProfiles": [
+    "6ad056e4c9bdcf541cc38ec9"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "westerville|oh|city|franklin",
+   "winner": "6ae81754357fdde577f607bf",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a3c946f492c02d28323d"
+   ],
+   "loserProfiles": [
+    "6ad0506268fa071f92534b74"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "champaign county|oh|county|champaign",
+   "winner": "6ae99e1b63ea57e21fd0334a",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a391e90b70b3593d6fcb",
+    "6ae81709d4a8963095b613d0"
+   ],
+   "loserProfiles": [
+    "6ae99e1953c1a2cb2f938340",
+    "6ac3280d923d4d53db1d0519"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "urbana|oh|city|champaign",
+   "winner": "6ae81707649453123d81f5f7",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a37fa7d6850d74948fb6"
+   ],
+   "loserProfiles": [
+    "6ac73183f29a24f8ede9a1d1"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "darke county|oh|county|darke",
+   "winner": "6ae99d8e657b9eec4e40bb14",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a37416e777a10319400f",
+    "6ae816fd068945aceec4ccd1"
+   ],
+   "loserProfiles": [
+    "6ae99d8cefed029986db7210",
+    "6ac320f16cb279d300c9f7e3"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "greenville|oh|city|darke",
+   "winner": "6ae816e8eb540786f547e487",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a36761c32e247f3be570"
+   ],
+   "loserProfiles": [
+    "6acc6a8cec1b425abac74d23"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "circleville|oh|city|pickaway",
+   "winner": "6ae816658dd9db870860a04d",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a23d020d5d11934d782d"
+   ],
+   "loserProfiles": [
+    "6adc3550bfdc60e65b1ed536"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "wilmington|oh|city|clinton",
+   "winner": "6ae816557123022f623d6b5d",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a18d54466108baef488b"
+   ],
+   "loserProfiles": [
+    "6ac1a19933f467b4f2047ad8"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "lawrence county|oh|county|lawrence",
+   "winner": "6ae99d6f0347586bc5db196d",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a17a274960c534ec7ccc",
+    "6ae81647cae12f7f1b3193fe"
+   ],
+   "loserProfiles": [
+    "6ae99d6e86ec8118d68fc99a",
+    "6ac1e834d18e67872c416863"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "ironton|oh|city|lawrence",
+   "winner": "6ae816401ecbf48a91d05eae",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a16834e417d16d3b48e4"
+   ],
+   "loserProfiles": [
+    "6ad3244c2b279272bcc78744"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "coshocton|oh|city|coshocton",
+   "winner": "6ae81606b00023294a9eeb3a",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a14ef5a654bf27276fb4"
+   ],
+   "loserProfiles": [
+    "6ac9c6c4e13faef7b379599b"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "cambridge|oh|city|guernsey",
+   "winner": "6ae815e9a58984a0a098618f",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a0ca8355457355819926"
+   ],
+   "loserProfiles": [
+    "6ad30faf8b03fe1ecad8d83d"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "coshocton county|oh|county|coshocton",
+   "winner": "6ae8161502c52489359f7f9a",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99ebddb3e065aa9a9f629",
+    "6ae9a0b40801ea76cf76caf2"
+   ],
+   "loserProfiles": [
+    "6ae99ebbef77c75b782647ce"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "west lafayette|oh|village|coshocton",
+   "winner": "6ae8161a3e9c017216a7f06a",
+   "winnerScore": [
+    1,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a0adb31efd7ce3514908"
+   ],
+   "loserProfiles": [
+    "6ac9c6b7989d1aaa58083689"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "van wert county|oh|county|van wert",
+   "winner": "6ae99d960a7def53e3cf03df",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a0a3f3fb50cc9ee55e4a",
+    "6ae81577b84e22579b147a01"
+   ],
+   "loserProfiles": [
+    "6ae99d90c24abfb0e1fc9098",
+    "6ac335f9e58d8360f8f2b8c3"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "van wert|oh|city|",
+   "winner": "6ae815dda9634a20aad83642",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a09ff2c1815a5c5684ea"
+   ],
+   "loserProfiles": [
+    "6adeebec5f514a5f6e9765d1"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "crawford county|oh|county|crawford",
+   "winner": "6ae99e71280b42c7107ca4c0",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a091347c85b240b76692",
+    "6ae815e30619b17184b667ea"
+   ],
+   "loserProfiles": [
+    "6ae99e6f38a1d58f60327b48",
+    "6ac320fba3e09a212517df85"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "celina|oh|city|mercer",
+   "winner": "6ae815cc4537694614c393d9",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a044bd353d798ceb2c1c"
+   ],
+   "loserProfiles": [
+    "6ad8636e2e3fde978c41fd31"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "duchouquet township|oh|township|auglaize",
+   "winner": "6ae80b7cc291e1387daee494",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a02cb061260564976c03"
+   ],
+   "loserProfiles": [
+    "6ae80b7c2c5eb65bc54d34d4"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "wapakoneta|oh|city|auglaize",
+   "winner": "6ae81526eec6159548383190",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae9a01a9c7144be28409d52"
+   ],
+   "loserProfiles": [
+    "6ac5caf0bc606a80c3264441"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "norwalk|oh|city|huron",
+   "winner": "6ae80521eec6159548380f7b",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99ff5e56369ad568b5667"
+   ],
+   "loserProfiles": [
+    "6ad46b81ff698c431a779b3c"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "kenton county|ky|county|kenton",
+   "winner": "6ae99ff4d1fae54325d07827",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae831ba836d2c310f134b9a"
+   ],
+   "loserProfiles": [
+    "6ab882b012e05020a1202318"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "boyle county|ky|county|boyle",
+   "winner": "6ae8314c10f7ebab227c3c07",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99ff205f2a1a952291384"
+   ],
+   "loserProfiles": [
+    "6ae831482fb650da84e82882"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "metcalfe county|ky|county|metcalfe",
+   "winner": "6ae99fe3e5f5cad0596742e9",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae84c5812105c4f35c39c56"
+   ],
+   "loserProfiles": [
+    "6ac1a2c864996a420caa6d2e"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "bath county|ky|county|bath",
+   "winner": "6ae99fccc83dbf4dff0491cb",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae83216cba055f3c5004466"
+   ],
+   "loserProfiles": [
+    "6ac1a1a5e330d4b2183442fb"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "rowan county|ky|county|rowan",
+   "winner": "6ae99fc9d9b37a1542585781",
+   "winnerScore": [
+    2,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8436b7cdc1a1ac8c507f3"
+   ],
+   "loserProfiles": [
+    "6ac1a3770e3a16c893d4e320"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "owen county|ky|county|owen",
+   "winner": "6ae845e2f8c533a6aee3a1ba",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99fc7c55548d901b74d02"
+   ],
+   "loserProfiles": [
+    "6ae845de0140980a99130848"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "franklin county|ky|county|franklin",
+   "winner": "6ae99fc5a8c177f115c28450",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae83a60ce184129c9c56924"
+   ],
+   "loserProfiles": [
+    "6ac1a278d85d0633b651964a"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "sandusky county|oh|county|sandusky",
+   "winner": "6ae99ec18091bc30c08b7ae7",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99fc3cc39825a6bb6e6b9",
+    "6ae804f584d55fe64c33b940"
+   ],
+   "loserProfiles": [
+    "6ae99ebf3bba6938aa79676d",
+    "6ac33d3ab9324cba10affc54"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "breathitt county|ky|county|breathitt",
+   "winner": "6ae99fc24534f85eca4e2bac",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae84693ad114ad9b4c48d37"
+   ],
+   "loserProfiles": [
+    "6ac1a250bcf3a3b5da7be141"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "scott county|ky|county|scott",
+   "winner": "6ae84e3af09cdf2d1b3060c9",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99fc19c70f0dfd4c194ac"
+   ],
+   "loserProfiles": [
+    "6ae99fc177d412b222de56ee"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "green county|ky|county|green",
+   "winner": "6ae99fbfa6e5ed29f43cff03",
+   "winnerScore": [
+    2,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae841abaee2e972892bdbf0"
+   ],
+   "loserProfiles": [
+    "6ac1a24974e50c388d49a555"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "powell county|ky|county|powell",
+   "winner": "6ae83740c8c23fa2ed7297d3",
+   "winnerScore": [
+    2,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99fbf6faab071050852fc"
+   ],
+   "loserProfiles": [
+    "6ae83740a318917b83a66303"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "daviess county|ky|county|daviess",
+   "winner": "6ae99fbb28632d16776d5c89",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae849122e13a1be4fc8d67d"
+   ],
+   "loserProfiles": [
+    "6ac1a27fb5584f000ee51c9c"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "shelby county|ky|county|shelby",
+   "winner": "6ae83552a4327e01a24eea7c",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99fbaed9c6243b7ed78b4"
+   ],
+   "loserProfiles": [
+    "6ae99fb9e54a95681b75db4c"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "fremont|oh|city|sandusky",
+   "winner": "6ae804f30ee74ef4d22944fd",
+   "winnerScore": [
+    2,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99fbab65be949051eb1fb"
+   ],
+   "loserProfiles": [
+    "6adee6544f655eaf8bd84254"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "henderson county|ky|county|henderson",
+   "winner": "6ae8424c84e4504f4098c98b",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99fb4709f3e01bb87d427"
+   ],
+   "loserProfiles": [
+    "6ae842325cdce58987aa00a4"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "morrow county|oh|county|morrow",
+   "winner": "6ae8463369e6051fa635a06c",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99fb3c6f8f3df9ab1c142"
+   ],
+   "loserProfiles": [
+    "6ae99fb2816c3a4962490b1c"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "seneca county|oh|county|seneca",
+   "winner": "6ae99d968adc5b470d80a495",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99fb0f889fba7645b7d37",
+    "6ae804b7357fdde577f5e786"
+   ],
+   "loserProfiles": [
+    "6ae99d935ebda9442b14717d",
+    "6ac33d2fe034000f52ecdb25"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "harrison county|oh|county|harrison",
+   "winner": "6ae83004e86393a5b694a0ac",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99fb0735cf7d27006ff34"
+   ],
+   "loserProfiles": [
+    "6ae99faedb809fdd015acd06"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "madison county|ky|county|madison",
+   "winner": "6ae8392bdc2a9bc409066e2d",
+   "winnerScore": [
+    1,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99faf699f3359377f233b"
+   ],
+   "loserProfiles": [
+    "6ae99fad78e9f88db429ac29"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "harrison county|ky|county|harrison",
+   "winner": "6ae83eb58ff6f5555444943f",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99faa7d8f20616956104c"
+   ],
+   "loserProfiles": [
+    "6ae99f9e09e9fd7bf7a028ff"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "butler county|oh|county|butler",
+   "winner": "6ae80abbd04667dd2562a5e2",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99fa9fa1319c0c46518f0"
+   ],
+   "loserProfiles": [
+    "6ae80ab65a6d21c13f3b9bb4"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "shelby county|oh|county|shelby",
+   "winner": "6ae8049b4282c8d7eced12e2",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99d5a4619ee1cb2a6951a",
+    "6ae99fa968af12dd3b5f76dd"
+   ],
+   "loserProfiles": [
+    "6ae99d5a6625f54e60ff690b"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "adams county|oh|county|adams",
+   "winner": "6ae83cf7c5e04fad85db18d6",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99fa70923effe037a4133"
+   ],
+   "loserProfiles": [
+    "6ae99fa52fa259de49de6211"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "wyandot county|oh|county|wyandot",
+   "winner": "6ae99fa6c4361c714c40f1d1",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae83c19e82a05e92530c3c5"
+   ],
+   "loserProfiles": [
+    "6ac32f1c781f1b5e51f95ffa"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "preble county|oh|county|preble",
+   "winner": "6ae99fa2302df1a66f784cd2",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae83f30e49c6601ff0b5469"
+   ],
+   "loserProfiles": [
+    "6ac3444b305e0438e06d837b"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "greene county|oh|county|greene",
+   "winner": "6ae99f9d3204a2b02b9b2095",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae82f2f8436ac2e3377b4f4"
+   ],
+   "loserProfiles": [
+    "6ac1f2b41d1df4038cebfc41"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "gallatin county|ky|county|gallatin",
+   "winner": "6ae84331604f7bc922ab47e8",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99f9ca6417bed9ee54b45"
+   ],
+   "loserProfiles": [
+    "6ae84315e8e553682222474b"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "ottawa county|oh|county|ottawa",
+   "winner": "6ae99f9b901c306c49ca0f20",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae83e3d8520618af38df7db"
+   ],
+   "loserProfiles": [
+    "6ac34b8ffe5a6619e7980bb6"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "anderson county|ky|county|anderson",
+   "winner": "6ae99f99b8ebbe64453a6a3f",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae84440b114726f1f9b34bd"
+   ],
+   "loserProfiles": [
+    "6ac1a233d0bcbf4151192537"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "calloway county|ky|county|calloway",
+   "winner": "6ae99f950d88283e67593807",
+   "winnerScore": [
+    2,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae84ba9f74c3f180c5c4cbe"
+   ],
+   "loserProfiles": [
+    "6ac1a233f1739cffabf24ed7"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "mclean county|ky|county|mclean",
+   "winner": "6ae829e75aa59dfc70a800dc",
+   "winnerScore": [
+    2,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99f92fb59cbc9696be8b5"
+   ],
+   "loserProfiles": [
+    "6ae829df20702195b903d0cb"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "whitley county|ky|county|whitley",
+   "winner": "6ae99f8fb4aa7fa8e37627b1",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae843dde466eb69e5172c1d"
+   ],
+   "loserProfiles": [
+    "6ac1a2af7d07949ccfcdb95e"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "mason county|ky|county|mason",
+   "winner": "6ae839ab81463c6fddc4ca0e",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99f8e485df89ab8ac7c79"
+   ],
+   "loserProfiles": [
+    "6ae839a745fdb07eb9154b94"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "hardin county|oh|county|hardin",
+   "winner": "6ae99f8cfce0a35bb71ab0f1",
+   "winnerScore": [
+    2,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae83ba32a8db78eb4d89ff3"
+   ],
+   "loserProfiles": [
+    "6ac1ebd7227f712e2b575773"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "hopkins county|ky|county|hopkins",
+   "winner": "6ae99f8b91ea45f7a2353826",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae84185330ddadcd93f0008"
+   ],
+   "loserProfiles": [
+    "6ac1a28c72c20bf04b38de6d"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "defiance county|oh|county|defiance",
+   "winner": "6ae99d7328a69cb1fd122e46",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99f8827491d60da3ecd17",
+    "6ae8048deaa6a247baca6a45"
+   ],
+   "loserProfiles": [
+    "6ae99d71bd8a9acc8de0ba84",
+    "6ac320eb77d8e22da8a78cb1"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "marion county|ky|county|marion",
+   "winner": "6ae849bc02533845e506e5b9",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99f880d23a64708e5f485"
+   ],
+   "loserProfiles": [
+    "6ae849bc9e1645e6159eb621"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "hardin county|ky|county|hardin",
+   "winner": "6ae8375b549c2177b3067eaa",
+   "winnerScore": [
+    2,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99f867a66ff4a82959960"
+   ],
+   "loserProfiles": [
+    "6ae837585dbc301493d7c9da"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "campbell county|ky|county|campbell",
+   "winner": "6ae83d2efee9838d45eebbab",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99f82582e8a9e470f26ec"
+   ],
+   "loserProfiles": [
+    "6ae83d2c8b4b3efc384fbaaa"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "defiance|oh|city|defiance",
+   "winner": "6ae8048b96e1722b2013e002",
+   "winnerScore": [
+    1,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99f41c1cf2c4a193aa107"
+   ],
+   "loserProfiles": [
+    "6acb340e9598bb1639b8f00b"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "east union township|oh|township|wayne",
+   "winner": "6ae80b79842199f8e748e6b5",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99f331fd57aa9476c3605"
+   ],
+   "loserProfiles": [
+    "6ae80b797e4516ad46c0f273"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "breckinridge county|ky|county|breckinridge",
+   "winner": "6ae99f2832528dc5f92bdefd",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae83083b8f12e76b020a757"
+   ],
+   "loserProfiles": [
+    "6ac1a19835389e54bcbb404f"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "jessamine county|ky|county|jessamine",
+   "winner": "6ae82a24b973adfbf528f30a",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99f1cc726b28119a12086"
+   ],
+   "loserProfiles": [
+    "6ae82a2302718e5851d6f6ed"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "muhlenberg county|ky|county|muhlenberg",
+   "winner": "6ae82dc63476e4aee3694681",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99f13431e17d92c531c4b"
+   ],
+   "loserProfiles": [
+    "6ae82dc290c9998eddd77e38"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "wayne county|oh|county|wayne",
+   "winner": "6ae99e253f71e52924dd4ba1",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99ef6795d2b565bc87069",
+    "6ae8045defaa66d60995a362"
+   ],
+   "loserProfiles": [
+    "6ae99e23ddbfa3e25abeb0d5",
+    "6ac335eae87af4456b00913c"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "logan county|ky|county|logan",
+   "winner": "6ae835c4297a8cd521572fcc",
+   "winnerScore": [
+    2,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99ed5a75d8bc6991cf7be"
+   ],
+   "loserProfiles": [
+    "6ae835c287b26e5297a4b29a"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "washington county|oh|county|washington",
+   "winner": "6ae99e59179952ea44f7a616",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99ec00d88283e675936fb",
+    "6ae8043ccb4e17a7ea5d2f64"
+   ],
+   "loserProfiles": [
+    "6ae99e566145b950188da757",
+    "6ac335ef8f7d78435647c025"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "brown county|oh|county|brown",
+   "winner": "6ae99eb7582e8a9e470f2622",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8271e32f3c96027af1f02"
+   ],
+   "loserProfiles": [
+    "6ac1dd7c206a6c7ee8d28d6c"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "geauga county|oh|county|geauga",
+   "winner": "6ae99eac3e3907ba84259f36",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8037f43f59da0fdaf28a1"
+   ],
+   "loserProfiles": [
+    "6ac1e100249f540223c028ee"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "jefferson county|oh|county|jefferson",
+   "winner": "6ae99e980c4f143169f2ff61",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae816cb5422bc94af11f3d0"
+   ],
+   "loserProfiles": [
+    "6ac1ebc9ec175a1467931f27"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "marietta|oh|city|",
+   "winner": "6ae8043a0619b17184b6359e",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99e96f317e22d12907a7e"
+   ],
+   "loserProfiles": [
+    "6adeeb2c028d5298969565ac"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "hamilton county|oh|county|hamilton",
+   "winner": "6ae99e930bafaed428bd27d5",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae82ba77ffdc8af2a1d7a93"
+   ],
+   "loserProfiles": [
+    "69a5f445b78080434a008c41"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "fayette county|oh|county|fayette",
+   "winner": "6ae8166267a2fc6b811f2287",
+   "winnerScore": [
+    1,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99e89ce8a4da9ae3ef1d8"
+   ],
+   "loserProfiles": [
+    "6ae99e787ef369b0238a74ac"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "guernsey county|oh|county|guernsey",
+   "winner": "6ae99e7674fabab1cf2281fa",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae815ef068945aceec4cbd1"
+   ],
+   "loserProfiles": [
+    "6ac1f2ab85d1bd5579e2432e"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "medina county|oh|county|medina",
+   "winner": "6ae99e6b8e0548a2ac13ad17",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae80bab013ccff59863c3ff"
+   ],
+   "loserProfiles": [
+    "6ac1e49c44b5411e6b147efa"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "mercer county|oh|county|mercer",
+   "winner": "6ae99e41bf8bb5dea7d4b6be",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae815590466ec760514af4f"
+   ],
+   "loserProfiles": [
+    "6ac1e4924bdad998e7704acd"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "clermont county|oh|county|clermont",
+   "winner": "6ae80fe20cf575491f04a297",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99e2b8091bc30c08b7a88"
+   ],
+   "loserProfiles": [
+    "6ae99e0e23fc89c6e7c3cf2f"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "clay township|oh|township|scioto",
+   "winner": "6ae80b6f3dc3af1930bce64a",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99dda3899f7de9aaa5069"
+   ],
+   "loserProfiles": [
+    "6ae80b6db0dd5c889270affb"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "jackson county|oh|county|jackson",
+   "winner": "6ae82797cf1578a38482a516",
+   "winnerScore": [
+    1,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99dd1c8ecc7f46e4e4c12"
+   ],
+   "loserProfiles": [
+    "6ae99dc2e40bb7b2533fdf14"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "lucas county|oh|county|lucas",
+   "winner": "6ae99dae971b454249077c91",
+   "winnerScore": [
+    2,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae80f8159a893bcaccf5ac8"
+   ],
+   "loserProfiles": [
+    "6ac1e0ec99395d2c7f32c7f1"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "erie county|oh|county|erie",
+   "winner": "6ae99da93c3e5fb5fad0c952",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae816d8cf5ff9ae41c769fa"
+   ],
+   "loserProfiles": [
+    "6ac1f9820e6a276b4e90afd6"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "marion county|oh|county|marion",
+   "winner": "6ae99da1903f0939326958bf",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8035268bf93e5ac64cda6"
+   ],
+   "loserProfiles": [
+    "6ac1e4a5485ad1b0799bd334"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "hancock county|oh|county|hancock",
+   "winner": "6ae99d9e971b454249077c83",
+   "winnerScore": [
+    2,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae80347c5d3da0fd44473df"
+   ],
+   "loserProfiles": [
+    "6ac1f2a02bd4201723699349"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "chillicothe|oh|city|ross",
+   "winner": "6ae803845a8d088eadcedb23",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99d9c180872ed3e5357c8"
+   ],
+   "loserProfiles": [
+    "6adda2e570833d5764f919df"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "trumbull county|oh|county|trumbull",
+   "winner": "6ae82e19002b37c930b98bb9",
+   "winnerScore": [
+    1,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99d9ac2bb7ff6b1395d8d"
+   ],
+   "loserProfiles": [
+    "6ae99d98e881a8d829c1a8b0"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "miami county|oh|county|miami",
+   "winner": "6ae99d8d23f5c2eb64505432",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae805c4196035aa12c88d7b"
+   ],
+   "loserProfiles": [
+    "6ac1e48c75608cfca2c6abe5"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "summit county|oh|county|summit",
+   "winner": "6ae80baf135d4be1c434091c",
+   "winnerScore": [
+    1,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99d870a8881f312d2a613"
+   ],
+   "loserProfiles": [
+    "6ae99d80c03bad5d8134478e"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "ross county|oh|county|ross",
+   "winner": "6ae99d7cc04186f067149aab",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae80386462f4fbe8a4434df"
+   ],
+   "loserProfiles": [
+    "6ac33d3fcf7f1bbe5b07647a"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "pickaway county|oh|county|pickaway",
+   "winner": "6ae99d7c1902e6521469f3b9",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8168638cd05504bfb997b"
+   ],
+   "loserProfiles": [
+    "6ac34b7cd216c2c25d0df8ca"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "zanesville|oh|city|muskingum",
+   "winner": "6ae80356d885b4165f89033e",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99d7a6bdd750c6604834b"
+   ],
+   "loserProfiles": [
+    "6adc2e64a276827ff310a041"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "hocking county|oh|county|hocking",
+   "winner": "6ae99d6d5c308503afdafd6a",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae828a88762fcf3d0a1751a"
+   ],
+   "loserProfiles": [
+    "6ac1ebcd9016997c5cbcf5ba"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "marion township|oh|township|marion",
+   "winner": "6ae80b6239ee56c901c62e40",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99d5f9afbfc9580b44cd4"
+   ],
+   "loserProfiles": [
+    "6ae80b623298656559164158"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "clinton county|oh|county|clinton",
+   "winner": "6ae99d5854e96f94f7d950b4",
+   "winnerScore": [
+    2,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae81657b9d8514e1a9aac0a"
+   ],
+   "loserProfiles": [
+    "6ac32802daee45c226fa0d97"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "auglaize township|oh|township|allen",
+   "winner": "6ae80b4f76613cd384916e6f",
+   "winnerScore": [
+    8,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99d4d4b5acbb4f7997aea"
+   ],
+   "loserProfiles": [
+    "6ae80b41cb4e17a7ea5d3b36"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "allen county|oh|county|allen",
+   "winner": "6ae8034f404b64ca0b837f75",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99d2ed5ea4f661e6f0a0f"
+   ],
+   "loserProfiles": [
+    "6ac32f1104478a32be757ba7"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "bowling green|oh|city|wood",
+   "winner": "6ae8033b07fbf1a0fe25e3e1",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99d24d7e0d071b8c635d6"
+   ],
+   "loserProfiles": [
+    "6adef371ce63250dac654a79"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "ontario|oh|city|richland",
+   "winner": "6ae8030d75c934464bf977d9",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99cee9683b13f8af2685a"
+   ],
+   "loserProfiles": [
+    "6adee9ea67a024396a6dd14c"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "lorain county|oh|county|lorain",
+   "winner": "6ae802e66d1b054ca9fdb542",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99cc028fd9fce18637dfd"
+   ],
+   "loserProfiles": [
+    "6ac1dd68f2951b38bdd7f45e"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "lorain|oh|city|lorain",
+   "winner": "6ae802fa70e06543b5e16f92",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99cb32b2b1c7988aaefb8"
+   ],
+   "loserProfiles": [
+    "6ad70adbcfc23621538e7284"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "mahoning county|oh|county|mahoning",
+   "winner": "6ae802e326e353abc0e63255",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99cb0f70190d623bfa2f5"
+   ],
+   "loserProfiles": [
+    "6ac1e81d1c300dd91a2ab57e"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "parma|oh|city|cuyahoga",
+   "winner": "6ae802d9a17b82aec16636e5",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99cab54f48380aab9596a"
+   ],
+   "loserProfiles": [
+    "6ac892242e26ff8145e034ec"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "portage county|oh|county|portage",
+   "winner": "6ae80d5b61c21a73eafc2e38",
+   "winnerScore": [
+    1,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99c147dc7bf37ef0541cc"
+   ],
+   "loserProfiles": [
+    "6ac344516c03e80ffb139d71"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "streetsboro|oh|city|portage",
+   "winner": "6ae80d5e535c7e0e3765bb08",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae99beda43345b007da0a92"
+   ],
+   "loserProfiles": [
+    "6adef19f73cfe29b00ae84c9"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "franklin county|oh|county|franklin",
+   "winner": "6ae99bb966463edf30252bff",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8031d14957b2b0447ea58"
+   ],
+   "loserProfiles": [
+    "6ac1f97283016966d3bb8af8"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "ross|oh|township|greene",
+   "winner": "6ae8a69f05a663fd2c1ec3f5",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a6a3781ad2e58a836823"
+   ],
+   "loserProfiles": [
+    "6ae8a6a1718a1dded9fd1ef5"
+   ],
+   "sameProfile": false
+  },
+  {
+   "key": "st. matthews|ky|city|",
+   "winner": "6ae8a6768951f547afc30905",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a67948b05d383fd7edda"
+   ],
+   "loserProfiles": [
+    "6adf612518b96626f99910a7"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "highland county|oh|county|highland",
+   "winner": "6ae8082029066bf78d4e472d",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a2bd1c8b85fe8f422a7a"
+   ],
+   "loserProfiles": [
+    "6ac1dd72ccf201630fd7aa6d"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "waverly|oh|village|pike",
+   "winner": "6ae8082881ba43fb2b4619d1",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a28ad61646ee8e573d47"
+   ],
+   "loserProfiles": [
+    "6adc435fb499ae10dfdb41ef"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "heath|oh|city|licking",
+   "winner": "6ae80768e3c4683e0ae7a3ae",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a274b7125bc426f6fbf5"
+   ],
+   "loserProfiles": [
+    "6ad851b8eda3e14866f9e880"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "pickerington|oh|city|fairfield",
+   "winner": "6ae8072d81aa87b7dcbd4e3d",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a2706f63da7812a23ad1"
+   ],
+   "loserProfiles": [
+    "6acb0a3d9b2eb8da0a0a57ab"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "auglaize county|oh|county|auglaize",
+   "winner": "6ae80538e7a6f499d2c14c76",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a247967d0b90a16ea2a0"
+   ],
+   "loserProfiles": [
+    "6ac1a2bf41320e557b7da004"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "tiffin|oh|city|seneca",
+   "winner": "6ae804b5062c7b6488df65d3",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a245cd3b0ccd47416a7e"
+   ],
+   "loserProfiles": [
+    "6add9c1a3751a2c614ff3b9e"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "huron county|oh|county|huron",
+   "winner": "6ae80523f2384bd661a4bcb4",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a23cd14c844ae88e2aab"
+   ],
+   "loserProfiles": [
+    "6ac1e0f71cbe1e67f82237e7"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "sidney|oh|city|shelby",
+   "winner": "6ae8049962060946ba9892ae",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a21c9190e2062efe75c7"
+   ],
+   "loserProfiles": [
+    "6adda67062d07578b31b3e45"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "athens county|oh|county|athens",
+   "winner": "6ae80b73fb8c5db63a2e42db",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a2183b241f2bd8d60e8f"
+   ],
+   "loserProfiles": [
+    "6ae80b732fcef7cf0d4a8d94"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "russell township|oh|township|geauga",
+   "winner": "6ae80b6b9acc157c8e3b832b",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a1ccdec3c15fc4c963a1"
+   ],
+   "loserProfiles": [
+    "6ae80b6a5ab7c7ff2934f2d9"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "ashland county|oh|county|ashland",
+   "winner": "6ae80b71b3e3d6c217b54d58",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a1c0f794a249d9c7cff4"
+   ],
+   "loserProfiles": [
+    "6ae80b717c1405cb058949aa"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "scioto county|oh|county|scioto",
+   "winner": "6ae8a1b3ef48591505393624",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae803b593a9b63f96cc7f1e"
+   ],
+   "loserProfiles": [
+    "6ac33d35856cdb64232fdc64"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "falls township|oh|township|muskingum",
+   "winner": "6ae80b67abb853b8db27dea7",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a19689556eab94f78830"
+   ],
+   "loserProfiles": [
+    "6ae80b668174e6120ac7adf3"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "muskingum county|oh|county|muskingum",
+   "winner": "6ae803596ed4e4a7fd6ec445",
+   "winnerScore": [
+    1,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a181b377a155c8ac39ac"
+   ],
+   "loserProfiles": [
+    "6ac47269fe4615f3936b4d9a"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "marion|oh|city|marion",
+   "winner": "6ae803546122ac88a329fc3b",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a17aab54edb4607e6a8e"
+   ],
+   "loserProfiles": [
+    "6adaff7a36e2d258836c531e"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "american township|oh|township|allen",
+   "winner": "6ae80b3f42cb635a629878f5",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a17939f029024f924795"
+   ],
+   "loserProfiles": [
+    "6ae80b3de26486bac8cabced"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "wood county|oh|county|wood",
+   "winner": "6ae8033d61067be15cbeab2b",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a15a655245f537a73407"
+   ],
+   "loserProfiles": [
+    "6ac32f22437668d61a806f3e"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "lakewood|oh|city|cuyahoga",
+   "winner": "6ae80319dbbb5e12b5ecf43a",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a1593c4e98e43d28bc15"
+   ],
+   "loserProfiles": [
+    "6ac8921b28c022d1d0d43c04"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "richland county|oh|county|richland",
+   "winner": "6ae80311e4ca6e04e13682e4",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a156b9020e4907df2d98"
+   ],
+   "loserProfiles": [
+    "6ac34440fa6caea6fc125f36"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "warren county|oh|county|warren",
+   "winner": "6ae80b37e35bc6fbdcdd7bdd",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a152614fc527ad24a43f"
+   ],
+   "loserProfiles": [
+    "6ae80b36a58984a0a0984c7d"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "clark county|oh|county|clark",
+   "winner": "6ae80309d66bd71d131c1595",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a1436c351177bfecfc27"
+   ],
+   "loserProfiles": [
+    "6ac32808815f18a5593fdeb8"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "springfield|oh|city|clark",
+   "winner": "6ae803006661410d0cec2022",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a13fd750a44db7c2bbb7"
+   ],
+   "loserProfiles": [
+    "6ac88368847085d917c1e9f1"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "licking county|oh|county|licking",
+   "winner": "6ae8032e46abac7cd7f2b9a0",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a13cfae7035368c4f69a"
+   ],
+   "loserProfiles": [
+    "6ac1e82dd494c2bd41b6e023"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "canton|oh|city|",
+   "winner": "6ae802df87d786b6dc9fb775",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a10d1cf28039cf8cdd57"
+   ],
+   "loserProfiles": [
+    "6adeee560298e201126ef8ac"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "hamilton|oh|city|butler",
+   "winner": "6ae802fc49a576177a23f418",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a101559e4115071b00f5"
+   ],
+   "loserProfiles": [
+    "6ac19f0b612abdd8404285c3"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "stark county|oh|county|stark",
+   "winner": "6ae802dd745d2bfe3405e12e",
+   "winnerScore": [
+    5,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a0fb1d329f6a812101fb"
+   ],
+   "loserProfiles": [
+    "6ac3399ffb89d96091bb0d7f"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "youngstown|oh|city|mahoning",
+   "winner": "6ae802e1ab16778b51cb4c85",
+   "winnerScore": [
+    11,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a0e72e032a4b8dd6eeac"
+   ],
+   "loserProfiles": [
+    "6adaea9a522ac32f358a6807"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "dayton|oh|city|montgomery",
+   "winner": "6ae802d731aa9ec2e0b356b8",
+   "winnerScore": [
+    9,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a0e658b7d4185920c29c"
+   ],
+   "loserProfiles": [
+    "6ad858e179630b5a9d14b86c"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "cuyahoga county|oh|county|cuyahoga",
+   "winner": "6ae802db76d7a3faf4050c7d",
+   "winnerScore": [
+    7,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a0e1ca66d9c0ff0c589d"
+   ],
+   "loserProfiles": [
+    "6ac320f69ed2f99016c67530"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "cleveland|oh|city|cuyahoga",
+   "winner": "6ae80317f374ae66ff4e75a7",
+   "winnerScore": [
+    6,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a0de3bf19f8406eb173c"
+   ],
+   "loserProfiles": [
+    "6ac89235c1784165f2575155"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "columbus|oh|city|franklin",
+   "winner": "6ae8031bab036cc6e1763e04",
+   "winnerScore": [
+    9,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a0d96ad3beea6aa19f05"
+   ],
+   "loserProfiles": [
+    "6ad05aaa45e7ecf3ebe4285a"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "jackson township|oh|township|stark",
+   "winner": "6ae80a928bcc6453dd74bfc9",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a0d342d35878991aff45"
+   ],
+   "loserProfiles": [
+    "6ae80a86c1f86621d04f31ce"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "washington township|oh|township|montgomery",
+   "winner": "6ae80a80d278e8db473ffcb7",
+   "winnerScore": [
+    4,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a0cd51efb1e72b3a249f"
+   ],
+   "loserProfiles": [
+    "6ae80a7e28f9c8b8e5c8a7ca"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "montgomery county|oh|county|montgomery",
+   "winner": "6ae802d4e766ae2ff3ee529c",
+   "winnerScore": [
+    3,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae8a0c525b26f4697b3001b"
+   ],
+   "loserProfiles": [
+    "6ac1d68a613d7ca7cea36154"
+   ],
+   "sameProfile": true
+  },
+  {
+   "key": "pierce township|oh|township|clermont",
+   "winner": "6ae847287b846677082bf03a",
+   "winnerScore": [
+    8,
+    0,
+    1
+   ],
+   "losers": [
+    "6ae84747d7e63dce99ffc909"
+   ],
+   "loserProfiles": [
+    "6ae847264cbdeb13df96832d"
+   ],
+   "sameProfile": true
+  }
+ ]
+}

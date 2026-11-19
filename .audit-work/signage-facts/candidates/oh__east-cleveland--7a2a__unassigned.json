@@ -1,0 +1,38 @@
+{
+ "jurisdiction_id": "6adf5f368fff55e2843b7a2a",
+ "jurisdiction_name": "East Cleveland",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "Residential Misc. General & Specialty Fee Calculations Residential Fee General(includes mechanical costs) Sub total Construction type New, addition, or alteration Project Total Cost Permit formula PTC = project total cost Residential 1,2 or 3 family $500,000 < PTC / 1000 X 20 Residential 1,2 or 3 family > $500,000 10,000 +[PTC – 500,000] / 1000 X 2 Sub total Sub total . State 1% Sub total X 0.01 . General Permit Total Fee . Special Permits Issued Separately Item Unit Cost Number Installed Sub Total Garage up to 400 sf $100.00 . . Demolition /removal up to 2000sf Each 1000sf over 2000sf $125.00 plus $10.00 per 1000 sf $125.00 plus . . Moving building across public street $400.00 . Moving building on vehicle across street $200.00 . Moving building lot to lot $100.00 . Moving building on same lot $50.00 . Exterior water proofing $150.00 O ne . Interior water proofing $1 0 0.00 O ne New Sidi",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "f73e0d9b418dea520ab5d1c429fbf0aca6ec153431955ebfdac2a487b9b2c07d",
+   "source_document_id": null,
+   "source_title": "f73e0d9b418dea520ab5d1c429fbf0aca6ec153431955ebfdac2a487b9b2c07d.pdf",
+   "official_url": "https://www.eastcleveland.org/Document_Center/Department/Building%20&%20housing/%20Permits%20&%20Fees/%20%20Residential%20Permits%20&%20Fees/Residential%20General%20Misc%20Permit%20App.pdf?t=202609211001240"
+  },
+  {
+   "page": 1,
+   "snippet": "2018 City Council Office/Standard Forms-updated 3-20-18 EAST CLEVELAND CITY COUNCIL VOLUNTEER/COMMUNITY SERVICE SIGN-UP FORM First/Last Name: ________________________________ Date:_________________ Street Address: ______________________________________ Phone: _______________ City/State/Zip: _______________________________________________________________ Do you require community service hours (i.e. Court)? Y____ No ____ If yes, how many hours are you required to complete? ____ hour(s) If no, how many hours would you like to volunteer weekly? ____ hour(s) Below are the current Community Service opportunities. Indicate the volunteer service you in which would like to participate. Please check all that apply: Programs Available Check √ Indicate days available (M T W Th F S a Su ) Indicate Time slots M orning : 8 a.m. - noon A fternoon : noon - 4:30 p.m. Evenings: 5 p.m. – 9 p.m. ( Please not",
+   "tags": [
+    "sign",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "ef70a1f3462ce390969d0d44ac6c9359436c853392ce3442bd2df41145efdbb5",
+   "source_document_id": null,
+   "source_title": "ef70a1f3462ce390969d0d44ac6c9359436c853392ce3442bd2df41145efdbb5.pdf",
+   "official_url": "https://www.eastcleveland.org/Document_Center/How%20Do%20I/Apply%20For/VOLUNTEER-COMMUNITY-SERVICE-FORM.pdf"
+  }
+ ]
+}

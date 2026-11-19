@@ -1,0 +1,71 @@
+{
+  "synthetic": true,
+  "extractionOnly": true,
+  "externalCalls": [],
+  "results": [
+    {
+      "name": "legacy compatibility: ordinary positive split remains40 material/72 labor (112 total)",
+      "ok": true
+    },
+    {
+      "name": "legacy compatibility: explicit0 rate incorrectly classifies all72 steel labor as material",
+      "ok": true
+    },
+    {
+      "name": "legacy compatibility: explicit0 aggregatefeet becomes1ft and48labor is classified as material",
+      "ok": true
+    },
+    {
+      "name": "legacy compatibility: manualv2 material is incorrectly linked to legacy #4 catalog row",
+      "ok": true
+    },
+    {
+      "name": "legacy compatibility: stable v2 catalog ID is ignored in favor of legacy size lookup",
+      "ok": true
+    },
+    {
+      "name": "fresh typed2 snapshot, not legacy size lookup or combined total",
+      "ok": true
+    },
+    {
+      "name": "manual typed2 is never linked by legacy size",
+      "ok": true
+    },
+    {
+      "name": "zero aggregate stays zero; material0 and labor12 remain distinct",
+      "ok": true
+    },
+    {
+      "name": "explicit zero2 rate cannot fall through to current catalog",
+      "ok": true
+    },
+    {
+      "name": "unrelated descriptor zero behavior remains unchanged",
+      "ok": true
+    },
+    {
+      "name": "unknown active selector 2 cannot silently use legacy",
+      "ok": true
+    },
+    {
+      "name": "unknown active selector 3 cannot silently use legacy",
+      "ok": true
+    },
+    {
+      "name": "unknown active selector 0 cannot silently use legacy",
+      "ok": true
+    },
+    {
+      "name": "typed2 missing or inconsistent snapshot fails before producing any parts",
+      "ok": true
+    },
+    {
+      "name": "off2 ignores inactive malformed snapshot",
+      "ok": true
+    },
+    {
+      "name": "pure extraction never executes blocked SDK or persistence dependency",
+      "ok": true
+    }
+  ]
+}

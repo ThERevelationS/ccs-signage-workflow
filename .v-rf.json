@@ -1,0 +1,53 @@
+{
+  "summary": {
+    "total": 3,
+    "resolved": 2,
+    "rate": "66.7%",
+    "failure_stages": {
+      "geocode": 1
+    },
+    "geocode_misses": 1,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "9000 KY-132, Clay, KY 42404",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "address override: 9000 ky-132 -> clay",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "clay"
+      },
+      "county": "webster",
+      "ms": 2213,
+      "worker": 1
+    },
+    {
+      "address": "7424 Brookpark Road, Brooklyn, OH 44144",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: brooklyn -> brooklyn",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "brooklyn"
+      },
+      "county": "",
+      "ms": 1613,
+      "worker": 1
+    },
+    {
+      "address": "5649 Main St b, Clay, KY 42404",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1682,
+      "worker": 1
+    }
+  ]
+}

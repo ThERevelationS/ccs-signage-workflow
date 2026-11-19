@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "== base44/shared/pricingEngine.ts\n38417 base44/shared/pricingEngine.ts\n0000020   ;  \\n   }  \\n\n0000024\n== src/components/estimator/foundation/landscapeMaterials.js\n5413 src/components/estimator/foundation/landscapeMaterials.js\n0000020  \\n   }   ;  \\n\n0000024\n== src/components/estimator/depositGate.js\n4867 src/components/estimator/depositGate.js\n0000020   ;  \\n   }  \\n\n0000024\n== src/components/estimator/foundation/wallCalculator.js\n25598 src/components/estimator/foundation/wallCalculator.js\n0000020   ;  \\n   }  \\n\n0000024\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 827
+}

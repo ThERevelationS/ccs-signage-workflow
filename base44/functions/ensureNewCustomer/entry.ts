@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const ALLOWED_FIELDS = new Set([
@@ -72,7 +73,7 @@ async function customerReference(base44: any, customerId: string) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     await authenticateSignShopSession(base44, body?.session_token);
     const creationKey = clean(body?.creation_key);
@@ -191,7 +192,7 @@ Deno.serve(async (req) => {
     return Response.json({ customer: canonical, reused: false });
   } catch (error) {
     const status = Number(error?.status || error?.statusCode || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('ensureNewCustomer error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Customer could not be created safely.' : error.message,

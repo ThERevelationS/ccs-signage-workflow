@@ -1,0 +1,209 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "58755f09c4b5aee1a22235245d50d5047d663fcb",
+  "sourceArtifact": "cabinets-landscape-baseline-v2.json",
+  "dependencyArtifact": "cabinets-landscape-dependency-source.json",
+  "fixtureArtifact": "cabinets-landscape-fixture.json",
+  "sourceId": "synthetic-cabland-project",
+  "estimateId": "synthetic-cabland-estimate",
+  "sourceVersion": "synthetic-v1",
+  "savedVersion": "synthetic-v2",
+  "candidates": {
+    "src/components/estimator/foundation/landscapeMaterials.js": {
+      "file": "cabinets-landscape-candidate-landscapeMaterials.js",
+      "hash": "ba13081706de2a5e2e1f6429c1e8a058ecb11f72535ed2fefd40b31927ab906a"
+    },
+    "src/components/estimator/foundation/foundationInputValidation.js": {
+      "file": "cabinets-landscape-candidate-foundationInputValidation.js",
+      "hash": "593ee4bcb6475331aca1468f618e0ac5b4cf183b35958ebcff58d1897db026df"
+    },
+    "src/components/estimator/foundation/foundationCalc.js": {
+      "file": "cabinets-landscape-candidate-foundationCalc.js",
+      "hash": "88f9e4a77a5461d2036e35aabfbae4c73918e98042a7799500baa17e1abfc185"
+    },
+    "src/components/estimator/foundation/foundationAssemblyModel.js": {
+      "file": "cabinets-landscape-candidate-foundationAssemblyModel.js",
+      "hash": "8e197f9559b4bfbc4861040ee323ea526fb0fcfd84341ca9c7ece78efd57ac79"
+    },
+    "src/components/estimator/foundation/SignageCabinetsPanel.jsx": {
+      "file": "cabinets-landscape-candidate-SignageCabinetsPanel.jsx",
+      "hash": "7cc8d401338d284fd0e24483eebf79cd75c31930aed6d91d476d60cb21d73ff5"
+    },
+    "src/components/estimator/foundation/LandscapeDesigner.jsx": {
+      "file": "cabinets-landscape-candidate-LandscapeDesigner.jsx",
+      "hash": "4956450d189584ffdfcaf190aeef79c03953e8678840657c4a346c7915f0fd23"
+    },
+    "src/pages/FoundationEstimator.jsx": {
+      "file": "cabinets-landscape-candidate-FoundationEstimator.jsx",
+      "hash": "680c4a45e3db7af339dd5e3a775c7322e4dbf8277aea5d97b3c8c1a74f1375d6"
+    }
+  },
+  "acknowledgedSnapshot": {
+    "item": {
+      "item_total_cost": 111.11
+    },
+    "delivery": {
+      "concrete_total": 330.75
+    },
+    "total_signage_cabinet_cost": 950,
+    "total_landscape_cost": 15.5
+  },
+  "validCurrentSnapshot": {
+    "cabinetRows": [
+      700,
+      250
+    ],
+    "total_signage_cabinet_cost": 950,
+    "landscapeCost": 15.5,
+    "total_landscape_cost": 15.5
+  },
+  "blockedSaveMessage": "Save paused: fix highlighted design inputs or catalog selections.",
+  "post23Reconciliation": {
+    "fixture": "inventory gained synthetic-readymix concrete_service supplier and items[0] selected it with custom_concrete_cost_per_cy 0 — the -23 supplier-defaults transport makes any ready-mix delivery without a priced supplier a legitimate catalog hold (supplier_unavailable), so the shared page gate could not reach the cabinets/landscape cases under the old fixture",
+    "verifier": "verify-cabinets-model.mjs source map now reads SPEC.sourceArtifact (it previously hardcoded the pre-23 baseline, masking the landed supplier-default changes)",
+    "expectedDeltas": "deliveryConcreteTotal 330.75→337.5 (0.75cy × mix_4000 210 + small-load 145 + fuel 35), grandTotal 668.5278→675.2778, sectionTotal 1634.0278→1640.7778"
+  },
+  "modelCaseCount": 45,
+  "pageCaseCount": 8,
+  "browserCaseCount": 12,
+  "browserModes": [
+    {
+      "id": "valid",
+      "pricingUnavailable": false,
+      "cabinetTexts": [
+        "Signage Cabinets",
+        "$700.00",
+        "$250.00"
+      ],
+      "landscapeTexts": [
+        "Landscape Designer",
+        "Grass",
+        "Concrete",
+        "$15.50"
+      ],
+      "sectionTexts": [
+        "Signage cabinets",
+        "$950.00",
+        "$15.50",
+        "$1,640.78"
+      ],
+      "bomRows": 2,
+      "cabinetQtyInteraction": true
+    },
+    {
+      "id": "held-bad-cabinet-qty",
+      "pricingUnavailable": true,
+      "cabinetTexts": [
+        "Saved amounts only",
+        "Not saved",
+        "positive quantity"
+      ],
+      "sectionTexts": [
+        "$950.00",
+        "Estimate handoff paused"
+      ],
+      "issueCodes": [
+        "signage_cabinet_quantity_unavailable"
+      ],
+      "invalidField": {
+        "selector": "input[data-cabinet-field=\"quantity\"]",
+        "describedBy": "signage-cabinet-0-pricing"
+      },
+      "bomRows": 2
+    },
+    {
+      "id": "held-missing-cabinet-price",
+      "pricingUnavailable": true,
+      "cabinetTexts": [
+        "Saved amounts only",
+        "Not saved",
+        "nonnegative unit cost"
+      ],
+      "sectionTexts": [
+        "$950.00",
+        "Estimate handoff paused"
+      ],
+      "issueCodes": [
+        "signage_cabinet_price_unavailable"
+      ],
+      "invalidField": {
+        "selector": "input[data-cabinet-field=\"unit_cost\"]",
+        "describedBy": "signage-cabinet-0-pricing"
+      },
+      "bomRows": 2
+    },
+    {
+      "id": "held-missing-cell-size",
+      "pricingUnavailable": true,
+      "cabinetTexts": [
+        "$700.00",
+        "$250.00"
+      ],
+      "landscapeTexts": [
+        "cell size",
+        "Not saved",
+        "area unavailable"
+      ],
+      "sectionTexts": [
+        "$950.00",
+        "$15.50",
+        "Estimate handoff paused"
+      ],
+      "issueCodes": [
+        "landscape_cell_size_unavailable"
+      ],
+      "invalidField": {
+        "selector": "input[data-landscape-field=\"cell_size_inches\"]",
+        "describedBy": "landscape-pricing"
+      },
+      "cellSizeInteraction": true,
+      "bomRows": 2
+    },
+    {
+      "id": "held-unsaved-project",
+      "pricingUnavailable": true,
+      "cabinetTexts": [
+        "Saved amounts only",
+        "Not saved",
+        "positive quantity"
+      ],
+      "sectionTexts": [
+        "Not saved",
+        "Estimate handoff paused"
+      ],
+      "issueCodes": [
+        "signage_cabinet_quantity_unavailable"
+      ],
+      "bomRows": 2
+    },
+    {
+      "id": "free-cabinet-zero",
+      "pricingUnavailable": false,
+      "cabinetTexts": [
+        "$0.00",
+        "$250.00"
+      ],
+      "sectionTexts": [
+        "$250.00"
+      ],
+      "bomRows": 2
+    }
+  ],
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 900
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "remoteWritesPerformed": false,
+  "checkpointsCreated": false,
+  "businessRecordOperationsPerformed": false,
+  "schemaActivationAuthorized": false,
+  "publishDeployAuthorized": false,
+  "transportPerformed": false
+}

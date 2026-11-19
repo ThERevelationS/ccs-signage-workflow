@@ -1,0 +1,504 @@
+import { base44 } from "@/api/base44Client";
+import { saveTrackedFields } from '@/components/shared/trackedFieldPersistence';
+import { stripInheritedWorkOrderSyncIdentity } from './workOrderCreationIdentity.mjs';
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
+import { staffEntities } from "@/components/staff/staffEntities";
+
+const SYSTEM_FIELDS = new Set([
+  "id",
+  "created_date",
+  "updated_date",
+  "created_by",
+  "created_by_id",
+]);
+
+function normalize(value) {
+  if (Array.isArray(value)) return value.map(normalize);
+  if (!value || typeof value !== "object") return value;
+  return Object.keys(value).sort().reduce((out, key) => {
+    out[key] = normalize(value[key]);
+    return out;
+  }, {});
+}
+
+function sameValue(a, b) {
+  if (a !== null && a !== undefined && a !== "" && b !== null && b !== undefined && b !== "") {
+    if (Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
+      return Math.abs(Number(a) - Number(b)) <= 0.000001;
+    }
+  }
+  // The backend trims most string fields on write, so a stored value won't
+  // byte-match an untrimmed patch value. Compare top-level strings trimmed —
+  // the same convention the idempotent-create payload matcher uses — or
+  // post-save verification false-negatives a patch that actually landed.
+  // Nested strings inside arrays/objects stay strict so CAS snapshots keep
+  // their full-fidelity compare.
+  if (typeof a === "string" && typeof b === "string") return a.trim() === b.trim();
+  return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
+}
+
+export function sanitizeWorkOrderFormPatch(formData = {}) {
+  return Object.entries(formData || {}).reduce((patch, [key, value]) => {
+    if (!SYSTEM_FIELDS.has(key)) patch[key] = value;
+    return patch;
+  }, {});
+}
+
+export function workOrderPatchMatches(record, patch) {
+  if (!record || !patch) return false;
+  return Object.entries(patch).every(([key, value]) => sameValue(record?.[key], value));
+}
+
+export async function createWorkOrderWithRecovery({ data, label = "Work Order", entity = staffEntities.WorkOrder } = {}) {
+  // All UI-driven new WorkOrders, including Duplicate Client, must start
+  // unlinked. Never copy an existing job's permanent Smartsheet row ownership
+  // or durable POST/import evidence into a newly created record.
+  const payload = stripInheritedWorkOrderSyncIdentity(sanitizeWorkOrderFormPatch(data || {}));
+  const title = String(payload.title || "").trim();
+  if (!title || typeof entity?.filter !== "function" || typeof entity?.create !== "function") {
+    throw new Error(`${label} could not initialize its retry-safe create.`);
+  }
+
+  // Create verification must scan the whole same-title set. entity.filter
+  // pages at 500 rows, so an exact same-title count (staffDataRead gateway)
+  // bounds the scan up front and the read then pages through the titles.
+  // SAME_TITLE_VERIFY_MAX_ROWS is a fail-closed safety cap on that scan,
+  // not a platform limit — beyond it, retry-safe verification is not
+  // trustworthy (e.g. high-volume same-title jobs like walk-in sales).
+  const SAME_TITLE_PAGE_SIZE = 500; // entity.filter page cap
+  const SAME_TITLE_VERIFY_MAX_ROWS = 5000;
+  const readMatches = async () => {
+    if (typeof entity.count === "function") {
+      const total = await entity.count({ title }).catch(() => null);
+      if (typeof total === "number" && total > SAME_TITLE_VERIFY_MAX_ROWS) {
+        throw new Error(`${label} has too many same-title Work Orders to verify creation safely. Review existing jobs before retrying.`);
+      }
+    }
+    const matches = [];
+    const seen = new Set();
+    for (let skip = 0; skip < SAME_TITLE_VERIFY_MAX_ROWS; skip += SAME_TITLE_PAGE_SIZE) {
+      const page = await entity.filter({ title }, "-created_date", SAME_TITLE_PAGE_SIZE, skip);
+      if (!Array.isArray(page)) throw new Error(`${label} lookup did not return a Work Order list.`);
+      for (let index = 0; index < page.length; index += 1) {
+        const row = page[index];
+        // Newest-first pages shift under concurrent inserts, so dedupe by id
+        // the same way loadAllEntityRows does.
+        const key = String(row?.id || "").trim() || `__row_${skip + index}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        if (workOrderPatchMatches(row, payload)) matches.push(row);
+      }
+      if (page.length < SAME_TITLE_PAGE_SIZE) return matches;
+    }
+    throw new Error(`${label} has too many same-title Work Orders to verify creation safely. Review existing jobs before retrying.`);
+  };
+
+  const before = await readMatches();
+  const beforeIds = new Set(before.map((row) => row.id));
+
+  let created = null;
+  let createError = null;
+  try {
+    created = await entity.create(payload);
+  } catch (error) {
+    createError = error;
+  }
+
+  if (created?.id) {
+    const saved = typeof entity.get === "function" ? await entity.get(created.id).catch(() => null) : null;
+    return { record: saved?.id ? saved : created, status: "created" };
+  }
+
+  const after = await readMatches();
+  const newMatches = after.filter((row) => !beforeIds.has(row.id));
+  if (newMatches.length === 1) return { record: newMatches[0], status: "recovered" };
+  if (newMatches.length > 1) {
+    throw new Error(`${label} may have been created more than once while the create response was unavailable. No Work Orders were deleted; reload and review matching jobs before retrying.`);
+  }
+  if (createError) throw createError;
+  throw new Error(`${label} could not verify whether it was created. Reload before retrying.`);
+}
+
+export function createWorkOrderArrayItemLocator(item) {
+  if (!item || typeof item !== "object") {
+    throw new Error("Work Order array item could not be identified safely.");
+  }
+  const rawId = item.id;
+  if (rawId !== null && rawId !== undefined && String(rawId).trim()) {
+    return { id: String(rawId) };
+  }
+  return { snapshot: normalize(item) };
+}
+
+export function findOptionalWorkOrderArrayItemIndex(items, locator, label = "Work Order item") {
+  if (!Array.isArray(items) || !locator) {
+    throw new Error(`${label} could not be located safely.`);
+  }
+  const matches = [];
+  items.forEach((item, index) => {
+    const matched = locator.id
+      ? String(item?.id ?? "") === locator.id
+      : sameValue(item, locator.snapshot);
+    if (matched) matches.push(index);
+  });
+  if (matches.length > 1) {
+    throw new Error(`${label} is ambiguous in the latest Work Order data. Reload before saving.`);
+  }
+  return matches.length === 1 ? matches[0] : -1;
+}
+
+export function findWorkOrderArrayItemIndex(items, locator, label = "Work Order item") {
+  const index = findOptionalWorkOrderArrayItemIndex(items, locator, label);
+  if (index >= 0) return index;
+  throw new Error(`${label} changed or disappeared in another session. Reload before saving.`);
+}
+
+export async function mutateLocatedWorkOrderArrayItem({
+  workOrderId,
+  field,
+  item,
+  mutateItem,
+  remove = false,
+  label = "Work Order item",
+  maxAttempts = 3,
+}) {
+  const locator = createWorkOrderArrayItemLocator(item);
+  return mutateWorkOrderArrayField({
+    workOrderId,
+    field,
+    label,
+    maxAttempts,
+    mutate: (currentItems) => {
+      const index = findWorkOrderArrayItemIndex(currentItems, locator, label);
+      if (remove) return currentItems.filter((_, currentIndex) => currentIndex !== index);
+      const nextItem = mutateItem?.(currentItems[index], index);
+      if (!nextItem || typeof nextItem !== "object") {
+        throw new Error(`${label} update did not produce a valid item.`);
+      }
+      return currentItems.map((currentItem, currentIndex) => currentIndex === index ? nextItem : currentItem);
+    },
+  });
+}
+
+export async function replaceWorkOrderFieldsIfUnchanged({ workOrderId, expectedFields, nextFields, guardFields = {} }) {
+  return saveTrackedFields({entityType:'WorkOrder', id:workOrderId, expectedFields, nextFields, guardFields});
+}
+
+const WO_STAGE_ORDER = ["estimating", "sales", "permitting", "design", "production", "fabrication", "installation", "completed"];
+const WO_OPEN_PERMIT_STATUSES = new Set(["active", "waiting"]);
+
+export async function transitionWorkOrderFromLoadedSnapshot({
+  workOrder,
+  newStage,
+  completed,
+  normalizeLegacyNotes = false,
+  allowPermitSkip = false,
+  label = "Work Order transition",
+}) {
+  const id = String(workOrder?.id || "").trim();
+  const stage = String(newStage || "").trim();
+  if (!id || !stage) throw new Error(`${label} is missing its Work Order or destination stage.`);
+
+  // Required-stage guard: a forward move that crosses the permitting stage is
+  // blocked while the job has open PermitLineItems. Pass allowPermitSkip for
+  // sanctioned jumps (e.g., permit handled outside the tracker).
+  const fromIdx = WO_STAGE_ORDER.indexOf(String(workOrder.current_stage || "").trim());
+  const toIdx = WO_STAGE_ORDER.indexOf(stage);
+  const permittingIdx = WO_STAGE_ORDER.indexOf("permitting");
+  if (!allowPermitSkip && fromIdx >= 0 && toIdx >= 0 && fromIdx < permittingIdx && toIdx > permittingIdx) {
+    const openPermits = (await staffEntities.PermitLineItem.filter({ work_order_id: id }).catch(() => []))
+      .filter((row) => WO_OPEN_PERMIT_STATUSES.has(String(row?.status || "").trim()));
+    if (openPermits.length) {
+      throw new Error(`${label} cannot skip the Permitting stage — this job has ${openPermits.length} open permit line item(s). Complete them or move through Permitting first.`);
+    }
+  }
+
+  const expectedFields = { current_stage: workOrder.current_stage };
+  const nextFields = { current_stage: stage };
+  if (typeof completed === "boolean") {
+    expectedFields.completed = workOrder.completed;
+    nextFields.completed = completed;
+  } else if (workOrder.completed === true && stage !== "completed") {
+    // Reopen: a stage move away from "completed" must not leave a stale
+    // completed flag on the record when the caller did not pass one.
+    expectedFields.completed = true;
+    nextFields.completed = false;
+  }
+
+  if (normalizeLegacyNotes && typeof workOrder.notes === "string" && workOrder.notes.trim()) {
+    expectedFields.notes = workOrder.notes;
+    nextFields.notes = [{
+      text: workOrder.notes,
+      timestamp: workOrder.created_date || new Date().toISOString(),
+      created_by: workOrder.created_by || "Unknown",
+    }];
+  }
+
+  return replaceWorkOrderFieldsIfUnchanged({
+    workOrderId: id,
+    expectedFields,
+    nextFields,
+    label,
+  });
+}
+
+export async function replaceWorkOrderArrayFieldIfUnchanged({
+  workOrderId,
+  field,
+  expectedArray,
+  nextArray,
+  label = "Work Order array",
+  maxAttempts = 3,
+}) {
+  const entity = staffEntities.WorkOrder;
+  const id = String(workOrderId || "").trim();
+  const fieldName = String(field || "").trim();
+  const expected = expectedArray == null ? [] : expectedArray;
+  const desired = nextArray == null ? [] : nextArray;
+  if (!id || !fieldName || !Array.isArray(expected) || !Array.isArray(desired) || !entity?.updateMany || !entity?.get) {
+    throw new Error(`${label} could not initialize its concurrency-safe replacement.`);
+  }
+
+  const attempts = Math.max(1, Math.min(5, Number(maxAttempts) || 3));
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const current = await entity.get(id);
+    if (!current?.id) throw new Error(`${label} could not verify its Work Order before saving.`);
+    if (current.deleted === true) {
+      throw new Error(`${label} was blocked because this Work Order is in Trash. Restore it before making changes.`);
+    }
+    const currentArray = current[fieldName] == null ? [] : current[fieldName];
+    if (!Array.isArray(currentArray)) {
+      throw new Error(`${label} data is not an array. No change was made.`);
+    }
+    if (sameValue(currentArray, desired)) return current;
+    if (!sameValue(currentArray, expected)) {
+      throw new Error(`${label} changed in another session. Reload it before saving. No checklist changes were overwritten.`);
+    }
+
+    const expectedUpdatedAt = String(current.updated_date || "").trim();
+    if (!expectedUpdatedAt) throw new Error(`${label} is missing its current Work Order version. Reload before saving.`);
+    await saveTrackedFields({entityType:'WorkOrder',id,expectedFields:{[fieldName]:expected},nextFields:{[fieldName]:desired}});
+    const result={updated:1};
+    if (!result || typeof result.updated !== "number") {
+      throw new Error(`${label} conditional replacement result could not be verified.`);
+    }
+    if (result.updated === 1) {
+      const saved = await entity.get(id).catch(() => null);
+      if (!saved) throw new Error(`${label} was saved but could not be re-read.`);
+      return saved;
+    }
+    // Another field may have changed after the preflight read. Re-read and retry
+    // only if this same checklist field still matches the originally loaded snapshot.
+  }
+
+  throw new Error(`${label} Work Order changed repeatedly while saving. Reload and try again.`);
+}
+
+export async function mutateWorkOrderArrayField({ workOrderId, field, mutate, label = "Work Order", maxAttempts = 3 }) {
+  const entity = staffEntities.WorkOrder;
+  const id = String(workOrderId || "").trim();
+  const fieldName = String(field || "").trim();
+  if (!id || !fieldName || typeof mutate !== "function" || !entity?.updateMany || !entity?.get) {
+    throw new Error(`${label} could not initialize its concurrency-safe array update.`);
+  }
+
+  const attempts = Math.max(1, Math.min(5, Number(maxAttempts) || 3));
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const current = await entity.get(id);
+    if (!current?.id) throw new Error(`${label} could not be verified before updating ${fieldName}.`);
+    if (current.deleted === true) {
+      throw new Error(`${label} was blocked because this Work Order is in Trash. Restore it before making changes.`);
+    }
+    const expectedUpdatedAt = String(current.updated_date || "").trim();
+    if (!expectedUpdatedAt) throw new Error(`${label} is missing its loaded version. Reload it before saving.`);
+
+    const currentArray = current[fieldName] == null ? [] : current[fieldName];
+    if (!Array.isArray(currentArray)) {
+      throw new Error(`${label} ${fieldName} data is not an array. No change was made.`);
+    }
+    const nextArray = mutate(currentArray, current);
+    if (!Array.isArray(nextArray)) {
+      throw new Error(`${label} ${fieldName} update did not produce a valid array.`);
+    }
+    if (sameValue(currentArray, nextArray)) return current;
+
+    let result;
+    try {
+      await saveTrackedFields({entityType:'WorkOrder',id,expectedFields:{[fieldName]:currentArray},nextFields:{[fieldName]:nextArray}});
+      result={updated:1};
+    } catch (error) {
+      const afterError = await entity.get(id).catch(() => null);
+      if (afterError?.deleted === true) {
+        throw new Error(`${label} write response was unavailable and the Work Order is now in Trash. Reload before retrying; no active Work Order update was accepted.`);
+      }
+      if (afterError && sameValue(afterError[fieldName] ?? [], nextArray)) return afterError;
+      throw error;
+    }
+
+    if (!result || typeof result.updated !== "number") {
+      throw new Error(`${label} conditional array-update result could not be verified.`);
+    }
+    if (result.updated === 1) {
+      const saved = await entity.get(id).catch(() => null);
+      if (!saved) throw new Error(`${label} was updated but could not be re-read.`);
+      return saved;
+    }
+    // Another session changed the Work Order after our preflight read. Re-read
+    // and re-apply the caller's deterministic array mutation to the latest value.
+  }
+
+  throw new Error(`${label} changed repeatedly in another session. Reload it before saving.`);
+}
+
+export async function softDeleteWorkOrderFromLoadedSnapshot({
+  workOrder,
+  deletedBy = "unknown",
+  label = "Work Order delete",
+}) {
+  const entity = staffEntities.WorkOrder;
+  const id = String(workOrder?.id || "").trim();
+  const expectedUpdatedAt = String(workOrder?.updated_date || "").trim();
+  const actor = String(deletedBy || "unknown").trim() || "unknown";
+  if (!id || !expectedUpdatedAt || !entity?.updateMany || !entity?.get) {
+    throw new Error(`${label} is missing its loaded Work Order version. Reload before deleting.`);
+  }
+
+  const current = await entity.get(id);
+  if (!current?.id) throw new Error(`${label} could not verify its Work Order before deleting.`);
+  if (current.deleted === true) return current;
+  if (String(current.updated_date || "").trim() !== expectedUpdatedAt) {
+    throw new Error(`${label} was blocked because the Work Order changed after it was loaded. Reload before deleting. Nothing was deleted.`);
+  }
+
+  const deletedAt = new Date().toISOString();
+  let result;
+  try {
+    result = await entity.updateMany(
+      { id, updated_date: expectedUpdatedAt },
+      { $set: { deleted: true, deleted_at: deletedAt, deleted_by: actor } },
+    );
+  } catch (error) {
+    const afterError = await entity.get(id).catch(() => null);
+    if (afterError?.deleted === true) return afterError;
+    throw error;
+  }
+
+  if (!result || typeof result.updated !== "number") {
+    throw new Error(`${label} result could not be verified.`);
+  }
+  if (result.updated === 1) {
+    const saved = await entity.get(id).catch(() => null);
+    if (!saved) throw new Error(`${label} succeeded but the deleted Work Order could not be re-read.`);
+    return saved;
+  }
+
+  const after = await entity.get(id).catch(() => null);
+  if (after?.deleted === true) return after;
+  throw new Error(`${label} was blocked because the Work Order changed while deletion was being confirmed. Reload before deleting. Nothing was deleted.`);
+}
+
+export async function restoreWorkOrderFromLoadedTrashSnapshot({
+  workOrder,
+  label = "Work Order recovery",
+}) {
+  const entity = staffEntities.WorkOrder;
+  const id = String(workOrder?.id || "").trim();
+  const expectedUpdatedAt = String(workOrder?.updated_date || "").trim();
+  if (!id || !expectedUpdatedAt || !entity?.updateMany || !entity?.get) {
+    throw new Error(`${label} is missing its loaded Work Order version. Reload trash before recovering.`);
+  }
+
+  const current = await entity.get(id);
+  if (!current?.id) throw new Error(`${label} could not verify its Work Order before recovering.`);
+  if (current.deleted !== true) return current;
+  if (String(current.updated_date || "").trim() !== expectedUpdatedAt) {
+    throw new Error(`${label} was blocked because the deleted Work Order changed after trash was loaded. Reload trash before recovering.`);
+  }
+
+  let result;
+  try {
+    result = await entity.updateMany(
+      { id, updated_date: expectedUpdatedAt },
+      { $set: { deleted: false, deleted_at: null, deleted_by: null } },
+    );
+  } catch (error) {
+    const afterError = await entity.get(id).catch(() => null);
+    if (afterError && afterError.deleted !== true) return afterError;
+    throw error;
+  }
+
+  if (!result || typeof result.updated !== "number") {
+    throw new Error(`${label} result could not be verified.`);
+  }
+  if (result.updated === 1) {
+    const saved = await entity.get(id).catch(() => null);
+    if (!saved) throw new Error(`${label} succeeded but the recovered Work Order could not be re-read.`);
+    try {
+      await NotificationTriggers.workOrderRestored(saved);
+    } catch (notificationError) {
+      console.error(`${label} succeeded but its restore notification failed:`, notificationError);
+    }
+    return saved;
+  }
+
+  const after = await entity.get(id).catch(() => null);
+  if (after && after.deleted !== true) return after;
+  throw new Error(`${label} was blocked because the deleted Work Order changed while recovery was being confirmed. Reload trash before recovering.`);
+}
+
+export async function updateWorkOrderFromLoadedSnapshot({ workOrder, formData, label = "Work Order" }) {
+  const entity = staffEntities.WorkOrder;
+  const id = String(workOrder?.id || "").trim();
+  const expectedUpdatedAt = String(workOrder?.updated_date || "").trim();
+  if (!id || !entity?.updateMany || !entity?.get) {
+    throw new Error(`${label} could not initialize its concurrency-safe update.`);
+  }
+  if (!expectedUpdatedAt) {
+    throw new Error(`${label} is missing its loaded version. Reload it before saving.`);
+  }
+
+  // WorkOrderForm is prefilled from the entire loaded record, including
+  // hidden Smartsheet link/create/import evidence. A regular job edit must
+  // never rewrite those sync-owned fields from its potentially stale draft.
+  // Preserve the existing exact-version CAS for ordinary editable fields.
+  const patch = stripInheritedWorkOrderSyncIdentity(sanitizeWorkOrderFormPatch(formData));
+  let result;
+  try {
+    result = await entity.updateMany(
+      { id, updated_date: expectedUpdatedAt, deleted: { $ne: true } },
+      { $set: patch },
+    );
+  } catch (error) {
+    const current = await entity.get(id).catch(() => null);
+    if (current?.deleted === true) {
+      throw new Error(`${label} was blocked because this Work Order is in Trash. Restore it before making changes.`);
+    }
+    if (current && workOrderPatchMatches(current, patch)) return current;
+    throw error;
+  }
+
+  if (!result || typeof result.updated !== "number") {
+    throw new Error(`${label} conditional-update result could not be verified.`);
+  }
+
+  if (result.updated === 1) {
+    const saved = await entity.get(id).catch(() => null);
+    if (!saved) throw new Error(`${label} was updated but could not be re-read.`);
+    try {
+      await NotificationTriggers.workOrderFieldsChanged(saved, workOrder);
+    } catch (notificationError) {
+      console.error(`${label} succeeded but its field-change notifications failed:`, notificationError);
+    }
+    return saved;
+  }
+
+  const current = await entity.get(id).catch(() => null);
+  if (current?.deleted === true) {
+    throw new Error(`${label} was blocked because this Work Order is in Trash. Restore it before making changes.`);
+  }
+  if (current && workOrderPatchMatches(current, patch)) {
+    return current;
+  }
+
+  throw new Error(`${label} changed in another session. Reload it before saving. No Work Order fields were overwritten.`);
+}

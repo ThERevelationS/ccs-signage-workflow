@@ -7,9 +7,11 @@ export default class AppErrorBoundary extends React.Component {
     return { hasError: true };
   }
 
-  componentDidCatch() {
+  componentDidCatch(error, info) {
     // Keep the on-screen recovery message clear and avoid exposing error details.
-    console.error("The app stopped while rendering. Recovery screen shown.");
+    // The component stack stays in the console so a crash reports which subtree
+    // threw instead of leaving "minified React error" with no location.
+    console.error("The app stopped while rendering. Recovery screen shown.", error, info?.componentStack || "");
   }
 
   handleReload = () => {

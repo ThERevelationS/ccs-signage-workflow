@@ -1,0 +1,95 @@
+{
+  "synthetic": true,
+  "mockedIO": true,
+  "realBase44StorageVerified": false,
+  "results": [
+    {
+      "name": "accept-undo-save-bom",
+      "width": 1440,
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 3\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-page-browser.mjs:190:14\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-page-browser.mjs:143:5)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-page-browser.mjs:166:5",
+      "telemetry": {
+        "pageErrors": [
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined"
+        ],
+        "consoleErrors": [
+          "Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s FoundationEstimator FoundationEstimator FoundationEstimator \n    at FoundationEstimator (http://127.0.0.1:52225/fixture.js:42724:32)",
+          "The above error occurred in the <FoundationBOM> component:\n\n    at FoundationBOM (http://127.0.0.1:52225/fixture.js:37729:3)\n    at div\n    at http://127.0.0.1:52225/fixture.js:27814:13\n    at Presence (http://127.0.0.1:52225/fixture.js:28135:11)\n    at http://127.0.0.1:52225/fixture.js:28385:13\n    at http://127.0.0.1:52225/fixture.js:28455:42\n    at div\n    at http://127.0.0.1:52225/fixture.js:27814:13\n    at Provider (http://127.0.0.1:52225/fixture.js:27522:15)\n    at http://127.0.0.1:52225/fixture.js:28262:7\n    at div\n    at div\n    at fieldset\n    at div\n    at div\n    at FoundationEstimator (http://127.0.0.1:52225/fixture.js:42724:32)\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://reactjs.org/link/error-boundaries to learn more about error boundaries."
+        ],
+        "externalRequests": [],
+        "requestFailures": []
+      },
+      "layout": {
+        "viewport": 1440,
+        "scroll": 1440,
+        "elements": []
+      }
+    },
+    {
+      "name": "invalid-draft-reload-restore",
+      "width": 1440,
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s FoundationEstimator FoundationEstimator FoundationEstimator \\n' +\n+     '    at FoundationEstimator (http://127.0.0.1:52225/fixture.js:42724:32)',\n+   'Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s FoundationEstimator FoundationEstimator FoundationEstimator \\n' +\n+     '    at FoundationEstimator (http://127.0.0.1:52225/fixture.js:42724:32)'\n+ ]\n- []\n\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-page-browser.mjs:146:58)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-page-browser.mjs:208:5",
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [
+          "Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s FoundationEstimator FoundationEstimator FoundationEstimator \n    at FoundationEstimator (http://127.0.0.1:52225/fixture.js:42724:32)",
+          "Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s FoundationEstimator FoundationEstimator FoundationEstimator \n    at FoundationEstimator (http://127.0.0.1:52225/fixture.js:42724:32)"
+        ],
+        "externalRequests": [],
+        "requestFailures": []
+      },
+      "layout": {
+        "viewport": 1440,
+        "scroll": 1440,
+        "elements": []
+      }
+    },
+    {
+      "name": "accept-undo-save-bom",
+      "width": 390,
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 3\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-page-browser.mjs:190:14\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-page-browser.mjs:143:5)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-page-browser.mjs:166:5",
+      "telemetry": {
+        "pageErrors": [
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined",
+          "ReferenceError: project is not defined"
+        ],
+        "consoleErrors": [
+          "Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s FoundationEstimator FoundationEstimator FoundationEstimator \n    at FoundationEstimator (http://127.0.0.1:52225/fixture.js:42724:32)",
+          "The above error occurred in the <FoundationBOM> component:\n\n    at FoundationBOM (http://127.0.0.1:52225/fixture.js:37729:3)\n    at div\n    at http://127.0.0.1:52225/fixture.js:27814:13\n    at Presence (http://127.0.0.1:52225/fixture.js:28135:11)\n    at http://127.0.0.1:52225/fixture.js:28385:13\n    at http://127.0.0.1:52225/fixture.js:28455:42\n    at div\n    at http://127.0.0.1:52225/fixture.js:27814:13\n    at Provider (http://127.0.0.1:52225/fixture.js:27522:15)\n    at http://127.0.0.1:52225/fixture.js:28262:7\n    at div\n    at div\n    at fieldset\n    at div\n    at div\n    at FoundationEstimator (http://127.0.0.1:52225/fixture.js:42724:32)\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://reactjs.org/link/error-boundaries to learn more about error boundaries."
+        ],
+        "externalRequests": [],
+        "requestFailures": []
+      },
+      "layout": {
+        "viewport": 390,
+        "scroll": 390,
+        "elements": []
+      }
+    },
+    {
+      "name": "invalid-draft-reload-restore",
+      "width": 390,
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s FoundationEstimator FoundationEstimator FoundationEstimator \\n' +\n+     '    at FoundationEstimator (http://127.0.0.1:52225/fixture.js:42724:32)',\n+   'Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s FoundationEstimator FoundationEstimator FoundationEstimator \\n' +\n+     '    at FoundationEstimator (http://127.0.0.1:52225/fixture.js:42724:32)'\n+ ]\n- []\n\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-page-browser.mjs:146:58)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-page-browser.mjs:208:5",
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [
+          "Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s FoundationEstimator FoundationEstimator FoundationEstimator \n    at FoundationEstimator (http://127.0.0.1:52225/fixture.js:42724:32)",
+          "Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s FoundationEstimator FoundationEstimator FoundationEstimator \n    at FoundationEstimator (http://127.0.0.1:52225/fixture.js:42724:32)"
+        ],
+        "externalRequests": [],
+        "requestFailures": []
+      },
+      "layout": {
+        "viewport": 390,
+        "scroll": 390,
+        "elements": []
+      }
+    }
+  ]
+}

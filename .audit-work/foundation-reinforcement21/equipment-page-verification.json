@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "id": "held-bad-duration-blocks-save",
+      "ok": true
+    },
+    {
+      "id": "missing-catalog-price-blocks-save",
+      "ok": true
+    },
+    {
+      "id": "new-unsaved-equipment-withholds-totals",
+      "ok": true
+    },
+    {
+      "id": "valid-equipment-saves-then-new-acknowledged-holds",
+      "ok": true
+    },
+    {
+      "id": "free-zero-custom-rate-saves",
+      "ok": true
+    },
+    {
+      "id": "held-bad-custom-qty-repaired-through-tab",
+      "ok": true
+    },
+    {
+      "id": "string-duration-normalizes-and-persists",
+      "ok": true
+    }
+  ],
+  "unexpectedNetwork": 0,
+  "unexpectedSdk": 0
+}

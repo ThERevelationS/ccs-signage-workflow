@@ -1,0 +1,65 @@
+{
+ "jurisdiction_id": "6ae9c6b5845b9cf049a41e48",
+ "jurisdiction_name": "Mentor",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "CITY OF MENTOR APPLICATION FOR SIGN PERMIT (REVISION 01/2022 ALL OTHER VERSIONS ARE OBSOLETE) Mentor Municipal Center, 8500 Civic Center Boulevard, Mentor, Ohio 44060-2499 www.cityofmentor.com Department of Planning and Development Phone 440-974-5740 / Fax 440-205-3605 / Email: planning@cityofmentor.com O:\\plng\\Applications and Permits\\Permits\\2022\\Sign Permit Application.doc Page 2 of 2 SIGN PERMIT INSTRUCTIONS APPLICATION FOR PERMIT: A permit application shall be made to the Department of Planning and Development and shall contain and have attached the following information and documentation: • Name, address and telephone number of the applicant. • Name of the person erecting the sign and any related structure. • Written consent of the owner of the building, structure, or land to which or on which the sign and/or any related structure is to be erected, if different from the applicant. ",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "type",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 16,
+   "source_sha256": "13bc4f8022068d4cf7c1b9066d8e9bda09cb2ee4cf3e27f93b51d0555b9538ea",
+   "source_document_id": null,
+   "source_title": "13bc4f8022068d4cf7c1b9066d8e9bda09cb2ee4cf3e27f93b51d0555b9538ea.pdf",
+   "official_url": "https://cityofmentor.com/wp-content/uploads/City-of-Mentor-Sign-Permit-Application-2022.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CITY OF MENTOR APPLICATION FOR SIGN PERMIT (REVISION 01/2022 ALL OTHER VERSIONS ARE OBSOLETE) Mentor Municipal Center, 8500 Civic Center Boulevard, Mentor, Ohio 44060-2499 www.cityofmentor.com Department of Planning and Development Phone 440-974-5740 / Fax 440-205-3605 / Email: planning@cityofmentor.com O:\\plng\\Applications and Permits\\Permits\\2022\\Sign Permit Application.doc Page 1 of 2 Project Information (Please Print) Project Address: Zoning: Parcel Number(s): Ward: Census Tract: TYPE OF SIGN : Permanent Illuminated Front Wall Side Wall Directional Free-Standing Cost of Sign (including erection): $ ILLUMINATION: Illumination: Candelas (shall not exceed 100 Candelas per square meter (cd/m2) from dusk till dawn) LOCATIONS & DIMENSIONS: (This data must also be shown on attached drawings) Overall Sign Area: Sign Height: Sign Width: Wall Sign Separation Distance (code minimum is three (3)",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "type",
+    "process"
+   ],
+   "weight": 15,
+   "source_sha256": "13bc4f8022068d4cf7c1b9066d8e9bda09cb2ee4cf3e27f93b51d0555b9538ea",
+   "source_document_id": null,
+   "source_title": "13bc4f8022068d4cf7c1b9066d8e9bda09cb2ee4cf3e27f93b51d0555b9538ea.pdf",
+   "official_url": "https://cityofmentor.com/wp-content/uploads/City-of-Mentor-Sign-Permit-Application-2022.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "GENERAL GUIDELINES Per the City of Mentor Code of Ordinances, no signage shall be posted within the Public Right-of-Way and no off-site or tempo- rary signage for commercial businesses is permitted. • Signs shall not be posted in the tree lawn • Signs shall not be placed on any utility poles or utility equipment (unless pertaining to its use or operation and required to be placed there by the utility), hydrants, rocks/boulders, trees or other vegetation • Signs shall not interfere or cause a visual conflict with any traffic control signs, signals or devices • Signs shall not be left at a customer’s property after work has been completed • Signs posted in violation of this Code are subject to confiscation and disposal The City of Mentor appreciates your cooperation in complying with the above stated sign regulations. If you have any questions, please contact the City of Mentor Code Enforc",
+   "tags": [
+    "sign",
+    "fee",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "2b123305219874b949c838476178498defe84eb5117892b168e54237d9e42057",
+   "source_document_id": null,
+   "source_title": "2b123305219874b949c838476178498defe84eb5117892b168e54237d9e42057.pdf",
+   "official_url": "http://cityofmentor.com/wp-content/uploads/City-of-Mentor-Sign-Code-Flyer.pdf"
+  }
+ ]
+}

@@ -1,0 +1,19 @@
+{
+  "authorized": true,
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "f33518b327fb282abc16fd134cac233911ccae09",
+  "restoreCheckpointId": "6aef073a7566e8e569fb559f",
+  "candidateHashes": {
+    "EquipmentInventoryTab.jsx": "d0503e650c548a1e40a42fd6b8e34726830dc62bfcc25d29722464070a571865",
+    "FoundationInventory.jsx": "0e9d351cfce62d4d6d18d2c4efe24a43c084b8224e6700f2e2df4382385149c6",
+    "FoundationMaterialDialog.jsx": "5fbfd26600a281b7fd768974c5aa8cc78a82f31f8d2bad64392d304dc47bdf5b",
+    "WallCapsInventoryTab.jsx": "735ddb052b673b9834ea94b9bf159919bab8d71a00eefade7f5457f6299be2ca",
+    "foundationCalc.js": "ac9c53eb4c08a023ac7c2268c07de09b6591528976cf38a322e8b82d7769557a",
+    "foundationEquipmentBindings.js": "9770051bb7cce5424d5075b6fff2910288f2eba6b5724dc3194d2a59928b543f",
+    "foundationInputValidation.js": "cd2cd349650134af3137be7a7a200c11fb52bd5d7a2429b9faf436abbb657f63",
+    "legacyFoundationCalc.js": "b799f3d33a794f6249beadb0b527a710f7df42d9aad0d0e062edb846dee4d1e4"
+  },
+  "reviewedProtocolHash": "b40e7184d6b76501966ec6ecc517197084cb8d93070e2745ca18c50f80af95b8",
+  "createdAt": "2026-11-07T11:10:54.420Z"
+}

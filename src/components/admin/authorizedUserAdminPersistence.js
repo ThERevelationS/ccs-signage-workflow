@@ -56,6 +56,27 @@ export async function getAccountDeletionImpactAdmin({ request, sessionToken } = 
   return validateDeletionImpactReport(result.impact, request);
 }
 
+// Pre-delete impact check for the Remove User dialog — same read-only report
+// as the request-scoped path, but keyed directly on the user's identity.
+export async function getUserDeletionImpactAdmin({ user, sessionToken } = {}) {
+  const email = String(user?.email || "").trim().toLowerCase();
+  const authorizedId = String(user?.id || "").trim();
+  if (!email || !authorizedId) {
+    throw new Error("User identity is incomplete. Reload before reviewing impact.");
+  }
+  const result = await runCoordinatedDeletionImpact(() => invokeAdminUsers({
+    action: "deletion_impact",
+    user_email: email,
+    authorized_email_id: authorizedId,
+    user_name: user?.full_name || "",
+    session_token: requireSessionToken(sessionToken),
+  }));
+  if (result?.success !== true) {
+    throw new Error("User deletion impact could not be verified safely.");
+  }
+  return result.impact;
+}
+
 export async function resolveAccountDeletionRequestAdmin({
   request,
   resolution,

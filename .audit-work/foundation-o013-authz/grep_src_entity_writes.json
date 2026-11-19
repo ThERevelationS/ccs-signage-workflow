@@ -1,0 +1,256 @@
+{
+  "matches": [
+    {
+      "path": "src/pages/InstallRouteMap.jsx",
+      "line": 72,
+      "text": "          writes.push(staffEntities.WorkOrder.updateMany({ id: s.wo.id, updated_date: s.wo.updated_date }, { $set: { install_route_order: want } }));"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 392,
+      "text": "      if (!created) created = await staffEntities.CustomerLocation.create({"
+    },
+    {
+      "path": "src/pages/CustomItemsEstimator.jsx",
+      "line": 74,
+      "text": "        saved = await staffEntities.CustomItemsProject.update(project.id, payload);"
+    },
+    {
+      "path": "src/pages/CustomItemsEstimator.jsx",
+      "line": 77,
+      "text": "        saved = await staffEntities.CustomItemsProject.create(payload);"
+    },
+    {
+      "path": "src/pages/QuoteSettings.jsx",
+      "line": 221,
+      "text": "      await staffEntities.TaxGroup.create({"
+    },
+    {
+      "path": "src/pages/QuoteSettings.jsx",
+      "line": 235,
+      "text": "    try { await staffEntities.TaxGroup.update(row.id, patchFields); await load(); }"
+    },
+    {
+      "path": "src/pages/QuoteSettings.jsx",
+      "line": 243,
+      "text": "    try { await staffEntities.TaxGroup.delete(row.id); await load(); }"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 500,
+      "text": "        if (existing?.id) { await staffEntities.MarkupTier.update(existing.id, data); updated += 1; }"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 501,
+      "text": "        else { await staffEntities.MarkupTier.create(data); created += 1; }"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 319,
+      "text": "        await staffEntities.AllInOneEstimate.update(secondary.id, {\r"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 89,
+      "text": "    staffEntities.AllInOneEstimate.update(e.id, { quote_expired: expired }).catch(() => {});"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 193,
+      "text": "        await staffEntities.AllInOneEstimate.update(id, { status: bulkStatus });"
+    },
+    {
+      "path": "src/components/permitting/RegulationAlertPanel.jsx",
+      "line": 50,
+      "text": "      await staffEntities.RegulationAlert.update(alertId, {"
+    },
+    {
+      "path": "src/components/permitting/RegulationAlertPanel.jsx",
+      "line": 63,
+      "text": "      await staffEntities.RegulationAlert.delete(alertId);"
+    },
+    {
+      "path": "src/components/permitting/permitWorkflowDesigner.js",
+      "line": 408,
+      "text": "  return withRateLimitRetry(() => staffEntities.PermittingWorkflowDraft.create({\r"
+    },
+    {
+      "path": "src/components/permitting/PermitSetupWizard.jsx",
+      "line": 74,
+      "text": "  staffEntities.PermitResolutionRule.create(data).catch(() => {});\r"
+    },
+    {
+      "path": "src/components/permitting/LocalityPickerDialog.jsx",
+      "line": 103,
+      "text": "  staffEntities.PermitResolutionRule.create(data).catch((e)=>console.warn(\"PermitResolutionRule mint failed (apply still succeeded):\", e?.message||e));"
+    },
+    {
+      "path": "src/components/permitting/JurisdictionDetailPanel.jsx",
+      "line": 772,
+      "text": "                  const saved = await staffEntities.JurisdictionProfile.update(jurisdiction.id, { notes });\r"
+    },
+    {
+      "path": "src/components/permitting/PermittingCompletenessDashboard.jsx",
+      "line": 99,
+      "text": "      await staffEntities.GeneralTask.create({\r"
+    },
+    {
+      "path": "src/components/permitting/permitLineItemIntegration.js",
+      "line": 242,
+      "text": "    const record = await withRateLimitRetry(() => staffEntities.PermitLineItem.create(payload));"
+    },
+    {
+      "path": "src/components/reports/ReportCatalogPanel.jsx",
+      "line": 127,
+      "text": "    const saved = await staffEntities.FeatureReport.updateMany("
+    },
+    {
+      "path": "src/components/reports/ReportCatalogPanel.jsx",
+      "line": 134,
+      "text": "  const created = await staffEntities.FeatureReport.create({"
+    },
+    {
+      "path": "src/components/reports/ReportCatalogPanel.jsx",
+      "line": 157,
+      "text": "  await staffEntities.FeatureReport.deleteMany({ id: record?.id, updated_date: record?.updated_date });"
+    },
+    {
+      "path": "src/components/reconciliation/LocationsPanel.jsx",
+      "line": 69,
+      "text": "        await staffEntities.SalesLocation.create(data);"
+    },
+    {
+      "path": "src/components/reconciliation/LocationsPanel.jsx",
+      "line": 72,
+      "text": "        await staffEntities.SalesLocation.update(editingId, data);"
+    },
+    {
+      "path": "src/components/reconciliation/LocationsPanel.jsx",
+      "line": 90,
+      "text": "      await staffEntities.SalesLocation.update(row.id, { active: row.active === false });"
+    },
+    {
+      "path": "src/components/admin/PermittingRulesList.jsx",
+      "line": 43,
+      "text": "      await staffEntities.PermitResolutionRule.update(rule.id, { active: false });"
+    },
+    {
+      "path": "src/components/admin/TaskAssignmentRules.jsx",
+      "line": 718,
+      "text": "      await staffEntities.GeneralTask.update(t.id, { blocked: next, blocked_reason: reason });"
+    },
+    {
+      "path": "src/components/admin/TaskAssignmentRules.jsx",
+      "line": 747,
+      "text": "      try { await staffEntities.GeneralTask.create({ text: `${text} — ${tpl.name}`, assigned_to: [], completed: false }); }"
+    },
+    {
+      "path": "src/components/admin/TaskAssignmentRules.jsx",
+      "line": 764,
+      "text": "      try { await staffEntities.GeneralTask.update(t.id, { assigned_to: next }); }"
+    },
+    {
+      "path": "src/components/pricing/MarkupTierPanel.jsx",
+      "line": 86,
+      "text": "      await staffEntities.MarkupTier.create({ tier_number: nextNumber, tier_name: `Tier ${nextNumber}`, description: \"\", sort_order: nextNumber, markups: {} });"
+    },
+    {
+      "path": "src/components/pricing/MarkupTierPanel.jsx",
+      "line": 100,
+      "text": "      await staffEntities.MarkupTier.delete(tier.id);"
+    },
+    {
+      "path": "src/components/pricing/MarkupTierPanel.jsx",
+      "line": 145,
+      "text": "          await staffEntities.MarkupTier.create(next);"
+    },
+    {
+      "path": "src/components/jobcosting/ProgressBillingPanel.jsx",
+      "line": 101,
+      "text": "    const attempt = async () => staffEntities.WorkOrder.updateMany("
+    },
+    {
+      "path": "src/components/shared/ImportProgressContext.jsx",
+      "line": 141,
+      "text": "    const job = await staffEntities.ImportJob.create({\r"
+    },
+    {
+      "path": "src/components/shared/ImportProgressContext.jsx",
+      "line": 161,
+      "text": "      await staffEntities.ImportJob.update(importJobIdRef.current, {\r"
+    },
+    {
+      "path": "src/components/shared/ImportProgressContext.jsx",
+      "line": 185,
+      "text": "      await staffEntities.ImportJob.update(importJobIdRef.current, {\r"
+    },
+    {
+      "path": "src/components/shared/ImportProgressContext.jsx",
+      "line": 200,
+      "text": "      await staffEntities.ImportJob.update(importJobIdRef.current, {\r"
+    },
+    {
+      "path": "src/components/shared/ImportProgressContext.jsx",
+      "line": 215,
+      "text": "      await staffEntities.ImportJob.update(importJobIdRef.current, {\r"
+    },
+    {
+      "path": "src/components/imports/ImportWizard.jsx",
+      "line": 281,
+      "text": "      job = await staffEntities.ImportJob.create({"
+    },
+    {
+      "path": "src/components/imports/ImportWizard.jsx",
+      "line": 314,
+      "text": "        await staffEntities.ImportJob.update(job.id, {"
+    },
+    {
+      "path": "src/components/masterInventory/inventoryPersistence.js",
+      "line": 144,
+      "text": "    await staffEntities.InventoryCostHistory.create({\r"
+    },
+    {
+      "path": "src/components/estimator/customerSync.js",
+      "line": 407,
+      "text": "      await staffEntities.PermitLineItem.create({"
+    },
+    {
+      "path": "src/components/estimator/builder/historicalBackfill.js",
+      "line": 69,
+      "text": "  await staffEntities.LegacyMigrationMap.create({"
+    },
+    {
+      "path": "src/components/estimator/builder/historicalBackfill.js",
+      "line": 88,
+      "text": "  await staffEntities.LegacyMigrationMap.create({"
+    },
+    {
+      "path": "src/components/estimator/builder/legacyBomReconcile.js",
+      "line": 206,
+      "text": "  return staffEntities.BuilderPart.create({"
+    },
+    {
+      "path": "src/components/estimator/builder/legacyBomReconcile.js",
+      "line": 364,
+      "text": "  await staffEntities.LegacyMigrationMap.create({"
+    },
+    {
+      "path": "src/components/estimator/builder/legacyBomReconcile.js",
+      "line": 474,
+      "text": "  await staffEntities.LegacyMigrationMap.create({"
+    },
+    {
+      "path": "src/components/estimator/aio/BuilderPartsPanel.jsx",
+      "line": 781,
+      "text": "        await staffEntities.BuilderPartGroup.updateMany({ id: g.id }, { sort_order: i }).catch(() => null);\r"
+    },
+    {
+      "path": "src/components/estimator/products/quickProductService.js",
+      "line": 573,
+      "text": "    created = await staffEntities.BuilderProduct.create(blueprint.builderCreateData);"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 50
+}

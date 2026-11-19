@@ -1,0 +1,27 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "head": "b359c0a43e62075b1d25d61fa132ceeb9b875d51",
+  "checkpoint": {
+    "checkpointId": "6aeda3df9662f00bac5c9411",
+    "name": "Estimator-InvokeLLM-GPT61-Sol-policy-verified",
+    "gitCommitHash": "b359c0a43e62075b1d25d61fa132ceeb9b875d51"
+  },
+  "files": [
+    "base44/shared/estimatorAiModelPolicy.js",
+    "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+    "src/components/vinylEstimator/VinylArtworkUploadDialog.jsx",
+    "src/components/channelLetterInstall/AIScopeWriterModal.jsx",
+    "src/components/channelLetterInstall/AIInstallScopeModal.jsx",
+    "src/components/channelLetterInstall/AddressAutocomplete.jsx",
+    "src/components/channelLetterInstall/PhotoEstimateModal.jsx"
+  ],
+  "requestedModel": "gpt_6_sol",
+  "servedModelVerified": false,
+  "realProviderCalls": 0,
+  "remoteBuildExit": 0,
+  "remoteClean": true,
+  "published": false,
+  "businessRecordsTested": false,
+  "paidAiCalls": 0
+}

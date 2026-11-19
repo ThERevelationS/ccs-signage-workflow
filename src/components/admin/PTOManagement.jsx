@@ -50,13 +50,16 @@ import {
   deletePTOPolicyIfUnused,
   updatePTOPolicyIfUnchanged,
 } from "@/components/timeclock/ptoPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { getStoredAdminSettingsCapability } from "@/components/auth/EmailGate";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const PTOPolicy = base44.entities.PTOPolicy;
 const UserPTOBalance = staffEntities.UserPTOBalance;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
+const GlobalSettings = staffEntities.GlobalSettings;
 
 const ACCRUAL_TYPES = [
   { value: "none", label: "No Accrual (Fixed Amount)" },
@@ -88,6 +91,53 @@ const TYPE_ICONS = {
   jury_duty: Briefcase,
   parental: Baby
 };
+
+function BlackoutDaysCard() {
+  const [row, setRow] = useState(null);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  useEffect(() => {
+    let alive = true;
+    loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: "holidayBlackoutDays", label: "Holiday blackout days" })
+      .then((r) => {
+        if (!alive) return;
+        setRow(r);
+        setText((Array.isArray(r?.setting_value?.dates) ? r.setting_value.dates : []).join("\n"));
+      })
+      .catch(() => null);
+    return () => { alive = false; };
+  }, []);
+  const save = async () => {
+    if (busy) return;
+    setBusy(true); setMsg("");
+    const dates = [...new Set(text.split(/\r?\n/).map(d => d.trim()).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)))].sort();
+    try {
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: GlobalSettings, loadedRecord: row, settingKey: "holidayBlackoutDays",
+        nextValue: { dates }, label: "Holiday blackout days",
+      });
+      setRow(saved); setText(dates.join("\n"));
+      setMsg(`Saved ${dates.length} blackout day${dates.length === 1 ? "" : "s"}.`);
+    } catch (err) { setMsg(err?.message || "Could not save blackout days."); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div className="clay-card mb-4 p-4">
+      <h3 className="text-sm font-semibold text-gray-800">Holiday / blackout days</h3>
+      <p className="mt-1 text-xs text-gray-500">Company-closed dates — one per line as YYYY-MM-DD. Use these when reviewing time-off requests.</p>
+      <div className="mt-2 flex items-start gap-3">
+        <textarea rows={5} value={text} onChange={(e) => setText(e.target.value)}
+          placeholder={"2026-01-01\n2026-07-04\n2026-12-25"}
+          className="w-56 rounded-md border border-input bg-transparent px-2 py-1 font-mono text-xs" />
+        <div className="flex flex-col gap-1">
+          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={save}>{busy ? "Saving…" : "Save days"}</Button>
+          {msg && <p className={`text-xs ${msg.startsWith("Saved") ? "text-emerald-600" : "text-red-600"}`}>{msg}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function PTOManagement() {
   const [policies, setPolicies] = useState([]);
@@ -124,7 +174,7 @@ export default function PTOManagement() {
       const [policiesData, balancesData, usersData] = await Promise.all([
         loadAllEntityRows({ entity: PTOPolicy, sort: null, label: "PTO policies" }),
         loadAllEntityRows({ entity: UserPTOBalance, sort: null, label: "PTO balances" }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "PTO authorized users" })
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "PTO authorized users" })
       ]);
       setPolicies(policiesData);
       setUserBalances(balancesData);
@@ -410,6 +460,7 @@ export default function PTOManagement() {
         </TabsList>
 
         <TabsContent value="policies" className="mt-4">
+          <BlackoutDaysCard />
           <div className="flex justify-end mb-4">
             <Button onClick={openNewPolicy} className="gap-2">
               <Plus className="w-4 h-4" />
@@ -451,13 +502,13 @@ export default function PTOManagement() {
                       </p>
                     </div>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => duplicatePolicy(policy)}>
+                      <Button variant="ghost" size="icon" aria-label="Duplicate policy" onClick={() => duplicatePolicy(policy)}>
                         <Copy className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEditPolicy(policy)}>
+                      <Button variant="ghost" size="icon" aria-label="Edit policy" onClick={() => openEditPolicy(policy)}>
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(policy)}>
+                      <Button variant="ghost" size="icon" aria-label="Delete policy" onClick={() => setDeleteConfirm(policy)}>
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
                     </div>
@@ -589,7 +640,7 @@ export default function PTOManagement() {
                           className="w-48 font-medium"
                         />
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => removeTimeOffType(index)}>
+                      <Button variant="ghost" size="icon" aria-label="Remove time-off type" onClick={() => removeTimeOffType(index)}>
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
                     </div>
@@ -701,8 +752,7 @@ export default function PTOManagement() {
                       placeholder="Holiday name"
                       className="flex-1 h-8 text-sm"
                     />
-                    <Input
-                      type="date"
+                    <CcsDateField
                       value={holiday.date}
                       onChange={(e) => updateHoliday(index, "date", e.target.value)}
                       className="w-40 h-8 text-sm"
@@ -714,7 +764,7 @@ export default function PTOManagement() {
                       />
                       Paid
                     </label>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeHoliday(index)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Remove holiday" onClick={() => removeHoliday(index)}>
                       <X className="w-3 h-3" />
                     </Button>
                   </div>
@@ -754,7 +804,7 @@ export default function PTOManagement() {
             
             <div className="space-y-2">
               {policies.map(policy => (
-                <button
+                <button type="button"
                   key={policy.id}
                   onClick={() => selectedUser?.email && assignPolicyToUser(selectedUser.email, policy.id)}
                   disabled={ptoSaving}

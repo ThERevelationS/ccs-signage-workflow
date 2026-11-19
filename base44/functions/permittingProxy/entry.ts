@@ -1,4 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(120_000),...init});
 
 const PERMITTING_APP_ID = '69b1840cf75aba55e115d020';
 // Cross-app credentials must come only from Base44 function secrets. Never
@@ -29,7 +31,7 @@ function researchCreatePayload(payload: Record<string, unknown>) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const user = await base44.auth.me().catch(() => null);
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -71,7 +73,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const response = await fetch(url, {
+    const response = await boundedFetch(url, {
       method: action === 'poll' ? 'GET' : 'POST',
       headers: {
         'Content-Type': 'application/json',

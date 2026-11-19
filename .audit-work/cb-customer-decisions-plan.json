@@ -1,0 +1,454 @@
+{
+  "generated_at": "2026-11-18T14:57:10.322Z",
+  "customer_count": 4166,
+  "decisions": [
+    {
+      "accounts": [
+        61,
+        2886
+      ],
+      "keep": "The Liberty Center",
+      "archive_accounts": [
+        {
+          "id": 61,
+          "count": 1,
+          "company_name": "Liberty Center"
+        },
+        {
+          "id": 2886,
+          "count": 1,
+          "company_name": "The Liberty Center"
+        }
+      ],
+      "names": [
+        {
+          "name": "The Liberty Center",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e9343ff75",
+              "merged_into_customer_id": null
+            }
+          ]
+        }
+      ],
+      "existing_create_name_matches": [],
+      "ledger": [],
+      "blockers": []
+    },
+    {
+      "accounts": [
+        424,
+        2701
+      ],
+      "keep": "PLK Communities",
+      "archive_accounts": [
+        {
+          "id": 424,
+          "count": 1,
+          "company_name": "PLK Communities, LLC"
+        },
+        {
+          "id": 2701,
+          "count": 1,
+          "company_name": "PLK Communities"
+        }
+      ],
+      "names": [
+        {
+          "name": "PLK Communities",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e9344017b",
+              "merged_into_customer_id": null
+            }
+          ]
+        }
+      ],
+      "existing_create_name_matches": [],
+      "ledger": [],
+      "blockers": []
+    },
+    {
+      "accounts": [
+        1036,
+        2608
+      ],
+      "keep": "Triumph Signs and Consulting, Inc.",
+      "archive_accounts": [
+        {
+          "id": 1036,
+          "count": 1,
+          "company_name": "Triumph Signs and Consulting"
+        },
+        {
+          "id": 2608,
+          "count": 1,
+          "company_name": "Triumph Signs and Consulting, Inc"
+        }
+      ],
+      "names": [
+        {
+          "name": "Triumph Signs and Consulting, Inc.",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e9343ff3d",
+              "merged_into_customer_id": null
+            }
+          ]
+        }
+      ],
+      "existing_create_name_matches": [],
+      "ledger": [],
+      "blockers": []
+    },
+    {
+      "accounts": [
+        1926
+      ],
+      "keep": "Cincinnati Metro / SORTA",
+      "merge": [
+        "Cincinnati Metro/Sorta"
+      ],
+      "archive_accounts": [
+        {
+          "id": 1926,
+          "count": 1,
+          "company_name": "Cincinnati Metro / SORTA"
+        }
+      ],
+      "names": [
+        {
+          "name": "Cincinnati Metro / SORTA",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e934400a0",
+              "merged_into_customer_id": null
+            }
+          ]
+        },
+        {
+          "name": "Cincinnati Metro/Sorta",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e9344014a",
+              "merged_into_customer_id": null
+            }
+          ]
+        }
+      ],
+      "existing_create_name_matches": [],
+      "ledger": [],
+      "blockers": []
+    },
+    {
+      "accounts": [
+        488
+      ],
+      "keep": "Lyons & Lyons Co",
+      "merge": [
+        "Lyons & Lyons"
+      ],
+      "archive_accounts": [
+        {
+          "id": 488,
+          "count": 1,
+          "company_name": "Lyons & Lyons Co."
+        }
+      ],
+      "names": [
+        {
+          "name": "Lyons & Lyons Co",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e934400bf",
+              "merged_into_customer_id": null
+            }
+          ]
+        },
+        {
+          "name": "Lyons & Lyons",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e93440201",
+              "merged_into_customer_id": null
+            }
+          ]
+        }
+      ],
+      "existing_create_name_matches": [],
+      "ledger": [],
+      "blockers": []
+    },
+    {
+      "accounts": [
+        1810
+      ],
+      "keep": "Karen Montgomery",
+      "merge": [
+        "Karen Montgomery (wedding)"
+      ],
+      "archive_accounts": [
+        {
+          "id": 1810,
+          "count": 1,
+          "company_name": "Karen Montgomery"
+        }
+      ],
+      "names": [
+        {
+          "name": "Karen Montgomery",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e9344022e",
+              "merged_into_customer_id": null
+            }
+          ]
+        },
+        {
+          "name": "Karen Montgomery (wedding)",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e93440217",
+              "merged_into_customer_id": null
+            }
+          ]
+        }
+      ],
+      "existing_create_name_matches": [],
+      "ledger": [],
+      "blockers": []
+    },
+    {
+      "accounts": [
+        2767
+      ],
+      "keep": "Best Sanitizers",
+      "merge": [
+        "Best Sanitizers (3 Registered Marks)"
+      ],
+      "archive_accounts": [
+        {
+          "id": 2767,
+          "count": 1,
+          "company_name": "Best Sanitizers"
+        }
+      ],
+      "names": [
+        {
+          "name": "Best Sanitizers",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e9344014e",
+              "merged_into_customer_id": null
+            }
+          ]
+        },
+        {
+          "name": "Best Sanitizers (3 Registered Marks)",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e9344004f",
+              "merged_into_customer_id": null
+            }
+          ]
+        }
+      ],
+      "existing_create_name_matches": [],
+      "ledger": [],
+      "blockers": []
+    },
+    {
+      "accounts": [
+        2944
+      ],
+      "keep": "The Drunken Academy",
+      "merge": [
+        "Drunken Academy"
+      ],
+      "archive_accounts": [
+        {
+          "id": 2944,
+          "count": 1,
+          "company_name": "The Drunken Academy"
+        }
+      ],
+      "names": [
+        {
+          "name": "The Drunken Academy",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e9343ff61",
+              "merged_into_customer_id": null
+            }
+          ]
+        },
+        {
+          "name": "Drunken Academy",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e9343ff89",
+              "merged_into_customer_id": null
+            }
+          ]
+        }
+      ],
+      "existing_create_name_matches": [],
+      "ledger": [],
+      "blockers": []
+    },
+    {
+      "accounts": [
+        447
+      ],
+      "create": "Skidmore",
+      "merge": [
+        "Skidmore (47 Magnet Names)",
+        "Skidmore (96 x 48 Tenure Wall)"
+      ],
+      "archive_accounts": [
+        {
+          "id": 447,
+          "count": 1,
+          "company_name": "Skidmore"
+        }
+      ],
+      "names": [
+        {
+          "name": "Skidmore (47 Magnet Names)",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e9344007a",
+              "merged_into_customer_id": null
+            }
+          ]
+        },
+        {
+          "name": "Skidmore (96 x 48 Tenure Wall)",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e934400f6",
+              "merged_into_customer_id": null
+            }
+          ]
+        }
+      ],
+      "existing_create_name_matches": [],
+      "ledger": [],
+      "blockers": []
+    },
+    {
+      "accounts": [
+        3284
+      ],
+      "create": "Modern Office Method",
+      "merge": [
+        "Modern Office Method (Lobby Sign)",
+        "Modern Office Method (Aluminum Box, Acrylic Letters, Clear Backer)"
+      ],
+      "archive_accounts": [
+        {
+          "id": 3284,
+          "count": 1,
+          "company_name": "Modern Office Method"
+        }
+      ],
+      "names": [
+        {
+          "name": "Modern Office Method (Lobby Sign)",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e9343ff0c",
+              "merged_into_customer_id": null
+            }
+          ]
+        },
+        {
+          "name": "Modern Office Method (Aluminum Box, Acrylic Letters, Clear Backer)",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e93440086",
+              "merged_into_customer_id": null
+            }
+          ]
+        }
+      ],
+      "existing_create_name_matches": [],
+      "ledger": [],
+      "blockers": []
+    },
+    {
+      "accounts": [
+        531
+      ],
+      "create": "Towne Properties",
+      "merge": [
+        "Towne Properties (Kable's Mill)",
+        "Towne Properties (Cheltenham)"
+      ],
+      "archive_accounts": [
+        {
+          "id": 531,
+          "count": 1,
+          "company_name": "Towne Properties"
+        }
+      ],
+      "names": [
+        {
+          "name": "Towne Properties (Kable's Mill)",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e934401a2",
+              "merged_into_customer_id": null
+            }
+          ]
+        },
+        {
+          "name": "Towne Properties (Cheltenham)",
+          "matches": [
+            {
+              "id": "6a958582ba45a19e934401a3",
+              "merged_into_customer_id": null
+            }
+          ]
+        }
+      ],
+      "existing_create_name_matches": [],
+      "ledger": [],
+      "blockers": []
+    },
+    {
+      "accounts": [
+        2606
+      ],
+      "create": "Towne Properties (Dayton)",
+      "archive_accounts": [
+        {
+          "id": 2606,
+          "count": 1,
+          "company_name": "Towne Properties (Dayton)"
+        }
+      ],
+      "names": [],
+      "existing_create_name_matches": [],
+      "ledger": [],
+      "blockers": []
+    }
+  ],
+  "preview": {
+    "ok": true,
+    "linked_total": 0,
+    "warnings": [
+      "Winner keeps its own master account."
+    ],
+    "entity_errors": [
+      {
+        "entity": "CrmSuggestion",
+        "label": "CRM suggestions",
+        "kind": "id",
+        "linked": 0,
+        "optional": false,
+        "error": "Entity schema CrmSuggestion not found in app"
+      }
+    ]
+  }
+}

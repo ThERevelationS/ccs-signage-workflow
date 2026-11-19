@@ -1,0 +1,52 @@
+{
+ "src/components/estimator/foundation/FoundationTemplateDialog.jsx": {
+  "file": "baseline/FoundationTemplateDialog.jsx",
+  "sha256": "10768f02abe71853e86e8cd7fc410d2b13f85007262a8f0bc1474106b6bfe634",
+  "bytes": 9784
+ },
+ "src/components/estimator/foundation/foundationTemplateService.js": {
+  "file": "baseline/foundationTemplateService.js",
+  "sha256": "7a550f583694ca0396af63924a9d2d5c28d2be1a02b2ab14e1f2c60ad172c30e",
+  "bytes": 1249
+ },
+ "candidate-dialog": {
+  "file": "candidates/src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+  "sha256": "4fd2231d3787faf6de428a5f58ce11453ff95530d2d2c008bf9adc152ca4ab5a",
+  "bytes": 10176
+ },
+ "candidate-service": {
+  "file": "candidates/src/components/estimator/foundation/foundationTemplateService.js",
+  "sha256": "9e238ed1490bdcb238881661b1d9de5a6d7bd5885d6d0fd1adaba78ab069c5e6",
+  "bytes": 1984
+ },
+ "dep-foundationTemplateModel": {
+  "file": "baseline/foundationTemplateModel.js",
+  "sha256": "3c7e383db4538ba9e519726e1bb22affb6e760fc565e48954ec27c6b28e959f5",
+  "bytes": 2824
+ },
+ "dep-foundationAssemblyModel": {
+  "file": "baseline/foundationAssemblyModel.js",
+  "sha256": "94e3bb9303c71439fbe5572798818a551b78e6879a67d203aee34a09d42f909c",
+  "bytes": 22454
+ },
+ "dep-builderEntityPersistence": {
+  "file": "baseline/builderEntityPersistence.js",
+  "sha256": "6b2ebe467e42d438d52b77bf380f47a6322da37f1678133d6a9fd4708db44577",
+  "bytes": 7401
+ },
+ "dep-reusableSaveIdempotency": {
+  "file": "baseline/reusableSaveIdempotency.js",
+  "sha256": "c5fc7cc474f73d215b2c9ffe75f909b52d9e9b01826e40719699d66dd661b904",
+  "bytes": 337
+ },
+ "dep-loadAllEntityRows": {
+  "file": "baseline/loadAllEntityRows.js",
+  "sha256": "0fb3228539668d46385631a6e5c33a50918760f93ba7af2543fb12a9daa12647",
+  "bytes": 7909
+ },
+ "dep-idempotentEntityCreate": {
+  "file": "baseline/idempotentEntityCreate.js",
+  "sha256": "b6a2cbceb411d98263b31b53f5a09cc45a87b2e3ef0e3850b41abaeb1ee05eb0",
+  "bytes": 6308
+ }
+}

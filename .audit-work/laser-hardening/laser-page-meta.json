@@ -1,0 +1,35 @@
+{
+  "inputs": [
+    "s:s://@/api/gatedEntities",
+    "s:s://@/api/base44Client",
+    "s:s://@/components/ui/button",
+    "s:s://@/components/ui/card",
+    "s:s://@/components/ui/input",
+    "s:s://@/components/ui/label",
+    "s:s://@/components/ui/select",
+    "s:s://@/components/ui/textarea",
+    "s:s://lucide-react",
+    "s:s://@/components/ui/tabs",
+    "s:s://@/components/channelLetterInstall/TabBadgeTrigger",
+    "s:s://@/components/markup/CustomerPricingTab",
+    "s:s://@/components/markup/projectCategorizer",
+    "s:s://@/components/markup/savedCustomerPricing",
+    "s:s://@/components/estimator/builder/builderService",
+    "s:s://@/components/estimator/loadAllEntityRows",
+    "s:s://@/components/estimator/builder/sourceProjectPersistence",
+    "s:s://@/components/estimator/builder/itemIdentity",
+    "s:s://@/components/estimator/idempotentEntityCreate",
+    "s:s://@/components/estimator/moduleShared/ModuleActionBar",
+    "s:s://@/components/estimator/moduleShared/ModuleTemplateDialog",
+    "s:s://@/components/estimator/moduleShared/moduleProjectActions",
+    "s:s://@/components/staff/staffEntities",
+    "frozen:/app/src/components/estimator/laser/laserPricingAvailability.js",
+    "frozen:/app/src/pages/LaserEstimator.jsx",
+    "frozen:/app/laser-page-entry.jsx"
+  ],
+  "loaded": {
+    "/app/laser-page-entry.jsx": "edbed1c6e8829c453b40d7852568c273430da4d177f74de8fc1f72a27a9402ce",
+    "/app/src/pages/LaserEstimator.jsx": "0f996fd442ad9361a38820f63078966e5ba85016171e965d890be8f0fcac54cc",
+    "/app/src/components/estimator/laser/laserPricingAvailability.js": "82275a855f3cc2d2058a8416a62ccf40a52a0c8cebacac573232bf22e55cd380"
+  }
+}

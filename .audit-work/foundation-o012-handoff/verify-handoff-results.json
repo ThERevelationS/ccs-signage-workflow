@@ -1,0 +1,149 @@
+{
+  "cases": [
+    {
+      "name": "A1 updateBuilderSourceProject CAS save persists exact record incl. receipt",
+      "ok": true
+    },
+    {
+      "name": "A2 [RED] stale source write (expectedUpdatedAt behind) is rejected, row untouched",
+      "ok": true
+    },
+    {
+      "name": "A3 idempotent retry: updateMany lost response but row already matches -> reuse",
+      "ok": true
+    },
+    {
+      "name": "A4 assertFoundationBuilderAcknowledgment passes only on the saved revision",
+      "ok": true
+    },
+    {
+      "name": "B1 no prior receipt -> save gate passes",
+      "ok": true
+    },
+    {
+      "name": "B2 receipt naming THIS estimate -> gate passes (pending op is ours)",
+      "ok": true
+    },
+    {
+      "name": "B3 receipt naming a live other estimate -> blocked (recover there first)",
+      "ok": true
+    },
+    {
+      "name": "B4 [RED] orphaned receipt (named estimate deleted) -> baseline bricks, candidate retires",
+      "ok": true
+    },
+    {
+      "name": "B5 malformed receipt -> blocked as unrecognised",
+      "ok": true
+    },
+    {
+      "name": "B6 probe failure (non-404) -> stays blocked, fail closed",
+      "ok": true
+    },
+    {
+      "name": "B7 [RED] CAS-retired receipt: orphaned receipt cleared + save lands atomically",
+      "ok": true
+    },
+    {
+      "name": "C1 [RED] grand_total:null poisons baseline to $0; candidate keeps the partition",
+      "ok": true
+    },
+    {
+      "name": "C2 [RED] stale foreign grand_total undercounts extras; candidate trusts partition",
+      "ok": true
+    },
+    {
+      "name": "C3 grand_total-only legacy record still works (last-resort fallback)",
+      "ok": true
+    },
+    {
+      "name": "C4 normal persisted record -> identical totals both builds",
+      "ok": true
+    },
+    {
+      "name": "C5 no totals at all -> saved-total is null, live path falls back to line snapshot",
+      "ok": true
+    },
+    {
+      "name": "D1 handoff preserves refs + writes acknowledged snapshots",
+      "ok": true
+    },
+    {
+      "name": "D2 [RED] hint resolving to no estimate line: baseline mints orphan BP, candidate throws clean",
+      "ok": true
+    },
+    {
+      "name": "D3 [CAS guard] estimate changed mid-handoff -> line write rejected",
+      "ok": true
+    },
+    {
+      "name": "D4 [CAS guard] foreign pending marker blocks, removal marker explains",
+      "ok": true
+    },
+    {
+      "name": "E1 recovery loads when pending + receipt + source version all match",
+      "ok": true
+    },
+    {
+      "name": "E2 [RED] receipt naming another estimate -> recovery refused",
+      "ok": true
+    },
+    {
+      "name": "E3 [RED] source saved again since the pending op -> recovery refused",
+      "ok": true
+    },
+    {
+      "name": "E4 [RED] pending marker belonging to a different estimate -> refused",
+      "ok": true
+    },
+    {
+      "name": "E5 [RED] linked estimate deleted -> recovery refuses (fail closed)",
+      "ok": true
+    },
+    {
+      "name": "F1 extract keys stable: original vs clone (component_id remap preserves pattern)",
+      "ok": true
+    },
+    {
+      "name": "F2 clone remaps component_id + every cross-reference consistently",
+      "ok": true
+    },
+    {
+      "name": "F3 save -> reopen (get) -> extract = identical keys",
+      "ok": true
+    },
+    {
+      "name": "F4 [RED] malformed persisted subsections: baseline crashes, candidate degrades to no rows",
+      "ok": true
+    },
+    {
+      "name": "G1 quote surface prices the acknowledged snapshot (customer_price_snapshot)",
+      "ok": true
+    },
+    {
+      "name": "G2 WO seed preserves refs + costs from the acknowledged line",
+      "ok": true
+    },
+    {
+      "name": "G3 revision-snapshot fields survive round-trip on the estimate row",
+      "ok": true
+    },
+    {
+      "name": "H1 [RED] merge of pending secondary line locks primary + marker unresumable",
+      "ok": true
+    },
+    {
+      "name": "H2 clean secondary lines pass the merge guard",
+      "ok": true
+    },
+    {
+      "name": "H3 [RED] duplicate transplants pending marker verbatim; candidate refuses",
+      "ok": true
+    },
+    {
+      "name": "H4 [RED] split of a pending picked line refused; unpicked pending does not block",
+      "ok": true
+    }
+  ],
+  "generated": "2026-11-11T09:24:45.266Z"
+}

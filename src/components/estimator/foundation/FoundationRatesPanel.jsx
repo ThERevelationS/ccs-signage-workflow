@@ -1,4 +1,3 @@
-import React from "react";
 
 // These are the rates the ported SignEstimate Pro math actually reads (Settings keys).
 // They are shop-wide, so they are shown here read-only — edit them in Estimator Settings.
@@ -22,13 +21,13 @@ export default function FoundationRatesPanel({ settings = {}, project, onChange 
     <div className="bg-white rounded-xl border border-gray-200 p-4">
       <div className="flex items-baseline justify-between mb-3">
         <h2 className="font-semibold text-gray-900">Rates in Use</h2>
-        <span className="text-xs text-gray-400">Shop-wide — change in Estimator Settings</span>
+        <span className="text-xs text-gray-500">Shop-wide — change in Estimator Settings</span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {RATES.map((r) => (
           <div key={r.key} className="bg-slate-50 rounded-lg px-2 py-1.5">
-            <div className="text-[11px] text-gray-400">{r.label}</div>
+            <div className="text-[11px] text-gray-500">{r.label}</div>
             <div className="text-sm font-semibold text-gray-800">
               {settings[r.key] ?? r.def}
             </div>

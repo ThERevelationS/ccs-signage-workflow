@@ -1,0 +1,124 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "58755f09c4b5aee1a22235245d50d5047d663fcb",
+  "baselineFile": "cabinets-landscape-baseline-v3.json",
+  "baselineStatusFile": "cabinets-landscape-baseline-v2-status.json",
+  "dependencyArtifact": "cabinets-landscape-dependency-source.json",
+  "fixtureArtifact": "cabinets-landscape-fixture.json",
+  "flowSpec": "cabinets-landscape-flow-proof-spec.json",
+  "hashManifest": "cabinets-landscape-candidate-hashes.json",
+  "jsonProofs": [
+    {
+      "file": "cabland-model-verification.json",
+      "resultCount": 45,
+      "mustBeAllOk": true
+    },
+    {
+      "file": "cabland-model-red-verification.json",
+      "resultCount": 45,
+      "expectedFailuresAgainstPreHardeningSource": 41,
+      "expectedCompatibilityPasses": 4,
+      "mustNotBeAllOk": true
+    },
+    {
+      "file": "cabland-page-verification.json",
+      "resultCount": 8,
+      "mustBeAllOk": true
+    },
+    {
+      "file": "cabland-page-state-proof.json",
+      "role": "evidence"
+    },
+    {
+      "file": "cabinets-landscape-browser-verification.json",
+      "resultCount": 12,
+      "mustBeAllOk": true
+    },
+    {
+      "file": "cabinets-landscape-consumer-build.json",
+      "warnings": 0,
+      "inputs": 62
+    },
+    {
+      "file": "cabland-page-import-edges.json",
+      "externalOnly": true
+    },
+    {
+      "file": "cabinets-landscape-browser-meta.json",
+      "role": "evidence"
+    }
+  ],
+  "allResultsMustHaveOkTrue": true,
+  "scopedLintLogs": [
+    {
+      "file": "cabinets-landscape-lint-foundationCalc.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "cabinets-landscape-lint-foundationInputValidation.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "cabinets-landscape-lint-landscapeMaterials.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "cabinets-landscape-lint-foundationAssemblyModel.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "cabinets-landscape-lint-SignageCabinetsPanel.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "cabinets-landscape-lint-LandscapeDesigner.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "cabinets-landscape-lint-FoundationEstimator.txt",
+      "line": "exit=0"
+    }
+  ],
+  "esbuildParseChecks": {
+    "count": 7,
+    "allPassed": true
+  },
+  "candidateHashes": {
+    "foundationCalc.js": "88f9e4a77a5461d2036e35aabfbae4c73918e98042a7799500baa17e1abfc185",
+    "foundationInputValidation.js": "593ee4bcb6475331aca1468f618e0ac5b4cf183b35958ebcff58d1897db026df",
+    "landscapeMaterials.js": "ba13081706de2a5e2e1f6429c1e8a058ecb11f72535ed2fefd40b31927ab906a",
+    "foundationAssemblyModel.js": "8e197f9559b4bfbc4861040ee323ea526fb0fcfd84341ca9c7ece78efd57ac79",
+    "SignageCabinetsPanel.jsx": "7cc8d401338d284fd0e24483eebf79cd75c31930aed6d91d476d60cb21d73ff5",
+    "LandscapeDesigner.jsx": "4956450d189584ffdfcaf190aeef79c03953e8678840657c4a346c7915f0fd23",
+    "FoundationEstimator.jsx": "680c4a45e3db7af339dd5e3a775c7322e4dbf8277aea5d97b3c8c1a74f1375d6"
+  },
+  "candidateFiles": {
+    "foundationCalc.js": "cabinets-landscape-candidate-foundationCalc.js",
+    "foundationInputValidation.js": "cabinets-landscape-candidate-foundationInputValidation.js",
+    "landscapeMaterials.js": "cabinets-landscape-candidate-landscapeMaterials.js",
+    "foundationAssemblyModel.js": "cabinets-landscape-candidate-foundationAssemblyModel.js",
+    "SignageCabinetsPanel.jsx": "cabinets-landscape-candidate-SignageCabinetsPanel.jsx",
+    "LandscapeDesigner.jsx": "cabinets-landscape-candidate-LandscapeDesigner.jsx",
+    "FoundationEstimator.jsx": "cabinets-landscape-candidate-FoundationEstimator.jsx"
+  },
+  "candidateLineEndings": "LF",
+  "candidateTerminalLF": {
+    "foundationCalc.js": true,
+    "foundationInputValidation.js": true,
+    "landscapeMaterials.js": true,
+    "foundationAssemblyModel.js": true,
+    "SignageCabinetsPanel.jsx": true,
+    "LandscapeDesigner.jsx": true,
+    "FoundationEstimator.jsx": true
+  },
+  "screenshotDirectory": ".audit-work/foundation-reinforcement22",
+  "screenshotCount": 12,
+  "allowedBuildWarningCount": 0,
+  "remoteWritesPerformed": false,
+  "checkpointsCreated": false,
+  "businessRecordOperationsPerformed": false,
+  "schemaActivationAuthorized": false,
+  "publishDeployAuthorized": false,
+  "transportPerformed": false
+}

@@ -1,0 +1,48 @@
+{
+ "jurisdiction_id": "6ac88a6735ae453b5ca522fa",
+ "jurisdiction_name": "Euclid",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "City of Euclid * 585 East 222 nd Street * Euclid, Ohio * 44123 * Sign Permit Application: JSM - 12JUL21 Page 1 of 2 CITY OF EUCLID BUILDING DEPARTMENT S IGN P ERMIT A PPLICATION * ~ ~ ~ P L E A S E T Y P E , O R P R I N T C L E A R L Y ~ ~ ~ * * ~ ~ ALL FIELDS REQUIRED ~ ~ * *PROJECT ADDRESS: _____________________________________________________________________________ *BUSINESS NAME: ______________________________________________ *PARCEL NUMBER: ____________ *DESCRIPTION OF SIGN(S): Application is hereby made for a permit to erect and maintain (a): Wall Sign(s) Ground Sign(s) Temporary Sign/Banner (s) Other: ___________________________ Number of signs: _________ Length: __________ x Height: __________ = Area: __________ (square feet) Length: __________ x Height: __________ = Area: __________ (square feet) Length: __________ x Height: __________ = Area: __________ (square feet) Building ",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "temporary",
+    "type",
+    "penalties",
+    "process"
+   ],
+   "weight": 16,
+   "source_sha256": "06f2acf727ce404257a190bb5f81f14c9d3b9dd9ccd2e2c14eaf0cd0757bd215",
+   "source_document_id": null,
+   "source_title": "06f2acf727ce404257a190bb5f81f14c9d3b9dd9ccd2e2c14eaf0cd0757bd215.pdf",
+   "official_url": "https://irp.cdn-website.com/83d949c5/files/uploaded/Sign%20Permit%20Application%202021.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "City of Euclid * 585 East 222 nd Street * Euclid, Ohio * 44123 * Sign Permit Application: JSM - 12JUL21 Page 2 of 2 PERMIT APPLICATION INFORMATION Please read and initial signifying acknowledgement, understanding and compliance of the following: Application for a sign permit shall be made upon the forms provided by the Zoning Commissioner. With the exception of any requirements determined to be inapplicable in a particular instance by the Zoning Commissioner, the applicant shall submit accurately scaled elevation drawings and a site plan at a minimum scale of one inch = 50 feet, indicating, in narrative or plan form, the following information: _____ The name, address and telephone number of the tenant and of the property owner; _____ The location of the building, structure or lot to which or upon which the sign is to be attached or erected; _____ The position of the sign in relation to n",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 15,
+   "source_sha256": "06f2acf727ce404257a190bb5f81f14c9d3b9dd9ccd2e2c14eaf0cd0757bd215",
+   "source_document_id": null,
+   "source_title": "06f2acf727ce404257a190bb5f81f14c9d3b9dd9ccd2e2c14eaf0cd0757bd215.pdf",
+   "official_url": "https://irp.cdn-website.com/83d949c5/files/uploaded/Sign%20Permit%20Application%202021.pdf"
+  }
+ ]
+}

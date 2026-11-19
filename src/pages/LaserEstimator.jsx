@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { LaserProject, Settings } from "@/api/gatedEntities";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,24 +8,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, Plus, Trash2, ArrowLeft, Zap, FileText, ListChecks, Calculator, Settings as SettingsIcon } from "lucide-react";
+import { Save, Plus, Trash2, ArrowLeft, Zap, FileText, ListChecks, Calculator, Settings as SettingsIcon, AlertTriangle } from "lucide-react";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
 import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeLaserProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
+import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
+import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
 import { TrendingUp } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
+import {
+  calcLaserPricing,
+  hasIssueFor,
+  hasLaserCostSnapshot,
+  laserDraftValue,
+  laserSeedNumber,
+  laserStrictNumber,
+  laserSumOrNull,
+} from "@/components/estimator/laser/laserPricingAvailability";
 
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4"]; // Updated: Removed "1"
 const materials = ["Acrylic", "Wood", "Leather"];
 
-const parseImperialFraction = (fractionString) => {
+const _parseImperialFraction = (fractionString) => {
   if (typeof fractionString !== 'string') return parseFloat(fractionString) || 0;
   let totalValue = 0;
   const wholeAndFraction = fractionString.split('-');
@@ -50,8 +62,14 @@ const parseImperialFraction = (fractionString) => {
 
 const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+// Export/display money helper — a finite value renders as currency; anything
+// else is a held cell, never a laundered $0.00 or "NaN".
+const exportMoney = (v) => (Number.isFinite(v) ? "$" + v.toFixed(2) : "—");
+const exportHours = (v) => (Number.isFinite(v) ? v.toFixed(3) : "—");
+
 export default function LaserEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const editId = embeddedProjectId || searchParams.get('edit') || searchParams.get('id');
   const estimateId = embeddedEstimateId || searchParams.get('estimateId');
   const [isEditing, setIsEditing] = useState(false);
@@ -79,13 +97,23 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  // Acknowledged pricing snapshot — the totals actually persisted on the
+  // record (loaded values, refreshed after each successful save). Under held
+  // pricing these are the display fallback; nulls render as "Not saved".
+  const [savedTotals, setSavedTotals] = useState({
+    total_machine_cost: null, total_labor_cost: null, total_supplies_cost: null,
+  });
   const [activeTab, setActiveTab] = useState("project");
   const persistedProjectIdRef = useRef(editId || "");
   const createAttemptRef = useRef({ signature: "", key: "" });
+  const copyAttemptRef = useRef({ signature: "", key: "" });
+  const [templateMode, setTemplateMode] = useState(null);
 
   useEffect(() => {
     persistedProjectIdRef.current = editId || "";
     createAttemptRef.current = { signature: "", key: "" };
+    copyAttemptRef.current = { signature: "", key: "" };
     let cancelled = false;
     const load = async () => {
       setIsLoading(true);
@@ -105,18 +133,28 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
         setGlobalSettings(settingsObj);
         setEstimateContext(estimate || null);
 
+        // Strict seed resolution — a recorded value is honored verbatim
+        // (including a legitimate 0 on the nonnegative keys); malformed or
+        // out-of-range values resolve the documented default AND are flagged
+        // by laserSettingIssues while the project would seed from Settings.
         const newDefaults = {
-          machine_rate_per_hour: parseFloat(settingsObj.parameter_laser_machine_rate) || 100,
-          labor_rate: parseFloat(settingsObj.parameter_laser_labor_rate) || 75,
-          engraving_machine_rate_per_hour: parseFloat(settingsObj.engraving_laser_machine_rate) || 80,
-          engraving_labor_rate: parseFloat(settingsObj.engraving_laser_labor_rate) || 40,
-          parameter_handling_time_percentage: parseFloat(settingsObj.parameter_handling_time_percentage) || 15,
-          engraving_handling_time_percentage: parseFloat(settingsObj.engraving_handling_time_percentage) || 20,
-          fixed_setup_hours: parseFloat(settingsObj.min_parameter_laser_setup_hours) || 0.5,
-          fixed_material_setup_cost: parseFloat(settingsObj.parameter_laser_fixed_material_setup_cost) || 0,
+          machine_rate_per_hour: laserSeedNumber(settingsObj, "parameter_laser_machine_rate", 100, { positive: true }),
+          labor_rate: laserSeedNumber(settingsObj, "parameter_laser_labor_rate", 75, { positive: true }),
+          engraving_machine_rate_per_hour: laserSeedNumber(settingsObj, "engraving_laser_machine_rate", 80, { positive: true }),
+          engraving_labor_rate: laserSeedNumber(settingsObj, "engraving_labor_rate", 40, { positive: true }),
+          parameter_handling_time_percentage: laserSeedNumber(settingsObj, "parameter_handling_time_percentage", 15),
+          engraving_handling_time_percentage: laserSeedNumber(settingsObj, "engraving_handling_time_percentage", 20),
+          fixed_setup_hours: laserSeedNumber(settingsObj, "min_parameter_laser_setup_hours", 0.5),
+          fixed_material_setup_cost: laserSeedNumber(settingsObj, "parameter_laser_fixed_material_setup_cost", 0),
           notes: settingsObj.default_notes_template || "",
           total_supplies_cost: 0,
         };
+        // The acknowledged snapshot for the loaded record (nulls for new).
+        setSavedTotals({
+          total_machine_cost: existing?.total_machine_cost ?? null,
+          total_labor_cost: existing?.total_labor_cost ?? null,
+          total_supplies_cost: existing?.total_supplies_cost ?? null,
+        });
 
         if (existing) {
           setProject((prev) => ({
@@ -161,7 +199,45 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
     return () => { cancelled = true; };
   }, [editId, estimateId]);
 
+// DXF/SVG dimension extraction (#92): reads the file text and pulls a
+// bounding box -- DXF $EXTMIN/$EXTMAX headers, or an SVG width/height/viewBox --
+// returning inches so a laser part can prefill length/width from a vector file.
+async function extractLaserDims(file) {
+  try {
+    const text = await file.text();
+    const lines = String(text).split(/[\r\n]+/);
+    const readPair = (marker) => {
+      const idx = lines.findIndex((l) => String(l).trim() === marker);
+      if (idx < 0) return null;
+      let x = NaN, y = NaN;
+      for (let j = idx + 1; j < Math.min(idx + 14, lines.length); j += 1) {
+        const code = String(lines[j]).trim();
+        if (code === "10") x = parseFloat(lines[j + 1]);
+        else if (code === "20") y = parseFloat(lines[j + 1]);
+        if (Number.isFinite(x) && Number.isFinite(y)) return { x, y };
+      }
+      return null;
+    };
+    const extMin = readPair("$EXTMIN");
+    const extMax = readPair("$EXTMAX");
+    const metric = lines.some((l, i) => String(l).trim() === "$MEASUREMENT" && String(lines[i + 2] || "").trim() === "1");
+    const insUnitsMM = lines.some((l, i) => String(l).trim() === "$INSUNITS" && String(lines[i + 2] || "").trim() === "4");
+    const toIn = (metric || insUnitsMM) ? 1 / 25.4 : 1;
+    if (extMin && extMax && extMax.x > extMin.x) {
+      const w = (extMax.x - extMin.x) * toIn;
+      const h = Math.abs(extMax.y - extMin.y) * toIn;
+      return { w: +w.toFixed(2), h: +h.toFixed(2) };
+    }
+    const vb = /viewBox=["']([\d\.\s-]+)["']/.exec(text);
+    const sW = /width=["']([\d\.]+)/.exec(text), sH = /height=["']([\d\.]+)/.exec(text);
+    if (Number.isFinite(parseFloat(sW?.[1])) && Number.isFinite(parseFloat(sH?.[1]))) return { w: parseFloat(sW[1]), h: parseFloat(sH[1]) };
+    if (vb) { const p = vb[1].trim().split(/\s+/).map(Number); if (p.length === 4 && p[2] > 0 && p[3] > 0) return { w: +p[2].toFixed(2), h: +p[3].toFixed(2) }; }
+  } catch {}
+  return null;
+}
+
   const addItem = () => {
+
     setTimeout(() => document.querySelector(`input[data-item-desc="${(project.items || []).length}"]`)?.focus(), 60);
     const newItem = {
       builder_item_id: newBuilderItemId("laser-item"),
@@ -184,6 +260,25 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
       labor_cost: 0
     };
     setProject((prev) => ({ ...prev, items: [...prev.items, newItem] }));
+  };
+
+  // File attach + dimension extraction (#92): upload the part's vector file,
+  // store its URL on the item, and prefill length/width from a DXF/SVG bbox.
+  const attachFileToItem = async (index, file) => {
+    if (!file) return;
+    try {
+      const up = await base44.integrations.Core.UploadFile({ file });
+      const url = up?.file_url || "";
+      if (url) updateItem(index, "file_url", url);
+      const dims = await extractLaserDims(file);
+      if (dims && (dims.w > 0 || dims.h > 0)) {
+        updateItem(index, "length", dims.w);
+        updateItem(index, "width", dims.h);
+        window.alert(`Attached file — extracted ${dims.w}" × ${dims.h}" into length/width.`);
+      } else {
+        window.alert("File attached (no readable dimensions — length/width left as entered).");
+      }
+    } catch (e) { window.alert(e?.message || "Attach failed."); }
   };
 
   const removeItem = (index) => {
@@ -227,16 +322,19 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
           // For 'engraving', total_cut_length_inches remains 0.
 
           // Get cut speed from settings based on thickness
-          const thicknessKey = `cut_speed_${updated.material_thickness.replace('/', '_')}`;
+          // (String() guards: absent material/thickness used to throw here —
+          // now it resolves a nonexistent setting key → the same `||default`
+          // result, and the field is flagged where it's actually consumed.)
+          const thicknessKey = `cut_speed_${String(updated.material_thickness ?? "").replace('/', '_')}`;
           const baseSpeed = parseFloat(globalSettings[thicknessKey]) || 20;
 
           // Apply material multiplier
-          const materialMultiplier = parseFloat(globalSettings[`${updated.material_type.toLowerCase()}_cut_multiplier`]) || 1.0;
+          const materialMultiplier = parseFloat(globalSettings[`${String(updated.material_type ?? "").toLowerCase()}_cut_multiplier`]) || 1.0;
           updated.cut_speed_ipm = baseSpeed * materialMultiplier;
 
           // Get engraving speed from settings
           const engraveBaseSpeed = parseFloat(globalSettings.laser_engrave_speed_sqipm) || 5;
-          const engraveMultiplier = parseFloat(globalSettings[`${updated.material_type.toLowerCase()}_engrave_multiplier`]) || 1.0;
+          const engraveMultiplier = parseFloat(globalSettings[`${String(updated.material_type ?? "").toLowerCase()}_engrave_multiplier`]) || 1.0;
           updated.engrave_speed_sqipm = engraveBaseSpeed * engraveMultiplier;
         }
 
@@ -245,111 +343,43 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
     }));
   };
 
-  const calculateTotals = useCallback(() => {
-    let totalMachineCost = 0;
-    let totalLaborCost = 0;
-    let totalSuppliesCost = 0;
+  // Pricing-availability: one strict calc pass shared by the banner, the
+  // totals panels, the per-field diagnostics, and the save guard. The ported
+  // math is byte-identical to the old inline calculation on clean input;
+  // flagged inputs hold derived numbers at null — never a leaked NaN or a
+  // laundered $0. Raw project/item state is never mutated by the calc.
+  const priced = useMemo(() => calcLaserPricing(project, globalSettings), [project, globalSettings]);
+  const calculated = priced.calc;
+  const allIssues = priced.issues || [];
+  // Any settings-side unavailability → stronger save message; any issue at
+  // all blocks the save — unavailable pricing is never written as $0/NaN.
+  const catalogBlocked = allIssues.some((i) => i.kind === "laser_catalog");
+  const pricingBlocked = allIssues.length > 0;
+  const pricingUnavailable = !!calculated?.pricingUnavailable;
+  const itemIssues = (index) => allIssues.filter((i) => i.itemIndex === index);
+  const itemIssuesId = (index) => `laser-item-${index}-issues`;
+  const itemFieldFlag = (field, index) => hasIssueFor(allIssues, field, index) || undefined;
+  const itemFieldDesc = (field, index) => (hasIssueFor(allIssues, field, index) ? itemIssuesId(index) : undefined);
+  const projectFieldFlag = (field) => hasIssueFor(allIssues, field) || undefined;
+  const projectFieldDesc = (field) => (hasIssueFor(allIssues, field) ? "laser-pricing-issues" : undefined);
 
-    // Cut/engrave speeds are stored as mm/sec and mmÂ²/sec.
-    // Convert lengths/areas from inches to mm (1 in = 25.4 mm) before dividing.
-    const MM_PER_IN = 25.4;
-    const SQMM_PER_SQIN = 25.4 * 25.4;
-
-    const updatedItems = project.items.map((item) => {
-      const cutLengthMm = item.total_cut_length_inches * MM_PER_IN;
-      const engraveAreaSqMm = item.engrave_area_sqin * item.quantity * SQMM_PER_SQIN;
-
-      const cutTimeSeconds = cutLengthMm / (item.cut_speed_ipm || 20);
-      const engraveTimeSeconds = engraveAreaSqMm / (item.engrave_speed_sqipm || 5);
-
-      const cutTimeHours = cutTimeSeconds / 3600;
-      const engraveTimeHours = engraveTimeSeconds / 3600;
-      const machineTimeHours = cutTimeHours + engraveTimeHours;
-
-      // Rates
-      const paramMachineRate = project.machine_rate_per_hour || 100;
-      const paramLaborRate = project.labor_rate || 75;
-      const paramHandlingPct = (project.parameter_handling_time_percentage || 15) / 100;
-
-      const engraveMachineRate = project.engraving_machine_rate_per_hour || 80;
-      const engraveLaborRate = project.engraving_labor_rate || 40;
-      const engraveHandlingPct = (project.engraving_handling_time_percentage || 20) / 100;
-
-      let itemMachineCost = 0;
-      let itemLaborCost = 0;
-      let itemHandlingHours = 0;
-
-      if (item.item_type === 'panel' || item.item_type === 'lettering') {
-        // Parameter Only
-        itemHandlingHours = machineTimeHours * paramHandlingPct;
-        itemMachineCost = machineTimeHours * paramMachineRate;
-        itemLaborCost = itemHandlingHours * paramLaborRate;
-      } else if (item.item_type === 'engraving') {
-        // Engraving Only
-        itemHandlingHours = machineTimeHours * engraveHandlingPct;
-        itemMachineCost = machineTimeHours * engraveMachineRate;
-        itemLaborCost = itemHandlingHours * engraveLaborRate;
-      } else if (item.item_type === 'engrave_and_cut') {
-        // Mixed - Split costs
-        const cutHandling = cutTimeHours * paramHandlingPct;
-        const engraveHandling = engraveTimeHours * engraveHandlingPct;
-        itemHandlingHours = cutHandling + engraveHandling;
-
-        itemMachineCost = (cutTimeHours * paramMachineRate) + (engraveTimeHours * engraveMachineRate);
-        itemLaborCost = (cutHandling * paramLaborRate) + (engraveHandling * engraveLaborRate);
-      }
-
-      totalMachineCost += itemMachineCost;
-      totalLaborCost += itemLaborCost;
-
-      return {
-        ...item,
-        machine_time_hours: machineTimeHours,
-        handling_time_hours: itemHandlingHours,
-        machine_cost: itemMachineCost,
-        labor_cost: itemLaborCost
-      };
-    });
-
-    // Add fixed setup time labor cost
-    const fixedSetupLaborCost = project.fixed_setup_hours * project.labor_rate;
-    totalLaborCost += fixedSetupLaborCost;
-
-    // Add fixed material setup cost to supplies cost
-    const fixedMaterialSetupCost = project.fixed_material_setup_cost || 0;
-    totalSuppliesCost += fixedMaterialSetupCost; // Now goes to supplies cost
-
-    return {
-      items: updatedItems,
-      total_machine_cost: totalMachineCost,
-      total_labor_cost: totalLaborCost,
-      total_supplies_cost: totalSuppliesCost // Return total supplies cost
-    };
-  }, [
-    project.items, 
-    project.machine_rate_per_hour, 
-    project.labor_rate, 
-    project.engraving_machine_rate_per_hour, 
-    project.engraving_labor_rate,
-    project.parameter_handling_time_percentage,
-    project.engraving_handling_time_percentage,
-    project.fixed_setup_hours, 
-    project.fixed_material_setup_cost, 
-    globalSettings
-  ]);
-
-  useEffect(() => {
-    if (!isLoading && project.items.length > 0) {
-      const calculated = calculateTotals();
-      setProject((prev) => ({
-        ...prev,
-        items: calculated.items,
-        total_machine_cost: calculated.total_machine_cost,
-        total_labor_cost: calculated.total_labor_cost,
-        total_supplies_cost: calculated.total_supplies_cost // Update project state with supplies cost
-      }));
-    }
-  }, [calculateTotals, isLoading, project.items.length]); // Added project.items.length to dependency array to trigger recalculation when items are added/removed
+  // Display model: live totals while finite; under held pricing the
+  // acknowledged snapshot persisted on the record (never a fabricated $0).
+  const displayTotals = {
+    total_machine_cost: Number.isFinite(calculated?.total_machine_cost)
+      ? calculated.total_machine_cost : savedTotals.total_machine_cost,
+    total_labor_cost: Number.isFinite(calculated?.total_labor_cost)
+      ? calculated.total_labor_cost : savedTotals.total_labor_cost,
+    total_supplies_cost: Number.isFinite(calculated?.total_supplies_cost)
+      ? calculated.total_supplies_cost : savedTotals.total_supplies_cost,
+  };
+  const displayTotalCost = laserSumOrNull(
+    displayTotals.total_machine_cost, displayTotals.total_supplies_cost, displayTotals.total_labor_cost);
+  // Rows the calc actually priced (length-matched); held rows carry nulled
+  // derived numbers so displays degrade to "—"/saved, not stale math.
+  const displayItems = Array.isArray(calculated?.items) && calculated.items.length === (project.items || []).length
+    ? calculated.items
+    : (project.items || []);
 
   // Ctrl+S / Cmd+S saves the section without leaving the editor.
   useEffect(() => {
@@ -370,6 +400,16 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
     return () => window.removeEventListener("beforeunload", warn);
   }, [isSaving]);
   const saveProject = async () => {
+    // Pricing-availability gate first — a held estimate never writes, so
+    // malformed/unusable inputs can never launder into persisted $0/NaN
+    // totals (this also covers the estimate handoff via recordBuilderSave).
+    if (pricingBlocked) {
+      setSaveError(catalogBlocked
+        ? "Save paused: a Laser Settings value is missing or unusable — update it in Laser Settings, then save."
+        : "Save paused: fix the flagged pricing values before saving — unavailable pricing is never written as $0.");
+      return;
+    }
+    setSaveError("");
     if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert('Please fill in project name and client name');
       return;
@@ -382,7 +422,8 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
 
     setIsSaving(true);
     try {
-      const calculated = calculateTotals();
+      // `calculated` is the shared pricing result — all finite under a clean
+      // (unblocked) pass, so persisted totals are real numbers.
       const totalCost = calculated.total_machine_cost + calculated.total_supplies_cost + calculated.total_labor_cost;
       const pricingProject = {
         ...project,
@@ -467,6 +508,12 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
         id: savedId || prev.id,
         updated_date: saved?.updated_date || prev.updated_date,
       }));
+      // Persisted totals are the new acknowledged snapshot for held display.
+      setSavedTotals({
+        total_machine_cost: calculated.total_machine_cost,
+        total_labor_cost: calculated.total_labor_cost,
+        total_supplies_cost: calculated.total_supplies_cost,
+      });
       onSaved?.();
       if (!embedded) alert(isEditing ? 'Project updated successfully!' : 'Project saved successfully!');
     } catch (error) {
@@ -477,8 +524,63 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
     }
   };
 
+  // #78 — clone the current save payload into a brand-new Laser project.
+  const handleSaveAsCopy = async () => {
+    // Same pricing gate as save — Save-As-Copy never writes held pricing.
+    if (pricingBlocked) {
+      setSaveError(catalogBlocked
+        ? "Copy paused: a Laser Settings value is missing or unusable — update it in Laser Settings first."
+        : "Copy paused: fix the flagged pricing values before copying — unavailable pricing is never written as $0.");
+      return;
+    }
+    setSaveError("");
+    setIsSaving(true);
+    try {
+      const copy = await saveModuleProjectCopy({
+        entity: LaserProject,
+        payload: {
+          ...project,
+          client_name: estimateContext?.client_name || project.client_name,
+          customer_id: estimateContext?.customer_id || project.customer_id,
+          estimate_number: estimateContext?.estimate_number || project.estimate_number,
+          items: calculated.items,
+          total_machine_cost: calculated.total_machine_cost,
+          total_supplies_cost: calculated.total_supplies_cost,
+          total_labor_cost: calculated.total_labor_cost,
+          total_cost: calculated.total_machine_cost + calculated.total_supplies_cost + calculated.total_labor_cost,
+          status: 'calculated'
+        },
+        attemptRef: copyAttemptRef,
+        keyPrefix: "laser_project_copy",
+        baseName: project.project_name || "Laser",
+        label: "Laser project copy",
+      });
+      if (embedded) onSaved?.();
+      else navigate(`/LaserEstimator?edit=${copy.id}`);
+    } catch (e) {
+      console.error(e);
+      alert("Save copy failed: " + e.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // #79 — template payload = the editable setup a user would reuse.
+  const buildLaserTemplateData = (p) => ({
+    items: p.items || [],
+    machine_rate_per_hour: p.machine_rate_per_hour,
+    labor_rate: p.labor_rate,
+    engraving_machine_rate_per_hour: p.engraving_machine_rate_per_hour,
+    engraving_labor_rate: p.engraving_labor_rate,
+    parameter_handling_time_percentage: p.parameter_handling_time_percentage,
+    engraving_handling_time_percentage: p.engraving_handling_time_percentage,
+    fixed_setup_hours: p.fixed_setup_hours,
+    fixed_material_setup_cost: p.fixed_material_setup_cost,
+    notes: p.notes,
+  });
+
   const downloadEstimate = () => {
-    const totalCost = (project.total_machine_cost || 0) + (project.total_supplies_cost || 0) + (project.total_labor_cost || 0);
+    const totalCost = displayTotalCost;
     
     const htmlContent = `
 <!DOCTYPE html>
@@ -779,7 +881,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
 <body>
   <div class="container">
     <div class="header">
-      <h1>âš¡ Laser Estimate</h1>
+      <h1>⚡ Laser Estimate</h1>
       <div class="subtitle">Precision Cutting & Engraving Services</div>
     </div>
     
@@ -808,7 +910,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
     <div class="content">
       <div class="section-title">Items Breakdown</div>
       
-      ${project.items.map((item, i) => `
+      ${displayItems.map((item, i) => `
         <div class="item">
           <div class="item-header">
             Item ${i + 1}: ${escHtml(item.description || item.item_type + " item")}
@@ -830,7 +932,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
             ${item.item_type === 'panel' || item.item_type === 'engrave_and_cut' ? `
             <div class="detail-row">
               <span class="detail-label">Dimensions:</span>
-              <span class="detail-value">${escHtml(item.length)}" Ã— ${escHtml(item.width)}"</span>
+              <span class="detail-value">${escHtml(item.length)}" × ${escHtml(item.width)}"</span>
             </div>
             ` : ''}
             ${item.item_type === 'lettering' ? `
@@ -843,7 +945,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
               <span class="detail-value">${escHtml(item.num_letters)}</span>
             </div>
             ` : ''}
-            ${(item.item_type === 'engraving' || item.item_type === 'engrave_and_cut') && item.engrave_area_sqin > 0 ? `
+            ${(item.item_type === 'engraving' || item.item_type === 'engrave_and_cut') && Number.isFinite(item.engrave_area_sqin) && item.engrave_area_sqin > 0 ? `
             <div class="detail-row">
               <span class="detail-label">Engrave Area:</span>
               <span class="detail-value">${escHtml(item.engrave_area_sqin)} sq in</span>
@@ -851,22 +953,22 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
             ` : ''}
             <div class="detail-row">
               <span class="detail-label">Machine Time:</span>
-              <span class="detail-value">${item.machine_time_hours.toFixed(3)} hrs</span>
+              <span class="detail-value">${exportHours(item.machine_time_hours)} hrs</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Handling Time:</span>
-              <span class="detail-value">${item.handling_time_hours.toFixed(3)} hrs</span>
+              <span class="detail-value">${exportHours(item.handling_time_hours)} hrs</span>
             </div>
           </div>
           
           <div class="item-costs">
             <div class="cost-box machine">
               <div class="cost-label">Machine Cost</div>
-              <div class="cost-value">$${item.machine_cost.toFixed(2)}</div>
+              <div class="cost-value">${exportMoney(item.machine_cost)}</div>
             </div>
             <div class="cost-box labor">
               <div class="cost-label">Labor Cost</div>
-              <div class="cost-value">$${item.labor_cost.toFixed(2)}</div>
+              <div class="cost-value">${exportMoney(item.labor_cost)}</div>
             </div>
           </div>
         </div>
@@ -881,31 +983,31 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
         </div>
         <div class="summary-row">
           <span class="summary-label">Material Setup Cost:</span>
-          <span class="summary-value">$${project.fixed_material_setup_cost.toFixed(2)}</span>
+          <span class="summary-value">${exportMoney(laserStrictNumber(project.fixed_material_setup_cost))}</span>
         </div>
         
         <div class="summary-row machine">
           <span class="summary-label">Total Machine Cost:</span>
-          <span class="summary-value">$${(project.total_machine_cost || 0).toFixed(2)}</span>
+          <span class="summary-value">${exportMoney(displayTotals.total_machine_cost)}</span>
         </div>
         <div class="summary-row supplies">
           <span class="summary-label">Total Supplies Cost:</span>
-          <span class="summary-value">$${(project.total_supplies_cost || 0).toFixed(2)}</span>
+          <span class="summary-value">${exportMoney(displayTotals.total_supplies_cost)}</span>
         </div>
         <div class="summary-row labor">
           <span class="summary-label">Total Labor Cost:</span>
-          <span class="summary-value">$${(project.total_labor_cost || 0).toFixed(2)}</span>
+          <span class="summary-value">${exportMoney(displayTotals.total_labor_cost)}</span>
         </div>
         
         <div class="total-row">
           <span class="total-label">Total Estimate</span>
-          <span class="total-value">$${totalCost.toFixed(2)}</span>
+          <span class="total-value">${exportMoney(totalCost)}</span>
         </div>
       </div>
       
       ${project.notes ? `
         <div class="notes">
-          <h3>ðŸ“� Additional Notes</h3>
+          <h3>📝 Additional Notes</h3>
           <p>${escHtml(project.notes)}</p>
         </div>
       ` : ''}
@@ -913,7 +1015,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
     
     <div class="footer">
       Generated by SignEstimate Pro - Professional Estimating Suite<br>
-      Â© ${new Date().getFullYear()} All Rights Reserved
+      © ${new Date().getFullYear()} All Rights Reserved
     </div>
   </div>
 </body>
@@ -932,7 +1034,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
   };
 
   const printEstimate = () => {
-    const totalCost = (project.total_machine_cost || 0) + (project.total_supplies_cost || 0) + (project.total_labor_cost || 0);
+    const totalCost = displayTotalCost;
     
     const printContent = `
       <html>
@@ -1231,7 +1333,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
         <body>
           <div class="container">
             <div class="header">
-              <h1>âš¡ Laser Estimate</h1>
+              <h1>⚡ Laser Estimate</h1>
               <div class="subtitle">Precision Cutting & Engraving Services</div>
             </div>
             
@@ -1260,7 +1362,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
             <div class="content">
               <div class="section-title">Items Breakdown</div>
               
-              ${project.items.map((item, i) => `
+              ${displayItems.map((item, i) => `
                 <div class="item">
                   <div class="item-header">
                     Item ${i + 1}: ${escHtml(item.description || item.item_type + " item")}
@@ -1282,7 +1384,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
                     ${item.item_type === 'panel' || item.item_type === 'engrave_and_cut' ? `
                     <div class="detail-row">
                       <span class="detail-label">Dimensions:</span>
-                      <span class="detail-value">${escHtml(item.length)}" Ã— ${escHtml(item.width)}"</span>
+                      <span class="detail-value">${escHtml(item.length)}" × ${escHtml(item.width)}"</span>
                     </div>
                     ` : ''}
                     ${item.item_type === 'lettering' ? `
@@ -1295,7 +1397,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
                       <span class="detail-value">${escHtml(item.num_letters)}</span>
                     </div>
                     ` : ''}
-                    ${(item.item_type === 'engraving' || item.item_type === 'engrave_and_cut') && item.engrave_area_sqin > 0 ? `
+                    ${(item.item_type === 'engraving' || item.item_type === 'engrave_and_cut') && Number.isFinite(item.engrave_area_sqin) && item.engrave_area_sqin > 0 ? `
                     <div class="detail-row">
                       <span class="detail-label">Engrave Area:</span>
                       <span class="detail-value">${escHtml(item.engrave_area_sqin)} sq in</span>
@@ -1303,22 +1405,22 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
                     ` : ''}
                     <div class="detail-row">
                       <span class="detail-label">Machine Time:</span>
-                      <span class="detail-value">${item.machine_time_hours.toFixed(3)} hrs</span>
+                      <span class="detail-value">${exportHours(item.machine_time_hours)} hrs</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Handling Time:</span>
-                      <span class="detail-value">${item.handling_time_hours.toFixed(3)} hrs</span>
+                      <span class="detail-value">${exportHours(item.handling_time_hours)} hrs</span>
                     </div>
                   </div>
                   
                   <div class="item-costs">
                     <div class="cost-box machine">
                       <div class="cost-label">Machine Cost</div>
-                      <div class="cost-value">$${item.machine_cost.toFixed(2)}</div>
+                      <div class="cost-value">${exportMoney(item.machine_cost)}</div>
                     </div>
                     <div class="cost-box labor">
                       <div class="cost-label">Labor Cost</div>
-                      <div class="cost-value">$${item.labor_cost.toFixed(2)}</div>
+                      <div class="cost-value">${exportMoney(item.labor_cost)}</div>
                     </div>
                   </div>
                 </div>
@@ -1333,31 +1435,31 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
                 </div>
                 <div class="summary-row">
                   <span class="summary-label">Material Setup Cost:</span>
-                  <span class="summary-value">$${project.fixed_material_setup_cost.toFixed(2)}</span>
+                  <span class="summary-value">${exportMoney(laserStrictNumber(project.fixed_material_setup_cost))}</span>
                 </div>
                 
                 <div class="summary-row machine">
                   <span class="summary-label">Total Machine Cost:</span>
-                  <span class="summary-value">$${(project.total_machine_cost || 0).toFixed(2)}</span>
+                  <span class="summary-value">${exportMoney(displayTotals.total_machine_cost)}</span>
                 </div>
                 <div class="summary-row supplies">
                   <span class="summary-label">Total Supplies Cost:</span>
-                  <span class="summary-value">$${(project.total_supplies_cost || 0).toFixed(2)}</span>
+                  <span class="summary-value">${exportMoney(displayTotals.total_supplies_cost)}</span>
                 </div>
                 <div class="summary-row labor">
                   <span class="summary-label">Total Labor Cost:</span>
-                  <span class="summary-value">$${(project.total_labor_cost || 0).toFixed(2)}</span>
+                  <span class="summary-value">${exportMoney(displayTotals.total_labor_cost)}</span>
                 </div>
                 
                 <div class="total-row">
                   <span class="total-label">Total Estimate</span>
-                  <span class="total-value">$${totalCost.toFixed(2)}</span>
+                  <span class="total-value">${exportMoney(totalCost)}</span>
                 </div>
               </div>
               
               ${project.notes ? `
                 <div class="notes">
-                  <h3>ðŸ“� Additional Notes</h3>
+                  <h3>📝 Additional Notes</h3>
                   <p>${escHtml(project.notes)}</p>
                 </div>
               ` : ''}
@@ -1365,7 +1467,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
             
             <div class="footer">
               Generated by SignEstimate Pro - Professional Estimating Suite<br>
-              Â© ${new Date().getFullYear()} All Rights Reserved
+              © ${new Date().getFullYear()} All Rights Reserved
             </div>
           </div>
         </body>
@@ -1379,7 +1481,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
   };
 
   const emailEstimate = () => {
-    const totalCost = (project.total_machine_cost || 0) + (project.total_supplies_cost || 0) + (project.total_labor_cost || 0); // Include supplies cost
+    const totalCost = displayTotalCost; // Include supplies cost
     
     const emailBody = `Hello,
 
@@ -1389,21 +1491,21 @@ Estimate Number: ${project.estimate_number}
 Reference Link: ${project.hyperlink}
 
 ESTIMATE SUMMARY:
-Total Machine Cost: $${(project.total_machine_cost || 0).toFixed(2)}
-Total Supplies Cost: $${(project.total_supplies_cost || 0).toFixed(2)}
-Total Labor Cost: $${(project.total_labor_cost || 0).toFixed(2)}
-TOTAL ESTIMATE: $${totalCost.toFixed(2)}
+Total Machine Cost: ${exportMoney(displayTotals.total_machine_cost)}
+Total Supplies Cost: ${exportMoney(displayTotals.total_supplies_cost)}
+Total Labor Cost: ${exportMoney(displayTotals.total_labor_cost)}
+TOTAL ESTIMATE: ${exportMoney(totalCost)}
 
 ITEMS BREAKDOWN:
-${project.items.map((item, i) => `
+${displayItems.map((item, i) => `
 Item ${i + 1}: ${item.description || `${item.item_type} item`}
 - Type: ${item.item_type}
 - Material: ${item.material_type} - ${item.material_thickness}"
 - Quantity: ${item.quantity}
-${item.item_type === 'panel' || item.item_type === 'engrave_and_cut' ? `- Dimensions: ${item.length}" Ã— ${item.width}"` : ''}
+${item.item_type === 'panel' || item.item_type === 'engrave_and_cut' ? `- Dimensions: ${item.length}" × ${item.width}"` : ''}
 ${item.item_type === 'lettering' ? `- Letter Height: ${item.letter_height}", Count: ${item.num_letters}` : ''}
-${(item.item_type === 'engraving' || item.item_type === 'engrave_and_cut') && item.engrave_area_sqin > 0 ? `- Engrave Area: ${item.engrave_area_sqin} sq in` : ''}
-- Item Total: $${(item.machine_cost + item.labor_cost).toFixed(2)}
+${(item.item_type === 'engraving' || item.item_type === 'engrave_and_cut') && Number.isFinite(item.engrave_area_sqin) && item.engrave_area_sqin > 0 ? `- Engrave Area: ${item.engrave_area_sqin} sq in` : ''}
+- Item Total: ${exportMoney(laserSumOrNull(item.machine_cost, item.labor_cost))}
 `).join('\n')}
 
 ${project.notes ? `\nAdditional Notes:\n${project.notes}` : ''}
@@ -1457,15 +1559,35 @@ Best regards`;
           </div>
         </div>
 
+        {saveError && (
+          <div role="alert" className="mb-3 px-3 py-2 text-[12px] text-red-700 bg-red-50 border border-red-200 rounded">
+            {saveError}
+          </div>
+        )}
+        {allIssues.length > 0 && (
+          <div role="status" id="laser-pricing-issues" className="mb-3 flex items-start gap-2 text-[11px] text-amber-900 bg-amber-50 border border-amber-300 rounded px-3 py-2">
+            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600" />
+            <div className="min-w-0">
+              <div className="font-semibold">
+                Pricing unavailable — {allIssues.length} value{allIssues.length === 1 ? "" : "s"} need{allIssues.length === 1 ? "s" : ""} attention before this estimate can be priced or saved.
+              </div>
+              <ul className="mt-1 space-y-0.5 list-disc list-inside">
+                {allIssues.slice(0, 5).map((it, i) => <li key={i}>{it.message}</li>)}
+                {allIssues.length > 5 && <li>…and {allIssues.length - 5} more</li>}
+              </ul>
+            </div>
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="sticky top-[64px] z-30 -mx-2 px-2 py-2 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/60">
                 <TabsList className="grid grid-cols-5 w-full bg-white shadow-md border border-slate-200 h-auto p-1 gap-1">
                   <TabBadgeTrigger value="project" icon={FileText} label="Project" color="red" />
-                  <TabBadgeTrigger value="items" icon={ListChecks} label="Items" amount={(project.total_machine_cost || 0) + (project.total_labor_cost || 0)} count={project.items.length} color="red" />
+                  <TabBadgeTrigger value="items" icon={ListChecks} label="Items" amount={(displayTotals.total_machine_cost ?? 0) + (displayTotals.total_labor_cost ?? 0)} count={(project.items || []).length} color="red" />
                   <TabBadgeTrigger value="advanced" icon={SettingsIcon} label="Advanced" color="red" />
-                  <TabBadgeTrigger value="summary" icon={Calculator} label="Summary" amount={(project.total_machine_cost || 0) + (project.total_supplies_cost || 0) + (project.total_labor_cost || 0)} color="red" />
+                  <TabBadgeTrigger value="summary" icon={Calculator} label="Summary" amount={displayTotalCost ?? 0} color="red" />
                   <TabBadgeTrigger value="pricing" icon={TrendingUp} label="Customer Pricing" accent color="red" />
                 </TabsList>
               </div>
@@ -1548,15 +1670,16 @@ Best regards`;
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {project.items.length === 0 ?
+                {(project.items || []).length === 0 ?
                 <div className="text-center py-8 text-slate-500">
                     <p>No items added yet. Click "Add Item" to get started.</p>
                   </div> :
 
-                project.items.map((item, index) =>
+                (project.items || []).map((item, index) =>
                 <div key={index} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
                       <div className="flex justify-between items-start">
                         <h4 className="font-semibold text-slate-900">Item #{index + 1}</h4>
+                        <label title="Attach a DXF/SVG cut file - extracts width x height into length/width" className="inline-flex items-center gap-1 h-[27px] px-2 rounded border border-sky-300 bg-sky-50 text-[9px] font-bold text-sky-700 hover:bg-sky-100 cursor-pointer">{item.file_url ? "Re-attach" : "Attach"}<input type="file" accept=".dxf,.svg,.dwg,.txt" className="hidden" onChange={(e) => attachFileToItem(index, e.target.files?.[0])} /></label>
                         <Button variant="ghost" size="icon" onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -1577,7 +1700,7 @@ Best regards`;
                         <div>
                           <Label>Item Type</Label>
                           <Select value={item.item_type} onValueChange={(value) => updateItem(index, 'item_type', value)}>
-                            <SelectTrigger className="mt-1">
+                            <SelectTrigger className="mt-1" aria-invalid={itemFieldFlag("item_type", index)} aria-describedby={itemFieldDesc("item_type", index)}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -1592,7 +1715,7 @@ Best regards`;
                         <div>
                           <Label>Material Type</Label>
                           <Select value={item.material_type} onValueChange={(value) => updateItem(index, 'material_type', value)}>
-                            <SelectTrigger className="mt-1">
+                            <SelectTrigger className="mt-1" aria-invalid={itemFieldFlag("material_type", index)} aria-describedby={itemFieldDesc("material_type", index)}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -1606,7 +1729,7 @@ Best regards`;
                         <div>
                           <Label>Material Thickness</Label>
                           <Select value={item.material_thickness} onValueChange={(value) => updateItem(index, 'material_thickness', value)}>
-                            <SelectTrigger className="mt-1">
+                            <SelectTrigger className="mt-1" aria-invalid={itemFieldFlag("material_thickness", index)} aria-describedby={itemFieldDesc("material_thickness", index)}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -1622,8 +1745,10 @@ Best regards`;
                           <Input
                         type="number"
                         min="1"
-                        value={item.quantity}
-                        onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 1)}
+                        value={item.quantity ?? ""}
+                        onChange={(e) => updateItem(index, 'quantity', laserDraftValue(e.target.value))}
+                        aria-invalid={itemFieldFlag("quantity", index)}
+                        aria-describedby={itemFieldDesc("quantity", index)}
                         className="mt-1" />
 
                         </div>
@@ -1635,8 +1760,10 @@ Best regards`;
                               <Input
                           type="number"
                           step="0.125"
-                          value={item.length}
-                          onChange={(e) => updateItem(index, 'length', parseFloat(e.target.value) || 0)}
+                          value={item.length ?? ""}
+                          onChange={(e) => updateItem(index, 'length', laserDraftValue(e.target.value))}
+                          aria-invalid={itemFieldFlag("length", index)}
+                          aria-describedby={itemFieldDesc("length", index)}
                           className="mt-1" />
 
                             </div>
@@ -1645,8 +1772,10 @@ Best regards`;
                               <Input
                           type="number"
                           step="0.125"
-                          value={item.width}
-                          onChange={(e) => updateItem(index, 'width', parseFloat(e.target.value) || 0)}
+                          value={item.width ?? ""}
+                          onChange={(e) => updateItem(index, 'width', laserDraftValue(e.target.value))}
+                          aria-invalid={itemFieldFlag("width", index)}
+                          aria-describedby={itemFieldDesc("width", index)}
                           className="mt-1" />
 
                             </div>
@@ -1660,8 +1789,10 @@ Best regards`;
                               <Input
                           type="number"
                           step="0.125"
-                          value={item.letter_height}
-                          onChange={(e) => updateItem(index, 'letter_height', parseFloat(e.target.value) || 0)}
+                          value={item.letter_height ?? ""}
+                          onChange={(e) => updateItem(index, 'letter_height', laserDraftValue(e.target.value))}
+                          aria-invalid={itemFieldFlag("letter_height", index)}
+                          aria-describedby={itemFieldDesc("letter_height", index)}
                           className="mt-1" />
 
                             </div>
@@ -1670,9 +1801,11 @@ Best regards`;
                               <Input
                           type="number"
                           min="1"
-                          value={item.num_letters}
-                          onChange={(e) => updateItem(index, 'num_letters', parseFloat(e.target.value) || 0)}
-                          className="mt-1" />
+                          value={item.num_letters ?? ""}
+                          onChange={(e) => updateItem(index, 'num_letters', laserDraftValue(e.target.value))}
+                        aria-invalid={itemFieldFlag("num_letters", index)}
+                        aria-describedby={itemFieldDesc("num_letters", index)}
+                        className="mt-1" />
 
                             </div>
                           </>
@@ -1681,9 +1814,9 @@ Best regards`;
                         {(item.item_type === 'panel' || item.item_type === 'lettering' || item.item_type === 'engrave_and_cut') &&
                     <div className="md:col-span-2 p-3 bg-blue-50 rounded-lg">
                             <p className="text-sm text-blue-800">
-                              <strong>Total Cut Length:</strong> {item.total_cut_length_inches.toFixed(2)}" 
-                              <span className="mx-2">â€¢</span>
-                              <strong>Cut Speed:</strong> {item.cut_speed_ipm.toFixed(1)} mm/sec
+                              <strong>Total Cut Length:</strong> {Number.isFinite(item.total_cut_length_inches) ? item.total_cut_length_inches.toFixed(2) : "—"}" 
+                              <span className="mx-2">•</span>
+                              <strong>Cut Speed:</strong> {Number.isFinite(item.cut_speed_ipm) ? item.cut_speed_ipm.toFixed(1) : "—"} mm/sec
                             </p>
                           </div>
                     }
@@ -1696,14 +1829,16 @@ Best regards`;
                         type="number"
                         step="0.1"
                         min="0"
-                        value={item.engrave_area_sqin}
-                        onChange={(e) => updateItem(index, 'engrave_area_sqin', Math.max(0, parseFloat(e.target.value) || 0))}
+                        value={item.engrave_area_sqin ?? ""}
+                        onChange={(e) => updateItem(index, 'engrave_area_sqin', laserDraftValue(e.target.value))}
+                        aria-invalid={itemFieldFlag("engrave_area_sqin", index)}
+                        aria-describedby={itemFieldDesc("engrave_area_sqin", index)}
                         placeholder="Enter engraving area"
                         className="mt-1" />
 
-                            {item.engrave_area_sqin > 0 &&
+                            {Number.isFinite(item.engrave_area_sqin) && item.engrave_area_sqin > 0 &&
                       <p className="text-xs text-slate-500 mt-1">
-                                Engrave Speed: {item.engrave_speed_sqipm.toFixed(1)} mmÂ²/sec
+                                Engrave Speed: {Number.isFinite(item.engrave_speed_sqipm) ? item.engrave_speed_sqipm.toFixed(1) : "—"} mm²/sec
                               </p>
                       }
                           </div>
@@ -1713,22 +1848,30 @@ Best regards`;
                           <div className="grid grid-cols-2 gap-3 text-sm">
                             <div>
                               <p className="text-slate-600">Machine Time</p>
-                              <p className="font-semibold text-slate-900">{item.machine_time_hours.toFixed(3)} hrs</p>
+                              <p className="font-semibold text-slate-900">{Number.isFinite(displayItems[index]?.machine_time_hours) ? displayItems[index].machine_time_hours.toFixed(3) : "—"} hrs</p>
                             </div>
                             <div>
                               <p className="text-slate-600">Handling Time</p>
-                              <p className="font-semibold text-slate-900">{item.handling_time_hours.toFixed(3)} hrs</p>
+                              <p className="font-semibold text-slate-900">{Number.isFinite(displayItems[index]?.handling_time_hours) ? displayItems[index].handling_time_hours.toFixed(3) : "—"} hrs</p>
                             </div>
                             <div>
                               <p className="text-slate-600">Machine Cost</p>
-                              <p className="font-semibold text-green-700">${item.machine_cost.toFixed(2)}</p>
+                              <p className="font-semibold text-green-700">{exportMoney(displayItems[index]?.machine_cost)}</p>
                             </div>
                             <div>
                               <p className="text-slate-600">Labor Cost</p>
-                              <p className="font-semibold text-green-700">${item.labor_cost.toFixed(2)}</p>
+                              <p className="font-semibold text-green-700">{exportMoney(displayItems[index]?.labor_cost)}</p>
                             </div>
                           </div>
                         </div>
+                        {itemIssues(index).length > 0 && (
+                          <div role="status" id={itemIssuesId(index)} className="md:col-span-2 flex items-start gap-2 text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+                            <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-600" />
+                            <ul className="space-y-0.5 list-disc list-inside">
+                              {itemIssues(index).map((it, ii) => <li key={ii}>{it.message}</li>)}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     </div>
                 )
@@ -1748,8 +1891,10 @@ Best regards`;
                         type="number"
                         step="0.1"
                         min="0"
-                        value={project.fixed_setup_hours}
-                        onChange={(e) => setProject((prev) => ({ ...prev, fixed_setup_hours: parseFloat(e.target.value) || 0 }))}
+                        value={project.fixed_setup_hours ?? ""}
+                        onChange={(e) => setProject((prev) => ({ ...prev, fixed_setup_hours: laserDraftValue(e.target.value) }))}
+                        aria-invalid={projectFieldFlag("fixed_setup_hours")}
+                        aria-describedby={projectFieldDesc("fixed_setup_hours")}
                         className="mt-1" />
                       <p className="text-xs text-slate-500 mt-1">One-time setup labor cost applied to the entire project</p>
                     </div>
@@ -1759,8 +1904,10 @@ Best regards`;
                         type="number"
                         step="1"
                         min="0"
-                        value={project.fixed_material_setup_cost}
-                        onChange={(e) => setProject((prev) => ({ ...prev, fixed_material_setup_cost: parseFloat(e.target.value) || 0 }))}
+                        value={project.fixed_material_setup_cost ?? ""}
+                        onChange={(e) => setProject((prev) => ({ ...prev, fixed_material_setup_cost: laserDraftValue(e.target.value) }))}
+                        aria-invalid={projectFieldFlag("fixed_material_setup_cost")}
+                        aria-describedby={projectFieldDesc("fixed_material_setup_cost")}
                         className="mt-1" />
                       <p className="text-xs text-slate-500 mt-1">One-time material/setup cost applied to the entire project, added to supplies cost.</p>
                     </div>
@@ -1784,23 +1931,23 @@ Best regards`;
                         </tr>
                       </thead>
                       <tbody>
-                        {project.items.map((it, i) => (
+                        {displayItems.map((it, i) => (
                           <tr key={i} className="border-t border-slate-100">
                             <td className="px-4 py-2 text-slate-500">{i + 1}</td>
                             <td className="px-4 py-2 font-medium">{it.description || `Item ${i + 1}`}</td>
                             <td className="px-4 py-2 capitalize text-xs text-slate-600">{(it.item_type || '').replace(/_/g, ' ')}</td>
-                            <td className="px-4 py-2 text-right tabular-nums">${(it.machine_cost || 0).toFixed(2)}</td>
-                            <td className="px-4 py-2 text-right tabular-nums">${(it.labor_cost || 0).toFixed(2)}</td>
-                            <td className="px-4 py-2 text-right tabular-nums font-semibold">${((it.machine_cost || 0) + (it.labor_cost || 0)).toFixed(2)}</td>
+                            <td className="px-4 py-2 text-right tabular-nums">{exportMoney(it.machine_cost)}</td>
+                            <td className="px-4 py-2 text-right tabular-nums">{exportMoney(it.labor_cost)}</td>
+                            <td className="px-4 py-2 text-right tabular-nums font-semibold">{exportMoney(laserSumOrNull(it.machine_cost, it.labor_cost))}</td>
                           </tr>
                         ))}
                       </tbody>
                       <tfoot className="bg-slate-50 border-t-2 border-slate-200 text-sm">
                         <tr>
                           <td colSpan="3" className="px-4 py-2 text-right font-medium">Totals</td>
-                          <td className="px-4 py-2 text-right tabular-nums font-medium">${(project.total_machine_cost || 0).toFixed(2)}</td>
-                          <td className="px-4 py-2 text-right tabular-nums font-medium">${(project.total_labor_cost || 0).toFixed(2)}</td>
-                          <td className="px-4 py-2 text-right tabular-nums font-bold">${((project.total_machine_cost || 0) + (project.total_supplies_cost || 0) + (project.total_labor_cost || 0)).toFixed(2)}</td>
+                          <td className="px-4 py-2 text-right tabular-nums font-medium">{exportMoney(displayTotals.total_machine_cost)}</td>
+                          <td className="px-4 py-2 text-right tabular-nums font-medium">{exportMoney(displayTotals.total_labor_cost)}</td>
+                          <td className="px-4 py-2 text-right tabular-nums font-bold">{exportMoney(displayTotalCost)}</td>
                         </tr>
                       </tfoot>
                     </table>
@@ -1810,7 +1957,15 @@ Best regards`;
 
               <TabsContent value="pricing" className="mt-4 space-y-4">
                 <CustomerPricingTab
-                  project={project}
+                  project={{
+                    ...project,
+                    // Advisory tier math — under held pricing feed the
+                    // acknowledged/saved amounts (or 0 when none), never NaN.
+                    total_machine_cost: displayTotals.total_machine_cost ?? 0,
+                    total_supplies_cost: displayTotals.total_supplies_cost ?? 0,
+                    total_labor_cost: displayTotals.total_labor_cost ?? 0,
+                    total_cost: displayTotalCost ?? 0,
+                  }}
                   categorize={categorizeLaserProject}
                   accentColor="red"
                   onTierChange={(tier) => setProject((prev) => ({
@@ -1827,10 +1982,17 @@ Best regards`;
             <Card className="bg-white border-0 shadow-sm sticky top-8">
               <CardHeader className="pb-3"><CardTitle>Project Summary</CardTitle></CardHeader>
               <CardContent className="space-y-4 pt-4">
+                {pricingUnavailable && (
+                  <p className="text-[10px] text-amber-700">Saved amounts (not current pricing) — held until the flagged values are fixed.</p>
+                )}
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium text-blue-800">Machine Cost:</span>
-                    <span className="text-lg font-bold text-blue-900">${(project.total_machine_cost || 0).toFixed(2)}</span>
+                    <span className="text-lg font-bold text-blue-900">
+                      {hasLaserCostSnapshot(displayTotals.total_machine_cost)
+                        ? `$${displayTotals.total_machine_cost.toFixed(2)}`
+                        : <span className="text-amber-700 text-sm font-semibold">Not saved</span>}
+                    </span>
                   </div>
                   <p className="text-xs text-blue-600">Laser machine operating time costs</p>
                 </div>
@@ -1838,7 +2000,11 @@ Best regards`;
                 <div className="p-4 bg-purple-50 rounded-lg">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium text-purple-800">Supplies Cost:</span>
-                    <span className="text-lg font-bold text-purple-900">${(project.total_supplies_cost || 0).toFixed(2)}</span>
+                    <span className="text-lg font-bold text-purple-900">
+                      {hasLaserCostSnapshot(displayTotals.total_supplies_cost)
+                        ? `$${displayTotals.total_supplies_cost.toFixed(2)}`
+                        : <span className="text-amber-700 text-sm font-semibold">Not saved</span>}
+                    </span>
                   </div>
                   <p className="text-xs text-purple-600">Materials and setup supplies</p>
                 </div>
@@ -1846,7 +2012,11 @@ Best regards`;
                 <div className="p-4 bg-green-50 rounded-lg">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium text-green-800">Labor Cost:</span>
-                    <span className="text-lg font-bold text-green-900">${(project.total_labor_cost || 0).toFixed(2)}</span>
+                    <span className="text-lg font-bold text-green-900">
+                      {hasLaserCostSnapshot(displayTotals.total_labor_cost)
+                        ? `$${displayTotals.total_labor_cost.toFixed(2)}`
+                        : <span className="text-amber-700 text-sm font-semibold">Not saved</span>}
+                    </span>
                   </div>
                   <p className="text-xs text-green-600">Handling, setup, and labor time</p>
                 </div>
@@ -1854,7 +2024,7 @@ Best regards`;
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-sm text-slate-600">
                     <span>Total Quantity:</span>
-                    <span className="font-medium">{project.items.reduce((sum, item) => {
+                    <span className="font-medium">{(project.items || []).reduce((sum, item) => {
                       const qty = parseFloat(item.quantity) || 0;
                       if (item.item_type === 'lettering') {
                         return sum + (qty * (parseFloat(item.num_letters) || 0));
@@ -1880,11 +2050,31 @@ Best regards`;
                 <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name) || project.items.length === 0} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 mt-4">
                   {isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" /> {isEditing ? 'Update Estimate' : 'Save Estimate'}</>}
                 </Button>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <ModuleActionBar
+                    onTemplates={() => setTemplateMode("load")}
+                    onSaveAsTemplate={() => setTemplateMode("save")}
+                    onSaveAsCopy={handleSaveAsCopy}
+                    estimateId={estimateId}
+                    saving={isSaving}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
+      <ModuleTemplateDialog
+        open={!!templateMode}
+        mode={templateMode}
+        onClose={() => setTemplateMode(null)}
+        project={project}
+        onApply={(data) => setProject((prev) => ({ ...prev, ...data }))}
+        moduleKey="laser"
+        title="Laser"
+        buildTemplateData={buildLaserTemplateData}
+        describeTemplate={(t) => `${(t.project_data?.items || []).length} items`}
+      />
     </div>);
 
 }

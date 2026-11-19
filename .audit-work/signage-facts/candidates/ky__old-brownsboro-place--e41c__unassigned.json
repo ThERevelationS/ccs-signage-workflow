@@ -1,0 +1,44 @@
+{
+ "jurisdiction_id": "6adefde08eb518c94797e41c",
+ "jurisdiction_name": "Old Brownsboro Place",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "Sign Permit Application Sign Permit Application – Office of Plann ing - July 2025 CHECKLIST Please submit the completed application along with the following documents. Applications WILL NOT be accepted without the following items : ______ Sign Plan: Provide one (1) copy of the sign plan, including the location and all dimensions of the sign. ______ Hanging Plan: Provide one (1) copy of the hanging plan . ______ Fee: Single (1) Attached Sign: $200; Two (2) or more attached signs: $350 Single (1) Freestanding Sign: $200; Two (2) or more freestanding signs: $350 (cash, charge or check made payable to “Louisville Metro Government”) Sign 1 Detail: ☐ New Sign ☐ Existing Sign or Reface ☐ Attached / Wall ☐ Freestanding ☐ Freestanding Directional ☐ Small Freestanding (Portable) ☐ Outdoor Advertising (Billboard) ☐ Banner ☐ Projecting ☐ Other: Specify: Internally Illuminated: ☐ Yes ☐ No Video Sign:",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "billboard",
+    "temporary",
+    "process"
+   ],
+   "weight": 16,
+   "source_sha256": "342d970a014b3837f84286d26783d26e5ac0c4421846eec6a6b17be1607389d8",
+   "source_document_id": null,
+   "source_title": "342d970a014b3837f84286d26783d26e5ac0c4421846eec6a6b17be1607389d8.pdf",
+   "official_url": "https://louisvilleky.gov/sites/default/files/2025-07/Planning_Sign%20Permit%20Application_July2025.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Sign Permit Application – Office of Plann ing - July 2025 SIGN PERMIT APPLICATION Would you rather apply electronically? Go to the address below to learn more about submitting applications online: https://louisvilleky.gov/office - planning/document/pdssubmitting - applications -online Staff Use Only in This Box Case No.: __________________________________________ Intake Staff: _________________________ Date: ______________________________________________ Fee: ________________________________ Once complete, please bring the application and supporting documentation to: Office of Planning, 444 S. Fifth Street # 300. For more information, call (502) 574 - 6230 or visit https://louisvi lleky.gov/government/office -planning . PROJECT INFORMATION Project Name: _____________________________________ Project Address: ___________________________ Zoning District: ____________________________________",
+   "tags": [
+    "sign",
+    "permit_required",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "342d970a014b3837f84286d26783d26e5ac0c4421846eec6a6b17be1607389d8",
+   "source_document_id": null,
+   "source_title": "342d970a014b3837f84286d26783d26e5ac0c4421846eec6a6b17be1607389d8.pdf",
+   "official_url": "https://louisvilleky.gov/sites/default/files/2025-07/Planning_Sign%20Permit%20Application_July2025.pdf"
+  }
+ ]
+}

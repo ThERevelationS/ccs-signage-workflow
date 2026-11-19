@@ -55,7 +55,7 @@ export function CellContextMenu({
       style={{ top: position.y, left: position.x }}
     >
       {(Array.isArray(actions) ? actions : []).map((action, index) => (
-        <button
+        <button type="button"
           key={index}
           disabled={action.disabled}
           className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 disabled:opacity-40"
@@ -70,7 +70,7 @@ export function CellContextMenu({
           {action.label}
         </button>
       ))}
-      <button
+      <button type="button"
         className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
         onMouseDown={(e) => {
           e.preventDefault();
@@ -82,7 +82,7 @@ export function CellContextMenu({
         Field History
       </button>
       {isRegistered && (
-        <button
+        <button type="button"
           className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
           onMouseDown={(e) => {
             e.preventDefault();

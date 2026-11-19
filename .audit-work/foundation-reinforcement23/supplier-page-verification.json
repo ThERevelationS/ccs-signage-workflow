@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "id": "held-missing-mix-blocks-save",
+      "ok": true
+    },
+    {
+      "id": "valid-supplier-saves-delivery-snapshot",
+      "ok": true
+    },
+    {
+      "id": "unsaved-held-delivery-withholds-totals",
+      "ok": true
+    },
+    {
+      "id": "held-missing-price-repaired-by-catalog-reload",
+      "ok": true
+    },
+    {
+      "id": "foreign-mix-selection-blocks-save",
+      "ok": true
+    },
+    {
+      "id": "free-zero-fuel-surcharge-saves",
+      "ok": true
+    },
+    {
+      "id": "string-prices-normalize-and-save",
+      "ok": true
+    }
+  ],
+  "unexpectedNetwork": 0,
+  "unexpectedSdk": 0
+}

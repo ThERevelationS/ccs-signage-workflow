@@ -1,0 +1,608 @@
+{
+  "mode": "valid",
+  "width": 1280,
+  "before": {
+    "mode": "valid",
+    "project": {
+      "id": "synthetic-cabland-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "Cabinets landscape proof project",
+      "items": [
+        {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 48,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": false,
+          "include_forming": false,
+          "include_finishing": false,
+          "selected_concrete_id": "synthetic-readymix",
+          "custom_concrete_cost_per_cy": 0,
+          "item_total_cost": 111.11,
+          "concrete_volume_cy": 0.5,
+          "concrete_cost": 11.11,
+          "excavation_cost": 22.22
+        }
+      ],
+      "walls": [],
+      "poles": [
+        {
+          "component_id": "synthetic-pole-1",
+          "pole_id": "synthetic-pole",
+          "height_inches": 120,
+          "y_offset_inches": 24,
+          "include_pole_painting": false
+        }
+      ],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [
+        {
+          "component_id": "synthetic-cab-1",
+          "id": "cab-1",
+          "description": "LED sign cabinet",
+          "mount": "foundation",
+          "foundation_component_id": "synthetic-item-1",
+          "foundation_index": 0,
+          "width_inches": 48,
+          "height_inches": 24,
+          "depth_inches": 8,
+          "mount_height_inches": 60,
+          "quantity": 2,
+          "unit_cost": 350
+        },
+        {
+          "component_id": "synthetic-cab-2",
+          "id": "cab-2",
+          "description": "Pole flag cabinet",
+          "mount": "pole",
+          "pole_component_id": "synthetic-pole-1",
+          "pole_index": 0,
+          "width_inches": 24,
+          "height_inches": 18,
+          "depth_inches": 6,
+          "mount_height_inches": 96,
+          "quantity": 1,
+          "unit_cost": 250
+        }
+      ],
+      "excavation_method": "hand_dig",
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {
+          "0,0": "grass",
+          "1,0": "grass",
+          "2,0": "concrete",
+          "3,0": "water"
+        }
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "total_signage_cabinet_cost": 950,
+      "total_landscape_cost": 15.5,
+      "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 330.75,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 441,
+        "additional_stops_cost": 0,
+        "trucks": [
+          {
+            "yards": 0.5925925925925926,
+            "rounded_yards": 0.75,
+            "cost": 330.75,
+            "small_order_fee": 0,
+            "fuel_fee": 0
+          }
+        ]
+      }
+    },
+    "savedProject": {
+      "id": "synthetic-cabland-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "Cabinets landscape proof project",
+      "items": [
+        {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 48,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": false,
+          "include_forming": false,
+          "include_finishing": false,
+          "selected_concrete_id": "synthetic-readymix",
+          "custom_concrete_cost_per_cy": 0,
+          "item_total_cost": 111.11,
+          "concrete_volume_cy": 0.5,
+          "concrete_cost": 11.11,
+          "excavation_cost": 22.22
+        }
+      ],
+      "walls": [],
+      "poles": [
+        {
+          "component_id": "synthetic-pole-1",
+          "pole_id": "synthetic-pole",
+          "height_inches": 120,
+          "y_offset_inches": 24,
+          "include_pole_painting": false
+        }
+      ],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [
+        {
+          "component_id": "synthetic-cab-1",
+          "id": "cab-1",
+          "description": "LED sign cabinet",
+          "mount": "foundation",
+          "foundation_component_id": "synthetic-item-1",
+          "foundation_index": 0,
+          "width_inches": 48,
+          "height_inches": 24,
+          "depth_inches": 8,
+          "mount_height_inches": 60,
+          "quantity": 2,
+          "unit_cost": 350
+        },
+        {
+          "component_id": "synthetic-cab-2",
+          "id": "cab-2",
+          "description": "Pole flag cabinet",
+          "mount": "pole",
+          "pole_component_id": "synthetic-pole-1",
+          "pole_index": 0,
+          "width_inches": 24,
+          "height_inches": 18,
+          "depth_inches": 6,
+          "mount_height_inches": 96,
+          "quantity": 1,
+          "unit_cost": 250
+        }
+      ],
+      "excavation_method": "hand_dig",
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {
+          "0,0": "grass",
+          "1,0": "grass",
+          "2,0": "concrete",
+          "3,0": "water"
+        }
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "total_signage_cabinet_cost": 950,
+      "total_landscape_cost": 15.5,
+      "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 330.75,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 441,
+        "additional_stops_cost": 0,
+        "trucks": [
+          {
+            "yards": 0.5925925925925926,
+            "rounded_yards": 0.75,
+            "cost": 330.75,
+            "small_order_fee": 0,
+            "fuel_fee": 0
+          }
+        ]
+      }
+    },
+    "inventory": [
+      {
+        "id": "synthetic-pole",
+        "material_type": "pole",
+        "material_name": "Steel pole 4x4",
+        "cost_per_unit": 20
+      },
+      {
+        "id": "synthetic-readymix",
+        "material_type": "concrete_service",
+        "material_name": "Metro Ready-Mix",
+        "supplier": "Metro Ready-Mix",
+        "cost_per_unit": 190,
+        "unit": "cy",
+        "minimum_order_yards": 0,
+        "below_minimum_cost_per_cy": 0,
+        "minimum_cost": 0,
+        "mix_3500_price": 205,
+        "mix_4000_price": 210,
+        "mix_4500_price": 218,
+        "mix_5000_price": 224,
+        "mix_fast_set_price": 258,
+        "admix_calcium_chloride_price": 9,
+        "admix_set_retarding_price": 5,
+        "admix_water_reducing_price": 4.75,
+        "admix_fibers_price": 13,
+        "admix_winter_service_price": 6,
+        "small_load_fee_1_1_75": 145,
+        "small_load_fee_2_2_75": 118,
+        "small_load_fee_3_3_75": 103,
+        "small_load_fee_4_4_25": 78,
+        "small_load_fee_4_5_4_75": 38,
+        "fuel_surcharge": 35,
+        "show_in_foundation": true
+      }
+    ],
+    "settings": {
+      "wall_labor_rate": "45",
+      "wall_minimum_charge": "150",
+      "wall_labor_bricks_per_hour": "50",
+      "wall_mortar_cost_per_bag": "10",
+      "foundation_main_labor_rate": "60",
+      "foundation_pouring_cost_per_cy": "15",
+      "foundation_hand_dig_time_per_cy": "2"
+    },
+    "dirty": false,
+    "totals": {
+      "total_concrete_cost": 337.5,
+      "concrete_delivery_cost": 337.5,
+      "concrete_delivered_yards": 0.75,
+      "concrete_rate_per_yard": 210,
+      "concrete_trucks": [
+        {
+          "yards": 0.75,
+          "roundedYards": 0.75,
+          "cost": 337.5,
+          "smallOrderFee": 145,
+          "fuelFee": 35
+        }
+      ],
+      "additional_stops_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 88.88888888888889,
+      "total_forming_materials_cost": 0,
+      "total_labor_cost": 8.88888888888889,
+      "total_pole_cost": 240,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_equipment_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "wall_caps_by_material": [],
+      "total_concrete_volume_cy": 0.5925925925925926,
+      "total_excavation_volume_cy": 0.7407407407407407,
+      "total_labor_hours": 1.4814814814814814,
+      "total_signage_cabinet_cost": 950,
+      "total_landscape_cost": 15.5,
+      "grand_total": 675.2777777777778
+    },
+    "catalogIssues": [],
+    "inputIssues": [],
+    "signageCabinetPricing": [
+      {
+        "available": true,
+        "issues": []
+      },
+      {
+        "available": true,
+        "issues": []
+      }
+    ],
+    "landscapePricing": {
+      "available": true,
+      "issues": []
+    },
+    "cabinetCost": 950,
+    "landscapeCost": 15.5,
+    "sectionTotal": 1640.7777777777778,
+    "pricingUnavailable": false,
+    "writes": 0
+  },
+  "after": {
+    "mode": "valid",
+    "project": {
+      "id": "synthetic-cabland-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "Cabinets landscape proof project",
+      "items": [
+        {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 48,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": false,
+          "include_forming": false,
+          "include_finishing": false,
+          "selected_concrete_id": "synthetic-readymix",
+          "custom_concrete_cost_per_cy": 0,
+          "item_total_cost": 111.11,
+          "concrete_volume_cy": 0.5,
+          "concrete_cost": 11.11,
+          "excavation_cost": 22.22
+        }
+      ],
+      "walls": [],
+      "poles": [
+        {
+          "component_id": "synthetic-pole-1",
+          "pole_id": "synthetic-pole",
+          "height_inches": 120,
+          "y_offset_inches": 24,
+          "include_pole_painting": false
+        }
+      ],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [
+        {
+          "component_id": "synthetic-cab-1",
+          "id": "cab-1",
+          "description": "LED sign cabinet",
+          "mount": "foundation",
+          "foundation_component_id": "synthetic-item-1",
+          "foundation_index": 0,
+          "width_inches": 48,
+          "height_inches": 24,
+          "depth_inches": 8,
+          "mount_height_inches": 60,
+          "quantity": 3,
+          "unit_cost": 350
+        },
+        {
+          "component_id": "synthetic-cab-2",
+          "id": "cab-2",
+          "description": "Pole flag cabinet",
+          "mount": "pole",
+          "pole_component_id": "synthetic-pole-1",
+          "pole_index": 0,
+          "width_inches": 24,
+          "height_inches": 18,
+          "depth_inches": 6,
+          "mount_height_inches": 96,
+          "quantity": 1,
+          "unit_cost": 250
+        }
+      ],
+      "excavation_method": "hand_dig",
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {
+          "0,0": "grass",
+          "1,0": "grass",
+          "2,0": "concrete",
+          "3,0": "water"
+        }
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "total_signage_cabinet_cost": 950,
+      "total_landscape_cost": 15.5,
+      "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 330.75,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 441,
+        "additional_stops_cost": 0,
+        "trucks": [
+          {
+            "yards": 0.5925925925925926,
+            "rounded_yards": 0.75,
+            "cost": 330.75,
+            "small_order_fee": 0,
+            "fuel_fee": 0
+          }
+        ]
+      }
+    },
+    "savedProject": {
+      "id": "synthetic-cabland-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "Cabinets landscape proof project",
+      "items": [
+        {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 48,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": false,
+          "include_forming": false,
+          "include_finishing": false,
+          "selected_concrete_id": "synthetic-readymix",
+          "custom_concrete_cost_per_cy": 0,
+          "item_total_cost": 111.11,
+          "concrete_volume_cy": 0.5,
+          "concrete_cost": 11.11,
+          "excavation_cost": 22.22
+        }
+      ],
+      "walls": [],
+      "poles": [
+        {
+          "component_id": "synthetic-pole-1",
+          "pole_id": "synthetic-pole",
+          "height_inches": 120,
+          "y_offset_inches": 24,
+          "include_pole_painting": false
+        }
+      ],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [
+        {
+          "component_id": "synthetic-cab-1",
+          "id": "cab-1",
+          "description": "LED sign cabinet",
+          "mount": "foundation",
+          "foundation_component_id": "synthetic-item-1",
+          "foundation_index": 0,
+          "width_inches": 48,
+          "height_inches": 24,
+          "depth_inches": 8,
+          "mount_height_inches": 60,
+          "quantity": 2,
+          "unit_cost": 350
+        },
+        {
+          "component_id": "synthetic-cab-2",
+          "id": "cab-2",
+          "description": "Pole flag cabinet",
+          "mount": "pole",
+          "pole_component_id": "synthetic-pole-1",
+          "pole_index": 0,
+          "width_inches": 24,
+          "height_inches": 18,
+          "depth_inches": 6,
+          "mount_height_inches": 96,
+          "quantity": 1,
+          "unit_cost": 250
+        }
+      ],
+      "excavation_method": "hand_dig",
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {
+          "0,0": "grass",
+          "1,0": "grass",
+          "2,0": "concrete",
+          "3,0": "water"
+        }
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "total_signage_cabinet_cost": 950,
+      "total_landscape_cost": 15.5,
+      "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 330.75,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 441,
+        "additional_stops_cost": 0,
+        "trucks": [
+          {
+            "yards": 0.5925925925925926,
+            "rounded_yards": 0.75,
+            "cost": 330.75,
+            "small_order_fee": 0,
+            "fuel_fee": 0
+          }
+        ]
+      }
+    },
+    "inventory": [
+      {
+        "id": "synthetic-pole",
+        "material_type": "pole",
+        "material_name": "Steel pole 4x4",
+        "cost_per_unit": 20
+      },
+      {
+        "id": "synthetic-readymix",
+        "material_type": "concrete_service",
+        "material_name": "Metro Ready-Mix",
+        "supplier": "Metro Ready-Mix",
+        "cost_per_unit": 190,
+        "unit": "cy",
+        "minimum_order_yards": 0,
+        "below_minimum_cost_per_cy": 0,
+        "minimum_cost": 0,
+        "mix_3500_price": 205,
+        "mix_4000_price": 210,
+        "mix_4500_price": 218,
+        "mix_5000_price": 224,
+        "mix_fast_set_price": 258,
+        "admix_calcium_chloride_price": 9,
+        "admix_set_retarding_price": 5,
+        "admix_water_reducing_price": 4.75,
+        "admix_fibers_price": 13,
+        "admix_winter_service_price": 6,
+        "small_load_fee_1_1_75": 145,
+        "small_load_fee_2_2_75": 118,
+        "small_load_fee_3_3_75": 103,
+        "small_load_fee_4_4_25": 78,
+        "small_load_fee_4_5_4_75": 38,
+        "fuel_surcharge": 35,
+        "show_in_foundation": true
+      }
+    ],
+    "settings": {
+      "wall_labor_rate": "45",
+      "wall_minimum_charge": "150",
+      "wall_labor_bricks_per_hour": "50",
+      "wall_mortar_cost_per_bag": "10",
+      "foundation_main_labor_rate": "60",
+      "foundation_pouring_cost_per_cy": "15",
+      "foundation_hand_dig_time_per_cy": "2"
+    },
+    "dirty": true,
+    "totals": {
+      "total_concrete_cost": 337.5,
+      "concrete_delivery_cost": 337.5,
+      "concrete_delivered_yards": 0.75,
+      "concrete_rate_per_yard": 210,
+      "concrete_trucks": [
+        {
+          "yards": 0.75,
+          "roundedYards": 0.75,
+          "cost": 337.5,
+          "smallOrderFee": 145,
+          "fuelFee": 35
+        }
+      ],
+      "additional_stops_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 88.88888888888889,
+      "total_forming_materials_cost": 0,
+      "total_labor_cost": 8.88888888888889,
+      "total_pole_cost": 240,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_equipment_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "wall_caps_by_material": [],
+      "total_concrete_volume_cy": 0.5925925925925926,
+      "total_excavation_volume_cy": 0.7407407407407407,
+      "total_labor_hours": 1.4814814814814814,
+      "total_signage_cabinet_cost": 1300,
+      "total_landscape_cost": 15.5,
+      "grand_total": 675.2777777777778
+    },
+    "catalogIssues": [],
+    "inputIssues": [],
+    "signageCabinetPricing": [
+      {
+        "available": true,
+        "issues": []
+      },
+      {
+        "available": true,
+        "issues": []
+      }
+    ],
+    "landscapePricing": {
+      "available": true,
+      "issues": []
+    },
+    "cabinetCost": 1300,
+    "landscapeCost": 15.5,
+    "sectionTotal": 1990.7777777777778,
+    "pricingUnavailable": false,
+    "writes": 0
+  },
+  "writes": 0,
+  "netOps": {
+    "fetch": 0,
+    "xhr": 0
+  },
+  "externalUrls": [],
+  "consoleErrors": [],
+  "keyWarnings": []
+}

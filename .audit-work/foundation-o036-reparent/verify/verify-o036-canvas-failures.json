@@ -1,0 +1,7 @@
+[
+  {
+    "name": "mount chrome: one link per live mount, honest anchors, none for standalone",
+    "ok": false,
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n+   'cabinet:component:cab-1',\n+   'pole:component:pole-1',\n+   'wall-cap:component:cap-1'\n-   'cab-1',\n-   'cap-1',\n-   'pole-1'\n  ]\n\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-o036-reparent/verify-canvas.mjs:154:10\n    at check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-o036-reparent/verify-canvas.mjs:78:9)\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-o036-reparent/verify-canvas.mjs:148:1"
+  }
+]

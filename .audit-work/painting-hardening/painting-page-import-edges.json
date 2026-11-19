@@ -1,0 +1,56 @@
+[
+  {
+    "output": ".audit-work/painting-hardening/.paint-page-bundle.mjs",
+    "path": "react",
+    "kind": "import-statement",
+    "external": true
+  },
+  {
+    "output": ".audit-work/painting-hardening/.paint-page-bundle.mjs",
+    "path": "react-router-dom",
+    "kind": "import-statement",
+    "external": true
+  },
+  {
+    "output": ".audit-work/painting-hardening/.paint-page-bundle.mjs",
+    "path": "react/jsx-runtime",
+    "kind": "import-statement",
+    "external": true
+  },
+  {
+    "output": ".audit-work/painting-hardening/.paint-page-bundle.mjs",
+    "path": "react/jsx-runtime",
+    "kind": "import-statement",
+    "external": true
+  },
+  {
+    "output": ".audit-work/painting-hardening/.paint-page-bundle.mjs",
+    "path": "react/jsx-runtime",
+    "kind": "import-statement",
+    "external": true
+  },
+  {
+    "output": ".audit-work/painting-hardening/.paint-page-bundle.mjs",
+    "path": "react/jsx-runtime",
+    "kind": "import-statement",
+    "external": true
+  },
+  {
+    "output": ".audit-work/painting-hardening/.paint-page-bundle.mjs",
+    "path": "react/jsx-runtime",
+    "kind": "import-statement",
+    "external": true
+  },
+  {
+    "output": ".audit-work/painting-hardening/.paint-page-bundle.mjs",
+    "path": "react/jsx-runtime",
+    "kind": "import-statement",
+    "external": true
+  },
+  {
+    "output": ".audit-work/painting-hardening/.paint-page-bundle.mjs",
+    "path": "react/jsx-runtime",
+    "kind": "import-statement",
+    "external": true
+  }
+]

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { localDateStamp } from "@/components/estimator/quoteLifecycle";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const STAGES = [
   { key: "new", label: "New" },
@@ -276,7 +277,7 @@ function NewIntakeDialog({ sessionToken, onClose, onCreated }) {
             <input className={inputCls} type="number" min="0" step="0.01" value={f.budget_amount} onChange={(e) => set("budget_amount", e.target.value)} />
           </Field>
           <Field label="Desired install date">
-            <input className={inputCls} type="date" value={f.desired_install_date} onChange={(e) => set("desired_install_date", e.target.value)} />
+            <CcsDateField className={inputCls} value={f.desired_install_date} onChange={(e) => set("desired_install_date", e.target.value)} />
           </Field>
           <Field label="Priority">
             <select className={inputCls} value={f.priority} onChange={(e) => set("priority", e.target.value)}>
@@ -297,7 +298,7 @@ function NewIntakeDialog({ sessionToken, onClose, onCreated }) {
             <input className={inputCls} value={f.next_action} onChange={(e) => set("next_action", e.target.value)} />
           </Field>
           <Field label="Next action due">
-            <input className={inputCls} type="date" value={f.next_action_due} onChange={(e) => set("next_action_due", e.target.value)} />
+            <CcsDateField className={inputCls} value={f.next_action_due} onChange={(e) => set("next_action_due", e.target.value)} />
           </Field>
           <Field label="Next action assignee">
             <input className={inputCls} value={f.next_action_assignee} onChange={(e) => set("next_action_assignee", e.target.value)} />
@@ -637,7 +638,9 @@ function FollowUps({ sessionToken, onOpenOpportunity }) {
     setLoading(true);
     setError("");
     try {
-      const data = await invoke(sessionToken, { action: "list_follow_ups" });
+      // #492 — pass the client-local day boundary: the backend falls back to a UTC
+      // `today`, which flags rows overdue one day early for US timezones.
+      const data = await invoke(sessionToken, { action: "list_follow_ups", today: localDateStamp() });
       setItems(data.follow_ups || []);
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Follow-ups failed to load.");
@@ -908,7 +911,7 @@ function OpportunityDetail({ sessionToken, opportunity, onClose, onChanged }) {
                 <Field label="Salesperson"><input className={inputCls} value={edit.salesperson || ""} onChange={(e) => setEdit((p) => ({ ...p, salesperson: e.target.value }))} /></Field>
                 <Field label="Lead source"><input className={inputCls} value={edit.lead_source || ""} onChange={(e) => setEdit((p) => ({ ...p, lead_source: e.target.value }))} /></Field>
                 <Field label="Budget"><input className={inputCls} type="number" min="0" step="0.01" value={edit.budget_amount ?? ""} onChange={(e) => setEdit((p) => ({ ...p, budget_amount: e.target.value }))} /></Field>
-                <Field label="Next action due"><input className={inputCls} type="date" value={edit.next_action_due || ""} onChange={(e) => setEdit((p) => ({ ...p, next_action_due: e.target.value }))} /></Field>
+                <Field label="Next action due"><CcsDateField className={inputCls} value={edit.next_action_due || ""} onChange={(e) => setEdit((p) => ({ ...p, next_action_due: e.target.value }))} /></Field>
                 <Field label="Next action"><input className={inputCls} value={edit.next_action || ""} onChange={(e) => setEdit((p) => ({ ...p, next_action: e.target.value }))} /></Field>
                 <Field label="Assignee"><input className={inputCls} value={edit.next_action_assignee || ""} onChange={(e) => setEdit((p) => ({ ...p, next_action_assignee: e.target.value }))} /></Field>
                 {CLOSED_STAGES.has(edit.stage) && (
@@ -1253,7 +1256,7 @@ export default function Opportunities() {
     try {
       const r = await base44.functions.invoke("opportunityWorkspaceAction", {
         session_token: sessionToken,
-        action: "list_opportunities",
+        action: "list_opportunities", today: localDateStamp(),
         include_closed: includeClosed,
       });
       const data = r?.data || r;

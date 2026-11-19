@@ -1,0 +1,15 @@
+{
+ "suite": "catalog-integrity",
+ "passed": 7,
+ "failed": 0,
+ "cases": [
+  "A empty-catalog alert+saved amounts",
+  "A2 Not-saved/zero snapshot",
+  "B all save paths+autosave blocked zero-IO",
+  "C reload restore+explicit save",
+  "D failed reload+retry",
+  "E stale reply no install",
+  "F overlapping flights"
+ ],
+ "timestamp": "2026-11-05T17:51:58.716Z"
+}

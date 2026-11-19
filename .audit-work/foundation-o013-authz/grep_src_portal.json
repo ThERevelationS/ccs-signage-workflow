@@ -1,0 +1,136 @@
+{
+  "matches": [
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 75,
+      "text": "  const r = await base44.functions.invoke(\"customerPortalAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 108,
+      "text": "        const url = `${window.location.origin}/customerportal?token=${encodeURIComponent(link.token || data.token)}`;"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 119,
+      "text": "  const activeUrl = active ? `${window.location.origin}/customerportal?token=${encodeURIComponent(active.token)}` : \"\";"
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 84,
+      "text": "  base44.functions.invoke(\"customerPortalAction\", body).then((r) => {"
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 665,
+      "text": "export default function CustomerPortal() {"
+    },
+    {
+      "path": "src/App.jsx",
+      "line": 83,
+      "text": "const CustomerPortal = lazyPage(() => import('./pages/CustomerPortal'));"
+    },
+    {
+      "path": "src/App.jsx",
+      "line": 279,
+      "text": "  if (path === '/customerportal') return CustomerPortal;"
+    },
+    {
+      "path": "src/components/portal/PortalPanel.jsx",
+      "line": 6,
+      "text": "  const r = await base44.functions.invoke(\"customerPortalAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/components/portal/PortalPanel.jsx",
+      "line": 60,
+      "text": "  const portalUrl = customerLink ? `${window.location.origin}/customerportal?token=${encodeURIComponent(customerLink.token)}` : \"\";"
+    },
+    {
+      "path": "src/components/portal/PortalPanel.jsx",
+      "line": 74,
+      "text": "            if (link) await copy(`${window.location.origin}/customerportal?token=${encodeURIComponent(link.token || d.token)}`, \"new\");"
+    },
+    {
+      "path": "src/components/portal/ProductStatusPanel.jsx",
+      "line": 18,
+      "text": "// Drop-in for the CustomerPortal work_order view: pass a WorkOrder-shaped"
+    },
+    {
+      "path": "src/components/portal/ProductStatusPanel.jsx",
+      "line": 20,
+      "text": "// CustomerPortal/PortalPanel kit — slate card, uppercase mini header,"
+    },
+    {
+      "path": "src/components/workflow/AttentionFeed.jsx",
+      "line": 294,
+      "text": "    // customerPortalAction writer; persisted notifications go through"
+    },
+    {
+      "path": "src/components/workflow/AttentionFeed.jsx",
+      "line": 298,
+      "text": "        base44.functions.invoke(\"customerPortalAction\", {"
+    },
+    {
+      "path": "src/components/workflow/AttentionFeed.jsx",
+      "line": 313,
+      "text": "        await base44.functions.invoke(\"customerPortalAction\", {"
+    },
+    {
+      "path": "src/components/workflow/NotificationCenter.jsx",
+      "line": 153,
+      "text": "    // existing customerPortalAction path stays the writer (#327 per-section)."
+    },
+    {
+      "path": "src/components/workflow/NotificationCenter.jsx",
+      "line": 155,
+      "text": "      await base44.functions.invoke(\"customerPortalAction\", {"
+    },
+    {
+      "path": "src/components/estimator/IntegrationsSurface.jsx",
+      "line": 430,
+      "text": "      \"Token-link customer portal — estimates, invoices, jobs, messages and file uploads via customerPortalAction.\","
+    },
+    {
+      "path": "src/components/estimator/IntegrationsSurface.jsx",
+      "line": 432,
+      "text": "      \"functions/customerPortalAction · entities/CustomerPortalLink · pages/CustomerPortal + components/portal/PortalPanel\","
+    },
+    {
+      "path": "src/components/estimator/moduleShared/moduleProjectActions.js",
+      "line": 75,
+      "text": "  return `${window.location.origin}/customerportal?token=${encodeURIComponent(token)}`;"
+    },
+    {
+      "path": "src/components/estimator/poRequiredModel.js",
+      "line": 12,
+      "text": "// recordEstimateAcceptance, customerPortalAction)."
+    },
+    {
+      "path": "src/components/estimator/EstimateAcceptancePanel.jsx",
+      "line": 252,
+      "text": "      await navigator.clipboard.writeText(`${window.location.origin}/customerportal?token=${encodeURIComponent(token)}`);\r"
+    },
+    {
+      "path": "src/components/estimator/EstimateAcceptancePanel.jsx",
+      "line": 270,
+      "text": "      await navigator.clipboard.writeText(`${window.location.origin}/customerportal?token=${encodeURIComponent(token)}`);\r"
+    },
+    {
+      "path": "src/components/announcements/AnnouncementManager.jsx",
+      "line": 40,
+      "text": "  \"WorkOrderCalendar\", \"TimeClock\", \"customerportal\"\r"
+    },
+    {
+      "path": "src/components/announcements/AnnouncementManager.jsx",
+      "line": 62,
+      "text": "  { label: \"Kiosk\", pages: [\"TimeClock\", \"customerportal\"] },\r"
+    },
+    {
+      "path": "src/components/jobs/JobWorkspace.jsx",
+      "line": 174,
+      "text": "      await navigator.clipboard.writeText(`${window.location.origin}/customerportal?token=${encodeURIComponent(token)}`);"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 26
+}

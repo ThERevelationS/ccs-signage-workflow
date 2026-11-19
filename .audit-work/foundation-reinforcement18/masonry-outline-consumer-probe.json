@@ -1,0 +1,51 @@
+{
+  "matches": [
+    {
+      "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+      "line": 157,
+      "text": "        {!wall.shape?.segments?.length && ("
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+      "line": 165,
+      "text": "        <WallShapeEditor shape={wall.shape} onChange={(shape) => set({ shape })} />"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+      "line": 173,
+      "text": "    onChange(walls.map((w, i) => (i === index ? { ...w, ...changes } : w)));"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+      "line": 201,
+      "text": "        walls.map((wall, index) => ("
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+      "line": 113,
+      "text": "                  {walls.map((w, i) => ("
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "line": 225,
+      "text": "  walls.forEach((wall, index) => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "line": 278,
+      "text": "  return walls.map((wall, index) => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "line": 284,
+      "text": "        wallShape: wall.shape,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 329,
+      "text": "      shape: isRecord(w.shape) ? { ...w.shape, segments: (w.shape.segments || []).map((s) => ({ ...s, component_id: remap(s.component_id, \"wall_segment\") })) } : w.shape,"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 9
+}

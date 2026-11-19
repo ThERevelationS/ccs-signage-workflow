@@ -1,0 +1,866 @@
+{
+  "candidates": 69,
+  "planned": [
+    {
+      "id": "6afc95a22f2c029fd0c52aa5",
+      "source_id": "1056",
+      "before": {
+        "amount_paid": 566.8,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc95fa98ed4bb7de672d01",
+      "source_id": "1073",
+      "before": {
+        "amount_paid": 62.95,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc95ffeca0afae564e9c86",
+      "source_id": "1080",
+      "before": {
+        "amount_paid": 187.5,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9603a82277bbda22b73c",
+      "source_id": "1095",
+      "before": {
+        "amount_paid": 966.86,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9605cbc2a6af08f4a502",
+      "source_id": "1099",
+      "before": {
+        "amount_paid": 0.01,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc960844a6bb0a9dc36229",
+      "source_id": "1129",
+      "before": {
+        "amount_paid": 3385.97,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc960870a746e01f762a4b",
+      "source_id": "1132",
+      "before": {
+        "amount_paid": 100,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9609247510e8a4b03a2d",
+      "source_id": "1135",
+      "before": {
+        "amount_paid": 966.86,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc960944b32507d8a2d376",
+      "source_id": "1138",
+      "before": {
+        "amount_paid": 650.49,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9611d244cf2c711b70bc",
+      "source_id": "1140",
+      "before": {
+        "amount_paid": 966.86,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9611ac677101ca1c4cfc",
+      "source_id": "1141",
+      "before": {
+        "amount_paid": 934.82,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96199d03742a992b0143",
+      "source_id": "1175",
+      "before": {
+        "amount_paid": 189.03,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc961a0ee19219f33bed32",
+      "source_id": "1178",
+      "before": {
+        "amount_paid": 100,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc961fb4f85c06962ed5d7",
+      "source_id": "1179",
+      "before": {
+        "amount_paid": 100,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96208b46329e37a01381",
+      "source_id": "1180",
+      "before": {
+        "amount_paid": 100,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9620ffaa79af0bedfb39",
+      "source_id": "1181",
+      "before": {
+        "amount_paid": 100,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96219780da979f7aa866",
+      "source_id": "1182",
+      "before": {
+        "amount_paid": 100,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9621983b73c62a046ea6",
+      "source_id": "1184",
+      "before": {
+        "amount_paid": 100,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9622feb60e7618bd5876",
+      "source_id": "1183",
+      "before": {
+        "amount_paid": 100,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9622fd3901d10723842e",
+      "source_id": "1185",
+      "before": {
+        "amount_paid": 100,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96232599dba33103f7de",
+      "source_id": "1186",
+      "before": {
+        "amount_paid": 100,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9624b6d8bd326735736e",
+      "source_id": "1189",
+      "before": {
+        "amount_paid": 2909.13,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9625d84eac37deec12d6",
+      "source_id": "1205",
+      "before": {
+        "amount_paid": 566.8,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9626a419589e68970a09",
+      "source_id": "1207",
+      "before": {
+        "amount_paid": 131.86,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9627c43382e1cb382c96",
+      "source_id": "1209",
+      "before": {
+        "amount_paid": 3018.99,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9630af65017dd443db14",
+      "source_id": "1222",
+      "before": {
+        "amount_paid": 8201.04,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9631b086bfe50e581b16",
+      "source_id": "1224",
+      "before": {
+        "amount_paid": 321.62,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96368cb0cbcaef9de93e",
+      "source_id": "1245",
+      "before": {
+        "amount_paid": 1140.27,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96460a65d52b356081c1",
+      "source_id": "1270",
+      "before": {
+        "amount_paid": 98.98,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9647e8b76da294450d02",
+      "source_id": "1271",
+      "before": {
+        "amount_paid": 460.32,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc964c577c4ec4a0bb79da",
+      "source_id": "1291",
+      "before": {
+        "amount_paid": 407.02,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc964d184cd95f7efdee5a",
+      "source_id": "1304",
+      "before": {
+        "amount_paid": 501.77,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96567436a9a92511cde4",
+      "source_id": "1338",
+      "before": {
+        "amount_paid": 1301.97,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc95a08fa9817d8bc2e6cf",
+      "source_id": "1350",
+      "before": {
+        "amount_paid": 262.4,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc965d3189e7466e0d2d44",
+      "source_id": "1361",
+      "before": {
+        "amount_paid": 235.2,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9664ae9d2903e3e206cd",
+      "source_id": "1374",
+      "before": {
+        "amount_paid": 553.91,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9666f1fd2b4329312cf6",
+      "source_id": "1380",
+      "before": {
+        "amount_paid": 337.19,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96668c7b777b30e7ca1c",
+      "source_id": "1382",
+      "before": {
+        "amount_paid": 3514.51,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96695e2b36d468706789",
+      "source_id": "1390",
+      "before": {
+        "amount_paid": 102.24,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc966d2f423d611e0e966f",
+      "source_id": "1403",
+      "before": {
+        "amount_paid": 738.7,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96729c81b6d3a01ceedf",
+      "source_id": "1409",
+      "before": {
+        "amount_paid": 1310.31,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9677fd8c01841b645f6f",
+      "source_id": "1411",
+      "before": {
+        "amount_paid": 1660.78,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc967a6c39f8500ff6a729",
+      "source_id": "1421",
+      "before": {
+        "amount_paid": 412.5,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc967cf5e0f4bd6b52f511",
+      "source_id": "1423",
+      "before": {
+        "amount_paid": 1654.35,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc967c7f5bc2a4fd7023dc",
+      "source_id": "1426",
+      "before": {
+        "amount_paid": 1181.81,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc967d3bb3f8631c11f438",
+      "source_id": "1427",
+      "before": {
+        "amount_paid": 714.17,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc967df7c197a7d348fee3",
+      "source_id": "1429",
+      "before": {
+        "amount_paid": 3847.53,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9680821dbf799b3cb1b8",
+      "source_id": "1443",
+      "before": {
+        "amount_paid": 1216.91,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9689a53af3cd542bdafa",
+      "source_id": "1457",
+      "before": {
+        "amount_paid": 749.51,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc968b6fd3d0a4be761278",
+      "source_id": "1470",
+      "before": {
+        "amount_paid": 102.47,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc968eaaeabeb09bdcbefe",
+      "source_id": "1482",
+      "before": {
+        "amount_paid": 267.51,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9694979bee3353365c59",
+      "source_id": "1485",
+      "before": {
+        "amount_paid": 42.8,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc9699eff5224e28ad0388",
+      "source_id": "1511",
+      "before": {
+        "amount_paid": 776.4,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96a7622f269471ac8059",
+      "source_id": "1528",
+      "before": {
+        "amount_paid": 508.88,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96a80792f22a868cdad0",
+      "source_id": "1531",
+      "before": {
+        "amount_paid": 377.08,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96a802aa3fd6e530fe3d",
+      "source_id": "1533",
+      "before": {
+        "amount_paid": 8900.83,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96ab5505c85b80f9667d",
+      "source_id": "1540",
+      "before": {
+        "amount_paid": 3000.1,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96ace8b76da294450dee",
+      "source_id": "1543",
+      "before": {
+        "amount_paid": 265.59,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96adcaae0210b5697601",
+      "source_id": "1544",
+      "before": {
+        "amount_paid": 966.12,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96b67bbd3e7fc0164c4d",
+      "source_id": "1554",
+      "before": {
+        "amount_paid": 271.6,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96b7fb7064fe8770f1e1",
+      "source_id": "1556",
+      "before": {
+        "amount_paid": 112.5,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96b92ac976171a4c8361",
+      "source_id": "1562",
+      "before": {
+        "amount_paid": 175.89,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96ba6474a1077e576618",
+      "source_id": "1568",
+      "before": {
+        "amount_paid": 75,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96c5527fce12f3164b03",
+      "source_id": "1585",
+      "before": {
+        "amount_paid": 1932.09,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96c83189b7abdf683b84",
+      "source_id": "1597",
+      "before": {
+        "amount_paid": 1235.44,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    },
+    {
+      "id": "6afc96ca41ecbf7beb8e7c3f",
+      "source_id": "1606",
+      "before": {
+        "amount_paid": 145,
+        "balance_due": 0
+      },
+      "after": {
+        "amount_paid": 0,
+        "balance_due": 0
+      }
+    }
+  ],
+  "verified_ids": [
+    "6afc95a22f2c029fd0c52aa5",
+    "6afc95fa98ed4bb7de672d01",
+    "6afc95ffeca0afae564e9c86",
+    "6afc9603a82277bbda22b73c",
+    "6afc9605cbc2a6af08f4a502",
+    "6afc960844a6bb0a9dc36229",
+    "6afc960870a746e01f762a4b",
+    "6afc9609247510e8a4b03a2d",
+    "6afc960944b32507d8a2d376",
+    "6afc9611d244cf2c711b70bc",
+    "6afc9611ac677101ca1c4cfc",
+    "6afc96199d03742a992b0143",
+    "6afc961a0ee19219f33bed32",
+    "6afc961fb4f85c06962ed5d7",
+    "6afc96208b46329e37a01381",
+    "6afc9620ffaa79af0bedfb39",
+    "6afc96219780da979f7aa866",
+    "6afc9621983b73c62a046ea6",
+    "6afc9622feb60e7618bd5876",
+    "6afc9622fd3901d10723842e",
+    "6afc96232599dba33103f7de",
+    "6afc9624b6d8bd326735736e",
+    "6afc9625d84eac37deec12d6",
+    "6afc9626a419589e68970a09",
+    "6afc9627c43382e1cb382c96",
+    "6afc9630af65017dd443db14",
+    "6afc9631b086bfe50e581b16",
+    "6afc96368cb0cbcaef9de93e",
+    "6afc96460a65d52b356081c1",
+    "6afc9647e8b76da294450d02",
+    "6afc964c577c4ec4a0bb79da",
+    "6afc964d184cd95f7efdee5a",
+    "6afc96567436a9a92511cde4",
+    "6afc95a08fa9817d8bc2e6cf",
+    "6afc965d3189e7466e0d2d44",
+    "6afc9664ae9d2903e3e206cd",
+    "6afc9666f1fd2b4329312cf6",
+    "6afc96668c7b777b30e7ca1c",
+    "6afc96695e2b36d468706789",
+    "6afc966d2f423d611e0e966f",
+    "6afc96729c81b6d3a01ceedf",
+    "6afc9677fd8c01841b645f6f",
+    "6afc967a6c39f8500ff6a729",
+    "6afc967cf5e0f4bd6b52f511",
+    "6afc967c7f5bc2a4fd7023dc",
+    "6afc967d3bb3f8631c11f438",
+    "6afc967df7c197a7d348fee3",
+    "6afc9680821dbf799b3cb1b8",
+    "6afc9689a53af3cd542bdafa",
+    "6afc968b6fd3d0a4be761278",
+    "6afc968eaaeabeb09bdcbefe",
+    "6afc9694979bee3353365c59",
+    "6afc9699eff5224e28ad0388",
+    "6afc96a7622f269471ac8059",
+    "6afc96a80792f22a868cdad0",
+    "6afc96a802aa3fd6e530fe3d",
+    "6afc96ab5505c85b80f9667d",
+    "6afc96ace8b76da294450dee",
+    "6afc96adcaae0210b5697601",
+    "6afc96b67bbd3e7fc0164c4d",
+    "6afc96b7fb7064fe8770f1e1",
+    "6afc96b92ac976171a4c8361",
+    "6afc96ba6474a1077e576618",
+    "6afc96c5527fce12f3164b03",
+    "6afc96c83189b7abdf683b84",
+    "6afc96ca41ecbf7beb8e7c3f"
+  ],
+  "ambiguous_missing": 0
+}

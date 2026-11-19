@@ -1,0 +1,357 @@
+{
+  "name": "PermitLineItem",
+  "type": "object",
+  "properties": {
+    "work_order_id": {
+      "type": "string",
+      "description": "Linked work order ID"
+    },
+    "work_order_title": {
+      "type": "string",
+      "description": "Cached work order title/client name"
+    },
+    "work_order_description": {
+      "type": "string",
+      "description": "Cached work order description"
+    },
+    "row_name": {
+      "type": "string",
+      "description": "Custom name for this permit line item row"
+    },
+    "locality_id": {
+      "type": "string",
+      "description": "Reference to PermitLocality"
+    },
+    "locality_name": {
+      "type": "string",
+      "description": "Cached locality display name"
+    },
+    "locality_office_id": {
+      "type": "string",
+      "description": "Optional stable ID of the office in PermitLocality.offices. Blank for legacy or unresolved rows; never a shared government office/catalog ID."
+    },
+    "office_type": {
+      "type": "string",
+      "description": "LEGACY \u2014 single office type. Use office_types (array) instead."
+    },
+    "office_types": {
+      "type": "array",
+      "description": "Office categories this line represents (e.g. ['Zoning', 'Building']).",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "waiting",
+        "completed"
+      ],
+      "default": "active",
+      "description": "Current status of this line item"
+    },
+    "priority": {
+      "type": "number",
+      "default": 0.0,
+      "description": "Sort order"
+    },
+    "steps": {
+      "type": "array",
+      "description": "Custom workflow steps with checkboxes and dates",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "checkbox",
+              "submitted_date",
+              "followup_date",
+              "permit_received_date",
+              "text"
+            ]
+          },
+          "value": {
+            "type": "string"
+          },
+          "checked": {
+            "type": "boolean",
+            "default": false
+          },
+          "followup_interval_days": {
+            "type": "number",
+            "default": 14.0
+          },
+          "next_followup_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "tied_to_step_id": {
+            "type": "string",
+            "description": "Optional \u2014 links a non-checkbox step to a checkbox step that marks completion."
+          }
+        }
+      }
+    },
+    "submitted_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When the permit was submitted"
+    },
+    "next_followup_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Next follow-up date (drives sorting)"
+    },
+    "permit_received_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When the permit was received \u2014 marks complete"
+    },
+    "application_reference_number": {
+      "type": "string",
+      "description": "Application, case, tracking, or reference number for this individual permit/office line. Line-level; does not overwrite legacy WorkOrder permit fields."
+    },
+    "permit_number": {
+      "type": "string",
+      "description": "Issued permit number for this individual permit/office line. Line-level; does not overwrite the legacy WorkOrder permit_number field."
+    },
+    "permit_document_url": {
+      "type": "string",
+      "description": "Link to the issued permit document (PDF/image) for this line \u2014 staff pastes the file or portal URL here."
+    },
+    "approval_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date this individual permit/office line was approved, when approval is distinct from permit receipt/issuance."
+    },
+    "expiration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expiration date for this individual permit/office line, when provided by the issuing authority."
+    },
+    "jurisdiction_fee_amount": {
+      "type": "number",
+      "description": "Actual known jurisdiction/permit-office fee for this individual line, entered or reconciled by staff. Never auto-filled from repository fee guidance or estimator permit_fee."
+    },
+    "jurisdiction_fee_status": {
+      "type": "string",
+      "enum": [
+        "due",
+        "paid",
+        "waived"
+      ],
+      "description": "Staff-recorded payment state for the actual jurisdiction fee. Blank means not recorded; no status is inferred from repository data."
+    },
+    "jurisdiction_fee_paid_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the actual jurisdiction fee for this permit line was paid, when known."
+    },
+    "correction_status": {
+      "type": "string",
+      "enum": [
+        "corrections_received",
+        "working_corrections",
+        "resubmitted"
+      ],
+      "description": "Staff-recorded correction/resubmission state for this individual permit line. Blank means no correction state is currently recorded."
+    },
+    "corrections_received_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the issuing authority sent or communicated the latest correction request for this permit line."
+    },
+    "resubmitted_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the latest corrected package was resubmitted for this permit line."
+    },
+    "closeout_status": {
+      "type": "string",
+      "enum": [
+        "inspection_required",
+        "inspection_scheduled",
+        "inspection_failed",
+        "inspection_passed",
+        "closed_out"
+      ],
+      "description": "Optional staff-recorded post-issuance inspection/closeout state for this individual permit line. Blank preserves legacy completion behavior and does not imply an inspection is required."
+    },
+    "inspection_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Scheduled or most recent inspection date for this individual permit line, as recorded by staff."
+    },
+    "closeout_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date staff confirmed the permit line's required inspection/closeout work was completed."
+    },
+    "last_submitted_trigger_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Exact submitted_date value already claimed for workflow automation. Prevents duplicate permit_submitted actions while allowing a later corrected date to fire once."
+    },
+    "last_permit_received_trigger_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Exact permit_received_date value already claimed for workflow automation. Prevents duplicate permit_received actions while allowing a later corrected date to fire once."
+    },
+    "last_followup_fired_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the follow-up reminder was last fired (dedupe guard)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes for this line item"
+    },
+    "next_action": {
+      "type": "string",
+      "description": "The next thing someone should do on this permit line \u2014 e.g. 'Call the office Friday to chase approval'. Free text, staff-entered."
+    },
+    "inspector_contact": {
+      "type": "string",
+      "description": "Inspector name/phone for the scheduled inspection."
+    },
+    "submission_method": {
+      "type": "string",
+      "enum": [
+        "",
+        "portal",
+        "email",
+        "fax",
+        "in_person",
+        "mail",
+        "other"
+      ],
+      "description": "How the application was submitted to the office \u2014 portal / email / fax / in-person / mail."
+    },
+    "urgent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Staff-marked urgent \u2014 rises to the top of the permit queue."
+    },
+    "follow_up_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Staff-set 'check back on this' date \u2014 the chase reminder."
+    },
+    "expected_response_date": {
+      "type": "string",
+      "format": "date",
+      "description": "The office's stated turnaround \u2014 'expected reply/decision by this date'."
+    },
+    "fee_payment_link": {
+      "type": "string",
+      "description": "The office's online-payment URL for this permit's fee \u2014 saved so staff never hunt it down twice."
+    },
+    "application_revision": {
+      "type": "number",
+      "default": 1,
+      "description": "How many times this application has been sent back and resubmitted \u2014 starts at 1."
+    },
+    "denial_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the office denied the application, when applicable."
+    },
+    "denial_reason": {
+      "type": "string",
+      "description": "The office's stated reason for denial \u2014 recorded verbatim so resubmission learns from it."
+    },
+    "appeal_deadline": {
+      "type": "string",
+      "format": "date",
+      "description": "Appeal/resubmission deadline after a denial, when one applies."
+    },
+    "applied_by": {
+      "type": "string",
+      "description": "Who applied this jurisdiction to the job \u2014 the accountability field."
+    },
+    "applied_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the jurisdiction was applied."
+    },
+    "application_document_url": {
+      "type": "string",
+      "format": "url",
+      "description": "The application packet/PDF filed (or drafted) for this line \u2014 the document rides with the record."
+    },
+    "site_photo_url": {
+      "type": "string",
+      "format": "url",
+      "description": "Site photo of the posted sign \u2014 rides with the permit for final inspection."
+    },
+    "office_contacted_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date staff last contacted the office (call/email)."
+    },
+    "office_responded_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the office last replied \u2014 the response loop closes visibly."
+    },
+    "note_attachment_url": {
+      "type": "string",
+      "format": "url",
+      "description": "Photo/scan attached to the line's notes \u2014 the record stays visual."
+    },
+    "variance_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "The office requires a variance (sign exceeds the standard rules) \u2014 a separate approval path."
+    },
+    "variance_status": {
+      "type": "string",
+      "description": "Variance tracking: applied / hearing date / approved / denied."
+    },
+    "variance_hearing_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the variance hearing, when scheduled."
+    },
+    "correction_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "Office issued a correction notice \u2014 something must be fixed before the permit clears."
+    },
+    "correction_deadline": {
+      "type": "string",
+      "format": "date",
+      "description": "Deadline to fix the correction notice before the application lapses."
+    },
+    "correction_resolved_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the correction was fixed and resubmitted."
+    },
+    "confirmation_number": {
+      "type": "string",
+      "description": "The office's submission reference/confirmation number, recorded at submit time."
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Person responsible"
+    }
+  },
+  "required": [
+    "work_order_id"
+  ],
+  "rls": {
+    "create": { "user_condition": { "role": "__permitlineitem_backend_only__" } },
+    "read": { "user_condition": { "role": "__permitlineitem_backend_only__" } },
+    "update": { "user_condition": { "role": "__permitlineitem_backend_only__" } },
+    "delete": { "user_condition": { "role": "__permitlineitem_backend_only__" } }
+  }
+}

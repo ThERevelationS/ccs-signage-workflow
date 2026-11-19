@@ -1,0 +1,66 @@
+{
+ "jurisdiction_id": "6ad30b9dc0198db8f707870a",
+ "jurisdiction_name": "Batesville",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "Key:  = permitted, C = conditional use, X = prohibited Use R ‐ 1 HR R ‐ 2 T ‐ 1 C ‐ 1 I ‐ 1 I ‐ 2 Home based child care facilities [up to 10 children]   Hotel   Lodging house   Motel   Offices [public or private]   Parking lots   Places of public assembly   Private clubs or lodges C Public recreational uses and facilities   Retail [clothing, grocery, drug, hardware, variety, etc.] C   Retail, service or office [neighborhood in scale and scope] C Restaurant or eating establishment [including drive ‐ in types]   Sexually oriented business X X X X X  3  4 Theaters   INDUSTRIAL USES Agricultural uses   Bulk plants  Cartage and express facilities   Compressor stations  Feed mills  General manufacturing, including processing, servicing, testing, repair, storage and sales   Light manufacturing/processing operations  Production of toxic or hazardous materials ",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 7,
+   "source_sha256": "418b23909bc54191ea3c6b57657ed3432ba927d034849fbb8bd7994d2d5fd4f2",
+   "source_document_id": null,
+   "source_title": "418b23909bc54191ea3c6b57657ed3432ba927d034849fbb8bd7994d2d5fd4f2.pdf",
+   "official_url": "https://www.cityofbatesville.com/wp-content/uploads/2015/05/Use-Zone-Matrix-20111116.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "FEE: $50 before violation $200 after violation 08/31/2009 BATESVILLE BOARD OF ZONING ADJUSTMENT Application for Variance Please complete this form and provide all attachments as required. Failure to provide complete and accurate information may result in processing delays. Property Owner Address of property [if different from property owner] Name: _______________________________ __________________________________________ Address: _______________________________ _______________________________ Current Zoning: ____________ Phone: _______________________________ Basis of Request Provide a brief but specific explanation of the variance requested. Justification Provide a brief, concise explanation as to why the variance is necessary. Be specific about how the circumstances are unique to this property. Site Map Provide a plot plan of the property, showing sufficient information to determine ex",
+   "tags": [
+    "fee",
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "75fcf335eaff0e9e583801cad47c91ba2770b4ff4258683a0bdcb65acf9351ec",
+   "source_document_id": null,
+   "source_title": "75fcf335eaff0e9e583801cad47c91ba2770b4ff4258683a0bdcb65acf9351ec.pdf",
+   "official_url": "https://www.cityofbatesville.com/wp-content/uploads/2015/05/Batesville-Zoning-Variance-Application-20090831-form.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "08/31/2009 Instructions for completing Application for Variance from the Zoning Regulations Property Owner  Provide the name, address and phone number of the owner of the property for which a variance is requested. If this address is different from the address of the property, list the address of the property. If the property does not have an address, provide a legal description or plat description to physically locate the property. Property Information  Indicate the current zoning classification(s) of the property(ies) Basis of Request  This narrative should be specific in describing the requirements of the zoning code from which a variance is being requested. Be equally specific in describing the extent of variance being requested. Justification  Provide a narrative explanation as to how the circumstances of this particular property are unique and thus warrant a variance from the s",
+   "tags": [
+    "dimension",
+    "process",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "75fcf335eaff0e9e583801cad47c91ba2770b4ff4258683a0bdcb65acf9351ec",
+   "source_document_id": null,
+   "source_title": "75fcf335eaff0e9e583801cad47c91ba2770b4ff4258683a0bdcb65acf9351ec.pdf",
+   "official_url": "https://www.cityofbatesville.com/wp-content/uploads/2015/05/Batesville-Zoning-Variance-Application-20090831-form.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Key:  = permitted, C = conditional use, X = prohibited Use R ‐ 1 HR R ‐ 2 T ‐ 1 C ‐ 1 I ‐ 1 I ‐ 2 RESIDENTIAL USES Apartments [upper floor or rear of commercial structure]  Boarding houses [including bed & breakfast]  Home occupations    Manufactured homes X  Mobile homes X X X Mobile Home Park C Modular Home   Multi ‐ family dwellings [including condominiums]  Patio homes    Retirement homes and assisted living facilities  Single family attached    Single family detached    Travel trailer or motor home [used as a permanent dwelling] X X X Two family dwellings [duplexes]  Zero lot line homes    PUBLIC AND QUASI PUBLIC USES Branch library C Churches      Convalescent homes C C C Forest preserves [non ‐ commercial]    Hospital C C C Main library  Nursing home  Parks [non ‐ commercial]    Playgrounds [non ‐ commercial]    Rehabilitative Home C Religio",
+   "tags": [
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 4,
+   "source_sha256": "418b23909bc54191ea3c6b57657ed3432ba927d034849fbb8bd7994d2d5fd4f2",
+   "source_document_id": null,
+   "source_title": "418b23909bc54191ea3c6b57657ed3432ba927d034849fbb8bd7994d2d5fd4f2.pdf",
+   "official_url": "https://www.cityofbatesville.com/wp-content/uploads/2015/05/Use-Zone-Matrix-20111116.pdf"
+  }
+ ]
+}

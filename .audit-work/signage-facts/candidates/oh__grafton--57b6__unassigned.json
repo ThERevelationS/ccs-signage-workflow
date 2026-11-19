@@ -1,0 +1,39 @@
+{
+ "jurisdiction_id": "6ae0458db86a45d9431157b6",
+ "jurisdiction_name": "Grafton",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Village of Grafton Residential /Commercial Permit Permit # 960 Main Street, Grafton, Ohio, 44044 Phone (440) 926 - 2401 www.villageofgrafton.org Job Address Property Owner Phone Email Mailing Address Tenant General Contractor (if homeowner, please complete homeowner affidavit on back) Phone Mobile GC Mailing Address License # Email Electrical Contractor Phone Mobile EC Mailing Address License # Email Plumbing Contractor Phone Mobile PC Mailing Address License # Email Mechanical Contractor Phone Mobile MC Mailing Address License # Email Type of Improvement □ New Single Family Dwelling □ New Accessory Structure □ Alteration □ Addition □ Accessory Structure Alteration □ Pool / Hot Tub □ Deck □ Retaining Wall □ Demolition M echanical Trades □ Electrical Work □ Pl umbing Work □ Mechanical Work Fire Alarm Fire Suppression Co mmercial Hood □ Other ____________ ________ Square Footage Applicant ",
+   "tags": [
+    "area",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "4ec9d407d22911c0352a10ab57a4a2e93e05e102625f6389176ae2dd185fca19",
+   "source_document_id": null,
+   "source_title": "4ec9d407d22911c0352a10ab57a4a2e93e05e102625f6389176ae2dd185fca19.pdf",
+   "official_url": "https://villageofgrafton.org/wp-content/uploads/2026/06/BUILDING-PERMIT-APPLICATION.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "SUBMITTAL REQUIREMENTS: CONSTRUCTION DRAWINGS: Single Family and Two - Family residential building permits - Submit 2 complete sets of construction drawings (including engineered, stamped foundation pla ns) and 2 plot plans as specified below. Residential Additions, Decks, Covered Patios, Basement Finishes - 2 complete sets of construction drawings – see below if 2 copies of a plot plan would be required for your project. COMMERCIAL, INDUSTRIAL OR MULTI - FAMILY STRUCTURES – Submit (5) complete sets of stamped construction drawings, and (5) complete sets of approved Planning Department site plans (including all pages of the site plan on record with the Village of Grafton ). PLOT PLANS: The purpose of a PLOT PLAN is to make sure that the applicant does not place a structure within a utility easement or violate the City ’s location regulations. Failure to attach a complete PLOT PLAN to the",
+   "tags": [
+    "sign",
+    "area",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "4ec9d407d22911c0352a10ab57a4a2e93e05e102625f6389176ae2dd185fca19",
+   "source_document_id": null,
+   "source_title": "4ec9d407d22911c0352a10ab57a4a2e93e05e102625f6389176ae2dd185fca19.pdf",
+   "official_url": "https://villageofgrafton.org/wp-content/uploads/2026/06/BUILDING-PERMIT-APPLICATION.pdf"
+  }
+ ]
+}

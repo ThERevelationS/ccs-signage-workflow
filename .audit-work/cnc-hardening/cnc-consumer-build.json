@@ -1,0 +1,51 @@
+{
+  "inputs": [
+    "frozen:/app/src/components/estimator/cnc/cncPricingAvailability.js",
+    "frozen:/app/src/pages/CNCEstimator.jsx",
+    "frozen:/app/src/pages/CNCSettings.jsx",
+    "frozen:/app/consumer-entry.js"
+  ],
+  "loaded": {
+    "/app/consumer-entry.js": "3f3398b94120f851fb874fd7fc9bfb38e65f4ff9f08b6a20a807aefeba8446f7",
+    "/app/src/pages/CNCSettings.jsx": "b4d2fe43808853f9e1a4bc0dbcf94a3cebd39869fc472d05a41515b641c2650a",
+    "/app/src/components/estimator/cnc/cncPricingAvailability.js": "7ff2091c118b7d5a470e2f4288c0dfab001160fc32f8618d5c00b7a1c431f484",
+    "/app/src/pages/CNCEstimator.jsx": "cad8d0c80544d7aced15b91a050e24178b497ef327391ef2301f8742eeff9be7"
+  },
+  "candidateHashes": {
+    "cncPricingAvailability.js": "7ff2091c118b7d5a470e2f4288c0dfab001160fc32f8618d5c00b7a1c431f484",
+    "CNCEstimator.jsx": "cad8d0c80544d7aced15b91a050e24178b497ef327391ef2301f8742eeff9be7"
+  },
+  "externals": [
+    "react",
+    "@/api/gatedEntities",
+    "react-router-dom",
+    "@/components/ui/button",
+    "@/components/ui/card",
+    "@/components/ui/input",
+    "@/components/ui/label",
+    "@/components/ui/textarea",
+    "@/components/ui/select",
+    "lucide-react",
+    "@/components/ui/tabs",
+    "@/components/channelLetterInstall/TabBadgeTrigger",
+    "@/components/markup/CustomerPricingTab",
+    "@/components/markup/projectCategorizer",
+    "@/components/markup/savedCustomerPricing",
+    "@/components/cnc/HoldDownAdvisor",
+    "@/components/estimator/builder/builderService",
+    "@/components/estimator/loadAllEntityRows",
+    "@/components/estimator/builder/sourceProjectPersistence",
+    "@/components/estimator/builder/itemIdentity",
+    "@/components/estimator/idempotentEntityCreate",
+    "@/components/estimator/moduleShared/ModuleActionBar",
+    "@/components/estimator/moduleShared/ModuleTemplateDialog",
+    "@/components/estimator/moduleShared/moduleProjectActions",
+    "@/components/staff/staffEntities",
+    "@/components/estimator/cnc/cncPricingAvailability",
+    "react/jsx-runtime",
+    "@/entities/all",
+    "@/components/estimator/settings/settingsSaveGuard",
+    "@/components/estimator/settings/SettingsTransferBar",
+    "@/components/estimator/settings/moduleSettingDefaults"
+  ]
+}

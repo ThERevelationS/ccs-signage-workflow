@@ -1,0 +1,33 @@
+ok browser-deep-frozen mount, unchanged refs, four Unknown metadata fields
+ok raw invalid edit changes only side, browser original remains frozen/unchanged
+ok two real UUID adds, all mat numerics blank, delete and controlled restore
+ok material round-trip preserves every raw field and unavailable ID
+ok both overrides preserve string0 then clear to null; actual item untouched
+ok acceptance blocks stale/false/missing/invalid IDs and every disable flag
+ok strict versions disable unsupported controls, including proto-like strings
+ok parent deletion preserves exact ties and displays newly orphaned reference
+ok hoops start entirely blank, authored allowance0 survives type round-trip
+ok 21-row pagination changes exactly one row, no pagination callbacks
+ok page7 shrink to21 rows then Prev once reaches page1 without edits
+ok malformed mats + valid ties require explicit repair, not data loss
+ok malformed defined hoops require repair; null row deletes without touching valid row
+ok 257ties still allow Add;4096ties and256mats cap without truncation
+ok absent secure UUID disables Add without callbacks
+ok object/array JSON reference values render repairable errors without crashing
+ok failed catalog read is visible without substituting metadata or changing the draft
+ok duplicate row and catalog IDs stay visible without duplicate React keys
+ok malformed cover and active design subtrees require explicit replacement
+ok malformed material/overrides are repaired only by their explicit actions
+ok accepted numeric fields display as numbers, malformed object inputs remain visibly invalid
+ok mobile text fields request a text keyboard; dimensions retain decimal keyboard
+ok switching to manual cannot silently reinterpret an authored each unit as feet
+ok actual styled populated long-UUID layout at375px
+ok actual styled populated long-UUID layout at1280px
+ok explicit acknowledgments start unchecked and block acceptance without any automatic callbacks
+ok preliminary acknowledgment is an immutable controlled event, not a design or price edit
+ok all explicit warnings still require fresh preview before one exact-ID acceptance
+ok unchecking a required warning retains frozen prior acknowledgment and blocks stale acceptance
+ok malformed warning lists and array-shaped acknowledgments fail closed; duplicate warnings render once
+ok acknowledgment controls respect busy, disabled, unsupported and stale states on a styled phone layout
+UI_LEAD_VERIFICATION_DONE cases=31 failures=0 keep=false reuse=false pid=30644
+exit=0

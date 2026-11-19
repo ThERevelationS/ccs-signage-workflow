@@ -1,0 +1,157 @@
+{
+ "cases": [
+  {
+   "name": "savedTotal: null/empty/never-priced records -> null (no indicator)",
+   "ok": true
+  },
+  {
+   "name": "savedTotal: 12-field persisted record -> split-field sum",
+   "ok": true
+  },
+  {
+   "name": "savedTotal: partial fields present -> sum (absent treated as $0)",
+   "ok": true
+  },
+  {
+   "name": "savedTotal: grand_total direct field wins when present (sourceProjectTotal parity)",
+   "ok": true
+  },
+  {
+   "name": "savedTotal: excludes wall subsets (brick+fill never double-counted)",
+   "ok": true
+  },
+  {
+   "name": "sourceProjectTotal: candidate == baseline on all foundation shapes",
+   "ok": true
+  },
+  {
+   "name": "sourceProjectTotal: null record falls back to line snapshots (live > frozen)",
+   "ok": true
+  },
+  {
+   "name": "calcProject: 12-field persisted sum == grand_total + cabinets + landscape",
+   "ok": true
+  },
+  {
+   "name": "categorizeFoundationProject: line sum == section total (single partition, no double count)",
+   "ok": true
+  },
+  {
+   "name": "precedence: bare record -> baseline = cost",
+   "ok": true
+  },
+  {
+   "name": "precedence: markup only -> cost x (1+markup%)",
+   "ok": true
+  },
+  {
+   "name": "precedence: override only -> override wins over markup-less baseline",
+   "ok": true
+  },
+  {
+   "name": "precedence: override + markup -> override wins",
+   "ok": true
+  },
+  {
+   "name": "precedence: override = 0 falls back to markup",
+   "ok": true
+  },
+  {
+   "name": "precedence: applied tier snapshot beats override + markup (internal cost untouched)",
+   "ok": true
+  },
+  {
+   "name": "precedence: applied:true without a numeric total falls back to manual baseline",
+   "ok": true
+  },
+  {
+   "name": "precedence: applied:false tier -> manual baseline",
+   "ok": true
+  },
+  {
+   "name": "precedence: engine context block -> engine owns sell side over manual baseline",
+   "ok": true
+  },
+  {
+   "name": "precedence: engine beats applied tier snapshot AND override",
+   "ok": true
+  },
+  {
+   "name": "precedence: empty engine context block under override lands back on override verbatim",
+   "ok": true
+  },
+  {
+   "name": "precedence: foundationHasEnginePricing detects config",
+   "ok": true
+  },
+  {
+   "name": "acceptedCustomerUnitPrice: customer_price_snapshot > total_snapshot",
+   "ok": true
+  },
+  {
+   "name": "liveCustomerUnitPrice: live > frozen chain both internal+customer",
+   "ok": true
+  },
+  {
+   "name": "acceptedInternalEstimateCost: frozen snapshot x quantity",
+   "ok": true
+  },
+  {
+   "name": "computePricing: quantity + adjustments + waterfall, accepted price only",
+   "ok": true
+  },
+  {
+   "name": "buildCustomerQuoteRows: rows carry adjusted (frozen) amounts, never live fields",
+   "ok": true
+  },
+  {
+   "name": "refreshSectionSnapshots: live_total_snapshot = record split sum; unchanged within 0.005",
+   "ok": true
+  },
+  {
+   "name": "refreshSectionSnapshots: |delta| > 0.005 -> changed (both directions, boundary exact)",
+   "ok": true
+  },
+  {
+   "name": "refreshSectionSnapshots: customer economics propagate (markup on source record)",
+   "ok": true
+  },
+  {
+   "name": "refreshSectionSnapshots: builder-backed lines keep snapshots (no double reprice)",
+   "ok": true
+  },
+  {
+   "name": "refreshSectionSnapshots: legacy_frozen + detached states survive",
+   "ok": true
+  },
+  {
+   "name": "buildEstimateWorkOrderProducts: quoted fields come from frozen pricing sections",
+   "ok": true
+  },
+  {
+   "name": "estimateConvertedAmount: pricing waterfall wins, then estimate quote_total, then snapshot sum",
+   "ok": true
+  },
+  {
+   "name": "applyMarkups: per-category markup + eligible-only volume discount",
+   "ok": true
+  },
+  {
+   "name": "calculateSavedCustomerPricing -> applied snapshot totals tier-mark the same cost partition",
+   "ok": true
+  },
+  {
+   "name": "tier resolution: requested > saved tier > customer_pricing_tier > customer default > tier 1",
+   "ok": true
+  },
+  {
+   "name": "calculateSavedCustomerPricing: no tiers configured -> null (no silent fallback)",
+   "ok": true
+  },
+  {
+   "name": "float reassociation within $0.005 never flags a delta",
+   "ok": true
+  }
+ ],
+ "generated": "2026-11-11T09:24:44.756Z"
+}

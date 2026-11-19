@@ -1,0 +1,2 @@
+Exact raw/API readback, one-file scope, protected schemas/pricing, actual remote dependency build and ready status verified.
+exit=0

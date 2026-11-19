@@ -1,0 +1,241 @@
+{
+  "matches": [
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 3,
+      "text": "// action mints a ProofShareLink row carrying an opaque token; anyone holding"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 10,
+      "text": "// ENTITY SPEC — `ProofShareLink` (orchestrator-owned jsonc; this model is the"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 13,
+      "text": "// Backend-only RLS (Sop.jsonc pattern — `__proofsharelink_backend_only__` role"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 31,
+      "text": "//                     minted link shows (canViewShareLink reports"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 36,
+      "text": "//                     SHARE_LINK_DEFAULT_DISCLAIMER; A-21 GlobalSettings key"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 41,
+      "text": "//                     (0, SHARE_LINK_MAX_TTL_MS]; default"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 42,
+      "text": "//                     SHARE_LINK_DEFAULT_TTL_MS."
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 49,
+      "text": "//                     (recordShareLinkView); honest \"did the third party"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 66,
+      "text": "// TTL: caller passes ttl_ms; the model clamps into (0, SHARE_LINK_MAX_TTL_MS]"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 67,
+      "text": "// — non-finite/non-positive → SHARE_LINK_DEFAULT_TTL_MS, over-max → max."
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 74,
+      "text": "//   SHARE_LINK_DEFAULT_TTL_MS / SHARE_LINK_MAX_TTL_MS — 7d / 30d bounds."
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 75,
+      "text": "//   SHARE_LINK_DEFAULT_DISCLAIMER — stock disclaimer text."
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 76,
+      "text": "//   SHARE_LINK_ENTITY_TYPE — 'proof_share' discriminator value."
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 77,
+      "text": "//   SHARE_LINK_STATUSES / SHARE_LINK_VIEW_REASONS — vocabularies."
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 80,
+      "text": "//   createShareLinkPatch({product, workOrder, actor_id, now, ttl_ms?,"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 83,
+      "text": "//   shareLinkStatus(link, {now})     → 'active'|'expired'|'revoked'."
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 84,
+      "text": "//   canViewShareLink(link, {now, proof_version})"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 90,
+      "text": "//   recordShareLinkView(link, {now}) → patch {view_count, last_viewed_at,"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 92,
+      "text": "//   revokeShareLinkPatch({actor_id, now})"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 102,
+      "text": "export const SHARE_LINK_ENTITY_TYPE = 'proof_share';"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 106,
+      "text": "export const SHARE_LINK_DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 107,
+      "text": "export const SHARE_LINK_MAX_TTL_MS = 30 * 24 * 60 * 60 * 1000;"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 111,
+      "text": "export const SHARE_LINK_DEFAULT_DISCLAIMER ="
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 117,
+      "text": "export const SHARE_LINK_STATUSES = ['active', 'expired', 'revoked'] as const;"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 119,
+      "text": "// Machine codes for canViewShareLink.reason — 'active' is the ok:true code;"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 121,
+      "text": "export const SHARE_LINK_VIEW_REASONS = ["
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 171,
+      "text": "// createShareLinkPatch({token}) — this exists so the model can always produce"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 188,
+      "text": "// Clamp ttl_ms into (0, SHARE_LINK_MAX_TTL_MS]; non-finite/non-positive →"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 189,
+      "text": "// SHARE_LINK_DEFAULT_TTL_MS (see header \"TTL\")."
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 192,
+      "text": "  if (!Number.isFinite(t) || t <= 0) return SHARE_LINK_DEFAULT_TTL_MS;"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 193,
+      "text": "  return Math.min(t, SHARE_LINK_MAX_TTL_MS);"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 198,
+      "text": "// SHARE_LINK_DEFAULT_DISCLAIMER."
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 204,
+      "text": "  return fromSettings || SHARE_LINK_DEFAULT_DISCLAIMER;"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 207,
+      "text": "// Full new-row shape for one ProofShareLink. Pins proof_version from the"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 212,
+      "text": "export function createShareLinkPatch({"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 233,
+      "text": "    entity_type: SHARE_LINK_ENTITY_TYPE,"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 253,
+      "text": "export function shareLinkStatus(link: any, { now }: any = {}): string {"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 268,
+      "text": "export function canViewShareLink(link: any, { now, proof_version }: any = {}) {"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 269,
+      "text": "  const status = shareLinkStatus(link, { now });"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 302,
+      "text": "export function recordShareLinkView(link: any, { now }: any = {}) {"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 314,
+      "text": "export function revokeShareLinkPatch({ actor_id, now }: any = {}) {"
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 2,
+      "text": "  \"name\": \"ProofShareLink\","
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 4,
+      "text": "  \"description\": \"External proof-share links (E-09): an opaque-token row per shared proof, created by staff, resolved by a backend function (asServiceRole) so unauthenticated third parties can view the pinned proof version + disclaimer. Backend-only RLS \\u2014 NEVER exposed through staffDataRead; the public proof-share page resolves tokens via a dedicated function. Revocation and 30-day-max expiry are enforced by proofShareLinkModel.canViewShareLink.\","
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 76,
+      "text": "    \"create\": { \"user_condition\": { \"role\": \"__proofsharelink_backend_only__\" } },"
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 77,
+      "text": "    \"read\": { \"user_condition\": { \"role\": \"__proofsharelink_backend_only__\" } },"
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 78,
+      "text": "    \"update\": { \"user_condition\": { \"role\": \"__proofsharelink_backend_only__\" } },"
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 79,
+      "text": "    \"delete\": { \"user_condition\": { \"role\": \"__proofsharelink_backend_only__\" } }"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 47
+}

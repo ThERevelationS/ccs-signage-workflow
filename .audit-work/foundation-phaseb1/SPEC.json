@@ -1,0 +1,114 @@
+{
+  "spec": "foundation-reinforcement-v2 phase-B steps 1-3 transport candidates",
+  "status": "CANDIDATE-ONLY — nothing here has been written to remote storage; no publish/deploy/entity-record ops performed",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remote_head_baseline": "97d37964a8554d7561995975deb0d6096f63e3e3",
+  "local_source_root": "src/components/estimator/foundation/ (held v2 authored modules, verified byte-identical below)",
+  "remote_source_snapshot": ".audit-work/foundation-phaseb1/remote-src/ (fresh pulls at remote_head_baseline)",
+
+  "new_files": [
+    {
+      "remote_path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+      "candidate": "candidate-src/new-modules/foundationGeometryInputs.js",
+      "provenance": "local src/components/estimator/foundation/foundationGeometryInputs.js, md5 69cc9a888e7caae7e5d3e5d410d0a061 — byte-identical",
+      "notes": "New remote leaf module; remote replaced this seam with inlined checks inside foundationItemInputIssues, but the v2 pure model requires the leaf semantics verbatim (geometry/type/quantity checks only — no excavation-method or override coupling)."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "candidate": "candidate-src/new-modules/foundationReinforcementModel.js",
+      "provenance": "local, md5 777c9c06ca6c628b93762bc16d076cca — byte-identical",
+      "notes": "Version-2 raw reinforcement geometry/structural model; pure, engineeringApproved always false."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/foundationReinforcementBasis.js",
+      "candidate": "candidate-src/new-modules/foundationReinforcementBasis.js",
+      "provenance": "local, md5 b9c78f5e26e267eb868907e243a956bc — byte-identical",
+      "notes": "Resolves the explicit reinforcement_material basis (catalog inventory_id or authored manual); unknown weight stays unknown, never zero."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/foundationReinforcementCost.js",
+      "candidate": "candidate-src/new-modules/foundationReinforcementCost.js",
+      "provenance": "local, md5 9defe0f17047dec15e457b716d80796a — byte-identical",
+      "notes": "Pure v2 steel material/labor amounts from geometry + basis + settings."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/foundationReinforcementProjection.js",
+      "candidate": "candidate-src/new-modules/foundationReinforcementProjection.js",
+      "provenance": "local, md5 32f3f6e59049b1818b2efcc77ad71952 — byte-identical",
+      "notes": "Chains model → basis → cost; emits issues (error/warning severities), canApplyToEstimate gate, rate sources."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/foundationReinforcementItemProjection.js",
+      "candidate": "candidate-src/new-modules/foundationReinforcementItemProjection.js",
+      "provenance": "local, md5 3949136feb7b3f3935eacc277158d627 — byte-identical",
+      "notes": "Wraps the v2 chain with common-cost pricing via legacy calcItemCost(include_rebar:false) plus fresh v2 steel once; consumes remote calcItemCost + foundationItemCatalogIssues (signatures verified identical on remote)."
+    }
+  ],
+
+  "edited_files": [
+    {
+      "remote_path": "src/components/estimator/foundation/foundationCalc.js",
+      "candidate": "candidate-src/foundationCalc.js",
+      "diff": "diff-foundationCalc.txt",
+      "summary": "Purely additive graft on fresh remote: imports calculateFoundationReinforcementItemProjection; adds REINFORCEMENT_SNAPSHOT_FIELDS + calculateVersionedItem; dispatch at top of calcItem (unmarked/version-1 → null → unchanged legacy path); per-item versioned pass in calcProject feeding blockers into the shared input-issue channel; include_rebar masked to false for version-2 items inside the delivery volume scan (local semantics).",
+      "preserved_remote_hardening": ["O-008 normalization", "O-030 constructionWarnings", "availability/catalog hardening", "saved-snapshot hold semantics (ITEM_SNAPSHOT_FIELDS, hasFoundationCostSnapshot)", "project-level delivery + supplier-price checks", "signage-cabinet + landscape + equipment paths"]
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "candidate": "candidate-src/foundationInputValidation.js",
+      "diff": "diff-foundationInputValidation.txt",
+      "summary": "Additive version gate inside foundationItemInputIssues: unsupported version (non-null, non-1, non-2) reports foundation_reinforcement_version_unsupported and returns; version 2 checks include_rebar boolean-ness then maps version-2 model errors (geometryLimit:0) onto reinforcement_design.* fields and skips legacy rebar field checks; version absent/1 falls through to untouched legacy checks.",
+      "preserved_remote_hardening": ["settings/excavation-method checks", "signage cabinet + landscape validation", "custom_* override validation", "volume range checks"]
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+      "candidate": "candidate-src/foundationCatalogIntegrity.js",
+      "diff": "diff-foundationCatalogIntegrity.txt",
+      "summary": "Additive v2 branch in foundationItemCatalogIssues: versioned items with a catalog reinforcement_material require exactly one current inventory row by id with material_type 'rebar' (catalog_item_unassigned/ambiguous/unavailable); early return so the legacy rebar_size fallback cannot substitute for a missing selected id. Legacy path untouched.",
+      "preserved_remote_hardening": ["concrete/forming/excavation catalog checks", "legacy rebar_size + manual-override semantics"]
+    }
+  ],
+
+  "entity_schema_candidates": [
+    {
+      "remote_path": "base44/entities/FoundationProject.jsonc",
+      "candidate": "candidate-src/FoundationProject.jsonc",
+      "diff": "diff-FoundationProject.jsonc.txt",
+      "summary": "items[] additive fields: reinforcement_calculation_version (integer), reinforcement_design, reinforcement_material, reinforcement_proposal, reinforcement_cost_snapshot, reinforcement_acceptance (objects, additionalProperties true); result-side additive fields: rebar_material_cost, rebar_labor_cost, rebar_labor_hours, rebar_geometry_feet, rebar_geometry_weight_lbs, rebar_connection_count. items[] uses additionalProperties:true on remote so these are preferred-explicit declarations, ASCII-canonical."
+    },
+    {
+      "remote_path": "base44/entities/FoundationInventory.jsonc",
+      "candidate": "candidate-src/FoundationInventory.jsonc",
+      "diff": "diff-FoundationInventory.jsonc.txt",
+      "summary": "material_type enum + 'rebar_support'; additive metadata fields: rebar_diameter_inches, rebar_weight_lb_per_ft, rebar_support_kind (chair|stand|bolster), rebar_support_height_inches/_min/_max, rebar_support_footprint_length/width_inches, rebar_support_material, rebar_support_pack_size, rebar_support_compatible_bar_sizes, rebar_support_placement_notes. ASCII-canonical."
+    }
+  ],
+
+  "verification": {
+    "script": "verify-phaseb1.mjs",
+    "transcript": "phaseb1-verification.txt",
+    "json": "phaseb1-verification.json",
+    "bundles": ["remote-calc.bundle.mjs (fresh remote)", "candidate-calc.bundle.mjs (candidate)"],
+    "result": "PASS 44/44",
+    "parity_cases": "30 remote-identical (25 whole-model frozen + 5 snapshot-mode) — byte-deep equality between remote and candidate bundles on legacy/unmarked items",
+    "v2_dispatch_cases": "14 — accepted profile (20ft/$112 steel/$288.25 item), unsupported-version hold, acknowledged-snapshot retention, include_rebar=false clears steel, zero-priced footage, catalog-id-vs-legacy-size conflicts, unknown-weight hold, duplicate component ids, v1-vs-v2 deliberate total divergence"
+  },
+
+  "invariants_proven": [
+    "Projects with no v2-marked items produce byte-identical calcProject output vs current remote (30 parity cases).",
+    "v2 items never enter the legacy steel formula; legacy items never enter the versioned path.",
+    "Unavailable/held v2 items keep acknowledged snapshots and feed itemPricing/delivery holds identically to legacy held items.",
+    "Unknown material weight, unresolved supports, missing catalog rows, and unsupported versions hold — never zero or guessed values.",
+    "engineeringApproved remains false on every versioned output."
+  ],
+
+  "explicit_non_goals": [
+    "editor/UI/proposal-panel wiring (Phase B later)",
+    "support placement/BOM semantics (needs support-kind modeling)",
+    "3D/scene rendering",
+    "BOM/work-order/print handoff",
+    "engineering or structural approval",
+    "any remote write — this spec is review input for a later transport phase"
+  ]
+}

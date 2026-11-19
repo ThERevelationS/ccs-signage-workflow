@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "content": "// Cost engine for the Concrete | Masonry | Poles estimator.\n//\n// All math is ported from SignEstimate Pro and must stay identical to it:\n//  - per-item concrete / rebar / forming / finishing / pouring / excavation → legacyFoundationCalc.js\n//  - project concrete delivery (trucks, fees, stops)                        → legacyFoundationCalc.js\n//  - masonry walls (outer + internal fill wall)                            → wallCalculator.js\n//  - poles + pole painting                                                  → poleCalculator.js\n//  - wall caps (full stock charged per cut piece)                           → wallCapCalculator.js\n//\n// Rollup (verbatim from SignEstimate Pro `totals`):\n//   grand = itemsTotal(+concrete delivery) + wallTotal + polesTotal + equipmentTotal + wallCapTotal\n// Poles, walls, caps and fill are PROJECT-level — they are never charged on a foundation item.\n\nimport { calcItemCost as legacyCalcItemCost, calcConcreteDelivery, foundationItemSettingIssues } from \"./legacyFoundationCalc\";\nimport { calcWalls } from \"./wallCalculator\";",
+      "startLine": 1,
+      "endLine": 15,
+      "totalLines": 513,
+      "truncated": false
+    }
+  ]
+}

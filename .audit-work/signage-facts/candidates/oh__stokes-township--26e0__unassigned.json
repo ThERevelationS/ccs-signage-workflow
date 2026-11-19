@@ -1,0 +1,36 @@
+{
+ "jurisdiction_id": "6aea66d5ec957579947326e0",
+ "jurisdiction_name": "Stokes Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "FEE SCHEDULE FOR ZONING STOKES TOWNSHIP Effective 01/01/2020 This schedule applies in all instances except for new construction of principal and/or accessory buildings: $1.00 to $1,000……………………………………………………………………$40.00 $2.50 per $1,000 thereafter This schedule applies for new construction of principal and/or accessory buildings: Principal and/or Accessory Buildings...………..$40.00 plus $0.30/sq. ft. of construction Recreational Permit…...…………………………………………………………....$20.00 Other fees: Variance Application……………………………………………………………..$350.00 Re-Zoning Permit…………………………………………………………………$750.00 Non-residential campers (Avondale only)…...……………......…$5.00/day (up to 7 days) Late Filing Fee……………….…………..………………...……...…See schedule below Permit Fee Plus Late Filing Fee = Total Fee Required $40.00 + $100.00 = $140.00 $40.01-50.00 + $250.00 = $290.01-300.00 $50.01-100.00 + $500.00 = $550.01-600.00 $100.01-250.",
+   "tags": [
+    "fee",
+    "area",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "cc50e59b14030d3a02b6b36ae05938d6635f1be2d06d7ec6481ac7e595021403",
+   "source_document_id": null,
+   "source_title": "cc50e59b14030d3a02b6b36ae05938d6635f1be2d06d7ec6481ac7e595021403.pdf",
+   "official_url": "http://stokestownship.com/wp-content/uploads/2022/08/Zoning-Fee-Schedule-01012020.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "7. The drawing(s) must be to scale and the scale used must be shown on the drawing(s). 8. The drawing(s) must list the total square feet of area encompassed by the property and the total square feet or area covered by all existing buildings including proposed additions. 9. Drawing(s) must show lot number(s) and street address. 10. Drawing(s) must list property owner ’ s name and mailing address. 11. Interim inspections must be completed at the following intervals: a. After the footer or foundation has been set in place. b. After the structure has been roofed. c. One to two weeks prior to compl etion. At this time , an Application for Zoning Certificate must be completed and approved by the Zoning Officer prior to occupancy. Stokes Township Zoning Officer Richard Stewart 8889 Princess Road Lakeview, Ohi o 43331 santafebc@woh.rr.com 937 - 367 - 4858",
+   "tags": [
+    "area",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "6b54f048e1cffaac5c55bbc7460f6f91ee71c5fbf3bcac1abad9defe36a5557b",
+   "source_document_id": null,
+   "source_title": "6b54f048e1cffaac5c55bbc7460f6f91ee71c5fbf3bcac1abad9defe36a5557b.pdf",
+   "official_url": "https://stokestownship.com/wp-content/uploads/2019/01/STOKES-TOWNSHP-ZONING-APPLICATION-PROCEDURE-011919.pdf"
+  }
+ ]
+}

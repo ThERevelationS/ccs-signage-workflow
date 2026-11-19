@@ -1,0 +1,19 @@
+{
+  "inputs": [
+    "sandbox-source:/app/src/components/ui/button.jsx",
+    "sandbox-source:/app/src/components/ui/input.jsx",
+    "sandbox-source:/app/node_modules-stub/lucide-react.js",
+    "sandbox-source:/app/src/components/estimator/foundation/legacyFoundationCalc.js",
+    "sandbox-source:/app/src/components/estimator/foundation/wallCalculator.js",
+    "sandbox-source:/app/src/components/estimator/foundation/poleCalculator.js",
+    "sandbox-source:/app/src/components/estimator/foundation/wallCapCalculator.js",
+    "sandbox-source:/app/src/components/estimator/foundation/foundationEquipmentBindings.js",
+    "sandbox-source:/app/src/components/estimator/foundation/foundationCatalogIntegrity.js",
+    "sandbox-source:/app/src/components/estimator/foundation/foundationInputValidation.js",
+    "sandbox-source:/app/src/components/estimator/foundation/foundationCalc.js",
+    "sandbox-source:/app/src/components/estimator/foundation/WallShapeEditor.jsx",
+    "sandbox-source:/app/src/components/estimator/foundation/FoundationWallsPanel.jsx",
+    "sandbox-source:/app/src/components/estimator/foundation/FoundationBOM.jsx",
+    "sandbox-source:/app/masonry-ui-entry.jsx"
+  ]
+}

@@ -19,21 +19,9 @@
     "active_mode"
   ],
   "rls": {
-    "read": {},
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "update": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
+    "create": { "user_condition": { "role": "__pricingmode_backend_only__" } },
+    "read": { "user_condition": { "role": "__pricingmode_backend_only__" } },
+    "update": { "user_condition": { "role": "__pricingmode_backend_only__" } },
+    "delete": { "user_condition": { "role": "__pricingmode_backend_only__" } }
   }
 }

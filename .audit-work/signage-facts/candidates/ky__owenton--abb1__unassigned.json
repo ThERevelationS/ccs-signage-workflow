@@ -1,0 +1,26 @@
+{
+ "jurisdiction_id": "6ae9bfcef238d5aba1b5abb1",
+ "jurisdiction_name": "Owenton",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "220 South Main Street Owenton, Ky 40359 Phone: (502) 484 - 2313 Fax: (502) 484 - 5156 City of Owenton SIGN PERMIT APPLICATION NAME OF BUSINESS AND ADDRESS OF SIGN LOCATION SIGN CONTRACTOR INFORMATION NAME: NAME: ADDRESS: ADDRESS: CITY, STATE , ZIP: CITY, STATE , ZIP: PHONE: PHONE: CITY OF OWENTON BUSINESS LICENSE: YES___ NO____ SITE/BUILDING INFORMATION LINEAR FOOTAGE OF LOT (ALONG ST): WIDTH OF BUILDING (FACADE): WIDTH OF TENANT SPACE TO WHICH SIGN WILL BE AT- TACHED: APPLICANT SIGNATURE:___________________________________________DATE:_________________________ ABOVE APPLICATION IS APPROVED ON THIS ____DAY OF________________________________20___________ CITY OFFICIAL SIGNATURE:___________________________________DATE:____________ ABOVE APPLICATON IS NOT APPROVED FOR THE FOLLOWING REASON(S): __________________________________________________________________________________________________ ",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "temporary",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "24d529c27c16966ad45b1cb8ebc07326146d4471a3465ffefae1b6dd3923f9d0",
+   "source_document_id": null,
+   "source_title": "24d529c27c16966ad45b1cb8ebc07326146d4471a3465ffefae1b6dd3923f9d0.pdf",
+   "official_url": "https://cityofowentonky.us/wp-content/uploads/2023/06/cityOwentonSignPermit.pdf"
+  }
+ ]
+}

@@ -1,0 +1,41 @@
+{
+ "jurisdiction_id": "6ac1a11a94b2cab66641c97d",
+ "jurisdiction_name": "Harveysburg",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "Page 2 of 4 Version 1.04 – Clarification edits approved in Planning 11/25/2025 – Effective date – 2/01/2026 H. Fences (Over 6 feet) Residential……………….…………………………………………………..$0.15 per linear foot ($70 Min) 3. MECHANICAL FEES Application Fee plus the following: (unless with building permit) A. Residential and Multi-Family (Per Residential Unit) ........................................ Sum of the following: New HVAC System (includes water, steam, and electric systems)......................................................... $70.00 Each additional new system...................................................................................................... $35.00 Chimney and/or Fireplace (All types) ..................................................................................................... $70.00 Replacement or Modification of Existing HVAC system, per system (includes electric & o",
+   "tags": [
+    "fee",
+    "dimension",
+    "process",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "d46a2e7530a1bc6845c4736e5b231f73b636b28e01f91529a91d557f7356ce79",
+   "source_document_id": null,
+   "source_title": "d46a2e7530a1bc6845c4736e5b231f73b636b28e01f91529a91d557f7356ce79.pdf",
+   "official_url": "https://www.villageofharveysburg.org/s/Residential_Fee_Schedule_2026.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Page 1 of 4 Version 1.04 – Clarification edits approved in Planning 11/25/2025 – Effective date – 2/01/2026 RESIDENTIAL FEE SCHEDULE FOR THE VILLAGE OF HARVEYSBURG BUILDING INSPECTION DEPARTMENT Effective Date: February 1, 2026 How to Calculate Fees : To determine fees, add the appropriate charges from the sections below. Multiply the total amount of fees by 1% to determine the State Surcharge Fee. Application Fee + Other Total Fees + Surcharge= Total. Example-Deck= $50 (Application Fee) + $105(Building Fee)+$1.05 (1% surcharge)=$156.05. If you added Electric to the Deck above: $70.00 (Electric Min) +$.70 (1%) =$70.70, added to the $156.05 for a grand total of $226.75. All permits will have the Application Fee charged only once unless a separate permit is required. 1. ADMINISTRATIVE FEES A. Application Fee (Every Application Processed).....................................................",
+   "tags": [
+    "fee",
+    "area",
+    "dimension",
+    "temporary",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "d46a2e7530a1bc6845c4736e5b231f73b636b28e01f91529a91d557f7356ce79",
+   "source_document_id": null,
+   "source_title": "d46a2e7530a1bc6845c4736e5b231f73b636b28e01f91529a91d557f7356ce79.pdf",
+   "official_url": "https://www.villageofharveysburg.org/s/Residential_Fee_Schedule_2026.pdf"
+  }
+ ]
+}

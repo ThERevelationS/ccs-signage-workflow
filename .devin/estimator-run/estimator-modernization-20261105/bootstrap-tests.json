@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "passed": true,
+  "model_sha256": "18c457ab5a9f441c0e278aab756f86fc5cc8fec0d11ca099cf20bff6e98645a6",
+  "controller_sha256": "fca3bb3baa5e94ed18943551359a301b6a3bde38dc333b0e41072a94a23c20ee",
+  "test_sha256": "0896eac34fa19bd1c22a7cd868f8015497beeb951994eb6da74f2d3f421378f1",
+  "evidence": ".audit-work/estimator-controller-final/suite.stdout.txt",
+  "result": "114 passed, 0 failed, 0 skipped; controller full diff reviewed; critical budget and redaction independently checked by lead",
+  "live_hook_loading": "unverified",
+  "process_reuse": "metadata preservation only; actual running process reuse remains a separate requirement",
+  "approval_fingerprint": "578f7baf458d38238dfc86457953302d866b5a1185809198b4c22492f750ef93"
+}

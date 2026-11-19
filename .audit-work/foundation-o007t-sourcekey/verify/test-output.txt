@@ -1,0 +1,13 @@
+ok apply stamps ai_engineering_data: source_key kept verbatim + origin_source_key + template_applied + applied_at
+ok apply defaults template_applied_at to a valid ISO timestamp when appliedAt not injected
+ok absent ai_engineering_data stays absent (target keeps its own); null travels as null
+ok malformed ai_engineering_data fails closed at apply (string/array/number)
+ok record without source_key gets origin_source_key null + template flag (foreign note, no false key)
+ok chained templates preserve the EARLIEST origin_source_key; apply time updates
+ok snapshot stores ai_engineering_data VERBATIM (no provenance stamp at rest)
+ok baseline assistant on the SOURCE project shows "Preliminary review" (control)
+ok round-trip: snapshot -> stored -> apply -> merge -> assistant shows stale banner, never "Preliminary review"
+ok stamp fields alone never flip the consumer to a non-stale label
+ok template row shows "Includes an AI review note" indicator only when the stored template carries one
+
+PASS o007t-sourcekey (11 passed, 0 failed)

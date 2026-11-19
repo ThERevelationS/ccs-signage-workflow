@@ -1,0 +1,51 @@
+{
+  "synthetic": true,
+  "mockedIO": true,
+  "realBase44StorageVerified": false,
+  "results": [
+    {
+      "name": "accept-undo-save-bom",
+      "width": 1440,
+      "ok": true,
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "name": "invalid-draft-reload-restore",
+      "width": 1440,
+      "ok": true,
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "name": "accept-undo-save-bom",
+      "width": 390,
+      "ok": true,
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "name": "invalid-draft-reload-restore",
+      "width": 390,
+      "ok": true,
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    }
+  ]
+}

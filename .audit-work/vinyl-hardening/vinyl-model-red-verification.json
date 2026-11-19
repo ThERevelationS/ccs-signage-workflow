@@ -1,0 +1,52 @@
+{
+ "mode": "red",
+ "generatedAt": "2026-11-07T12:04:10.721Z",
+ "totalChecks": 7,
+ "passed": 7,
+ "failed": 0,
+ "candidateBundleInputs": [
+  "frozen:/app/src/components/vinylInventory/vinylConstants.jsx",
+  "frozen:/app/src/components/vinylEstimator/vinylNestingCalculator.jsx",
+  "frozen:/app/src/components/vinylEstimator/vinylPricingAvailability.js",
+  "frozen:/app/src/components/vinylEstimator/vinylProjectHelpers.jsx",
+  "frozen:/app/src/components/vinylEstimator/vinylCostHelpers.jsx",
+  "frozen:/app/model-entry.js"
+ ],
+ "frozenBundleInputs": [
+  "frozen:/app/src/components/vinylEstimator/vinylProjectHelpers.jsx",
+  "frozen:/app/src/components/vinylEstimator/vinylCostHelpers.jsx",
+  "frozen:/app/src/components/vinylInventory/vinylConstants.jsx",
+  "frozen:/app/src/components/vinylEstimator/vinylNestingCalculator.jsx",
+  "frozen:/app/model-entry.js"
+ ],
+ "results": [
+  {
+   "id": "RED: remote calc silently reprices a missing vinyl price as $0",
+   "ok": true
+  },
+  {
+   "id": "RED: remote calc silently drops a zero-dimension part",
+   "ok": true
+  },
+  {
+   "id": "RED: remote calc silently floors a fractional quantity",
+   "ok": true
+  },
+  {
+   "id": "RED: remote rollup launders malformed supplies % to 0",
+   "ok": true
+  },
+  {
+   "id": "RED: remote rollup launders malformed equipment totals to 0",
+   "ok": true
+  },
+  {
+   "id": "RED: remote calc prices $0 labor for a personnel row missing its rate",
+   "ok": true
+  },
+  {
+   "id": "RED: remote calc silently defaults missing roll width to 54in",
+   "ok": true
+  }
+ ]
+}

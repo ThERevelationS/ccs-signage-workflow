@@ -1,4 +1,5 @@
 // src/components/estimator/builder/builderProductPersistence.js
+var cleanString = (value) => String(value ?? "").trim().replace(/\s+/g, " ");
 function normalize(value) {
   if (Array.isArray(value)) return value.map(normalize);
   if (!value || typeof value !== "object") return value;
@@ -13,6 +14,9 @@ function sameValue(a, b) {
   if (leftEmpty && rightEmpty) return true;
   if (!leftEmpty && !rightEmpty && Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
     return Math.abs(Number(a) - Number(b)) <= 1e-6;
+  }
+  if (typeof a === "string" && typeof b === "string") {
+    return cleanString(a) === cleanString(b);
   }
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 }

@@ -1,0 +1,26 @@
+{
+  "results": [
+    {
+      "id": "zero-labor",
+      "ok": true
+    },
+    {
+      "id": "zero-minimum",
+      "ok": true
+    },
+    {
+      "id": "zero-mortar",
+      "ok": true
+    },
+    {
+      "id": "genuine-free",
+      "ok": true
+    },
+    {
+      "id": "internal-zero-rates",
+      "ok": true
+    }
+  ],
+  "unexpectedNetwork": 0,
+  "unexpectedSdk": 0
+}

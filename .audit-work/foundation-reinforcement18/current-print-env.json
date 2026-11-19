@@ -1,0 +1,10 @@
+{
+ "readmeBytes": 9791,
+ "whoami": "{\"output\":\"Logged in as: brettheinlein1@gmail.com\"}\n",
+ "branches": "{\"branches\":[{\"name\":\"main\",\"status\":\"active\"}]}",
+ "original": {
+  "len": 11045,
+  "sha": "5dd1f5e89be2046d"
+ },
+ "git": "{\n  \"stdout\": \"e99a089ff3b1e0bf7bfdcd7259bddd354ad767b6\\n\",\n  \"stderr\": \"\",\n  \"exitCode\": 0,\n  \"truncated\": false,\n  \"durationMs\": 1118\n}\n"
+}

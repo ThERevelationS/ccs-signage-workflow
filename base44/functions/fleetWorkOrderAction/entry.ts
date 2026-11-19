@@ -1,10 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { setFleetInventoryQuantityIfUnchanged } from '../../shared/fleetInventoryQuantity.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { resolveFleetMeterReading } from '../../shared/fleetMeterReading.ts';
 import { verifyFleetMechanicWorkOrderCommit } from '../../shared/fleetMechanicWorkOrderCommitGate.ts';
+import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';
 
 const ACTIVE_STATUSES = new Set(['open', 'assigned', 'in_progress']);
 const STALE_CLAIM_MS = 30 * 60 * 1000;
@@ -665,7 +667,7 @@ async function finalizeStartedCompletion(base44: any, Receipt: any, mainReceipt:
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const auth = await authorize(base44, body?.session_token);
     if (auth.error) return auth.error;
@@ -753,7 +755,7 @@ Deno.serve(async (req) => {
             });
           }
         }
-        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
           event_type: 'work_order_created', target_id: reused.id, event_token: `created:${workOrderNumber}`
         }).catch(() => null);
         return Response.json({ success: true, reused: true, work_order: reused });
@@ -813,7 +815,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
         event_type: 'work_order_created', target_id: created.id, event_token: `created:${workOrderNumber}`
       }).catch(() => null);
       return Response.json({ success: true, work_order: created });
@@ -898,7 +900,10 @@ Deno.serve(async (req) => {
         if (reopenEquipment?.status === 'retired') return Response.json({ error: 'This Fleet work order cannot be reopened while its equipment is retired. Reactivate the equipment first.' }, { status: 409 });
       }
       const expectedUpdatedAt = String(body?.expected_updated_date || '').trim();
-      if (expectedUpdatedAt && expectedUpdatedAt !== String(existing.updated_date || '')) {
+      if (!expectedUpdatedAt) {
+        return Response.json({ error: 'A loaded work order version (expected_updated_date) is required before reopening.' }, { status: 409 });
+      }
+      if (expectedUpdatedAt !== String(existing.updated_date || '')) {
         return Response.json({ error: 'This Fleet work order changed after the reopen confirmation was opened. Reload it before reopening.' }, { status: 409 });
       }
       const completedReceipts = await Receipt.filter({ operation_type: 'work_order_complete', target_id: id, status: 'applied' });
@@ -930,8 +935,33 @@ Deno.serve(async (req) => {
           patch: { status: 'in_progress', completed_date: null },
           label: 'Fleet work order',
         });
-        await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '' });
-        return Response.json({ success: true, work_order: reopened, inventory_reversed: false });
+        // Reopen means the recorded consumption did not happen — restore the
+        // quantities every applied inventory_usage receipt for this work order
+        // took, otherwise stock would be double-charged on the next completion.
+        let inventoryReversed = false;
+        const usageReceipts = (await Receipt.filter({ operation_type: 'inventory_usage', status: 'applied' }).catch(() => [])) || [];
+        for (const usage of usageReceipts) {
+          const us = usage?.result_summary || {};
+          if (String(us.work_order_id || '') !== id || us.inventory_reversed === true) continue;
+          const qty = num(us.quantity_used, 0);
+          const itemEntity = usage.target_entity === 'FleetPart' ? base44.asServiceRole.entities.FleetPart : base44.asServiceRole.entities.FleetFluid;
+          const field = usage.target_entity === 'FleetPart' ? 'quantity_on_hand' : 'quantity';
+          if (qty > 0) {
+            for (let attempt = 0; attempt < 5; attempt += 1) {
+              const item = await itemEntity.get(usage.target_id).catch(() => null);
+              if (!item?.id || !item.updated_date) break;
+              const res = await itemEntity.updateMany(
+                { id: item.id, updated_date: item.updated_date },
+                { $set: { [field]: num(item[field], 0) + qty } },
+              ).catch(() => null);
+              if (res?.updated === 1) break;
+            }
+          }
+          await Receipt.update(usage.id, { result_summary: { ...us, inventory_reversed: true } }).catch(() => null);
+          inventoryReversed = true;
+        }
+        await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '', result_summary: { ...(claim.receipt.result_summary || {}), inventory_reversed: inventoryReversed } });
+        return Response.json({ success: true, work_order: reopened, inventory_reversed: inventoryReversed });
       } catch (error: any) {
         await Receipt.update(claim.receipt.id, {
           status: 'failed',
@@ -964,7 +994,7 @@ Deno.serve(async (req) => {
               result_summary: { ...(refreshedReceipt?.result_summary || summary), reconciled_from_completed_work_order: true },
             });
           }
-          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
             event_type: 'work_order_completed', target_id: id, event_token: completionKey
           }).catch(() => null);
         }
@@ -1079,7 +1109,7 @@ Deno.serve(async (req) => {
 
       if (mainClaim.applied) {
         const current = await WorkOrder.get(id);
-        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
           event_type: 'work_order_completed', target_id: id, event_token: current?.completion_receipt_key || completionKey
         }).catch(() => null);
         return Response.json({ success: true, reused: true, work_order: current });
@@ -1219,7 +1249,7 @@ Deno.serve(async (req) => {
       if (!mainClaim.owner) {
         const finalized = await finalizeStartedCompletion(base44, Receipt, activeMainReceipt);
         if (finalized) {
-          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
             event_type: 'work_order_completed', target_id: id, event_token: finalized?.completion_receipt_key || completionKey
           }).catch(() => null);
           return Response.json({ success: true, reused: true, recovered: true, work_order: finalized });
@@ -1277,7 +1307,7 @@ Deno.serve(async (req) => {
             meter_rule_results: meterRules,
           },
         });
-        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
           event_type: 'work_order_completed', target_id: id, event_token: completionKey
         }).catch(() => null);
         for (const plan of inventoryPlans) {
@@ -1289,7 +1319,7 @@ Deno.serve(async (req) => {
           const actualAfter = num(appliedSummary.after_quantity, NaN);
           const minimum = plan.item_type === 'part' ? num(item?.minimum_stock, NaN) : fluidMinimumInStockUnit(item);
           if (item && Number.isFinite(minimum) && Number.isFinite(actualBefore) && Number.isFinite(actualAfter) && actualBefore > minimum && actualAfter <= minimum) {
-            await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+            await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
               event_type: plan.item_type === 'part' ? 'low_stock_part' : 'low_stock_fluid',
               target_id: plan.item_id,
               event_token: plan.operation_key,

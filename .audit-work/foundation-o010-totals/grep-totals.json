@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "src/components/estimator/aio/ProductRow.jsx\nsrc/components/estimator/brick/BrickTotals.jsx\nsrc/components/estimator/brick/brickPricingAvailability.js\nsrc/components/estimator/builder/builderService.js\nsrc/components/estimator/builder/legacyBomReconcile.js\nsrc/components/estimator/builder/partSync.js\nsrc/components/estimator/cnc/cncPricingAvailability.js\nsrc/components/estimator/customerPricing.js\nsrc/components/estimator/foundation/FoundationBOM.jsx\nsrc/components/estimator/foundation/FoundationTotals.jsx\nsrc/components/estimator/foundation/foundationCalc.js\nsrc/components/estimator/foundation/foundationSyncRecovery.js\nsrc/components/estimator/foundation/legacyFoundationCalc.js\nsrc/components/estimator/foundation/poleCalculator.js\nsrc/components/estimator/foundation/wallCalculator.js\nsrc/components/estimator/foundation/wallCapCalculator.js\nsrc/components/estimator/laser/laserPricingAvailability.js\nsrc/components/estimator/metal/metalPricingAvailability.js\nsrc/components/estimator/moduleRegistry.js\nsrc/components/estimator/paint/paintPricingAvailability.js\nsrc/components/estimator/parts/customProductService.js\nsrc/components/estimator/parts/partGroupService.js\nsrc/components/estimator/parts/partPackageService.js\nsrc/components/estimator/products/blankProductService.js\nsrc/components/estimator/products/clipboardService.js\nsrc/components/estimator/products/productOperations.js\nsrc/components/estimator/products/quickProductService.js\nsrc/components/estimator/useSectionSync.js\nsrc/pages/CNCEstimator.jsx\nsrc/pages/FoundationEstimator.jsx\nsrc/pages/LaserEstimator.jsx\nsrc/pages/MaintenanceEstimator.jsx\nsrc/pages/MetalEstimator.jsx\nsrc/pages/PaintingEstimator.jsx\nsrc/pages/SOP.jsx\nsrc/pages/VinylEstimator.jsx\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 844
+}

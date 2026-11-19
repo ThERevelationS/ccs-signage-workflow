@@ -1,0 +1,511 @@
+{
+  "inputs": {
+    "node_modules/react/cjs/react.production.min.js": {
+      "bytes": 6930,
+      "imports": [],
+      "format": "cjs"
+    },
+    "node_modules/react/cjs/react.development.js": {
+      "bytes": 87593,
+      "imports": [],
+      "format": "cjs"
+    },
+    "node_modules/react/index.js": {
+      "bytes": 190,
+      "imports": [
+        {
+          "path": "node_modules/react/cjs/react.production.min.js",
+          "kind": "require-call",
+          "original": "./cjs/react.production.min.js"
+        },
+        {
+          "path": "node_modules/react/cjs/react.development.js",
+          "kind": "require-call",
+          "original": "./cjs/react.development.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react-dom/cjs/react-dom-server-legacy.node.production.min.js": {
+      "bytes": 38796,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        },
+        {
+          "path": "stream",
+          "kind": "require-call",
+          "external": true
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react-dom/cjs/react-dom-server.node.production.min.js": {
+      "bytes": 39058,
+      "imports": [
+        {
+          "path": "util",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react-dom/cjs/react-dom-server-legacy.node.development.js": {
+      "bytes": 246340,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        },
+        {
+          "path": "stream",
+          "kind": "require-call",
+          "external": true
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react-dom/cjs/react-dom-server.node.development.js": {
+      "bytes": 244692,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        },
+        {
+          "path": "util",
+          "kind": "require-call",
+          "external": true
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react-dom/server.node.js": {
+      "bytes": 646,
+      "imports": [
+        {
+          "path": "node_modules/react-dom/cjs/react-dom-server-legacy.node.production.min.js",
+          "kind": "require-call",
+          "original": "./cjs/react-dom-server-legacy.node.production.min.js"
+        },
+        {
+          "path": "node_modules/react-dom/cjs/react-dom-server.node.production.min.js",
+          "kind": "require-call",
+          "original": "./cjs/react-dom-server.node.production.min.js"
+        },
+        {
+          "path": "node_modules/react-dom/cjs/react-dom-server-legacy.node.development.js",
+          "kind": "require-call",
+          "original": "./cjs/react-dom-server-legacy.node.development.js"
+        },
+        {
+          "path": "node_modules/react-dom/cjs/react-dom-server.node.development.js",
+          "kind": "require-call",
+          "original": "./cjs/react-dom-server.node.development.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "src/components/estimator/foundation/legacyFoundationCalc.js": {
+      "bytes": 16412,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/wallCalculator.js": {
+      "bytes": 8725,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/poleCalculator.js": {
+      "bytes": 2602,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/wallCapCalculator.js": {
+      "bytes": 1130,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationEquipmentBindings.js": {
+      "bytes": 5494,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationCatalogIntegrity.js": {
+      "bytes": 4168,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationEquipmentBindings.js",
+          "kind": "import-statement",
+          "original": "./foundationEquipmentBindings"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationGeometryInputs.js": {
+      "bytes": 2674,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementModel.js": {
+      "bytes": 16449,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationInputValidation.js": {
+      "bytes": 3233,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementModel"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementBasis.js": {
+      "bytes": 6986,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementCost.js": {
+      "bytes": 7643,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementProjection.js": {
+      "bytes": 1642,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementModel"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementBasis.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementBasis"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementCost.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementCost"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementItemProjection.js": {
+      "bytes": 7862,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+          "kind": "import-statement",
+          "original": "./legacyFoundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementProjection.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementProjection"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationCalc.js": {
+      "bytes": 16155,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+          "kind": "import-statement",
+          "original": "./legacyFoundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/wallCalculator.js",
+          "kind": "import-statement",
+          "original": "./wallCalculator"
+        },
+        {
+          "path": "src/components/estimator/foundation/poleCalculator.js",
+          "kind": "import-statement",
+          "original": "./poleCalculator"
+        },
+        {
+          "path": "src/components/estimator/foundation/wallCapCalculator.js",
+          "kind": "import-statement",
+          "original": "./wallCapCalculator"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationEquipmentBindings.js",
+          "kind": "import-statement",
+          "original": "./foundationEquipmentBindings"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationInputValidation.js",
+          "kind": "import-statement",
+          "original": "./foundationInputValidation"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementItemProjection.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementItemProjection"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementBOMRows.js": {
+      "bytes": 2915,
+      "imports": [],
+      "format": "esm"
+    },
+    "node_modules/react/cjs/react-jsx-runtime.production.min.js": {
+      "bytes": 859,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react/cjs/react-jsx-runtime.development.js": {
+      "bytes": 42700,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react/jsx-runtime.js": {
+      "bytes": 214,
+      "imports": [
+        {
+          "path": "node_modules/react/cjs/react-jsx-runtime.production.min.js",
+          "kind": "require-call",
+          "original": "./cjs/react-jsx-runtime.production.min.js"
+        },
+        {
+          "path": "node_modules/react/cjs/react-jsx-runtime.development.js",
+          "kind": "require-call",
+          "original": "./cjs/react-jsx-runtime.development.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "src/components/estimator/foundation/FoundationBOM.jsx": {
+      "bytes": 8355,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementBOMRows.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementBOMRows"
+        },
+        {
+          "path": "node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    ".audit-work/foundation-reinforcement18/bom-before-local.jsx": {
+      "bytes": 7530,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "bom-ssr-entry.jsx": {
+      "bytes": 371,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "node_modules/react-dom/server.node.js",
+          "kind": "import-statement",
+          "original": "react-dom/server"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationBOM.jsx",
+          "kind": "import-statement",
+          "original": "./src/components/estimator/foundation/FoundationBOM.jsx"
+        },
+        {
+          "path": ".audit-work/foundation-reinforcement18/bom-before-local.jsx",
+          "kind": "import-statement",
+          "original": "./.audit-work/foundation-reinforcement18/bom-before-local.jsx"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    ".audit-work/foundation-reinforcement18/bom-ui-ssr.cjs": {
+      "imports": [
+        {
+          "path": "stream",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "util",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "stream",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "util",
+          "kind": "require-call",
+          "external": true
+        }
+      ],
+      "exports": [],
+      "entryPoint": "bom-ssr-entry.jsx",
+      "inputs": {
+        "node_modules/react/cjs/react.production.min.js": {
+          "bytesInOutput": 9651
+        },
+        "node_modules/react/cjs/react.development.js": {
+          "bytesInOutput": 77152
+        },
+        "node_modules/react/index.js": {
+          "bytesInOutput": 289
+        },
+        "node_modules/react-dom/cjs/react-dom-server-legacy.node.production.min.js": {
+          "bytesInOutput": 57932
+        },
+        "node_modules/react-dom/cjs/react-dom-server.node.production.min.js": {
+          "bytesInOutput": 59585
+        },
+        "node_modules/react-dom/cjs/react-dom-server-legacy.node.development.js": {
+          "bytesInOutput": 235343
+        },
+        "node_modules/react-dom/cjs/react-dom-server.node.development.js": {
+          "bytesInOutput": 234008
+        },
+        "node_modules/react-dom/server.node.js": {
+          "bytesInOutput": 779
+        },
+        "node_modules/react/cjs/react-jsx-runtime.production.min.js": {
+          "bytesInOutput": 990
+        },
+        "node_modules/react/cjs/react-jsx-runtime.development.js": {
+          "bytesInOutput": 36482
+        },
+        "node_modules/react/jsx-runtime.js": {
+          "bytesInOutput": 325
+        },
+        "bom-ssr-entry.jsx": {
+          "bytesInOutput": 412
+        },
+        "src/components/estimator/foundation/FoundationBOM.jsx": {
+          "bytesInOutput": 8906
+        },
+        "src/components/estimator/foundation/foundationCatalogIntegrity.js": {
+          "bytesInOutput": 108
+        },
+        "src/components/estimator/foundation/foundationReinforcementBasis.js": {
+          "bytesInOutput": 105
+        },
+        "src/components/estimator/foundation/foundationReinforcementCost.js": {
+          "bytesInOutput": 90
+        },
+        "src/components/estimator/foundation/foundationCalc.js": {
+          "bytesInOutput": 180
+        },
+        "src/components/estimator/foundation/foundationReinforcementBOMRows.js": {
+          "bytesInOutput": 2769
+        },
+        ".audit-work/foundation-reinforcement18/bom-before-local.jsx": {
+          "bytesInOutput": 8194
+        }
+      },
+      "bytes": 738695
+    }
+  }
+}

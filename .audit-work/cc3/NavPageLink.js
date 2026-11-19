@@ -1,0 +1,77 @@
+import { jsx, jsxs } from "react/jsx-runtime";
+import { Link } from "react-router-dom";
+import { Columns } from "lucide-react";
+import { hexToRgbTuple } from "@/components/layout/navPreferences";
+import { navButtonStyle, navDragStyle } from "@/components/layout/navCustomization";
+import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
+const abbreviate = (title) => title.length > 12 ? `${title.slice(0, 11)}\u2026` : title;
+export default function NavPageLink({
+  item,
+  variant = "top",
+  compactView = false,
+  isActive = false,
+  isInSplit = false,
+  onNavigate,
+  onContextMenuItem,
+  dragRef,
+  dragProps,
+  dragSnapshot,
+  dragHandleProps
+}) {
+  const { prefs } = useWorkspacePreferences();
+  const navPrefs = prefs.navigation || {};
+  const labelMode = navPrefs.labels || "full";
+  const tooltips = navPrefs.tooltips !== false;
+  const sizeMode = navPrefs.size || "auto";
+  const Icon = item.icon;
+  const isTop = variant === "top";
+  const iconOnly = isTop && labelMode === "icons";
+  const displayTitle = labelMode === "abbreviated" ? abbreviate(item.title) : item.title;
+  const itemStyleLook = navButtonStyle(item.stylePreset || "glass", item.accent);
+  const textColor = itemStyleLook.textColor || (isActive ? "#fff" : "#f1f5f9");
+  const { role: _dragRole, ...handleProps } = dragHandleProps || {};
+  const sizing = isTop ? sizeMode === "compact" ? "gap-1 rounded-lg px-1 py-0.5" : sizeMode === "roomy" ? "gap-2 rounded-lg px-2.5 py-2" : compactView ? "gap-1 rounded-lg px-1 py-0.5" : "gap-1.5 rounded-lg px-2 py-1.5" : compactView ? "gap-1.5 rounded-lg px-1.5 py-1" : "gap-2 rounded-xl px-3 py-2";
+  const tooltip = tooltips || iconOnly ? `${iconOnly ? `${item.title} \xB7 ` : ""}Drag to reorder \xB7 Ctrl+Click to open in split view` : void 0;
+  return /* @__PURE__ */ jsxs(
+    Link,
+    {
+      ref: dragRef,
+      ...dragProps,
+      ...handleProps,
+      "data-nav-item": item.url,
+      to: item.url,
+      onClick: onNavigate,
+      onContextMenu: (event) => {
+        if (!onContextMenuItem) return;
+        event.preventDefault();
+        event.stopPropagation();
+        onContextMenuItem(item, { x: event.clientX, y: event.clientY });
+      },
+      className: `${itemStyleLook.glass ? "ccs-glass-nav-item" : "ccs-nav-styled"} flex items-center border ${isTop ? `flex-shrink-0 whitespace-nowrap ${sizing}` : `w-full ${sizing}`} ${isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""}`,
+      style: {
+        ...navDragStyle(dragProps?.style, dragSnapshot?.isDragging) || {},
+        "--glass-accent-rgb": hexToRgbTuple(item.accent),
+        ...itemStyleLook.style || {}
+      },
+      title: tooltip,
+      children: [
+        /* @__PURE__ */ jsx(
+          Icon,
+          {
+            className: `${isTop ? compactView || sizeMode === "compact" ? "h-3 w-3" : "h-3.5 w-3.5" : compactView ? "h-3 w-3" : "h-4 w-4"} flex-shrink-0`,
+            style: { color: itemStyleLook.textColor || item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : void 0 }
+          }
+        ),
+        !iconOnly && /* @__PURE__ */ jsx(
+          "span",
+          {
+            className: `${isTop ? `${compactView ? "text-[10px]" : "text-xs"} whitespace-nowrap` : `${compactView ? "text-[11px]" : "text-sm"} min-w-0 truncate`} font-medium ${isActive ? "font-bold" : ""}`,
+            style: { color: textColor, textShadow: itemStyleLook.style?.textShadow },
+            children: displayTitle
+          }
+        ),
+        isInSplit && /* @__PURE__ */ jsx(Columns, { className: `${isTop ? "h-3 w-3" : "h-3 w-3"} flex-shrink-0 text-purple-500` })
+      ]
+    }
+  );
+}

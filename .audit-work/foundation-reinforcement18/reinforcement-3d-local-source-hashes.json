@@ -1,0 +1,13 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceScope": "local-only; remote activation held",
+  "lastVerifiedRemoteCheckpoint": "6aee1661a718e1305330d188",
+  "sources": {
+    "src/components/estimator/foundation/Foundation3DPreview.jsx": "2f6aab0c903c2aae8a215204b380ed256001f51c23988ae1aaab3b0c4e83564d",
+    "src/components/estimator/foundation/foundationReinforcementPreview3D.js": "a8b8f06fe0e0b728ec7efe365d8397bf7d2600750c2120834ba73865ef6d3d5f",
+    "src/components/estimator/foundation/foundationReinforcementThreePreview.js": "8b73fa3737becfc32facbc9ad6b99b7cdaa6292294a9c3530401d2bfbf078b3d",
+    "src/components/estimator/foundation/foundationReinforcementModel.js": "d8ef03fbb2083489174d841eee7c92b2c65c0578fb977eabf37bc37bf2cbc1a1",
+    "src/components/estimator/foundation/foundationGeometryInputs.js": "6fc01d657c28f786d82f554148276c29ff358a4d5498408e598473e687fe7cf0"
+  }
+}

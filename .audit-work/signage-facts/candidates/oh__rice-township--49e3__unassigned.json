@@ -1,0 +1,38 @@
+{
+ "jurisdiction_id": "6aea363536148b03501449e3",
+ "jurisdiction_name": "Rice Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "RICE TOWNSHIP ZONING APPLICATION Application # ___________ __ _ Application Date __________ __ _____ Zoning District ______ __ ____ PIN#______ __ ___________ ___ Application for: New Structure ___ _ Repair/Alteration __ __ _ _ Sign __ __ _ Compliance _ _ __ _ Fence _ __ _ _ _ Pool _ _ _ __ _ New Home __ _ _ _ Applicant Name: __________________________________ Phone # ___________________ Email ___________________________ ___ __ Address: ____________________________________________________________________________________________________ ___ ___ Owner Name : ________________________________ __ __ Phone # ______ _______ ____ _ ___ __ _ Zoning Fee: __________ Address: ____ __________________________________________________ ______ ____ ______ __ _ Stormwater Fee: __________ Specific work to be done: ___________________________________________________________ _ Pave Cut Fee : _ _____ ____ Cost:",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "cd6b24abc67175a47ae9458423a0fdecdfffcef799af9da6fb81828e41e0f2a8",
+   "source_document_id": null,
+   "source_title": "cd6b24abc67175a47ae9458423a0fdecdfffcef799af9da6fb81828e41e0f2a8.pdf",
+   "official_url": "https://ricetwp.com/wp-content/uploads/2023/03/Zoning-Application-2023.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Under Section 140 .2.2(A) of the Rice Township Zoning Ordinance, if an application is made by any person other than the owner or lessee, it must be accompanied by a written authorization from the owner or lessee authorizing the work and designating the agent to act in their place. Please Sign:",
+   "tags": [
+    "sign",
+    "authority",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "cd6b24abc67175a47ae9458423a0fdecdfffcef799af9da6fb81828e41e0f2a8",
+   "source_document_id": null,
+   "source_title": "cd6b24abc67175a47ae9458423a0fdecdfffcef799af9da6fb81828e41e0f2a8.pdf",
+   "official_url": "https://ricetwp.com/wp-content/uploads/2023/03/Zoning-Application-2023.pdf"
+  }
+ ]
+}

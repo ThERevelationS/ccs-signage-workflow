@@ -1,0 +1,39 @@
+{
+  "synthetic": true,
+  "results": [
+    {
+      "name": "known20-foot steel material40 and labor72 remain distinct and sum to112",
+      "ok": true
+    },
+    {
+      "name": "zero priced steel still lists physical20 and material0 alongside labor48",
+      "ok": true
+    },
+    {
+      "name": "unknown source quantities, weights, hours and costs are not relabeled as zero",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    null,\n    null,\n+   'Not saved',\n+   0\n  ]\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-bom-rows.mjs:33:60\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-bom-rows.mjs:9:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-bom-rows.mjs:29:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)\n    at async node:internal/modules/esm/loader:650:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5)"
+    },
+    {
+      "name": "known combined history survives without inventing an unrecorded material/labor split",
+      "ok": true
+    },
+    {
+      "name": "a partial or inconsistent saved split never duplicates or replaces a known combined112",
+      "ok": true
+    },
+    {
+      "name": "a valid off design has no live steel rows, while a blocked removal retains acknowledged112",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    40,\n    72,\n+   'Not saved'\n  ]\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-bom-rows.mjs:53:10\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-bom-rows.mjs:9:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-bom-rows.mjs:50:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)\n    at async node:internal/modules/esm/loader:650:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5)"
+    },
+    {
+      "name": "legacy and unrelated items remain on their existing BOM route",
+      "ok": true
+    },
+    {
+      "name": "snapshot names remain historical and frozen input is not mutated",
+      "ok": true
+    }
+  ]
+}

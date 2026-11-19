@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Pause, Play } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { invokeTimeClockAction } from "@/components/timeclock/timeClockReadCache";
 import { useAuth } from "@/components/auth/EmailGate";
 import WorkPauseMenu from "@/components/timeclock/WorkPauseMenu";
 import { useTimeClockStatus } from "@/components/timeclock/TimeClockStatusContext";
@@ -122,12 +123,14 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
   }, [email, sessionToken, scopeInstanceKey, refreshTimeClockStatus]);
 
   useEffect(() => {
-    void loadStatus();
+    // Provider's delayed poll lands outside the mount burst; its 5s dedupe
+    // cache makes this follow-up free instead of a second status_lite racing it.
+    if (timeClockStatus.version > 0) void loadStatus();
   }, [timeClockStatus.version, loadStatus]);
 
   useEffect(() => {
     mountedRef.current = true;
-    loadStatus();
+    if (timeClockStatus.version > 0) loadStatus();
     // Change events can originate from another employee session or arrive late.
     // Treat them only as invalidation signals; signed-session status is authoritative.
     const onPauseChanged = () => {
@@ -171,13 +174,10 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
     setBusy(true);
     setError("");
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const data = await invokeTimeClockAction({
         action,
-        request_id: requestId,
-        session_token: sessionToken,
-        target_email: email,
+        payload: { request_id: requestId, session_token: sessionToken, target_email: email },
       });
-      const data = response?.data || response;
       if (!data?.success) {
         const err = new Error(data?.error || `${paused ? "Resume Work" : "Work Pause"} was not confirmed by the server.`);
         err.retrySameRequest = data?.retry_same_request === true;
@@ -244,16 +244,10 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
     setReportBusy(true);
     setReportError("");
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const data = await invokeTimeClockAction({
         action,
-        request_id: requestId,
-        session_token: sessionToken,
-        target_email: email,
-        started_at,
-        resumed_at,
-        note,
+        payload: { request_id: requestId, session_token: sessionToken, target_email: email, started_at, resumed_at, note },
       });
-      const data = response?.data || response;
       if (!data?.success) {
         const err = new Error(data?.error || "The missed Work Pause was not confirmed by the server.");
         err.retrySameRequest = data?.retry_same_request === true;
@@ -294,7 +288,11 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       setReportError(message);
       throw err;
     } finally {
-      if (isCurrentAction()) setReportBusy(false);
+      // Clear on mount+scope only — never on the transition guard. This
+      // action's own signalPauseChanged → loadStatus bumps the transition
+      // counter before finally runs, which left reportBusy stuck true and
+      // the Save spinner running after a confirmed save.
+      if (mountedRef.current && scopeRef.current === scopeInstanceKey) setReportBusy(false);
     }
   };
 
@@ -316,7 +314,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
 
   return (
     <>
-    <button
+    <button type="button"
       data-work-pause-trigger
       type="button"
       onClick={() => setMenuOpen(true)}

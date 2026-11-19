@@ -1,0 +1,12 @@
+[
+ {
+  "old_text": "        sourcePath: `walls[${index}].materialId`,\n        entity: \"FoundationInventory\",\n        inventoryId: wall.materialId,\n        quantity: wall.calculatedCosts?.totalBricks || 1,\n        unit: \"unit\",\n        extendedCost: wall.calculatedCosts?.materialCost,\n        builderData: wall,\n        calculation: wall.calculatedCosts || {},\n      }));",
+  "new_text": "        sourcePath: `walls[${index}].materialId`,\n        entity: \"FoundationInventory\",\n        inventoryId: wall.materialId,\n        quantity: wall.calculatedCosts?.totalBricks || 1,\n        // CMP-D03: poured-concrete snapshots carry materialQuantityUnit \"cy\"\n        // — the part unit mirrors the recorded basis instead of always\n        // claiming a unit count.\n        unit: wall.calculatedCosts?.materialQuantityUnit === \"cy\" ? \"cy\" : \"unit\",\n        extendedCost: wall.calculatedCosts?.materialCost,\n        builderData: wall,\n        calculation: wall.calculatedCosts || {},\n      }));",
+  "replace_all": false
+ },
+ {
+  "old_text": "        sourcePath: `walls[${index}].internalMaterialId`,\n        entity: \"FoundationInventory\",\n        inventoryId: wall.internalMaterialId,\n        quantity: wall.calculatedCosts?.internalTotalBricks || 1,\n        unit: \"unit\",\n        extendedCost: wall.calculatedCosts?.internalMaterialCost,\n        builderData: wall,\n        calculation: wall.calculatedCosts || {},\n      }));",
+  "new_text": "        sourcePath: `walls[${index}].internalMaterialId`,\n        entity: \"FoundationInventory\",\n        inventoryId: wall.internalMaterialId,\n        quantity: wall.calculatedCosts?.internalTotalBricks || 1,\n        unit: wall.calculatedCosts?.internalMaterialQuantityUnit === \"cy\" ? \"cy\" : \"unit\",\n        extendedCost: wall.calculatedCosts?.internalMaterialCost,\n        builderData: wall,\n        calculation: wall.calculatedCosts || {},\n      }));",
+  "replace_all": false
+ }
+]

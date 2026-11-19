@@ -30,7 +30,7 @@
           "with": {
             "function_name": "checkPermitFollowupReminders",
             "args": {
-              "_workflow_capability": "BnuESG0zUlhPfmZRunszT2qn6F69cBW_JZKPq74OP7Y"
+              "_workflow_capability": "ccs-wf-cap-8781109dab72d19973b643aad81f6a75"
             }
           },
           "then": "end"

@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
         admin = await authenticateSignShopSession(base44, session_token);
       } catch (authError) {
         const status = Number(authError?.status || 401);
-        const safeStatus = [401, 409, 503].includes(status) ? status : 401;
+        const safeStatus = [401, 409, 429, 503].includes(status) ? status : 401;
         const error = safeStatus === 503
           ? 'Session authentication is unavailable'
           : safeStatus === 409
@@ -94,6 +94,8 @@ Deno.serve(async (req) => {
     const nextFields: Record<string, unknown> = {
       username: uname,
       password_hash,
+      password_changed_at: new Date().toISOString(),
+      force_password_reset: false,
       session_not_before: new Date().toISOString(),
       // A credential change is also the recovery path out of a brute-force
       // lockout; leaving the deadline in place would keep the new password

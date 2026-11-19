@@ -1,0 +1,37 @@
+{
+ "jurisdiction_id": "6adf6041cb999fa108c5f4f1",
+ "jurisdiction_name": "Barnesville",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "TERMS & CONDITIONS OnSolve welcomes you, as a “Subscriber” to its CodeRED ® and CodeRED Weather Warning ® Services (the “Services”). By completing this community notification enrollment form, you agree to be subject to OnSolve’s Terms of Use (“Terms”) and Privacy Policy (“Privacy Policy”) located here: www.onsolve.com/privacy-statement/, which may be updated from time to time. By completing this form, you agree that you have read the Terms and Privacy Policy, and agree to them in full. Your Information: The information we collect on this form is designed to assist OnSolve in serving you based upon your request for emergency or general interest notifications from OnSolve or your local provider. You agree to provide true, accurate and complete information on this form, and to maintain the accuracy of such information at all times. You warrant and represent that the provision of such inform",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "c9bd58d55166184d4ee55950fac1ea38abbed9be3ba900a3713b1a292c025c69",
+   "source_document_id": null,
+   "source_title": "c9bd58d55166184d4ee55950fac1ea38abbed9be3ba900a3713b1a292c025c69.pdf",
+   "official_url": "https://barnesvilleohio.com/wp-content/uploads/2022/04/CoderRED-Enrollment-Form.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Village of Barnesville, Ohio APPLICATION FOR BUILDING PERMIT Ordinance #1908, Codification Section 1321.01 Estimated Cost $ _________ __ _____ Date _____ ______ __________ (Shall Expire 6 months after issuance) The application shall be required to certify that the cost of the improvements is or will be as stated in the application. The Village of Barnesville shall have the right to require the applicant after an improvement has been completed to produce completed records of all costs of the improvement. If after an improvement has been completed, the applicant has not paid the correct fee, he or she shall file an amended application and submit the balance of any unpaid permit fee. Is this property in the Barnesville Historic District? Yes _____ or No _____ (check one) PLEASE PRINT LEGIBLY Name of Applicant _______________________________ __ _____ Phone __________________ (Property Owner)",
+   "tags": [
+    "fee",
+    "authority",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "582e75e6210746362a79ffc8eb21e9508b04cec3c0bab1725d47ec9edd761a83",
+   "source_document_id": null,
+   "source_title": "582e75e6210746362a79ffc8eb21e9508b04cec3c0bab1725d47ec9edd761a83.pdf",
+   "official_url": "https://barnesvilleohio.com/wp-content/uploads/2022/04/Building-Permit.pdf"
+  }
+ ]
+}

@@ -1,0 +1,46 @@
+PASS date-only boundary: today and past active, tomorrow Revisit Later
+PASS immediate date quick edit conditionally saves and re-sorts
+PASS immediate quick edit rejects another session changing its loaded date
+PASS confirmed clear captures its original date and clears it
+PASS confirmed clear protects original date after unrelated board refresh
+PASS confirmed clear refuses newer Revisit after board refresh
+PASS confirmed clear refuses concurrent Revisit change during CAS
+PASS confirmed clear fails safely on unrelated concurrent write without losing it
+PASS already-cleared date is idempotent and not written twice
+PASS duplicate confirm while save in-flight is ignored
+PASS deleted Work Order cannot have its confirmed date cleared
+PASS completed WIP with no Revisit returns to active queue
+PASS missing Revisit field reopens safely without a date
+PASS completed WIP preserves past Revisit when reopening
+PASS completed WIP preserves today Revisit when reopening
+PASS completed WIP with legacy future Revisit clears date atomically
+PASS reopen rejects future date added to previously undated WIP
+PASS reopen rejects future Revisit added mid-save at CAS boundary
+PASS CAS-losing WIP reopen recognizes matching saved state, restores focus without duplicate write
+PASS CAS-losing reopen with a different Revisit date retains conflict and never redirects focus
+PASS reopen fails safely on unrelated concurrent edit without losing it
+PASS incomplete WIP still opens checklist, not direct completion
+PASS two sessions classify no-date, today, and future Revisit consistently
+PASS stale second-session date edit cannot overwrite new future Revisit
+PASS simultaneous conflicting Revisit quick edits produce one winner
+PASS second-session confirmation cannot clear newer date after first-session edit
+PASS stale future edit cannot reschedule after another session clears Revisit
+PASS future Revisit clears into Active in both sessions after reload
+PASS completed WIP cannot reopen stale no-date snapshot after future scheduling
+PASS reopening legacy future WIP prevents stale other-session reschedule
+PASS simultaneous reopening is idempotent and leaves one active WIP item
+PASS reopening today-dated WIP preserves date across both sessions
+PASS other-session unrelated note update does not block WIP reopening
+PASS rapid duplicate Revisit selection makes only one write
+PASS rapid different Revisit selection is blocked visibly, then retry succeeds
+PASS different Work Order fields can save concurrently without losing data
+PASS failed stale quick edit releases field so retry after refresh works
+PASS failed clear stays visible in dialog and cannot retry a stale confirmation
+PASS new clear confirmation resets old conflict after reviewing refreshed date
+PASS clear confirmation renders inline accessible failure and requires review after conflict
+PASS an open checklist cannot be replaced by another Work Order
+PASS checklist close returns focus to the job or the board heading when the opener is gone
+PASS details dialog close uses the same job-anchor focus fallback
+PASS details dialog delete confirm cannot double-submit
+PASS details dialog inline field save cannot double-submit its own CAS
+45/45 SIPS board Revisit regression checks passed

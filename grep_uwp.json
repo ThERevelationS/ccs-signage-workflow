@@ -1,0 +1,76 @@
+{
+  "matches": [
+    {
+      "path": "INTEGRATION_PROGRESS.md",
+      "line": 51,
+      "text": "- `base44/entities/UserWorkspacePreferences.jsonc` — backend-only RLS, `user_email` key, consolidated `preferences` blob + `profiles` array, `last_request_id` idempotency, `creation_request_key` first-create dedupe."
+    },
+    {
+      "path": "INTEGRATION_PROGRESS.md",
+      "line": 141,
+      "text": "Phase D — §12 Reporting (9 items DONE): opsReportModel +7 reports (avg_quote_by_month, weekly_throughput, win_rate_by_customer, value_by_module, customer_ltv, portal_engagement, est_vs_actual_cost); estimate_funnel payload extended (by_salesperson_monthly, weekly, by_customer top-25, by_module — bounded); saved-views on OpsReports via UserWorkspacePreferences; opportunityWorkspaceAction DEPLOYED. PASS ops-reports local+remote."
+    },
+    {
+      "path": "docs/plans/CCS_PERSONALIZED_WORKSPACE_MASTERPLAN.md",
+      "line": 23,
+      "text": "- **Gap vs masterplan:** order is localStorage-only — no cross-device sync, lost on browser change. Phase 5 migrates it into `UserWorkspacePreferences` while keeping localStorage as the write-through cache."
+    },
+    {
+      "path": "docs/plans/CCS_PERSONALIZED_WORKSPACE_MASTERPLAN.md",
+      "line": 43,
+      "text": "**Conclusion: do NOT invent a new storage model.** Add `UserWorkspacePreferences.jsonc` mirroring `FleetDashboardPreference` (read own row, server-only writes) + a `workspacePrefsAction` function mirroring the `time_tracker_prefs_*` actions (get/update, `request_id` idempotency, own-email enforcement, ambiguity 409, `creation_key` create)."
+    },
+    {
+      "path": "docs/plans/CCS_PERSONALIZED_WORKSPACE_MASTERPLAN.md",
+      "line": 57,
+      "text": "## 4. Data model — `UserWorkspacePreferences.jsonc`"
+    },
+    {
+      "path": "docs/plans/CCS_PERSONALIZED_WORKSPACE_MASTERPLAN.md",
+      "line": 61,
+      "text": "  \"name\": \"UserWorkspacePreferences\","
+    },
+    {
+      "path": "docs/plans/CCS_PERSONALIZED_WORKSPACE_MASTERPLAN.md",
+      "line": 106,
+      "text": "Taskbar baseline tests; `UserWorkspacePreferences` + `workspacePrefsAction`; `WorkspacePreferencesProvider` + `useWorkspacePreferences`; Settings Center shell in Time Clock settings tab (search, sections, save status, category reset); light/dark/system; accent enum (reusing tracker accent colors); density comfortable/compact; font scale; reduced motion; nav order sync to server (localStorage stays as cache); landing page; reset order/category/all."
+    },
+    {
+      "path": "docs/plans/CCS_PERSONALIZED_WORKSPACE_MASTERPLAN.md",
+      "line": 153,
+      "text": "| New entity vs reuse | New `UserWorkspacePreferences` + reuse `TimeClockEmployeePreference` | Time-clock prefs already have a hardened path; duplicating splits authority |"
+    },
+    {
+      "path": "src/components/layout/workspacePrefs.js",
+      "line": 3,
+      "text": "// UserWorkspacePreferences.preferences (backend-only); this module is the"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 64,
+      "text": "// per-user workspace prefs blob (UserWorkspacePreferences.preferences via"
+    },
+    {
+      "path": "base44/functions/workspacePrefsAction/entry.ts",
+      "line": 5,
+      "text": "// Personal Workspace Settings backend. One UserWorkspacePreferences row per"
+    },
+    {
+      "path": "base44/functions/workspacePrefsAction/entry.ts",
+      "line": 28,
+      "text": "    const entity = base44.asServiceRole.entities.UserWorkspacePreferences;"
+    },
+    {
+      "path": "base44/entities/UserWorkspacePreferences.jsonc",
+      "line": 2,
+      "text": "  \"name\": \"UserWorkspacePreferences\","
+    },
+    {
+      "path": "ESTIMATOR_BACKLOG.md",
+      "line": 327,
+      "text": "286. **[F][DONE]** PARTIAL — report-filter persistence didn't exist — Shipped: named saved filter views on the Ops Reports surface (save dialog + apply/delete dropdown) persisted per-user via workspace preferences `opsReports.savedViews` (existing UserWorkspacePreferences convention, no new entity)"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 14
+}

@@ -1,0 +1,239 @@
+{
+  "inputs": {
+    "offline:@/components/ui/dialog": {
+      "bytes": 224,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/ui/button": {
+      "bytes": 113,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "offline:@/components/ui/input": {
+      "bytes": 78,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "offline:@/api/base44Client": {
+      "bytes": 178,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/masterInventory/foundationFieldSchema.js": {
+      "bytes": 3835,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/builder/builderEntityPersistence": {
+      "bytes": 388,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:./inventoryPersistence": {
+      "bytes": 140,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationGeometryInputs.js": {
+      "bytes": 2674,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementCatalogMetadata.js": {
+      "bytes": 1781,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/ReinforcementDraftField.jsx": {
+      "bytes": 1217,
+      "imports": [
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationReinforcementCatalogMetadataFields.jsx": {
+      "bytes": 1636,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementCatalogMetadata.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementCatalogMetadata"
+        },
+        {
+          "path": "src/components/estimator/foundation/ReinforcementDraftField.jsx",
+          "kind": "import-statement",
+          "original": "./ReinforcementDraftField"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/masterInventory/FoundationMaterialDialog.jsx": {
+      "bytes": 6228,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "offline:@/components/ui/dialog",
+          "kind": "import-statement",
+          "original": "@/components/ui/dialog"
+        },
+        {
+          "path": "offline:@/components/ui/button",
+          "kind": "import-statement",
+          "original": "@/components/ui/button"
+        },
+        {
+          "path": "offline:@/components/ui/input",
+          "kind": "import-statement",
+          "original": "@/components/ui/input"
+        },
+        {
+          "path": "offline:@/api/base44Client",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "src/components/masterInventory/foundationFieldSchema.js",
+          "kind": "import-statement",
+          "original": "./foundationFieldSchema"
+        },
+        {
+          "path": "offline:@/components/estimator/builder/builderEntityPersistence",
+          "kind": "import-statement",
+          "original": "@/components/estimator/builder/builderEntityPersistence"
+        },
+        {
+          "path": "offline:./inventoryPersistence",
+          "kind": "import-statement",
+          "original": "./inventoryPersistence"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementCatalogMetadata.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationReinforcementCatalogMetadata"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationReinforcementCatalogMetadataFields.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationReinforcementCatalogMetadataFields"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    ".audit-work/foundation-reinforcement18/catalog-meta-dialog-test.mjs": {
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "exports": [
+        "default"
+      ],
+      "entryPoint": "src/components/masterInventory/FoundationMaterialDialog.jsx",
+      "inputs": {
+        "src/components/masterInventory/FoundationMaterialDialog.jsx": {
+          "bytesInOutput": 5629
+        },
+        "offline:@/components/ui/dialog": {
+          "bytesInOutput": 224
+        },
+        "offline:@/components/ui/button": {
+          "bytesInOutput": 116
+        },
+        "offline:@/components/ui/input": {
+          "bytesInOutput": 81
+        },
+        "offline:@/api/base44Client": {
+          "bytesInOutput": 196
+        },
+        "src/components/masterInventory/foundationFieldSchema.js": {
+          "bytesInOutput": 3560
+        },
+        "offline:@/components/estimator/builder/builderEntityPersistence": {
+          "bytesInOutput": 308
+        },
+        "offline:./inventoryPersistence": {
+          "bytesInOutput": 140
+        },
+        "src/components/estimator/foundation/foundationGeometryInputs.js": {
+          "bytesInOutput": 307
+        },
+        "src/components/estimator/foundation/foundationReinforcementCatalogMetadata.js": {
+          "bytesInOutput": 1534
+        },
+        "src/components/estimator/foundation/ReinforcementDraftField.jsx": {
+          "bytesInOutput": 1288
+        },
+        "src/components/estimator/foundation/FoundationReinforcementCatalogMetadataFields.jsx": {
+          "bytesInOutput": 1557
+        }
+      },
+      "bytes": 15722
+    }
+  }
+}

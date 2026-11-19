@@ -1,0 +1,57 @@
+{
+  "results": [
+    {
+      "name": "saved Work Order with unknown Product costs never prints zero cost or 100 percent margin",
+      "ok": false,
+      "error": "Error: Reinforcement Work Order handoff is invalid: the last-calculated Part does not match the saved definition. Recalculate and save Foundation.\n    at fail3 (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:3233:17)\n    at validateCurrent (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:3261:5)\n    at readFoundationReinforcementWorkOrderPart (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:3363:27)\n    at foundationReinforcementPrintMaterial (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:4724:17)\n    at buildMaterials (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:4967:27)\n    at Module.buildWorkOrderPrintModel (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:5002:21)\n    at build (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:13:36)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:27:17\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:23:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:26:1"
+    },
+    {
+      "name": "new Product seeding retains accepted internal amounts rather than selling or live prices",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nundefined !== 694\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:45:10\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:23:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:39:1\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    },
+    {
+      "name": "customer price changes and live cost hints cannot replace the frozen internal basis",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nundefined !== 20\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:60:10\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:23:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:56:1\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    },
+    {
+      "name": "explicit zero accepted cost and quantity remain recorded zeros",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nundefined !== 0\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:69:10\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:23:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:67:1\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    },
+    {
+      "name": "missing or malformed accepted cost never becomes an invented zero",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: undefined\n+ actual - expected\n\n+ undefined\n- null\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:79:12\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:23:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:76:1\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    },
+    {
+      "name": "null blank boolean array and object money remain unknown in historical print rows",
+      "ok": true
+    },
+    {
+      "name": "partially costed Products do not claim a complete cost or margin",
+      "ok": false,
+      "error": "Error: Reinforcement Work Order handoff is invalid: the last-calculated Part does not match the saved definition. Recalculate and save Foundation.\n    at fail3 (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:3233:17)\n    at validateCurrent (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:3261:5)\n    at readFoundationReinforcementWorkOrderPart (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:3363:27)\n    at foundationReinforcementPrintMaterial (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:4724:17)\n    at buildMaterials (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:4967:27)\n    at Module.buildWorkOrderPrintModel (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:5002:21)\n    at build (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:13:36)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:99:17\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:23:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:94:1"
+    },
+    {
+      "name": "known cost with unknown selling amounts has no invented margin",
+      "ok": true
+    },
+    {
+      "name": "a manifest-only print does not promote its partial cost into a whole-order total",
+      "ok": false,
+      "error": "Error: Reinforcement Work Order handoff is invalid: the last-calculated Part does not match the saved definition. Recalculate and save Foundation.\n    at fail3 (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:3233:17)\n    at validateCurrent (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:3261:5)\n    at readFoundationReinforcementWorkOrderPart (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:3363:27)\n    at foundationReinforcementPrintMaterial (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:4724:17)\n    at buildMaterials (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:4967:27)\n    at Module.buildWorkOrderPrintModel (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-work-order-bundle.mjs:5002:21)\n    at build (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:13:36)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:118:17\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:23:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs:117:1"
+    },
+    {
+      "name": "fully recorded ordinary pricing retains its existing math and no source input is mutated",
+      "ok": true
+    }
+  ],
+  "frozenWorkOrderUnchanged": true,
+  "actualSourceHelpers": true,
+  "syntheticOnly": true,
+  "realStorageVerified": false,
+  "backendAuthorizationVerified": false,
+  "remoteActivated": false
+}

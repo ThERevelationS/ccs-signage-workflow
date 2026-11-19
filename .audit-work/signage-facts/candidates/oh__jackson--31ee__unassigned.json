@@ -1,0 +1,51 @@
+{
+ "jurisdiction_id": "6ad5a461031fe60c4dc831ee",
+ "jurisdiction_name": "Jackson",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 4,
+   "snippet": "The purpose of questions 1 - 12 is to obtain information relevant to employment with the City of Jackson RESPONSES TO THESE QUESTIONS ARE REQUIRED 1. Please indicate your County of residence: 2. Do you have a relative on Jackson City Payroll? Yes No If yes, what relationship: What Department? 3. Summary of Qualifications: Briefly describe the experience, education, training, and any other factors that qualify you for the position or examination for which you are applying. Refer to Minimum Qualification and any position-specific qualifications posted for this position or examination. If you need additional space, attach an extra sheet to this application. 4. Please list the specific course work areas at the high school level or beyond relevant to the position or examination for which you are applying. Also indicate the number of courses you have successfully completed in each area. NOTE: ",
+   "tags": [
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "134b25be88de8a91ac4bd2a438b20426c940d4569f448cff66899f9883875485",
+   "source_document_id": null,
+   "source_title": "134b25be88de8a91ac4bd2a438b20426c940d4569f448cff66899f9883875485.pdf",
+   "official_url": "https://www.jacksonohio.us/Documents/Forms/Civil%20Service%20Application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Permit # (To be assigned by the City of Jackson) Print Applicant Name: Title: Phone: ( ) Applicant Signature: Date: Approved: Rejected: Signature of individual approving: Date: 145 Broadway St. Jackson, Ohio 45640 (740) 286 - 2201 cityadministration@jacksonohio.us (740) 286 - 2201 cityadministration@jacksonohio.us Randy Evans, Mayor David Swackhammer, Director of Public Service/ Safety FLOODPLAIN DEVELOPMENT PERMIT Purpose for Permit : New Construction Remodel Demolition Fence or Wall Fill / Grading Paving / Concrete Clearing of trees or vegetation Property Owner Address City State Zip Phone Number ( ) Cell ( ) Email Contractor Name Registration # Contractor Phone Number ( ) Requirements : (check the boxes) Permit Fee of $10.00. Cash Credit Check # Notify OUPS (811) and the Mayor’s Office 48 hours prior to beginning any excavation. All activities shall comply with all FEMA and Ohio and F",
+   "tags": [
+    "fee",
+    "dimension",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "9395a50cc790fb811b3e018c892fa739d9bb1cabd625553155434f68a8824309",
+   "source_document_id": null,
+   "source_title": "9395a50cc790fb811b3e018c892fa739d9bb1cabd625553155434f68a8824309.pdf",
+   "official_url": "https://www.jacksonohio.us/Documents/Forms/Floodplain%20Permit.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Permit # (To be assigned by the City of Jackson) Print Applicant Name: Title: Phone: ( ) Applicant Signature: Date: Approved: Rejected: Signature of individual approving: Date: 145 Broadway St. Jackson, Ohio 45640 (740) 286 - 2201 cityadministration@jacksonohio.us (740) 286 - 2201 cityadministration@jacksonohio.us Randy Evans, Mayor David Swackhammer, Service Director DEMOLITION PERMIT Purpose for Permit Property Owner Address City State Zip Phone Number ( ) Cell ( ) Email Contractor Name Registration # Contractor Phone Number ( ) Residential Commercial or Industrial (First requires State of Ohio Permit) Subdivision Zoning Lot # Parcel Number Property in a Floodplain? No Yes, Floodplain Permit required Requirements: (check the boxes) Permit Fee $ 2 0.00 Residential $ 5 0.00 Commerical or Industrial Cash Credit Check # Terminate all utilites . Obtain Ohio EPA’s approval for buildings wher",
+   "tags": [
+    "fee",
+    "penalties",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "f8936751f4749be1f14bad1f889ff57523e576251dc1ff418d1fb73ad1ff51bb",
+   "source_document_id": null,
+   "source_title": "f8936751f4749be1f14bad1f889ff57523e576251dc1ff418d1fb73ad1ff51bb.pdf",
+   "official_url": "https://www.jacksonohio.us/Documents/Forms/Demolition%20Permit.pdf"
+  }
+ ]
+}

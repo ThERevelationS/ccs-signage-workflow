@@ -1,0 +1,22 @@
+{
+ "src/components/estimator/brick/BrickGeometryPanel.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/estimator/brick/BrickTotals.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/estimator/brick/brickPricingAvailability.js": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/pages/BrickStoneEstimator.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ }
+}

@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/estimator/customerQuote.js",
+      "content": "export function buildCustomerQuoteRows(estimate, pricing) {\n  const sections = pricing?.sections || [];\n  if (estimate?.hide_section_prices === true) {\n    return [{\n      key: \"project-scope\",\n      name: \"Project scope\",\n      category: \"\",\n      quantity: \"\",\n      description: estimate?.project_name || \"\",\n      amount: Number(pricing?.subtotal || 0),\n      bundled: true,\n    }];\n  }\n\n  const rows = sections\n    .filter((section) => section.include_in_customer !== false)\n    .map((section, index) => ({\n      key: section.line_id || section.project_id || `product-${index}`,\n      name: section.client_product_name || section.project_name || section.product_category || `Product ${index + 1}`,\n      category: section.product_category || \"\",\n      quantity: section.quantity,\n      description: section.customer_description || \"\",\n      amount: Number(section.adjusted || 0),\n      bundled: false,\n    }));\n\n  const bundledAmount = sections\n    .filter((section) => section.include_in_customer === false)\n    .reduce((sum, section) => sum + Number(section.adjusted || 0), 0);\n\n  if (Math.abs(bundledAmount) > 0.005) {\n    rows.push({\n      key: \"additional-project-scope\",\n      name: \"Additional project scope\",\n      category: \"\",\n      quantity: \"\",\n      description: \"Bundled scope included in project pricing.\",\n      amount: bundledAmount,\n      bundled: true,\n    });\n  }\n\n  return rows;\n}\n\nexport function quoteRowsTotal(rows) {\n  return (rows || []).reduce((sum, row) => sum + Number(row.amount || 0), 0);\n}",
+      "startLine": 1,
+      "endLine": 48,
+      "totalLines": 48,
+      "truncated": false
+    }
+  ]
+}

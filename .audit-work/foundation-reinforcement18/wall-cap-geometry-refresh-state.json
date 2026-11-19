@@ -1,0 +1,32 @@
+{
+ "readmeBytes": 9791,
+ "whoami": "Logged in as: brettheinlein1@gmail.com",
+ "branches": [
+  {
+   "name": "main",
+   "status": "active"
+  }
+ ],
+ "app": {
+  "id": "68dfcc5e57bbbc35387da97c",
+  "name": "CCS Signage Workflow",
+  "status": {
+   "state": "ready",
+   "details": null,
+   "request_id": "1b2b0193-a041-493e-b705-4ca7eeb2a1c3",
+   "turn_id": null,
+   "last_updated_date": "2026-11-06T12:00:27.081000",
+   "error_source": null,
+   "paywall_context": null
+  },
+  "git_repo_pending": null,
+  "dev_environment_enabled": false
+ },
+ "git": {
+  "stdout": "e1fbae8e8bc2162a5bd184b0cc4ccc2dfbe78f3b\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 944
+ }
+}

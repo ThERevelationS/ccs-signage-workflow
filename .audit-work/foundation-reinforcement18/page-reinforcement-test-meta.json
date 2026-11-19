@@ -1,0 +1,1583 @@
+{
+  "inputs": {
+    "offline:react-router-dom": {
+      "bytes": 103,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/ui/input": {
+      "bytes": 28,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/ui/tabs": {
+      "bytes": 170,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:lucide-react": {
+      "bytes": 1269,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationItemCard": {
+      "bytes": 248,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationPreliminaryNotice.js": {
+      "bytes": 5273,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "offline:lucide-react",
+          "kind": "import-statement",
+          "original": "lucide-react"
+        }
+      ],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationReinforcementProposalPanel": {
+      "bytes": 251,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/legacyFoundationCalc.js": {
+      "bytes": 19836,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/masterInventory/inventoryNormalization.js": {
+      "bytes": 20138,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationEquipmentBindings.js": {
+      "bytes": 7041,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/wallCapCalculator.js": {
+      "bytes": 9650,
+      "imports": [
+        {
+          "path": "src/components/masterInventory/inventoryNormalization.js",
+          "kind": "import-statement",
+          "original": "@/components/masterInventory/inventoryNormalization"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationCatalogIntegrity.js": {
+      "bytes": 5603,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationEquipmentBindings.js",
+          "kind": "import-statement",
+          "original": "./foundationEquipmentBindings"
+        },
+        {
+          "path": "src/components/estimator/foundation/wallCapCalculator.js",
+          "kind": "import-statement",
+          "original": "./wallCapCalculator"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/wallCalculator.js": {
+      "bytes": 34667,
+      "imports": [
+        {
+          "path": "src/components/masterInventory/inventoryNormalization.js",
+          "kind": "import-statement",
+          "original": "@/components/masterInventory/inventoryNormalization"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/poleCalculator.js": {
+      "bytes": 37273,
+      "imports": [
+        {
+          "path": "src/components/masterInventory/inventoryNormalization.js",
+          "kind": "import-statement",
+          "original": "@/components/masterInventory/inventoryNormalization"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/landscapeMaterials.js": {
+      "bytes": 19526,
+      "imports": [
+        {
+          "path": "src/components/masterInventory/inventoryNormalization.js",
+          "kind": "import-statement",
+          "original": "@/components/masterInventory/inventoryNormalization"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationGeometryInputs.js": {
+      "bytes": 15113,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationRuleRegistry.js": {
+      "bytes": 97839,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementModel.js": {
+      "bytes": 17500,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationRuleRegistry.js",
+          "kind": "import-statement",
+          "original": "./foundationRuleRegistry"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationInputValidation.js": {
+      "bytes": 11756,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/landscapeMaterials.js",
+          "kind": "import-statement",
+          "original": "./landscapeMaterials"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementModel"
+        },
+        {
+          "path": "src/components/masterInventory/inventoryNormalization.js",
+          "kind": "import-statement",
+          "original": "@/components/masterInventory/inventoryNormalization"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationConstructionChecks.js": {
+      "bytes": 12102,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+          "kind": "import-statement",
+          "original": "./legacyFoundationCalc"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementBasis.js": {
+      "bytes": 7067,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementCost.js": {
+      "bytes": 7987,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementSupport.js": {
+      "bytes": 15501,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementCutSchedule.js": {
+      "bytes": 16636,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementProjection.js": {
+      "bytes": 2949,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementModel"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementBasis.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementBasis"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementCost.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementCost"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementSupport.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementSupport"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementCutSchedule.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementCutSchedule"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementItemProjection.js": {
+      "bytes": 8920,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+          "kind": "import-statement",
+          "original": "./legacyFoundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementProjection.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementProjection"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationCalc.js": {
+      "bytes": 32596,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+          "kind": "import-statement",
+          "original": "./legacyFoundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/wallCalculator.js",
+          "kind": "import-statement",
+          "original": "./wallCalculator"
+        },
+        {
+          "path": "src/components/estimator/foundation/poleCalculator.js",
+          "kind": "import-statement",
+          "original": "./poleCalculator"
+        },
+        {
+          "path": "src/components/estimator/foundation/wallCapCalculator.js",
+          "kind": "import-statement",
+          "original": "./wallCapCalculator"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationEquipmentBindings.js",
+          "kind": "import-statement",
+          "original": "./foundationEquipmentBindings"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationInputValidation.js",
+          "kind": "import-statement",
+          "original": "./foundationInputValidation"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationConstructionChecks.js",
+          "kind": "import-statement",
+          "original": "./foundationConstructionChecks"
+        },
+        {
+          "path": "src/components/estimator/foundation/landscapeMaterials.js",
+          "kind": "import-statement",
+          "original": "./landscapeMaterials"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementItemProjection.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementItemProjection"
+        },
+        {
+          "path": "src/components/masterInventory/inventoryNormalization.js",
+          "kind": "import-statement",
+          "original": "@/components/masterInventory/inventoryNormalization"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementDraft.js": {
+      "bytes": 5216,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementBasisKey.js": {
+      "bytes": 2913,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementProposal.js": {
+      "bytes": 12011,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationInputValidation.js",
+          "kind": "import-statement",
+          "original": "./foundationInputValidation"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementDraft.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementDraft"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementItemProjection.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementItemProjection"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementBasisKey.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementBasisKey"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementEditorSession.js": {
+      "bytes": 11073,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementDraft.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementDraft"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementProposal.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementProposal"
+        }
+      ],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/idempotentEntityCreate": {
+      "bytes": 181,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/useFoundationReinforcementEditor.js": {
+      "bytes": 932,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementEditorSession.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementEditorSession"
+        },
+        {
+          "path": "offline:@/components/estimator/idempotentEntityCreate",
+          "kind": "import-statement",
+          "original": "@/components/estimator/idempotentEntityCreate"
+        }
+      ],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationRatesPanel": {
+      "bytes": 296,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationEquipmentTab": {
+      "bytes": 302,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationTotals": {
+      "bytes": 284,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/ConcreteDeliveryPanel": {
+      "bytes": 299,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationBOM": {
+      "bytes": 275,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationSceneTransforms.js": {
+      "bytes": 16169,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationLayoutModel.js": {
+      "bytes": 2858,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationSceneTransforms.js",
+          "kind": "import-statement",
+          "original": "./foundationSceneTransforms"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationSceneInput.js": {
+      "bytes": 27908,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+          "kind": "import-statement",
+          "original": "./foundationLayoutModel"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSceneTransforms.js",
+          "kind": "import-statement",
+          "original": "./foundationSceneTransforms"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationSceneSelection.js": {
+      "bytes": 48362,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+          "kind": "import-statement",
+          "original": "./foundationLayoutModel"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSceneTransforms.js",
+          "kind": "import-statement",
+          "original": "./foundationSceneTransforms"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSceneInput.js",
+          "kind": "import-statement",
+          "original": "./foundationSceneInput"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationSceneEditOps.js": {
+      "bytes": 42252,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+          "kind": "import-statement",
+          "original": "./foundationLayoutModel"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSceneTransforms.js",
+          "kind": "import-statement",
+          "original": "./foundationSceneTransforms"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSceneInput.js",
+          "kind": "import-statement",
+          "original": "./foundationSceneInput"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSceneSelection.js",
+          "kind": "import-statement",
+          "original": "./foundationSceneSelection"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReparentModel.js": {
+      "bytes": 40039,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+          "kind": "import-statement",
+          "original": "./foundationLayoutModel"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSceneTransforms.js",
+          "kind": "import-statement",
+          "original": "./foundationSceneTransforms"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSceneInput.js",
+          "kind": "import-statement",
+          "original": "./foundationSceneInput"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSceneSelection.js",
+          "kind": "import-statement",
+          "original": "./foundationSceneSelection"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSceneEditOps.js",
+          "kind": "import-statement",
+          "original": "./foundationSceneEditOps"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationSceneDiagnostics.js": {
+      "bytes": 29304,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+          "kind": "import-statement",
+          "original": "./foundationLayoutModel"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSceneSelection.js",
+          "kind": "import-statement",
+          "original": "./foundationSceneSelection"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReparentModel.js",
+          "kind": "import-statement",
+          "original": "./foundationReparentModel"
+        },
+        {
+          "path": "src/components/estimator/foundation/landscapeMaterials.js",
+          "kind": "import-statement",
+          "original": "./landscapeMaterials.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationPlanExport.js": {
+      "bytes": 11527,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationRevisionDiff.js": {
+      "bytes": 6427,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationFieldPackage.jsx": {
+      "bytes": 21858,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationPreliminaryNotice.js",
+          "kind": "import-statement",
+          "original": "./foundationPreliminaryNotice"
+        },
+        {
+          "path": "src/components/estimator/foundation/landscapeMaterials.js",
+          "kind": "import-statement",
+          "original": "./landscapeMaterials"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSceneDiagnostics.js",
+          "kind": "import-statement",
+          "original": "./foundationSceneDiagnostics"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationPlanExport.js",
+          "kind": "import-statement",
+          "original": "./foundationPlanExport"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationRuleRegistry.js",
+          "kind": "import-statement",
+          "original": "./foundationRuleRegistry"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationRevisionDiff.js",
+          "kind": "import-statement",
+          "original": "./foundationRevisionDiff"
+        },
+        {
+          "path": "src/components/estimator/foundation/wallCapCalculator.js",
+          "kind": "import-statement",
+          "original": "./wallCapCalculator"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationDesignBasis.jsx": {
+      "bytes": 3855,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationBulkMaterialChange.js": {
+      "bytes": 7409,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationBulkMaterialPanel.jsx": {
+      "bytes": 3845,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationBulkMaterialChange.js",
+          "kind": "import-statement",
+          "original": "./foundationBulkMaterialChange"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationGuidedSteps.jsx": {
+      "bytes": 5592,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "offline:lucide-react",
+          "kind": "import-statement",
+          "original": "lucide-react"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationWallsPanel": {
+      "bytes": 296,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationWallCapsPanel": {
+      "bytes": 305,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationPolesPanel": {
+      "bytes": 296,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationToolbar": {
+      "bytes": 287,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationSectionBanner": {
+      "bytes": 305,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/AiEngineeringAssistant": {
+      "bytes": 302,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationPhotoIntake": {
+      "bytes": 299,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationAiIntake": {
+      "bytes": 290,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/Foundation3DPreview": {
+      "bytes": 293,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationTemplateDialog": {
+      "bytes": 308,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationSyncConflictDialog": {
+      "bytes": 246,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/FoundationLayoutCanvas": {
+      "bytes": 302,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationSceneHistory.js": {
+      "bytes": 19795,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+          "kind": "import-statement",
+          "original": "./foundationLayoutModel"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationAssemblyModel.js": {
+      "bytes": 23477,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationDuplicateMirror.js": {
+      "bytes": 18556,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+          "kind": "import-statement",
+          "original": "./foundationAssemblyModel.js"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+          "kind": "import-statement",
+          "original": "./foundationLayoutModel.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/SignageCabinetsPanel": {
+      "bytes": 296,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/LandscapeDesigner": {
+      "bytes": 287,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/CustomerPricingPanel": {
+      "bytes": 296,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/markup/CustomerPricingTab": {
+      "bytes": 290,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/markup/projectCategorizer": {
+      "bytes": 103,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/markup/savedCustomerPricing": {
+      "bytes": 111,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/builder/builderService": {
+      "bytes": 635,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/lib/loadAllEntityRows": {
+      "bytes": 354,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/estimateMutationGuard": {
+      "bytes": 135,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/staff/staffEntities": {
+      "bytes": 865,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/sourceProjectPersistence.js": {
+      "bytes": 3808,
+      "imports": [
+        {
+          "path": "offline:@/components/estimator/estimateMutationGuard",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimateMutationGuard"
+        },
+        {
+          "path": "offline:@/components/staff/staffEntities",
+          "kind": "import-statement",
+          "original": "@/components/staff/staffEntities"
+        }
+      ],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/foundationBuilderRecovery": {
+      "bytes": 329,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationSaveSession.js": {
+      "bytes": 2871,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationDraftRecovery.js": {
+      "bytes": 22920,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/auth/EmailGate": {
+      "bytes": 64,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationSyncRecovery.js": {
+      "bytes": 9650,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationTemplateModel.js": {
+      "bytes": 10057,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+          "kind": "import-statement",
+          "original": "./foundationAssemblyModel.js"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationPreliminaryNotice.js",
+          "kind": "import-statement",
+          "original": "./foundationPreliminaryNotice.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/foundation/convertToBrickStone": {
+      "bytes": 94,
+      "imports": [],
+      "format": "esm"
+    },
+    "offline:@/components/estimator/moduleShared/moduleProjectActions": {
+      "bytes": 88,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/pages/FoundationEstimator.jsx": {
+      "bytes": 113155,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "offline:react-router-dom",
+          "kind": "import-statement",
+          "original": "react-router-dom"
+        },
+        {
+          "path": "offline:@/components/ui/input",
+          "kind": "import-statement",
+          "original": "@/components/ui/input"
+        },
+        {
+          "path": "offline:@/components/ui/tabs",
+          "kind": "import-statement",
+          "original": "@/components/ui/tabs"
+        },
+        {
+          "path": "offline:lucide-react",
+          "kind": "import-statement",
+          "original": "lucide-react"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationItemCard",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationItemCard"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationPreliminaryNotice.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationPreliminaryNotice"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationReinforcementProposalPanel",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationReinforcementProposalPanel"
+        },
+        {
+          "path": "src/components/estimator/foundation/useFoundationReinforcementEditor.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/useFoundationReinforcementEditor"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationRatesPanel",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationRatesPanel"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationEquipmentTab",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationEquipmentTab"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationTotals",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationTotals"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/ConcreteDeliveryPanel",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/ConcreteDeliveryPanel"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationBOM",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationBOM"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationFieldPackage.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationFieldPackage"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationDesignBasis.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationDesignBasis"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationBulkMaterialPanel.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationBulkMaterialPanel"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationGuidedSteps.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationGuidedSteps"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationRevisionDiff.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationRevisionDiff"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationWallsPanel",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationWallsPanel"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationWallCapsPanel",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationWallCapsPanel"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationPolesPanel",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationPolesPanel"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationToolbar",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationToolbar"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationSectionBanner",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationSectionBanner"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/AiEngineeringAssistant",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/AiEngineeringAssistant"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationPhotoIntake",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationPhotoIntake"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationAiIntake",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationAiIntake"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/Foundation3DPreview",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/Foundation3DPreview"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationTemplateDialog",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationTemplateDialog"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationSyncConflictDialog",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationSyncConflictDialog"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/FoundationLayoutCanvas",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationLayoutCanvas"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSceneHistory.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationSceneHistory"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSceneSelection.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationSceneSelection"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationDuplicateMirror.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationDuplicateMirror"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/SignageCabinetsPanel",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/SignageCabinetsPanel"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/LandscapeDesigner",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/LandscapeDesigner"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/CustomerPricingPanel",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/CustomerPricingPanel"
+        },
+        {
+          "path": "offline:@/components/markup/CustomerPricingTab",
+          "kind": "import-statement",
+          "original": "@/components/markup/CustomerPricingTab"
+        },
+        {
+          "path": "offline:@/components/markup/projectCategorizer",
+          "kind": "import-statement",
+          "original": "@/components/markup/projectCategorizer"
+        },
+        {
+          "path": "offline:@/components/markup/savedCustomerPricing",
+          "kind": "import-statement",
+          "original": "@/components/markup/savedCustomerPricing"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationCatalogIntegrity"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/legacyFoundationCalc"
+        },
+        {
+          "path": "src/components/masterInventory/inventoryNormalization.js",
+          "kind": "import-statement",
+          "original": "@/components/masterInventory/inventoryNormalization"
+        },
+        {
+          "path": "offline:@/components/estimator/builder/builderService",
+          "kind": "import-statement",
+          "original": "@/components/estimator/builder/builderService"
+        },
+        {
+          "path": "offline:@/lib/loadAllEntityRows",
+          "kind": "import-statement",
+          "original": "@/lib/loadAllEntityRows"
+        },
+        {
+          "path": "src/components/estimator/builder/sourceProjectPersistence.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/builder/sourceProjectPersistence"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/foundationBuilderRecovery",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationBuilderRecovery"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSaveSession.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationSaveSession"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationDraftRecovery.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationDraftRecovery"
+        },
+        {
+          "path": "offline:@/components/auth/EmailGate",
+          "kind": "import-statement",
+          "original": "@/components/auth/EmailGate"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSyncRecovery.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationSyncRecovery"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationAssemblyModel"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationTemplateModel"
+        },
+        {
+          "path": "offline:@/components/estimator/idempotentEntityCreate",
+          "kind": "import-statement",
+          "original": "@/components/estimator/idempotentEntityCreate"
+        },
+        {
+          "path": "offline:@/components/estimator/foundation/convertToBrickStone",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/convertToBrickStone"
+        },
+        {
+          "path": "offline:@/components/estimator/moduleShared/moduleProjectActions",
+          "kind": "import-statement",
+          "original": "@/components/estimator/moduleShared/moduleProjectActions"
+        },
+        {
+          "path": "offline:@/components/staff/staffEntities",
+          "kind": "import-statement",
+          "original": "@/components/staff/staffEntities"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    ".audit-work/foundation-reinforcement18/page-reinforcement-test-bundle.mjs": {
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "exports": [
+        "default"
+      ],
+      "entryPoint": "src/pages/FoundationEstimator.jsx",
+      "inputs": {
+        "src/pages/FoundationEstimator.jsx": {
+          "bytesInOutput": 100774
+        },
+        "offline:react-router-dom": {
+          "bytesInOutput": 99
+        },
+        "offline:@/components/ui/input": {
+          "bytesInOutput": 24
+        },
+        "offline:@/components/ui/tabs": {
+          "bytesInOutput": 170
+        },
+        "offline:lucide-react": {
+          "bytesInOutput": 342
+        },
+        "offline:@/components/estimator/foundation/FoundationItemCard": {
+          "bytesInOutput": 222
+        },
+        "src/components/estimator/foundation/foundationPreliminaryNotice.js": {
+          "bytesInOutput": 1604
+        },
+        "offline:@/components/estimator/foundation/FoundationReinforcementProposalPanel": {
+          "bytesInOutput": 224
+        },
+        "src/components/estimator/foundation/useFoundationReinforcementEditor.js": {
+          "bytesInOutput": 767
+        },
+        "src/components/estimator/foundation/legacyFoundationCalc.js": {
+          "bytesInOutput": 17737
+        },
+        "src/components/masterInventory/inventoryNormalization.js": {
+          "bytesInOutput": 4514
+        },
+        "src/components/estimator/foundation/foundationEquipmentBindings.js": {
+          "bytesInOutput": 3729
+        },
+        "src/components/estimator/foundation/wallCapCalculator.js": {
+          "bytesInOutput": 8091
+        },
+        "src/components/estimator/foundation/foundationCatalogIntegrity.js": {
+          "bytesInOutput": 4249
+        },
+        "src/components/estimator/foundation/wallCalculator.js": {
+          "bytesInOutput": 25212
+        },
+        "src/components/estimator/foundation/poleCalculator.js": {
+          "bytesInOutput": 17431
+        },
+        "src/components/estimator/foundation/landscapeMaterials.js": {
+          "bytesInOutput": 13891
+        },
+        "src/components/estimator/foundation/foundationGeometryInputs.js": {
+          "bytesInOutput": 13488
+        },
+        "src/components/estimator/foundation/foundationRuleRegistry.js": {
+          "bytesInOutput": 90293
+        },
+        "src/components/estimator/foundation/foundationReinforcementModel.js": {
+          "bytesInOutput": 17421
+        },
+        "src/components/estimator/foundation/foundationInputValidation.js": {
+          "bytesInOutput": 8755
+        },
+        "src/components/estimator/foundation/foundationConstructionChecks.js": {
+          "bytesInOutput": 8458
+        },
+        "src/components/estimator/foundation/foundationReinforcementBasis.js": {
+          "bytesInOutput": 7117
+        },
+        "src/components/estimator/foundation/foundationReinforcementCost.js": {
+          "bytesInOutput": 7810
+        },
+        "src/components/estimator/foundation/foundationReinforcementSupport.js": {
+          "bytesInOutput": 14314
+        },
+        "src/components/estimator/foundation/foundationReinforcementCutSchedule.js": {
+          "bytesInOutput": 13842
+        },
+        "src/components/estimator/foundation/foundationReinforcementProjection.js": {
+          "bytesInOutput": 1952
+        },
+        "src/components/estimator/foundation/foundationReinforcementItemProjection.js": {
+          "bytesInOutput": 8476
+        },
+        "src/components/estimator/foundation/foundationCalc.js": {
+          "bytesInOutput": 24962
+        },
+        "src/components/estimator/foundation/foundationReinforcementDraft.js": {
+          "bytesInOutput": 5190
+        },
+        "src/components/estimator/foundation/foundationReinforcementBasisKey.js": {
+          "bytesInOutput": 2864
+        },
+        "src/components/estimator/foundation/foundationReinforcementProposal.js": {
+          "bytesInOutput": 11563
+        },
+        "src/components/estimator/foundation/foundationReinforcementEditorSession.js": {
+          "bytesInOutput": 10575
+        },
+        "offline:@/components/estimator/idempotentEntityCreate": {
+          "bytesInOutput": 173
+        },
+        "offline:@/components/estimator/foundation/FoundationRatesPanel": {
+          "bytesInOutput": 240
+        },
+        "offline:@/components/estimator/foundation/FoundationEquipmentTab": {
+          "bytesInOutput": 242
+        },
+        "offline:@/components/estimator/foundation/FoundationTotals": {
+          "bytesInOutput": 236
+        },
+        "offline:@/components/estimator/foundation/ConcreteDeliveryPanel": {
+          "bytesInOutput": 241
+        },
+        "offline:@/components/estimator/foundation/FoundationBOM": {
+          "bytesInOutput": 233
+        },
+        "src/components/estimator/foundation/foundationSceneTransforms.js": {
+          "bytesInOutput": 2195
+        },
+        "src/components/estimator/foundation/foundationLayoutModel.js": {
+          "bytesInOutput": 1788
+        },
+        "src/components/estimator/foundation/foundationSceneInput.js": {
+          "bytesInOutput": 7738
+        },
+        "src/components/estimator/foundation/foundationSceneSelection.js": {
+          "bytesInOutput": 32497
+        },
+        "src/components/estimator/foundation/foundationSceneEditOps.js": {
+          "bytesInOutput": 803
+        },
+        "src/components/estimator/foundation/foundationReparentModel.js": {
+          "bytesInOutput": 5547
+        },
+        "src/components/estimator/foundation/foundationSceneDiagnostics.js": {
+          "bytesInOutput": 23336
+        },
+        "src/components/estimator/foundation/foundationPlanExport.js": {
+          "bytesInOutput": 8776
+        },
+        "src/components/estimator/foundation/foundationRevisionDiff.js": {
+          "bytesInOutput": 5561
+        },
+        "src/components/estimator/foundation/FoundationFieldPackage.jsx": {
+          "bytesInOutput": 22925
+        },
+        "src/components/estimator/foundation/FoundationDesignBasis.jsx": {
+          "bytesInOutput": 3353
+        },
+        "src/components/estimator/foundation/FoundationBulkMaterialPanel.jsx": {
+          "bytesInOutput": 4075
+        },
+        "src/components/estimator/foundation/foundationBulkMaterialChange.js": {
+          "bytesInOutput": 4601
+        },
+        "src/components/estimator/foundation/FoundationGuidedSteps.jsx": {
+          "bytesInOutput": 5126
+        },
+        "offline:@/components/estimator/foundation/FoundationWallsPanel": {
+          "bytesInOutput": 240
+        },
+        "offline:@/components/estimator/foundation/FoundationWallCapsPanel": {
+          "bytesInOutput": 243
+        },
+        "offline:@/components/estimator/foundation/FoundationPolesPanel": {
+          "bytesInOutput": 241
+        },
+        "offline:@/components/estimator/foundation/FoundationToolbar": {
+          "bytesInOutput": 238
+        },
+        "offline:@/components/estimator/foundation/FoundationSectionBanner": {
+          "bytesInOutput": 244
+        },
+        "offline:@/components/estimator/foundation/AiEngineeringAssistant": {
+          "bytesInOutput": 243
+        },
+        "offline:@/components/estimator/foundation/FoundationPhotoIntake": {
+          "bytesInOutput": 242
+        },
+        "offline:@/components/estimator/foundation/FoundationAiIntake": {
+          "bytesInOutput": 239
+        },
+        "offline:@/components/estimator/foundation/Foundation3DPreview": {
+          "bytesInOutput": 240
+        },
+        "offline:@/components/estimator/foundation/FoundationTemplateDialog": {
+          "bytesInOutput": 245
+        },
+        "offline:@/components/estimator/foundation/FoundationSyncConflictDialog": {
+          "bytesInOutput": 282
+        },
+        "offline:@/components/estimator/foundation/FoundationLayoutCanvas": {
+          "bytesInOutput": 243
+        },
+        "src/components/estimator/foundation/foundationSceneHistory.js": {
+          "bytesInOutput": 11641
+        },
+        "src/components/estimator/foundation/foundationAssemblyModel.js": {
+          "bytesInOutput": 22916
+        },
+        "src/components/estimator/foundation/foundationDuplicateMirror.js": {
+          "bytesInOutput": 8799
+        },
+        "offline:@/components/estimator/foundation/SignageCabinetsPanel": {
+          "bytesInOutput": 241
+        },
+        "offline:@/components/estimator/foundation/LandscapeDesigner": {
+          "bytesInOutput": 238
+        },
+        "offline:@/components/estimator/foundation/CustomerPricingPanel": {
+          "bytesInOutput": 241
+        },
+        "offline:@/components/markup/CustomerPricingTab": {
+          "bytesInOutput": 239
+        },
+        "offline:@/components/markup/projectCategorizer": {
+          "bytesInOutput": 102
+        },
+        "offline:@/components/markup/savedCustomerPricing": {
+          "bytesInOutput": 110
+        },
+        "offline:@/components/estimator/builder/builderService": {
+          "bytesInOutput": 684
+        },
+        "offline:@/lib/loadAllEntityRows": {
+          "bytesInOutput": 361
+        },
+        "offline:@/components/estimator/estimateMutationGuard": {
+          "bytesInOutput": 134
+        },
+        "offline:@/components/staff/staffEntities": {
+          "bytesInOutput": 934
+        },
+        "src/components/estimator/builder/sourceProjectPersistence.js": {
+          "bytesInOutput": 2975
+        },
+        "offline:@/components/estimator/foundation/foundationBuilderRecovery": {
+          "bytesInOutput": 305
+        },
+        "src/components/estimator/foundation/foundationSaveSession.js": {
+          "bytesInOutput": 2582
+        },
+        "src/components/estimator/foundation/foundationDraftRecovery.js": {
+          "bytesInOutput": 10993
+        },
+        "offline:@/components/auth/EmailGate": {
+          "bytesInOutput": 66
+        },
+        "src/components/estimator/foundation/foundationSyncRecovery.js": {
+          "bytesInOutput": 6774
+        },
+        "src/components/estimator/foundation/foundationTemplateModel.js": {
+          "bytesInOutput": 3558
+        },
+        "offline:@/components/estimator/foundation/convertToBrickStone": {
+          "bytesInOutput": 93
+        },
+        "offline:@/components/estimator/moduleShared/moduleProjectActions": {
+          "bytesInOutput": 87
+        }
+      },
+      "bytes": 658684
+    }
+  }
+}

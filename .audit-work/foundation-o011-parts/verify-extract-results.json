@@ -1,0 +1,69 @@
+{
+ "cases": [
+  {
+   "name": "cabinets priced -> per-row parts, no adjustment",
+   "ok": true
+  },
+  {
+   "name": "held cabinet row mints no $0 part; saved-aggregate adjustment covers the gap",
+   "ok": true
+  },
+  {
+   "name": "all cabinets held with no acknowledged total -> zero cabinet parts",
+   "ok": true
+  },
+  {
+   "name": "no cabinet rows + stale saved total -> one aggregate adjustment part",
+   "ok": true
+  },
+  {
+   "name": "landscape priced grid -> one part per material",
+   "ok": true
+  },
+  {
+   "name": "held landscape line mints no $0 part; adjustment covers gap to saved total",
+   "ok": true
+  },
+  {
+   "name": "malformed landscape record does not crash; saved total preserved as aggregate",
+   "ok": true
+  },
+  {
+   "name": "absent cabinets + landscape -> no such parts",
+   "ok": true
+  },
+  {
+   "name": "cabinet quantity 0 is held (not guessed to 1) -> covered by saved total",
+   "ok": true
+  },
+  {
+   "name": "explicit $0 unit_cost is a legitimate free cabinet -> priced $0 part",
+   "ok": true
+  },
+  {
+   "name": "legacy aggregate-only landscape save -> aggregate preserved under new key",
+   "ok": true
+  },
+  {
+   "name": "cabinet without id falls back to index key",
+   "ok": true
+  },
+  {
+   "name": "equipment extraction covers base + delivery + attachments + sub-attachments + saved-adjustment",
+   "ok": true
+  },
+  {
+   "name": "all emitted part_keys are unique",
+   "ok": true
+  },
+  {
+   "name": "regression: non-cabinet/landscape parts identical to baseline on a full project",
+   "ok": true
+  },
+  {
+   "name": "regression note: baseline minted $0 part for held cabinet row (candidate does not)",
+   "ok": true
+  }
+ ],
+ "generated": "2026-11-11T09:24:44.946Z"
+}

@@ -1,0 +1,37 @@
+{
+ "jurisdiction_id": "6adaf8e503b9eadb2f673150",
+ "jurisdiction_name": "Montezuma",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR ZONING PERMIT MERCER COUNTY, OHIO Application No. The undersigned applies for a zoning permit for the following use, said permit to be issued on the basis of the information contained within this application. The applicant hereby certifies that all the information and attachments to this application are true and correct. 1. Location Description (if not located in platted subdivision, attach a legal description) Subdivision Name Lot No. Street 2. Name of Owner Mailing Address Phone Number: Home Work Cell Estimated Cost Builder 3. Existing Use 4. Property presently zoned as : 5. Proposed Use : Residential Commercial Industrial New Construction Remodeling Number of Residential Units Accessory Building Deck Fence Sign Size Area (Attach drawings) 6. Sanitary Sewer Permit Number 7. Proposed Date of Completion 8. Lot: Width Depth Area 9. Building Size (Square Feet) Residential: ",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "44b51e338fcfee1e961beda787f37327833212e7623b5efcda19a929992e39bd",
+   "source_document_id": null,
+   "source_title": "44b51e338fcfee1e961beda787f37327833212e7623b5efcda19a929992e39bd.pdf",
+   "official_url": "https://www.mercercountyoh.gov/wp-content/uploads/bsk-pdf-manager/2018/09/Zoning_permit.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "12. Accessory Building Dimensions: Height Size 13. Flood Zone 14. Number of off-street parking spaces to be provided 15 . Number of off-street loading berths to be provided 16. Type of dust-free, hard surface for driveway, off-street parking areas, and off-street loading berths. Asphalt Concrete Double Chip and Seal Other: (explain) 17. Does the dwelling meet all requirements of the Residential Design and Appearance Standards : YES NO 18. Detention Basin: Volume Release Rate 19. Site plan submitted in triplicate, drawn to scale, showing actual dimensions and shape of lot, with exact sizes and locations of uses. YES NO 20. Building plans submitted in triplicate, drawn to scale, showing sufficient information to determine if residential structure meets the residential design and appearance standards YES NO 21. Zoning Permit fee paid. YES NO 22. On a separate sheet attach a list of other su",
+   "tags": [
+    "dimension",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "44b51e338fcfee1e961beda787f37327833212e7623b5efcda19a929992e39bd",
+   "source_document_id": null,
+   "source_title": "44b51e338fcfee1e961beda787f37327833212e7623b5efcda19a929992e39bd.pdf",
+   "official_url": "https://www.mercercountyoh.gov/wp-content/uploads/bsk-pdf-manager/2018/09/Zoning_permit.pdf"
+  }
+ ]
+}

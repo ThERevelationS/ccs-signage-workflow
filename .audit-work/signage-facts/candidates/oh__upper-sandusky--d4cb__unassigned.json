@@ -1,0 +1,40 @@
+{
+ "jurisdiction_id": "6adef2aa77ab6933068ed4cb",
+ "jurisdiction_name": "Upper Sandusky",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "City of Upper Sandusky Department of Zoning 109 S Sandusky Ave, Room 16 Upper Sandusky, OH 43351 Phone (419) 209 - 0476 • Fax (419) 294 - 6414 Zoning Permit Application Submit on a separate sheet, a sketch showing and labeling the dimensions of lot(s) , location, and dimensions of existing house and/or other buildings on the lot(s); also, sketch must show actual measured distances between buildings and from buildings to property/lot lines and from buildings to street/alley right - of - way lines. Property/l ot and street/alley right - of - way lines must be labeled. Show work proposed by this application. Project Address: _________________________________________ __ ______ _____________________________ Application Date : __________ ______ Construction Cost: $ __________________ Type of Construction New Commercial or Industrial Building Commercial/Industrial Addition Fence New Single - Fa",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "3040797754cab10d6a257e55600a3b27eb35ada51ac2f2f4763a0b3ef9af94ba",
+   "source_document_id": null,
+   "source_title": "3040797754cab10d6a257e55600a3b27eb35ada51ac2f2f4763a0b3ef9af94ba.pdf",
+   "official_url": "https://www.uppersanduskyoh.com/Document%20Center/Departments/Planning%20&%20Zoning/comprehensive_zoning_permit_application_fillable_1.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Note: The Issuance of this permit is subject to appeal by an aggrieved party within 20 days of its issuance. If such an appeal is made, the permit is invalid until reaffirmed by the Board of Zoning Appeals. “The Approval of This Application Shall Not Serve as Verification of the Area Requirements“ Applicant is responsible for ensuring measurements, lot lines, right - of - way and setbacks are accurate and bears all risk related thereto, along with all easements of record. The City encourages a new or recent survey be utilized. By my signature below, I affirm and state that I have no delinquencies or past due outstanding balances due the City of Upper Sandusky , Ohio including, but not limited to: Taxes and/or Utility accounts. By my signature below I affirm and state the above information I have provi ded is truthful, honest and accurate and I do personally attest thereto subject to pros",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "3040797754cab10d6a257e55600a3b27eb35ada51ac2f2f4763a0b3ef9af94ba",
+   "source_document_id": null,
+   "source_title": "3040797754cab10d6a257e55600a3b27eb35ada51ac2f2f4763a0b3ef9af94ba.pdf",
+   "official_url": "https://www.uppersanduskyoh.com/Document%20Center/Departments/Planning%20&%20Zoning/comprehensive_zoning_permit_application_fillable_1.pdf"
+  }
+ ]
+}

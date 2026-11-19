@@ -1,0 +1,22 @@
+{
+ "synthetic": true,
+ "telemetry": {
+  "foreign": [],
+  "consoleErrors": [],
+  "pageErrors": []
+ },
+ "results": [
+  {
+   "case": "S1: missing rental parent -> global alert, Saved 600, all save paths blocked",
+   "ok": true
+  },
+  {
+   "case": "S2: reload restores catalog, save CAS v1 writes real body; qty2->3 costs 145",
+   "ok": true
+  },
+  {
+   "case": "S3: mobile 390 unavailable card stays visible with Saved 600",
+   "ok": true
+  }
+ ]
+}

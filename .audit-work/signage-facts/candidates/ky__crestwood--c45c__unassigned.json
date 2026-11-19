@@ -1,0 +1,36 @@
+{
+ "jurisdiction_id": "6adef930f0fcea444898c45c",
+ "jurisdiction_name": "Crestwood",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "Oldham County Planning & Development Services Ryan Fischer , Director Building & Inspections Monthly Report November 202 4 Matthew Dunaway, Chief Building Inspector 100 West Jefferson Street Suite Three La Grange, K entucky 40031 Phone: (502) 222 - 1476 Fax: (502) 222 - 3213 www.oldhamcountyky.gov 0 20 40 60 80 100 120 140 160 Passed Failed Total 118 1 119 137 8 145 87 16 103 Inspector Summary - November Dunaway Jerry Dunaway Matthew Stoops Paul Permit applications can be submitted electronically at the following email address: permitsinspections@oldhamcountyky.gov PERMIT INSPECTOR SUMMARY REPORT Inspector Passed Failed Total Dunaway Jerry 118 1 119 Dunaway Matthew 137 8 145 Stoops Paul 87 16 103 Grand Totals 342 25 367 C omp iled by themarke tedge.com",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "fd3741bcdd81858fc869c53920fb23b27dbc3cddc6f379dc84aeb13f4914d9ec",
+   "source_document_id": null,
+   "source_title": "fd3741bcdd81858fc869c53920fb23b27dbc3cddc6f379dc84aeb13f4914d9ec.pdf",
+   "official_url": "https://irp.cdn-website.com/fd0fc3bd/files/uploaded/Building_-_Inspections_November_2024.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Oldham County Planning & Development Services Ryan Fischer , Director Building & Inspections Monthly Report November 202 4 Matthew Dunaway, Chief Building Inspector 100 West Jefferson Street Suite Three La Grange, K entucky 40031 Phone: (502) 222 - 1476 Fax: (502) 222 - 3213 www.oldhamcountyky.gov Building Permit Inspection Activities Nov . 202 4 202 4 YTD Nov . 202 3 202 3 YTD Total Permits 180 2 110 156 2129 Single Family Residential Detached 37 309 14 278 Multi - Family Residential 1 9 0 28 Pool 10 1 31 8 93 Electrical 9 3 10 30 95 1207 Sign 8 51 6 53 All Other 2 8 3 8 7 33 470 21% 6% 53% 4% 16% NOVEMBER BUILDING PERMITS Single Family Detached Pool Electrical Sign Other",
+   "tags": [
+    "sign",
+    "process"
+   ],
+   "weight": 2,
+   "source_sha256": "fd3741bcdd81858fc869c53920fb23b27dbc3cddc6f379dc84aeb13f4914d9ec",
+   "source_document_id": null,
+   "source_title": "fd3741bcdd81858fc869c53920fb23b27dbc3cddc6f379dc84aeb13f4914d9ec.pdf",
+   "official_url": "https://irp.cdn-website.com/fd0fc3bd/files/uploaded/Building_-_Inspections_November_2024.pdf"
+  }
+ ]
+}

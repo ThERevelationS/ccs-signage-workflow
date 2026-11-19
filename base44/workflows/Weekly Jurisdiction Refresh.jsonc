@@ -14,7 +14,7 @@
           "with": {
             "function_name": "refreshJurisdiction",
             "args": {
-              "_workflow_capability": "1hCL8LTLicGzU-CbX4alPNHmjI42cDj1HypDJp2RhHo"
+              "_workflow_capability": "ccs-wf-cap-468da33e39cbc3954e164f2dd79d27df"
             }
           },
           "then": "end"

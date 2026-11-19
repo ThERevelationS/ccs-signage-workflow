@@ -1,0 +1,7 @@
+{
+  "stdout": "Six real caller bundles and page include canonical policy; no LLM invoked\n",
+  "stderr": "▲ [WARNING] Duplicate \"type\" attribute in JSX element [duplicate-object-key]\n\n    src/components/channelLetterInstall/AddressAutocomplete.jsx:139:14:\n      139 │               type=\"button\"\n          ╵               ~~~~\n\n  The original \"type\" attribute is here:\n\n    src/components/channelLetterInstall/AddressAutocomplete.jsx:137:20:\n      137 │             <button type=\"button\"\n          ╵                     ~~~~\n\n1 warning\n\n  ...imator-sol-policy/estimator/foundation/AiEngineeringAssistant.js  1.9mb ⚠️\n  ...estimator-sol-policy/channelLetterInstall/AIInstallScopeModal.js  1.6mb ⚠️\n  ...-estimator-sol-policy/channelLetterInstall/AIScopeWriterModal.js  1.6mb ⚠️\n  ...-estimator-sol-policy/vinylEstimator/VinylArtworkUploadDialog.js  1.6mb ⚠️\n  ...-estimator-sol-policy/channelLetterInstall/PhotoEstimateModal.js  1.6mb ⚠️\n  ...estimator-sol-policy/channelLetterInstall/AddressAutocomplete.js  1.6mb ⚠️\n\n⚡ Done in 1106ms\n\n  ../tmp/ccs-estimator-sol-page.js  3.8mb ⚠️\n\n⚡ Done in 982ms\n",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 6071
+}

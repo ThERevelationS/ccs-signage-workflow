@@ -15,21 +15,9 @@
     "checkpoint_name"
   ],
   "rls": {
-    "create": {
-      "user_condition": {
-        "role": "__disabled_noop__"
-      }
-    },
-    "read": {},
-    "update": {
-      "user_condition": {
-        "role": "__disabled_noop__"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "__disabled_noop__"
-      }
-    }
+    "create": { "user_condition": { "role": "___checkpointmistake_backend_only__" } },
+    "read": { "user_condition": { "role": "___checkpointmistake_backend_only__" } },
+    "update": { "user_condition": { "role": "___checkpointmistake_backend_only__" } },
+    "delete": { "user_condition": { "role": "___checkpointmistake_backend_only__" } }
   }
 }

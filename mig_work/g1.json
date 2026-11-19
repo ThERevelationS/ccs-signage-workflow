@@ -1,0 +1,1006 @@
+{
+  "matches": [
+    {
+      "path": "src/api/integrations.js",
+      "line": 8,
+      "text": "export const InvokeLLM = base44.integrations.Core.InvokeLLM;"
+    },
+    {
+      "path": "src/api/permittingReviewClient.js",
+      "line": 3,
+      "text": "export function invokePermittingReview(payload) {"
+    },
+    {
+      "path": "src/api/permittingReviewClient.js",
+      "line": 5,
+      "text": "  return base44.functions.invoke(\"permittingRuleReview\", {"
+    },
+    {
+      "path": "src/api/base44Client.js",
+      "line": 182,
+      "text": "    if (prop === 'invoke' && typeof value === 'function') {"
+    },
+    {
+      "path": "src/api/rateLimitCooldown.js",
+      "line": 1,
+      "text": "// Shared app-wide 429 circuit breaker consulted by pollers and invoke paths —"
+    },
+    {
+      "path": "src/lib/workOrderCache.js",
+      "line": 5,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/lib/workOrderCache.js",
+      "line": 131,
+      "text": "  const res = await invokeFleet(\"boardFeed\", payload);"
+    },
+    {
+      "path": "src/lib/usePolling.js",
+      "line": 3,
+      "text": "import { isFleetCoolingDown } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetPublicReport.jsx",
+      "line": 3,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetPublicReport.jsx",
+      "line": 80,
+      "text": "        const {data}=await invokeFleet(\"fleetPublicIssueReport\",{action:\"list\"});"
+    },
+    {
+      "path": "src/pages/FleetPublicReport.jsx",
+      "line": 118,
+      "text": "      const {data}=await invokeFleet(\"fleetPublicIssueReport\",{action:\"submit\",submission_token:token,...form,title:form.title.trim(),description:form.description.trim(),reporter_name:form.reporter_name.trim(),reporter_contact:form.reporter_contact.trim(),photos:preparedPhotos});"
+    },
+    {
+      "path": "src/pages/Estimator.jsx",
+      "line": 14,
+      "text": "import { isFleetCoolingDown } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetFuel.jsx",
+      "line": 8,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetFuel.jsx",
+      "line": 53,
+      "text": "      const {data}=await invokeFleet(\"fleetFuelAction\",{action:\"summary\",equipment_id:equipmentId===\"all\"?\"\":equipmentId,start_date:`${year}-01-01`,end_date:`${year}-12-31`});"
+    },
+    {
+      "path": "src/pages/FleetFuel.jsx",
+      "line": 97,
+      "text": "  const remove=async()=>{setDeleting(true);setError(\"\");try{const{data}=await invokeFleet(\"fleetFuelAction\",{action:\"delete\",id:entry.id,expected_updated_date:entry.updated_date||\"\"});if(data?.error)throw new Error(data.error);setConfirmDelete(false);await onDeleted();}catch(err){setError(err?.message||\"Unable to delete fuel entry.\");}finally{setDeleting(false);}};"
+    },
+    {
+      "path": "src/pages/FleetFuel.jsx",
+      "line": 105,
+      "text": "  const submit=async event=>{event.preventDefault();setBusy(true);setError(\"\");try{let receiptUrl=form.receipt_url||\"\";if(file){const upload=await base44.integrations.Core.UploadFile({file});if(!upload?.file_url)throw new Error(\"Fuel receipt upload failed.\");receiptUrl=upload.file_url;}const entry={...form,fueled_at:new Date(form.fueled_at).toISOString(),odometer:form.odometer===\"\"?undefined:Number(form.odometer),gallons:Number(form.gallons),total_cost:Number(form.total_cost),receipt_url:receiptUrl};const payload=dialog.mode===\"edit\"?{action:\"update\",id:dialog.entry.id,expected_updated_date:dialog.entry.updated_date||\"\",entry}:{action:\"create\",creation_key:`fuel-${crypto.randomUUID()}`,entry};const{data}=await invokeFleet(\"fleetFuelAction\",payload);if(data?.error)throw new Error(data.error);await onSaved();}catch(err){setError(err?.message||\"Unable to save fuel entry.\");}finally{setBusy(false);}};"
+    },
+    {
+      "path": "src/pages/FleetFuel.jsx",
+      "line": 115,
+      "text": "  const bad=rows.filter(row=>row.issue);const run=async()=>{if(!rows.length||bad.length)return;setBusy(true);setError(\"\");try{const entries=rows.map(row=>({equipment_id:row.equipment_id,fueled_at:new Date(row.fueled_at).toISOString(),gallons:Number(row.gallons),total_cost:Number(row.total_cost),odometer:row.odometer===\"\"||row.odometer==null?undefined:Number(row.odometer),vendor:row.vendor||\"\",notes:row.notes||\"\",creation_key:row.creation_key}));const{data}=await invokeFleet(\"fleetFuelAction\",{action:\"import\",entries});if(data?.error)throw new Error(data.error);setResult(data);if(data.errors===0)await onImported();}catch(err){setError(err?.message||\"Fuel import failed.\");}finally{setBusy(false);}};"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 12,
+      "text": "import PortalPanel, { invokePortal, MESSAGE_KIND_LABELS } from \"@/components/portal/PortalPanel\";"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 77,
+      "text": "    base44.functions.invoke(\"opportunityWorkspaceAction\", {"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 298,
+      "text": "      const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"bulk_remarkup\", tier_number: tier });"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 321,
+      "text": "    const reloadInbox = () => invokePortal(sessionToken, { action: \"portal_inbox\" })"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 379,
+      "text": "          const res = await base44.functions.invoke(\"ensureEstimateCustomer\", { company_name: companyName, fields, session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/FleetWorkOrders.jsx",
+      "line": 14,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetWorkOrders.jsx",
+      "line": 309,
+      "text": "    const response = await invokeFleet(\"fleetWorkOrderAction\", payload);"
+    },
+    {
+      "path": "src/pages/FleetWorkOrders.jsx",
+      "line": 343,
+      "text": "      const response = await invokeFleet(\"fleetWorkOrderAction\", {"
+    },
+    {
+      "path": "src/pages/FleetWorkOrders.jsx",
+      "line": 405,
+      "text": "      const response = await invokeFleet(\"fleetWorkOrderAction\", { action: \"reopen\", id: workOrder.id, expected_updated_date: workOrder.updated_date || \"\" });"
+    },
+    {
+      "path": "src/pages/FleetOverview.jsx",
+      "line": 38,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";\r"
+    },
+    {
+      "path": "src/pages/FleetOverview.jsx",
+      "line": 104,
+      "text": "          invokeFleet(\"fleetReservationAction\", { action: \"list\" }).catch(() => null),\r"
+    },
+    {
+      "path": "src/pages/FleetOverview.jsx",
+      "line": 105,
+      "text": "          invokeFleet(\"fleetWarrantyAction\", { action: \"portfolio\" }).catch(() => null),\r"
+    },
+    {
+      "path": "src/pages/FleetOverview.jsx",
+      "line": 106,
+      "text": "          user?.role === \"admin\" ? invokeFleet(\"fleetLifecycleAction\", { action: \"portfolio\" }).catch(() => null) : Promise.resolve(null),\r"
+    },
+    {
+      "path": "src/pages/FleetOverview.jsx",
+      "line": 108,
+      "text": "          invokeFleet(\"fleetDashboardPreferenceAction\", { action: \"get\" }).catch(() => null),\r"
+    },
+    {
+      "path": "src/pages/FleetOverview.jsx",
+      "line": 111,
+      "text": "          invokeFleet(\"bouncieApi\", { method: \"GET\", path: \"/v1/vehicles\", query: {} }).catch(() => null),\r"
+    },
+    {
+      "path": "src/pages/FleetOverview.jsx",
+      "line": 121,
+      "text": "            invokeFleet(\"bouncieStatus\", {}).catch(() => null),\r"
+    },
+    {
+      "path": "src/pages/FleetOverview.jsx",
+      "line": 239,
+      "text": "      const { data: result } = await invokeFleet(\"fleetDashboardPreferenceAction\", { action: \"save\", expected_updated_date: dashboardPreferenceRecord?.updated_date || \"\", preference });\r"
+    },
+    {
+      "path": "src/pages/FleetOverview.jsx",
+      "line": 250,
+      "text": "      const { data: result } = await invokeFleet(\"fleetDashboardPreferenceAction\", { action: \"reset\", expected_updated_date: dashboardPreferenceRecord?.updated_date || \"\" });\r"
+    },
+    {
+      "path": "src/pages/AdminPermittingSettings.jsx",
+      "line": 67,
+      "text": "    const request = await base44.functions.invoke('permittingProxy',"
+    },
+    {
+      "path": "src/pages/AdminPermittingSettings.jsx",
+      "line": 85,
+      "text": "      const record = await base44.functions.invoke('permittingProxy',"
+    },
+    {
+      "path": "src/pages/AdminPermittingSettings.jsx",
+      "line": 150,
+      "text": "      const res = await base44.functions.invoke('backupPermittingRepository', {"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1202,
+      "text": "      const response = await base44.functions.invoke(\"recordEstimateAcceptance\", {"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1480,
+      "text": "              const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"set_watch\", entity: \"AllInOneEstimate\", record_id: estimate.id, field: \"status\", value: \"approved\", label: estimate.project_name || estimate.estimate_number || \"this estimate\" });"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1491,
+      "text": "              const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"export_estimate\", estimate_id: estimate.id });"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1517,
+      "text": "              const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"copy_bom\", from_estimate_id: srcRow.id, to_estimate_id: estimate.id });"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1536,
+      "text": "              const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"copy_sections\", from_estimate_id: srcRow.id, to_estimate_id: estimate.id });"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 132,
+      "text": "      const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"import_estimate\", bundle });"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 434,
+      "text": "      const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { action: \"full_backup\", session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 485,
+      "text": "              const res = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"estimate_from_module\", module_key: moduleKey.trim(), project_id: projectId.trim() });"
+    },
+    {
+      "path": "src/pages/FleetReservations.jsx",
+      "line": 8,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetReservations.jsx",
+      "line": 43,
+      "text": "        invokeFleet(\"fleetReservationAction\",{action:\"list\",equipment_id:equipmentId===\"all\"?\"\":equipmentId}),"
+    },
+    {
+      "path": "src/pages/FleetReservations.jsx",
+      "line": 67,
+      "text": "  const cancel=async()=>{if(!cancelRow)return;setError(\"\");try{const{data}=await invokeFleet(\"fleetReservationAction\",{action:\"cancel\",id:cancelRow.id,expected_updated_date:cancelRow.updated_date||\"\"});if(data?.error)throw new Error(data.error);setCancelRow(null);await load();}catch(err){setError(err?.message||\"Unable to cancel Fleet reservation.\");}};"
+    },
+    {
+      "path": "src/pages/FleetReservations.jsx",
+      "line": 91,
+      "text": "  const submit=async e=>{e.preventDefault();setBusy(true);setError(\"\");try{const reservation={...form,start_at:new Date(form.start_at).toISOString(),end_at:new Date(form.end_at).toISOString()};const payload=dialog.mode==='edit'?{action:'update',id:dialog.row.id,expected_updated_date:dialog.row.updated_date||'',reservation}:{action:'create',creation_key:dialog.creationKey,reservation};const{data}=await invokeFleet(\"fleetReservationAction\",payload);if(data?.error)throw new Error(data.error);await onSaved();}catch(err){setError(err?.message||\"Unable to save Fleet reservation.\");}finally{setBusy(false);}};"
+    },
+    {
+      "path": "src/pages/FleetReservations.jsx",
+      "line": 97,
+      "text": "  useEffect(()=>{let mounted=true;if(!state)return;setMeter(\"\");setSuggestion(null);setError(\"\");invokeFleet(\"fleetReservationAction\",{action:\"availability\",equipment_id:state.row.equipment_id}).then(({data})=>{if(!mounted)return;if(data?.meter?.available){setSuggestion(data.meter);setMeter(String(data.meter.value));}}).catch(()=>{});return()=>{mounted=false};},[state]);"
+    },
+    {
+      "path": "src/pages/FleetReservations.jsx",
+      "line": 98,
+      "text": "  if(!state)return null;const checkingOut=state.action==='check_out';const submit=async()=>{setBusy(true);setError(\"\");try{const payload={action:state.action,id:state.row.id,expected_updated_date:state.row.updated_date||\"\",[checkingOut?'pickup_meter':'return_meter']:meter===\"\"?undefined:Number(meter)};const{data}=await invokeFleet(\"fleetReservationAction\",payload);if(data?.error)throw new Error(data.error);await onSaved();}catch(err){setError(err?.message||`Unable to ${checkingOut?'check out':'return'} Fleet equipment.`);}finally{setBusy(false);}};"
+    },
+    {
+      "path": "src/pages/FleetFluids.jsx",
+      "line": 10,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetFluids.jsx",
+      "line": 45,
+      "text": "  const save=async(payload)=>{setSaving(true);setError(\"\");try{const body=dialog?.item?{action:\"update\",item_type:\"fluid\",id:dialog.item.id,expected_updated_date:dialog.item.updated_date||\"\",item:payload}:{action:\"create\",item_type:\"fluid\",creation_key:dialog?.createKey||\"\",item:payload};const {data}=await invokeFleet(\"fleetInventoryAction\",body);if(data?.error)throw new Error(data.error);setDialog(null);await load();}catch(e){setError(e?.message||\"Unable to save Fleet fluid.\");}finally{setSaving(false);}};"
+    },
+    {
+      "path": "src/pages/FleetFluids.jsx",
+      "line": 46,
+      "text": "  const recordUsage=async(payload)=>{if(!usageItem)return;setUsageBusy(true);setUsageError(\"\");try{const {data}=await invokeFleet(\"fleetInventoryAction\",{action:\"record_usage\",item_type:\"fluid\",id:usageItem.id,...payload});if(data?.error)throw new Error(data.error);await load();setUsageItem(null);}catch(e){setUsageError(e?.message||\"Unable to record Fleet fluid usage.\");}finally{setUsageBusy(false);}};"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 329,
+      "text": "        const res = await base44.functions.invoke(\"calculateTravelMiles\", { shop_address: shop, site_address: site });"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 231,
+      "text": "    // Save/conflict recovery still invokes loadWorkOrders directly."
+    },
+    {
+      "path": "src/pages/FleetHistory.jsx",
+      "line": 6,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetHistory.jsx",
+      "line": 137,
+      "text": "      const { data } = await invokeFleet(\"fleetSystemReportAction\", {"
+    },
+    {
+      "path": "src/pages/FleetHistory.jsx",
+      "line": 172,
+      "text": "      const { data } = await invokeFleet(\"fleetSystemReportAction\", {"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 5,
+      "text": "import { isFleetCoolingDown } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 392,
+      "text": "        await base44.functions.invoke('processWorkflowTriggers', {"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 653,
+      "text": "      const r = await base44.functions.invoke(\"accessRequestAction\", { session_token: sessionToken, action: \"submit\" });"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 971,
+      "text": "  // and a retry or resume never invokes a write."
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 1073,
+      "text": "      const response = await base44.functions.invoke(\"sendGmail\", {"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 1108,
+      "text": "          const accessRes = await base44.functions.invoke(\"issueAdminSettingsAccess\", { session_token: loginData.token });"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 2300,
+      "text": "      const accessRes = await base44.functions.invoke(\"issueAdminSettingsAccess\", { session_token: sessionToken, face_descriptor: descriptor });"
+    },
+    {
+      "path": "src/pages/FleetSearch.jsx",
+      "line": 22,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetSearch.jsx",
+      "line": 89,
+      "text": "        const response = await invokeFleet(\"fleetSearch\", { query: trimmed });\r"
+    },
+    {
+      "path": "src/pages/Inventory.jsx",
+      "line": 23,
+      "text": "const invokeAction = async (sessionToken, body) => {"
+    },
+    {
+      "path": "src/pages/Inventory.jsx",
+      "line": 24,
+      "text": "  const r = await base44.functions.invoke(\"inventoryAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/Inventory.jsx",
+      "line": 37,
+      "text": "        const data = await invokeAction(sessionToken, { action: \"list_movements\", item_id: item.id });"
+    },
+    {
+      "path": "src/pages/Inventory.jsx",
+      "line": 94,
+      "text": "      const data = await invokeAction(sessionToken, { action: \"list_stock\", query, low_only: lowOnly });"
+    },
+    {
+      "path": "src/pages/Inventory.jsx",
+      "line": 125,
+      "text": "      await invokeAction(sessionToken, body);"
+    },
+    {
+      "path": "src/pages/Inventory.jsx",
+      "line": 143,
+      "text": "      await invokeAction(sessionToken, {"
+    },
+    {
+      "path": "src/pages/Inventory.jsx",
+      "line": 163,
+      "text": "      await invokeAction(sessionToken, {"
+    },
+    {
+      "path": "src/pages/Inventory.jsx",
+      "line": 183,
+      "text": "      const low = await invokeAction(sessionToken, { action: \"list_stock\", low_only: true });"
+    },
+    {
+      "path": "src/pages/Inventory.jsx",
+      "line": 186,
+      "text": "      const data = await invokeAction(sessionToken, {"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 68,
+      "text": "        base44.functions.invoke(\"invoicingAction\", { session_token: sessionToken, action: \"revenue_summary\", months: 12 }).catch(() => null),\r"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 69,
+      "text": "        base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, action: \"list_opportunities\", include_closed: true }).catch(() => null),\r"
+    },
+    {
+      "path": "src/pages/FleetMechanic.jsx",
+      "line": 3,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetMechanic.jsx",
+      "line": 154,
+      "text": "    const { data: result } = await invokeFleet(\"fleetMechanicPortal\", { action: \"bootstrap\", token });"
+    },
+    {
+      "path": "src/pages/FleetMechanic.jsx",
+      "line": 385,
+      "text": "      const {data:result} = await invokeFleet(\"fleetMechanicPortal\", {"
+    },
+    {
+      "path": "src/pages/FleetMechanic.jsx",
+      "line": 489,
+      "text": "      const { data: result } = await invokeFleet(\"fleetMechanicPortal\", {"
+    },
+    {
+      "path": "src/pages/FleetMechanic.jsx",
+      "line": 635,
+      "text": "      const saved = await invokeFleet(\"fleetMechanicPortal\", {action:\"estimate_save\",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:currentEstimate?.updated_date||\"\",estimate:payloadEstimate});"
+    },
+    {
+      "path": "src/pages/FleetMechanic.jsx",
+      "line": 652,
+      "text": "        const submitted = await invokeFleet(\"fleetMechanicPortal\", {action:\"estimate_submit\",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:finalEstimate?.updated_date||\"\"});"
+    },
+    {
+      "path": "src/pages/FleetMechanic.jsx",
+      "line": 698,
+      "text": "      const { data: result } = await invokeFleet(\"fleetMechanicPortal\", {"
+    },
+    {
+      "path": "src/pages/JobCosting.jsx",
+      "line": 39,
+      "text": "const invokeAction = async (sessionToken, body) => {"
+    },
+    {
+      "path": "src/pages/JobCosting.jsx",
+      "line": 40,
+      "text": "  const r = await base44.functions.invoke(\"jobCostingAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/JobCosting.jsx",
+      "line": 70,
+      "text": "      setDetail(await invokeAction(sessionToken, { action: \"get_job_cost\", work_order_id: workOrderId }));"
+    },
+    {
+      "path": "src/pages/JobCosting.jsx",
+      "line": 207,
+      "text": "      const data = await invokeAction(sessionToken, { action: \"list_job_costs\", query });"
+    },
+    {
+      "path": "src/pages/TimeClock.jsx",
+      "line": 238,
+      "text": "      const r = await base44.functions.invoke(\"shiftSwapAction\", { session_token: timeClockSessionToken, action: \"submit\", partner_email: swapPartner.trim(), reason: swapReason.trim() });\r"
+    },
+    {
+      "path": "src/pages/TimeClock.jsx",
+      "line": 338,
+      "text": "          const correctionResponse = await base44.functions.invoke(\"timeClockAction\", {\r"
+    },
+    {
+      "path": "src/pages/TimeClock.jsx",
+      "line": 370,
+      "text": "      const response = await base44.functions.invoke(\"timeClockAction\", {\r"
+    },
+    {
+      "path": "src/pages/TimeClock.jsx",
+      "line": 440,
+      "text": "      const response = await base44.functions.invoke(\"timeClockAction\", {\r"
+    },
+    {
+      "path": "src/pages/TimeClock.jsx",
+      "line": 541,
+      "text": "      const response = await base44.functions.invoke(\"timeClockAction\", {\r"
+    },
+    {
+      "path": "src/pages/FleetInspections.jsx",
+      "line": 23,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetInspections.jsx",
+      "line": 203,
+      "text": "    const { data } = await invokeFleet(\"fleetInspectionAction\", {\r"
+    },
+    {
+      "path": "src/pages/FleetInspections.jsx",
+      "line": 227,
+      "text": "    const { data } = await invokeFleet(\"fleetInspectionAction\", body);\r"
+    },
+    {
+      "path": "src/pages/FleetInspections.jsx",
+      "line": 315,
+      "text": "  const persist=async complete=>{setBusy(true);setError(\"\");setMessage(\"\");try{const {data}=await invokeFleet(\"fleetInspectionAction\",{action:complete?\"inspection_complete\":\"inspection_save\",id:inspection.id,expected_updated_date:inspection.updated_date||\"\",responses,notes,meter_value:meterValue,meter_unit:meterValue!==\"\"?meterUnit:undefined,photo_urls:inspection.photo_urls||[]});if(data?.error)throw new Error(data.error);if(complete){setMessage(data.generated_work_order_ids?.length?`Inspection completed. ${data.generated_work_order_ids.length} Fleet work order${data.generated_work_order_ids.length===1?\"\":\"s\"} created/reused from failed items.`:\"Inspection completed with no automatic work orders.\");await onCompleted?.(data.inspection);}else{setMessage(\"Draft saved.\");await onSaved?.(data.inspection);}}catch(err){setError(err?.message||\"Unable to save Fleet inspection.\");}finally{setBusy(false);}};\r"
+    },
+    {
+      "path": "src/pages/FleetAnalytics.jsx",
+      "line": 20,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetAnalytics.jsx",
+      "line": 92,
+      "text": "      const lifecycleResult = await invokeFleet(\"fleetLifecycleAction\", { action: \"portfolio\" }).catch(() => null);\r"
+    },
+    {
+      "path": "src/pages/FleetAnalytics.jsx",
+      "line": 116,
+      "text": "    invokeFleet(\"fleetFuelAction\", { action: \"summary\", start_date: `${selectedYear}-01-01`, end_date: `${selectedYear}-12-31` })\r"
+    },
+    {
+      "path": "src/pages/OrderForm.jsx",
+      "line": 85,
+      "text": "        const response = await base44.functions.invoke('manageOwnProfile', {\r"
+    },
+    {
+      "path": "src/pages/FleetMaintenance.jsx",
+      "line": 25,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetMaintenance.jsx",
+      "line": 223,
+      "text": "      const { data } = await invokeFleet(\"fleetMaintenanceAction\", body);\r"
+    },
+    {
+      "path": "src/pages/Reconciliation.jsx",
+      "line": 39,
+      "text": "const invokeAction = async (sessionToken, body) => {"
+    },
+    {
+      "path": "src/pages/Reconciliation.jsx",
+      "line": 40,
+      "text": "  const r = await base44.functions.invoke(\"manageReconciliation\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/Reconciliation.jsx",
+      "line": 69,
+      "text": "    invokeAction(sessionToken, { action: \"get_batch\", batch_id: batchId })"
+    },
+    {
+      "path": "src/pages/Reconciliation.jsx",
+      "line": 201,
+      "text": "      const data = await invokeAction(sessionToken, { action: \"bootstrap\" });"
+    },
+    {
+      "path": "src/pages/Reconciliation.jsx",
+      "line": 292,
+      "text": "          invoke={invokeAction}"
+    },
+    {
+      "path": "src/pages/FleetRequests.jsx",
+      "line": 7,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetRequests.jsx",
+      "line": 106,
+      "text": "    const response = await invokeFleet(\"fleetRequestAction\", payload);"
+    },
+    {
+      "path": "src/pages/FleetRequests.jsx",
+      "line": 118,
+      "text": "      const response = await invokeFleet(\"fleetRequestAction\", { action: \"cancel\", id: request.id, expected_updated_date: request.updated_date || \"\" });"
+    },
+    {
+      "path": "src/pages/FleetParts.jsx",
+      "line": 30,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetParts.jsx",
+      "line": 128,
+      "text": "  const save=async(payload)=>{setSaving(true);setError(\"\");try{const body=dialog?.item?{action:\"update\",item_type:\"part\",id:dialog.item.id,expected_updated_date:dialog.item.updated_date||\"\",item:payload}:{action:\"create\",item_type:\"part\",creation_key:dialog?.createKey||\"\",item:payload};const {data}=await invokeFleet(\"fleetInventoryAction\",body);if(data?.error)throw new Error(data.error);setDialog(null);await load();}catch(e){setError(e?.message||\"Unable to save Fleet part.\");}finally{setSaving(false);}};\r"
+    },
+    {
+      "path": "src/pages/FleetParts.jsx",
+      "line": 129,
+      "text": "  const recordUsage=async(payload)=>{if(!usageItem)return;setUsageBusy(true);setUsageError(\"\");try{const {data}=await invokeFleet(\"fleetInventoryAction\",{action:\"record_usage\",item_type:\"part\",id:usageItem.id,...payload});if(data?.error)throw new Error(data.error);await load();setUsageItem(null);}catch(e){setUsageError(e?.message||\"Unable to record Fleet part usage.\");}finally{setUsageBusy(false);}};\r"
+    },
+    {
+      "path": "src/pages/FleetParts.jsx",
+      "line": 130,
+      "text": "  const dismissIdentification=async(row)=>{if(!row||!isAdmin)return;setError(\"\");try{const {data}=await invokeFleet(\"fleetPartLookupAction\",{action:\"dismiss\",id:row.id,expected_updated_date:row.updated_date||\"\"});if(data?.error)throw new Error(data.error);await load();}catch(e){setError(e?.message||\"Unable to dismiss the part-identification record.\");}};\r"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 292,
+      "text": "  // Save/conflict recovery still invokes loadWorkOrders directly."
+    },
+    {
+      "path": "src/pages/FleetNotifications.jsx",
+      "line": 24,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";\r"
+    },
+    {
+      "path": "src/pages/FleetNotifications.jsx",
+      "line": 78,
+      "text": "          invokeFleet(\"fleetReservationAction\", { action: \"list\" }).catch(() => null),\r"
+    },
+    {
+      "path": "src/pages/FleetNotifications.jsx",
+      "line": 79,
+      "text": "          invokeFleet(\"fleetWarrantyAction\", { action: \"portfolio\" }).catch(() => null),\r"
+    },
+    {
+      "path": "src/pages/FleetNotifications.jsx",
+      "line": 80,
+      "text": "          admin ? invokeFleet(\"fleetLifecycleAction\", { action: \"portfolio\" }).catch(() => null) : Promise.resolve(null),\r"
+    },
+    {
+      "path": "src/pages/FleetNotifications.jsx",
+      "line": 83,
+      "text": "          invokeFleet(\"bouncieApi\", { method: \"GET\", path: \"/v1/vehicles\", query: {} }).catch(() => null),\r"
+    },
+    {
+      "path": "src/pages/FleetNotifications.jsx",
+      "line": 106,
+      "text": "            invokeFleet(\"bouncieStatus\", {}).catch(() => null),\r"
+    },
+    {
+      "path": "src/pages/NewUserSetup.jsx",
+      "line": 66,
+      "text": "      const response = await base44.functions.invoke(\"onboardingAccountAction\", {"
+    },
+    {
+      "path": "src/pages/NewUserSetup.jsx",
+      "line": 183,
+      "text": "      const response = await base44.functions.invoke(\"onboardingAccountAction\", {"
+    },
+    {
+      "path": "src/pages/NewUserSetup.jsx",
+      "line": 211,
+      "text": "      const response = await base44.functions.invoke(\"onboardingAccountAction\", {"
+    },
+    {
+      "path": "src/pages/NewUserSetup.jsx",
+      "line": 231,
+      "text": "    const response = await base44.functions.invoke(\"onboardingAccountAction\", {"
+    },
+    {
+      "path": "src/pages/NewUserSetup.jsx",
+      "line": 247,
+      "text": "    const response = await base44.functions.invoke(\"onboardingAccountAction\", { action: \"validate\", token });"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 12,
+      "text": "import { invokeFleet, isFleetCoolingDown } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 86,
+      "text": "      const { data } = await base44.functions.invoke(\"bouncieStatus\", { session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 100,
+      "text": "      const { data } = await base44.functions.invoke(\"bouncieApi\", {"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 117,
+      "text": "      const { data } = await invokeFleet(\"fleetBouncieNotificationAction\", { action: \"list\", session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 127,
+      "text": "      await invokeFleet(\"bouncieSyncNotifications\", {});"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 145,
+      "text": "        ranges.map(r => base44.functions.invoke(\"bouncieApi\", {"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 240,
+      "text": "      const { data } = await base44.functions.invoke(\"bouncieAuthInitiate\", { session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 279,
+      "text": "      const { data } = await invokeFleet(\"fleetBouncieNotificationAction\", { action: \"mark_read\", id, session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 304,
+      "text": "      const results = await Promise.all(selectedNotificationVins.map((vin) => invokeFleet(\"fleetBouncieNotificationAction\", { action: \"mark_vehicle_read\", vehicle_vin: vin, session_token: sessionToken })));"
+    },
+    {
+      "path": "src/pages/WorkOrderTraveler.jsx",
+      "line": 66,
+      "text": "        const res = await base44.functions.invoke(\"workOrderTraveler\", { work_order_id: woId });"
+    },
+    {
+      "path": "src/pages/PurchaseOrders.jsx",
+      "line": 49,
+      "text": "const invokeAction = async (sessionToken, body) => {"
+    },
+    {
+      "path": "src/pages/PurchaseOrders.jsx",
+      "line": 50,
+      "text": "  const r = await base44.functions.invoke(\"purchaseOrderAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/PurchaseOrders.jsx",
+      "line": 131,
+      "text": "    base44.functions.invoke(\"inventoryAction\", { session_token: sessionToken, action: \"list_stock\" })"
+    },
+    {
+      "path": "src/pages/PurchaseOrders.jsx",
+      "line": 152,
+      "text": "        await invokeAction(sessionToken, { action: \"update_purchase_order\", purchase_order_id: purchaseOrder.id, baseline: purchaseOrder, fields });"
+    },
+    {
+      "path": "src/pages/PurchaseOrders.jsx",
+      "line": 154,
+      "text": "        await invokeAction(sessionToken, { action: \"create_purchase_order\", creation_request_key: keyRef.current, fields });"
+    },
+    {
+      "path": "src/pages/PurchaseOrders.jsx",
+      "line": 225,
+      "text": "      setDetail(await invokeAction(sessionToken, { action: \"get_purchase_order\", purchase_order_id: purchaseOrderId }));"
+    },
+    {
+      "path": "src/pages/PurchaseOrders.jsx",
+      "line": 244,
+      "text": "      const data = await invokeAction(sessionToken, body);"
+    },
+    {
+      "path": "src/pages/PurchaseOrders.jsx",
+      "line": 397,
+      "text": "      const data = await invokeAction(sessionToken, { action: \"list_purchase_orders\", status, query });"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 164,
+      "text": "      const res = await base44.functions.invoke(\"generateDocNumber\", { doc_type: \"estimate\", session_token: sessionToken });"
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 83,
+      "text": "  base44.functions.invoke(\"customerPortalAction\", body).then((r) => {"
+    },
+    {
+      "path": "src/pages/FleetWarranties.jsx",
+      "line": 9,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";"
+    },
+    {
+      "path": "src/pages/FleetWarranties.jsx",
+      "line": 43,
+      "text": "        invokeFleet(\"fleetWarrantyAction\",{action:\"portfolio\",equipment_id:equipmentId===\"all\"?\"\":equipmentId}),"
+    },
+    {
+      "path": "src/pages/FleetWarranties.jsx",
+      "line": 86,
+      "text": "  const remove=async()=>{setDeleting(true);setError(\"\");try{const{data}=await invokeFleet(\"fleetWarrantyAction\",{action:\"delete\",id:warranty.id,expected_updated_date:warranty.updated_date||\"\"});if(data?.error)throw new Error(data.error);setConfirmDelete(false);await onChanged();}catch(err){setError(err?.message||\"Unable to delete Fleet warranty.\");}finally{setDeleting(false);}};"
+    },
+    {
+      "path": "src/pages/FleetWarranties.jsx",
+      "line": 99,
+      "text": "  const submit=async e=>{e.preventDefault();setBusy(true);setError(\"\");try{let documentUrl=form.document_url||\"\";if(file){const upload=await base44.integrations.Core.UploadFile({file});if(!upload?.file_url)throw new Error(\"Warranty document upload failed.\");documentUrl=upload.file_url;}const warranty={...form,document_url:documentUrl,start_meter:form.start_meter===\"\"?undefined:Number(form.start_meter),end_meter:form.end_meter===\"\"?undefined:Number(form.end_meter)};const payload=dialog.mode==='edit'?{action:'update',id:dialog.row.warranty.id,expected_updated_date:dialog.row.warranty.updated_date||'',warranty}:{action:'create',creation_key:dialog.creationKey,warranty};const{data}=await invokeFleet(\"fleetWarrantyAction\",payload);if(data?.error)throw new Error(data.error);await onSaved();}catch(err){setError(err?.message||\"Unable to save Fleet warranty.\");}finally{setBusy(false);}};"
+    },
+    {
+      "path": "src/pages/FleetEquipmentDetail.jsx",
+      "line": 34,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";\r"
+    },
+    {
+      "path": "src/pages/FleetEquipmentDetail.jsx",
+      "line": 163,
+      "text": "      const { data: vehicleResult } = await invokeFleet(\"bouncieApi\", { method: \"GET\", path: \"/v1/vehicles\", query: {} });\r"
+    },
+    {
+      "path": "src/pages/FleetEquipmentDetail.jsx",
+      "line": 177,
+      "text": "      const results = await Promise.all(ranges.map(range => invokeFleet(\"bouncieApi\", { method: \"GET\", path: \"/v1/trips\", query: { imei: fleetImei, ...range, \"gps-format\": \"geojson\" } })));\r"
+    },
+    {
+      "path": "src/pages/FleetEquipmentDetail.jsx",
+      "line": 217,
+      "text": "      const { data } = await invokeFleet(\"fleetEquipmentAction\", { action: \"save_metadata\", equipment_id: id, metadata_id: metadata?.id || \"\", expected_metadata_updated_date: metadata?.updated_date || \"\", metadata: metaForm });\r"
+    },
+    {
+      "path": "src/pages/FleetEquipmentDetail.jsx",
+      "line": 390,
+      "text": "    invokeFleet(\"fleetFuelAction\", { action: \"summary\", equipment_id: equipment.id, start_date: `${year}-01-01`, end_date: `${year}-12-31` })\r"
+    },
+    {
+      "path": "src/pages/FleetEquipmentDetail.jsx",
+      "line": 420,
+      "text": "    invokeFleet(\"fleetWarrantyAction\", { action: \"portfolio\", equipment_id: equipment.id })\r"
+    },
+    {
+      "path": "src/pages/FleetEquipmentDetail.jsx",
+      "line": 449,
+      "text": "    invokeFleet(\"fleetReservationAction\", { action: \"list\", equipment_id: equipment.id })\r"
+    },
+    {
+      "path": "src/pages/FleetEquipment.jsx",
+      "line": 28,
+      "text": "import { invokeFleet } from \"@/components/fleet/fleetInvoke\";\r"
+    },
+    {
+      "path": "src/pages/FleetEquipment.jsx",
+      "line": 95,
+      "text": "        invokeFleet(\"bouncieApi\", { method: \"GET\", path: \"/v1/vehicles\", query: {} }).catch(() => null),\r"
+    },
+    {
+      "path": "src/pages/FleetEquipment.jsx",
+      "line": 161,
+      "text": "      const { data } = await invokeFleet(\"fleetEquipmentAction\", {\r"
+    },
+    {
+      "path": "src/pages/FleetEquipment.jsx",
+      "line": 184,
+      "text": "      const { data } = await invokeFleet(\"fleetEquipmentAction\", body);\r"
+    },
+    {
+      "path": "src/pages/EstimatorSettings.jsx",
+      "line": 110,
+      "text": "      const response = await base44.functions.invoke(\"manageQuoteApprovalSettings\", {"
+    },
+    {
+      "path": "src/pages/ChangeOrders.jsx",
+      "line": 43,
+      "text": "const invokeAction = async (sessionToken, body) => {"
+    },
+    {
+      "path": "src/pages/ChangeOrders.jsx",
+      "line": 44,
+      "text": "  const r = await base44.functions.invoke(\"changeOrderAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/ChangeOrders.jsx",
+      "line": 134,
+      "text": "        await invokeAction(sessionToken, { action: \"update_change_order\", change_order_id: changeOrder.id, baseline: changeOrder, fields });"
+    },
+    {
+      "path": "src/pages/ChangeOrders.jsx",
+      "line": 136,
+      "text": "        await invokeAction(sessionToken, { action: \"create_change_order\", creation_request_key: keyRef.current, fields });"
+    },
+    {
+      "path": "src/pages/ChangeOrders.jsx",
+      "line": 200,
+      "text": "      setDetail(await invokeAction(sessionToken, { action: \"get_change_order\", change_order_id: changeOrderId }));"
+    },
+    {
+      "path": "src/pages/ChangeOrders.jsx",
+      "line": 216,
+      "text": "      await invokeAction(sessionToken, body);"
+    },
+    {
+      "path": "src/pages/ChangeOrders.jsx",
+      "line": 346,
+      "text": "      const data = await invokeAction(sessionToken, { action: \"list_change_orders\", status, query });"
+    },
+    {
+      "path": "src/pages/ChangeOrders.jsx",
+      "line": 375,
+      "text": "      try { await invokeAction(sessionToken, { action: \"approve_change_order\", change_order_id: id }); ok++; }"
+    },
+    {
+      "path": "src/pages/ChangeOrders.jsx",
+      "line": 392,
+      "text": "      try { await invokeAction(sessionToken, { action: \"reject_change_order\", change_order_id: id, rejection_reason: clean(reason) }); ok++; }"
+    },
+    {
+      "path": "src/pages/UserSettings.jsx",
+      "line": 134,
+      "text": "      const response = await base44.functions.invoke(\"issuePasswordReset\", {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 87,
+      "text": "const invoke = async (sessionToken, body) => {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 88,
+      "text": "  const r = await base44.functions.invoke(\"opportunityWorkspaceAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 114,
+      "text": "        const r = await base44.functions.invoke(\"opportunityWorkspaceAction\", {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 185,
+      "text": "        const r = await base44.functions.invoke(\"opportunityWorkspaceAction\", {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 204,
+      "text": "      const r = await base44.functions.invoke(\"opportunityWorkspaceAction\", {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 364,
+      "text": "      const r = await base44.functions.invoke(\"findLocalityByAddress\", {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 403,
+      "text": "      const r = await base44.functions.invoke(\"opportunityWorkspaceAction\", {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 511,
+      "text": "      const data = await invoke(sessionToken, { action: \"list_estimating_requests\", include_closed: includeClosed });"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 524,
+      "text": "      const data = await invoke(sessionToken, { action: \"get_opportunity\", opportunity_id: row.opportunity_id });"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 537,
+      "text": "      await invoke(sessionToken, {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 641,
+      "text": "      const data = await invoke(sessionToken, { action: \"list_follow_ups\" });"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 654,
+      "text": "      const data = await invoke(sessionToken, { action: \"get_opportunity\", opportunity_id: row.id });"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 666,
+      "text": "      await invoke(sessionToken, {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 686,
+      "text": "      await invoke(sessionToken, {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 791,
+      "text": "      const r = await base44.functions.invoke(\"opportunityWorkspaceAction\", {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 827,
+      "text": "      const r = await base44.functions.invoke(\"opportunityWorkspaceAction\", {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 850,
+      "text": "      const r = await base44.functions.invoke(\"opportunityWorkspaceAction\", {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 1147,
+      "text": "      await invoke(sessionToken, {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 1255,
+      "text": "      const r = await base44.functions.invoke(\"opportunityWorkspaceAction\", {"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 1278,
+      "text": "    invoke(sessionToken, { action: \"get_opportunity\", opportunity_id: openId })"
+    },
+    {
+      "path": "src/pages/Opportunities.jsx",
+      "line": 1336,
+      "text": "        await invoke(sessionToken, {"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 67,
+      "text": "const invokeAction = async (sessionToken, body) => {"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 68,
+      "text": "  const r = await base44.functions.invoke(\"invoicingAction\", { session_token: sessionToken, ...body });"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 74,
+      "text": "const invokePortal = async (sessionToken, body) => {"
+    }
+  ],
+  "truncated": true,
+  "returnedMatches": 200
+}

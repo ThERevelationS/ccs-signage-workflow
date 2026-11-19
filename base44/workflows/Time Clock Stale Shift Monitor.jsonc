@@ -31,7 +31,7 @@
             "function_name": "timeClockAction",
             "args": {
               "action": "monitor_stale_shifts",
-              "_workflow_capability": "tuUWh54nBc3cZW9CgI8Ma9yvoio8CJqMWGKknfMZXg4qoPAL"
+              "_workflow_capability": "ccs-wf-cap-e5cdff14c9262cbfe5f0e339b9edc50f"
             }
           },
           "then": "end"

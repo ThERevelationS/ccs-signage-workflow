@@ -1,0 +1,31 @@
+{
+  "results": [
+    {
+      "name": "invalid live rate shows the saved cost as saved despite an available material option",
+      "ok": true
+    },
+    {
+      "name": "valid full stock rate is current and never labeled as a frozen amount",
+      "ok": true
+    },
+    {
+      "name": "explicit catalog zero is current and visible as zero, not unavailable",
+      "ok": true
+    },
+    {
+      "name": "missing history stays Not saved without a fabricated zero cost",
+      "ok": true
+    },
+    {
+      "name": "recorded zero history remains saved zero when the current price is missing",
+      "ok": true
+    },
+    {
+      "name": "deleted material keeps its unavailable selection and acknowledged amount",
+      "ok": true
+    }
+  ],
+  "syntheticOnly": true,
+  "sdkCalls": 0,
+  "financialValuesWritten": false
+}

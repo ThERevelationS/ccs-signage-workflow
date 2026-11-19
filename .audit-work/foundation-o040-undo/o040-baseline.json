@@ -1,0 +1,48 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "8a4ad456c1ca7b365069ea9d5c424a5b358f89e2",
+  "pulledAt": "2026-11-09",
+  "method": "npx base44@latest sandbox read --json (remote-src/ verbatim)",
+  "files": {
+    "src/components/estimator/foundation/foundationSceneInput.js": {
+      "exists": true,
+      "sha256": "6d986c4b4aa478628f82376140e9d412c8afcf26d7fcfb403a0e36cb0eb8b31d",
+      "note": "identical to O-038/O-039 spec hash — O-039 module unchanged since landing"
+    },
+    "src/components/estimator/foundation/FoundationLayoutCanvas.jsx": {
+      "exists": true,
+      "sha256": "33116498c442002f7f33158ec00eb4880c66740072718723a045373b08870d9c",
+      "note": "identical to O-038/O-039 spec hash — canvas seam wiring unchanged since landing"
+    },
+    "src/components/estimator/foundation/foundationLayoutModel.js": {
+      "exists": true,
+      "sha256": "972ad19712f2e6c5d23a208a443635515d13e9c1b5034169eb95bcb8f2d72e3d"
+    },
+    "src/components/estimator/foundation/foundationSceneTransforms.js": {
+      "exists": true,
+      "sha256": "27397d68015a2e0f5f38fc0e38bce196a42b302850f04def6b4ac221babecacc"
+    },
+    "src/components/estimator/foundation/foundationSceneHistory.js": {
+      "exists": false,
+      "note": "NEW module — no remote file at source head"
+    },
+    "src/pages/FoundationEstimator.jsx": {
+      "exists": true,
+      "bytes": 91060,
+      "note": "read-only pull for flow analysis — ownership-protected, NOT a candidate target"
+    },
+    "src/components/estimator/foundation/foundationAssemblyModel.js": {
+      "exists": true,
+      "bytes": 22448,
+      "note": "read-only pull — confirmed normalizeFoundationAssembly never rewrites x_inches/z_inches (anchors survive the commit path exactly)"
+    },
+    "src/components/estimator/foundation/foundationGeometryInputs.js": {
+      "exists": true,
+      "bytes": 2673,
+      "note": "staging completeness only"
+    }
+  },
+  "remoteHeadRechecked": "9a872e9248c57e9b468881baecf7b899248f5c24",
+  "recheckNote": "Concurrent external-agent commits landed during verification (panels, geometry inputs, wall editor). Re-pulled all O-040 target files at the new HEAD: byte-identical to baseline. foundationSceneHistory.js still absent remotely. Working tree clean (git status --porcelain empty)."
+}

@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "",
+  "stderr": "bash: line 2: node_modules.binesbuild: command not found\nbash: line 2: .jsx=jsx: command not found\n",
+  "exitCode": 127,
+  "truncated": false,
+  "durationMs": 780
+}

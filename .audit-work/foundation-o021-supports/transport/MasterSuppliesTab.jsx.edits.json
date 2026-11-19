@@ -1,0 +1,14 @@
+[
+ {
+  "old_text": "//   - ChannelLetterInstallInventory (channel-letter install / maintenance supplies)\n//   - FoundationInventory rows that are NOT equipment/attachment/sub_attachment\n//     (i.e. concrete_service, bagged_concrete, rebar, forming_material, pole,\n//      brick_stone, fill_material, wall_material, wall_cap)\n//\n// Each row gets cross-estimator visibility toggles.",
+  "new_text": "//   - ChannelLetterInstallInventory (channel-letter install / maintenance supplies)\n//   - FoundationInventory rows that are NOT equipment/attachment/sub_attachment\n//     (i.e. concrete_service, bagged_concrete, rebar, rebar_support,\n//      forming_material, pole, brick_stone, fill_material, wall_material,\n//      wall_cap)\n//\n// Each row gets cross-estimator visibility toggles."
+ },
+ {
+  "old_text": "\nconst FOUNDATION_SUPPLY_TYPES = [\n  \"concrete_service\", \"bagged_concrete\", \"rebar\", \"forming_material\",\n  \"pole\", \"brick_stone\", \"fill_material\", \"wall_material\", \"wall_cap\",\n];\n",
+  "new_text": "\nconst FOUNDATION_SUPPLY_TYPES = [\n  \"concrete_service\", \"bagged_concrete\", \"rebar\", \"rebar_support\",\n  \"forming_material\", \"pole\", \"brick_stone\", \"fill_material\", \"wall_material\",\n  \"wall_cap\",\n];\n"
+ },
+ {
+  "old_text": "    \"wall_unit_length_inches\", \"wall_unit_width_inches\", \"wall_unit_height_inches\", \"wall_color\", \"wall_texture\",\n    \"cap_stock_length_inches\", \"cap_width_inches\", \"cap_height_inches\", \"cap_profile\", \"cap_color\", \"cap_stock_price\", \"is_cuttable\",\n    \"rebar_size\", \"minimum_order_yards\", \"below_minimum_cost_per_cy\", \"minimum_cost\",\n    \"mix_3500_price\", \"mix_4000_price\", \"mix_4500_price\", \"mix_5000_price\", \"mix_fast_set_price\",\n    \"admix_calcium_chloride_price\", \"admix_set_retarding_price\", \"admix_water_reducing_price\", \"admix_fibers_price\", \"admix_winter_service_price\",",
+  "new_text": "    \"wall_unit_length_inches\", \"wall_unit_width_inches\", \"wall_unit_height_inches\", \"wall_color\", \"wall_texture\",\n    \"cap_stock_length_inches\", \"cap_width_inches\", \"cap_height_inches\", \"cap_profile\", \"cap_color\", \"cap_stock_price\", \"is_cuttable\",\n    \"rebar_size\", \"rebar_support_kind\", \"rebar_support_height_inches\",\n    \"rebar_support_height_min_inches\", \"rebar_support_height_max_inches\",\n    \"rebar_support_footprint_length_inches\", \"rebar_support_footprint_width_inches\",\n    \"rebar_support_material\", \"rebar_support_pack_size\",\n    \"rebar_support_compatible_bar_sizes\", \"rebar_support_placement_notes\",\n    \"minimum_order_yards\", \"below_minimum_cost_per_cy\", \"minimum_cost\",\n    \"mix_3500_price\", \"mix_4000_price\", \"mix_4500_price\", \"mix_5000_price\", \"mix_fast_set_price\",\n    \"admix_calcium_chloride_price\", \"admix_set_retarding_price\", \"admix_water_reducing_price\", \"admix_fibers_price\", \"admix_winter_service_price\","
+ }
+]

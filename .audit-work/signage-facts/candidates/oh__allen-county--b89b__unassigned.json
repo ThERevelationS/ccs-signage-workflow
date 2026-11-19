@@ -1,0 +1,22 @@
+{
+ "jurisdiction_id": "6aea0f5844d9e716312cb89b",
+ "jurisdiction_name": "Allen County",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "ALLEN COUNTY ZONING PERSONS ALLEN COUNTY ZONING PERSONS July 12, 2024 LIMA SOPHIA FISHER Housing & Neighborhoods 50 TOWN SQUARE LIMA, OHIO 45801 419-998-5575 sophia.fisher@cityhall.lima.oh.us SUGAR CREEK KENT MCCLEARY 3835 W. LINCOLN HWY. ELIDA, OHIO 45807 419-234-4143 kemcclea@unoh.edu SPENCERVILLE BEN SUEVER 116 SOUTH BROADWAY SPENCERVILLE, OHIO 45887 419-647-6263 FAX 419-647-6980 va@spencervilleoh.com SPENCER BRIAN BINKLEY 13855 KOLTER ROAD SPENCERVILLE, OHIO 45887 419-303-6189 spencertownship@frontier.com SHAWNEE TODD LAUSE 2530 FT AMANDA ROAD LIMA, OHIO 45806 419-991-8706 419-222-2984 lause.t@shawneetownship.com RICHLAND ERIC WEBB 8435 N. DIXIE HWY BLUFFTON, OHIO 45817 419-358-4897 richland.twp.allen.oh@gmail.com PERRY JOHN BREWSTER 2408 E. BREESE ROAD LIMA, OHIO 45806 419-204-7850 perrytownshipzoning@gmail.com MARION NORMAN ELWER 10150 RIDGE ROAD DELPHOS, OHIO 45833 419-204-7848 ma",
+   "tags": [
+    "dimension",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "e00661f6e2cd1774f6c4b4934de30481a8a97aebc90550bae2898d3afa0ad453",
+   "source_document_id": null,
+   "source_title": "e00661f6e2cd1774f6c4b4934de30481a8a97aebc90550bae2898d3afa0ad453.pdf",
+   "official_url": "https://allencountyohauditor.com/wp-content/uploads/2024/07/Zoning-Persons-ENG-.pdf"
+  }
+ ]
+}

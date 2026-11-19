@@ -1,0 +1,101 @@
+{
+  "unit": "foundation-o094-presets",
+  "item": "O-094 (CMP-H03) — Start-from-assembly presets, duplicate/mirror, bulk material changes, and reusable templates.",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remote_head_verified": "37d401b5aecbafc7ce1773af233efdde22c7ee75 (git log -1 via sandbox run, clean porcelain status)",
+  "mode": "LOCAL candidates only - no remote write, no checkpoint, no deploy, no entity ops, no business-record or paid-AI calls. All baselines are fresh `sandbox read` pulls at the verified HEAD; local worktree src/ was never read for content.",
+  "acceptance_text": "Start-from-assembly presets, duplicate/mirror, bulk material changes, and reusable templates. (ESTIMATOR_MASTERPLAN.md:689 — terse CMP-H03 line; the four verbs map to the four deliverables below.)",
+  "contract_reading": {
+    "patch_contract": "prepareFoundationTemplatePatch(data, {createId, appliedAt}) is the single page-side apply gate: allowlist-clones the 31 template fields, sanitizes customer_pricing, stamps ai_engineering_data (O-007t) and notes (O-119), and clones supplied assembly arrays via cloneFoundationComponents — fresh component_ids (incl. nested wall segments + pole signs), remapped references, dependent index fields rebuilt. The page merges as commit(() => patch) = {...prev, ...patch}: supplied arrays REPLACE wholesale, absent keys PRESERVE. Every O-094 transform returns a patch honoring exactly those merge semantics ({patch, summary} wrappers — patch is the mergeable delta, summary is caller telemetry).",
+    "assembly_geometry": "foundationAssemblyModel.js + foundationLayoutModel.js (READ-only): items = top-left plan corner x_inches/z_inches + unrotated footprint (foundationLayoutFootprint: length_inches x width_inches, or diameter x diameter for pillars) + visual rotation_degrees about the footprint center; poles = plan point x_inches/z_inches; walls = shape.points [{x,z}] with derived segment lengths (reflection/translation preserve them exactly — wallCalculator's 8*EPSILON geometry-mismatch check is structurally satisfied); wall_caps and signage_cabinets carry NO plan coordinates — they position by component_id reference (wall+segment / pole+foundation) and ride their parents through remapping.",
+    "material_fields": "per-field applicability read from the remote panels: items selected_concrete_id (per-item mix override from catalog.concrete) + selected_forming_id + legacy selected_pole_id (advisory legacy item-pole field per poleCalculator — still a material id); walls materialId + internalMaterialId (two distinct material slots); poles pole_id; wall_caps cap_inventory_id; project scalar selected_concrete_id (default mix). signage_cabinets carry authored unit_cost — no catalog id, not a bulk target. project_concrete_type is a descriptive type string ('4000psi'), not a catalog id — not a bulk target. custom_concrete_cost_per_cy is a PRICE override — never authored, reported as advisory count."
+  },
+  "targets": [
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+      "status": "NEW FILE",
+      "candidate": "candidates/src/components/estimator/foundation/foundationAssemblyPresets.js (sha256 46c13668cfb5, 472 lines)",
+      "exports": {
+        "FOUNDATION_ASSEMBLY_PRESETS": "6 frozen named preset objects (single-spread-footing, single-pillar-pier, pylon-pole-on-pier, twin-pole-monument, monument-base-wall-cap, open-l-wall-run). Each project_data is snapshot-shaped (assembly_schema_version 1 + all 5 assembly arrays). Material-id fields authored blank — presets never carry catalog ids, prices, rates, customer fields, notes, or AI data. Wall segments carry canonical lengths from the REAL foundationWallSegments + authored component_ids so preset caps have referenceable segments.",
+        "foundationAssemblyPresetTemplateData(presetOrKey)": "deep-cloned snapshot-shaped record for the dialog's existing onApply(data) lane — the page's prepare gate validates + remints + remaps exactly like a stored template",
+        "describeFoundationAssemblyPreset(presetOrKey)": "{preset_key, name, summary, counts, counts_label, total_components} row metadata for the pick list",
+        "applyFoundationAssemblyPreset(project, presetOrKey, {createId, appliedAt, mode})": "{patch, summary}. mode 'replace' (default) routes through prepareFoundationTemplatePatch (start-from semantics — supplied arrays replace); mode 'append' clones preset rows onto the existing assembly via appendClonedFoundationAssemblies (collision-guarded ids, refs remapped inside clone set, indexes rebuilt vs merged arrays) and supplies only non-empty appended arrays."
+      }
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationDuplicateMirror.js",
+      "status": "NEW FILE",
+      "candidate": "candidates/src/components/estimator/foundation/foundationDuplicateMirror.js (sha256 5485997911ea, 398 lines)",
+      "exports": {
+        "appendClonedFoundationAssemblies(project, assemblyData, {createId, transformClone})": "shared clone+append engine: cloneFoundationComponents with a collision guard seeded from every existing id/ref, optional per-clone geometry transform, source_item_component_id lineage remap via idMap, deep-cloned existing rows, dependent index fields rebuilt against the FINAL merged arrays, patch supplies only arrays that gained rows",
+        "duplicateFoundationAssembly(project, {component_ids, include_dependents, offset_inches, createId})": "{patch, summary{id_map, duplicated, rows_added}}. component_ids absent = whole assembly; explicit ids fail closed on unknown; dependent closure (pole-on-item, cap-on-wall, cabinet-on-pole/item, fixpointed) defaults on; refs pointing outside the clone set keep original ids (a duplicated cap stays on its kept wall); default 12in/12in plan offset on item+pole x/z and wall points",
+        "mirrorFoundationAssembly(project, {component_ids, include_dependents, axis, at, edge_of, edge, mode, createId})": "{patch, summary{axis, at, mirrored, rows_added|rows_mirrored}}. Mirror line: explicit at | foundation edge (edge_of item + min_x/max_x/min_z/max_z or left/right/top/bottom) | canvas centerline (240/160). mode 'copy' (default) appends reflected clones (createId required); mode 'reflect'/'in_place' reflects selected rows keeping ids — caps/cabinets ride refs so only geometry-carrying arrays enter the patch. Items reflect by footprint center (corner storage adjusted by width/depth) and flip rotation theta -> -theta (reflection reverses orientation on either axis); poles reflect as points; wall points reflect coordinate-wise with lengths preserved."
+      }
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationBulkMaterialChange.js",
+      "status": "NEW FILE",
+      "candidate": "candidates/src/components/estimator/foundation/foundationBulkMaterialChange.js (sha256 57460b5d8c64, 182 lines)",
+      "exports": {
+        "FOUNDATION_BULK_MATERIAL_TARGETS": "applicability catalog — concrete (items.selected_concrete_id + project selected_concrete_id), forming (items.selected_forming_id), wall_material (walls.materialId), internal_wall_material (walls.internalMaterialId — a separate slot, never conflated), wall_cap (wall_caps.cap_inventory_id), pole (poles.pole_id + legacy items.selected_pole_id). Unknown targets fail closed listing valid keys — no free-form field writes.",
+        "applyFoundationBulkMaterial(project, {target, value, mode, from, include_project_default, component_ids})": "{patch, summary}. modes 'all' (write every applicable slot in scope), 'replace' (only current === from), 'fill_blank' (only empty slots); value '' clears; component_ids scopes rows; project default participates under the same mode rules when the target defines one; patch supplies only changed arrays (+the project scalar when it moved); summary carries rows_changed per kind, fields_touched, project_default_changed, and custom_price_rows_kept advisory (custom concrete price overrides survive a mix swap — never repriced by this path)."
+      }
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+      "baseline": "baseline/FoundationTemplateDialog.jsx (fresh sandbox read at 37d401b5a, sha256 3abbe70b4618 — byte-identical to the O-119 landed candidate)",
+      "candidate": "candidates/src/components/estimator/foundation/FoundationTemplateDialog.jsx (sha256 f18dff763daf, +60 lines net)",
+      "diff": "verify/diff-FoundationTemplateDialog.jsx.patch",
+      "changes": [
+        "imports FOUNDATION_ASSEMBLY_PRESETS + describeFoundationAssemblyPreset + foundationAssemblyPresetTemplateData from ./foundationAssemblyPresets",
+        "new applyPreset(preset) mirroring apply(t): onApply(foundationAssemblyPresetTemplateData(preset)) through the SAME page-side lane — the prepare gate validates/mints/remaps; identical error + stale-context + close semantics",
+        "load mode restructured into two labeled sections: 'Start from an assembly preset' (all 6 presets — name, summary, counts_label, Apply button, plus the replace-semantics disclosure 'Applying a preset replaces the current foundation assembly sections.') above 'Saved templates' (existing loading/loadFailed/empty/list states preserved verbatim inside a bordered scroll region). Presets render even when the saved list fails to load — static data needs no fetch."
+      ]
+    }
+  ],
+  "unchanged_files_verified": {
+    "foundationTemplateModel.js": "baseline sha256 42fedbe65f08 == the O-119 landed candidate hash — no model change needed: presets reuse the existing 31-field gate and stamps verbatim",
+    "foundationTemplateService.js": "save/delete transport only — presets need no transport",
+    "foundationAssemblyModel.js": "clone/normalize engine consumed unchanged",
+    "foundationLayoutModel.js + wallCalculator.js": "geometry contract consumed READ-only (imports, not edits)"
+  },
+  "deferred_wiring_remainders": [
+    "src/pages/FoundationEstimator.jsx (page owner): wire the ops through its existing commit(() => patch) lane — commit(() => duplicateFoundationAssembly(project, {component_ids: sel, createId: (k) => newCreationRequestKey(`foundation_${k}`)}).patch); same shape for mirrorFoundationAssembly and applyFoundationBulkMaterial, or applyFoundationAssemblyPreset(project, key, {createId, mode:'append'}) for an add-more flow. The page already supplies commit + newCreationRequestKey at the template onApply call site (line ~1433).",
+    "src/components/estimator/foundation/FoundationToolbar.jsx (toolbar owner): the Btn prop pattern (icon+label+onClick beside 'Templates'/'Save as Template') accepts onDuplicate/onMirror/onBulkMaterial props + buttons; mirror axis/edge choice and bulk target+value+mode need small pickers — UI work deliberately not landed here (dead buttons would be worse than documented anchors).",
+    "selection plumbing: component_ids args accept any array of component ids — a layout-canvas selection model can feed them when one exists; absent component_ids already means 'whole assembly' so the page can ship select-all duplicate/mirror immediately.",
+    "preset surface alternative: if a future unit wants presets as pseudo-templates, foundationAssemblyPresetTemplateData rows are byte-compatible with ProjectTemplate.project_data — no storage needed today (static catalog)."
+  ],
+  "protected_not_touched": [
+    "src/pages/FoundationEstimator.jsx (page owner — its single prepareFoundationTemplatePatch call site is the preset apply lane unchanged)",
+    "foundationCalc.js, wallCalculator.js edit surface (imported READ-only), foundationReinforcement*, partSync.js (Phase B-3 owns)",
+    "FoundationBOM.jsx (Phase B-3 print surface)",
+    "FoundationProject.jsonc / FoundationSettings.jsx (entity/settings owners — no schema change needed: presets are static code data, ops are runtime patches)",
+    "foundationDraftRecovery.js / foundationBuilderRecovery.js / foundationSaveSession.js / foundationSyncRecovery.js (O-004t recovery cluster owns)",
+    "inventory files incl. inventoryNormalization (test-harness stubbed for bundling only — never read for content changes)",
+    "foundationAiReview.js, AiEngineeringAssistant.jsx (AI channel untouched)",
+    "FoundationLayoutCanvas.jsx / FoundationItemCard / FoundationPolesPanel / FoundationWallCapsPanel / FoundationWallsPanel / SignageCabinetsPanel / poleCalculator.js (field contract read remotely; zero edits)"
+  ],
+  "verification": {
+    "unit_harness": "verify/test-o094-presets.mjs — esbuild-bundles the 3 CANDIDATE modules against BASELINE deps (assemblyModel, layoutModel, templateModel, preliminaryNotice, wallCalculator — real functions, two heavy calc-path imports stubbed at module boundary only) + CANDIDATE dialog via react-test-renderer with the O-119 stub set; 25/25 PASS (verify/test-output.txt)",
+    "browser_harness": "verify/verify-o094-browser.mjs — esbuild IIFE bundle of candidates + fixture-browser stubs + playwright-core real Chromium; desktop 1280px + mobile 390px; 5/5 PASS (verify/o094-browser-verification.json; screenshots dialog-load-1280/390.png, dialog-apply-1280.png, ops-panel-1280.png; zero foreign requests/console errors/page errors asserted)",
+    "cases": [
+      "catalog: 6 frozen presets, all 5 assembly arrays supplied + schema v1; every one survives the REAL prepareFoundationTemplatePatch gate with every row id re-minted",
+      "refs remap: preset pole->item, cap->wall+segment, cabinet->pole all land on NEW ids; describe() counts_label for the pick list; templateData deep-cloned against catalog mutation",
+      "preset replace: merge replaces supplied arrays incl. empty clears, non-assembly fields preserved, source unmutated; preset append: existing rows verbatim + clones appended, refs remapped, dependent indexes rebuilt vs merged arrays, empty preset arrays supply no patch key",
+      "duplicate: item selection pulls pole+cabinet dependents (fixpoint), cap-without-wall keeps original refs, unknown id fails closed, select-all + createId collision guard, wall clone remaps segment ids with cap refs following, source_item_component_id lineage remapped, offset applied to item/pole x/z + wall points",
+      "mirror copy: default centerline x=240 (x' = 2*at - x - footprint_width, rotation 30->330), foundation-edge anchor (edge_of+max_x -> at=x+w), wall points reflected with segment lengths preserved, cap refs remapped; in_place mode: same ids, only changed arrays in patch, dependents reflected via closure; z-axis + edge/axis/at validation errors",
+      "bulk: concrete target hits items + project default only; unknown target fails closed; replace mode honors from (blanks stay blank); fill_blank writes only empty slots; wall materialId vs internalMaterialId are separate targets; component_ids scope; '' clears; empty patch on no-op; include_project_default=false excludes the scalar; custom_concrete_cost_per_cy verbatim + advisory count",
+      "real component: dialog renders all 6 presets + counts + replace disclosure in load mode; Apply passes snapshot-shaped data the REAL prepare gate accepts; presets render when saved-template load fails; browser: same at 1280+390 with screenshots; ops-panel executes duplicate/mirror/in-place/bulk/preset in-browser with exact numeric readbacks"
+    ],
+    "syntax": "npx esbuild clean on all 4 candidates (jsx loader for .jsx)"
+  },
+  "followups_noted": [
+    "LF normalization: baselines pulled via sandbox read were written locally with LF line endings; remote files are CRLF — the candidate diff is computed on normalized content",
+    "presets intentionally supply ALL 5 arrays so the replace path is a true start-from; mode:'append' is the documented splice variant for callers that want additive presets",
+    "pole reflect treats the pole as a point (the marker has no footprint fields); items reflect by footprint center — documented in-file",
+    "legacy item fields selected_pole_id / pole_* are bulk-pole-addressable by design (advisory lane per poleCalculator); nothing here migrates or rewrites them beyond the material id",
+    "scripts/test-foundation-template.mjs and the o007 verify suite do not cover the new modules; the o094 harness is self-contained under verify/"
+  ],
+  "ledger_paragraph": "O-094 (CMP-H03) assembly-ops unit LOCAL-ONLY at remote HEAD 37d401b5a (clean worktree; all baselines fresh sandbox reads — never local src/). Three new pure modules: foundationDuplicateMirror.js (duplicateFoundationAssembly — select-all-or-by-id clone with dependent-closure, collision-guarded fresh ids, remapped refs incl. source_item_component_id lineage, default 12in plan offset; mirrorFoundationAssembly — copy clones or in-place reflect about explicit at / foundation edge_of+edge / canvas centerline, items by footprint center with rotation flipped theta->-theta, poles as points, wall points reflected with segment lengths preserved; shared appendClonedFoundationAssemblies engine rebuilds dependent indexes vs merged arrays), foundationAssemblyPresets.js (6 frozen named assembly presets as snapshot-shaped data — all 5 arrays supplied, blank material ids, never a price; foundationAssemblyPresetTemplateData feeds the dialog's existing onApply lane; applyFoundationAssemblyPreset replace = the real prepareFoundationTemplatePatch gate, append = collision-guarded clone splice), foundationBulkMaterialChange.js (FOUNDATION_BULK_MATERIAL_TARGETS applicability map — concrete/forming/wall/internal-wall/cap/pole slots incl. legacy selected_pole_id; applyFoundationBulkMaterial with all/replace/fill_blank modes, component_ids scope, project-default participation, custom-price advisory — never authors a price field). FoundationTemplateDialog.jsx gains the 'Start from an assembly preset' pick section (6 rows, counts, replace disclosure) above a preserved 'Saved templates' block — the fit-the-existing-dialog clause landed, and presets ride the identical onApply(data) -> prepareFoundationTemplatePatch -> commit lane as saved templates so reusable-template round-tripping needed zero page edits. All transforms return {patch, summary} where patch merges {...prev, ...patch} exactly like template patches — supplied arrays replace, absent keys preserve. Verified: 25/25 esbuild+react-test-renderer cases on candidates bundled against REAL baseline deps + 5/5 real-Chromium cases at 1280px/390px (preset rows, apply-through-real-gate readback, in-browser ops with exact numerics, zero foreign requests/console/page errors; screenshots). Deferred by file ownership, documented in SPEC: page commit() wiring + toolbar buttons for duplicate/mirror/bulk (selection plumbing accepts any component_ids array; absent = whole assembly). Not touched: FoundationEstimator.jsx, FoundationBOM.jsx, foundationCalc/foundationReinforcement*/partSync (Phase B-3), FoundationProject.jsonc/settings, recovery cluster (O-004t), inventory files, AI review channel, panels read for field contract only. No remote write/checkpoint/deploy/business records/paid AI."
+}

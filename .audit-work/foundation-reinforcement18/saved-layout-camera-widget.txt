@@ -1,0 +1,21 @@
+ok actual overview mounts eight physical bars under their concrete and leaves all pricing/proposal inputs unchanged
+ok concrete and ground fade only around visible versioned steel with shared rotation/grade coordinates
+ok reinforcement visibility restores opaque concrete/ground and disposes each old renderer without writing a design
+ok hide/show releases and recreates canvas, listeners, observer and animation ownership
+ok unsupported versions remain visibly rejected while ordinary legacy foundations acquire no invented steel
+ok unavailable WebGL retains the mount and Retry actually creates a renderer without a false shown count
+ok failure after listener registration is fully cleaned and can be retried without duplicate listeners
+ok resize and existing camera/mode controls stay functional without altering the project
+ok invalid counts draw no replacement foundation; valid large quantities are explicitly preview-limited only
+ok unknown supports and fabrication omissions remain explicit instead of advertising zero supports or engineering approval
+ok explicit Saved2DAnchors mode applies saved poses to actual meshes and keeps recorded pole markers aligned
+ok layout draws only one anchor for quantity2 and switching back restores inspection copies without edits
+ok malformed independent poles are diagnosed without losing the valid concrete or rendering at zero
+ok legacy default height is labeled unknown and explicit active zero cannot create an8ft pole
+ok independent pole quantity budgets cap render markers only and remain explicit
+ok broken saved Foundation coordinates do not become a zero anchor while inspection remains usable
+ok saved mode survives unavailable WebGL retry and hide-show without leaking resources
+ok layout camera frames all recorded anchors and poles through views FitView resize and hideShow
+ok layout fits beyond the old200ft zoom limit without scaling mesh placement
+Reinforcement 3D widget: 19/19; failed=0
+exit=0

@@ -1,0 +1,11 @@
+{
+  "authorized": true,
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "1b672bf8ed786b5d79cab4cbdb003ecf814e91ff",
+  "restoreCheckpointId": "6aeeab539197fbe7cd645d1e",
+  "candidateHashes": {
+    "wallCalculator.js": "322027143feced74e235ec45c659452e555e34d5f8f7a6ec0b339483a0f579d9"
+  },
+  "reviewedProtocolHash": "ab435bb267806aab93af76bd2fe9bcab42c240054fe9b73a439cb054a57a3924"
+}

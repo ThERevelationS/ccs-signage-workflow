@@ -1,0 +1,582 @@
+{
+  "mode": "blocked-advisory",
+  "width": 1280,
+  "before": {
+    "mode": "blocked-advisory",
+    "project": {
+      "id": "synthetic-o030-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "P",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "items": [
+        {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 0,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": false,
+          "include_forming": true,
+          "include_finishing": false,
+          "is_new_sign_location": false,
+          "selected_concrete_id": "synthetic-readymix",
+          "excavation_method": "hand_dig",
+          "selected_forming_id": "synthetic-forming",
+          "item_total_cost": 111.11,
+          "concrete_volume_cy": 0.5,
+          "concrete_cost": 11.11,
+          "excavation_cost": 22.22
+        }
+      ],
+      "walls": [],
+      "poles": [],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [],
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {}
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "total_concrete_cost": 301.5,
+      "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 301.5,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 219,
+        "additional_stops_cost": 0,
+        "trucks": [
+          {
+            "yards": 0.5925925925925926,
+            "rounded_yards": 0.75,
+            "cost": 301.5,
+            "small_order_fee": 102.25,
+            "fuel_fee": 35
+          }
+        ]
+      }
+    },
+    "savedProject": {
+      "id": "synthetic-o030-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "P",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "items": [
+        {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 48,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": false,
+          "include_forming": true,
+          "include_finishing": true,
+          "is_new_sign_location": false,
+          "selected_concrete_id": "synthetic-readymix",
+          "excavation_method": "hand_dig",
+          "selected_forming_id": "synthetic-forming",
+          "item_total_cost": 111.11,
+          "concrete_volume_cy": 0.5,
+          "concrete_cost": 11.11,
+          "excavation_cost": 22.22
+        }
+      ],
+      "walls": [],
+      "poles": [],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [],
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {}
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "total_concrete_cost": 301.5,
+      "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 301.5,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 219,
+        "additional_stops_cost": 0,
+        "trucks": [
+          {
+            "yards": 0.5925925925925926,
+            "rounded_yards": 0.75,
+            "cost": 301.5,
+            "small_order_fee": 102.25,
+            "fuel_fee": 35
+          }
+        ]
+      }
+    },
+    "inventory": [
+      {
+        "id": "synthetic-readymix",
+        "material_type": "concrete_service",
+        "material_name": "Metro Ready-Mix",
+        "supplier": "Metro Ready-Mix",
+        "cost_per_unit": 190,
+        "unit": "cy",
+        "minimum_order_yards": 0,
+        "below_minimum_cost_per_cy": 0,
+        "minimum_cost": 0,
+        "mix_3500_price": 205,
+        "mix_4000_price": 210,
+        "mix_4500_price": 218,
+        "mix_5000_price": 224,
+        "mix_fast_set_price": 258,
+        "admix_calcium_chloride_price": 9,
+        "admix_set_retarding_price": 5,
+        "admix_water_reducing_price": 4.75,
+        "admix_fibers_price": 13,
+        "admix_winter_service_price": 6,
+        "small_load_fee_1_1_75": 145,
+        "small_load_fee_2_2_75": 118,
+        "small_load_fee_3_3_75": 103,
+        "small_load_fee_4_4_25": 78,
+        "small_load_fee_4_5_4_75": 38,
+        "fuel_surcharge": 35,
+        "show_in_foundation": true
+      },
+      {
+        "id": "synthetic-bagged",
+        "material_type": "bagged_concrete",
+        "material_name": "80lb bagged concrete",
+        "cost_per_unit": 6.5,
+        "show_in_foundation": true
+      },
+      {
+        "id": "synthetic-forming",
+        "material_type": "forming_material",
+        "material_name": "16ft forming board",
+        "cost_per_unit": 12,
+        "show_in_foundation": true
+      },
+      {
+        "id": "synthetic-rebar4",
+        "material_type": "rebar",
+        "material_name": "#4 rebar",
+        "rebar_size": "#4",
+        "cost_per_unit": 0.62,
+        "show_in_foundation": true
+      },
+      {
+        "id": "synthetic-excavator",
+        "material_type": "excavation_equipment",
+        "material_name": "Mini excavator",
+        "cost_per_day": 275,
+        "cost_per_week": 900,
+        "cost_per_month": 2600,
+        "pickup_delivery_cost": 120,
+        "show_in_foundation": true
+      }
+    ],
+    "settings": {
+      "foundation_main_labor_rate": "60",
+      "foundation_pouring_cost_per_cy": "15",
+      "foundation_forming_cost_per_sqft": "2.5",
+      "foundation_finishing_cost_per_sqft": "1.25",
+      "foundation_rebar_time_cross_section": "0.05",
+      "foundation_rebar_time_linear_ft": "0.02",
+      "foundation_hand_dig_time_per_cy": "2",
+      "foundation_equipment_excavation_time_per_cy": "0.5",
+      "foundation_forming_materials_spread_foot": "0.5",
+      "foundation_forming_materials_pillar": "0.75"
+    },
+    "delivery": {
+      "pricingUnavailable": true,
+      "concreteTotal": 301.5,
+      "roundedYards": 0.75,
+      "ratePerYard": 219,
+      "additionalStopsCost": 0,
+      "trucksList": [
+        {
+          "yards": 0.5925925925925926,
+          "roundedYards": 0.75,
+          "cost": 301.5,
+          "smallOrderFee": 102.25,
+          "fuelFee": 35
+        }
+      ],
+      "availableMixes": [],
+      "availableAdmixes": []
+    },
+    "totals": {
+      "total_concrete_cost": 312.61,
+      "concrete_delivery_cost": 301.5,
+      "concrete_delivered_yards": 0.75,
+      "concrete_rate_per_yard": 219,
+      "concrete_trucks": [
+        {
+          "yards": 0.5925925925925926,
+          "roundedYards": 0.75,
+          "cost": 301.5,
+          "smallOrderFee": 102.25,
+          "fuelFee": 35
+        }
+      ],
+      "additional_stops_cost": 0,
+      "total_rebar_cost": null,
+      "total_excavation_cost": 22.22,
+      "total_forming_materials_cost": null,
+      "total_labor_cost": null,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_equipment_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "wall_caps_by_material": [],
+      "total_concrete_volume_cy": 0.5,
+      "total_excavation_volume_cy": null,
+      "total_labor_hours": null,
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "grand_total": 412.61
+    },
+    "catalogIssues": [],
+    "inputIssues": [
+      {
+        "kind": "foundation",
+        "index": 0,
+        "componentId": "synthetic-item-1",
+        "field": "length_inches",
+        "code": "foundation_dimension_invalid",
+        "message": "Foundation 1: length (inches) must be a finite positive number."
+      }
+    ],
+    "constructionWarnings": [
+      {
+        "kind": "foundation",
+        "index": 0,
+        "componentId": "synthetic-item-1",
+        "field": "include_finishing",
+        "inventoryId": null,
+        "code": "forming_without_finishing",
+        "severity": "advisory",
+        "message": "Foundation 1: forming is priced but top finishing is not — a formed pour still exposes the top surface. Verify whether finishing is in scope."
+      }
+    ],
+    "itemPricing": [
+      {
+        "available": false,
+        "issues": [
+          {
+            "kind": "foundation",
+            "index": 0,
+            "componentId": "synthetic-item-1",
+            "field": "length_inches",
+            "code": "foundation_dimension_invalid",
+            "message": "Foundation 1: length (inches) must be a finite positive number."
+          }
+        ]
+      }
+    ],
+    "pricingUnavailable": true,
+    "writes": 0
+  },
+  "after": {
+    "mode": "blocked-advisory",
+    "project": {
+      "id": "synthetic-o030-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "P",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "items": [
+        {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 0,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": false,
+          "include_forming": true,
+          "include_finishing": false,
+          "is_new_sign_location": false,
+          "selected_concrete_id": "synthetic-readymix",
+          "excavation_method": "hand_dig",
+          "selected_forming_id": "synthetic-forming",
+          "item_total_cost": 111.11,
+          "concrete_volume_cy": 0.5,
+          "concrete_cost": 11.11,
+          "excavation_cost": 22.22
+        }
+      ],
+      "walls": [],
+      "poles": [],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [],
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {}
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "total_concrete_cost": 301.5,
+      "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 301.5,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 219,
+        "additional_stops_cost": 0,
+        "trucks": [
+          {
+            "yards": 0.5925925925925926,
+            "rounded_yards": 0.75,
+            "cost": 301.5,
+            "small_order_fee": 102.25,
+            "fuel_fee": 35
+          }
+        ]
+      }
+    },
+    "savedProject": {
+      "id": "synthetic-o030-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "P",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "items": [
+        {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 48,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": false,
+          "include_forming": true,
+          "include_finishing": true,
+          "is_new_sign_location": false,
+          "selected_concrete_id": "synthetic-readymix",
+          "excavation_method": "hand_dig",
+          "selected_forming_id": "synthetic-forming",
+          "item_total_cost": 111.11,
+          "concrete_volume_cy": 0.5,
+          "concrete_cost": 11.11,
+          "excavation_cost": 22.22
+        }
+      ],
+      "walls": [],
+      "poles": [],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [],
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {}
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "total_concrete_cost": 301.5,
+      "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 301.5,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 219,
+        "additional_stops_cost": 0,
+        "trucks": [
+          {
+            "yards": 0.5925925925925926,
+            "rounded_yards": 0.75,
+            "cost": 301.5,
+            "small_order_fee": 102.25,
+            "fuel_fee": 35
+          }
+        ]
+      }
+    },
+    "inventory": [
+      {
+        "id": "synthetic-readymix",
+        "material_type": "concrete_service",
+        "material_name": "Metro Ready-Mix",
+        "supplier": "Metro Ready-Mix",
+        "cost_per_unit": 190,
+        "unit": "cy",
+        "minimum_order_yards": 0,
+        "below_minimum_cost_per_cy": 0,
+        "minimum_cost": 0,
+        "mix_3500_price": 205,
+        "mix_4000_price": 210,
+        "mix_4500_price": 218,
+        "mix_5000_price": 224,
+        "mix_fast_set_price": 258,
+        "admix_calcium_chloride_price": 9,
+        "admix_set_retarding_price": 5,
+        "admix_water_reducing_price": 4.75,
+        "admix_fibers_price": 13,
+        "admix_winter_service_price": 6,
+        "small_load_fee_1_1_75": 145,
+        "small_load_fee_2_2_75": 118,
+        "small_load_fee_3_3_75": 103,
+        "small_load_fee_4_4_25": 78,
+        "small_load_fee_4_5_4_75": 38,
+        "fuel_surcharge": 35,
+        "show_in_foundation": true
+      },
+      {
+        "id": "synthetic-bagged",
+        "material_type": "bagged_concrete",
+        "material_name": "80lb bagged concrete",
+        "cost_per_unit": 6.5,
+        "show_in_foundation": true
+      },
+      {
+        "id": "synthetic-forming",
+        "material_type": "forming_material",
+        "material_name": "16ft forming board",
+        "cost_per_unit": 12,
+        "show_in_foundation": true
+      },
+      {
+        "id": "synthetic-rebar4",
+        "material_type": "rebar",
+        "material_name": "#4 rebar",
+        "rebar_size": "#4",
+        "cost_per_unit": 0.62,
+        "show_in_foundation": true
+      },
+      {
+        "id": "synthetic-excavator",
+        "material_type": "excavation_equipment",
+        "material_name": "Mini excavator",
+        "cost_per_day": 275,
+        "cost_per_week": 900,
+        "cost_per_month": 2600,
+        "pickup_delivery_cost": 120,
+        "show_in_foundation": true
+      }
+    ],
+    "settings": {
+      "foundation_main_labor_rate": "60",
+      "foundation_pouring_cost_per_cy": "15",
+      "foundation_forming_cost_per_sqft": "2.5",
+      "foundation_finishing_cost_per_sqft": "1.25",
+      "foundation_rebar_time_cross_section": "0.05",
+      "foundation_rebar_time_linear_ft": "0.02",
+      "foundation_hand_dig_time_per_cy": "2",
+      "foundation_equipment_excavation_time_per_cy": "0.5",
+      "foundation_forming_materials_spread_foot": "0.5",
+      "foundation_forming_materials_pillar": "0.75"
+    },
+    "delivery": {
+      "pricingUnavailable": true,
+      "concreteTotal": 301.5,
+      "roundedYards": 0.75,
+      "ratePerYard": 219,
+      "additionalStopsCost": 0,
+      "trucksList": [
+        {
+          "yards": 0.5925925925925926,
+          "roundedYards": 0.75,
+          "cost": 301.5,
+          "smallOrderFee": 102.25,
+          "fuelFee": 35
+        }
+      ],
+      "availableMixes": [],
+      "availableAdmixes": []
+    },
+    "totals": {
+      "total_concrete_cost": 312.61,
+      "concrete_delivery_cost": 301.5,
+      "concrete_delivered_yards": 0.75,
+      "concrete_rate_per_yard": 219,
+      "concrete_trucks": [
+        {
+          "yards": 0.5925925925925926,
+          "roundedYards": 0.75,
+          "cost": 301.5,
+          "smallOrderFee": 102.25,
+          "fuelFee": 35
+        }
+      ],
+      "additional_stops_cost": 0,
+      "total_rebar_cost": null,
+      "total_excavation_cost": 22.22,
+      "total_forming_materials_cost": null,
+      "total_labor_cost": null,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_equipment_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "wall_caps_by_material": [],
+      "total_concrete_volume_cy": 0.5,
+      "total_excavation_volume_cy": null,
+      "total_labor_hours": null,
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "grand_total": 412.61
+    },
+    "catalogIssues": [],
+    "inputIssues": [
+      {
+        "kind": "foundation",
+        "index": 0,
+        "componentId": "synthetic-item-1",
+        "field": "length_inches",
+        "code": "foundation_dimension_invalid",
+        "message": "Foundation 1: length (inches) must be a finite positive number."
+      }
+    ],
+    "constructionWarnings": [
+      {
+        "kind": "foundation",
+        "index": 0,
+        "componentId": "synthetic-item-1",
+        "field": "include_finishing",
+        "inventoryId": null,
+        "code": "forming_without_finishing",
+        "severity": "advisory",
+        "message": "Foundation 1: forming is priced but top finishing is not — a formed pour still exposes the top surface. Verify whether finishing is in scope."
+      }
+    ],
+    "itemPricing": [
+      {
+        "available": false,
+        "issues": [
+          {
+            "kind": "foundation",
+            "index": 0,
+            "componentId": "synthetic-item-1",
+            "field": "length_inches",
+            "code": "foundation_dimension_invalid",
+            "message": "Foundation 1: length (inches) must be a finite positive number."
+          }
+        ]
+      }
+    ],
+    "pricingUnavailable": true,
+    "writes": 0
+  },
+  "writes": 0,
+  "netOps": {
+    "fetch": 0,
+    "xhr": 0
+  },
+  "externalUrls": [],
+  "consoleErrors": [],
+  "keyWarnings": []
+}

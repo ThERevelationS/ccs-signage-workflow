@@ -1,0 +1,76 @@
+{
+  "workstream": "WS-O",
+  "item": "O-008u",
+  "ticket": "CMP-A08-tail-2",
+  "title": "Final O-008 remainders: MasterEquipmentTab explicit-0-respecting form semantics; supplier group headers on the last two flat lists",
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remoteBaseline": "1bb092f15",
+  "deliverableMode": "candidates-only",
+  "remoteWrites": 0,
+  "generated": "2026-11-08",
+
+  "summary": "Closes the last O-008 remainders flagged by the O-008t SPEC. (1) MasterEquipmentTab.jsx: every `|| 0`/minted-0 numeric initializer and draft coercion in the edit-form path now rides the boundary's explicit-0-respecting semantics — normalizeRow display costs, both openAdd branches (incl. sort_order), the `initial` useMemo on both entity branches (10 channel + 6 foundation numeric fields), the switchSupportsAttachments carry/swap maps, and all six remaining `parseFloat(...) || 0` draft inputs (now `inventoryNumberInput` with `?? \"\"` binders). Blank drafts persist null ('not cataloged'); authored 0 initializes 0 and saves 0; malformed stays verbatim. (2) InventoryTable.jsx + FoundationCatalog.jsx: the last two flat catalog lists now section by `groupInventoryBySupplier` with the same group-header markup O-008t landed in MasterSuppliesTab/FoundationInventory — alphabetical canonical keys, unrecorded suppliers pinned last. (3) Required-by-change fix: InventoryTable's `allVisibleSelected`/`toggleSelectAll` moved below the `sortedItems` declaration — remote HEAD has them ABOVE, a live TDZ ReferenceError on every render (proven: remote baseline throws under renderToStaticMarkup).",
+
+  "boundaryContract": {
+    "form-init null draft": "Absent stored value -> numeric field opens null (blank input via ?? \"\"); explicit authored 0 still initializes 0; drafts ride inventoryNumberInput so typed 0 saves as authored zero and malformed stays verbatim for validation.",
+    "tableSupplier": "InventoryTable getSupplier = row?.supplier || row?.vendor_name || row?.service_name — `supplier` on the declarative catalog entities (substrates/sign_lighting/sign_hardware/sign_parts_supplies); vendor_name||service_name on raw LaborServiceInventory rows, per the landed boundary contract.",
+    "group headers": "Same markup as landed: table sources render a `bg-slate-50/80` header <tr> ('Supplier: <label>' + row count + '— not recorded' for unassigned); card lists render the `text-xs font-semibold uppercase tracking-wide` section div ('Supplier: <label>' / 'No supplier recorded').",
+    "windowing": "FoundationCatalog's 60-row visibleCount still caps rendered ROWS — group headers never consume the budget; a section renders only when >=1 of its rows is inside the window."
+  },
+
+  "candidateFiles": {
+    "modified": [
+      "src/components/masterInventory/MasterEquipmentTab.jsx",
+      "src/components/masterInventory/InventoryTable.jsx",
+      "src/pages/FoundationCatalog.jsx"
+    ],
+    "protectedUntouched": [
+      "src/components/estimator/foundation/FoundationItemCard.jsx (Phase B-3 may own)",
+      "src/pages/FoundationInventory.jsx",
+      "src/components/estimator/foundation/foundationCalc.js / legacyFoundationCalc.js",
+      "src/components/estimator/foundation/foundationReinforcement*",
+      "src/components/estimator/foundation/partSync.js (FoundationBOM.jsx)",
+      "every O-008t-landed file (inventoryNormalization.js, MasterSuppliesTab.jsx, EquipmentInventoryTab.jsx, WallCapsInventoryTab.jsx, foundationFieldSchema.js)"
+    ]
+  },
+
+  "verification": {
+    "harness": ".audit-work/foundation-o008u-remaining/test-o008u-remaining.jsx + build-test.cjs — esbuild-bundles testtree/ (candidate files + REAL remote inventoryNormalization.js/foundationFieldSchema.js + stubbed @/ deps) under Node. Component tier uses react-dom/server renderToStaticMarkup with a react-shim that seeds useState in call order so loaded lists and open edit forms render without entity loads or DOM events.",
+    "result": "PASS o008u-remaining — 166 passed, 0 failed",
+    "blankVs0Matrix": "Verbatim-extracted normalizeRow/openAdd/initial/switchSupportsAttachments run the full matrix: absent -> null (all 17 numeric fields across both entity branches), authored 0 -> 0, authored 45/'12.5'/'abc' -> verbatim. openAdd both branches emit null for every cost field + sort_order.",
+    "saveCoercionMatrix": "inventoryNumberInput draft -> cleanForOwnership payload: ''->null persists, '0'->0, '12.5'->12.5, 'abc'->verbatim, untouched null stays null; owned ownership still blanks rental_company + forces pricing_mode owned_flat; swap carry preserves null/0/values across entity switch, cost_flat/max_height_feet open null, pickup<->delivery field map preserved.",
+    "groupingOrder": "Real render of InventoryTable on a labor_services source: groups render Citywide|Ernst|Permit Expediting|— not recorded — variant spellings (' citywide ') merge, canonical-key alphabetical order, service_name fallback groups a vendor-less named row, and a row with no supplier/vendor/service lands unassigned LAST. Read-only mode computes colSpan=5 (fields) vs canEdit colSpan=7 (+actions, +bulk checkbox when present). Substrates source groups on `supplier` identically.",
+    "foundationCatalog": "Real render: three sections (aaa/zzz/unassigned), 'No supplier recorded' last, visibleCount=2 caps at one section + 2 rows with 'Show 3 more (3 remaining)' — headers never consume the row budget. Extracted catalogSections verified across windows 0/2/3/60.",
+    "realDom": "renderToStaticMarkup output asserted on: supplier header <tr> markup/classNames per landed MasterSuppliesTab pattern, colSpan formula, within-group input order, authored-$0 Day cost + 'Not priced' for null/absent in the equipment list, EquipmentForm rendering value=\"\" on blank drafts vs value=\"0\"/value=\"2\" on authored zeros (≥5 zero inputs + safety margin) — no value=\"0\" anywhere in a new-row form.",
+    "tdzContrast": "remoteBaseline InventoryTable (fresh remote copy) throws 'Cannot access sortedItems before initialization' under renderToStaticMarkup; the candidate renders — the allVisibleSelected/toggleSelectAll relocation fixes a live crash, required by the grouping restructure.",
+    "syntax": "esbuild parse check: all 3 candidate files OK; full bundle builds warning-free."
+  },
+
+  "deliberateNonChanges": [
+    "MasterEquipmentTab equipment/boom/attachment CARD lists — no supplier grouping added: FoundationInventory equipment rows and ChannelLetterInstallEquipment rows do carry supplier-ish fields (rental_company), but O-008t's grant grouped catalog lists only; the equipment tab's kind/ownership tab structure wasn't in the flagged remainder. rental_company is available to tableSupplier if a later pass wants it.",
+    "FoundationCatalog's display-only `${Number(row.cost_per_unit || row.cost_per_day || row.pole_stock_price || 0).toFixed(2)}` price cell and `row.material_description || row.supplier || '—'` subtitle — same call O-008t made: display fallbacks mint nothing.",
+    "vertical_reach_safety_margin_feet `?? 2` — already explicit-0-respecting authored module default (missing -> 2ft, authored 0 stays 0); only its parseFloat||0 draft coercion was converted.",
+    "cleanForOwnership's owned-branch `rental_company = \"\"` + `pricing_mode` guard — string/enum fields, unchanged semantics.",
+    "pricing_mode/equipment_type/fuel_type/material_type/ownership/name `|| \"\"`/`|| \"per_day\"`/`|| \"boom_lift\"` and boolean `!!`/`??` visibility defaults — non-numeric authored defaults.",
+    "sort_order server-side sort param on loadAllEntityRows calls — not a form value.",
+    "FoundationInventory page's equipment list (EquipmentInventoryTab) — already landed in O-008t.",
+    "FoundationItemCard estimator concrete picker — still ungrouped by design (protected file); supplier_key is materialized for a future delivery-side grouping pass."
+  ],
+
+  "behaviorDeltas": [
+    "Master Equipment add/edit forms open blank for every unpriced numeric field (day/week/month costs, flat cost, delivery/pickup, heights, mpg, idle cost, sort_order) — saving an untouched form can no longer mint $0 rental rates or 0 dims into FoundationInventory/ChannelLetterInstallEquipment rows.",
+    "A blanked-out cost field persists null ('not cataloged') where `|| 0`/`parseFloat||0` minted 0; swapping a new item's storage entity no longer mints cost_flat/max_height_feet 0s.",
+    "The equipment list renders 'Not priced' for unpriced rental costs instead of a minted '$0'; authored $0 still displays '$0'.",
+    "Labor & Services (where concrete suppliers live) and all four other declarative Master Inventory tables section by supplier — vendor_name||service_name keyed — with unrecorded vendors pinned last as '— not recorded'.",
+    "FoundationCatalog sections each material-type list by supplier with 'No supplier recorded' last; the 60-row window still caps rows.",
+    "Declarative Master Inventory tabs no longer crash on render (latent TDZ in remote HEAD's allVisibleSelected ordering)."
+  ],
+
+  "knownRemainders": {
+    "supplierGroupingEstimator": "Concrete picker in FoundationEstimator/FoundationItemCard still flat — protected/ungranted files; supplier_key materialized for a future pass.",
+    "masterEquipmentTabGrouping": "MasterEquipmentTab lists group nothing (kind/ownership tabs only) — rental_company-based grouping available if wanted later.",
+    "nonCmpNumericCoercions": "cl_installCalculator parseFloat||0 consume math, importMappers/legacyInventoryMigrator loose cleanNum — non-CMP surfaces (unchanged from O-008t).",
+    "publishedApp": "Published site may predate the TDZ bug; the fix rides with these candidates whenever they next land."
+  }
+}

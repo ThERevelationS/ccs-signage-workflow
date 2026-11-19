@@ -134,7 +134,7 @@ export function AuthProvider({ children }) {
     } catch (error) {
       // A temporary service failure is not session revocation. Keep the token
       // for the next verification, but do not grant access without verification.
-      if ([401, 409].includes(Number(error?.response?.status))) {
+      if ([401, 409].includes(Number(error?.response?.status ?? error?.status))) {
         localStorage.removeItem(TOKEN_KEY);
         clearAdminSettingsAuthorization();
         setCurrentUser(null);
@@ -177,7 +177,7 @@ export function AuthProvider({ children }) {
       }
       endSession();
     } catch (error) {
-      const status = Number(error?.response?.status ?? error?.status);
+      const status = Number(error?.response?.status ?? error?.status ?? error?.originalError?.response?.status);
       if (status === 401 || status === 409) endSession();
     } finally {
       sessionRecheckInFlight.current = false;
@@ -280,12 +280,13 @@ export function AuthProvider({ children }) {
       <LoginDialog
         open={showLogin && !currentUser}
         onLogin={loginWithCredentials}
+        onBrowse={() => { setBrowseOnly(true); setShowLogin(false); }}
       />
     </AuthContext.Provider>
   );
 }
 
-function LoginDialog({ open, onLogin }) {
+function LoginDialog({ open, onLogin, onBrowse }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -360,7 +361,14 @@ function LoginDialog({ open, onLogin }) {
           </Button>
         </form>
 
-
+        <Button
+          type="button"
+          variant="ghost"
+          className="w-full text-slate-500 hover:text-slate-700"
+          onClick={onBrowse}
+        >
+          <Eye className="w-4 h-4 mr-2" /> Continue browsing as guest
+        </Button>
       </DialogContent>
     </Dialog>
   );

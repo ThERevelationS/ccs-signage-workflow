@@ -1,0 +1,70 @@
+{
+  "summary": {
+    "total": 4,
+    "resolved": 4,
+    "rate": "100.0%",
+    "failure_stages": {},
+    "geocode_misses": 0,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "115 Wright Station Way Suite 1, Springboro, OH 45066",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: springboro -> springboro",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "springboro"
+      },
+      "county": "",
+      "ms": 2539,
+      "worker": 1
+    },
+    {
+      "address": "1977, 240 W East St, WSHNGTN CT HS, OH 43160",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: washington court house -> washington court house",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "washington court house"
+      },
+      "county": "",
+      "ms": 2293,
+      "worker": 2
+    },
+    {
+      "address": "67 Donatech Dr, Owingsville, KY 40360",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: owingsville -> owingsville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "owingsville"
+      },
+      "county": "",
+      "ms": 1566,
+      "worker": 2
+    },
+    {
+      "address": "4153C OH-128, Cleves, OH 45002",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: cleves -> cleves",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "cleves"
+      },
+      "county": "",
+      "ms": 2376,
+      "worker": 1
+    }
+  ]
+}

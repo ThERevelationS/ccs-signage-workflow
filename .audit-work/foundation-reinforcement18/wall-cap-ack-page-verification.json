@@ -1,0 +1,11 @@
+{
+  "syntheticOnly": true,
+  "initialSavedCost": 21,
+  "initialDraftCopiedCost": 25,
+  "firstDisplayedHeldCost": 21,
+  "acceptedSavedCost": 25,
+  "nextDisplayedHeldCost": 25,
+  "sourceWrites": 1,
+  "builderWrites": 1,
+  "actualBusinessWrites": 0
+}

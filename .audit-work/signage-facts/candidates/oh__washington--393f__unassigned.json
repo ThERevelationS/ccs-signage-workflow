@@ -1,0 +1,50 @@
+{
+ "jurisdiction_id": "6ae03b50f18bc6c0a9a7393f",
+ "jurisdiction_name": "Washington",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Centerville High School Cross Point Shopping Center Southview Medical Center Kennedy E. S. Hadley Watts M.S. Weller E.S. Normandy E.S. Spring Valley Academy #44 #43 Primary Village North #42 Post Office Driscoll E. S. Stingley E. S. Magsig M. S. John Hole E.S. Centerville Library Washington Township Recreation Center Cline E. S. Woodbourne Library #45 Public Works Miami Valley School Centerville City Building Washington Township Government Center Centerville Police Miami Valley Hospital South Tower Heights M.S. Centerville Public Works #41 Centerville Place Shopping Center Bethany Village Primary Village South Rec West/ Hithergreen Incarnation E.S. Dayton Christian School Veterans Memorial Amphitheater St. Leonard School Bus Garage Miami Valley Firefighters/EMS Memorial St. Leonard NCR Country Club Town Hall Theatre H H E. Rahn Rd. Wilmington Pike E. Whipp Rd. Munger Rd. Polen Dr. Glenhe",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "d1f55dc1664c0ed25e68b2da479e99844a8881a419011a1c6fb8bcce7807b0e3",
+   "source_document_id": null,
+   "source_title": "d1f55dc1664c0ed25e68b2da479e99844a8881a419011a1c6fb8bcce7807b0e3.pdf",
+   "official_url": "https://www.washingtontwp.org/UserFiles/Servers/Server_12463606/File/Services/Zoning%20and%20Development/ZoningMap.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "IF THE APPELLANT OR APPLICANT IS DIFFERENT FROM THE PROPERTY OWNER, THE FOLLOWING MUST BE FILLED OUT AND NOTARIZED. I ____________ _________________________, as property owner of the property(s) listed within this application, do allow, ____________________________________ to represent me in the filing of this application and is also permitted to represent myself and my interests before any Board or Commission of Washington Township which has governing authority over this application. ____________________________________ APPELLANT OR APPLICANT Subscribed and sworn before me on the __________ day of ____________________, 2_____. My Commission expires ______________________________, 2_____. ___________________________________ Notary Public",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "8310599fea4b32ad35197d4fdb368cf00361267103f8b70549c5a162d38d39c5",
+   "source_document_id": null,
+   "source_title": "8310599fea4b32ad35197d4fdb368cf00361267103f8b70549c5a162d38d39c5.pdf",
+   "official_url": "https://www.washingtontwp.org/UserFiles/Servers/Server_12463606/File/Services/Zoning%20and%20Development/Misc/Affidavit.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "4 Finalize your application A plot plan showing the exact location of your proposed structure is required. Failure to provide a plan with sufficient detail will result in the delay or denial of your permit application. A complete plot plan should include the following: 1. A drawing showing the location and shape of the proposed structure. 2. The distance from the nearest property line if not a fence. 3. The height of any proposed fencing.",
+   "tags": [
+    "dimension",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "c0433f65252df629fa44e5d08e67f21b970ecdcc275f04be2c070d6efc1d9389",
+   "source_document_id": null,
+   "source_title": "c0433f65252df629fa44e5d08e67f21b970ecdcc275f04be2c070d6efc1d9389.pdf",
+   "official_url": "https://www.washingtontwp.org/UserFiles/Servers/Server_12463606/File/Services/Zoning%20and%20Development/Application%20and%20Fees/Permit%20Application%20Walkthrough%20(March%202026).pdf"
+  }
+ ]
+}

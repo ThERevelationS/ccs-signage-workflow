@@ -1,0 +1,12 @@
+# Supplementary consumers / context
+src/components/estimator/builder/partSync.js
+src/components/estimator/maintenance/maintenanceSellPricing.js
+src/components/estimator/settings/moduleSettingDefaults.js
+src/components/estimator/parts/partCatalog.js
+src/components/signMaintenance/maintenanceActionRatePersistence.js
+src/components/signMaintenance/MaintenanceMaterialItem.jsx
+src/components/signMaintenance/maintenanceMaterialRulePersistence.js
+src/components/estimator/aio/InlineProductEditor.jsx
+src/components/estimator/moduleShared/moduleProjectActions.js
+src/components/estimator/moduleShared/ModuleActionBar.jsx
+src/components/estimator/builder/itemIdentity.js

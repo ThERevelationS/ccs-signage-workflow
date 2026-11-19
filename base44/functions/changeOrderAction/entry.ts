@@ -1,10 +1,13 @@
+import { allocateDocNumber } from '../../shared/docNumberAllocation.ts';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import {
   createFoundationRecordWithRecovery,
   expectedFoundationFields,
   replaceFoundationFieldsIfUnchanged,
 } from "../../shared/opportunityFoundationPersistence.mjs";
+import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
 
 const clean = (value: any) => String(value ?? "").trim();
 const num = (value: any, fallback = 0) => {
@@ -52,13 +55,8 @@ function sanitizeLineItems(raw: any) {
 const amountDelta = (items: any[]) =>
   money((Array.isArray(items) ? items : []).reduce((s, r) => s + money(num(r.quantity) * num(r.unit_price)), 0));
 
-async function nextChangeOrderNumber(ChangeOrder: any) {
-  const rows = await ChangeOrder.filter({});
-  if (!Array.isArray(rows)) throw bad("Change order numbering lookup failed.", 500);
-  let seq = rows.length + 1001;
-  const existing = new Set(rows.map((r: any) => clean(r?.change_order_number)));
-  while (existing.has(`CO-${seq}`)) seq += 1;
-  return `CO-${seq}`;
+async function nextChangeOrderNumber(ChangeOrder: any, svc: any) {
+  return allocateDocNumber({ svc, configName: 'change_order', prefix: 'CO-', seedEntity: ChangeOrder, seedField: 'change_order_number' });
 }
 
 function coSnapshot(row: any) {
@@ -83,7 +81,7 @@ function coSnapshot(row: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const user = await authenticateSignShopSession(base44, body?.session_token);
     const actor = clean(user?.email) || clean(user?.id) || "unknown";
@@ -105,18 +103,29 @@ Deno.serve(async (req) => {
         const v = clean(body?.[key]);
         if (v) query[key] = v;
       }
-      const rows = await ChangeOrder.filter(query);
+      const rows = await loadAllEntityRows({
+        entity: ChangeOrder,
+        query,
+        sort: "-created_date",
+        label: "Change order rows",
+      });
       if (!Array.isArray(rows)) throw bad("Change order lookup failed.", 500);
       const search = clean(body?.query).toLowerCase();
-      const changeOrders = rows
+      const matched = rows
         .filter((r: any) => !search
           || clean(r?.change_order_number).toLowerCase().includes(search)
           || clean(r?.title).toLowerCase().includes(search)
           || clean(r?.customer_display_name).toLowerCase().includes(search))
-        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)))
-        .slice(0, 250)
-        .map(coSnapshot);
-      return Response.json({ success: true, action, change_orders: changeOrders });
+        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
+      const changeOrders = matched.slice(0, 250).map(coSnapshot);
+      return Response.json({
+        success: true,
+        action,
+        change_orders: changeOrders,
+        total_count: matched.length,
+        returned: changeOrders.length,
+        truncated: changeOrders.length < matched.length,
+      });
     }
 
     if (action === "get_change_order") {
@@ -174,7 +183,7 @@ Deno.serve(async (req) => {
         entity: ChangeOrder,
         data: {
           creation_request_key: key,
-          change_order_number: await nextChangeOrderNumber(ChangeOrder),
+          change_order_number: await nextChangeOrderNumber(ChangeOrder, base44.asServiceRole),
           status: "proposed",
           title,
           description: clean(fields.description),
@@ -207,8 +216,18 @@ Deno.serve(async (req) => {
       if (clean(current.status) !== "proposed") throw bad("Only proposed change orders can be edited.", 409);
       const incoming = body?.fields && typeof body.fields === "object" ? body.fields : {};
       const desired: any = {};
+      // Record links are set at creation and are not rewritable on update —
+      // silently moving a change order onto another customer/work order/invoice
+      // would let a staff session falsify financial linkage. To relink, cancel
+      // and create a new change order.
+      const LINK_FIELDS = new Set(["customer_id", "customer_display_name", "opportunity_id", "estimate_id", "work_order_id", "invoice_id"]);
       for (const key of EDITABLE_FIELDS) {
-        if (Object.prototype.hasOwnProperty.call(incoming, key)) desired[key] = incoming[key];
+        if (Object.prototype.hasOwnProperty.call(incoming, key)) {
+          if (LINK_FIELDS.has(key) && String(incoming[key] ?? '') !== String(current?.[key] ?? '')) {
+            throw bad(`Record link "${key}" cannot be changed on an existing change order.`, 409);
+          }
+          desired[key] = incoming[key];
+        }
       }
       if (Object.keys(desired).length === 0) throw bad("No editable fields supplied.");
       if (Object.prototype.hasOwnProperty.call(desired, "line_items")) {

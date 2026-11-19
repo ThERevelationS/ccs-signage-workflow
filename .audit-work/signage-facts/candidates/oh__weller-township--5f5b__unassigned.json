@@ -1,0 +1,940 @@
+{
+ "jurisdiction_id": "6ae9f6a5c0d1c34acd365f5b",
+ "jurisdiction_name": "Weller Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 54,
+   "snippet": "48 2. A sign initially approved for which a permit has been issued shall not be modified, altered or replaced, nor shall design element of any building or lot upon which such sign is maintained be modified, altered or replaced if any such design element constituted a basis for approval of such sign unless a new or amended permit is obtained consistent with these regulations. 3. The repainting, changing of parts and preventive maintenance of signs shall not be deemed alterations requiring a sign permit. SECTION 807.5 Signs Permitted in all Districts Not Requiring a Permit. 1. Signs advertising the sale, lease of rental of the premises upon which the sign is located, shall not exceed twelve (12) square feet per display area, except in all residential districts where the area of the sign shall not be more than six (6) square feet per display area; 2. Professional name plates not to exceed f",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "type",
+    "authority",
+    "process"
+   ],
+   "weight": 18,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 55,
+   "snippet": "49 sign shall exceed one hundred (100) square feet, nor shall off-premises signs visible to approaching traffic have a minimum spacing of less than two hundred (200) feet. Off- premise signs shall conform to all applicable yard and height regulations for the appropriate zoning district, except that such signs intended to be viewed from an elevated highway shall be not more than twenty (20) feet above the level of the roadway at its nearest point. Off-premises wall signs shall have a structural and supporting members concealed from view. SECTION 807.8 – Temporary Signs 1. Temporary signs not exceeding fifty (50) square feet in area, announcing special public or institutional events, the erection of a building, the architect, the builders, or contractors may be erected for a period of sixty (60) days plus the construction period. Such temporary signs shall conform to the general requiremen",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "billboard",
+    "temporary",
+    "type",
+    "authority",
+    "penalties"
+   ],
+   "weight": 15,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 34,
+   "snippet": "28 5. Parking and loading as regulated in Sections 802 and 803 of this Resolution. 6. Principal Building as regulated by Section 404.4, of this Resolution. 7. Accessory Structures as regulated by Section 404.4, of this Resolution. 8. Temporary Facilities as regulated in Section 805 of this Resolution. SECTION 404.3 Conditional Uses The following uses shall be permitted, subject to: a. Conditions imposed. b. The review and approval of the Zoning Board of Appeals and the issuance of an approved Conditional Use Zoning Certificate. c. Provisions of Article 800 of this Resolution. d. Principal Buildings and Accessory Structures as involved and their location on the lot shall be in accordance with Section 404.4 except as modified within the statements of conditional regulations. 1. Eating and drinking establishments including those with drive-through facilities. a. All lighting shall be shield",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "temporary",
+    "authority"
+   ],
+   "weight": 14,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 39,
+   "snippet": "33 5. A use normally considered accessory to the Principal Use. 6. Parking and loading as regulated in Sections 802 and 803 of this Resolution. 7. Principal Building as regulated by Section 405.4, of this Resolution 8. Accessory Structures as regulated by Section 405.4, of this Resolution. 9. Temporary Facilities as regulated in Section 805 of this Resolution. SECTION 405.3 Conditional Uses The following uses shall be permitted, subject to: a. Conditions imposed. b. The review and approval of the Zoning Board of Appeals and the issuance of an approved Conditional Use Zoning Certificate. c. Provisions of Article 800 of this Resolution. d. Principal Buildings and Accessory Structures as involved and their location on the lot shall be in accordance with Section 404.4 except as modified within the statements of conditional regulations. 1. Restaurants or other places serving food or beverages",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "temporary",
+    "authority"
+   ],
+   "weight": 12,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 40,
+   "snippet": "34 3. Gasoline service stations, subject to the following conditions: a. Such stations shall be used for the sale of gasoline, oil, minor accessories only. b. Curb cuts for ingress and egress shall not be permitted at such locations that will tend to create traffic hazards in the streets immediately adjacent thereto. Curb cuts shall be not less than twenty (20) feet from an adjacent Residential or Agricultural District boundary. c. The minimum lot area shall be twelve thousand (12,000) square feet, with access drives so arranged that ample space is available for motor vehicles which are required to wait. d. The minimum lot width shall be at least one hundred (100) feet and pump islands shall be set back at least fifteen (15) feet (measured from the street right-of-way line). All buildings and other structures shall have a front setback of fifty (50) feet from the street right-of-way line",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 12,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 61,
+   "snippet": "55 ARTICLE 900 EXCEPTIONS TO THIS RESOLUTION SECTION 901 AGRICULTURE Agriculture including farming, dairying, pasturage, horticulture, floriculture, viticulture and animal, fish, and poultry husbandry shall be exempt from requirements of this Resolution. The use of any land for agricultural purposes or the construction or use of any building or structure incident to the use for agricultural purposes of the land on which such buildings or structures are located shall be likewise exempt and no zoning permit shall be required for any such building or structure. SECTION 902 ESSENTIAL PUBLIC SERVICES Essential public services as authorized and regulated by the State of Ohio, Richland County or other resolutions of Weller Township shall be exempt from the requirements of this Resolution. Lacking such authorization or regulation, the exemption does not apply. Further, exemption does not apply w",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 12,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "SECTION 803 OFF-STREET LOADING AND UNLOADING ................................................................. 42 SECTION 804 ALLOWABLE BUILDING SERVING PRINCIPAL OR ACCESSORY USES. ............ 43 SECTION 805 TEMPORARY FACILITIES ................................................................................................ 44 SECTION 805.1 On A Construction Site .................................................................................................... 44 SECTION 805.2 Visitors Recreational Vehicle .......................................................................................... 44 SECTION 805.3 Hardship From Natural Disaster Damage ................................................................... 44 SECTION 805.4 Family Hardship Instances ............................................................................................. 44 SECTION 806 PLANT MATERIALS ..",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "process",
+    "temporary",
+    "authority"
+   ],
+   "weight": 11,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 56,
+   "snippet": "50 SECTION 807.12 – Sign Setback Requirements. 1. Except as modified in Sections 807.13-807.16, on-premise signs where permitted shall be set back forty (40) feet from the established center line of a paved thoroughfare. No off-premise sign shall be erected in front of the required setback line for the appropriate zoning district. SECTION 807.13 – Increased Setback. 1. For every square foot by which any on-premise sign exceeds fifty (50) square feet, the setback shall be increased by one-half (1/2) foot but need not exceed one hundred (100) feet. SECTION 807.14 – Setbacks for Off-Premise Signs. 1. If a setback line is not established for the appropriate zoning district, off-premise signs shall be set back a minimum of twenty (20) feet from the right-of-way line. SECTION 807.15 – Setbacks for Public and Quasipublic Signs. 1. Real estate signs and bulletin boards for church, school or any ",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "prohibited",
+    "billboard",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 35,
+   "snippet": "29 detrimental to the public health, safety, convenience, comfort, property or general welfare of the community and shall be abated. Abandoned is defined as a failure to operate said service station for at least three (3) consecutive months in any eighteen (18) month period. Whenever the Zoning Inspector shall find any service station to be abandoned within the meaning of this Section, he shall give notice in the same manner as service of summons in civil cases, or by certified mail addressed to the owner of record of the premises at his last known address or to the address to which tax bills are sent, or by a combination of the foregoing methods, to abate such abandoned condition within one hundred and eighty (180) days either by placing the station in operation in accordance with this Resolution, adapting and using the building for another permitted business use, or by razing the servi",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 42,
+   "snippet": "36 SECTION 405.4 Principal Building, Accessory Structure, And Lot Requirements 1. Lot Dimensions - minimum area 87l20 sq. ft. (2 acres) minimum frontage - no requirement. 2. Principal Building & Accessory Structure Dimensions - MAXIMUM HEIGHT FLOOR AREA MINIMUM SETBACK (7) FRONT SIDE REAR PRINCIPAL BUILDING 50 ft. - 50 ft. (1) (3) (4) (5) (6) (2) (4) (5) (6) ACCESSORY STRUCTURES (S) 50 ft. - 50 ft. (1) (3) (4) (5) (6) (2) (4) (5) (6) (l) Off-street parking will be permitted in the front yard after approval by the Township Zoning Inspector of the parking facilities plan which shall include identification of point of ingress and egress. (2) Off-street loading space shall be provided in the rear yard in accordance with the provisions of Section 803 of this Resolution and shall be provided in addition to any required off-street parking facilities. (3) When the front of a lot in the Light Ind",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 50,
+   "snippet": "44 SECTION 805 TEMPORARY FACILITIES SECTION 805.1 On A Construction Site 1. A temporary facility in the form of a travel trailer, motor home defined in this Resolution under the general class \"Recreational Vehicle\", or a portable storage shed may be used on a lot incidental to construction work being performed on the lot but not as sleeping or living quarters. 2. This temporary facility shall be placed on the lot so as to meet the Minimum Setback requirements for an Accessory Structure in the Zoning District involved. 3. This temporary facility may be in place for a period not to exceed l year after which it shall be removed from the lot. SECTION 805.2 Visitors Recreational Vehicle l. A Recreational Vehicle belonging to a visitor of residents of a permanent dwelling on a lot, may use that vehicle as temporary living quarters on the same lot. The stay and such use of this Recreational Veh",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 58,
+   "snippet": "52 SECTION 808 LANDFILL AND DUMPING OPERATIONS The use of land for the deposit of garbage, hazardous waste, or toxic materials on land surface or as land fill is prohibited. The use of land for facilities to incinerate these items is also no allowed. SECTION 809 FENCES AND WALLS SECTION 809.1 Fences And Walls Permitted Within Residential And Agricultural Districts Fences and walls are permitted within any R-Residential and A-Agricultural District. They are subject to the following conditions if they are closer than 80 feet to the lot line. 1. Fences or walls shall not exceed six (6) feet in height, measured from the surface of the ground except in the case of swimming pools which shall be completely enclosed by a fence no less than six (6) feet in height. 2. Fences or walls, except those serving a purely decorative purpose, shall be within the side and rear lot lines and the minimum fron",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 65,
+   "snippet": "59 official charged with protecting the public safety, upon order of such official. SECTION 904 DWELLING QUARTERS IN BUSINESS OR INDUSTRIAL DISTRICTS Within any Neighborhood Business or Light Industrial District, sleeping quarters of a watchman or caretaker may be permitted, providing such quarters are made a part and are attached as part of the Principal Building or Accessory Structure. SECTION 905 PERMITTED HEIGHT EXCEPTIONS Penthouse or roof structures for the housing of elevator, stairways, tanks, ventilating fans, or similar equipment required to operate and maintain a building, and fire or parapet walls, skylights, towers, steeples, stage lofts and screens, flagpoles, chimneys, smokestacks, radio and television aerials, wireless masts, water tanks, and similar structures may be erected above the maximum height limitations established herein. Such structure shall not be erected at a",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority"
+   ],
+   "weight": 9,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 69,
+   "snippet": "63 c. Not be hazardous or disturbing to existing or future neighboring uses. d. Not be detrimental to property in the immediate vicinity or to the community as a whole. e. Have vehicular approaches to the property which shall be so designed as not to create an interference with traffic on surrounding public streets or roads. 4. The Board of Zoning Appeals shall not have the power to authorize any use not normally permitted in a given zoning district. 5. The Board of Zoning Appeals shall have the power to revoke an authorized Variance certificate or an authorized Conditional Use certificate if any condition of the Variance or Conditional Use are violated. 6. Every Board of Zoning Appeals decision shall be by resolution, each of which shall be covered by a full written record of the findings. 7. In the event the Zoning Board of Appeals requires any expert testimony, they shall obtain same.",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 70,
+   "snippet": "64 in accordance with the provisions of this Resolution. Such appeal shall be taken within 20 days of the questioned action or decision by filing a written request for a hearing. The request shall also contain a statement of the grievance and identification of the requirements of the Resolution that are at issue. SECTION 1007 AMENDING THE ZONING MAP OR THE RESOLUTION. SECTION 1007.1 Authority To Amend. The Trustees of Weller Township are authorized by law to amend by resolution, the number, shape, or area in Districts established on the Zoning Maps or the regulations set forth in this Resolution. They do so upon consideration of recommendations from the Township Zoning Commission in accordance with the procedures of 1007.5. SECTION 1007.2 Initiation Of Amendments Considerations The Zoning Commission considers amendments of the Zoning maps and/or the Resolution on the basis of any one of ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 9,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 71,
+   "snippet": "65 Public Hearing. Said hearing shall be scheduled at least 15 days after a notice of the Hearing has been placed in a newspaper of general circulation within the Township. 5. Weighing into account the substance from the Public Hearing and Regional Planning recommendations, the Zoning Commission shall carry out its own deliberation on the Amendment Request and reach its decision on the matter of approval, denial, or approval with modifications. As required by its decision, the Zoning Commission shall make the necessary changes in the Resolution and/or the Zoning Map(s). These shall be forwarded with an explanatory letter of transmittal to the Board of Trustees for their action on adoption. The forward shall be within 30 days following the Public Hearing. SECTION 1007.5 Board Of Trustee's Response To A Zoning Commission Recommendation On Amendment Of The Resolution And/Or Zoning Map(s) 1.",
+   "tags": [
+    "sign",
+    "illumination",
+    "process",
+    "temporary",
+    "authority"
+   ],
+   "weight": 9,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "8 73. RIGHT-OF-WAY: An area or strip of land, either public or private, on which an irrevocable right of passage has been recorded for the use of pedestrians or vehicles or both. In addition to a roadway, it normally incorporates the curbs, lawn strips, sidewalks, lighting and drainage facilities, and may include special features (required by the topography or treatment) such as grade separation, landscaped areas, viaducts and bridges. Where the right-of-way limits cannot be established, or the relationship of the roadway to the right-of-way cannot be determined, the right- of-way shall be assumed to be sixty (60') feet wide measured thirty (30') feet either side of the centerline of the roadway. 74. SETBACK: A distance between the nearest point of a building, structure, or object and an adjacent lot line as measured along the horizontal. 75. SIDE LOT LINE: Is any lot line other than the",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "temporary"
+   ],
+   "weight": 8,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 21,
+   "snippet": "15 6. Principal Building as regulated by Section 402.4 of this Resolution. 7. Accessory Structures as regulated in Section 402.4 of this Resolution. 8. Automobile parking spaces as regulated in Section 802 of this Resolution. SECTION 402.3 Conditional Uses The following uses shall be permitted, subject to: a. Conditions imposed. b. The review and approval of the Board of Zoning Appeals and the issuance of an approved Conditional Use Zoning Certificate. c. Provisions of Article 800 of this Resolution. d. Principal Buildings and Accessory Structures as involved and their location on the lot shall in accordance with Section 402.4 except as may be modified within the statements of conditional regulations which follow. 1. Water conservation uses including water supply works, flood control and water protection works, fish and game hatcheries and preserves, and other uses similar in character w",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 25,
+   "snippet": "19 SECTION 402.4 Principal Building, Accessory Structure, And Lot Requirements 1. Lot Occupancy (permitted use) - maximum density of a single dwelling unit per acre. 2. Lot Dimensions - minimum area 43560 sq. ft. (l acre) (single dwelling unit.) minimum area 87120 sq. ft. (2 acres) (two dwelling units.) minimum width 200 foot. 3. Building & Structure Dimensions - MAXIMUM HEIGHT FLOOR AREA MINIMUM SETBACK (8) FRONT SIDE REAR PRINCIPAL BUILDING 30 ft. 1000 sq. ft. Minimum (1) (7) 40 ft. 20 ft. (4) 40 ft. ACCESSORY STRUCTURES (S) (5) (2) (6) (3) (4) (3) (4) (1) The sum of the horizontal areas of each story of the building measured from the interior faces of the outside walls. Floor areas of the basement, unfinished attic, and closed and unenclosed porches shall be excluded. (2) Total ground floor area of all Accessory Structures shall not exceed 600 sq. ft. plus 2.3% of the lot area in sq. ",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 38,
+   "snippet": "32 SECTION 405 I-1 LIGHT INDUSTRIAL DISTRICT SECTION 405.1 Purpose The I-1 Light Industrial Districts are designed to accommodate uses which provide repair, storage, manufacturing, processing, wholesaling and distribution facilities and whose external, physical effects are restricted to the area of the district. The uses permitted are such that they will not have an undesirable or detrimental effect on adjacent Agricultural, Residential, and Business Districts and because of their nature, products and processes require locations separate from establishments which process or manufacture raw materials. SECTION 405.2 Permitted Uses The following uses shall be permitted, subject to: a. Regulations imposed. b. The review and approval of the Zoning Inspector and the issuance of an approved Zoning Certificate. c. Provisions of Article 800 of this Resolution. l. The following basic research, des",
+   "tags": [
+    "dimension",
+    "illumination",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 41,
+   "snippet": "35 the provisions of this Section shall not apply. Upon the failure, neglect or refusal of any owner to comply with the notice to abate such abandonment, the Zoning Inspector shall take such action as may be necessary to abate said nuisance. Inoperative service stations which do not come within the definition of abandoned service station shall be maintained in accordance with the provisions of this Resolution and the owner shall cut all grass and remove all rubbish and weeds from the premises. The parking of motor vehicles upon said premises shall be prohibited and the owner shall place in the window of such service station a sign of at least ten (10) square feet in area notifying the public of this fact. Notwithstanding any other provision of this Resolution if the Zoning Inspector shall find that such notice is not complied with by the public, he may order the owner of the premises on ",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 52,
+   "snippet": "46 SECTION 807 SIGN REGULATIONS SECTION 807.1 General 1. The purpose of this Article is to promote and protect the public health, welfare, and safety by regulating existing and proposed outdoor advertising, outdoor advertising signs, and outdoor signs of all types. It is intended to enhance and protect the physical appearance of the community, and preserve the scenic and natural beauty of designated areas. It is further intended to reduce sign or advertising clutter, distraction and obstruction that may contribute to traffic accidents, reduce hazards that may be caused by signs overhanging or projecting over public right-of-way, provide more open space, curb the deterioration of the natural environment, and enhance community development by permitting signs which are compatible with their surroundings. SECTION 807.2 Except as otherwise expressly provided, this chapter does not regulate th",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "type",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 59,
+   "snippet": "53 SECTION 812 DRAINAGE CHANNELS Drainage channels that exist within Weller Township are essential for the maintenance of the health and general welfare of the people. Any encroachment upon, filling, or the destruction of channels is a violation of this Resolution. In order to provide for the development of property for its best use, such as new subdivisions, the County Engineer shall decide what facilities are adequate to maintain the primary purpose of the drainage channel. SECTION 813 WATER WELL OR SEPTIC TANK SYSTEMS Where a private water well and\\or private septic system is employed, evidence shall be presented to the Zoning Inspector that such facilities have been approved by the Richland County Health Department before a Zoning Permit to cover a building or structure can be issued. SECTION 814 PUBLIC AND PRIVATE ACCESS REQUIREMENTS l. A lot which does or will contain a Principal B",
+   "tags": [
+    "area",
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 72,
+   "snippet": "66 SECTION 1008.4 Fee Amounts The amounts to be paid for the various required fees are set by the Township Trustees. Information about these amounts is available from the Board of Trustees Secretary. SECTION 1008.5 Incidental Charges In the process of acting upon the various requests to which they must respond, the Zoning Commission or the Board of Zoning Appeals may find it necessary to elicit the assistance of some outside source. Any cost which is incurred in this process shall be charged to and paid by the one whose request is under consideration. SECTION 1009 APPROVALS REQUIRED BY RICHLAND COUNTY DEPARTMENTS WHICH ARE IN ADDITION TO THOSE ASSOCIATED WITH THIS WELLER TOWNSHIP RESOLUTION. SECTION 1009.1 General Statement In general, approvals from the Richland County Department of Health and Department of Building Codes and Regulations are also required before a property owner may pro",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 80,
+   "snippet": "74 WELLER TOWNSHIP, RICHLAND COUNTY, OHIO ZONING CERTIFICATE CONDITIONALLY PERMITTED USE l. APPLICANT (OWNER) INFORMATION Name Address Phone Number 2. LOT INFORMATION Identification No.(s) in County Records Address or Location Zoning District * May be several contiguous lots with common ownership. Septic Systems (Check one) Private Public Water System (Check one) Private Public Lot Area sq.ft. Lot Frontage (width) ft. 3. Description of Conditionally Permitted Use Describe the particular Conditionally Permitted Use for which this application is made. This shall be one of those sanctioned by the Zoning Resolution for the zoning district involved. 4. Use - Development Particulars All aspects of developing the described Conditionally Permitted Use on the lot shall be covered on an accompanying Permitted Use Zoning Certificate application. 5. ACKNOWLEDGMENTS",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 83,
+   "snippet": "77 Water System (Check one) Private Public 5. SETBACKS ON LOT OF THE TEMPORARY FACILITY Front Setback ft. Side Setback, right ft. Side Setback, left ft. Rear Setback ft. 6. ACKNOWLEDGMENTS I attest to the accuracy of the information presented in this application and understand that approval, if granted, becomes void if implementation of the Temporary Facility deviates in any way. I am fully aware of the time limitation imposed by the Zoning Resolution on the presence of the Temporary Facility on the lot and will abide thereby. Signature Applicant Date In consideration of the information of this application as measured against the requirements of the Zoning Resolution, approval of this Certificate is: (Check one) Granted Denied Reason(s), if denied Signature (Zoning Inspector) Date",
+   "tags": [
+    "dimension",
+    "illumination",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 84,
+   "snippet": "78 WELLER TOWNSHIP, RICHLAND COUNTY, OHIO ZONING CERTIFICATE VARIANCE l. APPLICANT (OWNER) INFORMATION Name Address Phone Number 2. LOT INFORMATION Identification No.(s) in County Records Address or Location Zoning District * May be several contiguous lots with common ownership. Septic Systems (Check one) Private Public Water System (Check one) Private Public Lot Area sq.ft. Lot Frontage (width) ft. 3. Description of Variance Describe the particular Variance for which this application is made. This shall be within the limitations sanctioned by the Zoning Resolution for the zoning district involved. 4. Lot - Development Information As Includes The Variance Prepare and submit herewith a separate application for a Permitted Use Zoning Certificate covering the development or additional development on the lot, including the entries that are at variance with the Zoning Resolution requirements.",
+   "tags": [
+    "area",
+    "dimension",
+    "process",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 20,
+   "snippet": "14 SECTION 402 RURAL RESIDENTIAL DISTRICT SECTION 402.1 Purpose This district is established to control the nature of low density residential growth in this area mainly agricultural in times past. In shaping the growing residential element it is also the intention to minimize its impact on continuing agricultural operations. SECTION 402.2 Permitted Uses The following uses shall be permitted, subject to: a. Regulations imposed. b. The review and approval of the Zoning Inspector and the issuance of an approved Use Zoning Certificate. c. Provisions of Article 800 of this Resolution. 1. A Single One Family Dwelling. 2. A Single Two Family Dwelling. 3. A Home occupation subject to the following: a. The home occupation shall be carried on entirely within the dwelling and not in an accessory structure. b. The external appearance of the dwelling in which the use is conducted shall not be altered",
+   "tags": [
+    "sign",
+    "prohibited",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 24,
+   "snippet": "18 d. Sales of commodities not produced on the premises may be permitted, provided that the commodities are specified in the permit application and are reasonably related to the home occupation. e. A single sign is permitted as regulated in Section 806. f. No equipment, process, materials or chemicals shall be used which create offensive noise, vibrations, smoke, dust, odor, heat, glare, x-rays, radiation, or electrical disturbances. g. Tractor-trailer trucks shall not be used to move materials and products associated with the home occupation in and out of the site. h. No more than two (2) additional parking places shall be permitted in conjunction with the home occupation, and shall not be located within the minimum front setback. Additional parking facilities shall be fully described in the permit application. 10. Telecommunication Towers a. Such particular elements of essential public",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 29,
+   "snippet": "23 be provided by a major thoroughfare or a service access road. d. All points of ingress and egress shall be located no closer than one hundred and fifty (l50) feet from an intersection, measured from the street right-of-way lines at the intersection. 4. Recreational facilities for public use, other than those governmentally owned, for archery, boating, fishing, golfing, swimming and hunting, including public and private country clubs, riding stables, gun clubs and similar uses consistent with the rural character of the area subject to the following conditions: a. The proposed site for any of the uses stated above shall have at least one (1) property line abutting an arterial thoroughfare, and the site shall be so planned as to provide all ingress and egress directly onto or from the arterial thoroughfare. b. Front, side and rear setback shall be at least thirty (30) feet wide and shall",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 7,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 47,
+   "snippet": "41 shall be provided on the same lot as the dwelling units they are intended to serve. 2. Business Districts: a. A minimum front setback of ten (10) feet exclusive of drives and aisles and measured from the nearest point of the off-street parking area and the nearest point of the street right-of-way line shall be maintained. b. Off-street parking facilities shall be located on the same lot or within two hundred (200) feet of the building to be served. The maximum distance of two hundred (200) feet shall be measured from the nearest point of the building to the nearest point of the off-street parking lot. c. Ingress and egress to parking lots or loading areas within a B-Business District shall not be made onto local streets serving an abutting Residential or Agricultural District. 3. Industrial Districts: Parking shall be permitted within the side and rear setbacks. SECTION 802.4 Parking ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 53,
+   "snippet": "47 6. Should any sign be or become unsafe or be in danger of falling, the owner thereof or the person maintaining the same shall, upon receipt of written notice from the Zoning Administrator, proceed at once to put such sign in safe and secure condition or remove the sign; 7. No sign shall be placed in any public right-of-way except publicly-owned signs, such as traffic control signs and directional signs. Signs directing and guiding traffic and parking on private property but bearing no advertising matter shall be permitted on any property; 8. All signs shall be so designed and supported as to carry the weight of the sign, and shall comply with the local building code in effect; 9. All signs shall be secured in such a manner as to prevent significant movement due to wind; 10. No advertising signs shall be attached to or supported by tree, utility pole, trash receptacle, bench, vending m",
+   "tags": [
+    "sign",
+    "permit_required",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 62,
+   "snippet": "56 building or structure by more than 20 feet. 3. If a telecommunications tower use is terminated, it shall be removed within 90 days following termination. 4. Modifications or additions to an existing permitted tower shall be permitted by the Board of Zoning Appeals if said tower, as changed, still meets the requirements of this Resolution. SECTION 903 NON-CONFORMING LOT/USE/PRINCIPAL BUILDING/ACCESSORY STRUCTURE SECTION 903.1 Purpose The purpose of this Section is to provide for the eventual and equitable elimination of non-conforming lots, non-conforming uses of land and non-conforming structures to the provisions of this Resolution, but which were in being or operation proper to the enactment of this Resolution. Nonconforming lots, uses and structures are declared to be incompatible with the permitted uses in the district involved. SECTION 903.2 Intent Within the districts establishe",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 63,
+   "snippet": "57 conforming use, and the extent that dimensional requirements are non- conforming. The purpose is to protect the owners of land or building structures that are or become non- conforming. No fee shall be charged for such a certificate. One copy of the certificate shall be returned to the owner and one copy shall be retained by the Township, which shall maintain as a public record, a file of such certificates. SECTION 903.7 Substitutions Of Non-Conforming Uses So long as no structural alterations are made, except as required by enforcement of other codes or resolutions, any non-conforming use may, upon appeal to the approval by the Board of Zoning Appeals, be changed to another non-conforming use of a less intensive classification, or the Board shall find that the use proposed for substitution is more appropriate to the district than the existing non-conforming use. In permitting such ch",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 68,
+   "snippet": "62 Township Trustees. The Board shall include five (5) citizens of the Township with records of civic, business, or professional leadership, and who shall not be members of the Zoning Commission. Each member shall be appointed for a period of five (5) years, except that one of the initial members shall be appointed for one (1) year and one of the initial members shall be appointed for two (2) years, and one of the initial members shall be appointed for three (3) years, and one of the initial members shall be appointed for four (4) years, and one of the initial members shall be appointed for five (5) years. In the event of the death or resignation of a member, the Township Trustees shall make the appointment for the duration of the unexpired portion of the term of the member. SECTION 1004.2 Organization The Board of Zoning Appeals shall elect a chairman from its membership, shall appoint ",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 73,
+   "snippet": "67 SECTION 1012 VIOLATIONS AND PENALTIES SECTION 1012.1 Declared Public Nuisance Buildings erected, altered, moved, razed or converted, or any use of land or premises carried on in violation of any provision of this Resolution are declared to be a nuisance per Se. Any building or land use activities considered possible violations of the provisions of this Resolution, which are observed by any Township Official, shall be reported to the Zoning Inspector. SECTION 1012.2 Inspection Of Violations The Zoning Inspector shall inspect each alleged violation, and shall in writing, order correction of all conditions which are found to be in violation of this Resolution per l003.2. SECTION 1012.3 Correction Period All violations shall be corrected within a period of ten (10) days after the written order is issued or for a longer period of time as indicated by the Zoning Inspector in the written ord",
+   "tags": [
+    "fee",
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 75,
+   "snippet": "69 ARTICLE 1200 APPENDICES ZONING CERTIFICATE, PERMITTED USE ZONING CERTIFICATE, CONDITIONALLY PERMITTED USE ZONING CERTIFICATE, TEMPORARY FACILITIES ZONING CERTIFICATE, VARIANCE ZONING CERTIFICATE, NON-CONFORMANCE APPLICATION FOR AMENDMENT TO THE WELLER TOWNSHIP ZONING RESOLUTION COMPLAINT FORM TO BOARD OF ZONING APPEALS COPY OF PROSECUTING ATTORNEY PROCEDURES FOR VIOLATIONS THOROUGHFARE PLAN",
+   "tags": [
+    "process",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 78,
+   "snippet": "72 Closest distance to Principal Building ft. ft. Total Ground Floor Area of all existing Accessory Structure ft. ft. Sign (if involved) Length ft. Width ft. This building will be constructed on site, in place, from basic building materials. (stick built). or (Check one) Will be modularly constructed with Industrialized Units. 8. SITE PLAN Attach a site plan which shows: Boundary dimensions of lot Abutting streets/roads Identification and setbacks of building/structures existing on lot. Identification and setbacks of building/structures per this application. Identification and location of any sign involved. Location and size of Parking and/or Loading facilities, if applicable, including points of ingress and egress. Any additional information requested by the Zoning Inspector. 9. ACKNOWLEDGMENTS I attest to the accuracy of the information presented in this application and understand that",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "SECTION 1001.2 Organization ................................................................................................................... 60 SECTION 1001.3 Quorum ........................................................................................................................... 60 SECTION 1001.4 Meetings .......................................................................................................................... 60 SECTION 1001.5 Powers, Duties, And Procedures ................................................................................ 60 SECTION 1002 ADMINISTERING AND ENFORCING THE RESOLUTION (THE ZONING INSPECTOR) ............................................................................................................................................. 61 SECTION 1003 ZONING INSPECTOR'S DUTIES AND PROCEDURES ............................................ 6",
+   "tags": [
+    "dimension",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "PERMITTED USE ................................................................................................................................................. 70 CONDITIONALLY PERMITTED USE ............................................................................................................ 74 TEMPORARY FACILITIES .............................................................................................................................. 76 VARIANCE ......................................................................................................................................................... 78 NON-CONFORMANCE ................................................................................................................................... 81 APPLICATION FOR AMENDMENT .......................................................................................................",
+   "tags": [
+    "process",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 27,
+   "snippet": "21 SECTION 403 R-1 RESIDENTIAL DISTRICT SECTION 403.1 Purpose The R-1 Residential Districts are established in recognition that sections of the Township include low to moderate density residential developments that are urban in character. Among these sections of the Township are lands adjacent to the Mansfield Urban Area; land in and adjacent to the unincorporated communities in the Township such as Olivesburg, Pavonia and Epworth; lands where the established use, character and density of development would best be maintained by these regulations; sections of the Township where the general welfare is best served by the provisions of these Districts in providing essential services at an adequate level in an efficient and economical manner without overcrowding the land. SECTION 403.2 Permitted Uses The following uses shall be permitted, subject to: a. Regulations imposed. b. The review and ",
+   "tags": [
+    "process",
+    "temporary",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 60,
+   "snippet": "54 SECTION 817.3 Zoning Certificate For A Temporary Facility Unless specifically waived within this Resolution, a Temporary Use Zoning Certificate is required before any Temporary Facility can be put in place and used on a lot. See Section l005. SECTION 817.4 Zoning Certificate For A Variance When an entry in the application for a Permitted Use or Conditional Use Zoning Certificate does not meet the Requirements of this Resolution an approved variance Zoning Certificate is needed in order for the processing of the Use Certificate to proceed. SECTION 817.5 Zoning Certificate For Non-Conformance A Zoning Certificate for Non-Conformance to establish for record, the legality of such a condition is recommended but is not mandatory. See Section l005.",
+   "tags": [
+    "process",
+    "temporary",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 64,
+   "snippet": "58 coverage, height, yards, its location on the lot, or other requirements concerning the building/structure, they may be continued so long as it remains otherwise lawful, subject to the following provisions: 1. No such non-conforming building/structure may be enlarged or altered in a way which increases its non-conformity, but any building/structure or portion thereof may be altered to decrease its non- conformity. 2. Should such nonconforming building/structure or non- conforming portion of a building/structure be destroyed by any means, it may be reconstructed as long as its non-conformity is not increased. 3. Should any Principal Building/Accessory Structure be moved for any reason for any distance whatever, it shall thereafter conform to the regulations for the district in which it is located after it is moved. SECTION 903.11 Non-Conforming Uses of Principal Building/Accessory Struc",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 66,
+   "snippet": "60 ARTICLE 1000 TOWNSHIP ZONING ADMINISTRATION SECTION 1001 TOWNSHIP ZONING COMMISSION, ORGANIZATION, AND PROCEDURES SECTION 1001.1 Compositions And Appointment There is hereby created a Township Zoning Commission consisting of five (5) members appointed by the Township Trustees. The Commission shall include five (5) citizens of the Township with records of civic, business, or professional leadership, and who shall not be members of the Board of Zoning Appeals. Each member shall be appointed for a period of five (5) years, except that one of the initial members shall be appointed for one (1) year and one of the initial members shall be appointed for two (2) years, and one of the initial members shall be appointed for three (3) years, and one of the initial members shall be appointed for four (4) years, and one of the initial members shall be appointed for five (5) years. In the event of ",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 67,
+   "snippet": "61 used shall be as stated in 1007.4. SECTION 1002 ADMINISTERING AND ENFORCING THE RESOLUTION (THE ZONING INSPECTOR) The provisions of this Resolution shall be administered and enforced by a Zoning Inspector, or his deputy(s), as shall be designated and employed by the Township Trustees. SECTION 1003 ZONING INSPECTOR'S DUTIES AND PROCEDURES SECTION 1003.1 Make Inspections The Zoning Inspector shall make necessary inspections of land, buildings, and structures within the allowances of statutes to determine their compliance with the provisions of applicable Zoning Certificates and this Resolution. SECTION 1003.2 Initiate Corrective Actions The Zoning Inspector shall upon determining any instance of noncompliance with the requirements of this Resolution, take steps aimed at correction of the non-compliance. The procedure to be followed are those set out by the Richland County Prosecuting At",
+   "tags": [
+    "sign",
+    "dimension",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 77,
+   "snippet": "71 5. LOT INFORMATION Identification No.(s) in County Records Address or Location Zoning District * May be several contiguous lots with common ownership. Septic Systems (Check one) Private Public Water System (Check one) ) Private Public Lot Area sq.ft. Lot Frontage (width) ft. 6. PRINCIPAL BUILDING INFORMATION Provide the following information if this application applies to a Principal Building: Maximum Height ft. Floor Area, Usable sq.ft. Front Setback ft. Side Setback, Right ft. Side Setback, Left ft. Rear Setback ft. This building will be constructed on site, in place, from basic building materials. (stick built). or (Check one) Will be modularly constructed with industrialized units. 7. ACCESSORY STRUCTURE INFORMATION NOTE: In accordance with the Zoning Resolution, the Accessory Structure category includes in part an attached or detached garage. Provide the following information if ",
+   "tags": [
+    "area",
+    "dimension",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 85,
+   "snippet": "79 5. Justification Of Variance In order for the Variance to be granted, the following factors must apply. Attach a separate sheet of comments which establish that such are the case. a. Special natural conditions exist peculiar to the lot in question. b. The special conditions are natural and do not result from action of the present or previous owner(s). c. A literal interpretation of the Zoning Resolution would deprive the applicant of rights enjoyed by other property owners. d. The requested Variance is the minimum variance that will allow a reasonable use of the lot. 6. ACKNOWLEDGMENTS I attest to the accuracy of the information presented in this application. I further understand that development on the subject lot incorporating this Variance cannot proceed until the associated Permitted Use Certificate has been approved. Signature Applicant (owner) Date",
+   "tags": [
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 91,
+   "snippet": "85 COMPLAINT TO BOARD OF ZONING APPEALS RE ZONING INSPECTOR'S DECISION OR ACTION l. COMPLAINANT Name Address Phone Number 2. NATURE OF COMPLAINT If the complaint is with respects to the Zoning Inspectors final action on a Zoning Certificate(s) application, check as appropriate: ZONING CERTIFICATE, PERMITTED USE ZONING CERTIFICATE, CONDITIONALLY PERMITTED USE ZONING CERTIFICATE, TEMPORARY FACILITIES ZONING CERTIFICATE, VARIANCE ZONING CERTIFICATE, NON-CONFORMANCE Date of the application(s) at issue in/are If the complaint is about the Zoning Inspectors action other than regards to a Zoning Certificate consideration, check here 3. SPECIFICS OF THE COMPLAINT On a separate attached document, state the specifics of the complaint. Cite the particular portions of the Zoning Resolution you believe have been misinterpreted, improperly applied, or were not applied by the Zoning Inspector in the si",
+   "tags": [
+    "process",
+    "temporary",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "1 ARTICLE 100 TITLE, AUTHORIZATION, PURPOSE SECTION 101 TITLE This Resolution shall be known and may be cited to as the \"Zoning Resolution of Weller Township, Richland County, Ohio,\" except as referred to herein, where it shall be known as \"this Resolution.\" SECTION 102 AUTHORIZATION A Resolution enacted under Chapter 519 of the Ohio Revised Code, governing the use of land within the unincorporated areas of Weller Township, Richland County, and in accordance with a comprehensive plan to regulate the location height, number of stories and size of buildings, and other structures, including tents, cabins and trailer coaches, percentage of land areas which may be occupied, setback lines, size of yards, courts and other open spaces, the density of population, the uses of buildings and other structures including tents, cabins and trailer coaches and the uses of land for trade, industry, reside",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "4 16. CLINIC: Is an establishment where human patients who are not lodged overnight are admitted for examination or treatment by a group of physicians, dentists or similar professions. 17. COLLECTOR'S VEHICLE: Any motor vehicle or agricultural tractor or traction engine of special interest, whether operable or not that is owned, operated, collected, preserved, restored, maintained and used essentially as a collectors item, leisure pursuit, or investment, but not as the owner's principal means of transportation. 18. CONDITIONAL USE: A use in this category amongst those sanctioned by this Resolution by district and requiring the approval of the Board of Zoning Appeals. 19. CONVALESCENT OR NURSING HOME: Is a Principal Building with sleeping rooms where persons are housed and are furnished with meals, nursing and medical care. 20. DENSITY: Is the number of dwelling units developed on a speci",
+   "tags": [
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "6 and unloading merchandise or materials and goods. 47. LOT: Is a parcel of land of sufficient size to at least meet minimum zoning requirements and may consist of: a. A single lot of record; b. A portion of a lot record; c. A combination of complete lots of record, of complete lots of record and portions of lots of records, or of portions of lots of record. 48. LOT AREA: The total ground area within the lot lines of the lot. 49. LOT, CORNER: Is a lot at the point of intersection of and abutting on two or more intersecting streets, the angle of intersection not being more than one hundred and thirty five (135) degrees. 50. LOT DEPTH: Is the horizontal distance between the adjacent street right-of-way line and rear lot line measured along the median between the side lot lines. Where the right-of-way width is not established, it shall be assumed to be sixty (60) feet. 51. LOT, INTERIOR: Is",
+   "tags": [
+    "area",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "7 58. MOTEL: A building kept, used and maintained, advertised, or held out to the public to be a place where sleeping accommodations are offered for pay to transient guests. 59. NONCONFORMING PRINCIPAL BUILDING OR ACCESSORY STRUCTURE: Is a Principal Building or Accessory Structure lawfully existing prior to the time this Resolution, or amendments thereto went into effect but does not meet the requirements of this Resolution or its subsequent amendments. 60. NONCONFORMING USE: Is a use lawfully pursued prior to the time this Resolution or amendments thereto went into effect but does not meet the requirements of this Resolution or its subsequent amendments. 61. NONCONFORMING LOT: Is a lot that was lawfully existing prior to the time this Resolution, or amendments thereto went into effect but does not meet the requirements of this Resolution or its subsequent amendments. 62. NURSERY: Is a s",
+   "tags": [
+    "illumination",
+    "temporary",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "9 a specified period of time. 84. THOROUGHFARE, ARTERIAL: Is a street or road which moves or is intended to move traffic from one part of the Township to another part or beyond the Township. For the purpose of this Resolution, \"Arterial Thoroughfares\" are designated on the Thoroughfare Plan for Weller Township. 85. THOROUGHFARE, COLLECTOR: Is a street or road which moves or is intended to move traffic from local thoroughfares to arterial thoroughfares. For the purpose of this Resolution \"Collector, Thoroughfares\" are designated on the Thoroughfare Plan for Weller Township. 86. THOROUGHFARE, LOCAL: A street or road which provides access to abutting property. For the purpose of this Resolution, \"Local Thoroughfares\" are designated on the Thoroughfare Plan for Weller Township. 87. THOROUGHFARE PLAN: A plan adopted by Weller Township as part of this Resolution indicating the location of arte",
+   "tags": [
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "10 94. ZONING CERTIFICATE - TEMPORARY FACILITIES: A document on which application can be made and approval granted or denied by the Zoning Inspector for a temporary facility on the particular lot. 1. ZONING CERTIFICATE - VARIANCE: A document on which application can be made and approval granted or denied by the Board of Zoning Appeals and Zoning Inspector for a Variance from a particular requirement(s) in a Permitted or Conditional Use to alleviate hardship resulting from natural conditions on the particular lot.",
+   "tags": [
+    "process",
+    "temporary"
+   ],
+   "weight": 5,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 19,
+   "snippet": "13 ARTICLE 400 STANDARD DISTRICT REGULATIONS SECTION 401 GENERAL STATEMENTS SECTION 401.1 Regulation Of Use And Development Regulations pertaining to the use of land and/or structures and physical development within each of the Zoning Districts, as adopted as a Standard Zoning District in Article 300, and as shown on the Zoning Districts Map, are hereby established and adopted. SECTION 401.2 Permitted Uses Only a use designated as a PERMITTED USE by this Resolution shall be allowed as a matter of right within a Zoning District and any use not so designated shall be prohibited except, when in character with the Zoning District, such additional uses may be added to the PERMITTED USES of the Zoning District by amendment of this Resolution. SECTION 401.3 Conditional Uses A use designated as a CONDITIONAL USE by this Resolution shall be allowed in a Zoning District when such CONDITIONAL USE, ",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 22,
+   "snippet": "16 b. Points of ingress and egress should be located no closer than one hundred and fifty (150) feet from an intersection, measured from the street right-of-way lines. c. Points of ingress and egress shall be available only from abutting arterial or collector thoroughfares and shall not be available from any local thoroughfare. 4. Churches and other buildings for the purpose of religious worship, subject to the following conditions: a. Principal Buildings and Accessory Structures of greater height than the maximum allowed in Section 402.4 may be allowed provided front, rear and side setbacks are increased above the minimum allowed setbacks by one (1) foot for each one (1) foot the building exceeds the maximum height allowed. b. Wherever the off-street parking area is adjacent to land developed for one (1) family and (2) two family residential purposes, a continuous and obscuring year-aro",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 37,
+   "snippet": "31 SECTION 404.4 Principal Building, Accessory Structure, And Lot Requirements 1. Lot Dimensions - no requirements. 2. Building & Structure Dimensions - MAXIMUM HEIGHT FLOOR AREA MINIMUM SETBACK (5) FRONT SIDE REAR PRINCIPAL BUILDING 40 ft. - 30 ft. (1) (2) (4) 25 ft. (2) (3) (4) ACCESSORY STRUCTURES (S) 40 ft. - 30 ft. (1) (2) (4) 25 ft. (2) (3) (4) (1) Off-street parking will be permitted in the front yard after approval by the Township Zoning Inspector of the parking facilities plan which shall include identification of point of ingress and egress. (2) A six (6) foot obscuring fence or screen or a thirty (30) foot wide greenbelt shall be provided along side and rear lot lines when these lines abut Agricultural or Residential District boundaries. (3) Off-street loading space shall be provided in the rear yard in accordance with the provisions of Section 803 of this Resolution and shall",
+   "tags": [
+    "dimension",
+    "authority",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 86,
+   "snippet": "80 In consideration of the information in this application as measured against the requirements of the Zoning Resolution and of the Public Hearing, approval of this certificate is: (Check one) Granted Granted with Restriction(s) Denied Restriction(s), if applied Reason(s), if denied Signature (Chairperson - Board of Zoning Appeals) Date",
+   "tags": [
+    "dimension",
+    "process",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "TABLE OF CONTENTS ARTICLE 100 ..............................................................................................................................................................1 TITLE, AUTHORIZATION, PURPOSE ................................................................................................................1 SECTION 101 TITLE ......................................................................................................................................1 SECTION 102 AUTHORIZATION .................................................................................................................1 SECTION 103 PURPOSE ..............................................................................................................................1 ARTICLE 200 ...............................................................................................................",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority"
+   ],
+   "weight": 4,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  },
+  {
+   "page": 17,
+   "snippet": "11 ARTICLE 300 ESTABLISHMENT OF ZONING DISTRICTS AND MAP SECTION 301 ESTABLISHMENT OF DISTRICTS Standard Zoning Districts: The intended use of standard zoning districts is to delineate areas of existing land use and development character so as to afford such areas the regulations necessary to maintain their essential qualities and to assure that any additional development will be in keeping with that which has already been established. For the purpose of this Resolution, the Township of Weller is hereby divided into the following Standard Zoning Districts: RR Rural Residential R-1 Residential B-1 Neighborhood Business I-1 Light Industrial SECTION 302 OFFICIAL ZONING DISTRICT MAPS All land in the Township of Weller within the scope of this Zoning Resolution is placed into Zoning Districts as is shown on the Zoning Districts Map of the Township of Weller, County of Richland, State of Ohio,",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority"
+   ],
+   "weight": 4,
+   "source_sha256": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717",
+   "source_document_id": null,
+   "source_title": "92eb746ff1c8ce5f8e87c2a866f9592e43511a2dbf310950c39f27813d30e717.pdf",
+   "official_url": "https://energyzoning.org/sites/default/files/PDF/3913982628_Weller%20Township_Richland_20220914.pdf"
+  }
+ ]
+}

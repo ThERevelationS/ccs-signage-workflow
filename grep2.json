@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "1769:        handoff_snapshot_version: 1,\n1770:        handoff_snapshot: snapshot,\n===\nbase44/functions/opportunityWorkspaceAction/entry.ts:592:        unread_portal_messages: list(messages).length >= 200,\nbase44/functions/opportunityWorkspaceAction/entry.ts:729:        unread_portal_messages: unreadMessages,\nsrc/components/workflow/AttentionFeed.jsx:221:      count: (feed.unread_portal_messages || []).length,\nsrc/components/workflow/AttentionFeed.jsx:224:      items: (feed.unread_portal_messages || []).slice(0, 6).map((m) => ({\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 444
+}

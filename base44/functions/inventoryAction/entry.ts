@@ -1,10 +1,12 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import {
   createFoundationRecordWithRecovery,
   expectedFoundationFields,
   replaceFoundationFieldsIfUnchanged,
 } from "../../shared/opportunityFoundationPersistence.mjs";
+import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
 
 const clean = (value: any) => String(value ?? "").trim();
 const num = (value: any, fallback = 0) => {
@@ -41,7 +43,7 @@ function stockSnapshot(row: any) {
 }
 
 async function nextPoNumber(PurchaseOrder: any) {
-  const rows = await PurchaseOrder.filter({});
+  const rows = await loadAllEntityRows({ entity: PurchaseOrder, label: "PO numbering rows" });
   if (!Array.isArray(rows)) throw bad("PO numbering lookup failed.", 500);
   let seq = rows.length + 1001;
   const existing = new Set(rows.map((r: any) => clean(r?.po_number)));
@@ -49,7 +51,7 @@ async function nextPoNumber(PurchaseOrder: any) {
   return `PO-${seq}`;
 }
 
-async function applyMovement({ Inventory, Movement, item, delta, reason, workOrderId, note, actor, key }: any) {
+async function applyMovement({ Inventory, Movement, item, delta, reason, workOrderId, estimateId, note, actor, key }: any) {
   const current = num(item?.quantity_on_hand);
   const next = money(current + delta);
   if (next < -0.0005) {
@@ -75,6 +77,7 @@ async function applyMovement({ Inventory, Movement, item, delta, reason, workOrd
       unit_cost: num(item?.cost_per_unit),
       resulting_qty: Math.max(0, next),
       work_order_id: workOrderId,
+      estimate_id: estimateId,
       note,
       created_by: actor,
     },
@@ -86,7 +89,7 @@ async function applyMovement({ Inventory, Movement, item, delta, reason, workOrd
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const user = await authenticateSignShopSession(base44, body?.session_token);
     const actor = clean(user?.email) || clean(user?.id) || "unknown";
@@ -96,28 +99,33 @@ Deno.serve(async (req) => {
     const Inventory = base44.asServiceRole.entities.Inventory;
     const Movement = base44.asServiceRole.entities.InventoryMovement;
     const WorkOrder = base44.asServiceRole.entities.WorkOrder;
+    const BuilderProduct = base44.asServiceRole.entities.BuilderProduct;
+    const BuilderPart = base44.asServiceRole.entities.BuilderPart;
     const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;
 
     if (action === "list_stock") {
-      const rows = await Inventory.filter({});
+      const rows = await loadAllEntityRows({ entity: Inventory, label: "Inventory stock rows" });
       if (!Array.isArray(rows)) throw bad("Inventory lookup failed.", 500);
       const query = clean(body?.query).toLowerCase();
       const lowOnly = body?.low_only === true;
-      const items = rows
-        .filter((r: any) => r?.legacy_compatibility !== true && r?.deleted !== true)
+      const active = rows
+        .filter((r: any) => r?.legacy_compatibility !== true && r?.deleted !== true);
+      const matched = active
         .map(stockSnapshot)
         .filter((r: any) => !lowOnly || r.low_stock)
         .filter((r: any) => !query
-          || [r.material_type, r.product_type, r.size, r.supplier].join(" ").toLowerCase().includes(query))
-        .slice(0, 400);
+          || [r.material_type, r.product_type, r.size, r.supplier].join(" ").toLowerCase().includes(query));
+      const items = matched.slice(0, 400);
       return Response.json({
         success: true,
         action,
         items,
-        low_stock_count: rows.filter((r: any) => {
+        total_count: matched.length,
+        returned: items.length,
+        truncated: items.length < matched.length,
+        low_stock_count: active.filter((r: any) => {
           const rp = num(r?.reorder_point, NaN);
-          return r?.legacy_compatibility !== true && r?.deleted !== true
-            && Number.isFinite(rp) && num(r?.quantity_on_hand) <= rp;
+          return Number.isFinite(rp) && num(r?.quantity_on_hand) <= rp;
         }).length,
       });
     }
@@ -128,7 +136,19 @@ Deno.serve(async (req) => {
       if (itemId) query.item_id = itemId;
       const rows = await Movement.filter(query, "-created_date", 200);
       if (!Array.isArray(rows)) throw bad("Movement lookup failed.", 500);
-      return Response.json({ success: true, action, movements: rows.slice(0, 200) });
+      const movements = rows.slice(0, 200);
+      // The 200-row window is an intentional bounded history — total_count
+      // tells the caller how deep the full movement log actually runs.
+      const counted = await Movement.count(query).then((n: any) => num(n, NaN)).catch(() => NaN);
+      const totalCount = Number.isFinite(counted) ? counted : movements.length;
+      return Response.json({
+        success: true,
+        action,
+        movements,
+        returned: movements.length,
+        total_count: totalCount,
+        truncated: totalCount > movements.length,
+      });
     }
 
     if (action === "create_reorder_po") {
@@ -160,6 +180,7 @@ Deno.serve(async (req) => {
           unit_cost: unitCost,
           quantity_received: 0,
           inventory_item_id: clean(item.id),
+          supplier: clean(item.supplier),
           line_total: money(suggested * unitCost),
         });
       }
@@ -236,6 +257,101 @@ Deno.serve(async (req) => {
         note: clean(body?.note), actor, key,
       });
       return Response.json({ success: true, action, ...result });
+    }
+
+    if (action === "set_reorder_point") {
+      const itemId = clean(body?.item_id);
+      const item = await Inventory.get(itemId).catch(() => null);
+      if (!item?.id || item?.legacy_compatibility === true) throw bad("Inventory item not found.", 404);
+      const reorderPoint = num(body?.reorder_point, NaN);
+      if (!Number.isFinite(reorderPoint) || reorderPoint < 0) throw bad("Reorder point must be a non-negative number.");
+      const expectedUpdatedAt = clean(body?.expected_updated_date);
+      if (expectedUpdatedAt && clean(item.updated_date) !== expectedUpdatedAt) {
+        throw bad("This inventory item changed in another session. Reload before editing its reorder point.", 409);
+      }
+      const saved = await Inventory.update(item.id, { reorder_point: reorderPoint });
+      return Response.json({
+        success: true,
+        action,
+        item_id: clean(item.id),
+        reorder_point: num(saved?.reorder_point, reorderPoint),
+        updated_date: clean(saved?.updated_date),
+      });
+    }
+
+    if (action === "set_archived") {
+      const itemId = clean(body?.item_id);
+      const item = await Inventory.get(itemId).catch(() => null);
+      if (!item?.id || item?.legacy_compatibility === true) throw bad("Inventory item not found.", 404);
+      const archived = body?.archived !== false;
+      const expectedUpdatedAt = clean(body?.expected_updated_date);
+      if (expectedUpdatedAt && clean(item.updated_date) !== expectedUpdatedAt) {
+        throw bad("This inventory item changed in another session. Reload before archiving it.", 409);
+      }
+      const saved = await Inventory.update(item.id, { deleted: archived });
+      return Response.json({
+        success: true,
+        action,
+        item_id: clean(item.id),
+        deleted: saved?.deleted === true,
+        updated_date: clean(saved?.updated_date),
+      });
+    }
+
+
+    if (action === "reserve_for_estimate") {
+      const estimateId = clean(body?.estimate_id);
+      if (!estimateId) throw bad("An estimate_id is required.");
+      const baseKey = clean(body?.creation_request_key) || `reserve:${estimateId}`;
+      const products = await BuilderProduct.filter({ estimate_id: estimateId }, undefined, 50).catch(() => []);
+      const productIds = (Array.isArray(products) ? products : []).map((p: any) => clean(p?.id)).filter(Boolean);
+      const parts: any[] = [];
+      for (const pid of productIds) {
+        const rows = await BuilderPart.filter({ builder_product_id: pid }, undefined, 100).catch(() => []);
+        if (Array.isArray(rows)) parts.push(...rows);
+        if (parts.length > 300) break;
+      }
+      const reservable = parts.filter((p: any) =>
+        clean(p?.inventory_entity) === "Inventory" &&
+        !!clean(p?.inventory_item_id) &&
+        clean(p?.inventory_link_state) !== "detached" &&
+        num(p?.quantity, 0) > 0);
+      const reserved: any[] = [];
+      const skipped: any[] = [];
+      for (const part of reservable.slice(0, 200)) {
+        const itemId = clean(part?.inventory_item_id);
+        const partKey = `${baseKey}:${clean(part?.id)}`;
+        const existing = await Movement.filter({ creation_request_key: partKey }).catch(() => []);
+        if (Array.isArray(existing) && existing.length) {
+          skipped.push({ part_id: clean(part?.id), item_id: itemId, reason: "already_reserved" });
+          continue;
+        }
+        const item = await Inventory.get(itemId).catch(() => null);
+        if (!item?.id || item?.legacy_compatibility === true || item?.deleted === true) {
+          skipped.push({ part_id: clean(part?.id), item_id: itemId, reason: "item_missing" });
+          continue;
+        }
+        const qty = num(part?.quantity, 0);
+        try {
+          const result = await applyMovement({
+            Inventory, Movement, item, delta: -qty, reason: "reserve",
+            workOrderId: "", estimateId,
+            note: `Reserved for estimate ${estimateId}`, actor, key: partKey,
+          });
+          reserved.push({ part_id: clean(part?.id), item_id: itemId, quantity: qty, movement_id: clean(result?.movement?.id) });
+        } catch (error: any) {
+          skipped.push({ part_id: clean(part?.id), item_id: itemId, reason: error?.message || "reserve_failed" });
+        }
+      }
+      return Response.json({
+        success: true,
+        action,
+        estimate_id: estimateId,
+        reserved_count: reserved.length,
+        skipped_count: skipped.length,
+        reserved,
+        skipped,
+      });
     }
 
     throw bad(`Unsupported action "${action}".`);

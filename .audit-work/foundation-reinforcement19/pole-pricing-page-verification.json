@@ -1,0 +1,30 @@
+{
+  "results": [
+    {
+      "id": "held-missing-price-blocks-save",
+      "ok": true
+    },
+    {
+      "id": "held-blank-height-blocks-save",
+      "ok": true
+    },
+    {
+      "id": "new-pole-strips-rendered-cost",
+      "ok": true
+    },
+    {
+      "id": "valid-poles-save-then-new-acknowledged-holds",
+      "ok": true
+    },
+    {
+      "id": "free-pole-zero-price-saves",
+      "ok": true
+    },
+    {
+      "id": "string-dims-normalize-and-persist",
+      "ok": true
+    }
+  ],
+  "unexpectedNetwork": 0,
+  "unexpectedSdk": 0
+}

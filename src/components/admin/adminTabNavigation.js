@@ -77,11 +77,19 @@ function permittedSubtabs(parentTab, permissions) {
   return nested.filter((subtab) => allowed.includes(subtab.value));
 }
 
-export function getAccessibleAdminGroups(isAdmin, user) {
-  const permissions = user?.is_full_admin ? null : (user?.admin_permissions && typeof user.admin_permissions === 'object' ? user.admin_permissions : null);
+export function getAccessibleAdminGroups(isAdmin, user, teamSections) {
+  const base = user?.is_full_admin ? null : (user?.admin_permissions && typeof user.admin_permissions === 'object' ? user.admin_permissions : null);
+  // Team grants — sections granted by the user's email-group memberships
+  // merge on top of their own sections list.
+  const permissions = base && Array.isArray(base.sections) && Array.isArray(teamSections) && teamSections.length
+    ? { ...base, sections: [...new Set([...base.sections, ...teamSections])] }
+    : base;
+  // Explicit deny wins over every grant — including full-admin. Full admins
+  // carry {} permissions, so denied_tabs lives on admin_permissions regardless.
+  const denied = Array.isArray(user?.admin_permissions?.denied_tabs) ? user.admin_permissions.denied_tabs : [];
   return ADMIN_TAB_GROUPS.map((group) => ({
     ...group,
-    tabs: group.tabs.filter((tab) => (!tab.adminOnly || isAdmin) && isGroupPermitted(group.id, permissions) && isTabPermitted(tab, permissions)),
+    tabs: group.tabs.filter((tab) => !denied.includes(tab.value) && (!tab.adminOnly || isAdmin) && isGroupPermitted(group.id, permissions) && isTabPermitted(tab, permissions)),
   })).filter((group) => group.tabs.length > 0);
 }
 
@@ -124,6 +132,10 @@ export function getAdminCategoryKeyboardTarget(key, index, count) {
 export const ADMIN_NESTED_TABS = {
   timeclock: [
     { value: 'entries', label: 'Time Entries', keywords: 'punches clock in clock out shifts' },
+    { value: 'live_status', label: 'Live Status', keywords: 'who is working clocked in right now on break' },
+    { value: 'pay_periods', label: 'Pay Periods & History', keywords: 'pay period finalize lock audit trail' },
+    { value: 'punch_locations', label: 'Punch Location Review', keywords: 'gps location punches geo outliers' },
+    { value: 'devices', label: 'Registered Devices', keywords: 'kiosk tablet registered devices' },
     { value: 'reports', label: 'Reports', keywords: 'timeclock payroll reports' },
     { value: 'pto', label: 'PTO Policies', keywords: 'paid time off vacation leave' },
     { value: 'overtime', label: 'Overtime Rules', keywords: 'payroll overtime hours' },
@@ -140,28 +152,44 @@ export const ADMIN_NESTED_TABS = {
 };
 
 const ADMIN_SEARCH_KEYWORDS = {
-  automations: 'automation rules email groups gmail',
-  users: 'staff user accounts access roles permissions passwords',
-  timeclock: 'time clock employee hours payroll',
-  backend: 'backend functions maintenance administration',
+  automations: 'automation rules email groups gmail pause resume kill switch enabled disabled duplicate restore version create new rule',
+  users: 'staff user accounts access roles permissions passwords deactivate remove delete export csv invite grant revoke admin bulk',
+  timeclock: 'time clock employee hours payroll approve shift review exception missed punch clock out export correction time off pto overtime',
+  backend: 'backend functions maintenance administration backup restore trash client order deleted',
   corebridge: 'corebridge api migration',
   opportunity_bridge: 'sales opportunities integration',
-  sync_conflicts: 'sync conflict review discrepancies',
-  smartsheet: 'smartsheet sync integration sales orders',
+  sync_conflicts: 'sync conflict review discrepancies resolve approve merge',
+  smartsheet: 'smartsheet sync integration sales orders run sync now columns sheet binding',
   resources: 'resource allocation capacity',
   permitting_completeness: 'permit completeness',
   permitting_rules: 'permit rules review',
   permitting_tests: 'permit tests',
   task_assignments: 'task assignment rules',
   calendar: 'scheduling calendar',
-  activity: 'activity feed events history',
+  activity: 'activity feed events history audit log export saved views live mine filter',
   fleet: 'fleet settings bouncie notifications reminders maintenance mechanic portal public report',
 };
+
+// Standalone app pages an admin may want to jump to directly.
+const ADMIN_PAGES = [
+  { page: "FleetTracking", label: "Fleet Tracking", keywords: "fleet vehicles map gps live tracking" },
+  { page: "FleetOverview", label: "Fleet Overview", keywords: "fleet vehicles dashboard" },
+  { page: "FleetMaintenance", label: "Fleet Maintenance", keywords: "fleet service schedule overdue" },
+  { page: "FleetEquipment", label: "Fleet Equipment", keywords: "vehicles trucks assets" },
+  { page: "FleetReservations", label: "Fleet Reservations", keywords: "vehicle booking calendar" },
+  { page: "FleetNotifications", label: "Fleet Alerts", keywords: "fleet alerts notification history" },
+  { page: "SOP", label: "Procedures (SOP)", keywords: "sop procedures documentation" },
+  { page: "ResourcePlanning", label: "Resource Planning", keywords: "capacity scheduling workload" },
+  { page: "Estimator", label: "Estimator", keywords: "estimate quote sales" },
+  { page: "FeatureReports", label: "Feature Reports", keywords: "feedback feature requests" },
+];
 
 export function getAccessibleAdminSubtab(parentTab, requestedSubtab, user) {
   const permissions = user?.is_full_admin ? null : (user?.admin_permissions && typeof user.admin_permissions === 'object' ? user.admin_permissions : null);
   const tabs = permittedSubtabs(parentTab, permissions);
-  if (!tabs) return null;
+  // A tab with no nested settings, or a permission set that grants none, has no
+  // subtab to select. An empty list must resolve to null, never to tabs[0].
+  if (!Array.isArray(tabs) || tabs.length === 0) return null;
   return tabs.find((tab) => tab.value === requestedSubtab)?.value || tabs[0].value;
 }
 
@@ -183,11 +211,24 @@ export function getAdminSearchKeyboardIndex(key, index, resultCount) {
 }
 
 export function searchAdminSettings(input, isAdmin, limit = 8, user) {
-  const query = normalizedSearch(input);
+  let query = normalizedSearch(input);
+  if (!query) return [];
+  // Scoped prefixes: "tab:time clock", "group:people", "page:users" restrict
+  // matching to that field so admins can jump precisely.
+  let scope = null;
+  const prefixed = query.match(/^(tab|group|page):\s*(.*)$/);
+  if (prefixed) { scope = prefixed[1]; query = prefixed[2].trim(); }
   if (!query) return [];
   const terms = query.split(' ');
   const permissions = user?.is_full_admin ? null : (user?.admin_permissions && typeof user.admin_permissions === 'object' ? user.admin_permissions : null);
-  const destinations = getAccessibleAdminGroups(isAdmin, user).flatMap((group) =>
+  const pageDestinations = ADMIN_PAGES.map((p) => ({
+    id: `page:${p.page}`,
+    label: p.label,
+    group: "Pages",
+    page: p.page,
+    keywords: p.keywords,
+  }));
+  const destinations = [...pageDestinations, ...getAccessibleAdminGroups(isAdmin, user).flatMap((group) =>
     group.tabs.flatMap((tab) => [
       {
         id: tab.value,
@@ -206,13 +247,15 @@ export function searchAdminSettings(input, isAdmin, limit = 8, user) {
         keywords: nested.keywords || '',
       })),
     ])
-  );
+  )];
 
   return destinations
     .map((destination, order) => {
       const label = normalizedSearch(destination.label);
       const breadcrumb = normalizedSearch(`${destination.group} ${destination.parentLabel || ''}`);
-      const haystack = `${label} ${breadcrumb} ${normalizedSearch(destination.keywords)}`;
+      const haystack = scope === 'group' ? normalizedSearch(destination.group)
+        : scope === 'tab' || scope === 'page' ? `${label} ${normalizedSearch(destination.parentLabel || '')}`
+        : `${label} ${breadcrumb} ${normalizedSearch(destination.keywords)}`;
       if (!terms.every((term) => haystack.includes(term))) return null;
       const rank = label === query ? 0 : label.startsWith(query) ? 1 : label.includes(query) ? 2 : 3;
       return { destination, rank, order };
@@ -221,4 +264,17 @@ export function searchAdminSettings(input, isAdmin, limit = 8, user) {
     .sort((a, b) => a.rank - b.rank || a.order - b.order)
     .slice(0, Math.max(0, Math.floor(Number(limit) || 0)))
     .map(({ destination: { keywords, ...result } }) => result);
+}
+
+// Human-readable summary of an admin's page access for row badges.
+// Counts top-level tab visibility only; subtab restrictions don't change the count.
+export function getAdminAccessSummary(user) {
+  if (user?.is_full_admin === true) return 'Full access';
+  const permissions = user?.admin_permissions && typeof user.admin_permissions === 'object' && !Array.isArray(user.admin_permissions)
+    ? user.admin_permissions : null;
+  const allTabs = ADMIN_TAB_GROUPS.flatMap((g) => g.tabs.map((t) => ({ ...t, groupId: g.id })));
+  const allowed = allTabs.filter((tab) => isGroupPermitted(tab.groupId, permissions) && isTabPermitted(tab, permissions));
+  if (allowed.length === allTabs.length) return 'All pages';
+  if (allowed.length === 0) return 'No pages';
+  return `${allowed.length} of ${allTabs.length} pages`;
 }

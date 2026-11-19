@@ -1,0 +1,934 @@
+{
+ "jurisdiction_id": "6ac9c6b7989d1aaa58083689",
+ "jurisdiction_name": "West Lafayette",
+ "state": "OH",
+ "office_id": "scan-6ac9c6b7989d1aaa58083689-office-0",
+ "office_name": "West Lafayette permitting office",
+ "snippets": [
+  {
+   "page": 12,
+   "snippet": "Stopping After Accident 73.30 Failure to stop after accident 73.31 Stopping after accident on other than public roads or highways 73.32 Accident involving damage to realty 73.33 Failure to report accident Chapter 74: Equipment and Loads Section Equipment 74.01 Unsafe vehicles, prohibition against operation 74.02 Bumpers on motor vehicles 74.03 Lighted lights required 74.04 Headlights 74.05 Tail lights and illumination of rear license plate 74.06 Red reflectors required 74.07 Safety lighting of commercial vehicles 74.08 Stoplight regulations 74.09 Obscured lights on vehicles 74.10 Red light or flag required 74.11 Lights on parked vehicles 74.12 Lights, emblems, and reflectors on slow-moving vehicles, farm machinery, agricultural tractors, and animal-drawn vehicles 74.13 Spotlight and auxiliary driving lights 74.14 Cowl, fender, and back-up lights 74.15 Two lights displayed 74.16 Headlight",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "penalties",
+    "process"
+   ],
+   "weight": 12,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 17,
+   "snippet": "96.08 96.09 96.10 96.11 96.12 96.13 Reckless operation; maintaining sufficient control; wakes restricted Unsafe conditions Marking of bathing and vessel areas Mooring prohibited in certain areas Operating under influence of alcohol or drugs prohibited Implied consent 96.14 Incapacitated operators prohibited 96.15 Water skiing confined to ski zones 96.16 Observer required when towing skier 96.17 Water skiing after dark prohibited 96.18 Personal flotation device required for towed person 96.19 Ski jumps prohibited 96.20 Permit for special water events 96.21 Sale of single celled inflatable vessels prohibited 96.22 Sitting, standing, walking on moving vessels restricted 96.23 Engine warm-up required 96.24 Personal flotation devices for children under ten 96.25 Operation without personal flotation devices prohibited 96.26 Distress signal or flag required 96.27 Anchor requirements 96.28 Speci",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 12,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "Section Section Section 93.61 93.62 93.63 93.64 93.99 94.01 94.02 94.03 94.04 94.05 94.06 94.07 94.08 94.09 94.10 94.11 94.12 94.13 94.14 94.25 94.26 94.27 94.28 94.29 94.30 94.40 94.41 94.42 94.43 94.44 94.45 94.99 95.01 95.02 95.03 95.04 95.05 95.06 96.01 96.02 96.03 96.04 96.05 96.06 96.07 ‘When habitations are deemed unsanitary Order for abatement or vacation of premises Enforcement of vacation order by Fire Chief or Police Chief Enforcement through court proceedings Penalty Chapter 94: Streets and Sidewalks General Provisions Conditions precedent to improving streets Opening permit required Application and cash deposit Restoration of pavement Barriers around excavations Warning lights Sidewalk construction by the municipality Unloading on street or sidewalk Street or sidewalk obstruction Materials on street or sidewalk Duty to keep sidewalks in repair and clean of ice and snow Rampe",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 22,
+   "snippet": "Section Section 136.17 136.18 136.19 136.20 136.21 137.01 137.02 137.03 137.04 137.05 137.06 137.07 137.08 137.09 137.10 137.11 137.12 137.13 137.14 138.01 138.02 138.03 138.04 138.05 138.06 138.07 138.08 138.09 138.10 138.11 138.12 138.13 138.14 138.15 138.16 138.17 138.18 138.19 138.20 Intimidation of crime victim or witness Using sham legal process Making false allegation of peace officer misconduct Misuse of 9-1-1 system Failure to disclose personal information Chapter 137: Weapons Control Definitions Carrying concealed weapons Using weapons while intoxicated Improperly handling firearms in a motor vehicle Possessing criminal tools Failure to secure dangerous ordnance Unlawful transactions in weapons Underage purchase of firearm or handgun Pointing and discharging firearms and other weapons License or permit to possess dangerous ordnance Possession of an object indistinguishable from",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 9,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Record of Ordinances Ordinance No.: 2026-25 Passed: May 26, 2026 said event. A Special Event is defined as an event whereby the Village is reimbursed by the third party sponsoring the Special Event. The Police Chief will negotiate a rate with the third—party event sponsor to include all costs incurred by the Village. M. Non-exempt employees in the Police Department working as a School Resource Officer (SRO) will receive an additional pay increase of $ .50 per hour. The Village is reimbursed by the third-party requesting the SRO coverage. The Police Chief will be paid an hourly rate determined by the corresponding annual salary divided by 2184 hours to include all cost incurred by the Village. N. Any village employee assuming the responsibilities with the title of Temporary Supervisor will receive an additional pay increase of $1 .00 per hour until such a time that they are no longer a te",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "6b85cce7cef36adb418c91b2ca87c7f4af553426213cba648b38c8bed7b73d6a",
+   "source_document_id": null,
+   "source_title": "6b85cce7cef36adb418c91b2ca87c7f4af553426213cba648b38c8bed7b73d6a.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-25_Pay_and_Benefit_Ordinance_for_2026_updated.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Ordinance No.: 2025-44 Record of Ordinances Passed: September 22, 2025 continuing loss, the administration may enter into a contract for the necessary repairs, replacements or other goods or services, or both to restore or maintain such service or to avert or terminate such a loss, without advertising, and in such amount as may in the circumstances be necessary. A full report shall be rendered to Council at their next scheduled meeting if the amount exceeds $10,000. “Split Purchase Orders or Invoices” means dividing purchases into lesser amounts to circumvent dollar ceilings limited by resolution. “Sole Source” means an item or service is only available from one supplier. “Department Head” refers to the Mayor, Fire Chief or Assistant Fire Chief, Village Administrator, Police Chief or Fiscal Officer based on the purpose of the expenditure. (E) PURCHASING LIMITATIONS: 1. Purchases from $0 ",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "6ca1217d19b51d1040c9a99d0eac566ddb902ae54e0c4e8da7254ab777336b9a",
+   "source_document_id": null,
+   "source_title": "6ca1217d19b51d1040c9a99d0eac566ddb902ae54e0c4e8da7254ab777336b9a.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-44_Purchasing_Policy.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Exhibit A OHIO BASIC CODE, 2026 EDITION — SUMMARY OF CONTENTS Notice is hereby given that on the e day of [ JALL I , 2026, there was enacted by the Legislative Authority of the Municipality of | A/¢ , Ohio, an ordinance entitled “An Ordinance Approving, Adopting and Enacting American Legal s Oltio Basic Code, 2026 Edition, as the Code of Ordinances for the Municipality of _ 1 W 5@5{ 02t Ohio.” A summary of the subjects, including all new matters contained in the Code of Ordinances, as adopted, are as follows. The majority of Basic Code provisions are based directly on state law. TITLE I: GENERAL PROVISIONS Chapter 10: General Provisions Section 10.01 Short titles 10.02 Definitions 10.03 Rules of construction 10.04 Revivor; effect of amendment or repeal 10.05 Construction of section references 10.06 Conflicting provisions 10.07 Severability 10.08 Reference to offices 10.09 Errors and omis",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 9,
+   "snippet": "TITLE V: PUBLIC WORKS [Reserved] TITLE VII: TRAFFIC CODE Chapter 70: General Provisions Section General Provisions 70.01 Definitions 70.02 Compliance with order of police officer 70.03 Emergency vehicles to proceed cautiously past red or stop signal 70.04 Exceptions generally; emergency, public safety and coroner vehicles exempt 70.05 Persons riding or driving animals upon roadways 70.06 Prohibitions against pedestrians and slow-moving vehicles on freeways 70.07 Use of private property for vehicular travel 70.08 Names of persons damaging real property by operation of vehicle to be provided to owner 70.09 Limited access highways; barriers along; vehicles to enter and leave at designated intersections 70.10 Through highways 70.11 Officer may remove ignition key 70.12 Removal of vehicles after accidents Traffic-Control Devices 70.30 Obeying traffic-control devices 70.31 Signal lights 70.32 ",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "Section 72.075 72.076 72.077 72.078 72.090 72.091 72.092 72.093 72.094 72.095 72.096 72.097 72.098 72.099 72.115 72.116 72.117 72.118 72.119 72.120 72.121 72.122 72.123 72.124 72.125 72.126 72.127 72.128 72.129 72.130 72.131 72.132 73.01 73.02 73.03 73.04 73.05 73.06 73.07 73.08 73.09 73.10 73.11 73.12 73.13 73.14 73.15 73.16 Grade Crossings Stop signs at grade crossings Driving vehicle across railroad grade crossing Vehicles required to stop at grade crossings Slow-moving vehicles or equipment crossing railroad tracks School Buses Regulations concerning school buses Violation of regulations; report; investigation; citation; warning Restrictions on the operation of school buses School bus inspection School bus not used for school purposes Licensing by Department of Public Safety Registration and identification of school buses School bus marking Flashing light signal lamps Occupant restra",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "74.60 Liability for damages; prosecution; application of monies 74.61 Weight exceptions for certain vehicles Chapter 75: Bicycles, Motorcycles and Off-Road Vehicles Section General Provisions 75.01 Bicycles; application of Title VII 75.02 Operation of motorized bicycle 75.03 Electric bicycles 75.04 Rules for bicycles, motorcycles, and snowmobiles 75.05 Prohibition against attaching bicycles and sleds to vehicles 75.06 Riding bicycles; motorcycles abreast 75.07 Equipment of bicycles Snowmobiles, Off-Highway Motorcycles, and All-Purpose Vehicles 75.25 Definitions 75.26 Equipment 75.27 Code application; prohibited operation 75.28 Permitted operation 75.29 Licensing requirements of operator 75.30 Maintenance of vehicles for hire 75.31 Accident reports 75.32 Impounding of vehicle 75.33 Local control within police power 75.34 Registration of vehicles 75.35 Certificate of title; prohibitions Ch",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Record of Ordinances Ordinance No.: 2025-62 Passed: November 24, 2025 said event. A Special Event is defined as an event whereby the Village is reimbursed by the third party sponsoring the Special Event. The Police Chief will negotiate a rate with the third-party event sponsor to include all costs incurred by the Village. . Non-exempt employees in the Police Department working as a School Resource Officer (SRO) will receive an additional pay increase of $ .50 per hour. The Village is reimbursed by the third-party requesting the SRO coverage. The Police Chief will be paid an hourly rate determined by the corresponding annual salary divided by 2184 hours to include all cost incurred by the Village. . Any village employee assuming the responsibilities with the title of Temporary Supervisor will receive an additional pay increase of $1.00 per hour until such a time that they are no longer a ",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "b103d0abebcfe6f3b1d0bc7d5cbf916a83e5662a7678e936ac769a82e96c19bf",
+   "source_document_id": null,
+   "source_title": "b103d0abebcfe6f3b1d0bc7d5cbf916a83e5662a7678e936ac769a82e96c19bf.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-62_Pay_and_Benefit_Ordinance_2026.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "Record of Ordinances Ordinance No.: 2026-25 Passed: May 26, 2026 continuous service. 1. Any employee who has any unused sick leave accrued pursuant to the provisions of this ordinance shall be entitled to a maximum cash benefit of two hundred and fifty (250) hours ofsuch unused sick leave accrued pursuantto Chapter2, Section 2 of this ordinance including amounts carried over pursuant to the provisions of this ordinance upon separation from service attheir election. This cash benefit shall be calculated using the employee’s rate of pay at time of separation. 2. In order to be eligible for the conversion oftheir accrued but unused sick leave into cash, an employee must have five (5) years of regular full-time employment priorto separation. 3. Any employee whose employment is terminated shall be considered a new employee upon re-hire with no accrued months of employment for computation of p",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "6b85cce7cef36adb418c91b2ca87c7f4af553426213cba648b38c8bed7b73d6a",
+   "source_document_id": null,
+   "source_title": "6b85cce7cef36adb418c91b2ca87c7f4af553426213cba648b38c8bed7b73d6a.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-25_Pay_and_Benefit_Ordinance_for_2026_updated.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Ordinance No.: 2025-44 Record of Ordinances Passed: September 22, 2025 purchase specifications and quotes and evidence of attempting to obtain quotes must be presented to Council for approval by motion. After Council's approval is obtained, the department will prepare the purchase order and send the purchase order accompanied by the quotes and evidence of attempting to obtain quotes to the Fiscal Officer. After approval from the Fiscal Officer, the department may make the requested purchase. Upon receiving the merchandise, the department head must document on the invoice their approval or disapproval, note the purchase order number and any backordered items then sign and date. The invoice should then be immediately given to the Fiscal Officer for payment processing. Purchases exceeding $75,000: Purchases exceeding $75,000, other than compensation of employees of the Village, must be auth",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "6ca1217d19b51d1040c9a99d0eac566ddb902ae54e0c4e8da7254ab777336b9a",
+   "source_document_id": null,
+   "source_title": "6ca1217d19b51d1040c9a99d0eac566ddb902ae54e0c4e8da7254ab777336b9a.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-44_Purchasing_Policy.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Record of Ordinances Ordinance No.: 2025-44 Passed: September 22, 2025 (L) SALE, TRADE-IN OR OTHER DISPOSITION OF PROPERTY: The Mayor shall conduct all sales of real or personal property which Council may authorize to be sold as having become unnecessary or unfit for village use. The Mayor shall choose the method of sale per his discretion. Any employee may only purchase items for sale from an auction or bidding process. (M) EQUIPMENT LEASES: The total dollar amount of the equipment lease determines the purchasing limitation noted in Section 1(E). (N) RELATED PARTY TRANSACTIONS: Related party transactions are governed by the Ohio Revised Code. A related party transaction is a transaction between parties (for example, a buyer and a seller) in which one party to the transaction is able to control or substantially influence the action of the other. (O) PUBLIC CONTRACTS AND CONFLICT OF INTER",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "6ca1217d19b51d1040c9a99d0eac566ddb902ae54e0c4e8da7254ab777336b9a",
+   "source_document_id": null,
+   "source_title": "6ca1217d19b51d1040c9a99d0eac566ddb902ae54e0c4e8da7254ab777336b9a.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-44_Purchasing_Policy.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Record of Ordinances Ordinance No.: 2026-34 Passed: August 10, 2026 negotiate a rate with the third-party event sponsor to include al| costs incurred by the Village. M. Non-exempt empioyees in the Police Department working as a School Resource Officer (SRO) will receive an additional pay increase of $ .50 per hour. The Village is reimbursed by the third-party requesting the SRO coverage. The Police Chief will be paid an hourly rate determined by the corresponding annual salary divided by 2184 hours to include all cost incurred by the Village. N. Any village employee assuming the responsibilities with the title of Temporary Supervisor will receive an additional pay increase of $1 .00 per hour until such a time that they are no longer a temporary supervisor. O. Any Village Police Officer assuming the responsibilities with a title of Corporal will receive an additional pay increase of $ .50",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 7,
+   "source_sha256": "70ab6f35cc7ad360493c70cc01093d5a0d48511104711f6ecaaa9d07651148de",
+   "source_document_id": null,
+   "source_title": "70ab6f35cc7ad360493c70cc01093d5a0d48511104711f6ecaaa9d07651148de.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-34_Pay_and_Benefit_Ordinance_for_2026Raises.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "Record of Ordinances Ordinance No.: 2026-34 Passed: August 10, 2026 1. Any employee who has any unused sick leave accrued pursuant to the provisions of this ordinance shall be entitled to a maximum cash benefit of two hundred and fifty (250) hours ofsuch unused sick leave accrued pursuantto Chapter2, Section 2 of this ordinance including amounts carried over pursuant to the provisions of this ordinance upon separation from service attheir election. This cash benefit shall be calculated using the employee’s rate of pay at time of separation. ln order to be eligible for the conversion oftheir accrued but unused sick leave into cash, an employee must have five (5) years of regular full-time employment priorto separation. 3. Any employee whose employment is terminated shall be considered a new employee upon re-hire with no accrued months of employment for computation of paid vacations, sick ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "70ab6f35cc7ad360493c70cc01093d5a0d48511104711f6ecaaa9d07651148de",
+   "source_document_id": null,
+   "source_title": "70ab6f35cc7ad360493c70cc01093d5a0d48511104711f6ecaaa9d07651148de.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-34_Pay_and_Benefit_Ordinance_for_2026Raises.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "Record of Ordinances Ordinance No.: 2026-34 Passed: August 10, 2026 11/26/2018 Changed Chapter 2 Section 9, paragraph B to reflect clothing allowance changes. 4/22/2019 Added Sergeant description to Appendix A, added Sergeant to pay schedule on page 1 Section 1A, added Sergeant to page 4 Section 1, updated Vacation accrual process in Section 5A 9/9/2019 Changed Section 1K to include Exempt employees and increase rate of pay to 2 times their normal straight time. 9/9/2019 Updated Sections 2 & 4 to add 90—day probationary period wording before Personal and Sick time are accrued. 9/23/2019 Added Section 1.M. to establish the rate of pay for a Temporary Supervisor. Added the Temporary Supervisor job description to Appendix A. 11/25/2019 Added 2% pay increase to all regular hourly and salary employees. 1/17/2020 Wage Table updated 1/31/2020 Corrected Wage Table 5/1 1/2020 Updated Section 5(G)",
+   "tags": [
+    "fee",
+    "dimension",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "70ab6f35cc7ad360493c70cc01093d5a0d48511104711f6ecaaa9d07651148de",
+   "source_document_id": null,
+   "source_title": "70ab6f35cc7ad360493c70cc01093d5a0d48511104711f6ecaaa9d07651148de.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-34_Pay_and_Benefit_Ordinance_for_2026Raises.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Record of Ordinances | Ordinance No.: 2026-01 . Passed: January 26, 2026 cc. Wart hogs (Phacochoerus aethiopicus); dd. Weasels; ee. Wolverines (gulo gulo); or ff. Woodchucks (Marmota monas). E. Whoever violates this section is guilty of a misdemeanor of the third degree. A separate offense shall be deemed committed each day during or on which a violation occurs or continues. SECTION V: DOG NUISANCE PROHIBITED; ABATEMENT All dogs must be leashed and handled by a capable person at all times. Capable is defined as someone strong enough or properly trained to restrain the dog when lunging. Any person being the owner or person in charge of a dog while at large or upon a leash shall comply with the following: A. The owner or person in charge of any dog shall not permit the dog to defecate upon any public land or any private land other than the land where the owner or person in charge of such d",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "79a102592399af7cae3e813ab95cfc2319cf2026621c78f2d13d674d9fd5c363",
+   "source_document_id": null,
+   "source_title": "79a102592399af7cae3e813ab95cfc2319cf2026621c78f2d13d674d9fd5c363.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-01_AN_ORDINANCE_REGARDING_ANIMALS_IN_THE_VILLAGE.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Record of Ordinances Wipwzh & Ordinance No.: 2026-19 Passed: Aprit-13; 2026 AN ORDINANCE APPROVING, ADOPTING AND ENACTING THE AMERICAN LEGAL PUBLISHING’S OHIO BASIC CODE, BEGINNING IN 2026 AND AS AMENDED IN PERPETUITY, AS THE CODE OF ORDINANCES FOR THE VILLAGE OF WEST LAFAYETTE, OHIO; REPEALING ORDINANCES IN CONFLICT THEREWITH, AND DECLARING AN EMERGENCY. WHEREAS, the present general and permanent ordinances of the municipality are inadequately arranged and classified and are insufficient in form and substance for the complete preservation of the public peace, health, safety and general welfare of the municipality and for the proper conduct of its affairs; and WHEREAS, American Legal Publishing Corporation publishes a Code of Ordinances suitable for adoption by municipalities in Ohio; and WHEREAS, it is necessary to provide for the usual daily operation of the municipality and for the im",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "Section 32.026 32.027 32.028 32.029 32.040 32.041 32.042 32.043 32.044 32.045 32.046 32.047 32.048 32.049 32.050 32.051 32.052 32.070 32.071 32.072 32.073 32.074 32.075 32.076 32.077 32.078 32.079 32.080 32.081 33.01 33.02 33.03 33.04 33.05 33.20 33.21 33.22 33.23 33.24 33.25 33.26 33.27 33.28 33.29 33.30 Bids and proceedings Alterations or modifications of contract Contract restrictions Award to lowest responsive and responsible bidder Ordinances and Resolutions Ordinances and resolutions as evidence Passage procedure Style of ordinances Subject and amendment of ordinances and resolutions Authentication and recording of ordinances and resolutions Publication of ordinances and resolutions; proof of publication and circulation Notice for proposed amendments to the municipal Charter Times of publication required Publication and certification of ordinances in book form Adoption of technical",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "Section Section 90.23 90.24 90.25 90.26 90.27 90.28 90.29 90.30 90.31 90.32 90.33 90.34 90.35 90.36 90.37 90.99 91.01 91.02 91.03 91.04 91.05 91.06 91.07 91.08 91.09 91.10 91.11 91.12 91.30 91.31 91.32 91.33 91.34 91.35 91.36 91.37 91.38 91.39 91.40 91.55 91.56 91.57 91.58 91.99 92.01 92.02 Cruelty to animals; cruelty to companion animals Animal fights Trapshooting Loud dog Dog tags Nuisance, dangerous and vicious dog defined; transfer of ownership certificate; form stating dog’s prior behavior Failure to register dog or dog kennel Hindering the capture of unregistered dog Unlawful tag Assistance dogs with blind, deaf, or hearing impaired person, or person with a mobility impairment, or trainer Retail sale and transportation of dogs Coloring rabbits or baby poultry; regulation of sale and display Jacklighting prohibited Restrictions on dog ownership for certain convicted felons Sexual co",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "92.03 Restrictions applicable to sale of beer and intoxicating liquor for consumption on the premises 92.04 Restrictions on sale of beer and liquor 92.05 Permit required; activities prohibited without permit 92.06 Illegal transportation prohibited 92.07 Open container prohibited; exception 92.08 Underage person shall not purchase intoxicating liquor or beer 92.09 Prohibitions; minors under 18 years; low-alcohol beverages 92.10 Alcohol vaporizing devices prohibited 92.11 Misrepresentation to obtain alcoholic beverage for a minor prohibited 92.12 Misrepresentation by a minor under 21 years 92.13 Sale to underage persons prohibited 92.14 Posting of card 92.15 Good faith acceptances of spurious identification 92.16 Consumption in motor vehicle prohibited 92.17 Hours of sale or consumption 92.18 Obstructing search of premises prohibited 92.19 Illegal possession of intoxicating liquor prohibit",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "Record of Ordinances Ordinance No.: 2025-62 Passed: November 24, 2025 continuous service. 1. Any employee who has any unused sick leave accrued pursuant to the provisions of this ordinance shall be entitled to a maximum cash benefit of two hundred and fifty (250) hours of such unused sick leave accrued pursuant to Chapter2, Section 2 of this ordinance including amounts carried over pursuant to the provisions of this ordinance upon separation from service attheir election. This cash benefit shall be calculated using the employee’s rate of pay at time of separation. 2. Inorder to be eligible for the conversion of their accrued but unused sick leave into cash, an employee must have five (5) years of regular full-ime employment prior to separation. 3. Any employee whose employment is terminated shall be considered a new employee upon re-hire with no accrued months of employment for computati",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "b103d0abebcfe6f3b1d0bc7d5cbf916a83e5662a7678e936ac769a82e96c19bf",
+   "source_document_id": null,
+   "source_title": "b103d0abebcfe6f3b1d0bc7d5cbf916a83e5662a7678e936ac769a82e96c19bf.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-62_Pay_and_Benefit_Ordinance_2026.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "VILLAGE l%;fiflhio Other (2 +3+4) Total square footage BUILDING HEIGHT: (Number of stories) Height LOT SIZE WIDTH: LOT DEPTH: CONTRACTOR: ESTIMATED COST OF CONSTRUCTION: FEES: Residential Construction $7.50 per 100 sq. ft. (Residential Minimum is $10.00) Sidewalk / Curb / Driveway - $10.00 FLAT FEE Signs - $ 10.00 per Sign FLAT FEE Fencing - $17.50 FLAT FLEE Demolition - Free Date of Demolition Plans for Demolished Materials Dumpster - Free Where will the dumpster be placed Duration of dumpster rental Tree Planting in Utility Right of Way - Free Alist of approved tress is available on our website www.westlafayettevillage.com. Application Processing Fee $ 7.50 TOTAL FEE ASSESSED",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "ca65d4b4bd8b8fc333a6c46be8125a81a1ac3c67dca974d10215e29530c32191",
+   "source_document_id": null,
+   "source_title": "ca65d4b4bd8b8fc333a6c46be8125a81a1ac3c67dca974d10215e29530c32191.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/Application_for_Building_Permit__Rev.1-30-24_.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Military Banner Program In partnership with you, the city and the Villages within Coshocton County we would like to honor our brave men and women by displaying 24”x37” military banners. Banners will be displayed at various times and in various places in the City/Villages throughout the year. There is no guarante e these banners will be put in the same spot each time they go up. For a veteran or active military member to qualify for this program:  Must be a resident of Coshocton County either before or after enlistment/active duty  Attached application must be compl eted  Must attach a copy of DD214 showing Honorable Discharge, Valid Veteran ID Card or Specified Armed Forces on Driver’s License (COPIES ONLY – Paperwork will be destroyed) o Unless member is still active military , then member must submit a picture in unif orm. The cost is $ 5 5 and covers the banner and shipping. Each b",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "de93ce731f330f407798c2b3d49907610b2b05e09c0675d38dccd70172087d5c",
+   "source_document_id": null,
+   "source_title": "de93ce731f330f407798c2b3d49907610b2b05e09c0675d38dccd70172087d5c.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/Coshocton_Military_Banner_Program_Application_updated_5.18.26.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "(continue on blank sheet if more space is required) Names & Addresses of all property owners within 150 feet of any part of the exterior boundaries of the proposed change: Applicant Signature: Address: Phone: [J owner [J Lessee/Tenant (This Section Internal Use Only) Application for Appeal Fe Cost of Appeal $50.00 (Costs associated include publishing or posting notice and mailing notices of the hearing or hearings) Received from: (Applicant of Appeal) Check or Money Order #: Received by: Date: Date of Hearing: The following Legal Notice appeared in the Local Paper: as required by the Zoning Ordinance: (Do not write in this space) BZA Application Page | 2",
+   "tags": [
+    "fee",
+    "dimension",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "13f4e56975fabba36fc01b37eebe36c7a48dca7e31e713483cd3c1e443550d96",
+   "source_document_id": null,
+   "source_title": "13f4e56975fabba36fc01b37eebe36c7a48dca7e31e713483cd3c1e443550d96.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/BZA-Application-Final-Rev.-11-15-23.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "For the purposes of this section the terms “Sanitar? Se%erage” and “industrial Wastes” are defined as follows: (1)- A. “Sanitary Sewerage” is waste from water closets, urinals, lavatories, sinks, bathtubs, showers, household laundries, cellar floor drains, garage and filling station floor drains, bars, soda fountains, refrigerator drips, drinking fountains and stable floor drains. B. “industrial Wastes” are any liquid wastes resulting from any commercial, manufacturing, or industrial operations or processes. (2)- No house sewer shall be constructed to connect with a public sewer, nor shall any connection be made to a public sewer within or without the corporate boundaries of the Village until the written permission of the Village Administrator has been obtained by the person, firm, or corporation employed to perform the work. An application for a permit shall be signed by the owner, agen",
+   "tags": [
+    "fee",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "284c4fb83b1490e3a9334a9d63121379744a45f34b2b023ca191d288e65497e5",
+   "source_document_id": null,
+   "source_title": "284c4fb83b1490e3a9334a9d63121379744a45f34b2b023ca191d288e65497e5.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-35_Sewer_Rates.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Record of Ordinances Ordinance No.: 2026-25 Passed: May 26, 2026 See Appendix A for definitions. B. Council Members missing scheduied Committee Meetings shali have their compensation reduced by $83.50 for every two unexcused absences. The Committee Chairman is responsibie for granting the excused absence and shall report any unexcused absences to the Fiscal Officer. C. Council Member - $10.00 per speciai meeting attended. D. For non-exempt employees, overtime shall be paid at the rate of one and one half (11/2) times the regular per hour rate: 1. Hours in excess of forty (40) hours worked in any work week for Village employees with a normal 40-hour work week schedule and in excess of eighty- four (84) hours worked in a 2-week pay period for law enforcement employees that work a 12—hour schedule. 2. Any village employee scheduled to work on a holiday shall receive 1.5 times their regular ",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "6b85cce7cef36adb418c91b2ca87c7f4af553426213cba648b38c8bed7b73d6a",
+   "source_document_id": null,
+   "source_title": "6b85cce7cef36adb418c91b2ca87c7f4af553426213cba648b38c8bed7b73d6a.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-25_Pay_and_Benefit_Ordinance_for_2026_updated.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "Record of Ordinances Ordinance No.: 2026-25 Passed: May 26, 2026 C. The following Part-Time positions are eligible to receive an annual clothing allowance of $250.00 percalendaryear forwork related items as long as they have worked 100 hours or more by December 3153 of the previous calendar year: 1. Patrolman l D. The Police Department may use this allowance for the purchase of a service weapon and/or equipment. E. No one employee, with exception to the Police Chief, Captain, Sergeant or Patrolman ll, shall receive more than a total of $500.00 per calendar year. . All employees ofthe police department will be required to sign and adhere to the “Agreement for Training and Uniform Reimbursement for Police Officers”. This agreement will be generated and managed by the Chief of Police. G. All non-exempt employees mustget supervisor approval priorto using this benefit. H. Unused funds do not ",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "6b85cce7cef36adb418c91b2ca87c7f4af553426213cba648b38c8bed7b73d6a",
+   "source_document_id": null,
+   "source_title": "6b85cce7cef36adb418c91b2ca87c7f4af553426213cba648b38c8bed7b73d6a.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-25_Pay_and_Benefit_Ordinance_for_2026_updated.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "11/26/201 8 4/22/201 9 9/9/2019 9/9/2019 9/23/201 9 11/25/201 9 1/1 7/2020 1/31/2020 5/1 1/2020 6/22/2020 11/9/2020 12/1 4/2020 05/24/2021 08/23/2021 09/1 3/2021 10/25/2021 12/20/2021 4/1 4/2022 12/1 2/2022 1/23/2023 3/1 3/2023 12/1 1/2023 Record of Ordinances Ordinance No.: 2026-25 Passed: May 26, 2026 Changed Chapter 2 Section 9, paragraph B to reflect clothing allowance changes. Added Sergeant description to Appendix A, added Sergeant to pay schedule on page 1 Section 1A, added Sergeant to page 4 Section 1 , updated Vacation accrual process in Section 5A Changed Section 1K to include Exempt employees and increase rate of pay to 2 times their normal straight time. Updated Sections 2 & 4 to add 90-day probationary period wording before Personal and Sick time are accrued. Added Section 1.M. to establish the rate of pay for a Temporary Supervisor. Added the Temporary Supervisorjob descrip",
+   "tags": [
+    "fee",
+    "dimension",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "6b85cce7cef36adb418c91b2ca87c7f4af553426213cba648b38c8bed7b73d6a",
+   "source_document_id": null,
+   "source_title": "6b85cce7cef36adb418c91b2ca87c7f4af553426213cba648b38c8bed7b73d6a.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-25_Pay_and_Benefit_Ordinance_for_2026_updated.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Record of Ordinances Ordinancbe No.: 2025-44 Passed: September 22, 2025 AN ORDINANCE TO AMEND THE VILLAGE OF WEST LAFAYETTE PURCHASING POLICY AND REPEALING ORDINANCES AND RESOLUTIONS IN CONFLICT THEREWITH. WHEREAS, this Council desires to amend the Village purchasing policy, WHEREAS, it is necessary to immediately enact this ordinance to amend the Village purchasing policy in order to preserve the public peace, property, health and safety, and to provide for all the usual daily operation of the municipal government, and by reason thereof, this ordinance shall take effect forthwith upon its passage; Now, therefore, BE IT ORDAINED by the Council of the Village of West Lafayette, State of Ohio as follows: SECTION 1: PURCHASING POLICY (A) PURPOSE: The purchasing policy of the Village is a set of instructions so that the contracting and purchasing functions can be carried out efficiently and ",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "6ca1217d19b51d1040c9a99d0eac566ddb902ae54e0c4e8da7254ab777336b9a",
+   "source_document_id": null,
+   "source_title": "6ca1217d19b51d1040c9a99d0eac566ddb902ae54e0c4e8da7254ab777336b9a.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-44_Purchasing_Policy.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "Record of Ordinances Ordinance No.: 2025-44 Passed: September 22, 2025 narne, address as well as phone number. A miscellaneous line item may not be used. 2. The department head is responsible for obtaining W-9 forms required by the IRS. 3. The department head is responsible for the approval of all purchase orders invoices and receipts. The department head must ensure that all items are received as ordered prior to authorizing payment of invoices and receipts. 4. There shall be no “split” purchase orders to avoid the limits set by resolution. 5. There shall be no purchase of any items or service without a purchase order outside of a justifiable emergency subject to Council’s approval. 6. A signed release from the department head and Fiscal Officer is required prior to the utilization of a super blanket purchase order to ensure sufficient funds are available. 7. No changes may be made to a",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "6ca1217d19b51d1040c9a99d0eac566ddb902ae54e0c4e8da7254ab777336b9a",
+   "source_document_id": null,
+   "source_title": "6ca1217d19b51d1040c9a99d0eac566ddb902ae54e0c4e8da7254ab777336b9a.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-44_Purchasing_Policy.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Record of Ordinances Ordinance No.: 2026-34 Passed: August 10, 2026 B. Council Members missing scheduled Committee Meetings shall have their compensation reduced by $8350 for every two unexcused absences. The Committee Chairman is responsible for granting the excused absence and shall report any unexcused absences to the Fiscal Officer. C. Council Member - $10.00 per special meeting attended. D. For non-exempt employees, overtime shall be paid at the rate of one and one half (1 1/2) times the regular per hour rate: 1. Hours in excess of forty (40) hours worked in any work week for Village employees with a normal 40—hour work week schedule and in excess of eighty- four (84) hours worked in a 2—week pay period for law enforcement employees that work a 12-hour schedule. 2. Any village employee scheduled to work on a holiday shall receive 1.5 times their regular rate in addition to his regul",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "70ab6f35cc7ad360493c70cc01093d5a0d48511104711f6ecaaa9d07651148de",
+   "source_document_id": null,
+   "source_title": "70ab6f35cc7ad360493c70cc01093d5a0d48511104711f6ecaaa9d07651148de.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-34_Pay_and_Benefit_Ordinance_for_2026Raises.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "Record of Ordinances Ordinance No.: 2026-34 Passed: August 10, 2026 calendar year: 1. Patrolman i D. The Police Department may use this allowance for the purchase of a service weapon and/or equipment. E. No one employee, with exception to the Police Chief, Captain, Sergeant or Patrolman ll, shall receive more than a total of $500.00 per calendar year. . All employees ofthe police department will be required to sign and adhere to the “Agreement for Training and Uniform Reimbursement for Police Officers”. This agreement will be generated and managed by the Chief of Police. G. All non-exempt employees must get supervisor approval priorto using this benefit. H. Unused funds do not carry over intothe next calendar year. Section 10. Holiday Schedule A. Eligibilityto receive holiday pay is defined as follows: 1. Afull-tjmeemployee. 2. Employed thirty (30) consecutive days prior to the said holi",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "70ab6f35cc7ad360493c70cc01093d5a0d48511104711f6ecaaa9d07651148de",
+   "source_document_id": null,
+   "source_title": "70ab6f35cc7ad360493c70cc01093d5a0d48511104711f6ecaaa9d07651148de.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-34_Pay_and_Benefit_Ordinance_for_2026Raises.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Record of Ordinances il Ordinance No.: 2026-19 Passed: -April13, 2026 (19) 2019-61 ORDINANCE REGULATING THE OPERATION OF UNDER- SPEED VEHICLES (GOLF CARTS), UTILITY VEHICLES, AND MINI-TRUCKS ON THE STREETS AND HIGHWAYS UNDER THE JURISDICTION OF THE VILLAGE OF WEST LAFAYETTE (20) 2024-05 AN ORDINANCE TO REGULATE TREES AND ESTABLISH OFFENSES RELATED TO TREES, REPEALING ORDINANCES IN CONFLICT THEREWITH (21) 2020-69 AN ORDINANCE ESTABLISHING A PERMIT TO SOLICIT BUSINESS INSIDE THE VILLAGE OF WEST LAFAYETTE (22) 2021-37 AN ORDINANCE AUTHORIZING THE MAYOR TO ESTABLISH AND/OR RE-ESTABLISH AN AUXILIARY POLICE UNIT AND AUTHORIZING ALL SUCH POWERS NECESSARY TO ACCOMPLISH THE SAME, REPEALING ALL PRIOR ORDERS OF THIS NATURE, AND DECLARING AN EMERGENCY (23) 2021-47 AN ORDINANCE TO ESTABLISH THE VILLAGE OF WEST LAFAYETTE POLICY FOR THE BURIAL OF UNCLAIMED OR INDIGENT BODIES AT THE EXPENSE OF THE VILLA",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "71.31 Driving under financial responsibility law suspension or cancellation; driving under a nonpayment of judgment suspension 71.32 Failure to reinstate license Commercial Driver’s Licenses 71.45 Definitions 71.46 Use of actual gross weight in lieu of rating 71.47 Prohibited acts 71.48 Prerequisites to operation of commercial motor vehicle 71.49 Physical qualification to operate commercial motor vehicles 71.50 Criminal offenses 71.51 Application of federal regulations 71.52 Employment of drivers of commercial vehicles 71.99 Penalty Chapter 72: Traffic Rules Section General Provisions 72.001 Lanes of travel upon roadways 72.002 Driving through safety zone 72.003 Vehicles traveling in opposite directions 72.004 Rules governing overtaking and passing of vehicles 72.005 Permission to overtake and pass on the right 72.006 Driving to left of center line 72.007 Prohibition against driving upon",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "Chapter 111: Taxicabs Section 111.01 Definitions 111.02 Certificate of public convenience and necessity required 111.03 Application for certificate 111.04 Issuance of certificate 111.05 Liability insurance required 111.06 License fees 111.07 Transfer of certificates and licenses 111.08 Suspension and revocation of certificates 111.09 Taxicab driver's license 111.10 Application for driver's license 111.11 Examination of applicant; motor vehicle operator's permit required 111.12 Police investigation of applicant; traffic and police record 111.13 Consideration of application 111.14 TIssuance of license; duration; annual fee 111.15 Display of license 111.16 Suspension and revocation of license 111.17 Failure to comply with federal, state and municipal laws 111.18 Vehicle equipment and maintenance 111.19 Designation of taxicabs 111.20 Taximeter and display of rates required 111.21 Number of p",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Record of Ordinances Ordinance No.: 2025-62 . Passed: November 24, 2025 See Appendix A for definitions. B. Council Members missing scheduled Committee Meetings shall have their compensation reduced by $83.50 for every two unexcused absences. The Committee Chairman is responsible for granting the excused absence and shall report any unexcused absences to the Fiscal Officer. C. Council Member - $10.00 per special meeting attended. D. For non-exempt employees, overtime shall be paid at the rate of one and one half (1%%) times the regular per hour rate: 1. Hours in excess of forty (40) hours worked in any work week for Village employees with a normal 40-hour work week schedule and in excess of eighty- four (84) hours worked in a 2-week pay period for law enforcement employees that work a 12-hour schedule. 2. Any village employee scheduled to work on a holiday shall receive 1.5 times their re",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "b103d0abebcfe6f3b1d0bc7d5cbf916a83e5662a7678e936ac769a82e96c19bf",
+   "source_document_id": null,
+   "source_title": "b103d0abebcfe6f3b1d0bc7d5cbf916a83e5662a7678e936ac769a82e96c19bf.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-62_Pay_and_Benefit_Ordinance_2026.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "Record of Ordinances Ordinance No.: 2025-62 Passed: November 24, 2025 C. The following Part-Time positions are eligible to receive an annual clothing allowance of $250.00 per calendaryear for work related items as long as they have worked 100 hours or more by December 31%, of the previous calendar year: 1. Patrolman | D. The Police Department may use this allowance for the purchase of a service weapon and/or equipment. E. No one employee, with exception to the Police Chief, Captain, Sergeant or Patrolman I, shall receive more than a total of $500.00 per calendar year. F. All employees of the police department will be required to sign and adhere to the “Agreement for Training and Uniform Reimbursement for Police Officers”. This agreement will be generated and managed by the Chief of Police. G. All non-exempt employees must get supervisor approval prior to using this benefit. H. Unused fun",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "b103d0abebcfe6f3b1d0bc7d5cbf916a83e5662a7678e936ac769a82e96c19bf",
+   "source_document_id": null,
+   "source_title": "b103d0abebcfe6f3b1d0bc7d5cbf916a83e5662a7678e936ac769a82e96c19bf.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-62_Pay_and_Benefit_Ordinance_2026.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "Record of Ordinances Ordinance No.: 2025-62 Passed: November 24, 2025 11/26/2018 4/22/2019 9/9/2019 9/9/2019 9/23/2019 11/25/2019 1/17/2020 1/31/2020 5/11/2020 6/22/2020 11/9/2020 12/14/2020 05/24/2021 08/23/2021 09/13/2021 10/25/2021 12/20/2021 4/14/2022 12/12/2022 1/23/2023 3/13/2023 12/11/2023 Changed Chapter 2 Section 9, paragraph B to reflect clothing allowance changes. Added Sergeant description to Appendix A, added Sergeant to pay schedule on page 1 Section 1A, added Sergeant to page 4 Section 1, updated Vacation accrual process in Section 5A Changed Section 1K to include Exempt employees and increase rate of pay to 2 times their normal straight time. Updated Sections 2 & 4 to add 90-day probationary period wording before Personal and Sick time are accrued. Added Section 1.M. to establish the rate of pay for a Temporary Supervisor. Added the Temporary Supervisor job description to",
+   "tags": [
+    "fee",
+    "dimension",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "b103d0abebcfe6f3b1d0bc7d5cbf916a83e5662a7678e936ac769a82e96c19bf",
+   "source_document_id": null,
+   "source_title": "b103d0abebcfe6f3b1d0bc7d5cbf916a83e5662a7678e936ac769a82e96c19bf.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-62_Pay_and_Benefit_Ordinance_2026.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "VILLAGE l%;j?zchio Application for Building Permit Application Date Permit Number. Owner Address Telephone DESCRIPTION of Project / Planned Work Location of Project Block: Lot No: Parcel Number: Attach a Plot Plan or legal description of the property. NATURE OF PROJECT: [ New Construction [J Addition[] Alteration BUILDING USE: (Note: A separate permit is required for each building) [ Business / Warehouse[ Storage / Utility / Garage [ Residential No. of Buildings No. of apartments or units per building [0 Sidewalk / curb / driveway (describe) [ Sign Type No. of signs Sign Size (If proposed use is business or industry, attach a detailed description of the nature of the business or industry, and whether waste material is to be discharged into sanitary sewer. Provide a copy of State Certificate of Plan Approval and two sets of the Construction Drawings.) Check appropriate floor(s) involved T",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "ca65d4b4bd8b8fc333a6c46be8125a81a1ac3c67dca974d10215e29530c32191",
+   "source_document_id": null,
+   "source_title": "ca65d4b4bd8b8fc333a6c46be8125a81a1ac3c67dca974d10215e29530c32191.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/Application_for_Building_Permit__Rev.1-30-24_.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "VILLAGE OF, Tammy Hicks S Village Administrator l . 113 East Railroad Street a ye ll 10 West Lafayette, Ohio 43845 Office Phone: 740-545-5434 villageadministrator@westlafayettevillage.com Application for Zoning Appeal (Revised 11/15/2023) To: Board of Zoning Appeals P.O.Box 175 113 East Railroad Street West Lafayette, Ohio 43845 Appeal No: Appeal Filed Date: Zoning District: The property under consideration is located at: There is herewith submitted a plot plan, drawn to scale, showing property affected. | am requesting permission to: My reasons for Appeal are: BZA Application Page | 1",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "13f4e56975fabba36fc01b37eebe36c7a48dca7e31e713483cd3c1e443550d96",
+   "source_document_id": null,
+   "source_title": "13f4e56975fabba36fc01b37eebe36c7a48dca7e31e713483cd3c1e443550d96.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/BZA-Application-Final-Rev.-11-15-23.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Record of Resolutions Resolution No.: 2025-46 Passed: August 25,2025 A RESOLUTION ESTABLISHING A TCGM FUND (252) FOR THE ACCOUNTING OF FUNDS FOR THE VILLAGE OF WEST LAFAYETTE AND DECLARING AN EMERGENCY ‘WHEREAS, the Village was awarded $100,000 through the Great Lakes Environmental Justice Thriving Communities Grantmaking Program for the purpose of completing field reviews, surveys and studies of village stormwater systems; and WHEREAS, pursuant to guidelines contained in the Subaward Agreement between the Village of West Lafayette and the Minneapolis Foundation, it is necessary to create a Thriving Communities Grantmaking (TCGM) fund by resolution of the legislative authority for the purpose of recording revenue and expenses of funds received from the Minneapolis Foundation, a Pass-Through Entity receiving grant funds from the U.S. EPA. NOW, THEREFORE, BE IT RESOLVED by the Council of t",
+   "tags": [
+    "fee",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "4acdf2cc26626da1e11473d5e7ea1ce42020965add4b9a1fa4fb77c71e192354",
+   "source_document_id": null,
+   "source_title": "4acdf2cc26626da1e11473d5e7ea1ce42020965add4b9a1fa4fb77c71e192354.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-46_Resolution_TCGM_Fund.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "Record of Ordinances Ordinance No.: 2026-25 Passed: May 26, 2026 days off, then the supervisor may request written verification be obtained from the employee's physician before benefits will be paid and before the employee may return to work. In addition to the previous requirements, the Village reserves the right to send the employee to a physician selected bythe Village. Supervisors may request a doctor’s excuse prior to authorizing sick time requests made prior to twenty- four (24) hours in advance of the request. G. Upon approval of an employee's supervisor, sick leave may be used by the employee only forthe following reasons: 1. Illness, injury, or pregnancy-related conditions ofthe employee. 2. Exposure of an employee to a contagious disease which could be communicated to and jeopardize the health of the public and of other employees. 3. Illness, injury or pregnancy-related conditi",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "6b85cce7cef36adb418c91b2ca87c7f4af553426213cba648b38c8bed7b73d6a",
+   "source_document_id": null,
+   "source_title": "6b85cce7cef36adb418c91b2ca87c7f4af553426213cba648b38c8bed7b73d6a.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-25_Pay_and_Benefit_Ordinance_for_2026_updated.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "Record of Ordinances Ordinance No.: 2026-25 Passed: May 26, 2026 Operator i — An Operator who works more than 32 hours per week and who has successfuHy passed his/her Class One exam in Wastewater and has achieved a valid license to operate in the State of Ohio. Operator ii — An Operator who works more than 32 hours per week and who has successfully passed his/her Class Two exam in Wastewater and has achieved a valid license to operate in the State of Ohio as a Class Two Operator. Operator of Record — An Operator ll that is listed on all Ohio EPA documentation as the “Operator of Record” for our Wastewater Treatment Plant, Wastewater Collections system, and the Pearl Valley and Fresno Forced County Main. The Operator of Record shall be responsible for filing all mandated reports with the Ohio EPA and any other regulating authority as indicated by his title. The Operator of Record shall su",
+   "tags": [
+    "prohibited",
+    "temporary",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "6b85cce7cef36adb418c91b2ca87c7f4af553426213cba648b38c8bed7b73d6a",
+   "source_document_id": null,
+   "source_title": "6b85cce7cef36adb418c91b2ca87c7f4af553426213cba648b38c8bed7b73d6a.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-25_Pay_and_Benefit_Ordinance_for_2026_updated.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Record of Ordinances Ordinance No.: 2025-44 Passed: September 22, 2025 of the said contract. This encumbrance of funds will protect the Village's appropriations and ensure that ample funds are available and reserved for the expenditure. (H)EXCEPTIONS TO OBTAINING QUOTES OR COMPETITIVE BIDDING: In the following circumstances quotes or sealed bids/proposals are not necessary: 1. Purchases available only from a sole source supplier where the products or services may be met by only one supplier. 2. Cooperative purchase contracts where the price for an item or service has been established by the State of Ohio or another government entity. Noncompetitive purchases using federal resources may also be subject to restrictions as stated in 2 CFR § 200.320(f) in effect as of the date of purchase. 3. Any real and present emergency. 4. Purchases of used equipment or supplies at an auction open to the",
+   "tags": [
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "6ca1217d19b51d1040c9a99d0eac566ddb902ae54e0c4e8da7254ab777336b9a",
+   "source_document_id": null,
+   "source_title": "6ca1217d19b51d1040c9a99d0eac566ddb902ae54e0c4e8da7254ab777336b9a.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-44_Purchasing_Policy.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "¢. Take all other actions necessary and appropriate to effectively handle the criminal cases filed under the Village's ordinances. Section 3. Qualifications and Training. James Skelton shall possess the following qualifications and training: a. Be a licensed attorney in good standing with the Ohio Supreme Court; b. Have a minimum of five (5) years of experience in the prosecution of criminal cases, either as a prosecutor or in private practice; ¢. Undergo any additional training or certification required by the Village Council or Village administration to ensure compliance with applicable laws and regulations. Section 4. Oversight and Reporting. a. James Skelton shall report directly to the Village Solicitor and shall be subject to the oversight and direction of the Village Council. b. He shall provide monthly written reports to the Village Solicitor detailing: 1. The status of all pendi",
+   "tags": [
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "706f33415e3df5423f6b1edcfab02f3690f34ebe7a3274eabff29393b19e0129",
+   "source_document_id": null,
+   "source_title": "706f33415e3df5423f6b1edcfab02f3690f34ebe7a3274eabff29393b19e0129.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-05_Resolution_Appointing_Skelton.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "Record of Ordinances Ordinance No.: 2026-34 Passed: August 10, 2026 before the employee may return to work. In addition to the previous requirements, the ViHage reserves the rightto send the employee to a physician selected bythe Village. Supervisors may request a doctor’s excuse prior to authorizing sick time requests made prior to twenty— four (24) hours in advance ofthe request. G. Upon approval of an employee's supervisor, sick leave may be used by the employee only forthefollowing reasons: 1. Illness, injury, or pregnancy—related conditions ofthe employee. 2. Exposure of an employee to a contagious disease which could be communicated to and jeopardize the health ofthe public and of other employees. 3. Illness, injury or pregnancy—related conditions of a member ofthe employee's immediate family where the employee's presence is reasonably necessary for the health and welfare ofthe emp",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "70ab6f35cc7ad360493c70cc01093d5a0d48511104711f6ecaaa9d07651148de",
+   "source_document_id": null,
+   "source_title": "70ab6f35cc7ad360493c70cc01093d5a0d48511104711f6ecaaa9d07651148de.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-34_Pay_and_Benefit_Ordinance_for_2026Raises.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "Record of Ordinances Ordinance No.: 2026-34 Passed: August 10, 2026 Operator i — An Operator who works more than 32 hours per week and who has successfuHy passed his/her Class One exam in Wastewater and has-achieved a valid license to operate in the State of Ohio. Operator ll — An Operator who works more than 32 hours per week and who has successfuHy passed his/her Class Two exam in Wastewater and has achieved a valid license to operate in the State of Ohio as a Class Two Operator. Operator of Record — An Operator II that is listed on all Ohio EPA documentation as the “Operator of Record” for our Wastewater Treatment Piant, Wastewater Coiiections system, and the Pearl Valley and Fresno Forced County Main. The Operator of Record shall be responsible for filing all mandated reports with the Ohio EPA and any other regulating authority as indicated by his title. The Operator of Record shall ",
+   "tags": [
+    "prohibited",
+    "temporary",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "70ab6f35cc7ad360493c70cc01093d5a0d48511104711f6ecaaa9d07651148de",
+   "source_document_id": null,
+   "source_title": "70ab6f35cc7ad360493c70cc01093d5a0d48511104711f6ecaaa9d07651148de.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-34_Pay_and_Benefit_Ordinance_for_2026Raises.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "VILLAGE OF, Tammy J. Hicks E S Village Administrator - 113 East Railroad Street u ye ' hlo West Lafayette, Ohio 43845 740-545-5434 villageadministrator@westlafayettevillage.com Application for Peddler, Itinerant Merchant, or Solictor License Date Submitted: Approved Denied Effective Date: (Background completed by Police Chief) (Authorization by Village Administrator) Name, Address, Phone # and Driver’s License # of Applicant: Name, Address and Phone of Supervisor of Applicant: Company Federal Tax ID #: Liscense # (if approved) Describe the nature, character and/or quality of the goods or services to be offered for sale or delivered: *Applicants who propose to handle foodstuffs shall also attach to this application a statement, from a licensed physician dated not more than 14 days prior to the submitted date of this application, certifying that the applicant(s) to be free of contagious or",
+   "tags": [
+    "sign",
+    "fee",
+    "prohibited",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "7498b4b38e51a7a0370bcb5c2e1718b56862ba1ed2bf0aed4ce22ed1cd121df7",
+   "source_document_id": null,
+   "source_title": "7498b4b38e51a7a0370bcb5c2e1718b56862ba1ed2bf0aed4ce22ed1cd121df7.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/Solicitation_License.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Ordinance No.: Record of Ordinances V3 2026-01 Passed: January 26, 2026 beings. These include exotic animals. a. Exotic animals are defined as any animal that requires special license to keep or own by state and federal law. B. No person shall possess, keep, or maintain a dangerous animal in the Village. C. The provisions of this section shall not apply to the keeping of dangerous animals in the following cases: a. b. c. The keeping of such animals in zoos, bona fide education or medical institutions, museums or any other place where they are kept as live specimens for the public view or for the purpose of instruction or study; The keeping of such animals for exhibition to the public by a circus, carnival or other exhibit or show; or The keeping of such animals in a bona fide, licensed veterinary hospital for treatment. D. Prohibited Animals. Except as provided in this section, no person",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "79a102592399af7cae3e813ab95cfc2319cf2026621c78f2d13d674d9fd5c363",
+   "source_document_id": null,
+   "source_title": "79a102592399af7cae3e813ab95cfc2319cf2026621c78f2d13d674d9fd5c363.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-01_AN_ORDINANCE_REGARDING_ANIMALS_IN_THE_VILLAGE.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Record of Resolution Resolution No.: 2025-69 Passed: November 24, 2025 A RESOLUTION TO AMEND THE 2025 PERMANENT APPROPRIATIONS ORDINANCE 2024-48, ADDING FUNDS BE IT RESOLVED by the Council of the Village of West Lafayette, State of Ohio as follows: SECTION I: That there be and hereby an addition to the following funds as follows: 101.710.523000 $5,000.00 In the 101 General Fund, funds are needed to cover the RITA retainer fees for the remainder of 2025. 210.102.525002 $31,500.00 In the 210 Fire Fund, a MARCS Grant was received in the amount of $27,780.75 for equipment purchase and monthly radio subscription fees. Money needs appropriated for a Motorola quote received for $31,243.24 for portable and mobile radio equipment purchase. 602.112.523000 $50,400.00 In the 602 Sewer Fund, funds are needed for the installation of clean-outs and maintenance on the Pearl Valley force main. Pearl Vall",
+   "tags": [
+    "fee",
+    "dimension",
+    "temporary",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "8b0d7ee48ddfda0291fe5024f97f252a55811423ddfcab10d01e728777f0c7f3",
+   "source_document_id": null,
+   "source_title": "8b0d7ee48ddfda0291fe5024f97f252a55811423ddfcab10d01e728777f0c7f3.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-69_Adding_Funds.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": ". (2). 3). . For the purposes of this section the terms “Sanitary Sewerage” and “Industrial Wastes” are defined as follows: A. “Sanitary Sewerage” is waste from water closets, urinals, lavatories, sinks, bathtubs, showers, household laundries, cellar floor drains, garage and filling station floor drains, bars, soda fountains, refrigerator drips, drinking fountains and stable floor drains. B. “Industrial Wastes” are any liquid wastes resulting from any commercial, manufacturing, or industrial operations Or processes. No house sewer shall be constructed to connect with a public sewer, nor shall any connection be made to a public sewer within or without the corporate boundaries of the Village until the written permission of the Village Administrator has been obtained by the person, firm, or corporation employed to perform the work. An application for a permit shall be signed by the owner, a",
+   "tags": [
+    "fee",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "9593edcd782768ffeb34dc884cd8373a090e237a82aa8c9785c1e70c4d3a2c59",
+   "source_document_id": null,
+   "source_title": "9593edcd782768ffeb34dc884cd8373a090e237a82aa8c9785c1e70c4d3a2c59.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-31_SEWER_RATES.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Record of Ordinances Mpren 4, Ordinance No.: 2026-19 Passed: Apri-13; 2026 (32) 2023-27 AN ORDINANCE PROHIBITING FREESTANDING OUTDOOR FURNACES (33) 2023-28 AN ORDINANCE TO AMEND ORDINANCE 2010-48 REGARDING CURFEWS IN THE VILLAGE OF WEST LAFAYETTE AND DECLARING AN EMERGENCY (34) 2026-01 AN ORDINANCE TO ADOPT RULES AND REGULATIONS FOR ANIMALS IN THE VILLAGE OF WEST LAFAYETTE, OHIO AND TO REPEAL ORDINANCES AND RESOLUTIONS IN CONFLICT THEREWITH (35) 2023-32 AN ORDINANCE REGARDING SEXUALLY ORIENTED BUSINESSES IN THE VILLAGE OF WEST LAFAYETTE, OHIO, REPEALING ORDINANCES IN CONFLICT THEREWITH, AND DECLARING AN EMERGENCY (36) 2023-58 AN ORDINANCE ESTABLISHING RULES AND REGULATIONS FOR THE INSTALLATION OF A PHOTO TRAFFIC ENFORCEMENT SYSTEM WITHIN SCHOOL ZONES AND ESTABLISHING PENALTIES (37) 2025-06 AN ORDINANCE REGULATING INOPERABLE MOTOR VEHICLES WITHIN THE VILLAGE OF WEST LAFAYETTE, REPEALING O",
+   "tags": [
+    "sign",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab",
+   "source_document_id": null,
+   "source_title": "ad7403ac765dba50e7ded95c92fff74b2c2c6f5bb497487071a4a46c7d8e33ab.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-19_AN_ORDINANCE_OBC.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "Record of Ordinances Ordinance No.: 2025-62 Passed: November 24, 2025 days off, then the supervisor may request written verification be obtained from the employee's physician before benefits will be paid and before the employee may return to work. In addition to the previous requirements, the Village reserves the right to send the employee to a physician selected by the Village. Supervisors may request a doctor's excuse prior to authorizing sick time requests made prior to twenty- four (24) hours in advance of the request. G. Upon approval of an employee's supervisor, sick leave may be used by the employee only for the following reasons: 1. lliness, injury, or pregnancy-related conditions of the employee. 2. Exposure of an employee to a contagious disease which could be communicated to and jeopardize the health of the public and of other employees. 3. lliness, injury or pregnancy-related",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "b103d0abebcfe6f3b1d0bc7d5cbf916a83e5662a7678e936ac769a82e96c19bf",
+   "source_document_id": null,
+   "source_title": "b103d0abebcfe6f3b1d0bc7d5cbf916a83e5662a7678e936ac769a82e96c19bf.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-62_Pay_and_Benefit_Ordinance_2026.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "Record of Ordinances Ordinance No.: 2025-62 Passed: November 24, 2025 Operator | — An Operator who works more than 32 hours per week and who has successfully passed his/her Class One exam in Wastewater and has achieved a valid license to operate in the State of Ohio. Operator Il - An Operator who works more than 32 hours per week and who has successfully passed his/her Class Two exam in Wastewater and has achieved a valid license to operate in the State of Ohio as a Class Two Operator. Operator of Record — An Operator |l that is listed on all Ohio EPA documentation as the “Operator of Record” for our Wastewater Treatment Plant, Wastewater Collections system, and the Pearl Valley and Fresno Forced County Main. The Operator of Record shall be responsible for filing all mandated reports with the Ohio EPA and any other regulating authority as indicated by his title. The Operator of Record sh",
+   "tags": [
+    "prohibited",
+    "temporary",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "b103d0abebcfe6f3b1d0bc7d5cbf916a83e5662a7678e936ac769a82e96c19bf",
+   "source_document_id": null,
+   "source_title": "b103d0abebcfe6f3b1d0bc7d5cbf916a83e5662a7678e936ac769a82e96c19bf.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-62_Pay_and_Benefit_Ordinance_2026.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "VILLAGE lm%%omo SIGN Types - Freestanding Post Mounted, Attached (to a building) BUILDING HEIGHT: STORY - That portion of a building included between the surface of any floor and the surface of the floor next above it or, if there is no floor above it, then the space between the floor and the ceiling next above it. HEIGHT - The vertical distance from the average contact ground level at the front wall of the building to the highest point of the coping of a flat roof, to the deck line of a mansard roof or to the mean height level between eaves and the ridge for gable, hip, shed or gambrel roofs. Height should not exceed 20’ from the peak to the lowest ground grade level. Building permits have a 30-day review period. The Zoning Inspector will review the application and either issue or refuse the application. A response will be issued in writing. Al village construction guidelines can be fou",
+   "tags": [
+    "sign",
+    "dimension",
+    "authority",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "ca65d4b4bd8b8fc333a6c46be8125a81a1ac3c67dca974d10215e29530c32191",
+   "source_document_id": null,
+   "source_title": "ca65d4b4bd8b8fc333a6c46be8125a81a1ac3c67dca974d10215e29530c32191.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/Application_for_Building_Permit__Rev.1-30-24_.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "For more information or questions, contact veteranbannerprogram@yahoo.com Or Rober t Moore at 740 - 294 - 7413 Please fill out an application for each military member. Applicants Name: __________________________________________ Phone #: _________________ Address: _______________________________ _______________________ __________________ Street City State/Zip Code Email: _______________________________________________________________________________ Veteran/Military Member Information: First Name: _______ _________________________ Last Name: _____________________________ Branch of Service (please circle one): US ARMY US AIR FORCE US MARINE CORPS US SPACE FORCE US NAVY US AIR NATIONAL GUARD US COAST GUARD US ARMY NATIONAL GUARD Preferred City/ Village to be displayed: ____________________________________________________ Banner: QTY __________ X $ 5 5 = _________ Yard Sign (Single Sided): Q",
+   "tags": [
+    "sign",
+    "fee",
+    "temporary",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "de93ce731f330f407798c2b3d49907610b2b05e09c0675d38dccd70172087d5c",
+   "source_document_id": null,
+   "source_title": "de93ce731f330f407798c2b3d49907610b2b05e09c0675d38dccd70172087d5c.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/Coshocton_Military_Banner_Program_Application_updated_5.18.26.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "Record of Ordinances Ordinance N0.: 2026-32 Passed: June 11, 2026 the WWTP. Wastewater having a temperature greater than 70 degrees Fahrenheit, or which will inhibit biological activity in the treatment plant resulting in interference, but in no case wastewater which causes the temperature at the head of a treatment plant to exceed 104 degrees Fahrenheit or 20 degrees centigrade; Petroleum oil, nonbiodegradable cutting oil, or products of mineral oil origin, in amounts that will cause interference or pass through. Pollutants Which result in the presence of toxic gases, vapors, or fumes within the WWTP in a quantity that may cause acute worker health and safety problems. Pollutants which cause a high concentration of inert suspended solids, such as but. not limited to, slurries, diatomaceous earth and lime residues. Pollutants which cause high concentration of dissolved solids such as, bu",
+   "tags": [
+    "fee",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "e968d09cd249be46fb3000845d3f3efa84d752bd9bf84a5192c540bc488dbaee",
+   "source_document_id": null,
+   "source_title": "e968d09cd249be46fb3000845d3f3efa84d752bd9bf84a5192c540bc488dbaee.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2026-32_Ordinance_Receiving_Septage.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Record of Resolution 2% Resolution No.: 2025-34 Passed: July }(, 2025 A RESOLUTION TO AMEND THE 2025 PERMANENT APPROPRIATIONS ORDINANCE 2024-48, ADDING FUNDS BE IT RESOLVED by the Council of the Village of West Lafayette, State of Ohio as follows: SECTION I: That there be and hereby an addition to the following funds as follows: 602.109.525000 $5,300.00 In the 602 Sewer Fund, funds are needed to replace the roof at the Wastewater Treatment Plant that was damaged in a recent storm. A claim was filed with the insurance company and a check in the amount of $4,162 to go towards the replacement. SECTION II: That this Resolution shall be declared an emergency measure necessary to preserve the health, welfare and safety of the citizens of the Village of West Lafayette, Ohio, the emergency being to assure timely payments to vendors and shall take effect immediately upon passage by Council and si",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "f695e16681b45f564b883ad98184e589e8e131bd7fa0328415cbc4f634a0dcdc",
+   "source_document_id": null,
+   "source_title": "f695e16681b45f564b883ad98184e589e8e131bd7fa0328415cbc4f634a0dcdc.pdf",
+   "official_url": "https://westlafayettevillage.com/documents/570/2025-34_ADDING_FUNDS.pdf"
+  }
+ ]
+}

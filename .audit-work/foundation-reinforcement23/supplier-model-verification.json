@@ -1,0 +1,161 @@
+{
+  "results": [
+    {
+      "name": "valid supplier prices produce identical truck math; no authored mutation",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "name": "availableMixes/admixes carry finite catalog prices and authored field names",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'mix_4000_price'\n"
+    },
+    {
+      "name": "calcProject totals match ported math for valid supplier + item",
+      "ok": true
+    },
+    {
+      "name": "$100 new-location stop is an authored constant — counted, not config-priced",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "name": "multi-truck delivery prices each bracket identically to ported math",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "name": "explicit-zero catalog prices are legitimate free prices",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "name": "explicit-0 settings are honored — the ported `|| def` overrode them",
+      "ok": false,
+      "error": "explicit 0 pouring rate kept\n+ actual - expected\n\n+ 8.88888888888889\n- 0\n"
+    },
+    {
+      "name": "numeric-string supplier prices normalize on the calculation copy only",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "name": "unselected mix/admixture prices are not consumed",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "name": "unconsumed small-load bracket is not checked",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "name": "zero-yard delivery consumes no supplier prices",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "name": "bagged-concrete items never consume ready-mix supplier prices",
+      "ok": true
+    },
+    {
+      "name": "missing mix price → supplier_price_unavailable + acknowledged hold",
+      "ok": false,
+      "error": "issue present"
+    },
+    {
+      "name": "invalid mix price holds (negative)",
+      "ok": false,
+      "error": "issue for negative"
+    },
+    {
+      "name": "invalid mix price holds (malformed)",
+      "ok": false,
+      "error": "issue for malformed"
+    },
+    {
+      "name": "invalid mix price holds (NaN)",
+      "ok": false,
+      "error": "issue for NaN"
+    },
+    {
+      "name": "invalid mix price holds (record)",
+      "ok": false,
+      "error": "issue for record"
+    },
+    {
+      "name": "invalid mix price holds (empty string)",
+      "ok": false,
+      "error": "issue for empty string"
+    },
+    {
+      "name": "missing selected admixture price holds",
+      "ok": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(issue)\n"
+    },
+    {
+      "name": "missing fuel surcharge holds",
+      "ok": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(issue)\n"
+    },
+    {
+      "name": "missing small-load bracket holds",
+      "ok": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(issue)\n"
+    },
+    {
+      "name": "mix selection not in the supplier catalog holds (was silently repriced to 4000 AE)",
+      "ok": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(issue)\n"
+    },
+    {
+      "name": "admixture selection not in the supplier catalog holds (was silently $0)",
+      "ok": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(issue)\n"
+    },
+    {
+      "name": "no ready-mix supplier assigned + yards to ship → supplier_unavailable",
+      "ok": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(issue)\n"
+    },
+    {
+      "name": "normalized labor-services supplier without authored prices holds (was silently $0)",
+      "ok": false,
+      "error": "normalizer preserves missing vs explicit 0\n\n0 !== null\n"
+    },
+    {
+      "name": "normalized supplier with authored prices prices identically to a raw row",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "name": "unsaved held delivery has no acknowledged snapshot — totals withheld, not guessed",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- true\n"
+    },
+    {
+      "name": "non-explicit snapshot keeps authored delivery basis — no saved project arg",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- true\n"
+    },
+    {
+      "name": "captureConcreteDeliverySnapshot round-trips the acknowledged hold",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\n337.5 !== 301.5\n"
+    },
+    {
+      "name": "supplier issues merge once into catalogIssues and never attach to an item",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\n0 !== 1\n"
+    },
+    {
+      "name": "unavailable items still short-circuit delivery — no duplicate supplier scan",
+      "ok": true
+    },
+    {
+      "name": "getSmallLoadFee/getFuelSurcharge return null, never a guessed amount",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\n150 !== null\n"
+    }
+  ]
+}

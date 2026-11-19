@@ -1,0 +1,820 @@
+{
+  "partial": true,
+  "done": 40,
+  "results": [
+    {
+      "address": "31 US-41, Sebree, KY 42455",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Sebree",
+        "ai_name": "Sebree",
+        "targets": "Sebree (municipality) + Webster County (county)",
+        "trace": "approx pin (google_approx) → checked county + municipality + state municipality boundaries → inside Sebree + Webster County → offices: 0 checked · 6 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 2985,
+      "worker": 1
+    },
+    {
+      "address": "687 Kintner Pkwy, Sunbury, OH 43074",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Sunbury — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Sunbury",
+        "targets": "Sunbury (municipality) + Delaware County (county)",
+        "trace": "google rooftop pin → checked state municipality + county + municipality boundaries → inside Sunbury + Delaware County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 35856,
+      "worker": 2
+    },
+    {
+      "address": "1 Highland Ave Ste A, Fort Thomas, KY 41075",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Fort Thomas",
+        "ai_name": "Fort Thomas",
+        "targets": "Fort Thomas (municipality) + Campbell County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Fort Thomas + Campbell County → offices: 0 checked · 6 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 5641,
+      "worker": 3
+    },
+    {
+      "address": "7040 Main St, Newtown, OH 45244",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "busy_waits": 2,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Newtown",
+        "ai_name": "Newtown",
+        "targets": "Newtown (municipality) + Hamilton County (county)",
+        "trace": "google rooftop pin → checked municipality + state municipality + county boundaries → inside Newtown + Hamilton County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 68401,
+      "worker": 4
+    },
+    {
+      "address": "17406 Royalton Rd Ste A, Strongsville, OH 44136",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Strongsville — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Strongsville",
+        "targets": "Strongsville (municipality) + Cuyahoga County (county)",
+        "trace": "approx pin (google_approx) → checked county + municipality + state municipality boundaries → inside Strongsville + Cuyahoga County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 38407,
+      "worker": 5
+    },
+    {
+      "address": "63907 US-50, McArthur, OH 45651",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Elk township — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Elk township",
+        "targets": "Elk township (township) + Vinton County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality + state township + township boundaries → inside Elk township + Vinton County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 118336,
+      "worker": 6
+    },
+    {
+      "address": "24 N Sandusky St, Delaware, OH 43015",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Delaware — no saved office matched",
+      "busy_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Delaware",
+        "targets": "Delaware (municipality) + Delaware County (county)",
+        "trace": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Delaware + Delaware County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 45519,
+      "worker": 7
+    },
+    {
+      "address": "20 N High St, Covington, OH 45318",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Covington — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Covington",
+        "targets": "Covington (municipality) + Miami County (county)",
+        "trace": "google rooftop pin → checked state municipality + municipality + county boundaries → inside Covington + Miami County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 33178,
+      "worker": 8
+    },
+    {
+      "address": "6950 Shelbyville Rd, Simpsonville, KY 40067",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Simpsonville — no saved office matched",
+      "busy_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Simpsonville",
+        "targets": "Simpsonville (municipality) + Shelby County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Simpsonville + Shelby County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 46420,
+      "worker": 9
+    },
+    {
+      "address": "562 N Dixie Blvd Ste C, Radcliff, KY 40160",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Radcliff",
+        "ai_name": "Radcliff",
+        "targets": "Radcliff (municipality) + Hardin County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Radcliff + Hardin County → offices: 0 checked · 6 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 50322,
+      "worker": 10
+    },
+    {
+      "address": "4595 East Main Street, Whitehall, OH 43213",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Whitehall",
+        "ai_name": "Whitehall",
+        "targets": "Whitehall (municipality) + Franklin County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Whitehall + Franklin County → offices: 0 checked · 3 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 46360,
+      "worker": 1
+    },
+    {
+      "address": "93 S Main St, Waynesville, OH 45068",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Waynesville — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Waynesville",
+        "targets": "Waynesville (municipality) + Warren County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Waynesville + Warren County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 40112,
+      "worker": 3
+    },
+    {
+      "address": "10 N Miami St, West Milton, OH 45383",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "West Milton",
+        "ai_name": "West Milton",
+        "targets": "West Milton (municipality) + Miami County (county)",
+        "trace": "google rooftop pin → checked state municipality + county + municipality boundaries → inside West Milton + Miami County → offices: 0 checked · 4 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 14022,
+      "worker": 8
+    },
+    {
+      "address": "123 Church St, Providence, KY 42450",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Providence — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Providence",
+        "targets": "Providence (municipality) + Webster County (county)",
+        "trace": "approx pin (google_approx) → checked county + municipality + state municipality boundaries → inside Providence + Webster County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 57602,
+      "worker": 2
+    },
+    {
+      "address": "5700 Dunham Rd, Maple Heights, OH 44137",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Maple Heights",
+        "ai_name": "Maple Heights",
+        "targets": "Maple Heights (municipality) + Cuyahoga County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Maple Heights + Cuyahoga County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 28018,
+      "worker": 5
+    },
+    {
+      "address": "1050 KY-136, Calhoun, KY 42327",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "McLean County — no saved office matched",
+      "busy_waits": 2,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "McLean County",
+        "targets": "McLean County (county)",
+        "trace": "approx pin (google_approx) → checked state municipality + municipality + county boundaries → inside McLean County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 54027,
+      "worker": 7
+    },
+    {
+      "address": "13121 Eastpoint Park Blvd D, Louisville, KY 40223",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Louisville",
+        "ai_name": "LOUISVILLE",
+        "targets": "LOUISVILLE (municipality) + Jefferson County (county)",
+        "trace": "approx pin (google_approx) → checked county + municipality + state municipality boundaries → inside LOUISVILLE + Jefferson County → offices: 0 checked · 1 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 17564,
+      "worker": 9
+    },
+    {
+      "address": "866 Old Elizabethtown Rd, Hodgenville, KY 42748",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "busy_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Hodgenville",
+        "ai_name": "Hodgenville",
+        "targets": "Hodgenville (municipality) + Larue County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Hodgenville + Larue County → offices: 0 checked · 5 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 17160,
+      "worker": 3
+    },
+    {
+      "address": "329 S Buckman St, Shepherdsville, KY 40165",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "busy_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Shepherdsville",
+        "ai_name": "Shepherdsville",
+        "targets": "Shepherdsville (municipality) + Bullitt County (county)",
+        "trace": "google rooftop pin → checked state municipality + county + municipality boundaries → inside Shepherdsville + Bullitt County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 16248,
+      "worker": 8
+    },
+    {
+      "address": "7920 Chambersburg Rd Ste A28, Huber Heights, OH 45424",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "busy_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Huber Heights",
+        "ai_name": "Huber Heights",
+        "targets": "Huber Heights (municipality) + Montgomery County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Huber Heights + Montgomery County → offices: 0 checked · 6 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 17552,
+      "worker": 1
+    },
+    {
+      "address": "650 Hendrickson Dr, Lebanon, KY 40033",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Lebanon — no saved office matched",
+      "busy_waits": 2,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Lebanon",
+        "targets": "Lebanon (municipality) + Marion County (county)",
+        "trace": "google rooftop pin → checked state municipality + county + municipality boundaries → inside Lebanon + Marion County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 49194,
+      "worker": 10
+    },
+    {
+      "address": "10400 Danner Dr, Streetsboro, OH 44241",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Streetsboro — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Streetsboro",
+        "targets": "Streetsboro (municipality) + Portage County (county)",
+        "trace": "google rooftop pin → checked state municipality + municipality + county boundaries → inside Streetsboro + Portage County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 41006,
+      "worker": 3
+    },
+    {
+      "address": "4897 OH-125, Georgetown, OH 45121",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Georgetown",
+        "ai_name": "Georgetown",
+        "targets": "Georgetown (municipality) + Brown County (county)",
+        "trace": "approx pin (google_approx) → checked county + municipality + state municipality boundaries → inside Georgetown + Brown County → offices: 0 checked · 1 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 66847,
+      "worker": 9
+    },
+    {
+      "address": "1860 Georgetown Rd, Owenton, KY 40359",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Owen County — no saved office matched",
+      "busy_waits": 2,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Owen County",
+        "targets": "Owen County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Owen County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 70511,
+      "worker": 8
+    },
+    {
+      "address": "227 E Loudon Ave, Loudonville, OH 44842",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Loudonville — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Loudonville",
+        "targets": "Loudonville (municipality) + Ashland County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Loudonville + Ashland County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 137595,
+      "worker": 5
+    },
+    {
+      "address": "519 Clearfield Road, Morehead, KY 40313",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Rowan County — no saved office matched",
+      "busy_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Rowan County",
+        "targets": "Rowan County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Rowan County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 46096,
+      "worker": 4
+    },
+    {
+      "address": "201 E Main St #900, Lexington, KY 40507",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "LEXINGTON — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "LEXINGTON",
+        "targets": "LEXINGTON (municipality) + Fayette County (county)",
+        "trace": "google rooftop pin → checked state municipality + county + municipality boundaries → inside LEXINGTON + Fayette County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 44979,
+      "worker": 1
+    },
+    {
+      "address": "155 W Main St, Georgetown, KY 40324",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Georgetown — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Georgetown",
+        "targets": "Georgetown (municipality) + Scott County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Georgetown + Scott County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 74500,
+      "worker": 2
+    },
+    {
+      "address": "301 Lau Pkwy, Clayton, OH 45315",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Englewood — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Englewood",
+        "targets": "Englewood (municipality) + Montgomery County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Englewood + Montgomery County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 45658,
+      "worker": 10
+    },
+    {
+      "address": "407 Boardman Canfield Road, Youngstown, OH 44512",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Boardman township — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Boardman township",
+        "targets": "Boardman township (township) + Mahoning County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality + township + state township boundaries → inside Boardman township + Mahoning County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 40105,
+      "worker": 3
+    },
+    {
+      "address": "3248 Brady Lake Rd, Ravenna, OH 44266",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Ravenna township — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Ravenna township",
+        "targets": "Ravenna township (township) + Portage County (county)",
+        "trace": "google rooftop pin → checked state municipality + municipality + county + state township + township boundaries → inside Ravenna township + Portage County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 62344,
+      "worker": 1
+    },
+    {
+      "address": "464 Chenault Rd, Frankfort, KY 40601",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Franklin County — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Franklin County",
+        "targets": "Franklin County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Franklin County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 42445,
+      "worker": 4
+    },
+    {
+      "address": "320 S College St, Harrodsburg, KY 40330",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "busy_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Harrodsburg",
+        "ai_name": "Harrodsburg",
+        "targets": "Harrodsburg (municipality) + Mercer County (county)",
+        "trace": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Harrodsburg + Mercer County → offices: 0 checked · 6 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 11608,
+      "worker": 8
+    },
+    {
+      "address": "2580 US-421, Manchester, KY 40962",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "busy_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Clay County",
+        "ai_name": "Clay County",
+        "targets": "Clay County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Clay County → offices: 0 checked · 1 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 13462,
+      "worker": 10
+    },
+    {
+      "address": "1755 U.S. 68 Business, Maysville, KY 41056",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Maysville — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Maysville",
+        "targets": "Maysville (municipality) + Mason County (county)",
+        "trace": "approx pin (google_approx) → checked county + municipality + state municipality boundaries → inside Maysville + Mason County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 49785,
+      "worker": 3
+    },
+    {
+      "address": "6900 Silverton Ave, Silverton, OH 45236",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Silverton — no saved office matched",
+      "busy_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Silverton",
+        "targets": "Silverton (municipality) + Hamilton County (county)",
+        "trace": "google rooftop pin → checked municipality + state municipality + county boundaries → inside Silverton + Hamilton County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 48857,
+      "worker": 8
+    },
+    {
+      "address": "1701 W Market St Ste. 201J, Louisville, KY 40203",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Louisville",
+        "ai_name": "Louisville",
+        "targets": "Louisville (municipality) + Jefferson County (county)",
+        "trace": "approx pin (google_approx) → checked county + municipality + state municipality boundaries → inside Louisville + Jefferson County → offices: 0 checked · 1 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 34997,
+      "worker": 4
+    },
+    {
+      "address": "2865 Olentangy River Road, Columbus, OH 43202",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Columbus — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Columbus",
+        "targets": "Columbus (municipality) + Franklin County (county)",
+        "trace": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Columbus + Franklin County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 45022,
+      "worker": 10
+    },
+    {
+      "address": "3821 Olivette Ave, Cheviot, OH 45211",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Cheviot — no saved office matched",
+      "busy_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Cheviot",
+        "targets": "Cheviot (municipality) + Hamilton County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Cheviot + Hamilton County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 57807,
+      "worker": 2
+    },
+    {
+      "address": "2224 KY-619, Russell Springs, KY 42642",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Russell County — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Russell County",
+        "targets": "Russell County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Russell County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 40191,
+      "worker": 1
+    }
+  ]
+}

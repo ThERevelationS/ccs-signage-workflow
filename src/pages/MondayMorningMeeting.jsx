@@ -15,8 +15,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { addDays, format, startOfDay } from "date-fns";
 import { Loader2, Link as LinkIcon, Search, RefreshCw, CalendarClock, AlertTriangle, CheckCircle2, ChevronDown, StickyNote, ListTodo } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { usePolling } from "@/lib/usePolling";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, mutateWorkOrderArrayField, mutateLocatedWorkOrderArrayItem } from "@/components/workflow/workOrderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -338,12 +339,10 @@ export default function MondayMorningMeeting() {
     else setIsRefreshing(true);
     try {
       const [orders, usersData, taskDescSetting] = await Promise.all([
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { is_rider: false, completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Monday Morning Meeting Work Orders",
-        }),
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.is_rider !== true && wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Monday Morning Meeting authorized users" }),
         loadSingleGlobalSetting({
           entity: base44.entities.GlobalSettings,
@@ -970,7 +969,7 @@ export default function MondayMorningMeeting() {
                     >
                       {/* Row Number - Clickable Focus Button */}
                       <td className="px-0 py-0 border-r">
-                        <button
+                        <button type="button"
                           onClick={(e) => { anchorFocusedRow(e.currentTarget); setFocusedRowId(focusedRowId === wo.id ? null : wo.id); }}
                           className={`w-full h-full px-2 py-2 text-center font-bold transition-colors ${
                             focusedRowId === wo.id
@@ -1044,7 +1043,7 @@ export default function MondayMorningMeeting() {
 
                       {/* Customer */}
                       <td className="px-2 py-2 border-r">
-                        <button
+                        <button type="button"
                           data-mmm-focus-id={wo.id}
                           onClick={() => setSelectedWorkOrder(wo)}
                           className="text-sm text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full truncate"
@@ -1359,7 +1358,7 @@ export default function MondayMorningMeeting() {
                         />
                       </td>
                       <td className="px-2 py-2 border-r" style={{ maxWidth: '150px' }}>
-                        <button
+                        <button type="button"
                           data-mmm-focus-id={wo.id}
                           onClick={() => setSelectedWorkOrder(wo)}
                           className="text-xs text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full"

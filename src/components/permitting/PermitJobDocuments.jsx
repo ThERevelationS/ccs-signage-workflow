@@ -62,7 +62,7 @@ export default function PermitJobDocuments({ workOrder, onManageFiles }) {
             const safeUrl = safeExternalHttpUrl(file?.url);
             const key = file?.id || `${file?.name || "file"}-${index}`;
             return (
-              <button
+              <button type="button"
                 key={key}
                 type="button"
                 disabled={!safeUrl}

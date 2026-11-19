@@ -1,0 +1,156 @@
+{
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "f33518b327fb282abc16fd134cac233911ccae09",
+ "sourceArtifact": "settings-catalog-baseline.json",
+ "dependencyArtifact": "settings-catalog-dependency-source.json",
+ "fixtureArtifact": "settings-catalog-fixture.json",
+ "sourceId": "synthetic-settings-project",
+ "estimateId": "synthetic-settings-estimate",
+ "sourceVersion": "synthetic-v1",
+ "savedVersion": "synthetic-v2",
+ "candidates": {
+  "legacyFoundationCalc.js": "settings-catalog-candidate-legacyFoundationCalc.js",
+  "foundationInputValidation.js": "settings-catalog-candidate-foundationInputValidation.js",
+  "foundationCalc.js": "settings-catalog-candidate-foundationCalc.js",
+  "foundationEquipmentBindings.js": "settings-catalog-candidate-foundationEquipmentBindings.js"
+ },
+ "candidateHashes": {
+  "legacyFoundationCalc.js": "b799f3d33a794f6249beadb0b527a710f7df42d9aad0d0e062edb846dee4d1e4",
+  "foundationInputValidation.js": "cd2cd349650134af3137be7a7a200c11fb52bd5d7a2429b9faf436abbb657f63",
+  "foundationCalc.js": "ac9c53eb4c08a023ac7c2268c07de09b6591528976cf38a322e8b82d7769557a",
+  "foundationEquipmentBindings.js": "9770051bb7cce5424d5075b6fff2910288f2eba6b5724dc3194d2a59928b543f"
+ },
+ "acknowledgedSnapshot": {
+  "item": {
+   "item_total_cost": 111.11,
+   "concrete_cost": 11.11,
+   "excavation_cost": 22.22
+  },
+  "delivery": {
+   "concrete_total": 301.5,
+   "rounded_yards": 0.75,
+   "rate_per_yard": 219
+  },
+  "total_concrete_cost": 301.5
+ },
+ "validCurrentSnapshot": {
+  "item": {
+   "item_total_cost": 97.77777777777777
+  },
+  "delivery": {
+   "concrete_total": 344.25,
+   "rate_per_yard": 219,
+   "trucks": [
+    {
+     "rounded_yards": 0.75,
+     "cost": 344.25,
+     "small_order_fee": 145,
+     "fuel_fee": 35
+    }
+   ]
+  },
+  "total_concrete_cost": 344.25,
+  "grand_total": 442.02777777777777
+ },
+ "blockedSaveMessage": "Save paused: fix highlighted design inputs or catalog selections.",
+ "pageCaseCount": 10,
+ "browserCaseCount": 12,
+ "browserModes": [
+  {
+   "id": "valid",
+   "pricingUnavailable": false,
+   "panelTexts": [
+    "$344.25",
+    "0.75 CY · $219.00/CY",
+    "4000 AIR ENTRAINED"
+   ],
+   "itemCardTexts": [
+    "$97.78"
+   ],
+   "expectedGrandTotal": 442.02777777777777
+  },
+  {
+   "id": "held-malformed-setting",
+   "pricingUnavailable": true,
+   "panelTexts": [
+    "Saved amounts (not current pricing)",
+    "$301.50"
+   ],
+   "itemCardTexts": [
+    "Saved amounts (not current pricing)",
+    "Estimator Settings",
+    "$111.11"
+   ],
+   "catalogIssueCodes": [
+    "foundation_setting_unavailable"
+   ],
+   "expectedGrandTotal": 412.61
+  },
+  {
+   "id": "held-partial-setting",
+   "pricingUnavailable": true,
+   "panelTexts": [
+    "Saved amounts (not current pricing)",
+    "$301.50"
+   ],
+   "itemCardTexts": [
+    "Saved amounts (not current pricing)"
+   ],
+   "catalogIssueCodes": [
+    "foundation_setting_unavailable"
+   ],
+   "expectedGrandTotal": 412.61
+  },
+  {
+   "id": "held-import-nan-setting",
+   "pricingUnavailable": true,
+   "panelTexts": [
+    "Saved amounts (not current pricing)"
+   ],
+   "itemCardTexts": [
+    "Saved amounts (not current pricing)"
+   ],
+   "catalogIssueCodes": [
+    "foundation_setting_unavailable"
+   ],
+   "expectedGrandTotal": 412.61
+  },
+  {
+   "id": "free-zero-setting",
+   "pricingUnavailable": false,
+   "panelTexts": [
+    "$344.25"
+   ],
+   "itemCardTexts": [
+    "$8.89"
+   ],
+   "expectedGrandTotal": 353.1388888888889
+  },
+  {
+   "id": "invalid-item-method",
+   "pricingUnavailable": true,
+   "panelTexts": [
+    "Saved amounts (not current pricing)"
+   ],
+   "itemCardTexts": [
+    "Saved amounts (not current pricing)",
+    "excavation method"
+   ],
+   "inputIssueCodes": [
+    "foundation_excavation_method_invalid"
+   ],
+   "expectedGrandTotal": 412.61
+  }
+ ],
+ "viewports": [
+  {
+   "width": 1280,
+   "height": 900
+  },
+  {
+   "width": 390,
+   "height": 844
+  }
+ ]
+}

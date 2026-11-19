@@ -10,14 +10,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Trash2, Edit, Copy, CheckCircle2, AlertTriangle, Loader2, UserCheck, ChevronDown, ChevronUp } from "lucide-react";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const GlobalSettings = base44.entities.GlobalSettings;
+const GlobalSettings = staffEntities.GlobalSettings;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 
 const SETTING_KEY = "taskAssignmentRules";
+const ESCALATION_KEY = "escalationMatrix";
 
 const STAGES = [
   { value: "estimating", label: "Estimating" },
@@ -126,7 +127,7 @@ function ConditionRow({ cond, index, users, onChange, onRemove, isFirst }) {
           />
         )
       )}
-      <button onClick={onRemove} className="ml-auto text-red-400 hover:text-red-600 p-1">
+      <button type="button" onClick={onRemove} className="ml-auto text-red-400 hover:text-red-600 p-1">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -162,7 +163,7 @@ function AssignmentRow({ assign, index, users, onChange, onRemove }) {
           {ONLY_IF_OPTS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
         </SelectContent>
       </Select>
-      <button onClick={onRemove} className="ml-auto text-red-400 hover:text-red-600 p-1">
+      <button type="button" onClick={onRemove} className="ml-auto text-red-400 hover:text-red-600 p-1">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -171,6 +172,10 @@ function AssignmentRow({ assign, index, users, onChange, onRemove }) {
 
 function RuleCard({ rule, users, onEdit, onDuplicate, onDelete, onToggle }) {
   const [expanded, setExpanded] = useState(false);
+  const [escalationRows, setEscalationRows] = useState([]);
+  const [escalationRecord, setEscalationRecord] = useState(null);
+  const [escalationSaving, setEscalationSaving] = useState(false);
+  const [escalationMsg, setEscalationMsg] = useState("");
   return (
     <div className={`clay-card p-4 ${!rule.enabled ? "opacity-60" : ""}`}>
       <div className="flex items-start justify-between gap-2">
@@ -217,11 +222,11 @@ function RuleCard({ rule, users, onEdit, onDuplicate, onDelete, onToggle }) {
           )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <button onClick={() => setExpanded(!expanded)} className="p-1 text-gray-400 hover:text-gray-600">
+          <button type="button" onClick={() => setExpanded(!expanded)} className="p-1 text-gray-400 hover:text-gray-600">
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
           <Switch checked={rule.enabled} onCheckedChange={() => onToggle(rule)} />
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDuplicate(rule)}><Copy className="w-3.5 h-3.5 text-gray-500" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Duplicate ${rule.name || "rule"}`} onClick={() => onDuplicate(rule)}><Copy className="w-3.5 h-3.5 text-gray-500" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(rule)}><Edit className="w-3.5 h-3.5 text-blue-600" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(rule)}><Trash2 className="w-3.5 h-3.5 text-red-600" /></Button>
         </div>
@@ -249,13 +254,16 @@ export default function TaskAssignmentRules() {
   const load = async () => {
     setLoading(true);
     try {
-      const [record, usersData] = await Promise.all([
+      const [record, usersData, escalation] = await Promise.all([
         loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: SETTING_KEY, label: "Task assignment rules" }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Task assignment authorized users" })
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Task assignment authorized users" }),
+        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: ESCALATION_KEY, label: "Escalation contacts" })
       ]);
       setSettingRecord(record);
       setRules(record?.setting_value?.rules || []);
       setUsers(usersData);
+      setEscalationRecord(escalation);
+      setEscalationRows(Array.isArray(escalation?.setting_value?.rows) ? escalation.setting_value.rows : []);
     } catch (error) {
       console.error("Error loading task assignment rules:", error);
       setSettingsError(error?.message || "Task assignment rules could not be loaded safely.");
@@ -265,6 +273,28 @@ export default function TaskAssignmentRules() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const saveEscalation = async () => {
+    if (escalationSaving) return;
+    setEscalationSaving(true); setEscalationMsg("");
+    try {
+      const rows = escalationRows
+        .map(r => ({ area: (r.area || "").trim(), contact: (r.contact || "").trim() }))
+        .filter(r => r.area && r.contact);
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: GlobalSettings,
+        loadedRecord: escalationRecord,
+        settingKey: ESCALATION_KEY,
+        nextValue: { rows },
+        label: "Escalation contacts",
+      });
+      setEscalationRecord(saved);
+      setEscalationRows(rows);
+      setEscalationMsg("Escalation contacts saved.");
+    } catch (e) {
+      setEscalationMsg(e?.message || "Save blocked - reload before saving.");
+    } finally { setEscalationSaving(false); }
+  };
 
   const persist = async (updatedRules) => {
     setSaving(true);
@@ -593,6 +623,37 @@ export default function TaskAssignmentRules() {
       </Dialog>
 
       {/* Delete Confirm */}
+      <TaskLoadPanel users={users} />
+
+      <div className="mt-4 rounded-xl border border-gray-200 bg-white/70 p-4">
+        <h3 className="font-semibold text-gray-800">Escalation contacts</h3>
+        <p className="text-xs text-gray-500 mt-1">Who to call when something goes wrong - payroll issues, sync failures, permit holds.</p>
+        <div className="mt-3 space-y-2">
+          {escalationRows.map((row, i) => (
+            <div key={i} className="flex flex-wrap items-center gap-2">
+              <Input value={row.area || ""} placeholder="Area (e.g., Payroll)"
+                onChange={(e) => setEscalationRows(prev => prev.map((r, j) => j === i ? { ...r, area: e.target.value } : r))}
+                className="h-8 w-40 text-xs" />
+              <Input value={row.contact || ""} placeholder="Name / phone / email"
+                onChange={(e) => setEscalationRows(prev => prev.map((r, j) => j === i ? { ...r, contact: e.target.value } : r))}
+                className="h-8 flex-1 text-xs" />
+              <Button type="button" variant="ghost" size="icon" aria-label="Remove row" className="h-8 w-8"
+                onClick={() => setEscalationRows(prev => prev.filter((_, j) => j !== i))}>
+                <Trash2 className="h-3.5 w-3.5 text-red-600" />
+              </Button>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 flex items-center gap-2">
+          <Button type="button" size="sm" variant="outline" className="h-7 text-xs"
+            onClick={() => setEscalationRows(prev => [...prev, { area: "", contact: "" }])}>Add row</Button>
+          <Button type="button" size="sm" disabled={escalationSaving} onClick={saveEscalation} className="h-7 text-xs">
+            {escalationSaving ? "Saving..." : "Save contacts"}
+          </Button>
+          {escalationMsg && <span className="text-xs text-gray-600">{escalationMsg}</span>}
+        </div>
+      </div>
+
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
@@ -605,6 +666,203 @@ export default function TaskAssignmentRules() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+// Open-task workload panel: per-assignee counts, overdue flags, unassigned
+// queue, and bulk reassignment between people.
+function TaskLoadPanel({ users }) {
+  const [tasks, setTasks] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [fromUser, setFromUser] = useState("");
+  const [toUser, setToUser] = useState("");
+  const [reassignBusy, setReassignBusy] = useState(false);
+  const [reassignMsg, setReassignMsg] = useState("");
+  const [doneTasks, setDoneTasks] = useState([]);
+
+  const loadTasks = async () => {
+    if (busy) return;
+    setBusy(true); setErr("");
+    try {
+      const rows = await loadAllEntityRows({ entity: staffEntities.GeneralTask, query: { completed: { $ne: true } }, sort: null, label: "Open general tasks" });
+      setTasks(Array.isArray(rows) ? rows : []);
+      const doneRows = await staffEntities.GeneralTask.filter({ completed: true }, "-updated_date", 100).catch(() => []);
+      setDoneTasks(Array.isArray(doneRows) ? doneRows : []);
+    } catch (e) { setErr(e?.message || "Task load could not be loaded."); }
+    finally { setBusy(false); }
+  };
+
+  const today = new Date().toISOString().slice(0, 10);
+  const openTasks = tasks || [];
+  const byAssignee = {};
+  const unassigned = [];
+  for (const t of openTasks) {
+    const people = Array.isArray(t.assigned_to) ? t.assigned_to.filter(Boolean) : [];
+    if (!people.length) { unassigned.push(t); continue; }
+    for (const p of people) {
+      byAssignee[p] = byAssignee[p] || { name: p, open: 0, overdue: 0, tasks: [] };
+      byAssignee[p].open += 1;
+      if (t.due_date && t.due_date < today) byAssignee[p].overdue += 1;
+      byAssignee[p].tasks.push(t);
+    }
+  }
+  const blockedTasks = openTasks.filter(t => t.blocked === true);
+  const inTwoDays = new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10);
+  const dueSoon = openTasks.filter(t => t.due_date && t.due_date >= today && t.due_date <= inTwoDays);
+  const toggleBlocked = async (t) => {
+    const next = !t.blocked;
+    const reason = next ? (prompt("Why is this task blocked?") || "").trim() : "";
+    if (next && !reason) return;
+    try {
+      await staffEntities.GeneralTask.update(t.id, { blocked: next, blocked_reason: reason });
+      await loadTasks();
+    } catch (e) { setErr(e?.message || "Could not update the task."); }
+  };
+
+  const closeDaysByAssignee = {};
+  for (const t of doneTasks) {
+    const days = (new Date(t.updated_date) - new Date(t.created_date)) / 86400e3;
+    if (!Number.isFinite(days) || days < 0) continue;
+    for (const p of (Array.isArray(t.assigned_to) ? t.assigned_to : [])) {
+      const c = closeDaysByAssignee[p] = closeDaysByAssignee[p] || { sum: 0, n: 0 };
+      c.sum += days; c.n += 1;
+    }
+  }
+
+  const rows = Object.values(byAssignee).sort((a, b) => b.open - a.open);
+  const reassignTargets = users.map(u => u.full_name || u.email).filter(Boolean);
+
+  const TASK_TEMPLATES = [
+    { name: "New work order intake", tasks: ["Confirm specs with customer", "Schedule site survey", "Order required materials"] },
+    { name: "Permit submission prep", tasks: ["Verify jurisdiction requirements", "Prepare permit application documents", "Schedule submission"] },
+    { name: "Install day checklist", tasks: ["Confirm crew assignment", "Verify materials on hand", "Confirm site access with customer"] },
+  ];
+  const spawnTemplate = async (tpl) => {
+    if (reassignBusy) return;
+    if (!window.confirm(`Create ${tpl.tasks.length} tasks from "${tpl.name}"? They start unassigned.`)) return;
+    setReassignBusy(true); setReassignMsg("");
+    let failed = 0;
+    for (const text of tpl.tasks) {
+      try { await staffEntities.GeneralTask.create({ text: `${text} — ${tpl.name}`, assigned_to: [], completed: false }); }
+      catch { failed++; }
+    }
+    setReassignMsg(failed ? `${tpl.tasks.length - failed} tasks created, ${failed} failed.` : `${tpl.tasks.length} tasks created unassigned — assign them below.`);
+    setReassignBusy(false);
+    await loadTasks();
+  };
+
+  const reassign = async () => {
+    if (!fromUser || !toUser || fromUser === toUser || reassignBusy) return;
+    const moving = openTasks.filter(t => Array.isArray(t.assigned_to) && t.assigned_to.includes(fromUser));
+    if (!moving.length) { setReassignMsg(`No open tasks assigned to ${fromUser}.`); return; }
+    if (!window.confirm(`Move ${moving.length} open task${moving.length === 1 ? "" : "s"} from ${fromUser} to ${toUser}?`)) return;
+    setReassignBusy(true); setReassignMsg("");
+    let failed = 0;
+    for (const t of moving) {
+      const next = t.assigned_to.map(n => n === fromUser ? toUser : n);
+      try { await staffEntities.GeneralTask.update(t.id, { assigned_to: next }); }
+      catch { failed++; }
+    }
+    setReassignMsg(failed ? `${moving.length - failed} moved, ${failed} failed — review remaining tasks.` : `${moving.length} tasks reassigned to ${toUser}.`);
+    setReassignBusy(false);
+    await loadTasks();
+  };
+
+  return (
+    <div className="mt-6 rounded-xl border border-indigo-200 bg-indigo-50/60 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 className="font-semibold text-indigo-950">Open task load</h3>
+          <p className="text-xs text-indigo-800/70">Current open general tasks by assignee — overloaded people, overdue work, and unassigned items.</p>
+        </div>
+        <Button type="button" variant="outline" size="sm" disabled={busy} onClick={loadTasks} className="bg-white/80">
+          {busy ? "Loading…" : tasks === null ? "Load task load" : "Refresh"}
+        </Button>
+      </div>
+      {err && <p className="mt-2 text-xs text-red-600">{err}</p>}
+      {tasks !== null && (
+        <div className="mt-3 space-y-3">
+          {unassigned.length > 0 && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2">
+              <p className="text-xs font-semibold text-amber-900">{unassigned.length} unassigned open task{unassigned.length === 1 ? "" : "s"}</p>
+              <div className="mt-1 space-y-1">
+                {unassigned.slice(0, 5).map(t => (
+                  <p key={t.id} className="text-xs text-amber-800">· {t.text}{t.due_date ? ` (due ${t.due_date})` : ""}</p>
+                ))}
+                {unassigned.length > 5 && <p className="text-xs text-amber-700">…and {unassigned.length - 5} more</p>}
+              </div>
+            </div>
+          )}
+          {dueSoon.length > 0 && (
+            <div className="rounded-lg border border-indigo-300 bg-white/70 px-3 py-2">
+              <p className="text-xs font-semibold text-indigo-900">{dueSoon.length} task{dueSoon.length === 1 ? "" : "s"} due within 48 hours</p>
+              <div className="mt-1 space-y-1">
+                {dueSoon.slice(0, 5).map(t => (
+                  <p key={t.id} className="text-xs text-indigo-800">· {t.text} (due {t.due_date}{(t.assigned_to || []).length ? ` — ${(t.assigned_to || []).join(", ")}` : ""})</p>
+                ))}
+                {dueSoon.length > 5 && <p className="text-xs text-indigo-700">…and {dueSoon.length - 5} more</p>}
+              </div>
+            </div>
+          )}
+          {blockedTasks.length > 0 && (
+            <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2">
+              <p className="text-xs font-semibold text-red-900">{blockedTasks.length} blocked task{blockedTasks.length === 1 ? "" : "s"}</p>
+              <div className="mt-1 space-y-1">
+                {blockedTasks.map(t => (
+                  <div key={t.id} className="flex flex-wrap items-center justify-between gap-2 text-xs text-red-800">
+                    <span>· {t.text} — {t.blocked_reason || "no reason given"}</span>
+                    <button type="button" onClick={() => toggleBlocked(t)} className="rounded border border-red-300 bg-white px-2 py-0.5 text-[11px] font-medium">Unblock</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {rows.map(r => (
+              <div key={r.name} className="rounded-lg border border-gray-200 bg-white p-2">
+                <p className="truncate text-sm font-medium text-gray-800">{r.name}</p>
+                <p className="text-lg font-bold text-indigo-700">{r.open}</p>
+                {r.overdue > 0 && <p className="text-[11px] font-semibold text-red-600">{r.overdue} overdue</p>}
+                {closeDaysByAssignee[r.name]?.n > 0 && (
+                  <p className="text-[11px] text-gray-500">avg {(closeDaysByAssignee[r.name].sum / closeDaysByAssignee[r.name].n).toFixed(1)}d to close</p>
+                )}
+              </div>
+            ))}
+            {rows.length === 0 && unassigned.length === 0 && <p className="col-span-full py-3 text-center text-xs text-gray-500">No open tasks.</p>}
+          </div>
+          <div className="flex flex-wrap items-end gap-2 rounded-lg border border-indigo-200 bg-white/70 p-3">
+            <div>
+              <Label className="text-xs">Move open tasks from</Label>
+              <Select value={fromUser} onValueChange={setFromUser}>
+                <SelectTrigger className="mt-1 h-9 w-48"><SelectValue placeholder="Person" /></SelectTrigger>
+                <SelectContent>{rows.map(r => <SelectItem key={r.name} value={r.name}>{r.name} ({r.open})</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">to</Label>
+              <Select value={toUser} onValueChange={setToUser}>
+                <SelectTrigger className="mt-1 h-9 w-48"><SelectValue placeholder="Person" /></SelectTrigger>
+                <SelectContent>{reassignTargets.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <Button type="button" size="sm" variant="outline" disabled={reassignBusy || !fromUser || !toUser || fromUser === toUser} onClick={reassign} className="bg-white">
+              {reassignBusy ? "Moving…" : "Reassign"}
+            </Button>
+            {reassignMsg && <p className="w-full text-xs text-indigo-800">{reassignMsg}</p>}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-indigo-900">Task templates:</span>
+            {TASK_TEMPLATES.map(tpl => (
+              <button type="button" key={tpl.name}  disabled={reassignBusy} onClick={() => spawnTemplate(tpl)}
+                className="rounded-full border border-indigo-300 bg-white px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-40">
+                + {tpl.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

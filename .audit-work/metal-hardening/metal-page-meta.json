@@ -1,0 +1,37 @@
+{
+  "inputs": [
+    "s:s://@/api/gatedEntities",
+    "s:s://@/components/ui/button",
+    "s:s://@/components/ui/card",
+    "s:s://@/components/ui/input",
+    "s:s://@/components/ui/label",
+    "s:s://@/components/ui/textarea",
+    "s:s://@/components/ui/select",
+    "s:s://lucide-react",
+    "s:s://@/components/ui/tabs",
+    "frozen:/app/src/components/channelLetterInstall/TabBadgeTrigger.jsx",
+    "s:s://@/components/markup/CustomerPricingTab",
+    "frozen:/app/src/components/markup/projectCategorizer.jsx",
+    "s:s://@/components/markup/savedCustomerPricing",
+    "s:s://@/components/estimator/builder/builderService",
+    "s:s://@/components/estimator/loadAllEntityRows",
+    "s:s://@/components/estimator/builder/sourceProjectPersistence",
+    "frozen:/app/src/components/estimator/builder/itemIdentity.js",
+    "s:s://@/components/estimator/idempotentEntityCreate",
+    "s:s://@/components/estimator/moduleShared/ModuleActionBar",
+    "s:s://@/components/estimator/moduleShared/ModuleTemplateDialog",
+    "s:s://@/components/estimator/moduleShared/moduleProjectActions",
+    "s:s://@/components/staff/staffEntities",
+    "frozen:/app/src/components/estimator/metal/metalPricingAvailability.js",
+    "frozen:/app/src/pages/MetalEstimator.jsx",
+    "frozen:/app/metal-page-entry.jsx"
+  ],
+  "loaded": {
+    "/app/metal-page-entry.jsx": "e5ece241a93978df3f13cf14f2600b076440a0ec486208c16ec02477f89a2d50",
+    "/app/src/pages/MetalEstimator.jsx": "f0e72afd6d37502d5552e98e4bad62f43f40b65b2796f5484ba4e3395b9d6a6d",
+    "/app/src/components/markup/projectCategorizer.jsx": "69d9df4fa6892f10a40ddefc87583fc94fddfd5e5be880c46a03b8df63efa0e4",
+    "/app/src/components/estimator/builder/itemIdentity.js": "3f6700c4155350056dfed2f9442bdd174a870854d1c7229beb0c39ace7d1582d",
+    "/app/src/components/channelLetterInstall/TabBadgeTrigger.jsx": "d2fe4259f0899eb6dd16635a3541347278805ff42b32c14029722b950fb13757",
+    "/app/src/components/estimator/metal/metalPricingAvailability.js": "68c228ec0d2196ff6fba4575ade6c24cde6629d25b27ff347063ebbf4a329984"
+  }
+}

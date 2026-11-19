@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "3521577c8244fdf27c80f0713add9245  src/components/estimator/customerPricing.js\n3521577c8244fdf27c80f0713add9245  -\n0000000   i   m   p   o   r   t       {       c   h   a   n   n   e   l\n0000020   S   e   l   l   E   c   o   n   o   m   i   c   s       }    \n0000040   f   r   o   m       \"   .   /   c   h   a   n   n   e   l   /\n",
+  "stderr": "bash: line 2: file: command not found\n",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 765
+}

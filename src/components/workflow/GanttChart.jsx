@@ -1,7 +1,8 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { format, differenceInDays, addDays, startOfWeek } from "date-fns";
 import ProjectHealthBadge from "./ProjectHealthBadge";
 import { buildWorkOrderSegments } from "./workOrderTimelineSegments";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // Panes narrower than this (portrait monitors, split view) switch to a shorter
 // window that fills the available width instead of scrolling a fixed 1200px
@@ -46,9 +47,18 @@ export default function GanttChart({ workOrders, onWorkOrderClick }) {
     const duration = differenceInDays(end, start);
 
     const left = (daysFromStart / daysToShow) * 100;
-    const width = (duration / daysToShow) * 100;
+    const endPct = left + (duration / daysToShow) * 100;
 
-    return { left: `${Math.max(0, left)}%`, width: `${Math.max(2, width)}%` };
+    // Clamp to the visible window and flag edges that continue out of range —
+    // previously bars ran past the chart edge with no continuation indicator.
+    const cLeft = Math.max(0, Math.min(100, left));
+    const cRight = Math.max(0, Math.min(100, endPct));
+    return {
+      left: `${cLeft}%`,
+      width: `${Math.max(2, cRight - cLeft)}%`,
+      overLeft: left < 0,
+      overRight: endPct > 100,
+    };
   };
 
   const formatSegmentDates = (seg) => {
@@ -78,9 +88,8 @@ export default function GanttChart({ workOrders, onWorkOrderClick }) {
               </div>
               <div className="mt-1 space-y-0.5">
                 {segments.map((seg) => (
-                  <button
+                  <button type="button"
                     key={seg.id}
-                    type="button"
                     className="w-full flex items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-white transition-colors"
                     onClick={() => onWorkOrderClick && onWorkOrderClick(seg.record)}
                   >
@@ -142,34 +151,64 @@ export default function GanttChart({ workOrders, onWorkOrderClick }) {
                 </div>
                 <div className="flex-1 relative" style={{ height: `${Math.max(1, segments.length) * 20}px` }}>
                   <div className="absolute inset-0 flex flex-col gap-0.5">
-                    {segments.map((seg) => (
-                      <div
-                        key={seg.id}
-                        className="relative h-5 flex items-center"
-                        style={seg.kind === "rider" ? { paddingLeft: "16px" } : undefined}
-                      >
-                        <div className="w-full h-px bg-gray-200" />
+                    {segments.map((seg) => {
+                      const pos = getBarPosition(seg.start, seg.due);
+                      const chartPx = Math.max(300, paneWidth - (compact ? 112 : 192));
+                      const label = String(seg.label || "");
+                      const fitsInside = ((parseFloat(pos.width) || 0) / 100) * chartPx >= label.length * 5.8 + 10;
+                      const endPct = (parseFloat(pos.left) || 0) + (parseFloat(pos.width) || 0);
+                      const labelPct = ((label.length * 5.8 + 10) / chartPx) * 100;
+                      const labelAfterBar = !fitsInside && (100 - endPct) >= labelPct;
+                      const labelBeforeBar = !fitsInside && !labelAfterBar && (parseFloat(pos.left) || 0) >= labelPct;
+                      return (
                         <div
-                          className="absolute h-5 rounded-lg flex items-center justify-center transition-all duration-300 hover:opacity-80 cursor-pointer"
-                          style={{
-                            ...getBarPosition(seg.start, seg.due),
-                            background: `linear-gradient(135deg, ${seg.color}ee 0%, ${seg.color}aa 100%)`,
-                            boxShadow: "1px 1px 3px rgba(0,0,0,0.1), inset 1px 1px 2px rgba(255,255,255,0.5)",
-                            ...(seg.kind === "rider"
-                              ? { border: "1px dashed rgba(124, 58, 237, 0.3)" }
-                              : {}),
-                            ...(seg.kind === "milestone"
-                              ? { border: "1px solid rgba(0,0,0,0.15)" }
-                              : {}),
-                          }}
-                          onClick={() => onWorkOrderClick && onWorkOrderClick(seg.record)}
+                          key={seg.id}
+                          className="relative h-5 flex items-center"
+                          style={seg.kind === "rider" ? { paddingLeft: "16px" } : undefined}
                         >
-                          <span className="text-[9px] font-medium text-gray-700 px-1 truncate">
-                            {seg.label}
-                          </span>
+                          <div className="w-full h-px bg-gray-200" />
+                          <div
+                            className="absolute h-5 rounded-lg flex items-center justify-center transition-all duration-300 hover:opacity-80 cursor-pointer"
+                            title={`${label} · ${formatSegmentDates(seg)}`}
+                            style={{
+                              left: pos.left,
+                              width: pos.width,
+                              background: `linear-gradient(135deg, ${seg.color}ee 0%, ${seg.color}aa 100%)`,
+                              boxShadow: "1px 1px 3px rgba(0,0,0,0.1), inset 1px 1px 2px rgba(255,255,255,0.5)",
+                              ...(seg.kind === "rider"
+                                ? { border: "1px dashed rgba(124, 58, 237, 0.3)" }
+                                : {}),
+                              ...(seg.kind === "milestone"
+                                ? { border: "1px solid rgba(0,0,0,0.15)" }
+                                : {}),
+                            }}
+                            onClick={() => onWorkOrderClick && onWorkOrderClick(seg.record)}
+                          >
+                            {(fitsInside || (!labelAfterBar && !labelBeforeBar)) && (
+                              <span className="text-[10px] font-medium text-gray-700 px-1 truncate">
+                                {label}
+                              </span>
+                            )}
+                          </div>
+                          {pos.overLeft && (
+                            <ChevronLeft className="pointer-events-none absolute left-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+                          )}
+                          {pos.overRight && (
+                            <ChevronRight className="pointer-events-none absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+                          )}
+                          {!fitsInside && (labelAfterBar || labelBeforeBar) && (
+                            <span
+                              className="pointer-events-none absolute top-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] font-medium text-gray-700"
+                              style={labelAfterBar
+                                ? { left: `calc(${pos.left} + ${pos.width} + 6px)` }
+                                : { right: `calc(${100 - (parseFloat(pos.left) || 0)}% + 6px)` }}
+                            >
+                              {label}
+                            </span>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>

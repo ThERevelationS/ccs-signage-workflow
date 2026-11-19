@@ -1,0 +1,46 @@
+{
+  "results": [
+    {
+      "id": "zero-labor 1280",
+      "ok": true
+    },
+    {
+      "id": "zero-labor 390",
+      "ok": true
+    },
+    {
+      "id": "zero-minimum 1280",
+      "ok": true
+    },
+    {
+      "id": "zero-minimum 390",
+      "ok": true
+    },
+    {
+      "id": "zero-mortar 1280",
+      "ok": true
+    },
+    {
+      "id": "zero-mortar 390",
+      "ok": true
+    },
+    {
+      "id": "genuine-free 1280",
+      "ok": true
+    },
+    {
+      "id": "genuine-free 390",
+      "ok": true
+    },
+    {
+      "id": "internal-zero-rates 1280",
+      "ok": true
+    },
+    {
+      "id": "internal-zero-rates 390",
+      "ok": true
+    }
+  ],
+  "port": 52201,
+  "pid": 47792
+}

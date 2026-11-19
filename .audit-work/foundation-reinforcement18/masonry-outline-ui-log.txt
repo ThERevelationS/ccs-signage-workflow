@@ -1,0 +1,25 @@
+ok invalid-rect-l-""
+ok invalid-rect-w-""
+ok invalid-rect-l-"0"
+ok invalid-rect-w-"0"
+ok invalid-rect-l-"-5"
+ok invalid-rect-w-"-5"
+ok invalid-rect-l-"abc"
+ok invalid-rect-w-"abc"
+ok invalid-rect-l-"1e999"
+ok invalid-rect-w-"1e999"
+ok invalid-rect-l-"NaN"
+ok invalid-rect-w-"NaN"
+ok valid-rect-8x8-exact-geometry-metadata
+ok valid-rect-decimal-8_5x4_25
+ok valid-rect-numeric-string-events
+ok malformed-points-no-crash-no-guessed-preview
+ok one-point-drawable-undo-clear
+ok valid-open-closed-unaffected
+ok legacy-segments-only-no-polygon-warning
+ok two-editors-unique-grid-and-error-ids
+ok scaled-svg-click-maps-to-viewbox-inches
+ok malformed-clear-available
+ok consecutive-duplicate-point-not-appended-after-clamp
+masonry-outline-ui passed=23 failed=0
+exit=0

@@ -1,0 +1,492 @@
+{
+ "jurisdiction_id": "6ac34440fa6caea6fc125f36",
+ "jurisdiction_name": "Richland County",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Z:\\Fees\\Fees effective Jan 2 2026\\RCO Richland Co Permit Approval Fees eff Jan 2 2026.docx Revised 03/01/2024 Page 1 of 1 RICHLAND COUNTY BUILDING DEPARTMEN T 1495 WEST LONGVIEW AVENUE • SUITE 202A • MANSFIELD, OHIO 44906 Phone: (419) 774 - 5517 • building.richlandcountyoh.gov RESIDENTIAL BUILDING PERMIT/APPROVAL FEES – RICHLAND COUNTY – Effective January 2 , 202 6 BUILDING NEW CONSTRUCTION/ADDITIONS/ALTERATIONS Building /Structural $100 + $5.00/100 sq. ft. Swimming Pool (does not include electrical) $200.00 ELECTRICAL - NEW CONSTRUCTION / ADDITIONS / ALTERATIONS Electrical $100 + $5.00/100 sq. ft Service (Permanent and Temporary), or Generator $100.00 (1 Inspection only) MECHANICAL NEW CONSTRUCTION/ADDITIONS/ALTERATIONS/REPLACEMENT Mechanical $100 + $5.00/100 sq. ft. RESIDENTIAL MISCELLANEOUS Request for Certificate of Occupancy $200.00 (2 Inspections) Partial Certificate of Occupancy $",
+   "tags": [
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "7828beddf193059b23fb717d7b97001f835edbd1fe4e1dfea1ebd32be90bf1e7",
+   "source_document_id": null,
+   "source_title": "7828beddf193059b23fb717d7b97001f835edbd1fe4e1dfea1ebd32be90bf1e7.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Fee%20Schedules/RCO%20Residential%20Richland%20Co%20Permit%20Approval%20Fees%20eff%20Jan%202%202026.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Z:\\Checklists and Forms\\Commercial Plan Approval Guide.docx Revised 1-24-2025 Page 4 of 4 index. The file name does not need to follow any certain format but shall be appropriately named and contain the date of submittal. For example….Foundation revision 01 -26-2024.PDF a. Where documents need to be submitted in multiple files due to size, please make sure each file is appropriately named and numbered. Include the total number of files submitted in the transmittal letter. File name for example…..Revision Plan Set 01 -26-24 1 of 3.PDF b. Number of pages in each file and total number of pages transmitted. 4. Indication of scopes of work submitted for review … Structural, Electrical, Mechanical, Automatic Sprinkler, Fire Alarm, Signage, etc. 5. Indication of any additional scopes of work submitted or areas/fixtures not previously submitted. i.e. …..added square footage or alterations within",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c",
+   "source_document_id": null,
+   "source_title": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Commercial%20Projects/Commercial%20Plan%20Approval%20Guide.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Codes_Permits\\Checklists and Forms\\OBC Commercial Application.dox Revised 10/20/2017 21 Mechanical Contractor: Attention/Contact: Address: City: State: Zip: Phone: FAX: E-Mail: Mechanical Contractor OCILB License No: 22 Fire Protection/Alarm Contractor: Attention/Contact: Address: City: State: Zip: Phone: FAX: E-Mail: Fire protection/alarm installer name: State Fire Marshall Cert No.: 23 Construction Type: 24 Building Height (ft.): 25 Number of Stories: Basement Yes No 26 Gross Building Area (sf): 27 Proposed Area per floor (sf): 28 Unlimited Area Building (OBC 507): Yes No 29 Total Altered / Added area of existing buildings (sf): 30 Existing Use Group(s) and Occupancy description(s): 31 Proposed Use Group(s) and Occupancy description(s): 32 For mixed occupancies, how are they separated 33 Maximum design occupant load of entire structure per OBC 1004: Incidental Uses (OBC 509) 34 For res",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "041def7d7cdf2355ab4275466ba4e180e1b387eb35ed97b39c653f93de982791",
+   "source_document_id": null,
+   "source_title": "041def7d7cdf2355ab4275466ba4e180e1b387eb35ed97b39c653f93de982791.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Commercial%20Application%20for%20plan%20approval.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Codes_Permits\\Checklists and Forms\\OBC Commercial Application.dox Revised 10/20/2017 25. Provide the number of stories of the structure and indicate whether a basement is proposed. 26. Provide the gross building area of the building or structure. For alterations or additions to existing buildings, please include the altered or added area in the gross area calculation. For new construction, this area will be used to calculate the application and permit fees. 27. Provide the proposed building area per floor of the structure. For structures with multiple stories and different floor areas, details of each story, mezzanine, and floor area shall be provided on the plans. 28. Indicate whether the building is constructed as an unlimited area building per OBC 507. 29. Provide the total altered or added area for existing buildings. This area will be used to calculated application and permit fees f",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "041def7d7cdf2355ab4275466ba4e180e1b387eb35ed97b39c653f93de982791",
+   "source_document_id": null,
+   "source_title": "041def7d7cdf2355ab4275466ba4e180e1b387eb35ed97b39c653f93de982791.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Commercial%20Application%20for%20plan%20approval.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "RCO Residential Application Revised 10/20/2017 19 Sewer Contractor (Rich. Co Sewer Only): Attention/Contact: Address: City: State: Zip: Phone: FAX: E-Mail: 20 Building Area Summary Main / First Floor Area (sf): 21 Number of Stories: Gross Building Area (sf): Second Floor Area (sf): 22 Number of Bedrooms: Finished Area (sf): Third Flood Area (sf): 23 Number of Dwelling Units: Unfinished Area (sf): 24 Basement: Yes No 25 Crawl Space: Yes No Basement Area (sf): 26 Fuel Supply: Electric Natural Gas LP Other: Garage Area (sf): 27 Sanitary Disposal: Richland County Public Septic N/A Deck / Porch Area (sf): 28 Water Supply: Well Public Private Water System N/A Total Altered / New Area (sf): 29 Fee Schedule Base Fee Square Foot Fee Line Total Fee 30 I hereby certify that I am the (select one) Building Fees Owner Agent for the Owner and all information contained in this application is true, accur",
+   "tags": [
+    "area",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "d44a588b057a00861846aa14ef6c796d6fa3bd09e77aba62c11f91669bc8bf9c",
+   "source_document_id": null,
+   "source_title": "d44a588b057a00861846aa14ef6c796d6fa3bd09e77aba62c11f91669bc8bf9c.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Residential%20Application%20for%20plan%20approval.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Codes_Permits\\Checklists and Forms\\OBC Commercial Application.dox Revised 10/20/2017 DIRECTIONS FOR COMPLETING APPLICATION FOR COMMERCIAL BUILDING PLAN APPROVAL In accordance with Ohio Building Code (OBC) Section 106.1, pursuant to Ohio Revised Code (ORC) Section 3791.04, construction documents, statement of special inspections required and other data shall be submitted in two or more sets with each application for an approval. Before beginning the construction of any building for which construction documents are required under OBC Section 106 , the owner or the owner's representative shall submit construction documents to the building official for approval. Application Directions: Complete page one of the application and attached worksheets as outlined below. All boxes, 1 through 42, must be completed in full or the application will be returned. Send this completed form along with all r",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "041def7d7cdf2355ab4275466ba4e180e1b387eb35ed97b39c653f93de982791",
+   "source_document_id": null,
+   "source_title": "041def7d7cdf2355ab4275466ba4e180e1b387eb35ed97b39c653f93de982791.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Commercial%20Application%20for%20plan%20approval.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "SMOKE DETECTORS SAVE LIVES Page 2 of 2 M:\\Checklists and Forms\\Smoke Detectors Save Lives.docRevised 01/30/2008 Section 313 of the 2006 Residential Code of Ohio for One-, Two- and Three-Family Dwellings establishes the minimum provisions for smoke alarms (detectors) in residential occupancies and structures. SECTION 313 SMOKE ALARMS 313.1 Smoke alarms. Smoke alarms shall be installed in the following locations: 1. In each sleeping room. 2. Outside each separate sleeping area in the immediate vicinity of the bedrooms. 3. On each additional story of the dwelling, including basements but not including crawl spaces and uninhabitable attics. In dwellings or dwelling units with split levels and without an intervening door between the adjacent levels, a smoke alarm installed on the upper level shall suffice for the adjacent lower level provided that the lower level is less than one full story b",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "64682d07fd1064618856839c01d8e9eb5c5e75a8d7a573121b89955522ffa0fb",
+   "source_document_id": null,
+   "source_title": "64682d07fd1064618856839c01d8e9eb5c5e75a8d7a573121b89955522ffa0fb.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Documents/Smoke%20Detectors%20Save%20Lives.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Z:\\Checklists and Forms\\Commercial Plan Approval Guide.docx Revised 1-24-2025 Page 2 of 4 5. Complete a Commercial Building Plan Approval Application. The application is available on our website or by calling our office. 6. Submit all the documents via Paper or Electronically as follows a. Application b. Fees Worksheet. A fees worksheet is available on our website to assist in the fee calculation process. c. Floodplain / Stormwater Approval …for projects located within the unincorporated areas of Richland County only . d. Zoning Permit e. Plans/Construction Documents. At such time as a complete application and documents have been submitted and all fees have been paid, the construction documents will be reviewed. If the drawings cannot be approved or more information is required, the applicant will be notified with a list of correction items. One or more of the following 3 approval types ",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c",
+   "source_document_id": null,
+   "source_title": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Commercial%20Projects/Commercial%20Plan%20Approval%20Guide.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "RCO Residential Application Revised 10/20/2017 DIRECTIONS FOR COMPLETING APPLICATION FOR RESIDENTIAL BUILDING PLAN APPROVAL In accordance with the Residential Code of Ohio (RCO) Section 105.1, pursuant to Ohio Revised Code (ORC) Section 3791.04, construction documents, statement of special inspections required and other data shall be submitted in two or more sets with each application for an approval. Before beginning the construction of any building for which construction documents are required under RCO Section 105, the owner or the owner's representative shall submit construction documents to the building official for approval. Application Directions: Complete page one of the application as outlined below. All boxes, 1 through 30, must be completed in full or the application will be returned. Send this completed form along with all required documents to “Richland County Building Depar",
+   "tags": [
+    "sign",
+    "area",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "d44a588b057a00861846aa14ef6c796d6fa3bd09e77aba62c11f91669bc8bf9c",
+   "source_document_id": null,
+   "source_title": "d44a588b057a00861846aa14ef6c796d6fa3bd09e77aba62c11f91669bc8bf9c.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Residential%20Application%20for%20plan%20approval.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Date Permit # Last Name First Name Number Street Cty/Vil/Twp County Description Sq Footage 05/02/2025 0295-25 CHALFANT JERRY 118 MAIN STREET WEST Lexington/V RICHLAND ROOF TOP SOLAR 378 05/05/2025 0316-25 MONN CLARA 3560 ALVIN ROAD Jackson/T RICHLAND ROOF TOP SOLAR 736 05/05/2025 0297-25 ZIMMERMAN LEROY 7020 ST RT 13 Butler/T RICHLAND STORAGE BUILDING 2976 05/05/2025 0317-25 FEDERAL HOME LOAN MORTGAGE 54 SECOND STREET Shelby/C RICHLAND HVAC 100 05/05/2025 0287-25 SHELBY CITY SCHOOLS 1 WHIPPET WAY Shelby/C RICHLAND INT ALTS/STEM LAB 2436 05/05/2025 0286-25 STAIGER JAMES 85 HILLTOP ROAD Springfield/T RICHLAND SERV UPGR 100 05/05/2025 0285-25 LEWIS JENNIFER 581 MORRISON AVENUE Washington/T RICHLAND ADDIT TO HOME 526 05/05/2025 0298-25 DOLLAR GENERAL 206 SANDUSKY AVENUE S. BUCYRUS/C CRAWFORD SIGNAGE 100 05/05/2025 0288-25 SALTZGIVER JAMES 3702 SHANGRI-LA AVE Ontario/C RICHLAND INT ALTS 100 0",
+   "tags": [
+    "sign",
+    "illumination",
+    "type"
+   ],
+   "weight": 5,
+   "source_sha256": "49dc33bd1755294a8efc5dd1084f1cb34d01c6ced4ec9c4e667902f801f3af07",
+   "source_document_id": null,
+   "source_title": "49dc33bd1755294a8efc5dd1084f1cb34d01c6ced4ec9c4e667902f801f3af07.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2025/May%202025.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMITS Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0603-24 KB ALLIANCE, 1129 NESTOR DR MADISON/T RICHLAND SING FAM DWELL 9/3/2024 1643 0604-24 JUERGENS, PAUL 1559 HONEYCREEK RD JEFFERSON/T RICHLAND DECK & RAMP 9/3/2024 120 0605-24 MORITZ, TOM 1070 MARIANNA DR MADISON/T RICHLAND DECK 9/3/2024 640 0606-24 GOWITZKA, SETH 686 MCBRIDE RD MIFFLIN/T RICHLAND SERVICE 9/3/2024 100 0607-24 TIME WARNER CABLE, 1446 CRUM RD BUTLER/T RICHLAND POWER SUPPLY 9/3/2024 100 0608-24 STRONG, BARBARA 2006 ASHLAND RD MIFFLIN/T RICHLAND RAMP 9/4/2024 134 0609-24 ABNER, WILLIAM 2921 ECKERT RD PERRY/T RICHLAND STORAGE BLDG 9/4/2024 1248 0610-24 WHITE TAIL FOOTHILLS, 1075 LOHR RD WORTHINGTON/T RICHLAND SERVICE TO AG B 9/4/2024 200 0611-24 MATHES, GARY 5517 TEETER RD WORTHINGTON/T RICHLAND DECK 9/4/2024 200 0612-24 THE TRAIL OF NIGHTMARE 4135 PARK AVE W SPRINGFIELD/T RICHLAND REQ F",
+   "tags": [
+    "sign",
+    "illumination",
+    "type"
+   ],
+   "weight": 5,
+   "source_sha256": "d534e906e96e69150d28091257c184d0fd5cf4b0c3e1ed8e551a92566438042e",
+   "source_document_id": null,
+   "source_title": "d534e906e96e69150d28091257c184d0fd5cf4b0c3e1ed8e551a92566438042e.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2024/Sept%202024.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0292-23 MICHAEL BYRNE MANUFA 1855 EARTH BORING RD MADISON/T RICHLAND ADDITION 4/14/2023 10540 0293-23 GARVERICK, MARCUS 303 THRUSH AVE W CRESTLINE/C CRAWFORD ABOVE GROUND 4/14/2023 100 0294-23 VERIZON, 485 WALNUT ST BUCYRUS/C CRAWFORD ANTENNA ALTS 4/14/2023 100 0295-23 CRESTLINE WWTP, 350 PARK RD CRESTLINE/C CRAWFORD ALTS TO PUMP B 4/18/2023 200 0296-23 CRESTLINE WWTP, 1000 WESTGATE DR CRESTLINE/C CRAWFORD HEADWORKS BL 4/18/2023 947 0297-23 CRESTLINE WWTP, 1000 WESTGATE DR CRESTLINE/C CRAWFORD EFFLUENT BLDG 4/18/2023 1102 0298-23 THE WANDERING LILY DIN 819 MAIN ST E CRESTLINE/C CRAWFORD REQ FOR C OF O 4/18/2023 500 0299-23 AUSTERMILLER, ROBERT 1026 BIBICH CT CRESTLINE/C CRAWFORD ELECTRICAL ALT 4/18/2023 100 0300-23 BUCYRUS GOODWILL, 131 STETZER RD S BUCYRUS/C CRAWFORD INT ALTS 4/19/2023 12000 0301-23 HOLLYS BOOK RACK, 2",
+   "tags": [
+    "sign",
+    "dimension",
+    "billboard"
+   ],
+   "weight": 4,
+   "source_sha256": "140ff5dfddddc39fa8aeff71844a46ab36d19bae1bc9248313b807933a717530",
+   "source_document_id": null,
+   "source_title": "140ff5dfddddc39fa8aeff71844a46ab36d19bae1bc9248313b807933a717530.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2023/April%202023.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Z: \\ Checklists and Forms \\ Request for CO Chg of Occ Daycare 09102026.docx Page 2 of 4 Request for Certificate of Occupancy Application Instructions and Floorplan / Site Sketch Requirements Application and Inspection Process At such time as an application/request, fees and all supporting documentation are submitted, an initial inspection will be scheduled. After the initial inspection, a follow - up letter and/or inspection report will be sent to the applicant addressing any re quired corrections or alterations. A final inspection shall be requested by the applicant after any corrections are completed. Additional inspection reports indicating zoning compliance, plumbing compliance, and fire inspection may be required. The app licant will be notified of these additional reports prior to or after the initial application. If upon inspection, the building and/or use is found to be more than",
+   "tags": [
+    "sign",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "3c137c3486bb3344edc931da6b31fdedef3ccb39b817a70cf6d10b1748180b73",
+   "source_document_id": null,
+   "source_title": "3c137c3486bb3344edc931da6b31fdedef3ccb39b817a70cf6d10b1748180b73.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Request%20for%20Certificate%20of%20Occupancy%20Change%20of%20Occupancy%20no%20alterations%20Daycare.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0297-26 STOTTLEMIRE, LISA 5380 ST RT 30 SANDUSKY/T RICHLAND SERVICE 5/15/2026 100 0298-26 MURDOCH, LARRY 159 BROADWAY ST SHELBY/C RICHLAND STORAGE BLDG 5/15/2026 504 0299-26 KOHL, JARREK 1892 LONDON E RD CASS/T RICHLAND SERVICE 5/18/2026 100 0300-26 SCHERER, TERRY 4671 SMILEY AVE W SHARON/T RICHLAND SERVICE TO AG 5/18/2026 100 0301-26 STOVER, CARY 260 FOREST AVE BUTLER/V RICHLAND SING FAM DWELL 5/18/2026 6874 0303-26 LAJI PROPERTIES, 770 PARK AVE E MADISON/T RICHLAND INT ALTS 5/18/2026 2679 0304-26 ZEIGLER, RON 619 INWOOD DR MIFFLIN/T RICHLAND STORAGE BLDG 5/20/2026 624 0305-26 FRESH GROUNDS COFFEE 1621 FOURTH ST W ONTARIO/C RICHLAND INT ALTS 5/20/2026 1633 0306-26 LINCOLN SOLAR, 3929 LINCOLN HWY WHETSTONE/T CRAWFORD JOB TRAILER 5/20/2026 160 0307-26 GERICH, LEONARD 1053 NEIL CIRCLE N MADISON/T RICHLAND SERVICE 5/20/202",
+   "tags": [
+    "sign",
+    "dimension",
+    "billboard"
+   ],
+   "weight": 4,
+   "source_sha256": "5bd7e0a3bb767abf412d8c7595376dbf8821f81c6b95bc427f4e9f18ad5235c5",
+   "source_document_id": null,
+   "source_title": "5bd7e0a3bb767abf412d8c7595376dbf8821f81c6b95bc427f4e9f18ad5235c5.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2026/May%202026.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMITS Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0026-72 KEMPF, ALLAN 33 SMILEY RD W SHELBY/C RICHLAND REROOF 5/1/2024 100 0266-24 SANSOM, CHRISTOPHER 7362 DIVILBISS RD WORTHINGTON/T RICHLAND SING FAM DWELL 5/1/2024 5560 0267-24 WILSON, AMANDA 43 SHELBY AVE SHELBY/C RICHLAND METER REINSTA 5/1/2024 100 0269-24 SHELBY CROSSING GOLF C 3885 LASER RD JACKSON/T RICHLAND REQ FOR C OF O 5/1/2024 500 0270-24 DAWSON, TODD 2331 PARK AVE W ONTARIO/C RICHLAND ATT GARAGE 5/1/2024 960 0271-24 YOUNG, MONTE 4774 RULE RD JEFFERSON/T RICHLAND STORAGE BLDG 5/2/2024 768 0272-24 OHIO HEALTH, 1750 FOURTH ST W ONTARIO/C RICHLAND HVAC ALTS 5/3/2024 144 0273-24 BULAKOVSKI, STEVE 2024 ALTA WEST RD SPRINGFIELD/T RICHLAND SERVICE REPAIR 5/6/2024 100 0274-24 MAST, MARVIN 5891 MCCURDY RD WORTHINGTON/T RICHLAND SING FAM DWELL 5/3/2024 2100 0275-24 LAMBERT, ARCHIE 986 HANNA RD MADISO",
+   "tags": [
+    "illumination",
+    "billboard"
+   ],
+   "weight": 4,
+   "source_sha256": "9403cf363b1f85c0c6d41c18f9591389425f96aea031a31927311f4d452f0f28",
+   "source_document_id": null,
+   "source_title": "9403cf363b1f85c0c6d41c18f9591389425f96aea031a31927311f4d452f0f28.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2024/May%202024.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMITS Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0053-24 INCA AZTEC SELF STORAG 995 ASHLAND RD MADISON/T RICHLAND BUILDING 4 2/1/2024 4400 0054-24 INCA AZTEC SELF STORAG 995 ASHLAND RD MADISON/T RICHLAND BUILDING 5 2/1/2024 7500 0055-24 INCA AZTEC SELF STORAG 995 ASHLAND RD MADISON/T RICHLAND BUILDING 6 2/1/2024 7500 0056-24 BARLEY, GEORGE 1351 PARK AVE E MADISON/T RICHLAND STORAGE BLDG 2/1/2024 576 0057-24 BOWLING, TYLER 3029 ST RT 39 JACKSON/T RICHLAND STORAGE BLDG 2/1/2024 1152 0058-24 BOHLAND, MATTHEW 2370 STONEWOOD DR TROY/T RICHLAND STORAGE BLDG 2/2/2024 1920 0059-24 CROSS, HARRY 907 COUNTRY CLUB DR MADISON/T RICHLAND GENERATOR 2/2/2024 100 0060-24 BENNETT, SARAH 1270 WITTMER RD TROY/T RICHLAND DECK ADDITION 2/2/2024 585 0061-24 HIBACHI EXPRESS, 2035 FOURTH ST W ONTARIO/C RICHLAND REQ FOR C OF O 2/5/2024 500 0062-24 LYKINS, SHANE 6436 KUHN RD PL",
+   "tags": [
+    "sign",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "9f4254c30c0a66a223e2e2cefd547ef1a44e403079d7015cc20e63651ff20a37",
+   "source_document_id": null,
+   "source_title": "9f4254c30c0a66a223e2e2cefd547ef1a44e403079d7015cc20e63651ff20a37.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2024/Feb%202024.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "RCO Residential Application Revised 10/20/2017 h. Second Flood Area- The area in square feet of the second floor of the house. This area includes finished and unfinished areas inside the exterior walls. This area does not include and deck, porch, or garage areas. i. Third Floor Area- The area in square feet of the third floor of the house. This area includes finished and unfinished areas inside the exterior walls. This area does not include and deck, porch, or garage areas. j. Total Altered / New Area- The area in square feet of all newly constructed or altered area including finished, unfinished, basement, floor, garage, deck and porch areas. This area is used to determine the fees for the application. 21. Provide the number of stories, not including the basement or crawl space, if provided. 22. Provide the number of bedrooms. 23. Provide the number of dwelling units…maximum of three (3",
+   "tags": [
+    "sign",
+    "area",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "d44a588b057a00861846aa14ef6c796d6fa3bd09e77aba62c11f91669bc8bf9c",
+   "source_document_id": null,
+   "source_title": "d44a588b057a00861846aa14ef6c796d6fa3bd09e77aba62c11f91669bc8bf9c.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Residential%20Application%20for%20plan%20approval.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMITS Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0250-23 WHITAKER, JOCELIN 2592 WASHINGTON SOUTH WASHINGTON/T RICHLAND SERVICE 4/3/2023 100 0251-23 COTTER, JOE 2893 SPRINGMILL WEST RD SPRINGFIELD/T RICHLAND SERVICE REPAIR 4/4/2023 100 0252-23 ERVIN, CHARLES 1563 LUCAS RD MIFFLIN/T RICHLAND INT ALTS & DECK 4/4/2023 2786 0253-23 BUCYRUS STORAGE COMP 1850 MARION RD BUCYRUS/C CRAWFORD NEW BUILDING 4/3/2023 15360 0254-23 KLUPP, DJ 980 PIPER RD MADISON/T RICHLAND TEMP SERVICE 4/4/2023 100 0255-23 BUCYRUS STORAGE COMP 1850 MARION RD BUCYRUS/C CRAWFORD BUILDING ADDITI 4/4/2023 0 0256-23 BUCYRUS STORAGE COMP 1850 MARION RD BUCYRUS/C CRAWFORD BUILDING ADDITI 4/4/2023 0 0257-23 BUCYRUS STORAGE COMP 1850 MARION RD BUCYRUS/C CRAWFORD BUILDING ADDITI 4/4/2023 0 0258-23 GEM AUTO, 688 TRIMBLE RD N MADISON/T RICHLAND SIGN 4/4/2023 100 0259-23 TILLMAN INFRASTRUCTUR 388",
+   "tags": [
+    "sign",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "140ff5dfddddc39fa8aeff71844a46ab36d19bae1bc9248313b807933a717530",
+   "source_document_id": null,
+   "source_title": "140ff5dfddddc39fa8aeff71844a46ab36d19bae1bc9248313b807933a717530.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2023/April%202023.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0655-25 LADEWIG, ANGELA 1643 SUBURBAN DR MADISON/T RICHLAND INT ALTS 9/12/2025 1495 0656-25 CRANK, DAVID 1246 LUCAS RD LOT 147 MADISON/T RICHLAND DECK 9/12/2025 329 0657-25 ROBERTS, WILLIAM 2915 STIVING RD JACKSON/T RICHLAND SING FAM DWELL 9/12/2025 5083 0658-25 BUCKEYE EXPRESS CAR W 355 MAIN ST S LEXINGTON/V RICHLAND INT ALTS 9/12/2025 14674 0659-25 COYNE, PATRICIA 743 LOHR RD SPRINGFIELD/T RICHLAND ROOFTOP SOLAR 9/12/2025 900 0660-25 HARRIS, JOSEPH 3300 ST RT 546 TROY/T RICHLAND SERVICE 9/12/2025 100 0661-25 MANSFIELD VILLAGE SQU 9096 LEX SPRINGMILL RD ONTARIO/C RICHLAND FIRE ALARM ALT 9/12/2025 0 0662-25 LEGGETT, JEFF 1 WALL ST PLYMOUTH/V RICHLAND SERVICE 9/15/2025 100 0663-25 MASON, KRISREE 3449 POSSUM RUN RD WASHINGTON/T RICHLAND ADDITION 9/15/2025 272 0664-25 ADENA, 307 HILL ST BUCYRUS/C CRAWFORD JOB TRAILER 9/15/",
+   "tags": [
+    "sign",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "284c5f4fbb818574578f158f8219f0e9508d6bdff66f504a21f92fa653f7eba6",
+   "source_document_id": null,
+   "source_title": "284c5f4fbb818574578f158f8219f0e9508d6bdff66f504a21f92fa653f7eba6.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2025/Sept%202025.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Z: \\ Checklists and Forms \\ Request for CO Chg of Occ Daycare 09102026.docx Page 1 of 4 RICHLAND COUNTY BUILDING DEPARTMEN T 1495 WEST LONGVIEW AVENUE • SUITE 202A • MANSFIELD, OHIO 44906 Phone: (419) 774 - 5517 • building.richlandcountyoh.gov REQUEST FOR CERTIFICATE OF OCCUPANCY , CHANGE OF OCCUPANCY WITHOUT ALTERATIONS , AND CHILD CARE APPROVAL APPLICATION Application No. Attention: Chief Building Official Date: (1) Purpose / Scope of Application (c i rcle residenti al or commercial and 1 o f the following box es ): Residentia l / Commercial ☐ I have an existing building and I am not in possession of Certificate of Occupancy ( approval ) for the building(s) located at the subject address. As the owner (or authorized agent), pursuant to section 111 of the Residential Code of Ohio / Ohio Building Code, I am requesting a Certificate of Occupancy. To the best of my knowledge, your departme",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "3c137c3486bb3344edc931da6b31fdedef3ccb39b817a70cf6d10b1748180b73",
+   "source_document_id": null,
+   "source_title": "3c137c3486bb3344edc931da6b31fdedef3ccb39b817a70cf6d10b1748180b73.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Request%20for%20Certificate%20of%20Occupancy%20Change%20of%20Occupancy%20no%20alterations%20Daycare.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMITS Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0190-24 HOWARD, JONATHAN 11 MAIN ST BUTLER/V RICHLAND ALTS TO STORAG 4/1/2024 1150 0191-24 OSWALT, KOREN 112 MAIN ST BUTLER/T RICHLAND DECK 4/1/2024 962 0192-24 HICKS, VALONNE 2175 SPRINGMILL RD N SPRINGFIELD/T RICHLAND SERVICE 4/1/2024 100 0193-24 GARRETT, TERRY 45 PLUM AVE SHELBY/C RICHLAND RAMP 4/1/2024 198 0194-24 CHAMBERLAIN, STEVE 6034 GARBER RD JEFFERSON/T RICHLAND SERVICE 4/2/2024 100 0195-24 MCNEELY, TOM 1027 BEAL RD MADISON/T RICHLAND GARAGE AND BR 4/3/2024 1110 0196-24 GILBERT, KATHERINE 3009 CRIMSON RD MIFFLIN/T RICHLAND SING FAM DWELL 4/3/2024 1805 0197-24 MORITZ, TOM 1181 POORMAN RD JEFFERSON/T RICHLAND ADDITION 4/3/2024 4496 0198-24 SCHRINER, TONY 7801 PLYMOUTH SPRINGMI PLYMOUTH/T RICHLAND SERVICE UPGRA 4/3/2024 100 0199-24 OHIO STOR N LOCK, 109 CURTIS DR SHELBY/C RICHLAND STORAGE UNIT 4/",
+   "tags": [
+    "sign",
+    "dimension"
+   ],
+   "weight": 3,
+   "source_sha256": "40c854e057a2559146126e106149e8eed90be7dd6500572f1acc8869673937f1",
+   "source_document_id": null,
+   "source_title": "40c854e057a2559146126e106149e8eed90be7dd6500572f1acc8869673937f1.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2024/April%202024.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMITS Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0520-23 KAUF, GARY 1401 LEWIS RD SPRINGFIELD/T RICHLAND COVERED DECK 7/5/2023 240 0521-23 ZIMMERMAN, DAVID 275 LATTIMER RD BLOOMINGROVE/ RICHLAND ADDITION 7/5/2023 824 0522-23 CRESTVIEW SCHOOL, 1575 ST RT 96 WELLER/T RICHLAND SERVICE REPLAC 7/5/2023 10 0523-23 NEWBERRY, TODD 2172 RANCHWOOD DR WASHINGTON/T RICHLAND ADDITION 7/5/2023 646 0524-23 ROACH, ADAM 6330 ST RT 13 JEFFERSON/T RICHLAND ELECTRICAL ALT 7/5/2023 1654 0525-23 BUCYRUS MOOSE, 216 MANSFIELD ST E BUCYRUS/C CRAWFORD HOOD SUPPRESSI 7/5/2023 100 0526-23 CLOVER HILL EARLY LEAR 2986 PARK AVE W ONTARIO/C RICHLAND INT & EXT ALTS 7/6/2023 662 0527-23 PROSSER, JUDSON 19 COLD DRAW CT SHELBY/C RICHLAND SING FAM DWELL 7/7/2023 4935 0528-23 CARTER, JOHN 1320 HOME RD TROY/T RICHLAND GROUND SOLAR 7/7/2023 1500 0529-23 BALDRIDGE, REBEKAH 1739 WINDSOR RD MI",
+   "tags": [
+    "sign",
+    "type"
+   ],
+   "weight": 3,
+   "source_sha256": "565fbf242cbdcdfc0d4b02e8cd72038e44010fe5ab96d96b0d27a39821bcde15",
+   "source_document_id": null,
+   "source_title": "565fbf242cbdcdfc0d4b02e8cd72038e44010fe5ab96d96b0d27a39821bcde15.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2023/July%202023.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0466-23 LEE, ADAM 683 HONEYCREEK RD JEFFERSON/T RICHLAND INT ELECT ALTS 6/13/2023 1606 0467-23 TARGET, 2205 WALKER LAKE RD ONTARIO/C RICHLAND INT ALTS 6/13/2023 73939 0468-23 CLEARFORK MOBILE HOM 1260 ST RT 97 JEFFERSON/T RICHLAND GENERATOR 6/14/2023 100 0469-23 CARTER, LINDA 297 HAMILTON RD JEFFERSON/T RICHLAND SERVICE UPGRA 6/14/2023 100 0470-23 THE NAIL NOOK, 10 HIGH SCHOOL AVE SHELBY/C RICHLAND REQ FOR C OF O 6/14/2023 500 0471-23 KINTER, AMANDA 373 EMMETT ST CRESTLINE/C CRAWFORD STORAGE BLDG 6/14/2023 600 0472-23 MOTTER, LEVI 3481 GERMAN CHURCH RD WASHINGTON/T RICHLAND SING FAM DWELL 6/14/2023 4461 0473-23 GOODWILL, 205 STETZER RD S BUCYRUS/C CRAWFORD WALL SIGN 6/14/2023 100 0474-23 TIMBERLAKE, GREG 1411 BURNISON RD SPRINGFIELD/T RICHLAND GROUND SOLAR 6/14/2023 504 0475-23 VERIZON, 2570 TWP RD 59 HOLMES/T CRAWFORD ",
+   "tags": [
+    "sign",
+    "type"
+   ],
+   "weight": 3,
+   "source_sha256": "5b3397d5d8c6ad260fbacf824f48732d54fde17b6b22525e452f8dc228e1914f",
+   "source_document_id": null,
+   "source_title": "5b3397d5d8c6ad260fbacf824f48732d54fde17b6b22525e452f8dc228e1914f.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2023/June%202023.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Z:\\Checklists and Forms\\Commercial Plan Approval Guide.docx Revised 1-24-2025 Page 1 of 4 RICHLAND COUNTY BUILDING DEPARTMEN T 1495 WEST LONGVIEW AVENUE • SUITE 202A • MANSFIELD, OHIO 44906 Phone • (419) 774 - 5517 Fax • (419) 774 - 6317 building.richlandcountyoh.gov Commercial Plan Approval Guide This guide details the general requirements for paper and electronic plans, electronic formatting requirements. Tips and best practices are also described to help make the plan approval process successful. Quick tips as follows…  Review project specific guides & resources located on our web page at building.richlandcountyoh.gov  A transmittal or cover letter shall accompany all drawing resubmissions and revisions.  All electronic plans and construction documents shall be submitted as an unsecured PDF.  Make sure electronic plans have a digital index in the bookmarks of the file.  Where sub",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c",
+   "source_document_id": null,
+   "source_title": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Commercial%20Projects/Commercial%20Plan%20Approval%20Guide.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Z:\\Checklists and Forms\\Commercial Plan Approval Guide.docx Revised 1-24-2025 Page 3 of 4 6. Once we receive a complete submission (application, fees worksheet, construction documents/plans), the application will be processed and an application number will be assigned. We will notify the applicant typically within 1 - 3 business days of the receipt of documents and if any additional documents are required. Once fees are received, the application will be place d in the plan review queue. Electronic Plan Requirements 1. All plans and construction documents need to be submitted as an unsecured PDF. Some digital seals do not allow us to stamp drawings for approval so please verify editing capability prior to submittal. The Design Professionals seal should include the Round stamp/seal, design professional signature, date of signature, and license expiration date (Architects only). We will ins",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c",
+   "source_document_id": null,
+   "source_title": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Commercial%20Projects/Commercial%20Plan%20Approval%20Guide.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMITS Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0544-25 SHINDE, KUNJ 2034 FERGUSON RD ONTARIO/C RICHLAND EV CHARGER 8/1/2025 100 0545-25 ZIMMERMAN, MARK 4834 DININGER RD PLYMOUTH/T RICHLAND SRVC REPLMT 8/4/2025 100 0546-25 STOFFER, MICHAEL 17 MADISON AVE E SHELBY/C RICHLAND PAVILLION & DE 8/4/2025 240 0547-25 WORKMAN, CHARLES 1072 BURGER AVE MADISON/T RICHLAND GARAGE 8/4/2025 572 0548-25 STRONG, JOHN 2564 JAMES RD PERRY/T RICHLAND SING FAM DWELL 8/5/2025 1008 0549-25 GUTH, JAY 1690 LEXINGTON ONTARIO TROY/T RICHLAND POOL HOUSE 8/5/2025 1079 0550-25 BOYD, AUSTIN 4674 BELLVILL RD N JEFFERSON/T RICHLAND SING FAM DWELL 8/4/2025 5984 0551-25 SHOPE INVESTMENTS, 450 FOX RD LEXINGTON/V RICHLAND SING FAM DWELL 8/6/2025 4036 0552-25 NORTH CENTRAL INSULAT 7539 ST RT 13S JEFFERSON/T RICHLAND SIGNAGE 8/4/2025 100 0553-25 FRANK, DAVE 1983 MANSFIELD WASHING WASHINGT",
+   "tags": [
+    "sign",
+    "type"
+   ],
+   "weight": 3,
+   "source_sha256": "9859f1a61abb387695b33f3db760ff2c93b552aff7acd7879fc198fc76f02191",
+   "source_document_id": null,
+   "source_title": "9859f1a61abb387695b33f3db760ff2c93b552aff7acd7879fc198fc76f02191.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2025/Aug%202025.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMITS Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0001-24 BUZZARD, SCOTT 4829 ST RT 545 WELLER/T RICHLAND METER REINSTA 1/3/2024 100 0002-24 SPENCE, ANGELIC 698 FAIRFAX AVE MADISON/T RICHLAND METER REINSTA 1/3/2024 100 0003-24 LOFT AND RAILS, 557 HOME RD N ONTARIO/C RICHLAND EVENT CENTER 1/3/2024 6000 0004-24 LALLY, TOM 35 MARVIN AVE SHELBY/C RICHLAND ELECTRICAL ALT 1/3/2024 270 0005-24 FORSTER, JASON 5233 MILLSBORO RD SANDUSKY/T RICHLAND SING FAM DWELL 1/4/2024 2884 0006-24 CONGDON, TYLER 2270 LAKEWOOD AVE MIFFLIN/T RICHLAND METER REINSTA 1/4/2024 100 0007-24 ACP ONTARIO, 896 LEXINGTON SPRINGMI ONTARIO/C RICHLAND INT ALTS 1/4/2024 5674 0008-24 NEW, WESLEY 2670 LEXINGTON AVE WASHINGTON/T RICHLAND SERVICE 1/4/2024 100 0009-24 BOLEN, STEVEN 4403 PARCEL RD PLYMOUTH/T RICHLAND STORAGE BLDG 1/4/2024 2400 0010-24 JARVIS, MIKE 438 HIGHRIDGE RD LEXINGTON/V RIC",
+   "tags": [
+    "sign",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "9d073f156cec7e3afe91a136853cba45dd13d04fc7e05c28ea6522d91c53bea5",
+   "source_document_id": null,
+   "source_title": "9d073f156cec7e3afe91a136853cba45dd13d04fc7e05c28ea6522d91c53bea5.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2024/Jan%202024.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0834-24 ROSS, GLEN 2169 COOK RD W TROY/T RICHLAND DET GARAGE 11/13/2024 1500 0835-24 AT&T, 2715 FOURTH ST W ONTARIO/C RICHLAND ANTENNA ALTS 11/13/2024 100 0836-24 AT&T, 2715 FOURTH ST W ONTARIO/C RICHLAND EQUIPMENT PLA 11/8/2024 100 0837-24 SMITH, JESSICA 3447 SYLVAN DR MIFFLIN/T RICHLAND SERVICE 11/13/2024 100 0838-24 WESTWOOD ALLIANCE CH 396 WILLOWOOD DR ONTARIO/C RICHLAND RTU 11/14/2024 100 0839-24 APARTMENTS AT 113 EAST 113 FINDLAY ST E CAREY/V WYANDOT INT ALTS 11/14/2024 7266 0840-24 EAST OF CHICAGO PIZZA, 2004 FOURTH ST W ONTARIO/C RICHLAND INT ALTS 11/14/2024 1189 0841-24 TLB #1 LTD, 1967 WOODMONT DR MIFFLIN/T RICHLAND INT ALTS 11/14/2024 1450 0842-24 MILLER, ALAN 207 HENRY ST N CRESTLINE/C CRAWFORD INT ALTS 11/14/2024 1498 0843-24 ONTARIO LOCAL SCHOOLS 467 SHELBY ONTARIO RD ONTARIO/C RICHLAND ALTS TO ENTRAN 11/1",
+   "tags": [
+    "sign",
+    "type"
+   ],
+   "weight": 3,
+   "source_sha256": "bf2288acc299d89291510b36b3dcf1ff974703d809afe4c61bf12d7b9939d241",
+   "source_document_id": null,
+   "source_title": "bf2288acc299d89291510b36b3dcf1ff974703d809afe4c61bf12d7b9939d241.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2024/Nov%202024.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0645-24 OE MEYER, 304 SIXTH AVE GALION/C CRAWFORD SERVICE 9/13/2024 100 0646-24 WEAVER, LANDIS 5532 ROME SOUTH RD BLOOMINGROVE/ RICHLAND SERVICE 9/13/2024 100 0647-24 KNELL, RYAN 147 BETHEL LANE ONTARIO/C RICHLAND FDN REPAIR 9/13/2024 404 0648-24 RAMEY, CHARLES 2136 KINGS CORNER RD E TROY/T RICHLAND STORAGE BLDG 9/16/2024 600 0649-24 WASHINGTON TOWNSHIP, 222 VANDERBILT RD WASHINGTON/T RICHLAND SALT STORAGE B 9/16/2024 7178 0650-24 WENDLING, JOSHUA 1996 KINGS CORNERS RD TROY/T RICHLAND DECK 9/16/2024 320 0651-24 STOFFER, SCOTT 4955 ST RT 545 WELLER/T RICHLAND SING FAM DWELL 9/16/2024 4784 0652-24 RUSSELL, CAROLYN 310 PARK RD CRESTLINE/C CRAWFORD SERVICE UPGRA 9/17/2024 100 0653-24 FINLEY, TONY 3871 MILLSBORO RD W SPRINGFIELD/T RICHLAND SOLAR PANELS 9/17/2024 379 0654-24 IB TECH, 260 CROSSROADS BLVD BUCYRUS/C CRAWFORD ADD",
+   "tags": [
+    "sign",
+    "type"
+   ],
+   "weight": 3,
+   "source_sha256": "d534e906e96e69150d28091257c184d0fd5cf4b0c3e1ed8e551a92566438042e",
+   "source_document_id": null,
+   "source_title": "d534e906e96e69150d28091257c184d0fd5cf4b0c3e1ed8e551a92566438042e.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2024/Sept%202024.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMITS Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0666-23 PAULEY, KYLE 3319 FOXCROFT CIRCLE LEXINGTON/V RICHLAND DECK 9/1/2023 435 0667-23 KANZ, GAYLE 3835 ST RT 546 TROY/T RICHLAND CARPORT 9/1/2023 900 0668-23 KAST, BILLY 115 BROADWAY ST SHELBY/C RICHLAND METER REINSTA 9/5/2023 100 0669-23 WILSON, JOYCE 2344 BOWMAN ST FRANKLIN/T RICHLAND SOLAR PANELS 9/5/2023 260 0670-23 SHAFFER, WOODROW 1654 MANSFIELD WASHING WASHINGTON/T RICHLAND GENERATOR 9/5/2023 100 0671-23 KURTZMAN SANITATION, 707 MAIN ST W CRESTLINE/C CRAWFORD STORAGE ADDITI 9/5/2023 768 0672-23 OHIO STATE REFORMATOR 942 GARE AVE MADISON/T RICHLAND SERVICE 9/5/2023 100 0673-23 BLACKWELL, NORVAL 1282 LEXINGTON ONTARIO TROY/T RICHLAND STORAGE BLDG 9/6/2023 768 0674-23 FIRST ENERGY, 1717 ASHLAND RD MADISON/T RICHLAND RAMP & VESTIBU 9/6/2023 231 0675-23 PAR MAR STORE, 147 MANSFIELD AVE SHELBY/C RIC",
+   "tags": [
+    "sign",
+    "type"
+   ],
+   "weight": 3,
+   "source_sha256": "d9e433e9cb511d3b91383b46e118eaf5833e4d8094aa0e685186807351e5b284",
+   "source_document_id": null,
+   "source_title": "d9e433e9cb511d3b91383b46e118eaf5833e4d8094aa0e685186807351e5b284.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2023/Sept%202023.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Z:\\Checklists and Forms\\Web portal instructions.docx Revised 8-8-2025 Page 1 of 4 RICHLAND COUNTY BUILDING DEPARTMEN T 1495 WEST LONGVIEW AVENUE • SUITE 202A • MANSFIELD, OHIO 44906 Phone: (419) 774 - 5517 • building.richlandcountyoh.gov Webportal Document Upload Instructions This guide will help the user to upload documents when submitting electronic documents to our department for plan review. The link to our web portal is on the left hand side of our webpage. Step 1. Navigate to our webpage and click on the Online Permit Portal Submission Page link. The link will open a new browser tab. Step 2. Complete the boxes with the requested information. If an application has already been submitted, put the application number in the resubmittal application number box.",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "f19c0ba6e318600ec593e1ff406679a21478eaa2ce7dae4a32c38f196bd8637e",
+   "source_document_id": null,
+   "source_title": "f19c0ba6e318600ec593e1ff406679a21478eaa2ce7dae4a32c38f196bd8637e.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/General%20Information/Web%20portal%20instructions%2008082025.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMITS Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0448-25 SCHROCK, ANDREW 1541 OLD BOWMAN ST RD MADISON/T RICHLAND SING FAM DWELL 7/1/2025 4480 0449-25 VIOLA, JOE 1580 FLEMING FALLS RD MADISON/T RICHLAND SING FAM DWELL 7/1/2025 3840 0450-25 WIRICK, TAMARA 1795 GATTON ROCKS RD WORTHINGTON/T RICHLAND STORAGE BLDG 7/2/2025 960 0453-25 KERSHNER, MIKE 336 INDIANA AVE MADISON/T RICHLAND METER REINSTA 7/3/2025 100 0454-25 NOLT, JEREMY 2447 BOWMAN ST RD FRANKLIN/T RICHLAND STORAGE BLDG 7/3/2025 1936 0456-25 MORITZ, TOM 1070 MARIANNA DR MADISON/T RICHLAND GARAGE ADDITI 7/3/2025 696 0457-25 STIMMELL, RICHARD 1823 GRACE AVE ONTARIO/C RICHLAND REPL HVAC 7/3/2025 100 0459-25 MIFFLIN TWP FIRE DEPART 2326 PARK AVE EAST MIFFLIN/T RICHLAND SIGN 7/7/2025 100 0461-25 WINTERS, KYLE 4434 BYERS RD MONROE/T RICHLAND STORAGE BLDG 7/7/2025 1944 0463-25 ABI EL HESSEN, ROLAND 50",
+   "tags": [
+    "sign",
+    "dimension"
+   ],
+   "weight": 2,
+   "source_sha256": "0394b9471ef6397aa7297a387bec57ee47bb7638bdf2b000706f9dc6db50f985",
+   "source_document_id": null,
+   "source_title": "0394b9471ef6397aa7297a387bec57ee47bb7638bdf2b000706f9dc6db50f985.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2025/July%202025.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Date Permit # Last Name First Name Number Street Cty/Vil/Twp County Description Sq Footage 04/01/2025 0198-25 WISE KIP 421 POORMAN RD Jefferson/T RICHLAND DETACHED GARAGE 1176 04/01/2025 0199-25 MILLER MATT 451 MARWOOD DR Washington/T RICHLAND STORAGE BUILDING 288 04/01/2025 0200-25 JAMES III WILLIAM 841 FLEMING FALLS RD Madison/T RICHLAND SING FAM DWELL 4866 04/01/2025 0201-25 AT AND T 2412 KLINE ROAD Franklin/T RICHLAND GROUND EQUIPMENT 100 04/02/2025 0203-25 CAUDILL DON 350 TWITCHELL ROAD Springfield/T RICHLAND SING FAM DWELL 4150 04/02/2025 0202-25 KEISSER JAMES 41 CLARK AVENUE Shelby/C RICHLAND METER REINS 100 04/02/2025 0209-25 MCELVAIN HOLDINGS 918 SUNSET DRIVE Madison/T RICHLAND ELECTRICAL ALTERATIONS 5560 04/03/2025 0207-25 MADISON CITY MOBILE HOME PARK 1135 EVERGREEN AVENUE Madison/T RICHLAND SIGN 0 04/03/2025 0208-25 EDMONDS LUKE 69 FREDERICK STREET Lexington/V RICHLAND HVAC 1",
+   "tags": [
+    "sign",
+    "dimension"
+   ],
+   "weight": 2,
+   "source_sha256": "20c64f9d0bb6ea460507f1374a5848efdb128fc3f6c077ba0657c7ff9c536e6b",
+   "source_document_id": null,
+   "source_title": "20c64f9d0bb6ea460507f1374a5848efdb128fc3f6c077ba0657c7ff9c536e6b.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2025/April%202025.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0394-24 ADKINS, GREG 63 TECHNOLOGY PKWY SHELBY/C RICHLAND POOL 6/17/2024 100 0395-24 VOUSDEN, DUSTIN 90 CLEVELAND ST SHELBY/C RICHLAND POOL 6/17/2024 100 0396-24 WALTER, MYRON 345 MAPLE LANE SPRINGFIELD/T RICHLAND ROOFTOP SOLAR 6/17/2024 628 0397-24 DOLLAR GENERAL, 1509 ASHLAND RD MADISON/T RICHLAND INT ALTS 6/18/2024 0 0398-24 CRESTLINE HIGH SCHOOL, 435 OLDFIELD RD CRESTLINE/C CRAWFORD VISITORS PRESS 6/18/2024 128 0400-24 LEXINGTON BEVERAGE CE 27 PLYMOUTH ST LEXINGTON/V RICHLAND SIGNS 6/21/2024 100 0401-24 ARMSTRONG, JESSE 3145 KINGS CORNERS RD TROY/T RICHLAND DECK 6/21/2024 256 0402-24 MCCORKLE, MIKE 840 WAGNER RD JEFFERSON/T RICHLAND INT ALTS TO BAS 6/21/2024 564 0403-24 STEPHENS, VIRGIL 3396 MILLSBORO RD SPRINGFIELD/T RICHLAND ABOVE GROUND 6/21/2024 100 0404-24 WURMS WOODWORKING, 725 MANSFIELD ST W NEW WASHINGTO CRA",
+   "tags": [
+    "sign",
+    "dimension"
+   ],
+   "weight": 2,
+   "source_sha256": "6aaa9a6fa83ff9509c5911337a7590a3841b177990fdf55f2a72ceee61b34ec4",
+   "source_document_id": null,
+   "source_title": "6aaa9a6fa83ff9509c5911337a7590a3841b177990fdf55f2a72ceee61b34ec4.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2024/June%202024.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMITS Permit # Name Address Cty/Vil/Twp County Description Date Sq Footage 0420-24 LEWIS, ETHAN 2312 SECOND ST S MADISON/T RICHLAND METER REINSTA 7/1/2024 100 0421-24 EKIN, BRENT 1404 ROCK RD SPRINGFIELD/T RICHLAND STORAGE BLDG 7/1/2024 768 0422-24 RIDENOUR, CARL 69 SAMANTHA DR SHELBY/C RICHLAND SING FAM DWELL 7/2/2024 6393 0423-24 FAITH POINT FREEWILL BA 521 KALER AVE BUCYRUS/C CRAWFORD SERVICE REPAIR 7/2/2024 100 0424-24 NOEL, BRAYDEN 160 BEELMAN ST PLYMOUTH/V RICHLAND SING FAM DWELL 7/2/2024 1280 0425-24 SHEPARD, BILL 7445 DOUP RD WORTHINGTON/T RICHLAND SERVICE REPLAC 7/2/2024 100 0426-24 GAYTAN, IGNACIO 932 SPRINGMILL ST MADISON/T RICHLAND METER REINSTA 7/3/2024 100 0427-24 GILLAM, SHERRI 2403 ALTA WEST RD SPRINGFIELD/T RICHLAND SING FAM DWELL 7/3/2024 5243 0428-24 MCKINNELL, BECKY 208 HOME RD S SPRINGFIELD/T RICHLAND ADDITION 7/3/2024 720 0429-24 LEXINGTON COMMUNITY 158 P",
+   "tags": [
+    "sign",
+    "dimension"
+   ],
+   "weight": 2,
+   "source_sha256": "7f6643e688d473887eaa6920cd78799f02fe7020e75b9e1488f65712be781501",
+   "source_document_id": null,
+   "source_title": "7f6643e688d473887eaa6920cd78799f02fe7020e75b9e1488f65712be781501.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Monthly%20Permit%20Data/2024/July%202024.pdf"
+  }
+ ]
+}

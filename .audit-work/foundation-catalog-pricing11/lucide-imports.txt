@@ -1,0 +1,1 @@
+Box,ChevronDown,ChevronUp,Copy,Cpu,Eye,EyeOff,Info,Loader2,Maximize2,Move,PenLine,Plus,RotateCcw,Square,Trash2,TrendingUp,Undo2,ZoomIn,ZoomOut,

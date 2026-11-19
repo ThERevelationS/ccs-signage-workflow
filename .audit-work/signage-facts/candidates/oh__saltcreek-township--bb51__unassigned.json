@@ -1,0 +1,66 @@
+{
+ "jurisdiction_id": "6aea311c354c4878e059bb51",
+ "jurisdiction_name": "Saltcreek Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "NOTES AND ADDITIONAL SUBMITTAL REQUIREMENTS: • In addition to completion of this form the applicant agrees to submit any additional information required by the floodplain administrator in order to determine that the proposed development is compliant with the local and federal flood damage prevention criteria of the National Flood Insurance Program. Site plans for all development proposals must: • Be drawn to scale with north arrow. • Show property boundaries, floodway, and floodplain lines. • Show dimensions of the lot. • Show dimensions and location of existing and/or proposed development on the site. • Show areas to be cut and filled. • Applications for residential and non-residential structures must also include: • The proposed lowest floor elevation based on the datum used on the effective Flood Insurance Rate Map and base flood elevation for the site. • Identification of whether the",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "d6c3078acf2fbc08cf5d1732564b12ce9c4b240ac6cc4b85211be5abd8c3a961",
+   "source_document_id": null,
+   "source_title": "d6c3078acf2fbc08cf5d1732564b12ce9c4b240ac6cc4b85211be5abd8c3a961.pdf",
+   "official_url": "https://pickawaycountyohio.gov/pdf/Building-floodpermit.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "FLOOD HAZARD AREA DEVELOPMENT PERMIT ADMINISTRATIVE CHECKLIST NOTE: The following is to be completed by the local floodplain administrator. All references to elevations are in feet mean sea level (m.s.l.) according to the datum used on the effective Flood Insurance Rate Maps. 1. The proposed development is in: An identified floodway. Does a hydrologic and hydraulic engineering analysis accompany the application Y / N Does the analysis have a certification that flood heights will not be increased Y / N Is the analysis certified by a Registered Professional Engineer Y / N A flood hazard area where base flood elevations exist with no identified floodway. Does a hydrologic and hydraulic engineering analysis accompany the application Y / N Does the analysis have a certification that flood heights will be increased less than the height designated in the community's flood damage reduction regul",
+   "tags": [
+    "area",
+    "dimension",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "d6c3078acf2fbc08cf5d1732564b12ce9c4b240ac6cc4b85211be5abd8c3a961",
+   "source_document_id": null,
+   "source_title": "d6c3078acf2fbc08cf5d1732564b12ce9c4b240ac6cc4b85211be5abd8c3a961.pdf",
+   "official_url": "https://pickawaycountyohio.gov/pdf/Building-floodpermit.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "FLOOD HAZARD AREA DEVELOPMENT PERMIT APPLICATION Application is hereby made for a DEVELOPMENT PERMIT as required by the Special Purpose Flood Damage Reduction Resolution No. 11-06-12-1 of Pickaway County, Ohio, for development in an identified flood hazard area. All activities shall be completed in accordance with the requirements of said regulations. The development to be performed is described below and in attachments hereto. The applicant understands and agrees that: • The permit applied for, if granted, is issued on the representations made herein; • Any permit issued may be revoked because of any breach of representation; • Once a permit is revoked all work shall cease until the permit is reissued or a new permit is issued; • Any permit issued on this application will not grant any right or privilege to erect any structure or sue any premises described for any purposes or in any man",
+   "tags": [
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "d6c3078acf2fbc08cf5d1732564b12ce9c4b240ac6cc4b85211be5abd8c3a961",
+   "source_document_id": null,
+   "source_title": "d6c3078acf2fbc08cf5d1732564b12ce9c4b240ac6cc4b85211be5abd8c3a961.pdf",
+   "official_url": "https://pickawaycountyohio.gov/pdf/Building-floodpermit.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "FLOOD HAZARD AREA DEVELOPMENT PERMIT This permit is issued based on documentation that the information provided in the Flood Hazard Development Permit Application is in compliance with the Pickaway County, Ohio, Flood Damage Reduction Regulations. Address or property location: Description of development activity: The permittee understands and agrees that: • An as-built Elevation Certificate will be submitted to the Floodplain Administrator after the first floor of a new, substantially improved, or substantially damaged, residential or non- residential structure is constructed; • A final Letter of Map Revision will be obtained where a Conditional Letter of Map Revision was required as part of the permit application; • The permit is issued on the representations made herein and on the application for permit; • The permit may be revoked because of any breach of representation; • Once a perm",
+   "tags": [
+    "prohibited",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "d6c3078acf2fbc08cf5d1732564b12ce9c4b240ac6cc4b85211be5abd8c3a961",
+   "source_document_id": null,
+   "source_title": "d6c3078acf2fbc08cf5d1732564b12ce9c4b240ac6cc4b85211be5abd8c3a961.pdf",
+   "official_url": "https://pickawaycountyohio.gov/pdf/Building-floodpermit.pdf"
+  }
+ ]
+}

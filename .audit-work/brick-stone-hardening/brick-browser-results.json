@@ -1,0 +1,23 @@
+{
+  "total": 4,
+  "failed": 0,
+  "results": [
+    {
+      "id": "desktop-held-mount",
+      "ok": true
+    },
+    {
+      "id": "desktop-save-blocked",
+      "ok": true
+    },
+    {
+      "id": "mobile-held-mount",
+      "ok": true
+    },
+    {
+      "id": "mobile-save-blocked",
+      "ok": true
+    }
+  ],
+  "consoleErrors": []
+}

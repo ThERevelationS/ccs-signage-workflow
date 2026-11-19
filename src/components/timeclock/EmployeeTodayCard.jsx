@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Clock3, Coffee, History, Loader2, Pause, Play, RefreshCw } from "lucide-react";
 import { format, isSameDay } from "date-fns";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
+import { invokeTimeClockAction } from "@/components/timeclock/timeClockReadCache";
 
 function formatDuration(totalMinutes) {
   const minutes = Math.max(0, Math.floor(Number(totalMinutes) || 0));
@@ -39,12 +40,13 @@ export default function EmployeeTodayCard({
     const requestSeq = ++statusSeqRef.current;
     setLoading(true);
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      // Read-cache path shares the 15s dedupe slot with the provider's status
+      // escalation — key order must match TimeClockStatusContext's payload.
+      const data = await invokeTimeClockAction({
         action: "status",
-        session_token: sessionToken,
-        target_email: user.email,
+        sessionToken,
+        payload: { session_token: sessionToken, target_email: user.email },
       });
-      const data = response?.data || response;
       if (requestSeq !== statusSeqRef.current || statusScopeRef.current !== requestScope) return;
       if (!data?.success) throw new Error(data?.error || "Current Time Clock status could not be verified.");
       if (String(data?.user?.email || "").trim().toLowerCase() !== requestEmail) return;
@@ -68,7 +70,7 @@ export default function EmployeeTodayCard({
 
   useEffect(() => {
     loadStatus();
-    const poll = setInterval(() => { if (!document.hidden) loadStatus(); }, 30000);
+    const poll = setInterval(() => { if (!document.hidden && !isFleetCoolingDown()) loadStatus(); }, 60000);
     const tick = setInterval(() => setNow(new Date()), 1000);
     const onPauseChanged = () => loadStatus();
     window.addEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
@@ -86,13 +88,21 @@ export default function EmployeeTodayCard({
     });
   }, [timeEntries, now]);
 
-  const completedTodayMinutes = todayEntries
+  // Minute totals follow the workday anchor: a shift combined into a previous
+  // workday counts there, not on the day its clock-in happened.
+  const todayKey = format(now, "yyyy-MM-dd");
+  const anchorDayOf = (entry) =>
+    String(entry?.work_day_anchor_date || "").trim() ||
+    (safeDate(entry?.clock_in) ? format(safeDate(entry.clock_in), "yyyy-MM-dd") : "");
+  const countedTodayEntries = todayEntries.filter((entry) => anchorDayOf(entry) === todayKey);
+
+  const completedTodayMinutes = countedTodayEntries
     .filter(entry => entry.status === "clocked_out")
     .reduce((sum, entry) => sum + Math.max(0, Math.round(Number(entry.total_hours || 0) * 60)), 0);
-  const completedPauseMinutes = todayEntries
+  const completedPauseMinutes = countedTodayEntries
     .filter(entry => entry.status === "clocked_out")
     .reduce((sum, entry) => sum + Math.max(0, Number(entry.tracked_work_pause_minutes || 0)), 0);
-  const completedBreakMinutes = todayEntries
+  const completedBreakMinutes = countedTodayEntries
     .filter(entry => entry.status === "clocked_out")
     .reduce((sum, entry) => sum + Math.max(0, Number(entry.tracked_break_minutes || 0)), 0);
 
@@ -107,12 +117,13 @@ export default function EmployeeTodayCard({
   const activePauseStart = safeDate(statusData?.active_work_pause?.started_at);
   const activePauseElapsed = activePauseStart ? Math.max(0, Math.floor((now.getTime() - activePauseStart.getTime()) / 60000)) : 0;
   const activeUnpaidBreakElapsed = statusData?.break_status === "on_break" && statusData?.active_break?.is_paid !== true ? activeBreakElapsed : 0;
-  const activeWorkedMinutes = activeEntry
+  const activeCountsToday = !activeEntry || anchorDayOf(activeEntry) === todayKey;
+  const activeWorkedMinutes = activeEntry && activeCountsToday
     ? Math.max(0, activeSpanMinutes - completedActiveUnpaidBreak - completedActivePause - activeUnpaidBreakElapsed - activePauseElapsed)
     : 0;
   const todayWorkedMinutes = completedTodayMinutes + activeWorkedMinutes;
-  const todayPauseMinutes = completedPauseMinutes + completedActivePause + activePauseElapsed;
-  const todayBreakMinutes = completedBreakMinutes + completedActiveBreak + activeBreakElapsed;
+  const todayPauseMinutes = completedPauseMinutes + (activeCountsToday ? completedActivePause + activePauseElapsed : 0);
+  const todayBreakMinutes = completedBreakMinutes + (activeCountsToday ? completedActiveBreak + activeBreakElapsed : 0);
 
   const pendingCorrections = correctionRequests.filter(request => ["pending", "reviewing"].includes(request.status));
   const pendingShiftReviewCount = Math.max(0, Number(statusData?.pending_shift_review?.count || 0));
@@ -169,6 +180,16 @@ export default function EmployeeTodayCard({
             <Badge variant="outline" className={statusClass}>
               <StatusIcon className="w-3 h-3 mr-1" />{statusLabel}
             </Badge>
+            {statusData?.break_status === "on_break" && activeBreakElapsed > 60 && (
+              <Badge variant="outline" className="border-red-300 bg-red-50 text-red-700" title="Break has run over the standard hour">
+                {activeBreakElapsed}m - over
+              </Badge>
+            )}
+            {activeSpanMinutes > 300 && completedActiveUnpaidBreak === 0 && statusData?.break_status === "working" && (
+              <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800" title="Over 5 hours worked without a lunch break">
+                no lunch yet
+              </Badge>
+            )}
           </div>
           <p className="text-xs text-gray-500 mt-1">Live operational time from authoritative Time Clock state.</p>
         </div>

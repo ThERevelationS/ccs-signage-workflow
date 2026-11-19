@@ -1,0 +1,83 @@
+{
+  "workstream": "WS-O",
+  "item": "O-008t",
+  "ticket": "CMP-A08-tail",
+  "title": "Supplier grouping in catalog UX; kill form-init/openAdd minted-0 presets; default_rate||0 verbatim policy",
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remoteBaseline": "db94d7615+",
+  "deliverableMode": "candidates-only",
+  "remoteWrites": 0,
+  "generated": "2026-11-08",
+
+  "summary": "Closes the three O-008 remainders. (1) Supplier grouping: the boundary gains inventorySupplierKey (canonical supplier key — trim/lowercase/separator-collapse; blank/non-string/absent -> null) and groupInventoryBySupplier (rows -> [{key,label,rows}] sorted by key, unrecorded supplier pinned last, first-seen authored spelling kept as the display label). normalizeFoundationInventoryRow materializes supplier_key on the calculation copy (absent-supplier rows stay absent; authored supplier_key wins verbatim). Every granted catalog list — FoundationInventory generic tabs + wall/fill grids, WallCapsInventoryTab, MasterSuppliesTab — sections by that key with an explicit group header. (2) Form-init/openAdd laundering: every granted numeric field initializer that minted 0/preset values now opens null — GenericItemForm number defaults, WallMaterialForm cost/dims, WallCapsInventoryTab price/dims, EquipmentInventoryTab openAdd costs/sort, MasterSuppliesTab buildInitial both sides; CL-side draft inputs moved from parseFloat||0 to inventoryNumberInput. (3) normalizeConcreteSupplier's default_rate||0 tail (and the minimum-field ||0 tails) now ride inventoryNonnegativeNumber — explicit 0 stays a real free rate; absent/blank/malformed keeps null instead of minted 0 or verbatim junk. Consume-parity proven: the ported selectedConcrete?.cost_per_unit||0 read resolves null to the same 0 the mint produced.",
+
+  "boundaryContract": {
+    "inventorySupplierKey": "Canonical supplier-group key: string -> trim + lowercase + separator-collapse([\\s\\-_.]+ -> '_'). Blank/non-string -> null (unassigned group). Never guesses a vendor.",
+    "groupInventoryBySupplier": "rows -> [{key,label,rows}] sorted alphabetically by key; key:null (unassigned) sorts LAST. label = first-seen authored spelling. getSupplier override for non-'supplier' fields (vendor_name||service_name, rental_company). Input order preserved inside groups; non-array -> [].",
+    "supplier_key materialization": "normalizeFoundationInventoryRow fills supplier_key on the calculation copy ONLY when absent AND inventorySupplierKey(supplier) resolves; authored supplier_key (including null) wins verbatim. Authored rows never mutated.",
+    "explicit-0 adapter": "normalizeConcreteSupplier cost_per_unit/minimum_order_yards/below_minimum_cost_per_cy/minimum_cost -> inventoryNonnegativeNumber: authored 0/'0' stays a real zero; absent/blank/malformed/negative/NaN -> null ('not cataloged'). supplier_key = inventorySupplierKey(vendor_name || service_name).",
+    "form-init null draft": "Absent stored value -> numeric field opens null (blank input via ?? \"\"); explicit authored 0 still initializes 0; drafts ride inventoryNumberInput so typed 0 saves as authored zero."
+  },
+
+  "candidateFiles": {
+    "modified": [
+      "src/components/masterInventory/inventoryNormalization.js",
+      "src/components/estimator/foundation/legacyFoundationCalc.js",
+      "src/pages/FoundationInventory.jsx",
+      "src/components/masterInventory/MasterSuppliesTab.jsx",
+      "src/components/foundation/EquipmentInventoryTab.jsx",
+      "src/components/foundation/WallCapsInventoryTab.jsx",
+      "src/components/masterInventory/foundationFieldSchema.js"
+    ],
+    "inspectedNoChange": [
+      "src/components/masterInventory/InventoryFormModal.jsx — already boundary-clean: init falls to '' for numbers (no source.defaults exist), coerce is inventoryNumberInput, default_rate is required for labor services so a concrete supplier cannot persist a missing rate.",
+      "src/components/masterInventory/FoundationMaterialDialog.jsx — already boundary-clean: init is {material_type, show_in_foundation} only; inputs render ?? \"\" + catalogNumberInput."
+    ],
+    "protectedUntouched": [
+      "src/pages/FoundationEstimator.jsx",
+      "src/components/estimator/foundation/foundationCalc.js",
+      "src/components/estimator/foundation/foundationReinforcement*",
+      "src/components/estimator/foundation/partSync.js (FoundationBOM.jsx)"
+    ]
+  },
+
+  "verification": {
+    "harness": ".audit-work/foundation-o008t-suppliers/test-o008t-suppliers.mjs — esbuild-bundles testtree/ (fresh-remote calculator siblings incl. new foundationReinforcement* deps + candidate boundary/calc overlay) under Node",
+    "result": "PASS o008t-suppliers — 159 passed, 0 failed",
+    "supplierKeyMatrix": "20 cases: spelling variants merge ('Citywide'/' citywide '/'CITYWIDE' -> 'citywide'), separators collapse, blank/non-string/non-finite -> null",
+    "groupingFixtures": "4-group fixture (variant merge, distinct vendor, ernst, unassigned last with blank/absent/non-string rows); LaborServiceInventory vendor_name||service_name getSupplier override; [] / non-array edge cases; alphabetical ordering with unassigned pinned last; no row dropped",
+    "adapterFixtures": "9 well-formed rates -> consume parity vs remote ||0 oracle + exact basis equality; 8 absent/malformed values -> null (was minted-0 or verbatim leak); NaN -> null (remote minted 0); explicit-0 min fields preserved; supplier_key from vendor/fallback/blank; re-export parity vs legacyFoundationCalc",
+    "formOpenFixtures": "Source assertions on every granted surface: no `defaults[f.key] = 0`, no `cost_per_unit: 0.75`, no `cap_stock_price: 35`, no openAdd `cost_per_day: 0`, no `|| 0` anywhere in MasterSuppliesTab, no parseFloat||0 draft coerce, `|| 0` tails gone from inventoryNormalization adapter",
+    "realSurface": "calcItemCost + calcConcreteDelivery produce byte-identical output for a candidate-null-rate supplier row vs a remote-minted-0-shaped row, and for an authored 155 rate; calcWalls legacy brick_stone -> priced; calcPoles 120in -> 10ft = $100; calcProject ingress normalization",
+    "syntax": "esbuild parse check: all 7 modified candidate files OK"
+  },
+
+  "deliberateNonChanges": [
+    "FoundationItemCard estimator concrete picker — flat row list unchanged; supplier_key is materialized so a future delivery-side grouping can consume ONE canonical key without inventing location/region semantics the schema lacks (LaborServiceInventory has vendor_name/vendor_contact/vendor_phone only).",
+    "InventoryTable.jsx (generic Master Inventory renderer incl. Labor & Services list) — outside the granted file set; concrete suppliers land there but the grouping helper + supplier_key now exist for it.",
+    "FoundationCatalog.jsx read-only browser — not in grant; its display-only `|| 0` price fallback mints nothing.",
+    "MasterEquipmentTab.jsx — edit-form `|| 0` initializers (lines ~73-95, 534-570) and save coercions (~861+) remain: file is outside the granted set; flagged remainder carries forward.",
+    "Calc-side consume reads `selectedConcrete?.cost_per_unit || 0`, `activeRebar?.cost_per_unit || 0`, `selectedForming?.cost_per_unit || 0` (legacyFoundationCalc) — resolve absent->0 at the consume boundary identically for null or minted-0 fields; ported math untouched.",
+    "sort_order comparator `(a.sort_order || 0)` (EquipmentInventoryTab) — display sort, not a minted stored value; openAdd now passes sort_order:null which the comparator resolves identically.",
+    "InventoryFormModal cost-history `Number(h.old_cost || 0)` — audit display of recorded numbers, not a form initializer.",
+    "WallMaterialForm subtype/color/texture + applyPreset() — authored non-numeric defaults and an explicit user action; dims/cost now start null so the form-open state stores nothing unauthored.",
+    "Channel-letter install cost CONSUMERS (cl_installCalculator parseFloat||0) — non-CMP calculation surface; the MasterSuppliesTab CL draft/initial fields were still converted because they are catalog writes minting stored zeros.",
+    "partSync reads raw LaborServiceInventory rows for its own snapshot — entity fields unchanged; the adapter's null semantics never reach it."
+  ],
+
+  "behaviorDeltas": [
+    "Admin add/edit forms open blank for every unpriced numeric field — saving an untouched form can no longer mint $0 prices, 0-inch dims, or 0 costs into the record.",
+    "A blanked-out price field now persists null ('not cataloged') where a `|| 0`/`parseFloat||0` path would have minted 0.",
+    "A LaborServiceInventory concrete row with no default_rate normalizes to cost_per_unit:null instead of 0 — identical through the ported consume read (null||0 === 0||0); NaN rates now hold null instead of minting 0; truthy malformed strings ('abc') now hold null instead of leaking verbatim into the normalized row.",
+    "Catalog lists section by supplier group — same vendor spelled differently lands in one group; unrecorded suppliers render last as 'No supplier recorded' / '— not recorded'.",
+    "WallMaterialForm no longer pre-fills standard brick dims/cost on open — applyPreset on an explicit subtype pick still fills standard dims as an authored draft."
+  ],
+
+  "knownRemainders": {
+    "supplierGroupingEstimator": "Concrete picker in FoundationEstimator/FoundationItemCard is not grouped (protected file for the estimator side; FoundationItemCard out of grant) — supplier_key is materialized for a future delivery-side grouping pass.",
+    "masterEquipmentTabInit": "MasterEquipmentTab `|| 0` edit-form initializers + save coercions (excavation equipment spec fields) — outside granted file set.",
+    "nonCmpNumericCoercions": "cl_installCalculator parseFloat||0 consume math, importMappers/legacyInventoryMigrator loose cleanNum — non-CMP surfaces.",
+    "inventoryTableGrouping": "Labor & Services generic table (InventoryTable.jsx) renders flat — grouping helper exists but the file is outside the granted set."
+  }
+}

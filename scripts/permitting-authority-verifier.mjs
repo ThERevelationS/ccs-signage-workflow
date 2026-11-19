@@ -1,0 +1,535 @@
+#!/usr/bin/env node
+// Authority verifier — the last automation gate. Locality offices arrive from
+// the seed scan at authority_verification_status 'needs_verification'; nothing
+// ever promotes them, so every resolved address dead-ends in human review.
+//
+// This worker applies the same evidence guards the manual verifyEvidence path
+// checks (official source, quoted responsibility, explicit coverage) against
+// the linked profile's office_research.roles and promotes evidence-backed
+// offices to staff_verified with verified_by 'evidence-pipeline' — the status
+// the resolver's verified_roles / apply_allowed gate already accepts.
+//
+// All-or-nothing per office: EVERY role in authority_roles must carry passing
+// evidence or the office stays needs_verification and gets
+// auto_verification_gaps + unproven_roles written for the (<1%) review list.
+// That mirrors the resolver's own .every(role => AUTHORITY_ROLES.has(role))
+// check — a partially-evidenced office can never satisfy the gate anyway.
+//
+// Mirror-first: reads localities + state profile mirrors, CAS-writes through
+// entity_updateMany {id,updated_date}, then mirrorApply so the fleet sees it.
+//
+// Usage: node scripts/permitting-authority-verifier.mjs [--once]
+//        [--slice i --slices n] [--delay-ms 900]
+// Emits auth_verify_* stages to .live-events.jsonl.
+import { openSync, writeFileSync, readFileSync } from 'node:fs';
+import { normalizePermitJurisdictionName } from '../src/components/permitting/jurisdictionPermitBridge.js';
+import { mirrorRead, mirrorApply } from './lib/entity-mirror.mjs';
+import { idleWait } from './lib/event-tail.mjs';
+import { enqueue } from './lib/outbox.mjs';
+import { permitCreds } from './lib/permit-creds.mjs';
+import { ohioCertifiedDept, kyElectricalRoster } from './lib/rosters/certified-depts.mjs';
+import { paceCall } from './lib/read-ledger.mjs';
+
+const APP = '68dfcc5e57bbbc35387da97c';
+const FN = `https://base44.app/api/apps/${APP}/functions`;
+const args = process.argv.slice(2);
+
+// Canonical authority-role vocabulary — staffEntityWrite validates
+// PermitLineItem.office_types against this set. Office records also carry
+// display labels in office_type/office_types ("Permitting", "Building"), so
+// line creates must derive types from authority_roles, never the labels.
+const KNOWN_ROLE_SET = new Set(['sign_permit', 'zoning', 'building', 'electrical', 'electrical_permit', 'electrical_inspection', 'right_of_way', 'historic_review', 'planning', 'transportation', 'other']);
+const ONCE = args.includes('--once');
+const SLICE = args.includes('--slice') ? Number(args[args.indexOf('--slice') + 1]) : 0;
+const SLICES = args.includes('--slices') ? Number(args[args.indexOf('--slices') + 1]) : 1;
+const DELAY = args.includes('--delay-ms') ? Number(args[args.indexOf('--delay-ms') + 1]) : 900;
+const PASS_SLEEP = 10 * 60 * 1000;
+const DRY = args.includes('--dry-run');
+const EVENTS = '.live-events.jsonl';
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ── app plumbing ──
+let token = '';
+async function freshToken() {
+  for (let i = 0; i < 5; i += 1) {
+    const t = await fetch(`${FN}/verifyLogin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: permitCreds().user, password: permitCreds().pass }) }).then((r) => r.json()).catch(() => null);
+    if (t?.token) { token = t.token; return; }
+    await sleep(3000 + i * 3000);
+  }
+  throw new Error('login failed');
+}
+async function call(fn, body, retried = false, serverRetry = 0) {
+  await paceCall(fn);
+  const r = await fetch(`${FN}/${fn}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_token: token, ...body }) });
+  if ((r.status === 401 || r.status === 403) && !retried) { await freshToken(); return call(fn, body, true); }
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 429 || j?.error === 'traffic volume') { await sleep(4000); return call(fn, body, retried, serverRetry); }
+  if ((r.status >= 500 || j?.error === 'user-exception') && serverRetry < 6) {
+    await sleep(3000 * (serverRetry + 1));
+    return call(fn, body, retried, serverRetry + 1);
+  }
+  if (!r.ok) throw new Error(`${fn} HTTP ${r.status}: ${JSON.stringify(j).slice(0, 160)}`);
+  return j;
+}
+
+const evFd = openSync(EVENTS, 'a');
+const emit = (e) => { try { writeFileSync(evFd, JSON.stringify({ t: Date.now(), worker: `authverif${SLICE}`, ...e }) + '\n', { flag: 'a' }); } catch {} };
+
+// ── evidence guards (mirroring verifyEvidence's checks, adapted for
+//    research-extracted roles rather than staff-selected page quotes) ──
+const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+const clean = (s) => String(s || '').trim();
+
+const REJECT_HOST = /facebook|linkedin|twitter|instagram|yelp|wikipedia|blogspot|wordpress|wixsite|weebly|squarespace|google\.com|mapquest|zoominfo|yellowpages|manta|patch\.com|nextdoor/i;
+const NOT_FOUND = /information not found|not available|unknown/i;
+const STOP_WORDS = new Set(['city', 'township', 'village', 'of', 'the', 'county', 'town', 'oh', 'ky', 'ohio', 'kentucky', 'new', 'north', 'south', 'east', 'west', 'upper', 'lower']);
+const nameTokens = (n) => norm(n).split(' ').filter((t) => t.length >= 4 && !STOP_WORDS.has(t));
+function isOfficialSource(url, profile) {
+  const u = clean(url);
+  if (!/^https?:\/\//i.test(u) || REJECT_HOST.test(u) || NOT_FOUND.test(u)) return false;
+  const host = u.replace(/^https?:\/\//i, '').split('/')[0].toLowerCase().replace(/^www\./, '');
+  if (/\.gov$|\.us$|\.oh\.us$|\.ky\.us$|ohio\.gov$|kentucky\.gov$|ky\.gov$/i.test(host)) return true;
+  for (const site of [profile?.website_url, profile?.permitting_url]) {
+    const h = clean(site).replace(/^https?:\/\//i, '').split('/')[0].toLowerCase().replace(/^www\./, '');
+    if (h && (host === h || host.endsWith(`.${h}`) || h.endsWith(`.${host}`))) return true;
+  }
+  // Jurisdiction-name domain — how a human recognizes "cityofdayton.org".
+  const compact = host.replace(/[^a-z0-9]/g, '');
+  return [...nameTokens(profile?.name), ...nameTokens(profile?.county_name)].some((t) => compact.includes(t));
+}
+// Per-role evidence verdict for one research entry (already applicability-positive).
+// A "responsibility quote" must actually talk about permitting work — v1-era
+// extraction stamped footers, nav menus, privacy policies and welcome text as
+// quotes (>=20 chars, no NOT_FOUND words → passed). Requiring topic language
+// rejects boilerplate while keeping real referral/permitting statements.
+const QUOTE_TOPIC = /permit|inspection|licen[cs]e|application|ordinance|enforce|planning|zoning|building|sign\b|electric|right.?of.?way|road depart|roadway|encroach|historic|landmark|plat|subdivis|variance|appeal|code official|certificate|fee schedule|land use/i;
+// Nav-labels ("Ordinances Planning & Zoning") carry topic words but state no
+// responsibility. Require an action/verb — or a "Title: Person" pattern, or
+// enough length to be real prose — before a quote can evidence a role.
+const QUOTE_ACTION = /\b(is|are|was|were|has|have|do|does|shall|must|will|may|can)\b|administ|issu|review|enforc|responsib|approv|inspect|contact|call\b|visit|submit|obtain|requir|process|handl|oversee|maintain|regulat|licens|adopt|provid|manag|coordinat|located/i;
+// "Zoning Zoning Inspector" — an office TITLE, not a responsibility quote. It
+// sneaks past topic+action checks ("Inspector" contains "inspect"). A real
+// quote has content beyond the title vocabulary; stripping every role/agent/
+// glue word from a title-only quote leaves ~nothing.
+const TITLE_WORDS = /permit|inspection|inspector|licen[cs]e|application|ordinance|enforce|planning|planner|zoning|building|sign|electric|right|way|road|encroach|historic|landmark|plat|subdivis|variance|appeal|code|official|certificate|fee|schedule|land|use|department|commission|authority|office|officer|director|administrator|administration|clerk|city|county|township|village|municipal|of|the|for|and|dept|local|individual|or|board|review|agent|contact|staff|safety|public|service|works|division|section|unit|area|state|general|engineer|trustee|surveyor|sanitarian|supervisor|superintendent|manager|assistant|chief|marshal|warden|regional|district|joint|association|council/gi;
+const titleOnly = (q) => clean(q).replace(TITLE_WORDS, ' ').replace(/[^a-z0-9]/gi, '').length < 10;
+const quoteEvidences = (q) => QUOTE_TOPIC.test(q) && !titleOnly(q) && (q.length >= 60 || QUOTE_ACTION.test(q) || /:\s*[A-Z][a-z]+\s+[A-Z]/.test(q));
+// Role↔office coherence: extraction stamps one page's office (zoning contact,
+// license bureau) onto every role. An entry may claim electrical for a zoning
+// inspector — incoherent unless the office name fits the role's department
+// family or the quote itself names the function.
+// (no bare "department|office|city|county" — every office name carries those;
+// coherence must come from role-family words or the quote naming the function)
+const ROLE_DEPT = {
+  sign_permit: /sign|zoning|planning|building|development|community|permit|code|inspect|engineer|administ|clerk|commission/i,
+  zoning: /zoning|planning|building|development|community|permit|code|inspect|commission|administ|clerk/i,
+  building: /building|housing|planning|development|community|permit|code|inspect|zoning|certified/i,
+  electrical_permit: /electr|building|housing|development|community|code|certified|division of industrial|dhbc/i,
+  electrical_inspection: /electr|building|housing|development|community|code|certified|division of industrial|dhbc/i,
+  right_of_way: /street|road|engineer|public works|service|utility|highway|right|way/i,
+  historic_review: /historic|preserv|landmark|architectural|design|certified local/i,
+};
+const ROLE_FUNC = {
+  sign_permit: /sign/i, zoning: /zoning|land use|plat|subdivis/i, building: /building|construct|permit/i,
+  electrical_permit: /electr/i, electrical_inspection: /electr/i,
+  right_of_way: /right.?of.?way|road|street|encroach|highway/i, historic_review: /historic|preserv|landmark|architectural/i,
+};
+function roleEvidence(role, entry, profile) {
+  const gaps = [];
+  const src = clean(entry?.official_source_url);
+  if (!src || !isOfficialSource(src, profile)) gaps.push(`${role}:no_official_source`);
+  const q = clean(entry?.responsibility_quote);
+  if (!q || q.length < 20 || NOT_FOUND.test(q)) gaps.push(`${role}:no_responsibility_quote`);
+  else if (!quoteEvidences(q)) gaps.push(`${role}:quote_off_topic`);
+  const on = clean(entry?.office_name);
+  if (on && ROLE_DEPT[role] && !ROLE_DEPT[role].test(on) && !ROLE_FUNC[role]?.test(q)) gaps.push(`${role}:role_office_mismatch`);
+  // County roles must be unincorporated-only — the "never combine" rule.
+  // Ohio counties' unincorporated territory IS the townships, and county sites
+  // phrase scope as "outside city limits" or put it inside the quote itself —
+  // accept every honest spelling of county-scope, never a municipal claim.
+  if (profile?.type === 'county') {
+    const SCOPE_OK = /unincorporated|township|outside.{0,30}(city|village|incorporat|municipal)|rural|county.?wide|all areas|entire county/i;
+    const area = `${clean(entry?.service_area)} ${clean(entry?.applicability)}`.toLowerCase();
+    if (area && !SCOPE_OK.test(area) && !SCOPE_OK.test(clean(entry?.responsibility_quote))) gaps.push(`${role}:county_not_unincorporated`);
+  }
+  return gaps;
+}
+// One research role entry supplies one role's evidence for one office.
+// Direct path: provider names must substring-match. Stub offices ("Zoning
+// authority", "Sign permit issuer", "City of <Jurisdiction>") carry a role
+// but no real provider name — county-administered / shared-service research
+// (joint planning commissions, county building depts serving villages)
+// can never substring-match those, so they blocked forever with no gap
+// recorded. Fallback accepts research that is tagged county-administered,
+// names the parent county, or names the jurisdiction itself. roleEvidence()
+// gates (official URL, quote, county-unincorporated) still apply downstream.
+const STUB_OFFICE = /sign permit issuer|zoning authority|building dept|permit office|permits?|government|jurisdiction|municipal|permitting/;
+function isStubOffice(officeName, locName) {
+  const key = norm(officeName), locKey = norm(locName);
+  return !key || (locKey && key.includes(locKey)) || STUB_OFFICE.test(key);
+}
+function researchForOffice(profile, officeName, loc, officeRoles = []) {
+  const roles = Array.isArray(profile?.office_research?.roles) ? profile.office_research.roles : [];
+  const key = norm(officeName);
+  const hits = roles.filter((r) => {
+    const rn = norm(r?.office_name || r?.label);
+    return rn && (rn === key || rn.includes(key) || key.includes(rn));
+  });
+  if (hits.length || !isStubOffice(officeName, loc?.name)) return hits;
+  const countyToks = nameTokens(profile?.county_name || loc?.parent_county_name || loc?.county_name || '');
+  const locToks = nameTokens(loc?.name || '');
+  const loose = roles.filter((r) => {
+    const rn = norm(r?.office_name || r?.label);
+    if (!rn) return false;
+    if (/county.administered|county.wide|unincorporated/i.test(`${r?.service_area || ''} ${r?.notes || ''}`)) return true;
+    if (countyToks.length && countyToks.every((t) => rn.includes(t))) return true;
+    if (locToks.length && locToks.every((t) => rn.includes(t))) return true;
+    return false;
+  });
+  if (loose.length) return loose;
+  // Stub offices are role-named placeholders seeded before research exists
+  // ("X Zoning office", "Right-of-way authority"). A role-typed entry for one
+  // of the stub's claimed roles IS the discovered authority — the entry's own
+  // evidence guards (official source, responsibility quote) still apply, and
+  // providerName renames the stub on promotion.
+  if (officeRoles.length) {
+    // Extraction noise can role-type a page's office_name wrong (a zoning
+    // quote scraped off a police page). Wrong-domain providers can't carry
+    // permitting roles — filtering them keeps role-attribution honest.
+    const wrongDept = /police|fire\b|ems\b|sheriff|water\b|sewer|utility|sanitation|parks?\b|recreation|library|school|cemetery|transit|ambulance/i;
+    const byRole = roles.filter((r) => officeRoles.includes(r?.role) && !wrongDept.test(String(r?.office_name || r?.label || '')));
+    if (byRole.length) return byRole;
+  }
+  return loose;
+}
+
+const AUTHORITY_ROLES = new Set(['sign_permit', 'zoning', 'building', 'electrical', 'electrical_permit', 'electrical_inspection', 'right_of_way', 'historic_review', 'planning', 'transportation', 'other']);
+
+async function loadProfiles() {
+  const [oh, ky] = await Promise.all([
+    mirrorRead('profiles-oh', 45 * 60 * 1000, async () => null),
+    mirrorRead('profiles-ky', 45 * 60 * 1000, async () => null),
+  ]);
+  const rows = [...(oh || []), ...(ky || [])];
+  const byId = new Map(), byKey = new Map();
+  for (const p of rows) {
+    if (p?.id) byId.set(p.id, p);
+    const k = `${p?.state}|${normalizePermitJurisdictionName(p?.name || '')}|${normalizePermitJurisdictionName(p?.county_name || '')}`;
+    if (p?.name && !byKey.has(k)) byKey.set(k, p);
+  }
+  return { rows, byId, byKey };
+}
+async function loadLocalities() {
+  return (await mirrorRead('localities', 20 * 60 * 1000, async () => null)) || [];
+}
+
+function profileFor(loc, idx) {
+  if (loc.jurisdiction_profile_id && idx.byId.has(loc.jurisdiction_profile_id)) return idx.byId.get(loc.jurisdiction_profile_id);
+  return idx.byKey.get(`${loc.state}|${normalizePermitJurisdictionName(loc.name || '')}|${normalizePermitJurisdictionName(loc.county_name || '')}`) ||
+    idx.byKey.get(`${loc.state}|${normalizePermitJurisdictionName(loc.name || '')}|`) || null;
+}
+
+async function pass(onlyNames = null) {
+  const [idx, localities] = await Promise.all([loadProfiles(), loadLocalities()]);
+  const only = onlyNames ? new Set(onlyNames.map((h) => `${String(h.name || '').toLowerCase().trim()}|${String(h.state || '').toUpperCase().trim()}`)) : null;
+  // Fresh-first ordering: enrichers append name|state to verify-first.jsonl
+  // the moment evidence lands — re-judging those localities immediately cuts
+  // promotion lag from a full scan position to seconds. Stale entries (>20m)
+  // are dead weight; feed file self-trims.
+  const first = new Set();
+  try {
+    const lines = readFileSync('.audit-work/verify-first.jsonl', 'utf8').trim().split('\n');
+    const fresh = [];
+    for (const l of lines) {
+      try { const e = JSON.parse(l); if (Date.now() - (e.at || 0) < 20 * 60e3) { first.add(`${String(e.name || '').toLowerCase().trim()}|${String(e.state || '').toUpperCase().trim()}`); fresh.push(l); } } catch {}
+    }
+    if (lines.length > 400 || fresh.length !== lines.length) writeFileSync('.audit-work/verify-first.jsonl', fresh.slice(-300).join('\n') + (fresh.length ? '\n' : ''));
+  } catch {}
+  if (first.size) localities.sort((a, b) => Number(first.has(`${String(b.name || '').toLowerCase().trim()}|${String(b.state || '').toUpperCase().trim()}`)) - Number(first.has(`${String(a.name || '').toLowerCase().trim()}|${String(a.state || '').toUpperCase().trim()}`)));
+  emit({ stage: 'auth_verify_pass', detail: `${localities.length} localities · ${idx.rows.length} profiles${first.size ? ` · ${first.size} verify-first` : ''}` });
+  let promoted = 0, gapped = 0, wrote = 0, scanned = 0;
+  const hash = (s) => [...String(s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0);
+  for (const loc of localities) {
+    if (only && !only.has(`${String(loc.name || '').toLowerCase().trim()}|${String(loc.state || '').toUpperCase().trim()}`)) continue;
+    if (SLICES > 1 && Math.abs(hash(loc.id)) % SLICES !== SLICE) continue;
+    const offices = Array.isArray(loc.offices) ? loc.offices : [];
+    const candidates = offices.filter((o) => o?.authority_verification_status === 'needs_verification' && Array.isArray(o?.authority_roles) && o.authority_roles.length);
+    if (!candidates.length) continue;
+    const profile = profileFor(loc, idx);
+    if (!profile) continue; // no repository identity — the sweep/research pipeline owns that gap
+    let changed = false;
+    const okList = [];
+    const next = offices.map((o) => ({ ...o }));
+    for (const o of next) {
+      if (o?.authority_verification_status !== 'needs_verification' || !Array.isArray(o?.authority_roles) || !o.authority_roles.length) continue;
+      scanned += 1;
+      const hits = researchForOffice(profile, o.name, loc, o.authority_roles);
+      if (!hits.length) continue; // research hasn't reached this office yet — normal WIP, not a gap
+      // Repair model: the seed bridge claimed every researched role including
+      // 'unknown'/'not_applicable_candidate' entries. Keep only roles carrying
+      // a potentially_applicable entry that passes the evidence guards;
+      // denied/unproven roles move to unproven_roles + auto_verification_gaps
+      // for the (<1%) review list. An office whose entire set is unproven
+      // stays needs_verification — it contributes nothing to apply_allowed.
+      const proven = [], trimmed = [];
+      let providerName = null;
+      const passingEntries = {};
+      const tiers = {};
+      for (const r of o.authority_roles) {
+        if (!AUTHORITY_ROLES.has(r)) { trimmed.push(`${r}:unknown_role`); continue; }
+        const entries = hits.filter((h) => h?.role === r);
+        const denied = entries.length && entries.every((e) => String(e?.applicability) === 'not_applicable_candidate');
+        if (denied) { trimmed.push(`${r}:research_denied`); continue; }
+        const passing = entries.find((e) => String(e?.applicability) === 'potentially_applicable' && roleEvidence(r, e, profile).length === 0);
+        if (passing) {
+          proven.push(r); passingEntries[r] = passing; providerName = providerName || clean(passing.office_name || passing.label) || null;
+          // MP-5.2 — corroboration tier: distinct evidence hosts backing
+          // this role. ≥2 sources = corroborated; 1 = single-source.
+          const hosts = new Set(entries.filter((e) => String(e?.applicability) === 'potentially_applicable')
+            .map((e) => { try { return new URL(e.official_source_url).host.toLowerCase().replace(/^www\./, ''); } catch { return null; } }).filter(Boolean));
+          // MP-4.3 roster corroboration — an OH BBS-certified dept is a
+          // second source for its own roles; KY electrical roles carry the
+          // DHBC structural fact (all KY electrical inspection is by
+          // state-certified inspectors).
+          if (String(profile.state || '').toUpperCase() === 'OH' && ohioCertifiedDept(profile.name)) hosts.add('ohio-bbs-cert');
+          if (String(profile.state || '').toUpperCase() === 'KY' && /electric/i.test(r)) hosts.add('ky-dhbc');
+          tiers[r] = hosts.size >= 2 ? 'verified' : 'single_source';
+          continue;
+        }
+        const applicable = entries.find((e) => String(e?.applicability) === 'potentially_applicable');
+        if (applicable) trimmed.push(...roleEvidence(r, applicable, profile));
+        else trimmed.push(`${r}:${entries.length ? 'research_unknown' : 'no_research_entry'}`);
+      }
+      if (proven.length) {
+        // MP-5.1 adversarial re-fetch — before promoting, re-GET each distinct
+        // evidence URL and require the quote verbatim in live page text. A
+        // stale/404/moved source demotes that role to `stale_source` instead
+        // of stamping verification on evidence that no longer exists.
+        const checked = new Map(); // url -> 'live'|'dead'
+        const stillProven = [];
+        for (const r of proven) {
+          const e = passingEntries[r] || {};
+          const url = clean(e.official_source_url);
+          const quote = clean(e.responsibility_quote);
+          if (!url || !quote) { stillProven.push(r); continue; }
+          if (!checked.has(url)) {
+            let verdict = 'dead';
+            try {
+              // Browser UA — com.ohio.gov and similar .gov hosts 404 bot UAs,
+              // which stale_source-demoted live BBS roster evidence. A human
+              // sees this page, so the check must fetch what a human gets.
+              const resp = await fetch(url, { signal: AbortSignal.timeout(15000), headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' } });
+              if (resp.ok) {
+                const ct = String(resp.headers.get('content-type') || '');
+                // Binary source (PDF roster like the OH BBS certified list):
+                // verbatim-quote can't apply to a compressed stream — the
+                // claim was verified by harvest-time parse of THIS document,
+                // so document liveness is the correct residual check.
+                if (/pdf|octet-stream/i.test(ct) || /\.pdf([?#]|$)/i.test(url)) verdict = 'live';
+                else {
+                  const text = (await resp.text()).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').toLowerCase();
+                  if (text.includes(quote.slice(0, 60).toLowerCase().replace(/\s+/g, ' ').trim())) verdict = 'live';
+                }
+              }
+            } catch {}
+            checked.set(url, verdict);
+          }
+          if (checked.get(url) === 'live') stillProven.push(r);
+          else trimmed.push(`${r}:stale_source`);
+        }
+        proven.length = 0; proven.push(...stillProven);
+      }
+      if (proven.length) {
+        o.authority_roles = proven;
+        // Stub names ("Zoning authority", "City of <Jurisdiction>") carry no
+        // real provider identity — upgrade to the researched provider name
+        // so the app shows who actually administers the role.
+        if (providerName && isStubOffice(o.name, loc?.name) && norm(providerName) !== norm(o.name)) o.name = providerName;
+        // keep display labels consistent with the repaired role set
+        const RT = { sign_permit: 'Sign permit', zoning: 'Zoning', building: 'Building', electrical: 'Electrical', electrical_permit: 'Electrical permit', electrical_inspection: 'Electrical inspection', right_of_way: 'Right of way', historic_review: 'Historic review', planning: 'Planning', transportation: 'Transportation', other: 'Permitting' };
+        if (Array.isArray(o.office_types)) o.office_types = proven.map((r) => RT[r] || r);
+        if (o.office_type) o.office_type = RT[proven[0]] || o.office_type;
+        o.authority_verification_status = 'staff_verified';
+        o.verified_by = 'evidence-pipeline';
+        o.verified_at = new Date().toISOString();
+        // MP-5.2 — office-level tier: 'verified' only when EVERY proven role
+        // has ≥2 distinct evidence hosts.
+        const tierList = proven.map((r) => tiers[r] || 'single_source');
+        o.corroboration_tier = tierList.every((t) => t === 'verified') ? 'verified' : 'single_source';
+        o.corroboration_tiers = tiers;
+        // W5.1 — completeness flag: single-source promotes only when the record
+        // is COMPLETE. A verified office with zero contact channels stays
+        // verified (the evidence is real) but flags for a contact-fill pass —
+        // it joins the <1% review surface instead of silently shipping thin.
+        const hasContact = ['contact_phone', 'contact_email', 'contact_website', 'contact_address', 'contact_person'].some((f) => String(o[f] || '').trim());
+        if (hasContact) delete o.completeness_flag;
+        else o.completeness_flag = 'no_contact';
+        if (trimmed.length) { o.auto_verification_gaps = trimmed; o.unproven_roles = trimmed.map((g) => g.split(':')[0]); }
+        else { delete o.auto_verification_gaps; delete o.unproven_roles; }
+        o.contact_notes = `${clean(o.contact_notes)} [evidence-pipeline: ${proven.join('+')} verified ${new Date().toISOString().slice(0, 10)} from official sources on ${profile.name}${profile.state ? `, ${profile.state}` : ''}${trimmed.length ? `; trimmed ${trimmed.length} unproven` : ''}]`.trim();
+        promoted += 1; changed = true;
+        // emit only after the write confirms — phantom oks lied last pass
+        okList.push({ office: o.name, roles: proven, trimmed: trimmed.length });
+      } else {
+        const before = JSON.stringify(o.auto_verification_gaps || []);
+        o.auto_verification_gaps = trimmed;
+        o.unproven_roles = trimmed.map((g) => g.split(':')[0]).filter((v, i, a) => a.indexOf(v) === i);
+        if (JSON.stringify(o.auto_verification_gaps) !== before) changed = true;
+        gapped += 1;
+      }
+    }
+    if (changed && !DRY) {
+      try {
+        // Local-first writes: apply my deltas onto the mirror snapshot (loc is
+        // mirror-fresh from this pass) and enqueue the update — the flusher
+        // streams it to the app at a capped rate instead of every promote
+        // hammering staffEntityWrite live. mirrorApply keeps local state true
+        // immediately so later passes/verifier sees the promotion now.
+        const delta = new Map(next.filter((o) => o?.id).map((o) => [o.id, o]));
+        const merged = offices.map((o) => (o?.id && delta.has(o.id) ? { ...o, ...delta.get(o.id) } : o));
+        enqueue({ entity: 'PermitLocality', op: 'update', id: loc.id, data: { offices: merged }, mirror: 'localities', note: `${loc.name}, ${loc.state} — authority promote`, priority: 1 });
+        wrote += 1;
+        mirrorApply('localities', { ...loc, offices: merged });
+        for (const k of okList) {
+          emit({ stage: 'auth_verify_ok', jurisdiction: `${loc.name}, ${loc.state}`, address: `${loc.name}, ${loc.state}`, detail: `${k.office} → ${k.roles.join('+')}${k.trimmed ? ` (trimmed ${k.trimmed})` : ''}` });
+        }
+      } catch (e) {
+        emit({ stage: 'auth_verify_error', jurisdiction: `${loc.name}, ${loc.state}`, detail: String(e?.message || e).slice(0, 140) });
+      }
+      await sleep(DELAY);
+    }
+  }
+  // Pending "apply when verified" requests — the picker's background path.
+  // Once a locality is apply-ready (some office staff_verified for sign_permit
+  // AND some for zoning), its queued work orders get their permit lines here —
+  // the same create shape the Permitting page uses — then the queue clears.
+  if (!DRY && SLICE === 0) await consumePendingApplies(localities);
+  emit({ stage: 'auth_verify_done', detail: `scanned ${scanned} offices · promoted ${promoted} · gapped ${gapped} · wrote ${wrote}` });
+}
+
+const applyReadyOffices = (offices) => {
+  const has = (role) => (offices || []).some((o) => o?.authority_verification_status === 'staff_verified' && (o.authority_roles || []).includes(role));
+  return has('sign_permit') && has('zoning');
+};
+
+async function consumePendingApplies(localities) {
+  const wants = localities.filter((l) => Array.isArray(l?.pending_applies) && l.pending_applies.length);
+  for (const loc of wants) {
+    const fresh = await call('staffDataRead', { entity: 'PermitLocality', query: { id: loc.id }, limit: 1 }).then((r) => (r?.records || r?.data || r?.items || [])[0]).catch(() => null);
+    if (!fresh) continue;
+    const pend = Array.isArray(fresh.pending_applies) ? fresh.pending_applies : [];
+    if (!pend.length) continue;
+    const ready = applyReadyOffices(fresh.offices);
+    if (!ready) emit({ stage: 'pending_apply_wait', jurisdiction: `${fresh.name}, ${fresh.state}`, detail: `${pend.length} job(s) queued — offices not verified yet` });
+    let remaining = [...pend];
+    for (const p of pend) {
+      const woId = String(p?.work_order_id || '');
+      if (!woId) { remaining = remaining.filter((x) => x !== p); continue; }
+      const wo = await call('staffDataRead', { entity: 'WorkOrder', query: { id: woId }, limit: 1 }).then((r) => (r?.records || r?.data || r?.items || [])[0]).catch(() => null);
+      if (!wo) { remaining = remaining.filter((x) => x !== p); continue; }
+      const existing = await call('staffDataRead', { entity: 'PermitLineItem', query: { work_order_id: woId }, limit: 200 }).then((r) => r?.records || r?.data || r?.items || []).catch(() => []);
+      if ((existing || []).some((li) => String(li.locality_id || '') === String(loc.id))) {
+        if (!ready) continue; // lines exist, still unverified — keep the entry queued for the upgrade pass
+        // Lines already on the job — the "add now + auto-verify" path leaves
+        // them marked 'Applied before office verification'. Upgrade those
+        // placeholders with the real verified office data instead of skipping.
+        const mine = existing.filter((li) => String(li.locality_id || '') === String(loc.id));
+        const verifiedOffices = (fresh.offices || []).filter((o) => o?.authority_verification_status === 'staff_verified');
+        let upgraded = 0;
+        for (const li of mine) {
+          if (!/before office verification/i.test(String(li.notes || ''))) continue;
+          const ltypes = Array.isArray(li.office_types) && li.office_types.length ? li.office_types : li.office_type ? [li.office_type] : [];
+          const match = verifiedOffices.find((o) => {
+            const ot = Array.isArray(o.office_types) && o.office_types.length ? o.office_types : o.office_type ? [o.office_type] : [];
+            return ltypes.some((t) => ot.includes(t));
+          }) || verifiedOffices[0];
+          const patch = { notes: `Offices verified ${new Date().toISOString().slice(0, 10)} — permit line auto-updated by the evidence pipeline.` };
+          if (match) {
+            patch.row_name = match.name || li.row_name;
+            patch.office_type = (Array.isArray(match.office_types) && match.office_types[0]) || match.office_type || li.office_type;
+            patch.office_types = Array.isArray(match.office_types) && match.office_types.length ? match.office_types : (match.office_type ? [match.office_type] : li.office_types);
+            patch.locality_office_id = String(match.id || '').trim();
+            patch.steps = (match.workflow_steps || []).map((s) => ({ ...s, value: '', checked: false }));
+          }
+          enqueue({ entity: 'PermitLineItem', op: 'update', id: li.id, data: patch, note: `upgrade pending line — ${wo.client_name || woId}`, priority: 1 });
+          upgraded++;
+        }
+        remaining = remaining.filter((x) => x !== p);
+        emit({ stage: 'pending_apply_done', jurisdiction: `${fresh.name}, ${fresh.state}`, detail: `upgraded ${upgraded} pending line(s) on ${wo.client_name || woId} — offices now verified` });
+        enqueue({ entity: 'WorkOrder', op: 'updateMany', id: woId, query: { id: woId, updated_date: wo.updated_date }, update: { $set: { pending_permit_locality_id: '', pending_permit_locality_name: '' } }, note: `clear pending marker — ${wo.client_name || woId}`, priority: 1 });
+        continue;
+      }
+      const skipKeys = new Set(Array.isArray(p.skip_office_keys) ? p.skip_office_keys : []);
+      const officesToCreate = (Array.isArray(fresh.offices) ? fresh.offices : [])
+        .filter((o, i) => !skipKeys.has(o.id || `office-${i}`))
+        .map((o) => {
+          const roles = (Array.isArray(o?.authority_roles) ? o.authority_roles : []).filter((r) => KNOWN_ROLE_SET.has(r));
+          const declared = Array.isArray(o?.office_types) && o.office_types.length ? o.office_types : o?.office_type ? [o.office_type] : [];
+          const types = roles.length ? roles : declared.filter((t) => KNOWN_ROLE_SET.has(t));
+          return { name: o.name || types[0] || 'Office', office_types: types, office_type: o?.office_type || declared[0] || '', office_id: o.id, steps: (o.workflow_steps || []).map((s) => ({ ...s, value: '', checked: false })) };
+        })
+        .filter((o) => !p.exclude_electrical || !(o.office_types.some((t) => /electrical/i.test(t)) || /electrical/i.test(o.office_type)));
+      const toCreate = officesToCreate.length ? officesToCreate : [{ name: fresh.name || 'Office', office_types: [], office_type: '', office_id: '', steps: [] }];
+      let ok = true;
+      for (const office of toCreate) {
+        // Enqueue through the outbox — the flusher streams creates at the
+        // capped rate. Dedupe already happened above against live lines.
+        const queued = enqueue({
+          entity: 'PermitLineItem', op: 'create',
+          data: {
+            work_order_id: woId,
+            work_order_title: wo.client_name || '',
+            work_order_description: wo.description || '',
+            row_name: office.name,
+            office_type: office.office_type,
+            office_types: office.office_types,
+            locality_id: loc.id,
+            locality_name: fresh.name || '',
+            locality_office_id: String(office.office_id || '').trim(),
+            status: 'active',
+            assigned_to: wo.current_task_assigned_to || wo.assigned_to || '',
+            applied_by: `${p.requested_by || 'staff'} (auto-applied${ready ? ' after verification' : ' — pending verification'})`,
+            applied_date: new Date().toISOString().slice(0, 10),
+            // Lines created before sign+zoning verify carry the same visible
+            // needs-review marker the page's "use anyway" path stamps — the
+            // upgrade pass swaps it for the verified note once evidence lands.
+            ...(ready ? {} : { notes: `Applied before office verification — ${fresh.name || 'this office'} does not have verified sign and zoning offices on file yet. Review this line when verification completes.` }),
+            steps: office.steps,
+            priority: 0,
+          },
+          note: `${fresh.name}, ${fresh.state} → ${wo.client_name || woId}`,
+          priority: 1,
+        });
+        if (!queued) { ok = false; emit({ stage: 'pending_apply_error', jurisdiction: `${fresh.name}, ${fresh.state}`, detail: 'outbox enqueue failed' }); }
+      }
+      if (ok) {
+        emit({ stage: 'pending_apply_done', jurisdiction: `${fresh.name}, ${fresh.state}`, detail: `${toCreate.length} permit line(s) ${ready ? 'applied' : 'added marked needs-review'} to ${wo.client_name || woId} — queued by ${p.requested_by || 'staff'}` });
+        if (ready) {
+          // Verified apply consumes the entry + clears the chip. Unverified
+          // lines stay queued — the next pass upgrades them when evidence lands.
+          remaining = remaining.filter((x) => x !== p);
+          enqueue({ entity: 'WorkOrder', op: 'updateMany', id: woId, query: { id: woId, updated_date: wo.updated_date }, update: { $set: { pending_permit_locality_id: '', pending_permit_locality_name: '' } }, note: `clear pending marker — ${wo.client_name || woId}`, priority: 1 });
+        }
+      }
+    }
+    if (remaining.length !== pend.length) {
+      enqueue({ entity: 'PermitLocality', op: 'update', id: loc.id, data: { pending_applies: remaining }, mirror: 'localities', note: `pending_applies trim — ${fresh.name}, ${fresh.state}`, priority: 1 });
+      mirrorApply('localities', { ...fresh, pending_applies: remaining });
+    }
+  }
+}
+
+async function main() {
+  console.log(`[auth-verifier] slice ${SLICE}/${SLICES} ${ONCE ? 'once' : 'loop'} — evidence-based staff_verified promotion`);
+  await freshToken();
+  do {
+    try { await pass(); } catch (e) { emit({ stage: 'auth_verify_error', detail: String(e?.message || e).slice(0, 200) }); console.error('[auth-verifier] pass error:', e?.message || e); }
+    // Trigger-aware idle: backfilled offices wake a targeted scan within
+    // ~20s; the full pass still runs on the 10-min schedule as backstop.
+    if (!ONCE) await idleWait(PASS_SLEEP, 'verify', async (hints) => {
+      emit({ stage: 'auth_verify_trigger', detail: `${hints.length} hint(s) — targeted verify now` });
+      await pass(hints);
+    }, { emit });
+  } while (!ONCE);
+}
+main();

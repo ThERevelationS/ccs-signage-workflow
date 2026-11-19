@@ -1,0 +1,7 @@
+{
+  "stdout": "src/pages/EstimateDetail.jsx\nsrc/components/estimator/estimateCreationService.js\nsrc/components/estimator/DuplicateEstimateDialog.jsx\n---\nsrc/components/estimator/aio/MergeEstimateDialog.jsx:52:    () => (Array.isArray(secondary?.line_items) ? secondary.line_items : []),\r\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 940
+}

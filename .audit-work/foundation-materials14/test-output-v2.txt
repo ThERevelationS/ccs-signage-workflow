@@ -1,0 +1,15 @@
+=== node --check ===
+check_exit=0
+=== SUITE ===
+ok missing concrete: unavailable option + saved cash + zero callbacks
+ok scoped lines: excavation 0 -> $0.00; absent -> Not saved
+ok rebar manual0 bypass via real calc; inactive forming disabled option; missing active form blocked
+ok controlled override: 0 applies, empty->null, Clear->null, unit labels
+ok delivery unavailable: saved mix/admix IDs visible+disabled, all inputs disabled, nulls Not saved
+ok saved trucks: 0 -> $0.00, nonzero shown, unknown -> Not saved
+ok frozen free-bag 45/cost0 BOM row + delivery order (saved) row
+ok BOM mixed: resolved groups = ONE case1; blocked f1 saved rows; no dup; footer flag
+ok empty BOM msg + all-zero Totals show real zeros; flagged grand Pricing unavailable
+PASS material-ui passed=9 failed=0
+=== LINT ===
+lint_exit=0

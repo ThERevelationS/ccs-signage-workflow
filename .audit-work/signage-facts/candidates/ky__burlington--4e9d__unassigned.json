@@ -1,0 +1,968 @@
+{
+ "jurisdiction_id": "6ac1a1ba3a7678a9f9344e9d",
+ "jurisdiction_name": "Burlington",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "1. Applications for a free - standing sign must include a site plan of the property indicating the location of the proposed sign on the property with respect to the right - of - way lines and the property lines. Indicate length of road frontage(s). 2. Applications for a building mounted sign must include a plan indicating the width of the building frontage on the street or, in the case of a multi - tenant building, the portion of the building to be occupied by the applicant. 3. Plans for all applications must include scaled drawings indicating the total area of the proposed sign and the total height of the sign if it is a free - standing sign. 4. Plans must include a written description of the proposed sign including the type of the sign and supporting structure, method of illumination (if any), and construction materials to be used. 5. Applications must include the property owners signa",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "type",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 16,
+   "source_sha256": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880",
+   "source_document_id": null,
+   "source_title": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Checklists/SignPermit_checklist.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Free - Standing Signs and Monument Signs $250.00 if sign is between 0 - 50 sq. ft. in size (flat fee for each sign) $375.00 if sign is between 51 - 100 sq. ft. in size (Section 3408.6) $425.00 if sign is more than 100 sq. ft. in size Incidental Electronically Changeable Message Sign $50.00 plus applicable building mounted or free - (Sections 3408.5.A.2.h and 3408.5.B.2.h) standing/monument signs fees above Temporary Advertising Display Permits $45.00 for each permit (Section 3409) Electronically Changeable Message Signs Conditional Use Permit Required (see fee schedule) (Section 3408.5) PLUS $200.00 if sign is less than 50 sq. ft. in size $375.00 is sign is equal to or greater than 50 sq. ft. In size Small Community Overlay District Signs $50.00 is sign is between 0 - 32 sq. ft. in size (Building Mounted and Free - Standing Signs) $80.00 is sign is between 33 - 50 sq. ft. in size (Sectio",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "illumination",
+    "temporary",
+    "type",
+    "authority",
+    "process"
+   ],
+   "weight": 15,
+   "source_sha256": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880",
+   "source_document_id": null,
+   "source_title": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Checklists/SignPermit_checklist.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Temporary Advertising Display Page 3 SECTION 3409 TEMPORARY ADVERTISING A. Temporary devices utilized for advertising or attracting attention to a permitted use in Commercial or, Employment, or Recreation districts , when not part of a sign , shall be permitted only under the following rules and procedures: 1. A Temporary Advertising Permit shall be obtained prior to the placement of any combination of banners, poster, pennants, flags, ribbons, streamers, spinners, or other similar moving devices, as well as strings of lights or spot lights. The procedure for ob taining a Temporary Advertising Display Permit shall be the same as the procedure for obtaining a Sign Permit a except that Temporary Advertising Display Permits must contain the dates the advertising devices will be utilized. 2. A Temporary Advertising Display permit shall allow the use of temporary advertising devices for any e",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "process"
+   ],
+   "weight": 15,
+   "source_sha256": "89b66bf9154501386c6aa73f463d9845881041b2ef0fb49ea9d60ab51c083ef2",
+   "source_document_id": null,
+   "source_title": "89b66bf9154501386c6aa73f463d9845881041b2ef0fb49ea9d60ab51c083ef2.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Applications/TAD.pdf"
+  },
+  {
+   "page": 29,
+   "snippet": "25 e. Building Mounted Signs - Building mounted signs shall be permitted for commercial, office and similar uses in the UTC, UNO and UC zone districts. One (1) building mounted sign is permitted for each building facade for a total of three (3) signs. Buildings that contain more than one tenant are permitted one (1) sign for each tenant. (1) Size - The maximum size of the sign, which is calculated by drawing a rectangle around the entire sign area including all lettering and graphics, shall not exceed twenty-four (24) square feet. (2) Height - Individual letters shall not exceed twenty-four (24) inches in height. (3) Location - signs shall not exceed the height or width of the building nor be roof-mounted. f. Projecting Signs - are permitted in place of any building mounted sign in accordance to Section 3460 - 2. of the Boone County Zoning Regulations . g. Exit/Entrance and Drive Thru Di",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "type"
+   ],
+   "weight": 14,
+   "source_sha256": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d",
+   "source_document_id": null,
+   "source_title": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Union%20Town%20Plan%202000/2000UnionTownPlan.pdf?t=202409061115000"
+  },
+  {
+   "page": 61,
+   "snippet": "Construction Standards Monument Signs The base and sides of the sign shall be constructed with a masonry product (excluding smooth or textured concrete block). The top of the sign shall have an architectural feature or finish, such as a gable, arch, or pediment. Single panel plexi-faced cabinets shall not be permitted. Building Mounted Signs Board signs, graphics painted directly on the building, manually changeable copy, electronically changeable copy, plexi-faced panels, internally illuminated awnings, firmly structured awnings with an “inflated” or plastic appearance, and similar signs shall not be permitted unless specifically approved through a Design Review, Concept Development Plan, or Special Sign District application. (C) RESIDENTIAL USES Refer to Sections 3410 and 3411 of the Boone County Zoning Regulations. ADMINISTRATION As stated previously, all proposals that meet the Speci",
+   "tags": [
+    "sign",
+    "permit_required",
+    "illumination",
+    "prohibited",
+    "process",
+    "type"
+   ],
+   "weight": 13,
+   "source_sha256": "82d496de4e4dd7b09d045d2071c29a418d698893e8220ba53782b41e9d7237a6",
+   "source_document_id": null,
+   "source_title": "82d496de4e4dd7b09d045d2071c29a418d698893e8220ba53782b41e9d7237a6.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/2013HDStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 54,
+   "snippet": "50 For the purpose of the Graves Road Special Sign District, the following standards shall apply: 1. All sections of Article 34 not otherwise replaced below; 2. Freestanding Signs - A density of one (1) architectural freestanding sign which identifies a shopping center, mixed use commercial, non - residential subdivision, planned development, or single - use non - residential development shall be permitted in accordance with the following standards: a. Road frontage must be 200 feet or greater. b. The sign shall not exceed 20 feet in height. c. The maximum size of the sign shall be no more than one (1) square foot of sign area per line al foot of road frontage along the street frontage where the sign is to be located. No architectural freestanding sign shall exceed one hundred fifty ( 15 0) square feet in area. d. The base of the sign shall be constructed of materials, colors, and design",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "type"
+   ],
+   "weight": 12,
+   "source_sha256": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0",
+   "source_document_id": null,
+   "source_title": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/I275GravesRdInterchangeStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 56,
+   "snippet": "52 iii. Building mounted signage shall not be permitt ed in residential developments. Exceptions are professional name plates, addresses, and building numbers that are six (6) square feet or less . b. Permitted Exceptions to the building mounted signage regulations found in Section 3413 of the Boone County Zoning Regulations are as follows: i. Projecting signs shall be permitted when a main building entrance is in close proximity to a street, private access drive, or shared private development street. Projecting signs will not be treated as one of the three pe rmitted sign areas on a primary or secondary facade but the sign area shall be factored into the total square footage that is permitted on that given facade. The maximum size of a projecting sign shall not be more than 32 square feet in size. Projecting s igns shall have a minimum clearance of 10 feet over sidewalks and shall not b",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "type"
+   ],
+   "weight": 12,
+   "source_sha256": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0",
+   "source_document_id": null,
+   "source_title": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/I275GravesRdInterchangeStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 60,
+   "snippet": "The base and sides of the sign shall use construction materials and design details that match the dominant construction materials of the principal building. The top of the sign shall have an architectural feature or finish, such as a gable, arch, or pediment. Single panel plexi-faced cabinets shall not be permitted. Building Mounted Signs Channel letters, sandblasted redwood, individual pin mounted letters, neon copy, neon or L.E.D. accent bands, fabric awnings, and similar signs as determined by the Zoning Administrator shall be permitted. Board signs, graphics painted directly on the building, manually changeable copy, electronically changeable copy, plexi-faced panels, internally illuminated awnings, firmly structured awnings with an “inflated” or plastic appearance, and similar signs shall not be permitted unless specifically approved through a Design Review, Concept Development Plan",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "type",
+    "process"
+   ],
+   "weight": 12,
+   "source_sha256": "82d496de4e4dd7b09d045d2071c29a418d698893e8220ba53782b41e9d7237a6",
+   "source_document_id": null,
+   "source_title": "82d496de4e4dd7b09d045d2071c29a418d698893e8220ba53782b41e9d7237a6.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/2013HDStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 27,
+   "snippet": "23 20. Raised curbs are required on all streets. SECTION 2570 Other Pertinent Articles of the Boone County Zoning Regulations Landscaping areas and provisions in both incorporated and unincorporated areas shall be constructed according to Article 36, Landscaping, of the Boone County Zoning Regulations . Article 37 shall not apply to lands within the Union Town Plan study area. SECTION 2580 Union Town Plan Special Sign District An approximate 1,850 acre site located in the City of Union and unincorporated Boone County as defined in the 2000 Union Town Plan . The following sections are intended to create a harmonious sign package for the Union Commercial (UC), Union Town Center (UTC), Union Neighborhood Office (UNO) and the Union Town Overlay (UTO) districts while providing for the proper identification of all developments. Signage in these districts is not subject to review by the Plannin",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 12,
+   "source_sha256": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d",
+   "source_document_id": null,
+   "source_title": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Union%20Town%20Plan%202000/2000UnionTownPlan.pdf?t=202409061115000"
+  },
+  {
+   "page": 1,
+   "snippet": "One (1 ) cop y of submitted drawings are required An application consists of all fees paid in full, submitted drawings, and a completed application form The information on the drawings shall contain the following items: (a) location of proposed sign(s); (b) height of proposed sign(s); (c) dimensions of sign or signage area; (d) type of illumination; and (e) type of construction material SECTION A : (To be completed by applicant) 1 . Name of Business : 2 . Location of Business : 3. Current Owner : Address: City State Zip Code Phone Number: Fax Number: Email: 4. Applicant: Address: City State Zip Code Phone Number: Fax Number: Email: 5. Proposed Signs A. Sign 1 (1) Type of Sign (check one) Canopy Menu Board (drive through) Directional Monument (free standing ) Electronic Message Board/ Architectural Free Standing Display Screen Other: (2) Height of Proposed Sign (feet) : (3) Area of Propos",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d",
+   "source_document_id": null,
+   "source_title": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Applications/SignPermit.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Sign Permit Page 4 (4) Is this a face change : Yes No (5) Linear feet of building width, or lease space, on which the sign will be mounted (for building mounted signs only): (6) Linear feet of lot frontage along the road where the sign will be visible: (7) Is the sign replacing an existing sign: Yes No If yes, indicate the height (in feet) and sign area (in square feet) of the existing sign: (8) Are there any other signs of this type on the building (or lease area) or on the property: Yes No If yes, indicate the number, height (in feet), and sign area (in square feet) for each sign: G. Sign 7 (1) Type of Sign (check one) Canopy Menu Board (drive through) Directional Monument (free standing) Electronic Message Board/ Architectural Free Standing Display Screen Other: (2) Height of Proposed Sign (feet): (3) Area of Proposed Sign (square feet): (4) Is this a face change: Yes No (5) Linear fe",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d",
+   "source_document_id": null,
+   "source_title": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Applications/SignPermit.pdf"
+  },
+  {
+   "page": 55,
+   "snippet": "51 development (except for the lot where the above referenced architectural free - standing sign is located), shall be permitted a density of one (1) on - premises monument sign for the purpose of identifying the tenant(s) on the lot based on the following standards: a. The sign shall not exceed eight (8) feet in height. b. The maximum size of the sign shall be 1 square foot of sign per linear foot of road frontage but not to exceed sixty (60) square feet in area. c. The base and sides of the sign shall use construc tion materials and design details that match the outlot building. d. The top of the sign shall have an architectural feature or finish, such as a gable, arch, or pediment. e. P lexi - faced cabinets shall not be permitted. f. Manually changeable copy , frequently chan ging electronically changeable copy, board signs, plexi - faced panels, and similar signs shall not be permit",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "type"
+   ],
+   "weight": 11,
+   "source_sha256": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0",
+   "source_document_id": null,
+   "source_title": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/I275GravesRdInterchangeStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 57,
+   "snippet": "the exterior wall materials. Color schemes shall use at least two colors to highlight building features and details, create contrast, and to avoid monotony and starkness in the overall building design. A consistent color scheme shall be provided on all facades so that the appearance of a rear or service side of the building is minimized. 8) Roof Types and Shapes: Parapet designs which have a defined cornice line and pitched roofs are permitted. Pitched roof forms shall appear complete and symmetrical when viewed from public vantage points both on and off the subject site. Mansard or other “stage set” type designs are not permitted. 9) Screening, Accessory Structures, and Retaining Walls: Mechanical Equipment Screening: All mechanical equipment shall be screened. Ground mounted equipment shall be screened either with landscaping or enclosed with an enclosure structure which uses the same ",
+   "tags": [
+    "sign",
+    "permit_required",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "82d496de4e4dd7b09d045d2071c29a418d698893e8220ba53782b41e9d7237a6",
+   "source_document_id": null,
+   "source_title": "82d496de4e4dd7b09d045d2071c29a418d698893e8220ba53782b41e9d7237a6.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/2013HDStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 58,
+   "snippet": "through either the Design Review, Concept Development Plan, Variance, or Special Sign District application processes (see Administrative Section for more information). These regulations strongly encourage monument style signage and building mounted signage. Architectural freestanding signs are permitted to a limited degree for shopping centers. It should be noted that some properties within the Study Area are part of Special Sign Districts or Planned Development (PD) approvals that allow alternative signage. Property owners may continue to follow existing Sign District or Planned Development approvals or exercise the option of bringing their sites in compliance with these Special Sign Regulations. These regulations are organized in terms of different types of development, including commercial, office and industrial, and residential development. These regulations further address freestand",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "process",
+    "type",
+    "penalties"
+   ],
+   "weight": 11,
+   "source_sha256": "82d496de4e4dd7b09d045d2071c29a418d698893e8220ba53782b41e9d7237a6",
+   "source_document_id": null,
+   "source_title": "82d496de4e4dd7b09d045d2071c29a418d698893e8220ba53782b41e9d7237a6.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/2013HDStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 21,
+   "snippet": "17 Concrete foundations can be exposed at a minimum of two feet but screened with landscaping. b. Garage/Loading/Unloading Doors - If the dwelling unit contains an attached garage or the principle structure contains a loading/unloading area, the garage or loading/unloading doors shall not face the road on which the principle structure faces and in the case of a single-family dwelling unit, the garage wall shall be extended or recessed at least two (2) feet from the front facade. This garage wall shall contain at least two (2) windows giving the garage an appearance of being a finished room within the dwelling unit. c. Entrance - All buildings shall have their main entrance on the primary street with an equally defined rear entry from the parking area. d. Building Length - No building which fronts on to current Mt. Zion Road, proposed Mt. Zion Road, Hathaway Road, old U.S. 42 and new U.S.",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "penalties",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d",
+   "source_document_id": null,
+   "source_title": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Union%20Town%20Plan%202000/2000UnionTownPlan.pdf?t=202409061115000"
+  },
+  {
+   "page": 2,
+   "snippet": "Sign Permit Page 2 (for building mounted signs only): (6) Linear feet of lot frontage along the road where the sign w ill be visible: (7) Is the sign replacing an existing sign : Yes No If yes, indicate the height (in feet) and sign area (in square feet) o f the existing sign : (8) Are there any other signs of this type on the building (or lease area) o r on the property: Yes No If yes, indicate the number, height (in feet), and sign area (in square feet ) for each sign: B. Sign 2 (1) Type of Sign (check one) Canopy Menu Board (drive through) Directional Monument (free standing) Electronic Message Board/ Architectural Free Standing Display Screen Other: (2) Height of Proposed Sign (feet): (3) Area of Proposed Sign (square feet): (4) Is this a face change : Yes No (5) Linear feet of building width, or lease space, on which the sign will be mounted (for building mounted signs only): (6) Li",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 10,
+   "source_sha256": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d",
+   "source_document_id": null,
+   "source_title": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Applications/SignPermit.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Sign Permit Page 3 D. Sign 4 (1) Type of Sign (check one) Canopy Menu Board (drive through) Directional Monument (free standing) Electronic Message Board/ Architectural Free Standing Display Screen Other: (2) Height of Proposed Sign (feet): (3) Area of Proposed Sign (square feet): (4) Is this a face change : Yes No (5) Linear feet of building width, or lease space, on which the sign will be mounted (for building mounted signs only): (6) Linear feet of lot frontage along the road where the sign will be visible: (7) Is the sign replacing an existing sign: Yes No If yes, indicate the height (in feet) and sign area (in square feet) of the existing sign: (8) Are there any other signs of this type on the building (or lease area) or on the property: Yes No If yes, indicate the number, height (in feet), and sign area (in square feet) for each sign: E. Sign 5 (1) Type of Sign (check one) Canopy M",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 10,
+   "source_sha256": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d",
+   "source_document_id": null,
+   "source_title": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Applications/SignPermit.pdf"
+  },
+  {
+   "page": 59,
+   "snippet": "Up to 50% of the sign area may be used as manually changeable copy display. Any proposed manually changeable copy display(s) shall be located beneath fixed copy signs. Monument Signs The base and sides of the sign shall use construction materials and design details that match the dominant construction material of the principal building. The top of the sign shall have an architectural feature or finish, such as a gable, arch, or pediment. Single panel plexi-faced cabinets shall not be permitted. 2. INDIVIDUAL TENANT SPACES WITHIN COMMERCIAL/RETAIL/SHOPPING CENTERS Anchor tenants over 40,000 square feet in area shall be permitted one building mounted sign on each facade that faces a public street or main development driveway. However, no more than two such signs shall be permitted. The permitted size of the building mounted signs shall be two square feet for each lineal foot of tenant spac",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "prohibited",
+    "type",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "82d496de4e4dd7b09d045d2071c29a418d698893e8220ba53782b41e9d7237a6",
+   "source_document_id": null,
+   "source_title": "82d496de4e4dd7b09d045d2071c29a418d698893e8220ba53782b41e9d7237a6.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/2013HDStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 28,
+   "snippet": "24 (1) Display - Fifty percent (50%) or more of the sign area shall display the name of the development. No greater than fifty (50%) of the sign area can identify individual tenants or out-lot tenants of the development. (2) Construction - Monument style with a brick or stone base. (3) Size - Sixty (60) square feet or split into two (2) signs at a maximum size of 30 square feet each. This dimension includes all brick, stone and masonry areas. (4) Height - Six (6) feet high from ground to top of sign which includes the base and additional brick, stone or masonry areas. (5) Location - Sign must be located outside of any vehicular sight triangle and at least five (5) feet from any property line. Signs must be located in a landscaped planting area. c. Monument Identification Signs - Individual businesses, offices, places of worship, schools, civic associations, libraries, museums, social clu",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "billboard",
+    "temporary"
+   ],
+   "weight": 10,
+   "source_sha256": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d",
+   "source_document_id": null,
+   "source_title": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Union%20Town%20Plan%202000/2000UnionTownPlan.pdf?t=202409061115000"
+  },
+  {
+   "page": 49,
+   "snippet": "45 *NOTE: : . Use percentages shall be calculated as follows: 1) The use percentages shall be calculated separately for that portion of the GR - BP district located to the east of the centerline of new Graves Road (KY - 495) (currently 202 acres) and that portion to the west of new Graves Road (currently 208 acres); 2) At the time of submission, the applicant shall identify the acreage of development for all uses encompassed within the limits of the application. 3) The use percentages shall be applied at the time of final approval of a concept plan, site plan, or tenant finish per mit. Accessory Uses Uses, buildings, and structures customarily incidental and subordinate to any of the permitted uses including : 1. Customary accessory buildings and uses; 2. On - site daycare; 3. Automatic t eller m achines ; 4. Drive - through facility operated in conjunction with a permitted use ; 5. Fenc",
+   "tags": [
+    "sign",
+    "area",
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0",
+   "source_document_id": null,
+   "source_title": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/I275GravesRdInterchangeStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 51,
+   "snippet": "47 7. Recycling c ollection c ontainers ; 8. Signs . Conditional Uses The following uses and appropriate accessories are subject to the approval and qualifications of the Board of adjustment and Zoning Appeals provided that the activity is an integral and subordinate function of a permitted use or the activity will not contradict the character of the district and the arrangement of uses, buildings, or structures will be compatible with the organization of permitted and accessory uses to be protected in the district : 1. H orse related uses, including riding and boarding stables, as defined by KRS 100.111(2)(c). Intensity The intensity of non - residential uses in a Graves Road Commercial (GR - C) district shall not exceed 15,000 square feet of gross floor area per acre of land . This intensity is derived by using the total square footage of non - residential uses vs. the total acreage of",
+   "tags": [
+    "sign",
+    "area",
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0",
+   "source_document_id": null,
+   "source_title": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/I275GravesRdInterchangeStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 57,
+   "snippet": "53 4. 4 DEVELOPMENT STANDARDS The following development standards apply to all development proposals within the three Graves Road Districts (GR - BP, GR - C, GR - R). Deviation from these requirements may be considered by the Zoning Administrator provided the proposal will (1) create an equ ivalent or superior solution to the requirement in question and (2) not compromise the character of the standards intended by the normal requirement. Variances may be requested per the Board of Adjustment procedures in the Boone County Zoning Regulations . The standards in the currently adopted Boone County Zoning Regulations will be followed for topics not specifically addressed in this Study. Building Setbacks : 1. Front and Corner Side Yards: a. 30 feet minimum along new Graves Road (KY 495) adjacent to highway on/off ramps; 15 feet minimum elsewhere on KY 495 and Petersburg Road (KY 20); 10 feet m",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 9,
+   "source_sha256": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0",
+   "source_document_id": null,
+   "source_title": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/I275GravesRdInterchangeStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 1,
+   "snippet": "Boone County Planning Commission will issue a 911 address once the tower or pole is approved. SECTION A : (To be completed by applicant) 1. Application Type A. Cellular Antenna Tower – Public Hearing Process ($2,500.00) One (1) copy of the Uniform Application submittal requirements shall be furnished (see Section 3197 of the Boone County Zoning Regulations ) Check One: Newly proposed cellular antenna tower (permanent and temporary structures) Proposed modification to an existing tower, public utility tower, athletic stadium light pole or co - location on a building or other tall structure and all preferred approval criteria are not met (see Table 1 in Section 3197 of the Boone County Zoning Regulations ) B. Cellular Antenna Tower – Administrative Process ($1.250.00) One (1) copy of 11” x 17” plans (cover page, tower location, tower elevations, lease compound) stamped by a KY Professional",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "7ea68d1eb70ab84766b0593c0125d1ac13600ce44dd8519b56521520496cbfce",
+   "source_document_id": null,
+   "source_title": "7ea68d1eb70ab84766b0593c0125d1ac13600ce44dd8519b56521520496cbfce.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Applications/UniformWireless.pdf"
+  },
+  {
+   "page": 19,
+   "snippet": "15 14. Churches or religious assembly uses, including apartment dwelling units related to the religious use; 15. Nursery and day care centers; 16. Passive open space including general, leisure, ornamental and other parks, spaces, trails, bikeways, pedestrian mall systems and similar uses; SECTION 2532 Accessory Uses Accessory uses and structures customarily incidental and subordinate to any of the permitted uses including: 1. Accessory uses for a dwelling unit including: a. Private garages and parking; b. Structures such as fences, walls, and satellite dishes; c. Buildings such as storage sheds, private greenhouses and gazebos; d. Storage of a recreational vehicle or unit; e. Private recreational courts, fields, swimming pools, or similar recreational activities; and 2. Signage (according to this order and Article, Section 3451); 3. Parking (according to Article 33 and Section 2586-9. St",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 9,
+   "source_sha256": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d",
+   "source_document_id": null,
+   "source_title": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Union%20Town%20Plan%202000/2000UnionTownPlan.pdf?t=202409061115000"
+  },
+  {
+   "page": 1,
+   "snippet": "Three (3) copies of submitted drawings are required A separate sign permit needs to be obtained for any exterior signage SECTION A : (To be completed by applicant) Fee: $200.00 for tenant Finish for new office, retail, industrial, etc. uses 1. Name of Business : 2. Applicant: 3. Mailing Address: City State Zip Code Phone Number: Fax Number: Email: 4. Location of Business : City State Zip Code 5. Detailed Description of Business : 6. Gross square footage of overall tenant space : 7. If business is an eating/drinking establishment, indicate the number of indoor and outdoor seats: 8. If business is an industrial, warehouse, or manufacturing use, indicate: A. Gross square footage of office areas: B. Number of employees on maximum shift in warehouse and/or production areas : C. Explain any chemicals/quantities stored on site 10 . Applicant’s Signature: TENANT FINISH BOONE COUNTY PLANNING COMM",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "illumination"
+   ],
+   "weight": 9,
+   "source_sha256": "f3201126e030d73fdf3da59c6f6c0176d0f637547202599732b4d164ddd7b552",
+   "source_document_id": null,
+   "source_title": "f3201126e030d73fdf3da59c6f6c0176d0f637547202599732b4d164ddd7b552.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Applications/TenantFinish.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Planning Commission . The minimum Development Plan requirements for applications involving the Industrial Three District (I - 3) are listed in ARTICLE 11 . 1. Minimum Requirements i. General Site Characteristics - ownership, topography, soils, drainage, vegetation and other physical characteristics. ii. Transportation Patterns - public and private roads and internal and external circulation patterns. iii. Land Use Characteristics - existing and proposed land uses, open spaces , impervious surfaces including streets , parking areas, structures and buildings (general description of size, area, intensities / densities , and height ). iv. Utilities and Infrastructure . v. Relationship of Proposed Zone Change with Comprehensive Plan - how specifically the proposed zone change would conflict, conform, compliment or otherwise affect the Comprehensive Plan as well as any special studies that are",
+   "tags": [
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c",
+   "source_document_id": null,
+   "source_title": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Checklists/ZoningMapAmendment_checklist.pdf"
+  },
+  {
+   "page": 54,
+   "snippet": "reduced to 10 feet for secondary frontages along local or subcollector roadways. Such approval shall be granted through the Design Review process 2) Landscape/Green Space Area: Landscaping shall be provided in accordance with Article 36 “Landscaping” of the zoning regulations. Additionally, a minimum of 22 percent of the overall site area shall be devoted to landscaping as permanent green space. The computation of this green space ratio can include areas such as landscaped parking lot islands and peninsulas, landscape areas along street frontages and building frontages, buffer yards, water features and sculptural elements, and storm management facilities which are integrally designed as part of the landscape. Storm water management facilities that are placed in front yards or corner side yards must be designed as an integral, visual part of the site’s landscape. 3) I-71/75 Streetscape: T",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "82d496de4e4dd7b09d045d2071c29a418d698893e8220ba53782b41e9d7237a6",
+   "source_document_id": null,
+   "source_title": "82d496de4e4dd7b09d045d2071c29a418d698893e8220ba53782b41e9d7237a6.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/2013HDStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 11,
+   "snippet": "7 The 2000 Union Town Plan September, 2000 Amendments to the Boone County Zoning Regulations ARTICLE 25 UNION TOWN PLAN SECTION 2500 Union Town Plan Zoning Districts Purpose and Intent Zoning implementation methodology includes two main courses of action. First, three new zoning districts are created, the Union Town Center (UTC), the Union Commercial (UC), and the Union Neighborhood Office (UNO) zones. Secondly, a Union Town Overlay District (UTO) is established to provide an incentive to develop the residential, recreation, and public facilities land uses of the Study Area in a certain manner. Both methods establish the potential for “higher” or more dense development in most areas than the existing zoning would allow under the current regulations. The potential for a shortened review process and the density represented in the Plan are the incentives for developers to develop according ",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d",
+   "source_document_id": null,
+   "source_title": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Union%20Town%20Plan%202000/2000UnionTownPlan.pdf?t=202409061115000"
+  },
+  {
+   "page": 14,
+   "snippet": "10 52. Photographic and stenographic services; 53. Research, development and testing services of an office nature; 54. Business colleges or schools; 55. Retail sale of office supplies and equipment; 56. Generic professional offices; 57. Video rental and sales; and 58. Storm water management facilities designed in accordance with Article 3 of the Boone County Subdivision Regulations (site plan review required). 59. Expansion of existing auto repair uses, provided the expansion meets the requirements of the Union Town Plan . SECTION 2512 Accessory Uses Accessory uses and structures customarily incidental and subordinate to any of the permitted uses including: 1. Accessory uses for a dwelling unit including: a. Private garages and parking; b. Structures such as fences, walls, and satellite dishes; c. Buildings such as storage sheds, private greenhouses and gazebos; d. Storage of a recreatio",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited",
+    "temporary",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d",
+   "source_document_id": null,
+   "source_title": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Union%20Town%20Plan%202000/2000UnionTownPlan.pdf?t=202409061115000"
+  },
+  {
+   "page": 26,
+   "snippet": "22 5. Vinyl and Aluminum siding is prohibited on all facades that are visible from the street excluding rear-accessed alleys. Houses like a traditional cape cod where windows extend out from the roof may use siding on the portions of the windows that extrude from the roof. 6. All houses must have a porch, or at the minimum, brick steps leading up to the front of the house. 7. An ornamental fence shall be designed and used throughout the entire development. The front yards of all houses must contain at least ten feet of this fencing. 8. An ornamental house light (attached and detached from the house on a pole) must be designed and used on all houses within the development. 9. All houses must have a pitched roof. Landscaping/Green Space 10. All streets must have street trees no less than 20 feet apart. 11. Street trees must be at least 4\" in diameter. 12. At least 10% of the total acreage ",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 8,
+   "source_sha256": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d",
+   "source_document_id": null,
+   "source_title": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Union%20Town%20Plan%202000/2000UnionTownPlan.pdf?t=202409061115000"
+  },
+  {
+   "page": 82,
+   "snippet": "77 Emergency Telecommunications Telecommunications, or the transmission of signals containing voice or data over a distance, is essential for public safety. Beginning in 2015, Boone, Campbell, and Kenton Counties engaged in a 2-year study of their emergency communications systems and concluded that their current system and its technology is unsatisfactory in coverage, poor signal strength in large buildings, and lacks the ability for law enforcement and fire agencies to communicate directly with each another. As a result of these findings, in 2017 the Boone County Fiscal Court, Campbell County Consolidated Dispatch Board, and Kenton County Fiscal Court contracted to have a new 700/800 MHz P25 radio communication system designed, built, and implemented. This system, due to go on-line in June 2019, would provide the best available technology to meet the short and long-term needs of public ",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "90d267c1653cd5285500d25cbac5a6d0246964a3d92492b53561583677c93e41",
+   "source_document_id": null,
+   "source_title": "90d267c1653cd5285500d25cbac5a6d0246964a3d92492b53561583677c93e41.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Comprehensive%20Plan/Our%20Boone%20County%202040%20combined.pdf?t=202409061114350"
+  },
+  {
+   "page": 3,
+   "snippet": "Temporary Storage Trailer Page 3 SECTION 3506 TEMPORARY STORAGE TRAILER PERMITS A. Temporary Storage Trailers , as defined in ARTICLE 40 , are permitted within Commercial Two (C - 2), Commercial Services (C - 3) and Recreation (R) districts subject to the terms and provisions of this Article and other applicable provisions of these regulations. B. Within the City of Florence: 1. Temporary storage trailers shall not be located within any required off - street parking space or drive aisle. 2. Temporary storage trailers may be located on a sidewalk as long as it does not impede pedestrian circulation. 3. No sales shall be conducted from the temporary storage trailer. SECTION 3507 TIME LIMITS FOR TEMPORARY STORAGE TRAILERS A. Temporary Storage Trailers are permitted on a site for one period of up to sixty (60) consecutive calendar days per calendar year, per address. SECTION 3508 TEMPORARY S",
+   "tags": [
+    "prohibited",
+    "process",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "99f7a0307e9dac44365e98fa085553155361002c7b564a1c2992980917689dd3",
+   "source_document_id": null,
+   "source_title": "99f7a0307e9dac44365e98fa085553155361002c7b564a1c2992980917689dd3.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Applications/TST.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "ALL OF THE FOLLOWING MUST BE SUPPLIED: 1. Completed application including property owner’s signature . 2. Legal description of the property including Deed Book, Page Number, and Group Number. 3. N ames and mailing addresses of all adjoining property owners, including those located across any road, street, or highway. 4. A site plan for the development/use of the property in accordance with Article 30 of the Zoning Regulations. 5 . Fee paid in full at the time of application. VARIANCE REVIEW: Agricultural and $350.00 (flat fee) + $250.00 (legal ad, adjoining property owners, and sign posting Residential Zones notification) + $66.00 (CLUR) (each variance) All Other Zones $6 50.00 (flat fee) + $250.00 (legal ad, adjoining property owners, and sign posting (each variance) notification) + $66.00 (CLUR) The Boone County Zoning Regulations require, through Section 204. D and 204.E, finding of f",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "ddf90a1349db3f359140977856f127941c4e5fdd366e9ee1244caca5af8bcd61",
+   "source_document_id": null,
+   "source_title": "ddf90a1349db3f359140977856f127941c4e5fdd366e9ee1244caca5af8bcd61.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Checklists/Variance_checklist.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Temporary Use Page 3 SECTION 3511 TEMPORARY USE PERMITS A. Temporary Use Permits allow seasonal commercial activities which are open to the public and of limited duration on farms which contain at least fifty (50) contiguous acres, regardless of district . The seasonal commercial activities must be accessory to active agricultural production occurring on the property. Examples include but are not limited to farm tours, hay rides, agricultural exhibits, corn mazes, petting zoos, barn dances, and other agri - tourism activities. Sales of produce grown on the premises or other goods that are related to the seasonal commercial activities are also permitted. B. If the proposed activities are listed under the applicable district as a Conditional Use , a property owner may elect to apply for a Conditional Use Permit per the requirements of ARTICLE 2 . If a Conditional Use Permit is obtained for",
+   "tags": [
+    "prohibited",
+    "process",
+    "temporary"
+   ],
+   "weight": 7,
+   "source_sha256": "26c0583a93b72019c49fc27dd57f9d4640953218a8f89a7f0109392400122721",
+   "source_document_id": null,
+   "source_title": "26c0583a93b72019c49fc27dd57f9d4640953218a8f89a7f0109392400122721.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Applications/TempUsePermit.pdf"
+  },
+  {
+   "page": 167,
+   "snippet": "155 The Future: Integrating Transportation and Land Use If Boone County continues to develop in this same low-density, dispersed form of development, which mainly accommodates travel by the automobile, it would almost certainly guarantee chronic traffic congestion, increased air pollution problems and negative impacts on the quality of life for residents of the county. The first section of the Transportation Element, the Regional Transportation System, describes the need for the Cincinnati Metropolitan Region to evolve, in the future, to a more \"transportation-sensitive\" land-use development pattern. Spurred by the federal legislation such as the CAAA and TEA-21, OKI's most recent regional transportation plan has established a regional Commission on Land Use that would generate recommendations and policies that may be implemented in local zoning ordinances that would \"promote land use pa",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "281a028acd0fdc3cbc8b5caa39d52b32349399f7211e74d3a2abe89d6d956b8b",
+   "source_document_id": null,
+   "source_title": "281a028acd0fdc3cbc8b5caa39d52b32349399f7211e74d3a2abe89d6d956b8b.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Comprehensive%20Plan/2010CompPlan.pdf?t=202409061114520"
+  },
+  {
+   "page": 179,
+   "snippet": "167 2) HOUSTON-DONALDSON/MALL ROAD The Mall Road area was recommended (through the 2002 Mall Road Corridor Study) to become a new urbanism corridor. The current planning effort for the area, the Mall Road District Study, calls for a dense, well designed, urban style of development that should occur over time. Residential development may be a part of this urban area, but should be located to minimize noise impacts from the interstate and airport. The entire area of Steinberg Drive, Rosetta Drive, Connector Drive, and the I-75 Mall Road ramps should be planned in detail to provide mixed use development that includes a good road connection and traffic circulation between the Pleasant Valley Road corridor and I-75. Regionally-oriented growth should be confined to Mall Road and Houston Road, and should not expand on to U.S. 42, KY 18 or Hopeful Church Road. However, the highway-scaled, automo",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "281a028acd0fdc3cbc8b5caa39d52b32349399f7211e74d3a2abe89d6d956b8b",
+   "source_document_id": null,
+   "source_title": "281a028acd0fdc3cbc8b5caa39d52b32349399f7211e74d3a2abe89d6d956b8b.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Comprehensive%20Plan/2010CompPlan.pdf?t=202409061114520"
+  },
+  {
+   "page": 194,
+   "snippet": "182 potential for burial and village sites to be found by any type of modern construction. Public infrastructure installation and private construction need to be done carefully and under supervision of knowledgeable authorities. The existing pay fishing lake area and Taylor Creek should be considered for a future wildlife habitat area. Development in the Petersburg area should protect the scenic characteristics of the hillsides and river plains. Petersburg must continue to contend with its isolation from the urban service areas of Boone County and poor accessibility during the winter months. Any reconstruction of KY 20 into Petersburg should occur for the purpose of serving residential and school-related traffic, rather than for use by industrial vehicles. The preservation of the historical buildings of this important Kentucky town should be a prime objective, and eventual development of",
+   "tags": [
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "281a028acd0fdc3cbc8b5caa39d52b32349399f7211e74d3a2abe89d6d956b8b",
+   "source_document_id": null,
+   "source_title": "281a028acd0fdc3cbc8b5caa39d52b32349399f7211e74d3a2abe89d6d956b8b.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Comprehensive%20Plan/2010CompPlan.pdf?t=202409061114520"
+  },
+  {
+   "page": 1,
+   "snippet": "ALL OF THE FOLLOWING MUST BE SUPPLIED: 1. Completed application including property owner’s signature (no fax or copy). 2. Legal description of the property including Deed Book, Page Number, and Group Number. 3. If development is planned by this application, then the Board requires the submission of a Site Plan for the development/use of the property in accordance with Article 30, of the Boone County Zoning Regulations. 3. N ames and mailing addresses of all adjoining property owners, including those located across any road, street, or highway. 4. Fee paid in full at the time of application. APPEAL REVIEW: Agricultural and $400.00 (flat fee) + $250.00 (legal ad, adjoining property owners, and sign posting Residential Zones notification) + $66.00 (CLUR) All Other Zones $400.00 (flat fee) + $250.00 (legal ad, adjoining property owners, and sign posting ) + $66.00 (CLUR) CHANGE OF NONCONFORM",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "28a67406a9556617b1a711957093c321ff43520c517afbee3c7690dca0bbbe63",
+   "source_document_id": null,
+   "source_title": "28a67406a9556617b1a711957093c321ff43520c517afbee3c7690dca0bbbe63.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Checklists/ChangeNonConformingandAppeals_checklist.pdf"
+  },
+  {
+   "page": 150,
+   "snippet": "163 Houston Road corridor, with a preferred emphasis on office development along I-75 and high-technology industrial uses west of Houston Road. The Houston Donaldson Study further details these developments. Commercial development in this section should remain near the arterial roads or close to the interstate. These consumer service and traffic-oriented developments must be contained to specific areas adjacent to the arterial roads and interstate. The coordination of curb cuts and parking lot connections in the already developed areas must occur in order to maintain a reasonable ease of travel along these roads. Undeveloped tracts of commercial land should connect to and coordinate with any adjoining commercial, office, or industrial development in existence. W here no development has yet occurred, provisions for Access Management must be made for future development. This includes the u",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "38366f0601616ec3e208fcca843b5e874b52b7e536fdd5d76437763982b1c162",
+   "source_document_id": null,
+   "source_title": "38366f0601616ec3e208fcca843b5e874b52b7e536fdd5d76437763982b1c162.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Comprehensive%20Plan/Boone%20County%20Comprehensive%20Plan%202025%20combined.pdf?t=202409061114330"
+  },
+  {
+   "page": 184,
+   "snippet": "153 The Future: Integrating Transportation and Land Use If Boone County continues to develop in this same low-density, dispersed form of development, which only accommodates travel by the automobile, it would almost certainly guarantee chronic traffic congestion, increased air pollution problems and a waning quality of life for residents of the county. The first section of the Transportation Element, the Regional Transportation System, describes the need for the Cincinnati Metropolitan Region to evolve, in the future, to a more \"transportation-sensitive\" land- use development pattern. Spurred by the federal legislation such as the CAAA and TEA-21, OKI's most recent regional transportation plan has established a regional Commission on Land Use that would generate recommendations and policies that may be implemented in local zoning ordinances that would \"promote land use patterns consisten",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "38366f0601616ec3e208fcca843b5e874b52b7e536fdd5d76437763982b1c162",
+   "source_document_id": null,
+   "source_title": "38366f0601616ec3e208fcca843b5e874b52b7e536fdd5d76437763982b1c162.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Comprehensive%20Plan/Boone%20County%20Comprehensive%20Plan%202025%20combined.pdf?t=202409061114330"
+  },
+  {
+   "page": 48,
+   "snippet": "44 These districts are where uses will need to be developed in harmony with one another in o rder for the area to operate and function as a unit. Great care must be taken in ensuring that the developments are in accordance with the descriptions in the relevant Focus Areas i n Section 4.1 of this chapter. For the portions of the Study Area where a new Graves Road zoning district is not proposed, existing zoning designations will remain and the Z oning Map Amendment process can be facilitated as currently permitted by KRS 100. Regarding the new zoning districts, g eneral descriptions and permitted us es of the proposed districts are as follows: GRAVES ROAD BUSINESS PARK (GR - BP) - The purpose of this district is to provide for a mixture of professional office, research, business commercial, and light industrial with the idea of supporting the primary function of the area as a professional",
+   "tags": [
+    "area",
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0",
+   "source_document_id": null,
+   "source_title": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/I275GravesRdInterchangeStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 52,
+   "snippet": "48 Accessory Uses Uses, buildings, and structures customarily incidental and subordinate to any of the permitted uses including : 1. Accessory dwe lling unit; 2. Family day care; 3. Customary accessory buildings and uses; 4. Fences; 5. Parking; 6. Signs. Conditional Uses The following uses and appr opriate accessories are subject to the approval and qualifications of the Board of adjustment and Zoning Appeals provided that the activity is an integral and subordinate function of a permitted use or the activity will not contradict the character of the district and the arrangement of uses, buildings, or structures will be compatible with the organization of permitted and accessory uses to be protected in the district : 1. Elderly Housing Facility (Site Plan Review required); 2. Nursing home; 3. Church, synagogue, temple, or place of religious assembly for worship (Site Plan Review required)",
+   "tags": [
+    "sign",
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0",
+   "source_document_id": null,
+   "source_title": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/I275GravesRdInterchangeStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 62,
+   "snippet": "58 b. A simplified expression (less detailing, fewer colors, fewer materials, etc) of the front façade design and materials may be used on rear and side facades not abutting an arterial or collector street . 3. Roof Forms : a. Pit ched roofs and flat roofs with a defined parapet line are permitted. Roof/wall junctures sh all employ varied parapet heights, articulated cornices or similar treatments. Mansard roofs and other “stage set” types are not permitted. 4. Windows and Entrances : a. Windows and storefront units shall be recessed within their openings (“punched” openings) to create shadow lines and three - dimensional relief. Windows/openings other than storefront type units shall have a vertical height to width orientation. Transoms and main/public entrances which are recessed behind the exterior facade are preferred. For office/commercial buildings, broad storefronts which allow di",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0",
+   "source_document_id": null,
+   "source_title": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/I275GravesRdInterchangeStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 63,
+   "snippet": "59 a. Site furniture such as benches/seating and outdoor tables, waste receptacles, bollards, and bicycle racks must be architectural grade and the various items selected for any given site must visually correlate to one another as components of an overall design system. Also, site furniture must u se neutral or dark colors, and shall not use wood or wood products. b. Light fixtures and masts, fences, railings around outdoor seating areas, and street/regulatory signage sh all have a black finish (painted, anodized , or vinyl coated). Screening : 1. Mechanical Equipment Screening : a. All mechanical equipment shall be screened. b. Ground mounted equipment shall be screened either with landscaping or enclosed with a structure using the same design palette as the principal building. c. Roof mounted equipment shal l be screened by a parapet wall (for flat roofed buildings) which is an integr",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 7,
+   "source_sha256": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0",
+   "source_document_id": null,
+   "source_title": "39ea4a0605f9b994b13c5312a660040b0e5cf239d29f3d46a5b45a09233c12b0.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/I275GravesRdInterchangeStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 10,
+   "snippet": "1 INTRODUCTION This introduction to the 2005 Boone County Com prehensive Plan is provided to orient the user or reader to the process by which the Com prehensive Plan has been developed, as well as to provide a sum m ary of each Elem ent. The reader is encouraged to review the detailed Elem ents, including the Tables and Figures within each elem ent. PLANNING PROCESS The Com prehensive Plan is form ulated from an extensive and continuing planning process. The process includes four com ponents. The first com ponent is inventory, reconnaissance, and analysis of background inform ation on existing and projected conditions affecting growth and developm ent. The second com ponent involves policy decisions by public agencies and bodies on how best to influence future growth and developm ent. Third is the preparation and adoption of plans which em body the public policies; and, fourth, the deve",
+   "tags": [
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "7730d1392a20d16039c006c6ba13d7fd07133cd62c2267571406eec832a511ea",
+   "source_document_id": null,
+   "source_title": "7730d1392a20d16039c006c6ba13d7fd07133cd62c2267571406eec832a511ea.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Comprehensive%20Plan/Boone%20County%20Comprehensive%20Plan%202030%20combined.pdf?t=202409061114330"
+  },
+  {
+   "page": 154,
+   "snippet": "145 preferred em phasis on office developm ent along I-75 and high-technology industrial uses west of Houston Road. The developm ent of the southern portion of the corridor has been m ore com m ercial in nature, and contains less office or industrial than recom m ended in the Study. The northern portion has experienced office, com m ercial, industrial, and education developm ent. Com m ercial developm ent in this section should rem ain near the arterial roads or close to the interstate. These consum er service and traffic-oriented developm ents m ust be contained to specific areas adjacent to the arterial roads and interstate. The coordination of curb cuts and parking lot connections in the already developed areas m ust occur in order to m aintain a reasonable ease of travel along these roads. Undeveloped tracts of com m ercial land should connect to and coordinate with any adjoining com",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "7730d1392a20d16039c006c6ba13d7fd07133cd62c2267571406eec832a511ea",
+   "source_document_id": null,
+   "source_title": "7730d1392a20d16039c006c6ba13d7fd07133cd62c2267571406eec832a511ea.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Comprehensive%20Plan/Boone%20County%20Comprehensive%20Plan%202030%20combined.pdf?t=202409061114330"
+  },
+  {
+   "page": 166,
+   "snippet": "157 21) Petersburg Area This section of Boone County is characterized by the town of Petersburg and the western-m ost portion of KY 20. Much of the land is Developm entally Sensitive, undeveloped, or in agricultural uses. Petersburg could potentially be a resource for heritage tourism in the county due to its history and river frontage. The extraction of gravel along the Ohio River in this area should continue at established sites; new locations for extractive operations should be discouraged so as to allow alternative uses, such as recreational and low density residential developm ent. This should lead to an appropriate balance of uses along Boone County's substantial river frontage, including access for recreational uses. Inactive sand and gravel extraction sites along the river should undergo the reclam ation process described in the Boone County Zoning Regulations, or be converted in",
+   "tags": [
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "7730d1392a20d16039c006c6ba13d7fd07133cd62c2267571406eec832a511ea",
+   "source_document_id": null,
+   "source_title": "7730d1392a20d16039c006c6ba13d7fd07133cd62c2267571406eec832a511ea.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Comprehensive%20Plan/Boone%20County%20Comprehensive%20Plan%202030%20combined.pdf?t=202409061114330"
+  },
+  {
+   "page": 56,
+   "snippet": "buildings) from the upper portion of the wall. Additionally for multi-story buildings, a change in the fenestration pattern between the ground floor and the upper floors can be employed. The top or cap effect should be created through the provision of a three dimensional detail(s) which breaks or jogs the wall plane from the roof such as a defined cornice or projecting eave. Main public building entrances shall be emphasized in the facade design by methods such as recessing the entrance behind the exterior facade, providing an over-scaled entrance feature which projects outward from or above the exterior facade, placing the doorway within a three dimensional archway, providing an awning or roof awning/canopy, and/or by changing the building materials, detailing, or color around the entrance opening. Detailing should be used at the base, top of facades, openings, transitions, and across l",
+   "tags": [
+    "area",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "82d496de4e4dd7b09d045d2071c29a418d698893e8220ba53782b41e9d7237a6",
+   "source_document_id": null,
+   "source_title": "82d496de4e4dd7b09d045d2071c29a418d698893e8220ba53782b41e9d7237a6.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Community%20Development%20Services/2013HDStudy.pdf?t=202409061115000"
+  },
+  {
+   "page": 22,
+   "snippet": "18 g. Street Furniture - Decorative waste receptacles and street furniture including benches shall be provided in front of each commercial or office building of over 3000 square feet. h. Interior Driveway Connections - Parking lots for adjacent uses shall be connected. SECTION 2550 Technical/Design Review Committee A function of the Boone County Planning Commission's Technical/Design Review Committee shall be to review architectural design plans for all proposed structures or the remodeling of existing structures within the Union Town Center (UTC) Union Commercial (UC) and Union Neighborhood Office (UNO) zoning districts. The Planning Commission staff will provide technical support, and prepare reports for the Technical/Design Review Committee. For proposed buildings in these three zones located in the Union City Limits a member of the Union City Commission shall serve as an adjunct comm",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d",
+   "source_document_id": null,
+   "source_title": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Union%20Town%20Plan%202000/2000UnionTownPlan.pdf?t=202409061115000"
+  },
+  {
+   "page": 25,
+   "snippet": "21 do not satisfy this requirement. The proposed bike/pedestrian path area along old U.S. 42 can be counted toward this total on this particular part of the Study Area. Pedestrian/Bike Path - developers shall construct a 10' minimum pedestrian/bike path as shown conceptually on the Land Use Plan Map. 7. Fences - Installation of a three or four rail post and board style horse fence is required within the setbacks for Old and New U.S. 42, and Hathaway Road for all developments. 8. At the entrance of all new developments, ornamental street lights are required. These street lights must be depicted and approved as part the Subdivision Plat review process. 9. Street trees are required along New U.S. 42 on average of 40 feet on center. 10. Sidewalks at least 5 feet wide are required on both sides of all local, collector and arterial streets and at least 4 feet wide on both sides of all cul-de-s",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d",
+   "source_document_id": null,
+   "source_title": "8bebb2974c5bb019f8c4a19ebc3e8a08c40b33f2a6fca90c31b433af4e60610d.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Union%20Town%20Plan%202000/2000UnionTownPlan.pdf?t=202409061115000"
+  },
+  {
+   "page": 14,
+   "snippet": "10 6. Future industrial districts should be identified in advance of residential development so that potential impacts are known and can be addressed. [Unincorporated Boone County, City of Union, City of Walton only] Future industrial districts shall be identified in advance of residential development so that potential impacts are known and can be addressed. [City of Florence only] 7. Effective site placement, architectural design, and landscape design for industrial uses shall enable a favorable relationship with adjoining uses. Smoke, dust, noise, and odor impacts shall be kept at a minimum and site development and enforcement shall be carefully coordinated with regulatory agencies. 8. Provisions shall be made for proper control of industrial uses that involve processes or products that could be hazardous to human life and property. PUBLIC FACILITIES Goal A: Safe, efficient, and enviro",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "90d267c1653cd5285500d25cbac5a6d0246964a3d92492b53561583677c93e41",
+   "source_document_id": null,
+   "source_title": "90d267c1653cd5285500d25cbac5a6d0246964a3d92492b53561583677c93e41.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Comprehensive%20Plan/Our%20Boone%20County%202040%20combined.pdf?t=202409061114350"
+  },
+  {
+   "page": 131,
+   "snippet": "126 For the short term, the existing recreational use at Turfway Park should be maintained and improved. One way involves the expansion of the business into a “ racino ” if allowed by the State of Kentucky. If the horse racing business vacates the property, this site should be redeveloped in a mixed use format with a combination of Business Park and Commercial uses and connect to the Marydale site to the east. The 20 acre portion of Property located on the southern boundary of Turfway Park along Houston Road could possibly be developed as a commercial and/or entertainment use. Property across Houston Road from the Racetrack, along I-75, should develop in a mixed office and commercial manner compatible with the racetrack and entertainment operations. Existing clusters of residential uses between O'Hara Road and the county line and along Donaldson Highway should redevelop in an integrated ",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "90d267c1653cd5285500d25cbac5a6d0246964a3d92492b53561583677c93e41",
+   "source_document_id": null,
+   "source_title": "90d267c1653cd5285500d25cbac5a6d0246964a3d92492b53561583677c93e41.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Comprehensive%20Plan/Our%20Boone%20County%202040%20combined.pdf?t=202409061114350"
+  },
+  {
+   "page": 4,
+   "snippet": "Temporary Storage Trailer Page 4 5. The placement of a Temporary Storage Trailer must meet a minimum five (5) foot setback, except that any trailer with a refrigeration unit or other device used for power shall not be located within two hundred (200) feet of a property line adjacent to a residential district or use . Any Temporary Storage Trailer without a refrigeration unit or other device for power shall not be located within fifty (50) feet of a property line adjacent to a residential district or use . 6. Merchandise shall not be sold directly out of a Temporary Storage Trailer , nor shall a Temporary Storage Trailer be used for the storage of bulk hazardous or toxic materials. 7. No Temporary Storage Trailer shall block , impair, or otherwise unduly inconvenience patrons of existing commercial developments on a site . To ensure the safety of the individuals utilizing the site , a pos",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "temporary",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "99f7a0307e9dac44365e98fa085553155361002c7b564a1c2992980917689dd3",
+   "source_document_id": null,
+   "source_title": "99f7a0307e9dac44365e98fa085553155361002c7b564a1c2992980917689dd3.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Applications/TST.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Design Review Page 2 12. Is the site subject to any of the following (check all that apply): Conditional Use Permit Variance Map Amendment If yes, date of action: 13. Current Zoning of Property: 14. Deed Book Page Number Group Number 15. Do the submitted design plans or architectural drawings and submitted Site Plan address the following standards (check all that apply): Architectural Details Placement or Location of Buildings Building Facades Relationship of Color Detention/Retention Ponds or Lakes Relationship of Materials Elevation Retaining Walls Entrances and Porch Projections Roof Types and Shapes Fences, Walls, and Landscaped Berms Scale Ground Cover or Paved Surfaces Signage Height Utilities Landscaping Windows and Doors Lighting 16. Design Review Jurisdiction/Location (check all that apply): Unincorporated Boone Florence Walton Union Property Owner’s Signature : Applicant ’s Sig",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "c8ebf0386a4ed903f9a498c9ba990d03098d1fc2fae433cbe415371c22bc9654",
+   "source_document_id": null,
+   "source_title": "c8ebf0386a4ed903f9a498c9ba990d03098d1fc2fae433cbe415371c22bc9654.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Applications/DesignReview.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "ALL OF THE FOLLOWING MUST BE SUPPLIED: 1. Completed application including property owner’s signature . 2. Legal description of the property including Deed Book, Page Number, and Group Number. 3. N ames and mailing addresses of all adjoining property owners, including those located across any road, street, or highway. 4. Fee paid in full at the time of application. CONDITIONAL USE PERMIT REVIEW: In A - 1 or A - 2 Zones $450.00 (flat fee) + $250.00 (legal ad, adjoining property owners, and sign posting notification) + $66.00 (CLUR) In PF, R, or CONS Zones $450.00 (flat fee) + $250.00 (legal ad, adjoining property owners, and sign posting notification) + $66.00 (CLUR) In RS, RSE, SR - 1, SR - 2, $500.00 (flat fee) + $250.00 (legal ad, adjoining property owners, and sign posting SR - 3, or R - 1F Zones notification) + $66.00 (CLUR) In UR - 1, UR - 2, UR - 3, $500.00 (flat fee) + $250.00 (leg",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "d2dd9e55aad6283a1496b4147b814143f6005c8a79ca3d14f71388976911778b",
+   "source_document_id": null,
+   "source_title": "d2dd9e55aad6283a1496b4147b814143f6005c8a79ca3d14f71388976911778b.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Checklists/ConditionalUsePermit_checklist.pdf"
+  },
+  {
+   "page": 24,
+   "snippet": "-20- These standards apply to new construction projects where a new building is being constructed or an existing building is being added onto to the extent that a formal Major Site Plan Review is required under the Boone County Zoning Regulations. Setbacks: A. Front yard shall conform to adjacent existing buildings or structures, or when buildings do not exist within 200 feet, to existing building setbacks on the opposite side of the street. The maximum front yard for commercial, office, industrial, or public facilities uses shall be 20 feet. B. Side yard minimum adjacent to private property - five (5) feet C. Side yard minimum adjacent to right-of-way - ten (10) feet D. Rear yard minimum adjacent to private property - twenty (20) feet E. Rear yard minimum adjacent to alley - five (5) feet Site Layout A. Non-residential building facades facing public street shall be designed as the build",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "e7bc02762e2b220c458d3d0275ec8732c221f63a6dd5067573614df4cdf8d619",
+   "source_document_id": null,
+   "source_title": "e7bc02762e2b220c458d3d0275ec8732c221f63a6dd5067573614df4cdf8d619.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/2002BurlingtonTownPlan.pdf"
+  },
+  {
+   "page": 25,
+   "snippet": "-21- A. Existing windows and doors shall be retained and repaired as needed. Repair or replacement of deteriorated window and door elements should imitate the original elements in dimension, profile, size, shape, arrangement and pattern. Window and door repair must reuse as much of the original material as possible; B. When window and door replacement is unavoidable, new units should match original design as closely as possible; C. The installation of modern picture windows, bay windows, or other openings not in scale with the building shall not be installed on the main or side facades. The addition of large windows or walk-out (i.e., sliding) glass doors on the rear facade or side facades which are not readily visible is discouraged but permitted; D. The use of glass block in foundation windows is not permitted on front or readily visible side facades. Building Roofs A. Historic roof ma",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "e7bc02762e2b220c458d3d0275ec8732c221f63a6dd5067573614df4cdf8d619",
+   "source_document_id": null,
+   "source_title": "e7bc02762e2b220c458d3d0275ec8732c221f63a6dd5067573614df4cdf8d619.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/2002BurlingtonTownPlan.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "requested by the applicant and as a result of the applicant’s action) Deferral of Zoning Map 30% of the above flat fee Amendment or Concept Development Plan request from scheduled Business Meeting or Zone Change Committee Meeting (when requested by the applicant and as a result of the applicant’s action) 5. If all principally permitted, conditional, and accessory uses for the proposed zone requested are not just those shown on the Concept Development Plan, this must be indicated on the Application for Zoning Action form under Description request. 6. Submittal of a Concept Development Plan as per Section 30 2 of the Boone County Zoning Regulations. SECTION 302 ZONING MAP AMENDMENT APPLICATION AND CONCEPT DEVELOPMENT PLAN A. The following standards and procedures apply to zoning map amendment applications and Concept Development Plans . 1. Application forms for zoning map amendments shall ",
+   "tags": [
+    "sign",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c",
+   "source_document_id": null,
+   "source_title": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c.pdf",
+   "official_url": "https://bcpcky.org/Documents/Applications%20Forms/Checklists/ZoningMapAmendment_checklist.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "2010 BOONE COUNTY COMPREHENSIVE PLAN BOONE COUNTY PLANNING COMMISSION MEMBERS Charlie Rolfsen , Chairman (Florence) Mike Ford , Vice-Chairman (Boone County) Kim Bunger , Secretary-Treasurer (Florence) Ben Brandstetter , Temporary Presiding Officer (Boone County) Randy Bessler (Boone County) Greg Breetz (Boone County) Mark Hicks (Boone County) Janet Kegley (Florence) Jim Longano (Union) Don McMillian (Walton) Lisa Reeves (Florence) Charlie Reynolds (Florence) Susan Schultz (Florence) Bob Schwenke (Boone County) Steve Turner (Walton) LONG RANGE PLANNING/COMP PLAN COMMITTEE Bob Schwenke , Chairman Greg Breetz Kim Bunger Mark Hicks Mike Ford Janet Kegley BOONE COUNTY PLANNING COMMISSION STAFF Kevin P. Costello, AICP - Executive Director Planning Services Division Brian J. Shorkey, AICP - Director, Planning Services Robert A. Jonas, AICP - GIS Specialist Matthew E. Becher, AICP - Rural/Open S",
+   "tags": [
+    "illumination",
+    "temporary",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "281a028acd0fdc3cbc8b5caa39d52b32349399f7211e74d3a2abe89d6d956b8b",
+   "source_document_id": null,
+   "source_title": "281a028acd0fdc3cbc8b5caa39d52b32349399f7211e74d3a2abe89d6d956b8b.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Comprehensive%20Plan/2010CompPlan.pdf?t=202409061114520"
+  },
+  {
+   "page": 127,
+   "snippet": "115 copies) of the Boone County Heritage Tourism Map. The Heritage Tourism Council met on a regular basis for nearly two years before disbanding in late 2005. The Historic Preservation Review Board should study and design a Local Landmarks Program to recognize significant historic buildings throughout the County. Design review guidelines, administered by the Review Board, should be established for these properties. Design review guidelines help to preserve the historical integrity and strengthen the aesthetic value of a building or site. The Review Board has established design review guidelines in conjunction with a zoning district for Florence's Main Street. Although this area is not a traditional historic district, the guidelines are intended to preserve the existing historic character of Main Street and strengthen its viability as a pedestrian corridor. Further study and extensive com",
+   "tags": [
+    "fee",
+    "dimension",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "281a028acd0fdc3cbc8b5caa39d52b32349399f7211e74d3a2abe89d6d956b8b",
+   "source_document_id": null,
+   "source_title": "281a028acd0fdc3cbc8b5caa39d52b32349399f7211e74d3a2abe89d6d956b8b.pdf",
+   "official_url": "https://bcpcky.org/Documents/Community%20Development/Comprehensive%20Plan/2010CompPlan.pdf?t=202409061114520"
+  }
+ ]
+}

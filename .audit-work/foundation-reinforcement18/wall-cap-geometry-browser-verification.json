@@ -1,0 +1,1372 @@
+{
+  "results": [
+    {
+      "mode": "saved",
+      "width": 1280,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 21,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "cap_stock_price",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_stock_price_unavailable",
+            "message": "Wall cap 1: record a finite nonnegative full-stock price; a missing price is not zero. Saved amounts are retained."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 21,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "cap_stock_price",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_stock_price_unavailable",
+            "message": "Wall cap 1: record a finite nonnegative full-stock price; a missing price is not zero. Saved amounts are retained."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-saved-1280-initial.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "saved",
+      "width": 390,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 21,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "cap_stock_price",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_stock_price_unavailable",
+            "message": "Wall cap 1: record a finite nonnegative full-stock price; a missing price is not zero. Saved amounts are retained."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 21,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "cap_stock_price",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_stock_price_unavailable",
+            "message": "Wall cap 1: record a finite nonnegative full-stock price; a missing price is not zero. Saved amounts are retained."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-saved-390-initial.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "unknown",
+      "width": 1280,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": null,
+        "grandTotal": null,
+        "capCost": null,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": null,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": null,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": null
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "cap_stock_price",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_stock_price_unavailable",
+            "message": "Wall cap 1: record a finite nonnegative full-stock price; a missing price is not zero. Saved amounts are retained."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": null,
+        "grandTotal": null,
+        "capCost": null,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": null,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": null,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": null
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "cap_stock_price",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_stock_price_unavailable",
+            "message": "Wall cap 1: record a finite nonnegative full-stock price; a missing price is not zero. Saved amounts are retained."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-unknown-1280-initial.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "unknown",
+      "width": 390,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": null,
+        "grandTotal": null,
+        "capCost": null,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": null,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": null,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": null
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "cap_stock_price",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_stock_price_unavailable",
+            "message": "Wall cap 1: record a finite nonnegative full-stock price; a missing price is not zero. Saved amounts are retained."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": null,
+        "grandTotal": null,
+        "capCost": null,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": null,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": null,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": null
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "cap_stock_price",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_stock_price_unavailable",
+            "message": "Wall cap 1: record a finite nonnegative full-stock price; a missing price is not zero. Saved amounts are retained."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-unknown-390-initial.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "zero",
+      "width": 1280,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": 0,
+        "grandTotal": 0,
+        "capCost": 0,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 21,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Synthetic current cap",
+            "qty": 1,
+            "cost": 0
+          }
+        ],
+        "issues": [],
+        "blocked": false,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": 0,
+        "grandTotal": 0,
+        "capCost": 0,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 21,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Synthetic current cap",
+            "qty": 1,
+            "cost": 0
+          }
+        ],
+        "issues": [],
+        "blocked": false,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-zero-1280-initial.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "zero",
+      "width": 390,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": 0,
+        "grandTotal": 0,
+        "capCost": 0,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 21,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Synthetic current cap",
+            "qty": 1,
+            "cost": 0
+          }
+        ],
+        "issues": [],
+        "blocked": false,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": 0,
+        "grandTotal": 0,
+        "capCost": 0,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 21,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Synthetic current cap",
+            "qty": 1,
+            "cost": 0
+          }
+        ],
+        "issues": [],
+        "blocked": false,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-zero-390-initial.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "current",
+      "width": 1280,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": 25,
+        "grandTotal": 25,
+        "capCost": 25,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 21,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Synthetic current cap",
+            "qty": 1,
+            "cost": 25
+          }
+        ],
+        "issues": [],
+        "blocked": false,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": 30,
+        "grandTotal": 30,
+        "capCost": 30,
+        "stock": 12,
+        "cut": 13,
+        "rawCost": 30,
+        "rawCut": 13,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 30,
+        "selectedStock": 12,
+        "groups": [
+          {
+            "id": "inventory-short",
+            "name": "Synthetic shorter stock",
+            "qty": 1,
+            "cost": 30
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "length_inches",
+            "inventoryId": "inventory-short",
+            "code": "wall_cap_cut_exceeds_stock",
+            "message": "Wall cap 1: cut length (13 in) exceeds the selected stock length (12 in). Choose longer stock or separate pieces; no extra quantity is assumed."
+          }
+        ],
+        "blocked": true,
+        "writes": 1,
+        "edits": 5,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-current-1280-initial.png",
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-current-1280-shorter-stock.png",
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-current-1280-cleared.png",
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-current-1280-new-acknowledgment.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "current",
+      "width": 390,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": 25,
+        "grandTotal": 25,
+        "capCost": 25,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 21,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Synthetic current cap",
+            "qty": 1,
+            "cost": 25
+          }
+        ],
+        "issues": [],
+        "blocked": false,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": 30,
+        "grandTotal": 30,
+        "capCost": 30,
+        "stock": 12,
+        "cut": 13,
+        "rawCost": 30,
+        "rawCut": 13,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 30,
+        "selectedStock": 12,
+        "groups": [
+          {
+            "id": "inventory-short",
+            "name": "Synthetic shorter stock",
+            "qty": 1,
+            "cost": 30
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "length_inches",
+            "inventoryId": "inventory-short",
+            "code": "wall_cap_cut_exceeds_stock",
+            "message": "Wall cap 1: cut length (13 in) exceeds the selected stock length (12 in). Choose longer stock or separate pieces; no extra quantity is assumed."
+          }
+        ],
+        "blocked": true,
+        "writes": 1,
+        "edits": 5,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-current-390-initial.png",
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-current-390-shorter-stock.png",
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-current-390-cleared.png",
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-current-390-new-acknowledgment.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "oversize",
+      "width": 1280,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": 49,
+        "rawCost": 25,
+        "rawCut": 49,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "length_inches",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_cut_exceeds_stock",
+            "message": "Wall cap 1: cut length (49 in) exceeds the selected stock length (48 in). Choose longer stock or separate pieces; no extra quantity is assumed."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": 49,
+        "rawCost": 25,
+        "rawCut": 49,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "length_inches",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_cut_exceeds_stock",
+            "message": "Wall cap 1: cut length (49 in) exceeds the selected stock length (48 in). Choose longer stock or separate pieces; no extra quantity is assumed."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-oversize-1280-initial.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "oversize",
+      "width": 390,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": 49,
+        "rawCost": 25,
+        "rawCut": 49,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "length_inches",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_cut_exceeds_stock",
+            "message": "Wall cap 1: cut length (49 in) exceeds the selected stock length (48 in). Choose longer stock or separate pieces; no extra quantity is assumed."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": 49,
+        "rawCost": 25,
+        "rawCut": 49,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "length_inches",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_cut_exceeds_stock",
+            "message": "Wall cap 1: cut length (49 in) exceeds the selected stock length (48 in). Choose longer stock or separate pieces; no extra quantity is assumed."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-oversize-390-initial.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "stock_unknown",
+      "width": 1280,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 25,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": null,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "cap_stock_length_inches",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_stock_length_unavailable",
+            "message": "Wall cap 1: the selected catalog stock length must be a recorded finite positive number. Saved dimensions are not a current stock specification."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 25,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": null,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "cap_stock_length_inches",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_stock_length_unavailable",
+            "message": "Wall cap 1: the selected catalog stock length must be a recorded finite positive number. Saved dimensions are not a current stock specification."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-stock_unknown-1280-initial.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "stock_unknown",
+      "width": 390,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 25,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": null,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "cap_stock_length_inches",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_stock_length_unavailable",
+            "message": "Wall cap 1: the selected catalog stock length must be a recorded finite positive number. Saved dimensions are not a current stock specification."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 25,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": 21,
+        "selectedStock": null,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "cap_stock_length_inches",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_stock_length_unavailable",
+            "message": "Wall cap 1: the selected catalog stock length must be a recorded finite positive number. Saved dimensions are not a current stock specification."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-stock_unknown-390-initial.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "cut_unknown",
+      "width": 1280,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": "",
+        "rawCost": 25,
+        "rawCut": "",
+        "rawCutType": "string",
+        "canonicalOwn": true,
+        "legacyCut": 18,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "length_inches",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_cut_length_invalid",
+            "message": "Wall cap 1: enter a finite positive cut length in inches. An empty or invalid cut is not changed to a default size."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": "",
+        "rawCost": 25,
+        "rawCut": "",
+        "rawCutType": "string",
+        "canonicalOwn": true,
+        "legacyCut": 18,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "length_inches",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_cut_length_invalid",
+            "message": "Wall cap 1: enter a finite positive cut length in inches. An empty or invalid cut is not changed to a default size."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-cut_unknown-1280-initial.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "cut_unknown",
+      "width": 390,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": "",
+        "rawCost": 25,
+        "rawCut": "",
+        "rawCutType": "string",
+        "canonicalOwn": true,
+        "legacyCut": 18,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "length_inches",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_cut_length_invalid",
+            "message": "Wall cap 1: enter a finite positive cut length in inches. An empty or invalid cut is not changed to a default size."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": 21,
+        "grandTotal": 21,
+        "capCost": 21,
+        "stock": 48,
+        "cut": "",
+        "rawCost": 25,
+        "rawCut": "",
+        "rawCutType": "string",
+        "canonicalOwn": true,
+        "legacyCut": 18,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": 21
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "length_inches",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_cut_length_invalid",
+            "message": "Wall cap 1: enter a finite positive cut length in inches. An empty or invalid cut is not changed to a default size."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-cut_unknown-390-initial.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "legacy",
+      "width": 1280,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": 25,
+        "grandTotal": 25,
+        "capCost": 25,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 21,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": false,
+        "legacyCut": 18,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Synthetic current cap",
+            "qty": 1,
+            "cost": 25
+          }
+        ],
+        "issues": [],
+        "blocked": false,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": 25,
+        "grandTotal": 25,
+        "capCost": 25,
+        "stock": 96,
+        "cut": 12.5,
+        "rawCost": 25,
+        "rawCut": 12.5,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": 18,
+        "savedCost": 21,
+        "selectedStock": 96,
+        "groups": [
+          {
+            "id": "inventory-long",
+            "name": "Synthetic longer stock",
+            "qty": 1,
+            "cost": 25
+          }
+        ],
+        "issues": [],
+        "blocked": false,
+        "writes": 0,
+        "edits": 2,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-legacy-1280-initial.png",
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-legacy-1280-edited.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    },
+    {
+      "mode": "legacy",
+      "width": 390,
+      "ok": true,
+      "initial": {
+        "sourceUnchanged": true,
+        "total": 25,
+        "grandTotal": 25,
+        "capCost": 25,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": 21,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": false,
+        "legacyCut": 18,
+        "savedCost": 21,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Synthetic current cap",
+            "qty": 1,
+            "cost": 25
+          }
+        ],
+        "issues": [],
+        "blocked": false,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "final": {
+        "sourceUnchanged": true,
+        "total": 25,
+        "grandTotal": 25,
+        "capCost": 25,
+        "stock": 96,
+        "cut": 12.5,
+        "rawCost": 25,
+        "rawCut": 12.5,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": 18,
+        "savedCost": 21,
+        "selectedStock": 96,
+        "groups": [
+          {
+            "id": "inventory-long",
+            "name": "Synthetic longer stock",
+            "qty": 1,
+            "cost": 25
+          }
+        ],
+        "issues": [],
+        "blocked": false,
+        "writes": 0,
+        "edits": 2,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-legacy-390-initial.png",
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-browser-legacy-390-edited.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    }
+  ],
+  "syntheticOnly": true,
+  "realStorageVerified": false,
+  "actualBusinessWrites": 0,
+  "sdkCalls": 0
+}

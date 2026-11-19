@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -28,11 +29,12 @@ const STATUS_BADGE = {
   cancelled: "bg-gray-200 text-gray-600",
 };
 
-export default function TimeOffApprovalPanel({ sessionToken }) {
+export default function TimeOffApprovalPanel({ sessionToken, reviewRequestId, onReviewRequestOpened, onRequestsLoaded }) {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState(null);
+  const [ptoBalances, setPtoBalances] = useState([]);
   const [adminNotes, setAdminNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [retryDecision, setRetryDecision] = useState(null);
@@ -63,6 +65,17 @@ export default function TimeOffApprovalPanel({ sessionToken }) {
   }, [sessionToken]);
 
   useEffect(() => { loadRequests(); }, [loadRequests]);
+
+  useEffect(() => {
+    if (typeof onRequestsLoaded === "function") onRequestsLoaded(requests);
+  }, [requests, onRequestsLoaded]);
+
+  useEffect(() => {
+    if (!reviewRequestId || loading) return;
+    const request = requests.find((r) => r.id === reviewRequestId);
+    if (request) openReview(request);
+    if (typeof onReviewRequestOpened === "function") onReviewRequestOpened();
+  }, [reviewRequestId, requests, loading]);
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
 
@@ -134,8 +147,27 @@ export default function TimeOffApprovalPanel({ sessionToken }) {
     }
   };
 
+  useEffect(() => {
+    setPtoBalances([]);
+    const email = selected?.user_email;
+    if (!email) return;
+    let cancelled = false;
+    staffEntities.UserPTOBalance.filter({ user_email: email }).then((rows) => {
+      if (cancelled || !Array.isArray(rows)) return;
+      const all = rows.flatMap(r => Array.isArray(r.balances) ? r.balances : []);
+      if (!cancelled) setPtoBalances(all);
+    }).catch(() => null);
+    return () => { cancelled = true; };
+  }, [selected?.user_email]);
+
   const retryingSelected = retryDecision?.timeOffRequestId === selected?.id;
   const isPending = selected?.status === "pending";
+  // Approved requests for the same employee that overlap the selected range.
+  const overlappingApproved = isPending && selected ? requests.filter((r) =>
+    r.id !== selected.id && r.user_email === selected.user_email && r.status === "approved" &&
+    r.start_date && r.end_date && selected.start_date && selected.end_date &&
+    r.start_date <= selected.end_date && selected.start_date <= r.end_date
+  ) : [];
 
   if (!sessionToken) return null;
 
@@ -206,7 +238,25 @@ export default function TimeOffApprovalPanel({ sessionToken }) {
                 {isPending && (
                   <>
                     <Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => decide("denied")} disabled={busy || (retryingSelected && retryDecision.decision !== "denied")}><XCircle className="w-4 h-4 mr-2" />{retryingSelected && retryDecision.decision === "denied" ? "Retry Denial" : "Deny"}</Button>
-                    <Button onClick={() => decide("approved")} disabled={busy || (retryingSelected && retryDecision.decision !== "approved")}>{busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}{retryingSelected && retryDecision.decision === "approved" ? "Retry Approval" : "Approve"}</Button>
+                    {ptoBalances.length > 0 && (
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    {ptoBalances.map((b, i) => {
+                      const short = typeof selected?.hours_requested === "number" && typeof b.available_hours === "number" && b.available_hours < selected.hours_requested;
+                      return (
+                        <span key={i} className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${short ? "border-red-300 bg-red-50 text-red-700" : "border-green-300 bg-green-50 text-green-700"}`}
+                          title={short ? "Requested hours exceed this balance" : "Current balance"}>
+                          {b.type_name || b.type_id}: {b.available_hours ?? "?"}h{short ? " — short" : ""}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+                {overlappingApproved.length > 0 && (
+                  <div className="mb-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
+                    Overlaps {overlappingApproved.length} already-approved request{overlappingApproved.length === 1 ? "" : "s"} ({overlappingApproved.map(r => `${r.start_date} to ${r.end_date}`).join(", ")}) — verify coverage before approving.
+                  </div>
+                )}
+                <Button onClick={() => decide("approved")} disabled={busy || (retryingSelected && retryDecision.decision !== "approved")}>{busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}{retryingSelected && retryDecision.decision === "approved" ? "Retry Approval" : "Approve"}</Button>
                   </>
                 )}
                 {selected.status === "approved" && (

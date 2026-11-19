@@ -1,0 +1,45 @@
+{
+ "jurisdiction_id": "6ac1a171be123c60cc162d2e",
+ "jurisdiction_name": "Hillsboro",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Mayor’s Office P (937) 393 - 5219 · Auditor’s Office P (937)393 - 5791 www.hillsboroohio.net “This institution is an equal opportunity provider and employer.” Justin Harsha, Mayor – Shawn Adkins , Safety & Service Director 130 NORTH HIGH STREET·HILLSBORO, OHIO 4513 3 - 1152 SIGN PERMIT Permit No.____________ BUSINESS INFORMATION Zoning District: Business Owner Owner/s Address Sign Address Business Phone or Name of Primary Key Holder Phone Name of Secondary Key Holder Phone Type of Sign: PROPOSED SIGN INFORMATION Projecting Electronic Wall Monument Pole Awning Billboard Name Plate Fuel Price Identification & Directional Menu Board If Pylon, will the sign have 1 advertisement or more? If more, how many? If an Awning, will it have an advertisement? If so what will it say? Is the sign temporary? Yes No Description of Work/Installation: Height x Width = sq. ft. Illuminated? Type of Illuminati",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "billboard",
+    "temporary"
+   ],
+   "weight": 14,
+   "source_sha256": "2603ead69b926885d05af2f0d7f22802bdff767937f914f9a25bb6f34813440b",
+   "source_document_id": null,
+   "source_title": "2603ead69b926885d05af2f0d7f22802bdff767937f914f9a25bb6f34813440b.pdf",
+   "official_url": "https://www.hillsboroohio.net/egov/documents/1784812278_15411.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Mayor’s Office P (937) 393 - 5219 · Auditor’s Office P (937)393 - 5791 www.hillsboroohio.net “This institution is an equal opportunity provider and employer.” SIGN CONTRACTOR INFORMATION Company Name Phone Address Contact Person Phone E - Mail The following submittals are required for review of the sign application: • Completion of the application. • Drawings to an appropriate scale showing: • The design and layout of the proposed sign, including the total area of the sign, and the size, height, character, materials and colors of letters, lines, and symbols. • If more than sign or sign face is proposed, separate information of each sign or sign face shall be provided. • A site plan showing the exact location of the sign(s) in relation to all buildings, right of way and property lines. • The method of illumination, if applicable. • Details and specifications of construction, erections and",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 12,
+   "source_sha256": "2603ead69b926885d05af2f0d7f22802bdff767937f914f9a25bb6f34813440b",
+   "source_document_id": null,
+   "source_title": "2603ead69b926885d05af2f0d7f22802bdff767937f914f9a25bb6f34813440b.pdf",
+   "official_url": "https://www.hillsboroohio.net/egov/documents/1784812278_15411.pdf"
+  }
+ ]
+}

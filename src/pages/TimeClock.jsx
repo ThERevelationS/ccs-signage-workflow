@@ -28,7 +28,8 @@ import {
   Settings,
   Pause,
   LockKeyhole,
-  Ban
+  Ban,
+  Layers
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
@@ -42,12 +43,13 @@ import UserSettingsTab from "@/components/timeclock/UserSettingsTab";
 import CorrectionRequestDialog from "@/components/timeclock/CorrectionRequestDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import EmployeeTodayCard from "@/components/timeclock/EmployeeTodayCard";
+import TimeClockHelpCard from "@/components/timeclock/TimeClockHelpCard";
 import {
   TIME_CLOCK_IDLE_LOGOUT_MS,
   remainingTimeClockSessionMs,
   classifyTimeClockLoginStatus,
 } from "@/components/timeclock/timeClockSessionSecurity";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const TimeEntry = staffEntities.TimeEntry;
@@ -225,6 +227,24 @@ export default function TimeClock() {
   const [timeOffRequests, setTimeOffRequests] = useState([]);
   const [correctionRequests, setCorrectionRequests] = useState([]);
   const [correctionEntry, setCorrectionEntry] = useState(null);
+  const [swapOpen, setSwapOpen] = useState(false);
+  const [swapPartner, setSwapPartner] = useState("");
+  const [swapReason, setSwapReason] = useState("");
+  const [swapBusy, setSwapBusy] = useState(false);
+  const [swapMsg, setSwapMsg] = useState(null);
+  const submitSwap = async () => {
+    if (!timeClockSessionToken || swapBusy) return;
+    setSwapBusy(true); setSwapMsg(null);
+    try {
+      const r = await base44.functions.invoke("shiftSwapAction", { session_token: timeClockSessionToken, action: "submit", partner_email: swapPartner.trim(), reason: swapReason.trim() });
+      const data = r?.data || r;
+      if (data?.success) {
+        setSwapMsg(data.already_pending ? "You already have a swap request pending." : "Swap request sent — a manager will review it.");
+        setSwapPartner(""); setSwapReason("");
+      } else setSwapMsg(data?.error || "Swap request failed.");
+    } catch (e) { setSwapMsg(e?.message || "Swap request failed."); }
+    setSwapBusy(false);
+  };
   const [isLoading, setIsLoading] = useState(true);
   const [showTimeOffRequest, setShowTimeOffRequest] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(new Date());
@@ -237,11 +257,51 @@ export default function TimeClock() {
   const [cancellingTimeOffId, setCancellingTimeOffId] = useState("");
   const [timeEntryError, setTimeEntryError] = useState("");
   const [sessionNotice, setSessionNotice] = useState(null);
+  const [workDayBusyId, setWorkDayBusyId] = useState("");
+
+  const WORK_DAY_WINDOW_MS = 12 * 60 * 60 * 1000;
+  const previousShiftFor = (entry) => {
+    const inMs = new Date(entry.clock_in).getTime();
+    if (!Number.isFinite(inMs)) return null;
+    return (timeEntries || [])
+      .filter((e) => e.id !== entry.id && e.status === "clocked_out" && e.clock_out
+        && !e.pay_period_id && !e.archived_admin && !e.archived_test_data
+        && new Date(e.clock_out).getTime() <= inMs
+        && inMs - new Date(e.clock_in).getTime() <= WORK_DAY_WINDOW_MS)
+      .sort((a, b) => new Date(b.clock_out) - new Date(a.clock_out))[0] || null;
+  };
+  const workDayMembers = (entry) =>
+    entry?.work_day_group_id
+      ? (timeEntries || []).filter((e) => e.work_day_group_id === entry.work_day_group_id)
+      : [];
+
+  const handleWorkDayGroup = async (entry, mode) => {
+    if (!timeClockSessionToken || !entry?.id || workDayBusyId) return;
+    setWorkDayBusyId(entry.id);
+    setTimeEntryError("");
+    try {
+      const res = await base44.functions.invoke("timeClockAction", {
+        action: mode === "ungroup" ? "ungroup_work_day" : "group_work_day",
+        session_token: timeClockSessionToken,
+        target_email: loggedInUser.email,
+        entry_id: entry.id,
+        request_id: newRequestId(),
+      });
+      const data = res?.data || res;
+      if (!data?.success) throw new Error(data?.error || "The work day could not be updated.");
+      await loadData();
+    } catch (err) {
+      setTimeEntryError(err?.response?.data?.error || err?.message || "The work day could not be updated.");
+    } finally {
+      setWorkDayBusyId("");
+    }
+  };
   const idleTimerRef = useRef(null);
   const lastActivityAtRef = useRef(0);
   const loginReportRunRef = useRef(0);
   const dataSeqRef = useRef(0);
   const dataScopeRef = useRef("");
+  const rosterRetryRef = useRef({ tries: 0, timer: null });
   // Update the data scope during render so a stale employee-session read that
   // resolves between a session-switch render and the effect cannot apply.
   const dataScope = `${timeClockSessionToken}|${String(loggedInUser?.email || "").toLowerCase()}`;
@@ -256,7 +316,8 @@ export default function TimeClock() {
   }, []);
 
   useEffect(() => {
-    loadAllUsers();
+    void loadAllUsers();
+    return () => { if (rosterRetryRef.current.timer) clearTimeout(rosterRetryRef.current.timer); };
   }, []);
 
   useEffect(() => {
@@ -271,11 +332,22 @@ export default function TimeClock() {
       const users = await loadAllEntityRows({
         entity: AuthorizedEmail,
         sort: null,
+        cacheTtlMs: 30000,
         label: "Time Clock authorized users",
       });
       setAllUsers(users);
+      rosterRetryRef.current.tries = 0;
     } catch (err) {
       console.error("Error loading users:", err);
+      // An empty roster silently disables face identify for the whole page
+      // lifetime - keep retrying while the page is open so a transient entity-
+      // budget 429 cannot kill face scan for the session. Slower and fewer:
+      // each retry is a full-table read, so a persistent 429 used to become
+      // twelve more full reads inside two minutes.
+      rosterRetryRef.current.tries += 1;
+      if (rosterRetryRef.current.tries <= 8) {
+        rosterRetryRef.current.timer = setTimeout(() => { void loadAllUsers(); }, 20000);
+      }
     }
     setIsLoading(false);
   };
@@ -291,7 +363,7 @@ export default function TimeClock() {
 
     setIsLoading(true);
     try {
-      const [entries, requests] = await Promise.all([
+      const [entries, requests, correctionData] = await Promise.all([
         loadAllEntityRows({
           entity: TimeEntry,
           query: { user_email: loggedInUser.email, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
@@ -303,35 +375,32 @@ export default function TimeClock() {
           query: { user_email: loggedInUser.email, archived_test_data: { $ne: true } },
           sort: null,
           label: `Time off requests for ${loggedInUser.email}`,
-        })
+        }),
+        requestToken
+          ? base44.functions.invoke("timeClockAction", {
+              action: "list_correction_requests",
+              session_token: requestToken,
+              target_email: loggedInUser.email,
+              request_id: newRequestId(),
+            }).then((res) => res?.data || res).catch((correctionError) => {
+              console.error("Error loading correction requests:", correctionError);
+              return null;
+            })
+          : Promise.resolve(null),
       ]);
 
       if (!current()) return;
 
       entries.sort((a, b) => new Date(b.clock_in) - new Date(a.clock_in));
       requests.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-      
+
       setTimeEntries(entries);
       setTimeOffRequests(requests);
-
-      if (requestToken) {
-        try {
-          const correctionResponse = await base44.functions.invoke("timeClockAction", {
-            action: "list_correction_requests",
-            session_token: requestToken,
-            target_email: loggedInUser.email,
-            request_id: newRequestId(),
-          });
-          if (!current()) return;
-          const correctionData = correctionResponse?.data || correctionResponse;
-          setCorrectionRequests(correctionData?.success && Array.isArray(correctionData.requests) ? correctionData.requests : []);
-        } catch (correctionError) {
-          console.error("Error loading correction requests:", correctionError);
-          if (current()) setCorrectionRequests([]);
-        }
-      } else {
-        setCorrectionRequests([]);
-      }
+      setCorrectionRequests(
+        requestToken && correctionData?.success && Array.isArray(correctionData.requests)
+          ? correctionData.requests
+          : [],
+      );
       
       const activeEntries = entries.filter(e => e.status === "clocked_in");
       if (current() && activeEntries.length > 1) {
@@ -593,15 +662,19 @@ export default function TimeClock() {
     <div className="min-h-screen p-4 sm:p-6 ambient-mesh">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <div className="clay-card p-3">
               <Clock className="w-6 h-6 text-purple-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Time Clock</h1>
+              <h1 className="text-2xl font-bold text-gray-800 whitespace-nowrap">Time Clock</h1>
               <p className="text-gray-600 text-sm">Track your work hours</p>
             </div>
+            {loggedInUser && (
+              <Button type="button" variant="link" size="sm" className="text-xs text-indigo-600 px-0"
+                onClick={() => setSwapOpen(true)}>Request schedule swap</Button>
+            )}
           </div>
           
           {loggedInUser ? (
@@ -950,6 +1023,41 @@ export default function TimeClock() {
                             )}
                           </div>
                         )}
+
+                        {["clocked_out", "clocked_in"].includes(entry.status) && !entry.archived_admin && (() => {
+                          const groupId = String(entry.work_day_group_id || "");
+                          const members = groupId ? workDayMembers(entry) : [];
+                          const prev = !groupId ? previousShiftFor(entry) : null;
+                          if (!groupId && !prev) return null;
+                          return (
+                            <div className="mt-3 pt-3 border-t">
+                              <p className="text-xs font-medium text-gray-500 mb-1.5">Work day</p>
+                              {groupId ? (
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-2.5 py-1 text-xs font-medium text-blue-800">
+                                    <Layers className="w-3 h-3" />
+                                    Combined work day{members.length > 1 ? ` · ${members.length} shifts count as one day` : ""}
+                                  </span>
+                                  {!entry.pay_period_id && (
+                                    <button type="button" className="text-xs text-gray-500 underline underline-offset-2 hover:text-gray-700 disabled:opacity-50"
+                                      disabled={workDayBusyId === entry.id}
+                                      onClick={() => handleWorkDayGroup(entry, "ungroup")}>
+                                      {workDayBusyId === entry.id ? "Separating…" : "Separate this shift"}
+                                    </button>
+                                  )}
+                                </div>
+                              ) : (
+                                <button type="button" className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-700 underline underline-offset-2 hover:text-blue-900 disabled:opacity-50"
+                                  disabled={workDayBusyId === entry.id || !timeClockSessionToken}
+                                  title={`Count this shift and the ${format(parseISO(prev.clock_in), "MMM d h:mm a")} shift as one work day in your tracker`}
+                                  onClick={() => handleWorkDayGroup(entry, "group")}>
+                                  {workDayBusyId === entry.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Layers className="w-3 h-3" />}
+                                  {workDayBusyId === entry.id ? "Combining…" : `Combine with previous shift (${format(parseISO(prev.clock_in), "MMM d")})`}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </StaggerItem>
                     );})
                   )}
@@ -1052,6 +1160,9 @@ export default function TimeClock() {
                 />
               </TabsContent>
             </Tabs>
+            <div className="mt-6">
+              <TimeClockHelpCard />
+            </div>
           </>
         )}
       </div>
@@ -1084,6 +1195,31 @@ export default function TimeClock() {
         onLogin={handleLogin}
         allUsers={allUsers}
       />
+
+      {swapOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Request schedule swap">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSwapOpen(false)} />
+          <div className="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+            <h3 className="text-base font-semibold text-gray-800">Request schedule swap</h3>
+            <p className="mt-0.5 text-xs text-gray-500">Trade your shift template with a coworker. A manager approves the swap.</p>
+            <div className="mt-3 space-y-2">
+              <input type="email" value={swapPartner} onChange={(e) => setSwapPartner(e.target.value)}
+                placeholder="coworker@email.com" aria-label="Partner email"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+              <textarea value={swapReason} onChange={(e) => setSwapReason(e.target.value)} rows={2}
+                placeholder="Why do you need the swap?" aria-label="Reason"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+              {swapMsg && <p className={`text-xs ${swapMsg.includes("sent") || swapMsg.includes("pending") ? "text-emerald-700" : "text-red-600"}`}>{swapMsg}</p>}
+              <div className="flex justify-end gap-2 pt-1">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setSwapOpen(false)}>Cancel</Button>
+                <Button type="button" size="sm" disabled={swapBusy || !swapPartner.trim()} onClick={submitSwap}>
+                  {swapBusy ? "Sending…" : "Send request"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <CorrectionRequestDialog
         open={!!correctionEntry}

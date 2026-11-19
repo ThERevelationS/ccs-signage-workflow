@@ -1,0 +1,62 @@
+{
+  "results": [
+    {
+      "mode": "unknown",
+      "width": 390,
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Stock and cost need visible separation\n    at capture (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-browser.mjs:100:16)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-wall-cap-geometry-browser.mjs:138:7",
+      "initial": {
+        "sourceUnchanged": true,
+        "total": null,
+        "grandTotal": null,
+        "capCost": null,
+        "stock": 48,
+        "cut": 18,
+        "rawCost": null,
+        "rawCut": 18,
+        "rawCutType": "number",
+        "canonicalOwn": true,
+        "legacyCut": null,
+        "savedCost": null,
+        "selectedStock": 48,
+        "groups": [
+          {
+            "id": "inventory-one",
+            "name": "Acknowledged cap",
+            "qty": 1,
+            "cost": null
+          }
+        ],
+        "issues": [
+          {
+            "kind": "wall_cap",
+            "index": 0,
+            "componentId": "cap-one",
+            "field": "cap_stock_price",
+            "inventoryId": "inventory-one",
+            "code": "wall_cap_stock_price_unavailable",
+            "message": "Wall cap 1: record a finite nonnegative full-stock price; a missing price is not zero. Saved amounts are retained."
+          }
+        ],
+        "blocked": true,
+        "writes": 0,
+        "edits": 0,
+        "actualBusinessWrites": 0
+      },
+      "screenshots": [
+        ".audit-work/foundation-reinforcement18/wall-cap-geometry-footer-red-browser-unknown-390-failure.png"
+      ],
+      "telemetry": {
+        "errors": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "external": [],
+        "unexpectedLocal": []
+      }
+    }
+  ],
+  "syntheticOnly": true,
+  "realStorageVerified": false,
+  "actualBusinessWrites": 0,
+  "sdkCalls": 0
+}

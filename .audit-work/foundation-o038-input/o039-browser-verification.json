@@ -1,0 +1,19 @@
+{
+  "suite": "verify-o039-browser",
+  "scenarios": [
+    "A: drag commit",
+    "B: keyboard nudges",
+    "C: wiggle null",
+    "D: second-pointer guard",
+    "E: reorder identity",
+    "F: fingerprint cancel",
+    "G: invalid item excluded",
+    "H: zoomed mapping",
+    "I: pen input",
+    "J: read-only",
+    "K: in-browser module probe"
+  ],
+  "status": "PASS",
+  "viewport": "1280x900",
+  "engine": "chromium (system chrome channel)"
+}

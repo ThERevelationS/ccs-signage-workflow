@@ -1,0 +1,41 @@
+{
+ "results": [
+  {
+   "case": "banner desktop: role=status notice visible with exact sentence",
+   "ok": true
+  },
+  {
+   "case": "banner desktop: collapse keeps the notice visible",
+   "ok": true
+  },
+  {
+   "case": "banner mobile: role=status notice visible with exact sentence",
+   "ok": true
+  },
+  {
+   "case": "banner mobile: collapse keeps the notice visible",
+   "ok": true
+  },
+  {
+   "case": "dismissible notice: per-view dismiss hides then remount restores",
+   "ok": true
+  },
+  {
+   "case": "dialog save mode: notes-preamble disclosure renders",
+   "ok": true
+  },
+  {
+   "case": "dialog load mode mobile: carried-notes + stale-review indicators render once each",
+   "ok": true
+  },
+  {
+   "case": "zero foreign requests / console errors / page errors",
+   "ok": true
+  }
+ ],
+ "telemetry": {
+  "foreign": [],
+  "consoleErrors": [],
+  "pageErrors": []
+ }
+}

@@ -1,0 +1,14 @@
+{
+ "suite": "catalog-integrity",
+ "passed": 7,
+ "failed": 0,
+ "cases": {
+  "A": "empty-catalog alert + saved amounts (no fabricated free total)",
+  "A2": "scoped pole Not-saved / explicit-0 / pricing stub gated",
+  "B": "all save paths + CtrlS + autosave>2s -> zero I/O, route+receipt intact",
+  "C": "reload 3 exact reads, draft/receipt deepEqual, save->saved CAS v1, body == real calcProject output",
+  "D": "failed reload keeps draft+alert+busy false, retry succeeds",
+  "E": "deferred A flight installs nothing into B; A-B-A gets new flight",
+  "F": "second click zero reads, one flight completes"
+ }
+}

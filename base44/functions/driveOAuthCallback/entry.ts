@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 import { verifyOAuthState } from '../../shared/oauthState.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(30_000),...init});
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -18,7 +19,7 @@ Deno.serve(async (req) => {
     const clientSecret = Deno.env.get('GOOGLE_DRIVE_CLIENT_SECRET');
     const redirectUri = `${url.origin}/api/functions/driveOAuthCallback`;
 
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+    const tokenResponse = await boundedFetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -59,7 +60,7 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 409, 429, 503].includes(status) ? status : 500;
     console.error('driveOAuthCallback error:', error?.message || error);
     return new Response(safeStatus === 500 ? 'OAuth connection failed safely' : error.message, { status: safeStatus });
   }

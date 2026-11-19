@@ -1,0 +1,90 @@
+{
+  "summary": {
+    "total": 5,
+    "resolved": 5,
+    "rate": "100.0%",
+    "failure_stages": {},
+    "geocode_misses": 0,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "4085 Wilmington Pike, Kettering, OH 45440",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 39.687713139262,
+        "lng": -84.130723121438
+      },
+      "matched": "4085 WILMINGTON PIKE, DAYTON, OH, 45440",
+      "target": {
+        "type": "municipality",
+        "name": "Kettering city"
+      },
+      "county": "Montgomery County",
+      "ms": 2082,
+      "worker": 1
+    },
+    {
+      "address": "787 North Bridge Street, Chillicothe, OH 45601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: chillicothe -> chillicothe",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "chillicothe"
+      },
+      "county": "",
+      "ms": 1249,
+      "worker": 1
+    },
+    {
+      "address": "5095 Northfield Road, Bedford Heights, OH 44146",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bedford -> bedford heights",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bedford heights"
+      },
+      "county": "",
+      "ms": 1695,
+      "worker": 1
+    },
+    {
+      "address": "2910 Hwy 127 N, Owenton, KY 40359",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: owenton -> owenton",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "owenton"
+      },
+      "county": "",
+      "ms": 1685,
+      "worker": 1
+    },
+    {
+      "address": "12504 Cannonsburg Road, Ashland, KY 41102",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: ashland -> ashland",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "ashland"
+      },
+      "county": "",
+      "ms": 1723,
+      "worker": 1
+    }
+  ]
+}

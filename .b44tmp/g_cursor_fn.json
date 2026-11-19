@@ -1,0 +1,506 @@
+{
+  "matches": [
+    {
+      "path": "base44/shared/permittingOfficeAuthority.mjs",
+      "line": 187,
+      "text": "export async function listOfficeAuthorityReviews(deps,{jurisdictionId,cursor}){"
+    },
+    {
+      "path": "base44/shared/permittingOfficeAuthority.mjs",
+      "line": 191,
+      "text": " if(cursor!==undefined && cursor!==null && cursor!==''){"
+    },
+    {
+      "path": "base44/shared/permittingOfficeAuthority.mjs",
+      "line": 192,
+      "text": "  const value=Number(cursor);if(!Number.isSafeInteger(value) || value<1)throw evidenceError('Invalid office review cursor.',400);"
+    },
+    {
+      "path": "base44/shared/permittingOfficeAuthority.mjs",
+      "line": 204,
+      "text": " return{success:true,items,has_more:rows.length>5,next_cursor:rows.length>5?String(rows[4].sequence):null,"
+    },
+    {
+      "path": "base44/shared/jurisdictionExternalReferralArchive.mjs",
+      "line": 21,
+      "text": " const cursor=profile.discovery_scan_state;"
+    },
+    {
+      "path": "base44/shared/jurisdictionExternalReferralArchive.mjs",
+      "line": 22,
+      "text": " if(!cursor || cursor.blocked || cursor.seed_url!==profile.permitting_url)fail('Official discovery source changed or requires review.');"
+    },
+    {
+      "path": "base44/shared/jurisdictionExternalReferralArchive.mjs",
+      "line": 23,
+      "text": " const rows=(cursor.external_referrals || []).filter(row=>row.url===selection?.url && row.source_page_url===selection?.source_page_url);"
+    },
+    {
+      "path": "base44/shared/jurisdictionExternalReferralArchive.mjs",
+      "line": 26,
+      "text": " validateExternalPermittingReferral(referral,cursor.seed_url);"
+    },
+    {
+      "path": "base44/shared/jurisdictionExternalReferralArchive.mjs",
+      "line": 28,
+      "text": " if(!cursor.visited_urls?.includes(referral.source_page_url))fail('Referral source page has no saved discovery visit.');"
+    },
+    {
+      "path": "base44/shared/jurisdictionExternalReferralArchive.mjs",
+      "line": 66,
+      "text": "  const next=invalidateProfile(profile,{documents,discovery_scan_state:{...cursor,external_initial_collection_drained:!cursor.external_referrals.some(row=>row.referral_kind==='downloadable_document' && !documents.some(doc=>doc.url===row.url))}});"
+    },
+    {
+      "path": "base44/shared/jurisdictionExternalReferralArchive.mjs",
+      "line": 68,
+      "text": "   guardFields:{_manual_documents:profile._manual_documents,auto_refresh:profile.auto_refresh,discovery_scan_state:cursor,"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 19,
+      "text": "export const DISCOVERY_CURSOR_METHOD = 'official-page-frontier-v1';"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 20,
+      "text": "const CURSOR_MAX_ITEMS = 5000;"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 21,
+      "text": "const CURSOR_MAX_CHARS = 1024 * 1024;"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 23,
+      "text": "function validateCursor(cursor, seedUrl, maxDepth) {"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 25,
+      "text": "  if (!cursor || cursor.blocked || cursor.method !== DISCOVERY_CURSOR_METHOD || key(cursor.seed_url) !== key(seedUrl) || cursor.max_depth !== maxDepth ||"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 26,
+      "text": "      !Number.isInteger(cursor.attempted_pages_total) || cursor.attempted_pages_total < 0 ||"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 27,
+      "text": "      !Array.isArray(cursor.pending_pages) || !Array.isArray(cursor.visited_urls) || !Array.isArray(cursor.gaps) ||"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 28,
+      "text": "      (cursor.external_referrals?.length || 0) + cursor.pending_pages.length + cursor.visited_urls.length + cursor.gaps.length > CURSOR_MAX_ITEMS ||"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 29,
+      "text": "      JSON.stringify(cursor).length > CURSOR_MAX_CHARS)"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 31,
+      "text": "  for (const url of cursor.visited_urls) scopedUrl(url, seedUrl);"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 32,
+      "text": "  if(cursor.external_referrals!==undefined && !Array.isArray(cursor.external_referrals))throw Error('Saved external referral inventory requires review.');"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 33,
+      "text": "  for(const row of cursor.external_referrals || []){"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 35,
+      "text": "    if(!cursor.visited_urls.some(url=>key(url)===key(row.source_page_url)))throw Error('External referral source page was not visited.');"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 37,
+      "text": "  for (const page of cursor.pending_pages) {"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 41,
+      "text": "  for (const gap of cursor.gaps) { scopedUrl(gap.url, seedUrl); if (typeof gap.reason !== 'string') throw Error('Saved discovery gap requires review.'); }"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 49,
+      "text": "  if (resume) validateCursor(resume, seedUrl, maxDepth);"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 148,
+      "text": "  const continuationState = { ...(resume?.saved_document_scans ? {saved_document_scans:resume.saved_document_scans} : {}), external_initial_collection_drained:false, method: DISCOVERY_CURSOR_METHOD, seed_url: seedUrl, max_depth: maxDepth,"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 151,
+      "text": "  if (referrals.length + continuationState.visited_urls.length + pendingPages.length + gaps.length > CURSOR_MAX_ITEMS ||"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryScan.mjs",
+      "line": 152,
+      "text": "      JSON.stringify(continuationState).length > CURSOR_MAX_CHARS)"
+    },
+    {
+      "path": "base44/shared/permittingDocumentArchiveBacklog.mjs",
+      "line": 35,
+      "text": "    const profile=await options.entity.get(listed.id),cursor=profile?.discovery_scan_state;"
+    },
+    {
+      "path": "base44/shared/permittingDocumentArchiveBacklog.mjs",
+      "line": 36,
+      "text": "    if(!profile?.id || profile.state!==state || profile.auto_refresh!==true || profile._manual_documents || !cursor || cursor.blocked || cursor.seed_url!==profile.permitting_url)continue;"
+    },
+    {
+      "path": "base44/shared/permittingDocumentArchiveBacklog.mjs",
+      "line": 37,
+      "text": "    const referral=(cursor.external_referrals || []).find(row=>row.referral_kind==='downloadable_document' && !(profile.documents || []).some(doc=>doc.url===row.url));"
+    },
+    {
+      "path": "base44/shared/permittingDocumentArchiveBacklog.mjs",
+      "line": 40,
+      "text": "      nextFields:{discovery_scan_state:{...cursor,external_initial_collection_drained:true}},"
+    },
+    {
+      "path": "base44/shared/permittingAddressArchive.mjs",
+      "line": 1,
+      "text": "import {addressResearchCollection,isAddressDirectOriginalReferral,addressDiscoveryCursor} from './permittingAddressDiscoveryContinuation.mjs';"
+    },
+    {
+      "path": "base44/shared/permittingAddressArchive.mjs",
+      "line": 86,
+      "text": " const result=await archiveExternalJurisdictionReferral({entity:adapter,jurisdictionId:collectionId,selection,manual:!automatic,automaticScopedResume:automatic,automaticInitialCollection:automatic,now,fetchScopedSource:async(url,init,host)=>{await adapter.get(collectionId);return fetchSource(url,init,host);},fetchSource:scopedArchiveFetch(adapter,collectionId,current.permitting_url,fetchSource),uploadFile,onProgress,invalidateProfile:(_row,fields)=>fields.discovery_scan_state?{...fields,discovery_scan_state:addressDiscoveryCursor(fields.discovery_scan_state,fields.documents || _row.documents)}:fields});"
+    },
+    {
+      "path": "base44/shared/jurisdictionSourceTextSegments.mjs",
+      "line": 63,
+      "text": "  if (old.storage_mode && !segmentedProgressOwned(source)) throw permanent('Segment cursor conflicts with retained inline evidence.');"
+    },
+    {
+      "path": "base44/shared/jurisdictionSourceTextSegments.mjs",
+      "line": 110,
+      "text": "      throw permanent('Pending segment does not continue the durable source cursor.');"
+    },
+    {
+      "path": "base44/shared/jurisdictionSourceTextSegments.mjs",
+      "line": 144,
+      "text": "// excluded by the source cursor; duplicate/overlapping evidence is rejected."
+    },
+    {
+      "path": "base44/shared/jurisdictionSourceTextSegments.mjs",
+      "line": 151,
+      "text": "      (state.storage_mode && !segmentedProgressOwned(source))) throw Error('Source text identity or cursor requires review.');"
+    },
+    {
+      "path": "base44/shared/jurisdictionSourceTextSegments.mjs",
+      "line": 154,
+      "text": "      state.next_page!==committed+1 || (!state.storage_mode && committed!==inline.length)) throw Error('Source text cursor requires review.');"
+    },
+    {
+      "path": "base44/shared/jurisdictionSourceTextContinuation.mjs",
+      "line": 64,
+      "text": "  // Stored page sequence is the durable cursor, not a caller-supplied page number."
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryContinuation.mjs",
+      "line": 12,
+      "text": " const profile=await entity.get(jurisdictionId),cursor=profile?.discovery_scan_state;"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryContinuation.mjs",
+      "line": 14,
+      "text": "    cursor?.blocked || !cursor?.pending_pages?.length)return{success:true,skipped:true,reason:'no_eligible_discovery_frontier',llm_calls:0};"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryContinuation.mjs",
+      "line": 20,
+      "text": " scan=await scanOfficialPermittingPages({jurisdiction:profile,seedUrl:profile.permitting_url,resume:cursor,"
+    },
+    {
+      "path": "base44/shared/permittingDiscoveryContinuation.mjs",
+      "line": 25,
+      "text": "    nextFields:{...(error.code==='SOURCE_IDENTITY_REVIEW_REQUIRED'?{auto_refresh:false}:{}),discovery_scan_state:{...cursor,blocked:true,block_reason:String(error.message).slice(0,300),...(error.code==='SOURCE_IDENTITY_REVIEW_REQUIRED'?{block_code:error.code}:{})}},label:'Discovery frontier review block'});"
+    },
+    {
+      "path": "base44/shared/smartsheetConflictReview.ts",
+      "line": 14,
+      "text": "  if(body.action==='conflict_list')return {success:true,page:await entity.filter(query,{sort:'-created_date',limit:25,...(body.cursor?{cursor:body.cursor}:{})}),count:await entity.count(query)};\r"
+    },
+    {
+      "path": "base44/shared/permittingSourceRuleInvalidation.mjs",
+      "line": 3,
+      "text": "export async function invalidateSourceRules({sourceEntity,ruleEntity,segmentEntity,profileEntity,settingsEntity,sourceDocumentId,newHash,cursor=''}){"
+    },
+    {
+      "path": "base44/shared/permittingSourceRuleInvalidation.mjs",
+      "line": 10,
+      "text": "  if(cursor)query.id={$gt:cursor};"
+    },
+    {
+      "path": "base44/shared/permittingSourceRuleInvalidation.mjs",
+      "line": 49,
+      "text": "   next_cursor:rows.length>50?lastCompleted:null,llm_calls:0};"
+    },
+    {
+      "path": "base44/shared/permittingHtmlOfficeDelegation.mjs",
+      "line": 61,
+      "text": "  targets:[{id:profile.id,name:profile.name,state:profile.state,type:profile.type}],has_more:false,next_cursor:null,llm_calls:0};"
+    },
+    {
+      "path": "base44/shared/salesHistorySnapshotGuard.mjs",
+      "line": 1,
+      "text": "// Sales history pages must not mix cursor positions from two WorkOrder versions."
+    },
+    {
+      "path": "base44/shared/permittingApprovedEvidence.mjs",
+      "line": 6,
+      "text": "export async function retrieveApprovedEvidence({entities,jurisdictionId,limit=25,cursor=null}) {"
+    },
+    {
+      "path": "base44/shared/permittingApprovedEvidence.mjs",
+      "line": 12,
+      "text": "  if(cursor!==null && cursor!==undefined) {"
+    },
+    {
+      "path": "base44/shared/permittingApprovedEvidence.mjs",
+      "line": 15,
+      "text": "      if(typeof cursor!=='string' || cursor.length>1000)throw Error();"
+    },
+    {
+      "path": "base44/shared/permittingApprovedEvidence.mjs",
+      "line": 16,
+      "text": "      position=JSON.parse(cursor);"
+    },
+    {
+      "path": "base44/shared/permittingApprovedEvidence.mjs",
+      "line": 19,
+      "text": "    } catch {throw evidenceError('Evidence cursor belongs to another scope or is invalid; refresh evidence.',400);}"
+    },
+    {
+      "path": "base44/shared/permittingApprovedEvidence.mjs",
+      "line": 57,
+      "text": "    next_cursor:rows.length>limit?JSON.stringify({jurisdiction_id:jurisdictionId,last_rule_id:rows[limit-1].id}):null,checked_at:new Date().toISOString(),"
+    },
+    {
+      "path": "base44/shared/permittingAddressDiscoveryContinuation.mjs",
+      "line": 10,
+      "text": "export function addressDiscoveryCursor(cursor,documents){"
+    },
+    {
+      "path": "base44/shared/permittingAddressDiscoveryContinuation.mjs",
+      "line": 11,
+      "text": " return {...cursor,external_initial_collection_drained:!(cursor.external_referrals || []).some(ref=>isAddressDirectOriginalReferral(ref)&&!(documents || []).some(doc=>doc.url===ref.url))};"
+    },
+    {
+      "path": "base44/shared/permittingAddressDiscoveryContinuation.mjs",
+      "line": 15,
+      "text": " const cursor=row.discovery_scan_state;"
+    },
+    {
+      "path": "base44/shared/permittingAddressDiscoveryContinuation.mjs",
+      "line": 17,
+      "text": "  external_referrals:(cursor?.external_referrals || []).filter(isAddressDirectOriginalReferral),"
+    },
+    {
+      "path": "base44/shared/permittingAddressDiscoveryContinuation.mjs",
+      "line": 19,
+      "text": "  ...(cursor?{discovery:{pending_pages:cursor.pending_pages || [],gaps:cursor.gaps || [],blocked:cursor.blocked===true,block_reason:cursor.block_reason,visited_count:cursor.visited_urls?.length || 0,last_pages:row.discovery_last_scan?.pages || [],last_resources:row.discovery_last_scan?.resources || [],outside_links:(cursor.external_referrals || []).filter(ref=>!isAddressDirectOriginalReferral(ref))}}:{})};"
+    },
+    {
+      "path": "base44/shared/permittingAddressDiscoveryContinuation.mjs",
+      "line": 33,
+      "text": " const row=await checked(collectionId),cursor=row.discovery_scan_state;"
+    },
+    {
+      "path": "base44/shared/permittingAddressDiscoveryContinuation.mjs",
+      "line": 37,
+      "text": " const retryGaps=retryPageUrl===null?[]:(cursor?.gaps || []).filter(gap=>gap.reason==='page_fetch_failed'&&gap.url===retryPageUrl);"
+    },
+    {
+      "path": "base44/shared/permittingAddressDiscoveryContinuation.mjs",
+      "line": 39,
+      "text": " const resume=retryPageUrl===null?cursor:{...cursor,gaps:[retryGaps[0],...cursor.gaps.filter(gap=>gap!==retryGaps[0])]};"
+    },
+    {
+      "path": "base44/shared/permittingAddressDiscoveryContinuation.mjs",
+      "line": 40,
+      "text": " if(!cursor||cursor.blocked||(retryPageUrl===null&&!cursor.pending_pages?.length))return {success:true,skipped:true,reason:cursor?.blocked?'frontier_requires_review':'no_pending_pages',collection:addressResearchCollection(row),attempted_pages:0};"
+    },
+    {
+      "path": "base44/shared/permittingAddressDiscoveryContinuation.mjs",
+      "line": 53,
+      "text": "  await replaceJurisdictionFieldsIfUnchanged({entity:adapter,jurisdiction:row,guardFields:guards,nextFields:{discovery_scan_state:{...cursor,blocked:true,block_reason:String(error.message).slice(0,300)}},label:'Address discovery review block'});"
+    },
+    {
+      "path": "base44/shared/permittingAddressDiscoveryContinuation.mjs",
+      "line": 59,
+      "text": "  nextFields:{documents:merged,discovery_scan_state:addressDiscoveryCursor(scan.continuation_state,merged),discovery_last_scan:{pages:scan.pages,resources:scan.documents,checked_at:new Date().toISOString()}},label:'Address discovery continuation'});"
+    },
+    {
+      "path": "base44/entities/PermittingSourceDocument.jsonc",
+      "line": 166,
+      "text": "      \"description\": \"Bounded deterministic text-extraction lease, retry state, page cursor, archive identity, and completeness. Text availability does not establish adopted authority.\""
+    },
+    {
+      "path": "base44/entities/PermittingSourceDocument.jsonc",
+      "line": 203,
+      "text": "      \"description\": \"Preserved initial physical PDF pages with extracted text, archive hash, parser method, and gaps. Later pages may live in immutable PermittingSourceTextSegment records; the committed cursor is in text_extraction_state. Original archive and review decisions remain intact.\""
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 64,
+      "text": "        htmlEntity:entities.PermittingHtmlEvidence},{jurisdictionId,cursor:body.cursor});\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 76,
+      "text": "        limit:body.limit===undefined?25:Number(body.limit),cursor:body.cursor===undefined?null:body.cursor}));\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 82,
+      "text": "      const limit=Math.min(200,Math.max(1,Number(body.limit) || 50)),skip=Number(body.cursor || 0);\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 87,
+      "text": "      return Response.json({success:true,rules:rows.slice(0,limit),has_more:rows.length>limit,next_cursor:rows.length>limit?String(skip+limit):null});\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleExtraction/entry.ts",
+      "line": 20,
+      "text": "      const skip=Number(body.cursor || 0);\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleExtraction/entry.ts",
+      "line": 21,
+      "text": "      if (!Number.isSafeInteger(skip) || skip<0) return Response.json({error:'Invalid source cursor.'},{status:400});\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleExtraction/entry.ts",
+      "line": 26,
+      "text": "      return Response.json({success:true,sources:rows.slice(0,20),has_more:rows.length>20,next_cursor:rows.length>20?String(skip+20):null,llm_calls:0});\r"
+    },
+    {
+      "path": "base44/functions/permittingSourceAuthorityReview/entry.ts",
+      "line": 26,
+      "text": "   sourceDocumentId:String(body.source_document_id || ''),cursor:String(body.cursor || '')});\r"
+    },
+    {
+      "path": "base44/functions/permittingOfficeAuthorityReview/entry.ts",
+      "line": 32,
+      "text": "   const skip=Number(body.cursor || 0);\r"
+    },
+    {
+      "path": "base44/functions/permittingOfficeAuthorityReview/entry.ts",
+      "line": 33,
+      "text": "   if(!Number.isSafeInteger(skip) || skip<0)throw Object.assign(Error('Invalid jurisdiction cursor.'),{status:400});\r"
+    },
+    {
+      "path": "base44/functions/permittingOfficeAuthorityReview/entry.ts",
+      "line": 38,
+      "text": "    has_more:targets.length>20,next_cursor:targets.length>20?String(skip+20):null,llm_calls:0});\r"
+    },
+    {
+      "path": "base44/functions/permittingOfficeAuthorityReview/entry.ts",
+      "line": 42,
+      "text": "  if(action==='list')return Response.json(await listOfficeAuthorityReviews(deps,{jurisdictionId,cursor:body.cursor}));\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleInvalidate/entry.ts",
+      "line": 11,
+      "text": "   sourceDocumentId:String(body.source_document_id || ''),newHash:body.new_hash,cursor:String(body.cursor || '')}));\r"
+    },
+    {
+      "path": "base44/functions/sourceMonitorSeed/entry.ts",
+      "line": 22,
+      "text": "    let cursor: string | undefined;"
+    },
+    {
+      "path": "base44/functions/sourceMonitorSeed/entry.ts",
+      "line": 26,
+      "text": "        { sort: \"id\", limit: 200, fields: [\"id\", \"title\", \"official_url\", \"source_type\", \"authority_classification\", \"file_hash_sha256\", \"jurisdiction_id\", \"file_bytes\"], ...(cursor ? { cursor } : {}) },"
+    },
+    {
+      "path": "base44/functions/sourceMonitorSeed/entry.ts",
+      "line": 29,
+      "text": "      cursor = page.next_cursor;"
+    },
+    {
+      "path": "base44/functions/sourceMonitorSeed/entry.ts",
+      "line": 30,
+      "text": "    } while (cursor && page_has_more(page));"
+    },
+    {
+      "path": "base44/functions/sourceMonitorSeed/entry.ts",
+      "line": 34,
+      "text": "    let mCursor: string | undefined;"
+    },
+    {
+      "path": "base44/functions/sourceMonitorSeed/entry.ts",
+      "line": 38,
+      "text": "        { sort: \"id\", limit: 500, fields: [\"id\", \"source_document_id\"], ...(mCursor ? { cursor: mCursor } : {}) },"
+    },
+    {
+      "path": "base44/functions/sourceMonitorSeed/entry.ts",
+      "line": 41,
+      "text": "      mCursor = mPage.next_cursor;"
+    },
+    {
+      "path": "base44/functions/sourceMonitorSeed/entry.ts",
+      "line": 42,
+      "text": "    } while (mCursor && page_has_more(mPage));"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncTraceRead/entry.ts",
+      "line": 16,
+      "text": "      fields: ['sync_run_id','source','action','requested_at','completed_at','last_checkpoint_at','status','metrics','stages','limitations'], ...(body.cursor ? { cursor: String(body.cursor) } : {}) });"
+    },
+    {
+      "path": "base44/functions/permittingHtmlEvidence/entry.ts",
+      "line": 38,
+      "text": "   const cursor=String(body.cursor || '');\r"
+    },
+    {
+      "path": "base44/functions/permittingHtmlEvidence/entry.ts",
+      "line": 39,
+      "text": "   if(cursor && !/^[a-zA-Z0-9_-]{1,100}$/.test(cursor))return Response.json({error:'Invalid HTML evidence cursor.'},{status:400});\r"
+    },
+    {
+      "path": "base44/functions/permittingHtmlEvidence/entry.ts",
+      "line": 40,
+      "text": "   const rows=await entities.PermittingHtmlEvidence.filter({jurisdiction_id:jurisdictionId,...(cursor?{id:{$gt:cursor}}:{})},'id',6,0);\r"
+    },
+    {
+      "path": "base44/functions/permittingHtmlEvidence/entry.ts",
+      "line": 41,
+      "text": "   return Response.json({success:true,items:rows.slice(0,5).map(htmlEvidenceSummary),has_more:rows.length>5,next_cursor:rows.length>5?rows[4].id:null,llm_calls:0});\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 942,
+      "text": "    const resolvePayrollGenerationBridge = async (cursorSnapshot: any) => {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 960,
+      "text": "          String(priorRow.clock_in || '') !== String(cursorSnapshot?.clock_in || '') ||\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 961,
+      "text": "          String(priorRow.clock_out || '') !== String(cursorSnapshot?.clock_out || '') ||\r"
+    }
+  ],
+  "truncated": true,
+  "returnedMatches": 100
+}

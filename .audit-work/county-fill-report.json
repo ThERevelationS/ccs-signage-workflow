@@ -1,0 +1,2873 @@
+{
+ "at": "2026-11-10T06:52:30.468Z",
+ "writes": [
+  {
+   "id": "6aeedd71f9ec5298466f8681",
+   "name": "Celina city",
+   "state": "OH",
+   "county": "Mercer County",
+   "from": [
+    "Mercer County"
+   ]
+  },
+  {
+   "id": "6aeedc4203ac3c117c2be91a",
+   "name": "Zanesville city",
+   "state": "OH",
+   "county": "Muskingum County",
+   "from": [
+    "Muskingum County"
+   ]
+  },
+  {
+   "id": "6aeebc8b6d45146fa154498d",
+   "name": "Wilmington city",
+   "state": "OH",
+   "county": "Clinton County",
+   "from": [
+    "Clinton County"
+   ]
+  },
+  {
+   "id": "6aeebb5d6ea906626421ef51",
+   "name": "Massillon city",
+   "state": "OH",
+   "county": "Stark County",
+   "from": [
+    "Stark County"
+   ]
+  },
+  {
+   "id": "6aeebb5c47a83978de85ae00",
+   "name": "Circleville city",
+   "state": "OH",
+   "county": "Pickaway County",
+   "from": [
+    "Pickaway County",
+    "Pickaway"
+   ]
+  },
+  {
+   "id": "6aeebb5bfb0a978d788cc80f",
+   "name": "Dayton city",
+   "state": "OH",
+   "county": "Montgomery County",
+   "from": [
+    "Montgomery County"
+   ]
+  },
+  {
+   "id": "6aec9403bc44209aaef2f987",
+   "name": "Delphos",
+   "state": "OH",
+   "county": "Allen County",
+   "from": [
+    "Allen County"
+   ]
+  },
+  {
+   "id": "6ae9b7f6c3993d7f82a641fc",
+   "name": "Worthville",
+   "state": "KY",
+   "county": "Carroll County",
+   "from": [
+    "Carroll"
+   ]
+  },
+  {
+   "id": "6ae9b7e4f386e643c7b84fd7",
+   "name": "Sanders",
+   "state": "KY",
+   "county": "Carroll County",
+   "from": [
+    "Carroll"
+   ]
+  },
+  {
+   "id": "6ae9b7bbb1b239e1c17a0b51",
+   "name": "Prestonville",
+   "state": "KY",
+   "county": "Carroll County",
+   "from": [
+    "Carroll"
+   ]
+  },
+  {
+   "id": "6ae9b76d06b6e724246e253f",
+   "name": "Oak Grove",
+   "state": "KY",
+   "county": "Christian County",
+   "from": [
+    "Christian County",
+    "Christian"
+   ]
+  },
+  {
+   "id": "6ae9b7459636d4df74563ebe",
+   "name": "LaFayette",
+   "state": "KY",
+   "county": "Christian County",
+   "from": [
+    "Christian"
+   ]
+  },
+  {
+   "id": "6ae9b71172df9348d490a1dd",
+   "name": "Keene",
+   "state": "KY",
+   "county": "Jessamine County",
+   "from": [
+    "Jessamine"
+   ]
+  },
+  {
+   "id": "6ae9b6cf2334fb49486e8648",
+   "name": "Grand Rivers",
+   "state": "KY",
+   "county": "Livingston County",
+   "from": [
+    "Livingston County",
+    "Livingston"
+   ]
+  },
+  {
+   "id": "6ae9b6c96af26f371a021c87",
+   "name": "Ghent",
+   "state": "KY",
+   "county": "Carroll County",
+   "from": [
+    "Carroll County",
+    "Carroll"
+   ]
+  },
+  {
+   "id": "6ae9b6a77008b11c83c2dfd8",
+   "name": "Warfield",
+   "state": "KY",
+   "county": "Martin County",
+   "from": [
+    "Martin"
+   ]
+  },
+  {
+   "id": "6ae9b68f747130cc41c5ddc3",
+   "name": "Woodlawn",
+   "state": "KY",
+   "county": "Campbell County",
+   "from": [
+    "Campbell"
+   ]
+  },
+  {
+   "id": "6ae9b68c6e1809193d7a17bb",
+   "name": "Carrsville",
+   "state": "KY",
+   "county": "Livingston County",
+   "from": [
+    "Livingston"
+   ]
+  },
+  {
+   "id": "6ae9b686fea8953769590b72",
+   "name": "Woodbury",
+   "state": "KY",
+   "county": "Butler County",
+   "from": [
+    "Butler"
+   ]
+  },
+  {
+   "id": "6ae9b6629c2f5a6e4c940dd0",
+   "name": "Bloomfield",
+   "state": "KY",
+   "county": "Nelson County",
+   "from": [
+    "Nelson"
+   ]
+  },
+  {
+   "id": "6ae9b63d9498b57d203710cf",
+   "name": "Yankee Lake",
+   "state": "OH",
+   "county": "Trumbull County",
+   "from": [
+    "Trumbull County"
+   ]
+  },
+  {
+   "id": "6ae9b62cc56dfe982440024c",
+   "name": "Wren",
+   "state": "OH",
+   "county": "Van Wert County",
+   "from": [
+    "Van Wert County"
+   ]
+  },
+  {
+   "id": "6ae9b60f02bb3d617b971a01",
+   "name": "Smithfield",
+   "state": "KY",
+   "county": "Henry County",
+   "from": [
+    "Henry County",
+    "Henry"
+   ]
+  },
+  {
+   "id": "6ae9b6055b7901c05953dbcf",
+   "name": "Wilson",
+   "state": "OH",
+   "county": "Clinton County",
+   "from": [
+    "Clinton",
+    "Clinton County"
+   ]
+  },
+  {
+   "id": "6ae9b60020da32f691b9c4d5",
+   "name": "Wilmot",
+   "state": "OH",
+   "county": "Stark County",
+   "from": [
+    "Stark County"
+   ]
+  },
+  {
+   "id": "6ae9b5b0111f08f7820b84c1",
+   "name": "Ryland Heights",
+   "state": "KY",
+   "county": "Kenton County",
+   "from": [
+    "Kenton"
+   ]
+  },
+  {
+   "id": "6ae9b5a66da0eaf9f91ef99d",
+   "name": "Plum Springs",
+   "state": "KY",
+   "county": "Warren County",
+   "from": [
+    "Warren"
+   ]
+  },
+  {
+   "id": "6ae9b593fc1d18d2a1c2cf6f",
+   "name": "West Mansfield",
+   "state": "OH",
+   "county": "Logan County",
+   "from": [
+    "Logan County"
+   ]
+  },
+  {
+   "id": "6ae9b576f34bfdcbaedb81f7",
+   "name": "Mentor",
+   "state": "KY",
+   "county": "Campbell County",
+   "from": [
+    "Campbell"
+   ]
+  },
+  {
+   "id": "6ae9b567805328bff58ea3b6",
+   "name": "Lakeview Heights",
+   "state": "KY",
+   "county": "Rowan County",
+   "from": [
+    "Rowan"
+   ]
+  },
+  {
+   "id": "6ae9b56313de030f17ab3d78",
+   "name": "Venedocia",
+   "state": "OH",
+   "county": "Van Wert County",
+   "from": [
+    "Van Wert County"
+   ]
+  },
+  {
+   "id": "6ae9b559b84f7b0bafa5c857",
+   "name": "Island",
+   "state": "KY",
+   "county": "McLean County",
+   "from": [
+    "Mclean",
+    "McLean County"
+   ]
+  },
+  {
+   "id": "6ae9b555f6035906edae0d87",
+   "name": "Valley Hi",
+   "state": "OH",
+   "county": "Logan County",
+   "from": [
+    "Logan County"
+   ]
+  },
+  {
+   "id": "6ae9b55232963c6bb20bfc73",
+   "name": "Unionville Center",
+   "state": "OH",
+   "county": "Union County",
+   "from": [
+    "Union County"
+   ]
+  },
+  {
+   "id": "6ae9b5496c7b820d5460b62f",
+   "name": "Worthington Hills",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b545f388e869521e2784",
+   "name": "Worthington",
+   "state": "KY",
+   "county": "Greenup County",
+   "from": [
+    "Greenup"
+   ]
+  },
+  {
+   "id": "6ae9b540ca32a89de8e93df5",
+   "name": "Woodlawn Park",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b53c8fd392a73c45d0b0",
+   "name": "Woodland Hills",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b52e775c800d046e34be",
+   "name": "Ewing",
+   "state": "KY",
+   "county": "Fleming County",
+   "from": [
+    "Fleming"
+   ]
+  },
+  {
+   "id": "6ae9b51706ffcab6d9075e10",
+   "name": "Windy Hills",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson County",
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b513093fadde824907fc",
+   "name": "Wildwood",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b510bc1ae5b69c2f4375",
+   "name": "Wheatcroft",
+   "state": "KY",
+   "county": "Webster County",
+   "from": [
+    "Webster"
+   ]
+  },
+  {
+   "id": "6ae9b50d596f814beb2242ee",
+   "name": "Westwood",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b509ec2769f967d683cd",
+   "name": "Wellington",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b4eb850c8378523f783c",
+   "name": "Silver Lake",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae9b4e17c7750d356fe25a2",
+   "name": "Savannah",
+   "state": "OH",
+   "county": "Ashland County",
+   "from": [
+    "Ashland County"
+   ]
+  },
+  {
+   "id": "6ae9b4d30fae595dae0dacab",
+   "name": "Crestview",
+   "state": "KY",
+   "county": "Campbell County",
+   "from": [
+    "Campbell"
+   ]
+  },
+  {
+   "id": "6ae9b4c85ecb364a018f8bc5",
+   "name": "Sycamore",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b4c230ec1601e3227fa9",
+   "name": "Concord",
+   "state": "KY",
+   "county": "Lewis County",
+   "from": [
+    "Lewis"
+   ]
+  },
+  {
+   "id": "6ae9b4bcc6c875dfe3a8c9c0",
+   "name": "Fairview",
+   "state": "KY",
+   "county": "Kenton County",
+   "from": [
+    "Kenton"
+   ]
+  },
+  {
+   "id": "6ae9b4b0a3885d53ad1ded6d",
+   "name": "Spring Mill",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b47015cc905fa4af78d0",
+   "name": "Seneca Gardens",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b41fa681da2f10060755",
+   "name": "Potsdam",
+   "state": "OH",
+   "county": "Miami County",
+   "from": [
+    "Miami County"
+   ]
+  },
+  {
+   "id": "6ae9b3ecc6cd73fab586819b",
+   "name": "Parkway Village",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b3e633f13b2363dc2db2",
+   "name": "Woodstock",
+   "state": "OH",
+   "county": "Champaign County",
+   "from": [
+    "Champaign County"
+   ]
+  },
+  {
+   "id": "6ae9b3e1fd49d19ba38b4bb1",
+   "name": "Willshire",
+   "state": "OH",
+   "county": "Van Wert County",
+   "from": [
+    "Van Wert",
+    "Van Wert County"
+   ]
+  },
+  {
+   "id": "6ae9b3df1f7c18052f93c1f1",
+   "name": "Parral",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9b3c7a3885d53ad1dec6f",
+   "name": "Norwood",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b3c55ffb02b343b9b209",
+   "name": "Northfield",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson County",
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b3be02ab0a900938fb7b",
+   "name": "Otway",
+   "state": "OH",
+   "county": "Scioto County",
+   "from": [
+    "Scioto County"
+   ]
+  },
+  {
+   "id": "6ae9b3a98fa59950c9a5e418",
+   "name": "Moorland",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b3a06ed490eb9f4d9f0e",
+   "name": "Meadowview Estates",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b39d433c78197553df16",
+   "name": "Meadowbrook Farm",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b38234c339e718fcb6c1",
+   "name": "Maryhill Estates",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b37cd707034b4c001073",
+   "name": "Manor Creek",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b378cb5841909c2a763a",
+   "name": "Lynnview",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b35e14a51c92f41a7302",
+   "name": "Lincolnshire",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b35b14aa2c4ecf13c4a7",
+   "name": "Blaine",
+   "state": "KY",
+   "county": "Lawrence County",
+   "from": [
+    "Lawrence"
+   ]
+  },
+  {
+   "id": "6ae9b34c9ba38a01f4a549ac",
+   "name": "Thornville",
+   "state": "OH",
+   "county": "Perry County",
+   "from": [
+    "Perry County"
+   ]
+  },
+  {
+   "id": "6ae9b34aceb3addc530a76b5",
+   "name": "Langdon Place",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b34921b800a214d1bd40",
+   "name": "Kingsley",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b333a7154ae132876b2f",
+   "name": "Hurstbourne Acres",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b3299e67e3679c032e50",
+   "name": "Houston Acres",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b319ca6c7c59eaed340c",
+   "name": "Hollyvilla",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b3180c7a9e5643d42139",
+   "name": "Sugar Bush Knolls",
+   "state": "OH",
+   "county": "Portage County",
+   "from": [
+    "Portage County"
+   ]
+  },
+  {
+   "id": "6ae9b316c788f2e217e2166a",
+   "name": "Meyers Lake",
+   "state": "OH",
+   "county": "Stark County",
+   "from": [
+    "Stark County"
+   ]
+  },
+  {
+   "id": "6ae9b31547d046e15a196120",
+   "name": "Zoar",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9b3113161c87d56e7915c",
+   "name": "Stratton",
+   "state": "OH",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson County"
+   ]
+  },
+  {
+   "id": "6ae9b30efe04d8bf4a31cc6c",
+   "name": "Hills and Dales",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b30ef8d2a1bd857096ea",
+   "name": "Stone Creek",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9b30a06bad4ca9f968fb8",
+   "name": "Hickory Hill",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b2fd0699c208fd7aac2d",
+   "name": "Heritage Creek",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b2f4c25e740ecc480bb9",
+   "name": "Hebron Estates",
+   "state": "KY",
+   "county": "Bullitt County",
+   "from": [
+    "Bullitt"
+   ]
+  },
+  {
+   "id": "6ae9b2dda720128818bd0e3c",
+   "name": "Greenup",
+   "state": "KY",
+   "county": "Greenup County",
+   "from": [
+    "Greenup",
+    "Greenup County"
+   ]
+  },
+  {
+   "id": "6ae9b2d12ebc0225a982d7d6",
+   "name": "Graymoor-Devondale",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson County",
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b2c9b50096ed9f6ecf66",
+   "name": "West Farmington",
+   "state": "OH",
+   "county": "Trumbull County",
+   "from": [
+    "Trumbull County"
+   ]
+  },
+  {
+   "id": "6ae9b2bdc51630c5af554cc5",
+   "name": "Goose Creek",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b2b9c1b60ac666ff4f92",
+   "name": "Glenview Manor",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b2b4f7bf044b174184fa",
+   "name": "Glenview Hills",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b2b01f5ae46b21c8f32e",
+   "name": "Glenview",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b2b00102e4c3540bd00a",
+   "name": "Saint Marys",
+   "state": "OH",
+   "county": "Auglaize County",
+   "from": [
+    "Auglaize County"
+   ]
+  },
+  {
+   "id": "6ae9b2ac01aa1ded48a0fdde",
+   "name": "Saint Henry",
+   "state": "OH",
+   "county": "Mercer County",
+   "from": [
+    "Mercer County"
+   ]
+  },
+  {
+   "id": "6ae9b2a8b1d2199b35e5317c",
+   "name": "Saint Clairsville",
+   "state": "OH",
+   "county": "Belmont County",
+   "from": [
+    "Belmont County"
+   ]
+  },
+  {
+   "id": "6ae9b2a6981151f00452e16d",
+   "name": "Fox Chase",
+   "state": "KY",
+   "county": "Bullitt County",
+   "from": [
+    "Bullitt",
+    "Bullitt County"
+   ]
+  },
+  {
+   "id": "6ae9b2a36a3b88d3cf6dcb22",
+   "name": "Forest Hills",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b29a70e8544226e52ae7",
+   "name": "Fincastle",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b297e3d99b85043f78ef",
+   "name": "Lakemore",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae9b293cb5841909c2a7283",
+   "name": "Kettlersville",
+   "state": "OH",
+   "county": "Shelby County",
+   "from": [
+    "Shelby County"
+   ]
+  },
+  {
+   "id": "6ae9b28905370abfba92faf7",
+   "name": "Druid Hills",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b28221c99ef21d9c2a9b",
+   "name": "Douglass Hills",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b27ec15489a4984f5d87",
+   "name": "Jeffersonville",
+   "state": "OH",
+   "county": "Fayette County",
+   "from": [
+    "Fayette County"
+   ]
+  },
+  {
+   "id": "6ae9b2763ac216d468164934",
+   "name": "Rayland",
+   "state": "OH",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson County"
+   ]
+  },
+  {
+   "id": "6ae9b276095b8b14387d0375",
+   "name": "Uhrichsville",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9b25dbd9d3063912418eb",
+   "name": "Creekside",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b25292ddc62409602875",
+   "name": "Hills and Dales",
+   "state": "OH",
+   "county": "Stark County",
+   "from": [
+    "Stark County"
+   ]
+  },
+  {
+   "id": "6ae9b243fc619394f9360b38",
+   "name": "Peninsula",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae9b2407d3e9651b5ce1635",
+   "name": "Coldstream",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b234fec342b4a8364334",
+   "name": "Cambridge",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b21b2790d9a96c0c6cb7",
+   "name": "Brownsboro Village",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b20d7cc3564842b79593",
+   "name": "Brownsboro Farm",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson County",
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b1fff4471708b269e61d",
+   "name": "South Solon",
+   "state": "OH",
+   "county": "Madison County",
+   "from": [
+    "Madison County"
+   ]
+  },
+  {
+   "id": "6ae9b1fe541b7a8e1c56e666",
+   "name": "Geneva",
+   "state": "OH",
+   "county": "Ashtabula County",
+   "from": [
+    "Ashtabula",
+    "Ashtabula County"
+   ]
+  },
+  {
+   "id": "6ae9b1f8baefd0f2ff192691",
+   "name": "Broeck Pointe",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b1f7ce1b799c615d1aed",
+   "name": "Gallipolis",
+   "state": "OH",
+   "county": "Gallia County",
+   "from": [
+    "Gallia",
+    "Gallia County"
+   ]
+  },
+  {
+   "id": "6ae9b1efd28fd77e17505065",
+   "name": "Fultonham",
+   "state": "OH",
+   "county": "Muskingum County",
+   "from": [
+    "Muskingum County"
+   ]
+  },
+  {
+   "id": "6ae9b1e22a49191c0b7fa7d3",
+   "name": "New Franklin",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae9b1e11fd6e47bb2d53b08",
+   "name": "Briarwood",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b1dc7d01c95661a6a03e",
+   "name": "New Carlisle",
+   "state": "OH",
+   "county": "Clark County",
+   "from": [
+    "Clark County"
+   ]
+  },
+  {
+   "id": "6ae9b1c3be9c5b280bbe3977",
+   "name": "Bradfordsville",
+   "state": "KY",
+   "county": "Marion County",
+   "from": [
+    "Marion"
+   ]
+  },
+  {
+   "id": "6ae9b1c0c02fbd4a8d1bc345",
+   "name": "Blue Ridge Manor",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b1b62790d9a96c0c6bd2",
+   "name": "Nelsonville",
+   "state": "OH",
+   "county": "Athens County",
+   "from": [
+    "Athens County"
+   ]
+  },
+  {
+   "id": "6ae9b19b12a7086726bb97ef",
+   "name": "Bellewood",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b197089e4456a134bca8",
+   "name": "Bellemeade",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b18fb1bf8ee8716924b4",
+   "name": "Empire",
+   "state": "OH",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson County"
+   ]
+  },
+  {
+   "id": "6ae9b17af952afae0860146d",
+   "name": "Midway",
+   "state": "OH",
+   "county": "Madison County",
+   "from": [
+    "Madison County"
+   ]
+  },
+  {
+   "id": "6ae9b1712ac43e9d9648f208",
+   "name": "Roswell",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9b165d23e33256f7c35b6",
+   "name": "Reminderville",
+   "state": "OH",
+   "county": "Cuyahoga County",
+   "from": [
+    "Cuyahoga County"
+   ]
+  },
+  {
+   "id": "6ae9b15fd57296656fad91c7",
+   "name": "East Sparta",
+   "state": "OH",
+   "county": "Stark County",
+   "from": [
+    "Stark County"
+   ]
+  },
+  {
+   "id": "6ae9b154df2ea6e7ef5f6466",
+   "name": "Beechwood Village",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson County",
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b14d00a40c6069dca2f4",
+   "name": "Barbourmeade",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson County",
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b14456cd7b71bcb69e4e",
+   "name": "Bancroft",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson County",
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b13b4dad212e57065e43",
+   "name": "Audubon Park",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson County",
+    "Jefferson"
+   ]
+  },
+  {
+   "id": "6ae9b12ecffe63640bc702b8",
+   "name": "Macedonia",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae9b11fac5854b7141f6106",
+   "name": "Pleasant Plain",
+   "state": "OH",
+   "county": "Warren County",
+   "from": [
+    "Warren County"
+   ]
+  },
+  {
+   "id": "6ae9b0f78ae8331d5de54e24",
+   "name": "Butlerville",
+   "state": "OH",
+   "county": "Warren County",
+   "from": [
+    "Warren County"
+   ]
+  },
+  {
+   "id": "6ae9b0e6ebc0a2109122cd96",
+   "name": "Burgoon",
+   "state": "OH",
+   "county": "Sandusky County",
+   "from": [
+    "Sandusky County"
+   ]
+  },
+  {
+   "id": "6ae9b0d354946a572947c641",
+   "name": "Wilkesville",
+   "state": "OH",
+   "county": "Vinton County",
+   "from": [
+    "Vinton",
+    "Vinton County"
+   ]
+  },
+  {
+   "id": "6ae9b0c995ef95f65108a270",
+   "name": "Larue",
+   "state": "OH",
+   "county": "Marion County",
+   "from": [
+    "Marion County"
+   ]
+  },
+  {
+   "id": "6ae9b0c9301dce897e7c2c1d",
+   "name": "Brewster",
+   "state": "OH",
+   "county": "Stark County",
+   "from": [
+    "Stark County"
+   ]
+  },
+  {
+   "id": "6ae9b0c381b271158de5223b",
+   "name": "West Rushville",
+   "state": "OH",
+   "county": "Fairfield County",
+   "from": [
+    "Fairfield County"
+   ]
+  },
+  {
+   "id": "6ae9b0a41a93d6da78940baa",
+   "name": "Belmore",
+   "state": "OH",
+   "county": "Putnam County",
+   "from": [
+    "Putnam County"
+   ]
+  },
+  {
+   "id": "6ae9b0a0a11984cf8cd63a8e",
+   "name": "Beach City",
+   "state": "OH",
+   "county": "Stark County",
+   "from": [
+    "Stark County"
+   ]
+  },
+  {
+   "id": "6ae9b0a061855095e6b794e4",
+   "name": "Holloway",
+   "state": "OH",
+   "county": "Belmont County",
+   "from": [
+    "Belmont County"
+   ]
+  },
+  {
+   "id": "6ae9b09e1ad8a94fc11b1089",
+   "name": "Orangeville",
+   "state": "OH",
+   "county": "Trumbull County",
+   "from": [
+    "Trumbull County"
+   ]
+  },
+  {
+   "id": "6ae9b09639446cc5d1942783",
+   "name": "Barnhill",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9b04b520e030275aa5354",
+   "name": "Urbancrest",
+   "state": "OH",
+   "county": "Franklin County",
+   "from": [
+    "Franklin County"
+   ]
+  },
+  {
+   "id": "6ae9b02719e5f271fc8857cb",
+   "name": "New Weston",
+   "state": "OH",
+   "county": "Darke County",
+   "from": [
+    "Darke County"
+   ]
+  },
+  {
+   "id": "6ae9b019d7859dcb6b49ec5c",
+   "name": "Strasburg",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9afffb07c6ff77163d305",
+   "name": "South Salem",
+   "state": "OH",
+   "county": "Ross County",
+   "from": [
+    "Ross County"
+   ]
+  },
+  {
+   "id": "6ae9afea915a67fc98816095",
+   "name": "Gloria Glens Park",
+   "state": "OH",
+   "county": "Medina County",
+   "from": [
+    "Medina County"
+   ]
+  },
+  {
+   "id": "6ae9afe791eceee06bbc1b61",
+   "name": "Munroe Falls",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae9afe5964f1958b76dc037",
+   "name": "Girard",
+   "state": "OH",
+   "county": "Trumbull County",
+   "from": [
+    "Trumbull County"
+   ]
+  },
+  {
+   "id": "6ae9afe1a4c8573b509f9353",
+   "name": "Mount Cory",
+   "state": "OH",
+   "county": "Hancock County",
+   "from": [
+    "Hancock County"
+   ]
+  },
+  {
+   "id": "6ae9afa77fb61f9c4da2720f",
+   "name": "Fort Jennings",
+   "state": "OH",
+   "county": "Putnam County",
+   "from": [
+    "Putnam County"
+   ]
+  },
+  {
+   "id": "6ae9afa72863e857d7a34370",
+   "name": "Saint Louisville",
+   "state": "OH",
+   "county": "Licking County",
+   "from": [
+    "Licking County"
+   ]
+  },
+  {
+   "id": "6ae9afa680d5992aa9dd8f07",
+   "name": "Miltonsburg",
+   "state": "OH",
+   "county": "Monroe County",
+   "from": [
+    "Monroe County"
+   ]
+  },
+  {
+   "id": "6ae9af99e5b28624bff288bc",
+   "name": "Milford Center",
+   "state": "OH",
+   "county": "Union County",
+   "from": [
+    "Union County"
+   ]
+  },
+  {
+   "id": "6ae9af96cc0fcda5ad4ffcbd",
+   "name": "Midvale",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9af90292bcf8c9ce16484",
+   "name": "Russells Point",
+   "state": "OH",
+   "county": "Logan County",
+   "from": [
+    "Logan County"
+   ]
+  },
+  {
+   "id": "6ae9af8b6b6c04c73565c5ad",
+   "name": "Elgin",
+   "state": "OH",
+   "county": "Van Wert County",
+   "from": [
+    "Van Wert County"
+   ]
+  },
+  {
+   "id": "6ae9af82bc3bd805fdb4a23f",
+   "name": "East Cleveland",
+   "state": "OH",
+   "county": "Cuyahoga County",
+   "from": [
+    "Cuyahoga County"
+   ]
+  },
+  {
+   "id": "6ae9af767555f1ae18f15253",
+   "name": "Roseville",
+   "state": "OH",
+   "county": "Muskingum County",
+   "from": [
+    "Muskingum County"
+   ]
+  },
+  {
+   "id": "6ae9af3736a695f7e0923b5e",
+   "name": "Richwood",
+   "state": "OH",
+   "county": "Union County",
+   "from": [
+    "Union County"
+   ]
+  },
+  {
+   "id": "6ae9af30fb4b6f0a958aa986",
+   "name": "Magnetic Springs",
+   "state": "OH",
+   "county": "Union County",
+   "from": [
+    "Union County"
+   ]
+  },
+  {
+   "id": "6ae9af2a96bade458d7da0a2",
+   "name": "Port Washington",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9aefa9a62ae433588f9af",
+   "name": "Lordstown",
+   "state": "OH",
+   "county": "Trumbull County",
+   "from": [
+    "Trumbull County"
+   ]
+  },
+  {
+   "id": "6ae9aee2c4c40c95a978071d",
+   "name": "Lewisville",
+   "state": "OH",
+   "county": "Monroe County",
+   "from": [
+    "Monroe County"
+   ]
+  },
+  {
+   "id": "6ae9aeddff665448fc9f5898",
+   "name": "Cloverdale",
+   "state": "OH",
+   "county": "Putnam County",
+   "from": [
+    "Putnam County"
+   ]
+  },
+  {
+   "id": "6ae9aebb34e42233d273b955",
+   "name": "Hoytville",
+   "state": "OH",
+   "county": "Wood County",
+   "from": [
+    "Wood County"
+   ]
+  },
+  {
+   "id": "6ae9aeb4f24136ce368f005f",
+   "name": "Holmesville",
+   "state": "OH",
+   "county": "Holmes County",
+   "from": [
+    "Holmes County"
+   ]
+  },
+  {
+   "id": "6ae9aeb22a447295f3c089c0",
+   "name": "Castine",
+   "state": "OH",
+   "county": "Darke County",
+   "from": [
+    "Darke County"
+   ]
+  },
+  {
+   "id": "6ae9ae91f41d8bf9d2928b5f",
+   "name": "Bolivar",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9ae7dabfd431b97348996",
+   "name": "Beverly",
+   "state": "OH",
+   "county": "Washington County",
+   "from": [
+    "Washington County"
+   ]
+  },
+  {
+   "id": "6ae9ae79f048d559c6b18fb7",
+   "name": "Graysville",
+   "state": "OH",
+   "county": "Monroe County",
+   "from": [
+    "Monroe County"
+   ]
+  },
+  {
+   "id": "6ae9ae771baf7253da30e600",
+   "name": "Gratiot",
+   "state": "OH",
+   "county": "Licking County",
+   "from": [
+    "Licking County"
+   ]
+  },
+  {
+   "id": "6ae9ae72997a66289facfc7d",
+   "name": "Benton Ridge",
+   "state": "OH",
+   "county": "Hancock County",
+   "from": [
+    "Hancock County"
+   ]
+  },
+  {
+   "id": "6ae9ae6ff998beb47f186aa1",
+   "name": "Gilboa",
+   "state": "OH",
+   "county": "Putnam County",
+   "from": [
+    "Putnam County"
+   ]
+  },
+  {
+   "id": "6ae9ae6e28931e1a799e5d13",
+   "name": "Old Washington",
+   "state": "OH",
+   "county": "Guernsey County",
+   "from": [
+    "Guernsey County"
+   ]
+  },
+  {
+   "id": "6ae9ae5b562496e1ecfac65a",
+   "name": "Northfield",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae9ae557148fd24d5e8eb1e",
+   "name": "Belle Center",
+   "state": "OH",
+   "county": "Logan County",
+   "from": [
+    "Logan County"
+   ]
+  },
+  {
+   "id": "6ae9ae51abf0978dafdbff72",
+   "name": "Niles",
+   "state": "OH",
+   "county": "Trumbull County",
+   "from": [
+    "Trumbull County"
+   ]
+  },
+  {
+   "id": "6ae9ae4e1082a92908e35377",
+   "name": "New Philadelphia",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9ae463e2cf4daa5bd8713",
+   "name": "Barnesville",
+   "state": "OH",
+   "county": "Belmont County",
+   "from": [
+    "Belmont County"
+   ]
+  },
+  {
+   "id": "6ae9ae44eb5fce997dd82ccd",
+   "name": "Newcomerstown",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9ae35418f4f0ab184d609",
+   "name": "Ansonia",
+   "state": "OH",
+   "county": "Darke County",
+   "from": [
+    "Darke County"
+   ]
+  },
+  {
+   "id": "6ae9ae2ae3e2125054721a24",
+   "name": "Dupont",
+   "state": "OH",
+   "county": "Putnam County",
+   "from": [
+    "Putnam County"
+   ]
+  },
+  {
+   "id": "6ae9ae1cf27c0e8252533290",
+   "name": "Dennison",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9ae19528dd417166a15ff",
+   "name": "Navarre",
+   "state": "OH",
+   "county": "Stark County",
+   "from": [
+    "Stark County"
+   ]
+  },
+  {
+   "id": "6ae9ae0c6966aee1ada5a2d7",
+   "name": "Convoy",
+   "state": "OH",
+   "county": "Van Wert County",
+   "from": [
+    "Van Wert County"
+   ]
+  },
+  {
+   "id": "6ae9adfdb5b1c4d7cb1c369b",
+   "name": "Morral",
+   "state": "OH",
+   "county": "Marion County",
+   "from": [
+    "Marion County"
+   ]
+  },
+  {
+   "id": "6ae9aded15d92e0cd0a1d33f",
+   "name": "Mineral City",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9adde0acbfa84b8fc45a7",
+   "name": "Middle Point",
+   "state": "OH",
+   "county": "Van Wert County",
+   "from": [
+    "Van Wert County"
+   ]
+  },
+  {
+   "id": "6ae9add15811c83476a002c4",
+   "name": "Chickasaw",
+   "state": "OH",
+   "county": "Mercer County",
+   "from": [
+    "Mercer County"
+   ]
+  },
+  {
+   "id": "6ae9adc3d5330f7fa0ddde7b",
+   "name": "Mayfield Heights",
+   "state": "OH",
+   "county": "Cuyahoga County",
+   "from": [
+    "Cuyahoga County"
+   ]
+  },
+  {
+   "id": "6ae9adb8ab43f2d7bcb3c56c",
+   "name": "Mayfield",
+   "state": "OH",
+   "county": "Cuyahoga County",
+   "from": [
+    "Cuyahoga",
+    "Cuyahoga County"
+   ]
+  },
+  {
+   "id": "6ae9ad950b674488efceaeee",
+   "name": "Macksburg",
+   "state": "OH",
+   "county": "Washington County",
+   "from": [
+    "Washington County"
+   ]
+  },
+  {
+   "id": "6ae9ad8db27ae2b93b386e82",
+   "name": "Lyndhurst",
+   "state": "OH",
+   "county": "Cuyahoga County",
+   "from": [
+    "Cuyahoga County"
+   ]
+  },
+  {
+   "id": "6ae9ad7c13ac3aa17c4fb19f",
+   "name": "Lower Salem",
+   "state": "OH",
+   "county": "Washington County",
+   "from": [
+    "Washington County"
+   ]
+  },
+  {
+   "id": "6ae9ad741cca0645f3c6eb07",
+   "name": "Lowell",
+   "state": "OH",
+   "county": "Washington County",
+   "from": [
+    "Washington County"
+   ]
+  },
+  {
+   "id": "6ae9ad611d64eed21d14c355",
+   "name": "Brooklyn Heights",
+   "state": "OH",
+   "county": "Cuyahoga County",
+   "from": [
+    "Cuyahoga County"
+   ]
+  },
+  {
+   "id": "6ae9ad5cf305cdfcdf3ed943",
+   "name": "Laura",
+   "state": "OH",
+   "county": "Miami County",
+   "from": [
+    "Miami County"
+   ]
+  },
+  {
+   "id": "6ae9ad4ffa7a66bd28895a45",
+   "name": "Bethesda",
+   "state": "OH",
+   "county": "Belmont County",
+   "from": [
+    "Belmont County"
+   ]
+  },
+  {
+   "id": "6ae9ad474b1ea07d6de262eb",
+   "name": "Kirtland Hills",
+   "state": "OH",
+   "county": "Lake County",
+   "from": [
+    "Lake County"
+   ]
+  },
+  {
+   "id": "6ae9acffb5c0a4c87950b92c",
+   "name": "Beachwood",
+   "state": "OH",
+   "county": "Cuyahoga County",
+   "from": [
+    "Cuyahoga County"
+   ]
+  },
+  {
+   "id": "6ae9acfc34b73933ee910ffc",
+   "name": "Bailey Lakes",
+   "state": "OH",
+   "county": "Ashland County",
+   "from": [
+    "Ashland County"
+   ]
+  },
+  {
+   "id": "6ae9aced6b9f0d18f84fc703",
+   "name": "Hollansburg",
+   "state": "OH",
+   "county": "Darke County",
+   "from": [
+    "Darke County"
+   ]
+  },
+  {
+   "id": "6ae9acd52a447295f3c0870c",
+   "name": "Athalia",
+   "state": "OH",
+   "county": "Lawrence County",
+   "from": [
+    "Lawrence County"
+   ]
+  },
+  {
+   "id": "6ae9acc944a8d4073fd889c5",
+   "name": "Hemlock",
+   "state": "OH",
+   "county": "Perry County",
+   "from": [
+    "Perry County"
+   ]
+  },
+  {
+   "id": "6ae9acaf5077069a17ee5755",
+   "name": "Hanging Rock",
+   "state": "OH",
+   "county": "Lawrence County",
+   "from": [
+    "Lawrence County"
+   ]
+  },
+  {
+   "id": "6ae9ac9a43946c2e737990e6",
+   "name": "Hamden",
+   "state": "OH",
+   "county": "Vinton County",
+   "from": [
+    "Vinton County"
+   ]
+  },
+  {
+   "id": "6ae9ac52d8371d5fcb516bef",
+   "name": "Gnadenhutten",
+   "state": "OH",
+   "county": "Tuscarawas County",
+   "from": [
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9ab8d404796e65b4bcf9e",
+   "name": "Sprigg Township",
+   "state": "OH",
+   "county": "Adams County",
+   "from": [
+    "Adams",
+    "Adams County"
+   ]
+  },
+  {
+   "id": "6ae9ab8c520ff856a239e3ac",
+   "name": "Deersville",
+   "state": "OH",
+   "county": "Harrison County",
+   "from": [
+    "Harrison County"
+   ]
+  },
+  {
+   "id": "6ae9ab633c19c3fc422a83d3",
+   "name": "Cortland",
+   "state": "OH",
+   "county": "Trumbull County",
+   "from": [
+    "Trumbull County"
+   ]
+  },
+  {
+   "id": "6ae9ab61bec4936e45e0dd9f",
+   "name": "Continental",
+   "state": "OH",
+   "county": "Putnam County",
+   "from": [
+    "Putnam County"
+   ]
+  },
+  {
+   "id": "6ae9ab5ec7a613ac39346c5f",
+   "name": "Columbiana",
+   "state": "OH",
+   "county": "Columbiana County",
+   "from": [
+    "Columbiana",
+    "Columbiana County"
+   ]
+  },
+  {
+   "id": "6ae9ab30ed662b41b6701219",
+   "name": "Boston Heights",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae9a96b0d7b0759b93d12b6",
+   "name": "Nottingham Township",
+   "state": "OH",
+   "county": "Harrison County",
+   "from": [
+    "Harrison",
+    "Harrison County"
+   ]
+  },
+  {
+   "id": "6ae9a91b2c3a71421eefdd7e",
+   "name": "Twinsburg",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County",
+    "Summit"
+   ]
+  },
+  {
+   "id": "6ae9a839ae71b37ab7da7b9a",
+   "name": "Claibourne Township",
+   "state": "OH",
+   "county": "Union County",
+   "from": [
+    "Union",
+    "Union County"
+   ]
+  },
+  {
+   "id": "6ae9a702f8dea7ebead2189e",
+   "name": "Weathersfield Township",
+   "state": "OH",
+   "county": "Trumbull County",
+   "from": [
+    "Trumbull",
+    "Trumbull County"
+   ]
+  },
+  {
+   "id": "6ae9a6f384e1cd965f57cb28",
+   "name": "Swan Creek Township",
+   "state": "OH",
+   "county": "Fulton County",
+   "from": [
+    "Fulton",
+    "Fulton County"
+   ]
+  },
+  {
+   "id": "6ae9a64d213cdce18828a431",
+   "name": "Hiram Township",
+   "state": "OH",
+   "county": "Portage County",
+   "from": [
+    "Portage",
+    "Portage County"
+   ]
+  },
+  {
+   "id": "6ae9a09ff2c1815a5c5684ea",
+   "name": "Van Wert",
+   "state": "OH",
+   "county": "Van Wert County",
+   "from": [
+    "Van Wert County",
+    "Van Wert"
+   ]
+  },
+  {
+   "id": "6ae99e96f317e22d12907a7e",
+   "name": "Marietta",
+   "state": "OH",
+   "county": "Washington County",
+   "from": [
+    "Washington County",
+    "Washington"
+   ]
+  },
+  {
+   "id": "6ae98a3358032e01f635c575",
+   "name": "Zaleski",
+   "state": "OH",
+   "county": "Vinton County",
+   "from": [
+    "Vinton County"
+   ]
+  },
+  {
+   "id": "6ae9599b7a833e6116f6ecf4",
+   "name": "Corwin",
+   "state": "OH",
+   "county": "Warren County",
+   "from": [
+    "Warren County"
+   ]
+  },
+  {
+   "id": "6ae8a67948b05d383fd7edda",
+   "name": "St. Matthews",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson County"
+   ]
+  },
+  {
+   "id": "6ae8a6768951f547afc30905",
+   "name": "St. Matthews",
+   "state": "KY",
+   "county": "Jefferson County",
+   "from": [
+    "Jefferson County"
+   ]
+  },
+  {
+   "id": "6ae85f515ae1bc397892a780",
+   "name": "Liberty",
+   "state": "KY",
+   "county": "Casey County",
+   "from": [
+    "Casey",
+    "Casey County"
+   ]
+  },
+  {
+   "id": "6ae85e7a3a114e21da3c009f",
+   "name": "Paris",
+   "state": "KY",
+   "county": "Bourbon County",
+   "from": [
+    "Bourbon",
+    "Bourbon County"
+   ]
+  },
+  {
+   "id": "6ae85d88cbedfb6360a76b91",
+   "name": "Hazel",
+   "state": "KY",
+   "county": "Calloway County",
+   "from": [
+    "Calloway County",
+    "Calloway"
+   ]
+  },
+  {
+   "id": "6ae85d4c47e50139eb9d3c69",
+   "name": "Livermore",
+   "state": "KY",
+   "county": "McLean County",
+   "from": [
+    "McLean County",
+    "Mclean"
+   ]
+  },
+  {
+   "id": "6ae85af5c4a7ce551a8d4d4a",
+   "name": "Crescent Springs",
+   "state": "KY",
+   "county": "Kenton County",
+   "from": [
+    "Kenton County",
+    "Kenton"
+   ]
+  },
+  {
+   "id": "6ae85add613fe53d0bc90a41",
+   "name": "Bromley",
+   "state": "KY",
+   "county": "Kenton County",
+   "from": [
+    "Kenton County",
+    "Kenton"
+   ]
+  },
+  {
+   "id": "6ae853df754afc1e5e5c9a18",
+   "name": "East Canton",
+   "state": "OH",
+   "county": "Stark County",
+   "from": [
+    "Stark County"
+   ]
+  },
+  {
+   "id": "6ae82e1c82a0e3d5feffd77f",
+   "name": "Barberton",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae82b16c676eeabb2bdd21e",
+   "name": "North Canton",
+   "state": "OH",
+   "county": "Stark County",
+   "from": [
+    "Stark County"
+   ]
+  },
+  {
+   "id": "6ae815dda9634a20aad83642",
+   "name": "Van Wert",
+   "state": "OH",
+   "county": "Van Wert County",
+   "from": [
+    "Van Wert County",
+    "Van Wert"
+   ]
+  },
+  {
+   "id": "6ae80fb93d17cc47bd954ee0",
+   "name": "Akron",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae80def0be0d812dfbab6af",
+   "name": "Fairlawn",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae80dd66ba6fd56318a2706",
+   "name": "Tallmadge",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae80dd13fd4e427cfdd689b",
+   "name": "Hudson",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae80d8e67b4b23060502dfb",
+   "name": "Cuyahoga Falls",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae80d4a88d1059144002375",
+   "name": "Twinsburg",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County",
+    "Summit"
+   ]
+  },
+  {
+   "id": "6ae80bb45422bc94af11d939",
+   "name": "Norton",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae80bad3e2d5a2a64b103d7",
+   "name": "Stow",
+   "state": "OH",
+   "county": "Summit County",
+   "from": [
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae808a10495a7f8072f7bd5",
+   "name": "Massillon",
+   "state": "OH",
+   "county": "Stark County",
+   "from": [
+    "Stark County"
+   ]
+  },
+  {
+   "id": "6ae806bd03e44eb85655d837",
+   "name": "Marysville",
+   "state": "OH",
+   "county": "Union County",
+   "from": [
+    "Union County"
+   ]
+  },
+  {
+   "id": "6ae8043a0619b17184b6359e",
+   "name": "Marietta",
+   "state": "OH",
+   "county": "Washington County",
+   "from": [
+    "Washington County",
+    "Washington"
+   ]
+  },
+  {
+   "id": "6ae802df87d786b6dc9fb775",
+   "name": "Canton",
+   "state": "OH",
+   "county": "Stark County",
+   "from": [
+    "Stark County",
+    "Stark"
+   ]
+  },
+  {
+   "id": "69e62744e1f117de43ba7c75",
+   "name": "City of Cincinnati",
+   "state": "OH",
+   "county": "Hamilton County",
+   "from": [
+    "Hamilton County"
+   ]
+  }
+ ],
+ "held": [
+  {
+   "id": "6aeedd708a0280a6df702c1c",
+   "name": "Bellevue city",
+   "state": "OH",
+   "candidates": [
+    "Sandusky County",
+    "Erie County",
+    "Huron County"
+   ]
+  },
+  {
+   "id": "6aeedc42e0a61c9a68ac88e6",
+   "name": "Oakwood city",
+   "state": "OH",
+   "candidates": [
+    "Montgomery County",
+    "Cuyahoga County"
+   ]
+  },
+  {
+   "id": "6aeebb5c3f65784d6a3984b5",
+   "name": "Allen city",
+   "state": "KY",
+   "candidates": [
+    "Floyd County",
+    "Allen County",
+    "Floyd",
+    "Allen"
+   ]
+  },
+  {
+   "id": "6aeebb5a8f4f54a4a7dad790",
+   "name": "Columbus city",
+   "state": "OH",
+   "candidates": [
+    "Franklin County",
+    "Delaware County",
+    "Gallia County"
+   ]
+  },
+  {
+   "id": "6ae9b538a8c6eef116277eb8",
+   "name": "Swanton",
+   "state": "OH",
+   "candidates": [
+    "Lucas",
+    "Fulton County",
+    "Lucas County"
+   ]
+  },
+  {
+   "id": "6ae9b4f6e299536335d9331f",
+   "name": "Upton",
+   "state": "KY",
+   "candidates": [
+    "Hardin/larue"
+   ]
+  },
+  {
+   "id": "6ae9b4ae66531a1202046ec2",
+   "name": "Sparta",
+   "state": "KY",
+   "candidates": [
+    "Gallatin/owen"
+   ]
+  },
+  {
+   "id": "6ae9b474effb8920d76a6978",
+   "name": "Richfield",
+   "state": "OH",
+   "candidates": [
+    "Lucas",
+    "Henry",
+    "Summit",
+    "Summit County",
+    "Lucas County",
+    "Henry County"
+   ]
+  },
+  {
+   "id": "6ae9b41d2a31559b42ecdaef",
+   "name": "Allen",
+   "state": "KY",
+   "candidates": [
+    "Floyd County",
+    "Allen County",
+    "Floyd",
+    "Allen"
+   ]
+  },
+  {
+   "id": "6ae9b3ff61ef04e92a712e6f",
+   "name": "Prospect",
+   "state": "KY",
+   "candidates": [
+    "Jefferson County",
+    "Jefferson/oldham"
+   ]
+  },
+  {
+   "id": "6ae9b39011e49354b123ca25",
+   "name": "Warren",
+   "state": "OH",
+   "candidates": [
+    "Belmont",
+    "Washington",
+    "Tuscarawas",
+    "Jefferson",
+    "Warren",
+    "Trumbull",
+    "Washington County",
+    "Warren County",
+    "Trumbull County",
+    "Jefferson County",
+    "Belmont County",
+    "Tuscarawas County"
+   ]
+  },
+  {
+   "id": "6ae9b2cd263efdd4b81d628c",
+   "name": "McDonald",
+   "state": "OH",
+   "candidates": [
+    "Hardin",
+    "Hardin County",
+    "Trumbull County"
+   ]
+  },
+  {
+   "id": "6ae9b1a1cfff75929e234d3a",
+   "name": "Mount Pleasant",
+   "state": "OH",
+   "candidates": [
+    "Jefferson",
+    "Jefferson County",
+    "Harrison County"
+   ]
+  },
+  {
+   "id": "6ae9b189bc9f50209c494167",
+   "name": "Mifflin",
+   "state": "OH",
+   "candidates": [
+    "Ashland County",
+    "Franklin",
+    "Pike",
+    "Richland",
+    "Ashland",
+    "Wyandot",
+    "Franklin County",
+    "Wyandot County",
+    "Richland County",
+    "Pike County"
+   ]
+  },
+  {
+   "id": "6ae9b14e22eab757af6463d5",
+   "name": "Quaker City",
+   "state": "OH",
+   "candidates": [
+    "Lawrence County",
+    "Guernsey County"
+   ]
+  },
+  {
+   "id": "6ae9b138bc0748bb78ca6fca",
+   "name": "Congress",
+   "state": "OH",
+   "candidates": [
+    "Wayne",
+    "Morrow",
+    "Wayne County",
+    "Morrow County"
+   ]
+  },
+  {
+   "id": "6ae9b0f1f609fa12b3e008aa",
+   "name": "Worthington",
+   "state": "OH",
+   "candidates": [
+    "Richland",
+    "Richland County",
+    "Franklin County"
+   ]
+  },
+  {
+   "id": "6ae9b09a2c41783279ec30a3",
+   "name": "Bay Village",
+   "state": "OH",
+   "candidates": [
+    "Ottawa",
+    "Ottawa County",
+    "Cuyahoga County"
+   ]
+  },
+  {
+   "id": "6ae9b054d3aa41dac0425032",
+   "name": "Ohio City",
+   "state": "OH",
+   "candidates": [
+    "Clermont County",
+    "Monroe",
+    "Clermont",
+    "Gallia",
+    "Monroe County",
+    "Gallia County",
+    "Van Wert County"
+   ]
+  },
+  {
+   "id": "6ae9af106623410e43499773",
+   "name": "Pleasant City",
+   "state": "OH",
+   "candidates": [
+    "Brown County",
+    "Brown",
+    "Logan",
+    "Fairfield",
+    "Madison",
+    "Hancock",
+    "Clark",
+    "Franklin",
+    "Hardin",
+    "Putnam",
+    "Marion",
+    "Henry",
+    "Seneca",
+    "Knox",
+    "Perry",
+    "Van Wert",
+    "Fairfield County",
+    "Van Wert County",
+    "Seneca County",
+    "Perry County",
+    "Marion County",
+    "Madison County",
+    "Logan County",
+    "Knox County",
+    "Henry County",
+    "Hardin County",
+    "Hancock County",
+    "Franklin County",
+    "Clark County",
+    "Putnam County",
+    "Guernsey County"
+   ]
+  },
+  {
+   "id": "6ae9aed42cb9f8cb9a402255",
+   "name": "Clinton",
+   "state": "OH",
+   "candidates": [
+    "Fulton",
+    "Franklin County",
+    "Shelby",
+    "Vinton",
+    "Franklin",
+    "Wayne",
+    "Seneca",
+    "Knox",
+    "Clinton",
+    "Wayne County",
+    "Vinton County",
+    "Shelby County",
+    "Seneca County",
+    "Knox County",
+    "Fulton County",
+    "Summit County"
+   ]
+  },
+  {
+   "id": "6ae9ae9e8f29602785650406",
+   "name": "Hartford",
+   "state": "OH",
+   "candidates": [
+    "Licking",
+    "Trumbull",
+    "Licking County",
+    "Trumbull County"
+   ]
+  },
+  {
+   "id": "6ae9ae1f98f09674ca16b476",
+   "name": "Dover",
+   "state": "OH",
+   "candidates": [
+    "Union",
+    "Fulton",
+    "Cuyahoga",
+    "Tuscarawas",
+    "Athens",
+    "Union County",
+    "Tuscarawas County",
+    "Fulton County",
+    "Athens County"
+   ]
+  },
+  {
+   "id": "6ae9acb6479a3dbfc45acce1",
+   "name": "Harrisville",
+   "state": "OH",
+   "candidates": [
+    "Carroll County",
+    "Medina",
+    "Medina County"
+   ]
+  },
+  {
+   "id": "6ae9a5d8d35533af465ca203",
+   "name": "Canal Winchester",
+   "state": "OH",
+   "candidates": [
+    "Franklin County",
+    "Fairfield County"
+   ]
+  },
+  {
+   "id": "6ae99dd1c8ecc7f46e4e4c12",
+   "name": "Jackson County",
+   "state": "OH",
+   "candidates": [
+    "Stark County",
+    "Jackson",
+    "Vinton",
+    "Franklin",
+    "Sandusky",
+    "Crawford",
+    "Hardin",
+    "Wyandot",
+    "Monroe",
+    "Shelby",
+    "Noble",
+    "Richland",
+    "Pike",
+    "Hancock",
+    "Montgomery",
+    "Ashland",
+    "Mahoning",
+    "Brown",
+    "Stark",
+    "Pickaway",
+    "Putnam",
+    "Perry",
+    "Allen",
+    "Coshocton",
+    "Champaign",
+    "Preble",
+    "Seneca",
+    "Auglaize",
+    "Guernsey",
+    "Clermont",
+    "Knox",
+    "Muskingum",
+    "Paulding",
+    "Wood",
+    "Darke",
+    "Union",
+    "Van Wert",
+    "Highland",
+    "Wyandot County",
+    "Wood County",
+    "Vinton County",
+    "Van Wert County",
+    "Union County",
+    "Shelby County",
+    "Seneca County",
+    "Sandusky County",
+    "Richland County",
+    "Putnam County",
+    "Preble County",
+    "Pike County",
+    "Pickaway County",
+    "Perry County",
+    "Paulding County",
+    "Noble County",
+    "Muskingum County",
+    "Montgomery County",
+    "Monroe County",
+    "Mahoning County",
+    "Knox County",
+    "Jackson County",
+    "Highland County",
+    "Hardin County",
+    "Hancock County",
+    "Guernsey County",
+    "Franklin County",
+    "Darke County",
+    "Crawford County",
+    "Coshocton County",
+    "Clermont County",
+    "Champaign County",
+    "Brown County",
+    "Auglaize County",
+    "Ashland County",
+    "Allen County"
+   ]
+  },
+  {
+   "id": "6ae897a2173e8ed5810f165a",
+   "name": "Ottawa",
+   "state": "OH",
+   "candidates": [
+    "Putnam County",
+    "Putnam",
+    "Ottawa"
+   ]
+  },
+  {
+   "id": "6ae88862df0076c0373dc3b1",
+   "name": "McArthur",
+   "state": "OH",
+   "candidates": [
+    "Vinton County",
+    "Logan",
+    "Logan County"
+   ]
+  },
+  {
+   "id": "6ae84d98c3543303c1c79b98",
+   "name": "Mason",
+   "state": "OH",
+   "candidates": [
+    "Warren County",
+    "Lawrence",
+    "Lawrence County"
+   ]
+  },
+  {
+   "id": "6ae849667e2ffda75db665a5",
+   "name": "Harrison",
+   "state": "OH",
+   "candidates": [
+    "Logan County",
+    "Hamilton County",
+    "Montgomery County",
+    "Vinton",
+    "Knox",
+    "Preble",
+    "Pickaway",
+    "Logan",
+    "Hamilton",
+    "Carroll",
+    "Montgomery",
+    "Henry",
+    "Licking",
+    "Perry",
+    "Champaign",
+    "Paulding",
+    "Gallia",
+    "Muskingum",
+    "Scioto",
+    "Van Wert",
+    "Ross",
+    "Harrison",
+    "Darke",
+    "Preble County",
+    "Vinton County",
+    "Van Wert County",
+    "Scioto County",
+    "Ross County",
+    "Pickaway County",
+    "Perry County",
+    "Paulding County",
+    "Muskingum County",
+    "Licking County",
+    "Knox County",
+    "Henry County",
+    "Gallia County",
+    "Darke County",
+    "Champaign County",
+    "Carroll County",
+    "Harrison County"
+   ]
+  },
+  {
+   "id": "6ae82eae1f3fce84e2936d3f",
+   "name": "Rittman",
+   "state": "OH",
+   "candidates": [
+    "Wayne County",
+    "Medina County"
+   ]
+  },
+  {
+   "id": "6ae82ea483bd09ff72d578aa",
+   "name": "Green",
+   "state": "OH",
+   "candidates": [
+    "Brown County",
+    "Summit County",
+    "Hamilton County",
+    "Monroe",
+    "Shelby",
+    "Clinton",
+    "Fayette",
+    "Mahoning",
+    "Adams",
+    "Brown",
+    "Clark",
+    "Wayne",
+    "Ashland",
+    "Gallia",
+    "Harrison",
+    "Hamilton",
+    "Scioto",
+    "Ross",
+    "Hocking",
+    "Wayne County",
+    "Shelby County",
+    "Scioto County",
+    "Ross County",
+    "Monroe County",
+    "Mahoning County",
+    "Hocking County",
+    "Harrison County",
+    "Gallia County",
+    "Fayette County",
+    "Clinton County",
+    "Clark County",
+    "Ashland County",
+    "Adams County"
+   ]
+  },
+  {
+   "id": "6ae82abb8546878e2e371097",
+   "name": "Alliance",
+   "state": "OH",
+   "candidates": [
+    "Stark County",
+    "Mahoning County"
+   ]
+  },
+  {
+   "id": "6ae807365145c5b367a4c368",
+   "name": "Canal Winchester",
+   "state": "OH",
+   "candidates": [
+    "Franklin County",
+    "Fairfield County"
+   ]
+  },
+  {
+   "id": "69e67fb1539dbf3b982f791b",
+   "name": "Deerfield",
+   "state": "OH",
+   "candidates": [
+    "Warren",
+    "Morgan",
+    "Portage",
+    "Ross",
+    "Warren County",
+    "Ross County",
+    "Morgan County",
+    "Portage County"
+   ]
+  }
+ ]
+}

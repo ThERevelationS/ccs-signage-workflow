@@ -1,0 +1,1 @@
+PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)

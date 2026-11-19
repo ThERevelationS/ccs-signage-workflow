@@ -1,0 +1,110 @@
+[
+  {
+    "path": "src/components/estimator/foundation/wallCapCalculator.js",
+    "hunk": 0,
+    "result": {
+      "path": "src/components/estimator/foundation/wallCapCalculator.js",
+      "diff": "--- a/src/components/estimator/foundation/wallCapCalculator.js\n+++ b/src/components/estimator/foundation/wallCapCalculator.js\n@@ -1,6 +1,24 @@\n-// Wall cap pricing — ported from SignEstimate Pro (WallCapsTab.jsx).\n+// Wall cap pricing - ported from SignEstimate Pro (WallCapsTab.jsx).\n // A cut cap piece is always charged at FULL stock price; cuts do not reduce price.\n const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);\n+const stockPriceNumber = value => {\n+  if (typeof value === \"number\") return Number.isFinite(value) ? value : null;\n+  if (typeof value !== \"string\" || !/^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)$/.test(value.trim())) return null;\n+  const number = Number(value);\n+  return Number.isFinite(number) ? number : null;\n+};\n+const known = value => typeof value === \"number\" && Number.isFinite(value);\n+const assigned = id => (typeof id === \"string\" && id.trim() !== \"\")\n+  || (typeof id === \"number\" && Number.isFinite(id));\n+const sumKnown = rows => {\n+  let total = 0;\n+  for (const row of rows) {\n+    if (!known(row.cost)) return null;\n+    total += row.cost;\n+    if (!Number.isFinite(total)) return null;\n+  }\n+  return total;\n+};\n \n export function calcWallCaps(wallCaps = [], inventory = []) {\n   const caps = (wallCaps || []).map((cap) => {\n",
+      "applied": false
+    }
+  },
+  {
+    "path": "src/components/estimator/foundation/wallCapCalculator.js",
+    "hunk": 1,
+    "result": {
+      "path": "src/components/estimator/foundation/wallCapCalculator.js",
+      "diff": "--- a/src/components/estimator/foundation/wallCapCalculator.js\n+++ b/src/components/estimator/foundation/wallCapCalculator.js\n@@ -3,14 +3,38 @@\n const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);\n \n export function calcWallCaps(wallCaps = [], inventory = []) {\n-  const caps = (wallCaps || []).map((cap) => {\n-    const inv = inventory.find((i) => i.id === cap.cap_inventory_id);\n-    if (!inv) return { ...cap };\n+  const issues = [];\n+  const caps = (wallCaps || []).map((cap, index) => {\n+    const id = cap.cap_inventory_id;\n+    const issue = (field, code, message) => issues.push({\n+      kind: \"wall_cap\", index, componentId: cap.component_id ?? cap.id ?? null,\n+      field, inventoryId: assigned(id) ? id : null, code,\n+      message: `Wall cap ${index + 1}: ${message}`,\n+    });\n+    const matches = assigned(id) ? inventory.filter(row => row?.id === id) : [];\n+    if (matches.length !== 1) {\n+      issue(\"cap_inventory_id\", !assigned(id) ? \"catalog_item_unassigned\"\n+        : matches.length > 1 ? \"catalog_item_ambiguous\" : \"catalog_item_unavailable\",\n+      !assigned(id) ? \"select a catalog material.\" : matches.length > 1\n+        ? \"the selected catalog ID is ambiguous; refresh the catalog.\" : \"selected catalog material is unavailable.\");\n+      return { ...cap };\n+    }\n+    const inv = matches[0];\n+    if (inv.material_type !== \"wall_cap\") {\n+      issue(\"cap_inventory_id\", \"catalog_item_type_mismatch\", \"the selected catalog material is not a wall cap.\");\n+      return { ...cap };\n+    }\n+    const rate = stockPriceNumber(inv.cap_stock_price);\n+    if (rate === null || rate < 0) {\n+      issue(\"cap_stock_price\", \"wall_cap_stock_price_unavailable\",\n+        \"record a finite nonnegative full-stock price; a missing price is not zero. Saved amounts are retained.\");\n+      return { ...cap };\n+    }\n     return {\n       ...cap,\n-      cap_name: inv?.material_name || \"\",\n+      cap_name: inv.material_name || \"\",\n       stock_length_inches: num(inv?.cap_stock_length_inches),\n-      cost: num(inv?.cap_stock_price),\n+      cost: rate,\n     };\n   });\n \n",
+      "applied": false
+    }
+  },
+  {
+    "path": "src/components/estimator/foundation/wallCapCalculator.js",
+    "hunk": 2,
+    "result": {
+      "path": "src/components/estimator/foundation/wallCapCalculator.js",
+      "diff": "--- a/src/components/estimator/foundation/wallCapCalculator.js\n+++ b/src/components/estimator/foundation/wallCapCalculator.js\n@@ -14,20 +14,26 @@\n     };\n   });\n \n-  const byInventory = Object.values(\n-    caps.reduce((acc, c) => {\n-      if (!c.cap_inventory_id) return acc;\n-      acc[c.cap_inventory_id] = acc[c.cap_inventory_id] || {\n-        id: c.cap_inventory_id,\n-        name: c.cap_name,\n-        qty: 0,\n-        cost: 0,\n-      };\n-      acc[c.cap_inventory_id].qty += 1;\n-      acc[c.cap_inventory_id].cost += num(c.cost);\n-      return acc;\n-    }, {})\n-  );\n+  const groups = new Map();\n+  for (const cap of caps) {\n+    if (!assigned(cap.cap_inventory_id)) continue;\n+    if (!groups.has(cap.cap_inventory_id)) groups.set(cap.cap_inventory_id, []);\n+    groups.get(cap.cap_inventory_id).push(cap);\n+  }\n+  const byInventory = [...groups].map(([id, rows]) => ({\n+    id, name: rows[0].cap_name, qty: rows.length, cost: sumKnown(rows),\n+  }));\n+  const total = sumKnown(caps);\n+  if (total === null && caps.every(cap => known(cap.cost))) {\n+    issues.push({\n+      kind: \"wall_cap\", index: 0, componentId: caps[0]?.component_id ?? caps[0]?.id ?? null,\n+      field: \"cost\", inventoryId: null, code: \"wall_cap_cost_total_invalid\",\n+      message: \"Wall cap total is outside the supported numeric range; current pricing is unavailable.\",\n+    });\n+  }\n+  return { caps, byInventory, total, issues };\n+}\n \n-  return { caps, byInventory, total: caps.reduce((s, c) => s + num(c.cost), 0) };\n+export function foundationWallCapCatalogIssues(wallCaps = [], inventory = []) {\n+  return calcWallCaps(wallCaps, inventory).issues;\n }",
+      "applied": false
+    }
+  },
+  {
+    "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+    "hunk": 0,
+    "result": {
+      "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+      "diff": "--- a/src/components/estimator/foundation/FoundationWallCapsPanel.jsx\n+++ b/src/components/estimator/foundation/FoundationWallCapsPanel.jsx\n@@ -3,6 +3,7 @@\n import { Trash2, Plus } from \"lucide-react\";\n import { money } from \"./foundationCalc\";\n import { hasFoundationCostSnapshot } from \"./foundationCatalogIntegrity\";\n+import { foundationWallCapCatalogIssues } from \"./wallCapCalculator\";\n \n const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);\n \n",
+      "applied": false
+    }
+  },
+  {
+    "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+    "hunk": 1,
+    "result": {
+      "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+      "diff": "--- a/src/components/estimator/foundation/FoundationWallCapsPanel.jsx\n+++ b/src/components/estimator/foundation/FoundationWallCapsPanel.jsx\n@@ -33,6 +33,8 @@\n       },\n     ]);\n   };\n+\n+  const unavailableCaps = new Set(foundationWallCapCatalogIssues(caps, options).filter(issue => issue.code !== \"wall_cap_cost_total_invalid\").map(issue => issue.index));\n \n   return (\n     <div className=\"space-y-3\">\n",
+      "applied": false
+    }
+  },
+  {
+    "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+    "hunk": 2,
+    "result": {
+      "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+      "diff": "--- a/src/components/estimator/foundation/FoundationWallCapsPanel.jsx\n+++ b/src/components/estimator/foundation/FoundationWallCapsPanel.jsx\n@@ -158,7 +158,7 @@\n               </span>\n               <div className=\"flex items-center gap-3\">\n                 <span className=\"font-bold text-gray-900\">{hasFoundationCostSnapshot(cap.cost) ? money(cap.cost) : \"Not saved\"}</span>\n-                {(!options.some((o) => o.id === cap.cap_inventory_id)) && <span className=\"text-[10px] text-amber-700\">Saved amounts (not current pricing)</span>}\n+                {unavailableCaps.has(index) && <span className=\"text-[10px] text-amber-700\">Saved amounts (not current pricing)</span>}\n                 <Button variant=\"ghost\" size=\"icon\" onClick={() => removeCap(index)}>\n                   <Trash2 className=\"w-4 h-4 text-red-500\" aria-hidden=\"true\" />\n                 </Button>\n",
+      "applied": false
+    }
+  },
+  {
+    "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+    "hunk": 0,
+    "result": {
+      "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+      "diff": "--- a/src/components/estimator/foundation/foundationCatalogIntegrity.js\n+++ b/src/components/estimator/foundation/foundationCatalogIntegrity.js\n@@ -1,4 +1,5 @@\n import { foundationEquipmentCatalogIssues } from \"./foundationEquipmentBindings\";\n+import { foundationWallCapCatalogIssues } from \"./wallCapCalculator\";\n \n export function foundationItemCatalogIssues(item, inventory = [], index = 0) {\n   const issues = [];\n",
+      "applied": false
+    }
+  },
+  {
+    "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+    "hunk": 1,
+    "result": {
+      "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+      "diff": "--- a/src/components/estimator/foundation/foundationCatalogIntegrity.js\n+++ b/src/components/estimator/foundation/foundationCatalogIntegrity.js\n@@ -29,7 +29,6 @@\n   return issues;\n }\n \n-// Availability only: this does not validate rates, geometry, or engineering.\n export function foundationAssemblyCatalogIssues(project, inventory = []) {\n   const available = new Set(inventory.map((row) => row.id));\n   const issues = [];\n",
+      "applied": false
+    }
+  },
+  {
+    "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+    "hunk": 2,
+    "result": {
+      "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+      "diff": "--- a/src/components/estimator/foundation/foundationCatalogIntegrity.js\n+++ b/src/components/estimator/foundation/foundationCatalogIntegrity.js\n@@ -30,6 +30,7 @@\n }\n \n // Availability only: this does not validate rates, geometry, or engineering.\n+// Check catalog availability and the explicit wall-cap full-stock price basis.\n export function foundationAssemblyCatalogIssues(project, inventory = []) {\n   const available = new Set(inventory.map((row) => row.id));\n   const issues = [];\n",
+      "applied": false
+    }
+  },
+  {
+    "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+    "hunk": 3,
+    "result": {
+      "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+      "diff": "--- a/src/components/estimator/foundation/foundationCatalogIntegrity.js\n+++ b/src/components/estimator/foundation/foundationCatalogIntegrity.js\n@@ -51,9 +51,6 @@\n   for (const [index, pole] of (project?.poles || []).entries()) {\n     check(pole, index, \"pole\", \"pole_id\", \"Pole\");\n   }\n-  for (const [index, cap] of (project?.wall_caps || []).entries()) {\n-    check(cap, index, \"wall_cap\", \"cap_inventory_id\", \"Wall cap\");\n-  }\n   for (const [index, wall] of (project?.walls || []).entries()) {\n     check(wall, index, \"wall\", \"materialId\", \"Wall\");\n     if (wall.includeInternalWall) {\n",
+      "applied": false
+    }
+  },
+  {
+    "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+    "hunk": 4,
+    "result": {
+      "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+      "diff": "--- a/src/components/estimator/foundation/foundationCatalogIntegrity.js\n+++ b/src/components/estimator/foundation/foundationCatalogIntegrity.js\n@@ -62,6 +62,7 @@\n   }\n   return [\n     ...issues,\n+    ...foundationWallCapCatalogIssues(project?.wall_caps || [], inventory),\n     ...(project?.items || []).flatMap((item, index) => foundationItemCatalogIssues(item, inventory, index)),\n     ...foundationEquipmentCatalogIssues(project?.selected_equipment || [], inventory),\n   ];\n",
+      "applied": false
+    }
+  },
+  {
+    "path": "src/components/estimator/foundation/foundationCalc.js",
+    "hunk": 0,
+    "result": {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "diff": "--- a/src/components/estimator/foundation/foundationCalc.js\n+++ b/src/components/estimator/foundation/foundationCalc.js\n@@ -232,7 +232,7 @@\n     total_labor_hours: addKnown(sum(\"finishing_hours\"), sum(\"excavation_hours\")),\n   };\n \n-  totals.grand_total = itemsTotal === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;\n+  totals.grand_total = itemsTotal === null || wallCaps.total === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;\n \n   return {\n     items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, catalogIssues, inputIssues,\n",
+      "applied": false
+    }
+  }
+]

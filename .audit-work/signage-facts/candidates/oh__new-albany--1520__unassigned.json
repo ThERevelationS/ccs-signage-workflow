@@ -1,0 +1,26 @@
+{
+ "jurisdiction_id": "6adf5d76981c3ee33b5b1520",
+ "jurisdiction_name": "New Albany",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Department Address: 7815 Walton Parkway ● New Albany, Ohio 43054 ● Phone 614.939.2254 Mailing Address: 99 West Main Street ● P.O. Box 188 ● New Albany, Ohio 43054 Community Development Sign Permit Application Address (required) Parcel Number (required) Project Name Property Submittal Requirements I hereby certify that I am the owner of the named property, or that the proposed work is authorized by the owner of record and that I have been authorized by the owner to make this application as his/her authorized agent and I agree to conform to all applicable laws of the jurisdiction. In addition, if a permit for work described in this application is issued, I certify that the code official’s authorized representative shall have the authority to enter areas covered by such permit at any reasonable hour to enforce the provisions of the code(s) applicable to such permit. Applicant Signature Date",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "bef5168e053ee3320d6698eb87b526d5caf029b7a6d99425e1b281cb58366339",
+   "source_document_id": null,
+   "source_title": "bef5168e053ee3320d6698eb87b526d5caf029b7a6d99425e1b281cb58366339.pdf",
+   "official_url": "https://newalbanyohio.org/wp-content/uploads/2025/01/Sign-Permit-Application.pdf"
+  }
+ ]
+}

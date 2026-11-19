@@ -1,0 +1,10 @@
+file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/cb-held-supervisor.mjs:21
+  if (exit !== 0) throw new Error(`${label} failed; inspect its logs and locks.`);
+                        ^
+
+Error: leads-apply failed; inspect its logs and locks.
+    at run (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/cb-held-supervisor.mjs:21:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/cb-held-supervisor.mjs:52:3
+
+Node.js v26.13.0

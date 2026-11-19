@@ -1,0 +1,20 @@
+{
+  "actualFrozenServiceAndHelpers": true,
+  "sdkAndEntityBoundaryMocked": true,
+  "realStorageVerified": false,
+  "acceptedPilotNotRecomputed": true,
+  "results": [
+    {
+      "scenario": "revision-unavailable-before-persist",
+      "ok": true,
+      "revisionRows": 1,
+      "productVersion": 2
+    },
+    {
+      "scenario": "revision-reply-lost-after-persist",
+      "ok": true,
+      "revisionRows": 1,
+      "productVersion": 2
+    }
+  ]
+}

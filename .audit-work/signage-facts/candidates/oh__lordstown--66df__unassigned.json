@@ -1,0 +1,25 @@
+{
+ "jurisdiction_id": "6adeed3418fcfce1d38266df",
+ "jurisdiction_name": "Lordstown",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "ZONING REGULATIONS FOR A NEW HOME Residential (R-1) 1. Full basement under living space of all two story and ranch style dwellings. 2. For any other style dwelling, lowest level is considered the basement. Interior floor must be at least 4 feet below front finish grade. Interior side walls must be a minimum of 8 feet in height. Area of lowest level (excluding garage) must be at least 40% of the area of interior floor plan at grade level. 3. Full size garage must be attached to dwelling with access to interior of dwelling. 4. 1500 square feet minimum living space (If more than one floor, at least 800 square feet on the first floor). 5. Height not to exceed 35 feet to the ridgeline (peak of roof). 6. Lot has to be at least 100 feet wide and 200 feet deep if lot has sanitary sewer (If no sanitary sewer, need approval from Trumbull County Board of Health). 7. House has to be at least 60 feet",
+   "tags": [
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "7e9abb4d080bd2122831ad96d8690dd893aba076a4be4c48981713d3e6644d55",
+   "source_document_id": null,
+   "source_title": "7e9abb4d080bd2122831ad96d8690dd893aba076a4be4c48981713d3e6644d55.pdf",
+   "official_url": "https://www.lordstown.com/wp-content/uploads/ZONING-REGULATIONS-FOR-A-NEW-HOME-Access-Structures.pdf"
+  }
+ ]
+}

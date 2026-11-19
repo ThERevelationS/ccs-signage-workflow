@@ -12,7 +12,11 @@ async function invokeAnnouncement(payload) {
     const response = await base44.functions.invoke("manageAnnouncements", payload);
     return response?.data || response;
   } catch (error) {
-    throw new Error(error?.response?.data?.error || error?.message || "Announcement could not be changed safely.");
+    // Preserve the HTTP status on the wrapped error so callers can tell a
+    // rate limit (back off) from a genuine feed outage (fallback read).
+    const wrapped = new Error(error?.response?.data?.error || error?.message || "Announcement could not be changed safely.");
+    wrapped.status = error?.status ?? error?.response?.status;
+    throw wrapped;
   }
 }
 

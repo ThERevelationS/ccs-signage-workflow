@@ -1,0 +1,70 @@
+{
+ "jurisdiction_id": "6adeee4b62b6390b1377cda2",
+ "jurisdiction_name": "Massillon",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 5,
+   "snippet": "CITY OF MASSILLON, OHIO APPLICATION FOR BUILDING PERMIT TO THE BUILDING DEPARTMENT: APPLICATION IS HEREBY MADE FOR PERMIT TO REPAIR/REMODEL/ERECT/RAZE A STRUCTURE AS HEREIN DESCRIBED: THE ACCEPTANCE OF WHICH SHALL CONSTITUTE AN AGREEMENT ON OWNER’S PART TO ABIDE BY ALL CONDITIONS HEREIN CONTAINED, AND TO COMPLY WITH ALL ORDINANCES OF THE CITY OF MASSILLON AND THE LAWS OF THE STATE OF OHIO RELATING TO THE WORK TO BE DONE HEREUNDER: OWNER________________________________________ ADDRESS_____________________________________ CITY/STATE/ZIP________________________________ PHONE_______________________________________ EMAIL________________________________________ CONTRACTOR__________________________________ ADDRESS_____________________________________ CITY/STATE/ZIP________________________________ PHONE_______________________________________ EMAIL________________________________________ ELEC. CO",
+   "tags": [
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "penalties",
+    "process"
+   ],
+   "weight": 14,
+   "source_sha256": "fde6976d86ffe273d5a63faf81023ab8acd72773cc9adc4a5680e211bcf1f368",
+   "source_document_id": null,
+   "source_title": "fde6976d86ffe273d5a63faf81023ab8acd72773cc9adc4a5680e211bcf1f368.pdf",
+   "official_url": "https://massillonohio.gov/wp-content/uploads/Sign-Contractors-Registration-Permit-Information-FILLABLE.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Codified Ordinances of the City of Massillon, Ohio, Section 181.23 REGISTRATION OF CONTRACTORS (A) No person, firm, partnership, association, corporation or other entity shall perform any construction work within the City of Massillon without first obtaining a tax account number and a Certificate of Tax Registration from the City of Massillon Income Tax Department. (B) A Certificate of Tax Registration shall be denied to any person, firm, partnership, association, corporation or other entity who is not current in the filing of required tax documents; who is not current in the required payment of taxes; or who has not complied with the provisions of this Chapter. (C) The Income Tax Department shall maintain a list, and provide quarterly updated list to the City of Massillon Building and Engineering Departments, of the persons, firms, partnerships, associations, corporations and other enti",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "fde6976d86ffe273d5a63faf81023ab8acd72773cc9adc4a5680e211bcf1f368",
+   "source_document_id": null,
+   "source_title": "fde6976d86ffe273d5a63faf81023ab8acd72773cc9adc4a5680e211bcf1f368.pdf",
+   "official_url": "https://massillonohio.gov/wp-content/uploads/Sign-Contractors-Registration-Permit-Information-FILLABLE.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "CITY OF MASSILLON BUILDING DEPARTMENT MUNICIPAL GOVERNMENT CENTER ONE JAMES DUNCAN PLAZA, MASSILLON, OH 44646 PHONE: (330) 830-1724 * FAX: (330) 830-1782 1. Owner of Company First & Last Name __________________________________________ 2. Company Name ____________________________________________________________ 3. Permanent Address_________________________________________________________ _________________________________________________________ City State Zip 3. Home Phone ___________________________________ U. S. Citizen? ( ) Yes ( ) No 4. Date of Birth _____________________ FED I.D. # OR SS#_________________________ 5. State of Ohio License? ( ) Yes ( ) No 6. State License Number _______________________ Expires_________________________ 6. Business Name _____________________________________________________________ 7. Business Address ______________________________________________________",
+   "tags": [
+    "sign",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "fde6976d86ffe273d5a63faf81023ab8acd72773cc9adc4a5680e211bcf1f368",
+   "source_document_id": null,
+   "source_title": "fde6976d86ffe273d5a63faf81023ab8acd72773cc9adc4a5680e211bcf1f368.pdf",
+   "official_url": "https://massillonohio.gov/wp-content/uploads/Sign-Contractors-Registration-Permit-Information-FILLABLE.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "MASSILLON BUILDING DEPARTMENT ONE JAMES DUNCAN PLAZA, MASSILLON, OH 44646 PHONE 330.830.1724 | FAX 330.830.1782 www.massillonohio.gov Dear Applicant, In answer to your inquiry, the City of Massillon requires all Sign Contractors to be registered with the City of Massillon. To become registered as a Sign Contractor, you will need to: 1. Submit the following items: • Completed Application for Contractor Registration Form. • Certificate of Insurance for Three Hundred Thousand Dollars. • Copy of your Worker’s Compensation Certificate. • Completed Income Tax Questionnaire Form. • $100.00 Yearly Sign Contractor Registration Fee 2. Yearly registration is from January 1 st of each calendar year through December 31 st of the same calendar year. It does not matter what time of the year the registration is obtained, it will expire on December 31 st of that same year. The cost is not pro-rated. 3. T",
+   "tags": [
+    "sign",
+    "fee",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "fde6976d86ffe273d5a63faf81023ab8acd72773cc9adc4a5680e211bcf1f368",
+   "source_document_id": null,
+   "source_title": "fde6976d86ffe273d5a63faf81023ab8acd72773cc9adc4a5680e211bcf1f368.pdf",
+   "official_url": "https://massillonohio.gov/wp-content/uploads/Sign-Contractors-Registration-Permit-Information-FILLABLE.pdf"
+  }
+ ]
+}

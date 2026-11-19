@@ -1,0 +1,494 @@
+{
+ "results": [
+  {
+   "name": "parse \"12' 6\\\"\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"12'-6\\\"\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"12.5'\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"150\\\"\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"12 6\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"12'6\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"150\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"12\" → 12",
+   "ok": true
+  },
+  {
+   "name": "parse \"12.5\" → 12.5",
+   "ok": true
+  },
+  {
+   "name": "parse \"6\" → 6",
+   "ok": true
+  },
+  {
+   "name": "parse \"6.5\" → 6.5",
+   "ok": true
+  },
+  {
+   "name": "parse \"0.375\" → 0.375",
+   "ok": true
+  },
+  {
+   "name": "parse \".5\" → 0.5",
+   "ok": true
+  },
+  {
+   "name": "parse \"12.\" → 12",
+   "ok": true
+  },
+  {
+   "name": "parse \"0\" → 0",
+   "ok": true
+  },
+  {
+   "name": "parse \"12'\" → 144",
+   "ok": true
+  },
+  {
+   "name": "parse \"6'\" → 72",
+   "ok": true
+  },
+  {
+   "name": "parse \"0'\" → 0",
+   "ok": true
+  },
+  {
+   "name": "parse \"0.5'\" → 6",
+   "ok": true
+  },
+  {
+   "name": "parse \"1/2'\" → 6",
+   "ok": true
+  },
+  {
+   "name": "parse \"12.5' 6\\\"\" → 156",
+   "ok": true
+  },
+  {
+   "name": "parse \"12'6\\\"\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"12' 6\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"6'3\\\"\" → 75",
+   "ok": true
+  },
+  {
+   "name": "parse \"12'0\\\"\" → 144",
+   "ok": true
+  },
+  {
+   "name": "parse \"12 6\\\"\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"12-6\\\"\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"12.5 6\" → 156",
+   "ok": true
+  },
+  {
+   "name": "parse \"3/8\\\"\" → 0.375",
+   "ok": true
+  },
+  {
+   "name": "parse \"3/8\" → 0.375",
+   "ok": true
+  },
+  {
+   "name": "parse \"1/2\" → 0.5",
+   "ok": true
+  },
+  {
+   "name": "parse \"6 1/2\\\"\" → 6.5",
+   "ok": true
+  },
+  {
+   "name": "parse \"6 1/2\" → 6.5",
+   "ok": true
+  },
+  {
+   "name": "parse \"1 1/2\" → 1.5",
+   "ok": true
+  },
+  {
+   "name": "parse \"12 1/2\" → 12.5",
+   "ok": true
+  },
+  {
+   "name": "parse \"12 6 1/2\" → 150.5",
+   "ok": true
+  },
+  {
+   "name": "parse \"12' 6 1/2\\\"\" → 150.5",
+   "ok": true
+  },
+  {
+   "name": "parse \"1/4\\\"\" → 0.25",
+   "ok": true
+  },
+  {
+   "name": "parse \"6-1/2\\\"\" → 6.5",
+   "ok": true
+  },
+  {
+   "name": "parse \"-27\" → -27",
+   "ok": true
+  },
+  {
+   "name": "parse \"-4'\" → -48",
+   "ok": true
+  },
+  {
+   "name": "parse \"-12 6\" → -150",
+   "ok": true
+  },
+  {
+   "name": "parse \"+150\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"-12-6\\\"\" → -150",
+   "ok": true
+  },
+  {
+   "name": "parse \" 12 ' 6 \\\"\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"12' 6 \" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"12′ 6″\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"12’6”\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"12'- 6\\\"\" → 150",
+   "ok": true
+  },
+  {
+   "name": "parse \"12' 13\\\"\" → 157",
+   "ok": true
+  },
+  {
+   "name": "parse \"0' 24\\\"\" → 24",
+   "ok": true
+  },
+  {
+   "name": "parse 150 → 150",
+   "ok": true
+  },
+  {
+   "name": "parse -48 → -48",
+   "ok": true
+  },
+  {
+   "name": "parse 0.375 → 0.375",
+   "ok": true
+  },
+  {
+   "name": "parse \"9999'\" → 119988",
+   "ok": true
+  },
+  {
+   "name": "reject \"\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"   \"",
+   "ok": true
+  },
+  {
+   "name": "reject \"abc\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"12abc\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"abc12\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"1e3\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"1,2\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"12..5\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"5/0\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"6 5/0\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"1/2/3\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"'\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"''\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"\\\"\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"12'6\\\"7\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"12'6'\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"12 6 7\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"12 6 7 8\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"12-6\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"-\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"+\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"--5\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"12 -6\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"6\\\"5\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"'6\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"12' '6\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"Infinity\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"NaN\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"12x6\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"-12-6\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"e\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"/\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"1/\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"/2\"",
+   "ok": true
+  },
+  {
+   "name": "reject \"  -  \"",
+   "ok": true
+  },
+  {
+   "name": "reject \"12'-'\"",
+   "ok": true
+  },
+  {
+   "name": "reject null",
+   "ok": true
+  },
+  {
+   "name": "reject undefined",
+   "ok": true
+  },
+  {
+   "name": "reject {}",
+   "ok": true
+  },
+  {
+   "name": "reject []",
+   "ok": true
+  },
+  {
+   "name": "reject null",
+   "ok": true
+  },
+  {
+   "name": "reject null",
+   "ok": true
+  },
+  {
+   "name": "reject null",
+   "ok": true
+  },
+  {
+   "name": "parse \"12'-\" → 144",
+   "ok": true
+  },
+  {
+   "name": "reject \"12'-'\"",
+   "ok": true
+  },
+  {
+   "name": "format 150 → \"12' 6\\\"\"",
+   "ok": true
+  },
+  {
+   "name": "format 144 → \"12'\"",
+   "ok": true
+  },
+  {
+   "name": "format 12 → \"1'\"",
+   "ok": true
+  },
+  {
+   "name": "format 6.5 → \"6.5\\\"\"",
+   "ok": true
+  },
+  {
+   "name": "format 0.375 → \"0.375\\\"\"",
+   "ok": true
+  },
+  {
+   "name": "format 0 → \"0\\\"\"",
+   "ok": true
+  },
+  {
+   "name": "format -27 → \"-2' 3\\\"\"",
+   "ok": true
+  },
+  {
+   "name": "format -6 → \"-6\\\"\"",
+   "ok": true
+  },
+  {
+   "name": "format 150.5 → \"12' 6.5\\\"\"",
+   "ok": true
+  },
+  {
+   "name": "format 120 → \"10'\"",
+   "ok": true
+  },
+  {
+   "name": "format 24 → \"2'\"",
+   "ok": true
+  },
+  {
+   "name": "format 119988 → \"9999'\"",
+   "ok": true
+  },
+  {
+   "name": "format 1 → \"1\\\"\"",
+   "ok": true
+  },
+  {
+   "name": "format 13 → \"1' 1\\\"\"",
+   "ok": true
+  },
+  {
+   "name": "format 157 → \"13' 1\\\"\"",
+   "ok": true
+  },
+  {
+   "name": "format rejects non-finite",
+   "ok": true
+  },
+  {
+   "name": "draft boundary",
+   "ok": true
+  },
+  {
+   "name": "stored display",
+   "ok": true
+  },
+  {
+   "name": "input issue",
+   "ok": true
+  },
+  {
+   "name": "field meta map integrity",
+   "ok": true
+  },
+  {
+   "name": "field meta resolver fail-closed",
+   "ok": true
+  },
+  {
+   "name": "prior exports untouched",
+   "ok": true
+  }
+ ],
+ "pass": 122,
+ "total": 122
+}

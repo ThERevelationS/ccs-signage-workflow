@@ -1,0 +1,9 @@
+{
+  workorders: 3192,
+  unlinked: 206,
+  linked_estimate: 37,
+  estimate_has_customer: 36,
+  estimate_no_customer: 1,
+  number_but_no_estimate_link: 0,
+  no_estimate_number_at_all: 169
+}

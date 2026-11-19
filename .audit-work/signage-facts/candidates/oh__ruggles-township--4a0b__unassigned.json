@@ -1,0 +1,66 @@
+{
+ "jurisdiction_id": "6aea54b9314255aed4384a0b",
+ "jurisdiction_name": "Ruggles Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "ACPC#____________________ Ashland County Planning Commission Application for Type IB Subdivision Type I subdivisions are 5 lots or less from one parcel. • Type IA are under 5 acres and are regulated by ORC 711.131; a separate Type 1A application must be used. • Type 1B are 5-20 acres and are regulated by ORC 711.133; this Type 1B application must be used. One copy of this application, complete with information listed below must be fi led with Ashland County Planning for review by the Subdivision Review Committee, consisting of the County Engineer, Ashland Soil & Water Conservation District, Ashland County Floodplain Administration, Ashland County Planning, the Ashland County Health Department, and local zoning inspector when applicable. Separate applications must be submitted for each lot to be subdivided. Applications will be processed within 7 business days upon receipt of a complete a",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "152e878838236ee5f88441c00a58a94c49dc88359d9a644ab7fd31e67bc927b6",
+   "source_document_id": null,
+   "source_title": "152e878838236ee5f88441c00a58a94c49dc88359d9a644ab7fd31e67bc927b6.pdf",
+   "official_url": "https://www.ashlandcounty.org/planning/data/uploads/2026-type-1b-application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "ACPC#____________________ Ashland County Planning Commission Application for Type IA Subdivision Type I subdivisions are 5 lots or less from one parcel. • Type IA are under 5 acres and are regulated by ORC 711.131; this Type 1A application must be used. • Type 1B are 5-20 acres and are regulated by ORC 711.133; a separate Type 1B application must be used. One copy of this application, complete with information listed below must be fi led with Ashland County Planning for review by the Subdivision Review Committee, consisting of the County Engineer, Ashland Soil & Water Conservation District, Ashland County Floodplain Administration, Ashland County Planning, the Ashland County Health Department, and local zoning inspector when applicable. Separate applications must be submitted for each lot to be subdivided. Applications will be processed within 7 business days upon receipt of a complete a",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "5c3b1924e889015f3790115ac9c0427f9a781e8f673ab1d4f9521f6e1c3f25d8",
+   "source_document_id": null,
+   "source_title": "5c3b1924e889015f3790115ac9c0427f9a781e8f673ab1d4f9521f6e1c3f25d8.pdf",
+   "official_url": "https://www.ashlandcounty.org/planning/data/uploads/2026-type-1a-application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "APCC#____________________ Application for Exempt Parcel Exempt Parcel: A parcel that does not meet or conform with the requirements of the subdivision regulations and to be transferred to an adjoi ning landowner. One copy of this application, complete with the information listed below, must be filed with the Ashland County Planning Commission. After these applications are received by the Commission, they will be reviewed by this office and the Tax Map office. Separate applications shall be submitted for each lot to be subdivided. The application, complete with the action taken by the Commission, will be returned to the applicant or agent. Name of Applicant: ____________________ Telephone: _______________________ Address: ____________________________ __ City: ____________________________ Name of Surveyor: _____________________ Telephone: ______________________ Address: ___________________",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "969126594fec9ffa229bb0be6f2eb3aae0f3ea3d9fcef38705c67f09e155c3f7",
+   "source_document_id": null,
+   "source_title": "969126594fec9ffa229bb0be6f2eb3aae0f3ea3d9fcef38705c67f09e155c3f7.pdf",
+   "official_url": "https://www.ashlandcounty.org/planning/data/uploads/exempt-application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR SUBDIVISION VARIANCE Date Received: _________________ Application # :__________________ Name: _____________________________________________________________________ Address: _____________________________________ Phone : ____________________ City: _____________________________ State: __________ Zip: ______________ Township: ________________________ Section: ____________________________ 1) Nature of Variance Requested: Describe generally the nature of the variance: _________ ___________________________________________________________________________ ___________________________________________________________________________ ___________________________________________________________________________ 2) Justification of Variance: On a separate sheet, please attach a statement explaining why the variance from the requirements of the subdivision regulations is requested. Include",
+   "tags": [
+    "process",
+    "authority"
+   ],
+   "weight": 4,
+   "source_sha256": "ce431666500ca98888ce361ab465aa2bf1b2ef7fe4b4cf8243354aa9d6499791",
+   "source_document_id": null,
+   "source_title": "ce431666500ca98888ce361ab465aa2bf1b2ef7fe4b4cf8243354aa9d6499791.pdf",
+   "official_url": "https://www.ashlandcounty.org/planning/data/uploads/application-for-subdivision-variance1-2.pdf"
+  }
+ ]
+}

@@ -1,5 +1,12 @@
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Read-after-write grace for the post-create verify read: a create whose
+// response was lost can still have landed, and an immediate empty verify
+// read is not conclusive.
+const VERIFY_RETRY_DELAY_MS = 700;
+
 const canonicalRecord = (rows = []) => [...rows].sort((a, b) => {
   const aStamp = String(a?.created_date || "");
   const bStamp = String(b?.created_date || "");
@@ -23,6 +30,10 @@ function sameValue(a, b) {
   if (!emptyA && !emptyB && Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
     return Math.abs(Number(a) - Number(b)) <= 0.000001;
   }
+  // Trimmed server values must match the retry payload — backend `clean()`
+  // trims most string fields on write, so a strict compare would false-negative
+  // a legitimately-reused record and 409 "retry key belongs to different data".
+  if (typeof a === "string" && typeof b === "string") return a.trim() === b.trim();
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 }
 
@@ -74,15 +85,38 @@ export async function ensureIdempotentEntityCreate({
     createError = error;
   }
 
-  let afterCreate;
+  let afterCreate = null;
+  let verifyError = null;
   try {
     afterCreate = await load();
-  } catch (verifyError) {
+  } catch (error) {
+    verifyError = error;
+  }
+  // Read-after-write lag: a create that failed at the response layer can
+  // still have landed, so an immediate empty/failed verify is not conclusive.
+  // Give the write a moment and re-read once before declaring the outcome
+  // unknown — a retry must resolve the existing row, never create a dup.
+  if ((!Array.isArray(afterCreate) || afterCreate.length === 0) && (createError || !created?.id)) {
+    await sleep(VERIFY_RETRY_DELAY_MS);
+    try {
+      const retryRows = await load();
+      if (Array.isArray(retryRows)) afterCreate = retryRows;
+    } catch (error) {
+      verifyError = verifyError || error;
+    }
+  }
+  if (!Array.isArray(afterCreate)) {
     if (created?.id && matchesPayload(created, payload)) return created;
     throw new Error(`${label} create outcome could not be verified. Do not retry blindly; reload first. ${verifyError?.message || "Recovery lookup failed."}`);
   }
 
   if (afterCreate.length === 1) {
+    // Our create returned an id but the only visible same-key row is a
+    // different record — a concurrent create landed too and ours is still
+    // indexing. Fail closed instead of silently orphaning our row as a dup.
+    if (created?.id && String(afterCreate[0].id) !== String(created.id)) {
+      throw new Error(`${label} was created concurrently more than once. No uncertain duplicate was deleted; reload and review records with this retry key.`);
+    }
     if (!matchesPayload(afterCreate[0], payload)) {
       throw new Error(`${label} retry key exists but its live data does not match this create. No row was changed or deleted.`);
     }

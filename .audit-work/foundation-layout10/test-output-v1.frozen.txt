@@ -1,0 +1,21 @@
+=== LAYOUT TEST ===
+ok keyboard: arrows 1in, Shift 12in, one commit each; readonly/invalid safe
+ok no drag without move -> no callback; props immutability
+PASS layout passed=14 failed=0
+=== BROWSER ===
+layout-browser scenarios=3 events=0 failed=0
+ok mouse drag zoom 1/2/0.5 -> corner 216,142, one commit each
+ok touch drag: pointer-capture path commits once; touch cancel -> none
+ok keyboard arrows + reorder mid-drag resolves index + delete cancels
+=== ESLINT ===
+
+C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\src\components\estimator\foundation\FoundationLayoutCanvas.jsx
+  23:34  warning  'legacyIndex' is defined but never used. Allowed unused args must match /^_/u  unused-imports/no-unused-vars
+
+✖ 1 problem (0 errors, 1 warning)
+
+eslint_exit=0
+=== PAGE BUNDLE ===
+  .audit-work\foundation-layout10\page-real-bundle.js  882.8kb
+
+Done in 38ms

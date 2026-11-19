@@ -1,0 +1,358 @@
+{
+ "mode": "candidate",
+ "generatedAt": "2026-11-13T08:10:16.381Z",
+ "totalChecks": 85,
+ "passed": 85,
+ "failed": 0,
+ "candidateBundleInputs": [
+  "frozen:/app/src/components/channelLetterInstall/lettersCalculator.jsx",
+  "frozen:/app/src/components/channelLetterInstall/wallMaterials.jsx",
+  "frozen:/app/src/components/channelLetterInstall/installSizeRates.jsx",
+  "frozen:/app/src/components/channelLetterInstall/installCalculator.jsx",
+  "frozen:/app/src/components/channelLetterInstall/channelLetterPricingAvailability.js",
+  "frozen:/app/model-entry.js"
+ ],
+ "availabilitySha256": "559cd862b1562025ddf74277634727e466ccdd3a9bdaffd07d8bf9c8e0c5efe1",
+ "results": [
+  {
+   "id": "parser: numbers + numeric strings pass",
+   "ok": true
+  },
+  {
+   "id": "parser: malformed → null",
+   "ok": true
+  },
+  {
+   "id": "parser: nonneg/positive gates",
+   "ok": true
+  },
+  {
+   "id": "snapshot: only real finite numbers count",
+   "ok": true
+  },
+  {
+   "id": "draft value: blank preserved, numbers parsed, junk kept raw",
+   "ok": true
+  },
+  {
+   "id": "valid: clean full-scope project produces identical calc + no issues",
+   "ok": true
+  },
+  {
+   "id": "valid: explicit $0 fees + $0 markup are real zeros, not issues",
+   "ok": true
+  },
+  {
+   "id": "valid: numeric-string inputs produce identical calc + no issues",
+   "ok": true
+  },
+  {
+   "id": "valid: raceway install item may mount 0 letters",
+   "ok": true
+  },
+  {
+   "id": "valid: install_only scope zeroes letters side identically",
+   "ok": true
+  },
+  {
+   "id": "valid: letters_only scope drops install/crew from rollup identically",
+   "ok": true
+  },
+  {
+   "id": "held: blank purchase qty → qty issue + row held + subtotal null",
+   "ok": true
+  },
+  {
+   "id": "held: malformed qty string → qty issue (numeric strings only)",
+   "ok": true
+  },
+  {
+   "id": "held: zero qty → qty issue (0 silently prices the row $0)",
+   "ok": true
+  },
+  {
+   "id": "held: blank size_value → size issue",
+   "ok": true
+  },
+  {
+   "id": "held: standalone raceway with blank length (size_value) → size issue",
+   "ok": true
+  },
+  {
+   "id": "held: unknown letter_type → type issue",
+   "ok": true
+  },
+  {
+   "id": "held: unit_cost_override + malformed override → unit cost issue",
+   "ok": true
+  },
+  {
+   "id": "held: letters_total_override + malformed total → total issue",
+   "ok": true
+  },
+  {
+   "id": "held: malformed install_height_feet on a purchase → height issue",
+   "ok": true
+  },
+  {
+   "id": "held: missing per-inch rate setting → catalog issue poisons the row",
+   "ok": true
+  },
+  {
+   "id": "held: malformed per-inch rate → same catalog issue",
+   "ok": true
+  },
+  {
+   "id": "held: raceway row + missing tier rate → catalog rate issue",
+   "ok": true
+  },
+  {
+   "id": "held: malformed design fee → aggregate-only hold, rows stay live",
+   "ok": true
+  },
+  {
+   "id": "held: malformed letters markup → markup issue + null letters total",
+   "ok": true
+  },
+  {
+   "id": "held: delivery fee still flagged when a non-dimensional row exists",
+   "ok": true
+  },
+  {
+   "id": "valid: delivery fee is NOT consumed for all-dimensional projects",
+   "ok": true
+  },
+  {
+   "id": "held: dimensional row without fab_config → dimensional issue",
+   "ok": true
+  },
+  {
+   "id": "held: inactive dimensional material → material unavailable",
+   "ok": true
+  },
+  {
+   "id": "held: dimensional fab + missing CNC settings → setting issue",
+   "ok": true
+  },
+  {
+   "id": "held: dangling standoff inventory ref → material unavailable",
+   "ok": true
+  },
+  {
+   "id": "held: unknown installation_type → type issue + row held",
+   "ok": true
+  },
+  {
+   "id": "held: qty_letters 0 on flush mount → qty issue",
+   "ok": true
+  },
+  {
+   "id": "held: invalid letter_size → size issue (medium defaults hidden)",
+   "ok": true
+  },
+  {
+   "id": "held: raceway item missing length → raceway length issue",
+   "ok": true
+  },
+  {
+   "id": "held: malformed installation_height_feet → height issue",
+   "ok": true
+  },
+  {
+   "id": "held: unsupported install_environment → env issue",
+   "ok": true
+  },
+  {
+   "id": "held: missing install_labor_rate → catalog rate issue poisons item",
+   "ok": true
+  },
+  {
+   "id": "held: missing qualified size-rate minutes → minutes issue",
+   "ok": true
+  },
+  {
+   "id": "held: legacy size-rate key satisfies the minutes check (no issue)",
+   "ok": true
+  },
+  {
+   "id": "held: malformed qualified minutes (even w/ legacy present) → issue",
+   "ok": true
+  },
+  {
+   "id": "held: malformed wall multiplier → wall multiplier issue",
+   "ok": true
+  },
+  {
+   "id": "held: unknown wall material id → wall material issue (1.0x hidden)",
+   "ok": true
+  },
+  {
+   "id": "held: escort on + missing escort multiplier → condition issue",
+   "ok": true
+  },
+  {
+   "id": "held: poor site access + missing level minutes → condition issue",
+   "ok": true
+  },
+  {
+   "id": "held: severity out of range → severity issue",
+   "ok": true
+  },
+  {
+   "id": "held: material linked to missing inventory → material unavailable",
+   "ok": true
+  },
+  {
+   "id": "held: material inventory missing price → material price issue",
+   "ok": true
+  },
+  {
+   "id": "held: per_letter_by_size uses the size-specific cost field",
+   "ok": true
+  },
+  {
+   "id": "held: custom material malformed unit_cost → material value issue",
+   "ok": true
+  },
+  {
+   "id": "held: raceway hardware in install materials → mode issue (Letters owns it)",
+   "ok": true
+  },
+  {
+   "id": "held: equipment row without equipment_id → unassigned issue",
+   "ok": true
+  },
+  {
+   "id": "held: dangling equipment_id → equipment unavailable",
+   "ok": true
+  },
+  {
+   "id": "held: equipment missing price → catalog price issue",
+   "ok": true
+  },
+  {
+   "id": "held: unsupported equipment pricing_mode → mode issue",
+   "ok": true
+  },
+  {
+   "id": "held: blank equipment duration → duration issue (0 periods bills $0)",
+   "ok": true
+  },
+  {
+   "id": "held: malformed equipment total_cost → equipment value issue + null rollup",
+   "ok": true
+  },
+  {
+   "id": "held: personnel hours>0 + missing rate → rate issue + null rollup",
+   "ok": true
+  },
+  {
+   "id": "held: malformed personnel total_cost → personnel cost issue",
+   "ok": true
+  },
+  {
+   "id": "held: crew role present + missing role rate → catalog rate issue",
+   "ok": true
+  },
+  {
+   "id": "held: miles set + missing fuel price → travel setting issue",
+   "ok": true
+  },
+  {
+   "id": "held: miles set + owned truck missing mpg → vehicle mpg issue",
+   "ok": true
+  },
+  {
+   "id": "valid: miles set + owned truck WITH mpg → no vehicle issue",
+   "ok": true
+  },
+  {
+   "id": "held: malformed miles → miles issue",
+   "ok": true
+  },
+  {
+   "id": "held: malformed stored travel cost → travel issue + null rollup",
+   "ok": true
+  },
+  {
+   "id": "valid: zero mileage does not demand travel settings",
+   "ok": true
+  },
+  {
+   "id": "held: malformed supplies % → supplies issue + null supplies/subtotal",
+   "ok": true
+  },
+  {
+   "id": "held: malformed extra supplies → supplies issue",
+   "ok": true
+  },
+  {
+   "id": "held: malformed project markup → markup issue + null markup/total",
+   "ok": true
+  },
+  {
+   "id": "held: install item hold poisons labor/materials/subtotal, not letters",
+   "ok": true
+  },
+  {
+   "id": "held: held purchase row passes through RAW (no laundering, no mutation)",
+   "ok": true
+  },
+  {
+   "id": "held: source install items + materials never mutated",
+   "ok": true
+  },
+  {
+   "id": "snapshot: held letters + saved subtotal surfaces, then recomposes downstream",
+   "ok": true
+  },
+  {
+   "id": "snapshot: held component with no own fallback → saved aggregate fills the hole",
+   "ok": true
+  },
+  {
+   "id": "snapshot: held project with NO saved totals → honest nulls",
+   "ok": true
+  },
+  {
+   "id": "snapshot: saved totals carried on the project itself are honored",
+   "ok": true
+  },
+  {
+   "id": "snapshot: live finite value always beats the saved snapshot",
+   "ok": true
+  },
+  {
+   "id": "snapshot: explicit saved $0 stays a real zero",
+   "ok": true
+  },
+  {
+   "id": "snapshot: non-finite saved totals are NOT trusted",
+   "ok": true
+  },
+  {
+   "id": "helpers: issuesForField + hasIssueFor filter by field/index/itemIndex",
+   "ok": true
+  },
+  {
+   "id": "issue shape: kind/index/field/code/message/hold on every record",
+   "ok": true
+  },
+  {
+   "id": "empty settings short-circuits like the page (no calc, no issues)",
+   "ok": true
+  },
+  {
+   "id": "contrast: remote chain prices missing-rate letters at a hidden default",
+   "ok": true
+  },
+  {
+   "id": "contrast: remote rollup launders a malformed supplies % to the 10% default",
+   "ok": true
+  },
+  {
+   "id": "contrast: remote line item launders blank qty to $0 labor",
+   "ok": true
+  }
+ ]
+}

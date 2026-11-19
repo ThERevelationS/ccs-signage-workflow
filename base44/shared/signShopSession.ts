@@ -1,4 +1,13 @@
 import { constantTimeEqual } from './constantTime.ts';
+import { applyOwnerCapabilities } from './ownerRole.ts';
+
+// Short-lived auth cache — every function call used to spend ~2 entity_list
+// reads re-verifying the same session (AuthorizedEmail + UserSession). Deno
+// isolates persist across invocations, so a 15s cache eliminates the
+// per-invoke read cost on warm isolates while keeping session revocation
+// bounded. Only successful authentications are cached.
+const sessionAuthCache = new Map<string, { user: any; expires: number }>();
+const SESSION_AUTH_CACHE_MS = 15_000;
 
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -30,6 +39,11 @@ export async function signShopSessionPayload(payload: Record<string, unknown>) {
   const payloadStr = b64urlEncode(JSON.stringify(payload));
   const sig = await hmacSign(payloadStr, secret);
   return `${payloadStr}.${sig}`;
+}
+
+export async function signShopSessionTokenHash(token: string) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+  return b64urlEncode(String.fromCharCode(...new Uint8Array(buf)));
 }
 
 export async function authenticateSignShopSession(base44: any, token: unknown) {
@@ -64,6 +78,50 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
     throw Object.assign(new Error('Authentication required'), { status: 401 });
   }
 
+  // Break-glass expiry — a time-boxed admin grant lapses automatically; the
+  // actor keeps their session but every backend admin gate sees a non-admin.
+  const stripExpiredGrant = (user: any) => {
+    const grantExpiry = Date.parse(String(user?.admin_grant_expires || ''));
+    if (Number.isFinite(grantExpiry) && grantExpiry > 0 && grantExpiry <= Date.now() && user) {
+      user.role = 'user';
+      user.is_full_admin = false;
+      user.admin_permissions = {};
+    }
+    return user;
+  };
+
+  // Deactivated accounts and lapsed access windows must not keep working on
+  // an already-issued token — verifyLogin blocks NEW logins for these, but
+  // session tokens live 30 days and per-session revocation is manual. The
+  // user row is fetched fresh (or re-checked from the ≤15s cache) on every
+  // call, so enforcement lands within seconds of the admin change.
+  const rejectInactive = (user: any) => {
+    if (user?.is_deactivated === true || user?.is_active === false) {
+      throw Object.assign(new Error('Authentication required'), { status: 401 });
+    }
+    // access_expires_on is a "valid through" date — the account lapses the day
+    // after (matches the admin UI's expired badge). End-of-UTC-day parse keeps
+    // the boundary timezone-safe.
+    const expiry = Date.parse(`${String(user?.access_expires_on || '').trim()}T23:59:59.999Z`);
+    if (Number.isFinite(expiry) && expiry > 0 && expiry <= Date.now()) {
+      throw Object.assign(new Error('Authentication required'), { status: 401 });
+    }
+    return user;
+  };
+
+  const tokenHash = await signShopSessionTokenHash(rawToken);
+  const cachedAuth = sessionAuthCache.get(tokenHash);
+  if (cachedAuth && cachedAuth.expires > Date.now()) {
+    // Free hit-path recheck — the cached user's session_not_before still gates
+    // older tokens (catches not_before bumps fetched inside the cache window).
+    const cachedUser = applyOwnerCapabilities(rejectInactive(stripExpiredGrant(cachedAuth.user)));
+    const cachedNotBefore = Date.parse(String(cachedUser?.session_not_before || ''));
+    if (Number.isFinite(cachedNotBefore) && cachedNotBefore > 0 && issuedAt < cachedNotBefore) {
+      throw Object.assign(new Error('Authentication required'), { status: 401 });
+    }
+    return cachedUser;
+  }
+
   const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
   if (!Array.isArray(users)) {
     throw Object.assign(new Error('Authenticated user identity could not be verified'), { status: 503 });
@@ -73,7 +131,22 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
     throw Object.assign(new Error('Authenticated user identity is ambiguous'), { status: 409 });
   }
 
-  const user = users[0];
+  // Revocation check — a revoked UserSession row (by token fingerprint) rejects this token.
+  try {
+    const revoked = await base44.asServiceRole.entities.UserSession.filter({ token_hash: tokenHash, revoked: true });
+    if (Array.isArray(revoked) && revoked.length > 0) {
+      throw Object.assign(new Error('Authentication required'), { status: 401 });
+    }
+  } catch (e) {
+    if (e?.status === 401) throw e;
+    // UserSession may not exist yet — treat lookup failures as non-blocking.
+  }
+
+  // Owner normalization runs AFTER grant-expiry strip — an owner (anchored or
+  // granted) is never demoted by a lapsed break-glass grant.
+  const user = applyOwnerCapabilities(rejectInactive(stripExpiredGrant(users[0])));
+  if (sessionAuthCache.size > 500) sessionAuthCache.clear();
+  sessionAuthCache.set(tokenHash, { user, expires: Date.now() + SESSION_AUTH_CACHE_MS });
   const notBefore = Date.parse(String(user?.session_not_before || ''));
   if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) {
     throw Object.assign(new Error('Authentication required'), { status: 401 });

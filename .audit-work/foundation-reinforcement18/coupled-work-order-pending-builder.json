@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "noWrites": true,
+  "audit": [
+    {
+      "index": 0,
+      "entity": "AllInOneEstimate",
+      "method": "get",
+      "id": "coupled-estimate",
+      "found": true
+    }
+  ],
+  "expected": "recovery pending"
+}

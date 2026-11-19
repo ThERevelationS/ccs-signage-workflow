@@ -1,0 +1,6 @@
+ok R1 invalid spread steel: raw/cache/prices preserved, all writes blocked, correction saves
+ok R2 pillar counts and hoop bounds: no silent defaults/clamping, explicit repair saves
+ok R3 rebar disabled: inactive invalid steel fields do not block or change on save
+ok R4 legacy null defaults preserved, explicit empty spacing requires correction
+input-validation scenarios=4 failed=0
+exit=0

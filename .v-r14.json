@@ -1,0 +1,1116 @@
+{
+  "summary": {
+    "total": 77,
+    "resolved": 77,
+    "rate": "100.0%",
+    "failure_stages": {},
+    "geocode_misses": 0,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "705 W Main St, Hazel, KY 42049",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: hazel -> hazel",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "hazel"
+      },
+      "county": "",
+      "ms": 2257,
+      "worker": 1
+    },
+    {
+      "address": "35 Monument Sq, Urbana, OH 43078",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: urbana -> urbana",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "urbana"
+      },
+      "county": "",
+      "ms": 3199,
+      "worker": 2
+    },
+    {
+      "address": "18800 North Market Place Drive, Aurora, OH 44202",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: aurora -> aurora",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "aurora"
+      },
+      "county": "",
+      "ms": 3124,
+      "worker": 3
+    },
+    {
+      "address": "1580 South Pershing Drive, Lancaster, OH 43130",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: lancaster -> lancaster",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "lancaster"
+      },
+      "county": "",
+      "ms": 1693,
+      "worker": 1
+    },
+    {
+      "address": "2455 W Main St, Alliance, OH 44601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: alliance -> alliance",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "alliance"
+      },
+      "county": "",
+      "ms": 1679,
+      "worker": 3
+    },
+    {
+      "address": "4831 US-42, Ghent, KY 41045",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: ghent -> ghent",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "ghent"
+      },
+      "county": "",
+      "ms": 1594,
+      "worker": 2
+    },
+    {
+      "address": "10728 Bowling Green Rd, Auburn, KY 42206",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: auburn -> auburn",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "auburn"
+      },
+      "county": "",
+      "ms": 1586,
+      "worker": 1
+    },
+    {
+      "address": "7705 Market Pl Dr, Aurora, OH 44202",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: aurora -> aurora",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "aurora"
+      },
+      "county": "",
+      "ms": 1729,
+      "worker": 2
+    },
+    {
+      "address": "7235 Market Pl Dr, Aurora, OH 44202",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: aurora -> aurora",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "aurora"
+      },
+      "county": "",
+      "ms": 1723,
+      "worker": 3
+    },
+    {
+      "address": "1584 US-41 ALT, Dixon, KY 42409",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.503614982338,
+        "lng": -87.710452457766
+      },
+      "matched": "1584 US HWY 41 ALTERNATE RTE S, DIXON, KY, 42409",
+      "target": {
+        "type": "municipality",
+        "name": "Dixon city"
+      },
+      "county": "Webster County",
+      "ms": 3123,
+      "worker": 1
+    },
+    {
+      "address": "16900 Square Dr, Marysville, OH 43040",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: marysville -> marysville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "marysville"
+      },
+      "county": "",
+      "ms": 1683,
+      "worker": 3
+    },
+    {
+      "address": "6493 Strip Ave NW, North Canton, OH 44720",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: north canton -> north canton",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "north canton"
+      },
+      "county": "",
+      "ms": 1672,
+      "worker": 2
+    },
+    {
+      "address": "300 Elm St, Livermore, KY 42352",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: livermore -> livermore",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "livermore"
+      },
+      "county": "",
+      "ms": 1691,
+      "worker": 3
+    },
+    {
+      "address": "8139 Old Troy Pike, OH-202, Huber Heights, OH 45424",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 39.871204979008,
+        "lng": -84.137521437666
+      },
+      "matched": "8139 OLD TROY PIKE, HUBER HEIGHTS, OH, 45424",
+      "target": {
+        "type": "municipality",
+        "name": "Huber Heights city"
+      },
+      "county": "Montgomery County",
+      "ms": 2893,
+      "worker": 2
+    },
+    {
+      "address": "4873 Strip Avenue Northwest, Canton, OH 44720",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: canton -> canton",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "canton"
+      },
+      "county": "",
+      "ms": 2256,
+      "worker": 1
+    },
+    {
+      "address": "1031 Baker Dr, Monroe, OH 45050",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: monroe -> monroe",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "monroe"
+      },
+      "county": "",
+      "ms": 1687,
+      "worker": 3
+    },
+    {
+      "address": "7 Limited Pkwy, Reynoldsburg, OH 43069",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: reynoldsburg -> reynoldsburg",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "reynoldsburg"
+      },
+      "county": "",
+      "ms": 1706,
+      "worker": 1
+    },
+    {
+      "address": "1346 Echo Valley Rd, Auburn, KY 42206",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: auburn -> auburn",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "auburn"
+      },
+      "county": "",
+      "ms": 2483,
+      "worker": 2
+    },
+    {
+      "address": "110 W 8th St, Livermore, KY 42352",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: livermore -> livermore",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "livermore"
+      },
+      "county": "",
+      "ms": 1701,
+      "worker": 3
+    },
+    {
+      "address": "9470 OH-14, Streetsboro, OH 44241",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: streetsboro -> streetsboro",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "streetsboro"
+      },
+      "county": "",
+      "ms": 1675,
+      "worker": 1
+    },
+    {
+      "address": "9086 OH-14, Streetsboro, OH 44241",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: streetsboro -> streetsboro",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "streetsboro"
+      },
+      "county": "",
+      "ms": 1679,
+      "worker": 2
+    },
+    {
+      "address": "37063 Colorado Ave #2, Avon, OH 44011",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: avon -> avon",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "avon"
+      },
+      "county": "",
+      "ms": 1685,
+      "worker": 3
+    },
+    {
+      "address": "6301 Moonseed St, Prospect, KY 40059",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: prospect -> prospect",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "prospect"
+      },
+      "county": "",
+      "ms": 1689,
+      "worker": 1
+    },
+    {
+      "address": "211 Parkway Plaza, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 1703,
+      "worker": 2
+    },
+    {
+      "address": "115 Union St, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 1692,
+      "worker": 3
+    },
+    {
+      "address": "6474 Beechwood Dr, Avon Lake, OH 44012",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: avon lake -> avon lake",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "avon lake"
+      },
+      "county": "",
+      "ms": 2007,
+      "worker": 1
+    },
+    {
+      "address": "3795 S Danville Bypass, Danville, KY 40422",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: danville -> danville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "danville"
+      },
+      "county": "",
+      "ms": 11975,
+      "worker": 3
+    },
+    {
+      "address": "1793 J H O'Bryan Ave, Grand Rivers, KY 42045",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: grand rivers -> grand rivers",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "grand rivers"
+      },
+      "county": "",
+      "ms": 10938,
+      "worker": 2
+    },
+    {
+      "address": "265 Nautical Dr, Grand Rivers, KY 42045",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: grand rivers -> grand rivers",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "grand rivers"
+      },
+      "county": "",
+      "ms": 10677,
+      "worker": 1
+    },
+    {
+      "address": "193 Parkway Plaza, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 2624,
+      "worker": 2
+    },
+    {
+      "address": "117 Union St, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 1766,
+      "worker": 3
+    },
+    {
+      "address": "115 1/2 Union St, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 2457,
+      "worker": 1
+    },
+    {
+      "address": "1033 Port Rd, Wurtland, KY 41144",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: wurtland -> wurtland",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "wurtland"
+      },
+      "county": "",
+      "ms": 1590,
+      "worker": 2
+    },
+    {
+      "address": "247 Parkway Plaza, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 1424,
+      "worker": 3
+    },
+    {
+      "address": "385 Parkway Plaza, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 3528,
+      "worker": 1
+    },
+    {
+      "address": "137 Cr-1648, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 2539,
+      "worker": 2
+    },
+    {
+      "address": "221 Kentucky Home Square, Bardstown, KY 40004",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bardstown -> bardstown",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bardstown"
+      },
+      "county": "",
+      "ms": 2761,
+      "worker": 3
+    },
+    {
+      "address": "1704 N Dixie Hwy, Elizabethtown, KY 42701",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: elizabethtown -> elizabethtown",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "elizabethtown"
+      },
+      "county": "",
+      "ms": 3104,
+      "worker": 1
+    },
+    {
+      "address": "1010 Granite Dr Ste 1, Bardstown, KY 40004",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bardstown -> bardstown",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bardstown"
+      },
+      "county": "",
+      "ms": 7034,
+      "worker": 2
+    },
+    {
+      "address": "700 Pitzer St #1, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 6031,
+      "worker": 3
+    },
+    {
+      "address": "23 Moore Blvd, Barlow, KY 42024",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barlow -> barlow",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barlow"
+      },
+      "county": "",
+      "ms": 3935,
+      "worker": 1
+    },
+    {
+      "address": "72 Moore Blvd, Barlow, KY 42024",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barlow -> barlow",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barlow"
+      },
+      "county": "",
+      "ms": 3092,
+      "worker": 3
+    },
+    {
+      "address": "100 Park Ave Ste 122, Beachwood, OH 44122",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beachwood -> beachwood",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beachwood"
+      },
+      "county": "",
+      "ms": 2310,
+      "worker": 2
+    },
+    {
+      "address": "25800 Science Park Dr #180, Beachwood, OH 44122",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beachwood -> beachwood",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beachwood"
+      },
+      "county": "",
+      "ms": 3142,
+      "worker": 1
+    },
+    {
+      "address": "10 Technology Pl, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 1915,
+      "worker": 3
+    },
+    {
+      "address": "3523 US-62 E, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 2931,
+      "worker": 2
+    },
+    {
+      "address": "1521 N Main St, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 4378,
+      "worker": 1
+    },
+    {
+      "address": "1 Reynolds Wy, Beavercreek, OH 45430",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beavercreek -> beavercreek",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beavercreek"
+      },
+      "county": "",
+      "ms": 5356,
+      "worker": 3
+    },
+    {
+      "address": "1001 Granite Dr, Bardstown, KY 40004",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bardstown -> bardstown",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bardstown"
+      },
+      "county": "",
+      "ms": 4338,
+      "worker": 2
+    },
+    {
+      "address": "959 Morton Ave, Bardstown, KY 40004",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bardstown -> bardstown",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bardstown"
+      },
+      "county": "",
+      "ms": 3897,
+      "worker": 1
+    },
+    {
+      "address": "1 Thai Summit Dr, Bardstown, KY 40004",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bardstown -> bardstown",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bardstown"
+      },
+      "county": "",
+      "ms": 3047,
+      "worker": 2
+    },
+    {
+      "address": "140 W Hoover Pkwy, Columbus, KY 42032",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: columbus -> columbus",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "columbus"
+      },
+      "county": "",
+      "ms": 3421,
+      "worker": 3
+    },
+    {
+      "address": "1810 N Main St, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 2122,
+      "worker": 1
+    },
+    {
+      "address": "1701 N Main St, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 2051,
+      "worker": 2
+    },
+    {
+      "address": "1849 N Main St, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 4103,
+      "worker": 3
+    },
+    {
+      "address": "720 US-231, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 4282,
+      "worker": 1
+    },
+    {
+      "address": "1315 N Main St, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 2504,
+      "worker": 2
+    },
+    {
+      "address": "1812 N Main St, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 6267,
+      "worker": 3
+    },
+    {
+      "address": "1327 N Main St, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 11717,
+      "worker": 2
+    },
+    {
+      "address": "213 Midtown Plaza, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 5518,
+      "worker": 1
+    },
+    {
+      "address": "1202 N Main St, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 7003,
+      "worker": 3
+    },
+    {
+      "address": "1845 N Main St, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 6729,
+      "worker": 1
+    },
+    {
+      "address": "211 Park Ave Ste 115, Beachwood, OH 44122",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beachwood -> beachwood",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beachwood"
+      },
+      "county": "",
+      "ms": 1412,
+      "worker": 2
+    },
+    {
+      "address": "211 Park Ave #109, Beachwood, OH 44122",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beachwood -> beachwood",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beachwood"
+      },
+      "county": "",
+      "ms": 1924,
+      "worker": 3
+    },
+    {
+      "address": "4009 Orange Pl, Orange, OH 44122",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 41.452609774784,
+        "lng": -81.48973246836
+      },
+      "matched": "4009 ORANGE PL, BEACHWOOD, OH, 44122",
+      "target": {
+        "type": "municipality",
+        "name": "Orange village"
+      },
+      "county": "Cuyahoga County",
+      "ms": 4632,
+      "worker": 1
+    },
+    {
+      "address": "111 Park Ave #105, Beachwood, OH 44122",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beachwood -> beachwood",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beachwood"
+      },
+      "county": "",
+      "ms": 2837,
+      "worker": 2
+    },
+    {
+      "address": "27200 Harvard Rd, Orange, OH 44122",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 41.449370272357,
+        "lng": -81.486910402379
+      },
+      "matched": "27200 HARVARD RD, BEACHWOOD, OH, 44122",
+      "target": {
+        "type": "municipality",
+        "name": "Orange village"
+      },
+      "county": "Cuyahoga County",
+      "ms": 4068,
+      "worker": 3
+    },
+    {
+      "address": "15 Old Hartford Rd, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 1889,
+      "worker": 2
+    },
+    {
+      "address": "1215 N Main St, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 2086,
+      "worker": 1
+    },
+    {
+      "address": "2700 Miamisburg Centerville Rd, Dayton, OH 45459",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: dayton -> dayton",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "dayton"
+      },
+      "county": "",
+      "ms": 2536,
+      "worker": 2
+    },
+    {
+      "address": "261 Front St, Bardwell, KY 42023",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bardwell -> bardwell",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bardwell"
+      },
+      "county": "",
+      "ms": 2309,
+      "worker": 3
+    },
+    {
+      "address": "65 John Roberts Dr, Bardwell, KY 42023",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bardwell -> bardwell",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bardwell"
+      },
+      "county": "",
+      "ms": 2656,
+      "worker": 1
+    },
+    {
+      "address": "62 John Roberts Drive, Bardwell, KY 42023",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bardwell -> bardwell",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bardwell"
+      },
+      "county": "",
+      "ms": 2520,
+      "worker": 2
+    },
+    {
+      "address": "178 Hwy 51 S, Bardwell, KY 42023",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bardwell -> bardwell",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bardwell"
+      },
+      "county": "",
+      "ms": 2807,
+      "worker": 3
+    },
+    {
+      "address": "62 John Roberts Dr, Bardwell, KY 42023",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bardwell -> bardwell",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bardwell"
+      },
+      "county": "",
+      "ms": 2599,
+      "worker": 1
+    },
+    {
+      "address": "437 Ohio St, Wickliffe, KY 42087",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: wickliffe -> wickliffe",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "wickliffe"
+      },
+      "county": "",
+      "ms": 1879,
+      "worker": 2
+    },
+    {
+      "address": "326 Lake Dr, Barlow, KY 42024",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barlow -> barlow",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barlow"
+      },
+      "county": "",
+      "ms": 1749,
+      "worker": 3
+    }
+  ]
+}

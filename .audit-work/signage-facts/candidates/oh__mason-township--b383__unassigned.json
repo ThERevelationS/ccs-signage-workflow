@@ -1,0 +1,50 @@
+{
+ "jurisdiction_id": "6aea68d3b6ef9b15ef01b383",
+ "jurisdiction_name": "Mason Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "Below is an excerpt from the City of Mason Zoning Ordinance: 1187.7 TEMPORARY SIGNS A) Shall be located on the premises to which they refer, except as permitted in part D of this section. B) Shall not be illuminated. C) Temporary signs shall be permitted as specified in the Temporary Sign Standards tables on the following page, except as permitted in Part D of this section. Temporary Sign Standards (Section 1187.7) Type of Temporary Sign District(s) Permitted Type of Sign Permitted Maximum Size Maximum Height Maximum Number Permit Required Required Setback Permitted Duration Real Estate - sale or lease of individual home or residential lot Residential Ground 6 sq. ft. 4 ft. 1 [b] No [d] [h] Remove within 30 days of sale or lease Real Estate - sale or lease of individual business or vacant lot Retail Office Industrial Ground Wall 32 sq. ft. 10 ft. 1 [b] Yes [d] [h] Remove within 30 days o",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "temporary",
+    "type",
+    "authority"
+   ],
+   "weight": 21,
+   "source_sha256": "cbaa406a30e1e63c8453fbfc973ab919e4985109cfa03b0560c0dd9be2d93f60",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\mason-township--b383\\unassigned\\sources\\cbaa406a30e1e63c8453fbfc973ab919e4985109cfa03b0560c0dd9be2d93f60.pdf",
+   "official_url": "https://imaginemason.org/download/PDFs/building/SIGN-APPLICATION-2024.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "REVISED | 1/1/2023 CITY OF MASON 6000 MASON - MONTGOMERY RD MASON, OH 45040 PERMIT NO O. 513 . 229 . 8520 F. 513.229.8521 E - mail: permits@masonoh.org APPLICATION FOR SIGN PERMIT PROJECT ADDRESS BUSINESS NAME OF PROJECT OWNER (not tenant) Address Phone Fax E - mail CONTRACTOR Address Phone Fax E - mail DESCRIPTION OF SIGN - Permanent Temporary EST. COST OF WORK • Application is hereby made for permission to - Erect Alter Repair Move Wall Sign Projecting Sign Ground Sign Roof Sign in accordance with this application and accompanying plans and the regulations of th e Building & Zoning Codes. • Will this sign be - Illuminated Indirect Illuminated Not Illuminated • Are there any existing signs on the building or premises? Yes No (If yes, show on drawing.) • Does the message and copy on sign pertain to a business conducted on the premises? Yes No • Square feet of area _____________ How many ",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "type",
+    "authority",
+    "process"
+   ],
+   "weight": 16,
+   "source_sha256": "cbaa406a30e1e63c8453fbfc973ab919e4985109cfa03b0560c0dd9be2d93f60",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\mason-township--b383\\unassigned\\sources\\cbaa406a30e1e63c8453fbfc973ab919e4985109cfa03b0560c0dd9be2d93f60.pdf",
+   "official_url": "https://imaginemason.org/download/PDFs/building/SIGN-APPLICATION-2024.pdf"
+  }
+ ]
+}

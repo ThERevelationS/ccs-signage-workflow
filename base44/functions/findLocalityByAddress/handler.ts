@@ -7,17 +7,25 @@ import {summarizeMatchedLocalityAuthority} from '../../shared/permittingAddressL
 import {strictGeocode,resolveSpatialLocation,exactConfiguredLocality} from '../../shared/permittingSpatialResolution.mjs';
 import {normalizeAddressState} from '../../shared/permittingAddressState.js';
 import {withEntityRateLimitRetry} from '../../shared/entityRateLimitRetry.ts';
+import {indexReadByAddress,indexReadByCell,indexRowFresh,indexWrite,buildIndexEntry,rulesetFingerprint,geohash} from '../../shared/permittingLookupIndex.mjs';
 
 
 
 
-async function fixedJSON(url:string){
- const response=await fetch(url,{signal:AbortSignal.timeout(15000)});
+async function fixedJSON(url:string,timeoutMs=15000){
+ const response=await fetch(url,{signal:AbortSignal.timeout(timeoutMs)});
  if(!response.ok)throw Error('Location service returned HTTP '+response.status);
  const text=await response.text();if(text.length>8*1024*1024)throw Error('Location response exceeds its limit.');return JSON.parse(text);
 }
 // Keep this revision in responses and scan events so preview/live routing can be verified.
-const ADDRESS_LOOKUP_REVISION='address-geocode-v5';
+const ADDRESS_LOOKUP_REVISION='address-geocode-v6';
+// A persistent Google denial is a configuration fault, not a transient error.
+// Once observed, skip the doomed round-trip on later lookups until the cooldown
+// lets one probe through (admin geocode_diagnostic calls always probe so a key
+// fix can be verified without waiting). Free locators keep working meanwhile.
+let googleDeniedUntil=0;
+let googleDeniedService:any=null;
+const GOOGLE_DENIED_TTL_MS=10*60*1000;
 // Interpret provider text internally; only fixed diagnostic codes/messages leave this function.
 function geocodingRejection(raw:unknown){
  const message=typeof raw==='string'?raw.slice(0,2000).toLowerCase():'';
@@ -30,65 +38,208 @@ function geocodingRejection(raw:unknown){
  if(/not authorized to use this api|api.*not authorized/.test(message))return {diagnostic_code:'API_ACCESS_DENIED',message:'Google does not allow this server key to use Geocoding API. An administrator must check the enabled API and key API restrictions.'+suffix};
  return {diagnostic_code:'REQUEST_DENIED',message:'Google rejected the map location request. An administrator needs to check the server key, Geocoding API access and billing.'+suffix};
 }
+// Demand-triggered office research: a resolved locality whose sign/zoning
+// offices are missing or unverified used to sit idle until the background
+// fleet reached it. The lookup itself now queues the profile for priority
+// research (same row shape the office seed scan creates) — one filtered queue
+// read + one create, and only on the !applyAllowed path.
+const ACTIVE_QUEUE_STATUSES=new Set(['not_started','source_discovery','research_in_flight','partial_gaps']);
+const normCountyName=(v:unknown)=>String(v||'').toLowerCase().replace(/\s*county$/,'').trim();
+async function kickOfficeResearch(base44:any,matched:any,profiles:any[]){
+ try{
+  const profile=(profiles||[]).find((p:any)=>p.id===matched.jurisdiction_profile_id)||null;
+  const hasRoles=((profile?.office_research?.roles||[])as any[]).length>0;
+  if(hasRoles&&(matched.offices||[]).length>0)return{state:'verification_pending'};
+  if(hasRoles)return{state:'backfill_pending'};
+  const county=profile?.parent_county?.name||matched.parent_county_name||null;
+  const rows=await loadAllEntityRows({entity:base44.asServiceRole.entities.SourceCollectionQueue,query:{jurisdiction_name:matched.name,state:matched.state},sort:'created_date',label:'Office research demand check'}).catch(()=>null);
+  if(rows===null)return{state:'unknown'};
+  const already=rows.some((q:any)=>ACTIVE_QUEUE_STATUSES.has(String(q.status||''))&&(!county||!q.parent_county_name||normCountyName(q.parent_county_name)===normCountyName(county)));
+  // Held profiles (auto_refresh off or a discovery-scan block) are refused by
+  // the engine's identity guard with a 409 — report it honestly instead of
+  // pretending research started. The queue row below still records the demand
+  // for the moment a reviewer clears the hold.
+  const held=!!profile&&(profile.auto_refresh===false||!!profile?.discovery_scan_state?.blocked);
+  // Immediate research — the picker is open NOW, so launch the engine this
+  // instant rather than waiting for fleet rotation. Fire-and-forget with a
+  // short head-start so the request transmits; the queue row below is the
+  // durable fallback if the invoke dies before landing.
+  if(profile&&!held){
+   try{
+    const kick=base44.functions.invoke('refreshJurisdiction',{jurisdiction_id:profile.id,defer_archive:true,automatic_research:true}).catch(()=>null);
+    await Promise.race([kick,new Promise(r=>setTimeout(r,2000))]);
+   }catch{}
+  }
+  if(!already){
+   const typeMap:Record<string,string>={city:'city',village:'city',municipality:'city',county:'county',township:'township'};
+   const jurisdictionType=typeMap[String(profile?.type||matched.jurisdiction_type||'city').toLowerCase()]||'city';
+   await base44.asServiceRole.entities.SourceCollectionQueue.create({jurisdiction_name:matched.name,state:matched.state,jurisdiction_type:jurisdictionType,parent_county_name:county,status:'not_started',dispatch_rank:0,missing_next:'Office research — auto-queued by an address lookup that needed verified offices.'}).catch(()=>null);
+  }
+  return{state:held?'research_held':(profile?'research_started':(already?'already_queued':'queued'))};
+ }catch{return{state:'unknown'};}
+}
 function addressResponse(data:any,init:any={}){
  const response=Response.json({...data,lookup_revision:ADDRESS_LOOKUP_REVISION},init);
  response.headers.set('X-CCS-Address-Revision',ADDRESS_LOOKUP_REVISION);
  return response;
 }
+// Reference catalogs change rarely; cache them briefly per isolate so bursts of
+// lookups do not multiply service-role entity reads against the shared rate budget.
+const catalogCache=new Map<string,{ts:number,data:{localities:any[],profiles:any[]}}>();
+const catalogInflight=new Map<string,Promise<any>>();
+const CATALOG_TTL_MS=5*60*1000;
+async function loadCatalogs(base44:any,stateFilter:any){
+ const key=stateFilter?.state||'all';
+ const hit=catalogCache.get(key);
+ if(hit&&Date.now()-hit.ts<CATALOG_TTL_MS)return hit.data;
+ if(catalogInflight.has(key))return catalogInflight.get(key);
+ const p=(async()=>{
+  const [localities,profiles,rules]=await Promise.all([
+   loadAllEntityRows({entity:base44.asServiceRole.entities.PermitLocality,query:stateFilter,sort:'created_date',label:'Location matching catalog'}),
+   loadAllEntityRows({entity:base44.asServiceRole.entities.JurisdictionProfile,query:stateFilter,sort:'created_date',label:'Location county identities'}),
+   loadAllEntityRows({entity:base44.asServiceRole.entities.PermitResolutionRule,query:{active:true},sort:'created_date',label:'Resolution rules'}).catch(()=>[])]);
+  catalogCache.set(key,{ts:Date.now(),data:{localities,profiles,rules}});
+  return {localities,profiles,rules};
+ })().finally(()=>catalogInflight.delete(key));
+ catalogInflight.set(key,p);
+ return p;
+}
+// Session tokens are stable; cache the actor briefly so repeated searches do not
+// burn two auth reads per lookup against the shared entity rate budget.
+const sessionCache=new Map<string,{ts:number,actor:any}>();
+const SESSION_TTL_MS=90*1000;
+async function cachedSession(base44:any,token:any){
+ const key=String(token||'');
+ const hit=sessionCache.get(key);
+ if(hit&&Date.now()-hit.ts<SESSION_TTL_MS)return hit.actor;
+ const actor=await authenticateSignShopSession(base44,token);
+ if(sessionCache.size>500)sessionCache.clear();
+ sessionCache.set(key,{ts:Date.now(),actor});
+ return actor;
+}
 Deno.serve(async req=>{
  let reporter:any=silentScanReporter;
+ let diagnostic=false;
  try{
-  const base44=withEntityRateLimitRetry(createClientFromRequest(req)),body=await req.json();
+  const base44=withEntityRateLimitRetry(createClientFromRequest(req),{maxRetries:2}),body=await req.json();
   // Admin diagnostics use normal platform authentication; ordinary searches keep
   // the existing Sign Shop session requirement and authority gates.
-  const diagnostic=body?.action==='geocode_diagnostic';
-  const actor=diagnostic?await base44.auth.me().catch(()=>null):await authenticateSignShopSession(base44,body?.session_token);
+  diagnostic=body?.action==='geocode_diagnostic';
+  const actor=diagnostic?await base44.auth.me().catch(()=>null):await cachedSession(base44,body?.session_token);
   if(diagnostic&&actor?.role!=='admin')return addressResponse({success:false,error:'Admin access required.'},{status:403});
+  if(body?.action==='places_autocomplete'){
+   const input=typeof body.input==='string'?body.input.trim():'';
+   if(input.length<3||input.length>200)return addressResponse({success:true,suggestions:[]});
+   const key=Deno.env.get('GOOGLE_GEOCODING_API_KEY')?.trim()||Deno.env.get('GOOGLE_MAPS_API_KEY')?.trim();
+   if(!key)return addressResponse({success:false,error:'Map service not configured.'},{status:500});
+   try{
+    const res=await fetch('https://places.googleapis.com/v1/places:autocomplete',{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':key},body:JSON.stringify({input,includedRegionCodes:['us'],includedPrimaryTypes:['street_address','subpremise','premise','route','locality'],languageCode:'en',regionCode:'us'}),signal:AbortSignal.timeout(6000)});
+    const data=await res.json();
+    if(data?.error)return addressResponse({success:true,suggestions:[],autocomplete_error:String(data.error.status||'PLACES_ERROR')});
+    const suggestions=Array.isArray(data?.suggestions)?data.suggestions.slice(0,8).map((s:any)=>{const p=s?.placePrediction||{};return{place_id:p.placeId||'',text:p.text?.text||'',main:p.structuredFormat?.mainText?.text||'',secondary:p.structuredFormat?.secondaryText?.text||''};}).filter((s:any)=>s.text):[];
+    return addressResponse({success:true,suggestions});
+   }catch{return addressResponse({success:true,suggestions:[],autocomplete_error:'Suggestion service unavailable.'});}
+  }
   const address=typeof body.address==='string'?body.address.trim():'';
   if(!address||address.length>500)return addressResponse({success:false,error:'Enter a full street address of 500 characters or fewer.'},{status:400});
-  if(!diagnostic&&body.action_token)reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:'address-lookup',targetName:address,kind:'address',label:`Find jurisdiction for ${address}`});
+  if(!diagnostic&&body.action_token)reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:'address-lookup',targetName:address,kind:'address',label:`Find jurisdiction for ${address}`}).catch(()=>silentScanReporter); // telemetry setup must never kill the lookup — degrade to silent on entity-cap pressure
   const progress=async(event:any)=>{const {progress,...item}=event;await reporter.emit(item,progress || {});};
   await reporter.emit({kind:'address_lookup',detail:`Looking up ${address}. Service revision: ${ADDRESS_LOOKUP_REVISION}.`},{stage:'Finding the building on the map',indeterminate:true});
-  let geocode:any=null,geocodingService:any=null;
+  let geocode:any=null,geocodingService:any=null,googleVague:any=null;
+  let resolution:any=null,catalogs:any=null;
+  // Fast path: a fresh PermitLookupIndex row answers the whole lookup in one
+  // entity read — no geocode chain, no boundary queries. needs_review and
+  // unresolved outcomes are never cached, so a hit is always a real answer.
+  // Freshness requires the current code revision AND the current ruleset
+  // fingerprint (a minted rule invalidates older rows). Dormant-safe: the
+  // index no-ops until the entity is provisioned.
+  if(!diagnostic){
+    try{
+      const idxRow=await indexReadByAddress(base44,address);
+      if(idxRow){
+        const earlyCatalogs=await loadCatalogs(base44,idxRow.state?{state:idxRow.state}:null).catch(()=>null);
+        if(earlyCatalogs&&indexRowFresh(idxRow,{revision:ADDRESS_LOOKUP_REVISION,fingerprint:rulesetFingerprint(earlyCatalogs.rules||[])})){
+          catalogs=earlyCatalogs;
+          resolution={...(idxRow.resolution||{}),status:idxRow.pick_status==='rejected'?'invalid_input':(idxRow.resolution?.status||'location_verified'),state:idxRow.state,point:idxRow.point,checked_at:new Date().toISOString(),index_hit:true};
+          if(!Array.isArray(resolution.targets)||!resolution.targets.length)resolution.targets=resolution.target?[resolution.target]:[];
+          geocode={lat:idxRow.point?.lat,lon:idxRow.point?.lng,display_name:idxRow.geocode_snapshot?.formatted||address,location_exact:!!idxRow.geocode_snapshot?.location_exact,address_parts:{administrative_area_level_1:idxRow.state}};
+          await reporter.emit({kind:'index_hit',detail:`Served from the permitting lookup index (${idxRow.jurisdiction_name}, ${idxRow.state}) — geocode and boundary checks skipped.`});
+        }
+      }
+    }catch{/* index is an optimization — any failure falls through to the normal path */}
+  }
   const serviceFailure=(status:string,message:string,diagnostic_code?:string)=>geocodingService={status,issue:true,message,...(diagnostic_code?{diagnostic_code}:{})};
-  try{
+  if(!resolution)try{
    // Never return the dedicated server key through getGoogleMapsKey.
    const key=Deno.env.get('GOOGLE_GEOCODING_API_KEY')?.trim() || Deno.env.get('GOOGLE_MAPS_API_KEY')?.trim();
+   const keySource=Deno.env.get('GOOGLE_GEOCODING_API_KEY')?.trim()?'geocoding':(Deno.env.get('GOOGLE_MAPS_API_KEY')?.trim()?'maps':'none');
    if(!key){serviceFailure('NOT_CONFIGURED','The map location service is not configured. An administrator needs to check its server key. You do not need to re-enter this address.');throw Error('Map geocoding is not configured.');}
+   if(!diagnostic&&Date.now()<googleDeniedUntil)throw Object.assign(new Error('google-denied-cooldown'),{code:'GOOGLE_DENIED_COOLDOWN'});
    await reporter.emit({kind:'geocode_lookup',url:'https://maps.googleapis.com/maps/api/geocode/json',detail:`Searching for ${address}.`});
    const data=await fixedJSON(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${encodeURIComponent(key)}`);
    const serviceStatus=['OK','ZERO_RESULTS','REQUEST_DENIED','OVER_QUERY_LIMIT','OVER_DAILY_LIMIT','INVALID_REQUEST','UNKNOWN_ERROR'].includes(data.status)?data.status:'UNKNOWN_STATUS';
    const serviceResultCount=Array.isArray(data.results)?data.results.length:0;
-   console.info('CCS address geocoder v5',{status:serviceStatus,result_count:serviceResultCount});
+   console.info('CCS address geocoder v5',{status:serviceStatus,result_count:serviceResultCount,google_error_message:String(data?.error_message||'').slice(0,300),key_source:Deno.env.get('GOOGLE_GEOCODING_API_KEY')?.trim()?'geocoding':'maps'});
    await reporter.emit({kind:'geocode_service_result',detail:`Google Geocoding responded: ${serviceStatus}; ${serviceResultCount} address results.`});
    if(serviceStatus==='OK'&&!serviceResultCount)serviceFailure('EMPTY_RESULT','The map service returned an empty response. Try again later; no jurisdiction has been selected.');
    else if(serviceStatus==='ZERO_RESULTS')geocodingService={status:serviceStatus,issue:false,message:'No address match was returned. Check the street address.'};
-   else if(serviceStatus==='REQUEST_DENIED'){const rejection=geocodingRejection(data.error_message);serviceFailure(serviceStatus,rejection.message,rejection.diagnostic_code);}
+    else if(serviceStatus==='REQUEST_DENIED'){const rejection=geocodingRejection(data.error_message);serviceFailure(serviceStatus,rejection.message,rejection.diagnostic_code);if(geocodingService){geocodingService.google_error=String(data?.error_message||'').slice(0,300);geocodingService.key_source=keySource;}googleDeniedUntil=Date.now()+GOOGLE_DENIED_TTL_MS;googleDeniedService=geocodingService;}
    else if(serviceStatus!=='OK')serviceFailure(serviceStatus,serviceStatus==='OVER_QUERY_LIMIT'||serviceStatus==='OVER_DAILY_LIMIT'?'Google Geocoding reached its service limit. Try again later or ask an administrator to check quota and billing.':serviceStatus==='INVALID_REQUEST'?'The map service rejected the lookup request. An administrator needs to check the request setup.':'The map location service is temporarily unavailable. Try again later.');
    if(geocodingService)await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}`});
-   if(data.status==='OK'&&data.results?.length){const g=data.results[0];geocode={lat:g.geometry?.location?.lat,lon:g.geometry?.location?.lng,display_name:g.formatted_address,location_exact:strictGeocode(data.results,address),address_parts:(g.address_components || []).reduce((a:any,c:any)=>{for(const t of c.types || [])a[t]=c.long_name;return a;},{})};}
-  }catch{if(!geocodingService)serviceFailure('UNAVAILABLE','The map location service could not be reached. Try again later; no jurisdiction has been selected.');await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}`});}
+   if(data.status==='OK'&&data.results?.length){googleDeniedUntil=0;googleDeniedService=null;const g=data.results[0];const exact=strictGeocode(data.results,address);
+    // A Google street-level result that misses full rooftop certainty (range-
+    // interpolated, geometric center, partial match) is still evidence — mark
+    // it approximate so the boundary check applies its wider safety margin
+    // instead of dead-ending at "vague pin". True locality/zip centroids stay
+    // vague because they cannot prove which jurisdiction they sit in.
+    const streetish=exact||(g.types||[]).some((t:string)=>['street_address','premise','subpremise','route','intersection'].includes(t))||g.geometry?.location_type==='ROOFTOP';
+    const candidate={lat:g.geometry?.location?.lat,lon:g.geometry?.location?.lng,display_name:g.formatted_address,location_exact:exact,...(exact||!streetish?{}:{approximate_source:'google_approx'}),address_parts:(g.address_components || []).reduce((a:any,c:any)=>{for(const t of c.types || [])a[t]=c.long_name;return a;},{})};
+    // A vague Google result (locality/zip centroid) is never the last word —
+    // hold it as the final fallback and let the free locators try for a real
+    // street pin first instead of dead-ending every lookup at a guess.
+    if(exact||streetish)geocode=candidate;else googleVague=candidate;}
+  }catch(err:any){if(err?.code==='GOOGLE_DENIED_COOLDOWN'){geocodingService=googleDeniedService||geocodingService||{status:'REQUEST_DENIED',issue:true,message:'Google rejected the map location request. An administrator needs to check the server key, Geocoding API access and billing. You do not need to re-enter this address.'};await reporter.emit({kind:'geocode_service_result',detail:'Google Geocoding is still denied from the last check; trying the free locators first.'});await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding skipped during denial cooldown: ${geocodingService.message}`});}else{if(!geocodingService)serviceFailure('UNAVAILABLE','The map location service could not be reached. Try again later; no jurisdiction has been selected.');await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}`});}}
   // Browser-resolved Census hint: the worker cannot reach census.gov (its fetch
  // hangs until abort), so the client geocodes via the browser and resubmits.
  const hint=body?.census_hint;
  if(!geocode&&hint&&Number.isFinite(Number(hint.lat))&&Number.isFinite(Number(hint.lng))){
   const hp=hint.address_parts||{};const hs=normalizeAddressState(hp.state||'');
   if(['oh','ky'].includes(hs)){
-   geocode={lat:Number(hint.lat),lon:Number(hint.lng),display_name:hint.matched_address||address,location_exact:false,approximate_source:'browser_us_census',address_parts:{administrative_area_level_1:hs,locality:hp.city||'',postal_code:hp.zip||''}};
-   await reporter.emit({kind:'geocode_service_result',detail:'Browser Census locator matched '+geocode.display_name+' as an approximate map location.'});
-   if(geocodingService?.issue)geocodingService={...geocodingService,fallback_used:'us_census',fallback_message:'The public Census locator found an approximate map position after Google rejected the lookup.'};
+   geocode={lat:Number(hint.lat),lon:Number(hint.lng),display_name:hint.matched_address||address,location_exact:false,approximate_source:'browser_geocoder',address_parts:{administrative_area_level_1:hs,locality:hp.city||'',postal_code:hp.zip||''}};
+   await reporter.emit({kind:'geocode_service_result',detail:'Browser map locator matched '+geocode.display_name+' as an approximate map location.'});
+   if(geocodingService?.issue)geocodingService={...geocodingService,fallback_used:'browser_geocoder',fallback_message:'The browser map locator found an approximate map position after Google rejected the lookup.'};
   }
  }
- // Free fallback: US Census geocoder needs no API key. It gives coordinates and
- // a normalized address but not Google-style components; resolve state from the
- // matched address and never treat its output as parcel-exact proof.
+ // Free fallback 1: OpenStreetMap Nominatim — no key; interpolation finds
+ // approximate positions where strict street-number matching fails. Policy: one
+ // serialized request per lookup, honest User-Agent, treated as approximate only.
+ // OSM runs before Census because the worker historically cannot reach
+ // census.gov — a doomed 15s wait used to precede every OSM attempt.
+ if(!geocode){
+  try{
+   await reporter.emit({kind:'geocode_lookup',url:'https://nominatim.openstreetmap.org/search',detail:'Trying the public OpenStreetMap address locator.'});
+   const osmResponse=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&addressdetails=1&q='+encodeURIComponent(address),{headers:{'User-Agent':'ccs-signage-permitting-lookup/1.0'},signal:AbortSignal.timeout(6000)});
+   const osm=osmResponse.ok?await osmResponse.json():[];
+   const hit=Array.isArray(osm)?osm[0]:null;
+   const addr=hit?.address||{};
+   const st=normalizeAddressState(addr.state||'');
+   if(hit&&Number.isFinite(Number(hit.lat))&&Number.isFinite(Number(hit.lon))&&['oh','ky'].includes(st)){
+    geocode={lat:Number(hit.lat),lon:Number(hit.lon),display_name:hit.display_name||address,location_exact:false,approximate_source:'nominatim',address_parts:{administrative_area_level_1:st,locality:addr.city||addr.town||addr.village||addr.municipality||'',postal_code:addr.postcode||''}};
+    await reporter.emit({kind:'geocode_service_result',detail:'OpenStreetMap locator matched '+geocode.display_name+' as an approximate map location.'});
+    if(geocodingService?.issue)geocodingService={...geocodingService,fallback_used:'nominatim',fallback_message:'The public OpenStreetMap locator found an approximate map position after other locators failed.'};
+   }else await reporter.emit({kind:'geocode_service_result',detail:'OpenStreetMap locator returned no usable match.'});
+  }catch{await reporter.emit({kind:'geocode_failed',detail:'The OpenStreetMap backup locator could not confirm the address either.'});}
+ }
+ // Free fallback 2 (last resort): US Census geocoder needs no key and returns
+ // normalized addresses, but the worker often cannot reach census.gov — keep it
+ // last with its own short timeout so an unreachable host cannot stall lookups.
  if(!geocode){
   try{
    await reporter.emit({kind:'geocode_lookup',url:'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress',detail:'Trying the public US Census address locator.'});
    const cleaned=address.replace(/s+,/g,',').replace(/,?s*(USA|United States|US)$/i,'');
    let match=null,matches=[];
    for(const candidate of [...new Set([cleaned,address])]){
-    const census=await fixedJSON('https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address='+encodeURIComponent(candidate)+'&benchmark=Public_AR_Current&format=json');
+    const census=await fixedJSON('https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address='+encodeURIComponent(candidate)+'&benchmark=Public_AR_Current&format=json',5000);
     matches=census?.result?.addressMatches || [];
     if(matches.length){match=matches[0];break;}
    }
@@ -101,22 +252,55 @@ Deno.serve(async req=>{
    }
   }catch{await reporter.emit({kind:'geocode_failed',detail:'The Census backup locator could not confirm the address either.'});}
  }
+ // Last resort only: Google's vague centroid is still better than nothing —
+ // it surfaces as an honest needs_review rather than a total geocode miss.
+ if(!geocode&&googleVague){geocode=googleVague;await reporter.emit({kind:'geocode_service_result',detail:'Falling back to Google\'s approximate area result after the free locators found no street match.'});}
  if(diagnostic)return addressResponse({success:true,diagnostic_only:true,geocode,geocoding_service:geocodingService,authority_established:false,apply_allowed:false,llm_calls:0,record_writes:0});
   await reporter.emit({kind:'geocode_result',detail:geocode?`Map result: ${geocode.display_name}; latitude ${geocode.lat}, longitude ${geocode.lon}. ${geocode.location_exact?'Street and building coordinates matched.':'Approximate or corrected address; review required.'}`:'No map location found.'},{stage:'Checking government boundaries',indeterminate:true});
-  const resolution=await resolveSpatialLocation({geocode,fetchJSON:fixedJSON,onProgress:progress});
-  const hasServiceIssue=Boolean(geocodingService?.issue&&resolution.status!=='location_verified');
-  if(hasServiceIssue)resolution.reason=geocodingService.message;
-  await reporter.emit({kind:'location_result',detail:resolution.reason},{stage:'Checking saved jurisdictions',indeterminate:true});
-  const stateFilter=resolution.state?{state:resolution.state}:null;
-  const [localities,profiles]=await Promise.all([
-   loadAllEntityRows({entity:base44.asServiceRole.entities.PermitLocality,query:stateFilter,sort:'created_date',label:'Location matching catalog'}),
-   loadAllEntityRows({entity:base44.asServiceRole.entities.JurisdictionProfile,query:stateFilter,sort:'created_date',label:'Location county identities'})]);
-  const matched=exactConfiguredLocality(localities,resolution,profiles);
-  await reporter.emit({kind:'catalog_check',detail:`Checked ${localities.length} saved jurisdictions. ${matched?`Unique location match: ${matched.name}. ${matched.offices?.some(office=>office.authority_verification_status==='staff_verified')?'Checking reviewed office roles.':'Office setup needs review; website research stays in the review tools.'}`:'No unique confirmed match. Website research stays available in the review tools.'}`});
+   // Catalogs (incl. staff review rules) load BEFORE the spatial pass — rules
+ // are consulted inside resolution gates. Cached ~5min; a catalog outage
+ // degrades to rule-free resolution, never a 500.
+ const geoState=normalizeAddressState(geocode?.address_parts?.administrative_area_level_1).toUpperCase();
+ const stateFilter=geoState?{state:geoState}:null;
+ if(!catalogs){
+ try{catalogs=await loadCatalogs(base44,stateFilter);}catch(e1){
+   await new Promise(r=>setTimeout(r,2500));
+   try{catalogs=await loadCatalogs(base44,stateFilter);}catch(e2){catalogs=null;}
+ }
+ }
+ // Geohash cell reuse: a new address whose pin lands provably inside the same
+ // jurisdiction as a nearby verified pin (new pin closer to the stored pin
+ // than that pin's own boundary distance) reuses the pick — the boundary
+ // queries are skipped. Edge rows are never eligible.
+ if(!resolution){
+  try{
+   const cellRow=await indexReadByCell(base44,geocode?{lat:geocode.lat,lng:geocode.lon}:null,geocode?geohash(geocode.lat,geocode.lon,7):'');
+   if(cellRow&&cellRow.state===geoState&&indexRowFresh(cellRow,{revision:ADDRESS_LOOKUP_REVISION,fingerprint:rulesetFingerprint(catalogs?.rules||[])})){
+    resolution={...(cellRow.resolution||{}),status:'location_verified',state:cellRow.state,point:{lat:geocode.lat,lng:geocode.lon},checked_at:new Date().toISOString(),index_hit:true,cell_reuse:true};
+    await reporter.emit({kind:'index_hit',detail:`Jurisdiction reused from a nearby verified pin (${cellRow.jurisdiction_name}, ${cellRow.state}) — boundary checks skipped.`});
+   }
+  }catch{/* fall through to the full boundary pass */}
+ }
+ if(!resolution)resolution=await resolveSpatialLocation({geocode,fetchJSON:fixedJSON,onProgress:progress,rules:catalogs?.rules||[],enteredAddress:address});
+ // Write-through: verified picks (and deterministic not-an-address rejects)
+ // become one-read answers for the next lookup of this address. Review and
+ // unresolved outcomes are never cached — they are flags, not answers.
+ if(resolution&&!resolution.index_hit){
+  indexWrite(base44,buildIndexEntry({address,point:geocode?{lat:geocode.lat,lng:geocode.lon}:resolution?.point,resolution,geocode,revision:ADDRESS_LOOKUP_REVISION,fingerprint:rulesetFingerprint(catalogs?.rules||[]),source:'resolver',ttlDays:resolution.status==='invalid_input'?90:30}));
+ }
+ const hasServiceIssue=Boolean(geocodingService?.issue&&resolution.status!=='location_verified');
+ if(hasServiceIssue)resolution.reason=geocodingService.message;
+ await reporter.emit({kind:'location_result',detail:resolution.reason},{stage:'Checking saved jurisdictions',indeterminate:true});
+ const {localities,profiles}=catalogs||{localities:[],profiles:[]};
+ const officeCheckDeferred=!catalogs;
+  const matched=catalogs?exactConfiguredLocality(localities,resolution,profiles):null;
+  await reporter.emit({kind:'catalog_check',detail:catalogs?`Checked ${localities.length} saved jurisdictions. ${matched?`Unique location match: ${matched.name}. ${matched.offices?.some(office=>office.authority_verification_status==='staff_verified')?'Checking reviewed office roles.':'Office setup needs review; website research stays in the review tools.'}`:'No unique confirmed match. Website research stays available in the review tools.'}`:'The saved-office record service was busy — the office match is deferred to the next lookup, not lost.'});
   // Never ask an LLM to choose a locality ID; never write research into approved
   // profiles or a Work Order. Research starts even when location needs review.
   const authority=summarizeMatchedLocalityAuthority(matched);
   const applyAllowed=Boolean(matched&&authority.verified_roles.includes('sign_permit')&&authority.verified_roles.includes('zoning'));
+  const officeResearch=(matched&&!applyAllowed)?await kickOfficeResearch(base44,matched,profiles):null;
+  if(officeResearch)await reporter.emit({kind:'catalog_check',detail:{research_started:'No verified offices on file — live office research started right now.',queued:'No verified offices on file — queued this jurisdiction for priority office research.',already_queued:'Office research is already in progress for this jurisdiction.',backfill_pending:'Office research landed — the saved-office record is catching up.',verification_pending:'Offices are on file and awaiting verification.'}[officeResearch.state]||'Office research status is being checked.'});
   // Website research and archive downloads are explicitly deferred: they made
   // every ordinary address search wait minutes even though jurisdiction selection
   // only needs the verified location and configured catalog match.
@@ -124,6 +308,11 @@ Deno.serve(async req=>{
   const addressArchives=null;
   const reason=matched?resolution.reason:resolution.status==='location_verified'?`Location is ${resolution.target.name}, but we are not sure which office handles permits there yet. Someone on the team can look it up in the review tools.`:resolution.reason;
   await reporter.emit({kind:'address_findings',detail:reason},{stage:applyAllowed?'Ready to use':'Administrator review needed',processed:1,total:1,indeterminate:false});
-  return addressResponse({success:true,scan_run:await reporter.finish(hasServiceIssue?'completed_with_errors':'complete',hasServiceIssue?geocodingService.message:undefined),geocode,geocoding_service:geocodingService,location_resolution:resolution,automatic_scan:automatic,address_archives:addressArchives,research_deferred:true,suggested_locality:matched?{id:matched.id,name:matched.name,state:matched.state,zip:matched.zip,jurisdiction_profile_id:matched.jurisdiction_profile_id}:null,authority_review:authority,apply_allowed:applyAllowed,not_matched:!matched,ai_locality_name:resolution.target?.name || '',ai_state:resolution.state || '',ai_county:resolution.target?.county || '',match_confidence:matched?'high':'unresolved',match_method:matched?'government_boundary_intersection':'none',match_reason:reason,notes:!applyAllowed?'An administrator must confirm the location and sign/zoning office setup before this address is used.':''});
- }catch(error){const status=[400,401,409,503].includes(Number(error?.status))?Number(error.status):500;return addressResponse({success:false,scan_run:await reporter.finish('failed','Address lookup could not finish safely.'),error:status===500?'Address lookup could not finish safely. Please try again.':error.message,error_detail:String(error?.message||error).slice(0,300)},{status});}
+  return addressResponse({success:true,scan_run:await reporter.finish(hasServiceIssue?'completed_with_errors':'complete',hasServiceIssue?geocodingService.message:undefined),geocode,geocoding_service:geocodingService,location_resolution:resolution,automatic_scan:automatic,address_archives:addressArchives,research_deferred:true,office_research:officeResearch,suggested_locality:matched?{id:matched.id,name:matched.name,state:matched.state,zip:matched.zip,jurisdiction_profile_id:matched.jurisdiction_profile_id}:null,authority_review:authority,apply_allowed:applyAllowed,not_matched:!matched,office_check_deferred:officeCheckDeferred,ai_locality_name:resolution.target?.name || '',ai_state:resolution.state || '',ai_county:resolution.target?.county || '',match_confidence:matched?'high':'unresolved',match_method:matched?'government_boundary_intersection':'none',match_reason:reason,notes:!applyAllowed?'An administrator must confirm the location and sign/zoning office setup before this address is used.':''});
+ }catch(error){
+  const errorStatus=Number(error?.status||error?.response?.status||0);
+  // A platform rate limit is transient: hand it back as 429 so the browser
+  // backs off instead of treating the lookup as a deterministic failure.
+  if(errorStatus===429||/rate limit|too many requests|traffic volume/i.test(String(error?.message||'')))return addressResponse({success:false,error:'Address lookup is busy. Try again shortly.',retry_after_ms:3000,error_detail:String(error?.message||error).slice(0,300)},{status:429,headers:{'Retry-After':'3'}});
+  const status=[400,401,409,503].includes(errorStatus)?errorStatus:500;return addressResponse({success:false,scan_run:await reporter.finish('failed','Address lookup could not finish safely.'),error:status===500?'Address lookup could not finish safely. Please try again.':error.message,...(diagnostic||status!==500?{error_detail:String(error?.message||error).slice(0,300)}:{})},{status});}
 });

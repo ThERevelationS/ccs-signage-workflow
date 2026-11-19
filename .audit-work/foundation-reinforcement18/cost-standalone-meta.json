@@ -1,0 +1,24 @@
+{
+  "inputs": {
+    "src/components/estimator/foundation/foundationReinforcementCost.js": {
+      "bytes": 7643,
+      "imports": [],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    ".audit-work/foundation-reinforcement18/cost-standalone-bundle.js": {
+      "imports": [],
+      "exports": [
+        "priceFoundationReinforcementModel"
+      ],
+      "entryPoint": "src/components/estimator/foundation/foundationReinforcementCost.js",
+      "inputs": {
+        "src/components/estimator/foundation/foundationReinforcementCost.js": {
+          "bytesInOutput": 7653
+        }
+      },
+      "bytes": 7771
+    }
+  }
+}

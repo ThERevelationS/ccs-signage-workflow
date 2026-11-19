@@ -1,0 +1,17 @@
+ok render purity: empty counts + legacy ids -> no mutation, total $100.00
+ok unknown/orphan row visible with empty inventory
+ok normalized qty2 -> 130; input 3 -> one update + 145; remove -> 100
+ok normalized qty0 -> effective 1 charged 115; legacy dup ids x2 -> 130 -> input 3 -> 145
+ok custom rate0/qty2/delivery0 -> 0; clear rate -> 200
+ok missing parent -> Saved 600; unknown -> Not saved; explicit0 -> $0.00; missing child keeps whole
+ok counts qty0 missing does NOT block; normalized qty0 missing DOES block
+ok normalized dup rows visible, qty edit disabled, Remove all clears shadows; corrupt input -> inline error
+FAIL zero keys re-add via real attachment-to-sub compatibility - unique selector Add attachment.
+
+0 !== 1
+
+ok unselected catalog parent does not link a selected sub
+ok real equipment flags control eligible add options
+ok zero-rate and unknown periods; duration preserves quantity override
+PASS equipment-ui passed=11 failed=1
+node_exit=1

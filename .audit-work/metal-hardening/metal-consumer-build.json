@@ -1,0 +1,50 @@
+{
+  "inputs": [
+    "frozen:/app/src/components/estimator/metal/metalPricingAvailability.js",
+    "frozen:/app/src/pages/MetalEstimator.jsx",
+    "frozen:/app/src/pages/MetalSettings.jsx",
+    "frozen:/app/consumer-entry.js"
+  ],
+  "loaded": {
+    "/app/consumer-entry.js": "5463fc8cfdbbd47e66381eccfdf71ded6342c206241aa2cc05bbafc6df054995",
+    "/app/src/pages/MetalSettings.jsx": "a98b040217f71de60e6071a127d997a8ee5c6bdd45af40ac26ab7aec6493ee42",
+    "/app/src/pages/MetalEstimator.jsx": "f0e72afd6d37502d5552e98e4bad62f43f40b65b2796f5484ba4e3395b9d6a6d",
+    "/app/src/components/estimator/metal/metalPricingAvailability.js": "68c228ec0d2196ff6fba4575ade6c24cde6629d25b27ff347063ebbf4a329984"
+  },
+  "candidateHashes": {
+    "metalPricingAvailability.js": "68c228ec0d2196ff6fba4575ade6c24cde6629d25b27ff347063ebbf4a329984",
+    "MetalEstimator.jsx": "f0e72afd6d37502d5552e98e4bad62f43f40b65b2796f5484ba4e3395b9d6a6d"
+  },
+  "externals": [
+    "react",
+    "@/api/gatedEntities",
+    "@/components/ui/button",
+    "@/components/ui/card",
+    "@/components/ui/input",
+    "@/components/ui/label",
+    "@/components/ui/textarea",
+    "@/components/ui/select",
+    "lucide-react",
+    "@/components/ui/tabs",
+    "react-router-dom",
+    "@/components/channelLetterInstall/TabBadgeTrigger",
+    "@/components/markup/CustomerPricingTab",
+    "@/components/markup/projectCategorizer",
+    "@/components/markup/savedCustomerPricing",
+    "@/components/estimator/builder/builderService",
+    "@/components/estimator/loadAllEntityRows",
+    "@/components/estimator/builder/sourceProjectPersistence",
+    "@/components/estimator/builder/itemIdentity",
+    "@/components/estimator/idempotentEntityCreate",
+    "@/components/estimator/moduleShared/ModuleActionBar",
+    "@/components/estimator/moduleShared/ModuleTemplateDialog",
+    "@/components/estimator/moduleShared/moduleProjectActions",
+    "@/components/staff/staffEntities",
+    "@/components/estimator/metal/metalPricingAvailability",
+    "react/jsx-runtime",
+    "@/entities/all",
+    "@/components/estimator/settings/settingsSaveGuard",
+    "@/components/estimator/settings/SettingsTransferBar",
+    "@/components/estimator/settings/moduleSettingDefaults"
+  ]
+}

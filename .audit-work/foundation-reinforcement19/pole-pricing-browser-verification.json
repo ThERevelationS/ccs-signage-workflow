@@ -1,0 +1,54 @@
+{
+  "results": [
+    {
+      "id": "valid 1280",
+      "ok": true
+    },
+    {
+      "id": "valid 390",
+      "ok": true
+    },
+    {
+      "id": "held-unavailable 1280",
+      "ok": true
+    },
+    {
+      "id": "held-unavailable 390",
+      "ok": true
+    },
+    {
+      "id": "blank-height 1280",
+      "ok": true
+    },
+    {
+      "id": "blank-height 390",
+      "ok": true
+    },
+    {
+      "id": "new-unsaved 1280",
+      "ok": true
+    },
+    {
+      "id": "new-unsaved 390",
+      "ok": true
+    },
+    {
+      "id": "free-price 1280",
+      "ok": true
+    },
+    {
+      "id": "free-price 390",
+      "ok": true
+    },
+    {
+      "id": "bad-paint 1280",
+      "ok": true
+    },
+    {
+      "id": "bad-paint 390",
+      "ok": true
+    }
+  ],
+  "port": 50781,
+  "pid": 77588
+}

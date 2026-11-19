@@ -60,7 +60,7 @@ export default function JurisdictionActivityTab({ jurisdiction }) {
           <Clock className="w-6 h-6 text-gray-400" />
         </div>
         <p className="text-sm font-medium text-gray-600">No activity yet</p>
-        <p className="text-xs text-gray-400 mt-1">Changes to this jurisdiction will appear here.</p>
+        <p className="text-xs text-gray-400 mt-1">Changes to this office will show up here.</p>
       </div>
     );
   }

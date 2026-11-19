@@ -1,0 +1,2 @@
+Exact readback, three consumer bundles, twelve protected files, clean two-file scope and ready status verified.
+exit=0

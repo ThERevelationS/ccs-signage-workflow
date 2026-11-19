@@ -1,0 +1,26 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "verdict": "accepted",
+  "files": {
+    "src/components/estimator/foundation/foundationDraftRecovery.js": "16cf0d383ef46a3bf21557cff04ca2a6f0ad50ef0b5928ad3ad601f361de8904",
+    "src/pages/FoundationEstimator.jsx": "aa81d6d519b4f35b61a2dff58eef465b7bb18f8700de75051badfa9c7b23295f"
+  },
+  "evidence": {
+    "navigation": "nav-final.txt",
+    "helper": "draft-node.txt",
+    "regressions": [
+      "f-save.txt",
+      "f-catalog.txt",
+      "f-matui.txt",
+      "f-matbrowser.txt"
+    ],
+    "lint": "lint-final.txt",
+    "bundle": "final-metafile.json"
+  },
+  "limitations": [
+    "design fields only; pricing/customer edits require save",
+    "synthetic browser/service boundaries; no live RLS proof",
+    "O-004 broader acceptance remains open"
+  ]
+}

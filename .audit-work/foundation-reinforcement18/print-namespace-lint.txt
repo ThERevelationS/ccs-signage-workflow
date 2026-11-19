@@ -1,0 +1,9 @@
+
+C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\src\components\jobs\printTemplates\templates\original.js
+   8:3   error    'clean' is defined but never used                                    unused-imports/no-unused-imports
+  85:41  warning  'i' is defined but never used. Allowed unused args must match /^_/u  unused-imports/no-unused-vars
+
+✖ 2 problems (1 error, 1 warning)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+
+lint=1

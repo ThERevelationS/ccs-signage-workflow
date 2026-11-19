@@ -1,0 +1,2201 @@
+{
+  "sourceHead": "892c701aedae039ae03ad8b160ae42175ad99e40",
+  "sourceSha": "55b6fc1ffcd9b7660d9c66b47e5000254de0e0e754719c1d25c3c0306f162614",
+  "scope": "Positive/explicit-zero material legacy outputs; zero-setting repair excluded",
+  "rows": [
+    {
+      "name": "concrete material, positive settings",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 6,
+            "materialCost": 12,
+            "mortarCost": 0,
+            "laborHours": 0.12,
+            "laborCost": 45,
+            "totalCost": 57,
+            "totalLinearInches": 16,
+            "numCourses": 2.25,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "genuine zero material price",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 0
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 6,
+            "materialCost": 0,
+            "mortarCost": 0,
+            "laborHours": 0.12,
+            "laborCost": 45,
+            "totalCost": 45,
+            "totalLinearInches": 16,
+            "numCourses": 2.25,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "brick, explicit dry joint",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "brick",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 6,
+            "materialCost": 12,
+            "mortarCost": 10,
+            "laborHours": 0.12,
+            "laborCost": 45,
+            "totalCost": 67,
+            "totalLinearInches": 16,
+            "numCourses": 2.25,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "brick_stone type and mortar joint",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0.375,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "brick_stone",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "brick",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0.375,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 6,
+            "materialCost": 12,
+            "mortarCost": 10,
+            "laborHours": 0.12,
+            "laborCost": 45,
+            "totalCost": 67,
+            "totalLinearInches": 16,
+            "numCourses": 2.057142857142857,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "stone units, two unequal segments",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 24,
+              "mortarGapInches": 0.5,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  },
+                  {
+                    "component_id": "segment-b",
+                    "length": 40
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "stone",
+            "wall_unit_length_inches": 16,
+            "wall_unit_width_inches": 6,
+            "wall_unit_height_inches": 8,
+            "cost_per_unit": 2
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 24,
+          "mortarGapInches": 0.5,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              },
+              {
+                "component_id": "segment-b",
+                "length": 40
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 12,
+            "materialCost": 24,
+            "mortarCost": 10,
+            "laborHours": 0.24,
+            "laborCost": 420,
+            "totalCost": 454,
+            "totalLinearInches": 56,
+            "numCourses": 2.823529411764706,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "closed outline with internal brick",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": true,
+              "shape": {
+                "closed": true,
+                "segments": [
+                  {
+                    "component_id": "segment-a",
+                    "length": 48
+                  },
+                  {
+                    "component_id": "segment-b",
+                    "length": 24
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              },
+              "internalMaterialId": "synthetic-inner",
+              "internalWallHeightInches": 12,
+              "internalMortarGapInches": 0.375
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2
+          },
+          {
+            "id": "synthetic-inner",
+            "material_type": "brick_stone",
+            "material_name": "Synthetic internal brick",
+            "wall_material_subtype": "brick",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 3
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": true,
+          "shape": {
+            "closed": true,
+            "segments": [
+              {
+                "component_id": "segment-a",
+                "length": 48
+              },
+              {
+                "component_id": "segment-b",
+                "length": 24
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 27,
+            "materialCost": 54,
+            "mortarCost": 0,
+            "laborHours": 0.54,
+            "laborCost": 202.5,
+            "totalCost": 539.5,
+            "totalLinearInches": 72,
+            "numCourses": 2.25,
+            "internalTotalBricks": 21,
+            "internalMaterialCost": 63,
+            "internalMortarCost": 10,
+            "internalLaborCost": 210,
+            "internalLaborHours": 0.42
+          },
+          "internalMaterialId": "synthetic-inner",
+          "internalWallHeightInches": 12,
+          "internalMortarGapInches": 0.375
+        }
+      ]
+    },
+    {
+      "name": "open outline with internal brick",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": true,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "segment-a",
+                    "length": 48
+                  },
+                  {
+                    "component_id": "segment-b",
+                    "length": 24
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              },
+              "internalMaterialId": "synthetic-inner",
+              "internalWallHeightInches": 12,
+              "internalMortarGapInches": 0.375
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2
+          },
+          {
+            "id": "synthetic-inner",
+            "material_type": "brick_stone",
+            "material_name": "Synthetic internal brick",
+            "wall_material_subtype": "brick",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 3
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": true,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "segment-a",
+                "length": 48
+              },
+              {
+                "component_id": "segment-b",
+                "length": 24
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 27,
+            "materialCost": 54,
+            "mortarCost": 0,
+            "laborHours": 0.54,
+            "laborCost": 202.5,
+            "totalCost": 617.5,
+            "totalLinearInches": 72,
+            "numCourses": 2.25,
+            "internalTotalBricks": 27,
+            "internalMaterialCost": 81,
+            "internalMortarCost": 10,
+            "internalLaborCost": 270,
+            "internalLaborHours": 0.54
+          },
+          "internalMaterialId": "synthetic-inner",
+          "internalWallHeightInches": 12,
+          "internalMortarGapInches": 0.375
+        }
+      ]
+    },
+    {
+      "name": "internal concrete units",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": true,
+              "shape": {
+                "closed": true,
+                "segments": [
+                  {
+                    "component_id": "segment-a",
+                    "length": 48
+                  },
+                  {
+                    "component_id": "segment-b",
+                    "length": 24
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              },
+              "internalMaterialId": "synthetic-inner",
+              "internalWallHeightInches": 12,
+              "internalMortarGapInches": 0.375
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2
+          },
+          {
+            "id": "synthetic-inner",
+            "material_type": "brick_stone",
+            "material_name": "Synthetic internal brick",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 3
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": true,
+          "shape": {
+            "closed": true,
+            "segments": [
+              {
+                "component_id": "segment-a",
+                "length": 48
+              },
+              {
+                "component_id": "segment-b",
+                "length": 24
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 27,
+            "materialCost": 54,
+            "mortarCost": 0,
+            "laborHours": 0.54,
+            "laborCost": 202.5,
+            "totalCost": 529.5,
+            "totalLinearInches": 72,
+            "numCourses": 2.25,
+            "internalTotalBricks": 21,
+            "internalMaterialCost": 63,
+            "internalMortarCost": 0,
+            "internalLaborCost": 210,
+            "internalLaborHours": 0.42
+          },
+          "internalMaterialId": "synthetic-inner",
+          "internalWallHeightInches": 12,
+          "internalMortarGapInches": 0.375
+        }
+      ]
+    },
+    {
+      "name": "outer explicit price override",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2,
+            "custom_cost_per_unit": 5
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 6,
+            "materialCost": 30,
+            "mortarCost": 0,
+            "laborHours": 0.12,
+            "laborCost": 45,
+            "totalCost": 75,
+            "totalLinearInches": 16,
+            "numCourses": 2.25,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "outer explicit free override",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2,
+            "custom_cost_per_unit": 0
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 6,
+            "materialCost": 0,
+            "mortarCost": 0,
+            "laborHours": 0.12,
+            "laborCost": 45,
+            "totalCost": 45,
+            "totalLinearInches": 16,
+            "numCourses": 2.25,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "internal explicit price override",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": true,
+              "shape": {
+                "closed": true,
+                "segments": [
+                  {
+                    "component_id": "segment-a",
+                    "length": 48
+                  },
+                  {
+                    "component_id": "segment-b",
+                    "length": 24
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              },
+              "internalMaterialId": "synthetic-inner",
+              "internalWallHeightInches": 12,
+              "internalMortarGapInches": 0.375,
+              "custom_internal_material_cost_per_unit": 7
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2
+          },
+          {
+            "id": "synthetic-inner",
+            "material_type": "brick_stone",
+            "material_name": "Synthetic internal brick",
+            "wall_material_subtype": "brick",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 3
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": true,
+          "shape": {
+            "closed": true,
+            "segments": [
+              {
+                "component_id": "segment-a",
+                "length": 48
+              },
+              {
+                "component_id": "segment-b",
+                "length": 24
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 27,
+            "materialCost": 54,
+            "mortarCost": 0,
+            "laborHours": 0.54,
+            "laborCost": 202.5,
+            "totalCost": 623.5,
+            "totalLinearInches": 72,
+            "numCourses": 2.25,
+            "internalTotalBricks": 21,
+            "internalMaterialCost": 147,
+            "internalMortarCost": 10,
+            "internalLaborCost": 210,
+            "internalLaborHours": 0.42
+          },
+          "internalMaterialId": "synthetic-inner",
+          "internalWallHeightInches": 12,
+          "internalMortarGapInches": 0.375,
+          "custom_internal_material_cost_per_unit": 7
+        }
+      ]
+    },
+    {
+      "name": "internal explicit free override",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": true,
+              "shape": {
+                "closed": true,
+                "segments": [
+                  {
+                    "component_id": "segment-a",
+                    "length": 48
+                  },
+                  {
+                    "component_id": "segment-b",
+                    "length": 24
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              },
+              "internalMaterialId": "synthetic-inner",
+              "internalWallHeightInches": 12,
+              "internalMortarGapInches": 0.375,
+              "custom_internal_material_cost_per_unit": 0
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2
+          },
+          {
+            "id": "synthetic-inner",
+            "material_type": "brick_stone",
+            "material_name": "Synthetic internal brick",
+            "wall_material_subtype": "brick",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 3
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": true,
+          "shape": {
+            "closed": true,
+            "segments": [
+              {
+                "component_id": "segment-a",
+                "length": 48
+              },
+              {
+                "component_id": "segment-b",
+                "length": 24
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 27,
+            "materialCost": 54,
+            "mortarCost": 0,
+            "laborHours": 0.54,
+            "laborCost": 202.5,
+            "totalCost": 476.5,
+            "totalLinearInches": 72,
+            "numCourses": 2.25,
+            "internalTotalBricks": 21,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 10,
+            "internalLaborCost": 210,
+            "internalLaborHours": 0.42
+          },
+          "internalMaterialId": "synthetic-inner",
+          "internalWallHeightInches": 12,
+          "internalMortarGapInches": 0.375,
+          "custom_internal_material_cost_per_unit": 0
+        }
+      ]
+    },
+    {
+      "name": "outer explicit quantity override",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2,
+            "custom_outer_material_qty": 5
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 5,
+            "materialCost": 10,
+            "mortarCost": 0,
+            "laborHours": 0.1,
+            "laborCost": 45,
+            "totalCost": 55,
+            "totalLinearInches": 16,
+            "numCourses": 2.25,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "outer explicit zero quantity",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2,
+            "custom_outer_material_qty": 0
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 0,
+            "materialCost": 0,
+            "mortarCost": 0,
+            "laborHours": 0,
+            "laborCost": 45,
+            "totalCost": 45,
+            "totalLinearInches": 16,
+            "numCourses": 2.25,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "internal explicit quantity override",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": true,
+              "shape": {
+                "closed": true,
+                "segments": [
+                  {
+                    "component_id": "segment-a",
+                    "length": 48
+                  },
+                  {
+                    "component_id": "segment-b",
+                    "length": 24
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              },
+              "internalMaterialId": "synthetic-inner",
+              "internalWallHeightInches": 12,
+              "internalMortarGapInches": 0.375,
+              "custom_internal_material_qty": 3
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2
+          },
+          {
+            "id": "synthetic-inner",
+            "material_type": "brick_stone",
+            "material_name": "Synthetic internal brick",
+            "wall_material_subtype": "brick",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 3
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": true,
+          "shape": {
+            "closed": true,
+            "segments": [
+              {
+                "component_id": "segment-a",
+                "length": 48
+              },
+              {
+                "component_id": "segment-b",
+                "length": 24
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 27,
+            "materialCost": 54,
+            "mortarCost": 0,
+            "laborHours": 0.54,
+            "laborCost": 202.5,
+            "totalCost": 485.5,
+            "totalLinearInches": 72,
+            "numCourses": 2.25,
+            "internalTotalBricks": 21,
+            "internalMaterialCost": 9,
+            "internalMortarCost": 10,
+            "internalLaborCost": 210,
+            "internalLaborHours": 0.06
+          },
+          "internalMaterialId": "synthetic-inner",
+          "internalWallHeightInches": 12,
+          "internalMortarGapInches": 0.375,
+          "custom_internal_material_qty": 3
+        }
+      ]
+    },
+    {
+      "name": "internal explicit zero quantity",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": true,
+              "shape": {
+                "closed": true,
+                "segments": [
+                  {
+                    "component_id": "segment-a",
+                    "length": 48
+                  },
+                  {
+                    "component_id": "segment-b",
+                    "length": 24
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              },
+              "internalMaterialId": "synthetic-inner",
+              "internalWallHeightInches": 12,
+              "internalMortarGapInches": 0.375,
+              "custom_internal_material_qty": 0
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2
+          },
+          {
+            "id": "synthetic-inner",
+            "material_type": "brick_stone",
+            "material_name": "Synthetic internal brick",
+            "wall_material_subtype": "brick",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 3
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": true,
+          "shape": {
+            "closed": true,
+            "segments": [
+              {
+                "component_id": "segment-a",
+                "length": 48
+              },
+              {
+                "component_id": "segment-b",
+                "length": 24
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 27,
+            "materialCost": 54,
+            "mortarCost": 0,
+            "laborHours": 0.54,
+            "laborCost": 202.5,
+            "totalCost": 476.5,
+            "totalLinearInches": 72,
+            "numCourses": 2.25,
+            "internalTotalBricks": 21,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 10,
+            "internalLaborCost": 210,
+            "internalLaborHours": 0
+          },
+          "internalMaterialId": "synthetic-inner",
+          "internalWallHeightInches": 12,
+          "internalMortarGapInches": 0.375,
+          "custom_internal_material_qty": 0
+        }
+      ]
+    },
+    {
+      "name": "fractional explicit material price",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2.125
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 6,
+            "materialCost": 12.75,
+            "mortarCost": 0,
+            "laborHours": 0.12,
+            "laborCost": 45,
+            "totalCost": 57.75,
+            "totalLinearInches": 16,
+            "numCourses": 2.25,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "numeric-string material price",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": "2.125"
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 6,
+            "materialCost": 12.75,
+            "mortarCost": 0,
+            "laborHours": 0.12,
+            "laborCost": 45,
+            "totalCost": 57.75,
+            "totalLinearInches": 16,
+            "numCourses": 2.25,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "numeric-string free price",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": " 0 "
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 6,
+            "materialCost": 0,
+            "mortarCost": 0,
+            "laborHours": 0.12,
+            "laborCost": 45,
+            "totalCost": 45,
+            "totalLinearInches": 16,
+            "numCourses": 2.25,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "irrelevant catalog row cannot change wall calculation",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2
+          },
+          {
+            "id": "unrelated-pole",
+            "material_type": "pole",
+            "cost_per_unit": null
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 45,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 6,
+            "materialCost": 12,
+            "mortarCost": 0,
+            "laborHours": 0.12,
+            "laborCost": 45,
+            "totalCost": 57,
+            "totalLinearInches": 16,
+            "numCourses": 2.25,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "zero labor setting behavior deliberately unchanged in this unit",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 0,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 6,
+            "materialCost": 12,
+            "mortarCost": 0,
+            "laborHours": 0.12,
+            "laborCost": 45,
+            "totalCost": 57,
+            "totalLinearInches": 16,
+            "numCourses": 2.25,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "zero minimum setting behavior deliberately unchanged in this unit",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "concrete",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 1,
+          "wall_minimum_charge": 0,
+          "wall_mortar_cost_per_bag": 10
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 6,
+            "materialCost": 12,
+            "mortarCost": 0,
+            "laborHours": 0.12,
+            "laborCost": 150,
+            "totalCost": 162,
+            "totalLinearInches": 16,
+            "numCourses": 2.25,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "zero mortar setting behavior deliberately unchanged in this unit",
+      "fixture": {
+        "project": {
+          "id": "synthetic-masonry-project",
+          "items": [],
+          "poles": [],
+          "wall_caps": [],
+          "selected_equipment": [],
+          "walls": [
+            {
+              "component_id": "synthetic-wall",
+              "materialId": "synthetic-wall-material",
+              "heightInches": 9,
+              "mortarGapInches": 0,
+              "includeInternalWall": false,
+              "shape": {
+                "closed": false,
+                "segments": [
+                  {
+                    "component_id": "synthetic-segment",
+                    "length": 16
+                  }
+                ]
+              },
+              "calculatedCosts": {
+                "totalBricks": 6,
+                "materialCost": 321,
+                "mortarCost": 17,
+                "laborCost": 70,
+                "totalCost": 408
+              }
+            }
+          ]
+        },
+        "inventory": [
+          {
+            "id": "synthetic-wall-material",
+            "material_type": "wall_material",
+            "material_name": "Synthetic wall units",
+            "wall_material_subtype": "brick",
+            "wall_unit_length_inches": 8,
+            "wall_unit_width_inches": 4,
+            "wall_unit_height_inches": 4,
+            "cost_per_unit": 2
+          }
+        ],
+        "settings": {
+          "wall_labor_rate": 1,
+          "wall_minimum_charge": 1,
+          "wall_mortar_cost_per_bag": 0
+        }
+      },
+      "expected": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 6,
+            "materialCost": 12,
+            "mortarCost": 10,
+            "laborHours": 0.12,
+            "laborCost": 1,
+            "totalCost": 23,
+            "totalLinearInches": 16,
+            "numCourses": 2.25,
+            "internalTotalBricks": 0,
+            "internalMaterialCost": 0,
+            "internalMortarCost": 0,
+            "internalLaborCost": 0,
+            "internalLaborHours": 0
+          }
+        }
+      ]
+    }
+  ]
+}

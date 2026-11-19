@@ -1,0 +1,15 @@
+{
+  "authorized": true,
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "fdd71de8e5fa512a2e85525ab1ed22445c550073",
+  "restoreCheckpointId": "6aeed93dfe40f1e4f1c2bf14",
+  "candidateHashes": {
+    "poleCalculator.js": "8cdfbb75492817b8628eda4d10f133b7d05c9b50c46f1dd745ae1a50e201596e",
+    "foundationCalc.js": "cf744d530e198dbdf5499646cb9e49e63211a2ed7de884556ecf39bacd061332",
+    "FoundationPolesPanel.jsx": "2016265a3e7f8367f0788390460d97e9e0cd2177b9f6016e5c58a5a1dc26663f",
+    "FoundationBOM.jsx": "f85657e3f52eb5855f6eb251dd67378b9872c7e107c6afd2e4811708fead4698",
+    "FoundationEstimator.jsx": "084a90cb3a7ff116bdd55f05f6fd75b601971ef311cacd4915a332ea02735b56"
+  },
+  "reviewedProtocolHash": "b37d5e600f439e45f7e3f08c45154a4800a601105c95ff7ec4a0af982d34480a"
+}

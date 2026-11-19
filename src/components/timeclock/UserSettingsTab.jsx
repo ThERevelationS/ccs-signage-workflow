@@ -11,6 +11,7 @@ import {
 import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 import TimeTrackerSettings from "@/components/timeclock/TimeTrackerSettings";
+import WorkspaceSettingsCenter from "@/components/timeclock/WorkspaceSettingsCenter";
 import { useAuth } from "@/components/auth/EmailGate";
 
 export default function UserSettingsTab({ currentUser, sessionToken: sessionTokenOverride = "", onUserUpdated }) {
@@ -56,6 +57,9 @@ export default function UserSettingsTab({ currentUser, sessionToken: sessionToke
 
   return (
     <div className="space-y-6">
+      {/* Personal Workspace — per-employee appearance/taskbar/startup prefs */}
+      <WorkspaceSettingsCenter />
+
       {/* Password Reset Section */}
       <div className="clay-card p-5">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -132,8 +136,10 @@ export default function UserSettingsTab({ currentUser, sessionToken: sessionToke
         </div>
       </div>
 
-      {/* Time Tracker Section (salary employees) */}
-      <TimeTrackerSettings currentUser={currentUser} sessionToken={sessionToken} />
+      {/* Time Tracker Section (salary employees) — anchor target for the Settings Center "Time Clock" pointer */}
+      <div id="time-tracker-settings" className="scroll-mt-4">
+        <TimeTrackerSettings currentUser={currentUser} sessionToken={sessionToken} />
+      </div>
 
       {/* Face Enrollment Dialog */}
       <FaceEnrollmentDialog

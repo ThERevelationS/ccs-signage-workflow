@@ -1,0 +1,40 @@
+{
+  "synthetic": true,
+  "realBase44StorageVerified": false,
+  "webGLVerified": false,
+  "results": [
+    {
+      "name": "straight steel uses the authored physical radius and path length exactly once",
+      "ok": true
+    },
+    {
+      "name": "oriented cylinder endpoints match the concrete-local normalized paths",
+      "ok": true
+    },
+    {
+      "name": "parent concrete rotation and grade offset transform both steel and concrete together",
+      "ok": true
+    },
+    {
+      "name": "hoop rings are centered in the XZ plane with no fabricated hook or allowance geometry",
+      "ok": true
+    },
+    {
+      "name": "tie references stay dashed two-point paths rather than fictitious bent or cut-length bars",
+      "ok": true
+    },
+    {
+      "name": "role colors and labels cover only modeled steel; unknown roles or kinds fail closed",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    'horizontal',\n    'longitudinal',\n    'hoop',\n    'inter_mat_tie',\n+   'support'\n  ]\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-three-preview.mjs:67:10\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-three-preview.mjs:24:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-three-preview.mjs:66:1\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    },
+    {
+      "name": "scene cleanup disposes shared materials and geometry once, including duplicated mesh references",
+      "ok": true
+    },
+    {
+      "name": "rendering leaves frozen primitive inputs, physical radii and role identity unchanged",
+      "ok": true
+    }
+  ]
+}

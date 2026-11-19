@@ -234,7 +234,7 @@ export function getPermitLineLifecycleSummary(line) {
   }
   if (correctionStatus === "resubmitted") return { key: "resubmitted", label: "Resubmitted", shortLabel: "Resubmitted", tone: "info" };
   if (asDateKey(line?.submitted_date)) return { key: "submitted", label: "Submitted", shortLabel: "Submitted", tone: "info" };
-  return { key: "pre_submission", label: "Pre-submission", shortLabel: "Pre-submission", tone: "neutral" };
+  return { key: "pre_submission", label: "Not submitted yet", shortLabel: "Not sent", tone: "neutral" };
 }
 
 const PERMIT_LIFECYCLE_PROGRESS_ORDER = [
@@ -422,13 +422,13 @@ export function getPermitGroupReadiness(group, today = "") {
     reviews.push(...handoff.reviews);
   });
 
-  if (lines.length === 0) blockers.push("Permit workflow has not been configured yet.");
+  if (lines.length === 0) blockers.push("This job's permit steps aren't set up yet.");
 
   openLines.forEach((line) => {
     const label = lineLabel(line);
-    if (!String(line?.locality_id || line?.locality_name || "").trim()) blockers.push(`${label} is missing its locality.`);
-    if (!Array.isArray(line?.steps) || line.steps.length === 0) blockers.push(`${label} has no workflow steps configured.`);
-    if (line?.submitted_date && !line?.permit_received_date && !asDateKey(line?.next_followup_date)) reviews.push(`${label} was submitted but has no next follow-up scheduled.`);
+    if (!String(line?.locality_id || line?.locality_name || "").trim()) blockers.push(`${label} doesn't have an office picked yet.`);
+    if (!Array.isArray(line?.steps) || line.steps.length === 0) blockers.push(`${label} has no steps set up yet.`);
+    if (line?.submitted_date && !line?.permit_received_date && !asDateKey(line?.next_followup_date)) reviews.push(`${label} was sent in — set a date to check back.`);
   });
 
   const hasOwner = [
@@ -436,7 +436,7 @@ export function getPermitGroupReadiness(group, today = "") {
     wo?.assigned_to,
     ...openLines.map((line) => line?.assigned_to),
   ].some((value) => normalizedAssignment(value));
-  if (openLines.length > 0 && !hasOwner) reviews.push("No responsible person is assigned to this permitting job.");
+  if (openLines.length > 0 && !hasOwner) reviews.push("Nobody is assigned to this job yet.");
 
   if (wo?._permittingRoutingMismatch) {
     reviews.push(wo._permittingRoutingWarning || "Work Order stage and Permitting task routing do not agree.");
@@ -457,37 +457,37 @@ export const PERMIT_QUEUE_META = {
   needs_setup: {
     label: "Needs Setup",
     shortLabel: "Setup",
-    description: "Locality/workflow still needs to be selected",
+    description: "Pick which town or office to file with",
     className: "border-violet-200 bg-violet-50 text-violet-800",
   },
   overdue: {
     label: "Overdue",
     shortLabel: "Overdue",
-    description: "Follow-up date has passed",
+    description: "A follow-up is late — call or check now",
     className: "border-red-200 bg-red-50 text-red-800",
   },
   due_today: {
     label: "Due Today",
     shortLabel: "Today",
-    description: "Follow-up is due today",
+    description: "Follow up today",
     className: "border-amber-200 bg-amber-50 text-amber-800",
   },
   needs_action: {
     label: "Needs Action",
     shortLabel: "Action",
-    description: "Active permit work with no future follow-up holding it",
+    description: "Needs your next step — nothing scheduled",
     className: "border-blue-200 bg-blue-50 text-blue-800",
   },
   waiting: {
     label: "Waiting",
     shortLabel: "Waiting",
-    description: "Waiting for a future follow-up date",
+    description: "Waiting — next check-in is scheduled",
     className: "border-slate-200 bg-slate-50 text-slate-700",
   },
   completed: {
     label: "Completed",
     shortLabel: "Done",
-    description: "All permit lines are complete",
+    description: "All done",
     className: "border-green-200 bg-green-50 text-green-800",
   },
 };
@@ -533,10 +533,10 @@ export function getPermitGroupQueueState(group, today) {
     return {
       key: "needs_setup",
       nextAction: missingLocality && missingWorkflow
-        ? `Select the locality and workflow for ${lineLabel(setupLine)}.`
+        ? `Pick the office + steps for ${lineLabel(setupLine)}.`
         : missingLocality
-          ? `Select the locality for ${lineLabel(setupLine)}.`
-          : `Configure the permit workflow steps for ${lineLabel(setupLine)}.`,
+          ? `Pick the office for ${lineLabel(setupLine)}.`
+          : `Set up the steps for ${lineLabel(setupLine)}.`,
       followupDate: "",
       timingLabel: "Setup needed",
       urgencyDays: null,
@@ -583,7 +583,7 @@ export function getPermitGroupQueueState(group, today) {
   if (inspectionRequiredLine) {
     return {
       key: "needs_action",
-      nextAction: `Schedule the required inspection for ${lineLabel(inspectionRequiredLine)}.`,
+      nextAction: `Book the inspection for ${lineLabel(inspectionRequiredLine)}.`,
       followupDate: "",
       timingLabel: "Inspection needed",
       urgencyDays: null,
@@ -651,7 +651,7 @@ export function getPermitGroupQueueState(group, today) {
   if (receivedButOpenLine) {
     return {
       key: "needs_action",
-      nextAction: `Review the issued permit for ${lineLabel(receivedButOpenLine)} and mark the workflow line complete when its recorded obligations are finished.`,
+      nextAction: `The permit for ${lineLabel(receivedButOpenLine)} came back — check it over and mark the line done when everything's finished.`,
       followupDate: "",
       timingLabel: "Permit received",
       urgencyDays: null,

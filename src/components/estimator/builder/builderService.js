@@ -65,26 +65,66 @@ export function sourceProjectTotal(line, record) {
   }
 
   if (line?.module_key === "foundation") {
+    // The persisted split fields are the authoritative cost partition on a
+    // FoundationProject row; grand_total is never persisted by the Builder, so
+    // any present grand_total is foreign-authored (or null, which num() would
+    // coerce to a poisoned $0). Trust the persisted partition first and fall
+    // back to grand_total only when no split field carries a number at all.
+    const split = foundationSplitFieldTotal(record);
+    if (split !== null) return split;
     const direct = num(record.grand_total, NaN);
     if (Number.isFinite(direct)) return direct;
-    const known = [
-      "total_concrete_cost",
-      "total_rebar_cost",
-      "total_excavation_cost",
-      "total_forming_materials_cost",
-      "total_labor_cost",
-      "total_wall_cost",
-      "total_pole_cost",
-      "total_pole_painting_cost",
-      "total_equipment_cost",
-      "total_wall_cap_cost",
-      "total_signage_cabinet_cost",
-      "total_landscape_cost",
-    ];
-    return known.reduce((sum, key) => sum + num(record[key]), 0);
+    return 0;
   }
 
   return num(record.total_cost, num(line?.total_snapshot));
+}
+
+// The 12 persisted split-total cost fields — the authoritative cost partition
+// on a saved FoundationProject record. total_brick_cost and total_fill_cost
+// are deliberately absent: they are subsets of total_wall_cost, so counting
+// them would double-count wall cost. grand_total is never persisted; it is
+// recomputed from these fields by the Builder. Shared by sourceProjectTotal's
+// foundation branch and foundationRecordSavedTotal (CMP-A10).
+export const FOUNDATION_RECORD_TOTAL_FIELDS = [
+  "total_concrete_cost",
+  "total_rebar_cost",
+  "total_excavation_cost",
+  "total_forming_materials_cost",
+  "total_labor_cost",
+  "total_wall_cost",
+  "total_pole_cost",
+  "total_pole_painting_cost",
+  "total_equipment_cost",
+  "total_wall_cap_cost",
+  "total_signage_cabinet_cost",
+  "total_landscape_cost",
+];
+
+// Null when no split-total field carries a finite number; otherwise the sum of
+// the 12 persisted fields with absent fields counting as $0. Shared by
+// sourceProjectTotal's foundation branch and foundationRecordSavedTotal so the
+// acknowledged-cost comparator and the live-cost path can never disagree about
+// which fields form the authoritative partition.
+export function foundationSplitFieldTotal(record) {
+  if (!record || typeof record !== "object") return null;
+  if (!FOUNDATION_RECORD_TOTAL_FIELDS.some((key) => Number.isFinite(Number(record[key])))) return null;
+  return FOUNDATION_RECORD_TOTAL_FIELDS.reduce((sum, key) => sum + num(record[key]), 0);
+}
+
+// The acknowledged section total persisted on a FoundationProject record —
+// the same split-field sum the linked estimate stores as live_total_snapshot
+// at each Builder save (manual add-on Product parts live only on the estimate
+// side and are intentionally not represented here). Null when the record
+// carries no persisted totals at all (never priced/saved with totals); absent
+// fields count as $0, matching sourceProjectTotal's foundation branch.
+export function foundationRecordSavedTotal(record) {
+  if (!record || typeof record !== "object") return null;
+  const split = foundationSplitFieldTotal(record);
+  if (split !== null) return split;
+  const direct = num(record.grand_total, NaN);
+  if (Number.isFinite(direct)) return direct;
+  return null;
 }
 
 async function findBuilderProduct(line, estimateId) {
@@ -296,7 +336,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     const createResult = await createBuilderProductWithRecovery({
       entity: staffEntities.BuilderProduct,
       data: builderProductData,
-      label: `Builder Product â€œ${clientName || builderName || lineId}â€�`,
+      label: `Builder Product “${clientName || builderName || lineId}”`,
     });
     builderProduct = createResult.record;
   } else {
@@ -558,18 +598,34 @@ export async function ensureEstimateBuilderProducts(estimate, { strictReconcilia
   return { ...estimate, line_items: lineItems };
 }
 
-export async function recordBuilderSave({ estimateId, line, sourceProject, liveTotal, internalCost, customerPrice }) {
+export async function recordBuilderSave({ estimateId, line, sourceProject, liveTotal, internalCost, customerPrice, expectedPendingKey }) {
   if (!estimateId || !line) return line;
   if (!sourceProject || typeof sourceProject !== "object") {
     throw new Error("The saved Builder source could not be verified. Product pricing and Parts were not synchronized.");
   }
   const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be verified before synchronizing this Builder save.");
-  const currentLine = (estimate.line_items || []).find(
-    (item) => item.builder_product_id === line.builder_product_id || item.project_id === line.project_id
-  ) || line;
+  // Source-only hints omit the Builder ID; two absent IDs are not an identity.
+  const matchedLine = (estimate.line_items || []).find(
+    (item) => item.module_key === line.module_key && (
+      (line.builder_product_id && item.builder_product_id === line.builder_product_id)
+      || (line.project_id && item.project_id === line.project_id)
+    )
+  );
+  if (!matchedLine) {
+    // A hint that resolves to no estimate line means the Product was removed
+    // from the estimate between load and save. Falling back to the bare hint
+    // would mint an orphan BuilderProduct whose estimate_line_id never lands
+    // in line_items, then report an endless partial sync — fail closed so the
+    // caller can report the removal instead.
+    throw new Error("This Product is no longer part of the estimate. The Builder source was saved, but its estimate section was removed — reload the estimate before retrying.");
+  }
+  const currentLine = matchedLine;
 
   const existingPending = pendingBuilderMutation(currentLine);
+  if (expectedPendingKey !== undefined && existingPending?.key !== expectedPendingKey) {
+    throw new Error("The pending Builder operation changed before recovery. Reload the estimate before continuing.");
+  }
   if (existingPending) {
     if (existingPending.kind === "builder_product_remove") {
       throw new Error("This Product is being removed. Use Resume Product Remove before opening or saving its Builder again.");
@@ -604,6 +660,10 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     sourceProjectOverride: sourceProject ?? undefined,
   });
   const builder = ensured.builderProduct;
+  const matchesCurrentLine = (item) => item.module_key === currentLine.module_key && (
+    (builder?.id && item.builder_product_id === builder.id)
+    || (currentLine.project_id && item.project_id === currentLine.project_id)
+  );
   if (builder && !ensured.partSyncInputs) {
     throw new Error("Builder catalogs could not be preverified. Product pricing and Parts were not synchronized.");
   }
@@ -773,9 +833,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       ) {
         throw new Error("This estimate changed in another session while the Builder was being saved. Initial pricing was not frozen; reload the Estimate before retrying.");
       }
-      const preMarkerLine = (preMarkerEstimate.line_items || []).find((item) =>
-        item.builder_product_id === builder.id || (currentLine.project_id && item.project_id === currentLine.project_id)
-      );
+      const preMarkerLine = (preMarkerEstimate.line_items || []).find(matchesCurrentLine);
       if (!preMarkerLine) {
         throw new Error("This Product is no longer part of the estimate. Initial pricing was not frozen.");
       }
@@ -804,7 +862,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
         staffEntities.BuilderProduct.get(builder.id),
         loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
       ]);
-      const markedLine = (markedEstimate?.line_items || []).find((item) => item.builder_product_id === builder.id);
+      const markedLine = (markedEstimate?.line_items || []).find(matchesCurrentLine);
       const canonicalPending = pendingBuilderMutation(markedLine);
       if (!canonicalPending || canonicalPending.key !== operationKey) {
         throw new Error("Another Builder price-acceptance operation won the recovery marker race. Reload before continuing.");
@@ -871,7 +929,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
   }
 
   const nextLines = (estimate.line_items || []).map((item) => {
-    if (item.project_id !== currentLine.project_id && item.builder_product_id !== builder?.id) return item;
+    if (!matchesCurrentLine(item)) return item;
     return {
       ...item,
       line_id: item.line_id || ensured.line.line_id,
@@ -900,7 +958,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     label: "Builder save Estimate line synchronization",
   });
   const savedLines = savedEstimate.line_items || nextLines;
-  return savedLines.find((item) => item.project_id === currentLine.project_id) || currentLine;
+  return savedLines.find(matchesCurrentLine) || currentLine;
 }
 
 export async function deleteBuilderProductCascade(builderProductId) {
@@ -925,7 +983,7 @@ export async function deleteBuilderProductCascade(builderProductId) {
       entity: staffEntities.BuilderPart,
       record: row,
       guardFields: { builder_product_id: builderProductId },
-      label: `Builder Part â€œ${row.part_name || "Part"}â€� cascade delete`,
+      label: `Builder Part “${row.part_name || "Part"}” cascade delete`,
     });
     partDeletes += 1;
   }
@@ -934,7 +992,7 @@ export async function deleteBuilderProductCascade(builderProductId) {
       entity: staffEntities.BuilderPartGroup,
       record: row,
       guardFields: { builder_product_id: builderProductId },
-      label: `Builder Part Group â€œ${row.group_name || "Part Group"}â€� cascade delete`,
+      label: `Builder Part Group “${row.group_name || "Part Group"}” cascade delete`,
     });
     groupDeletes += 1;
   }

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(30_000),...init});
 
 const cleanHeader = (value: unknown) => String(value || '').replace(/[\r\n]+/g, ' ').trim();
 
@@ -100,7 +101,7 @@ Deno.serve(async (req) => {
         const encodedEmail = toBase64Url(email);
 
         // Send the email via Gmail API
-        const sendResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+        const sendResponse = await boundedFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,

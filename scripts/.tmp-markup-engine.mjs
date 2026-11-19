@@ -28,7 +28,22 @@ function getVolumeDiscountPct(eligibleSubtotal, brackets) {
   }
   return 0;
 }
+var _applyCache = /* @__PURE__ */ new WeakMap();
 function applyMarkups(lines, tier, settings) {
+  if (!lines || typeof lines !== "object") return _applyMarkupsComputed(lines, tier, settings);
+  const settingsKey = JSON.stringify(settings || {});
+  let byTier = _applyCache.get(lines);
+  const hit = byTier?.get(tier);
+  if (hit && hit.key === settingsKey) return hit.out;
+  const out = _applyMarkupsComputed(lines, tier, settings);
+  if (!byTier) {
+    byTier = /* @__PURE__ */ new Map();
+    _applyCache.set(lines, byTier);
+  }
+  byTier.set(tier, { key: settingsKey, out });
+  return out;
+}
+function _applyMarkupsComputed(lines, tier, settings) {
   const { brackets = [], eligibleCategoryKeys = [], categoryFlags = {} } = settings || {};
   const isDiscountEligible = (key) => eligibleCategoryKeys.includes(key) && categoryFlags[key] !== false;
   const marked = lines.map((line) => {

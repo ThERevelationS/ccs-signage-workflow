@@ -1,0 +1,842 @@
+{
+  "mode": "free-mortar-zero",
+  "width": 390,
+  "before": {
+    "mode": "free-mortar-zero",
+    "project": {
+      "id": "synthetic-masonry-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "P",
+      "items": [
+        {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 48,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": false,
+          "include_forming": false,
+          "include_finishing": false,
+          "item_total_cost": 111.11,
+          "concrete_volume_cy": 0.5,
+          "concrete_cost": 11.11,
+          "excavation_cost": 22.22
+        }
+      ],
+      "walls": [
+        {
+          "component_id": "synthetic-wall-1",
+          "name": "Wall 1",
+          "materialId": "synthetic-wall-brick",
+          "heightInches": 24,
+          "mortarGapInches": 0,
+          "includeInternalWall": true,
+          "internalMaterialId": "synthetic-wall-fill",
+          "internalWallHeightInches": 12,
+          "internalMortarGapInches": 0,
+          "shape": {
+            "closed": true,
+            "points": [
+              {
+                "x": 0,
+                "z": 0
+              },
+              {
+                "x": 480,
+                "z": 0
+              },
+              {
+                "x": 480,
+                "z": 240
+              },
+              {
+                "x": 0,
+                "z": 240
+              }
+            ],
+            "segments": [
+              {
+                "length": 480
+              },
+              {
+                "length": 240
+              },
+              {
+                "length": 480
+              },
+              {
+                "length": 240
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 700,
+            "materialCost": 1400,
+            "mortarCost": 50,
+            "laborHours": 14,
+            "laborCost": 6300,
+            "totalCost": 7777,
+            "totalLinearInches": 1440,
+            "numCourses": 9,
+            "internalTotalBricks": 300,
+            "internalMaterialCost": 300,
+            "internalMortarCost": 27,
+            "internalLaborCost": 2700,
+            "internalLaborHours": 6
+          }
+        }
+      ],
+      "poles": [],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [],
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {}
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "total_wall_cost": 7777,
+      "total_brick_cost": 1400,
+      "total_fill_cost": 300,
+      "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 330.75,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 441,
+        "additional_stops_cost": 0,
+        "trucks": [
+          {
+            "yards": 0.5925925925925926,
+            "rounded_yards": 0.75,
+            "cost": 330.75,
+            "small_order_fee": 0,
+            "fuel_fee": 0
+          }
+        ]
+      }
+    },
+    "savedProject": {
+      "id": "synthetic-masonry-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "P",
+      "items": [
+        {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 48,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": false,
+          "include_forming": false,
+          "include_finishing": false,
+          "item_total_cost": 111.11,
+          "concrete_volume_cy": 0.5,
+          "concrete_cost": 11.11,
+          "excavation_cost": 22.22
+        }
+      ],
+      "walls": [
+        {
+          "component_id": "synthetic-wall-1",
+          "name": "Wall 1",
+          "materialId": "synthetic-wall-brick",
+          "heightInches": 24,
+          "mortarGapInches": 0.375,
+          "includeInternalWall": true,
+          "internalMaterialId": "synthetic-wall-fill",
+          "internalWallHeightInches": 12,
+          "internalMortarGapInches": 0.375,
+          "shape": {
+            "closed": true,
+            "points": [
+              {
+                "x": 0,
+                "z": 0
+              },
+              {
+                "x": 480,
+                "z": 0
+              },
+              {
+                "x": 480,
+                "z": 240
+              },
+              {
+                "x": 0,
+                "z": 240
+              }
+            ],
+            "segments": [
+              {
+                "length": 480
+              },
+              {
+                "length": 240
+              },
+              {
+                "length": 480
+              },
+              {
+                "length": 240
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 700,
+            "materialCost": 1400,
+            "mortarCost": 50,
+            "laborHours": 14,
+            "laborCost": 6300,
+            "totalCost": 7777,
+            "totalLinearInches": 1440,
+            "numCourses": 9,
+            "internalTotalBricks": 300,
+            "internalMaterialCost": 300,
+            "internalMortarCost": 27,
+            "internalLaborCost": 2700,
+            "internalLaborHours": 6
+          }
+        }
+      ],
+      "poles": [],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [],
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {}
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "total_wall_cost": 7777,
+      "total_brick_cost": 1400,
+      "total_fill_cost": 300,
+      "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 330.75,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 441,
+        "additional_stops_cost": 0,
+        "trucks": [
+          {
+            "yards": 0.5925925925925926,
+            "rounded_yards": 0.75,
+            "cost": 330.75,
+            "small_order_fee": 0,
+            "fuel_fee": 0
+          }
+        ]
+      }
+    },
+    "inventory": [
+      {
+        "id": "synthetic-wall-brick",
+        "material_type": "wall_material",
+        "material_name": "Modular brick",
+        "cost_per_unit": 2,
+        "wall_unit_length_inches": 8,
+        "wall_unit_width_inches": 4,
+        "wall_unit_height_inches": 2.25
+      },
+      {
+        "id": "synthetic-wall-fill",
+        "material_type": "wall_material",
+        "material_name": "Fill block",
+        "cost_per_unit": 1,
+        "wall_unit_length_inches": 8,
+        "wall_unit_width_inches": 4,
+        "wall_unit_height_inches": 2.25
+      },
+      {
+        "id": "synthetic-wall-concrete",
+        "material_type": "wall_material",
+        "material_name": "Poured concrete wall",
+        "wall_material_subtype": "concrete",
+        "cost_per_unit": 5,
+        "wall_unit_length_inches": 8,
+        "wall_unit_width_inches": 4,
+        "wall_unit_height_inches": 2.25
+      }
+    ],
+    "settings": {
+      "wall_labor_rate": "45",
+      "wall_minimum_charge": "150",
+      "wall_labor_bricks_per_hour": "50",
+      "wall_mortar_cost_per_bag": "10",
+      "foundation_main_labor_rate": "60",
+      "foundation_pouring_cost_per_cy": "15",
+      "foundation_hand_dig_time_per_cy": "2"
+    },
+    "walls": [
+      {
+        "component_id": "synthetic-wall-1",
+        "name": "Wall 1",
+        "materialId": "synthetic-wall-brick",
+        "heightInches": 24,
+        "mortarGapInches": 0,
+        "includeInternalWall": true,
+        "internalMaterialId": "synthetic-wall-fill",
+        "internalWallHeightInches": 12,
+        "internalMortarGapInches": 0,
+        "shape": {
+          "closed": true,
+          "points": [
+            {
+              "x": 0,
+              "z": 0
+            },
+            {
+              "x": 480,
+              "z": 0
+            },
+            {
+              "x": 480,
+              "z": 240
+            },
+            {
+              "x": 0,
+              "z": 240
+            }
+          ],
+          "segments": [
+            {
+              "length": 480
+            },
+            {
+              "length": 240
+            },
+            {
+              "length": 480
+            },
+            {
+              "length": 240
+            }
+          ]
+        },
+        "calculatedCosts": {
+          "totalBricks": 1980,
+          "materialCost": 3960,
+          "mortarCost": 160,
+          "laborHours": 39.6,
+          "laborCost": 10800,
+          "totalCost": 21336,
+          "totalLinearInches": 1440,
+          "numCourses": 10.666666666666666,
+          "internalTotalBricks": 1056,
+          "internalMaterialCost": 1056,
+          "internalMortarCost": 80,
+          "internalLaborCost": 5280,
+          "internalLaborHours": 21.12
+        }
+      }
+    ],
+    "items": [
+      {
+        "component_id": "synthetic-item-1",
+        "foundation_type": "spread_foot",
+        "quantity": 2,
+        "length_inches": 48,
+        "width_inches": 24,
+        "depth_inches": 12,
+        "include_rebar": false,
+        "include_forming": false,
+        "include_finishing": false,
+        "item_total_cost": 97.77777777777777,
+        "concrete_volume_cy": 0.5925925925925926,
+        "concrete_cost": 0,
+        "excavation_cost": 88.88888888888889,
+        "excavation_volume_cy": 0.7407407407407407,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_hours": 1.4814814814814814,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 8.88888888888889,
+        "finishing_cost": 0,
+        "finishing_hours": 0
+      }
+    ],
+    "totals": {
+      "total_concrete_cost": 330.75,
+      "concrete_delivery_cost": 330.75,
+      "concrete_delivered_yards": 0.75,
+      "concrete_rate_per_yard": 201,
+      "concrete_trucks": [
+        {
+          "yards": 0.75,
+          "roundedYards": 0.75,
+          "cost": 330.75,
+          "smallOrderFee": 150,
+          "fuelFee": 30
+        }
+      ],
+      "additional_stops_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 88.88888888888889,
+      "total_forming_materials_cost": 0,
+      "total_labor_cost": 8.88888888888889,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 3960,
+      "total_fill_cost": 1056,
+      "total_equipment_cost": 0,
+      "total_wall_cost": 21336,
+      "total_wall_cap_cost": 0,
+      "wall_caps_by_material": [],
+      "total_concrete_volume_cy": 0.5925925925925926,
+      "total_excavation_volume_cy": 0.7407407407407407,
+      "total_labor_hours": 1.4814814814814814,
+      "grand_total": 21764.527777777777
+    },
+    "catalogIssues": [],
+    "inputIssues": [],
+    "wallPricing": [
+      {
+        "available": true,
+        "issues": []
+      }
+    ],
+    "itemPricing": [
+      {
+        "available": true,
+        "issues": []
+      }
+    ],
+    "pricingUnavailable": false,
+    "writes": 0
+  },
+  "after": {
+    "mode": "free-mortar-zero",
+    "project": {
+      "id": "synthetic-masonry-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "P",
+      "items": [
+        {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 48,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": false,
+          "include_forming": false,
+          "include_finishing": false,
+          "item_total_cost": 111.11,
+          "concrete_volume_cy": 0.5,
+          "concrete_cost": 11.11,
+          "excavation_cost": 22.22
+        }
+      ],
+      "walls": [
+        {
+          "component_id": "synthetic-wall-1",
+          "name": "Wall 1",
+          "materialId": "synthetic-wall-brick",
+          "heightInches": 24,
+          "mortarGapInches": 0,
+          "includeInternalWall": true,
+          "internalMaterialId": "synthetic-wall-fill",
+          "internalWallHeightInches": 12,
+          "internalMortarGapInches": 0,
+          "shape": {
+            "closed": true,
+            "points": [
+              {
+                "x": 0,
+                "z": 0
+              },
+              {
+                "x": 480,
+                "z": 0
+              },
+              {
+                "x": 480,
+                "z": 240
+              },
+              {
+                "x": 0,
+                "z": 240
+              }
+            ],
+            "segments": [
+              {
+                "length": 480
+              },
+              {
+                "length": 240
+              },
+              {
+                "length": 480
+              },
+              {
+                "length": 240
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 700,
+            "materialCost": 1400,
+            "mortarCost": 50,
+            "laborHours": 14,
+            "laborCost": 6300,
+            "totalCost": 7777,
+            "totalLinearInches": 1440,
+            "numCourses": 9,
+            "internalTotalBricks": 300,
+            "internalMaterialCost": 300,
+            "internalMortarCost": 27,
+            "internalLaborCost": 2700,
+            "internalLaborHours": 6
+          }
+        }
+      ],
+      "poles": [],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [],
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {}
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "total_wall_cost": 7777,
+      "total_brick_cost": 1400,
+      "total_fill_cost": 300,
+      "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 330.75,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 441,
+        "additional_stops_cost": 0,
+        "trucks": [
+          {
+            "yards": 0.5925925925925926,
+            "rounded_yards": 0.75,
+            "cost": 330.75,
+            "small_order_fee": 0,
+            "fuel_fee": 0
+          }
+        ]
+      }
+    },
+    "savedProject": {
+      "id": "synthetic-masonry-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "P",
+      "items": [
+        {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 48,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": false,
+          "include_forming": false,
+          "include_finishing": false,
+          "item_total_cost": 111.11,
+          "concrete_volume_cy": 0.5,
+          "concrete_cost": 11.11,
+          "excavation_cost": 22.22
+        }
+      ],
+      "walls": [
+        {
+          "component_id": "synthetic-wall-1",
+          "name": "Wall 1",
+          "materialId": "synthetic-wall-brick",
+          "heightInches": 24,
+          "mortarGapInches": 0.375,
+          "includeInternalWall": true,
+          "internalMaterialId": "synthetic-wall-fill",
+          "internalWallHeightInches": 12,
+          "internalMortarGapInches": 0.375,
+          "shape": {
+            "closed": true,
+            "points": [
+              {
+                "x": 0,
+                "z": 0
+              },
+              {
+                "x": 480,
+                "z": 0
+              },
+              {
+                "x": 480,
+                "z": 240
+              },
+              {
+                "x": 0,
+                "z": 240
+              }
+            ],
+            "segments": [
+              {
+                "length": 480
+              },
+              {
+                "length": 240
+              },
+              {
+                "length": 480
+              },
+              {
+                "length": 240
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 700,
+            "materialCost": 1400,
+            "mortarCost": 50,
+            "laborHours": 14,
+            "laborCost": 6300,
+            "totalCost": 7777,
+            "totalLinearInches": 1440,
+            "numCourses": 9,
+            "internalTotalBricks": 300,
+            "internalMaterialCost": 300,
+            "internalMortarCost": 27,
+            "internalLaborCost": 2700,
+            "internalLaborHours": 6
+          }
+        }
+      ],
+      "poles": [],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [],
+      "landscape": {
+        "cell_size_inches": 12,
+        "cells": {}
+      },
+      "customer_pricing": {
+        "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "total_wall_cost": 7777,
+      "total_brick_cost": 1400,
+      "total_fill_cost": 300,
+      "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 330.75,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 441,
+        "additional_stops_cost": 0,
+        "trucks": [
+          {
+            "yards": 0.5925925925925926,
+            "rounded_yards": 0.75,
+            "cost": 330.75,
+            "small_order_fee": 0,
+            "fuel_fee": 0
+          }
+        ]
+      }
+    },
+    "inventory": [
+      {
+        "id": "synthetic-wall-brick",
+        "material_type": "wall_material",
+        "material_name": "Modular brick",
+        "cost_per_unit": 2,
+        "wall_unit_length_inches": 8,
+        "wall_unit_width_inches": 4,
+        "wall_unit_height_inches": 2.25
+      },
+      {
+        "id": "synthetic-wall-fill",
+        "material_type": "wall_material",
+        "material_name": "Fill block",
+        "cost_per_unit": 1,
+        "wall_unit_length_inches": 8,
+        "wall_unit_width_inches": 4,
+        "wall_unit_height_inches": 2.25
+      },
+      {
+        "id": "synthetic-wall-concrete",
+        "material_type": "wall_material",
+        "material_name": "Poured concrete wall",
+        "wall_material_subtype": "concrete",
+        "cost_per_unit": 5,
+        "wall_unit_length_inches": 8,
+        "wall_unit_width_inches": 4,
+        "wall_unit_height_inches": 2.25
+      }
+    ],
+    "settings": {
+      "wall_labor_rate": "45",
+      "wall_minimum_charge": "150",
+      "wall_labor_bricks_per_hour": "50",
+      "wall_mortar_cost_per_bag": "10",
+      "foundation_main_labor_rate": "60",
+      "foundation_pouring_cost_per_cy": "15",
+      "foundation_hand_dig_time_per_cy": "2"
+    },
+    "walls": [
+      {
+        "component_id": "synthetic-wall-1",
+        "name": "Wall 1",
+        "materialId": "synthetic-wall-brick",
+        "heightInches": 24,
+        "mortarGapInches": 0,
+        "includeInternalWall": true,
+        "internalMaterialId": "synthetic-wall-fill",
+        "internalWallHeightInches": 12,
+        "internalMortarGapInches": 0,
+        "shape": {
+          "closed": true,
+          "points": [
+            {
+              "x": 0,
+              "z": 0
+            },
+            {
+              "x": 480,
+              "z": 0
+            },
+            {
+              "x": 480,
+              "z": 240
+            },
+            {
+              "x": 0,
+              "z": 240
+            }
+          ],
+          "segments": [
+            {
+              "length": 480
+            },
+            {
+              "length": 240
+            },
+            {
+              "length": 480
+            },
+            {
+              "length": 240
+            }
+          ]
+        },
+        "calculatedCosts": {
+          "totalBricks": 1980,
+          "materialCost": 3960,
+          "mortarCost": 160,
+          "laborHours": 39.6,
+          "laborCost": 10800,
+          "totalCost": 21336,
+          "totalLinearInches": 1440,
+          "numCourses": 10.666666666666666,
+          "internalTotalBricks": 1056,
+          "internalMaterialCost": 1056,
+          "internalMortarCost": 80,
+          "internalLaborCost": 5280,
+          "internalLaborHours": 21.12
+        }
+      }
+    ],
+    "items": [
+      {
+        "component_id": "synthetic-item-1",
+        "foundation_type": "spread_foot",
+        "quantity": 2,
+        "length_inches": 48,
+        "width_inches": 24,
+        "depth_inches": 12,
+        "include_rebar": false,
+        "include_forming": false,
+        "include_finishing": false,
+        "item_total_cost": 97.77777777777777,
+        "concrete_volume_cy": 0.5925925925925926,
+        "concrete_cost": 0,
+        "excavation_cost": 88.88888888888889,
+        "excavation_volume_cy": 0.7407407407407407,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_hours": 1.4814814814814814,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 8.88888888888889,
+        "finishing_cost": 0,
+        "finishing_hours": 0
+      }
+    ],
+    "totals": {
+      "total_concrete_cost": 330.75,
+      "concrete_delivery_cost": 330.75,
+      "concrete_delivered_yards": 0.75,
+      "concrete_rate_per_yard": 201,
+      "concrete_trucks": [
+        {
+          "yards": 0.75,
+          "roundedYards": 0.75,
+          "cost": 330.75,
+          "smallOrderFee": 150,
+          "fuelFee": 30
+        }
+      ],
+      "additional_stops_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 88.88888888888889,
+      "total_forming_materials_cost": 0,
+      "total_labor_cost": 8.88888888888889,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 3960,
+      "total_fill_cost": 1056,
+      "total_equipment_cost": 0,
+      "total_wall_cost": 21336,
+      "total_wall_cap_cost": 0,
+      "wall_caps_by_material": [],
+      "total_concrete_volume_cy": 0.5925925925925926,
+      "total_excavation_volume_cy": 0.7407407407407407,
+      "total_labor_hours": 1.4814814814814814,
+      "grand_total": 21764.527777777777
+    },
+    "catalogIssues": [],
+    "inputIssues": [],
+    "wallPricing": [
+      {
+        "available": true,
+        "issues": []
+      }
+    ],
+    "itemPricing": [
+      {
+        "available": true,
+        "issues": []
+      }
+    ],
+    "pricingUnavailable": false,
+    "writes": 0
+  },
+  "writes": 0,
+  "netOps": {
+    "fetch": 0,
+    "xhr": 0
+  },
+  "externalUrls": [],
+  "consoleErrors": [],
+  "keyWarnings": []
+}

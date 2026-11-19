@@ -1,0 +1,24 @@
+ok module foundation: shared flagship via InvokeLLM
+ok module channel_letters: shared flagship via InvokeLLM
+ok module maintenance: shared flagship via InvokeLLM
+ok module painting: shared flagship via InvokeLLM
+ok module laser: shared flagship via InvokeLLM
+ok module cnc: shared flagship via InvokeLLM
+ok module metal: shared flagship via InvokeLLM
+ok module vinyl: shared flagship via InvokeLLM
+ok exact module set, immutable list and no unknown-module fallback
+ok src/components/estimator/foundation/AiEngineeringAssistant.jsx: one canonical model property, no behavior/schema/prompt drift
+ok src/components/estimator/foundation/AiEngineeringAssistant.jsx: synthetic SDK observes actual source request and unchanged payload
+ok src/components/vinylEstimator/VinylArtworkUploadDialog.jsx: one canonical model property, no behavior/schema/prompt drift
+ok src/components/vinylEstimator/VinylArtworkUploadDialog.jsx: synthetic SDK observes actual source request and unchanged payload
+ok src/components/channelLetterInstall/AIScopeWriterModal.jsx: one canonical model property, no behavior/schema/prompt drift
+ok src/components/channelLetterInstall/AIScopeWriterModal.jsx: synthetic SDK observes actual source request and unchanged payload
+ok src/components/channelLetterInstall/AIInstallScopeModal.jsx: one canonical model property, no behavior/schema/prompt drift
+ok src/components/channelLetterInstall/AIInstallScopeModal.jsx: synthetic SDK observes actual source request and unchanged payload
+ok src/components/channelLetterInstall/AddressAutocomplete.jsx: one canonical model property, no behavior/schema/prompt drift
+ok src/components/channelLetterInstall/AddressAutocomplete.jsx: synthetic SDK observes actual source request and unchanged payload
+ok src/components/channelLetterInstall/PhotoEstimateModal.jsx: one canonical model property, no behavior/schema/prompt drift
+ok src/components/channelLetterInstall/PhotoEstimateModal.jsx: synthetic SDK observes actual source request and unchanged payload
+ok no foreign requests or real provider invocations
+InvokeLLM policy: 22/22 passed; failed=0
+exit=0

@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Trash2, Check, Loader2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { softDeleteWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadSalesPersonRosterSafely } from "@/components/sales/salesFilterPersistence";
@@ -109,7 +109,7 @@ function DuplicateGroup({ group, onResolved, users }) {
             {keeping ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Check className="w-3 h-3 mr-1" />}
             Keep Best, Delete Rest
           </Button>
-          <button onClick={() => setExpanded(!expanded)} className="text-gray-400 hover:text-gray-600">
+          <button type="button" onClick={() => setExpanded(!expanded)} className="text-gray-400 hover:text-gray-600">
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         </div>

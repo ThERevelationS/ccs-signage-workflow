@@ -1,0 +1,121 @@
+{
+  "synthetic": true,
+  "sourceCheckpoint": "6aed818c8e4b552cf32a811e",
+  "basis": "Frozen complete-before case 1; current unchanged financial engine; no baseline regeneration.",
+  "limitation": "Calculator/guard observations only; no page save, backend acceptance, or production-record test.",
+  "observations": [
+    {
+      "name": "zero instance quantity",
+      "authoredPatch": {
+        "quantity": 0
+      },
+      "catalogIssueCount": 0,
+      "currentPricingAvailable": true,
+      "calculated": {
+        "quantity": 1,
+        "concrete_volume_cy": 1,
+        "concrete_bags": 45,
+        "rebar_feet": 64,
+        "item_total_cost": 866.55
+      },
+      "projectGrandTotal": 866.55
+    },
+    {
+      "name": "negative instance quantity",
+      "authoredPatch": {
+        "quantity": -2
+      },
+      "catalogIssueCount": 0,
+      "currentPricingAvailable": true,
+      "calculated": {
+        "quantity": 1,
+        "concrete_volume_cy": -2,
+        "concrete_bags": -90,
+        "rebar_feet": -128,
+        "item_total_cost": -1733.1
+      },
+      "projectGrandTotal": -1733.1
+    },
+    {
+      "name": "fractional instance quantity",
+      "authoredPatch": {
+        "quantity": 1.5
+      },
+      "catalogIssueCount": 0,
+      "currentPricingAvailable": true,
+      "calculated": {
+        "quantity": 1.5,
+        "concrete_volume_cy": 1.5,
+        "concrete_bags": 68,
+        "rebar_feet": 64,
+        "item_total_cost": 1121.55
+      },
+      "projectGrandTotal": 1121.55
+    },
+    {
+      "name": "negative footing length",
+      "authoredPatch": {
+        "length_inches": -36
+      },
+      "catalogIssueCount": 0,
+      "currentPricingAvailable": true,
+      "calculated": {
+        "quantity": 1,
+        "concrete_volume_cy": -1,
+        "concrete_bags": -45,
+        "rebar_feet": -38,
+        "item_total_cost": -659.35
+      },
+      "projectGrandTotal": -659.35
+    },
+    {
+      "name": "zero footing depth",
+      "authoredPatch": {
+        "depth_inches": 0
+      },
+      "catalogIssueCount": 0,
+      "currentPricingAvailable": true,
+      "calculated": {
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "concrete_bags": 0,
+        "rebar_feet": 24,
+        "item_total_cost": 146.05
+      },
+      "projectGrandTotal": 146.05
+    },
+    {
+      "name": "trailing junk in width",
+      "authoredPatch": {
+        "width_inches": "36oops"
+      },
+      "catalogIssueCount": 0,
+      "currentPricingAvailable": true,
+      "calculated": {
+        "quantity": 1,
+        "concrete_volume_cy": 1,
+        "concrete_bags": 45,
+        "rebar_feet": 64,
+        "item_total_cost": 866.55
+      },
+      "projectGrandTotal": 866.55
+    },
+    {
+      "name": "unsupported foundation type",
+      "authoredPatch": {
+        "foundation_type": "unsupported",
+        "diameter": 24
+      },
+      "catalogIssueCount": 0,
+      "currentPricingAvailable": true,
+      "calculated": {
+        "quantity": 1,
+        "concrete_volume_cy": 0.3490658503988659,
+        "concrete_bags": 16,
+        "rebar_feet": 0,
+        "item_total_cost": 258.646745936647
+      },
+      "projectGrandTotal": 258.646745936647
+    }
+  ]
+}

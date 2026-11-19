@@ -1,0 +1,20 @@
+{
+ "authorized": true,
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "5f25691b8966137d4c96cafee690a186a797ebb1",
+ "restoreCheckpointId": "6aef8adbb9ea671568f8866d",
+ "candidateHashes": {
+  "maintenancePricingAvailability.js": "b7768ccf480313487e243cafee780669169d07c79cef86e7765087cb3e949090",
+  "ServiceItemRow.jsx": "18c647b73036491b02979c761027a16297d037dede6c89e4b1ae96817169d4e0",
+  "RepaintMonumentPanel.jsx": "eac0586852059f39478a8c9da4b2628eab9238794c9179d3642bc8194f558b2a",
+  "DimLetterPaintSubPanel.jsx": "6934ef7e2782ce97e0c1b70f066e0684e11bcf88291a7bf05021e3d1fbbf6e65",
+  "MaintenanceEstimator.jsx": "9e38b7c47e35c470169782e294b607c0e1b748f6fb2cd01e589e02850c20efe8"
+ },
+ "reviewedProtocolHash": "37baa56e856e4501df101becbd2d1adfd4c968d474d57f8da2821f3316fad317",
+ "reviewedProtocolFile": "maintenance-pricing-sandbox-unit.mjs",
+ "dryRunEvidence": "maintenance-pricing-sandbox-dry-run-diffs.json + maintenance-pricing-sandbox-staged-build-meta.json (5 previews applied=false; 5 bundles 0 warnings)",
+ "driftDecision": "maintenance-pricing-baseline-v2-drift-decision.json (EOL-only drift on MaintenanceEstimator.jsx accepted — see file)",
+ "createdAt": "2026-11-07T20:32:33.997Z",
+ "authority": "standing autonomous grant (Brett) — remote transport for maintenance pricing-availability hardening"
+}

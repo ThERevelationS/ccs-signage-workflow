@@ -7,51 +7,51 @@ export default function SelectorSavedSourceReview({profile,locality}){
   const [limit,setLimit]=useState(10);
   const sources=summarizeSavedSelectorSources(profile);
   const handoff=summarizeSelectorElectricalOfficeHandoff(profile,locality);
-  return <details aria-label={'Saved source links for '+(profile?.name||'jurisdiction')} className="rounded border p-2 text-xs">
-    <summary className="min-h-11 cursor-pointer py-2 font-semibold">Review saved source links ({sources.length})</summary>
-    <p>Saved on profile ID {typeof profile?.id==='string'&&profile.id.trim()?profile.id:'unknown'}. Research links do not verify electrical issuers, inspectors, local authority, or current adopted code. Check exact office IDs, geography and county overlays with official sources.</p>
-    {!sources.length&&<p>No saved links. Inspect Scan activity and request official permit/inspection materials; do not guess an office.</p>}
+  return <details aria-label={'Saved source links for '+(profile?.name||'this office')} className="rounded border p-2 text-xs">
+    <summary className="min-h-11 cursor-pointer py-2 font-semibold">Saved source links ({sources.length})</summary>
+    <p>Saved on profile {typeof profile?.id==='string'&&profile.id.trim()?profile.id:'unknown'}. Research links don't prove who issues, who inspects, or what the current rules are. Check the office's own pages for its exact identity and coverage.</p>
+    {!sources.length&&<p>No saved links. Check Scan activity and ask the office for its real permit/inspection info — don't guess.</p>}
     <ul className="space-y-2">{sources.slice(0,limit).map((source,index)=><li key={source.key} className="rounded border p-2">
       <p className="font-semibold break-words">{source.title}</p>
-      <p>{source.category} · {source.provenance}{source.protected?' · Protected/manual evidence — preserve':''}</p>
+      <p>{source.category} · {source.provenance}{source.protected?' · Hand-saved proof — keep it':''}</p>
       <div className="flex flex-wrap gap-3">
-        {source.source_url&&<a className="inline-flex min-h-11 items-center underline break-all" href={source.source_url} target="_blank" rel="noopener noreferrer">Open recorded source link</a>}
-        {source.referral_url&&<a className="inline-flex min-h-11 items-center underline break-all" href={source.referral_url} target="_blank" rel="noopener noreferrer">Open discovery page</a>}
-        {source.stored_url&&<a className="inline-flex min-h-11 items-center underline break-all" href={source.stored_url} target="_blank" rel="noopener noreferrer">Open fingerprint-matched retained PDF</a>}
+        {source.source_url&&<a className="inline-flex min-h-11 items-center underline break-all" href={source.source_url} target="_blank" rel="noopener noreferrer">Open the saved link</a>}
+        {source.referral_url&&<a className="inline-flex min-h-11 items-center underline break-all" href={source.referral_url} target="_blank" rel="noopener noreferrer">Open where it was found</a>}
+        {source.stored_url&&<a className="inline-flex min-h-11 items-center underline break-all" href={source.stored_url} target="_blank" rel="noopener noreferrer">Open the matching saved PDF</a>}
       </div>
-      {!source.source_url&&<p>A usable original URL is not recorded; request source review.</p>}
-      {source.archive_status==='archive_not_verified'&&<p>A stored file exists but its PDF fingerprint has not been verified; keep it for staff review.</p>}
-      {source.archive_status==='archive_not_recorded'&&<p>No verified PDF archive recorded. Retain HTML forms and portals as links.</p>}
-      {source.archive_status==='verified_pdf_fingerprint'&&<p>Stored PDF fingerprint matches. Legal authority and applicability are not confirmed.</p>}
+      {!source.source_url&&<p>No usable link saved — ask for a source check.</p>}
+      {source.archive_status==='archive_not_verified'&&<p>A file is saved but its PDF fingerprint isn't verified — keep it for a staff check.</p>}
+      {source.archive_status==='archive_not_recorded'&&<p>No verified PDF saved. Keep forms and portals as links.</p>}
+      {source.archive_status==='verified_pdf_fingerprint'&&<p>The saved PDF's fingerprint matches — that doesn't confirm it's official or applies.</p>}
       <SelectorSourceOfficeReviewLookup key={source.key+':'+profile?.id} profile={profile} document={profile?.documents?.[index]}/>
     </li>)}</ul>
-    {sources.length>limit&&<button type="button" className="min-h-11 underline" onClick={()=>setLimit(n=>n+10)}>Show next saved links ({sources.length-limit} remaining)</button>}
-    <section aria-label="Electrical office source-to-review checklist" className="mt-3 space-y-2 rounded border border-amber-200 bg-amber-50 p-2">
-      <p className="font-semibold">Next: reconcile the saved electrical office roles</p>
+    {sources.length>limit&&<button type="button" className="min-h-11 underline" onClick={()=>setLimit(n=>n+10)}>Show more saved links ({sources.length-limit} left)</button>}
+    <section aria-label="Electrical office checklist" className="mt-3 space-y-2 rounded border border-amber-200 bg-amber-50 p-2">
+      <p className="font-semibold">Next: sort out the saved electrical offices</p>
       <p>{handoff.notice}</p>
-      {handoff.legacy_broad_role_present&&<p>A legacy broad electrical role is recorded; it does not establish a permit issuer or inspection provider.</p>}
+      {handoff.legacy_broad_role_present&&<p>An old generic electrical role is saved — it doesn't settle who issues the permit or inspects.</p>}
       <dl className="space-y-2">{handoff.roles.map(item=><div key={item.role} className="border-t border-amber-200 pt-2">
         <dt className="font-semibold">{item.label}</dt>
         <dd>
-          {item.status==='not_assessed'&&'No exact profile link for this comparison. Ask staff to verify the locality link first.'}
-          {item.status==='not_recorded'&&'No specific office assigned this role in the saved locality. Find explicit official role and service-area evidence; do not guess.'}
-          {item.status==='needs_staff_review'&&'One office is configured, but its role has not been staff reviewed. Check official responsibilities and service area.'}
-          {item.status==='staff_review_reference'&&'One saved office is marked staff reviewed; fresh official authority and site applicability are still unverified.'}
-          {item.status==='office_identity_conflict'&&'The office has a missing, malformed or duplicated saved office ID. Repair identity before assigning responsibility.'}
-          {item.status==='canonical_identity_conflict'&&'The canonical government office ID is missing or malformed. Reconcile exact identity before relying on the historical review flag.'}
-          {item.status==='multiple_saved_offices'&&'Multiple saved offices carry this role. Each office and geographic service area needs separate review; no single office was chosen.'}
+          {item.status==='not_assessed'&&'No profile link to compare — check the town link first.'}
+          {item.status==='not_recorded'&&'No office is saved for this job. Find the office\'s own page proving it — don\'t guess.'}
+          {item.status==='needs_staff_review'&&'One office is saved but not checked — verify what it covers.'}
+          {item.status==='staff_review_reference'&&'One saved office was checked before — but whether it\'s still official and covers this address is unverified.'}
+          {item.status==='office_identity_conflict'&&'The office\'s saved ID is missing, broken, or doubled — fix that before assigning it.'}
+          {item.status==='canonical_identity_conflict'&&'The official office ID is missing or broken — sort out which office it really is first.'}
+          {item.status==='multiple_saved_offices'&&'More than one saved office claims this job. Check each one and its coverage separately — none was picked.'}
         </dd>
         {!!item.offices.length&&<dd><ul className="mt-1 space-y-2">
           {item.offices.map((office,i)=><li key={office.id+'-'+i} className="border-l-2 border-amber-300 pl-2">
-            <strong>{office.name}</strong> — saved office ID: {office.id||'not recorded'}; canonical government office ID: {office.canonical_id||'not recorded'}.
-            <p>Local role flag: {office.recorded_review==='staff_reviewed'?'staff reviewed (historical tracker flag)':'requires review'}; {office.has_review_notes?'notes recorded':'no supporting review notes'}; {office.has_reviewer?'reviewer and date recorded':'reviewer/date missing'}.</p>
-            {!office.canonical_identity_unique&&<p>{office.canonical_identity_issue==='missing_or_malformed'?'Canonical government office identity is missing or malformed.':'This canonical government office ID appears in multiple saved copies for this role; reconcile each copy and its service area.'} Preserve historical flags and notes; names and websites cannot repair this identity.</p>}
-            {office.website&&<a className="inline-flex min-h-11 items-center underline break-all" href={office.website} target="_blank" rel="noopener noreferrer">Open configured office website (reference only)</a>}
+            <strong>{office.name}</strong> — saved office ID: {office.id||'not saved'}; official office ID: {office.canonical_id||'not saved'}.
+            <p>Flag: {office.recorded_review==='staff_reviewed'?'checked before (old mark)':'needs a look'}; {office.has_review_notes?'notes saved':'no notes'}; {office.has_reviewer?'who checked saved':'no checker saved'}.</p>
+            {!office.canonical_identity_unique&&<p>{office.canonical_identity_issue==='missing_or_malformed'?'The official office identity is missing or broken.':'This official office ID shows up in more than one saved copy — sort out each copy and its coverage.'} Keep the old flags and notes; names and websites alone can't fix this.</p>}
+            {office.website&&<a className="inline-flex min-h-11 items-center underline break-all" href={office.website} target="_blank" rel="noopener noreferrer">Open the saved office site (reference only)</a>}
           </li>)}
         </ul></dd>}
       </div>)}</dl>
-      <p>Compare official sources above against each specific role. Use the existing locality office editor for staff review; a website rescan or document link cannot approve an office or match a job address.</p>
+      <p>Compare the official pages above with each job. Use the office editor for the staff check — a rescan or document link can't approve an office or match an address.</p>
     </section>
-    <p>Review permit issuance and inspection evidence separately. No link or filename automatically approves the responsible office.</p>
+    <p>Check who issues permits and who inspects separately. No link or filename proves an office is responsible.</p>
   </details>;
 }

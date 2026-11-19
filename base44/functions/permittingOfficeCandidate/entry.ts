@@ -1,8 +1,9 @@
 import {createClientFromRequest} from 'npm:@base44/sdk@0.8.52';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import {registerOfficeCandidate,getOfficeCandidate,previewOfficeCandidateIdentity} from '../../shared/permittingOfficeCandidate.mjs';
 Deno.serve(async req=>{
  try{
-  const client=createClientFromRequest(req),user=await client.auth.me().catch(()=>null);
+  const client=withEntityRateLimitRetry(createClientFromRequest(req)),user=await client.auth.me().catch(()=>null);
   if(user?.role!=='admin')return Response.json({error:'Admin access required for office candidate registration.'},{status:403});
   const body=await req.json().catch(()=>({}));
   if(!['preview','register','get_request','identity_preview'].includes(body.action))return Response.json({error:'Unknown office candidate action.'},{status:400});

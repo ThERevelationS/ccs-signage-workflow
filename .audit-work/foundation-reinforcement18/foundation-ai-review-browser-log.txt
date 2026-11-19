@@ -1,0 +1,11 @@
+ok success 1280
+ok success 390
+ok stale 1280
+ok stale 390
+ok unmount 1280
+ok unmount 390
+ok legacy 1280
+ok legacy 390
+ok invalid 1280
+ok invalid 390
+exit=0

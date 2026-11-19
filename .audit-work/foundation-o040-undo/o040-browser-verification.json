@@ -1,0 +1,19 @@
+{
+  "suite": "verify-o040-browser",
+  "scenarios": [
+    "A: drag = one command",
+    "B: undo/redo round-trip through real commit path",
+    "C: nudge burst coalescing + boundary",
+    "D: external write detaches",
+    "E: interleaved write preserved inside anchors",
+    "F: refused commits record nothing",
+    "G: wiggle null + second-pointer still one command",
+    "H: read-only records nothing",
+    "I: zoomed drag",
+    "J: in-browser module probe"
+  ],
+  "count": 10,
+  "status": "PASS",
+  "viewport": "1280x900",
+  "engine": "chromium (system chrome channel)"
+}

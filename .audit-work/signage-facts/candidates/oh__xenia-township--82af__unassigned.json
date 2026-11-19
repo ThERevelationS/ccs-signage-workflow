@@ -1,0 +1,45 @@
+{
+ "jurisdiction_id": "6ae8af4f7db9c63ef99582af",
+ "jurisdiction_name": "Xenia township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "SIGNS ZONING CERTIFICATE APPLICATION Xenia Township 8 Brush Row Rd., Xenia OH 45385 Phone: 937 - 372 - 0859 ∙ Fax: 937 - 372 - 3343 ∙ www.xeniatownship oh . gov PROPERTY AND CONTACT INFORMATION Name of Property Owner: ____________________________ ______ _ Phone: ____________________________ Address of Property: _______________________________ _ City: __________________ Zip: _______________ Owner Email Address : ________________________________ Parcel Number: __________________________ Name of Contractor:____________________________________ Phone:______________________________ Contractor Email Address: _ ______________________________ SIGNS (EXISTING): (Please attach plot plan & drawings) Ground Signs __ __ ____ _ Double Sided □ Yes □ N o Billboard ___ __ ____ Double Sided □ Yes □ No Electronic Signs ___ __ ____ Double Sided □ Yes □ No Wall Signs ______ __ _ Feet _____ X Feet _____ = SQ F",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "process",
+    "billboard",
+    "type"
+   ],
+   "weight": 15,
+   "source_sha256": "2544ed214b35af245e4d95d70db323aeabb7f5f786ba5092e30b1fc7c1b91b9d",
+   "source_document_id": null,
+   "source_title": "2544ed214b35af245e4d95d70db323aeabb7f5f786ba5092e30b1fc7c1b91b9d.pdf",
+   "official_url": "https://xeniatownshipoh.gov/wp-content/uploads/2026/04/Sign-ZONING-CERTIFICATE-APPLICATION-Signs-1.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "SECTION 517 PERMITTED SIGNS (basic, electric, billboard) 517.1 Scope of Regulations 1. The regulations herein set forth shall apply and govern in all districts. No sign shall be erected or maintained unless it is in compliance with the regulations for the district in which it is located. No sign shall be erected or continued in operation in any manner constituting a nuisance because of glare, focus, animation or flashing. 2. All signs hereafter erected, constructed or modified shall be exempt from yard and setback requirements of the districts in which they are located. All signs are prohibited in the right - of - way. 3. Where permitted, all illuminated or electronic signs shall be designed, constructed , and operated so as to prevent glare upon the street or adjacent property. Both strobe and full motion video effects are prohibited. Such illuminated or electronic messages shall be tur",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "billboard"
+   ],
+   "weight": 12,
+   "source_sha256": "2544ed214b35af245e4d95d70db323aeabb7f5f786ba5092e30b1fc7c1b91b9d",
+   "source_document_id": null,
+   "source_title": "2544ed214b35af245e4d95d70db323aeabb7f5f786ba5092e30b1fc7c1b91b9d.pdf",
+   "official_url": "https://xeniatownshipoh.gov/wp-content/uploads/2026/04/Sign-ZONING-CERTIFICATE-APPLICATION-Signs-1.pdf"
+  }
+ ]
+}

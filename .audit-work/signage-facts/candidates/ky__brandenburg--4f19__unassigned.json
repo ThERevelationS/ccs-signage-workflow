@@ -1,0 +1,38 @@
+{
+ "jurisdiction_id": "6ac1a19aa992266b6b544f19",
+ "jurisdiction_name": "Brandenburg",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "CITY OF BRANDENBURG LICENSE APPLICATION Business Information Applicant/Contact Person Name: Phone: Doing Business As: FEIN #: Type of Business: Email: Business Address: Mailing Address (if different): Tax Preparer Name & Phone #: Will you be using subcontractors? YES NO Employees Receive: W2? 1099? # of employees When will you begin conducting work in Brandenburg? Food Vendor? YES NO If yes, must provide health dept. inspection Do you rent/lease a location in Brandenburg? YES NO If yes, list landlord’s name and address: Please list any name, title, and phone # for any other contacts for the business: Every person or business entity conducting business for gain or profit in the City, shall first be approved by the City Clerk and/or their designee. A minimum license fee of $100.00 must be paid at time of application . The license fee withheld from employees’ earnings (.333%) , must be remi",
+   "tags": [
+    "fee",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "3cc083095b096157c173765bd6e332b469faa93927e8b72eb37c87bfd79dadf7",
+   "source_document_id": null,
+   "source_title": "3cc083095b096157c173765bd6e332b469faa93927e8b72eb37c87bfd79dadf7.pdf",
+   "official_url": "https://brandenburg.ky.gov/wp-content/uploads/2025/08/2025-Business-License.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CITY OF BRANDENBURG Business License and Occupational Fee Requirements I acknowledge the following requirements: 1. Minimum Business License Fee ($100.00) : In June of each year, a renewal letter for the business license fee is mailed/emailed to the address on file. It is due by July 1 st of each year. Please complete the license application form to update any changes. Any subcontractors are required to file their own license fee. 2. Employer’s Quarterly Return of License Fee Withheld (.333%) – These returns are due each quarter, even if there are no wages earned in Brandenburg. Businesses must still file a zero return. 3. It is the responsibility of the taxpayer to notify the City of any change of address, telephone number, and/or status in writing within 10 days of the change. If at any time in the future, the company ceases to do business in the City of Brandenburg, the City must be n",
+   "tags": [
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "3cc083095b096157c173765bd6e332b469faa93927e8b72eb37c87bfd79dadf7",
+   "source_document_id": null,
+   "source_title": "3cc083095b096157c173765bd6e332b469faa93927e8b72eb37c87bfd79dadf7.pdf",
+   "official_url": "https://brandenburg.ky.gov/wp-content/uploads/2025/08/2025-Business-License.pdf"
+  }
+ ]
+}

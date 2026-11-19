@@ -1,0 +1,41 @@
+--- .audit-work/foundation-layout10/cur-v2.norm	2026-11-05 12:24:19.241968800 -0500
++++ .audit-work/foundation-layout10/cur-v3.norm	2026-11-05 12:28:41.935173400 -0500
+@@ -29,7 +29,7 @@
+   };
+ 
+   const mountedRef = useRef(true);
+-  useEffect(() => () => { mountedRef.current = false; dragRef.current = null; }, []);
++  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; dragRef.current = null; }; }, []);
+ 
+   const cancelDrag = (e) => {
+     if (e?.pointerId !== undefined && dragRef.current && e.pointerId !== dragRef.current.pointerId) return;
+@@ -86,16 +86,18 @@
+     if (!point) return;
+     const raw = { x: point.x_inches - d.grab.dx, z: point.z_inches - d.grab.dz };
+     if (raw.x === d.corner.x && raw.z === d.corner.z) return; // unchanged incl. fractional legacy corners
++    const roundX = Math.round(raw.x), roundZ = Math.round(raw.z);
++    if (roundX === d.corner.x && roundZ === d.corner.z) return; // sub-inch wiggle rounded to same corner
+     const index = findCurrentIndex(d);
+     if (index < 0) return; // deleted during gesture
+     const live = items[index];
+     if (layoutItemFingerprint(live) !== d.fingerprint) return; // authoritative change mid-drag
+     if (typeof onMoveItem !== "function") return;
+-    onMoveItem(index, { x_inches: Math.round(raw.x), z_inches: Math.round(raw.z) });
++    onMoveItem(index, { x_inches: roundX, z_inches: roundZ });
+   };
+ 
+   const onKeyDown = (e, item, index) => {
+-    if (!editable) return;
++    if (!mountedRef.current || !editable) return;
+     if (e.ctrlKey || e.metaKey || e.altKey) return;
+     const step = e.shiftKey ? 12 : 1;
+     const dirs = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+@@ -120,7 +122,7 @@
+             {editable ? "Drag a foundation, or focus it and use arrow keys (Shift for larger steps)." : "Foundation positions (read-only)."}
+           </p>
+         </div>
+-        <div className="flex items-center gap-2 text-[11px] text-gray-600">
++        <div className="flex items-center gap-2 flex-wrap text-[11px] text-gray-600">
+           <span className="flex items-center gap-1">
+             <Move className="w-3 h-3" aria-hidden="true" /> Move Foundation
+           </span>

@@ -1,0 +1,17 @@
+ok saved 1280
+ok saved 390
+ok unknown 1280
+ok unknown 390
+ok zero 1280
+ok zero 390
+ok current 1280
+ok current 390
+ok oversize 1280
+ok oversize 390
+ok stock_unknown 1280
+ok stock_unknown 390
+ok cut_unknown 1280
+ok cut_unknown 390
+ok legacy 1280
+ok legacy 390
+exit=0

@@ -1,0 +1,19 @@
+Searching files
+Searching files
+Searched files
+{
+  "matches": [
+    {
+      "path": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 10,
+      "text": "const WRITE_OPS: Record<string, Set<string>> = {"
+    },
+    {
+      "path": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 122,
+      "text": "    const allowed = WRITE_OPS[entityName];"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 2
+}

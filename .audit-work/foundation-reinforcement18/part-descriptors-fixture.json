@@ -1,0 +1,64 @@
+{
+  "component_id": "stable-component",
+  "include_rebar": true,
+  "quantity": 1,
+  "rebar_size": "#4",
+  "reinforcement_calculation_version": 2,
+  "reinforcement_design": {
+    "version": 2,
+    "supports": {
+      "mode": "off",
+      "reason": "Reviewed separately"
+    }
+  },
+  "reinforcement_material": {
+    "kind": "catalog",
+    "inventory_id": "selected-other"
+  },
+  "custom_rebar_qty": null,
+  "custom_rebar_cost_per_ft": null,
+  "rebar_feet": 20,
+  "rebar_geometry_feet": 20,
+  "rebar_weight_lbs": 13.36,
+  "rebar_geometry_weight_lbs": 13.36,
+  "rebar_rate": 2,
+  "rebar_material_cost": 40,
+  "rebar_labor_cost": 72,
+  "rebar_labor_hours": 1.2,
+  "rebar_connection_count": 4,
+  "rebar_cost": 112,
+  "reinforcement_cost_snapshot": {
+    "version": 1,
+    "calculation_version": 2,
+    "engineering_approved": false,
+    "amounts": {
+      "geometry_feet": 20,
+      "priced_feet": 20,
+      "material_cost": 40,
+      "labor_cost": 72,
+      "labor_hours": 1.2,
+      "connection_count": 4,
+      "steel_cost": 112,
+      "priced_weight_lbs": 13.36,
+      "geometry_weight_lbs": 13.36
+    },
+    "material": {
+      "kind": "catalog",
+      "inventory_id": "selected-other",
+      "inventory_updated_date": "v1",
+      "name": "Selected steel",
+      "pricing_unit": "ft",
+      "original_unit": "ft",
+      "bar_diameter_inches": 0.5,
+      "weight_lb_per_ft": 0.668,
+      "cost_per_ft": 2,
+      "rate_source": "catalog"
+    },
+    "basis": {
+      "unit": "ft",
+      "cost_per_ft": 2,
+      "labor_rate_per_hour": 60
+    },
+    "rate_sources": []
+  }
+}

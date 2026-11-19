@@ -1,0 +1,24 @@
+{
+ "jurisdiction_id": "6adeedb4be04364adb492c0b",
+ "jurisdiction_name": "Pandora",
+ "state": "OH",
+ "office_id": "scan-6adeedb4be04364adb492c0b-office-0",
+ "office_name": "Zoning Inspector",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "TYPE OF CONSTRUCTION Commercial____ Industrial ______ Residential_______ Church________ School________ Multi-family________ 2-or 3-family_______ Other______ New Building: Area___________ Sq.Ft. Cost___________________ New Home: Area___________ Sq.Ft. Cost___________________ Remodel: Area___________ Sq.Ft. Cost___________________ Addition: Area___________ Sq.Ft. Cost___________________ Garage Area___________ Sq.Ft. Cost___________________ Fence: Area___________ Sq.Ft. Cost___________________ Driveway: Area___________ Sq.Ft. Cost___________________ Sign: Area___________ Sq.Ft. Cost___________________ Other:_______________ Area___________ Sq.Ft. Cost___________________ TOTAL PROJECT COST $______________________ PLOT PLAN All site plan drawings shall contain the following: Front, rear, left side, right side setbacks and lot dimensions. Location of: driveway, sidewalks, water line, sanitary s",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "prohibited"
+   ],
+   "weight": 8,
+   "source_sha256": "17450cbdaf95ac91ef0b1c9bdfbb5e7f28bd9d96b58cc53229c5c2876e3126ff",
+   "source_document_id": null,
+   "source_title": "17450cbdaf95ac91ef0b1c9bdfbb5e7f28bd9d96b58cc53229c5c2876e3126ff.pdf",
+   "official_url": "https://irp.cdn-website.com/fe095431/files/uploaded/Zoning_Permit_Application.pdf"
+  }
+ ]
+}

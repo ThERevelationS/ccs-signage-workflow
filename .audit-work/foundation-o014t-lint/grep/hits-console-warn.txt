@@ -1,0 +1,7 @@
+./src/components/estimator/customerSync.js:71:        console.warn(`${duplicateLabel} duplicate cleanup skipped — no session token; reconciliation will repair the duplicate. (${error?.message || "unknown"})`);
+./src/components/estimator/customerSync.js:396:      console.warn("Estimate sales_stage stamp skipped:", stampError?.message || stampError);
+./src/components/estimator/customerSync.js:415:      console.warn("Permit line auto-seed skipped:", e?.message || e);
+./src/components/estimator/customerSync.js:432:      console.warn("Opportunity compatibility WorkOrder link could not be saved:", linkError?.message || linkError);
+./src/components/estimator/estimateRevisionService.js:63:    console.warn("Revision completion skipped — no session token; audit write deferred for reconciliation.");
+./src/components/estimator/estimateRevisionService.js:96:    console.warn("Lifecycle revision skipped — no session token; audit write deferred for reconciliation.");
+./src/components/masterInventory/InventoryTable.jsx:133:        console.warn("No entity available for inline toggle on", item);

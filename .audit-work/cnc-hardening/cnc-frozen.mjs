@@ -1,0 +1,111 @@
+// Shared frozen-source + stub machinery for the CNC page/browser harnesses.
+// Every import inside the bundled page resolves to either frozen remote source,
+// a local candidate, an explicit boundary/visual-leaf stub, or an allowlisted
+// real package — anything else throws at build time.
+import path from "node:path";
+import fs from "node:fs";
+import { createHash } from "node:crypto";
+import { fileURLToPath } from "node:url";
+
+export const E = path.dirname(fileURLToPath(import.meta.url)).replace(/\\/g, "/") + "/";
+export const hash = (t) => createHash("sha256").update(t).digest("hex");
+const readText = (p) => fs.readFileSync(p, "utf8");
+const remoteSrc = (p) => readText(E + "remote-src/" + p);
+export const P = "/app/src/components/estimator/cnc/";
+
+export function frozenSources() {
+  const sources = new Map();
+  const REMOTE_FILES = [
+    "src/components/markup/projectCategorizer.jsx",
+    "src/components/estimator/builder/itemIdentity.js",
+    "src/components/channelLetterInstall/TabBadgeTrigger.jsx",
+  ];
+  for (const f of REMOTE_FILES) sources.set("/app/" + f, remoteSrc(f));
+  const CANDIDATES = {
+    "cncPricingAvailability.js": "candidates/src/components/estimator/cnc/cncPricingAvailability.js",
+    "CNCEstimator.jsx": "candidates/src/pages/CNCEstimator.jsx",
+  };
+  for (const [name, file] of Object.entries(CANDIDATES))
+    sources.set(name === "CNCEstimator.jsx" ? "/app/src/pages/CNCEstimator.jsx" : P + name, readText(E + file));
+  return sources;
+}
+
+export function makeStubs(sources) {
+  const STUBS = {
+    "@/api/gatedEntities": `
+      export const CNCProject = {
+        get: async (id) => { globalThis.__spies.push(['projectGet', id]); return globalThis.__project ?? null; },
+      };
+      export const Settings = (globalThis.__entSettings ||= {__ent:'settings'});`,
+    "@/components/staff/staffEntities": `
+      export const staffEntities = {
+        AllInOneEstimate: { get: async (id) => globalThis.__estimate ?? null },
+      };`,
+    "@/api/base44Client": `const fail=()=>{globalThis.__unexpectedSdk++;throw Error("Unexpected SDK access in the CNC page proof");};
+      const entity=new Proxy({},{get:()=>fail});
+      export const base44={functions:{invoke:fail},entities:new Proxy({},{get:()=>entity})};`,
+    "@/components/estimator/loadAllEntityRows": `
+      export async function loadAllEntityRows(a){
+        globalThis.__catalogReads.push(a.label);
+        if(a.entity===globalThis.__entSettings) return globalThis.__settingRows||[];
+        return [];
+      }
+      export const primeEntityRowsCache=()=>{};`,
+    "@/components/estimator/builder/sourceProjectPersistence": `
+      export const updateBuilderSourceProject = async (a) => { globalThis.__spies.push(['saveSource', a]); return { ...a.data, id: a.sourceId, updated_date: 'v2' }; };
+      export const preflightBuilderSourceMutation = async (a) => { globalThis.__spies.push(['preflight', a]); };`,
+    "@/components/estimator/idempotentEntityCreate": `
+      export const ensureIdempotentEntityCreate = async (a) => { globalThis.__spies.push(['ensureIdempotent', a]); return { ...a.data, id: 'new-1', updated_date: 'v1' }; };
+      export const newCreationRequestKey = (k) => 'key-' + k + '-' + (globalThis.__kseq = (globalThis.__kseq || 0) + 1);`,
+    "@/components/estimator/builder/builderService": `
+      export const recordBuilderSave = async (a) => { globalThis.__spies.push(['recordBuilderSave', a]); return { ok: true }; };`,
+    "@/components/estimator/moduleShared/moduleProjectActions": `
+      export const saveModuleProjectCopy = async (a) => { globalThis.__spies.push(['saveCopy', a]); return { id: 'copy-1' }; };`,
+    "@/components/markup/savedCustomerPricing": `
+      export async function calculateSavedCustomerPricing(a){ globalThis.__spies.push(['pricing', a]); return null; }`,
+    "@/components/markup/CustomerPricingTab": `export default ()=><div data-stub="CustomerPricingTab"/>;`,
+    "@/components/cnc/HoldDownAdvisor": `export default ()=><div data-stub="HoldDownAdvisor"/>;`,
+    "@/components/estimator/moduleShared/ModuleActionBar": `export default (p)=><button type="button" data-stub="copy" onClick={p.onSaveAsCopy}>copy</button>;`,
+    "@/components/estimator/moduleShared/ModuleTemplateDialog": `export default ()=>null;`,
+    "@/components/ui/input": `export const Input=(p)=><input {...p}/>;`,
+    "@/components/ui/textarea": `export const Textarea=(p)=><textarea {...p}/>;`,
+    "@/components/ui/label": `export const Label=(p)=><label {...p}>{p.children}</label>;`,
+    "@/components/ui/card": `export const Card=(p)=><div {...p}>{p.children}</div>;export const CardContent=(p)=><div {...p}>{p.children}</div>;export const CardHeader=(p)=><div {...p}>{p.children}</div>;export const CardTitle=(p)=><div {...p}>{p.children}</div>;`,
+    "@/components/ui/select": `export const Select=(p)=><div>{p.children}</div>;export const SelectTrigger=(p)=><div data-trigger aria-invalid={p["aria-invalid"]} aria-describedby={p["aria-describedby"]} className={p.className}>{p.children}</div>;export const SelectValue=()=><span/>;export const SelectContent=(p)=><div>{p.children}</div>;export const SelectItem=(p)=><div>{p.children}</div>;`,
+    "@/components/ui/tabs": `export const Tabs=(p)=><div className={p.className}>{p.children}</div>;export const TabsList=(p)=><div className={p.className}>{p.children}</div>;export const TabsContent=(p)=><div className={p.className}>{p.children}</div>;export const TabsTrigger=(p)=><button type="button" className={p.className} value={p.value}>{p.children}</button>;`,
+    "@/components/ui/button": `export const Button=(p)=><button type="button" {...p}>{p.children}</button>;`,
+  };
+  const names = new Set();
+  for (const text of sources.values())
+    for (const m of text.matchAll(/import\s*\{([^}]*)\}\s*from\s*["']lucide-react["']/g))
+      for (const raw of m[1].split(",")) {
+        const n = raw.trim().split(/\s+as\s+/)[0].trim();
+        if (n) names.add(n);
+      }
+  STUBS["lucide-react"] = [...names].map((n) => `export const ${n}=()=>null;`).join("\n");
+  return STUBS;
+}
+
+export function makeFrozenPlugin(sources, STUBS, loaded, opts = {}) {
+  return { name: "frozen", setup(b) {
+    b.onResolve({ filter: /.*/ }, (a) => {
+      if (STUBS[a.path]) return { path: "s://" + a.path, namespace: "s" };
+      let base;
+      const inTree = a.importer === "" || a.importer.startsWith("/app/") || a.importer.startsWith("s://");
+      if (a.path.startsWith("/app/") && inTree) base = a.path;
+      else if (a.path.startsWith("@/") && inTree) base = "/app/src/" + a.path.slice(2);
+      else if (a.path.startsWith(".") && inTree) base = path.posix.resolve(path.posix.dirname(a.importer), a.path);
+      else if (opts.realPackages) return undefined; // real package + its internals → default resolution
+      else return { external: true };
+      const resolved = [base, base + ".js", base + ".jsx"].find((p) => sources.has(p));
+      if (!resolved) throw Error("Missing frozen source; held local work forbidden: " + a.path + " (imported by " + a.importer + ")");
+      return { path: resolved, namespace: "frozen" };
+    });
+    b.onLoad({ filter: /.*/, namespace: "s" }, (a) => ({ contents: STUBS[a.path.slice(4)], loader: "jsx", resolveDir: path.resolve(".") }));
+    b.onLoad({ filter: /.*/, namespace: "frozen" }, (a) => {
+      const contents = sources.get(a.path);
+      loaded[a.path] = hash(contents);
+      return { contents, loader: a.path.endsWith(".jsx") ? "jsx" : "js", resolveDir: path.resolve(".") };
+    });
+  }};
+}

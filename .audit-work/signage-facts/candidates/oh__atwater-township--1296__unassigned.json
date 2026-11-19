@@ -1,0 +1,25 @@
+{
+ "jurisdiction_id": "6aea384f9744b6b4d1e71296",
+ "jurisdiction_name": "Atwater Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "2026 ZONING PERMITS AND FEES (updated 10/13.2026) : 2026 Zoning Permits and Fees Schedule Single Family Dwelling $200.00 Two Family Dwelling $300.00 Additions $175.00 Garage and Pole Building $175.00 Storage Building (over 200 sq. ft.) $175.00 Movable Storage Building (over 200 sq ft.) $ 50.00 Commercial Building and offices (up to 1,000 sq ft) $350.00 Commercial Building and offices (over 1,000 sq ft) $650.00 Industrial and offices (up to 1,000 sq ft) $350.00 Industrial and offices (over 1,000 sq ft) $650.00 Changes to permit application $ 50.00 Application to Board of Zoning Appeals $175.00 Application for conditional zoning certificate *includes change of use applications $175.00 Application for zoning amendment $175.00 Demolition Permit Residential $ 50.00 Demolition Permit Commercial & Industrial $150.00 Signs (9 sq ft or less) $ 75.00 Signs (over 9 sq ft less than 50 sq ft) $125.00",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "06a914f29b0be6cff58ad9b8ff0c3e82824f412b3642485894b5ef62f7aa8b61",
+   "source_document_id": null,
+   "source_title": "06a914f29b0be6cff58ad9b8ff0c3e82824f412b3642485894b5ef62f7aa8b61.pdf",
+   "official_url": "https://www.atwatertwp.net/documents/zoning-fees-2026.pdf"
+  }
+ ]
+}

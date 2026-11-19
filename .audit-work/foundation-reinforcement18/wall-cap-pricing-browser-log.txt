@@ -1,0 +1,9 @@
+ok saved 1280
+ok saved 390
+ok unknown 1280
+ok unknown 390
+ok zero 1280
+ok zero 390
+ok current 1280
+ok current 390
+exit=0

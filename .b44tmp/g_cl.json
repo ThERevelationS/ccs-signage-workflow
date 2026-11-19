@@ -1,0 +1,11 @@
+{
+  "matches": [
+    {
+      "path": "src/components/admin/SyncConflictReview.jsx",
+      "line": 12,
+      "text": "    try{const response=await base44.functions.invoke('smartsheetSyncAction',{action:'conflict_list',session_token:sessionToken,status,dataset,cursor});const data=response.data;if(!data?.success)throw new Error(data?.error||'Reviews could not be loaded.');setItems(old=>cursor?[...old,...data.page.items]:data.page.items);setPage(data.page);setCount(data.count);}catch(error){setMessage(error?.response?.data?.error||error.message);}finally{setLoading(false);}\r"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 1
+}

@@ -1,0 +1,16 @@
+[
+  "lifecycle: start writes a proposal draft through commit",
+  "lifecycle: preview produces quantities and a finite section delta",
+  "lifecycle: accept commits version-2 fields once and clears proposal",
+  "lifecycle: accepted v2 steel is explicit-design steel, not legacy formula",
+  "delta: steel delta equals proposed minus current item steel",
+  "delta: section rows report held-aware totals (unpriceable cabinet held at saved)",
+  "discard: removes draft, leaves every legacy field byte-identical",
+  "blocked: start/preview/accept refuse and commit nothing",
+  "blocked: missing acknowledged source refuses proposal edits",
+  "stale: concurrent project change invalidates preview and refuses accept",
+  "stale: wrong proposal id refuses accept",
+  "held: version-1 item on legacy path is never silently re-dispatched",
+  "held: unsupported version keeps acknowledged snapshot, no legacy fallback",
+  "draft: malformed raw values reach preview as issues, never commit silently"
+]

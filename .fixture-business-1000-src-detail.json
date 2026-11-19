@@ -1,0 +1,5350 @@
+[
+ {
+  "address": "3579 South High Street, Columbus, OH 43207",
+  "place": "Walmart",
+  "city_queried": "Columbus",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1006 South High Street, Columbus, OH 43206",
+  "place": "McDonald's",
+  "city_queried": "Columbus",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2875 Stelzer Road, Columbus, OH 43219",
+  "place": "Speedway",
+  "city_queried": "Columbus",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "6333 Cleveland Avenue, Columbus, OH 43231",
+  "place": "The Home Depot",
+  "city_queried": "Columbus",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "15707 Saint Clair Avenue, Cleveland, OH 44117",
+  "place": "Dollar General",
+  "city_queried": "Cleveland",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "9361 Cleveland East Liverpool Road, Streetsboro, OH 44241",
+  "place": "Bob Evans",
+  "city_queried": "Cleveland",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "10800 Lorain Avenue, Cleveland, OH 44111",
+  "place": "Taco Bell",
+  "city_queried": "Cleveland",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "6710 Denison Avenue, Cleveland, OH 44102",
+  "place": "Burger King",
+  "city_queried": "Cleveland",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3325 Alamo Avenue, Cincinnati, OH 45209",
+  "place": "Dollar Tree",
+  "city_queried": "Cincinnati",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4630 Ridge Avenue, Cincinnati, OH 45209",
+  "place": "O'Reilly Auto Parts",
+  "city_queried": "Cincinnati",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "5385 Ridge Road, Cincinnati, OH 45213",
+  "place": "Lowe's",
+  "city_queried": "Cincinnati",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "902 Ohio Pike, Cincinnati, OH 45245",
+  "place": "Circle K",
+  "city_queried": "Cincinnati",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1205 West Alexis Road, Toledo, OH 43612",
+  "place": "Arby's",
+  "city_queried": "Toledo",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1410 East Alexis Road, Toledo, OH 43612",
+  "place": "Wendy's",
+  "city_queried": "Toledo",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4925 Jackman Road, Toledo, OH 43613",
+  "place": "Starbucks",
+  "city_queried": "Toledo",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "4260 West Sylvania Avenue, Toledo, OH 43623",
+  "place": "Chick-fil-A",
+  "city_queried": "Toledo",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1333 South Arlington Street, Akron, OH 44306",
+  "place": "ALDI",
+  "city_queried": "Akron",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "484 East Exchange Street, Akron, OH 44304",
+  "place": "Subway",
+  "city_queried": "Akron",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "396 East Market Street, Akron, OH 44304",
+  "place": "Pizza Hut",
+  "city_queried": "Akron",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "730 East Market Street, Akron, OH 44305",
+  "place": "Domino's",
+  "city_queried": "Akron",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "359 Miamisburg Centerville Road, Dayton, OH 45459",
+  "place": "Big Lots",
+  "city_queried": "Dayton",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "101 West 3rd Street, Dayton, OH 45402",
+  "place": "City of Dayton, City Hall",
+  "city_queried": "Dayton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "215 East 3rd Street, Dayton, OH 45402",
+  "place": "Dayton Metro Library",
+  "city_queried": "Dayton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "6270 State Road, Parma, OH 44134",
+  "place": "Bartels Busack Pet Hospital",
+  "city_queried": "Parma",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "8303 West Ridgewood Drive, Parma, OH 44129",
+  "place": "Walmart Supercenter",
+  "city_queried": "Parma",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1787 Snow Road, Parma, OH 44134",
+  "place": "McDonald's",
+  "city_queried": "Parma",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4873 Strip Avenue Northwest, Canton, OH 44720",
+  "place": "The Home Depot",
+  "city_queried": "Canton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4008 Tuscarawas Street West, Canton, OH 44708",
+  "place": "Bob Evans",
+  "city_queried": "Canton",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "4934 Fulton Road Northwest, Canton, OH 44718",
+  "place": "Meijer",
+  "city_queried": "Canton",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "2304 Tuscarawas Street West, Canton, OH 44708",
+  "place": "Taco Bell",
+  "city_queried": "Canton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "15 West Midlothian Boulevard, Youngstown, OH 44507",
+  "place": "Burger King",
+  "city_queried": "Youngstown",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3323 Market Street, Youngstown, OH 44408",
+  "place": "AutoZone",
+  "city_queried": "Youngstown",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4141 Market Street, Youngstown, OH 44512",
+  "place": "O'Reilly Auto Parts",
+  "city_queried": "Youngstown",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1951 Cooper Foster Park Road, Amherst, OH 44001",
+  "place": "Arby's",
+  "city_queried": "Lorain",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1410 Colorado Avenue, Lorain, OH 44052",
+  "place": "Wendy's",
+  "city_queried": "Lorain",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4310 North Leavitt Road, Lorain, OH 44053",
+  "place": "Starbucks",
+  "city_queried": "Lorain",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "5494 North Leavitt Road, Lorain, OH 44053",
+  "place": "Dunkin'",
+  "city_queried": "Lorain",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "4695 Marburg Avenue, Cincinnati, OH 45209",
+  "place": "Chick-fil-A",
+  "city_queried": "Hamilton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "700 Northwest Washington Boulevard, Hamilton, OH 45013",
+  "place": "Applebee's",
+  "city_queried": "Hamilton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "5505 Ridge Road, Cincinnati, OH 45213",
+  "place": "ALDI",
+  "city_queried": "Hamilton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3003 Reading Road, Cincinnati, OH 45206",
+  "place": "KFC",
+  "city_queried": "Hamilton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2130 South Limestone Street, Springfield, OH 45505",
+  "place": "Subway",
+  "city_queried": "Springfield",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "365 North Lexington-Springmill Road, Ontario, OH 44906",
+  "place": "Pizza Hut",
+  "city_queried": "Springfield",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "417 West McCreight Avenue, Springfield, OH 45504",
+  "place": "Domino's",
+  "city_queried": "Springfield",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "205 East Leffels Lane, Springfield, OH 45505",
+  "place": "Big Lots",
+  "city_queried": "Springfield",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "3301 Shroyer Road, Kettering, OH 45429",
+  "place": "Fairmont High School",
+  "city_queried": "Kettering",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "630 East River Street, Elyria, OH 44035",
+  "place": "University Hospitals Elyria Medical Center",
+  "city_queried": "Elyria",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1000 Chestnut Commons Drive, Elyria, OH 44035",
+  "place": "Walmart Supercenter",
+  "city_queried": "Elyria",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "311 Midway Boulevard, Elyria, OH 44035",
+  "place": "McDonald's",
+  "city_queried": "Elyria",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "710 Griswold Road, Elyria, OH 44035",
+  "place": "Speedway",
+  "city_queried": "Elyria",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "11901 Berea Road, Cleveland, OH 44111",
+  "place": "The Home Depot",
+  "city_queried": "Lakewood",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "15311 Detroit Avenue, Lakewood, OH 44107",
+  "place": "Dollar General",
+  "city_queried": "Lakewood",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "15500 Detroit Avenue, Lakewood, OH 44107",
+  "place": "Taco Bell",
+  "city_queried": "Lakewood",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "11790 Madison Avenue, Lakewood, OH 44107",
+  "place": "Burger King",
+  "city_queried": "Lakewood",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3616 East Broad Street, Columbus, OH 43213",
+  "place": "Lowe's",
+  "city_queried": "Newark",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "8271 East Broad Street, Reynoldsburg, OH 43068",
+  "place": "Sheetz",
+  "city_queried": "Newark",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1175 North 21st Street, Newark, OH 43055",
+  "place": "Arby's",
+  "city_queried": "Newark",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1372 Lexington Avenue, Mansfield, OH 44907",
+  "place": "Wendy's",
+  "city_queried": "Mansfield",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1500 Lexington Avenue, Mansfield, OH 44907",
+  "place": "Starbucks",
+  "city_queried": "Mansfield",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "145 Stander Avenue, Mansfield, OH 44903",
+  "place": "Applebee's",
+  "city_queried": "Mansfield",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1380 Lexington Avenue, Mansfield, OH 44907",
+  "place": "Family Dollar",
+  "city_queried": "Mansfield",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3634 South Dixie Highway, Middletown, OH 45005",
+  "place": "ALDI",
+  "city_queried": "Middletown",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3361 Towne Boulevard, Franklin, OH 45005",
+  "place": "KFC",
+  "city_queried": "Middletown",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4351 Roosevelt Boulevard, Middletown, OH 45044",
+  "place": "Subway",
+  "city_queried": "Middletown",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "2201 North Verity Parkway, Middletown, OH 45042",
+  "place": "Pizza Hut",
+  "city_queried": "Middletown",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "215 East Wooster Street, Bowling Green, OH 43402",
+  "place": "Domino's",
+  "city_queried": "Bowling Green",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1068 North Main Street, Bowling Green, OH 43402",
+  "place": "Little Caesars",
+  "city_queried": "Bowling Green",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "111 West Washington Street, Bowling Green, OH 43402",
+  "place": "Bowling Green Post Office",
+  "city_queried": "Bowling Green",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "251 North Main Street, Bowling Green, OH 43402",
+  "place": "Wood County District Public Library",
+  "city_queried": "Bowling Green",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1900 South Main Street, Findlay, OH 45840",
+  "place": "Blanchard Valley Hospital",
+  "city_queried": "Findlay",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2500 Tiffin Avenue, Findlay, OH 45840",
+  "place": "Walmart Supercenter",
+  "city_queried": "Findlay",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1996 Tiffin Avenue, Findlay, OH 45840",
+  "place": "Kroger",
+  "city_queried": "Findlay",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1921 Tiffin Avenue, Findlay, OH 45840",
+  "place": "McDonald's",
+  "city_queried": "Findlay",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "701 North Cable Road, Lima, OH 45805",
+  "place": "Walgreens",
+  "city_queried": "Lima",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1410 Elida Road, Lima, OH 45805",
+  "place": "Speedway",
+  "city_queried": "Lima",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "6459 Bellefontaine Road, Lima, OH 45804",
+  "place": "Marathon Gas",
+  "city_queried": "Lima",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3298 Elida Road, Lima, OH 45805",
+  "place": "Meijer",
+  "city_queried": "Lima",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "137 McMahan Boulevard, Marion Township, OH 43302",
+  "place": "CVS Pharmacy",
+  "city_queried": "Marion",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1309 Mount Vernon Avenue, Marion Township, OH 43302",
+  "place": "Taco Bell",
+  "city_queried": "Marion",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1278 Mount Vernon Avenue, Marion Township, OH 43302",
+  "place": "Burger King",
+  "city_queried": "Marion",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "248 McMahan Boulevard, Marion Township, OH 43302",
+  "place": "Dollar Tree",
+  "city_queried": "Marion",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2645 Maple Avenue, Zanesville, OH 43701",
+  "place": "AutoZone",
+  "city_queried": "Zanesville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3388 Maple Avenue, Zanesville, OH 43701",
+  "place": "O'Reilly Auto Parts",
+  "city_queried": "Zanesville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3660 Maple Avenue, Zanesville, OH 43701",
+  "place": "Tractor Supply Company",
+  "city_queried": "Zanesville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3755 Frazeysburg Road, Zanesville, OH 43701",
+  "place": "Lowe's",
+  "city_queried": "Zanesville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "14857 Chillicothe Road, South Russell, OH 44072",
+  "place": "Circle K",
+  "city_queried": "Chillicothe",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1082 North Bridge Street, Chillicothe, OH 45601",
+  "place": "Arby's",
+  "city_queried": "Chillicothe",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1137 East Main Street, Chillicothe, OH 45601",
+  "place": "Wendy's",
+  "city_queried": "Chillicothe",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "800 Western Avenue, Chillicothe, OH 45601",
+  "place": "Dunkin'",
+  "city_queried": "Chillicothe",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2507 Gallia Street, Portsmouth, OH 45662",
+  "place": "Save-A-Lot",
+  "city_queried": "Portsmouth",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2339 Gallia Street, Portsmouth, OH 45662",
+  "place": "ALDI",
+  "city_queried": "Portsmouth",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3826 US 23, Portsmouth, OH 45662",
+  "place": "KFC",
+  "city_queried": "Portsmouth",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "2918 Gallia Street, Portsmouth, OH 45662",
+  "place": "Subway",
+  "city_queried": "Portsmouth",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1274 Claremont Avenue, Ashland, OH 44805",
+  "place": "Pizza Hut",
+  "city_queried": "Ashland",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "627 Claremont Avenue, Ashland, OH 44805",
+  "place": "Domino's",
+  "city_queried": "Ashland",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "530 Claremont Avenue, Ashland, OH 44805",
+  "place": "Ashland Post Office",
+  "city_queried": "Ashland",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "30 Home Street, Athens, OH 45701",
+  "place": "Athens Public Library",
+  "city_queried": "Athens",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1 South Court Street, Athens, OH 45701",
+  "place": "Athens County Courthouse",
+  "city_queried": "Athens",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "55 Hospital Drive, Athens, OH 45701",
+  "place": "O’Bleness Hospital",
+  "city_queried": "Athens",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "929 East State Street, Athens, OH 45701",
+  "place": "Walmart Supercenter",
+  "city_queried": "Athens",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "500 Pike Street, Marietta, OH 45750",
+  "place": "McDonald's",
+  "city_queried": "Marietta",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "300 Greene Street, Marietta, OH 45750",
+  "place": "Walgreens",
+  "city_queried": "Marietta",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "433 2nd Street, Marietta, OH 45750",
+  "place": "Speedway",
+  "city_queried": "Marietta",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "504 Pike Street, Marietta, OH 45750",
+  "place": "Bob Evans",
+  "city_queried": "Marietta",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1046 North Apple Creek Road, Wooster, OH 44691",
+  "place": "Marathon",
+  "city_queried": "Wooster",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4905 Burbank Road, Wooster, OH 44691",
+  "place": "Meijer",
+  "city_queried": "Wooster",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1839 Beall Avenue, Wooster, OH 44691",
+  "place": "Taco Bell",
+  "city_queried": "Wooster",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1907 Cleveland Road, Wooster, OH 44691",
+  "place": "Burger King",
+  "city_queried": "Wooster",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "8718 State Route 66 North, Defiance, OH 43512",
+  "place": "Tractor Supply Company",
+  "city_queried": "Defiance",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1831 North Clinton Street, Defiance, OH 43512",
+  "place": "Lowe's",
+  "city_queried": "Defiance",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1326 Michigan Street, Sidney, OH 45365",
+  "place": "Wendy's",
+  "city_queried": "Sidney",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "221 North Vandemark Road, Sidney, OH 45365",
+  "place": "Applebee's",
+  "city_queried": "Sidney",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2500 Michigan Street, Sidney, OH 45365",
+  "place": "ALDI",
+  "city_queried": "Sidney",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2004 West Market Street, Tiffin, OH 44883",
+  "place": "KFC",
+  "city_queried": "Tiffin",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "200 South Sandusky Street, Tiffin, OH 44883",
+  "place": "Subway",
+  "city_queried": "Tiffin",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "432 Wentz Street, Tiffin, OH 44883",
+  "place": "Pizza Hut",
+  "city_queried": "Tiffin",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "240 West Market Street, Tiffin, OH 44883",
+  "place": "Domino's",
+  "city_queried": "Tiffin",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1800 East State Street, Fremont, OH 43420",
+  "place": "Big Lots",
+  "city_queried": "Fremont",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2136 Enterprise Drive, Fremont, OH 43420",
+  "place": "Harbor Freight Tools",
+  "city_queried": "Fremont",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "323 South Front Street, Fremont, OH 43420",
+  "place": "Fremont City Hall",
+  "city_queried": "Fremont",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "500 West State Street, Fremont, OH 43420",
+  "place": "Fremont Ross High School",
+  "city_queried": "Fremont",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "282 Benedict Avenue, Norwalk, OH 44857",
+  "place": "Akron Children's Hospital - Maternal Fetal Medicine",
+  "city_queried": "Norwalk",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "340 Westwind Drive, Norwalk, OH 44857",
+  "place": "Walmart Supercenter",
+  "city_queried": "Norwalk",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "249 Benedict Avenue, Norwalk, OH 44857",
+  "place": "McDonald's",
+  "city_queried": "Norwalk",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "100 North Dixie Highway, Cridersville, OH 45806",
+  "place": "Speedway",
+  "city_queried": "Wapakoneta",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1009 Lincoln Avenue, Wapakoneta, OH 45895",
+  "place": "Dollar General",
+  "city_queried": "Wapakoneta",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1550 Saturn Drive, Wapakoneta, OH 45895",
+  "place": "Bob Evans",
+  "city_queried": "Wapakoneta",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1101 Bellefontaine Street, Wapakoneta, OH 45895",
+  "place": "CVS Pharmacy",
+  "city_queried": "Wapakoneta",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "203 East Market Street, Celina, OH 45822",
+  "place": "Burger King",
+  "city_queried": "Celina",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "872 North Washington Street, Van Wert, OH 45891",
+  "place": "Arby's",
+  "city_queried": "Van Wert",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1234 South Shannon Street, Van Wert, OH 45891",
+  "place": "Wendy's",
+  "city_queried": "Van Wert",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1885 East Mansfield Street, Bucyrus, OH 44820",
+  "place": "Aldi",
+  "city_queried": "Bucyrus",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1659 Marion Road, Bucyrus, OH 44820",
+  "place": "KFC",
+  "city_queried": "Bucyrus",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "233 North Sandusky Avenue, Bucyrus, OH 44820",
+  "place": "Subway",
+  "city_queried": "Bucyrus",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1750 East Mansfield Street, Bucyrus, OH 44820",
+  "place": "Pizza Hut",
+  "city_queried": "Bucyrus",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "501 West Main Street, West Lafayette, OH 43845",
+  "place": "West Lafayette Post Office",
+  "city_queried": "Coshocton",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "760 Chestnut Street, Coshocton, OH 43812",
+  "place": "Coshocton City Hall",
+  "city_queried": "Coshocton",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1400 Deerpath Drive, Cambridge, OH 43725",
+  "place": "Cambridge High School",
+  "city_queried": "Cambridge",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "61205 Southgate Road, Cambridge, OH 43725",
+  "place": "Walmart Supercenter",
+  "city_queried": "Cambridge",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "808 Park Avenue, Ironton, OH 45638",
+  "place": "Speedway",
+  "city_queried": "Ironton",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "824 Park Avenue, Ironton, OH 45638",
+  "place": "Marathon",
+  "city_queried": "Ironton",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1701 Rombach Avenue, Wilmington, OH 45177",
+  "place": "Taco Bell",
+  "city_queried": "Wilmington",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1607 Rombach Avenue, Wilmington, OH 45177",
+  "place": "Burger King",
+  "city_queried": "Wilmington",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "6142 Wilmington Pike, Centerville, OH 45459",
+  "place": "AutoZone",
+  "city_queried": "Wilmington",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1627 Rombach Avenue, Wilmington, OH 45177",
+  "place": "Tractor Supply Company",
+  "city_queried": "Wilmington",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1840 Columbus Avenue, Washington Court House, OH 43160",
+  "place": "Arby's",
+  "city_queried": "Washington Court House",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "530 Clinton Avenue, Washington Court House, OH 43160",
+  "place": "Wendy's",
+  "city_queried": "Washington Court House",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "548 Clinton Avenue, Washington Court House, OH 43160",
+  "place": "Starbucks",
+  "city_queried": "Washington Court House",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "23455 Goodchild Service Road, Circleville, OH 43113",
+  "place": "Aldi",
+  "city_queried": "Circleville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1458 South Court Street, Circleville, OH 43113",
+  "place": "KFC",
+  "city_queried": "Circleville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "224 Lancaster Pike, Circleville, OH 43113",
+  "place": "Subway",
+  "city_queried": "Circleville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4130 Mall Drive, Steubenville, OH 43952",
+  "place": "Harbor Freight Tools",
+  "city_queried": "Steubenville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "323 Columbus Avenue, Sandusky, OH 44870",
+  "place": "Erie County Courthouse",
+  "city_queried": "Sandusky",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2610 Columbus Avenue, Sandusky, OH 44870",
+  "place": "Perkins Township Police Department",
+  "city_queried": "Sandusky",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1111 Hayes Avenue, Sandusky, OH 44870",
+  "place": "Firelands Regional Medical Center",
+  "city_queried": "Sandusky",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2052 Fangboner Road, Fremont, OH 43420",
+  "place": "Walmart Supercenter",
+  "city_queried": "Sandusky",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1510 Covington Avenue, Piqua, OH 45356",
+  "place": "Kroger",
+  "city_queried": "Piqua",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "995 East Ash Street, Piqua, OH 45356",
+  "place": "McDonald's",
+  "city_queried": "Piqua",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1200 East Ash Street, Piqua, OH 45356",
+  "place": "The Home Depot",
+  "city_queried": "Piqua",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1120 Russ Road, Greenville, OH 45331",
+  "place": "Taco Bell",
+  "city_queried": "Greenville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "639 Scioto Street, Urbana, OH 43078",
+  "place": "Arby's",
+  "city_queried": "Urbana",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "734 Scioto Street, Urbana, OH 43078",
+  "place": "Wendy's",
+  "city_queried": "Urbana",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2180 Harrisburg Pike, Grove City, OH 43123",
+  "place": "Family Dollar",
+  "city_queried": "Grove City",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1970 Stringtown Road, Grove City, OH 43123",
+  "place": "KFC",
+  "city_queried": "Grove City",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1693 Stringtown Road, Grove City, OH 43123",
+  "place": "Subway",
+  "city_queried": "Grove City",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "2536 Columbus Street, Grove City, OH 43123",
+  "place": "Pizza Hut",
+  "city_queried": "Grove City",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "8 East Bridge Street, Dublin, OH 43017",
+  "place": "Domino's",
+  "city_queried": "Dublin",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "6569 Sawmill Road, Dublin, OH 43017",
+  "place": "Big Lots",
+  "city_queried": "Dublin",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2441 East Dublin Granville Road, Columbus, OH 43229",
+  "place": "Harbor Freight Tools",
+  "city_queried": "Dublin",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "6700 Perimeter Loop Road, Dublin, OH 43016",
+  "place": "Giant Eagle",
+  "city_queried": "Dublin",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "126 South State Street, Westerville, OH 43081",
+  "place": "Westerville Public Library",
+  "city_queried": "Westerville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "727 East Schrock Road, Westerville, OH 43081",
+  "place": "Westerville Fire Station 112",
+  "city_queried": "Westerville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "6283 Sunbury Road, Westerville, OH 43081",
+  "place": "VCA Westerville East Animal Hospital",
+  "city_queried": "Westerville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2793 Meadowlark Lane South, Reynoldsburg, OH 43068",
+  "place": "Walmart Supercenter",
+  "city_queried": "Reynoldsburg",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "8460 East Main Street, Reynoldsburg, OH 43068",
+  "place": "Kroger",
+  "city_queried": "Reynoldsburg",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "6350 Tussing Road, Reynoldsburg, OH 43068",
+  "place": "McDonald's",
+  "city_queried": "Reynoldsburg",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "6300 East Main Street, Reynoldsburg, OH 43068",
+  "place": "Walgreens",
+  "city_queried": "Reynoldsburg",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1700 Hilliard-Rome Road, Hilliard, OH 43026",
+  "place": "Speedway",
+  "city_queried": "Hilliard",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4101 Trueman Boulevard, Hilliard, OH 43026",
+  "place": "The Home Depot",
+  "city_queried": "Hilliard",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1661 Hilliard-Rome Road, Hilliard, OH 43228",
+  "place": "Meijer",
+  "city_queried": "Hilliard",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4961 Roberts Road, Hilliard, OH 43026",
+  "place": "CVS Pharmacy",
+  "city_queried": "Hilliard",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4727 Morse Road, Gahanna, OH 43230",
+  "place": "Arby's",
+  "city_queried": "Gahanna",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1309 Hamilton Road, Gahanna, OH 43230",
+  "place": "Wendy's",
+  "city_queried": "Gahanna",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1370 Hamilton Road, Columbus, OH 43230",
+  "place": "Starbucks",
+  "city_queried": "Gahanna",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1111 Hamilton Road, Gahanna, OH 43230",
+  "place": "Dunkin' Donuts",
+  "city_queried": "Gahanna",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "890 East Dublin Granville Road, Columbus, OH 43229",
+  "place": "Pizza Hut",
+  "city_queried": "Worthington",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "326 South Cassingham Road, Bexley, OH 43209",
+  "place": "Bexley High School",
+  "city_queried": "Bexley",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "8704 Owenfield Drive, Powell, OH 43065",
+  "place": "The Home Depot",
+  "city_queried": "Delaware",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "161 London Road, Delaware, OH 43015",
+  "place": "Dollar General",
+  "city_queried": "Delaware",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1301 Columbus Pike, Delaware, OH 43015",
+  "place": "Bob Evans",
+  "city_queried": "Delaware",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "18000 State Route 31, Marysville, OH 43040",
+  "place": "Taco Bell",
+  "city_queried": "Marysville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1044 Delaware Avenue, Marysville, OH 43040",
+  "place": "Burger King",
+  "city_queried": "Marysville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "616 East 5th Street, Marysville, OH 43040",
+  "place": "AutoZone",
+  "city_queried": "Marysville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "615 East 5th Street, Marysville, OH 43040",
+  "place": "O'Reilly Auto Parts",
+  "city_queried": "Marysville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "300 Keny Boulevard, London, OH 43140",
+  "place": "Tractor Supply Company",
+  "city_queried": "London",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1420-42 London – Delaware Road, London, OH 43140",
+  "place": "Sheetz",
+  "city_queried": "London",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1365 London – Delaware Road, London, OH 43140",
+  "place": "Arby's",
+  "city_queried": "London",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1400 Hill Road North, Pickerington, OH 43147",
+  "place": "Aldi",
+  "city_queried": "Pickerington",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1810 Winderly Lane, Pickerington, OH 43147",
+  "place": "KFC",
+  "city_queried": "Pickerington",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1164 Hill Road North, Pickerington, OH 43147",
+  "place": "Subway",
+  "city_queried": "Pickerington",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "810 Refugee Road, Pickerington, OH 43147",
+  "place": "Pizza Hut",
+  "city_queried": "Pickerington",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "6430 Winchester Boulevard, Canal Winchester, OH 43110",
+  "place": "Domino's",
+  "city_queried": "Canal Winchester",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4101 Summit Road Southwest, Pataskala, OH 43062",
+  "place": "Licking Heights High School",
+  "city_queried": "Pataskala",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "7125 Mink Street Southwest, Pataskala, OH 43062",
+  "place": "West Licking Joint Fire District Station 403",
+  "city_queried": "Pataskala",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "623 West Broad Street, Pataskala, OH 43062",
+  "place": "Pataskala Police Department",
+  "city_queried": "Pataskala",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "65 South Main Street, Pataskala, OH 43062",
+  "place": "Animal Hospital of Pataskala",
+  "city_queried": "Pataskala",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "911 Hebron Road, Heath, OH 43056",
+  "place": "Walmart Supercenter",
+  "city_queried": "Heath",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "910 Hebron Road, Newark, OH 43056",
+  "place": "Kroger",
+  "city_queried": "Heath",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "789 South 30th Street, Heath, OH 43056",
+  "place": "McDonald's",
+  "city_queried": "Heath",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "764 Hebron Road, Heath, OH 43056",
+  "place": "Walgreens",
+  "city_queried": "Heath",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1000 Cherry Valley Road Southeast, Newark, OH 43055",
+  "place": "Speedway",
+  "city_queried": "Granville",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1001 Cherry Valley Road Southeast, Newark, OH 43055",
+  "place": "Bob Evans",
+  "city_queried": "Granville",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "121 East Main Street, St. Henry, OH 45883",
+  "place": "Hemmelgarn Marathon",
+  "city_queried": "Granville",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "200 East Broadway, Granville, OH 43023",
+  "place": "CVS Pharmacy",
+  "city_queried": "Granville",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "762 West Coshocton Street, Johnstown, OH 43031",
+  "place": "Burger King",
+  "city_queried": "Johnstown",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "772 West Coshocton Street, Johnstown, OH 43031",
+  "place": "AutoZone",
+  "city_queried": "Johnstown",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "659 West Coshocton Street, Johnstown, OH 43031",
+  "place": "Tractor Supply Company",
+  "city_queried": "Johnstown",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "9905 Johnstown Road, New Albany, OH 43054",
+  "place": "Sheetz",
+  "city_queried": "Johnstown",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "7259 Longhorn Drive, Sunbury, OH 43074",
+  "place": "Arby's",
+  "city_queried": "Sunbury",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "88 Miller Drive, Sunbury, OH 43074",
+  "place": "Wendy's",
+  "city_queried": "Sunbury",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "7305 State Route 37 East, Sunbury, OH 43074",
+  "place": "Starbucks",
+  "city_queried": "Sunbury",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "9965 Sawmill Parkway, Powell, OH 43065",
+  "place": "ALDI",
+  "city_queried": "Powell",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "9840 Brewster Lane, Powell, OH 43065",
+  "place": "Subway",
+  "city_queried": "Powell",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "285 Main Street, West Jefferson, OH 43162",
+  "place": "McDonald's",
+  "city_queried": "West Jefferson",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "201 Sterling Run Boulevard, Mount Orab, OH 45154",
+  "place": "Wendy's",
+  "city_queried": "Mount Sterling",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "657 West Main Street, Blanchester, OH 45107",
+  "place": "Subway",
+  "city_queried": "Blanchester",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "209 Old South Broadway Street, Blanchester, OH 45107",
+  "place": "Domino's",
+  "city_queried": "Blanchester",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "987 Mount Orab Pike, Georgetown, OH 45121",
+  "place": "Georgetown Junior/Senior High School",
+  "city_queried": "Georgetown",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1257 Bellefontaine Street, Wapakoneta, OH 45895",
+  "place": "Walmart Supercenter",
+  "city_queried": "Georgetown",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1255 North High Street, Hillsboro, OH 45133",
+  "place": "Burger King",
+  "city_queried": "Hillsboro",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1457 North High Street, Hillsboro, OH 45133",
+  "place": "Tractor Supply Company",
+  "city_queried": "Hillsboro",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2240 Lowes Drive, Lancaster, OH 43130",
+  "place": "Lowe's",
+  "city_queried": "Greenfield",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1800 North Memorial Drive, Lancaster, OH 43130",
+  "place": "Sheetz",
+  "city_queried": "Greenfield",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1580 South Pershing Drive, Lancaster, OH 43130",
+  "place": "Arby's",
+  "city_queried": "Greenfield",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4410 Coonpath Road Northwest, Carroll, OH 43112",
+  "place": "Wendy's",
+  "city_queried": "Greenfield",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "220 East Emmitt Avenue, Waverly, OH 45690",
+  "place": "Starbucks",
+  "city_queried": "Waverly",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "880 Emmitt Avenue, Waverly, OH 45690",
+  "place": "Aldi",
+  "city_queried": "Waverly",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "721 West Emmitt Avenue, Waverly, OH 45690",
+  "place": "KFC",
+  "city_queried": "Waverly",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "731 East Main Street, Jackson, OH 45640",
+  "place": "Subway",
+  "city_queried": "Jackson",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "800 East Main Street, Jackson, OH 45640",
+  "place": "Pizza Hut",
+  "city_queried": "Jackson",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1305 South Pennsylvania Avenue, Wellston, OH 45692",
+  "place": "Domino's",
+  "city_queried": "Jackson",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1336 Whipple Avenue Northwest, Canton, OH 44708",
+  "place": "Big Lots",
+  "city_queried": "Jackson",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "135 East 2nd Street, Wellston, OH 45692",
+  "place": "Sylvester Memorial Wellston Public Library",
+  "city_queried": "Wellston",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "377 West Front Street, Logan, OH 43138",
+  "place": "Dollar General",
+  "city_queried": "Logan",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "143 East Sandusky Avenue, Bellefontaine, OH 43311",
+  "place": "CVS Pharmacy",
+  "city_queried": "Logan",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1301 West Hunter Street, Logan, OH 43138",
+  "place": "Taco Bell",
+  "city_queried": "Logan",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1205 West Hunter Street, Logan, OH 43138",
+  "place": "Burger King",
+  "city_queried": "Logan",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1241 North Memorial Drive, Lancaster, OH 43130",
+  "place": "AutoZone",
+  "city_queried": "Lancaster",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "625 North Memorial Drive, Lancaster, OH 43130",
+  "place": "O'Reilly Auto Parts",
+  "city_queried": "Lancaster",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1690 East Main Street, Lancaster, OH 43130",
+  "place": "Tractor Supply Company",
+  "city_queried": "Lancaster",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "50 Massillon Marketplace Drive Southeast, Massillon, OH 44646",
+  "place": "Wendy's",
+  "city_queried": "Massillon",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2 Erie Street, Massillon, OH 44646",
+  "place": "Starbucks",
+  "city_queried": "Massillon",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "309 Lincoln Way West, Massillon, OH 44647",
+  "place": "Dunkin'",
+  "city_queried": "Massillon",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "266 Federal Avenue Northwest, Massillon, OH 44647",
+  "place": "Save-A-Lot",
+  "city_queried": "Massillon",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "2150 West State Street, Alliance, OH 44601",
+  "place": "ALDI",
+  "city_queried": "Alliance",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "825 East State Street, Alliance, OH 44601",
+  "place": "KFC",
+  "city_queried": "Alliance",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2100 Parkway Boulevard, Alliance, OH 44601",
+  "place": "Subway",
+  "city_queried": "Alliance",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "2200 West State Street, Alliance, OH 44601",
+  "place": "Pizza Hut",
+  "city_queried": "Alliance",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1955 East Maple Street, North Canton, OH 44720",
+  "place": "Giant Eagle",
+  "city_queried": "North Canton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1474 Boettler Road, Uniontown, OH 44685",
+  "place": "Green High School",
+  "city_queried": "Green",
+  "state": "OH",
+  "osm_type": "relation"
+ },
+ {
+  "address": "1 Wood County War Memorial, Bowling Green, OH 43402",
+  "place": "Wood County Courthouse",
+  "city_queried": "Green",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "131 West Gypsy Lane Road, Bowling Green, OH 43402",
+  "place": "Walmart Supercenter",
+  "city_queried": "Green",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3491 North Bend Road, Cincinnati, OH 45239",
+  "place": "Kroger",
+  "city_queried": "Green",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "500 West Tuscarawas Avenue, Barberton, OH 44203",
+  "place": "McDonald's",
+  "city_queried": "Barberton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "747 Wooster Road North, Barberton, OH 44203",
+  "place": "Dollar General",
+  "city_queried": "Barberton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4195 South Cleveland Massillon Road, Norton, OH 44203",
+  "place": "CVS Pharmacy",
+  "city_queried": "Norton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4111 South Cleveland Massillon Road, Norton, OH 44203",
+  "place": "Taco Bell",
+  "city_queried": "Norton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1560 Norton Road, Stow, OH 44224",
+  "place": "Burger King",
+  "city_queried": "Norton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4022 South Cleveland Massillon Road, Norton, OH 44203",
+  "place": "O'Reilly Auto Parts",
+  "city_queried": "Norton",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1065 Williams Reserve Boulevard, Wadsworth, OH 44281",
+  "place": "Lowe's",
+  "city_queried": "Wadsworth",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "820 High Street, Wadsworth, OH 44281",
+  "place": "Sheetz",
+  "city_queried": "Wadsworth",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1050 High Street, Wadsworth, OH 44281",
+  "place": "Circle K",
+  "city_queried": "Wadsworth",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "964 High Street, Wadsworth, OH 44281",
+  "place": "Arby's",
+  "city_queried": "Wadsworth",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "933 North Court Street, Medina, OH 44256",
+  "place": "Wendy's",
+  "city_queried": "Medina",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3471 Center Road, Brunswick, OH 44212",
+  "place": "Starbucks",
+  "city_queried": "Medina",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "3868 Center Road, Brunswick, OH 44212",
+  "place": "Dunkin'",
+  "city_queried": "Medina",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1007 North Court Street, Medina, OH 44256",
+  "place": "Chick-fil-A",
+  "city_queried": "Medina",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1421 Town Center Boulevard, Brunswick, OH 44212",
+  "place": "Applebee's",
+  "city_queried": "Brunswick",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "4221 Center Road, Brunswick, OH 44212",
+  "place": "ALDI",
+  "city_queried": "Brunswick",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3280 Center Road, Brunswick, OH 44212",
+  "place": "KFC",
+  "city_queried": "Brunswick",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "5321 Center Road, Brunswick, OH 44212",
+  "place": "Subway",
+  "city_queried": "Brunswick",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "14089 Pearl Road, Strongsville, OH 44136",
+  "place": "Pizza Hut",
+  "city_queried": "Strongsville",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "15177 Pearl Road, Strongsville, OH 44136",
+  "place": "Big Lots",
+  "city_queried": "Strongsville",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "15919 Pearl Road, Strongsville, OH 44136",
+  "place": "Giant Eagle",
+  "city_queried": "Strongsville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "18688 Royalton Road, Strongsville, OH 44136",
+  "place": "Strongsville City Hall",
+  "city_queried": "Strongsville",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "5071 West Wallings Road, North Royalton, OH 44133",
+  "place": "North Royalton Branch Cuyahoga County Public Library",
+  "city_queried": "North Royalton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4618 Royalton Road, Broadview Heights, OH 44147",
+  "place": "McDonald's",
+  "city_queried": "Broadview Heights",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2000 Corporation Center, Broadview Heights, OH 44147",
+  "place": "Burger King",
+  "city_queried": "Brecksville",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "5095 Northfield Road, Bedford Heights, OH 44146",
+  "place": "Dunkin'",
+  "city_queried": "Bedford",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "5488A Warrensville Center Road, Maple Heights, OH 44137",
+  "place": "Save-A-Lot",
+  "city_queried": "Maple Heights",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "3299 Canfield Road, Youngstown, OH 44511",
+  "place": "KFC",
+  "city_queried": "Maple Heights",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "20515 Southgate Park Boulevard, Maple Heights, OH 44137",
+  "place": "Pizza Hut",
+  "city_queried": "Maple Heights",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "21650 Libby Road, Maple Heights, OH 44137",
+  "place": "Little Caesars",
+  "city_queried": "Maple Heights",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "34310 Aurora Road, Solon, OH 44139",
+  "place": "Market District",
+  "city_queried": "Solon",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "34125 Portz Parkway, Solon, OH 44139",
+  "place": "Solon Branch of Cuyahoga County Public Library",
+  "city_queried": "Solon",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3360 Inwood Drive, Solon, OH 44139",
+  "place": "Solon High School",
+  "city_queried": "Solon",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "8900 I 480;SR 14, Twinsburg, OH 44087",
+  "place": "Mcdonald Women's Hospital",
+  "city_queried": "Twinsburg",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "2533 East Aurora Road, Twinsburg, OH 44087",
+  "place": "McDonald's",
+  "city_queried": "Twinsburg",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "7966 Darrow Road, Hudson, OH 44236",
+  "place": "Speedway",
+  "city_queried": "Twinsburg",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "18800 North Market Place Drive, Aurora, OH 44202",
+  "place": "The Home Depot",
+  "city_queried": "Aurora",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "7105 Aurora Road, Aurora, OH 44202",
+  "place": "Bob Evans",
+  "city_queried": "Aurora",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "7300 Aurora Road, Aurora, OH 44202",
+  "place": "Meijer",
+  "city_queried": "Aurora",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "118 West Garfield Road, Aurora, OH 44202",
+  "place": "CVS Pharmacy",
+  "city_queried": "Aurora",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "9223 Cleveland East Liverpool Road, Streetsboro, OH 44241",
+  "place": "Taco Bell",
+  "city_queried": "Streetsboro",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "9535 Cleveland East Liverpool Road, Streetsboro, OH 44241",
+  "place": "Burger King",
+  "city_queried": "Streetsboro",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "9203 Cleveland East Liverpool Road, Streetsboro, OH 44241",
+  "place": "AutoZone",
+  "city_queried": "Streetsboro",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1210 Streetsboro Road, Streetsboro, OH 44241",
+  "place": "Lowe's",
+  "city_queried": "Streetsboro",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "165 Tallmadge Road, Kent, OH 44240",
+  "place": "Arby's",
+  "city_queried": "Kent",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "515 East Main Street, Kent, OH 44240",
+  "place": "Wendy's",
+  "city_queried": "Kent",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "475 Terrace Drive, Kent, OH 44240",
+  "place": "Starbucks",
+  "city_queried": "Kent",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1625 South Water Street, Kent, OH 44240",
+  "place": "Dunkin'",
+  "city_queried": "Kent",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1350 East Main Street, Ravenna, OH 44266",
+  "place": "ALDI",
+  "city_queried": "Ravenna",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1052 West Main Street, Ravenna, OH 44266",
+  "place": "Subway",
+  "city_queried": "Ravenna",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1313 East Main Street, Ravenna, OH 44266",
+  "place": "Pizza Hut",
+  "city_queried": "Ravenna",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4963 Darrow Road, Stow, OH 44224",
+  "place": "Domino's",
+  "city_queried": "Stow",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1700 Norton Road, Stow, OH 44224",
+  "place": "Giant Eagle",
+  "city_queried": "Stow",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1900 23rd Street, Cuyahoga Falls, OH 44223",
+  "place": "Western Reserve Hospital",
+  "city_queried": "Cuyahoga Falls",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3520 Hudson Drive, Stow, OH 44224",
+  "place": "Walmart Supercenter",
+  "city_queried": "Cuyahoga Falls",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "482 Howe Avenue, Cuyahoga Falls, OH 44221",
+  "place": "McDonald's",
+  "city_queried": "Cuyahoga Falls",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "7124 Richfield Hudson Road, Windham, OH 44288",
+  "place": "Dollar General",
+  "city_queried": "Hudson",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3489 Hudson Drive, Stow, OH 44224",
+  "place": "Bob Evans",
+  "city_queried": "Hudson",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "5783 Darrow Road, Hudson, OH 44236",
+  "place": "CVS Pharmacy",
+  "city_queried": "Hudson",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "62 Tallmadge Circle, Tallmadge, OH 44278",
+  "place": "Taco Bell",
+  "city_queried": "Tallmadge",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "610 South Avenue, Tallmadge, OH 44278",
+  "place": "Burger King",
+  "city_queried": "Tallmadge",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "574 South Avenue, Tallmadge, OH 44278",
+  "place": "Dollar Tree",
+  "city_queried": "Tallmadge",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "339 West Avenue, Tallmadge, OH 44278",
+  "place": "AutoZone",
+  "city_queried": "Tallmadge",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "11 South Cleveland Massillon Road, Fairlawn, OH 44333",
+  "place": "Circle K",
+  "city_queried": "Fairlawn",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "126 Flight Memorial Drive, Fairlawn, OH 44333",
+  "place": "Wendy's",
+  "city_queried": "Fairlawn",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2801 Skyway Drive, Fairlawn, OH 44333",
+  "place": "Starbucks",
+  "city_queried": "Fairlawn",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "175 Center Street, Seville, OH 44273",
+  "place": "Seville Animal Hospital",
+  "city_queried": "Seville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "851 State Route 97, Bellville, OH 44813",
+  "place": "Burger King",
+  "city_queried": "Bellville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "689 North Lexington-Springmill Road, Ontario, OH 44906",
+  "place": "Arby's",
+  "city_queried": "Lexington",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1023 North Lexington-Springmill Road, Ontario, OH 44906",
+  "place": "Applebee's",
+  "city_queried": "Lexington",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "955 North Lexington-Springmill Road, Ontario, OH 44906",
+  "place": "ALDI",
+  "city_queried": "Ontario",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1340 North Lexington-Springmill Road, Ontario, OH 44862",
+  "place": "Subway",
+  "city_queried": "Ontario",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "135 North Ohio Avenue, Sidney, OH 45365",
+  "place": "Sidney Post Office",
+  "city_queried": "Shelby",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "230 East North Street, Sidney, OH 45365",
+  "place": "Amos Memorial Public Library",
+  "city_queried": "Shelby",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2400 Saint Marys Avenue, Sidney, OH 45365",
+  "place": "Lehman Catholic High School",
+  "city_queried": "Shelby",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1100 Neal Zick Road, Willard, OH 44890",
+  "place": "Mercy Health Willard Hospital",
+  "city_queried": "Willard",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1022 East Main Street, Bellevue, OH 44811",
+  "place": "Dollar general",
+  "city_queried": "Bellevue",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "201 West Main Street, Bellevue, OH 44811",
+  "place": "CVS Pharmacy",
+  "city_queried": "Bellevue",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1365 East Main Street, Bellevue, OH 44811",
+  "place": "Taco Bell",
+  "city_queried": "Bellevue",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "711 West Main Street, Bellevue, OH 44811",
+  "place": "Burger King",
+  "city_queried": "Bellevue",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1033 West McPherson Highway, Clyde, OH 43410",
+  "place": "Arby's",
+  "city_queried": "Clyde",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1750 Township Highway 122, Upper Sandusky, OH 43351",
+  "place": "Wendy's",
+  "city_queried": "Upper Sandusky",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1001 East Columbus Street, Kenton, OH 43326",
+  "place": "KFC",
+  "city_queried": "Kenton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "119 East Columbus Street, Kenton, OH 43326",
+  "place": "Subway",
+  "city_queried": "Kenton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "946 East Columbus Street, Kenton, OH 43326",
+  "place": "Pizza Hut",
+  "city_queried": "Kenton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "10 North Main Street, Kenton, OH 43326",
+  "place": "Domino's",
+  "city_queried": "Kenton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "131 South Main Street, Ada, OH 45810",
+  "place": "Ada Post Office",
+  "city_queried": "Ada",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "86 North Main Street, Peebles, OH 45660",
+  "place": "Old City Hall",
+  "city_queried": "Ada",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "320 North Main Street, Ada, OH 45810",
+  "place": "Ada Public Library",
+  "city_queried": "Ada",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "97 Dragon Lair Drive, West Union, OH 45693",
+  "place": "West Union High School",
+  "city_queried": "Ada",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "139 Garau Street, Bluffton, OH 45817",
+  "place": "Bluffton Hospital",
+  "city_queried": "Bluffton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "22220 SR 51, Genoa, OH 43430",
+  "place": "Taco Bell",
+  "city_queried": "Ottawa",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1300 Indiana Avenue, Saint Marys, OH 45885",
+  "place": "Subway",
+  "city_queried": "Saint Marys",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1594 Celina Road, Saint Marys, OH 45885",
+  "place": "Pizza Hut",
+  "city_queried": "Saint Marys",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "585 Royal Oak Drive, Saint Marys, OH 45885",
+  "place": "Domino's",
+  "city_queried": "Saint Marys",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "723 North Commerce Street, Lewisburg, OH 45338",
+  "place": "Lewisburg post office",
+  "city_queried": "Lewisburg",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "600 Hillcrest Drive, Eaton, OH 45320",
+  "place": "Eaton High School",
+  "city_queried": "Eaton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "630 Eaton Avenue, Hamilton, OH 45013",
+  "place": "Kettering Health Hamilton",
+  "city_queried": "Eaton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "100 East Washington Jackson Road, Eaton, OH 45320",
+  "place": "Walmart Supercenter",
+  "city_queried": "Eaton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1705 North Barron Street, Eaton, OH 45320",
+  "place": "Kroger",
+  "city_queried": "Eaton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "101 South Heincke Road, Miamisburg, OH 45342",
+  "place": "Arby's",
+  "city_queried": "Miamisburg",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "220 South Heincke Road, Miamisburg, OH 45342",
+  "place": "Wendy's",
+  "city_queried": "Miamisburg",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2765 Miamisburg Centerville Road, Miami Township, OH 45459",
+  "place": "Starbucks",
+  "city_queried": "Miamisburg",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "27 North Springboro Pike, Dayton, OH 45449",
+  "place": "Dunkin'",
+  "city_queried": "Miamisburg",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "680 East Central Avenue, West Carrollton, OH 45449",
+  "place": "KFC",
+  "city_queried": "West Carrollton",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "5652 North Springboro Pike, Moraine, OH 45449",
+  "place": "Subway",
+  "city_queried": "West Carrollton",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "23321 Broadway Avenue, Oakwood, OH 44146",
+  "place": "McDonald's",
+  "city_queried": "Oakwood",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "5010 Olive Road, Dayton, OH 45426",
+  "place": "Speedway",
+  "city_queried": "Trotwood",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "5200 Salem Avenue, Trotwood, OH 45426",
+  "place": "The Home Depot",
+  "city_queried": "Trotwood",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3031 Shiloh Springs Road, Dayton, OH 45426",
+  "place": "Marathon",
+  "city_queried": "Trotwood",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "606 South Main Street, Englewood, OH 45322",
+  "place": "Wendy's",
+  "city_queried": "Englewood",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "9198 North Main Street, Englewood, OH 45415",
+  "place": "Starbucks",
+  "city_queried": "Englewood",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "420 East National Road, Vandalia, OH 45377",
+  "place": "KFC",
+  "city_queried": "Vandalia",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "312 East National Road, Vandalia, OH 45377",
+  "place": "Subway",
+  "city_queried": "Vandalia",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "337 East National Road, Vandalia, OH 45377",
+  "place": "Pizza Hut",
+  "city_queried": "Vandalia",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1 Blue Pride Drive, Brookville, OH 45309",
+  "place": "Brookville High School",
+  "city_queried": "Brookville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4900 South County Road 25A, Tipp City, OH 45371",
+  "place": "Tipp City Veterinary Hospital",
+  "city_queried": "Tipp City",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "127 South Garber Drive, Tipp City, OH 45371",
+  "place": "McDonald's",
+  "city_queried": "Tipp City",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1000 West Main Street, Tipp City, OH 45371",
+  "place": "Speedway",
+  "city_queried": "Tipp City",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1187 East Dayton Yellow Springs Road, Fairborn, OH 45324",
+  "place": "Starbucks",
+  "city_queried": "Yellow Springs",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "168 East Dayton Yellow Springs Road, Fairborn, OH 45324",
+  "place": "Dunkin'",
+  "city_queried": "Yellow Springs",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "25 East Dayton Yellow Springs Road, Fairborn, OH 45324",
+  "place": "Family Dollar",
+  "city_queried": "Yellow Springs",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "21 East Dayton Yellow Springs Road, Fairborn, OH 45324",
+  "place": "Save-A-Lot",
+  "city_queried": "Yellow Springs",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "13 East Chillicothe Street, Cedarville, OH 45314",
+  "place": "Subway",
+  "city_queried": "Cedarville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2757 West Alexandersville Bellbrook Road, Dayton, OH 45459",
+  "place": "McDonald's",
+  "city_queried": "Bellbrook",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "113 North Main Street, Centerville, OH 45459",
+  "place": "Speedway",
+  "city_queried": "Bellbrook",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1920 Bellbrook Avenue, Xenia, OH 45385",
+  "place": "Dollar General",
+  "city_queried": "Bellbrook",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "575 Corwin Nixon Boulevard, South Lebanon, OH 45065",
+  "place": "Lowe's",
+  "city_queried": "South Lebanon",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1019 Dayton Lebanon Pike, Centerville, OH 45458",
+  "place": "Wendy's",
+  "city_queried": "South Lebanon",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "636 Corwin Nixon Boulevard, South Lebanon, OH 45065",
+  "place": "Starbucks",
+  "city_queried": "South Lebanon",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "588 West Marion Street, Mount Gilead, OH 43338",
+  "place": "Pizza Hut",
+  "city_queried": "Morrow",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "28 South Main Street, Mount Gilead, OH 43338",
+  "place": "Domino's",
+  "city_queried": "Morrow",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "37 West High Street, Mount Gilead, OH 43338",
+  "place": "United States Post Office",
+  "city_queried": "Morrow",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "6707 Goshen Road, Goshen, OH 45122",
+  "place": "Goshen High School",
+  "city_queried": "Goshen",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1849 SR 28;SR 132, Goshen, OH 45122",
+  "place": "Goshen Township Fire/EMS",
+  "city_queried": "Goshen",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "6757 Goshen Road, Goshen, OH 45122",
+  "place": "Goshen Township Police Department",
+  "city_queried": "Goshen",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "970 Lila Avenue, Milford, OH 45150",
+  "place": "Clear Outlook Counseling",
+  "city_queried": "Goshen",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1815 East Ohio Pike, Amelia, OH 45102",
+  "place": "Walmart Supercenter",
+  "city_queried": "Amelia",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "262 West Main Street, Amelia, OH 45102",
+  "place": "Kroger Marketplace",
+  "city_queried": "Amelia",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1261 West Ohio Pike, Amelia, OH 45102",
+  "place": "McDonald's",
+  "city_queried": "Amelia",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "57 West Main Street, Amelia, OH 45102",
+  "place": "Walgreens",
+  "city_queried": "Amelia",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1269 Old State Route 74, Batavia, OH 45103",
+  "place": "Speedway",
+  "city_queried": "Batavia",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "499 West Main Street, Batavia, OH 45103",
+  "place": "Dollar General",
+  "city_queried": "Batavia",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "947 Old State Route 74, Cincinnati, OH 45245",
+  "place": "CVS Pharmacy",
+  "city_queried": "Batavia",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "609 West Plane Street, Bethel, OH 45106",
+  "place": "Arby's",
+  "city_queried": "Bethel",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "621 West Plane Street, Bethel, OH 45106",
+  "place": "Wendy's",
+  "city_queried": "Bethel",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "600 West Plane Street, Bethel, OH 45106",
+  "place": "Dunkin Donuts",
+  "city_queried": "Bethel",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "2762 State Route 222, Bethel, OH 45106",
+  "place": "Family Dollar",
+  "city_queried": "Bethel",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "275 Rivers Edge Drive, Milford, OH 45150",
+  "place": "Harbor Freight Tools",
+  "city_queried": "Milford",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "100 Castleberry Court, Milford, OH 45150",
+  "place": "Milford Post Office",
+  "city_queried": "Milford",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "745 Center Street, Milford, OH 45150",
+  "place": "Milford City Hall",
+  "city_queried": "Milford",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "19 Water Street, Milford, OH 45150",
+  "place": "Milford Public Library",
+  "city_queried": "Milford",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1 Warrior Way, Cincinnati, OH 45227",
+  "place": "Mariemont High School",
+  "city_queried": "Mariemont",
+  "state": "OH",
+  "osm_type": "relation"
+ },
+ {
+  "address": "5903 Hawthorne Avenue, Fairfax, OH 45227",
+  "place": "Fairfax Police Department",
+  "city_queried": "Mariemont",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "7010 Rowan Hill Drive, Mariemont, OH 45227",
+  "place": "Mercy Saint Theresa Nursing Home",
+  "city_queried": "Mariemont",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "7341 Montgomery Road, Silverton, OH 45236",
+  "place": "CVS Pharmacy",
+  "city_queried": "Silverton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "6330 Hamilton Cleves Pike, Whitewater Township, OH 45041",
+  "place": "Wendy's",
+  "city_queried": "Cleves",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "10919 New Haven Road, Harrison, OH 45030",
+  "place": "KFC",
+  "city_queried": "Harrison",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "354 West 3rd Avenue, Columbus, OH 43201",
+  "place": "Subway",
+  "city_queried": "Harrison",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "10459 Harrison Avenue, Harrison, OH 45030",
+  "place": "Pizza Hut",
+  "city_queried": "Harrison",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "516 Lower Lincoln, Cadiz, OH 43907",
+  "place": "Domino's",
+  "city_queried": "Harrison",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "2691 Springdale Road, Cincinnati, OH 45231",
+  "place": "Speedway",
+  "city_queried": "Springdale",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "10365 Reading Road, Cincinnati, OH 45241",
+  "place": "Arby's",
+  "city_queried": "Evendale",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "10775 Reading Road, Cincinnati, OH 45241",
+  "place": "Wendy's",
+  "city_queried": "Evendale",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4200 Vine Street, Saint Bernard, OH 45217",
+  "place": "Saint Bernard Police Department",
+  "city_queried": "Saint Bernard",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "8515 Euclid Avenue, Cleveland, OH 44106",
+  "place": "Burger King",
+  "city_queried": "Fairfax",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "10630 Loveland Madeira Road, Loveland, OH 45140",
+  "place": "Circle K",
+  "city_queried": "Madeira",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "10660 Loveland Madeira Road, Loveland, OH 45140",
+  "place": "Arby's",
+  "city_queried": "Madeira",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "10601 Loveland Madeira Road, Loveland, OH 45140",
+  "place": "Wendy's",
+  "city_queried": "Madeira",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "7011 Miami Avenue, Madeira, OH 45243",
+  "place": "Starbucks",
+  "city_queried": "Madeira",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "9188 Plainfield Road, Blue Ash, OH 45236",
+  "place": "Dunkin'",
+  "city_queried": "Blue Ash",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "11250 Reed Hartman Highway, Blue Ash, OH 45241",
+  "place": "Chick-fil-A",
+  "city_queried": "Blue Ash",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "10650 Loveland Madeira Road, Loveland, OH 45140",
+  "place": "Taco Bell",
+  "city_queried": "Loveland",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3159 West United States Highway 22 and 3, Loveland, OH 45140",
+  "place": "Domino's",
+  "city_queried": "Loveland",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "200 Loveland–Madeira Road, Loveland, OH 45140",
+  "place": "Loveland Post Office",
+  "city_queried": "Loveland",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "120 Grear Millitzer Place, Loveland, OH 45140",
+  "place": "Loveland City Hall",
+  "city_queried": "Loveland",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "9560 I 71, Mason, OH 45040",
+  "place": "Cincinnati Children’s Hospital Outpatient",
+  "city_queried": "Mason",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "5303 Bowen Drive, Mason, OH 45040",
+  "place": "Walmart Supercenter",
+  "city_queried": "Mason",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "9188 Reading Road, Reading, OH 45241",
+  "place": "Taco Bell",
+  "city_queried": "Reading",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "10425 Reading Road, Cincinnati, OH 45241",
+  "place": "Burger King",
+  "city_queried": "Reading",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1246 Reading Road, Mason, OH 45040",
+  "place": "Dollar Tree",
+  "city_queried": "Reading",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "11960 Lebanon Road, Sharonville, OH 45241",
+  "place": "Wendy's",
+  "city_queried": "Sharonville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "12045 Lebanon Road, Sharonville, OH 45241",
+  "place": "Dunkin'",
+  "city_queried": "Sharonville",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "4478 Montgomery Road, Norwood, OH 45212",
+  "place": "KFC",
+  "city_queried": "Norwood",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "3915 Montgomery Road, Norwood, OH 45212",
+  "place": "Domino's",
+  "city_queried": "Norwood",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "2469 East Dublin Granville Road, Columbus, OH 43229",
+  "place": "United States Post Office",
+  "city_queried": "Forest Park",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "8800 Kingsridge Drive, Dayton, OH 45458",
+  "place": "Walmart Supercenter",
+  "city_queried": "Montgomery",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "410 South Main Street, Dayton, OH 45402",
+  "place": "McDonald's",
+  "city_queried": "Montgomery",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1542 Wayne Avenue, Dayton, OH 45410",
+  "place": "Walgreens",
+  "city_queried": "Montgomery",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "4950 Burkhardt Road, Dayton, OH 45431",
+  "place": "Speedway",
+  "city_queried": "Montgomery",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1889 Deerfield Road, Lebanon, OH 45036",
+  "place": "The Home Depot",
+  "city_queried": "Lebanon",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "892 Dayton Lebanon Pike, Centerville, OH 45458",
+  "place": "Dollar General",
+  "city_queried": "Lebanon",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "605 Columbus Avenue, Lebanon, OH 45036",
+  "place": "CVS Pharmacy",
+  "city_queried": "Lebanon",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "715 East Main Street, Lebanon, OH 45036",
+  "place": "Taco Bell",
+  "city_queried": "Lebanon",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "540 South Locust Street, Oxford, OH 45056",
+  "place": "Dollar Tree",
+  "city_queried": "Oxford",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "740 West Trenton Avenue, Findlay, OH 45840",
+  "place": "Wendy's",
+  "city_queried": "Trenton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "508 West Trenton Avenue, Findlay, OH 45840",
+  "place": "Starbucks",
+  "city_queried": "Trenton",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "416 West Trenton Avenue, Findlay, OH 45840",
+  "place": "Dunkin'",
+  "city_queried": "Trenton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1165 West Trenton Avenue, Findlay, OH 45840",
+  "place": "Chick-fil-A",
+  "city_queried": "Trenton",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "5539 Monroe Street, Sylvania, OH 43560",
+  "place": "ALDI",
+  "city_queried": "Monroe",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "2902 Monroe Street, Toledo, OH 43606",
+  "place": "KFC",
+  "city_queried": "Monroe",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "40 American Way, Monroe, OH 45050",
+  "place": "Subway",
+  "city_queried": "Monroe",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "294 North Main Street, Monroe, OH 45050",
+  "place": "Pizza Hut",
+  "city_queried": "Monroe",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "840 West 3rd Avenue, Columbus, OH 43212",
+  "place": "Market District - Grandview Yard",
+  "city_queried": "Franklin",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "44 East 4th Street, Franklin, OH 45005",
+  "place": "Franklin-Springboro Public Library",
+  "city_queried": "Franklin",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "320 West Central Avenue, Springboro, OH 45066",
+  "place": "Springboro Police Department",
+  "city_queried": "Springboro",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "3333 West Tech Road, Miamisburg, OH 45342",
+  "place": "Dayton Children's Hospital - South Campus",
+  "city_queried": "Springboro",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "625 West Central Avenue, Springboro, OH 45066",
+  "place": "Kroger",
+  "city_queried": "Springboro",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "775 West Central Avenue, Springboro, OH 45066",
+  "place": "McDonald's",
+  "city_queried": "Springboro",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "911 Dayton Lebanon Pike, Centerville, OH 45458",
+  "place": "Walgreens",
+  "city_queried": "Centerville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1488 Yankee Street, Dayton, OH 45458",
+  "place": "Speedway",
+  "city_queried": "Centerville",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "5860 I 675, Centerville, OH 45459",
+  "place": "The Home Depot",
+  "city_queried": "Centerville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "7115 Far Hills Avenue, Centerville, OH 45459",
+  "place": "Bob Evans",
+  "city_queried": "Centerville",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3810 Dayton-Xenia Road, Beavercreek, OH 45432",
+  "place": "Marathon",
+  "city_queried": "Beavercreek",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3218 Dayton-Xenia Road, Beavercreek, OH 45432",
+  "place": "Taco Bell",
+  "city_queried": "Beavercreek",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3378 Pentagon Boulevard, Beavercreek, OH 45431",
+  "place": "Burger King",
+  "city_queried": "Beavercreek",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3198 Dayton-Xenia Road, Beavercreek, OH 45432",
+  "place": "AutoZone",
+  "city_queried": "Beavercreek",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "6700 Brandt Pike, Huber Heights, OH 45424",
+  "place": "O'Reilly Auto Parts",
+  "city_queried": "Huber Heights",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "8421 Old Troy Pike, Huber Heights, OH 45424",
+  "place": "Lowe's",
+  "city_queried": "Huber Heights",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "6340 Brandt Pike, Huber Heights, OH 45424",
+  "place": "Arby's",
+  "city_queried": "Huber Heights",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "8201 Center Point 70 Boulevard, Huber Heights, OH 45424",
+  "place": "Wendy's",
+  "city_queried": "Huber Heights",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1355 North Detroit Street, Xenia, OH 45385",
+  "place": "Subway",
+  "city_queried": "Xenia",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "354 West Main Street, Xenia, OH 45385",
+  "place": "Pizza Hut",
+  "city_queried": "Xenia",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3320 Dayton-Xenia Road, Beavercreek, OH 45432",
+  "place": "Domino's",
+  "city_queried": "Xenia",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "245 West Main Street, Xenia, OH 45385",
+  "place": "Little Caesars",
+  "city_queried": "Xenia",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2081 US 23, Delaware, OH 43015",
+  "place": "Big Lots",
+  "city_queried": "Troy",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "1781 West Main Street, Troy, OH 45373",
+  "place": "Harbor Freight Tools",
+  "city_queried": "Troy",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "419 West Main Street, Troy, OH 45385",
+  "place": "Troy–Miami County Public Library",
+  "city_queried": "Troy",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "7700 University Drive, West Chester Township, OH 45069",
+  "place": "West Chester Hospital",
+  "city_queried": "West Chester",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "8288 Cincinnati-Dayton Road, West Chester Township, OH 45069",
+  "place": "Walmart Supercenter",
+  "city_queried": "West Chester",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "7855 Tylersville Road, West Chester Township, OH 45069",
+  "place": "Kroger",
+  "city_queried": "West Chester",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "9142 Cincinnati Columbus Road;Columbus-Cincinnati Road, West Chester Township, OH 45069",
+  "place": "McDonald's",
+  "city_queried": "West Chester",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "859 East Main Street, Lancaster, OH 43130",
+  "place": "Walgreens",
+  "city_queried": "Fairfield",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2735 Columbus-Lancaster Road Northwest, Greenfield Township, OH 43130",
+  "place": "Speedway",
+  "city_queried": "Fairfield",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3775 Presidential Drive, Fairborn, OH 45324",
+  "place": "The Home Depot",
+  "city_queried": "Fairfield",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3000 Columbus-Lancaster Road Northwest, Lancaster, OH 43130",
+  "place": "Meijer",
+  "city_queried": "Fairfield",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "5418 Kings Mills Road, Mason, OH 45040",
+  "place": "Taco Bell",
+  "city_queried": "Mason",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "9380 Mason Montgomery Road, Mason, OH 45040",
+  "place": "Lowe's",
+  "city_queried": "Mason",
+  "state": "OH",
+  "osm_type": "node"
+ },
+ {
+  "address": "3999 South Hamilton Road, Groveport, OH 43125",
+  "place": "Sheetz",
+  "city_queried": "Hamilton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "6271 Glenway Avenue, Cincinnati, OH 45211",
+  "place": "Arby's",
+  "city_queried": "Hamilton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "1246 Hopple Street, Cincinnati, OH 45225",
+  "place": "Wendy's",
+  "city_queried": "Hamilton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "3686 Madison Road, Cincinnati, OH 45209",
+  "place": "Starbucks",
+  "city_queried": "Hamilton",
+  "state": "OH",
+  "osm_type": "way"
+ },
+ {
+  "address": "2815 Fern Valley Road, Louisville, KY 40213",
+  "place": "Dunkin'",
+  "city_queried": "Louisville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "10501 Preston Highway, Louisville, KY 40229",
+  "place": "Chick-fil-A",
+  "city_queried": "Louisville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "10006 Will Way, Louisville, KY 40291",
+  "place": "Applebee's",
+  "city_queried": "Louisville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1961-F Brownsboro Road, Louisville, KY 40206",
+  "place": "Family Dollar",
+  "city_queried": "Louisville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "126 Rojay Drive, Lexington, KY 40503",
+  "place": "ALDI",
+  "city_queried": "Lexington",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "3851 Kenesaw Drive, Lexington, KY 40517",
+  "place": "Subway",
+  "city_queried": "Lexington",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "801 Euclid Avenue, Lexington, KY 40502",
+  "place": "Domino's",
+  "city_queried": "Lexington",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "3601 Walden Drive, Lexington, KY 40517",
+  "place": "Little Caesars",
+  "city_queried": "Lexington",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "660 31-W By-Pass, Bowling Green, KY 42101",
+  "place": "Harbor Freight Tools",
+  "city_queried": "Bowling Green",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1225 State Street, Bowling Green, KY 42101",
+  "place": "Warren County Public Library",
+  "city_queried": "Bowling Green",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2450 West Parrish Avenue, Owensboro, KY 42301",
+  "place": "Audubon Animal Hospital",
+  "city_queried": "Owensboro",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "3151 Leitchfield Road, Owensboro, KY 42303",
+  "place": "Walmart Supercenter",
+  "city_queried": "Owensboro",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2630 Frederica Street, Owensboro, KY 42301",
+  "place": "Kroger",
+  "city_queried": "Owensboro",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2750 Frederica Street, Owensboro, KY 42301",
+  "place": "McDonald's",
+  "city_queried": "Owensboro",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1220 Madison Avenue, Covington, KY 41011",
+  "place": "Walgreens",
+  "city_queried": "Covington",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "3926 Winston Avenue, Covington, KY 41015",
+  "place": "Speedway",
+  "city_queried": "Covington",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "2001 Madison Avenue, Covington, KY 41014",
+  "place": "CVS/pharmacy",
+  "city_queried": "Covington",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "6724 Dixie Highway, Florence, KY 41042",
+  "place": "Taco Bell",
+  "city_queried": "Florence",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "4868 Houston Road, Florence, KY 41042",
+  "place": "Burger King",
+  "city_queried": "Florence",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1040 Hansel Avenue, Florence, KY 41042",
+  "place": "Dollar Tree",
+  "city_queried": "Florence",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "8510 Old Toll Road, Florence, KY 41042",
+  "place": "AutoZone",
+  "city_queried": "Florence",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "305 Connector Road, Georgetown, KY 40324",
+  "place": "Tractor Supply Company",
+  "city_queried": "Georgetown",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "109 Magnolia Drive, Georgetown, KY 40324",
+  "place": "Lowe's",
+  "city_queried": "Georgetown",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1237 Paris Pike, Georgetown, KY 40324",
+  "place": "Arby's",
+  "city_queried": "Georgetown",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2002 Paris Pike, Georgetown, KY 40324",
+  "place": "Wendy's",
+  "city_queried": "Georgetown",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2013 Colby Taylor Drive, Richmond, KY 40475",
+  "place": "Starbucks",
+  "city_queried": "Richmond",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "2072 Lantern Ridge Drive, Richmond, KY 40475",
+  "place": "Chick-fil-A",
+  "city_queried": "Richmond",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "5042 Atwood Drive, Richmond, KY 40475",
+  "place": "Save-A-Lot",
+  "city_queried": "Richmond",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "798 Eastern Bypass, Richmond, KY 40475",
+  "place": "ALDI",
+  "city_queried": "Richmond",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "900 North Main Street, Nicholasville, KY 40356",
+  "place": "KFC",
+  "city_queried": "Nicholasville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "109 Springdale Drive, Nicholasville, KY 40356",
+  "place": "Subway",
+  "city_queried": "Nicholasville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "964 North Main Street, Nicholasville, KY 40356",
+  "place": "Pizza Hut",
+  "city_queried": "Nicholasville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "800 South Main Street, Nicholasville, KY 40356",
+  "place": "Domino's",
+  "city_queried": "Nicholasville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1512 North Dixie Highway, Elizabethtown, KY 42701",
+  "place": "Little Caesars",
+  "city_queried": "Elizabethtown",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1502 North Dixie Highway, Elizabethtown, KY 42701",
+  "place": "Harbor Freight Tools",
+  "city_queried": "Elizabethtown",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "200 West Dixie Avenue, Elizabethtown, KY 42701",
+  "place": "Elizabethtown City Hall",
+  "city_queried": "Elizabethtown",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "100 Jim Owen Drive, Elizabethtown, KY 42701",
+  "place": "Hardin County Public Library",
+  "city_queried": "Elizabethtown",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "430 Koffman Drive, Hopkinsville, KY 42240",
+  "place": "Hopkinsville High School",
+  "city_queried": "Hopkinsville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2400 Russellville Road, Hopkinsville, KY 42240",
+  "place": "Western State Hospital",
+  "city_queried": "Hopkinsville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "300 Clinic Drive, Hopkinsville, KY 42240",
+  "place": "Walmart Supercenter",
+  "city_queried": "Hopkinsville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1213 Skyline Drive, Hopkinsville, KY 42240",
+  "place": "Kroger",
+  "city_queried": "Hopkinsville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "2088 Declaration Drive, Independence, KY 41051",
+  "place": "McDonald's",
+  "city_queried": "Independence",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2005 Centennial Boulevard, Independence, KY 41051",
+  "place": "Walgreens",
+  "city_queried": "Independence",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "3395 Madison Pike, Fort Wright, KY 41017",
+  "place": "Speedway",
+  "city_queried": "Independence",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "355 Leonardwood Drive, Frankfort, KY 40601",
+  "place": "Taco Bell",
+  "city_queried": "Frankfort",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "161 Arrowhead Court, Frankfort, KY 40601",
+  "place": "Burger King",
+  "city_queried": "Frankfort",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "111 Arrowhead Court, Frankfort, KY 40601",
+  "place": "Tractor Supply Company",
+  "city_queried": "Frankfort",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "350 Woodgate Road, Frankfort, KY 40601",
+  "place": "Lowe's",
+  "city_queried": "Frankfort",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "2336 South Green Street, Henderson, KY 42420",
+  "place": "Circle K",
+  "city_queried": "Henderson",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "2067 US Highway 41, Henderson, KY 42420",
+  "place": "Arby's",
+  "city_queried": "Henderson",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1961 South Parkway Street, Henderson, KY 42420",
+  "place": "Wendy's",
+  "city_queried": "Henderson",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2051 US Highway 41, Henderson, KY 42420",
+  "place": "Applebee's",
+  "city_queried": "Henderson",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "825 South Hurstbourne Parkway, Louisville, KY 40222",
+  "place": "ALDI",
+  "city_queried": "Jeffersontown",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1801 Blankenbaker Parkway, Jeffersontown, KY 40299",
+  "place": "KFC",
+  "city_queried": "Jeffersontown",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1821 Plantside Drive, Jeffersontown, KY 40299",
+  "place": "Subway",
+  "city_queried": "Jeffersontown",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "9160 Taylorsville Road, Jeffersontown, KY 40299",
+  "place": "Pizza Hut",
+  "city_queried": "Jeffersontown",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "651 South Wilson Road, Radcliff, KY 40160",
+  "place": "Domino's",
+  "city_queried": "Radcliff",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "105 Kieta Way, Radcliff, KY 40160",
+  "place": "Little Caesars",
+  "city_queried": "Radcliff",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "411 West Lincoln Trail Boulevard, Radcliff, KY 40160",
+  "place": "Radcliff City Hall",
+  "city_queried": "Radcliff",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "800 South Logsdon Parkway, Radcliff, KY 40160",
+  "place": "Hardin County Public Library North Branch",
+  "city_queried": "Radcliff",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1000 Saint Christopher Drive, Ashland, KY 41101",
+  "place": "Bellefonte Hospital & Recovery Center",
+  "city_queried": "Ashland",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "12504 Cannonsburg Road, Ashland, KY 41102",
+  "place": "Walmart Supercenter",
+  "city_queried": "Ashland",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2550 Winchester Avenue, Ashland, KY 41101",
+  "place": "McDonald's",
+  "city_queried": "Ashland",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "110 April Way, Winchester, KY 40391",
+  "place": "Taco Bell",
+  "city_queried": "Winchester",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1 Shoppers Drive, Winchester, KY 40391",
+  "place": "Burger King",
+  "city_queried": "Winchester",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1121 Winchester Road, Lexington, KY 40509",
+  "place": "O'Reilly Auto Parts",
+  "city_queried": "Winchester",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1500 Bypass Road, Winchester, KY 40391",
+  "place": "Tractor Supply Company",
+  "city_queried": "Winchester",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1400 Lowes Drive, Murray, KY 42071",
+  "place": "Lowe's",
+  "city_queried": "Murray",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "409 North 12th Street, Murray, KY 42071",
+  "place": "Arby's",
+  "city_queried": "Murray",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1111 Chestnut Street, Murray, KY 42071",
+  "place": "Wendy's",
+  "city_queried": "Murray",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "509 North 12th Street, Murray, KY 42071",
+  "place": "Starbucks",
+  "city_queried": "Murray",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "525 Langdon Street, Somerset, KY 42501",
+  "place": "Dunkin'",
+  "city_queried": "Somerset",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "2400 University of Kentucky Drive, Somerset, KY 42501",
+  "place": "Chick-fil-A",
+  "city_queried": "Somerset",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "4105 Mercury Boulevard, Somerset, KY 42501",
+  "place": "ALDI",
+  "city_queried": "Somerset",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "704 US 27, Somerset, KY 42501",
+  "place": "KFC",
+  "city_queried": "Somerset",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "141 Veech Drive, Bardstown, KY 40004",
+  "place": "Subway",
+  "city_queried": "Bardstown",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "321 West John Rowan Boulevard, Bardstown, KY 40004",
+  "place": "Pizza Hut",
+  "city_queried": "Bardstown",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "701 North 3rd Street, Bardstown, KY 40004",
+  "place": "Domino's",
+  "city_queried": "Bardstown",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "307 West Broadway Street, Danville, KY 40422",
+  "place": "Boyle County Public Library",
+  "city_queried": "Danville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "420 West Main Street, Danville, KY 40422",
+  "place": "Danville Central Fire Station",
+  "city_queried": "Danville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "445 West Main Street, Danville, KY 40422",
+  "place": "Danville Police Department",
+  "city_queried": "Danville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "100 Walton Avenue, Danville, KY 40422",
+  "place": "Walmart Supercenter",
+  "city_queried": "Danville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "3141 Park Avenue, Paducah, KY 42001",
+  "place": "Kroger",
+  "city_queried": "Paducah",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2627 Jackson Street, Paducah, KY 42001",
+  "place": "McDonald's",
+  "city_queried": "Paducah",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "2801 James Sanders Boulevard, Paducah, KY 42001",
+  "place": "The Home Depot",
+  "city_queried": "Paducah",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "4368 North Mayo Trail, Pikeville, KY 41501",
+  "place": "Taco Bell",
+  "city_queried": "Pikeville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "116 Lee Avenue, Pikeville, KY 41501",
+  "place": "Burger King",
+  "city_queried": "Pikeville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "3940 North Mayo Trail, Coal Run Village, KY 41501",
+  "place": "O'Reilly Auto Parts",
+  "city_queried": "Pikeville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "164 Lee Avenue, Pikeville, KY 41501",
+  "place": "Tractor Supply Company",
+  "city_queried": "Pikeville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "314 East Maple Leaf Road, Maysville, KY 41056",
+  "place": "Lowe's",
+  "city_queried": "Maysville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1501 US 62, Maysville, KY 41056",
+  "place": "Wendy's",
+  "city_queried": "Maysville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "24 Corbin Bypass, Corbin, KY 40701",
+  "place": "ALDI",
+  "city_queried": "Corbin",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "688 West Dixie Highway, Corbin, KY 40701",
+  "place": "KFC",
+  "city_queried": "Corbin",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "120 College Park Drive, London, KY 40741",
+  "place": "Laurel County Public Library",
+  "city_queried": "London",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "120 Jill Drive, Berea, KY 40403",
+  "place": "Walmart Supercenter",
+  "city_queried": "Berea",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "890 Berea Road, Richmond, KY 40475",
+  "place": "Kroger",
+  "city_queried": "Berea",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "109 Brenwood Street, Berea, KY 40403",
+  "place": "McDonald's",
+  "city_queried": "Berea",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "220 Richmond Road North, Berea, KY 40403",
+  "place": "Walgreens",
+  "city_queried": "Berea",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2150 Dixie Highway, Fort Mitchell, KY 41017",
+  "place": "Starbucks",
+  "city_queried": "Fort Mitchell",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "30 Town Center Boulevard, Fort Mitchell, KY 41017",
+  "place": "Applebee's",
+  "city_queried": "Fort Mitchell",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "3069 Dixie Highway, Erlanger, KY 41018",
+  "place": "Wendy's",
+  "city_queried": "Edgewood",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "785 North Broadway, Lexington, KY 40542",
+  "place": "Subway",
+  "city_queried": "Elsmere",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "176 Johns Hill Road, Highland Heights, KY 41076",
+  "place": "Highland Heights Police Department",
+  "city_queried": "Highland Heights",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "70 Martha Layne Collins Boulevard, Cold Spring, KY 41076",
+  "place": "Kroger",
+  "city_queried": "Highland Heights",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "171 Southgate Drive, Georgetown, KY 40324",
+  "place": "McDonald's",
+  "city_queried": "Southgate",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1902 Monmouth Street, Newport, KY 41071",
+  "place": "Speedway",
+  "city_queried": "Southgate",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "7150 Alexandria Pike, Alexandria, KY 41001",
+  "place": "Arby's",
+  "city_queried": "Alexandria",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "7201 East Alexandria Pike, Alexandria, KY 41001",
+  "place": "Wendy's",
+  "city_queried": "Alexandria",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "4765 Alexandria Pike, Cold Spring, KY 41076",
+  "place": "Dunkin'",
+  "city_queried": "Alexandria",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "51 Elm Street, Ludlow, KY 41016",
+  "place": "Ludlow Police Department",
+  "city_queried": "Ludlow",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "610 Emily Drive, Fort Mitchell, KY 41017",
+  "place": "AutoZone",
+  "city_queried": "Crescent Springs",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2517 Terry Lane, Crescent Springs, KY 41017",
+  "place": "Arby's",
+  "city_queried": "Crescent Springs",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "4385 Winston Avenue, Covington, KY 41015",
+  "place": "Wendy's",
+  "city_queried": "Taylor Mill",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "300 Sam Walton drive, Somerset, KY 42501",
+  "place": "Subway",
+  "city_queried": "Walton",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1664 Frogtown Road, Union, KY 41091",
+  "place": "Union Post Office",
+  "city_queried": "Union",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "126 South Morgan Street, Morganfield, KY 42437",
+  "place": "Union County Public Library",
+  "city_queried": "Union",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "10379 Raider Run, Union, KY 41091",
+  "place": "Larry A. Ryle High School",
+  "city_queried": "Union",
+  "state": "KY",
+  "osm_type": "relation"
+ },
+ {
+  "address": "324 Floyd Drive, Carrollton, KY 41008",
+  "place": "Tractor Supply",
+  "city_queried": "Carrollton",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "3055 Slumber Lane, Carrollton, KY 41008",
+  "place": "Arby's",
+  "city_queried": "Carrollton",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "31777 Hospitality Way, Carrollton, KY 41008",
+  "place": "Wendy's",
+  "city_queried": "Carrollton",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "101 West Crystal Drive, La Grange, KY 40031",
+  "place": "KFC",
+  "city_queried": "La Grange",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "4101 W Highway 146, La Grange, KY 40031",
+  "place": "Subway",
+  "city_queried": "La Grange",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1605 Midland Trail, Shelbyville, KY 40065",
+  "place": "Walgreens",
+  "city_queried": "Shelbyville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1620 Mount Eden Road, Shelbyville, KY 40065",
+  "place": "Speedway",
+  "city_queried": "Shelbyville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "21 Mount Tabor Court, Shelbyville, KY 40065",
+  "place": "Dollar General",
+  "city_queried": "Shelbyville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "16 Mack Walters Road, Shelbyville, KY 40065",
+  "place": "CVS Pharmacy",
+  "city_queried": "Shelbyville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "12609 Taylorsville Road, Louisville, KY 40299",
+  "place": "Taco Bell",
+  "city_queried": "Taylorsville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "9120 Taylorsville Road, Jeffersontown, KY 40299",
+  "place": "Burger King",
+  "city_queried": "Taylorsville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "724 Taylorsville Road, Taylorsville, KY 40071",
+  "place": "AutoZone",
+  "city_queried": "Taylorsville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "544 Taylorsville Road, Shelbyville, KY 40065",
+  "place": "Lowe's",
+  "city_queried": "Taylorsville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "360 Village Lane, Mount Washington, KY 40047",
+  "place": "Arby's",
+  "city_queried": "Mount Washington",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "140 Mt Washington Bypass, Mount Washington, KY 40047",
+  "place": "Dunkin'",
+  "city_queried": "Mount Washington",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "427 Highway 44 East, Shepherdsville, KY 40165",
+  "place": "KFC",
+  "city_queried": "Shepherdsville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1090 Cedar Grove Road, Shepherdsville, KY 40165",
+  "place": "Subway",
+  "city_queried": "Shepherdsville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "6442 Old Mill Road, Mount Washington, KY 40047",
+  "place": "Pizza Hut",
+  "city_queried": "Shepherdsville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "544 Conestoga Parkway, Shepherdsville, KY 40165",
+  "place": "Domino's",
+  "city_queried": "Shepherdsville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1109 Hillview Drive, Irvington, KY 40146",
+  "place": "Irvington Branch Public Library",
+  "city_queried": "Hillview",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "320 Loretto Road, Lebanon, KY 40033",
+  "place": "Spring View Hospital",
+  "city_queried": "Lebanon",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2136 Campbellsville Road, Lebanon, KY 40033",
+  "place": "Walmart Supercenter",
+  "city_queried": "Lebanon",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "705 East Main Street, Lebanon, KY 40033",
+  "place": "Kroger",
+  "city_queried": "Lebanon",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "926 South Lincoln Boulevard, Hodgenville, KY 42748",
+  "place": "Burger King",
+  "city_queried": "Hodgenville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "152 East Lincoln Trail Boulevard, Radcliff, KY 40160",
+  "place": "Arby's",
+  "city_queried": "Vine Grove",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "225 North Dixie Boulevard, Radcliff, KY 40160",
+  "place": "Wendy's",
+  "city_queried": "Vine Grove",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "100 North Dixie Boulevard, Radcliff, KY 40160",
+  "place": "Starbucks",
+  "city_queried": "Vine Grove",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "714 Highland Avenue, Vine Grove, KY 40175",
+  "place": "Family Dollar",
+  "city_queried": "Vine Grove",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1200 KY 313, Brandenburg, KY 40108",
+  "place": "KFC",
+  "city_queried": "Brandenburg",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "757 KY 313, Brandenburg, KY 40108",
+  "place": "Domino's",
+  "city_queried": "Brandenburg",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "777 KY 313, Brandenburg, KY 40108",
+  "place": "Big Lots",
+  "city_queried": "Brandenburg",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1002 Hooks Lane, Hardinsburg, KY 40143",
+  "place": "Walmart",
+  "city_queried": "Hardinsburg",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1116 US 60;KY 259, Hardinsburg, KY 40143",
+  "place": "McDonald's",
+  "city_queried": "Hardinsburg",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "802 South Main Street, Leitchfield, KY 42754",
+  "place": "Taco Bell",
+  "city_queried": "Leitchfield",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "3204 Leitchfield Road, Elizabethtown, KY 42701",
+  "place": "Burger King",
+  "city_queried": "Leitchfield",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1301 Elizabethtown Road, Leitchfield, KY 42754",
+  "place": "Dollar Tree",
+  "city_queried": "Leitchfield",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "140 Stockpen Road, Munfordville, KY 42765",
+  "place": "Tractor Supply Company",
+  "city_queried": "Munfordville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "901 Mammoth Cave Street, Cave City, KY 42127",
+  "place": "Subway",
+  "city_queried": "Cave City",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "804 Mammoth Cave Street, Cave City, KY 42127",
+  "place": "Pizza Hut",
+  "city_queried": "Cave City",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "309 Broadway Street, Cave City, KY 42127",
+  "place": "Cave City Post Office",
+  "city_queried": "Cave City",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1530 South Green Street, Glasgow, KY 42141",
+  "place": "Mary Wood Weldon Memorial Public Library",
+  "city_queried": "Glasgow",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1301 North Race Street, Glasgow, KY 42141",
+  "place": "T.J. Samson Community Hospital",
+  "city_queried": "Glasgow",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2345 Happy Valley Road, Glasgow, KY 42141",
+  "place": "Walmart Supercenter",
+  "city_queried": "Glasgow",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "507 North Main Street, Tompkinsville, KY 42167",
+  "place": "Taco Bell",
+  "city_queried": "Tompkinsville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "829 Jamestown Street, Columbia, KY 42728",
+  "place": "Family Dollar",
+  "city_queried": "Columbia",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "111 Dohoney Trace, Columbia, KY 42728",
+  "place": "KFC",
+  "city_queried": "Columbia",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "950 Jamestown Street, Columbia, KY 42728",
+  "place": "Subway",
+  "city_queried": "Columbia",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "990 Jamestown Street, Columbia, KY 42728",
+  "place": "Pizza Hut",
+  "city_queried": "Columbia",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "3660 Boston Road, Lexington, KY 40514",
+  "place": "Speedway",
+  "city_queried": "Monticello",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "701 South 10th Street, Williamsburg, KY 40769",
+  "place": "Arby's",
+  "city_queried": "Williamsburg",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1484 Cumberland Gap Parkway, Barbourville, KY 40906",
+  "place": "KFC",
+  "city_queried": "Barbourville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "214 Walnut Street, Pineville, KY 40977",
+  "place": "Pineville-Bell County Public Library",
+  "city_queried": "Pineville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "9824 US 25E, Pineville, KY 40977",
+  "place": "Bell County High School",
+  "city_queried": "Pineville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "150 North 20th Street, Middlesboro, KY 40864",
+  "place": "Middlesboro Police Department",
+  "city_queried": "Middlesboro",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "3600 West Cumberland Avenue, Middlesboro, KY 40965",
+  "place": "Middlesboro ARH Hospital",
+  "city_queried": "Middlesboro",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "515 North 12th Street, Middlesboro, KY 40965",
+  "place": "Kroger",
+  "city_queried": "Middlesboro",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "495 North 12th Street, Middlesboro, KY 40965",
+  "place": "McDonald's",
+  "city_queried": "Middlesboro",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1614 East Main Street, Cumberland, KY 40823",
+  "place": "Speedway",
+  "city_queried": "Harlan",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1815 East Main Street, Cumberland, KY 40823",
+  "place": "Dollar General",
+  "city_queried": "Harlan",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "118 North Main Street, Evarts, KY 40828",
+  "place": "Marathon",
+  "city_queried": "Harlan",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "137 Village Lane, Hazard, KY 41701",
+  "place": "Taco Bell",
+  "city_queried": "Hazard",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "100 Black Gold Court, Hazard, KY 41701",
+  "place": "Burger King",
+  "city_queried": "Hazard",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "330 Village Lane, Hazard, KY 41701",
+  "place": "Tractor Supply Company",
+  "city_queried": "Hazard",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "81 Justice Drive, Hazard, KY 41701",
+  "place": "Lowe's",
+  "city_queried": "Hazard",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "31 Nathan Lane, Jackson, KY 41339",
+  "place": "Wendy's",
+  "city_queried": "Jackson",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "3199 Jackson Street, Paducah, KY 42003",
+  "place": "Dunkin' Donuts",
+  "city_queried": "Jackson",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "184 Broadway Street, Irvine, KY 40336",
+  "place": "Estill County Public Library",
+  "city_queried": "Irvine",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "397 Engineer Road, Irvine, KY 40336",
+  "place": "Estill County High School",
+  "city_queried": "Irvine",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "130 Main Street, Irvine, KY 40336",
+  "place": "Estill County Courthouse",
+  "city_queried": "Irvine",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "718 West College Avenue, Stanton, KY 40380",
+  "place": "Kroger",
+  "city_queried": "Stanton",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "385 Furnace Road, Stanton, KY 40380",
+  "place": "McDonald's",
+  "city_queried": "Stanton",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "125 North Main Street, Stanton, KY 40380",
+  "place": "Walgreens",
+  "city_queried": "Stanton",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "350 Viking Drive, Morehead, KY 40351",
+  "place": "Dollar Tree",
+  "city_queried": "Morehead",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "100 I 64, Morehead, KY 40351",
+  "place": "Lowe's",
+  "city_queried": "Morehead",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "125 West Main Street, Morehead, KY 40351",
+  "place": "Arby's",
+  "city_queried": "Morehead",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "104 North Main Street, Cynthiana, KY 41031",
+  "place": "Cynthiana-Harrison County Public Library",
+  "city_queried": "Cynthiana",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "201 West Pike Street, Cynthiana, KY 41031",
+  "place": "Harrison County Volunteer Fire Department Station 7",
+  "city_queried": "Cynthiana",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1210 Millersburg Pike, Cynthiana, KY 41031",
+  "place": "Harrison Memorial Hospital",
+  "city_queried": "Cynthiana",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "305 Letton Drive, Paris, KY 40361",
+  "place": "Walmart Supercenter",
+  "city_queried": "Paris",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "103 Ash Drive, Paris, KY 40361",
+  "place": "Walgreens",
+  "city_queried": "Paris",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1559 Main Street, Paris, KY 40361",
+  "place": "Speedway",
+  "city_queried": "Paris",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "139 East Main Street, Paris, KY 40361",
+  "place": "Dollar General",
+  "city_queried": "Paris",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "3590 Lexington Road, Versailles, KY 40383",
+  "place": "Marathon",
+  "city_queried": "Versailles",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "411 Lexington Road, Versailles, KY 40383",
+  "place": "Taco Bell",
+  "city_queried": "Versailles",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "219 Kroger Way, Versailles, KY 40383",
+  "place": "Burger King",
+  "city_queried": "Versailles",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "2284 Versailles Road, Lexington, KY 40504",
+  "place": "Dollar Tree",
+  "city_queried": "Versailles",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1220 Anderson Crossing Drive, Lawrenceburg, KY 40342",
+  "place": "Wendy's",
+  "city_queried": "Lawrenceburg",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2025 Harrodsburg Road, Lexington, KY 40503",
+  "place": "Chick-fil-A",
+  "city_queried": "Harrodsburg",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "609 South College Street, Harrodsburg, KY 40330",
+  "place": "KFC / Taco Bell",
+  "city_queried": "Harrodsburg",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "101 Cs-1022, Stanford, KY 40484",
+  "place": "Subway",
+  "city_queried": "Stanford",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "22 Cs-1098-80, Stanford, KY 40484",
+  "place": "Domino's",
+  "city_queried": "Stanford",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "101 Lexington Street, Lancaster, KY 40444",
+  "place": "Garrard County Public Library",
+  "city_queried": "Lancaster",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "599 Industry Road, Lancaster, KY 40444",
+  "place": "Garrard County High School",
+  "city_queried": "Lancaster",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "113 South Lexington Avenue, Wilmore, KY 40390",
+  "place": "Dollar General",
+  "city_queried": "Wilmore",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1090 Richmond Street, Mount Vernon, KY 40456",
+  "place": "Taco Bell",
+  "city_queried": "Mount Vernon",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1245 Muddy Gap Road, Manchester, KY 40962",
+  "place": "Wendy's",
+  "city_queried": "Manchester",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "2975 Burnside Road, Somerset, KY 42501",
+  "place": "Pizza Hut",
+  "city_queried": "Burnside",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "238 Middleburg Road, Liberty, KY 42539",
+  "place": "Casey County Public Library",
+  "city_queried": "Liberty",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1700 Old Lebanon Road, Campbellsville, KY 42718",
+  "place": "Taylor Regional Hospital",
+  "city_queried": "Campbellsville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "725 Campbellsville Bypass, Campbellsville, KY 42718",
+  "place": "Walmart Supercenter",
+  "city_queried": "Campbellsville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "399 Campbellsville Bypass, Campbellsville, KY 42718",
+  "place": "Kroger",
+  "city_queried": "Campbellsville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "3020 Scottsville Road, Bowling Green, KY 42104",
+  "place": "Burger King",
+  "city_queried": "Scottsville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1138 Old Gallatin Road, Scottsville, KY 42164",
+  "place": "Tractor Supply Company",
+  "city_queried": "Scottsville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "8 Hudson Hollow Road, Frankfort, KY 40601",
+  "place": "Arby's",
+  "city_queried": "Franklin",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "184 Versailles Road, Frankfort, KY 40601",
+  "place": "Wendy's",
+  "city_queried": "Franklin",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1303 Lawrenceburg Road, Frankfort, KY 40601",
+  "place": "Starbucks",
+  "city_queried": "Franklin",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1300 Kings Daughters Drive, Frankfort, KY 40601",
+  "place": "Chick-fil-A",
+  "city_queried": "Franklin",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "683 North Main Street, Russellville, KY 42276",
+  "place": "KFC",
+  "city_queried": "Russellville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "111 North Main Street, Russellville, KY 42276",
+  "place": "Subway",
+  "city_queried": "Russellville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "661 North Main Street, Russellville, KY 42276",
+  "place": "Pizza Hut",
+  "city_queried": "Russellville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "30 Shelton Lane, Russellville, KY 42276",
+  "place": "Domino's",
+  "city_queried": "Russellville",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "433 West Main Street, Auburn, KY 42206",
+  "place": "Auburn Branch Public Library",
+  "city_queried": "Auburn",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1201 Morgantown Road, Bowling Green, KY 42101",
+  "place": "Walmart Supercenter",
+  "city_queried": "Morgantown",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1360 KY 70;KY 259, Brownsville, KY 42210",
+  "place": "Dollar General",
+  "city_queried": "Brownsville",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1697 North Main Street, Beaver Dam, KY 42320",
+  "place": "Burger King",
+  "city_queried": "Beaver Dam",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1470 North Main Street, Beaver Dam, KY 42320",
+  "place": "O'Reilly Auto Parts",
+  "city_queried": "Beaver Dam",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1521 North Main Street, Beaver Dam, KY 42320",
+  "place": "Tractor Supply Company",
+  "city_queried": "Beaver Dam",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "108 East Broad Street, Central City, KY 42330",
+  "place": "Central City Public Library",
+  "city_queried": "Central City",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1500 US 62, Princeton, KY 42445",
+  "place": "Walmart Supercenter",
+  "city_queried": "Princeton",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "206 Alley 21, Princeton, KY 42445",
+  "place": "Dollar General",
+  "city_queried": "Princeton",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1738 Mayfield Highway, Benton, KY 42025",
+  "place": "Tractor Supply Company",
+  "city_queried": "Benton",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "312 West 5th Street, Benton, KY 42025",
+  "place": "Wendy's",
+  "city_queried": "Benton",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1109 Paris Road, Mayfield, KY 42066",
+  "place": "Big Lots",
+  "city_queried": "Mayfield",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "101 Nolan Avenue, Fulton, KY 42041",
+  "place": "Wendy's",
+  "city_queried": "Fulton",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "3705 Kentucky Avenue, Indianapolis, KY 46221",
+  "place": "CVS Pharmacy",
+  "city_queried": "Marion",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "780 West Main Street, Lebanon, KY 40033",
+  "place": "Taco Bell",
+  "city_queried": "Marion",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "4883 Kentucky Avenue, Indianapolis, KY 46221",
+  "place": "Burger King",
+  "city_queried": "Marion",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "5645 Main Street, Clay City, KY 40312",
+  "place": "Family Dollar",
+  "city_queried": "Clay",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "420 I 69, Hanson, KY 42413",
+  "place": "Walmart Supercenter",
+  "city_queried": "Hanson",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1301 Monmouth Street, Newport, KY 41071",
+  "place": "Aldi",
+  "city_queried": "Newport",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "1315 Monmouth Street, Newport, KY 41071",
+  "place": "KFC",
+  "city_queried": "Newport",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "144 Pavilion Parkway, Newport, KY 41071",
+  "place": "Subway",
+  "city_queried": "Newport",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "102 Pavilion Parkway, Newport, KY 41071",
+  "place": "Domino's",
+  "city_queried": "Newport",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "24 South Fort Thomas Avenue, Fort Thomas, KY 41075",
+  "place": "Fort Thomas Post Office",
+  "city_queried": "Fort Thomas",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "1000 Highland Avenue, Fort Thomas, KY 41075",
+  "place": "Campbell County Public Library - Philip N. Carrico Branch",
+  "city_queried": "Fort Thomas",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "4100 Narrows Road, Erlanger, KY 41018",
+  "place": "Erlanger Fire Station #3",
+  "city_queried": "Erlanger",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "3071 Dixie Highway, Erlanger, KY 41018",
+  "place": "Kroger",
+  "city_queried": "Erlanger",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "3050 Dixie Highway, Erlanger, KY 41018",
+  "place": "McDonald's",
+  "city_queried": "Erlanger",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "3104 Dixie Highway, Erlanger, KY 41018",
+  "place": "Walgreens",
+  "city_queried": "Erlanger",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "985 Burlington Pike, Florence, KY 41042",
+  "place": "Speedway",
+  "city_queried": "Burlington",
+  "state": "KY",
+  "osm_type": "node"
+ },
+ {
+  "address": "2479 Burlington Pike, Burlington, KY 41005",
+  "place": "Dollar General",
+  "city_queried": "Burlington",
+  "state": "KY",
+  "osm_type": "way"
+ },
+ {
+  "address": "2549 North Bend Road, Hebron, KY 41048",
+  "place": "Burger King",
+  "city_queried": "Hebron",
+  "state": "KY",
+  "osm_type": "way"
+ }
+]

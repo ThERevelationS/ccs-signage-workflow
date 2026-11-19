@@ -1,0 +1,22 @@
+ok changed @1280
+ok changed @390
+ok labor @1280
+ok labor @390
+ok legacy-labor @1280
+ok legacy-labor @390
+ok zero @1280
+ok zero @390
+ok stale @1280
+ok stale @390
+ok invalid @1280
+ok invalid @390
+ok removal @1280
+ok removal @390
+ok independent @1280
+ok independent @390
+ok large @1280
+ok large @390
+ok legacy-control @1280
+ok legacy-control @390
+Pricing browser: 20/20; failed=0; errors=0; shots=4
+exit=0

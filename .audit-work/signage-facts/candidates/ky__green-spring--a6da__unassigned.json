@@ -1,0 +1,22 @@
+{
+ "jurisdiction_id": "6adefd2cc0d5507878cfa6da",
+ "jurisdiction_name": "Green Spring",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR PORTABLE STORAGE UNIT OR DUMPSTER PERMIT Property Owner’s Printed Name(s):____________________________________________ Applicant’s Name: _____________________________________________________________________ Applicant’s Mailing Address: _____________________________________________________________ Applicant’s E-mail Address: ______________________________________________________________ Applicant’s Telephone Numbers: ___________________________ Best Time and Number to Reach You: _________________________________ Property Address for Requested Action: ____________________________________________________ Type of Request: (check all that apply) Dumpster Portable Storage Unit Other I Promise to place unit on my driveway… Agree: Yes _____ No ____ Date of Planned Placement: Beginning_______________________ Ending ________________________ Temporary Unit Company Name: ____________",
+   "tags": [
+    "temporary",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "bc740584afe3601f7b34c949a9c6858c18c35bd1525afc7f332c1039095d46fd",
+   "source_document_id": null,
+   "source_title": "bc740584afe3601f7b34c949a9c6858c18c35bd1525afc7f332c1039095d46fd.pdf",
+   "official_url": "https://cityofgreenspring.com/wp-content/uploads/2025/02/PortableUnitPermitApplication.pdf"
+  }
+ ]
+}

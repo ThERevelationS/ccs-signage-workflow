@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "749:    \"products\": {\n===\n      \"type\": \"string\"\n    },\n    \"site_survey_date\": {\n      \"type\": \"string\",\n      \"format\": \"date\"\n    },\n    \"site_survey_time\": {\n      \"type\": \"string\"\n    },\n    \"site_survey_am_pm\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"AM\",\n        \"PM\"\n      ]\n    },\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 2807
+}

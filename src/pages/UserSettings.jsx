@@ -21,14 +21,16 @@ import {
   Phone,
   GraduationCap,
   Shirt,
-  CalendarDays
+  CalendarDays,
+  Settings2
 } from "lucide-react";
+import MyAccountPreferences from "@/components/account/MyAccountPreferences";
 import UserCalendarSettingsPanel from "@/components/calendar/UserCalendarSettingsPanel";
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import DeleteAccountSection from "@/components/user/DeleteAccountSection";
 import { updateOwnHrData, updateOwnUsername } from "@/components/user/ownProfilePersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function UserSettings() {
@@ -229,6 +231,10 @@ export default function UserSettings() {
               <CalendarDays className="w-4 h-4" />
               Calendar
             </TabsTrigger>
+            <TabsTrigger value="preferences" className="gap-2">
+              <Settings2 className="w-4 h-4" />
+              Preferences
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="account">
@@ -399,6 +405,14 @@ export default function UserSettings() {
                 sessionToken={sessionToken}
               />
             </div>
+          </TabsContent>
+
+          {/* K-03 — workspace/display prefs, timezone, queue defaults and
+              notification subscriptions. Mounts only when the tab opens
+              (Radix lazy-mounts tab content), so it adds no reads to the
+              page's own load. */}
+          <TabsContent value="preferences">
+            <MyAccountPreferences />
           </TabsContent>
         </Tabs>
 

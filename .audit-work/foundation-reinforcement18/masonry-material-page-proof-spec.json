@@ -1,0 +1,137 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "892c701aedae039ae03ad8b160ae42175ad99e40",
+  "scope": "Synthetic real Foundation page with exact candidate model; no live SDK, storage, or financial derivation",
+  "sourceArtifact": "wall-cap-geometry-sandbox-final-scope.json",
+  "fixtureArtifact": "masonry-pricing-baseline-probe.json",
+  "fixtureSourceId": "synthetic-masonry-project",
+  "fixtureEstimateId": "synthetic-masonry-estimate",
+  "sourceVersion": "synthetic-v1",
+  "savedVersion": "synthetic-v2",
+  "candidateFiles": [
+    "wallCalculator.js",
+    "foundationCatalogIntegrity.js",
+    "foundationCalc.js",
+    "FoundationWallsPanel.jsx",
+    "FoundationBOM.jsx"
+  ],
+  "baselineSnapshot": {
+    "totalBricks": 6,
+    "materialCost": 321,
+    "mortarCost": 17,
+    "laborCost": 70,
+    "totalCost": 408
+  },
+  "validCurrentSnapshotFields": {
+    "totalBricks": 6,
+    "materialCost": 12,
+    "mortarCost": 0,
+    "laborCost": 45,
+    "totalCost": 57
+  },
+  "validZeroSnapshotFields": {
+    "totalBricks": 6,
+    "materialCost": 0,
+    "mortarCost": 0,
+    "laborCost": 45,
+    "totalCost": 45
+  },
+  "cases": [
+    {
+      "id": "missing-price-blocks-actions",
+      "setup": "Remove cost_per_unit from the seed catalog wall material; keep the acknowledged baseline snapshot.",
+      "actions": ["edit project name", "Save", "Save And Exit", "Save As Copy", "Swap To Brick Stone", "Ctrl+S", "enable autosave and settle debounce"],
+      "expect": {
+        "wallSnapshot": "baselineSnapshot",
+        "pricingUnavailable": true,
+        "wallMaterialIssueCode": "wall_material_price_unavailable",
+        "sourceSaveCalls": 0,
+        "builderSaveCalls": 0,
+        "customerPricingCalls": 0,
+        "idempotentCreateCalls": 0,
+        "conversionCalls": 0,
+        "ownerVersion": "synthetic-v1",
+        "routeUnchanged": true
+      }
+    },
+    {
+      "id": "new-unpriced-wall-remains-unknown",
+      "setup": "Mount an acknowledged project with no walls, then add the seed wall via the real FoundationWallsPanel onChange using a new component identity and missing catalog unit price. Include rendered valid-current cost fields in the new raw draft to prove they cannot become saved history.",
+      "expect": {
+        "wallCalculatedCosts": {},
+        "totalWallCost": null,
+        "totalBrickCost": null,
+        "grandTotal": null,
+        "sourceSaveCalls": 0,
+        "builderSaveCalls": 0,
+        "wallPanelAmountText": "Not saved"
+      }
+    },
+    {
+      "id": "genuine-zero-rate-saves",
+      "setup": "Set the seed catalog cost_per_unit to explicit numeric zero. Mount with the acknowledged baseline snapshot, edit the project name to create a real draft, and click Save.",
+      "expect": {
+        "wallSnapshotFields": "validZeroSnapshotFields",
+        "pricingUnavailable": false,
+        "sourceSaveCalls": 1,
+        "builderSaveCalls": 1,
+        "expectedUpdatedAt": "synthetic-v1",
+        "sourceSavedVersion": "synthetic-v2",
+        "authoredSegmentLength": 16,
+        "stableComponentId": "synthetic-wall"
+      }
+    },
+    {
+      "id": "valid-preview-cannot-relabel-as-acknowledged",
+      "setup": "Mount the valid positive seed catalog and acknowledged baseline. Assert the computed wall is validCurrentSnapshotFields. Change the rendered panel wall materialId to an unavailable id through its real onChange callback, retaining the rendered cost fields in that emitted row. Do not save before the invalid change.",
+      "expect": {
+        "wallSnapshot": "baselineSnapshot",
+        "pricingUnavailable": true,
+        "sourceSaveCalls": 0,
+        "builderSaveCalls": 0,
+        "authoredSegmentLength": 16
+      }
+    },
+    {
+      "id": "explicit-save-updates-acknowledged-basis",
+      "setup": "Mount the valid positive seed catalog, edit project name, and explicitly Save. Then change the materialId to an unavailable id through the real wall panel callback. Verify that the invalid edit now holds the newly saved valid snapshot, not the original baseline or an unsaved preview.",
+      "expect": {
+        "wallSnapshotFields": "validCurrentSnapshotFields",
+        "pricingUnavailable": true,
+        "sourceSaveCalls": 1,
+        "builderSaveCalls": 1,
+        "ownerVersion": "synthetic-v2"
+      }
+    },
+    {
+      "id": "unpriced-inner-wall-blocks-complete-wall",
+      "setup": "Enable includeInternalWall and select an actual wall_material inventory item whose cost_per_unit is null. The outer seed material remains valid. Keep the baseline acknowledged snapshot.",
+      "expect": {
+        "wallSnapshot": "baselineSnapshot",
+        "pricingUnavailable": true,
+        "issueKind": "internal_wall",
+        "sourceSaveCalls": 0,
+        "builderSaveCalls": 0
+      }
+    },
+    {
+      "id": "invalid-override-cannot-fall-back-to-base",
+      "setup": "Keep the valid positive seed base rate but set catalog custom_cost_per_unit to a blank string. Attempt Save after a nonfinancial edit.",
+      "expect": {
+        "wallSnapshot": "baselineSnapshot",
+        "pricingUnavailable": true,
+        "sourceSaveCalls": 0,
+        "builderSaveCalls": 0
+      }
+    }
+  ],
+  "harnessConstraints": [
+    "Use the exact frozen remote FoundationEstimator page, not the held local v2 page.",
+    "Use all five candidate files for actual page consumption, with core inputs proven by build metafile or equivalent path/hash evidence.",
+    "Do not stub calcProject, wall calculations, catalog integrity, money, acknowledged-version state, or the page save-session implementation.",
+    "Boundary-only staff entity, source save, builder-service, and visual leaf stubs are allowed; unexpected SDK or external network operations must fail.",
+    "Reuse the existing wall-cap page harness mechanics, but never change its frozen proof files or old results.",
+    "No live record tests, paid AI calls, app source writes, publishing, deployment, or schema activation."
+  ]
+}

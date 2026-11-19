@@ -1,0 +1,27 @@
+{
+ "jurisdiction_id": "6ae04581a2f928f6156f6142",
+ "jurisdiction_name": "Sandy",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR COMMERCIAL BUILDING PERMIT STARK COUNTY BUILDING DEPT. 7235 Whipple Ave. NW Ste A Canton, OH 44720 330-451-1770 / FAX: 330-491-8373 buildingdept@starkcountyohio.gov LOCATION ADDRESS : UNIT # / FLOOR #: (PLEASE INCLUDE ADDRESS DIRECTION ( N, S, E, W, ETC.) CITY, ZIP PROJECT/BUSINESS/TENANT: TENANT PHONE _______________________ CONTRACT VALUE OF PROJECT : $ SQ. FT. (round UP to nearest 100 sq. ft.) (Site Work round UP to nearest 1000 sq. ft.) TYPE OF IMPROVEMENT: 0-150,000 SQ FT $2.00 PER 100 SQ FT 150,001 + SQ FT $5.00 PER 100 SQ FT *New/Addition/Alteration include 5 inspections* ___New Building ___Addition ___Alter/Remodel of existing ___Repair ___Pole/Storage Building ___Sign(s) $200 per type of sign ___Reroof $200 ___Demolition $200 per building ___Solar Panels $200 per building ___OTHER DETAILED DESCRIPTION OF WORK: Contact Canton City Air Pollution Control at 330-489-",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "4fdf47c2bfafe6fe88b419648500dba8ab13ab7f39d104b5d698dcfb48acb328",
+   "source_document_id": null,
+   "source_title": "4fdf47c2bfafe6fe88b419648500dba8ab13ab7f39d104b5d698dcfb48acb328.pdf",
+   "official_url": "https://www.starkcountyohio.gov/COMMERCIAL%20BUILDING%20PERMIT.pdf"
+  }
+ ]
+}

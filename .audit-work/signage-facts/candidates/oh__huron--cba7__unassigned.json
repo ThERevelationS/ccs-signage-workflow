@@ -1,0 +1,26 @@
+{
+ "jurisdiction_id": "6ae0437cc61c99c109f8cba7",
+ "jurisdiction_name": "Huron",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "HURON TOWNSHIP BUILDING DEPARTMENT SIGN PERMIT APPLICATION Applicant’s Name: _______________________________________________________ Address: _______________________________________________________________ Telephone Number: (____)_________________ Sign Location: ___________________________________________________________ ___________________________________________________________ Land Owner’s Name: ______________________________________________________ Land Owner’s Address: ____________________________________________________ Telephone Number: (_____)________________ Company or Individual Responsible for Sign Erection: _____________________________________________________________ _____________________________________________________________ Type of Sign: Ground: _________ Wall: __________ Roof: ____________ Projecting: ______ Other: ___________ Describe: _________________________________",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "981b113a48fd42edf2d3366e02d1f44c11f4daf18574eca3da28edc836a8e79a",
+   "source_document_id": null,
+   "source_title": "981b113a48fd42edf2d3366e02d1f44c11f4daf18574eca3da28edc836a8e79a.pdf",
+   "official_url": "https://hurontwp.com/wp-content/uploads/2024/11/Sign-Permit-Application.pdf"
+  }
+ ]
+}

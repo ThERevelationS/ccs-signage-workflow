@@ -1,0 +1,38 @@
+{
+ "jurisdiction_id": "6ad99fcc06dde35d1e63cd70",
+ "jurisdiction_name": "New Middletown",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "925.01 STORM SEWER MANAGEMENT. (a) Purpose: The purpose of these regulations is to provide for the health, safety, and general welfare of the citizens of the Village of New Middletown through the regulation of modifications to the Village's municipal separate storm sewer system (MS4). (b) Rules and Regulations: The Village Administrator, in consultation with the Village Engineer or an engineering firm hired to perform engineering services on an annual basis for the Village, shall establish uniform rules and regulations and a uniform permit process to address requests by property owners in the Village who request authority to install culverts and storm water lines in the roadside ditches along the Village right of way. All culverts, catch basins or storm water lines only shall be installed in accordance with the rules and regulations, and the specifications outlined therein, established i",
+   "tags": [
+    "fee",
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "03ac6942591804cf2b68dd51d6f4fdd2e215d450f6a537aa89cfec24af179af8",
+   "source_document_id": null,
+   "source_title": "03ac6942591804cf2b68dd51d6f4fdd2e215d450f6a537aa89cfec24af179af8.pdf",
+   "official_url": "https://newmiddletownoh.gov/pdf/Ordinance-925-01.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "> > ) \" ) \" ! EASTWOOD DR KERRYWOOD DR SYCAMORE DR OHLIN DR JEFFREY LN LINFORD LN STACY DR WARD AVE FOSTER AVE RENEE DR TREE LINE TRL N WOODS DR MAIN ST CARRIE DR WOODLAND DR DEERINGWOOD DR SANDY DR SANDY CT CARROUSEL WOODS DR MIDWAY DR MEADOWBROOK DR OLENTANGY CIR CIRCLE VIEW DR E CIRCLE VIEW DR CIRCLE VIEW CT WOODLAND DR ROBINWOOD DR MAPLEWOOD DR MAPLEVIEW CT SYCAMORE HILL DR SYCAMORE HILL CT WARNER DR HILL CT MIDWAY DR Ginger Hill DELRAY DR MAIN ST E MIDDLETOWN RD STRUTHERS RD STRUTHERS RD E MIDDLETOWN RD EAST CALLA RD EAST CALLA RD HEDGROW PL CIR GOLDEN RYE WINDSOR WAY Welker Park W & A Neff MemoriaL Park Town Hall Police Springfield Intermediate School Springfield High School Fire Sta. Water Tank 0 400 800 1,200 200 Feet Project: Middletown_Zoning_Official.mxd Zoning Map Village of New Middletown Mahoning County, OHIO Prepared By The Mahoning County GIS Department For The Village of",
+   "tags": [
+    "dimension",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "369aea47d39cbbd25d7b36bf35954eb09e52152292f143f1aeaa13173d50ddca",
+   "source_document_id": null,
+   "source_title": "369aea47d39cbbd25d7b36bf35954eb09e52152292f143f1aeaa13173d50ddca.pdf",
+   "official_url": "https://newmiddletownoh.gov/pdf/Middletown_Zoning_Official_2020.pdf"
+  }
+ ]
+}

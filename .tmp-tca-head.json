@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/timeclock/TimeClockAdmin.jsx",
+      "content": "import { useState, useEffect, Fragment } from \"react\";",
+      "startLine": 1,
+      "endLine": 1,
+      "totalLines": 2452,
+      "truncated": false
+    }
+  ]
+}

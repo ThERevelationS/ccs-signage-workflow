@@ -8,6 +8,7 @@ import MetalEstimator from "@/pages/MetalEstimator";
 import BrickStoneEstimator from "@/pages/BrickStoneEstimator";
 import MaintenanceEstimator from "@/pages/MaintenanceEstimator";
 import PaintingEstimator from "@/pages/PaintingEstimator";
+import CustomItemsEstimator from "@/pages/CustomItemsEstimator";
 import ReattachPartsModal from "@/components/estimator/builder/ReattachPartsModal";
 import { getDetachedBuilderParts, reattachBuilderParts } from "@/components/estimator/builder/partSync";
 
@@ -21,9 +22,10 @@ const EDITORS = {
   brick_stone: BrickStoneEstimator,
   maintenance: MaintenanceEstimator,
   painting: PaintingEstimator,
+  custom_items: CustomItemsEstimator,
 };
 
-export default function InlineProductEditor({ line, lines = [], estimateId, expectedEstimateUpdatedAt = "", onClose, onSaved, onSwitchLine }) {
+export default function InlineProductEditor({ line, estimateId, expectedEstimateUpdatedAt = "", onClose, onSaved }) {
   const Editor = EDITORS[line?.module_key];
   const [checkingDetached, setCheckingDetached] = useState(!!line?.builder_product_id);
   const [detachedParts, setDetachedParts] = useState([]);
@@ -96,7 +98,7 @@ export default function InlineProductEditor({ line, lines = [], estimateId, expe
 
   if (checkingDetached && !reviewHandled) {
     return (
-      <div className="bg-white border border-gray-200 rounded-md p-8 text-center text-[12px] text-gray-500">
+      <div role="status" className="bg-white border border-gray-200 rounded-md p-8 text-center text-[12px] text-gray-500">
         Checking Builder Part links…
       </div>
     );

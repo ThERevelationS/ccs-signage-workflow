@@ -184,7 +184,7 @@ export default function ChannelLetterHelpAssistant({ activeTab, manualTrigger, o
         className="fixed z-[120] w-[340px] bg-white rounded-2xl shadow-2xl border-2 border-purple-100 p-4 transition-all duration-300 ease-out"
         style={bubbleStyle}
       >
-        <button onClick={handleClose} className="absolute top-2 right-2 text-slate-400 hover:text-slate-600">
+        <button type="button" onClick={handleClose} className="absolute top-2 right-2 text-slate-400 hover:text-slate-600">
           <X className="w-4 h-4" />
         </button>
 

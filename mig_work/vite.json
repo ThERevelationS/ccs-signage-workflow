@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "path": "vite.config.js",
+      "content": "import { frontendSharedModules } from './scripts/frontend-shared-modules.mjs'\nimport base44 from \"@base44/vite-plugin\"\nimport react from '@vitejs/plugin-react'\nimport { defineConfig } from 'vite'\n\n// https://vite.dev/config/\nexport default defineConfig({\n  logLevel: 'error', // Suppress warnings, only show errors\n  // Keep original identifier names while still minifying whitespace and syntax.\n  // Renaming can produce an identifier literally named \"of\"; a division right after it\n  // inside a `for (...)` header is mis-lexed during the build and fails publishing.\n  esbuild: {\n    minifyIdentifiers: false,\n  },\n  plugins: [\n    // Resolve the exact browser-safe shared helpers before Base44 blocks /base44/** imports.\n    frontendSharedModules(),\n    base44({\n      // Support for legacy code that imports the base44 SDK with @/integrations, @/entities, etc.\n      // can be removed if the code has been updated to use the new SDK imports from @base44/sdk\n      legacySDKImports: process.env.BASE44_LEGACY_SDK_IMPORTS === 'true'\n    }),\n    react(),\n  ]\n});",
+      "startLine": 1,
+      "endLine": 25,
+      "totalLines": 25,
+      "truncated": false
+    },
+    {
+      "path": "src/components/ui/progress.jsx",
+      "content": "\"use client\"\n\nimport * as React from \"react\"\nimport * as ProgressPrimitive from \"@radix-ui/react-progress\"\n\nimport { cn } from \"@/lib/utils\"\n\nconst Progress = React.forwardRef(({ className, value, ...props }, ref) => (\n  <ProgressPrimitive.Root\n    ref={ref}\n    className={cn(\n      \"relative h-2 w-full overflow-hidden rounded-full bg-primary/20\",\n      className\n    )}\n    {...props}>\n    <ProgressPrimitive.Indicator\n      className=\"h-full w-full flex-1 bg-primary transition-all\"\n      style={{ transform: `translateX(-${100 - (value || 0)}%)` }} />\n  </ProgressPrimitive.Root>\n))\nProgress.displayName = ProgressPrimitive.Root.displayName\n\nexport { Progress }",
+      "startLine": 1,
+      "endLine": 23,
+      "totalLines": 23,
+      "truncated": false
+    }
+  ]
+}

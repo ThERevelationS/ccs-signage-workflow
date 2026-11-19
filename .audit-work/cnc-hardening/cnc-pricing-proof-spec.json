@@ -1,0 +1,66 @@
+{
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "d4e979d30b9885f7506c1e11d083eed38b6a0ddc",
+ "jsonProofs": [
+  {
+   "file": "cnc-model-verification.json",
+   "resultCount": 97
+  },
+  {
+   "file": "cnc-model-red-verification.json",
+   "resultCount": 10
+  },
+  {
+   "file": "cnc-page-verification.json",
+   "resultCount": 9
+  },
+  {
+   "file": "cnc-browser-results.json",
+   "resultCount": 6
+  },
+  {
+   "file": "cnc-consumer-build.json",
+   "resultCount": 4
+  },
+  {
+   "file": "cnc-lint-results.json",
+   "resultCount": 2
+  },
+  {
+   "file": "cnc-page-import-edges.json",
+   "resultCount": "see file"
+  },
+  {
+   "file": "cnc-page-meta.json",
+   "resultCount": "see file"
+  }
+ ],
+ "allResultsMustHaveOkTrue": true,
+ "scopedLintLogs": [
+  {
+   "file": "cnc-lint-results.json",
+   "line": "0 errors / 0 warnings over 2 candidate files"
+  }
+ ],
+ "candidateHashes": {
+  "src/components/estimator/cnc/cncPricingAvailability.js": "7ff2091c118b7d5a470e2f4288c0dfab001160fc32f8618d5c00b7a1c431f484",
+  "src/pages/CNCEstimator.jsx": "cad8d0c80544d7aced15b91a050e24178b497ef327391ef2301f8742eeff9be7"
+ },
+ "remoteBaselineHashes": {
+  "src/pages/CNCEstimator.jsx": "c5e8e6a13c06e5f9e07e59ac89917abab88ea81c7dfe22273163438c7ff1a571"
+ },
+ "allowedBuildWarningCount": 0,
+ "remoteOperationsPermitted": [
+  "sandbox read",
+  "sandbox run (read-only shell)"
+ ],
+ "remoteMutationsPerformed": 0,
+ "applyRequiresLeadApproval": true,
+ "remoteWriteAuthorized": false,
+ "checkpointAuthorized": false,
+ "entityOperationsAuthorized": false,
+ "schemaOrMetadataAuthorized": false,
+ "publishOrDeployAuthorized": false,
+ "baselineFile": "cnc-pricing-baseline-v2.json"
+}

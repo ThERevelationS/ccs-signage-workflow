@@ -214,7 +214,7 @@ export default function ProductRow({
   const handleClone = async () => {
     if (readOnly || !onClone || cloning) return;
     const name = line.client_product_name || line.project_name || "Product";
-    if (!window.confirm(`Clone “${name}”?\n\nThe copy will preserve its Builder configuration, Parts, Part Groups, detached overrides and frozen pricing as a new independent Product.`)) return;
+    if (!window.confirm(`Clone "${name}"?\n\nThe copy will preserve its Builder configuration, Parts, Part Groups, detached overrides and frozen pricing as a new independent Product.`)) return;
     setCloning(true);
     try {
       await onClone(line, index);
@@ -229,10 +229,12 @@ export default function ProductRow({
         <button
           type="button"
           onClick={() => setPartsOpen((value) => !value)}
+          aria-expanded={partsOpen}
+          aria-label={partsOpen ? `Collapse parts for ${line.client_product_name || line.project_name || "product"}` : `Expand parts for ${line.client_product_name || line.project_name || "product"}`}
           className="w-[26px] h-[26px] rounded border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:bg-gray-100 flex-shrink-0"
           title={partsOpen ? "Collapse Product Parts" : "Expand Product Parts"}
         >
-          {partsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          {partsOpen ? <ChevronDown className="w-4 h-4" aria-hidden="true" /> : <ChevronRight className="w-4 h-4" aria-hidden="true" />}
         </button>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
@@ -241,11 +243,11 @@ export default function ProductRow({
             </span>
             {isCustom ? (
               <span className="text-[10px] px-2 py-0.5 rounded-sm bg-lime-100 text-gray-800 border border-lime-300 inline-flex items-center gap-1">
-                <Layers3 className="w-3 h-3 text-lime-700" /> CUSTOM PRODUCT
+                <Layers3 className="w-3 h-3 text-lime-700" aria-hidden="true" /> CUSTOM PRODUCT
               </span>
             ) : (
               <span className="text-[10px] px-2 py-0.5 rounded-sm bg-[#454545] text-white border border-gray-700 inline-flex items-center gap-1">
-                <Layers3 className="w-3 h-3 text-lime-300" /> BUILDER · {line.builder_name || getModuleLabel(line.module_key)}
+                <Layers3 className="w-3 h-3 text-lime-300" aria-hidden="true" /> BUILDER · {line.builder_name || getModuleLabel(line.module_key)}
               </span>
             )}
             {line.owned && (
@@ -254,7 +256,7 @@ export default function ProductRow({
               </span>
             )}
             <span className={`text-[10px] px-2 py-0.5 rounded-full border inline-flex items-center gap-1 ${meta.className}`}>
-              <StatusIcon className="w-3 h-3" /> {meta.label}
+              <StatusIcon className="w-3 h-3" aria-hidden="true" /> {meta.label}
             </span>
           </div>
           <div className="text-[10px] text-gray-400 mt-0.5">
@@ -357,7 +359,7 @@ export default function ProductRow({
                                       : "Resume the previously started Quick Product insertion from its saved recovery marker."
                                     : "Resume the previously started Update Price operation from its saved recovery marker."}
             >
-              <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} aria-hidden="true" />
               {updatingPrice ? "Recovering…" : pendingPriceLabel}{pendingStale ? " · stale >24h" : ""}
             </button>
           ) : line.needs_reattach_review || line.price_state === "detached_parts" ? (
@@ -367,7 +369,7 @@ export default function ProductRow({
               className="h-[28px] px-3 border border-amber-300 bg-amber-50 rounded flex items-center gap-1 text-[12px] font-semibold text-amber-700 cursor-not-allowed"
               title="Resolve or reattach detached Parts before updating this product's price."
             >
-              <AlertTriangle className="w-3 h-3" />
+              <AlertTriangle className="w-3 h-3" aria-hidden="true" />
               Resolve Parts First
             </button>
           ) : line.price_recalc_required ? (
@@ -378,7 +380,7 @@ export default function ProductRow({
               className="h-[28px] px-3 border border-amber-300 bg-amber-50 rounded flex items-center gap-1 text-[12px] font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
               title={line.price_recalc_reason || "Open this Builder, recalculate with current Master Inventory, then save it before accepting Update Price."}
             >
-              <RefreshCw className="w-3 h-3" />
+              <RefreshCw className="w-3 h-3" aria-hidden="true" />
               Recalculate Builder
             </button>
           ) : (
@@ -389,7 +391,7 @@ export default function ProductRow({
               className="h-[28px] px-3 border border-lime-400 bg-lime-200 rounded flex items-center gap-1 text-[12px] font-semibold text-gray-800 hover:bg-lime-300 disabled:opacity-50"
               title={`Accept current customer price ${money(liveCustomerPrice)} (internal cost ${money(live)})`}
             >
-              <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} aria-hidden="true" />
               {updatingPrice ? "Updating…" : "Update Price"}
             </button>
           )
@@ -399,9 +401,10 @@ export default function ProductRow({
           type="button"
           onClick={() => isCustom ? setOpen((value) => !value) : onEdit?.(line, index)}
           disabled={readOnly && !isCustom}
+          aria-expanded={isCustom ? open : undefined}
           className="h-[28px] px-3 border border-gray-200 rounded flex items-center gap-1 text-[12px] text-gray-700 hover:bg-gray-100 disabled:opacity-50"
         >
-          <Pencil className="w-3 h-3" /> {isCustom ? "Product Settings" : "Edit Product"}
+          <Pencil className="w-3 h-3" aria-hidden="true" /> {isCustom ? "Product Settings" : "Edit Product"}
         </button>
         {line.builder_product_id && (
           <button
@@ -409,9 +412,10 @@ export default function ProductRow({
             onClick={() => setPartPickerOpen(true)}
             disabled={readOnly}
             title={isCustom ? "Add Part from Master Inventory" : "Add independent Part from Master Inventory"}
+            aria-label={isCustom ? "Add Part from Master Inventory" : "Add independent Part from Master Inventory"}
             className="h-[28px] px-2.5 border border-lime-300 bg-lime-50 rounded flex items-center justify-center gap-1 text-[11px] font-semibold text-gray-700 hover:bg-lime-100"
           >
-            <Plus className="w-3.5 h-3.5 text-lime-700" /><span className="hidden xl:inline">Add Part</span>
+            <Plus className="w-3.5 h-3.5 text-lime-700" aria-hidden="true" /><span className="hidden xl:inline">Add Part</span>
           </button>
         )}
         <button
@@ -419,27 +423,30 @@ export default function ProductRow({
           onClick={() => setNotesOpen(true)}
           disabled={readOnly}
           title="Manage Product Notes"
+          aria-label="Manage Product Notes"
           className={`h-[28px] px-2.5 border rounded flex items-center justify-center gap-1 text-[11px] font-semibold ${line.product_notes ? "border-lime-300 text-lime-700 bg-lime-50" : "border-gray-200 text-gray-600 hover:bg-gray-100"}`}
         >
-          <StickyNote className="w-3.5 h-3.5" /><span className="hidden xl:inline">Notes</span>
+          <StickyNote className="w-3.5 h-3.5" aria-hidden="true" /><span className="hidden xl:inline">Notes</span>
         </button>
         {line.builder_product_id && (
           <button
             type="button"
             onClick={() => setPriceHistoryOpen(true)}
             title="View Product Price History"
+            aria-label="View Product Price History"
             className="h-[28px] px-2.5 border border-gray-200 rounded flex items-center justify-center gap-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-100"
           >
-            <History className="w-3.5 h-3.5" /><span className="hidden 2xl:inline">History</span>
+            <History className="w-3.5 h-3.5" aria-hidden="true" /><span className="hidden 2xl:inline">History</span>
           </button>
         )}
         <button
           type="button"
           onClick={() => setQuickProductOpen(true)}
           title="Create Quick Product"
+          aria-label="Create Quick Product"
           className="h-[28px] px-2.5 border border-gray-200 rounded flex items-center justify-center gap-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-100"
         >
-          <PackagePlus className="w-3.5 h-3.5" /><span className="hidden 2xl:inline">Quick Product</span>
+          <PackagePlus className="w-3.5 h-3.5" aria-hidden="true" /><span className="hidden 2xl:inline">Quick Product</span>
         </button>
         <button
           type="button"
@@ -458,41 +465,46 @@ export default function ProductRow({
             }
           }}
           title="Copy Product to 30-day Clipboard"
+          aria-label="Copy Product to 30-day Clipboard"
           className="h-[28px] px-2.5 border border-gray-200 rounded flex items-center justify-center gap-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
         >
-          <ClipboardCopy className="w-3.5 h-3.5" /><span className="hidden xl:inline">{copiedClipboard ? "Copied" : "Copy"}</span>
+          <ClipboardCopy className="w-3.5 h-3.5" aria-hidden="true" /><span className="hidden xl:inline">{copiedClipboard ? "Copied" : "Copy"}</span>
         </button>
         <button
           type="button"
           onClick={handleClone}
           disabled={cloning || readOnly}
           title="Clone Product"
+          aria-label="Clone Product"
           className="h-[28px] px-2.5 border border-gray-200 rounded flex items-center justify-center gap-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
         >
-          <Copy className={`w-3.5 h-3.5 ${cloning ? "animate-pulse" : ""}`} /><span className="hidden xl:inline">{cloning ? "Cloning…" : "Clone"}</span>
+          <Copy className={`w-3.5 h-3.5 ${cloning ? "animate-pulse" : ""}`} aria-hidden="true" /><span className="hidden xl:inline">{cloning ? "Cloning…" : "Clone"}</span>
         </button>
         <button
           type="button"
           onClick={() => setOpen(!open)}
+          aria-expanded={open}
           title="Product Settings & Pricing Options"
+          aria-label="Product settings and pricing options"
           className={`h-[28px] px-2.5 border rounded flex items-center justify-center gap-1 text-[11px] font-semibold ${
             open ? "border-red-300 text-red-600 bg-red-50" : "border-gray-200 text-gray-600 hover:bg-gray-100"
           }`}
         >
-          <Percent className="w-3 h-3" /> Pricing
+          <Percent className="w-3 h-3" aria-hidden="true" /> Pricing
         </button>
         <button
           type="button"
           onClick={() => {
             const name = line.client_product_name || line.project_name || "Product";
-            if (!window.confirm(`Remove “${name}” from this estimate?`)) return;
+            if (!window.confirm(`Remove "${name}" from this estimate?`)) return;
             onRemove(index);
           }}
           disabled={readOnly || priceAcceptancePending}
           title={priceAcceptancePending ? "Resume the pending Product operation before removing this Product." : "Remove product"}
+          aria-label={priceAcceptancePending ? "Resume the pending Product operation before removing this Product." : `Remove ${line.client_product_name || line.project_name || "product"} from this estimate`}
           className="w-[28px] h-[28px] border border-gray-200 rounded flex items-center justify-center text-red-500 hover:bg-red-50 disabled:opacity-50"
         >
-          <Trash2 className="w-3 h-3" />
+          <Trash2 className="w-3 h-3" aria-hidden="true" />
         </button>
       </div>
 

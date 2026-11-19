@@ -1,0 +1,10 @@
+import { post } from './cb-http.mjs';
+import { readFileSync } from 'node:fs';
+const id = Number(process.argv[2] || 1500);
+const show = (n, r) => console.log(n, r.status, r.text.length, r.text.slice(0, 700));
+show('payments2', await post('/SalesModule/Reports/Reports.asmx/GetOrderPayments2', { OrderId: id, IsPaymentHistoryOverride: true }));
+show('refunds', await post('/SalesModule/Reports/Reports.asmx/GetOrderRefunds', { OrderId: id, IsPaymentHistoryOverride: true }));
+const rec = readFileSync('imports/corebridge-2026-11-16/orders/orders.jsonl', 'utf8').trim().split('\n').map(JSON.parse).find((x) => x.order_id === id);
+const pid = rec?.products?.[0]?.Id;
+console.log('product', pid, 'parts in view', rec?.products?.[0]?.Parts?.length);
+if (pid) show('partSummaries', await post('/SalesModule/Orders/OrderProduct.asmx/GetOrderProductPartSummaries', { orderId: id, orderProductId: pid }));

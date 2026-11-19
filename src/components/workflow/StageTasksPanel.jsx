@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, ClipboardList, Loader2 } from "lucide-react";
 import { deleteGeneralTaskIfUnchanged, updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
-const GeneralTask = base44.entities.GeneralTask;
+const GeneralTask = staffEntities.GeneralTask;
 
 // Displays general office tasks assigned to a specific workflow stage page,
 // so the team working that stage sees stage-tagged tasks alongside their work orders.
@@ -20,6 +21,7 @@ export default function StageTasksPanel({ stage }) {
         entity: GeneralTask,
         query: { completed: false },
         sort: "created_date",
+        cacheTtlMs: 30000,
         label: `Open ${stage} office tasks`,
       });
       const filtered = (all || []).filter(t => t.stage === stage);
@@ -33,7 +35,7 @@ export default function StageTasksPanel({ stage }) {
   useEffect(() => {
     setIsLoading(true);
     load();
-    const interval = setInterval(load, 60000);
+    const interval = setInterval(() => { if (!document.hidden && !isFleetCoolingDown()) load(); }, 60000);
     return () => clearInterval(interval);
   }, [stage]);
 
@@ -119,7 +121,7 @@ export default function StageTasksPanel({ stage }) {
                   </div>
                 )}
               </div>
-              <button
+              <button type="button"
                 onClick={() => handleDelete(task)}
                 className="text-red-400 hover:text-red-600 p-1"
                 title="Delete task"

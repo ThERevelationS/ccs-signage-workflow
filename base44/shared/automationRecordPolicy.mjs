@@ -5,6 +5,8 @@ const RECORD_ACTION_EVENTS = new Set([
   'feature_report_submitted', 'feature_report_status_changed', 'feature_report_completed',
   'user_registered', 'user_password_reset', 'user_face_enrolled', 'user_role_changed',
   'jurisdiction_profile_created', 'jurisdiction_profile_updated', 'regulation_alert_created',
+  'crm_event_completed', 'po_received', 'po_backordered', 'recon_variance',
+  'invoice_overdue',
 ]);
 const ORDER_DEADLINES = new Set(['order_date_needed_approaching', 'order_date_needed_passed', 'order_overdue']);
 const RECORD_FILTERS = {

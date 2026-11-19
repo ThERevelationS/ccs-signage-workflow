@@ -1,0 +1,116 @@
+FAIL .audit-work/foundation-catalog-pricing11/verify-preservation.mjs  | AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal: ||   code: 'ERR_ASSERTION',
+FAIL .audit-work/foundation-equipment13/verify-engine.mjs  | AssertionError [ERR_ASSERTION]: legacy-duration-zero-fallback ||   code: 'ERR_ASSERTION',
+FAIL .audit-work/foundation-materials14/verify-financial.mjs  | FAILED foundation material financial cases=39 failed=25 || FAIL exact original whole-model parity: bag spread AssertionError [ERR_ASSERTION]
+PASS .audit-work/foundation-o004-drafts/verify-draft-model.mjs  | 11/11 model checks passed
+PASS .audit-work/foundation-o004-drafts/verify-draft-page.mjs  | 8/8 page checks passed
+PASS .audit-work/foundation-o004t-conflicts/verify-o004t-model.mjs  | PASS o004t model
+PASS .audit-work/foundation-o009t-classification/verify-o009t.mjs  | 46 passed, 0 failed
+PASS .audit-work/foundation-o009u-siblings/verify-o009u.mjs  | 46 passed, 0 failed
+PASS .audit-work/foundation-o010-totals/verify-totals-model.mjs  | PASS totals-model o010 (38 cases)
+PASS .audit-work/foundation-o011-parts/verify-extract.mjs  | PASS extract-foundation o011 (16 cases)
+PASS .audit-work/foundation-o012-handoff/verify-handoff.mjs  | PASS verify-handoff
+PASS .audit-work/foundation-o029-cutschedule/verify-b3-regression.mjs  | PASS b3-regression-on-o029-tree
+PASS .audit-work/foundation-o029-cutschedule/verify-o029.mjs  | PASS o029
+PASS .audit-work/foundation-o029-cutschedule/verify-page-compile.mjs  | PASS page-compile-standalone
+PASS .audit-work/foundation-o030-diagnostics/verify-o030-model.mjs  | PASS o030-model 24/24
+PASS .audit-work/foundation-o030-diagnostics/verify-o030-page.mjs  | PASS o030-page 6/6
+PASS .audit-work/foundation-o034-selection/verify-o034-model.mjs  | PASS verify-o034-model: 21 assertion groups
+PASS .audit-work/foundation-o035-editops/verify-o035-model.mjs  | PASS o035-model
+PASS .audit-work/foundation-o036-reparent/verify-canvas.mjs  | PASS o036-canvas
+PASS .audit-work/foundation-o036-reparent/verify-o036.mjs  | PASS o036
+PASS .audit-work/foundation-o038-input/verify-o038-o039-model.mjs  | PASS verify-o038-o039-model: 34 assertions, 0 failures
+PASS .audit-work/foundation-o038-input/verify-o039-remote-parity.mjs  | PASS verify-o039-remote-parity: 9 scripted steps, 0 diffs
+PASS .audit-work/foundation-o040-undo/verify-o040-model.mjs  | PASS verify-o040-model: 34 assertion groups
+PASS .audit-work/foundation-o040-undo/verify-o040-remote-parity.mjs  | PASS verify-o040-remote-parity: 9 scripted steps, 0 diffs
+PASS .audit-work/foundation-o093-labels/verify-o093-model.mjs  | PASS o093-model
+PASS .audit-work/foundation-o096-totals/verify-o096-model.mjs  | PASS o096-model (38 cases)
+FAIL .audit-work/foundation-o113-rules/verify-o113.mjs  | AssertionError [ERR_ASSERTION]: zero invalid seeds ||   code: 'ERR_ASSERTION',
+PASS .audit-work/foundation-phaseb1/verify-phaseb1.mjs  | PASS phaseb1 cases=44 failed=0
+PASS .audit-work/foundation-phaseb2/verify-phaseb2.mjs  | PASS phaseb2-model
+FAIL .audit-work/foundation-phaseb3/verify-phaseb3.mjs  | ok O-022 invalid mode errors instead of guessing || ok O-023 mat resting directly on base warns 'unneeded', supports on it error
+FAIL .audit-work/foundation-reinforcement16/verify-basic-inputs.mjs  | Basic input verification: 58/83 passed; failed=25 || FAIL frozen complete-model parity: bag spread AssertionError [ERR_ASSERTION]: totals
+FAIL .audit-work/foundation-reinforcement17/verify-reinforcement-inputs.mjs  | Reinforcement input verification: 86/111 passed; failed=25 || FAIL complete frozen model unchanged: bag spread totals
+PASS .audit-work/foundation-reinforcement18/verify-active-v2-dispatch.mjs  | Active version2 dispatch: 13/13; failed=0
+FAIL .audit-work/foundation-reinforcement18/verify-basis-key.mjs  | ok cyclic object/array fail closed
+PASS .audit-work/foundation-reinforcement18/verify-basis.mjs  | Reinforcement basis: 50/50 passed; failed=0
+PASS .audit-work/foundation-reinforcement18/verify-builder-line-identity-io.mjs  | Builder identity I/O scope: 8/8
+FAIL .audit-work/foundation-reinforcement18/verify-catalog-metadata-ui.mjs  | AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value: ||   assert.ok(inputs.includes("src/components/estimator/foundat
+PASS .audit-work/foundation-reinforcement18/verify-catalog-metadata.mjs  | Catalog metadata: 8/8; failed=0
+FAIL .audit-work/foundation-reinforcement18/verify-catalog-update-readback.mjs  | ok lost reply plus dropped metadata retains the original error and never claims recovery || FAIL server dropping declared-looking diameter/w
+FAIL .audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs  | FAIL saved Work Order with unknown Product costs never prints zero cost or 100 percent margin Reinforcement Work Order handoff is invalid: t
+PASS .audit-work/foundation-reinforcement18/verify-cost-print-candidate.mjs  | ok frozen financial inputs remain exact and no SDK entity function or network op
+FAIL .audit-work/foundation-reinforcement18/verify-cost.mjs  | AssertionError [ERR_ASSERTION]: Model source changed without a verified compatibility seam. ||   code: 'ERR_ASSERTION',
+PASS .audit-work/foundation-reinforcement18/verify-coupled-builder-pilot.mjs  | Coupled actual service/Part sync/initial-freeze recovery pilot passes; baseline-
+FAIL .audit-work/foundation-reinforcement18/verify-coupled-builder-recovery.mjs  | AssertionError [ERR_ASSERTION]: Frozen code drift: .audit-work/foundation-reinforcement18/coupled-builder-pilot-bundle.mjs ||   code: 'ERR_
+FAIL .audit-work/foundation-reinforcement18/verify-coupled-page-recovery-safety.mjs  | X [ERROR] No matching export in "src/components/estimator/builder/builderService.js" for import "foundationRecordSavedTotal" ||   let error 
+FAIL .audit-work/foundation-reinforcement18/verify-coupled-page.mjs  | X [ERROR] No matching export in "src/components/estimator/builder/builderService.js" for import "foundationRecordSavedTotal" ||   let error 
+FAIL .audit-work/foundation-reinforcement18/verify-coupled-work-order.mjs  | ok material-read-failure || FAIL saved-page Do not recompute settled conversion inputs; use frozen output
+PASS .audit-work/foundation-reinforcement18/verify-draft-projection.mjs  | Draft/projection: 21/21 passed; failed=0
+PASS .audit-work/foundation-reinforcement18/verify-editor-session.mjs  | Editor session: 14/14; failed=0
+PASS .audit-work/foundation-reinforcement18/verify-foundation-ai-review-ui.mjs  | ok saved note cannot appear current when the active design is malformed or unava
+PASS .audit-work/foundation-reinforcement18/verify-foundation-ai-review.mjs  | ok missing active mat tie and hoop lists stay unknown rather than invented empty
+PASS .audit-work/foundation-reinforcement18/verify-foundation-catalog-gateway.mjs  | ok unconditional and unsupported catalog operations stay denied for admin
+PASS .audit-work/foundation-reinforcement18/verify-foundation-pole-preview.mjs  | ok malformed source indices and instance collections cannot attach a pole to an 
+PASS .audit-work/foundation-reinforcement18/verify-foundation-preview-camera.mjs  | ok wide and very tall layouts can fit beyond old200ft wheel clamp without touchi
+PASS .audit-work/foundation-reinforcement18/verify-foundation-saved-anchors.mjs  | ok unsupported placement modes fail closed without interpreting them as saved po
+PASS .audit-work/foundation-reinforcement18/verify-frozen-pricing.mjs  | Frozen pricing context: 21/21; failed=0
+PASS .audit-work/foundation-reinforcement18/verify-item-projection.mjs  | Item projection: 24/24 passed; failed=0
+PASS .audit-work/foundation-reinforcement18/verify-masonry-bom-model.mjs  | ok empty wall set remains empty
+PASS .audit-work/foundation-reinforcement18/verify-masonry-dimensions-model.mjs  | masonry-dimensions-model passed=125 failed=0
+PASS .audit-work/foundation-reinforcement18/verify-masonry-dimensions-page.mjs  | masonry-dimensions-page passed=5 failed=0
+PASS .audit-work/foundation-reinforcement18/verify-masonry-height-model.mjs  | masonry-height-model passed=61 failed=0
+PASS .audit-work/foundation-reinforcement18/verify-masonry-height-page.mjs  | masonry-height-page passed=5 failed=0
+PASS .audit-work/foundation-reinforcement18/verify-masonry-material-model.mjs  | 60/60 material model cases
+PASS .audit-work/foundation-reinforcement18/verify-masonry-material-project.mjs  | 14/14 project cases; 8 frozen source modules; zero SDK/business operations.
+PASS .audit-work/foundation-reinforcement18/verify-masonry-outline-model.mjs  | masonry-outline-model passed=84 failed=0
+PASS .audit-work/foundation-reinforcement18/verify-masonry-outline-page.mjs  | masonry-outline-page passed=7 failed=0
+PASS .audit-work/foundation-reinforcement18/verify-masonry-outline-ui.mjs  | masonry-outline-ui passed=23 failed=0
+PASS .audit-work/foundation-reinforcement18/verify-masonry-page.mjs  | masonry-page passed=7 failed=0
+PASS .audit-work/foundation-reinforcement18/verify-masonry-rates-page.mjs  | masonry-rates-page passed=5 failed=0
+PASS .audit-work/foundation-reinforcement18/verify-masonry-ui.mjs  | masonry-ui passed=6 failed=0
+PASS .audit-work/foundation-reinforcement18/verify-masonry-zero-settings.mjs  | masonry-zero-settings passed=36 failed=0
+FAIL .audit-work/foundation-reinforcement18/verify-material-pagination.mjs  | X [ERROR] Unexpected import @/lib/loadAllEntityRows [plugin real-pagination-fake-sdk-only] ||   This error came from the "onResolve" callbac
+PASS .audit-work/foundation-reinforcement18/verify-material-read-guard.mjs  | Material read guards: 11/11; failed=0
+PASS .audit-work/foundation-reinforcement18/verify-model.mjs  | Version2 local geometry model: 39/39 passed; failed=0
+FAIL .audit-work/foundation-reinforcement18/verify-page-reinforcement.mjs  | X [ERROR] No matching export in "offline:lucide-react" for import "AlertTriangle" || X [ERROR] No matching export in "offline:lucide-react" 
+PASS .audit-work/foundation-reinforcement18/verify-part-descriptors.mjs  | Part descriptors: 26/26; failed=0
+PASS .audit-work/foundation-reinforcement18/verify-pricing-ui.mjs  | Pricing UI: 9/9; failed=0
+PASS .audit-work/foundation-reinforcement18/verify-print-only-candidate.mjs  | ok strict missing-money handling and recorded zero remain distinct without any S
+PASS .audit-work/foundation-reinforcement18/verify-proposal.mjs  | Proposal: 31/31 passed; failed=0
+PASS .audit-work/foundation-reinforcement18/verify-recovery-remote-candidate.mjs  | ok invalid-unsent-quantity
+FAIL .audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs  | Reinforcement 3D widget: 0/20; failed=20 || FAIL actual overview mounts eight physical bars under their concrete and leaves all pricing/prop
+FAIL .audit-work/foundation-reinforcement18/verify-reinforcement-bom-rows.mjs  | Reinforcement BOM rows: 6/8; failed=2 || FAIL unknown source quantities, weights, hours and costs are not relabeled as zero Expected values 
+FAIL .audit-work/foundation-reinforcement18/verify-reinforcement-preview-3d.mjs  | ok nonfinite or partial authored transforms fail visibly; large finite rotation is safely normalized || Reinforcement preview model: 15/16; 
+FAIL .audit-work/foundation-reinforcement18/verify-reinforcement-three-preview.mjs  | Reinforcement Three primitives: 7/8; failed=1 || FAIL role colors and labels cover only modeled steel; unknown roles or kinds fail closed Ex
+PASS .audit-work/foundation-reinforcement18/verify-shared-extraction.mjs  | Shared extraction: 16/16; failed=0
+PASS .audit-work/foundation-reinforcement18/verify-shared-sync.mjs  | Shared sync planning: 32/32; failed=0
+FAIL .audit-work/foundation-reinforcement18/verify-ui-lead.mjs  | 
+FAIL .audit-work/foundation-reinforcement18/verify-validation-seam.mjs  | AssertionError [ERR_ASSERTION]: basic: FAIL frozen complete-model parity: bag spread AssertionError [ERR_ASSERTION]: totals ||   code: 'ERR
+FAIL .audit-work/foundation-reinforcement18/verify-versioned-persistence.mjs  | ok a backend dropping undeclared versioned metadata fails client readback instead of acknowledging partial data || Versioned persistence: 8/
+FAIL .audit-work/foundation-reinforcement18/verify-wall-cap-ack-page.mjs  | X [ERROR] Expected ")" but found "{" ||   let error = new Error(text);
+PASS .audit-work/foundation-reinforcement18/verify-wall-cap-acknowledged.mjs  | ok legacy standalone calls without a supplied snapshot still preserve their know
+FAIL .audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs  | FAIL shorter stock does not silently shorten a requested cut Expected 1 but found 10 instances with node type: "input" || FAIL clearing a cu
+PASS .audit-work/foundation-reinforcement18/verify-wall-cap-geometry.mjs  | ok project save/handoff gate receives stock-fit issues while keeping stored amou
+PASS .audit-work/foundation-reinforcement18/verify-wall-cap-pricing-ui.mjs  | ok deleted material keeps its unavailable selection and acknowledged amount
+PASS .audit-work/foundation-reinforcement18/verify-wall-cap-pricing.mjs  | ok no cap rows remains a genuine zero and valid frozen source inputs are never m
+FAIL .audit-work/foundation-reinforcement18/verify-wall-cap-transport-state.mjs  | AssertionError [ERR_ASSERTION]: wall-cap-geometry-ui-verification.json ||   code: 'ERR_ASSERTION',
+PASS .audit-work/foundation-reinforcement18/verify-work-order-consumers.mjs  | Work Order consumers: 15/15; failed=0
+FAIL .audit-work/foundation-reinforcement18/verify-work-order-part.mjs  | ok unresolved removal, unsupported source versions and missing linked state fail closed || ok persisted future versions, malformed provenanc
+PASS .audit-work/foundation-reinforcement19/verify-pole-pricing-consumers.mjs  | pole-pricing-consumers ok inputs=57
+PASS .audit-work/foundation-reinforcement19/verify-pole-pricing-model.mjs  | pole-pricing-model passed=43 failed=0
+PASS .audit-work/foundation-reinforcement19/verify-pole-pricing-page.mjs  | pole-pricing-page passed=6 failed=0
+PASS .audit-work/foundation-reinforcement20/verify-masonry-consumers.mjs  | masonry-consumers ok inputs=57
+PASS .audit-work/foundation-reinforcement20/verify-masonry-model.mjs  | masonry-model passed=81 failed=0 total=81
+PASS .audit-work/foundation-reinforcement20/verify-masonry-page.mjs  | masonry-page passed=7 failed=0
+PASS .audit-work/foundation-reinforcement21/verify-equipment-consumers.mjs  | equipment-consumers ok inputs=62
+PASS .audit-work/foundation-reinforcement21/verify-equipment-model.mjs  | equipment-model passed=48 failed=0 total=48
+PASS .audit-work/foundation-reinforcement21/verify-equipment-page.mjs  | equipment-page passed=7 failed=0
+PASS .audit-work/foundation-reinforcement22/verify-cabinets-consumers.mjs  | cabland-consumers ok inputs=62
+PASS .audit-work/foundation-reinforcement22/verify-cabinets-model.mjs  | cabland-model passed=45 failed=0
+PASS .audit-work/foundation-reinforcement22/verify-cabinets-page.mjs  | cabland-page passed=8 failed=0
+PASS .audit-work/foundation-reinforcement23/verify-supplier-consumers.mjs  | supplier-consumers ok inputs=57
+PASS .audit-work/foundation-reinforcement23/verify-supplier-model.mjs  | supplier-model passed=32 failed=0 total=32
+PASS .audit-work/foundation-reinforcement23/verify-supplier-page.mjs  | supplier-page passed=7 failed=0
+PASS .audit-work/foundation-reinforcement24/verify-settings-consumers.mjs  | settings-consumers ok inputs=77
+PASS .audit-work/foundation-reinforcement24/verify-settings-model.mjs  | settings-model passed=27 failed=0 total=27
+PASS .audit-work/foundation-reinforcement24/verify-settings-page.mjs  | settings-page passed=10 failed=0

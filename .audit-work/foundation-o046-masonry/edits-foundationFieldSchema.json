@@ -1,0 +1,7 @@
+[
+ {
+  "old_text": "    { key: \"brick_height_inches\", label: \"Height (in)\", type: \"number\" },\n    { key: \"brick_color\", label: \"Color\", type: \"text\" },\n  ],\n  wall_material: [\n    { key: \"wall_unit_length_inches\", label: \"Unit length (in)\", type: \"number\" },\n    { key: \"wall_unit_width_inches\", label: \"Unit width (in)\", type: \"number\" },\n    { key: \"wall_unit_height_inches\", label: \"Unit height (in)\", type: \"number\" },\n    { key: \"wall_color\", label: \"Color\", type: \"text\" },\n  ],\n  wall_cap: [",
+  "new_text": "    { key: \"brick_height_inches\", label: \"Height (in)\", type: \"number\" },\n    { key: \"brick_color\", label: \"Color\", type: \"text\" },\n  ],\n  wall_material: [\n    // CMP-D03: subtype picks the quantity method — brick/cinderblock/stone are\n    // unit masonry (priced per unit from the unit dims below); \"concrete\" is\n    // poured, priced per cubic yard on wall thickness alone.\n    { key: \"wall_material_subtype\", label: \"Subtype (brick / cinderblock / stone / concrete)\", type: \"text\" },\n    { key: \"wall_unit_length_inches\", label: \"Unit length (in)\", type: \"number\" },\n    { key: \"wall_unit_width_inches\", label: \"Unit width (in) — wall thickness for poured concrete\", type: \"number\" },\n    { key: \"wall_unit_height_inches\", label: \"Unit height (in)\", type: \"number\" },\n    { key: \"wall_color\", label: \"Color\", type: \"text\" },\n  ],\n  wall_cap: [",
+  "replace_all": false
+ }
+]

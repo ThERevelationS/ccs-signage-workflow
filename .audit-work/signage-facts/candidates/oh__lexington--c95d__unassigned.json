@@ -1,0 +1,228 @@
+{
+ "jurisdiction_id": "6ae0491d2a81c2441679c95d",
+ "jurisdiction_name": "Lexington",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Z:\\Fees\\Fees effective Jan 2 2026\\RCO Richland Co Permit Approval Fees eff Jan 2 2026.docx Revised 03/01/2024 Page 1 of 1 RICHLAND COUNTY BUILDING DEPARTMEN T 1495 WEST LONGVIEW AVENUE • SUITE 202A • MANSFIELD, OHIO 44906 Phone: (419) 774 - 5517 • building.richlandcountyoh.gov RESIDENTIAL BUILDING PERMIT/APPROVAL FEES – RICHLAND COUNTY – Effective January 2 , 202 6 BUILDING NEW CONSTRUCTION/ADDITIONS/ALTERATIONS Building /Structural $100 + $5.00/100 sq. ft. Swimming Pool (does not include electrical) $200.00 ELECTRICAL - NEW CONSTRUCTION / ADDITIONS / ALTERATIONS Electrical $100 + $5.00/100 sq. ft Service (Permanent and Temporary), or Generator $100.00 (1 Inspection only) MECHANICAL NEW CONSTRUCTION/ADDITIONS/ALTERATIONS/REPLACEMENT Mechanical $100 + $5.00/100 sq. ft. RESIDENTIAL MISCELLANEOUS Request for Certificate of Occupancy $200.00 (2 Inspections) Partial Certificate of Occupancy $",
+   "tags": [
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "7828beddf193059b23fb717d7b97001f835edbd1fe4e1dfea1ebd32be90bf1e7",
+   "source_document_id": null,
+   "source_title": "7828beddf193059b23fb717d7b97001f835edbd1fe4e1dfea1ebd32be90bf1e7.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Fee%20Schedules/RCO%20Residential%20Richland%20Co%20Permit%20Approval%20Fees%20eff%20Jan%202%202026.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Z:\\Checklists and Forms\\Commercial Plan Approval Guide.docx Revised 1-24-2025 Page 4 of 4 index. The file name does not need to follow any certain format but shall be appropriately named and contain the date of submittal. For example….Foundation revision 01 -26-2024.PDF a. Where documents need to be submitted in multiple files due to size, please make sure each file is appropriately named and numbered. Include the total number of files submitted in the transmittal letter. File name for example…..Revision Plan Set 01 -26-24 1 of 3.PDF b. Number of pages in each file and total number of pages transmitted. 4. Indication of scopes of work submitted for review … Structural, Electrical, Mechanical, Automatic Sprinkler, Fire Alarm, Signage, etc. 5. Indication of any additional scopes of work submitted or areas/fixtures not previously submitted. i.e. …..added square footage or alterations within",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c",
+   "source_document_id": null,
+   "source_title": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Commercial%20Projects/Commercial%20Plan%20Approval%20Guide.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Codes_Permits\\Checklists and Forms\\OBC Commercial Application.dox Revised 10/20/2017 21 Mechanical Contractor: Attention/Contact: Address: City: State: Zip: Phone: FAX: E-Mail: Mechanical Contractor OCILB License No: 22 Fire Protection/Alarm Contractor: Attention/Contact: Address: City: State: Zip: Phone: FAX: E-Mail: Fire protection/alarm installer name: State Fire Marshall Cert No.: 23 Construction Type: 24 Building Height (ft.): 25 Number of Stories: Basement Yes No 26 Gross Building Area (sf): 27 Proposed Area per floor (sf): 28 Unlimited Area Building (OBC 507): Yes No 29 Total Altered / Added area of existing buildings (sf): 30 Existing Use Group(s) and Occupancy description(s): 31 Proposed Use Group(s) and Occupancy description(s): 32 For mixed occupancies, how are they separated 33 Maximum design occupant load of entire structure per OBC 1004: Incidental Uses (OBC 509) 34 For res",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "041def7d7cdf2355ab4275466ba4e180e1b387eb35ed97b39c653f93de982791",
+   "source_document_id": null,
+   "source_title": "041def7d7cdf2355ab4275466ba4e180e1b387eb35ed97b39c653f93de982791.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Commercial%20Application%20for%20plan%20approval.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Codes_Permits\\Checklists and Forms\\OBC Commercial Application.dox Revised 10/20/2017 25. Provide the number of stories of the structure and indicate whether a basement is proposed. 26. Provide the gross building area of the building or structure. For alterations or additions to existing buildings, please include the altered or added area in the gross area calculation. For new construction, this area will be used to calculate the application and permit fees. 27. Provide the proposed building area per floor of the structure. For structures with multiple stories and different floor areas, details of each story, mezzanine, and floor area shall be provided on the plans. 28. Indicate whether the building is constructed as an unlimited area building per OBC 507. 29. Provide the total altered or added area for existing buildings. This area will be used to calculated application and permit fees f",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "041def7d7cdf2355ab4275466ba4e180e1b387eb35ed97b39c653f93de982791",
+   "source_document_id": null,
+   "source_title": "041def7d7cdf2355ab4275466ba4e180e1b387eb35ed97b39c653f93de982791.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Commercial%20Application%20for%20plan%20approval.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "RCO Residential Application Revised 10/20/2017 19 Sewer Contractor (Rich. Co Sewer Only): Attention/Contact: Address: City: State: Zip: Phone: FAX: E-Mail: 20 Building Area Summary Main / First Floor Area (sf): 21 Number of Stories: Gross Building Area (sf): Second Floor Area (sf): 22 Number of Bedrooms: Finished Area (sf): Third Flood Area (sf): 23 Number of Dwelling Units: Unfinished Area (sf): 24 Basement: Yes No 25 Crawl Space: Yes No Basement Area (sf): 26 Fuel Supply: Electric Natural Gas LP Other: Garage Area (sf): 27 Sanitary Disposal: Richland County Public Septic N/A Deck / Porch Area (sf): 28 Water Supply: Well Public Private Water System N/A Total Altered / New Area (sf): 29 Fee Schedule Base Fee Square Foot Fee Line Total Fee 30 I hereby certify that I am the (select one) Building Fees Owner Agent for the Owner and all information contained in this application is true, accur",
+   "tags": [
+    "area",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "d44a588b057a00861846aa14ef6c796d6fa3bd09e77aba62c11f91669bc8bf9c",
+   "source_document_id": null,
+   "source_title": "d44a588b057a00861846aa14ef6c796d6fa3bd09e77aba62c11f91669bc8bf9c.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Residential%20Application%20for%20plan%20approval.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Codes_Permits\\Checklists and Forms\\OBC Commercial Application.dox Revised 10/20/2017 DIRECTIONS FOR COMPLETING APPLICATION FOR COMMERCIAL BUILDING PLAN APPROVAL In accordance with Ohio Building Code (OBC) Section 106.1, pursuant to Ohio Revised Code (ORC) Section 3791.04, construction documents, statement of special inspections required and other data shall be submitted in two or more sets with each application for an approval. Before beginning the construction of any building for which construction documents are required under OBC Section 106 , the owner or the owner's representative shall submit construction documents to the building official for approval. Application Directions: Complete page one of the application and attached worksheets as outlined below. All boxes, 1 through 42, must be completed in full or the application will be returned. Send this completed form along with all r",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "041def7d7cdf2355ab4275466ba4e180e1b387eb35ed97b39c653f93de982791",
+   "source_document_id": null,
+   "source_title": "041def7d7cdf2355ab4275466ba4e180e1b387eb35ed97b39c653f93de982791.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Commercial%20Application%20for%20plan%20approval.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "SMOKE DETECTORS SAVE LIVES Page 2 of 2 M:\\Checklists and Forms\\Smoke Detectors Save Lives.docRevised 01/30/2008 Section 313 of the 2006 Residential Code of Ohio for One-, Two- and Three-Family Dwellings establishes the minimum provisions for smoke alarms (detectors) in residential occupancies and structures. SECTION 313 SMOKE ALARMS 313.1 Smoke alarms. Smoke alarms shall be installed in the following locations: 1. In each sleeping room. 2. Outside each separate sleeping area in the immediate vicinity of the bedrooms. 3. On each additional story of the dwelling, including basements but not including crawl spaces and uninhabitable attics. In dwellings or dwelling units with split levels and without an intervening door between the adjacent levels, a smoke alarm installed on the upper level shall suffice for the adjacent lower level provided that the lower level is less than one full story b",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "64682d07fd1064618856839c01d8e9eb5c5e75a8d7a573121b89955522ffa0fb",
+   "source_document_id": null,
+   "source_title": "64682d07fd1064618856839c01d8e9eb5c5e75a8d7a573121b89955522ffa0fb.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Documents/Smoke%20Detectors%20Save%20Lives.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Z:\\Checklists and Forms\\Commercial Plan Approval Guide.docx Revised 1-24-2025 Page 2 of 4 5. Complete a Commercial Building Plan Approval Application. The application is available on our website or by calling our office. 6. Submit all the documents via Paper or Electronically as follows a. Application b. Fees Worksheet. A fees worksheet is available on our website to assist in the fee calculation process. c. Floodplain / Stormwater Approval …for projects located within the unincorporated areas of Richland County only . d. Zoning Permit e. Plans/Construction Documents. At such time as a complete application and documents have been submitted and all fees have been paid, the construction documents will be reviewed. If the drawings cannot be approved or more information is required, the applicant will be notified with a list of correction items. One or more of the following 3 approval types ",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c",
+   "source_document_id": null,
+   "source_title": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Commercial%20Projects/Commercial%20Plan%20Approval%20Guide.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "RCO Residential Application Revised 10/20/2017 DIRECTIONS FOR COMPLETING APPLICATION FOR RESIDENTIAL BUILDING PLAN APPROVAL In accordance with the Residential Code of Ohio (RCO) Section 105.1, pursuant to Ohio Revised Code (ORC) Section 3791.04, construction documents, statement of special inspections required and other data shall be submitted in two or more sets with each application for an approval. Before beginning the construction of any building for which construction documents are required under RCO Section 105, the owner or the owner's representative shall submit construction documents to the building official for approval. Application Directions: Complete page one of the application as outlined below. All boxes, 1 through 30, must be completed in full or the application will be returned. Send this completed form along with all required documents to “Richland County Building Depar",
+   "tags": [
+    "sign",
+    "area",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "d44a588b057a00861846aa14ef6c796d6fa3bd09e77aba62c11f91669bc8bf9c",
+   "source_document_id": null,
+   "source_title": "d44a588b057a00861846aa14ef6c796d6fa3bd09e77aba62c11f91669bc8bf9c.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Residential%20Application%20for%20plan%20approval.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Z: \\ Checklists and Forms \\ Request for CO Chg of Occ Daycare 09102026.docx Page 2 of 4 Request for Certificate of Occupancy Application Instructions and Floorplan / Site Sketch Requirements Application and Inspection Process At such time as an application/request, fees and all supporting documentation are submitted, an initial inspection will be scheduled. After the initial inspection, a follow - up letter and/or inspection report will be sent to the applicant addressing any re quired corrections or alterations. A final inspection shall be requested by the applicant after any corrections are completed. Additional inspection reports indicating zoning compliance, plumbing compliance, and fire inspection may be required. The app licant will be notified of these additional reports prior to or after the initial application. If upon inspection, the building and/or use is found to be more than",
+   "tags": [
+    "sign",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "3c137c3486bb3344edc931da6b31fdedef3ccb39b817a70cf6d10b1748180b73",
+   "source_document_id": null,
+   "source_title": "3c137c3486bb3344edc931da6b31fdedef3ccb39b817a70cf6d10b1748180b73.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Request%20for%20Certificate%20of%20Occupancy%20Change%20of%20Occupancy%20no%20alterations%20Daycare.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "RCO Residential Application Revised 10/20/2017 h. Second Flood Area- The area in square feet of the second floor of the house. This area includes finished and unfinished areas inside the exterior walls. This area does not include and deck, porch, or garage areas. i. Third Floor Area- The area in square feet of the third floor of the house. This area includes finished and unfinished areas inside the exterior walls. This area does not include and deck, porch, or garage areas. j. Total Altered / New Area- The area in square feet of all newly constructed or altered area including finished, unfinished, basement, floor, garage, deck and porch areas. This area is used to determine the fees for the application. 21. Provide the number of stories, not including the basement or crawl space, if provided. 22. Provide the number of bedrooms. 23. Provide the number of dwelling units…maximum of three (3",
+   "tags": [
+    "sign",
+    "area",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "d44a588b057a00861846aa14ef6c796d6fa3bd09e77aba62c11f91669bc8bf9c",
+   "source_document_id": null,
+   "source_title": "d44a588b057a00861846aa14ef6c796d6fa3bd09e77aba62c11f91669bc8bf9c.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Residential%20Application%20for%20plan%20approval.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Z: \\ Checklists and Forms \\ Request for CO Chg of Occ Daycare 09102026.docx Page 1 of 4 RICHLAND COUNTY BUILDING DEPARTMEN T 1495 WEST LONGVIEW AVENUE • SUITE 202A • MANSFIELD, OHIO 44906 Phone: (419) 774 - 5517 • building.richlandcountyoh.gov REQUEST FOR CERTIFICATE OF OCCUPANCY , CHANGE OF OCCUPANCY WITHOUT ALTERATIONS , AND CHILD CARE APPROVAL APPLICATION Application No. Attention: Chief Building Official Date: (1) Purpose / Scope of Application (c i rcle residenti al or commercial and 1 o f the following box es ): Residentia l / Commercial ☐ I have an existing building and I am not in possession of Certificate of Occupancy ( approval ) for the building(s) located at the subject address. As the owner (or authorized agent), pursuant to section 111 of the Residential Code of Ohio / Ohio Building Code, I am requesting a Certificate of Occupancy. To the best of my knowledge, your departme",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "3c137c3486bb3344edc931da6b31fdedef3ccb39b817a70cf6d10b1748180b73",
+   "source_document_id": null,
+   "source_title": "3c137c3486bb3344edc931da6b31fdedef3ccb39b817a70cf6d10b1748180b73.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Applications/Request%20for%20Certificate%20of%20Occupancy%20Change%20of%20Occupancy%20no%20alterations%20Daycare.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Z:\\Checklists and Forms\\Commercial Plan Approval Guide.docx Revised 1-24-2025 Page 1 of 4 RICHLAND COUNTY BUILDING DEPARTMEN T 1495 WEST LONGVIEW AVENUE • SUITE 202A • MANSFIELD, OHIO 44906 Phone • (419) 774 - 5517 Fax • (419) 774 - 6317 building.richlandcountyoh.gov Commercial Plan Approval Guide This guide details the general requirements for paper and electronic plans, electronic formatting requirements. Tips and best practices are also described to help make the plan approval process successful. Quick tips as follows…  Review project specific guides & resources located on our web page at building.richlandcountyoh.gov  A transmittal or cover letter shall accompany all drawing resubmissions and revisions.  All electronic plans and construction documents shall be submitted as an unsecured PDF.  Make sure electronic plans have a digital index in the bookmarks of the file.  Where sub",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c",
+   "source_document_id": null,
+   "source_title": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Commercial%20Projects/Commercial%20Plan%20Approval%20Guide.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Z:\\Checklists and Forms\\Commercial Plan Approval Guide.docx Revised 1-24-2025 Page 3 of 4 6. Once we receive a complete submission (application, fees worksheet, construction documents/plans), the application will be processed and an application number will be assigned. We will notify the applicant typically within 1 - 3 business days of the receipt of documents and if any additional documents are required. Once fees are received, the application will be place d in the plan review queue. Electronic Plan Requirements 1. All plans and construction documents need to be submitted as an unsecured PDF. Some digital seals do not allow us to stamp drawings for approval so please verify editing capability prior to submittal. The Design Professionals seal should include the Round stamp/seal, design professional signature, date of signature, and license expiration date (Architects only). We will ins",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c",
+   "source_document_id": null,
+   "source_title": "81c78f0fd435c1f610a84637908184e6b6a71fa116f090a49aa80d52cef9cf6c.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/Commercial%20Projects/Commercial%20Plan%20Approval%20Guide.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Z:\\Checklists and Forms\\Web portal instructions.docx Revised 8-8-2025 Page 1 of 4 RICHLAND COUNTY BUILDING DEPARTMEN T 1495 WEST LONGVIEW AVENUE • SUITE 202A • MANSFIELD, OHIO 44906 Phone: (419) 774 - 5517 • building.richlandcountyoh.gov Webportal Document Upload Instructions This guide will help the user to upload documents when submitting electronic documents to our department for plan review. The link to our web portal is on the left hand side of our webpage. Step 1. Navigate to our webpage and click on the Online Permit Portal Submission Page link. The link will open a new browser tab. Step 2. Complete the boxes with the requested information. If an application has already been submitted, put the application number in the resubmittal application number box.",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "f19c0ba6e318600ec593e1ff406679a21478eaa2ce7dae4a32c38f196bd8637e",
+   "source_document_id": null,
+   "source_title": "f19c0ba6e318600ec593e1ff406679a21478eaa2ce7dae4a32c38f196bd8637e.pdf",
+   "official_url": "https://www.richlandcountyoh.gov/media/Departments/Building/General%20Information/Web%20portal%20instructions%2008082025.pdf"
+  }
+ ]
+}

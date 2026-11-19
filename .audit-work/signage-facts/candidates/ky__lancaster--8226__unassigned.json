@@ -1,0 +1,56 @@
+{
+ "jurisdiction_id": "6adf0082a405746f76c08226",
+ "jurisdiction_name": "Lancaster",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Rev:20210119 Doc# AF01 GARRARD COUNTY BUILDING PERMIT APPLICATION Garrard County Fiscal Court 15 Public Square, Lancaster, KY 40444 (859)792-3531 fax (859)-792-2010 APPLICANT INFORMATION: Name (Please Print) _______________________________________ Date _____________ Phone Number ______________________ Present Address ______________________________________________________________ CONSTRUCTION INFORMATION: Construction Site Address _______________________________ TOTAL SQUARE FOOTAGE_________ Check boxes that apply: Mobile/Manf Home New Home Construction Commercial/COU Deck/Porch/Pavillion Attached Garage Outbuilding Is the property a minimum of 1 Acre ? YES _____ NO _____ Is the property in a flood zone ? YES _____ NO _____ Please contact the following for inspections ELECTRICAL Wallace Brown (859)-887-2909 PLUMBING (859)-792-2153 CULVERT Garrard Road Dept (859)-792-3531 HVAC (502)-573-03",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "03f3c12dc62ed842a4ae08014b757b15094eb6c5285d3f4325d814576289fb70",
+   "source_document_id": null,
+   "source_title": "03f3c12dc62ed842a4ae08014b757b15094eb6c5285d3f4325d814576289fb70.pdf",
+   "official_url": "https://garrardcountyky.gov/wp-content/uploads/2024/04/Building-Permit-Application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "GARRARD COUNTY BUILDING PERMIT FEES Effective 2017 Residential Construction 1999 sqft and less $200 Lancaster Only 2000 to 3000 sqft $250 Signs $25 + $1 per additional sqft over 4 sqft 3001 to 4000 sqft $300 Business Awning $20 4001 and greater $350 Demolition $75 Room Additions $100 Cell Tower Uniform App $2500 Decks, Porches,etc $50 Carport $20 Accessory Bldg <144 $25 Zone Change: 144 to 750 $50 Residential $150 per hearing/ 500 Spec Meet 750 $100 Commercial $300 per hearing/650 Spec Meet In Ground Pool $50 Industrial $400 per hearing/ 750 Spec Meet Mobile Home $150 Plat Review: Preliminary $150 / 500 Spec Meet Final $300 / 650 Spec Meet COMMERCIAL Construction Type 1 Commercial Exhaust Hoods $100 Assembly, High Hazard, Institutional 16 cents sqft Business, Day Care, Educational, Industrial, Mercantile, Residential, Storage 15 cents sqft Utility and Misc 13 cents sqft Production Greenh",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "496e7d04fc5cc2844383586baa1279ddc69a06c2b84fc866be04e27def3a7605",
+   "source_document_id": null,
+   "source_title": "496e7d04fc5cc2844383586baa1279ddc69a06c2b84fc866be04e27def3a7605.pdf",
+   "official_url": "https://garrardcountyky.gov/wp-content/uploads/2023/03/Fee-Schedule.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "NET PROFIT LICENSE TAX RETURN GENERAL INSTRUCTIONS The following instructions are provided to aid the taxpayer in the completion of the Net Profit License Tax Return. They are not intended to be all-inclusive and therefore should be used only as a supplement to the existing ordinance and regulations. If you have any questions that are not addressed in these instructions please refer to the Occupational License Fee Ordinance 0-05-01-10-1 Who must file a Net Profit Form? Each separate corporation, limited liability company, business development corporation, partnership, limited partnership, registered limited liability partnership, sole proprietorship, association, joint stock company, receivership, trust, professional service organization, or other legal entity engaged in a business within Garrard County and a nexus in Garrard County. You must file a Net Profit Form Even if: -Your busines",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "bb3898b507049f98b0570ad257f72a5ea99d740628ee34d94cb4519612e66502",
+   "source_document_id": null,
+   "source_title": "bb3898b507049f98b0570ad257f72a5ea99d740628ee34d94cb4519612e66502.pdf",
+   "official_url": "https://garrardcountyky.gov/wp-content/uploads/2023/04/Instructions-for-Annual-License-Fee-Net-Profit-Form.pdf"
+  }
+ ]
+}

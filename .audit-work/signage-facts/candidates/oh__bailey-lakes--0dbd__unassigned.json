@@ -1,0 +1,25 @@
+{
+ "jurisdiction_id": "6adf604ed9d669610ce30dbd",
+ "jurisdiction_name": "Bailey Lakes",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Village of Bailey Lakes 822 Main Street Ashland, OH 44805 (419) 922-4063 VILLAGE OF BAILEY LAKES GENERAL ZONING PERMIT APPLICATION O W N E R / A P P L I C A N T I N F O R M A T I O N : Property or Business Owner Phone Number Email Street Address City State Zip Code Name of Applicant (if different from Owner) Phone Number Email Property / Project Address City State Zip Code Z O N I N G P E R M I T C A T E G O R Y : P L AN / D R AW I N G : PROPERTY TYPE PROJECT  Residential  Commercial  New Construction  Addition  Alteration / Repair  Demolition C H E C K P E R M I T ( S ) AP P L I E D F O R : PERMIT TYPE  Sign Permit  Residence  Utility Building  Garage  Lot Split  Fence  Temporary Use  Demolition  Deck/Porch  Car Port  Variance  Shed  Other ________________________________________ O H I O L A W R E Q U I R E S A L L E X C A V A T I O N S M U S T B E R E G I S T E R E D",
+   "tags": [
+    "sign",
+    "permit_required",
+    "illumination",
+    "process",
+    "temporary"
+   ],
+   "weight": 11,
+   "source_sha256": "393d3ea6ea98e3f59cd36c40091da883fd650bc49235f669c7f18f832ce0253e",
+   "source_document_id": null,
+   "source_title": "393d3ea6ea98e3f59cd36c40091da883fd650bc49235f669c7f18f832ce0253e.pdf",
+   "official_url": "https://img1.wsimg.com/blobby/go/7b091efa-cd92-4908-8698-ee416e7d3033/downloads/4f1acbd4-fc2a-4597-9f3f-18c8d97c804d/General%20Zoning%20Permit.pdf?ver=1792529210367"
+  }
+ ]
+}

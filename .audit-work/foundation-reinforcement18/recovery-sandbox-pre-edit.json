@@ -1,0 +1,31 @@
+{
+  "status": {
+    "id": "68dfcc5e57bbbc35387da97c",
+    "status": {
+      "state": "ready",
+      "details": null,
+      "request_id": "1b2b0193-a041-493e-b705-4ca7eeb2a1c3",
+      "turn_id": null,
+      "last_updated_date": "2026-11-06T12:00:27.081000",
+      "error_source": null,
+      "paywall_context": null
+    },
+    "devEnvironmentEnabled": false,
+    "lastGitCommit": "fa3b174d70482c8f4e5329ee0e9acf28ec287a50"
+  },
+  "head": "fa3b174d70482c8f4e5329ee0e9acf28ec287a50",
+  "dirty": "",
+  "helperExists": false,
+  "files": [
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "crlf": false,
+      "hash": "d4493957101e38cd0aa0b7ad3a9a8ec97fb0def5bee2d8f0f19ac68eacdd0b6a"
+    },
+    {
+      "path": "src/components/estimator/builder/builderService.js",
+      "crlf": false,
+      "hash": "c4ff8a65e632110a0e19ab6f8e76e4b0d9bc2a0d9b16d5212367af6735805daf"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "inventory": [
+    {
+      "id": "eq",
+      "material_type": "excavation_equipment",
+      "material_name": "Synthetic drill",
+      "cost_per_day": 100,
+      "pickup_delivery_cost": 20,
+      "is_spread_foot_excavation": true,
+      "compatible_attachment_ids": [
+        "att"
+      ]
+    },
+    {
+      "id": "att",
+      "material_type": "attachment",
+      "material_name": "Synthetic bit",
+      "cost_per_day": 15,
+      "allow_multiple": true
+    }
+  ],
+  "entry": {
+    "_id": "selected-eq",
+    "equipment_id": "eq",
+    "rental_period": "day",
+    "rental_duration": 1,
+    "include_delivery": false,
+    "attachment_counts": {},
+    "attachment_ids": [
+      "att"
+    ],
+    "equipment_cost": 100
+  }
+}

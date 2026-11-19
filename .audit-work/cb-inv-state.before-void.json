@@ -1,0 +1,1133 @@
+{
+  "batch_id": "cb-invoices-2026-11-17",
+  "ids": {
+    "Invoice": {
+      "2": "6afc95f073d56fa783ebb716",
+      "11": "6afc95f051f0f6a8d4697f5b",
+      "14": "6afc95f20e90ef6b813bf7c2",
+      "15": "6afc95f199f380c75ed45395",
+      "19": "6afc95f22b0ad053b4658ad1",
+      "21": "6afc95f3d98d6cf23013cd9a",
+      "22": "6afc95a153d3b9ec45906ea4",
+      "28": "6afc95f3a5497d13066d677b",
+      "1033": "6afc95f4788ebc016eb11bd8",
+      "1036": "6afc95f492c9ce32380a8ad4",
+      "1039": "6afc95f5357e227349805458",
+      "1040": "6afc95f53b63b5d6226b0393",
+      "1047": "6afc95f6c23126b443870e3f",
+      "1050": "6afc95f6a5c66305e9d69b0b",
+      "1056": "6afc95a22f2c029fd0c52aa5",
+      "1060": "6afc95f7ff94f15e29812536",
+      "1063": "6afc95f71a46206c9ed0baab",
+      "1068": "6afc95f8677a7559dee4210d",
+      "1069": "6afc95f9577e8399ad570f03",
+      "1070": "6afc95f82bf3cdaa69c3301c",
+      "1073": "6afc95fa98ed4bb7de672d01",
+      "1074": "6afc95fa85825e4d4cb006c1",
+      "1080": "6afc95ffeca0afae564e9c86",
+      "1082": "6afc960090264cdfa3e88ea4",
+      "1084": "6afc960064ead1945a715d8b",
+      "1085": "6afc9601f25be23594881a98",
+      "1086": "6afc96012b0ad053b4658ae6",
+      "1089": "6afc9602ca44bc1efa4ff4a1",
+      "1095": "6afc9603a82277bbda22b73c",
+      "1096": "6afc9603b2f8f99e1041640a",
+      "1097": "6afc9604aadba97895198efb",
+      "1098": "6afc96042e25827e4ee7b1e8",
+      "1099": "6afc9605cbc2a6af08f4a502",
+      "1105": "6afc96055a3f43636ebc9bdf",
+      "1115": "6afc9606e77232ce7c4b161a",
+      "1120": "6afc9606035fcea3c2f4923e",
+      "1125": "6afc96074d64b627513d1c9b",
+      "1127": "6afc9607a6481bb55462a2c4",
+      "1129": "6afc960844a6bb0a9dc36229",
+      "1132": "6afc960870a746e01f762a4b",
+      "1135": "6afc9609247510e8a4b03a2d",
+      "1138": "6afc960944b32507d8a2d376",
+      "1139": "6afc961096769f3001963bcf",
+      "1140": "6afc9611d244cf2c711b70bc",
+      "1141": "6afc9611ac677101ca1c4cfc",
+      "1142": "6afc9612f534e6a1c3445f8d",
+      "1145": "6afc9612cd77351b0b7d80aa",
+      "1146": "6afc9613509aedbbe244b94c",
+      "1148": "6afc961343249f5152db8c29",
+      "1151": "6afc9614da5360f5c95c6679",
+      "1157": "6afc96146f3834472551dcd6",
+      "1163": "6afc961540bb16bc69032803",
+      "1164": "6afc96151d542375058c734a",
+      "1165": "6afc9616ade71b43b72b10a3",
+      "1166": "6afc96162a853ff038033703",
+      "1167": "6afc961743c676eedf5d4112",
+      "1168": "6afc9617e353a7b784b3a323",
+      "1170": "6afc9618370f7bfb603c4e39",
+      "1171": "6afc96185e9b911d8f17003f",
+      "1175": "6afc96199d03742a992b0143",
+      "1176": "6afc9619725753bf934d48e8",
+      "1178": "6afc961a0ee19219f33bed32",
+      "1179": "6afc961fb4f85c06962ed5d7",
+      "1180": "6afc96208b46329e37a01381",
+      "1181": "6afc9620ffaa79af0bedfb39",
+      "1182": "6afc96219780da979f7aa866",
+      "1183": "6afc9622feb60e7618bd5876",
+      "1184": "6afc9621983b73c62a046ea6",
+      "1185": "6afc9622fd3901d10723842e",
+      "1186": "6afc96232599dba33103f7de",
+      "1189": "6afc9624b6d8bd326735736e",
+      "1197": "6afc9624670669bccc2d7f49",
+      "1204": "6afc962599f380c75ed453c5",
+      "1205": "6afc9625d84eac37deec12d6",
+      "1207": "6afc9626a419589e68970a09",
+      "1208": "6afc962757cd563fe3e2763b",
+      "1209": "6afc9627c43382e1cb382c96",
+      "1210": "6afc96280e6896692bed1566",
+      "1211": "6afc9629fe63ed022ebda35f",
+      "1213": "6afc9629e18650424251b7a9",
+      "1216": "6afc962afb87bcfeeda8f86d",
+      "1217": "6afc962afd02d804be1eb892",
+      "1219": "6afc9630853875681921afbe",
+      "1222": "6afc9630af65017dd443db14",
+      "1223": "6afc9631c4a51a1caed07e95",
+      "1224": "6afc9631b086bfe50e581b16",
+      "1232": "6afc9632d7bcb6a01e0a09c2",
+      "1235": "6afc96320f493ee7e807f553",
+      "1236": "6afc963375801353732fd7a9",
+      "1237": "6afc96344dede46fd1a69ae6",
+      "1238": "6afc96343bebf76fedf4f215",
+      "1239": "6afc9634cd15c2a70c349d75",
+      "1242": "6afc9635733c0bbf9cc9fc9f",
+      "1243": "6afc96350f335ecdd498a852",
+      "1245": "6afc96368cb0cbcaef9de93e",
+      "1246": "6afc963692e061539ec8e226",
+      "1247": "6afc9637d6544118df77d56d",
+      "1248": "6afc9638cf782c3cb94fb124",
+      "1249": "6afc9638c46f70529d7e8be9",
+      "1252": "6afc963944a6bb0a9dc36242",
+      "1256": "6afc9639f340d7a54c34b0c3",
+      "1259": "6afc964556767f41949133c4",
+      "1260": "6afc963a469699ed7694c79f",
+      "1264": "6afc9645331c0873dc6d6f75",
+      "1267": "6afc96463bdb42d44c1f552a",
+      "1270": "6afc96460a65d52b356081c1",
+      "1271": "6afc9647e8b76da294450d02",
+      "1273": "6afc9648674b6c03ba127775",
+      "1279": "6afc96481057d3d730105697",
+      "1280": "6afc96495182dca1656963bd",
+      "1282": "6afc96493377f5e7db304563",
+      "1287": "6afc96499bab57750dc5c684",
+      "1288": "6afc964a10dae87e63212897",
+      "1290": "6afc964b745d108566a0c04f",
+      "1291": "6afc964c577c4ec4a0bb79da",
+      "1301": "6afc964c735775afae7cb1d6",
+      "1304": "6afc964d184cd95f7efdee5a",
+      "1305": "6afc964ef979668535739791",
+      "1311": "6afc964e3b10d67b0b42caba",
+      "1314": "6afc964f298b77b13246ec17",
+      "1320": "6afc964fa645fea20ada30bc",
+      "1322": "6afc965055e1d5a9f50d7c29",
+      "1325": "6afc9653756f2b3dcf2383c2",
+      "1327": "6afc965387dcafa4846ae450",
+      "1328": "6afc96553f45e60e554c02ba",
+      "1329": "6afc9654a1624c83e5110926",
+      "1332": "6afc96550792f22a868cda80",
+      "1337": "6afc9656a784fd7e4e44f6d6",
+      "1338": "6afc96567436a9a92511cde4",
+      "1339": "6afc9657fb87bcfeeda8f895",
+      "1344": "6afc965782741e25bf30c843",
+      "1346": "6afc96588f6029e1b267d721",
+      "1350": "6afc95a08fa9817d8bc2e6cf",
+      "1352": "6afc9658c3ced6da363f147e",
+      "1354": "6afc9659019a9992cd52fedc",
+      "1355": "6afc965a7deee444e49d396e",
+      "1356": "6afc9659de71617ef680f64a",
+      "1357": "6afc965a1d753a81277a5e34",
+      "1358": "6afc965b59a42c08516e0599",
+      "1359": "6afc965c1c577f615ed30c62",
+      "1360": "6afc965c357e2273498054ca",
+      "1361": "6afc965d3189e7466e0d2d44",
+      "1364": "6afc965d74610fc35d7f8c80",
+      "1367": "6afc9663e2ecb99d07bc044a",
+      "1368": "6afc9662032153deed7b6043",
+      "1369": "6afc9663624cd4bc9e70a895",
+      "1371": "6afc96643bebf76fedf4f340",
+      "1374": "6afc9664ae9d2903e3e206cd",
+      "1377": "6afc96657c0f9a28e1d96218",
+      "1380": "6afc9666f1fd2b4329312cf6",
+      "1382": "6afc96668c7b777b30e7ca1c",
+      "1384": "6afc966749461e0e44268d92",
+      "1386": "6afc96670ae7a10d22dfe247",
+      "1388": "6afc9668035fcea3c2f495b7",
+      "1389": "6afc96686f78e181719e515d",
+      "1390": "6afc96695e2b36d468706789",
+      "1391": "6afc966ac5d6eb43dcb9a53b",
+      "1395": "6afc966a13871d0d89f7c36a",
+      "1396": "6afc966ba4a0104eace4582c",
+      "1398": "6afc966bc58ecad6e1049d3b",
+      "1399": "6afc966c5b24432a20746642",
+      "1403": "6afc966d2f423d611e0e966f",
+      "1404": "6afc966d4e9e4e744e25b617",
+      "1409": "6afc96729c81b6d3a01ceedf",
+      "1411": "6afc9677fd8c01841b645f6f",
+      "1412": "6afc967828cb5f3b0007a103",
+      "1413": "6afc9678261bf63948c1df39",
+      "1414": "6afc96781d7a902510ae499d",
+      "1417": "6afc9679d2100bbf6fe533f7",
+      "1420": "6afc967ade063091f8441db4",
+      "1421": "6afc967a6c39f8500ff6a729",
+      "1422": "6afc967b843c4c1e0c46fbf5",
+      "1423": "6afc967cf5e0f4bd6b52f511",
+      "1425": "6afc967b199c1c65a8f8071b",
+      "1426": "6afc967c7f5bc2a4fd7023dc",
+      "1427": "6afc967d3bb3f8631c11f438",
+      "1429": "6afc967df7c197a7d348fee3",
+      "1436": "6afc967ea82277bbda22b7c2",
+      "1438": "6afc967fcba43960759ca6e3",
+      "1439": "6afc967f6c5239951e378386",
+      "1442": "6afc968077112940c18b276b",
+      "1443": "6afc9680821dbf799b3cb1b8",
+      "1444": "6afc968110f8092b53f0f6d3",
+      "1446": "6afc968302b82eab271f4a00",
+      "1448": "6afc96841e0e7a3fcfbf4a00",
+      "1451": "6afc9684a5346a01de528992",
+      "1452": "6afc96854729d25b991a0a17",
+      "1453": "6afc9686498040c0cf39c613",
+      "1454": "6afc968620240a7985874ada",
+      "1455": "6afc9687b45d3b0ad7d9acde",
+      "1456": "6afc9687da01f9e5dae3c894",
+      "1457": "6afc9689a53af3cd542bdafa",
+      "1458": "6afc9688199c1c65a8f80722",
+      "1459": "6afc968996c2813cc1bbf48b",
+      "1460": "6afc96888a18ad5f62b0dff1",
+      "1464": "6afc968aff4d1863dc5e4504",
+      "1465": "6afc968a6e543debf4a754f6",
+      "1470": "6afc968b6fd3d0a4be761278",
+      "1473": "6afc968b47fe589b02086a43",
+      "1474": "6afc968c018a438f4bb3aa74",
+      "1475": "6afc968cf8b7c613af83d186",
+      "1480": "6afc968e31e4d6f99c3c9c00",
+      "1481": "6afc96932f56c1ac3567af28",
+      "1482": "6afc968eaaeabeb09bdcbefe",
+      "1483": "6afc96936240eda73931d27a",
+      "1485": "6afc9694979bee3353365c59",
+      "1488": "6afc9694f0d6ec68b2610df9",
+      "1489": "6afc969413871d0d89f7c398",
+      "1492": "6afc9695d07734ce2f87e002",
+      "1493": "6afc9694e9facbe67165e5cc",
+      "1494": "6afc969596769f3001963c80",
+      "1498": "6afc9696d56b47e7e1aca1a5",
+      "1499": "6afc9695a2fabd52e231f70f",
+      "1500": "6afc9696944e36fc4f0de867",
+      "1501": "6afc96976bb0f20e6eea46e2",
+      "1502": "6afc9697dc4f9a5b21cf17c8",
+      "1503": "6afc96979923390ea3ae5be7",
+      "1505": "6afc9698e69ed15e19716f58",
+      "1506": "6afc969861d1f02914b11407",
+      "1509": "6afc96987de749b8bf0e91bb",
+      "1510": "6afc9698fb7064fe8770f148",
+      "1511": "6afc9699eff5224e28ad0388",
+      "1512": "6afc9699a3f0e355302df1e0",
+      "1514": "6afc96a5b7d990c62b97ab94",
+      "1516": "6afc96a555e1d5a9f50d7c81",
+      "1517": "6afc96a591a6e79a0b2f3e0f",
+      "1518": "6afc96a6b8d9349ed0358ddc",
+      "1520": "6afc96a66111b8ce5012107a",
+      "1526": "6afc96a6fe7f4c7c431daa40",
+      "1527": "6afc96a7c37f8f9effa51823",
+      "1528": "6afc96a7622f269471ac8059",
+      "1531": "6afc96a80792f22a868cdad0",
+      "1533": "6afc96a802aa3fd6e530fe3d",
+      "1534": "6afc96a8972b2907c0d89402",
+      "1536": "6afc96a9a2c6240576b46f71",
+      "1537": "6afc96aaa0754f0b74b40ce9",
+      "1538": "6afc96a9d7d3a05a81797c9f",
+      "1540": "6afc96ab5505c85b80f9667d",
+      "1541": "6afc96aa7470085e0d215a70",
+      "1542": "6afc96abb619015474e5662c",
+      "1543": "6afc96ace8b76da294450dee",
+      "1544": "6afc96adcaae0210b5697601",
+      "1545": "6afc96ad4b361a9f6e24f103",
+      "1548": "6afc96b4677ff3c59bfe3282",
+      "1549": "6afc96b475178a7d5db6626c",
+      "1550": "6afc96b502492bd7f964079c",
+      "1551": "6afc96b5b2477b4a0c40846f",
+      "1552": "6afc96b6a76d4109daa98ede",
+      "1554": "6afc96b67bbd3e7fc0164c4d",
+      "1555": "6afc96b73c54a62fce5acfaa",
+      "1556": "6afc96b7fb7064fe8770f1e1",
+      "1557": "6afc96b8b2fc576fefbfb37b",
+      "1558": "6afc96b8528106ab718e90b3",
+      "1560": "6afc96b84f3c5ae7cdb17c77",
+      "1562": "6afc96b92ac976171a4c8361",
+      "1564": "6afc96b9cb5af288f40edb80",
+      "1568": "6afc96ba6474a1077e576618",
+      "1569": "6afc96b9a06e3bbdbc2783d7",
+      "1570": "6afc96bbd816d8bdc8a4c536",
+      "1571": "6afc96ba0aa6bdf994f0583c",
+      "1575": "6afc96bce7da5b6a1a61f089",
+      "1577": "6afc96bbee31179ec00c4a2d",
+      "1578": "6afc96bb5bb7419e8ab7a09b",
+      "1581": "6afc96c4ad1f4fa2485563cf",
+      "1582": "6afc96c532ce9a5bcf411bad",
+      "1583": "6afc96c34cbfa5ddfba04e26",
+      "1584": "6afc96c496769f3001963ca5",
+      "1585": "6afc96c5527fce12f3164b03",
+      "1591": "6afc96c64035d8d7758b9445",
+      "1592": "6afc96c738b9e790c5ec5b38",
+      "1593": "6afc96c742515179d0fef7fd",
+      "8637": "6afc95a2a0766e2aa6070d12",
+      "11280": "6afc95a32dd3433e939c4baa"
+    },
+    "Payment": {
+      "49": "6afc95b2eae13b759a4d36ba",
+      "249": "6afc95b353ccdf8c46ef6613",
+      "363": "6afc95c15b1fd85cb32befa5",
+      "6720": "6afc95b43be526361faee2ce",
+      "9102": "6afc95b313bc745a84209bbf"
+    },
+    "ReconciliationBatch": {
+      "historical": "6afc9591d5d3ea65b3f326c2"
+    }
+  },
+  "ambiguous": [
+    {
+      "entity": "Invoice",
+      "action": "write_rows",
+      "row": {
+        "source_entity": "invoices",
+        "source_id": "1596",
+        "data": {
+          "creation_request_key": "cb:invoice:1596",
+          "invoice_number": "INV-2554",
+          "customer_id": "6afbe402a5ba717b45448299",
+          "estimate_id": "6afc09a1f3767baf1eaba4c9",
+          "work_order_id": "",
+          "customer_display_name": "Chick-fil-A - Lexington",
+          "salesperson": "Carl Heinlein",
+          "entered_by": "cheinlein",
+          "subtotal": 1000,
+          "tax_rate": 0,
+          "tax_amount": 0,
+          "total": 1000,
+          "balance_due": 0,
+          "amount_paid": 1000,
+          "issue_date": "2016-07-12",
+          "due_date": "",
+          "terms": "",
+          "status": "paid",
+          "billing_type": "standard",
+          "line_items": [
+            {
+              "description": "Time and Material for Labeling Project",
+              "quantity": 1,
+              "unit_price": 1000,
+              "taxable": false
+            }
+          ],
+          "notes": "Imported from CoreBridge order 1596 (INV-2554, status CLOSED). Entered by cheinlein on 2016-07-12. PO: .",
+          "internal_notes": "Labeling and Other Projects - July\nProduction due: 07/15/2016\nBilling: 1425 Handy's Bend Rd., Wilmore, KY, 40390, US\nShipping: 2467 Crowne Point Dr, Cincinnati, OH, 45241, US",
+          "source_summary": {
+            "source": "corebridge",
+            "order_id": "1596",
+            "invoice_number": "INV-2554",
+            "order_status": "CLOSED",
+            "account_id": 17,
+            "batch_id": "cb-invoices-2026-11-17",
+            "imported_at": "2026-11-17T17:56:50.030Z"
+          },
+          "paid_date": "2016-07-13"
+        }
+      },
+      "at": "2026-11-17T19:09:55.349Z"
+    },
+    {
+      "entity": "Invoice",
+      "action": "write_rows",
+      "row": {
+        "source_entity": "invoices",
+        "source_id": "1597",
+        "data": {
+          "creation_request_key": "cb:invoice:1597",
+          "invoice_number": "INV-2555-V",
+          "customer_id": "6afbe40d230ba9af28bd182b",
+          "estimate_id": "6afc09a14c1b0402fbf501ef",
+          "work_order_id": "",
+          "customer_display_name": "Fourelle Properties LLC",
+          "salesperson": "Twyla Heinlein",
+          "entered_by": "cheinlein",
+          "subtotal": 1162.5,
+          "tax_rate": 0.065,
+          "tax_amount": 72.94,
+          "total": 1235.44,
+          "balance_due": 0,
+          "amount_paid": 1235.44,
+          "issue_date": "2016-07-14",
+          "due_date": "",
+          "terms": "",
+          "status": "void",
+          "billing_type": "standard",
+          "line_items": [
+            {
+              "description": "Sandblasted 11\" x 70\" - \"Warren Davidson\" — qty 1 (taxable portion)",
+              "quantity": 1,
+              "unit_price": 1122,
+              "taxable": true
+            },
+            {
+              "description": "Sandblasted 11\" x 70\" - \"Warren Davidson\" — qty 1 (non-taxable portion)",
+              "quantity": 1,
+              "unit_price": 40.5,
+              "taxable": false
+            }
+          ],
+          "notes": "Imported from CoreBridge order 1597 (INV-2555-V, status VOIDED). Entered by cheinlein on 2016-07-14. PO: .",
+          "internal_notes": "New Tenant - Warren Davidson\nProduction due: 08/31/2016\nBilling: 8859 Cincinnati-Dayton Rd., West Chester, OH, 45069, US\nShipping: 2467 Crowne Point Dr, Cincinnati, OH, 45241, US",
+          "source_summary": {
+            "source": "corebridge",
+            "order_id": "1597",
+            "invoice_number": "INV-2555-V",
+            "order_status": "VOIDED",
+            "account_id": 73,
+            "batch_id": "cb-invoices-2026-11-17",
+            "imported_at": "2026-11-17T17:56:50.030Z"
+          },
+          "voided_date": "2016-09-30",
+          "void_reason": "Voided in CoreBridge"
+        }
+      },
+      "at": "2026-11-17T19:09:55.349Z"
+    },
+    {
+      "entity": "Invoice",
+      "action": "write_rows",
+      "row": {
+        "source_entity": "invoices",
+        "source_id": "1600",
+        "data": {
+          "creation_request_key": "cb:invoice:1600",
+          "invoice_number": "INV-2558",
+          "customer_id": "6afbe40c6c94ed956fafd07b",
+          "estimate_id": "6afc09a213f8429da3be3b97",
+          "work_order_id": "",
+          "customer_display_name": "Meritage Restaurant",
+          "salesperson": "Twyla Heinlein",
+          "entered_by": "theinlein",
+          "subtotal": 1436.35,
+          "tax_rate": 0.07,
+          "tax_amount": 48.78,
+          "total": 1485.13,
+          "balance_due": 0,
+          "amount_paid": 1485.13,
+          "issue_date": "2016-07-16",
+          "due_date": "",
+          "terms": "",
+          "status": "paid",
+          "billing_type": "standard",
+          "line_items": [
+            {
+              "description": "Sign Pole Panels — qty 2 (taxable portion)",
+              "quantity": 1,
+              "unit_price": 452.56,
+              "taxable": true
+            },
+            {
+              "description": "Sign Pole Panels — qty 2 (non-taxable portion)",
+              "quantity": 1,
+              "unit_price": 131.25,
+              "taxable": false
+            },
+            {
+              "description": "Relocation / Installation Services",
+              "quantity": 1,
+              "unit_price": 477,
+              "taxable": false
+            },
+            {
+              "description": "\"Meritage Parking Only\" Signs (Replacement Vinyl) — qty 5 (taxable portion)",
+              "quantity": 1,
+              "unit_price": 177.34,
+              "taxable": true
+            },
+            {
+              "description": "\"Meritage Parking Only\" Signs (Replacement Vinyl) — qty 5 (non-taxable portion)",
+              "quantity": 1,
+              "unit_price": 75,
+              "taxable": false
+            },
+            {
+              "description": "Restaurant Hours Window Graphics — qty 1 (taxable portion)",
+              "quantity": 1,
+              "unit_price": 66.95,
+              "taxable": true
+            },
+            {
+              "description": "Restaurant Hours Window Graphics — qty 1 (non-taxable portion)",
+              "quantity": 1,
+              "unit_price": 56.25,
+              "taxable": false
+            }
+          ],
+          "notes": "Imported from CoreBridge order 1600 (INV-2558, status CLOSED). Entered by theinlein on 2016-07-16. PO: .",
+          "internal_notes": "New Restaurant Location Signage\nProduction due: 07/18/2016\nBilling: 1140 Congress Ln., Cincinnati, OH, 45246, US\nShipping: 40 Village Square, Glendale, OH, 45246, US",
+          "source_summary": {
+            "source": "corebridge",
+            "order_id": "1600",
+            "invoice_number": "INV-2558",
+            "order_status": "CLOSED",
+            "account_id": 67,
+            "batch_id": "cb-invoices-2026-11-17",
+            "imported_at": "2026-11-17T17:56:50.030Z"
+          },
+          "paid_date": "2016-09-27"
+        }
+      },
+      "at": "2026-11-17T19:09:55.350Z"
+    },
+    {
+      "entity": "Invoice",
+      "action": "write_rows",
+      "row": {
+        "source_entity": "invoices",
+        "source_id": "1605",
+        "data": {
+          "creation_request_key": "cb:invoice:1605",
+          "invoice_number": "INV-2563",
+          "customer_id": "6afbe4529fe726733ece2134",
+          "estimate_id": "6afc09a300885de22fb8ca33",
+          "work_order_id": "",
+          "customer_display_name": "The Midwest Sea Salt Company",
+          "salesperson": "Carl Heinlein",
+          "entered_by": "rmcpherson",
+          "subtotal": 0,
+          "tax_rate": 0.07,
+          "tax_amount": 0,
+          "total": 0,
+          "balance_due": 0,
+          "amount_paid": 0,
+          "issue_date": "2016-07-18",
+          "due_date": "",
+          "terms": "",
+          "status": "void",
+          "billing_type": "standard",
+          "line_items": [
+            {
+              "description": "P95 backer",
+              "quantity": 1,
+              "unit_price": 0,
+              "taxable": false
+            }
+          ],
+          "notes": "Imported from CoreBridge order 1605 (INV-2563, status VOIDED). Entered by rmcpherson on 2016-07-18. PO: .",
+          "internal_notes": "Reorder: 7' Lobby Sign\nProduction due: 07/21/2016\nBilling: 11240 Cornell Park Dr., Suite 115, Blue Ash, OH, 45242, US\nShipping: 11240 Cornell Park Dr., Suite 115, Blue Ash, OH, 45242, US",
+          "source_summary": {
+            "source": "corebridge",
+            "order_id": "1605",
+            "invoice_number": "INV-2563",
+            "order_status": "VOIDED",
+            "account_id": 226,
+            "batch_id": "cb-invoices-2026-11-17",
+            "imported_at": "2026-11-17T17:56:50.030Z"
+          },
+          "voided_date": "2016-07-31",
+          "void_reason": "Voided in CoreBridge"
+        }
+      },
+      "at": "2026-11-17T19:09:55.350Z"
+    },
+    {
+      "entity": "Invoice",
+      "action": "write_rows",
+      "row": {
+        "source_entity": "invoices",
+        "source_id": "1606",
+        "data": {
+          "creation_request_key": "cb:invoice:1606",
+          "invoice_number": "INV-2564",
+          "customer_id": "6afbe45857454f86bd936b98",
+          "estimate_id": "6afc09a3bd02ce2a361bcb9c",
+          "work_order_id": "",
+          "customer_display_name": "Cincinnati Concours d'Elegance Foundation",
+          "salesperson": "Mike Bush",
+          "entered_by": "theinlein",
+          "subtotal": 138,
+          "tax_rate": 0.07,
+          "tax_amount": 7,
+          "total": 145,
+          "balance_due": 0,
+          "amount_paid": 145,
+          "issue_date": "2016-07-18",
+          "due_date": "",
+          "terms": "",
+          "status": "void",
+          "billing_type": "standard",
+          "line_items": [
+            {
+              "description": "48\"w x 12\"h Sign Panel w/ Business Logo — qty 1 (taxable portion)",
+              "quantity": 1,
+              "unit_price": 100.04,
+              "taxable": true
+            },
+            {
+              "description": "48\"w x 12\"h Sign Panel w/ Business Logo — qty 1 (non-taxable portion)",
+              "quantity": 1,
+              "unit_price": 37.96,
+              "taxable": false
+            }
+          ],
+          "notes": "Imported from CoreBridge order 1606 (INV-2564, status VOIDED). Entered by theinlein on 2016-07-18. PO: .",
+          "internal_notes": "Logo'd Sign Panel for Stanley Ave. Exterior Wall Sign\nProduction due: 07/25/2016\nBilling: 347 Stanley Avenue, 1 West, Cincinnati, OH, 45226, US\nShipping: 347 Stanley Avenue, 1 West, Cincinnati, OH, 45226, US",
+          "source_summary": {
+            "source": "corebridge",
+            "order_id": "1606",
+            "invoice_number": "INV-2564",
+            "order_status": "VOIDED",
+            "account_id": 260,
+            "batch_id": "cb-invoices-2026-11-17",
+            "imported_at": "2026-11-17T17:56:50.030Z"
+          },
+          "voided_date": "2016-08-03",
+          "void_reason": "Voided in CoreBridge"
+        }
+      },
+      "at": "2026-11-17T19:09:55.350Z"
+    },
+    {
+      "entity": "Invoice",
+      "action": "write_rows",
+      "row": {
+        "source_entity": "invoices",
+        "source_id": "1611",
+        "data": {
+          "creation_request_key": "cb:invoice:1611",
+          "invoice_number": "INV-2568",
+          "customer_id": "6afbe458d7024ef503bbb748",
+          "estimate_id": "6afc09a4bfa17571a88618e9",
+          "work_order_id": "",
+          "customer_display_name": "Stretch Physical Therapy and Total Wellness",
+          "salesperson": "Twyla Heinlein",
+          "entered_by": "rmcpherson",
+          "subtotal": 361.23,
+          "tax_rate": 0.065,
+          "tax_amount": 16.17,
+          "total": 377.4,
+          "balance_due": 0,
+          "amount_paid": 377.4,
+          "issue_date": "2016-07-21",
+          "due_date": "",
+          "terms": "",
+          "status": "paid",
+          "billing_type": "standard",
+          "line_items": [
+            {
+              "description": "Wall graphic — qty 1 (taxable portion)",
+              "quantity": 1,
+              "unit_price": 54.11,
+              "taxable": true
+            },
+            {
+              "description": "Wall graphic — qty 1 (non-taxable portion)",
+              "quantity": 1,
+              "unit_price": 37.5,
+              "taxable": false
+            },
+            {
+              "description": "Window logo",
+              "quantity": 1,
+              "unit_price": 79.69,
+              "taxable": true
+            },
+            {
+              "description": "White Vinyl Hours — qty 1 (taxable portion)",
+              "quantity": 1,
+              "unit_price": 32.67,
+              "taxable": true
+            },
+            {
+              "description": "White Vinyl Hours — qty 1 (non-taxable portion)",
+              "quantity": 1,
+              "unit_price": 37.5,
+              "taxable": false
+            },
+            {
+              "description": "Wall Graphic2 — qty 1 (taxable portion)",
+              "quantity": 1,
+              "unit_price": 82.26,
+              "taxable": true
+            },
+            {
+              "description": "Wall Graphic2 — qty 1 (non-taxable portion)",
+              "quantity": 1,
+              "unit_price": 37.5,
+              "taxable": false
+            }
+          ],
+          "notes": "Imported from CoreBridge order 1611 (INV-2568, status CLOSED). Entered by rmcpherson on 2016-07-21. PO: .",
+          "internal_notes": "Lobby Wall Graphics\nProduction due: 07/27/2016\nBilling: 4851 Wunnenberg Way, Suite D, West Chester, OH, 45069, US\nShipping: 4851 Wunnenberg Way, Suite D, West Chester, OH, 45069, US",
+          "source_summary": {
+            "source": "corebridge",
+            "order_id": "1611",
+            "invoice_number": "INV-2568",
+            "order_status": "CLOSED",
+            "account_id": 259,
+            "batch_id": "cb-invoices-2026-11-17",
+            "imported_at": "2026-11-17T17:56:50.030Z"
+          },
+          "paid_date": "2016-10-05"
+        }
+      },
+      "at": "2026-11-17T19:09:55.350Z"
+    },
+    {
+      "entity": "Invoice",
+      "action": "write_rows",
+      "row": {
+        "source_entity": "invoices",
+        "source_id": "1614",
+        "data": {
+          "creation_request_key": "cb:invoice:1614",
+          "invoice_number": "INV-2571",
+          "customer_id": "6afbe45904b9d41142500a63",
+          "estimate_id": "6afc09a51feaa688dc0af92b",
+          "work_order_id": "",
+          "customer_display_name": "Blink Signs",
+          "salesperson": "Twyla Heinlein",
+          "entered_by": "theinlein",
+          "subtotal": 150,
+          "tax_rate": 0,
+          "tax_amount": 0,
+          "total": 150,
+          "balance_due": 0,
+          "amount_paid": 150,
+          "issue_date": "2016-07-22",
+          "due_date": "",
+          "terms": "",
+          "status": "paid",
+          "billing_type": "standard",
+          "line_items": [
+            {
+              "description": "Site Survey",
+              "quantity": 1,
+              "unit_price": 150,
+              "taxable": false
+            }
+          ],
+          "notes": "Imported from CoreBridge order 1614 (INV-2571, status CLOSED). Entered by theinlein on 2016-07-22. PO: .",
+          "internal_notes": "Mobile Center Inc. - Site Survey\nProduction due: 08/30/2016\nBilling: 1925 Saint Clair Ave., Cleveland, OH, 44114, US\nShipping: 5210 Kings Mill Rd., Mason, OH, 45040, US",
+          "source_summary": {
+            "source": "corebridge",
+            "order_id": "1614",
+            "invoice_number": "INV-2571",
+            "order_status": "CLOSED",
+            "account_id": 263,
+            "batch_id": "cb-invoices-2026-11-17",
+            "imported_at": "2026-11-17T17:56:50.030Z"
+          },
+          "paid_date": "2016-09-22"
+        }
+      },
+      "at": "2026-11-17T19:09:55.350Z"
+    },
+    {
+      "entity": "Invoice",
+      "action": "write_rows",
+      "row": {
+        "source_entity": "invoices",
+        "source_id": "1621",
+        "data": {
+          "creation_request_key": "cb:invoice:1621",
+          "invoice_number": "INV-2578",
+          "customer_id": "6afbe45af35d6dedac16d8ab",
+          "estimate_id": "6afc09af1512775868c78074",
+          "work_order_id": "",
+          "customer_display_name": "Procter and Gamble",
+          "salesperson": "Carl Heinlein",
+          "entered_by": "cheinlein",
+          "subtotal": 615.7,
+          "tax_rate": 0.07,
+          "tax_amount": 43.1,
+          "total": 658.8,
+          "balance_due": 0,
+          "amount_paid": 658.8,
+          "issue_date": "2016-07-27",
+          "due_date": "",
+          "terms": "",
+          "status": "paid",
+          "billing_type": "standard",
+          "line_items": [
+            {
+              "description": "Logo Sign",
+              "quantity": 1,
+              "unit_price": 168.24,
+              "taxable": true
+            },
+            {
+              "description": "Rectangle Signs - Text Only",
+              "quantity": 1,
+              "unit_price": 203.88,
+              "taxable": true
+            },
+            {
+              "description": "Round Signs",
+              "quantity": 1,
+              "unit_price": 243.58,
+              "taxable": true
+            }
+          ],
+          "notes": "Imported from CoreBridge order 1621 (INV-2578, status CLOSED). Entered by cheinlein on 2016-07-27. PO: .",
+          "internal_notes": "Office Signage\nProduction due: 08/10/2016\nBilling: 5289 Vine Street, Cincinnati, OH, 45217, US\nShipping: 2467 Crowne Point Dr, Cincinnati, OH, 45241, US",
+          "source_summary": {
+            "source": "corebridge",
+            "order_id": "1621",
+            "invoice_number": "INV-2578",
+            "order_status": "CLOSED",
+            "account_id": 266,
+            "batch_id": "cb-invoices-2026-11-17",
+            "imported_at": "2026-11-17T17:56:50.030Z"
+          },
+          "paid_date": "2016-08-05"
+        }
+      },
+      "at": "2026-11-17T19:09:55.350Z"
+    },
+    {
+      "entity": "Invoice",
+      "action": "write_rows",
+      "row": {
+        "source_entity": "invoices",
+        "source_id": "1622",
+        "data": {
+          "creation_request_key": "cb:invoice:1622",
+          "invoice_number": "INV-2579",
+          "customer_id": "6a958582ba45a19e93440070",
+          "estimate_id": "6afc09af9a9f262ddca68879",
+          "work_order_id": "",
+          "customer_display_name": "The Whiting-Turner Contracting Company",
+          "salesperson": "Rebecca McPherson",
+          "entered_by": "theinlein",
+          "subtotal": 283.07,
+          "tax_rate": 0.065,
+          "tax_amount": 13.52,
+          "total": 371.59,
+          "balance_due": 0,
+          "amount_paid": 371.59,
+          "issue_date": "2016-07-27",
+          "due_date": "",
+          "terms": "",
+          "status": "paid",
+          "billing_type": "standard",
+          "line_items": [
+            {
+              "description": "4x4 Site signs — qty 2 (taxable portion)",
+              "quantity": 1,
+              "unit_price": 208.07,
+              "taxable": true
+            },
+            {
+              "description": "4x4 Site signs — qty 2 (non-taxable portion)",
+              "quantity": 1,
+              "unit_price": 75,
+              "taxable": false
+            }
+          ],
+          "notes": "Imported from CoreBridge order 1622 (INV-2579, status CLOSED). Entered by theinlein on 2016-07-27. PO: .",
+          "internal_notes": "Maxmetal Site Signs\nProduction due: 08/02/2016\nShipping: 75\nBilling: 501 East Withrow St., Oxford, OH, 45056, US\nShipping: 501 East Withrow St., Oxford, OH, 45056, US",
+          "source_summary": {
+            "source": "corebridge",
+            "order_id": "1622",
+            "invoice_number": "INV-2579",
+            "order_status": "CLOSED",
+            "account_id": 238,
+            "batch_id": "cb-invoices-2026-11-17",
+            "imported_at": "2026-11-17T17:56:50.030Z"
+          },
+          "paid_date": "2016-07-29"
+        }
+      },
+      "at": "2026-11-17T19:09:55.351Z"
+    },
+    {
+      "entity": "Invoice",
+      "action": "write_rows",
+      "row": {
+        "source_entity": "invoices",
+        "source_id": "1623",
+        "data": {
+          "creation_request_key": "cb:invoice:1623",
+          "invoice_number": "INV-2580",
+          "customer_id": "6a958582ba45a19e9343fff7",
+          "estimate_id": "6afc09af10c86a602e101249",
+          "work_order_id": "",
+          "customer_display_name": "Bridgewater Church",
+          "salesperson": "Twyla Heinlein",
+          "entered_by": "theinlein",
+          "subtotal": 3652.41,
+          "tax_rate": 0,
+          "tax_amount": 0,
+          "total": 3652.41,
+          "balance_due": 0,
+          "amount_paid": 3652.41,
+          "issue_date": "2016-07-27",
+          "due_date": "",
+          "terms": "",
+          "status": "paid",
+          "billing_type": "standard",
+          "line_items": [
+            {
+              "description": "Custom-framed Aluminum Signage with Metal Wave",
+              "quantity": 1,
+              "unit_price": 2926.91,
+              "taxable": false
+            },
+            {
+              "description": "Installation Services",
+              "quantity": 1,
+              "unit_price": 202.5,
+              "taxable": false
+            },
+            {
+              "description": "Permitting Acquisitions",
+              "quantity": 1,
+              "unit_price": 523,
+              "taxable": false
+            }
+          ],
+          "notes": "Imported from CoreBridge order 1623 (INV-2580, status CLOSED). Entered by theinlein on 2016-07-27. PO: .",
+          "internal_notes": "Exterior Wayfinding Signage w/ Cutout Wave\nProduction due: 10/27/2016\nBilling: 3100 Princeton Road, Hamilton, OH, 45011, US\nShipping: 3100 Princeton Road, Hamilton, OH, 45011, US",
+          "source_summary": {
+            "source": "corebridge",
+            "order_id": "1623",
+            "invoice_number": "INV-2580",
+            "order_status": "CLOSED",
+            "account_id": 16,
+            "batch_id": "cb-invoices-2026-11-17",
+            "imported_at": "2026-11-17T17:56:50.030Z"
+          },
+          "paid_date": "2017-05-18"
+        }
+      },
+      "at": "2026-11-17T19:09:55.351Z"
+    },
+    {
+      "entity": "Invoice",
+      "action": "write_rows",
+      "row": {
+        "source_entity": "invoices",
+        "source_id": "1628",
+        "data": {
+          "creation_request_key": "cb:invoice:1628",
+          "invoice_number": "INV-2585",
+          "customer_id": "6afbe40eb6f4d4a8d45ac206",
+          "estimate_id": "6afc09b04cab7f211686e362",
+          "work_order_id": "",
+          "customer_display_name": "Florence Baptist Church",
+          "salesperson": "Twyla Heinlein",
+          "entered_by": "theinlein",
+          "subtotal": 14172.64,
+          "tax_rate": 0,
+          "tax_amount": 0,
+          "total": 14172.64,
+          "balance_due": 0,
+          "amount_paid": 14172.64,
+          "issue_date": "2016-07-28",
+          "due_date": "",
+          "terms": "",
+          "status": "paid",
+          "billing_type": "standard",
+          "line_items": [
+            {
+              "description": "Sanctuary Atrium \"X\" Logo with \"Multiply\" Tagline",
+              "quantity": 1,
+              "unit_price": 1471.65,
+              "taxable": false
+            },
+            {
+              "description": "Reception Logo & Tagline",
+              "quantity": 1,
+              "unit_price": 825.07,
+              "taxable": false
+            },
+            {
+              "description": "Kiosk Signage (2)",
+              "quantity": 1,
+              "unit_price": 1914.58,
+              "taxable": false
+            },
+            {
+              "description": "3D Wall Lettering - \"The Commons\"",
+              "quantity": 1,
+              "unit_price": 419.22,
+              "taxable": false
+            },
+            {
+              "description": "3D >>>> students",
+              "quantity": 1,
+              "unit_price": 783.35,
+              "taxable": false
+            },
+            {
+              "description": "Multiply Worship & Acrylic/Vinyl Descriptor with Stand-off Mounts",
+              "quantity": 1,
+              "unit_price": 836.21,
+              "taxable": false
+            },
+            {
+              "description": "Multiply Impact & Acrylic/Vinyl Descriptor with Stand-off Mounts",
+              "quantity": 1,
+              "unit_price": 801.53,
+              "taxable": false
+            },
+            {
+              "description": "Multiply Planting & Acrylic/Vinyl Descriptor with Stand-off Mounts",
+              "quantity": 1,
+              "unit_price": 779.01,
+              "taxable": false
+            },
+            {
+              "description": "Multiply Missions & Acrylic/Vinyl Descriptor with Stand-off Mounts",
+              "quantity": 1,
+              "unit_price": 738.45,
+              "taxable": false
+            },
+            {
+              "description": "Multiply Hope & Acrylic/Vinyl Descriptor with Stand-off Mounts",
+              "quantity": 1,
+              "unit_price": 652.49,
+              "taxable": false
+            },
+            {
+              "description": "\"KIDZ\" Logo with Text",
+              "quantity": 1,
+              "unit_price": 738.49,
+              "taxable": false
+            },
+            {
+              "description": "\"KIDZ\" Logos",
+              "quantity": 1,
+              "unit_price": 1324.95,
+              "taxable": false
+            },
+            {
+              "description": "Lettering (for Kidz Logo)",
+              "quantity": 1,
+              "unit_price": 255.3,
+              "taxable": false
+            },
+            {
+              "description": "Matte Vinyl Wall Lettering",
+              "quantity": 1,
+              "unit_price": 1437.97,
+              "taxable": false
+            },
+            {
+              "description": "Wall Vinyl for Lettering (Redo per Client)",
+              "quantity": 1,
+              "unit_price": 200.95,
+              "taxable": false
+            },
+            {
+              "description": "D/S Wayfinding Signage",
+              "quantity": 1,
+              "unit_price": 496.07,
+              "taxable": false
+            },
+            {
+              "description": "D/S Wayfinding Signage - Remake of 2",
+              "quantity": 1,
+              "unit_price": 167.79,
+              "taxable": false
+            },
+            {
+              "description": "D/S Blade Signs for Restrooms",
+              "quantity": 1,
+              "unit_price": 329.56,
+              "taxable": false
+            }
+          ],
+          "notes": "Imported from CoreBridge order 1628 (INV-2585, status CLOSED). Entered by theinlein on 2016-07-28. PO: .",
+          "internal_notes": "Signage for Church Remodel\nProduction due: 07/29/2016\nBilling: 642 Mt. Zion Rd., Florence, KY, 41042, US\nShipping: 642 Mt. Zion Rd., Florence, KY, 41042, US",
+          "source_summary": {
+            "source": "corebridge",
+            "order_id": "1628",
+            "invoice_number": "INV-2585",
+            "order_status": "CLOSED",
+            "account_id": 74,
+            "batch_id": "cb-invoices-2026-11-17",
+            "imported_at": "2026-11-17T17:56:50.030Z"
+          },
+          "paid_date": "2016-08-23"
+        }
+      },
+      "at": "2026-11-17T19:09:55.351Z"
+    },
+    {
+      "entity": "Invoice",
+      "action": "write_rows",
+      "row": {
+        "source_entity": "invoices",
+        "source_id": "1629",
+        "data": {
+          "creation_request_key": "cb:invoice:1629",
+          "invoice_number": "INV-2586",
+          "customer_id": "6afbe5e8895f9df5e9617cc9",
+          "estimate_id": "6afc09b1ac48298a8df41496",
+          "work_order_id": "",
+          "customer_display_name": "OM Valley Permaculture",
+          "salesperson": "Rebecca McPherson",
+          "entered_by": "rmcpherson",
+          "subtotal": 1106.34,
+          "tax_rate": 0.07,
+          "tax_amount": 66.94,
+          "total": 1248.28,
+          "balance_due": 0,
+          "amount_paid": 1248.28,
+          "issue_date": "2016-08-01",
+          "due_date": "",
+          "terms": "",
+          "status": "paid",
+          "billing_type": "standard",
+          "line_items": [
+            {
+              "description": "3mm max — qty 2 (taxable portion)",
+              "quantity": 1,
+              "unit_price": 751.17,
+              "taxable": true
+            },
+            {
+              "description": "3mm max — qty 2 (non-taxable portion)",
+              "quantity": 1,
+              "unit_price": 75,
+              "taxable": false
+            },
+            {
+              "description": "3mm max — qty 1 (taxable portion)",
+              "quantity": 1,
+              "unit_price": 205.17,
+              "taxable": true
+            },
+            {
+              "description": "3mm max — qty 1 (non-taxable portion)",
+              "quantity": 1,
+              "unit_price": 75,
+              "taxable": false
+            }
+          ],
+          "notes": "Imported from CoreBridge order 1629 (INV-2586, status CLOSED). Entered by rmcpherson on 2016-08-01. PO: .",
+          "internal_notes": "Walk-in Customer\nProduction due: 08/09/2016\nShipping: 75\nBilling: 2467 crowne point dr, Cincinnati, OH, 45241, US\nShipping: 2467 Crowne Point Dr, Cincinnati, OH, 45241, US",
+          "source_summary": {
+            "source": "corebridge",
+            "order_id": "1629",
+            "invoice_number": "INV-2586",
+            "order_status": "CLOSED",
+            "account_id": 270,
+            "batch_id": "cb-invoices-2026-11-17",
+            "imported_at": "2026-11-17T17:56:50.030Z"
+          },
+          "paid_date": "2016-08-12"
+        }
+      },
+      "at": "2026-11-17T19:09:55.351Z"
+    }
+  ],
+  "pending": null,
+  "last_write_started_at": 1794942888088,
+  "apply_ended_at": 1794942595351,
+  "backfill_count": 5
+}

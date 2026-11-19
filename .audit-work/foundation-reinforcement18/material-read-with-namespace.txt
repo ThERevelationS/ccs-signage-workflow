@@ -1,0 +1,13 @@
+ok missing estimate id performs no read
+ok explicit frozen inputs preserve exact zero, split, provenance and inactive filtering
+ok primary read errors remain errors, never an empty manifest
+ok linked product read errors remain errors
+ok mixed stamped and legacy parts on one product are both included
+ok legacy product loading is paged rather than silently capped at500
+ok duplicate rows from both read paths count only once
+ok malformed explicit inputs do not fall through into live reads
+ok failed material read blocks create before any Work Order write
+ok failed material read blocks update before any Work Order write
+ok a mapper validation error is not converted into an empty successful handoff
+Material read guards: 11/11; failed=0
+exit=0

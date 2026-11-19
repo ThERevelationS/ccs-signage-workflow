@@ -1,0 +1,38 @@
+{
+  "results": [
+    {
+      "case": "page: dirty-route-leave guard wired (click capture + sentinel popstate)",
+      "ok": true
+    },
+    {
+      "case": "page: draft messaging updated to pricing-inclusive + tab-only honest copy",
+      "ok": true
+    },
+    {
+      "case": "store: pricing fields allowlisted + loss marker implemented",
+      "ok": true
+    },
+    {
+      "case": "page: availability-hardening wiring preserved",
+      "ok": true
+    },
+    {
+      "case": "page: draft-store wiring preserved (persist/restore/discard/save-clear)",
+      "ok": true
+    },
+    {
+      "case": "page: save/sync hardening preserved",
+      "ok": true
+    },
+    {
+      "case": "diff: store file changes confined to allowlist/check/read/write regions",
+      "ok": true
+    },
+    {
+      "case": "diff: page file changes confined to guard effect + 3 message strings",
+      "ok": true
+    }
+  ],
+  "okCount": 8,
+  "total": 8
+}

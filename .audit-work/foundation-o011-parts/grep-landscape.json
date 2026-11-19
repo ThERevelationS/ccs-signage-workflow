@@ -1,0 +1,546 @@
+{
+  "matches": [
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 32,
+      "text": "import LandscapeDesigner from \"@/components/estimator/foundation/LandscapeDesigner\";"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 234,
+      "text": "          landscape: proj.landscape || { cell_size_inches: 12, cells: {} },"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 520,
+      "text": "  // Held extras: when a recorded cabinet row or the landscape grid cannot be"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 525,
+      "text": "  const landscapeCost = calc.totals.total_landscape_cost;"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 526,
+      "text": "  const sectionTotal = calc.totals.grand_total === null || cabinetCost === null || landscapeCost === null"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 528,
+      "text": "    : calc.totals.grand_total + cabinetCost + landscapeCost;"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 569,
+      "text": "    landscape: project.landscape || { cell_size_inches: 12, cells: {} },"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 571,
+      "text": "    total_landscape_cost: landscapeCost,"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 636,
+      "text": "      totals: calc.totals, sectionTotal, cabinetCost, landscapeCost,"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 712,
+      "text": "              builder_calculation: { totals: captured.totals, delivery: captured.delivery, cabinet_cost: captured.cabinetCost, landscape_cost: captured.landscapeCost, section_total: captured.sectionTotal },"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 1092,
+      "text": "                <TabsTrigger value=\"landscape\" className={TAB_CLASS}>"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 1100,
+      "text": "                  <Trees className=\"w-3.5 h-3.5\" /> Signage &amp; Landscape"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 1148,
+      "text": "              <TabsContent value=\"landscape\" className=\"space-y-4\">"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 1176,
+      "text": "                <LandscapeDesigner"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 1177,
+      "text": "                  landscape={project.landscape}"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 1178,
+      "text": "                  onChange={(landscape) => patch({ landscape })}"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 1220,
+      "text": "                      <span>{hasFoundationCostSnapshot(landscapeCost) ? money(landscapeCost) : \"Not saved\"}</span>"
+    },
+    {
+      "path": "src/components/markup/projectCategorizer.jsx",
+      "line": 152,
+      "text": "  const landscape = num(p.total_landscape_cost);"
+    },
+    {
+      "path": "src/components/markup/projectCategorizer.jsx",
+      "line": 153,
+      "text": "  if (landscape > 0) lines.push({ module: 'foundation', label: 'Landscape / Site Materials', cost: landscape, category_key: 'outsourced_fab' });"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 1,
+      "text": "// Landscape materials for the Signage & Landscape designer."
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 3,
+      "text": "export const LANDSCAPE_MATERIALS = ["
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 15,
+      "text": "export const materialByKey = (key) => LANDSCAPE_MATERIALS.find((m) => m.key === key);"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 24,
+      "text": "const landscapePriceNumber = (value) => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 33,
+      "text": "// landscape total is held rather than silently repriced on a guessed basis."
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 34,
+      "text": "const landscapeCellSizeNumber = (value) => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 46,
+      "text": "export function landscapeInputIssues(landscape) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 48,
+      "text": "  if (landscape === undefined || landscape === null) return issues;"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 50,
+      "text": "    kind: \"landscape\", index: null, componentId: null, field, code,"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 51,
+      "text": "    message: `Landscape: ${message}`,"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 53,
+      "text": "  const rawCells = landscape.cells;"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 56,
+      "text": "    add(\"cells\", \"landscape_cells_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 62,
+      "text": "  if (landscapeCellSizeNumber(landscape.cell_size_inches) === null) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 63,
+      "text": "    add(\"cell_size_inches\", \"landscape_cell_size_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 72,
+      "text": "      add(\"cells\", \"landscape_material_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 73,
+      "text": "        `site material ${JSON.stringify(key)} is not in the landscape catalog — pick a catalog material or erase it before repricing`);"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 74,
+      "text": "    } else if (landscapePriceNumber(mat.cost_per_sqft) === null) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 75,
+      "text": "      add(\"cost_per_sqft\", \"landscape_material_price_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 86,
+      "text": "export const landscapeSummary = (landscape) => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 87,
+      "text": "  const cells = isRecord(landscape?.cells) ? landscape.cells : {};"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 88,
+      "text": "  const cellSize = landscapeCellSizeNumber(landscape?.cell_size_inches);"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 100,
+      "text": "    const rate = mat ? landscapePriceNumber(mat.cost_per_sqft) : null;"
+    },
+    {
+      "path": "src/components/estimator/foundation/landscapeMaterials.js",
+      "line": 111,
+      "text": "  return { lines, total, issues: landscapeInputIssues(landscape) };"
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 4,
+      "text": "  LANDSCAPE_MATERIALS,"
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 7,
+      "text": "  landscapeSummary,"
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 9,
+      "text": "} from \"./landscapeMaterials\";"
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 21,
+      "text": "const landscapeInputValue = (value) =>"
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 24,
+      "text": "export default function LandscapeDesigner({ landscape, onChange }) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 27,
+      "text": "  const cells = landscape?.cells || {};"
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 28,
+      "text": "  const summary = landscapeSummary(landscape);"
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 39,
+      "text": "    onChange({ cell_size_inches: landscape?.cell_size_inches, cells: next });"
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 46,
+      "text": "          <h3 className=\"text-[13px] font-bold text-gray-900\">Landscape Designer</h3>"
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 58,
+      "text": "              data-landscape-field=\"cell_size_inches\""
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 59,
+      "text": "              value={landscape?.cell_size_inches ?? \"\"}"
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 61,
+      "text": "              aria-describedby={cellSizeIssue ? \"landscape-pricing\" : undefined}"
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 63,
+      "text": "                cell_size_inches: landscapeInputValue(e.target.value),"
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 82,
+      "text": "        <ul role=\"status\" id=\"landscape-pricing\" className=\"list-disc pl-5 mb-2 text-[10px] text-amber-800\">"
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 90,
+      "text": "          {LANDSCAPE_MATERIALS.map((m) => ("
+    },
+    {
+      "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+      "line": 146,
+      "text": "            <span>Landscape total</span>"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 21,
+      "text": "import { landscapeSummary } from \"./landscapeMaterials\";"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 401,
+      "text": "  const landscapeCalc = landscapeSummary(project.landscape);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 402,
+      "text": "  const landscapeIssues = inputIssues.filter((issue) => issue.kind === \"landscape\");"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 403,
+      "text": "  const landscapePricing = { available: landscapeIssues.length === 0, issues: landscapeIssues };"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 495,
+      "text": "    total_landscape_cost: category(\"total_landscape_cost\", landscapeIssues.length ? null : landscapeCalc.total),"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 501,
+      "text": "    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, polePricing: poleCalc.polePricing, wallPricing: wallCalc.wallPricing, equipmentPricing, signageCabinetPricing, landscapePricing, catalogIssues, inputIssues,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 1,
+      "text": "import { landscapeInputIssues } from \"./landscapeMaterials\";"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 186,
+      "text": "  // A recorded landscape design that is not a record (string/number/array)"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 189,
+      "text": "  const landscape = project?.landscape;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 190,
+      "text": "  const landscapeIssues = landscape !== undefined && landscape !== null"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 191,
+      "text": "    && (typeof landscape !== \"object\" || Array.isArray(landscape))"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 193,
+      "text": "        kind: \"landscape\", index: null, componentId: null, field: \"landscape\","
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 194,
+      "text": "        code: \"landscape_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 195,
+      "text": "        message: \"Landscape: the recorded site design is malformed — repair or clear it before repricing.\","
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 197,
+      "text": "    : landscapeInputIssues(landscape);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 215,
+      "text": "    ...landscapeIssues,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationDraftRecovery.js",
+      "line": 5,
+      "text": "  \"items\", \"walls\", \"poles\", \"wall_caps\", \"signage_cabinets\", \"selected_equipment\", \"landscape\","
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+      "line": 16,
+      "text": "  \"landscape\","
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 2577,
+      "text": "  if (num(project.builder_calculation?.landscape_cost) > 0.005) {\r"
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 2579,
+      "text": "      key: \"foundation:landscape\",\r"
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 2580,
+      "text": "      name: \"Landscape Materials\",\r"
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 2582,
+      "text": "      subtype: \"landscape\",\r"
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 2583,
+      "text": "      sourcePath: \"builder_calculation.landscape_cost\",\r"
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 2584,
+      "text": "      cost: project.builder_calculation.landscape_cost,\r"
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 2585,
+      "text": "      builderData: project.landscape || {},\r"
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 2586,
+      "text": "      calculation: { total_cost: project.builder_calculation.landscape_cost },\r"
+    },
+    {
+      "path": "src/components/estimator/builder/builderService.js",
+      "line": 82,
+      "text": "      \"total_landscape_cost\","
+    },
+    {
+      "path": "src/components/estimator/builder/legacyBomReconcile.js",
+      "line": 34,
+      "text": "  if (key === \"foundation:landscape\") return \"landscape\";"
+    },
+    {
+      "path": "src/components/estimator/builder/legacyBomReconcile.js",
+      "line": 70,
+      "text": "  landscape: { label: \"Legacy Landscape\", type: \"material\", subtype: \"legacy_landscape\", sourceFields: [\"total_landscape_cost\"] },"
+    },
+    {
+      "path": "src/components/estimator/builder/legacyBomReconcile.js",
+      "line": 102,
+      "text": "    landscape: num(project.total_landscape_cost),"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/_shared.js",
+      "line": 40,
+      "text": "// `extraCss` is the template's <style> payload; landscape templates pass a"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/_shared.js",
+      "line": 41,
+      "text": "// `@page { size: landscape; }` rule inside it."
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/landscapeSpanish.js",
+      "line": 1,
+      "text": "// Landscape Spanish work-order print — same information density as the"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/landscapeSpanish.js",
+      "line": 2,
+      "text": "// streamlined landscape sheet but with ALL fixed labels translated to"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/landscapeSpanish.js",
+      "line": 6,
+      "text": "// (customer-facing sheet). Landscape @page."
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/landscapeSpanish.js",
+      "line": 37,
+      "text": "export function renderLandscapeSpanishHtml(model, renderOptions = {}) {"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/landscapeSpanish.js",
+      "line": 148,
+      "text": "  @page { size: landscape; margin: 0.4in; }"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/landscapeSpanish.js",
+      "line": 154,
+      "text": "  id: \"landscape-spanish\","
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/landscapeSpanish.js",
+      "line": 155,
+      "text": "  label: \"Landscape (Español)\","
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/landscapeSpanish.js",
+      "line": 156,
+      "text": "  renderHtml: renderLandscapeSpanishHtml,"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/streamlinedLandscape.js",
+      "line": 1,
+      "text": "// Streamlined Landscape work-order print — the condensed one-pager for the"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/streamlinedLandscape.js",
+      "line": 2,
+      "text": "// production floor. Landscape @page, tight product table with ONLY"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/streamlinedLandscape.js",
+      "line": 23,
+      "text": "export function renderStreamlinedLandscapeHtml(model, renderOptions = {}) {"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/streamlinedLandscape.js",
+      "line": 128,
+      "text": "  @page { size: landscape; margin: 0.4in; }"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/streamlinedLandscape.js",
+      "line": 135,
+      "text": "  label: \"Streamlined Landscape\","
+    },
+    {
+      "path": "src/components/jobs/printTemplates/templates/streamlinedLandscape.js",
+      "line": 136,
+      "text": "  renderHtml: renderStreamlinedLandscapeHtml,"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/index.js",
+      "line": 10,
+      "text": "import streamlinedLandscape from \"./templates/streamlinedLandscape\";"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/index.js",
+      "line": 11,
+      "text": "import landscapeSpanish from \"./templates/landscapeSpanish\";"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/index.js",
+      "line": 19,
+      "text": "  streamlinedLandscape,  // \"streamlined\" — condensed landscape, no internal cost/margin"
+    },
+    {
+      "path": "src/components/jobs/printTemplates/index.js",
+      "line": 20,
+      "text": "  landscapeSpanish,      // \"landscape-spanish\" — landscape, Spanish labels"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 108
+}

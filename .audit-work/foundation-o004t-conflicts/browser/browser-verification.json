@@ -1,0 +1,75 @@
+{
+  "results": [
+    {
+      "case": "C1 desktop: conflict dialog shows both sides' values + timestamps + 3 honest choices",
+      "ok": true
+    },
+    {
+      "case": "C1 mobile: conflict dialog shows both sides' values + timestamps + 3 honest choices",
+      "ok": true
+    },
+    {
+      "case": "C2: keep_draft applies draft to caller and closes; nothing written to store/entities",
+      "ok": true
+    },
+    {
+      "case": "C3: keep_saved explicitly clears the stored draft through the real CAS store",
+      "ok": true
+    },
+    {
+      "case": "C4: keep_both re-anchors the same draft onto v2 — saved stays, draft survives as new offer",
+      "ok": true
+    },
+    {
+      "case": "C5: failed choice handler keeps the dialog open — no silent half-apply",
+      "ok": true
+    },
+    {
+      "case": "C6: unverifiable saved side — honest banner, no blind diff",
+      "ok": true
+    },
+    {
+      "case": "C7: base_moved_identical — dedicated safe re-anchor copy",
+      "ok": true
+    },
+    {
+      "case": "C8: save_conflict kind — unsent-edits framing + keep-both re-offer copy",
+      "ok": true
+    },
+    {
+      "case": "C9: disabled choice surfaces its reason and blocks the click",
+      "ok": true
+    },
+    {
+      "case": "R1: resync_unacknowledged retry — real chain mints parts, acknowledges v2, no dup keys",
+      "ok": true
+    },
+    {
+      "case": "R2: resume_pending retry — 'Resume the recorded Builder operation' replays stored plan",
+      "ok": true
+    },
+    {
+      "case": "R3: stale pinned anchor + concurrent source move → conflict outcome, zero writes",
+      "ok": true
+    },
+    {
+      "case": "R4: blocked_mismatch receipt — action rendered disabled with the reason",
+      "ok": true
+    },
+    {
+      "case": "R5: acknowledged state renders no retry surface at all",
+      "ok": true
+    },
+    {
+      "case": "R6: mobile 390 — retry surface + conflict dialog both usable",
+      "ok": true
+    }
+  ],
+  "telemetry": {
+    "foreign": [],
+    "consoleErrors": [],
+    "pageErrors": []
+  },
+  "okCount": 16,
+  "total": 16
+}

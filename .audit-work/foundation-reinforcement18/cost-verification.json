@@ -1,0 +1,302 @@
+{
+  "localOnly": true,
+  "synthetic": true,
+  "results": [
+    {
+      "name": "one mat independent expected costs:20ft/16contacts/material40/labor72/steel112",
+      "ok": true
+    },
+    {
+      "name": "three foundations:60ft/48contacts/material120/labor216/steel336",
+      "ok": true
+    },
+    {
+      "name": "aggregate10ft override is not multiplied by3 again",
+      "ok": true
+    },
+    {
+      "name": "explicit0ft keeps geometric20ft and16connection labor48, not borrowed material",
+      "ok": true
+    },
+    {
+      "name": "explicit free material and zero labor stay zero",
+      "ok": true
+    },
+    {
+      "name": "null aggregate override means geometric quantity",
+      "ok": true
+    },
+    {
+      "name": "off is real zero without rates/supports",
+      "ok": true
+    },
+    {
+      "name": "unknown supports have preliminary steel112 but cannot replace totals",
+      "ok": true
+    },
+    {
+      "name": "unknown weight null:NULL not0, blockshandoff",
+      "ok": true
+    },
+    {
+      "name": "unknown weight undefined:NULL not0, blockshandoff",
+      "ok": true
+    },
+    {
+      "name": "pillar singlehoop keeps10ft longitudinal steel and4contacts",
+      "ok": true
+    },
+    {
+      "name": "disconnected steel preliminary amount cannot imply proven connections",
+      "ok": true
+    },
+    {
+      "name": "manual tie path remains fabrication-review gated",
+      "ok": true
+    },
+    {
+      "name": "invalid cost_per_ft:undefined",
+      "ok": true
+    },
+    {
+      "name": "invalid cost_per_ft:null",
+      "ok": true
+    },
+    {
+      "name": "invalid cost_per_ft:",
+      "ok": true
+    },
+    {
+      "name": "invalid cost_per_ft:0",
+      "ok": true
+    },
+    {
+      "name": "invalid cost_per_ft:-1",
+      "ok": true
+    },
+    {
+      "name": "invalid cost_per_ft:NaN",
+      "ok": true
+    },
+    {
+      "name": "invalid cost_per_ft:Infinity",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_rate_per_hour:undefined",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_rate_per_hour:null",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_rate_per_hour:",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_rate_per_hour:0",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_rate_per_hour:-1",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_rate_per_hour:NaN",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_rate_per_hour:Infinity",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_hours_per_ft:undefined",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_hours_per_ft:null",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_hours_per_ft:",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_hours_per_ft:0",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_hours_per_ft:-1",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_hours_per_ft:NaN",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_hours_per_ft:Infinity",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_hours_per_connection:undefined",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_hours_per_connection:null",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_hours_per_connection:",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_hours_per_connection:0",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_hours_per_connection:-1",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_hours_per_connection:NaN",
+      "ok": true
+    },
+    {
+      "name": "invalid labor_hours_per_connection:Infinity",
+      "ok": true
+    },
+    {
+      "name": "unsupported unit:undefined",
+      "ok": true
+    },
+    {
+      "name": "unsupported unit:each",
+      "ok": true
+    },
+    {
+      "name": "unsupported unit:ft ",
+      "ok": true
+    },
+    {
+      "name": "unsupported unit:lb",
+      "ok": true
+    },
+    {
+      "name": "invalid/mismatched diameter:0",
+      "ok": true
+    },
+    {
+      "name": "invalid/mismatched diameter:-1",
+      "ok": true
+    },
+    {
+      "name": "invalid/mismatched diameter:0.5",
+      "ok": true
+    },
+    {
+      "name": "invalid/mismatched diameter:0.625",
+      "ok": true
+    },
+    {
+      "name": "invalid weight:0",
+      "ok": true
+    },
+    {
+      "name": "invalid weight:-1",
+      "ok": true
+    },
+    {
+      "name": "invalid weight:0.668",
+      "ok": true
+    },
+    {
+      "name": "invalid weight:Infinity",
+      "ok": true
+    },
+    {
+      "name": "invalid override:0",
+      "ok": true
+    },
+    {
+      "name": "invalid override:-1",
+      "ok": true
+    },
+    {
+      "name": "invalid override:NaN",
+      "ok": true
+    },
+    {
+      "name": "invalid override:Infinity",
+      "ok": true
+    },
+    {
+      "name": "positive arithmetic overflow:cost_per_ft",
+      "ok": true
+    },
+    {
+      "name": "positive arithmetic overflow:labor_rate_per_hour",
+      "ok": true
+    },
+    {
+      "name": "positive arithmetic overflow:labor_hours_per_ft",
+      "ok": true
+    },
+    {
+      "name": "positive arithmetic overflow:labor_hours_per_connection",
+      "ok": true
+    },
+    {
+      "name": "positive arithmetic overflow:weight_lb_per_ft",
+      "ok": true
+    },
+    {
+      "name": "positive material underflow cannot masquerade as0",
+      "ok": true
+    },
+    {
+      "name": "positive weight underflow cannot masquerade as0",
+      "ok": true
+    },
+    {
+      "name": "invalid current model:missing/undefined",
+      "ok": true
+    },
+    {
+      "name": "invalid current model:valid/3",
+      "ok": true
+    },
+    {
+      "name": "invalid current model:invalid/2",
+      "ok": true
+    },
+    {
+      "name": "cut schedule and aggregate quantity mismatch fails closed",
+      "ok": true
+    },
+    {
+      "name": "missing connection count is unknown, not0",
+      "ok": true
+    },
+    {
+      "name": "contradictory off model cannot erase real steel",
+      "ok": true
+    },
+    {
+      "name": "errored model diagnostics cannot be ignored merely because status says valid",
+      "ok": true
+    },
+    {
+      "name": "malformed model diagnostics fail closed without throwing",
+      "ok": true
+    },
+    {
+      "name": "unknown cut group role cannot masquerade as complete steel",
+      "ok": true
+    },
+    {
+      "name": "frozen inputs and separate outputs; no shared state",
+      "ok": true
+    }
+  ]
+}

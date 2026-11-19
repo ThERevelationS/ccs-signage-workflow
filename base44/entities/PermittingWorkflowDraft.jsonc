@@ -42,39 +42,9 @@
     "snapshot"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "user"
-          }
-        }
-      ]
-    },
-    "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "user"
-          }
-        }
-      ]
-    },
-    "update": false,
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
+    "create": { "user_condition": { "role": "__permittingworkflowdraft_backend_only__" } },
+    "read": { "user_condition": { "role": "__permittingworkflowdraft_backend_only__" } },
+    "update": { "user_condition": { "role": "__permittingworkflowdraft_backend_only__" } },
+    "delete": { "user_condition": { "role": "__permittingworkflowdraft_backend_only__" } }
   }
 }

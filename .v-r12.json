@@ -1,0 +1,167 @@
+{
+  "summary": {
+    "total": 10,
+    "resolved": 10,
+    "rate": "100.0%",
+    "failure_stages": {},
+    "geocode_misses": 0,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "139 B, N Court St, Medina, OH 44256",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 41.140148198719,
+        "lng": -81.86406906054
+      },
+      "matched": "139 N COURT ST, MEDINA, OH, 44256",
+      "target": {
+        "type": "municipality",
+        "name": "Medina city"
+      },
+      "county": "Medina County",
+      "ms": 2758,
+      "worker": 1
+    },
+    {
+      "address": "1 Wood County War Memorial, Bowling Green, OH 43402",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bowling green -> bowling green",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bowling green"
+      },
+      "county": "",
+      "ms": 1259,
+      "worker": 1
+    },
+    {
+      "address": "1725 Ridge Road, Springfield, OH 45502",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: springfield -> springfield",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "springfield"
+      },
+      "county": "",
+      "ms": 1687,
+      "worker": 1
+    },
+    {
+      "address": "300 Great Lakes Pkwy, Bellevue, OH 44811",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bellevue -> bellevue",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bellevue"
+      },
+      "county": "",
+      "ms": 1623,
+      "worker": 1
+    },
+    {
+      "address": "217 US-60, Irvington, KY 40146",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: irvington -> irvington",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "irvington"
+      },
+      "county": "",
+      "ms": 1997,
+      "worker": 1
+    },
+    {
+      "address": "1400 Deerpath Drive, Cambridge, OH 43725",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: cambridge -> cambridge",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "cambridge"
+      },
+      "county": "",
+      "ms": 1388,
+      "worker": 1
+    },
+    {
+      "address": "1978 Thomas E Keller Blvd, Defiance, OH 43512",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: defiance -> defiance",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "defiance"
+      },
+      "county": "",
+      "ms": 1729,
+      "worker": 1
+    },
+    {
+      "address": "6417 Columbus Pike, Orange Township, OH 43035",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 40.202307548006,
+        "lng": -83.02939793422
+      },
+      "matched": "6417 COLUMBUS PIKE, LEWIS CENTER, OH, 43035",
+      "target": {
+        "type": "township",
+        "name": "Orange township",
+        "county": "Delaware County"
+      },
+      "county": "Delaware County",
+      "ms": 1849,
+      "worker": 1
+    },
+    {
+      "address": "400 Premium Outlets Dr, Monroe, OH 45050",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: monroe -> monroe",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "monroe"
+      },
+      "county": "",
+      "ms": 1475,
+      "worker": 1
+    },
+    {
+      "address": "9203 Cleveland East Liverpool Road, Streetsboro, OH 44241",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: streetsboro -> streetsboro",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "streetsboro"
+      },
+      "county": "",
+      "ms": 1709,
+      "worker": 1
+    }
+  ]
+}

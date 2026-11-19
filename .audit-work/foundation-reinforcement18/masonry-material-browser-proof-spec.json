@@ -1,0 +1,87 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "892c701aedae039ae03ad8b160ae42175ad99e40",
+  "fixtureArtifact": "masonry-pricing-baseline-probe.json",
+  "snapshotArtifact": "masonry-material-page-proof-spec.json",
+  "candidateHashSpec": "masonry-material-proof-spec.json",
+  "viewports": [
+    { "width": 1280, "height": 1150 },
+    { "width": 390, "height": 1080 }
+  ],
+  "modes": [
+    {
+      "id": "valid",
+      "setup": "Positive seed catalog and original acknowledged seed source, recalculated with the three actual core candidates.",
+      "panelAmount": "$57.00",
+      "bomExactTexts": ["Wall 1 — Synthetic wall units", "6 units", "$12.00"],
+      "pricingUnavailable": false,
+      "savedNotice": false
+    },
+    {
+      "id": "held",
+      "setup": "Remove seed catalog unit price; retain acknowledged baselineSnapshot from the page-proof spec.",
+      "panelAmount": "$408.00",
+      "panelExactTexts": ["Courses: Not saved", "Labor hrs: Not saved", "Linear in: Not saved"],
+      "bomExactTexts": ["Wall 1 — saved outer material", "6 units", "$321.00", "Wall 1 — saved mortar", "$17.00"],
+      "bomForbiddenText": "Synthetic wall units",
+      "pricingUnavailable": true,
+      "savedNotice": true,
+      "invalidSelectFields": ["Wall material"]
+    },
+    {
+      "id": "new",
+      "setup": "An acknowledged source with no walls; the current seed wall has a new component id and no unit price. Use explicit savedProject with no matching saved wall. Include validCurrentSnapshotFields in the raw draft to exercise rejection of draft-preview history.",
+      "panelAmount": "Not saved",
+      "panelExactTexts": ["Units: Not saved", "Courses: Not saved", "Material: Not saved", "Labor hrs: Not saved", "Linear in: Not saved"],
+      "bomExactTexts": ["Wall 1 — saved outer material", "Not saved"],
+      "forbiddenAmount": "$0.00",
+      "pricingUnavailable": true,
+      "savedNotice": true,
+      "invalidSelectFields": ["Wall material"]
+    },
+    {
+      "id": "zero",
+      "setup": "Seed catalog unit price is numeric zero, other seed settings unchanged.",
+      "panelAmount": "$45.00",
+      "bomExactTexts": ["Wall 1 — Synthetic wall units", "6 units", "$0.00"],
+      "pricingUnavailable": false,
+      "savedNotice": false
+    },
+    {
+      "id": "inner",
+      "setup": "Positive outer seed catalog and an actual internal wall_material row named InnerMat with null cost_per_unit. Current includeInternalWall is true and its selected id matches that row. Preserve baseline acknowledged wall snapshot.",
+      "panelAmount": "$408.00",
+      "bomExactTexts": ["Wall 1 — saved outer material", "$321.00", "Wall 1 — saved internal material", "Not saved"],
+      "bomForbiddenText": "InnerMat",
+      "pricingUnavailable": true,
+      "savedNotice": true,
+      "invalidSelectFields": ["Internal wall material"]
+    },
+    {
+      "id": "both",
+      "setup": "Seed outer unit price is null and current includeInternalWall is true with a missing internalMaterialId selection. Preserve the acknowledged seed snapshot.",
+      "panelAmount": "$408.00",
+      "diagnosticTextPrefixes": ["Wall 1:", "Internal wall 1:"],
+      "pricingUnavailable": true,
+      "savedNotice": true,
+      "invalidSelectFields": ["Wall material", "Internal wall material"]
+    }
+  ],
+  "assertions": [
+    "All five candidate source hashes must match the lead-authored hash spec and appear in the browser bundle inputs.",
+    "Use real styled Button/Input primitives, real lucide icons, and generated CSS from actual component class names.",
+    "The closed WallShapeEditor visual leaf may be stubbed; no calcProject, money, wall-price, catalog, quantity, or snapshot helpers may be stubbed.",
+    "Use role/status and aria-describedby to prove each invalid select points to the visible row diagnostic.",
+    "No document horizontal overflow at either width; retain complete text and amounts without clipping.",
+    "No console errors, duplicate-key warnings, unexpected SDK operations, or external requests; block network access except the owned local fixture server.",
+    "Raw project geometry, acknowledged snapshot, calculation result, and source-write counters must remain identical before and after each viewport capture.",
+    "Capture one full-page screenshot per mode and viewport, plus a financial/input snapshot artifact for each case.",
+    "Do not recompute or change previously frozen model or page financial expectations."
+  ],
+  "caseCount": 12,
+  "actualBusinessRecordOperations": 0,
+  "realStorageVerified": false,
+  "schemaOrV2ActivationAuthorized": false,
+  "publishDeployAuthorized": false
+}

@@ -1,0 +1,19 @@
+ok snapshot captures every allowlisted field incl. links, AI brief, pricing settings, rates
+ok snapshot excludes identity/customer/quote/receipt/derived/engine fields
+ok customer_pricing: applied snapshot reduced to selection-only at snapshot AND patch time
+ok customer_pricing: non-applied record and null travel verbatim
+ok customer_pricing: malformed values fail closed in snapshot and patch
+ok snapshot -> patch -> merge produces deep-equal design state on all covered fields
+ok assembly arrays clone with fresh component_ids; all parent/nested refs remapped consistently
+ok accepted design: item reinforcement_design + calculation_version round-trip deep-equal (preserve, never mint)
+ok omitted template keys stay absent from patch so the target keeps its own values
+ok malformed template content fails closed
+ok snapshot preserves supplied assembly rows verbatim except normalized ids; non-assembly fields untouched
+ok dialog save path snapshots the extended allowlist (links + pricing selection + AI brief)
+ok dialog saveDisabled gate (page passes pricingBlocked || catalogReloading): disabled button + note + zero service calls
+ok dialog apply path hands stored project_data to onApply verbatim (page prepareFoundationTemplatePatch does the remap)
+ok page candidate parses as JSX and wires the O-014 gate + copy field carry
+ok model candidate parses cleanly and baseline deps still satisfy its imports
+
+16 passed, 0 failed
+PASS o007-templates

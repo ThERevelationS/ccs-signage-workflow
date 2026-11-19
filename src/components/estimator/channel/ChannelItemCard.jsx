@@ -1,4 +1,3 @@
-import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus } from "lucide-react";
@@ -20,14 +19,14 @@ export default function ChannelItemCard({ item, index, materials, onChange, onRe
           placeholder="Sign / elevation description"
           onChange={(e) => set({ description: e.target.value })}
         />
-        <button
+        <button type="button"
           onClick={() => {
             if (!window.confirm("Remove this item?")) return;
             onRemove(index);
           }}
           className="text-gray-400 hover:text-red-600 p-2"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
 
@@ -132,14 +131,14 @@ export default function ChannelItemCard({ item, index, materials, onChange, onRe
                 </option>
               ))}
             </select>
-            <button
+            <button type="button"
               onClick={() => {
                 if (!window.confirm("Remove this material?")) return;
                 set({ materials: item.materials.filter((_, i) => i !== idx) });
               }}
               className="text-gray-400 hover:text-red-600"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         ))}
@@ -148,7 +147,7 @@ export default function ChannelItemCard({ item, index, materials, onChange, onRe
           size="sm"
           onClick={() => set({ materials: [...(item.materials || []), {}] })}
         >
-          <Plus className="w-4 h-4" /> Material
+          <Plus className="w-4 h-4" aria-hidden="true" /> Material
         </Button>
       </div>
 

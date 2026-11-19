@@ -1,0 +1,35 @@
+{
+ "jurisdiction_id": "6adf85c4aaf727b8d40ea5f4",
+ "jurisdiction_name": "Washington",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "IF THE APPELLANT OR APPLICANT IS DIFFERENT FROM THE PROPERTY OWNER, THE FOLLOWING MUST BE FILLED OUT AND NOTARIZED. I ____________ _________________________, as property owner of the property(s) listed within this application, do allow, ____________________________________ to represent me in the filing of this application and is also permitted to represent myself and my interests before any Board or Commission of Washington Township which has governing authority over this application. ____________________________________ APPELLANT OR APPLICANT Subscribed and sworn before me on the __________ day of ____________________, 2_____. My Commission expires ______________________________, 2_____. ___________________________________ Notary Public",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "8310599fea4b32ad35197d4fdb368cf00361267103f8b70549c5a162d38d39c5",
+   "source_document_id": null,
+   "source_title": "8310599fea4b32ad35197d4fdb368cf00361267103f8b70549c5a162d38d39c5.pdf",
+   "official_url": "https://www.washingtontwp.org/UserFiles/Servers/Server_12463606/File/Services/Zoning%20and%20Development/Misc/Affidavit.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "4 Finalize your application A plot plan showing the exact location of your proposed structure is required. Failure to provide a plan with sufficient detail will result in the delay or denial of your permit application. A complete plot plan should include the following: 1. A drawing showing the location and shape of the proposed structure. 2. The distance from the nearest property line if not a fence. 3. The height of any proposed fencing.",
+   "tags": [
+    "dimension",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "c0433f65252df629fa44e5d08e67f21b970ecdcc275f04be2c070d6efc1d9389",
+   "source_document_id": null,
+   "source_title": "c0433f65252df629fa44e5d08e67f21b970ecdcc275f04be2c070d6efc1d9389.pdf",
+   "official_url": "https://www.washingtontwp.org/UserFiles/Servers/Server_12463606/File/Services/Zoning%20and%20Development/Application%20and%20Fees/Permit%20Application%20Walkthrough%20(March%202026).pdf"
+  }
+ ]
+}

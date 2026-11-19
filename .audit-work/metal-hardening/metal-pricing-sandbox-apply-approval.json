@@ -1,0 +1,14 @@
+{
+ "authorized": true,
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "019b114582de9ffd5f51eecc7f69f5a530177245",
+ "restoreCheckpointId": "6aef962df1ccf2894579398f",
+ "candidateHashes": {
+  "metalPricingAvailability.js": "68c228ec0d2196ff6fba4575ade6c24cde6629d25b27ff347063ebbf4a329984",
+  "MetalEstimator.jsx": "f0e72afd6d37502d5552e98e4bad62f43f40b65b2796f5484ba4e3395b9d6a6d"
+ },
+ "reviewedProtocolHash": "6ceadc0e0f518093b5293f02d9a30e30daa15bd73f3b3050d0d8f07b61e2e64e",
+ "createdAt": "2026-11-07T21:20:51.173Z",
+ "authority": "standing autonomous grant (Brett) — remote transport for metal pricing-availability hardening"
+}

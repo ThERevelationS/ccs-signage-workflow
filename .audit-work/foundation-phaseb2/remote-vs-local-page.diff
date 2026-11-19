@@ -1,0 +1,251 @@
+16a17,18
+> import FoundationReinforcementProposalPanel from "@/components/estimator/foundation/FoundationReinforcementProposalPanel";
+> import { useFoundationReinforcementEditor } from "@/components/estimator/foundation/useFoundationReinforcementEditor";
+37c39
+< import { hasFoundationCostSnapshot } from "@/components/estimator/foundation/foundationCatalogIntegrity";
+---
+> import { landscapeSummary } from "@/components/estimator/foundation/landscapeMaterials";
+40,41c42
+< import { normalizeFoundationInventoryRows } from "@/components/masterInventory/inventoryNormalization";
+< import { recordBuilderSave, foundationRecordSavedTotal } from "@/components/estimator/builder/builderService";
+---
+> import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+48c49
+< import { createFoundationSyncAttempt, foundationSyncRecoveryState, assertFoundationBuilderAcknowledgment, validateFoundationSyncAttempt, resolveFoundationSyncReceiptForSave } from "@/components/estimator/foundation/foundationSyncRecovery";
+---
+> import { createFoundationSyncAttempt, foundationSyncRecoveryState, assertFoundationBuilderAcknowledgment, validateFoundationSyncAttempt } from "@/components/estimator/foundation/foundationSyncRecovery";
+274,276c275
+<         // Canonicalize once at state ingress (CMP-A08): every downstream read —
+<         // catalog memo, tab props, BOM, and calcProject — sees canonical rows.
+<         setInventory(normalizeFoundationInventoryRows([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]));
+---
+>         setInventory([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]);
+301,303d299
+<   // Advisory construction checks (CMP-B16) — verify-style warnings only;
+<   // they render on the diagnostics surface but never block save or handoff.
+<   const constructionWarnings = calc?.constructionWarnings || [];
+327c323
+<       setInventory(normalizeFoundationInventoryRows([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]));
+---
+>       setInventory([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]);
+397,440c393,417
+<   // In-app dirty-route-leave guard. The app router is a declarative
+<   // BrowserRouter (no data-router blocker APIs), so a page-scoped guard covers
+<   // the two real leave paths: internal anchor clicks (shell nav, in-page links)
+<   // and browser Back/Forward. Unsent edits are already persisted to the tab
+<   // draft on every commit — the confirm makes an accidental leave a choice.
+<   const navGuardArmedRef = useRef(false);
+<   useEffect(() => {
+<     const needsGuard = () => saving || dirty || recoveryRequired || draftSessionRef.current.pending;
+<     const confirmLeave = () => window.confirm(
+<       "You have unsaved changes or an unacknowledged Builder sync. Leave without saving?" +
+<       (draftSessionRef.current.revision ? " Unsent edits stay backed up in this browser tab only." : ""));
+<     const onClickCapture = (e) => {
+<       if (!needsGuard() || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+<       const anchor = e.target?.closest?.("a[href]");
+<       if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download")) return;
+<       const href = anchor.getAttribute("href") || "";
+<       if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
+<       let url;
+<       try { url = new URL(href, window.location.href); } catch { return; }
+<       if (url.origin !== window.location.origin) return;
+<       if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+<       if (!confirmLeave()) { e.preventDefault(); e.stopPropagation(); }
+<     };
+<     // A same-URL sentinel history entry makes a Back press land on this page's
+<     // own URL first, where it can be confirmed before the app actually leaves.
+<     // Cancel steps back onto the sentinel via forward() (no new entry — stale
+<     // sentinels never accumulate); confirm disarms then really goes back. A
+<     // stale sentinel popped while clean passes straight through. Standalone
+<     // mode only — embedded, a route pop unmounts us before we could confirm,
+<     // so the sentinel would only leave a dead entry.
+<     if (!embedded && !navGuardArmedRef.current && needsGuard()) {
+<       try { window.history.pushState({ ccsFoundationLeaveGuard: true }, "", window.location.href); navGuardArmedRef.current = true; } catch { /* best effort */ }
+<     }
+<     const onPop = (e) => {
+<       if (!navGuardArmedRef.current) return;
+<       if (e.state?.ccsFoundationLeaveGuard === true) return; // landed on the armed sentinel itself (Forward / re-entry) — nothing to do
+<       if (!needsGuard()) { navGuardArmedRef.current = false; window.history.back(); return; }
+<       if (confirmLeave()) { navGuardArmedRef.current = false; window.history.back(); }
+<       else { try { window.history.forward(); } catch { /* best effort */ } }
+<     };
+<     document.addEventListener("click", onClickCapture, true);
+<     if (navGuardArmedRef.current) window.addEventListener("popstate", onPop);
+<     return () => { document.removeEventListener("click", onClickCapture, true); window.removeEventListener("popstate", onPop); };
+<   }, [embedded, saving, dirty, recoveryRequired, draftOffer]);
+---
+>   const reinforcementEditor = useFoundationReinforcementEditor({
+>     getCurrent: () => {
+>       const live = currentEditorRef.current;
+>       const ack = acknowledgedVersionRef.current;
+>       return {
+>         project: projectRef.current,
+>         savedProject: ack?.sourceSnapshot ?? null,
+>         inventory,
+>         settings,
+>         context: {
+>           ...live,
+>           loaded: mountedRef.current && live.loaded,
+>           ownerId,
+>           sourceUpdatedAt: ack?.updated_date ?? null,
+>           estimateUpdatedAt: linkedEstimate?.updated_date ?? null,
+>         },
+>         blocked:
+>           saving || !!saveAttemptRef.current || !!copyFlightRef.current || !!catalogReloadRef.current ||
+>           catalogReloading || draftSessionRef.current.pending || recoveryRequired ||
+>           !!sourceRefreshRef.current || !ack?.sourceSnapshot || ack?.ownerId !== ownerId ||
+>           ack?.sourceId !== live.sourceId,
+>       };
+>     },
+>     commit: (updater) => commit(updater),
+>   });
+462c439
+<       setDraftOffer({ store: draftStore, backedUp: true, message: "Design and customer-pricing edits backed up in this browser tab only — closing the tab loses them; save to keep all changes." });
+---
+>       setDraftOffer({ store: draftStore, backedUp: true, message: "Design edits backed up in this browser tab. Pricing/customer details are not included; save to keep all changes." });
+571,587c548,553
+<   // Held extras: when a recorded cabinet row or the landscape grid cannot be
+<   // repriced the calc keeps the acknowledged project totals (or null), never a
+<   // silently guessed amount. Null propagation keeps the section total honest —
+<   // "Estimate handoff paused" is already gated on pricingBlocked.
+<   const cabinetCost = calc.totals.total_signage_cabinet_cost;
+<   const landscapeCost = calc.totals.total_landscape_cost;
+<   const sectionTotal = calc.totals.grand_total === null || cabinetCost === null || landscapeCost === null
+<     ? null
+<     : calc.totals.grand_total + cabinetCost + landscapeCost;
+< 
+<   // Saved-vs-current reconciliation (CMP-A10): the acknowledged record's
+<   // persisted 12-field split-total sum — the same number the linked estimate
+<   // stored as live_total_snapshot at the last Builder save (manual add-on
+<   // Product parts live only on the estimate side, so record-sum is the right
+<   // comparator for this module-scoped sectionTotal). Null for a never-priced
+<   // record; the totals panel renders the advisory delta, never blocking.
+<   const savedSectionTotal = foundationRecordSavedTotal(savedSourceProject);
+---
+>   const cabinetCost = (project.signage_cabinets || []).reduce(
+>     (s, c) => s + (c.unit_cost || 0) * (c.quantity || 1),
+>     0
+>   );
+>   const landscapeCost = landscapeSummary(project.landscape).total;
+>   const sectionTotal = calc.totals.grand_total + cabinetCost + landscapeCost;
+737,747c703,709
+<           // A persisted receipt naming another estimate context stays
+<           // authoritative while that estimate can still be read; when the named
+<           // estimate is definitively gone the orphaned receipt is retired with
+<           // this save instead of blocking the standalone editor forever.
+<           const receipt = await resolveFoundationSyncReceiptForSave({
+<             project: captured.project,
+<             estimateId: captured.estimateId,
+<             getEstimate: (id) => staffEntities.AllInOneEstimate.get(id),
+<           });
+<           if (!receipt.ok) throw new Error(receipt.error);
+<           captured.clearStaleSyncReceipt = receipt.clearStaleReceipt === true;
+---
+>           const prior = captured.project.builder_sync_attempt;
+>           if (prior != null) {
+>             const ok = validateFoundationSyncAttempt(prior)
+>               && prior.source_project_id === captured.project.id
+>               && (!!captured.estimateId && prior.estimate_id === captured.estimateId);
+>             if (!ok) throw new Error("An unrecognised Builder sync receipt blocks saving. Reload and retry.");
+>           }
+763c725
+<           data: { ...captured.basePayload, customer_pricing: customerPricing, ...(captured.syncAttempt ? { builder_sync_attempt: captured.syncAttempt } : captured.clearStaleSyncReceipt ? { builder_sync_attempt: null } : {}) },
+---
+>           data: { ...captured.basePayload, customer_pricing: customerPricing, ...(captured.syncAttempt ? { builder_sync_attempt: captured.syncAttempt } : {}) },
+916,923d877
+<         // Same-job metadata payload() does not own — a copy keeps the
+<         // document link, the saved estimate-number lineage (mirroring
+<         // convertFoundationToBrickStone), the persisted beautify brief
+<         // image, and any externally-set pricing-engine context.
+<         estimate_number: project.estimate_number,
+<         hyperlink: project.hyperlink,
+<         beautify_data_url: project.beautify_data_url,
+<         pricing_engine: project.pricing_engine,
+1078,1088d1031
+<         {constructionWarnings.length > 0 && (
+<           <div role="status" className="mb-3 rounded border border-blue-300 bg-blue-50 px-3 py-2 text-[12px] text-blue-900">
+<             <span className="font-semibold">Construction checks — verify before build</span>
+<             <ul className="list-disc pl-5 mt-1 space-y-0.5">
+<               {constructionWarnings.map((warning, i) => (
+<                 <li key={`${warning.code}-${warning.kind}-${warning.index ?? ""}-${i}`}>{warning.message}</li>
+<               ))}
+<             </ul>
+<           </div>
+<         )}
+< 
+1101c1044
+<                 <div className="font-semibold">Unsent browser-tab draft found. Nothing restored or sent. {draftVisible.savedAt ? `Saved ${draftVisible.savedAt}.` : ""} Recovery covers design and customer-pricing fields; customer links and saved receipts stay as stored.</div>
+---
+>                 <div className="font-semibold">Unsent browser-tab draft found. Nothing restored or sent. {draftVisible.savedAt ? `Saved ${draftVisible.savedAt}.` : ""} Recovery covers design fields only.</div>
+1112c1055
+<                 <div className="font-semibold">A browser draft exists but cannot be restored. {draftVisible.message || ""} Recovery covers design and customer-pricing fields; customer links and saved receipts stay as stored.</div>
+---
+>                 <div className="font-semibold">A browser draft exists but cannot be restored. {draftVisible.message || ""} Recovery covers design fields only.</div>
+1207,1218c1150,1178
+<                     {calc.items.map((item, index) => (
+<                       <FoundationItemCard
+<                         key={item.component_id || index}
+<                         item={item}
+<                         pricing={calc.itemPricing[index]}
+<                         index={index}
+<                         catalog={catalog}
+<                         onChange={patchItem}
+<                         onRemove={removeItem}
+<                         onDuplicate={duplicateItem}
+<                       />
+<                     ))}
+---
+>                     {calc.items.map((item, index) => {
+>                       const componentId = item.component_id;
+>                       const proposalState = reinforcementEditor.read(componentId);
+>                       return (
+>                         <div key={componentId || index} className="space-y-2">
+>                           <FoundationItemCard
+>                             item={item}
+>                             pricing={calc.itemPricing[index]}
+>                             index={index}
+>                             catalog={catalog}
+>                             onChange={patchItem}
+>                             onRemove={removeItem}
+>                             onDuplicate={duplicateItem}
+>                           />
+>                           <FoundationReinforcementProposalPanel
+>                             item={item}
+>                             catalog={inventory.filter((row) => row.material_type === "rebar")}
+>                             {...proposalState}
+>                             busy={saving || catalogReloading}
+>                             onStart={() => reinforcementEditor.start(componentId)}
+>                             onDraftChange={(draft) => reinforcementEditor.changeDraft(componentId, draft)}
+>                             onPreview={() => reinforcementEditor.preview(componentId)}
+>                             onAccept={(proposalId) => reinforcementEditor.accept(componentId, proposalId)}
+>                             onDiscard={() => reinforcementEditor.discard(componentId)}
+>                             onAcknowledgmentsChange={(value) => reinforcementEditor.acknowledge(componentId, value)}
+>                           />
+>                         </div>
+>                       );
+>                     })}
+1234d1193
+<                   wallPricing={calc.wallPricing}
+1241d1199
+<                   polePricing={calc.polePricing}
+1294c1252
+<                   <FoundationTotals totals={calc.totals} pricingUnavailable={pricingBlocked} savedSectionTotal={savedSectionTotal} sectionTotal={sectionTotal} />
+---
+>                   <FoundationTotals totals={calc.totals} pricingUnavailable={pricingBlocked} />
+1298c1256
+<                       <span>{hasFoundationCostSnapshot(cabinetCost) ? money(cabinetCost) : "Not saved"}</span>
+---
+>                       <span>{money(cabinetCost)}</span>
+1302c1260
+<                       <span>{hasFoundationCostSnapshot(landscapeCost) ? money(landscapeCost) : "Not saved"}</span>
+---
+>                       <span>{money(landscapeCost)}</span>
+1326,1330d1283
+<                   polePricing={calc.polePricing}
+<                   wallPricing={calc.wallPricing}
+<                   cabinets={project.signage_cabinets || []}
+<                   landscape={project.landscape}
+<                   landscapePricing={calc.landscapePricing}
+1376,1377d1328
+<         saveDisabled={pricingBlocked || catalogReloading}
+<         saveDisabledReason="Pricing unavailable: fix highlighted design inputs or catalog selections before saving a template."

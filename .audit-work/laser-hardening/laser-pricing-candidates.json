@@ -1,0 +1,22 @@
+{
+ "src/components/estimator/laser/laserPricingAvailability.js": {
+  "candidateFile": "laser-pricing-candidate-laserPricingAvailability.js",
+  "sha256": "82275a855f3cc2d2058a8416a62ccf40a52a0c8cebacac573232bf22e55cd380",
+  "bytes": 23438,
+  "lines": 497,
+  "lineEndings": "LF",
+  "terminalLF": true,
+  "existsOnRemote": false,
+  "remoteSha256": null
+ },
+ "src/pages/LaserEstimator.jsx": {
+  "candidateFile": "laser-pricing-candidate-LaserEstimator.jsx",
+  "sha256": "0f996fd442ad9361a38820f63078966e5ba85016171e965d890be8f0fcac54cc",
+  "bytes": 88871,
+  "lines": 2081,
+  "lineEndings": "LF",
+  "terminalLF": true,
+  "existsOnRemote": true,
+  "remoteSha256": "745e33332f6133302a955d7b02a6b06838b6f24e1f536718d2ffa4badddaccd3"
+ }
+}

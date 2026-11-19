@@ -1,0 +1,89 @@
+{
+  "synthetic": true,
+  "results": [
+    {
+      "name": "material basis records20ft at2 for40 without engineering/procurement approval",
+      "ok": true
+    },
+    {
+      "name": "labor basis records1.2hr at60 for72, not a per-job72 hourly rate",
+      "ok": true
+    },
+    {
+      "name": "current component and quantity changes never retag a recorded frozen basis",
+      "ok": true
+    },
+    {
+      "name": "missing legacy context stays explicitly unrecorded, never inferred from current fields",
+      "ok": true
+    },
+    {
+      "name": "zero rate retains actual frozen20ft, even when current quantity becomes0",
+      "ok": true
+    },
+    {
+      "name": "invalid frozen-money reconciliation fails closed",
+      "ok": true
+    },
+    {
+      "name": "unknown material weight cannot masquerade as a recorded basis",
+      "ok": true
+    },
+    {
+      "name": "future versions and unsupported states fail closed",
+      "ok": true
+    },
+    {
+      "name": "unrecorded context cannot smuggle invented quantities",
+      "ok": true
+    },
+    {
+      "name": "missing current rate cannot silently become0 at capture",
+      "ok": true
+    },
+    {
+      "name": "wrong stored role or purchasing unit fails closed",
+      "ok": true
+    },
+    {
+      "name": "coercive numeric objects are never evaluated",
+      "ok": true
+    },
+    {
+      "name": "positive multiplication underflow never creates free steel",
+      "ok": true
+    },
+    {
+      "name": "capture and preserve clone all nested context independently",
+      "ok": true
+    },
+    {
+      "name": "malformed root inputs return coded errors",
+      "ok": true
+    },
+    {
+      "name": "presentation distinguishes recorded frozen and last-calculated quantities",
+      "ok": true
+    },
+    {
+      "name": "unrecorded legacy labor never presents72 as an hourly frozen rate",
+      "ok": true
+    },
+    {
+      "name": "independent and non-v2 parts never present source geometry as their live definition",
+      "ok": true
+    },
+    {
+      "name": "missing last-calculated rate is unavailable, not a displayed zero",
+      "ok": true
+    },
+    {
+      "name": "pending removal does not display obsolete geometry as an active zero-rate design",
+      "ok": true
+    },
+    {
+      "name": "zero priced feet never erase20 physical feet in presentation",
+      "ok": true
+    }
+  ]
+}

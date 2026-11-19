@@ -15,6 +15,8 @@ import {
   formatCompanyDateTime,
   parseCompanyDateTimeInput,
 } from "@/components/timeclock/timeClockCompanyTime";
+import { CcsDateTimeField } from "@/components/ui/ccs-date-field";
+import dayjs from "dayjs";
 
 export default function WorkPauseMenu({
   open,
@@ -147,26 +149,28 @@ export default function WorkPauseMenu({
                     <Label htmlFor="missed-pause-start" className="text-xs font-semibold text-purple-900 dark:text-violet-100">
                       Pause started ({TIME_CLOCK_COMPANY_TIME_LABEL})
                     </Label>
-                    <Input
+                    <CcsDateTimeField
                       id="missed-pause-start"
-                      type="datetime-local"
                       value={startedInput}
                       onChange={(e) => { setStartedInput(e.target.value); setLocalError(""); }}
                       disabled={reportBusy || !canReportMissed}
-                      className="mt-1 bg-white dark:bg-slate-900"
+                      max={dayjs().format("YYYY-MM-DD")}
+                      presets={false}
+                      className="mt-1"
                     />
                   </div>
                   <div>
                     <Label htmlFor="missed-pause-end" className="text-xs font-semibold text-purple-900 dark:text-violet-100">
                       Pause ended ({TIME_CLOCK_COMPANY_TIME_LABEL})
                     </Label>
-                    <Input
+                    <CcsDateTimeField
                       id="missed-pause-end"
-                      type="datetime-local"
                       value={resumedInput}
                       onChange={(e) => { setResumedInput(e.target.value); setLocalError(""); }}
                       disabled={reportBusy || !canReportMissed}
-                      className="mt-1 bg-white dark:bg-slate-900"
+                      max={dayjs().format("YYYY-MM-DD")}
+                      presets={false}
+                      className="mt-1"
                     />
                   </div>
                 </div>

@@ -1,0 +1,2 @@
+Two-target dry-run: 3 actual CLI edit previews applied=false; new helper staged locally only; no mutation.
+exit=0

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { VinylMachine, User } from "@/entities/all";
+import { VinylMachine, User } from "@/api/gatedEntities";
 import { ArrowLeft, Layers, Lock, Plus, Printer, Save, Scissors, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createVinylMachineWithRecovery } from "@/components/vinylInventory/vinylMachinePersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 
 const TYPE_META = {
   printer: { label: "Printer", icon: Printer },

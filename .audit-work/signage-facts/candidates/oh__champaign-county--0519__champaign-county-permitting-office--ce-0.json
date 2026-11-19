@@ -1,0 +1,821 @@
+{
+ "jurisdiction_id": "6ac3280d923d4d53db1d0519",
+ "jurisdiction_name": "Champaign County",
+ "state": "OH",
+ "office_id": "scan-6ac3280d923d4d53db1d0519-office-0",
+ "office_name": "Champaign County permitting office",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "C:\\Documents and Settings\\PatrickK\\My Documents\\GroupWise\\FORM 2 - RCO Energy Analysis Prescriptive Option 1101-1104.doc Page 1 of 2 Montgomery County Building Regulations FORM 2: 2013 RESIDENTIAL CODE OF OHIO SECTIONS 1101 THROUGH 1104 SUMMARY Based upon 2013 RCO, Sections 1101-1104, Zone 5 Requirements, and the International Energy Conservation Code Job address __________________________________________________________________________ Date ______________ Building Envelope Requirements Zone Maximum Minimum Insulation R-Value Window and Glass Door U-Factor 4 Skylight Glazing U-Factor Ceiling 9 Wood Frame Wall Mass Wall 5 Floor 8 Basement Wall 6, 7 Slab Perimeter 3 Crawlspace Wall 2, 6 5 .35 .60 R-38 R-20 or R-13 + 5 1 R-13/17 R-30 R-10 / 13 R-10 / 15 R-10 / 13 Thermally Isolated Sunrooms (greater than 40% glazing). 10,11 5 .50 .75 R-24 R-13 R-13 R-30 R-10 / 13 R-10 / 15 R-10 / 13 1. Exte",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "246dd35a698c38b1b308fa6f337504457256292137c7c960df2f86cca7a8af22",
+   "source_document_id": null,
+   "source_title": "246dd35a698c38b1b308fa6f337504457256292137c7c960df2f86cca7a8af22.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/FORM_2___RCO_Energy_Analysis_Prescriptive_Option_1101_1104.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "C:\\Documents and Settings\\PatrickK\\My Documents\\GroupWise\\FORM 2 - RCO Energy Analysis Prescriptive Option 1101-1104.doc Page 2 of 2 Summary of additional requirements: 1102.2.3 Access hatches and doors . Access doors from conditioned spaces to unconditioned spaces (e.g., attics and crawl spaces) shall be weatherstripped and insulated to a level equivalent to the insulation on the surrounding surfaces. Access shall be provided to all equipment, which prevents damaging or compressing the insulation. A wood framed or equivalent baffle or retainer is required to be provided when loose fill insulation is installed, the purpose of which is to prevent the loose fill insulation from spilling into the living space when the attic access is opened and to provide a permanent means of maintaining the installed R-value of the loose fill insulation. 1102.2.8 Slab-on-grade floors. Slab-on-grade floors ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "246dd35a698c38b1b308fa6f337504457256292137c7c960df2f86cca7a8af22",
+   "source_document_id": null,
+   "source_title": "246dd35a698c38b1b308fa6f337504457256292137c7c960df2f86cca7a8af22.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/FORM_2___RCO_Energy_Analysis_Prescriptive_Option_1101_1104.pdf"
+  },
+  {
+   "page": 27,
+   "snippet": "PAGE NO. 27 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 05/01/2026 04/01/2026 TO 04/30/2 026 10:28 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRE SS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPL ICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------- ------------ 20260001SI 4/2/2026 1637 US HWY 36 E KROGER COMPANY 0 SIGN VISION CO SIGN PERMIT N/A 4111 EXECUTIVE PKWY 389 .34 1021 CLAYCRAFT ROAD SOUTH END LV 0 GAHANNA, OH 43230 NEW SIGN WESTERVILLE, OH 4308 1 NL 0 614 - 475 - 5161 N/A BA 0 URBANA C",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area"
+   ],
+   "weight": 6,
+   "source_sha256": "109db52d1188874442c4e13e96b2fac6c33ae6dae8bd923319f2f9f482085e8b",
+   "source_document_id": null,
+   "source_title": "109db52d1188874442c4e13e96b2fac6c33ae6dae8bd923319f2f9f482085e8b.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/April_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 26,
+   "snippet": "PAGE NO. 26 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 10/02/2026 09/01/2026 TO 09/30/2026 08:51 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRE SS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/C S4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260536B 9/16/2026 3136 URBANA MOOREFIELD PK R. LOCKWOOD 14850 ISL CONSTRUCTION LLC ROOF N/A 95.95 567 EAST CHURCH ST N/A LV 0 URBANA, OH 43078 ROOF NL 0 937 - 631 - 1879 N/A 0/0/ BA 0 URBANA CITY / ISL ROOFING --------------------------",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area"
+   ],
+   "weight": 6,
+   "source_sha256": "33c735fe72a648005ba087339f41ce98cc658517e73667c09987174d10bfb241",
+   "source_document_id": null,
+   "source_title": "33c735fe72a648005ba087339f41ce98cc658517e73667c09987174d10bfb241.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/September_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 19,
+   "snippet": "PAGE N O. 19 COUNTY OF CHAMPAIGN PRNT PRMT PERMIT REPORT 04/01/2026 03/01/2026 TO 03/31/2026 10:18 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNE R CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------- ---------------------------------------------------------------------------------------------------- 20260059H 3/25/2026 5109 WILLOW DALE RD BRIAN EVANS 0 LOGAN SERVICES I NC HEAT/AC N/A 5109 WILLOW DALE ROAD 95.95 1200 INDUSTRIAL PARK DRIV N/A LV 0 VANDAILIA, OH 45377 REPLACEMENT URBANA, OH 43078 NL 0 937 - 224 - 3200 0/0/ BA 0 CHAMPAI",
+   "tags": [
+    "fee",
+    "area",
+    "dimension"
+   ],
+   "weight": 6,
+   "source_sha256": "40ae9cb033e04a760df88245fcb91aec20432872db789d18caeb749bd18dbf37",
+   "source_document_id": null,
+   "source_title": "40ae9cb033e04a760df88245fcb91aec20432872db789d18caeb749bd18dbf37.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/March_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "RESIDENTIAL INSPECTIONS WHEN CALLING FOR INSPECTIONS: PERMIT# - OWNER NAME – ADDRESS – TYPE INSPECTION 937-484-1602 EXT. 1 Inspections must be called in by 3 pm the day before the inspection is to be performed. The inspector will call the contractor between 8:00 am and 9:00 am the day of the inspection to confirm. NO SAME DAY INSPECTIONS 1. FOOTER: After excavation and placing forms or grades, but prior to placing concrete. 2. FOUNDATION: Inspection prior to pouring walls, or pouring floor, and to backfill. 3. SLAB: Inspection prior to pouring basement, garage, porches, door slabs. 4. TEMPORARY ELECTRIC 5. FIREPLACE: at first flue and prior to pouring hearth 6. ROUGH PLUMBING: call Health Department 484-1605 7. ROUGH FRAMING, ELECTRIC & HEAT must be scheduled at the same time. 8. ROOFING – 1 st inspection for Ice Guard, 2 nd inspection final. 9. FINAL PLUMBING: call Health Department 484",
+   "tags": [
+    "dimension",
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "74a852758e7e679c7cfb8887e872a85c544e6378c9f6ac9e667e998a25c9ed36",
+   "source_document_id": null,
+   "source_title": "74a852758e7e679c7cfb8887e872a85c544e6378c9f6ac9e667e998a25c9ed36.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Building_Information/Required_Residential_Inspections.PDF"
+  },
+  {
+   "page": 1,
+   "snippet": "Re-roof Requirements These are the requirements that Champaign County Building Regulations Department will be enforcing as of May 1, 2010 for re-roofing projects.. SECTION R907 REROOFING R907.1 General. Materials and methods of application used for recovering or replacing an existing roof covering shall comply with the requirements of Chapter 9. Exception: Reroofing shall not be required to meet the minimum design slope requirement of one- quarter unit vertical in 12 units horizontal (2-percent slope) in Section 905 for roofs that provide positive roof drainage. R907.2 Structural and construction loads. The structural roof components shall be capable of supporting the roof covering system and the material and equipment loads that will be encountered during installation of the roof covering system. R907.3 Recovering versus replacement. New roof coverings shall not be installed without fir",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "9b58dec9f8c92473b60626ef4c76287147c27440a21f16ea63fdfc2be0ecaefd",
+   "source_document_id": null,
+   "source_title": "9b58dec9f8c92473b60626ef4c76287147c27440a21f16ea63fdfc2be0ecaefd.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Building_Information/Re-Roof_Requirements.PDF"
+  },
+  {
+   "page": 2,
+   "snippet": "Where the application of a new roof covering over wood shingle or shake roofs creates a combustible concealed space, the entire existing surface shall be covered with gypsum board, mineral fiber, glass fiber or other approved materials securely fastened in place. R907.5 Reinstallation of materials. Existing slate, clay or cement tile shall be permitted for reinstallation, except that damaged, cracked or broken slate or tile shall not be reinstalled. Existing vent flashing, metal edgings, drain outlets, collars and metal counterflashings shall not be reinstalled where rusted, damaged or deteriorated. Aggregate surfacing materials shall not be reinstalled. R907.6 Flashings. Flashings shall be reconstructed in accordance with approved manufacturer’s installation instructions. Metal flashing to which bituminous materials are to be adhered shall be primed prior to installation. R905.2.7.1 Ice",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "9b58dec9f8c92473b60626ef4c76287147c27440a21f16ea63fdfc2be0ecaefd",
+   "source_document_id": null,
+   "source_title": "9b58dec9f8c92473b60626ef4c76287147c27440a21f16ea63fdfc2be0ecaefd.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Building_Information/Re-Roof_Requirements.PDF"
+  },
+  {
+   "page": 26,
+   "snippet": "PAGE NO. 26 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 09/01/2026 08/01/2026 TO 08/31/2026 03:18 PM PERMIT # PE RMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRE SS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRAC TOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/C S4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 -------------------------------------------------------------------------------- ------------------------------------------------------- 20260503B 8/31/2026 5689 ST RT 296 E TIM NORRIS 32879 DAYTON BARNS & A LL - STEEL POLE BARN L431200470002204 5689 ST RT 296 E 348.45 7580 BRANDT PIKE N/A LV 0 HUBER HEIGHTS, OH 45424 METAL BARN CABLE, OH 43009 NL 0 937 - 741 - 7200 0/0/",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 6,
+   "source_sha256": "9f7ff4f45ca13a370aecd18ad8012c567a67deb464b471ee3fe43fd4f88d4b45",
+   "source_document_id": null,
+   "source_title": "9f7ff4f45ca13a370aecd18ad8012c567a67deb464b471ee3fe43fd4f88d4b45.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/August_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 29,
+   "snippet": "PAGE NO. 29 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 09/01/2026 08/01/2026 TO 08/31/2026 03:18 PM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DE SC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260003SI 8/7/2026 1840 US HWY 36 E WALMA RT 0 SIGN CRAFTERS INC SIGN PERMIT K482511034900700 1840 US HWY 36 E 426.42 1508 STRINGTONW ROAD N/A LV 0 EVANSVILLE, IN 47711 NEW SIGNAGE URBANA, OH 43078 NL 0 812 - 424 - 9011 BA 0 URBANA CITY /",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area"
+   ],
+   "weight": 6,
+   "source_sha256": "9f7ff4f45ca13a370aecd18ad8012c567a67deb464b471ee3fe43fd4f88d4b45",
+   "source_document_id": null,
+   "source_title": "9f7ff4f45ca13a370aecd18ad8012c567a67deb464b471ee3fe43fd4f88d4b45.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/August_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 26,
+   "snippet": "PAGE NO. 26 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 08/05/2026 07/01/2026 TO 07/31/2026 10:12 AM PERMIT # PE RMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRE SS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRAC TOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/C S4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 -------------------------------------------------------------------------------- ------------------------------------------------------- 20260421B 7/22/2026 127 SCIOTO ST COLDWELL BANKER 37950 BRUNS CONSTRUCTI ON ENTERP ROOF K482500021801300 1115 N LIMESTONE 97.85 1429 CRANBERRY ROAD N/A LV 0 SAINT HENRY, OH 45883 ROOF SPRINGFIELD, OH 45503 NL 0 419 - 925 - 4078 0/0/ BA ",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area"
+   ],
+   "weight": 6,
+   "source_sha256": "bd014d9ee48ee65c81b00fa99d9972050ae4381dce2be81456f5e45a540065ba",
+   "source_document_id": null,
+   "source_title": "bd014d9ee48ee65c81b00fa99d9972050ae4381dce2be81456f5e45a540065ba.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/July_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "P:\\Shared\\WEB DOCUMENTS\\Energy Analysis Documents\\FORM 1 - 2019 RCO Energy Analysis OHBA Option.doc 6/17/2019 Page 1 of 3 Montgomery County Building Regulations FORM 1: THE OHIO HOME BUILDERS ALTERNATIVE ENERGY CODE COMPLIANCE OPTION Based upon the 2019 Residential Code of Ohio, Section 1112, Ohio Home Builders Alternative Energy Code Job address __________________________________________________________________________ Date ______________ Applicant Name (please print)______________________________________________________Phone No.__________________ Compliance path proposed: 1 2 Sunroom R-values on construction documents must match the chosen path option. Insulation and G lazing R equired by C omponent (Based upon Table 11 12 .2.1) Compliance Path Maximum U - Factor Minimum Insulation R - Value Window and Glass Door Skylight Glazing Ceiling Wood Frame Wall Mass Wall 4 Floor 5 Basement Wal",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "df37266f99a431584bade43ec8fcdd97349bd8718c0e348d22fa87e52e983f0c",
+   "source_document_id": null,
+   "source_title": "df37266f99a431584bade43ec8fcdd97349bd8718c0e348d22fa87e52e983f0c.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Applications/FORM_1_-_2019_RCO_Energy_Analysis_OHBA_Option.pdf"
+  },
+  {
+   "page": 8,
+   "snippet": "PAGE NO. 8 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 12/01/2025 11/01/2025 TO 12/01/2025 08:30 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250449B 11/20/2025 800 MAIN ST N MONTICELLO HOMES 160000 MONTICELLO HOMES LLC NEW RESIDENCE N/A PO BOX 1945 471.06 PO BOX 1945 N/A LV 1283 POWELL, OH - NEW HOME POWELL, OH 43065 NL 192 614-607-1140 N/A 0/0/ BA 0 URBANA CITY R/101 MONTICELLO",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area"
+   ],
+   "weight": 6,
+   "source_sha256": "e82175b448eff46d651feb2b83285986441b26c9bb59bb430890d026f7648157",
+   "source_document_id": null,
+   "source_title": "e82175b448eff46d651feb2b83285986441b26c9bb59bb430890d026f7648157.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/November_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "PAGE NO. 18 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 07/01/2026 06/01/2026 TO 06/30/2026 10:22 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PR OJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260112H 6/8/2026 543 LIGHT ST E GINA BUNNELL 0 LO GAN SERVICES INC HEAT/AC N/A 543 E LIGHT ST 95.95 1200 INDUSTRIAL PARK DRIV N/A LV 0 VANDAILIA, OH 45377 REPLACEMENT URBANA, OH 43078 NL 0 937 - 224 - 3200 0/0/ BA 0 URBANA CITY MP/ LOGAN",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 5,
+   "source_sha256": "2d40c16ac27ffa6255a01df760e7329745ea575dc37d182cfc4e7f3ee2281775",
+   "source_document_id": null,
+   "source_title": "2d40c16ac27ffa6255a01df760e7329745ea575dc37d182cfc4e7f3ee2281775.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/June_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 27,
+   "snippet": "PAGE NO. 27 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 07/01/2026 06/01/2026 TO 06/30/2 026 10:22 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRE SS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPL ICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------- ------------ 20260114H 6/8/2026 660 PINDAR ST CODY WAL 0 LOGAN SERVICES I NC HEAT/AC N/A 660 PINDAR STREET 95 .95 1200 INDUSTRIAL PARK DRIV N/A LV 0 VANDAILIA, OH 45377 REPLACEMENT URBANA, OH 43078 NL 0 937 - 224 - 3200 N/A 0/0/ BA 0 URBANA CITY MP/ ",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 5,
+   "source_sha256": "2d40c16ac27ffa6255a01df760e7329745ea575dc37d182cfc4e7f3ee2281775",
+   "source_document_id": null,
+   "source_title": "2d40c16ac27ffa6255a01df760e7329745ea575dc37d182cfc4e7f3ee2281775.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/June_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 21,
+   "snippet": "PAGE NO. 21 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 10/31/2025 10/01/2025 TO 10/31/2025 03:59 PM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250365B 10/3/2025 1609 SLACK RD SIMPSON, GEORGE 7800 TIP TOP CONSTRUCTION ROOF E110511280001402 1609 SLACK RD 237.35 N/A LV 0 LYNCHBURG, OH 45142 ROOF OVER PORCH ST PARIS, OH 43072 NL 0 513-516-5905 0/0/ BA 0 CHAMPAIGN / GEORGE SIMPSON ---",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 5,
+   "source_sha256": "949ee3500da072bbc7c7885e9d70a90811a526fefa5bbb9161a4837f0b3bef07",
+   "source_document_id": null,
+   "source_title": "949ee3500da072bbc7c7885e9d70a90811a526fefa5bbb9161a4837f0b3bef07.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/October_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CHAMPAIGN COUNTY BUILDING REGULATIONS PLEASE FILL OUT COMPLETELY. OMISSIONS MAY DELAY PERMIT PROCESS. Application No. _______________________________ (1)Project Information Name of Business: ____________________________________ Site Address:__________ _______________________________ City:________________________________________________ (2) Project Description ___________________________________________________ ___________________________________________________ ___________________________________________ ________ (3) Square Footage _________________________________ Proposed Use Code ______________________ (4) Property Owner Owner/Representative:_________________________________ Address:____________________________________________ (if different fro m site address) City: _________________ State: ________ Zip:_____________ Phone /Cell ______________________________________ (5) Responsible D",
+   "tags": [
+    "area",
+    "temporary",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "afa5c9ec0bcd202e940eb1055c9b9bbaf8b4667bb52742e6616df1c316c8ad77",
+   "source_document_id": null,
+   "source_title": "afa5c9ec0bcd202e940eb1055c9b9bbaf8b4667bb52742e6616df1c316c8ad77.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Applications/Commercial_Application.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "PAGE NO. 6 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 12/01/2025 11/01/2025 TO 12/01/2025 08:30 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250437B 11/17/2025 4023 FLATFOOT RD REBECCA CRABTREE 0 ESPINOSA ROOFING ROOF N/A 4023 FLATFOOT RD 85.85 1444 KNIGHT RD N/A LV 0 URBANA, OH 43078 ROOF CABLE, OH 43009 NL 0 937-926-0003 0/0/ BA 0 CHAMPAIGN / ESPINOSA ROOFING -----------------",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 5,
+   "source_sha256": "e82175b448eff46d651feb2b83285986441b26c9bb59bb430890d026f7648157",
+   "source_document_id": null,
+   "source_title": "e82175b448eff46d651feb2b83285986441b26c9bb59bb430890d026f7648157.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/November_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CHAMPAIGN COUNTY BUILDING REGULATIONS RESIDENTIAL BUILDING PERMIT – APPLICATION FORM PHONE : 937 - 484 - 1602 ADDRESS : 1512 S. US Hwy 68 Bay 13 mhall @co.champaign.oh.us Urbana, OH 43078 THIS APPLICATION MUST BE FILLED OUT COMPLETELY TO BE ACCEPTED FOR PROCESSING NOTE: Permit approval certifies compliance with building codes based upon the information submitted by the owner/applicant. MUST HAVE ZONING PERMIT AND HEALTH DEPARTMENT APPROVAL WHERE APPLICABLE PRIOR TO PERMIT BEING ISSUED. NOTE: The applicant warrants the truthfulness of the information provided on submitted application and plans. Any information provided that is incorrect may result in the permit being REVOKED. NOTE: All Residential Building Applications must be accompanied with 2 sets detailed construction drawings 1. Date Submitted: ____________ 2. Estimated Project Cost: $___________ ___________ _ 3. Square Foota ge: Liv",
+   "tags": [
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "f82dec89b7c187c6ae117036429473c1595fd4168498c39f7d689bdb01b96674",
+   "source_document_id": null,
+   "source_title": "f82dec89b7c187c6ae117036429473c1595fd4168498c39f7d689bdb01b96674.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Applications/Residential_Building_Permit-Application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "PAGE NO. 1 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 01/05/2026 12/01/2025 TO 12/31/2025 11:01 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250327E 12/16/2025 119 ASHLAND AVE ALL OHIO WLEDING 0 EVANS ELECTRIC NEW F202400010202500 119 ASHLAND AVE 173.04 121 WASHINGTON AVE 45 LV 0 URBANA, OH 40378 NEW SERVICE ST PARIS, OH 43072 NL 0 937-653-7166 0/0/ BA 0 ST PARIS EP/ ED EVANS --",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "046cec4abd7457cbfd1563aebb30812fda06d49ee55817867a241c6c0ef45dd9",
+   "source_document_id": null,
+   "source_title": "046cec4abd7457cbfd1563aebb30812fda06d49ee55817867a241c6c0ef45dd9.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/December_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "PAGE NO. 14 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 01/05/2026 12/01/2025 TO 12/31/2025 11:01 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250453B 12/2/2025 136 RACE ST E PANDIN CO LLC 0 OWNER ALT/REMOD N/A PO BOX 39 322.09 N/A LV 0 RENO MECHANICSBURG, OH 43044 NL 0 0/0/ BA 0 MECHANICSBURG / THEODORE PANDIN ---------------------------------------------------------------------",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "046cec4abd7457cbfd1563aebb30812fda06d49ee55817867a241c6c0ef45dd9",
+   "source_document_id": null,
+   "source_title": "046cec4abd7457cbfd1563aebb30812fda06d49ee55817867a241c6c0ef45dd9.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/December_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "PAGE NO. 5 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 05/01/2026 04/01/2026 TO 04/30/2026 10:28 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRE SS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTO R CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS B AS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260164B 4/24/2026 11671 CHRISTIANSBURG JACKSON RD SWABB, ROBERT 0 ERIE CONSTRUCTION MID - WES ROOF E110511200001101 11671 CHRISTIANSBURG JACKSO 95.95 3516 GRANITE CIR CLE N/A LV 0 TOLEDO, OH 43617 ROOF ST PARIS, OH 43072 NL 0 800 - 536 ",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "109db52d1188874442c4e13e96b2fac6c33ae6dae8bd923319f2f9f482085e8b",
+   "source_document_id": null,
+   "source_title": "109db52d1188874442c4e13e96b2fac6c33ae6dae8bd923319f2f9f482085e8b.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/April_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 25,
+   "snippet": "PAGE NO. 25 COUNTY OF CHAMPAIGN PRNTPRM T PERMIT REPORT 05 /01/2026 04/01/2026 TO 04/30/2026 10:28 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ------------------------------------- -------------------------------------------------------------------------------------------------- 20260182B 4/29/2026 1632 ST RT 296 W TAPP, JOHN 125000 HOYLMAN CONSTRUC TION POLE BARN N/A 1632 W ST RT 296 429.88 322 MEADOW LANE N/A LV 0 DEGRAFF, OH 43318 REBUILD BUILDING B - 7 URBANA, OH 43078 NL 0 0/0/ BA 0 CHAMPAIGN R/434 HOYLMAN C",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "109db52d1188874442c4e13e96b2fac6c33ae6dae8bd923319f2f9f482085e8b",
+   "source_document_id": null,
+   "source_title": "109db52d1188874442c4e13e96b2fac6c33ae6dae8bd923319f2f9f482085e8b.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/April_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "PAGE NO. 10 COUNTY OF CHAMPAIGN PRNT PRMT PERMIT REPORT 07/01/2026 06/01/2026 TO 06/30/2026 10:22 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRE SS WORK DESC 2 LOT NUMBER OWNER ADDR ESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260143E 6/11/2026 4210 ELM TREE RD S TIM MCNAMARA 0 AREA ENERGY & ELECTRIC, I NEW N/A 4358 SOUT ELM TREE ROAD 102.01 2001 COMMERCE DR . N/A LV 0 SIDNEY, OH 45365 SERVICE/AES ST PARIS, OH 43072 NL 0 937 - 498 - 4784 0/0/ BA 0 CHAMPAIGN ",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "2d40c16ac27ffa6255a01df760e7329745ea575dc37d182cfc4e7f3ee2281775",
+   "source_document_id": null,
+   "source_title": "2d40c16ac27ffa6255a01df760e7329745ea575dc37d182cfc4e7f3ee2281775.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/June_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "PAGE NO. 11 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 07/01/2026 06/01/2026 TO 06/30/2026 10:22 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR W ORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRES S WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260144E 6/12/2026 4462 EVERETT RD WISSE DIANA 0 RILEY GENERAL CONSTRUCTIO NEW N/A 801 WASHINGTON AVENUE 101.00 3325 HECK HILL R D N N/A LV 0 ST. PARIS, OH 43072 GARAGE/PIONEER URBANA, OH 43078 NL 0 937 - 620 - 5703 0/0/ BA 0 CHAMPAIGN E",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "2d40c16ac27ffa6255a01df760e7329745ea575dc37d182cfc4e7f3ee2281775",
+   "source_document_id": null,
+   "source_title": "2d40c16ac27ffa6255a01df760e7329745ea575dc37d182cfc4e7f3ee2281775.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/June_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 17,
+   "snippet": "PAGE NO. 17 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 07/01/2026 06/01/2026 TO 06/30/2026 10:22 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WOR K DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CS Z WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS S Q FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260138E 6/4/2026 418 LAWN AVE E P RICE, GRANT 0 OWNER NEW N/A 418 E LAWN AVE 151.50 N/A LV 0 200 AMP/AES URBANA, OH 43078 NL 0 0/0/ BA 0 URBANA CITY EP/ GRANT PRICE ----------------------------------------------------------------------",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "2d40c16ac27ffa6255a01df760e7329745ea575dc37d182cfc4e7f3ee2281775",
+   "source_document_id": null,
+   "source_title": "2d40c16ac27ffa6255a01df760e7329745ea575dc37d182cfc4e7f3ee2281775.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/June_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "PAGE NO. 16 COUNTY OF CHAMPAIGN PRNTPR MT PERMIT REPORT 04/01/2026 03/01/2026 TO 03/31/2026 10:18 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRE SS WORK DESC 2 LOT NUMBER OWNER ADDRES S2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UN ITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260048H 3/10/2026 4 038 URBANA MOOREFIELD PK DON SHOCKEY 0 SNYDER HEATING & COOLING HEAT/AC N/A 4038 URBANA MOOREFIELD PIKE 85.85 1231 ST RT 54 N/A LV 0 URBANA, OH 43078 INSTAL URBANA, OH 43078 NL 0 937 - 653 - 7304 0/0/ BA 0 CHAMPAIG",
+   "tags": [
+    "sign",
+    "area",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "40ae9cb033e04a760df88245fcb91aec20432872db789d18caeb749bd18dbf37",
+   "source_document_id": null,
+   "source_title": "40ae9cb033e04a760df88245fcb91aec20432872db789d18caeb749bd18dbf37.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/March_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "PAGE NO. 18 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 04/01/2026 03/01/2026 TO 03/31/2026 10:18 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PR OJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260052E 3/16/2026 333 WARD ST E ROPP, DUSTIN 0 ST ANTON ELECTRICAL LTD RECONNECT N/A 5689 ST RT 55 95.95 2226 N FOUNTAIN BLVD N/A LV 0 SPRINGFIELD, OH 45504 RECONNECT/AES URBANA, OH 43078 NL 0 937 - 206 - 4050 0/0/ BA 0 URBANA CITY EP/ S",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "40ae9cb033e04a760df88245fcb91aec20432872db789d18caeb749bd18dbf37",
+   "source_document_id": null,
+   "source_title": "40ae9cb033e04a760df88245fcb91aec20432872db789d18caeb749bd18dbf37.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/March_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "PAGE NO. 13 COUNTY OF CHAMPAIGN PRN TPRMT PERMIT REPORT 03/02/2026 02/01/2026 TO 02/28/2026 09:37 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OW NER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------- ------------------------------------------------------------------------------------------------------ 20260028B 2/9/2026 904 SCIOTO ST MERCY MEMORIAL HOSPITAL 110000 MESSER CONSTRUCT ION ROOF K482511033400100 904 SCIOTO ST 118.54 4801 HEMPSTEAD STATION DR N/A LV 0 DAYTON, OH 45429 ROOF URBANA, OH 43078 NL 0 937 - 291 - 1300 0/0/ BA 0 URBA",
+   "tags": [
+    "sign",
+    "area",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "71f6016f46145f05e79f30114422194c9df3352d57ebc4eab550a2d64293e68a",
+   "source_document_id": null,
+   "source_title": "71f6016f46145f05e79f30114422194c9df3352d57ebc4eab550a2d64293e68a.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/February_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 17,
+   "snippet": "PAGE NO. 17 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 03/02/2026 02/01/2026 TO 02/28/2026 09:37 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WOR K DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CS Z WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS S Q FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260037H 2/25/2026 565 WASHINGTON AVE T ROWBRIDGE, ALONZO 0 LOGAN SERVICES INC HEAT/AC K482500032221700 565 WASHINGTON AVE 85.85 1200 INDUSTRIAL PARK DRIV N/A LV 0 VANDAILIA, OH 45377 REPLACEMENT URBANA, OH 43078 NL 0 937 - 224 - 3200 0",
+   "tags": [
+    "fee",
+    "area",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "71f6016f46145f05e79f30114422194c9df3352d57ebc4eab550a2d64293e68a",
+   "source_document_id": null,
+   "source_title": "71f6016f46145f05e79f30114422194c9df3352d57ebc4eab550a2d64293e68a.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/February_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "PAGE NO. 4 COUNTY OF CHAMPAIGN PR NTPRMT PERMIT REPORT 02/02/2026 01/01/2026 TO 01/31/2026 03:44 PM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRE SS WORK DESC 2 LOT NUMBER OWNER AD DRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260010E 1/20/202 6 1298 DIALTON RD CARNES, BARNEY 0 CLEMENS ELECTRIC, LTD NEW E110511100000300 1298 DIALTON RD 91.91 1159 S. MUTUAL U NION RD. N/A LV 0 CABLE, OH 43009 NEW SERVICE/AES ST PARIS, OH 43072 NL 0 937 - 653 - 6878 0/0/ BA 0 C",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "733913800b188191806215255feb84ca63b7eaee2d862eb43549da6224c985c0",
+   "source_document_id": null,
+   "source_title": "733913800b188191806215255feb84ca63b7eaee2d862eb43549da6224c985c0.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/January_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "PAGE NO. 5 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 06/02/2026 05/01/2026 TO 05/31/2026 08:02 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20260213B 5/12/2026 2171 DUGAN RD S MARK SCHETTER 10000 A-1 HOME IMPROVEMENTS, IN ROOF N/A 2171 SOUTH DUGAN ROAD 95.95 7147 ST. RT. 187 N/A LV 0 MECHANICSBURG, OH 43044 ROOF URBANA, OH 43078 NL 0 937-834-1111 0/0/ BA 0 CHAMPAIGN / JOHN BIRKO ",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "75ed42578f2221e43a1f6365f8f4d998de7c34298b233aa8d3d0c163fc814628",
+   "source_document_id": null,
+   "source_title": "75ed42578f2221e43a1f6365f8f4d998de7c34298b233aa8d3d0c163fc814628.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/May_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 8,
+   "snippet": "PAGE NO. 8 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 06/02/2026 05/01/2026 TO 05/31/2026 08:02 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20260243B 5/28/2026 521 LIGHT ST E DUSTIN ROOSA 50000 BARR HOME & BUSINESS SERV ADD TO BLDG N/A 521 CHURCH STREET E 336.33 2837 SHORT CUT RD N/A LV 0 URBANA, OH 43078 GARAGE ADDITION F-8 URBANA, OH 43078 NL 0 937-869-3307 0/0/ BA 0 URBANA CIT",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "75ed42578f2221e43a1f6365f8f4d998de7c34298b233aa8d3d0c163fc814628",
+   "source_document_id": null,
+   "source_title": "75ed42578f2221e43a1f6365f8f4d998de7c34298b233aa8d3d0c163fc814628.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/May_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 21,
+   "snippet": "PAGE NO. 21 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 06/02/2026 05/01/2026 TO 05/31/2026 08:02 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20260090E 5/4/2026 6295 US HWY 68 N NEER, STEVE 0 RABENSTEIN ELECTRIC, LLC NEW I300912240002301 6295 US HWY 68 N 92.92 501 RUNKLE ST N/A LV 0 W. LIBERTY, OH 43357 TRANSFER SWITCH/AES W LIBERTY, OH 43357 NL 0 937-465-6820 0/0/ BA 0 CHAMPAIGN ",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "75ed42578f2221e43a1f6365f8f4d998de7c34298b233aa8d3d0c163fc814628",
+   "source_document_id": null,
+   "source_title": "75ed42578f2221e43a1f6365f8f4d998de7c34298b233aa8d3d0c163fc814628.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/May_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "PAGE NO. 12 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 10/31/2025 10/01/2025 TO 10/31/2025 03:59 PM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250240H 10/27/2025 12 LAUREL BEND HESS, JERRY & BEV 0 SNYDER HEATING & COOLING AC K482500002400480 12 LAUREL BEND 85.85 1231 ST RT 54 N/A LV 0 URBANA, OH 43078 AC REPLACEMENT URBANA, OH 43078 NL 0 937-653-7304 BON AIR ESTATES #42 0/0/ BA 0",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "949ee3500da072bbc7c7885e9d70a90811a526fefa5bbb9161a4837f0b3bef07",
+   "source_document_id": null,
+   "source_title": "949ee3500da072bbc7c7885e9d70a90811a526fefa5bbb9161a4837f0b3bef07.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/October_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "PAGE NO. 14 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 10/31/2025 10/01/2025 TO 10/31/2025 03:59 PM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250239H 10/27/2025 1013 MAIN ST S BOWSHIER, ELIZABETH L. 0 SNYDER HEATING & COOLING HEAT N/A 1013 S MAIN ST 85.85 1231 ST RT 54 N/A LV 0 URBANA, OH 43078 FURNACE REPLACEMENT URBANA, OH 43078 NL 0 937-653-7304 0/0/ BA 0 URBANA CITY MP/ SNYD",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "949ee3500da072bbc7c7885e9d70a90811a526fefa5bbb9161a4837f0b3bef07",
+   "source_document_id": null,
+   "source_title": "949ee3500da072bbc7c7885e9d70a90811a526fefa5bbb9161a4837f0b3bef07.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/October_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 19,
+   "snippet": "PAGE NO. 19 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 10/31/2025 10/01/2025 TO 10/31/2025 03:59 PM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250386B 10/10/2025 5869 RUNKLE RD CORWIN, CHRISTOPHER 15000 BOSS BUILDINGS DET GARAGE N/A 970 E LAWN AVE 241.19 116 EAST MARKET ST STE 20 N/A LV 0 ELKIN, NC 28621 METAL GARAGE URBANA, OH 43078 NL 0 336-673-3065 0/0/ BA 0 CHAMPAIGN R/434 CH",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "949ee3500da072bbc7c7885e9d70a90811a526fefa5bbb9161a4837f0b3bef07",
+   "source_document_id": null,
+   "source_title": "949ee3500da072bbc7c7885e9d70a90811a526fefa5bbb9161a4837f0b3bef07.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/October_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 22,
+   "snippet": "PAGE NO. 22 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 10/31/2025 10/01/2025 TO 10/31/2025 03:59 PM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250270E 10/15/2025 12439 ST RT 29 W STANLEY MCCOMBS 0 OWNER NEW N/A 12229 ST RT 29 W 91.91 N/A LV 0 REPLACE PANEL/PIONEER NL 0 0/0/ BA 0 CHAMPAIGN / STANLEY MCCOMBS --------------------------------------------------------------------------",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "949ee3500da072bbc7c7885e9d70a90811a526fefa5bbb9161a4837f0b3bef07",
+   "source_document_id": null,
+   "source_title": "949ee3500da072bbc7c7885e9d70a90811a526fefa5bbb9161a4837f0b3bef07.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/October_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "PA GE NO. 7 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 09/01/2026 08/01/2026 TO 08/31/2026 03:18 PM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ------------------------------- -------------------------------------------------------------------------------------------------------- 20260009FA 8/25/2026 610 EDGEWOOD AVE S N TAFURI 25900 SILCO FIRE & SEC URITY FIRE ALARM K482511013302201 2101 FORD STREET 283.25 10200 READING RD N/A LV 0 CINCINNATI, OH 45241 NEW FIRE ALARM/#2 GOLDEN, CO 80401 NL 0 513 - 733 - 5655 BA 0 U",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "9f7ff4f45ca13a370aecd18ad8012c567a67deb464b471ee3fe43fd4f88d4b45",
+   "source_document_id": null,
+   "source_title": "9f7ff4f45ca13a370aecd18ad8012c567a67deb464b471ee3fe43fd4f88d4b45.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/August_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "PAGE NO. 11 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 09/01/2026 08/01/2026 TO 08/31/2026 03:18 PM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR W ORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRES S WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260496B 8/27/2026 1240 KINGSCREEK RD E DEBRA WHITAKER 25941 ERIE CONSTRUCTION MID - WES ROOF I300912150207000 1240 KINGSCREEK RDE 95.95 3516 GRANITE CIR CLE 54 LV 0 TOLEDO, OH 43617 ROOF URBANA, OH 43078 NL 0 800 - 536 - 4200 N/A 0/0/ B",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "9f7ff4f45ca13a370aecd18ad8012c567a67deb464b471ee3fe43fd4f88d4b45",
+   "source_document_id": null,
+   "source_title": "9f7ff4f45ca13a370aecd18ad8012c567a67deb464b471ee3fe43fd4f88d4b45.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/August_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "PAGE NO. 12 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 09/01/2026 08/01/2026 TO 08/31/2026 03:18 PM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DES C 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260482B 8/18/2026 436 LIGHT ST W #19 BUD DAVENPORT 7000 PREMIER CONSTRACTORS OF A ROOF K482511043901900 436 LIGHT ST W #19 95.95 507 NORTH MIAMI AVENUE 19 LV 0 SIDNEY, OH 45365 ROOF URBANA, OH 43078 NL 0 937 - 498 - 1415 LIGHT WAY CONDOS",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "9f7ff4f45ca13a370aecd18ad8012c567a67deb464b471ee3fe43fd4f88d4b45",
+   "source_document_id": null,
+   "source_title": "9f7ff4f45ca13a370aecd18ad8012c567a67deb464b471ee3fe43fd4f88d4b45.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/August_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 22,
+   "snippet": "PAGE NO. 22 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 09/01/2026 08/01/2026 TO 08/31/2026 03:18 PM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRE SS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNIT S/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260211E 8/13/2026 206 SANDUSKY ST E PRESTON ESTEP 0 RACEWAY ELECTRIC LIMITED UPGRADE N/A 206 E SANDUSKY ST 102.01 5040 MUTUAL CATA WBA ROAD N/A LV 0 MECHANICSBURG, OH 43044 UPGRADE/AES MECHANICSBURG, OH 43044 NL 0 937 - 834 - 4138 0/0/ ",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "9f7ff4f45ca13a370aecd18ad8012c567a67deb464b471ee3fe43fd4f88d4b45",
+   "source_document_id": null,
+   "source_title": "9f7ff4f45ca13a370aecd18ad8012c567a67deb464b471ee3fe43fd4f88d4b45.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/August_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 31,
+   "snippet": "PAGE NO. 3 1 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 09/0 1/2026 08/01/2026 TO 08/31/2026 03:18 PM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CS Z NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------- ------------------------------------------------------------------------------------------------ 20260223E 8/17/2026 459 WARD ST E ACORD, JOE 0 RON PYLES ELECTR IC RECONNECT N/A 459 E WARD ST 55.55 3211 MIDDLE RD N/A LV 0 URBANA, OH 43078 MOVE METER/AES URBANA, OH 43078 NL 0 937 - 605 - 2636 0/0/ BA 0 URBANA CITY EP/ RON PYLES -----",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "9f7ff4f45ca13a370aecd18ad8012c567a67deb464b471ee3fe43fd4f88d4b45",
+   "source_document_id": null,
+   "source_title": "9f7ff4f45ca13a370aecd18ad8012c567a67deb464b471ee3fe43fd4f88d4b45.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/August_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Residential Electrical Plan Approval Application Champaign County Building Regulations Address of Project City/Township Project Description Owner Address Phone No Cell Phone No ( ) ( ) E - mail: Contractor/DBA Address Phone No Cell Phone No ( )_____________ E - mail: ( ) Electrical Design Service Size Panel Location  Overhead  Underground Power Company Panel Schedule (ATTACH SEPERATE SHEET OR USE BELOW SPACE ) Sq. Ft._____________ (New Dwelling Only) Drawings Hav e Been Submitted with Building Plans?  Yes  No* * If no, drawings or system description must be submitted below or with Application ___________________________________________________________________________________________ As the legal owner or agent of the property owner above, I am performing the electrical work described above: ____________________________ Date ____/____/___ Applicant/Owner/Agent Office Use Only Below Th",
+   "tags": [
+    "fee",
+    "area",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "ae7942c01328c5c9b24e1963a043103469ce962ce777462220217e236740ca83",
+   "source_document_id": null,
+   "source_title": "ae7942c01328c5c9b24e1963a043103469ce962ce777462220217e236740ca83.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Applications/Residential_Electrical_Plan_Approval_Application.pdf"
+  },
+  {
+   "page": 21,
+   "snippet": "PAGE NO. 21 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 08/05/2026 07/01/2026 TO 07/31 /2026 10:12 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRE SS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 AP PLICANT NAME CONTRACTOR 4 ------------------------------------------------------------------------------------------------------------------------- -------------- 20260433B 7/27/2026 66 OAKLAND AVE NICOLE CISTONE & JORDAN SWANK 0 OWNER NEW RESIDENCE N/A 6 CENTRAL AVNUE 5 64.79 N/A LV 1212 NEW HOME D - 8 MECHANICSBURG, OH 43044 NL 132 0/0/ BA 0 MECHANICSBURG R/101 JORDAN SWANK ---------------------",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "bd014d9ee48ee65c81b00fa99d9972050ae4381dce2be81456f5e45a540065ba",
+   "source_document_id": null,
+   "source_title": "bd014d9ee48ee65c81b00fa99d9972050ae4381dce2be81456f5e45a540065ba.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/July_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CHAMPAIGN COUNTY BUILDING REGULATIONS – RESIDENTIAL PERMITS REQUIRED: 1. House – Modular and Stick-built 2. Patios and Decks (over 200 sq. ft.) including pool decks 3. Room Additions 4. Garage and Garage Additions 5. All Carports 6. Porch w/Roof (includes over existing slab) 7. Room over existing Patio or Deck 8. Replace or Repair Foundation Walls 9. Replace Footing 10. Relocate, Removal and/or Replacement of Bearing or Non-Bearing Wall 11. Replacement or Repair of Ceiling or Floor Joists 12. Replacement or Repair of Trusses or Rafters 13. All Detached Buildings over 200 sq. ft. 14. Replacement of Chimney or Fireplace 15. Replacement of Furnace or Air Conditioner 16. Rewiring or Alteration of wiring on Existing Building 17. Electrical Service Upgrade (includes relocation or adding additional panel) and Reconnect Inspections 18. Swimming Pools – Electric & Bonding (Must secure zoning appr",
+   "tags": [
+    "area",
+    "penalties",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "c26b079107e88b8fe84376c85095170407f32ee7e1802b2edea7e73e87abe329",
+   "source_document_id": null,
+   "source_title": "c26b079107e88b8fe84376c85095170407f32ee7e1802b2edea7e73e87abe329.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Building_Information/What_Requires_A_Permit.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "PAGE NO. 1 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 12/01/2025 11/01/2025 TO 12/01/2025 08:30 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250423B 11/5/2025 910 AMHERST DR ELLIS KIRK 0 ESPINOSA ROOFING ROOF N/A 910 AMHERST DRIVE 85.85 1444 KNIGHT RD N/A LV 0 URBANA, OH 43078 ROOF URBANA, OH 43078 NL 0 937-926-0003 0/0/ BA 0 URBANA CITY / ESPINOSA ROOFING ----------------------",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "e82175b448eff46d651feb2b83285986441b26c9bb59bb430890d026f7648157",
+   "source_document_id": null,
+   "source_title": "e82175b448eff46d651feb2b83285986441b26c9bb59bb430890d026f7648157.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/November_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "PAGE NO. 4 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 12/01/2025 11/01/2025 TO 12/01/2025 08:30 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250438B 11/17/2025 225 COLLEGE ST TORI THOMAS 0 BUCKEYE STATE RENOVATIONS ROOF N/A 6825 CABLE ROAD 85.85 2 NORTH MAIN STREET N/A LV 0 MECHANICSBURG, OH 43044 ROOF CABLE, OH 43009 NL 0 614-230-1565 N/A 0/0/ BA 0 URBANA CITY / BUCKEYE STATE R",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "e82175b448eff46d651feb2b83285986441b26c9bb59bb430890d026f7648157",
+   "source_document_id": null,
+   "source_title": "e82175b448eff46d651feb2b83285986441b26c9bb59bb430890d026f7648157.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/November_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "PAGE NO. 5 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 12/01/2025 11/01/2025 TO 12/01/2025 08:30 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250431B 11/12/2025 1365 DALLAS RD W DIXIE DALLAS 22000 BARR HOME & BUSINESS SERV PORCH N/A 1365 WEST DALLAS ROAD 159.38 2837 SHORT CUT RD N/A LV 336 URBANA, OH 43078 COVERED FRONT PORCH URBANA, OH 43078 NL 0 937-869-3307 0/0/ BA 0 CHAMPAIGN",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "e82175b448eff46d651feb2b83285986441b26c9bb59bb430890d026f7648157",
+   "source_document_id": null,
+   "source_title": "e82175b448eff46d651feb2b83285986441b26c9bb59bb430890d026f7648157.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/November_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "PAGE NO. 18 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 12/01/2025 11/01/2025 TO 12/01/2025 08:30 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250296E 11/14/2025 26 WEAVER WAY DIANE SELOVER 0 DNK ELECTRIC NEW N/A 26 WEAVER WAY 85.85 2420 FIRST STREET N/A LV 0 FT RECOVERY, OH 45846 REPLACE WIRE/AES NORTH LEWISBURG, OH 43060 NL 0 419-852-0501 0/0/ BA 0 N LEWISBURG EP/ DNK ELECTRIC ",
+   "tags": [
+    "fee",
+    "area",
+    "dimension"
+   ],
+   "weight": 4,
+   "source_sha256": "e82175b448eff46d651feb2b83285986441b26c9bb59bb430890d026f7648157",
+   "source_document_id": null,
+   "source_title": "e82175b448eff46d651feb2b83285986441b26c9bb59bb430890d026f7648157.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/November_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "PAGE NO. 5 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 01/05/2026 12/01/2025 TO 12/31/2025 11:01 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250473B 12/22/2025 2959 FORD RD RYAN & KARLY STEWART 325000 OWNER NEW RESIDENCE N/A 1463 SKYLARK DRIVE 1158.07 N/A LV 3167 NEW HOME H-8 TROY, OH 45373 NL 2865 0/0/ BA 0 CHAMPAIGN R/101 RYAN STEWART ------------------------------------------",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 3,
+   "source_sha256": "046cec4abd7457cbfd1563aebb30812fda06d49ee55817867a241c6c0ef45dd9",
+   "source_document_id": null,
+   "source_title": "046cec4abd7457cbfd1563aebb30812fda06d49ee55817867a241c6c0ef45dd9.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/December_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 8,
+   "snippet": "PAGE NO. 8 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 01/05/2026 12/01/2025 TO 12/31/2025 11:01 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250457B 12/4/2025 1437 LUDLOW RD N ROB WILSON 28000 HARPER CONSTRUCTION POLE BARN N/A 1437 N LUDLOW ROAD 208.46 7001 BLUE RD N/A LV 0 CABLE, OH 43009 POLE BARN URBANA, OH 43078 NL 0 937-243-1171 0/0/ BA 0 CHAMPAIGN R/434 MARK HARPER -------",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 3,
+   "source_sha256": "046cec4abd7457cbfd1563aebb30812fda06d49ee55817867a241c6c0ef45dd9",
+   "source_document_id": null,
+   "source_title": "046cec4abd7457cbfd1563aebb30812fda06d49ee55817867a241c6c0ef45dd9.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/December_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "PAGE NO. 12 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 01/05/2026 12/01/2025 TO 12/31/2025 11:01 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250476B 12/24/2025 1228 MUZZY RD J. RETTENMAIER USA LP 60000 HUMBLE CONSTRUCTION CO. ADD TO BLDG K482511013302700 1228 MUZZY RD 231.75 1180 CARLISLE ST N/A LV 0 BELLEFONTAINE, OH 43311 FOUNDATION MCC ROOM/C-1 URBANA, OH 43078 NL 0 937-592-",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 3,
+   "source_sha256": "046cec4abd7457cbfd1563aebb30812fda06d49ee55817867a241c6c0ef45dd9",
+   "source_document_id": null,
+   "source_title": "046cec4abd7457cbfd1563aebb30812fda06d49ee55817867a241c6c0ef45dd9.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/December_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 17,
+   "snippet": "PAGE NO. 17 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 01/05/2026 12/01/2025 TO 12/31/2025 11:01 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250316E 12/5/2025 8857 ST RT 55 TUCKER, BRUCE 0 OWNER NEW E110511010001001 8857 ST RT 55 137.36 N/A LV 0 GARAGE/AES ST PARIS, OH 43072 NL 0 0/0/ BA 0 CHAMPAIGN EP/ BRUCE TUCKER --------------------------------------------------------------",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 3,
+   "source_sha256": "046cec4abd7457cbfd1563aebb30812fda06d49ee55817867a241c6c0ef45dd9",
+   "source_document_id": null,
+   "source_title": "046cec4abd7457cbfd1563aebb30812fda06d49ee55817867a241c6c0ef45dd9.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/December_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 20,
+   "snippet": "PAGE NO. 20 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 01/05/2026 12/01/2025 TO 12/31/2025 11:01 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------------------------------------------------------------------------------------------------------- 20250464B 12/9/2025 312 WATER ST E BRIAN KIMBLEY 2500 OWNER ALT/REMOD N/A 312 EAST WATER STREET 326.55 N/A LV 0 RENO URBANA, OH 43078 NL 0 0/0/ BA 0 URBANA CITY R/434 BRIAN KIMBLEY ------------------------------------------------------------",
+   "tags": [
+    "fee",
+    "area"
+   ],
+   "weight": 3,
+   "source_sha256": "046cec4abd7457cbfd1563aebb30812fda06d49ee55817867a241c6c0ef45dd9",
+   "source_document_id": null,
+   "source_title": "046cec4abd7457cbfd1563aebb30812fda06d49ee55817867a241c6c0ef45dd9.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/December_2025_Permits_Issued.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "PAGE NO. 10 COUNTY OF CHAMPAIGN PRNT PRMT PERMIT REPORT 05/01/2026 04/01/2026 TO 04/30/2026 10:28 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRE SS WORK DESC 2 LOT NUMBER OWNER ADDR ESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260080E 4/21/2026 4901 GAME FARM RD HEATHER BEHLMER 0 KIZER ELECTRIC NEW I300912100000400 4901 GAME FARM RD 102.01 2781 CONCORD PK N/A LV 0 URBANA, OH 43078 SERVICE/AES URBANA, OH 43078 NL 0 937 - 653 - 5932 0/0/ BA 0 CHAMPAIGN EP/ KIZ",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 3,
+   "source_sha256": "109db52d1188874442c4e13e96b2fac6c33ae6dae8bd923319f2f9f482085e8b",
+   "source_document_id": null,
+   "source_title": "109db52d1188874442c4e13e96b2fac6c33ae6dae8bd923319f2f9f482085e8b.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/April_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 23,
+   "snippet": "PAGE NO. 23 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 05/01/2026 04/01/2026 TO 04/30/2026 10:28 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260154B 4/21/2026 411 SONANDER RD JER AD WHITE 18006 ROOFS BY WARREN ROOF N/A 411 SONANDER ROAD 95.95 2616 KENNARD KIN GSCREEK R N/A LV 0 URBANA, OH 43078 ROOF URBANA, OH 43078 NL 0 937 - 653 - 7664 0/0/ BA 0 CHAMPAIGN / ROOFS BY WARREN -",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 3,
+   "source_sha256": "109db52d1188874442c4e13e96b2fac6c33ae6dae8bd923319f2f9f482085e8b",
+   "source_document_id": null,
+   "source_title": "109db52d1188874442c4e13e96b2fac6c33ae6dae8bd923319f2f9f482085e8b.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/April_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 31,
+   "snippet": "PAGE NO. 3 1 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 05/0 1/2026 04/01/2026 TO 04/30/2026 10:28 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CS Z NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 --------------------------------------- ------------------------------------------------------------------------------------------------ TOTAL PERMIT COUNT: 1 50 TOTAL EST. COST: $5,026,746 TOTAL FEES: $26,336.65",
+   "tags": [
+    "fee",
+    "area"
+   ],
+   "weight": 3,
+   "source_sha256": "109db52d1188874442c4e13e96b2fac6c33ae6dae8bd923319f2f9f482085e8b",
+   "source_document_id": null,
+   "source_title": "109db52d1188874442c4e13e96b2fac6c33ae6dae8bd923319f2f9f482085e8b.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/April_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 33,
+   "snippet": "PAGE NO. 33 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 07/01/2026 06/01/2026 TO 06/30/202 6 10:22 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRE SS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CONTRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLIC ANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260139E 6/5/2026 1632 ST RT 296 W TAPP, JOHN 0 FAIRCHILD CONSTR UCTION NEW N/A 1632 W ST RT 296 151.5 0 1807 LIPPINCOTT RD N/A LV 0 W. LIBERTY, OH 43357 GARAGE/PIONEER URBANA, OH 43078 NL 0 937 - 652 - 3305 0/0/ BA 0 CHAMPAIGN EP/ BRIA",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 3,
+   "source_sha256": "2d40c16ac27ffa6255a01df760e7329745ea575dc37d182cfc4e7f3ee2281775",
+   "source_document_id": null,
+   "source_title": "2d40c16ac27ffa6255a01df760e7329745ea575dc37d182cfc4e7f3ee2281775.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/June_2026_Permits_Issued.pdf"
+  },
+  {
+   "page": 41,
+   "snippet": "PAGE NO. 41 COUNTY OF CHAMPAIGN PRNTPRMT PERMIT REPORT 07/01/2026 06/01/2026 TO 06/30/2026 10:22 AM PERMIT # PERMIT DT SITE ADDRESS OWNER EST. COST CONTRACTOR WORK DESC 1 PARCEL ID OWNER ADDRESS FEES CONTRACTOR ADDRESS WORK DESC 2 LOT NUMBER OWNER ADDRESS2 LIV SQ FT CONTRACTOR CSZ WORK DESC 3 PROJECT OWNER CSZ NLV SQ FT CONTRACTOR PHONE WORK DESC 4 SUB DIVISION UNITS/STORIES/DIMENSIONS BAS SQ FT CON TRACTOR 2 WORK DESC 5 JURISDICTION CNST UG1/CS1|UG2/CS2|UG3/CS3|UG4/CS4|UG5/CS5 CONTRACTOR 3 APPLICANT NAME CONTRACTOR 4 ----------------------------------------------------------------------------------------------------------------------------- ---------- 20260115H 6/8/2026 12817 WOLCOTT RD HENDERSON , JOHNIE 0 ROBERTS BROTHERS COMFORT HEAT/AC E110511290000405 12817 WOLCOTT RD 141.40 PO BOX 800 N/A LV 0 ST. PARIS, OH 43072 MINI SPLITS ST PARIS, OH 43072 NL 0 937 - 663 - 4136 N/A 0/0/ BA 0 C",
+   "tags": [
+    "fee",
+    "area"
+   ],
+   "weight": 3,
+   "source_sha256": "2d40c16ac27ffa6255a01df760e7329745ea575dc37d182cfc4e7f3ee2281775",
+   "source_document_id": null,
+   "source_title": "2d40c16ac27ffa6255a01df760e7329745ea575dc37d182cfc4e7f3ee2281775.pdf",
+   "official_url": "http://www.co.champaign.oh.us/Building-Regulations/Permits/June_2026_Permits_Issued.pdf"
+  }
+ ]
+}

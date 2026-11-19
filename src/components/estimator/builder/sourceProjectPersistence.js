@@ -1,5 +1,9 @@
-import { base44 } from "@/api/base44Client";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
+import { staffEntities } from "@/components/staff/staffEntities";
+
+// String fields can differ only by stray or repeated whitespace; normalize
+// whitespace (but not case) so stored rows match their intended patches.
+const cleanString = (value) => String(value ?? "").trim().replace(/\s+/g, " ");
 
 function normalize(value) {
   if (Array.isArray(value)) return value.map(normalize);
@@ -19,6 +23,9 @@ function sameValue(a, b) {
       return Math.abs(Number(a) - Number(b)) <= 0.000001;
     }
   }
+  if (typeof a === "string" && typeof b === "string") {
+    return cleanString(a) === cleanString(b);
+  }
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 }
 
@@ -29,7 +36,7 @@ export function sourcePatchMatches(record, patch) {
 
 export async function preflightBuilderSourceMutation({ estimateId = "" } = {}) {
   if (!estimateId) return null;
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate?.id) throw new Error("Estimate could not be verified before saving this Builder source.");
   await assertEstimateProductMutationAllowed(estimate);
   return estimate;
@@ -53,6 +60,11 @@ export async function updateBuilderSourceProject({
 
   await preflightBuilderSourceMutation({ estimateId });
 
+  const verified = (record) => !!record && record.id === sourceId
+    && typeof record.updated_date === "string" && record.updated_date.length > 0
+    && sourcePatchMatches(record, data);
+  const conflict = () => new Error(`${label} changed in another session. Reload it before saving.`);
+
   let result;
   try {
     result = await entity.updateMany(
@@ -61,26 +73,27 @@ export async function updateBuilderSourceProject({
     );
   } catch (error) {
     const current = await entity.get(sourceId).catch(() => null);
-    if (current && sourcePatchMatches(current, data)) return current;
+    if (verified(current)) return current;
     throw error;
   }
 
-  if (!result || typeof result.updated !== "number") {
+  if (!result || !Number.isInteger(result.updated) || (result.updated !== 0 && result.updated !== 1)) {
     throw new Error(`${label} conditional-update result could not be verified.`);
   }
 
   if (result.updated === 1) {
     const saved = await entity.get(sourceId).catch(() => null);
     if (!saved) throw new Error(`${label} was updated but could not be re-read.`);
+    if (!verified(saved)) throw conflict();
     return saved;
   }
 
   const current = await entity.get(sourceId).catch(() => null);
-  if (current && sourcePatchMatches(current, data)) {
+  if (verified(current)) {
     // Exact retry after a lost successful response. Do not rewrite the row merely
     // to refresh its timestamp; reuse the already-persisted intended state.
     return current;
   }
 
-  throw new Error(`${label} changed in another session. Reload it before saving.`);
+  throw conflict();
 }

@@ -1,0 +1,14 @@
+ok attached marker follows resolved foundation X/Z and grade top rather than fixedZzero
+ok independent center coordinates offset and height convert inches exactly once
+ok legacy missing heights remain explicit schematic placeholders and never enter source data
+ok explicit zero and malformed active heights never become the legacy8ft default
+ok broken independent coordinates and offsets are omitted rather than silently relocated
+ok malformed collections and row records produce recoverable diagnostics instead of renderer exceptions
+ok only resolved foundation instances create attached markers, never raw quantity copies
+ok render-only64marker budget never changes source quantities financials or gates
+ok malformed resolved poses cannot invent attached coordinates
+ok numeric string heights and negative offsets retain recorded provenance
+ok blank and whitespace-only legacy heights are labeled placeholders rather than malformed or zero
+ok pole diagnostics identify their true source once rather than naming an unrelated Foundation
+ok malformed source indices and instance collections cannot attach a pole to an unverified source
+exit=0

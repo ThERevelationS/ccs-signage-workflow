@@ -1,0 +1,347 @@
+{
+ "jurisdiction_id": "6ac1a183cf89277560170c0d",
+ "jurisdiction_name": "Lincoln Heights",
+ "state": "OH",
+ "office_id": "scan-6ac1a183cf89277560170c0d-office-0",
+ "office_name": "Building/Code Enforcement Department",
+ "snippets": [
+  {
+   "page": 43,
+   "snippet": "43 6.15 SIGNAGE A. Prohibited and Obsolete Signs . All prohibited and obsolete signs as defined by the Lincoln Heights Zoning Code and signs with expired zoning permits shall be removed or replaced pursuant to the applicable sections of the Zoning Code or enforced consistent with the procedures of this Code. B. Sign Maintenance . All signage and incidental landscaping and/or lighting shall be maintained in good condition and shall not show evidence of deterioration. Neither lighting nor signage shall be permitted to be posted on trees or utility poles. C. Visibility Triangles . All signage shall be located outside of all visibility triangles at intersections and ingress/egress points, and shall not be located in such a manner as to constitute a traffic or safety hazard.",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "10 B. LIABILITY . No officer, agent, or employee of the Village shall be personally liable for any damage that may accrue to persons or property as a result of any act required or permitted in the discharge of his duties under this Code. C. INTERPRETATION AUTHORITY . The Village Manager shall have authority to interpret and implement the provisions of this Code, to secure the intent thereof, and to designate requirements applicable because of local climatic or other conditions. 4.08 INSPECTIONS The Compliance Officer is authorized to inspect building exteriors and premises located within Village of Lincoln Heights for purposes of enforcing the provisions of this Exterior Property Maintenance Code. For the purpose of making such inspections, and upon showing appropriate identification, the Compliance Officer is hereby authorized to examine and survey at any reasonable hour all residential",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "13 membership. 3. Chairman . The Appeals Board shall annually select one of its members to serve as chairman. 4. Secretary . The Appeals Board shall designate a qualified person to serve as secretary to the Appeals Board. The secretary shall file a detailed record of all proceedings in the office of the Village Manager . 5. Disqualification of Member . A member shall not hear an appeal in which that member has a personal, professional, or financial interest. 6. Procedure . The Appeals Board may adopt rules of procedure not inconsistent with this Code. No member of the Appeals Board shall take part in any hearing or determination in which he or she has a personal or financial interest. Three (3) members of the Appeals Board in attendance at any meeting shall constitute a quorum. 7. Authority . The Appeals Board shall hear all appeals relative to the c ompliance of this Code. By a majority",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "18 C. Implicit Denial of Violations Charged in Violation Citation 1. Implicit Denial of Violation(s) . The Recipient who fails to either expressly deny the violations charged in the Violation Citation issued against them in the manner and within the time permitted by Section 4.09(B)(1)(f) of this code or who fails to admit the violations charged in the Violation Citation issued against them by paying the penalty(s) set forth in the Violation Citation in the manner and within the time permitted by Section 4.09(B)(1)(f) of this code shall be deemed to have denied the violations charged. D. Municipal Court Proceedings 1. Referral to Municipal Court . If the Recipient of a Violation Citation denies the violations charged in the Citation within fourteen (14) calendar days after service of the Violation Citation, the Village of Lincoln Heights Finance Director shall notify the Lincoln Heights ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 37,
+   "snippet": "37 F. Hazards . Hazards and unsanitary conditions shall be eliminated. G. Occupancy . No temporary buildings, trailers, recreational vehicles, tents, or garages shall be used temporarily or permanently as a residence during the course of construction. H. Grading . All premises shall be graded and maintained to prevent the erosion of soil and to prevent the accumulation of water thereon, or within any structure located thereon. I. Drainage . All portions of all premises shall be so graded that there is no pooling of water or recurrent entrance of water into any part of any building except where such pooling or retention of water is part of a plan approved by the County Engineer. All condensate and waste cooling water shall be appropriately discharged into an approved drainage system. J. Drainage Swales . Swales are to be maintained by the owners of the parcels on which they are located, a",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "temporary",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 9,
+   "snippet": "9 industrial purposes, shall comply with the provisions of this Exterior Property Maintenance Code, irrespective of when such building was constructed, altered or repaired, or premises occupied. 4.03 CONFLICT OF LAWS In any case where a provision of this Exterior Property Maintenance Code is found to be in conflict with a provision of any zoning, building, fire, safety or health regulation or other regulation, the provision which establishes the higher standard for the promotion and protection of the public health, safety, and general welfare of the people shall prevail. 4.04 EXISTING REMEDIES Nothing in this Exterior Property Maintenance Code shall be deemed to abolish, impair, or prevent the execution of any existing remedies of the Village of Lincoln Heights or its officers or agents related to the abatement of a public nuisance. 4.05 SEPARABILITY If any section, subsection, paragraph",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 20,
+   "snippet": "20 4.15 ABANDONMENT OF CONSTRUCTION PROJECT Any building or structure for which a building permit has been issued, and except for circumstances beyond the property owner's control (e.g., labor strikes, inclement weather, etc.), all construction work shall be diligently pursued to completion. Any construction project upon which no substantial work has been undertaken for a period of six (6) months shall be deemed abandoned. Upon any construction project being deemed abandoned, all buildings or structures not completed to the degree such buildings or s tructures have been indicated on the plans submitted in support of a building permit, and all building materials and construction equipment shall be removed from the site. 4.16 PERIODIC REVIEW The chairman of the Exterior Property Maintenance Code Appeals Board shall periodically appoint a committee to review the Exterior Property Maintenanc",
+   "tags": [
+    "fee",
+    "dimension",
+    "process",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 39,
+   "snippet": "39 appropriately treated. All sound plant materials, especially trees and shrubs, shall be properly maintained and not be neglected. 6.08 STAIRWAYS All exterior stairways on all commercial and industrial premises shall: A. Be maintained free of holes, grooves, and cracks which constitute a safety hazard; B. Be maintained free of rotted or deteriorated supports; C. Have treads of uniform width and risers of uniform height; and D. Stairway handrails and/or railings shall be firmly fastened and maintained in good condition. Where the absence of handrails and/or railings create a hazardous condition, the Compliance Officer may require their installation in accordance with the provisions of the Lincoln Heights Building Code. 6.09 ACCESSORY STRUCTURES All accessory structures, including signs and detached storage buildings, shall be structurally sound, neatly maintained, and in good repair or ",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 7,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "15 which the Violation Citation is served upon him/her; 3. The Violation Citation must include a statement indicating the allowable answers that may be made and that the person will be afforded a court hearing if he/she denies committing the violation; 4. The Violation Citation must include a statement specifying that the answer must be made in person, or by mail, to the Village of Lincoln Heights Finance Director ; 5. The Violation Citation must include a statement indicating the amount of the penalty arising from the violation; 6. The Violation Citation must include a statement advising the person of the violation charged, and the date, time, and place of the violation charged; and 7. The Violation Citation must include the signature and affirmation of the Hamilton County Sheriff deputy who delivers the Violation Citation. B. Payment of Penalty . When a Violation Citation as herein pro",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 19,
+   "snippet": "19 preclude the Solicitor from instituting appropriate action to restrain, correct, or abate a violation, or to prevent illegal occupancy of a building, structure or premises, or to stop an illegal act, conduct, business or utilization of the building, structure, or premises. B. Should the nuisance not be abated by the expiration of the time stated in the notice or order of the Compliance Officer or any extensions granted or such additional time as the Exterior Property Maintenance Code Appeals Board may grant, the Compliance Officer may call on any department, division, or contractor of the Village for whatever assistance may be necessary to abate the aforesaid nuisance or may, by private contract, abate such nuisance and the cost of the contract will be paid for from Village fund s. All costs for abating such nuisance shall be recovered in the following manner: 1. The owner(s) shall be",
+   "tags": [
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 27,
+   "snippet": "27 shall cover no more than 400 square feet of yard area, with a maximum of two (2) pieces of camping or recreational equipment permitted. The vehicles must be registered to a resident of the respective property. RV’s and Utility Trailers may be parked for purposes of loading and unloading for forty - eight (48) hours. N. Street Numbers . Each structure to which a street number has been assigned shall have such number displayed in a position easily observed and readable from the public right - of - way. All numbers shall be in Arabic numerals at least four (4) inches high and one - half (½ ) inch stroke and of a color contrasting to the background. O. Rodent harborage . All structures and exterior property shall be kept free from rodent harborage and infestation. Where rodents are found, they shall be promptly exterminated by approved processes which will not be injurious to human health",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 6,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 41,
+   "snippet": "41 its removal. 6.13 DEFACEMENT OF PROPERTY A. Prohibited Conduct . 1. No person shall inscribe, draw or otherwise place or cause to be placed, anything defacing the surface of any building, structure, wall or surface of other property, including, but not limited to sidewalks, walls, buildings, fences and signs, that are publicly or privately owned. 2. No parent or legal guardian shall knowingly permit any minor child in his or her custody to violate this section. 3. The parent or legal guardian of a minor defendant who resides with such parent or legal guardian at the time of the offense may be held liable for any penalty or condition of restitution or reparation imposed by a court upon a minor for violations of this section, provided that such minor has not paid such penalty or made restitution or reparation within the time ordered by the court, and further provided that such parent or",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 22,
+   "snippet": "22 5.02 RESPONSIBILITY Every person and/or legal entity owning, leasing, occupying or having charge of any premises shall keep such premises in compliance with these requirements, except as otherwise provided in this Code. A person shall not occupy as owner - occupant or permit another person to occupy premises which are not in a sanitary and safe condition and which do not comply with the requirements of this Code. 5.03 APPLICATION OF MAINTENANCE STANDARDS The following standards are applicable to all residential structures, dwelling units, residential portions of mixed use structures and all dwelling units located in commercial buildings. 5.04 STRUCTURAL SOUNDNESS AND MAINTENANCE OF DWELLINGS A. General Maintenance . All exterior property and premises shall be maintained in a clean, safe, and sanitary condition. The owner, lessee, occupant, or person or entity having charge of the prop",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 23,
+   "snippet": "23 D. Exterior Walls and Surfaces . Exterior walls and other exterior surface materials shall be free of holes, cracks, loose or rotting boards and timbers or any other condition which might admit rodents, rain or dampness to the interior of the dwelling. Except for materials that have been designed or manufactured to remain untreated, all exterior wood, composition or metal surfaces shall be protected from the elements by paint or other protective covering. Surfaces shall be maintained so as to be kept clean and free of flaking, loose or peeling paint or covering. All canopies, signs, awnings, exterior stairways, fire escapes, standpipes, exhaust ducts, porches, balconies, and similar overhanging extensions, where exposed to public view, shall be maintained in goo d condition and shall not show evidence of ripping, tearing, or deterioration. E. Windows, Skylight, Doors and Frames . Wind",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 5,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 28,
+   "snippet": "28 C. No person owning, leasing, operating, occupying or having charge of land within the Village shall permit trees, bushes, shrubs, or other growth to overhang or block any part of a sidewalk or unpaved but traveled portion of a street for a height of seven (7) feet above the surface, or any part of a paved street for a height of fourteen (14) feet above the surface. D. All plant materials, especially trees and shrubs, afflicted with decay, disease, insect infestation, or otherwise considered dangerous to other plant material shall be removed or appropriately treated. All sound plant materials, especially trees and shrubs, shall be properly maintained and not evidence signs of neglect. 5.08 STAIRWAYS All exterior stairways on all residential premises shall: A. Be maintained free of holes, grooves, and cracks which constitute a safety hazard; B. Be maintained free of rotted or deteriora",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 5,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 30,
+   "snippet": "30 enclosed building. B. Parking of Junk or Inoperable Vehicle on Public Property . No junk or inoperable vehicle shall be located on any public property for a period in excess of twenty - four hours. C. Impounding of Junk or Inoperable Vehicle . In addition to other remedies provided by law, the Compliance Officer may order into storage any vehicle maintained in violation of any provision of this resolution. Prior to removal of any junk or inoperable vehicle, the Compliance Officer shall photograph the junk or inoperable vehicle and record the make, model and serial number when available. The place of storage shall be designated by the Compliance Officer. D. Disposition of Junk or Inoperable Vehicles Ordered Into Storage . Any junk or inoperable vehicle ordered into storage that remains unclaimed for a period of thirty (30) days may be disposed of at a vehicle salvage dealer or scrap me",
+   "tags": [
+    "sign",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 32,
+   "snippet": "32 ARTICLE VI COMMERCIAL AND INDUSTRIAL EXTERIOR PROPERTY MAINTENANCE STANDARDS 6.01 SCOPE The provisions of this Code set forth shall govern the minimum conditions and the responsibilities of every owner, lessee, occupant, or person or entity having charge of any commercial premises for maintenance of commercial and industrial structures, equipment and exterior property to preserve and achieve the presentable appearance of existing structures and premises, to avoid blighting ef fects of the substandard maintenance of such structures and premises and their negative impact on the value of surrounding properties, and to eliminate hazardous conditions. 6.02 RESPONSIBILITY Every owner, lessee, occupant, or person or entity having charge of any commercial premises shall maintain all occupied and unoccupied structures, exterior property, and vacant land in compliance with these requirements, e",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 33,
+   "snippet": "33 and industrial structure shall be so constructed and maintained and be kept in good repair and in safe condition so as to make all occupied rooms and other interior areas weather - tight, water - tight, rodent proof, and so as to be fit for human use and so as to not adversely affect the neighborhood in which they are loca ted. Good repair, maintenance, and safe condition shall include but is not limited to the following: A. General Maintenance . All exterior property and premises shall be maintained in a clean, safe, and sanitary condition. The owner, lessee, occupant, or person or entity having charge of the property shall keep all parts of the exterior property in a clean and sanitary condition. No premises shall be in a condition that constitutes a health hazard, safety hazard, or general nuisance. B. Protective Treatment . All exterior surfaces including, but not limited to, door",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 5,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "16 4.12 PROSECUTION In case any Violation Citation is not promptly complied with, the Compliance Officer may request the Solicitor to institute an appropriate action or proceeding to recover the penalty provided in Section 4.99 of this Code. In addition, the Compliance Officer, may ask the Solicitor to sue the person(s) responsible for the violation for the purpose of ordering him/her to abate such nuisance. A. Permissible Answers to Violation Citations 1. Permissible Answers to Violation Citation . Any recipient to whom a Violation Citation has been served may answer said Citation in one of the following ways: a. Admit that the Recipient committed the violations charged within the time permitted by this Code; b. Deny that the Recipient committed the violations charged within the time permitted by this Code; c. Implicitly deny the violations charged by failing to file an answer or pay th",
+   "tags": [
+    "dimension",
+    "authority",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 35,
+   "snippet": "35 L. Basement . Basement or cellar hatchways shall be so constructed and maintained as to prevent the entrance of rodents, rain, and surface drainage into the dwelling. M. Decorative Features . All cornices, entablatures, bell courses, corbels, terra cotta trim, wall facings, and similar decorative features shall be maintained in good repair with proper anchorage and in a safe condition. N. Structural member . Any structural member of a structure which has become deteriorated or damaged to the extent that it does not serve the purpose as originally intended shall be renewed, restored, repaired, or replaced as is necessary to serve the purpose as originally intended. O. Overhang extensions . All overhang extensions including, but not limited to canopies, marquees, signs, awnings, fire escapes, standpipes and exhaust ducts shall be maintained in good repair and be properly anchored so as ",
+   "tags": [
+    "sign",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 38,
+   "snippet": "38 pedestrian and employee safety and properly aimed so as not to shine on adjacent properties (per local zoning regulation). N. Driveways and Walkways . All driveways, walkways, stairs, parking spaces, and similar areas shall be kept in a proper state of repair, and maintained free from hazardous conditions. O. Rodent Harborage . All structures and exterior property shall be kept free from rodent harborage and infestation. Where rodents are found, they shall be promptly exterminated by approved processes which will not be injurious to human health. After extermination, proper precautions shall be taken to eliminate rodent harborage and prevent re - infestation. P. Mosquito Infestation . All structures and exterior property shall be kept free of the accumulation of stagnant water by any means, which may yield the potential for serving as a breeding ground for mosquitoes. 6.07 VEGETATION ",
+   "tags": [
+    "dimension",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 40,
+   "snippet": "40 6.11 COMMERCIAL VEHICLE No commercial or industrial vehicle over one (1) ton rated capacity and more than seven (7) feet in height, and not owned by or associated with an existing business on a subject property, may be parked on any commercial lot, except for commercial vehicles making service calls or deliveries to or from a subject property. 6.12 JUNK OR INOPERABLE VEHICLE A. Storage of Junk or Inoperable Vehicle on Private Property . No junk, inoperable, or unlicensed vehicle shall be located on any commercial or industrial property, except when stored within a completely enclosed building or in a manner in conformance with the Lincoln Heights Zoning Resolution. B. Parking of Junk or Inoperable Vehicle on Public Property . No junk or inoperable vehicle shall be located on any public property for a period in excess of twenty - four hours. C. Impounding of Junk or Inoperable Vehicle ",
+   "tags": [
+    "dimension",
+    "authority",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  },
+  {
+   "page": 24,
+   "snippet": "24 and against decay or rust by periodic application of weather - coating materials, such as paint or similar surface treatment. J. Porches and Decks . Every porch or deck shall be so constructed and maintained so as to be free of missing, defective, rotting or deteriorated foundations, supports, floors, other members, and steps thereto, and kept in sound condition and in good repair. K. Basement . Basement or cellar hatchways shall be so constructed and maintained as to prevent the entrance of rodents, rain, and surface drainage into the dwelling. L. Decorative Features . All cornices, entablatures, bell courses, corbels, terra cotta trim, wall facings, and similar decorative features shall be maintained in good repair with proper anchorage and in a safe condition. M. Structural member . Any structural member of a structure which has become deteriorated or damaged to the extent that it ",
+   "tags": [
+    "sign",
+    "process"
+   ],
+   "weight": 2,
+   "source_sha256": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096",
+   "source_document_id": null,
+   "source_title": "9dbe9c4ccf63adb51b804666907b88191df0f22fbb27ce6fe6a744dd003fd096.pdf",
+   "official_url": "https://www.vlho.org/Documents/About%20Us/Full%20Exterior%20Property%20Maintenance%20Code/Lincoln%20Heights%20Exterior%20PMC.pdf"
+  }
+ ]
+}

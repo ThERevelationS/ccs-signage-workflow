@@ -1,0 +1,10 @@
+FoundationEstimator.jsx LF-only
+FoundationPolesPanel.jsx LF-only
+FoundationWallCapsPanel.jsx LF-only
+FoundationWallsPanel.jsx LF-only
+SignageCabinetsPanel.jsx LF-only
+FoundationTemplateDialog.jsx LF-only
+foundationTemplateService.js LF-only
+foundationAssemblyModel.js NOT_FOUND
+foundationTemplateModel.js NOT_FOUND
+FoundationProject.jsonc LF-only

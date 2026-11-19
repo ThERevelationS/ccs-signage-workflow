@@ -1,0 +1,2 @@
+fb38d7a1fc9d4f15779b30b63db736e7c238c5306040159763ce6c7b0d92480d scripts/test-foundation-catalog-visibility.mjs
+8e2ba10e294c8971db88fc49f03141ce87533ea2a2f09e3bec2d66be091e0a88 scripts/foundation-catalog-browser-fixture.mjs

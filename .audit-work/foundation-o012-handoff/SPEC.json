@@ -1,0 +1,152 @@
+{
+  "unit": "WS-O O-012 (CMP-A12) — verify reopen/quote/revision/WO handoff preserves references, BOM, drawings, and costs",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remote_head_analyzed": "101321a04e9457b8a4640a68cbdae81179fe0d06",
+  "remote_head_reverified": "2e661df98e96e1746bb2f2db4d03b3033ea0ace9",
+  "reverified_note": "all seven touched files byte-identical between the two heads; candidate diffs apply cleanly at 2e661df9",
+  "produced": "2026-11-08",
+  "transport": "local candidate copies under .audit-work/foundation-o012-handoff/candidates/ — NO remote writes performed or permitted for this unit",
+  "evidence_class": "synthetic/model only — no live business records were created, read, or mutated",
+
+  "targets": [
+    {
+      "remote_path": "src/components/estimator/builder/builderService.js",
+      "candidate": "candidates/builderService.js",
+      "diff": "diffs/builderService.js.diff",
+      "changes": [
+        "sourceProjectTotal foundation branch: trust the persisted 12-field split partition first; grand_total only when no split field carries a number (fixes null-poison -> $0 and foreign grand_total undercount)",
+        "new shared helper foundationSplitFieldTotal(record) so the live path and the acknowledged comparator cannot disagree about the partition",
+        "foundationRecordSavedTotal: same partition-first ordering, grand_total last-resort, null when nothing persisted",
+        "recordBuilderSave: fail closed when the source-only hint resolves to no estimate line (was: || line fallback minted an orphan BuilderProduct with an estimate_line_id that never lands in line_items, then errored forever)"
+      ]
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/foundationSyncRecovery.js",
+      "candidate": "candidates/foundationSyncRecovery.js",
+      "diff": "diffs/foundationSyncRecovery.js.diff",
+      "changes": [
+        "new resolveFoundationSyncReceiptForSave({project, estimateId, getEstimate}): receipt naming a different estimate that can still be read stays authoritative; a definitively-absent (404) named estimate retires the orphaned receipt (clearStaleReceipt) so the standalone editor is unbricked; unverifiable probes stay blocked (fail closed)"
+      ]
+    },
+    {
+      "remote_path": "src/pages/FoundationEstimator.jsx",
+      "candidate": "candidates/FoundationEstimator.jsx",
+      "diff": "diffs/FoundationEstimator.jsx.diff",
+      "changes": [
+        "saveSource prior-receipt gate replaced by resolveFoundationSyncReceiptForSave (same strictness for live/malformed receipts; orphan retirement added)",
+        "updateBuilderSourceProject data writes builder_sync_attempt: null through the same CAS patch when the resolver retires an orphaned receipt"
+      ]
+    },
+    {
+      "remote_path": "src/components/estimator/builder/builderMutationRecovery.js",
+      "candidate": "candidates/builderMutationRecovery.js",
+      "diff": "diffs/builderMutationRecovery.js.diff",
+      "changes": [
+        "new assertNoPendingLinesForCopy(lines, action): refuses to copy a section carrying a durable Builder recovery marker into a different estimate record (the marker's estimate_id would be unresumable and would lock the target's Product/Part mutations up to the 24h stale TTL while permanently breaking that section's reconciliation)"
+      ]
+    },
+    {
+      "remote_path": "src/pages/EstimateDetail.jsx",
+      "candidate": "candidates/EstimateDetail.jsx",
+      "diff": "diffs/EstimateDetail.jsx.diff",
+      "changes": [
+        "handleMerge calls assertNoPendingLinesForCopy(picked) after selection resolution (baseline only guarded the PRIMARY estimate's own pending state)"
+      ]
+    },
+    {
+      "remote_path": "src/components/estimator/estimateCreationService.js",
+      "candidate": "candidates/estimateCreationService.js",
+      "diff": "diffs/estimateCreationService.js.diff",
+      "changes": [
+        "buildDuplicateEstimate guards cloned lines with assertNoPendingLinesForCopy (duplicate keeps verbatim line_items incl. price_acceptance_pending)",
+        "buildSplitEstimate defers the same guard to after its selection filter via skipPendingGuard so an unpicked pending line does not block a clean split"
+      ]
+    },
+    {
+      "remote_path": "src/components/estimator/builder/partSync.js",
+      "candidate": "candidates/partSync.js",
+      "diff": "diffs/partSync.js.diff",
+      "changes": [
+        "extractFoundation: coerce persisted subsection arrays (items/walls/poles/wall_caps/selected_equipment/signage_cabinets/project_concrete_admixtures) once at entry — getSourceProject feeds the raw stored row into this extractor during estimate reconciliation and a malformed non-array subsection crashed the whole handoff"
+      ]
+    }
+  ],
+
+  "gaps": [
+    {
+      "id": "G1",
+      "severity": "real defect",
+      "title": "sourceProjectTotal/foundationRecordSavedTotal grand_total poison",
+      "evidence": "num(null, NaN) === 0 (finite), so grand_total:null short-circuits to $0 ahead of the 12-field partition; any foreign numeric grand_total (the field is never persisted by the Builder per its own comment) undercounts records whose saved partition includes newer extras (cabinet/landscape). Hit on the estimate-reopen reconcile path via getSourceProject -> ensureBuilderProductForLine -> sourceProjectTotal.",
+      "fix": "partition-first in both functions via shared foundationSplitFieldTotal; grand_total only when no split field exists",
+      "cases": "C1 C2 (RED vs baseline), C3 C4 C5 (parity)"
+    },
+    {
+      "id": "G2",
+      "severity": "real defect",
+      "title": "orphaned builder_sync_attempt permanently bricks standalone saves",
+      "evidence": "saveSource prior-gate requires prior.estimate_id === captured.estimateId; a receipt naming a deleted estimate (or a raced duplicate-estimate context) can never satisfy that, so every future save — including standalone ?id= context — threw 'unrecognised Builder sync receipt' forever.",
+      "fix": "resolveFoundationSyncReceiptForSave probes the named estimate via the same staffDataRead 404 contract; definitively-absent -> retire receipt with the next CAS save; live -> keep blocking with an actionable message; unverifiable -> keep blocking",
+      "cases": "B4 B7 (RED), B1 B2 B3 B5 B6 (guard parity)"
+    },
+    {
+      "id": "G3",
+      "severity": "real defect",
+      "title": "recordBuilderSave mints orphan BuilderProduct when the hint's estimate line was removed",
+      "evidence": "currentLine fell back to the bare hint (|| line) when no line matched; ensureBuilderProductForLine then created a BuilderProduct with a fresh estimate_line_id that never lands in line_items, after which the preMarker/acknowledgment checks threw 'not part of the estimate' on every retry — permanent orphan row + endless partial sync.",
+      "fix": "throw 'no longer part of the estimate' before any write when the hint resolves to no estimate line",
+      "cases": "D2 (RED), D1 (GREEN handoff), D3 D4 (CAS guards)"
+    },
+    {
+      "id": "G4",
+      "severity": "real defect",
+      "title": "merge/duplicate/split transplant unresumable price_acceptance_pending markers",
+      "evidence": "handleMerge copied picked lines verbatim and only guarded the primary's own pending state; buildDuplicateEstimate/buildSplitEstimate clone line_items verbatim with no pending check at all. A copied marker's estimate_id names the source estimate — getPendingEstimatePriceAcceptance on the target does not verify ownership, so the target locks for up to 24h and the section can never reconcile (marker validation rejects the copied record id forever).",
+      "fix": "assertNoPendingLinesForCopy in builderMutationRecovery, applied at merge (picked lines), duplicate (whole clone), and split (picked lines only via skipPendingGuard deferral)",
+      "cases": "H1 H3 H4 (RED: lock + unresumable ownership proven), H2 (clean merge parity)"
+    },
+    {
+      "id": "G5",
+      "severity": "real defect",
+      "title": "extractFoundation crashes on malformed persisted subsection arrays",
+      "evidence": "(project.walls || []).forEach etc. tolerate null/undefined but not non-array truthy values or non-object rows; getSourceProject feeds the raw stored record (no page normalization) during estimate open/strict-reconcile, and cloneFoundationComponents' own comments document malformed stored rows existing. One corrupt subsection crashed the entire Builder handoff.",
+      "fix": "coerce row arrays + filter non-object rows once at extractFoundation entry",
+      "cases": "F4 (RED vs baseline: crash -> graceful [] on the same inputs)"
+    }
+  ],
+
+  "verified_no_gap": [
+    "?id= reopen reads the exact persisted row via staffEntities.get — a staffDataRead point read with NO TTL cache (only filter/list/count are cached <=30s and write-busted); the page verifies proj.id === id, linked est.id === estimateId, owner, and acknowledged updated_date; route/context generation + source write epochs guard stale saves",
+    "updateBuilderSourceProject CAS: conditional updateMany({id, updated_date}, {$set}) + post-read verify + lost-response idempotent reuse — A1 A2 A3",
+    "recordBuilderSave acknowledgment: line.updated_date_snapshot === sourceProject.updated_date required; estimate line CAS via expectedEstimateFields catches mid-handoff concurrent edits — D3",
+    "recovery identity: linked estimate, foundation line, pending key/kind, operation source version, receipt shape+ownership all verified — E1-E5",
+    "extract keys stable across cloneFoundationComponents remap (index-keyed parts + cap.id preserved, all cross-refs remapped through one idMap, no dangling) — F1 F2",
+    "quote surface prices the acknowledged customer_price_snapshot via real computePricing + buildCustomerQuoteRows — G1",
+    "WO seed preserves estimate_line_id/builder_product_id/source_project_id/module_key and resolves parts by line id then builder_product_id — G2",
+    "whole-estimate revision snapshot fields round-trip byte-identical — G3",
+    "FoundationEstimator copy path deletes builder_sync_attempt before create (line ~931) so copies cannot inherit a receipt",
+    "MODULE_TOTAL_FIELD has no foundation entry — the special-cased branch is the only foundation total path"
+  ],
+
+  "verification": {
+    "model": {
+      "harness": "verify-handoff.mjs — esbuild bundles REAL remote modules (builderService cand+base, partSync cand+base, sourceProjectPersistence, foundationBuilderRecovery, builderMutationRecovery, estimateMutationGuard, estimateCreationService cand+base, workOrderConversion, aioPricing+customerQuote+customerPricing) with stubbed @/ imports backed by one shared in-memory entity store (globalThis.__ccsEntities)",
+      "result": "PASS 36/36 — verify-handoff-results.json",
+      "red_cases": "A2 B4 B7 C1 C2 D2 E2 E3 E4 E5 F4 H1 H3 H4 — each asserts the BASELINE build exhibits the defect and the CANDIDATE build does not",
+      "cas_guards": "A2 stale source write rejected + row untouched; D3 concurrent estimate line edit rejected mid-handoff; D4 foreign pending markers refused",
+      "receipt_matrix": "same-context pass, live-foreign block, deleted-foreign retire, malformed block, unverifiable block — B1-B6"
+    },
+    "syntax": "esbuild parse OK on both JSX candidates (FoundationEstimator.jsx 74.0kb, EstimateDetail.jsx 100.5kb); all module candidates execute inside their harness bundles",
+    "browser": "not run — the real page mounts against the live staff data gateway and cannot be pointed at the synthetic entity store; the model suite bundles the same modules the page calls (updateBuilderSourceProject, recordBuilderSave, resolveFoundationSyncReceiptForSave, assertFoundationBuilderAcknowledgment, extractBuilderParts) so the exercised code paths are the deployed ones",
+    "live_business_record_lifecycle": "OPEN — no live-record evidence claimed; a real save->reopen->quote->revision->WO pass on production data remains to be performed"
+  },
+
+  "ledger": "O-012 verified the Foundation handoff chain on synthetic records: ?id= reopen is a cache-free point read of the exact persisted record; source saves are CAS + idempotent-retry safe; builder_sync_attempt receipts are shape+ownership validated on both the save gate and the recovery path; recordBuilderSave preserves line_id/project_id/builder_product_id and stamps updated_date_snapshot on the acknowledged revision; quote and WO surfaces consume the acknowledged snapshots; extractFoundation keys survive clone/remap round-trips. Five real gaps were found and surgically hardened in candidates only: grand_total poisoning of sourceProjectTotal/foundationRecordSavedTotal (G1), orphaned receipts bricking standalone saves (G2), orphan BuilderProduct minting on raced section removal (G3), merge/duplicate/split transplanting unresumable recovery markers (G4), and extractFoundation crashing on malformed persisted subsections (G5). Model suite 36/36 incl. 14 RED cases proving each baseline defect. Real business-record lifecycle evidence is explicitly OPEN and not claimed.",
+
+  "unresolved": [
+    "real business-record lifecycle verification (save->reopen->quote->revision->WO on live data) — OPEN by design",
+    "estimate duplicate/split carries the SAME project_id and builder_product_id on copied lines — two live estimates share one FoundationProject source and one BuilderProduct; the duplicate's builder-side save hits the replaceBuilderEntityFieldsIfUnchanged estimate_id guard (builder row owned by the source estimate). Deep pre-existing gap needing a source/product duplication policy — out of O-012 surgical scope",
+    "orphaned receipt retired via builder_sync_attempt:null assumes object-typed entity fields accept null clears (verified in harness; confirm on live entity write when candidates land)"
+  ]
+}

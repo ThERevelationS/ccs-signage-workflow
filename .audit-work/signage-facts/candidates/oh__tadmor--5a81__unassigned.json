@@ -1,0 +1,24 @@
+{
+ "jurisdiction_id": "6ad9b53aad517a8c20b75a81",
+ "jurisdiction_name": "Tadmor",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "HIKING – Discover a rich variety of hiking terrain and numerous trail options. Loop trails are color- coded, with intersections marked by numbers that correspond to numbers on the inside map. Follow the same color to arrive back at your starting point. Portions of the Buckeye Trail and North Country National Scenic Trail also traverse the park. Trails are open year-round. PICNICKING – A variety of picnic areas are available throughout the park. Shelters, located in beautiful natural settings, may be reserved for exclusive use. Amenities and fees vary by location. Shelters without reservations are available on a first-come, first-served basis. FISHING – Fish the Great Miami River or the Poplar Creek Ponds. A popular river spot is just below the dam. An Ohio fishing license is required. Call 937-275-PARK (7275) or visit metroparks.org/fishing for details. PADDLING – The Great Miami River i",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 6,
+   "source_sha256": "e6b40f69b12b3e9671a86e899859edf3158a48846d0dd7bb20bd9e845dcea2a6",
+   "source_document_id": null,
+   "source_title": "e6b40f69b12b3e9671a86e899859edf3158a48846d0dd7bb20bd9e845dcea2a6.pdf",
+   "official_url": "https://www.metroparks.org/wp-content/uploads/2016/01/TaylorsvilleBrochureSept2025Comp_reduced.pdf"
+  }
+ ]
+}

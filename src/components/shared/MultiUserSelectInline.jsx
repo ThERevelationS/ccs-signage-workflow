@@ -71,7 +71,7 @@ export default function MultiUserSelectInline({
               {normalizedSelected.map(user => (
                 <Badge key={user} variant="secondary" className="text-xs py-0 px-1.5 gap-1">
                   {user.split(' ')[0]}
-                  <button onClick={(e) => { e.stopPropagation(); toggleUser(user); }}>
+                  <button type="button" onClick={(e) => { e.stopPropagation(); toggleUser(user); }}>
                     <X className="w-2.5 h-2.5" />
                   </button>
                 </Badge>

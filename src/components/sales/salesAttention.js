@@ -82,4 +82,3 @@ export const hasSalesAttention = (workOrder, today = new Date()) =>
 
 export const getSalesAttentionScore = (workOrder, today = new Date()) =>
   getActionableSalesAttentionItems(workOrder, today).reduce((total, item) => total + (item.priority || 0), 0);
-

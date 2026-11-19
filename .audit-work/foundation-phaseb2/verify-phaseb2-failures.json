@@ -1,0 +1,12 @@
+[
+  {
+    "name": "lifecycle: accepted v2 steel is explicit-design steel, not legacy formula",
+    "ok": false,
+    "error": "AssertionError [ERR_ASSERTION]: snapshot missing priced feet\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-phaseb2/verify-phaseb2.mjs:201:10\n    at check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-phaseb2/verify-phaseb2.mjs:26:9)\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-phaseb2/verify-phaseb2.mjs:184:1"
+  },
+  {
+    "name": "delta: section total uses held-aware totals (unpriceable cabinet held at saved)",
+    "ok": false,
+    "error": "AssertionError [ERR_ASSERTION]: section delta should be finite via held totals: [{\"field\":\"supports\",\"code\":\"reinforcement_supports_off_explained\",\"message\":\"Support items are off with an explicit explanation; this is not an engineering approval.\",\"severity\":\"warning\",\"scope\":\"geometry\"},{\"field\":\"geometry\",\"code\":\"reinforcement_geometry_truncated\",\"message\":\"10 steel primitives are omitted from this per-instance preview; complete quantities remain reported.\",\"severity\":\"warning\",\"scope\":\"geometry\"},{\"code\":\"reinforcement_section_delta_unavailable\",\"severity\":\"error\",\"message\":\"The full Concrete section delta is unavailable. Resolve other design or catalog issues and refresh before accepting.\"}]\n\nfalse !== true\n\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-phaseb2/verify-phaseb2.mjs:232:10\n    at check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-phaseb2/verify-phaseb2.mjs:26:9)\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-phaseb2/verify-phaseb2.mjs:218:1"
+  }
+]

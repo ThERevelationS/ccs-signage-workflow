@@ -48,6 +48,49 @@
       "type": "string",
       "description": "Property/parcel lookup database URL (CAGIS or equivalent)"
     },
+    "billing_address": {
+      "type": "string",
+      "description": "The office's invoice/remit address \u2014 where the permit fee check goes."
+    },
+    "photo_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Photos/scans of the office's posted requirements \u2014 evidence attachments."
+    },
+    "call_outcome_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "outcome": {
+            "type": "string",
+            "description": "What the office said \u2014 'permits take 2 weeks'"
+          },
+          "recorded_by": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Per-office call outcomes \u2014 the tribal knowledge stays with the jurisdiction."
+    },
+    "fips_code": {
+      "type": "string",
+      "description": "Federal FIPS place/county code \u2014 machine-verifiable identity, not just a name."
+    },
+    "ordinance_citation": {
+      "type": "string",
+      "description": "The governing code section \u2014 'Milford Codified \u00a7153.042' \u2014 as structured data, not buried in notes."
+    },
+    "required_documents": {
+      "type": "string",
+      "description": "The office's own required-fields/documents list \u2014 'drawings, site plan, contractor license' \u2014 stored verbatim so staff know what the application needs."
+    },
     "notes": {
       "type": "string",
       "description": "Manual notes about this jurisdiction"
@@ -117,6 +160,10 @@
           "file_url": {
             "type": "string"
           },
+          "superseded": {
+            "type": "boolean",
+            "description": "This source is outdated (form replaced, page moved) \u2014 kept for audit, not cited."
+          },
           "doc_type": {
             "type": "string",
             "enum": [
@@ -156,7 +203,11 @@
             "additionalProperties": true,
             "description": "Durable archival receipt and lease. uploading/upload_uncertain must never auto-retry; uploaded resumes readback of the same file. No regulatory authority is implied."
           },
-          "address_research_review": {"type":"object","additionalProperties":true,"description":"Administrator-reviewed immutable original snapshot link; not rule or office authority approval."},
+          "address_research_review": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Administrator-reviewed immutable original snapshot link; not rule or office authority approval."
+          },
           "archive_pinned": {
             "type": "boolean",
             "description": "Prevents automatic archival changes to this document."
@@ -393,10 +444,40 @@
       "type": "object",
       "additionalProperties": true,
       "description": "URL-bound deterministic discovery frontier. Pending pages, visited URLs and unresolved gaps commit atomically with retained documents using profile version guards. No authority or locality completeness is implied."
+    },
+    "ordinance_refs": {
+      "type": "array",
+      "description": "Extracted sign/zoning ordinance references: [{url, host (municode|amlegal|ecode360|local), section, excerpt, extracted_at}]. Actual code text, not just links.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "source_generation": {
+      "type": "string",
+      "description": "Which research-engine generation produced office_research (v1 legacy, v2 deterministic, v2.1 county-fallback...). Staleness/refresh scheduling reads this."
+    },
+    "zoning_authority": {
+      "type": "string",
+      "description": "MP-4.1 taxonomy — who administers zoning here: township_own | county | municipal | joint_commission | regional."
+    },
+    "provider_type": {
+      "type": "string",
+      "description": "MP-4.5 taxonomy — provider class: government | county | regional | joint_commission | state_certified_private | utility."
+    },
+    "ordinance_url": {
+      "type": "string",
+      "description": "WS-10 — code-library URL (municode/ecode360/amlegal) carrying this jurisdiction's sign ordinance."
     }
   },
   "required": [
     "name",
     "state"
-  ]
+  ],
+  "rls": {
+    "create": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } },
+    "read": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } },
+    "update": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } },
+    "delete": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } }
+  }
 }

@@ -1,0 +1,23 @@
+ok material basis records20ft at2 for40 without engineering/procurement approval
+ok labor basis records1.2hr at60 for72, not a per-job72 hourly rate
+ok current component and quantity changes never retag a recorded frozen basis
+ok missing legacy context stays explicitly unrecorded, never inferred from current fields
+ok zero rate retains actual frozen20ft, even when current quantity becomes0
+ok invalid frozen-money reconciliation fails closed
+ok unknown material weight cannot masquerade as a recorded basis
+ok future versions and unsupported states fail closed
+ok unrecorded context cannot smuggle invented quantities
+ok missing current rate cannot silently become0 at capture
+ok wrong stored role or purchasing unit fails closed
+ok coercive numeric objects are never evaluated
+ok positive multiplication underflow never creates free steel
+ok capture and preserve clone all nested context independently
+ok malformed root inputs return coded errors
+ok presentation distinguishes recorded frozen and last-calculated quantities
+ok unrecorded legacy labor never presents72 as an hourly frozen rate
+ok independent and non-v2 parts never present source geometry as their live definition
+ok missing last-calculated rate is unavailable, not a displayed zero
+ok pending removal does not display obsolete geometry as an active zero-rate design
+ok zero priced feet never erase20 physical feet in presentation
+Frozen pricing context: 21/21; failed=0
+exit=0

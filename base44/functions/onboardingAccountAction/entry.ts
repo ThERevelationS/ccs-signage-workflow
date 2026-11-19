@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
         actor = await authenticateSignShopSession(base44, body?.session_token);
       } catch (authError) {
         const status = Number(authError?.status || 401);
-        const safeStatus = [401, 409, 503].includes(status) ? status : 401;
+        const safeStatus = [401, 409, 429, 503].includes(status) ? status : 401;
         const error = safeStatus === 503
           ? 'Session authentication is unavailable'
           : safeStatus === 409
@@ -164,6 +164,7 @@ Deno.serve(async (req) => {
         full_name: fullName,
         username,
         password_hash: await bcrypt.hash(password, 10),
+        password_changed_at: new Date().toISOString(),
         password_reset_token: null,
         password_reset_token_hash: null,
         password_reset_expires: null,
@@ -210,7 +211,7 @@ Deno.serve(async (req) => {
     return Response.json({ success: false, error: 'Invalid onboarding action' }, { status: 400 });
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('onboardingAccountAction error:', safeStatus, error?.message || error);
     return Response.json({ success: false, error: safeStatus === 500 ? 'Onboarding could not be completed safely' : error.message }, { status: safeStatus });
   }

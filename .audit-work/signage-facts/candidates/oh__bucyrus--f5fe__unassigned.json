@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6adf927d5cf949535412f5fe",
+ "jurisdiction_name": "Bucyrus",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "BUILDING – ZONING PERMIT Permit No _______-____ o Building Permit o Zoning Permit o Sign Permit o Fence o Demo w/o utilities o other Site Address______________________________________ Owner___________________________________________ Phone____________________________________________ Owner’s Address__________________________________ __________________________________________________ Contractor_______________________________________ Phone____________________________________________ Contractor Registration Number___________________ Zoning District _____________________ Activity Type: o New Const. o Addition o Alteration o Repair o Occupancy Change o Change of Use o Other:_________________________________________ Lot No. __________________________________________ Parcel No. _______________________________________ Present Occupancy______________________________ Proposed Occupancy______________",
+   "tags": [
+    "sign",
+    "permit_required",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "c1ce5d9553b597bc1dc4e077210bb8c9bcd8dbaa627a4cea27077be129a5ce5a",
+   "source_document_id": null,
+   "source_title": "c1ce5d9553b597bc1dc4e077210bb8c9bcd8dbaa627a4cea27077be129a5ce5a.pdf",
+   "official_url": "https://www.cityofbucyrusoh.us/sites/default/files/2022-08/building-zoning_permit.pdf"
+  }
+ ]
+}

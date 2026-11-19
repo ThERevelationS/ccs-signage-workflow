@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { normalizePermittingResearchInput } from '../../shared/permittingResearchInput.ts';
 import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchSanitizer.ts';
 
@@ -9,7 +10,7 @@ import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchS
  */
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -23,7 +24,7 @@ Deno.serve(async (req) => {
     const { jurisdictionName, jurisdictionState, jurisdictionType, includeParentCounty } = researchInput;
 
     // For now, fallback to direct LLM call since agent API may have timing issues
-    // The agent prompt instructions are documented in agents/jurisdiction_research.jsonc
+    // The agent prompt instructions are documented in agents/jurisdiction_research_agent.jsonc
     
     const researchPrompt = `You are a specialized jurisdiction research assistant for sign permit information.
 

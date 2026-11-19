@@ -1,0 +1,44 @@
+{
+  "results": [
+    {
+      "name": "saved top-left inches become centered feet with no inspection spread",
+      "ok": true
+    },
+    {
+      "name": "clockwise CSS90 rotation matches the real Three rotated top-left corner",
+      "ok": true
+    },
+    {
+      "name": "negative anchors are not clamped and missing legacy coordinates default to the same2Dzero",
+      "ok": true
+    },
+    {
+      "name": "quantity3 has only one recorded anchor, with explicit unrecorded additional-location warning",
+      "ok": true
+    },
+    {
+      "name": "inspection remains the default with all quantity copies and its original rotation sign",
+      "ok": true
+    },
+    {
+      "name": "authored-broken and Float32-overflow coordinates are not silently relocated",
+      "ok": true
+    },
+    {
+      "name": "pillar saved anchor uses diameter for both footprint dimensions and keeps grade offset",
+      "ok": true
+    },
+    {
+      "name": "version2 steel shares its concrete saved pose without changing frozen quantities or approvals",
+      "ok": true
+    },
+    {
+      "name": "unsupported placement modes fail closed without interpreting them as saved positions",
+      "ok": true
+    }
+  ],
+  "syntheticOnly": true,
+  "realRendererVerified": false,
+  "UIWired": false,
+  "pricingChanged": false
+}

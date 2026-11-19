@@ -1,0 +1,184 @@
+{
+  "synthetic": true,
+  "results": [
+    {
+      "name": "missing estimate id performs no read",
+      "ok": true,
+      "reads": [],
+      "writes": []
+    },
+    {
+      "name": "explicit frozen inputs preserve exact zero, split, provenance and inactive filtering",
+      "ok": true,
+      "reads": [],
+      "writes": []
+    },
+    {
+      "name": "primary read errors remain errors, never an empty manifest",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Missing expected rejection.\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:86:3\n    at async check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:60:9)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:83:1",
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        },
+        {
+          "via": "raw",
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          },
+          "limit": 500
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "linked product read errors remain errors",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Missing expected rejection.\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:91:3\n    at async check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:60:9)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:88:1",
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        },
+        {
+          "via": "raw",
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          },
+          "limit": 500
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "mixed stamped and legacy parts on one product are both included",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n-   'legacy',\n    'stamped'\n  ]\n\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:97:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:60:9)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:93:1",
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "legacy product loading is paged rather than silently capped at500",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n500 !== 505\n\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:104:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:60:9)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:100:1",
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        },
+        {
+          "via": "raw",
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          },
+          "limit": 500
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "duplicate rows from both read paths count only once",
+      "ok": true,
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "malformed explicit inputs do not fall through into live reads",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Missing expected rejection.\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:115:5\n    at async check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:60:9)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:113:1",
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        },
+        {
+          "via": "raw",
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          },
+          "limit": 500
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "failed material read blocks create before any Work Order write",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: The validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: Unexpected dependency localDateStamp\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:123:5\n    at async check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:60:9)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:120:3",
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        },
+        {
+          "via": "raw",
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          },
+          "limit": 500
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "failed material read blocks update before any Work Order write",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: The validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: Unexpected dependency localDateStamp\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:123:5\n    at async check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:60:9)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:120:3",
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        },
+        {
+          "via": "raw",
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          },
+          "limit": 500
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "a mapper validation error is not converted into an empty successful handoff",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: The validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: Unexpected dependency localDateStamp\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:133:3\n    at async check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:60:9)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-material-read-guard.mjs:128:1",
+      "reads": [
+        {
+          "via": "paged",
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          }
+        }
+      ],
+      "writes": []
+    }
+  ]
+}

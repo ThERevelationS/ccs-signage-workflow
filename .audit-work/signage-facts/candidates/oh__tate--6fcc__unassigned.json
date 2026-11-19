@@ -1,0 +1,910 @@
+{
+ "jurisdiction_id": "6adf7717b5c3c63bcbbf6fcc",
+ "jurisdiction_name": "Tate",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 15,
+   "snippet": "SECTION 5. Signs Permitted In Commercial & Manufacturing Districts Requiring a Permit 1. In any Commercial or Manufacturing District, unless otherwise specified, each business or industry shall be permitted one flat or wall, on premises sign. The area of all permanent on-premises signs for any single business or manufacturing enterprise may have an area equivalent to one and one half (1 1/2) square feet of sign area for each lineal foot of building width, or part of a building occupied by the enterprise, but shall not exceed a maximum area of one (100) square feet. 2. In a Commercial or Manufacturing District, two off-premises signs, with a total area not exceeding six hundred (600) square feet may be permitted at a single location. No single off-premises sign shall exceed one thousand two hundred (1,200) square feet nor shall off-premises signs visible to approaching traffic have minimu",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "dimension",
+    "prohibited",
+    "billboard",
+    "temporary",
+    "type",
+    "authority",
+    "process"
+   ],
+   "weight": 16,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 20,
+   "snippet": "SECTION 2. Residential “R-l” District. A.Uses Permitted 1. Single-family dwellings 2. Churches and other places of worship, Sunday school buildings and parish houses 3. Public and private elementary and high schools 4. Publicly owned or operated properties including community buildings and fire stations 5. Cemeteries, including mausoleums; provided that mausoleums shall be at least two hundred (200) feet from every street centerline or any adjoining lot line. 6. Roadside stands, offering for sale only agricultural products which are produced upon the premises, including a sign advertising such products not exceeding twelve (12) square feet in area, provided that both the stand and sign shall be removed during any season or period of time when they are not in use. 7. Temporary buildings incidental to construction work, provided that such temporary buildings shall be removed upon the compl",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "prohibited",
+    "process",
+    "temporary",
+    "authority"
+   ],
+   "weight": 13,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 21,
+   "snippet": "SECTION 3. Residential “R-2” District A. Uses Permitted 1. Any use or structure permitted and as required in the “R-l” District, except as hereinafter modified. 2. Two-family and three-family dwellings 3. Conversions of single-family dwellings into two-family or three-family dwellings provided that the structure, when converted, conforms with the lot area, frontage and yard requirements prescribed, for such two or three family dwellings, in this Article and the Schedule of Dimensions and Area Regulations. 4. The office or studio, in the residence of a physician, surgeon, dentist artist, lawyer, architect, engineer, teacher, or other member of a recognized profession, (as defined by the Classification system of the current U.S. Dept. of Commerce, Bureau of Census - “Census of General Social and Economic Characteristics”); but not including a beauty parlor, barber shop, music school, danci",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 13,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 45,
+   "snippet": "4. An application shall be disapproved unless the applicant demonstrates that technically suitable and feasible sites are not available in a nonresidential district and that the site is located in the least restrictive district that included a technically suitable and feasible site. 5. Monopole installations are required, it is required that any building constructed to service a telecommunications tower be designed in an architecturally compatible manner to adjacent buildings. It is further required that the tower itself and any support equipment located on the ground shall be painted or have a finish in earth tones to reduce visual impact. 6. Pole, tower and/or structure placement be only on a lot meeting not less than the square footage requirements of the zone district located within, with a maximum height being 150 feet. The minimum setback shall be as indicated in the Zoning Resolut",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 13,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "SECTION 8B. Front Yard RequirementsFor Double Frontage Lots Double frontage lots shall meet the front yard requirements of the district or districts in which they are located on both of the streets upon which they front. SECTION 8C. Required Yard Not To Be used by Another Building No part of a yard required for any building shall be used for the purpose of complying with the provisions of this Resolution for another building. SECTION 9. Private Swimming Pools No private swimming pool, exclusive of portable pool with a diameter less than twelve (12) feet or with a surface of less than one hundred (100) square feet shall be allowed in any residential district except as an accessory use and unless it complies with the following conditions and requirements: (A) The pool is intended and is to be used solely for the enjoyment of the occupants of the principle use of the property on which it is",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 12,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "ARTICLE V SIGNS SECTION 1. General Requirements For All Signs & Districts 1. Any illuminated sign or lighting device shall employ only light(s) emitting a light of constant intensity and no sign shall be illuminated by or contain flashing, intermittent, rotating or moving light or lights. In no event shall an illuminated sign or lighting device be placed or directed so as to permit the beams therefrom to be directed upon public thoroughfare, highway, sidewalk, or adjacent premises so as to cause glare or reflection that may constitute a traffic hazard or nuisance. A. Reader boards and electronic messages are considered part of the permanent display area of the sign. Apparent motion of the visual message, caused by, but not limited to, the illusion of moving objects, moving patterns or boards of light, expanding, contracting or rotating shapes, or other similar animation effects, shall be",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "illumination",
+    "prohibited",
+    "type"
+   ],
+   "weight": 12,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 27,
+   "snippet": "B. Uses Permitted as Conditional Uses Drive-in theaters under the conditions established for such uses in Article VI, Section B.6. C. Uses Prohibited 1. Storage of flammable liquids, above ground, other than for use on the premises. D. Dimensions and Area Regulations for lots and Structures. The regulations or Dimensions and Area for Lots and Structures are set forth in the Schedule in Appendix A. SECTION 8 Recreational Services “RS” District. A. Uses Permitted 1. Agriculture, farming, stock raising, dairying, truck garden and nurseries 2. Retail sales of grocery items, art and craft products, antiques sporting and athletic goods, bait, fuel and ice, bottled gas, photographic supplies, gifts, novelties, souvenirs, and similar products. 3. Playgrounds, golf courses and other privately owned recreational centers 4. Riding stables and private stables 5. Accessory uses buildings and uses cus",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 12,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 9,
+   "snippet": "12. Home Occupation: an accessory use which is an activity, profession, occupation, service, craft, or revenue-enhancing hobby which is clearly incidental and subordinate to the use of the premise as a dwelling, and is conducted entirely within the dwelling unit, or elsewhere on the premises by conditional use permit, without any significant adverse effect upon the surrounding neighborhood. Activities such as teaching, tutoring, tax consulting and the like shall involve not more than three receivers of such services at any one time, with the exception of certified or uncertified Type B Family Day-Care Homes, which constitute a residential use and not an accessory use. 13A. Industry. Heavy: those industries whose processing of products results in the emission of any Atmospheric pollutant, light flashes or glare, orders, noise or vibration which may be heard or felt off premises, and those",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process",
+    "temporary",
+    "authority"
+   ],
+   "weight": 11,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 17,
+   "snippet": "ARTICLE VI ZONING DISTRIC REGULATIONS SECTION 1. AGRICULTURE “A” DISTRICT A. Uses permitted 1. Agriculture, farming, stock raising, dairying, truck gardening, and nurseries, sales limited to items raised on premises. 2. Public and semi-public owned or operated properties. 3. Single family dwellings. 4. Roadside stands offering for sale only agricultural products. Such stands shall be located at least twenty (20) feet from the edge of the pavement. 5. Home occupations - A home occupation shall be a permitted use if it complies with the following requirements: a) The external appearance of the structure in which the use is conducted shall not be altered. There shall be no more than one unlighted sign not more than two (2) square feet in area. b) No internal or external alterations, construction , or reconstruction of the premises to accommodate the use shall be permitted. c) There shall be",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "E. The minimum dimension for a parking space shall be nine (9) feet by (19) feet. Each parking lot shall have sufficient aisle and turning space to allow vehicles to move freely in and out of designated parking spaces without endangering the physical safety of vehicular and/or pedestrian traffic or interfering with the free flow of traffic either in the parking area or in adjacent streets. 2. All vehicles shall be parked on surfaces prepared for parking. No vehicle shall be parked on unprepared surfaces, such as front or side yards or other grassy areas. SECTION 7. Additional Parking Provisions 1. If the vehicle storage space or standing space required above cannot be reasonably provided on the same lot on which the principal use is conducted, the Board of Zoning Appeals may permit such space to be provided on other off-street property provided such space lies within four hundred (400) f",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 26,
+   "snippet": "b) Any lot used for motel shall not be less than one (1) acre in area and shall contain not less than one thousand (1000) square feet per sleeping unit. All buildings and structures shall be distant at least fifty (50) feet from a rear lot line and at least twenty-five (25) feet from the front and side lot lines. The buildings and structures on the lot shall not occupy in the aggregate more than twenty-five (25) percent of the area of the lot. When a motel is part of a major shopping area with combined parking, or exceeds two stories in height, the land area may be reduced to seven hundred-fifty (750) square feet per sleeping unit. c) All areas not used for access, parking, circulation, buildings and services shall be completely and permanently landscaped and the entire site maintained in good condition. d) Signs shall be limited to two (2) indirectly illuminated signs with a total area ",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 9,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 42,
+   "snippet": "17. Identification of soil types and subsurface geology of the subject property, indicating anticipated problems and proposed methods of handling said problems; 18. Existing and proposed location(s) of outdoor lighting, signs, screen plantings, fences, and landscaping. Any existing woodlands of mature vegetation, and any other significant natural features, such as water bodies, drainage courses, wetlands, and wildlife habitats, must be included, and every good faith effort made to preserve, maintain, and enhance same; 19. Location and screening or other description to indicated control and handling of solid waste. Indicate dumpster pad where dumpster is to be used; 20. A schedule of development, including the staging and phasing of: a) Streets, utilities, and other public facility improvements in order of priority, and b) Dedication of land to public use or set aside for common ownership",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 50,
+   "snippet": "SECTION 5. Powers of the Board of Appeals 1. Conditional Uses and Exceptions A. The Board shall have the power to hear and decide, in accordance with the provisions of this Resolution, applications, filed as hereinafter provided, for conditional uses, special exceptions or for interpretation of the Zoning Map, or for decisions upon other special questions on which the Board is authorized by this Resolution to pass. In considering an application for a conditional use, a special exception or interpretation of the Zoning Map, the Board shall give due regard to the nature of the conditional use or special exception, the Board may impose such requirements and conditions with respect to location, construction, maintenance and operation — in particular conditional use or special exception — as the Board may deem necessary for the protection of adjacent properties and the public interest. B. In ",
+   "tags": [
+    "illumination",
+    "process",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "TABLE OF CONTENTS ARTICLE TITLE PAGE I PURPOSES ................................................................................................... 1 II DISTRICT AND BOUNDARIES THEREOF Section 1 Districts ......................................................................................... 1 Section 2 District Map .................................................................................. 2 Section 3 District Boundaries ....................................................................... 2 Section 4 Vacation of Public Way ................................................................. 2 III DEFINITIONS ................................................................................................... 3-5 IV GENERAL PROVISIONS APPLICABLE TO ALL ZONING DISTRICTS Section 1 Existing Buildings and Uses Not Affected ................................ 6 Section 2 Restoring Unsafe ",
+   "tags": [
+    "sign",
+    "permit_required",
+    "dimension",
+    "prohibited"
+   ],
+   "weight": 8,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Section 6 Temporary Signs ........................................................................ 10 Section 7 Free Standing Signs ................................................................... 10 Section 8 Wall Signs Pertaining To Non-Conforming Uses ...................... 10 Section 9 Other Signs ................................................................................ 10 Section 10 Limitation .................................................................................. 10 Section 11 Violations ................................................................................... 11 VI ZONING DISTRICT REGULATIONS Section 1 Agricultural District “A” ........................................................... 12 A. Uses Permitted ................................................................................... 12 B. Uses Permitted As Special Exceptions ..................",
+   "tags": [
+    "sign",
+    "prohibited",
+    "temporary",
+    "type",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 8,
+   "snippet": "ARTICLE III DEFINITIONS 1 The words which are defined are those which have special or limited meanings as used in this zoning resolution and might not otherwise be clear. Words whose meaning is self-evident as used in this zoning resolution are not defined here. 1. Accessory Structure or Use: any structure of use, other man the principle structure of use, directly incident to or required for the enjoyment of the permitted use of any premises: also as specifically designated under the zoning district regulations of this Zoning Resolution. 2. Agriculture: the use of the land only - minus agricultural structures - for the cultivation of crops or the raising of animals or preservation in its natural state. 3. Agricultural Structures: any structure or building accessory to the principle agricultural use of the land. Farm dwellings, however, are principal buildings. 4. Alteration: any change o",
+   "tags": [
+    "dimension",
+    "illumination",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "2. Manufacturing, processing, treating and storing of minerals or raw materials which are extracted from the same property on which they are to be manufactured, processed, treated, or stored. The Board may grant approval if it determines that the proposed use will not constitute a fire hazard or emit smoke, noise, odor, or dust which would be obnoxious or detrimental to neighboring properties. The Board may attach such conditions and safeguards as it deems necessary to protect the character of the District. 3. Cemeteries, Columbariums or Crematories 4. Riding Stables and Private Stables 5. Amusement Parks, Playgrounds, Golf Courses and other privately owned recreational center. 6. Drive-in Theaters - subject to the following conditions: a) The applicant presents plans and specifications for the proposed theater in a form suitable for making the determinations required herein. b) There is",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 24,
+   "snippet": "SECTION 5. Commercial’C-1 District A.Uses Permitted 1. Any local retail business such as a grocery, fruit or vegetable store, drugstore, carryout, drapery and curtain shop and the like. 2. Bakery, provided all products are sold at retail on the premises 3. Personal services uses, such as barber shops, beauty shops, beauty parlor, photographic or artist studios, dressmaking, tailoring, shoe repair, repair of household appliances, dry cleaning and pressing and receiving stations for personal services. 4. restaurant, soda fountain, lunchroom; but excluding drive-in and “pickup”eating and drinking establishments. B. Uses Permitted as Conditional Uses The following uses shall be considered conditional uses and will require written approval of the Board of Appeals. 1. Neighborhood shopping centers and other groupings of five or more commercial, retail and/or service establishments in building(",
+   "tags": [
+    "area",
+    "dimension",
+    "process",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 29,
+   "snippet": "b) Site design standards: The following site design standards shall be met for all motor vehicle oriented businesses. 1) The minimum lot area shall be forty thousand (40000) square feet 2) The minimum lot frontage shall be one-hundred seventy five (175) feet on all sides fronting on a public street 3) Buildings and structures, including permitted signs shall be setback at least fifty (5O) feet from the street right-of-way line(s), thirty (30) feet from the side lot lines and twenty (20) feet from any rear lot line. c) Drainage: All sites shall provide for proper storm water drain off to prevent flooding and/or ponding. The plan of drainage control shall be a part of the plans and specifications submitted to the Board and shall be certified by a registered engineer d) trash storage areas: All motor vehicle oriented businesses shall provide suitable trash storage areas which are designed a",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "23. Processing: manufacturing, packaging, repairing, cleaning, and any other similar original or restorative treatment applied to raw materials, products, or personal property. Processing does not refer to (the fabrication of structures. 24 Public . -service Building: any building necessary for the operation and maintenance of a utility. 25. Retail Sales: sale of any product or merchandise to customers for their own personal consumption and use, not for resale. 26. Road: a traffic-carrying way. As used in this Zoning Resolution, a road may be privately owned. 27. Sleeping Rooms: a single room rented for dwelling purposes but without the amenities for separate and independent housekeeping. 28. Special Use: a use which must receive special approval by the Board of Zoning Appeals if delegated, in order to be permitted in a zoning district. 29. Street: any highway or other public traffic-car",
+   "tags": [
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "ARTICLE IV GENERAL PROVISIONS APPLICABLE TO ALL ZONING DISTRICTS SECTION 1. Existing Buildings and Uses Not Affected Any building, structure, or use existing at the time of the enactment of this Resolution may be continued, even though such building, structure or use does not conform with the provisions of this Resolution. If however, any such nonconforming use is voluntarily discontinued for two years or more, any future use of said land or structure shall be in conformity with the zoning regulations of the district in which the land and/or structure is located. SECTION 2. Restoring Unsafe Buildings Nothing herein shall be construed as preventing the strengthening or restoring to a safe condition of any part of any building or structure declared unsafe by the building inspector or from complying with his lawful requirements. SECTION 3. Approved Water Supply and Sewage Disposal Facilitie",
+   "tags": [
+    "area",
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "SECTION 11. Violations In case any sign shall be installed, erected, constructed or maintained in violation of any of the terms of this Resolution, the zoning inspector shall notify in writing the owner/lessee thereof to alter such sign so as to comply with this Resolution. Failure to comply with any of the provisions of this Article shall be deemed a violation and shall be punishable under Article VII, Section 7 of this Resolution. -11-",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 22,
+   "snippet": "SECTION 4. Residential “R-3” District A. Uses Permitted 1. Multi-family residential buildings and apartment buildings containing at least four (4) dwelling units per building, but not more man sixteen (16) units per building. Multi-family buildings and apartments may be permitted only where public sewers are available and of sufficient quantity (size and treatment capacity) to adequately serve the development. 2. Accessory uses normally associated with apartments or apartment complexes, including but not limited to, swimming pools, tennis courts and other recreational facilities, community buildings or meeting places all of which are intended solely for the use of residents of the apartment or apartment complex to which it is accessory. 3. On lots less than five (5) acres in size that are platted or approved as described in ORC Section 519.21(B), all structures shall conform to the set b",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 31,
+   "snippet": "SECTION 9. Industrial “I-1” District A, Uses Permitted 1. Any industrial or manufacturing activity which can be shown not to emit noise, smoke, dust, vibration, heat, bright light, order or other obnoxious effects beyond the limits of its lot. 2. The storage of flammable liquid above ground in amounts less than six hundred (600) gallons and for use on the premises B. Uses Permitted as Special Exceptions The following uses shall be considered special exceptions and will require written approval of the Board of Appeals: 1. The storage of flammable liquids above ground in amounts greater than six hundred (600) gallons 2. The storage of sand or gravel or any other raw material; the storage of equipment or vehicles of an earth moving or construction nature; finished products or components of finished products, outside of completely enclosed buildings on lots other than those on which the manu",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 46,
+   "snippet": "ARTICLE VII ENFORCEMENT SECTION 1. Zoning Inspector. 1. It shall be the duty of the Zoning Inspector, who shall be appointed by the Tate Township Board of trustees, to enforce this resolution. It shall also be the duty of all officials and employees of the Township to assist the Zoning Inspector by reporting to him upon new construction, land uses or upon seeing violations. 2. Appeal from the decision of the Zoning Inspector may be made to the Board of Appeals, as provided in Article VIII, Section 2. SECTION 2. Filing Plans. Every applicant for a zoning certificate shall be accompanied by a dimensioned sketch or scale plan indicating the shape, size, height and location in exact relation to all property lines and to street lines of all buildings or structures to be erected, altered, or moved and of any building or structures already on the lot. SECTION 3. Zoning Certificate. 1. It shall ",
+   "tags": [
+    "dimension",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 49,
+   "snippet": "B. An appeal shall stay all proceedings in furtherance of the action appealed from, unless the Zoning Inspector shall certify to the Board of Zoning Appeals after notice of appeal shall have been filed with it that by reason of facts stated in the certificate, a stay would, in his opinion, cause imminent peril to life or property, in which case proceedings shall not be stayed otherwise than by a restraining notice to the officer from whom the appeal is taken and on due cause shown. C. The Board may in conformity with the provisions of this Article reverse or affirm, wholly or partly, or may modify the order, requirement, decision or determination as in its opinion ought to be made in the premises; and to that end, shall have all powers of the Zoning Inspector from whom the appeal is taken. SECTION 3. Hearings 1. The Board shall fix a reasonable time for the hearing of an appeal, give pub",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 51,
+   "snippet": "C. Where, by reason of the exceptional narrowness, shallowness or unusual shape of a specific piece of property on the effective date of this Resolution or by reason of exceptional topographic conditions or other extra-ordinary situation of condition of such piece of property, or of the use or development of properly immediately adjoining the piece of property in question, the literal enforcement of the requirements of this Resolution would involve practical difficulties or would cause undue hardship — necessary to carry out the spirit and purpose of this Resolution — the Board shall have power to authorize a variance from such strict application, so as to relieve such hardship, and so that the spirit and purpose of this Resolution shall be observed and substantial justice done. In authorizing a variance, the Board may attach thereto such conditions regarding the location, charter and ot",
+   "tags": [
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 65,
+   "snippet": "22. Additional information or engineering data, in such form and content as necessary to determine that the site plan meets the standards of this Article and other requirements and performance standards of the Zoning Resolution for Tate Township and of other public agencies in Clermont County to ensure proper integration of the proposed project in the area and the prevention of adverse and undesirable impact on the community. C. The aforementioned information required for site plan review may be combined in any suitable and convenient manner as long as the data required is clearly indicated and comprehended. D. Depending on the nature of the site plan review application, one or more of the aforementioned site plan requirements may be waived by the Township Zoning Inspector and/or the Representative from Tate Township Board of Zoning Appeals. To obtain a waiver the applicant must submit a",
+   "tags": [
+    "dimension",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Section 3 Zoning Certificate ...................................................................... 39 Section 4 Condition Under Which Certificates Are Required ................... 39 Section 5 Application & Issuance Of Zoning Certification ....................... 40 Section 6 Zoning Certificate For Non-Conforming Uses .......................... 40 Section 7 Violations & Penalties ............................................................... 40 Section 8 Violations - Remedies ................................................................ 40 VIII BOARD OF ZONING APPEALS Section 1 Organization & Procedure ......................................................... 41 Section 2 Applications & Appeals ............................................................. 41 Section 3 Hearings ..................................................................................... 42 Section 4 Decision",
+   "tags": [
+    "dimension",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 30,
+   "snippet": "1) Gasoline Service Stations: One (1) space for each service bay, and one (1) space for each full time employee per shift with a minimum of two (2) employee spaces. If rental vehicles are to be provided and kept at the site, one (1) parking space shall be provided to each two (2) rental units so kept. 2) Other motor vehicle oriented businesses shall provide one (1) parking space for each full time employee per shift with a minimum of five (5) employee spaces, plus one (1) space for each one hundred (100) square feet of gross floor area. 3) All parking spaces shall be clearly designated by painted lines or other space dividers. 3. Retail sales, services or rental of marine craft and accessories, recreational vehicles and new or used automobiles in accordance with the following regulations: a) Location and Access: No sales or rental lot may be located except with direct access to an arteri",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited"
+   ],
+   "weight": 6,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 33,
+   "snippet": "The Township Trustees may permit the following uses in a planned unit commercial development: 1. Local retail businesses, as defined in the “C-1” District 2. Personal services, as defined in the “C-1” District 3. Restaurants, as defined in the “C-1” District 4. Financial and professional offices, as defined in the “C-1” District 5. Neighborhood shopping centers, as defined in the “C-1” District 6. Auto and farm implement establishments, as defined in the “C-2” District 7. Hardware and building material stores, as defined in the “C-2” District 8. Carpenter, paper hanging, electrical, plumbing, heating, printing or lithography shops, as defined in the “C-2” District 9. Theaters and movie houses, as defined in the “C-2” District 10. Hotels, motels, and motor hotels, as defined in the “C-2” District The Township Trustees may permit the following uses in a planned unit industrial development:",
+   "tags": [
+    "sign",
+    "illumination",
+    "billboard",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 35,
+   "snippet": "C. Interior Streets Interior access streets shall be paved according to county specification for streets, as delineated in the subdivision regulations and properly maintained. D. Collector Streets and Major Thorough-fares Primary regional arterial, collector streets and major thoroughfares shall be designed as such by the developer upon the submission of general plans as provided for in subsection 5-C2 (d) hereafter. Such designations shall be subject to modification by the Zoning Commission so that an efficient circulation system is established in relation to other existing or planned streets in the area. There shall be no direct access from planned unit development lots to a primary regional arterial, and direct access from lots to collector street shall be minimized. E. Access Control 1. On existing primary regional arterial streets, the minimum spacing between access points shall be ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 40,
+   "snippet": "D. Concept Plan 1. Each applicant, if possible, should confer with the Zoning Commission in connection with the preparation of the planned unit development application. The general outlines of the proposal, evidenced schematically by sketch plans, would be considered before submission of the P.U.D. application. The Zoning Commission may seek assistance from the staff of the Clermont County Planning Commission in reviewing these pre-application plans. 2. This procedure shall conform to Article X of the Tate Township Zoning Resolution. 3. The Zoning Commission shall review the concept plan and shall render a written report to the Township Trustees and the applicant within thirty (30) days after the public hearing. The Zoning Commission may call upon other public and/or private consultants necessary to provide sound review. These departments and/or consultants need only concern themselves w",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 48,
+   "snippet": "ARTICLE VIII BOARD OF ZONING APPEALS SECTION 1. Organization and Procedure 1. Appointment: A Township Board of Zoning Appeals is hereby created. The Board shall consist of five (5) members, to be appointed by the Tate Township Trustees. Members shall be residents of Tate Township, Clermont County, Ohio. The terms of one (1) member will expire each year. Each member shall serve until his successor is appointed and qualified. Member of the Board shall be removable for non-performance of duty, misconduct in office, or other cause, by the Trustees, upon written charges having been filed with the Trustees and after a public hearing has been held regarding such charges, a copy of the charges having been served upon the member so charged at least ten (10) days prior to the hearing, either personally or by registered mail, or by leaving the same at his usual place of residence. The member shall ",
+   "tags": [
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 53,
+   "snippet": "ARTICLE X DISTRICT CHANGES AND RESOLUTION AMENDMENTS SECTION 1. Initiation of Amendments or Supplements Amendments or supplements to the Zoning Resolution may be initiated by motion of the Township Zoning Commission, by the passage of a resolution therefore by the Board of Trustees or by filing of an application by one or more of the owners or lessees of property within the area proposed to be changed or affected by the proposed amendment or supplement with the Township Zoning Commission. The Board of Township Trustees shall upon the passage of such resolution certify it to the Township Zoning Commission. SECTION 2. Application Procedure for Change in Zoning Districts 1. Applications for any change of district boundaries or classifications of property as shown on the Zoning Map, shall be submitted to the Commission, at its public office, upon such forms, and shall be accompanied by such ",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 54,
+   "snippet": "4. The Township Zoning Commission shall, within thirty (30) days after its hearing, recommend the approval or denial of the proposed amendment or supplement, or the approval of some modification thereof and submit such recommendation together with such application or resolution, the text and map pertaining thereto and the recommendation of the County Planning Commission thereon to the Board of Township Trustees. SECTION 4. Public Hearing of Township Trustees 1. The Board of Township Trustees shall, upon receipt of a recommendation from the Township Zoning Commission, set a time for a public hearing on such proposed amendment or supplement, which date shall not be more than thirty (30) days from the date of the receipt of such recommendation from the Township Zoning Commission. Notices of such public hearing shall be given by the Board of Trustees by one publication in one or more newspap",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 55,
+   "snippet": "SECTION 7. Application Fees 1. At the time that an application for a change of Zoning Districts is filed with the Zoning Commission, as provided herein, there shall be deposited with the Township Clerk, a fee, the amount of which is established by the Tate Township Board of Trustees, to cover investigation, legal notices and other expenses incidental to the determination of such matter, such fee to be for one lot or part of one lot. An additional fee, established by the Tate Township Board of Trustees, shall be deposited for each additional lot or part of an additional lot to be adjacent to each other. Such sums so deposited shall be credited by the Township Clerk to the General Fund of the Township. 2. In the event that the Zoning Commission disapproved the application and the petitioner elects not to have the same certified to the Trustees, then a refund of a portion of the fee, the am",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 58,
+   "snippet": "Section III. Site Plan Review Procedures and Requirements; The Township shall review all required site plans using the following procedures, standards, limitations and guidelines. Site plans submitted for review shall demonstrate the proposed development meets the guidelines and performance standards set forth in the Zoning Resolution. The site plan shall contain sufficient detailed information about existing and proposed site conditions to allow an informed decision to be made by the Zoning Inspector, Zoning Commission, Township Trustees, and County Planning Commission as may be required concerning the general acceptability of the proposed development. To be considered complete, a site plan shall identify and provide all the information required under Section V. Prior to filing an application for site plan review, an applicant may request a preapplication conference with the Zoning Insp",
+   "tags": [
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 68,
+   "snippet": "B. It shall be unlawful to participate in more than two (2) yard sales in any calendar year. C. Not more than two (2) yard sale permits shall be issued for any one (1) person for one (1) calendar year. D. Not more than two (2) yard sale permits shall be issued for any one (1) premises for one (1) calendar year. E. Yard sales shall be limited in time to no more than the daylight hours of three consecutive days. F. It is a requirement of yard sale permits that the names and addresses of all participating persons be listed on the application. The yard sale permit must be posted at a visible location to the traveling public for the duration of the sale. G. It shall be unlawful to conduct any yard sale with a duration exceeding three (3) consecutive days. H. Personal property offered for sale may be displayed within the residence, in a garage, in a carport or in a yard, but only in such areas",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Section 7 Commercial “C-3” District A. Uses Permitted ................................................................................... 21 B. Uses Permitted As Special Exceptions .............................................. 22 C. Uses Prohibited .................................................................................. 22 D. Dimension And Area Regulations ..................................................... 22 Section 8 Recreational Services “RS” District A. Uses Permitted ................................................................................... 22 B. Uses Permitted As Special Exceptions .............................................. 22 C. Uses Prohibited .................................................................................. 25 D. Dimension And Area Regulations ..................................................... 25 Section 9 Industrial “1-1” District ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 19,
+   "snippet": "g) Minor or moderate alterations may be permitted to accommodate the proposed use, but there shall be no substantial construction or reconstruction. h) No equipment, process, materials, or chemicals shall be used which create offensive noise, vibration, smoke, dust, odor, heat, glare, x-rays, radiation, or electrical disturbances. i) No more than two (2) additional parking places may be proposed in conjunction with the home occupation, which shall not be located in a required front yard. 11. Invalidation of Home Occupation Conditional Use Permit - For the purposes of this Resolution, a conditional use permit issued for a home occupation shall cease to be valid at such time as the premises for which it was issued is no longer occupied by the holder of said permit. Such conditional use permit shall also be immediately invalidated upon the conduct of the home occupation in any manner not ap",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 25,
+   "snippet": "C. Uses Prohibited 1. Any use which is of storage, warehousing or manufacturing nature. 2. Storage of flammable liquid above ground in excess of six hundred gallons 3. Coal yards, lumber yards, junk yards 4. Any other use not specifically permitted by this section D. Dimension and Area Regulations For Lots and Structures The regulations on the dimensions and areas for lots and structures are set form in the Schedule of Dimensions and Area Regulations in Appendix A. The applicable regulations shall be observed in the Commercial “C-l” One District. SECTION 6 Commercial “C-2” Two District A. Permitted Uses 1. Any use or structure permitted and as required in the “C-l” District, except as hereinafter modified. 2. Gasoline filling stations with underground storage tanks 3. Neighborhood shopping centers as permitted and regulated in “C-l” District. 4. Automobile, truck, trailer and farm implem",
+   "tags": [
+    "prohibited",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 28,
+   "snippet": "c) Accessory Uses: Management headquarters, recreational facilities, laundry facilities and other uses and structures customarily incidental to the operation of recreational vehicle parks and playgrounds are permitted as accessory uses provided that such uses are restricted in their use to occupants or the park or campground and such uses shall present no usable evidence of their commercial charter which would attract customers other than occupants of the park. d) Sanitary Facilities: Toilets, showers and other essential plumbing fixtures shall conform to all applicable Ohio and County plumbing and health codes. e) Design of Access to Park: Entrances and exits to recreational vehicle parks and campgrounds shall be designed for safe and convenient movement of traffic and to minimize friction with the free movement of traffic on adjacent streets. All traffic into and out of the park shall ",
+   "tags": [
+    "area",
+    "dimension"
+   ],
+   "weight": 5,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 34,
+   "snippet": "B. Area, Density and Lot Regulations 1. Minimum Area for Developments: The minimum area for development shall be five (5) contiguous acres. Contiguous property of any size may be added to a P.U.D. after a final development plan has been approved or after construction begins provided the additional acreage is designed in harmony with the character of the original P.U.D.. Additions to acreage will be treated as a major modification of an approved P.U. D.. 2. Maximum Density of Developments: a) Except as provided herein, a planned unit residential development shall not exceed the gross density of eight (8) dwelling units per acre. Planned unit residential developments which exceed fifty (5O) acres may have a maximum density of eight point eight (8.8) dwelling units per acre. Planned unit residential developments which exceed one hundred (100) acres may have a maximum density of twelve (12) ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 39,
+   "snippet": "Development of steep slopes should be done with caution and excavation and alteration of the ground should be minimized. When steep slopes are being proposed for development, the zoning commission may require specific performance standards to be applied to the development in order to mitigate impacts. 5. Woodland Areas: Areas or stands of trees (measured canopy to canopy) covering an area greater than one-quarter (1/4) acre in which: a) The majority of the trees are young canopy (4 “ -16” tree caliper); or b) The majority of the trees are fifteen (15) feet in height or greater and form at least a twenty (20) percent canopy. c) Any grove of trees without regard to a minimum area consisting of mature canopy (16” and greater tree caliper). All development should be planned, designed and constructed so that existing healthy trees and vegetation are preserved to the maximum extent possible, a",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 47,
+   "snippet": "SECTION 5. Application and issuance of Zoning Certificates 1. Written application for a zoning certificate for the construction of a new building or for the structure alteration of an existing building shall be made prior to the application for a Clermont County Building Permit. Said certificate shall be issued within ten (10) days after a written request for the same has been made to the Zoning Inspector or his agent, provided such construction or alteration is in conformity with the provisions of this Resolution. 2. Written application for a zoning certificate for the use of vacant land or for a change in the use of land or of a building, or for a change in a non-conforming use, as herein provided, shall be made to the Zoning Inspector or his agent, provided such constriction or alteration is in conformity with the provisions of this Resolution. 3. A fee established by the Tate Townshi",
+   "tags": [
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 64,
+   "snippet": "14. Location of proposed streets, identifying approximate dimensions of pavement, right-of-way and grades; 15. Location of all existing and proposed water, sanitary sewer, and storm drainage lines, indication approximate pipes sizes. Indication should also be given regarding the provision of electric and telephone service; 16. Limits of existing flood hazard areas within and adjacent to the property, accurately showing the limits of building encroachments and earth fill within this area, with 100 year water surface elevations and proposed finished floor elevations denoted; 17. Identification of the soil types and geologic formations on the subject property, indicating anticipated problems and proposed methods of handling said problems; 18. Existing and proposed location(s) of outdoor lighting, signs, screen plantings, fences, and landscaping. Any existing woodlands of mature vegetation, ",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 5,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 69,
+   "snippet": "B. No sign or other form of advertisement shall be exhibited for more than seven (7) days prior to the day such sale is to commence. C. Signs must be removed at the close of the yard sale activities or by the end of daylight, whichever first occurs. (5) RESPONSIBILITY OF PERMIT HOLDER AND OWNER: The individual to whom such permit is issued and the owner or tenant of the premises on which such sale or activity is conducted shall be jointly and severally responsible for the maintenance of good order and decorum on the premises during all hours of such sale or activity. No such individual shall permit any loud or boisterous conduct on said premises nor permit vehicles to impede the passage of traffic on any roads or streets in the area of such premises. All such individuals shall obey the reasonable orders of any member of the Police or Fire Department of Tate Township and the Clermont Coun",
+   "tags": [
+    "sign",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 32,
+   "snippet": "C. Dimensions and Area Regulations The regulations on the dimensions and areas for lots and structures are set forth in the Schedule of Dimensions and Area Regulations in Appendix A. The applicable regulations shall be observed in the Industrial “I-2” District. SECTION 11. Mobile Home Park and Subdivision District A. Uses Permitted 1. Mobile Home Parks 2. Mobile Home Subdivisions. A Mobile Home Subdivision is a subdivision designed and intended for residential use where residence is in mobile homes exclusively. B. Uses Prohibited All other uses except mobile home parks and mobile home subdivisions are prohibited. SECTION 12-1. General Provisions for Planned Use Developments A. Intent and Objectives It is the intent of this article to accommodate creative and imaginative planned unit development and to permit those innovations in the technology of land development which are in the best in",
+   "tags": [
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 36,
+   "snippet": "7. Where the frontage of a tract is greater than five hundred (500) feet an additional access point may be permitted; the form of access, however, may be direct or indirect. a) If the frontage of the tract is greater than one-quarter (1/4) mile, then one or both of the access points may have direct access onto the primary regional arterial street, depending upon the location of adjacent direct access points. In the case where the frontage allows only one point of direct access, the second access point will be some indirect means. b) If the frontage of the tract is between five hundred (500) feet and one-quarter (1/4) mile, it is possible that one direct access point will be allowed onto the primary regional arterial street; this will be dependent, however, upon the location of the adjacent access points. 8. The location of access points shall comply with safe sight distance practices rec",
+   "tags": [
+    "dimension",
+    "prohibited"
+   ],
+   "weight": 4,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 59,
+   "snippet": "D. Step 4-The Township Zoning Commission shall then take all steps necessary to complete the zone change process as set forth in Revised Code Section 519.12. For site plan review tinder Section II (B) the following steps shall occur: A. Step 1- The applicant shall submit 10 copies of the site plan to the Zoning Inspector. B, Step 2- The Township Zoning Inspector shall: 1. Transmit copies of the site plan application to the following entities: a. The Zoning Inspector b . The appropriate county and state review agencies, and c. The Representative from Tate Township Board of Zoning Appeals C. Step 3- The Representative from Tate Township Board of Zoning Appeals shall within thirty (30) days review the site plan and report back to the Zoning Inspector with recommendation for or against the development or some modification thereof. D. Step 4- The Township Zoning Inspector then, in the exercis",
+   "tags": [
+    "process",
+    "authority"
+   ],
+   "weight": 4,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 62,
+   "snippet": "2. All roadway, parking lot, and walkway lights shall be shielded so that substantially all the directly-emitted light falls within the property line, G. Screening And Buffering 1. Screening areas shall be provided for the purpose of minimizing the friction between incompatible land uses and improving the aesthetic and functional quality of new development. 2. Where vegetative and/or topographic conditions that provide a natural screening and buffer exist prior to development of properties in question, every effort shall be made to retain such conditions. In such cases, additional screening may not be required, provided that provision is made for maintenance of such areas. Section V Site Plan Requirements: A. All applications for site plan review shall be accompanied by: 1. A completed application form provided by the Zoning Inspector of Tate Township; 2. The required site plan review fe",
+   "tags": [
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 67,
+   "snippet": "APPENDIX C: Yard Sales (1)Purpose: These rules and regulations are designed to control and restrict yard sales in order to protect the public health, safety, convenience and general welfare and to restrict such sales to casual and/or occasional occurrences only, in keeping with the character of the neighborhood where this activity is carried on. The intent of this article is to eliminate perpetual, prolonged and extended garage and yard sales in all districts of Tate Township. Such sales, if continued indefinitely, tend to become retail businesses in residential areas and zones, create a nuisance and violate the zoning regulations of Tate Township. The provisions of this article arise from the need to limit, regulate, restrict and control garage and yard sales. (2) Definitions As used in the article, the following terms shall have the meaning indicated: YARD SALE: A. The sale or offering",
+   "tags": [
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 70,
+   "snippet": "(8) EXEMPTIONS This article shall not be applicable to: A. Persons selling goods pursuant to an order or process or a court of competent jurisdiction. B. Persons acting in accordance with their powers and duties as public officials. C. Any person selling a single item of personal property which is specifically named or described in an advertisement offering the item for sale. D. Any publisher of a newspaper, magazine or other publication or other communications media which publishers or broadcasts anything in good faith without knowledge of its false, deceptive or misleading character or without knowledge that the provisions of this article have not been met. E. Any sale conducted by any legitimate business or commercial or industrial establishment on property zoned for that business under the zoning regulations of Tate Township with or without the protection of the nonconforming use sec",
+   "tags": [
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 4,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "TATE TOWNSHIP ZONING RESOLUTION A RESOLUTION, for the purpose of promoting public health, safety, morals, comfort and general welfare; to provide for an orderly and systematic development of Tate Township; to conserve and protect property and property values; to secure the most appropriate use of land; and to facilitate adequate but economical provisions of public improvements, all in accordance with a Comprehensive Plan; the Board of Trustees of this Township finds it necessary and advisable to regulate the location, size and use of buildings and other structures; percentages of lot areas which may be occupied; building setback lines; size of yards, courts and other open spaces; and the uses of land for trade, industry, residence, recreation or other purposes and for such purposes; divides the unincorporated area of the Township into districts or zones. BE IT RESOLVED BY THE BOARD OF TR",
+   "tags": [
+    "dimension",
+    "authority"
+   ],
+   "weight": 3,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 41,
+   "snippet": "SECTION 12 4 Final approval of uses in a Planned Unit Development A. Final Development Plan The final development plan shall include the following information: 1. All property lines, shape and dimensions of the lot to be built upon showing directional bearings and distances, adjacent streets, and location with reference to identifiable street intersection. A list of the names and addresses of the owners of all property owner located within the subject site, and within two hundred (200) feet in all directions of the subject site, together with corresponding parcel numbers; 2. Name of development, legal description of property’, north arrow, scale acreage, name and address of record owner and engineer, architect or land planner, or the person responsible for preparing the plan; 3. Vicinity map locating the subject property in Tate Township. Both vicinity map and preliminary development pla",
+   "tags": [
+    "dimension",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 43,
+   "snippet": "SECTION 12-6. Revision of Approved Final Development Plan The development shall conform to the approved final planned unit development plan and the approved subdivision plan. The development applicant, his successors and assignees shall make no alterations, additions or deletions to the final development plan, the related documents or to the site, except as provided herein. Upon final approval of uses, changes may be made only pursuant to a new submission of a planned unit development application which shall be processed and approved in accordance with this ordinance. The Township Trustees may authorize minor changes, without a new planned unit development application, provided that overall density is not increased. SECTION 12-7. Phasing The establishment of common open spaces and construction of public or common residential facilities shown on the recorded final development plan togethe",
+   "tags": [
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 44,
+   "snippet": "SECTION 13 - Wireless Telecommunication Towers The purpose of the addition to the zoning resolution to l)encourage the location of telecommunication towers in non-residential areas and to minimize the total number of towers: 2) encourage the joint use of new and existing towers; and 3) encourage telecommunication companies to locate towers in areas of township where the adverse impact on the community will be minimal. (A) Except as provided in Ohio Revised Code Section 519.11 with respect to any cellular or wireless telecommunication tower that is owned or used by a public utility, and proposed to be located in an area zoned for residential use, nothing contained In this Resolution shall prevent the location, erection, construction, reconstruction, change, alteration, maintenance, removal, use or enlargement of any buildings or structures of any public utility, whether publicly or privat",
+   "tags": [
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 52,
+   "snippet": "ARTICLE IX INTERPRETATION, PURPOSE, AND CONFLICT SECTION 1. In interpreting and applying the provisions of this Resolution, they shall be held to the minimum requirements for the promotion of the public safety, health, convenience, comfort, morals, prosperity and general welfare. It is not intended by this Resolution to interfere with or abrogate or annul any resolution, rules, regulations or permits previously adopted or issued, and not in conflict with any of the provisions of this Resolution, or which shall be adopted or issued, pursuant to law relating to the use of buildings or premises and likewise not in conflict with this Resolution; nor is it intended by this Resolution to interfere or abrogate or annul any easements, covenants, or other agreements between parties; provided however, that where this Resolution imposes a greater restriction upon the use of buildings or premises or",
+   "tags": [
+    "dimension",
+    "authority"
+   ],
+   "weight": 3,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  },
+  {
+   "page": 56,
+   "snippet": "Minimum Lot Size Maximum % Maximum Served By Minimum Lot Of Lot Area Minimum Minimum Height Approved Area When Not Which May Lot Width Front Minimum Minimum of Served By Be Covered At Front Yard Side Rear Sanitary Sewer Sanitary Sewer By Buildings Yard Line Depth * * Yard Yard Accessory Buildings Front Yard Side yard Rear Yard DIST fFeet) (Sq. Feet) (Sq. Feet) (Feet) (Feet) (Feet) (Feet) (Feet) (Feet) (Feet) “A.” 35 43,560 43,560 30 150 75 (9) 20 30 Must be in side or rear * 3 * 10 “R-1” 35 10,000 20,000 30 100 50 (9) 10 30 Must be in side or rear 5 10 “R-2” 35 (1)7500/ 3000 (1) 20.000/ 20,000 30 (2) 75/ 100 35 (9) 10 30 Must be in side or rear yard 3 5 “R.-3” For the dimension & area in the “R-3” District see pages 17 & 18 50 (9) 20 35 Must be in side or rear yard 3 5 “C-l” 45 None As required by Co. Health Board None None (3)60/35 (4) None / 40 15 Same as required for principle buildin",
+   "tags": [
+    "dimension"
+   ],
+   "weight": 3,
+   "source_sha256": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf",
+   "source_document_id": null,
+   "source_title": "f9c28dc31d4869aee20b2c46703c884433db75b4357c4fc9da268a12505e03cf.pdf",
+   "official_url": "https://tatetownship.org/wp-content/uploads/2017/03/tate-township-zoning-book.pdf"
+  }
+ ]
+}

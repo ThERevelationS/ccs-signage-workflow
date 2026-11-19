@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6adc54e82b3f03a874e253c3",
+ "jurisdiction_name": "McConnelsville",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Village of McConnelsville Application for Building Permit Ordinance No. 04-09 Date of Application: 1. Location Address: Located in Flood Plain? Yes No (If yes, then Local Flood Plain Permit must be completed) Located in Downtown Historic District? Yes No (If yes, Certificate of Appropriateness is required) 2. Owner's Name: 3. Owner's Address: 4. Type of construction: 5. Measurements: ____ feet in width ____feet in length ____feet in height 6. Contractor: 7. Estimated cost: 8. Date of commencement: This permit shall be obtained prior to the commencement of construction for all new construction or additions that have a value of One thousand Dollars ($1,000.00) or more in construction costs. Post permit in a conspicuous place upon the premises where work is being done, until construction is complete. Failure to obtain this permit will find you guilty of a minor misdemeanor. The undersigned ",
+   "tags": [
+    "fee",
+    "dimension",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "00d488d98a87d2612a5a8714af4f6fc37d869a0a2f75c99cd072759a289ffa43",
+   "source_document_id": null,
+   "source_title": "00d488d98a87d2612a5a8714af4f6fc37d869a0a2f75c99cd072759a289ffa43.pdf",
+   "official_url": "https://www.vomcc.com/files/Village_Building_Permit.pdf"
+  }
+ ]
+}

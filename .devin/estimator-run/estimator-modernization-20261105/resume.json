@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "run_id": "estimator-modernization-20261105",
+  "approval": "Final explicit Approve and begin received; all eight modules sequentially, Concrete first, scoped sandbox activation/checkpoints, five integration credits total and five attempts.",
+  "phase": "Concrete save and durable Builder-sync recovery source units checkpointed; stable assembly identities and safe parent/child editing next. Continuation remains unbound/disabled; approved foreground work continues.",
+  "next_action": "Implement the lead-designed O-005/O-006 stable component identity and legacy-index adapter unit locally, with explicit orphan recovery and fresh-ID graph copies; preserve recovery checkpoint 6aec82410d2ab0bd55cc306d. Review full incremental diffs and focused tests before any further sandbox/schema activation.",
+  "latest_verified_unit": {
+    "checkpoint": "6aec82410d2ab0bd55cc306d",
+    "commit": "d3afd97ad60018e3cbda1f43de24807da9f6c1b7",
+    "receipt": ".audit-work/foundation-recovery02/remote-sync/receipt.json",
+    "browser_receipt": ".audit-work/foundation-browser03/verified-receipt.json",
+    "checks": "42 named page-handler cases; 20 receipt-model cases; 13 source-CAS cases; Builder service/persistence 12/8; remote helper/persistence syntax and page compile passed. Schema semantic/RLS proof passed on readback; remote JSON-check shell quoting failed and is not counted as a passing check.",
+    "remaining": ["Live authorization and real Builder business-write path untested", "Browser route A-to-B-to-A gate", "Native browser Back/app-shell interception and recovery of edits not yet sent", "Copy/template/identity and all other Concrete modernization gates"],
+    "technical_rows_closed": ["O-001", "O-002"],
+    "local_runtime": {
+      "dashboard": "http://localhost:5170",
+      "dashboard_pid": 45092,
+      "synthetic_fixture": "http://127.0.0.1:5171",
+      "synthetic_fixture_shell": "bc6384",
+      "reuse": "Check and reuse existing servers; restart only if dead or changed. Do not touch unrelated port 4173."
+    },
+    "historical_sections_below": "Earlier v3-required/source-audit notes are retained as history, not current open instructions."
+  },
+  "current_work": {
+    "lead_authored_model": ".devin/estimator-run-model.mjs",
+    "implementation_owned_files": [".devin/estimator-run-control.mjs", ".devin/estimator-run-control.ps1", ".devin/stop-masterplan.ps1", ".devin/hooks.v1.json", "scripts/test-estimator-unattended.mjs"],
+    "rework_required": [],
+    "verified_evidence": ".audit-work/estimator-controller-final/: 114 passed, 0 failed, 0 skipped; full model/controller/helper/test diffs reviewed; paid-budget/local-work and secret-redaction outputs independently checked by lead",
+    "live_probe": "Actual nonce token executed in this session; no binding-receipt.json was emitted. Do not fabricate metadata or activate selector. /hooks is a user slash command and is not agent-invocable through exec.",
+    "current_worker": {
+      "id": "w-foundation-save01",
+      "tasks": ["O-001", "O-002", "O-003", "O-AUTH-01"],
+      "mode": "Local source implementation and synthetic tests only; no remote writes until lead review",
+      "owned_files": ["src/pages/FoundationEstimator.jsx", "src/components/estimator/foundation/foundationSaveSession.js", "base44/functions/staffEntityWrite/entry.ts", "scripts/test-foundation-save-session.mjs", "scripts/test-foundation-save-handler.mjs", "scripts/test-foundation-write-gateway.mjs"],
+      "evidence_root": ".audit-work/foundation-save01/"
+    },
+    "latest_concrete_review": {
+      "baseline_proof": "Compiled original page with correct expected-no-navigation assertion fails exit 1; baseline actual gateway rejects create/updateMany 403 in mocked handler. Evidence frozen in test-output-v2.txt; do not rerun the same baseline derivation.",
+      "accepted_so_far": "SaveOutcome coordinator, invalid-return guards, after-pricing and after-Builder checks, revision changes, ack baseline, error/UI feedback, exact narrow FoundationProject allowlist.",
+      "v3_required": [
+        "Coalesce one page-wide active attempt irrespective of intent/revision; no duplicate effect chains",
+        "Validate current context before stale handlers may mutate saving/error state; clear global busy only by actual owning promise",
+        "Mounted guard prevents callback/navigation after unmount",
+        "Await every React act and prove entry to the intended deferred stage",
+        "True synthetic brick_stone/custom_items line witness remains byte-identical",
+        "Strict Foundation-only string id/updated_date query validation; no other backend changes",
+        "Cleanup temporary bundle/globals"
+      ],
+      "gateway_correction": "Object updated_date is currently stringified to literal [object Object] before entity.updateMany, not passed as an operator. The observed test returns updated:0 with no mutation. This is invalid-type acceptance, NOT proven CAS bypass. Do not repeat the earlier worker hypothesis as a confirmed vulnerability."
+    }
+  },
+  "concrete_source_audit": {
+    "app_id": "68dfcc5e57bbbc35387da97c",
+    "branch": "main",
+    "save_path": "FoundationEstimator.jsx handleSave -> updateBuilderSourceProject -> staffEntities.FoundationProject.updateMany -> staffEntityWrite",
+    "confirmed_source_findings": [
+      "Remote staffEntityWrite WRITE_OPS lacks FoundationProject; current Foundation save uses conditional updateMany and copy uses create.",
+      "Remote FoundationEstimator.jsx handleSave catches failures and returns no result; handleSaveAndExit always closes/navigates after awaiting it.",
+      "handleSave clears dirty after source/Builder completion without an edit-generation check; source edits can race.",
+      "No synchronous single-flight save ref exists; React saving state alone does not serialize immediate duplicates.",
+      "commit, undo and redo are the local mutation entry points to cover with edit revisions.",
+      "foundationProjectPersistence.js, foundationSaveRecovery.js and foundationPersistence.js are NOT_FOUND; do not pretend they exist."
+    ],
+    "next_scope": "Save integrity and authorization audit only; no rebar/visual/AI feature implementation before these foundations are verified.",
+    "authorization_open_question": "Trace protected-quote/source ownership and actual project link metadata before adding narrow FoundationProject operations; do not blindly add a broad gateway permission.",
+    "source_evidence": [
+      "C:\\Users\\BRETTH~1\\AppData\\Local\\Temp\\devin.exe-overflows\\shell-188879-dbdf77f965882c9e\\content.txt",
+      "CLI reads of FoundationEstimator.jsx lines110-418, FoundationToolbar.jsx, staffEntityWrite entry.ts lines1-357 and FoundationProject schema",
+      "Existing sourceProjectPersistence exact-retry/CAS and Builder recovery markers remain authoritative"
+    ]
+  },
+  "lead_save_design_for_next_unit": {
+    "state": "Design only, not yet dispatched or implemented. Add the chosen unit design to masterplan before implementation handoff.",
+    "helper": "New foundationSaveSession.js exports createFoundationSaveSession(). Its run({sourceId,editRevision,getCurrent,saveSource,syncBuilder}) returns one synchronously shared in-flight promise, never parallel source saves.",
+    "outcomes": "Return typed saved/partial/conflict/failed/superseded outcomes with sourceId, sourceVersion, savedEditRevision, sourceSaved and builderSync (not_required/pending/synced), error/warnings. Saved/exit requires fully persisted current source+edit revision; partial never exits or clears dirty.",
+    "race_cases": [
+      "Source save failure => failed/conflict, no Builder call, dirty and editor retained.",
+      "Source success then Builder failure => partial/sourceSaved true/pending; keep acknowledged source version so retry does not use an obsolete CAS baseline.",
+      "Edit/undo/redo while pricing/source/Builder await => generation advances synchronously; old snapshot may persist but never clears newer dirty state, invokes stale success or exits.",
+      "Project/route A->B->A increments a monotonic context/edit generation; getCurrent includes actual current route ID/loading state, not merely old loaded project.id.",
+      "Before source write after asynchronous pricing, recheck route/source identity; old saveRef.current invoked while loading a new route must not write the prior source.",
+      "After source acknowledgement update only metadata for that same source; preserve newer typed fields. Apply recalculated customer_pricing snapshot only when revision still matches.",
+      "Undo/redo currently restore full historical project objects including stale updated_date. Keep latest acknowledged source version in a ref separate from editable history; undo must not roll the CAS baseline back.",
+      "A callback/UI refresh failure must not masquerade as failed durable persistence; report a separate warning. Recheck context/revision before Save & Exit.",
+      "Coordinator can report superseded with sourceSaved true and pending or synced Builder according to stage; never claim partial/cancelled data was fully saved."
+    ],
+    "page_entry_points": "FoundationEstimator commit/patch/patchItem/add/remove/duplicate use commit; undo and redo are separate mutation entry points. Current source lines311-372 contain handleSave and unconditional Save & Exit. Beforeunload currently guards saving only; full dirty/SPArouting recovery belongs to O-004 and must not be falsely marked complete by the first fix.",
+    "tests": "First reproduce existing failure-exits with an offline handler fixture using compiled actual page callbacks and fake SDK/React hooks if practical, plus pure coordinator behavioral tests: success/failure, CAS conflict, source-saved/Builder-failed, same-tick duplicate calls, edit during each await, stale route/loading saveRef, undo after v2 save retains v2 expected version, newest-only dirty clear, onSaved observer exception separate from persistence. Actual browser behavior must remain separately unverified until tested.",
+    "authorization_candidate": "Only FoundationProject create+updateMany are necessary for current source/copy paths; no update/delete/bulk grants. Real handler tests must preserve authentication, administrator gates for other entities, nested operator rejection, ID/system stripping and exact id+updated_date CAS. Do not add all seven other module grants during Concrete.",
+    "runtime_entry_evidence": "Fresh sandbox ls base44/functions/staffEntityWrite shows entry.ts only; main.ts and function.jsonc are NOT_FOUND. Do not claim separately observed production runtime behavior or use traditional functions deploy."
+  },
+  "safety": {
+    "real_run_selector_created": false,
+    "base44_source_writes": true,
+    "business_record_calls": false,
+    "paid_integration_attempts": 0,
+    "checkpoints": ["6aec73ceffbea47da877c96f", "6aec74d70f5db46663beab4c", "6aec80203dfa3e2029f2104e", "6aec82410d2ab0bd55cc306d"],
+    "publications": [],
+    "foreign_changes": "Do not overwrite/reset/stage pre-existing work; preserve scripts/lib/entity-mirror.mjs and all out-of-scope changes.",
+    "dashboard": "Verified existing PID45092 owns localhost:5170; reuse without restart. /status.json is the correct JSON endpoint. Keep fixture5171 and unrelated4173 untouched unless their owned code changes.",
+    "historical_claim": "w-160 has old D-03/D-04/D-07 array claim displayed running although later D-07 done. Preserve this foreign history; it is not proof of a currently running process or authority to reset the claim."
+  }
+}

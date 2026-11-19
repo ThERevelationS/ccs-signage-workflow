@@ -1,0 +1,115 @@
+{
+  "stamp": 1794481478599,
+  "probes": [
+    {
+      "name": "fixture project",
+      "pass": false,
+      "resp": {
+        "error": "The record could not be saved. Try again."
+      }
+    },
+    {
+      "name": "fixture product",
+      "pass": true,
+      "productId": "6af59d4904ca76fe8952f519"
+    },
+    {
+      "name": "fixture parts",
+      "pass": true
+    },
+    {
+      "name": "source armed",
+      "pass": true
+    },
+    {
+      "name": "copy created",
+      "pass": true,
+      "dupId": "6af59d4dcd8dc10f764925b2"
+    },
+    {
+      "name": "copy has line_items",
+      "pass": true,
+      "count": 1
+    },
+    {
+      "name": "line project remapped",
+      "pass": false
+    },
+    {
+      "name": "line product remapped",
+      "pass": true,
+      "builder_product_id": "6af59d4d9293589244a81473"
+    },
+    {
+      "name": "project clone owned by copy",
+      "pass": false
+    },
+    {
+      "name": "project clone number",
+      "pass": false,
+      "want": ""
+    },
+    {
+      "name": "project clone key",
+      "pass": false
+    },
+    {
+      "name": "no sync receipt transplanted",
+      "pass": true
+    },
+    {
+      "name": "product clone owned by copy",
+      "pass": true,
+      "est": "6af59d4dcd8dc10f764925b2"
+    },
+    {
+      "name": "product clone line link",
+      "pass": true,
+      "eli": "L1794481478599"
+    },
+    {
+      "name": "product source_project remapped",
+      "pass": false,
+      "sp": ""
+    },
+    {
+      "name": "parts cloned",
+      "pass": true,
+      "count": 2,
+      "keys": [
+        "p1-1794481478599",
+        "p2-1794481478599"
+      ]
+    },
+    {
+      "name": "lifecycle reset",
+      "pass": false,
+      "fs": "none",
+      "os": "none"
+    },
+    {
+      "name": "design preserved",
+      "pass": true,
+      "hash": "snap-1794481478599"
+    },
+    {
+      "name": "totals attached",
+      "pass": true,
+      "tc": 800,
+      "qt": 800
+    },
+    {
+      "name": "retry same id",
+      "pass": true,
+      "retryId": "6af59d4dcd8dc10f764925b2"
+    },
+    {
+      "name": "no double-clone",
+      "pass": false,
+      "prodCount": 1,
+      "projCount": 0,
+      "partCount": 2
+    }
+  ],
+  "ok": false
+}

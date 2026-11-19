@@ -1,0 +1,119 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "3d1aaf013cf0c845777f14ba594ee058b3f3fa70",
+  "sourceArtifact": "masonry-material-sandbox-final-scope.json",
+  "dependencyArtifact": "masonry-page-dependency-source.json",
+  "ratesPanelArtifact": "masonry-rates-panel-source.json",
+  "fixtureArtifact": "masonry-pricing-baseline-probe.json",
+  "candidate": "masonry-rates-candidate-wallCalculator.js",
+  "sourceId": "synthetic-masonry-project",
+  "estimateId": "synthetic-masonry-estimate",
+  "sourceVersion": "synthetic-v1",
+  "savedVersion": "synthetic-v2",
+  "viewports": [
+    { "width": 1280, "height": 1200 },
+    { "width": 390, "height": 1200 }
+  ],
+  "cases": [
+    {
+      "id": "zero-labor",
+      "settings": { "wall_labor_rate": 0, "wall_minimum_charge": 1, "wall_mortar_cost_per_bag": 10 },
+      "expectedCosts": { "totalBricks": 6, "materialCost": 12, "laborCost": 1, "mortarCost": 0, "totalCost": 13 },
+      "wallAmount": "$13.00",
+      "bomRows": [["Wall 1 — Synthetic wall units", "6 units", "$12.00"]]
+    },
+    {
+      "id": "zero-minimum",
+      "settings": { "wall_labor_rate": 1, "wall_minimum_charge": 0, "wall_mortar_cost_per_bag": 10 },
+      "expectedCosts": { "totalBricks": 6, "materialCost": 12, "laborCost": 1, "mortarCost": 0, "totalCost": 13 },
+      "wallAmount": "$13.00",
+      "bomRows": [["Wall 1 — Synthetic wall units", "6 units", "$12.00"]]
+    },
+    {
+      "id": "zero-mortar",
+      "settings": { "wall_labor_rate": 1, "wall_minimum_charge": 1, "wall_mortar_cost_per_bag": 0 },
+      "outerMaterialPatch": { "wall_material_subtype": "brick" },
+      "expectedCosts": { "totalBricks": 6, "materialCost": 12, "laborCost": 1, "mortarCost": 0, "totalCost": 13 },
+      "wallAmount": "$13.00",
+      "bomRows": [["Wall 1 — Synthetic wall units", "6 units", "$12.00"]]
+    },
+    {
+      "id": "genuine-free",
+      "settings": { "wall_labor_rate": 0, "wall_minimum_charge": 0, "wall_mortar_cost_per_bag": 0 },
+      "outerMaterialPatch": { "wall_material_subtype": "brick", "cost_per_unit": 0 },
+      "expectedCosts": { "totalBricks": 6, "materialCost": 0, "laborCost": 0, "mortarCost": 0, "totalCost": 0 },
+      "wallAmount": "$0.00",
+      "bomRows": [["Wall 1 — Synthetic wall units", "6 units", "$0.00"]]
+    },
+    {
+      "id": "internal-zero-rates",
+      "settings": { "wall_labor_rate": 0, "wall_minimum_charge": 0, "wall_mortar_cost_per_bag": 0 },
+      "wallPatch": {
+        "includeInternalWall": true,
+        "internalMaterialId": "inner",
+        "internalWallHeightInches": 9,
+        "shape": {
+          "closed": true,
+          "segments": [
+            { "component_id": "s-0", "length": 16, "angle": 0 },
+            { "component_id": "s-1", "length": 16, "angle": 90 },
+            { "component_id": "s-2", "length": 16, "angle": 180 },
+            { "component_id": "s-3", "length": 16, "angle": 270 }
+          ]
+        }
+      },
+      "additionalInventory": [
+        {
+          "id": "inner",
+          "material_type": "wall_material",
+          "material_name": "Inner units",
+          "wall_material_subtype": "brick",
+          "wall_unit_length_inches": 8,
+          "wall_unit_width_inches": 4,
+          "wall_unit_height_inches": 4,
+          "cost_per_unit": 3
+        }
+      ],
+      "expectedCosts": {
+        "totalBricks": 24,
+        "materialCost": 48,
+        "laborCost": 0,
+        "mortarCost": 0,
+        "internalTotalBricks": 12,
+        "internalMaterialCost": 36,
+        "internalLaborCost": 0,
+        "internalMortarCost": 0,
+        "totalCost": 84
+      },
+      "wallAmount": "$84.00",
+      "bomRows": [
+        ["Wall 1 — Synthetic wall units", "24 units", "$48.00"],
+        ["Wall 1 — Inner units (internal)", "12 units", "$36.00"]
+      ]
+    }
+  ],
+  "pageAssertions": [
+    "Use the exact current frozen remote FoundationEstimator page, real Settings row mapping, real calcProject and save-session, and the new wallCalculator candidate only.",
+    "Mount each case with all three Settings entries as setting_name/setting_value rows; numeric zeros must survive real page mapping.",
+    "Before any Save there must be zero source and Builder writes, no pricingUnavailable flag, and the displayed/calculated wall fields must equal the fixed expectedCosts.",
+    "Find the actual project name input by its exact current value, edit it, and explicitly Save through a fresh toolbar callback.",
+    "Inspect the actual CAS patch fields against expectedCosts, stable component_id and authored shape, expectedUpdatedAt synthetic-v1, saved reply synthetic-v2, exactly one source write and one Builder call.",
+    "The genuine-free case must persist numeric zero, not skip the save or replace it with a default.",
+    "Do not stub calculators, money, catalog integrity, acknowledged-version state or save-session. Boundary and closed visual-leaf stubs are allowed.",
+    "Fail unexpected SDK/network access and assert counters remain zero; build must show the actual page and exact one-file candidate source."
+  ],
+  "browserAssertions": [
+    "Render the actual current FoundationWallsPanel, FoundationBOM, and FoundationRatesPanel using real styled primitives and CSS; only the closed WallShapeEditor may be stubbed.",
+    "Drive every displayed calculation with actual calcProject and the candidate wallCalculator, not prefilled amounts.",
+    "Scope the displayed wall total to its own panel and compare every BOM cell to the fixed bomRows for that case.",
+    "In actual Rates in Use, assert the wall_labor_rate and wall_mortar_cost_per_bag numeric values equal the case settings; no positive default may replace a zero.",
+    "No Saved amounts or Pricing unavailable notices for these fully configured valid cases.",
+    "No horizontal page overflow, console errors, duplicate-key warnings, external requests, fetch or XHR operations.",
+    "Capture a screenshot and complete input/acknowledged/calculated before/after snapshot for each case and width; the state must remain identical.",
+    "Use exact-origin routing and network traps before navigation; preserve all source hashes and full import-edge proof.",
+    "No business-record operations, paid AI calls, app source writes, publishing, deployment, schemas or v2 activation."
+  ],
+  "pageCaseCount": 5,
+  "browserCaseCount": 10
+}

@@ -1,0 +1,18 @@
+10c10
+< export default function FoundationTemplateDialog({ open, mode, onClose, project, onApply }) {
+---
+> export default function FoundationTemplateDialog({ open, mode, onClose, project, onApply, saveDisabled = false, saveDisabledReason = "" }) {
+95a96
+>     if (saveDisabled) return null;
+171a173
+>       setError(null);
+202a205,209
+>             {saveDisabled ? (
+>               <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+>                 {saveDisabledReason || "Saving a template is not available right now."}
+>               </p>
+>             ) : null}
+209c216
+<                 disabled={busy}
+---
+>                 disabled={busy || saveDisabled}

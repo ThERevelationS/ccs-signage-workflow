@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { ChevronDown, ChevronRight, ExternalLink, Briefcase, User, Clipboard, MapPin, Clock, AlertTriangle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronDown, ChevronRight, ExternalLink, Briefcase, User, Clipboard, MapPin, Clock, AlertTriangle, Trash2, Loader2 } from "lucide-react";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -16,8 +17,9 @@ import PermitLineNotesSection from "./PermitLineNotesSection";
 import PermitJobDocuments from "./PermitJobDocuments";
 import InlineEditField from "./InlineEditField";
 import LocalityPickerDialog from "./LocalityPickerDialog";
-import { getPermitGroupProgress, PERMIT_QUEUE_META } from "./permitQueue";
-import { summarizePermitGroupAuthorityCoverage, summarizePermitLineOfficeAuthority, legacyOfficeLinkOptions } from "@/shared/permittingAddressLocality.js";
+import PermitSetupWizard from "./PermitSetupWizard";
+import { getPermitGroupProgress, isPermitLineEffectivelyComplete, PERMIT_QUEUE_META } from "./permitQueue";
+import { summarizePermitGroupAuthorityCoverage, summarizePermitLineOfficeAuthority, legacyOfficeLinkOptions, officeResearchStatusLine } from "@/shared/permittingAddressLocality.js";
 
 const LIFECYCLE_PROGRESS_TONES = {
   neutral: "border-slate-200 bg-white text-slate-600",
@@ -34,6 +36,9 @@ export default function PermitClientGroup({
   onUpdateNotes,
   onUpdateLocality,
   onSelectLocalityForWorkOrder,
+  onQueueLocalityApply,
+  onRemoveLocality,
+  onRefreshLines,
   onLinkLegacyOffice,
   onOpenWorkOrder,
   onShowLocalityInfo,
@@ -48,25 +53,91 @@ export default function PermitClientGroup({
   users,
   taskDescriptions,
   today,
+  sharedOfficeCount = 0,
+  onSearchLocality,
   queueState,
   expanded: controlledExpanded,
   onExpandedChange
 }) {
-  const [internalExpanded, setInternalExpanded] = useState(true);
+  const expandKey = `permitting_expanded_${group?.work_order_id || "unknown"}`;
+  const [internalExpanded, setInternalExpanded] = useState(() => {
+    try { const saved = localStorage.getItem(expandKey); return saved == null ? true : saved === "1"; } catch { return true; }
+  });
   const [showLocalityPicker, setShowLocalityPicker] = useState(false);
+  const [showSetupWizard, setShowSetupWizard] = useState(false);
+  const [wizardStep, setWizardStep] = useState(3);
+  // Collapse/expand all lines — rows persist their own expanded state in
+  // localStorage, so this stamps every line's key and remounts the list.
+  const [compactNonce, setCompactNonce] = useState(0);
+  const setAllLinesExpanded = (open) => {
+    (group.lines || []).forEach(li => { try { localStorage.setItem(`permitline_expanded_${li.id}`, open ? "1" : "0"); } catch {} });
+    setCompactNonce(n => n + 1);
+  };
   const [stageFixOpen, setStageFixOpen] = useState(false);
   const [stageFixSaving, setStageFixSaving] = useState(false);
   const [showAllReadinessIssues, setShowAllReadinessIssues] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState(null);
+  // "Mark all submitted" asks with a styled dialog — never window.confirm.
+  const [markSentAsk, setMarkSentAsk] = useState(null);
   const expanded = controlledExpanded ?? internalExpanded;
   const setExpanded = (nextExpanded) => {
     if (onExpandedChange) onExpandedChange(nextExpanded);
-    else setInternalExpanded(nextExpanded);
+    else { setInternalExpanded(nextExpanded); try { localStorage.setItem(expandKey, nextExpanded ? "1" : "0"); } catch {} }
   };
   const wo = group.work_order;
   const hasLines = group.lines.length > 0;
+  // The job's applied office — only defined when every line shares one
+  // locality, which is what "remove the office from this job" means.
+  const lineLocalityIds = [...new Set(group.lines.map(li => String(li.locality_id || '')).filter(Boolean))];
+  const appliedLocality = lineLocalityIds.length === 1 ? (localities || []).find(l => l.id === lineLocalityIds[0]) : null;
+  const removeLocalityTargets = lineLocalityIds.map(id => {
+    const lines = group.lines.filter(line => String(line.locality_id || "") === id);
+    const locality = (localities || []).find(item => String(item.id) === id);
+    return {
+      id,
+      name: locality?.name || lines.find(line => line.locality_name)?.locality_name || "this jurisdiction",
+      count: lines.length,
+    };
+  });
+  const pendingLocalityName = String(wo?.pending_permit_locality_name || '').trim();
+  const pendingLocalityId = String(wo?.pending_permit_locality_id || '').trim();
+  // Live pending-apply status — a static chip says nothing, so poll the
+  // locality: show verification progress, and the moment the worker consumes
+  // this job's pending_applies entry reload the page data so the finished
+  // lines appear without a manual refresh.
+  const [pendStatus, setPendStatus] = useState('');
+  const pendFiredRef = useRef(false);
+  useEffect(() => { pendFiredRef.current = false; }, [pendingLocalityId]);
+  useEffect(() => {
+    if (!pendingLocalityId || !group?.work_order_id || !isRegistered) { setPendStatus(''); return; }
+    let dead = false;
+    const tick = async () => {
+      // Hidden tabs don't need the office-watch status line — skip the reads.
+      if (document.hidden) return;
+      const loc = await staffEntities.PermitLocality.get(pendingLocalityId).catch(() => null);
+      if (dead || !loc?.id) return;
+      const stillQueued = (Array.isArray(loc.pending_applies) ? loc.pending_applies : [])
+        .some(p => String(p?.work_order_id || '') === String(group.work_order_id));
+      if (!stillQueued) {
+        if (!pendFiredRef.current) { pendFiredRef.current = true; onRefreshLines?.(); }
+        return;
+      }
+      const prof = loc.jurisdiction_profile_id
+        ? await staffEntities.JurisdictionProfile.get(loc.jurisdiction_profile_id).catch(() => null)
+        : null;
+      if (dead) return;
+      setPendStatus(officeResearchStatusLine(loc, prof));
+    };
+    tick();
+    const iv = setInterval(tick, 12000);
+    return () => { dead = true; clearInterval(iv); };
+  }, [pendingLocalityId, group?.work_order_id, isRegistered]);
   const readiness = group.readiness || { blockers: [], reviews: [], issueCount: 0, hasBlockers: false, hasIssues: false };
   const progress = getPermitGroupProgress(group, today);
   const authorityCoverage = summarizePermitGroupAuthorityCoverage(group.lines, localities);
+  const authorityNeedsCheck = authorityCoverage.some(
+    ({ authority }) => authority?.coverage_status && authority.coverage_status !== 'configured_offices_reviewed'
+  );
 
   // Est/Inv # — prefer corbridge_invoice_number, else est_inv_at
   const estInvNumber = wo?.corbridge_invoice_number || wo?.est_inv_at || "";
@@ -102,12 +173,25 @@ export default function PermitClientGroup({
             {wo?.client_name || "—"}
           </div>
           <div className="text-[10px] text-gray-400 flex-shrink-0">
-            {hasLines ? `${group.lines.length} line${group.lines.length === 1 ? '' : 's'}` : 'No lines'}
+            {hasLines ? `${group.lines.length} line${group.lines.length === 1 ? '' : 's'}` : (expanded ? 'No lines' : 'Tap to set up')}
           </div>
         </div>
 
         {/* Row 2: job metadata — fields wrap onto their own line instead of clipping */}
         <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 pl-6">
+
+        {/* Live auto-apply indicator — visible collapsed AND expanded so
+            background work is always on screen, not buried in the body. */}
+        {pendingLocalityName && (
+          <span
+            className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-800 max-w-full"
+            onClick={e => e.stopPropagation()}
+            title={pendStatus || `Auto-applying ${pendingLocalityName} when its offices verify`}
+          >
+            <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" />
+            <span className="truncate">{pendStatus || `${pendingLocalityName} — auto-applying when offices verify`}</span>
+          </span>
+        )}
 
         {/* Est/Inv # — editable text + external link */}
         <div className="flex items-center gap-1 text-[11px] flex-shrink-0" onClick={e => e.stopPropagation()}>
@@ -187,6 +271,35 @@ export default function PermitClientGroup({
           <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-semibold ${PERMIT_QUEUE_META[queueState.key]?.className || "border-gray-200 bg-gray-50 text-gray-700"}`}>
             {PERMIT_QUEUE_META[queueState.key]?.label || "Permit"}
           </span>
+          {group.lines.some(li => li.urgent) && (
+            <span className="inline-flex items-center rounded-full border border-red-400 bg-red-100 px-2 py-0.5 font-bold text-red-800">⚠ URGENT</span>
+          )}
+          {sharedOfficeCount > 1 && (
+            <button
+              type="button"
+              onClick={() => { const name = String(group.lines[0]?.locality_name || "").trim(); if (name && onSearchLocality) onSearchLocality(name); }}
+              className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-700 hover:bg-indigo-100"
+              title="Show the other jobs that use this same permit office"
+            >
+              Same office as {sharedOfficeCount - 1} other{sharedOfficeCount - 1 === 1 ? "" : "s"}
+            </button>
+          )}
+          {isRegistered && wo && hasLines && (
+            <button
+              type="button"
+              className="inline-flex items-center rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 font-semibold text-violet-800 hover:bg-violet-100"
+              title="Build an AI permit plan for this job from its town's checked rules"
+              onClick={() => { setWizardStep(2); setShowSetupWizard(true); }}
+            >AI plan</button>
+          )}
+          {isRegistered && group.lines.length > 1 && group.lines.some(li => !li.submitted_date && !isPermitLineEffectivelyComplete(li)) && (
+            <button
+              type="button"
+              className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800 hover:bg-emerald-100"
+              title="Mark every pending line in this job as submitted today"
+              onClick={() => setMarkSentAsk(group.lines.filter((li) => !li.submitted_date && !isPermitLineEffectivelyComplete(li)))}
+            >Mark all submitted</button>
+          )}
           {queueState.timingLabel && (
             <span className={`inline-flex items-center gap-1 font-semibold ${queueState.key === "overdue" ? "text-red-700" : queueState.key === "due_today" ? "text-amber-700" : "text-gray-500"}`}>
               <Clock className="w-3 h-3" /> {queueState.timingLabel}
@@ -211,11 +324,39 @@ export default function PermitClientGroup({
               )}
             </>
           )}
+          {!expanded && readiness.hasBlockers && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+              className="inline-flex items-center gap-1 rounded-full border border-red-300 bg-red-50 px-2 py-0.5 font-semibold text-red-800 hover:bg-red-100"
+            >
+              <AlertTriangle className="w-3 h-3" /> {readiness.blockers.length} blocker{readiness.blockers.length === 1 ? "" : "s"}
+            </button>
+          )}
+          {!expanded && !readiness.hasBlockers && readiness.reviews.length > 0 && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+              className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 font-semibold text-amber-800 hover:bg-amber-100"
+            >
+              {readiness.reviews.length} to review
+            </button>
+          )}
+          {!expanded && authorityNeedsCheck && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+              className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 font-semibold text-amber-800 hover:bg-amber-100"
+            >
+              office check
+            </button>
+          )}
           <span className="font-semibold text-gray-600">Next:</span>
           <span className="text-gray-700">{queueState.nextAction}</span>
         </div>
       )}
 
+      {expanded && (<>
       {progress.totalCount > 1 && (
         <div className="border-b bg-slate-50/70 px-3 py-2 text-xs">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -238,7 +379,7 @@ export default function PermitClientGroup({
             {progress.handoffApplicableCount > 0 && (
               <span
                 className={`ml-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:ml-auto ${progress.handoffBlockedCount > 0 ? "border-red-200 bg-red-50 text-red-800" : progress.handoffIssueCount > 0 ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}
-                title="Handoff readiness uses only recorded permit facts and does not change workflow status."
+                title="How many lines have everything filled in for handoff — this doesn't change any status."
               >
                 Handoff {progress.handoffReadyCount}/{progress.handoffApplicableCount} ready
               </span>
@@ -305,19 +446,19 @@ export default function PermitClientGroup({
         <div className="border-b border-amber-200 bg-amber-50/70 px-3 py-2 text-xs" role="status">
           <div className="mb-1 flex items-center gap-1.5 font-semibold text-amber-950">
             <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
-            Authority review — configured offices only, not complete legal coverage
+            Office check — only the offices we have on file; there may be more
           </div>
           {authorityCoverage.map(({ locality_id, locality_name, authority }) => (
             <div key={locality_id || 'unlinked'} className="mt-1 text-amber-950">
               <strong>{locality_name}:</strong>{' '}
               {authority.coverage_status === 'configured_offices_reviewed' ? (
-                <span>All configured offices staff-reviewed; additional required authorities may still exist.</span>
+                <span>All offices here are staff-checked — other offices may still be needed.</span>
               ) : authority.coverage_status === 'partial' ? (
-                <span>{authority.verified_office_count} configured office(s) verified; {authority.other_office_count} still need review.</span>
+                <span>{authority.verified_office_count} office(s) verified — {authority.other_office_count} still need a check.</span>
               ) : authority.coverage_status === 'not_verified' ? (
-                <span>No staff-verified authority; configured offices still need review.</span>
+                <span>No verified offices yet — they still need a check.</span>
               ) : authority.coverage_status === 'not_configured' ? (
-                <span>No configured offices; permitting authority not established.</span>
+                <span>No offices set up — we don't know who issues the permit.</span>
               ) : (
                 <span>Locality link missing or unavailable; review this permit line.</span>
               )}
@@ -329,38 +470,159 @@ export default function PermitClientGroup({
               )}
             </div>
           ))}
+          {authorityCoverage.map(({ locality_id }) => {
+            const loc = localities?.find((l) => l.id === locality_id);
+            return (loc?.offices || []).map((o) => (
+              <div
+                key={`${locality_id}-${o.id || o.name}`}
+                className={`mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-amber-950 ${
+                  group.lines.some(line => String(line.locality_id || "") === String(locality_id || "")
+                    && String(line.locality_office_id || "") === String(o.id || "")) ? "" : "opacity-60"
+                }`}
+              >
+                <span className="font-semibold">{o.name || "Office"}</span>
+                {group.lines.some(line => String(line.locality_id || "") === String(locality_id || "")
+                  && String(line.locality_office_id || "") === String(o.id || "")) ? (
+                  <span className="rounded-full border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[9px] font-semibold text-indigo-700">tracked</span>
+                ) : (
+                  <span className="text-[10px] text-gray-500">no permit line</span>
+                )}
+                <span
+                  className="text-[9px]"
+                  title={o.authority_verification_status === 'staff_verified' ? 'Verified by our team' : o.authority_verification_status ? `Status: ${String(o.authority_verification_status).replaceAll('_', ' ')}` : 'Not verified yet'}
+                >
+                  {o.authority_verification_status === 'staff_verified' ? '●●●' : o.authority_verification_status ? '●●○' : '●○○'}
+                </span>
+                {o.contact_phone && <a className="underline" href={`tel:${String(o.contact_phone).replace(/[^+\d]/g, "")}`}>{o.contact_phone}</a>}
+                {o.contact_website && <a className="underline" href={o.contact_website} target="_blank" rel="noopener noreferrer">Permit portal ↗</a>}
+                {o.contact_address && <a className="underline" href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(o.contact_address)} target="_blank" rel="noopener noreferrer">Directions ↗</a>}
+                <button
+                  type="button"
+                  className="underline"
+                  title="Read this office's details aloud"
+                  onClick={(e) => { e.stopPropagation(); try { speechSynthesis.speak(new SpeechSynthesisUtterance(`${o.name || "Office"}. Phone ${o.contact_phone || "not on file"}. ${o.contact_address || ""}`)); } catch {} }}
+                >
+                  Read aloud
+                </button>
+              </div>
+            ));
+          })}
+          {authorityCoverage.map(({ locality_id }) => {
+            const loc = localities?.find((l) => l.id === locality_id);
+            const last = (loc?.change_log || []).slice(-1)[0];
+            return last ? (
+              <p key={`log-${locality_id}`} className="mt-1 text-[10px] text-amber-800">
+                Updated {String(last.at || '').slice(0, 10)}{last.by ? ` by ${last.by}` : ''}: {(last.changed_fields || []).join(', ').replaceAll('_', ' ') || 'details'}
+              </p>
+            ) : null;
+          })}
+          <button
+            type="button"
+            className="mt-1.5 text-[10px] font-semibold text-amber-800 underline hover:text-amber-950"
+            onClick={() => {
+              const blocks = authorityCoverage.map(({ locality_id, locality_name }) => {
+                const loc = localities?.find((l) => l.id === locality_id);
+                const offices = (loc?.offices || []).map((o) =>
+                  `${o.name || "Office"} (${(o.office_types || []).join(", ") || "general"}) — ${o.contact_phone || "no phone"} — ${o.contact_website || "no link"}`
+                );
+                return `${locality_name}\n${offices.length ? offices.join("\n") : "  (no offices configured)"}`;
+              });
+              navigator.clipboard?.writeText(blocks.join("\n\n")).catch(() => {});
+            }}
+          >
+            Copy office contact info
+          </button>
         </div>
       )}
+      </>)}
 
       {/* EXPANDED BODY */}
       {expanded && (
         <div>
-          {hasLines&&<div className="px-4 py-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>setShowLocalityPicker(true)}>Check jurisdiction…</Button></div>}
+          {pendingLocalityName && (
+            <div className="px-4 py-2">
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-900">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                {pendStatus || `${pendingLocalityName} — applying automatically when its offices verify`}
+              </span>
+            </div>
+          )}
+          {hasLines&&<div className="px-4 py-2 flex flex-wrap items-center gap-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>{setWizardStep(3);setShowSetupWizard(true);}}>Edit permit setup…</Button>
+            {group.lines.length > 2 && (
+              <>
+                <button type="button" onClick={() => setAllLinesExpanded(false)} className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600">compact all</button>
+                <button type="button" onClick={() => setAllLinesExpanded(true)} className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600">expand all</button>
+              </>
+            )}
+            {onRemoveLocality && removeLocalityTargets.map(target => (
+              <Button key={target.id} type="button" variant="outline" className="min-h-11 text-xs gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" disabled={!isRegistered} onClick={() => setRemoveTarget(target)}>
+                <Trash2 className="w-3 h-3" /> Remove {target.name}
+              </Button>
+            ))}
+
+            {(() => {
+
+              const latest = [...(appliedLocality?.office_change_log || [])].pop();
+
+              if (!latest?.at) return null;
+
+              const fresh = Date.now() - new Date(latest.at).getTime() < 14 * 864e5;
+
+              return (
+
+                <span
+
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium ${fresh ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-gray-200 bg-gray-50 text-gray-500'}`}
+
+                  title={`Office data last changed ${latest.at}`}
+
+                >
+
+                  <AlertTriangle className={`w-3.5 h-3.5 ${fresh ? '' : 'opacity-40'}`} />
+
+                  Office info changed{latest.summary ? ` — ${latest.summary}` : ''}
+
+                </span>
+
+              );
+
+            })()}
+
+          </div>}
           {!hasLines ? (
             <div className="px-4 py-4 bg-gray-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
-              <span className="text-xs text-gray-500">Choose the jurisdiction for this job:</span>
+              <span className="text-xs text-gray-500"><strong className="text-gray-700">Next step:</strong> set up this job's permit — office, lines, and an AI plan in one pass.</span>
               <Button
-                onClick={() => setShowLocalityPicker(true)}
+                onClick={() => { setWizardStep(0); setShowSetupWizard(true); }}
                 disabled={!isRegistered}
                 size="sm"
-                variant="outline"
-                className="min-h-11 text-xs gap-1 border-purple-300 text-purple-700 hover:bg-purple-50"
+                className="min-h-11 text-xs gap-1 bg-purple-600 text-white hover:bg-purple-700"
               >
-                <MapPin className="w-3.5 h-3.5" /> Choose jurisdiction…
+                <MapPin className="w-3.5 h-3.5" /> New permit setup…
               </Button>
+              <button type="button" onClick={() => setShowLocalityPicker(true)} disabled={!isRegistered}
+                className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600 disabled:opacity-40">
+                advanced lookup
+              </button>
             </div>
           ) : (
             <>
               <div className="divide-y">
-                {group.lines.map(li => (
+                {[...group.lines].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((li, idx, sorted) => (
+                  <div key={`${li.id}:${compactNonce}`} className="flex items-stretch gap-0">
+                    <div className="flex flex-col justify-center pl-1 pr-0.5">
+                      <button type="button" disabled={idx === 0 || !isRegistered} className="text-[10px] text-gray-400 hover:text-purple-700 disabled:opacity-20" title="Move up" onClick={() => onUpdateField(li.id, "order", (sorted[idx-1]?.order ?? idx-1) - 0.5)}>▲</button>
+                      <button type="button" disabled={idx === sorted.length - 1 || !isRegistered} className="text-[10px] text-gray-400 hover:text-purple-700 disabled:opacity-20" title="Move down" onClick={() => onUpdateField(li.id, "order", (sorted[idx+1]?.order ?? idx+1) + 0.5)}>▼</button>
+                    </div>
+                    <div className="min-w-0 flex-1">
                   <PermitSpreadsheetRow
-                    key={li.id}
                     lineItem={li}
                     onUpdateStep={onUpdateStep}
                     onUpdateField={onUpdateField}
                     onShowLocalityInfo={onShowLocalityInfo}
                     onShowJurisdictionInfo={onShowJurisdictionInfo}
                     localityState={localities?.find((locality) => locality.id === li.locality_id)?.state || ""}
+                    locality={localities?.find((locality) => locality.id === li.locality_id) || null}
                     officeAuthority={summarizePermitLineOfficeAuthority(li, localities)}
                     legacyOfficeOptions={legacyOfficeLinkOptions(li, localities)}
                     onLinkLegacyOffice={onLinkLegacyOffice}
@@ -369,7 +631,10 @@ export default function PermitClientGroup({
                     users={users}
                     currentUser={currentUser}
                     today={today}
+                    installDate={wo?.project_install_date || ""}
                   />
+                    </div>
+                  </div>
                 ))}
               </div>
 
@@ -434,8 +699,84 @@ export default function PermitClientGroup({
           onApply={(localityId, opts) => {
             onSelectLocalityForWorkOrder(group.work_order_id, localityId, opts);
           }}
+          onPendingApply={(localityId, opts) => {
+            onQueueLocalityApply?.(group.work_order_id, localityId, opts);
+          }}
         />
       )}
+
+      {showSetupWizard && (
+        <PermitSetupWizard
+          isOpen={showSetupWizard}
+          onClose={() => setShowSetupWizard(false)}
+          initialStep={wizardStep}
+          workOrder={wo}
+          existingLines={group.lines}
+          localities={localities}
+          onApply={(localityId, opts) => {
+            return onSelectLocalityForWorkOrder(group.work_order_id, localityId, opts);
+          }}
+          onPendingApply={(localityId, opts) => {
+            return onQueueLocalityApply?.(group.work_order_id, localityId, opts);
+          }}
+          onRemoveLocality={onRemoveLocality ? (localityId) => onRemoveLocality(group.work_order_id, localityId) : null}
+          onDeleteLines={async ids => {
+            for (const id of ids) await onDeleteLine?.(id);
+          }}
+        />
+      )}
+
+      {/* Remove this job's applied office — deletes only this job's permit
+          lines for that locality; the office record itself is untouched, so
+          searching the address again re-suggests the same office. */}
+      {/* Batch "sent today" — a deliberate confirm because this drives the
+          permit_submitted automation for every pending line at once. */}
+      <AlertDialog open={!!markSentAsk} onOpenChange={(o) => { if (!o) setMarkSentAsk(null); }}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark {markSentAsk?.length || 0} application{(markSentAsk?.length || 0) === 1 ? '' : 's'} as sent?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This stamps today's date on every pending permit line for this job. Only confirm if you really sent {(markSentAsk?.length || 0) === 1 ? 'it' : 'them all'} to the office.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Not yet</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const today = new Date().toISOString().slice(0, 10);
+                for (const li of markSentAsk || []) onUpdateField(li.id, "submitted_date", today);
+                setMarkSentAsk(null);
+              }}
+            >
+              Yes — I sent them
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!removeTarget} onOpenChange={(open) => { if (!open) setRemoveTarget(null); }}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove {removeTarget?.name || 'this jurisdiction'} from this job?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This deletes {removeTarget?.count || 0} permit line{removeTarget?.count === 1 ? '' : 's'} linked to {removeTarget?.name || 'this jurisdiction'} on this job only — the office record itself stays saved, so searching the address again will find it if it is still the right one.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep jurisdiction</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                const target = removeTarget;
+                setRemoveTarget(null);
+                if (target?.id) onRemoveLocality(group.work_order_id, target.id);
+              }}
+            >
+              Remove jurisdiction
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

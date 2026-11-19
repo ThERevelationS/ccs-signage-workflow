@@ -26,14 +26,14 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { base44 } from "@/api/base44Client";
 import { UploadFile, ExtractDataFromUploadedFile } from "@/integrations/Core";
 import { Upload, X, Plus, Check, Trash2, Eye, EyeOff, Circle, CheckCircle2, FileSearch, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/components/auth/EmailGate";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
+import { CcsDateField, CcsTimeField } from "@/components/ui/ccs-date-field";
 
 const TEAM_MEMBERS = [
   "Carl",
@@ -57,10 +57,9 @@ export default function WorkOrderForm({
   lockedStage = null,
   initialData = null, // For duplicating - prefill form with this data
   existingWorkOrders = [], // For duplicate detection
-  key // Force re-render when duplicating
+  key: _key // Force re-render when duplicating
 }) {
   const { currentUser, sessionToken } = useAuth();
-  const [users, setUsers] = useState([]);
   const [authorizedUsers, setAuthorizedUsers] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [customName, setCustomName] = useState("");
@@ -170,7 +169,7 @@ export default function WorkOrderForm({
     
     // If initialData provided (for duplicating), merge it
     if (initialData) {
-      const { id, created_date, updated_date, created_by, ...dataWithoutId } = initialData;
+      const { id: _id, created_date: _cd, updated_date: _ud, created_by: _cb, ...dataWithoutId } = initialData;
       let notes = dataWithoutId.notes || [];
       if (typeof notes === 'string' && notes.trim()) {
         notes = [{
@@ -202,7 +201,7 @@ export default function WorkOrderForm({
   // Reset form when dialog opens with new initialData (for duplicating)
   useEffect(() => {
     if (isOpen && initialData && !workOrder) {
-      const { id, created_date, updated_date, created_by, ...dataWithoutId } = initialData;
+      const { id: _id, created_date: _cd, updated_date: _ud, created_by: _cb, ...dataWithoutId } = initialData;
       let notes = dataWithoutId.notes || [];
       if (typeof notes === 'string' && notes.trim()) {
         notes = [{
@@ -227,8 +226,13 @@ export default function WorkOrderForm({
   }, [isOpen, initialData]);
 
   useEffect(() => {
-    loadUsers();
-    loadProductTypes();
+    // loadUsers() used to fetch the platform User catalog here, but the
+    // result was never read — the assignee picker uses authorizedUsers.
+    // Product types are only needed inside the open form, so the catalog
+    // load waits for isOpen instead of firing on every board page mount.
+    if (isOpen) {
+      loadProductTypes();
+    }
     
     // Handle custom name for initialData (duplicating)
     if (initialData && initialData.assigned_to && !TEAM_MEMBERS.includes(initialData.assigned_to)) {
@@ -280,23 +284,10 @@ export default function WorkOrderForm({
     }
   }, [workOrder, isRider, parentWorkOrder, lockedStage, initialData]);
 
-  const loadUsers = async () => {
-    try {
-      const usersList = await loadAllEntityRows({
-        entity: base44.entities.User,
-        sort: null,
-        label: "Work Order form app users",
-      });
-      setUsers(usersList);
-    } catch (e) {
-      console.error("Error loading users:", e);
-    }
-  };
-
   const loadProductTypes = async () => {
     try {
       const setting = await loadSingleGlobalSetting({
-        entity: base44.entities.GlobalSettings,
+        entity: staffEntities.GlobalSettings,
         settingKey: "productTypes",
         label: "Work Order product types",
       });
@@ -766,8 +757,7 @@ export default function WorkOrderForm({
               </div>
               <div>
                 <Label className="font-semibold">Initial Contact Date</Label>
-                <Input
-                  type="date"
+                <CcsDateField
                   value={formData.start_date}
                   onChange={(e) => handleChange("start_date", e.target.value)}
                   className="mt-1"
@@ -791,8 +781,7 @@ export default function WorkOrderForm({
               <div className="grid grid-cols-3 gap-2">
                 <div>
                   <Label className="font-semibold text-xs">Site Survey Date</Label>
-                  <Input
-                    type="date"
+                  <CcsDateField
                     value={formData.site_survey_date}
                     onChange={(e) => handleChange("site_survey_date", e.target.value)}
                     className="mt-1"
@@ -800,8 +789,7 @@ export default function WorkOrderForm({
                 </div>
                 <div>
                   <Label className="font-semibold text-xs">Time</Label>
-                  <Input
-                    type="time"
+                  <CcsTimeField
                     value={formData.site_survey_time}
                     onChange={(e) => handleChange("site_survey_time", e.target.value)}
                     className="mt-1"
@@ -1057,8 +1045,7 @@ export default function WorkOrderForm({
                   </label>
                   <div className="flex items-center gap-1 ml-2">
                     <Label className="text-xs">Due Date:</Label>
-                    <Input
-                      type="date"
+                    <CcsDateField
                       value={formData.due_date}
                       onChange={(e) => handleChange("due_date", e.target.value)}
                       className="w-36 h-7"

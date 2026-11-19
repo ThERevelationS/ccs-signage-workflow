@@ -1,6 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
+import { isOwnerRecord, isOwnerEmail, roleLabelFor } from '../../shared/ownerRole.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { runDeletionImpactChecks } from '../../shared/deletionImpactBoundedChecks.mjs';
 
@@ -67,7 +69,10 @@ function adminUserView(row: any) {
     can_approve_quotes: row?.can_approve_quotes === true,
     employment_type: row?.employment_type || 'hourly',
     can_work_pause: row?.can_work_pause === true,
-    is_full_admin: row?.is_full_admin === true,
+    can_self_approve_shifts: row?.role === 'admin' && row?.can_self_approve_shifts === true,
+    is_owner: isOwnerRecord(row),
+    role_label: roleLabelFor(row),
+    is_full_admin: row?.is_full_admin === true || isOwnerRecord(row),
     admin_permissions: row?.admin_permissions && typeof row.admin_permissions === 'object' && !Array.isArray(row.admin_permissions) ? row.admin_permissions : {},
     hr_data: row?.hr_data && typeof row.hr_data === 'object' && !Array.isArray(row.hr_data) ? row.hr_data : {},
     onboarding_complete: row?.onboarding_complete === true,
@@ -109,6 +114,11 @@ function cleanManagedFields(value: any) {
   if (Object.prototype.hasOwnProperty.call(input, 'can_import_export')) out.can_import_export = input.can_import_export === true;
   if (Object.prototype.hasOwnProperty.call(input, 'can_order_export')) out.can_order_export = input.can_order_export === true;
   if (Object.prototype.hasOwnProperty.call(input, 'can_view_resources')) out.can_view_resources = input.can_view_resources === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'notification_prefs')) {
+    const prefs = input.notification_prefs && typeof input.notification_prefs === 'object' && !Array.isArray(input.notification_prefs)
+      ? input.notification_prefs : {};
+    out.notification_prefs = { automation_emails: prefs.automation_emails !== false };
+  }
   if (Object.prototype.hasOwnProperty.call(input, 'can_approve_quotes')) out.can_approve_quotes = input.can_approve_quotes === true;
   if (Object.prototype.hasOwnProperty.call(input, 'employment_type')) {
     const employmentType = String(input.employment_type || '');
@@ -116,7 +126,11 @@ function cleanManagedFields(value: any) {
     out.employment_type = employmentType;
   }
   if (Object.prototype.hasOwnProperty.call(input, 'can_work_pause')) out.can_work_pause = input.can_work_pause === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'can_self_approve_shifts')) out.can_self_approve_shifts = input.can_self_approve_shifts === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'force_password_reset')) out.force_password_reset = input.force_password_reset === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'is_deactivated')) out.is_deactivated = input.is_deactivated === true;
   if (Object.prototype.hasOwnProperty.call(input, 'is_full_admin')) out.is_full_admin = input.is_full_admin === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'is_owner')) out.is_owner = input.is_owner === true;
   if (Object.prototype.hasOwnProperty.call(input, 'admin_permissions')) {
     const perms = input.admin_permissions;
     if (!perms || typeof perms !== 'object' || Array.isArray(perms) || JSON.stringify(perms).length > 20000) {
@@ -128,6 +142,7 @@ function cleanManagedFields(value: any) {
   if (!Object.keys(out).length) throw Object.assign(new Error('No supported user fields were supplied.'), { status: 400 });
   if (out.role === 'admin') out.can_view_resources = true;
   if (out.role === 'user') out.can_order_export = false;
+  if (out.role === 'user') out.can_self_approve_shifts = false;
   return out;
 }
 
@@ -256,20 +271,22 @@ async function countIdentityReferences(base44: any, entityName: string, identiti
   return rows.filter((row: any) => recordReferencesIdentity(row, identities, keys)).length;
 }
 
-async function deletionImpactReport(base44: any, Request: any, requestId: string) {
-  if (!requestId) throw Object.assign(new Error('Deletion request identity is required.'), { status: 400 });
-  const request = await Request.get(requestId).catch(() => null);
-  if (!request?.id) throw Object.assign(new Error('Deletion request no longer exists.'), { status: 404 });
+async function deletionImpactReport(base44: any, Request: any, requestId: string, directTarget: any = null) {
+  let request: any = null;
+  if (requestId) {
+    request = await Request.get(requestId).catch(() => null);
+    if (!request?.id) throw Object.assign(new Error('Deletion request no longer exists.'), { status: 404 });
+  }
 
-  const email = cleanEmail(request.user_email);
-  const authorizedId = String(request.authorized_email_id || '').trim();
+  const email = cleanEmail(request?.user_email || directTarget?.email);
+  const authorizedId = String(request?.authorized_email_id || directTarget?.authorized_id || '').trim();
   if (!email || !authorizedId) {
-    throw Object.assign(new Error('Deletion request identity is incomplete.'), { status: 409 });
+    throw Object.assign(new Error('Deletion target identity is incomplete.'), { status: 409 });
   }
 
   const authorized = await base44.asServiceRole.entities.AuthorizedEmail.get(authorizedId).catch(() => null);
   const authorizedMatches = !!authorized?.id && cleanEmail(authorized.email) === email;
-  const displayName = cleanText(authorized?.full_name || request.user_name, 500);
+  const displayName = cleanText(authorized?.full_name || request?.user_name || directTarget?.name, 500);
   const identities = new Set([email, displayName.toLowerCase()].filter(Boolean));
 
   const base44UsersRaw = await base44.asServiceRole.entities.User.filter({ email });
@@ -326,7 +343,7 @@ async function deletionImpactReport(base44: any, Request: any, requestId: string
   if (workOrders + generalTasks + calendarEvents > 0) blockers.push('Live workflow/task/calendar references exist and need reassignment or archival treatment.');
 
   return {
-    request: adminDeletionRequestView(request),
+    request: request ? adminDeletionRequestView(request) : null,
     target: {
       authorized_email_id: authorizedId,
       authorized_email_exists: authorizedMatches,
@@ -473,7 +490,9 @@ async function createUser(AuthorizedEmail: any, input: any) {
     can_view_resources: role === 'admin' ? true : input?.can_view_resources === true,
     employment_type: EMPLOYMENT_TYPES.has(String(input?.employment_type || 'hourly')) ? String(input.employment_type || 'hourly') : 'hourly',
     can_work_pause: input?.can_work_pause === true,
+    can_self_approve_shifts: role === 'admin' && input?.can_self_approve_shifts === true,
     can_approve_quotes: input?.can_approve_quotes === true,
+    is_owner: input?.is_owner === true,
     onboarding_complete: false,
   };
 
@@ -504,7 +523,7 @@ async function createUser(AuthorizedEmail: any, input: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const actor = await authenticateSignShopSession(base44, body?.session_token);
     if (actor?.role !== 'admin') {
@@ -531,7 +550,19 @@ Deno.serve(async (req) => {
 
     if (action === 'deletion_impact') {
       const Request = base44.asServiceRole.entities.AccountDeletionRequest;
-      const impact = await deletionImpactReport(base44, Request, String(body?.request_id || '').trim());
+      const requestId = String(body?.request_id || '').trim();
+      if (!requestId) {
+        // Direct pre-delete check: the Remove User dialog verifies impact
+        // without requiring an employee-initiated deletion request.
+        const email = cleanEmail(body?.user_email);
+        const authorizedId = String(body?.authorized_email_id || '').trim();
+        if (!email || !authorizedId) {
+          return Response.json({ error: 'Deletion impact requires a request_id or a user identity.' }, { status: 400 });
+        }
+        const impact = await deletionImpactReport(base44, Request, '', { email, authorized_id: authorizedId, name: body?.user_name });
+        return Response.json({ success: true, impact });
+      }
+      const impact = await deletionImpactReport(base44, Request, requestId);
       return Response.json({ success: true, impact });
     }
 
@@ -546,6 +577,9 @@ Deno.serve(async (req) => {
       if (createWantsAdmin && actor?.is_full_admin !== true) {
         return Response.json({ error: 'Only a full admin can create administrator accounts.' }, { status: 403 });
       }
+      if (body?.data?.is_owner === true && !isOwnerRecord(actor)) {
+        return Response.json({ error: 'Only an owner can grant the Owner role.' }, { status: 403 });
+      }
       const result = await createUser(AuthorizedEmail, body?.data);
       return Response.json({ success: true, ...result });
     }
@@ -558,12 +592,54 @@ Deno.serve(async (req) => {
       const desired = cleanManagedFields(body?.next_fields);
       const touchesPrivilege = Object.prototype.hasOwnProperty.call(desired, 'role') ||
         Object.prototype.hasOwnProperty.call(desired, 'is_full_admin') ||
-        Object.prototype.hasOwnProperty.call(desired, 'admin_permissions');
+        Object.prototype.hasOwnProperty.call(desired, 'admin_permissions') ||
+        Object.prototype.hasOwnProperty.call(desired, 'is_owner');
       if (touchesPrivilege && actor?.is_full_admin !== true) {
         return Response.json({ error: 'Only a full admin can change roles or admin privileges.' }, { status: 403 });
       }
+      // Two-admin rule: promoting someone to full admin directly is blocked —
+      // it must come through an approved AccessRequest (the approve path
+      // applies grants via service-role writes and bypasses this check).
+      // Owners are the exception: the top tier may grant full admin directly.
+      if (desired.is_full_admin === true && current?.is_full_admin !== true && !isOwnerRecord(actor)) {
+        const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        let approved: any[] = [];
+        try {
+          approved = await base44.asServiceRole.entities.AccessRequest.filter({
+            requester_email: current.email, status: 'approved',
+          }) || [];
+        } catch { approved = []; }
+        const valid = (approved || []).some((r: any) =>
+          Date.parse(String(r?.decided_at || '')) >= Date.parse(dayAgo) &&
+          (Array.isArray(r?.requested_sections) && r.requested_sections.includes('full_admin')));
+        if (!valid) {
+          return Response.json({ error: 'Full-admin grants require an approved access request. Create one via request admin access, then have a second admin approve it.' }, { status: 403 });
+        }
+      }
+      // Owner tier: granting or revoking Owner requires the actor to already
+      // be an owner. Email-anchored owners (the ownerRole bootstrap list)
+      // cannot be revoked or demoted through the app — that anchor is what
+      // guarantees at least one privileged account always exists.
+      if (Object.prototype.hasOwnProperty.call(desired, 'is_owner')
+          && desired.is_owner !== isOwnerRecord(current)) {
+        if (!isOwnerRecord(actor)) {
+          return Response.json({ error: 'Only an owner can grant or revoke the Owner role.' }, { status: 403 });
+        }
+        if (desired.is_owner === false && isOwnerEmail(current.email)) {
+          return Response.json({ error: 'This account is anchored as an application owner and cannot be revoked here.' }, { status: 409 });
+        }
+      }
+      if (isOwnerRecord(current) && desired.role && desired.role !== 'admin') {
+        if (!isOwnerRecord(actor)) {
+          return Response.json({ error: 'Only an owner can demote an Owner account.' }, { status: 403 });
+        }
+        if (isOwnerEmail(current.email)) {
+          return Response.json({ error: 'This account is anchored as an application owner and cannot be demoted here.' }, { status: 409 });
+        }
+      }
       const roleBoundPermission = Object.prototype.hasOwnProperty.call(desired, 'can_order_export') ||
-        Object.prototype.hasOwnProperty.call(desired, 'can_view_resources');
+        Object.prototype.hasOwnProperty.call(desired, 'can_view_resources') ||
+        Object.prototype.hasOwnProperty.call(desired, 'can_self_approve_shifts');
       // Existing clients may not supply expected_role. They still receive a
       // conditional role guard from the loaded record at persistence time.
       const expectedRole = String(body?.expected_role || '').trim();
@@ -579,7 +655,13 @@ Deno.serve(async (req) => {
       if (desired.can_order_export === true && (desired.role || current.role) !== 'admin') {
         return Response.json({ error: 'Order Form export requires an admin account.' }, { status: 403 });
       }
+      // Self shift approval is an admin-only grant like Order Form export:
+      // role demotion revokes it and no non-admin may retain it.
+      if (desired.can_self_approve_shifts === true && (desired.role || current.role) !== 'admin') {
+        return Response.json({ error: 'Self shift approval requires an admin account.' }, { status: 403 });
+      }
       if (desired.role === 'user') desired.can_order_export = false;
+      if (desired.role === 'user') desired.can_self_approve_shifts = false;
       const expectedInput = body?.expected_fields && typeof body.expected_fields === 'object' && !Array.isArray(body.expected_fields)
         ? body.expected_fields
         : {};
@@ -588,7 +670,7 @@ Deno.serve(async (req) => {
         // Existing users predate the Order Export field. Its absent stored
         // value means false, but the conditional write must retain the actual
         // absent baseline rather than falsely treating it as a conflict.
-        const legacyUnsetOrderExport = field === 'can_order_export' && current?.[field] == null;
+        const legacyUnsetOrderExport = (field === 'can_order_export' || field === 'can_self_approve_shifts' || field === 'is_owner') && current?.[field] == null;
         const currentValue = legacyUnsetOrderExport ? false : current?.[field];
         if (!sameValue(currentValue, expectedInput[field]) && !sameValue(currentValue, desired[field])) {
           return Response.json({ error: `Authorized user changed in another session (${field}). Reload before saving.` }, { status: 409 });
@@ -613,6 +695,15 @@ Deno.serve(async (req) => {
         },
         label: `Authorized user ${email}`,
       });
+      try {
+        await base44.asServiceRole.entities.AdminAuditLog.create({
+          actor_email: actor?.email || 'unknown',
+          action: 'update_user',
+          target_email: current.email,
+          detail: Object.keys(desired).join(', '),
+          at: new Date().toISOString(),
+        });
+      } catch { /* audit logging is best-effort — never block the save */ }
       return Response.json({ success: true, record: adminUserView(saved) });
     }
 
@@ -643,6 +734,14 @@ Deno.serve(async (req) => {
       if (!expectedUpdatedDate || String(current.updated_date || '') !== expectedUpdatedDate) {
         return Response.json({ error: 'Authorized user changed in another session and was not removed.' }, { status: 409 });
       }
+      if (isOwnerRecord(current)) {
+        if (isOwnerEmail(current.email)) {
+          return Response.json({ error: 'This account is anchored as an application owner and cannot be deleted here.' }, { status: 409 });
+        }
+        if (!isOwnerRecord(actor)) {
+          return Response.json({ error: 'Only an owner can remove an Owner account.' }, { status: 403 });
+        }
+      }
       if (current.role === 'admin') await ensureAnotherAdminExists(AuthorizedEmail, id);
 
       const result = await AuthorizedEmail.deleteMany({ id, email: current.email, updated_date: expectedUpdatedDate });
@@ -660,7 +759,7 @@ Deno.serve(async (req) => {
     // Surface only this exact deadline failure to coordinate safe UI retries.
     const impactTimedOut = error?.message === 'Deletion impact scan deadline exceeded; no report was verified.';
     const status = Number(error?.status || 500);
-    const safeStatus = impactTimedOut ? 503 : [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = impactTimedOut ? 503 : [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('manageAuthorizedUsers error:', error?.message || error);
     return Response.json({
       error: impactTimedOut

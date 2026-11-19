@@ -1,0 +1,66 @@
+{
+ "jurisdiction_id": "6adef48707594cfdae046bf5",
+ "jurisdiction_name": "Smithville",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "FOOD TRUCK WAIVER OF LIABILITY This Is a legally - binding unconditional and full General Release of Liability, Waiver and Discharge made by me, _____________________________ (hereinafter referred to as the Operator) to the Village of Smithville (hereinafter referred to as the Village). In consideration of operating with The Village of Smithville, the Operator hereby agrees to release, relinquish, and waive any and all claims that they may have or may acquire, against the Village arising out of or pertaining in any way to operation of my business in conjunction therewith. Further, the Operator accepts all risk related to its sales and this Agreement, and they agree to indemnify, defend, and hold harmless the Village and the Village’s elected officials, employees, agents and the like relative to any claim for loss, damage, o r personal injury related to, or arising from, the Operator’s ac",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "844de338095307edc01d72e7afa5d0962de0c8c93f80742ed0dea796215d4c23",
+   "source_document_id": null,
+   "source_title": "844de338095307edc01d72e7afa5d0962de0c8c93f80742ed0dea796215d4c23.pdf",
+   "official_url": "https://thevillageofsmithville.com/wp-content/uploads/2025/12/2026-Food-truck-application.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Membership The Village Council will not consider applications from regular full - time or part - time Smithville employees, or seasonal, temporary, or contract employee if appointment could cause a conflict of interest. The Village Council will not appoint a Board and/or Commission member to serve concurrently on more than one board or commission. Conflicts of Interest No commissioners or council members shall: 1) Enter into any contract with the city/village unless otherwise authorized by law. 2) Use of their position to secure any special privilege or exemption for themselves or others. 3) Use their office or otherwise act in any manner which would give the appearance of or result in any impropriety or conflict of interest. Important Information Concerning Your Application DATA PRIVACY NOTICE: Ohio law requires that you be informed of the purposes and intended uses of the information y",
+   "tags": [
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "c157ce48f79684338e829d529a625bab392be6eac92e09a7d336ca536c518b82",
+   "source_document_id": null,
+   "source_title": "c157ce48f79684338e829d529a625bab392be6eac92e09a7d336ca536c518b82.pdf",
+   "official_url": "https://thevillageofsmithville.com/wp-content/uploads/2025/06/Application-Council-Vacancy.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR WATER AND SEWER SERVICE Date__________________ Full Name (To appear on bill) _ ______________________________________________SS#______________________ Name of Spouse_________________________________________________________SS#________________________ Birth Date _____________________________________Spouse’s Birth Date___________________________________ Address (to be served) _____________________________________________________________________________ Mailing Address ( if different from above) ____________________________________________________________ Phone __________________________________ Email ___________________________________ Name & City of Present Employer _______________________________________________________________ Name & City of Spouse’s Employer ______________________________________________________________ Name of Landlord (if applicable) __________________",
+   "tags": [
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "da558efe308b8abdb2427ad696dad97bdb4c88cf3fc448ddb49d9e6cb24aa779",
+   "source_document_id": null,
+   "source_title": "da558efe308b8abdb2427ad696dad97bdb4c88cf3fc448ddb49d9e6cb24aa779.pdf",
+   "official_url": "https://thevillageofsmithville.com/wp-content/uploads/2024/08/Application-Water-Sewer-Utilities.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "CERTIFICATION AND SIGNATURE Submission of this application expressly authorizes the Village of Smithville to contact the Ohio Environmental Protection Agency to confirm statements contained within this application and to review applicable confidential records. As part of this application, the property owner may also be required to directly request from the Ohio Departme nt of Taxation to release specific tax records to the local jurisdiction considering the request. The Applicant agrees to supply additional information upon request. Th e Applicant affirmatively covenants that the information contained in and submitted with this application is complete and correct and is aware of the ORC Sections 9066 (C) (1) and 2921.13 (D) (1) penalties for falsification which could result in the forfeiture of all current and future economic development assistance benefits as well as a fine of not more ",
+   "tags": [
+    "fee",
+    "penalties",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "fce3f69deb395cf0b39dd9280ae18cde041647dcbd5b65ef5401b93b55071ebe",
+   "source_document_id": null,
+   "source_title": "fce3f69deb395cf0b39dd9280ae18cde041647dcbd5b65ef5401b93b55071ebe.pdf",
+   "official_url": "https://thevillageofsmithville.com/wp-content/uploads/2025/12/CRA-Application.pdf"
+  }
+ ]
+}

@@ -1,6 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(120_000),...init});
 
 const MAX_BACKUP_DOCUMENT_BYTES = 50 * 1024 * 1024;
 
@@ -39,7 +41,7 @@ async function readBackupBlob(response: Response) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const user = await base44.auth.me().catch(() => null);
 
     if (user?.role !== 'admin') {
@@ -101,20 +103,17 @@ Deno.serve(async (req) => {
                   if (!response.ok) throw new Error(`Stored document fetch returned HTTP ${response.status}`);
                   const blob = await readBackupBlob(response);
 
-                  const formData = new FormData();
-                  formData.append('file', blob, fileName);
-                  formData.append('parents', JSON.stringify([jurisdictionFolder.id]));
-
-                  const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                    method: 'POST',
-                    headers: {
-                      'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: formData
+                  const uploadRes = await uploadFileToDrive(accessToken, {
+                    name: fileName,
+                    mimeType: blob.type || 'application/pdf',
+                    data: blob,
+                    parentId: jurisdictionFolder.id,
                   });
 
                   if (uploadRes.ok) {
                     filesUploaded++;
+                  } else {
+                    console.error(`Drive upload failed for ${fileName}: HTTP ${uploadRes.status}`, await uploadRes.text().catch(() => ''));
                   }
                 }
               } catch (e) {
@@ -146,20 +145,17 @@ Deno.serve(async (req) => {
             const metadataContent = JSON.stringify(metadata, null, 2);
             const metadataBlob = new Blob([metadataContent], { type: 'application/json' });
 
-            const formData = new FormData();
-            formData.append('file', metadataBlob, 'jurisdiction_metadata.json');
-            formData.append('parents', JSON.stringify([jurisdictionFolder.id]));
-
-            const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`
-              },
-              body: formData
+            const uploadRes = await uploadFileToDrive(accessToken, {
+              name: 'jurisdiction_metadata.json',
+              mimeType: 'application/json',
+              data: metadataBlob,
+              parentId: jurisdictionFolder.id,
             });
 
             if (uploadRes.ok) {
               filesUploaded++;
+            } else {
+              console.error(`Drive upload failed for metadata of ${jurisdiction.name}: HTTP ${uploadRes.status}`, await uploadRes.text().catch(() => ''));
             }
           } catch (e) {
             console.error(`Error uploading metadata for ${jurisdiction.name}:`, e);
@@ -182,6 +178,33 @@ Deno.serve(async (req) => {
   }
 });
 
+// Drive's uploadType=multipart endpoint requires a multipart/related body —
+// a JSON metadata part (name/parents) followed by the media part. Plain
+// multipart/form-data with `file`/`parents` fields is not a valid upload and
+// also dropped the file name entirely, so uploads landed wrong or failed.
+async function uploadFileToDrive(accessToken, { name, mimeType, data, parentId }) {
+  const boundary = `b44_backup_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  const metadata = { name: String(name || 'backup.bin').slice(0, 300) };
+  if (parentId) metadata.parents = [parentId];
+  const head = new TextEncoder().encode(
+    `--${boundary}\r\n` +
+    `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+    `${JSON.stringify(metadata)}\r\n` +
+    `--${boundary}\r\n` +
+    `Content-Type: ${mimeType || 'application/octet-stream'}\r\n\r\n`
+  );
+  const tail = new TextEncoder().encode(`\r\n--${boundary}--`);
+  const body = new Blob([head, data, tail]);
+  return fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': `multipart/related; boundary=${boundary}`,
+    },
+    body,
+  });
+}
+
 async function createOrGetFolder(folderName, parentId, accessToken) {
   try {
     // Search for existing folder
@@ -189,7 +212,7 @@ async function createOrGetFolder(folderName, parentId, accessToken) {
       ? `name='${folderName}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`
       : `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
 
-    const searchRes = await fetch(
+    const searchRes = await boundedFetch(
       `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&spaces=drive&fields=files(id,name)&pageSize=1`,
       {
         headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -212,7 +235,7 @@ async function createOrGetFolder(folderName, parentId, accessToken) {
       metadata.parents = [parentId];
     }
 
-    const createRes = await fetch('https://www.googleapis.com/drive/v3/files?fields=id,name', {
+    const createRes = await boundedFetch('https://www.googleapis.com/drive/v3/files?fields=id,name', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,

@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { fetchAllOrders } from "@/lib/workOrderCache";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import {
   createOrderWithRecovery,
   replaceOrderFieldsIfUnchanged,
@@ -57,6 +59,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 const Order = base44.entities.Order;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
@@ -89,7 +92,7 @@ function normalizeOrderRequestTypes(values) {
   return normalized;
 }
 
-export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientName }) {
+export default function WorkOrderOrders({ workOrderId, clientName }) {
   const { currentUser, sessionToken, isRegistered } = useAuth();
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
@@ -131,13 +134,12 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
     let active = true;
     const loadRequestTypes = async () => {
       try {
-        const rows = await GlobalSettings.filter({ setting_key: ORDER_REQUEST_TYPES_SETTING_KEY });
+        const setting = await loadSingleGlobalSetting({
+          entity: GlobalSettings,
+          settingKey: ORDER_REQUEST_TYPES_SETTING_KEY,
+          label: "Order item types",
+        });
         if (!active) return;
-        if (!Array.isArray(rows)) throw new Error("Order item-type settings did not return a record list.");
-        if (rows.length > 1) {
-          throw new Error(`Order item types have ${rows.length} shared settings records. Ask an admin to resolve the duplicate settings.`);
-        }
-        const setting = rows[0] || null;
         setRequestTypeSetting(setting);
         const sharedTypes = normalizeOrderRequestTypes(setting?.setting_value?.items);
         if (sharedTypes.length) {
@@ -169,13 +171,11 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
     setReadError("");
     try {
       const [ordersData, usersData] = await Promise.all([
-        loadAllEntityRows({
-          entity: Order,
-          query: { work_order_id: workOrderId, deleted: { $ne: true } },
-          sort: "row_number",
-          label: "Work Order orders",
-        }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Work Order purchasing authorized users" })
+        fetchAllOrders().then((rows) =>
+          (rows || [])
+            .filter((o) => o.deleted !== true && String(o.work_order_id) === String(workOrderId))
+            .sort((a, b) => (a?.row_number ?? 0) - (b?.row_number ?? 0))),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Work Order purchasing authorized users" })
       ]);
       setOrders(ordersData);
       setUsers(usersData);
@@ -229,6 +229,11 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
 
       setOrders((current) => current.some((order) => order.id === newOrder.id) ? current : [...current, newOrder]);
       originalOrdersRef.current[newOrder.id] = { ...newOrder };
+      try {
+        await NotificationTriggers.orderCreated(newOrder, currentUser?.full_name || currentUser?.email);
+      } catch (notificationError) {
+        console.error("Order created but its notification could not be sent:", notificationError);
+      }
     } catch (error) {
       console.error("Error creating Work Order purchase Order:", error);
       setSaveError(error?.message || "The Order could not be created.");
@@ -295,6 +300,16 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
           ? { ...saved, ...(pendingChangesRef.current[orderId] || {}) }
           : order));
         setPendingChanges({ ...pendingChangesRef.current });
+        try {
+          await NotificationTriggers.orderSaveEvents({
+            baseline,
+            saved,
+            fields: Object.keys(cleanedChanges),
+            changedBy: currentUser?.full_name || currentUser?.email,
+          });
+        } catch (notificationError) {
+          console.error("Order saved but its notification could not be sent:", notificationError);
+        }
       }
     } catch (error) {
       console.error("Error saving Work Order purchases safely:", error);
@@ -334,15 +349,6 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
     } finally {
       deleteInFlightRef.current = false;
     }
-  };
-
-  const getFilteredUsers = (searchTerm) => {
-    if (!searchTerm) return users.slice(0, 10);
-    const lower = searchTerm.toLowerCase();
-    return users.filter(u => 
-      u.full_name?.toLowerCase().includes(lower) ||
-      u.email?.toLowerCase().includes(lower)
-    ).slice(0, 10);
   };
 
   const getRequestorColor = (email) => {
@@ -547,7 +553,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
               <div className="flex items-center gap-1">
                 Type
                 {currentUser?.role === "admin" && (
-                  <button
+                  <button type="button"
                     onClick={() => { setRequestTypesError(""); setEditingRequestTypes(true); }}
                     className="hover:bg-gray-200 rounded p-0.5"
                     aria-label="Manage Order item types"
@@ -567,7 +573,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
               <div className="flex items-center gap-1">
                 Vendor
                 {isRegistered && (
-                  <button onClick={() => setEditingVendors(true)} className="hover:bg-gray-200 rounded p-0.5">
+                  <button type="button" onClick={() => setEditingVendors(true)} className="hover:bg-gray-200 rounded p-0.5">
                     <Pencil className="w-3 h-3 text-gray-500" />
                   </button>
                 )}
@@ -693,7 +699,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                 <div className="w-24 px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `needed-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `needed-${order.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
+                      <button type="button" className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                         {order.date_needed ? format(parseLocalDate(order.date_needed), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
@@ -730,7 +736,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                 <div className="w-24 px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `ordered-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordered-${order.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
+                      <button type="button" className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                         {order.date_ordered ? format(parseLocalDate(order.date_ordered), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
@@ -786,7 +792,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                 <div className="w-24 px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `received-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `received-${order.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
+                      <button type="button" className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                         {order.date_received ? format(parseLocalDate(order.date_received), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
@@ -871,7 +877,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                 <div key={type} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div className="flex items-center gap-2">
                     <div className="flex flex-col">
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === 0) return;
                           const items = [...requestTypes];
@@ -883,7 +889,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                       </button>
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === requestTypes.length - 1) return;
                           const items = [...requestTypes];
@@ -898,7 +904,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                     </div>
                     <span className="text-sm">{type}</span>
                   </div>
-                  <button
+                  <button type="button"
                     onClick={() => removeRequestType(type)}
                     disabled={requestTypesSaving || requestTypes.length <= 1}
                     className="text-red-500 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-30"
@@ -940,7 +946,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                 <div key={vendor} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div className="flex items-center gap-2">
                     <div className="flex flex-col">
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === 0) return;
                           const items = [...vendors];
@@ -952,7 +958,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                       </button>
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === vendors.length - 1) return;
                           const items = [...vendors];
@@ -967,7 +973,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                     </div>
                     <span className="text-sm">{vendor}</span>
                   </div>
-                  <button onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
+                  <button type="button" onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
                     <X className="w-4 h-4" />
                   </button>
                 </div>

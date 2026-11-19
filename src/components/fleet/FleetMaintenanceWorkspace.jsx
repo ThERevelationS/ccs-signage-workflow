@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { HostedImg } from "@/shared/hostedAssetUrl";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
@@ -101,7 +102,7 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
         <div className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div className="flex items-start gap-3 sm:gap-4 min-w-0">
             <button type="button" onClick={onBack} className="mt-1 min-h-11 min-w-11 shrink-0 p-2 rounded-lg border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900" aria-label="Back to maintenance equipment"><ArrowLeft className="w-4 h-4" /></button>
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gray-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0">{equipment.photo_url ? <img src={equipment.photo_url} alt="" className="w-full h-full object-cover" /> : <Truck className="w-7 h-7 text-gray-400" />}</div>
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gray-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0">{equipment.photo_url ? <HostedImg src={equipment.photo_url} alt="" className="w-full h-full object-cover" /> : <Truck className="w-7 h-7 text-gray-400" />}</div>
             <div className="min-w-0"><div className="text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-300">Maintenance Workspace</div><h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100 truncate">{equipment.name}</h2><p className="text-sm text-gray-500 dark:text-slate-400 truncate">{[equipment.year, equipment.make, equipment.model].filter(Boolean).join(" ") || pretty(equipment.type)}</p></div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -110,7 +111,7 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
             {isAdmin && !retired && <button type="button" onClick={onNewSchedule} className="min-h-11 px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"><CalendarClock className="w-4 h-4" />New Schedule</button>}
           </div>
         </div>
-        <div className="px-3 sm:px-5 border-t border-gray-100 dark:border-slate-800 overflow-x-auto overscroll-x-contain"><div role="tablist" aria-label={`${equipment.name} maintenance sections`} className="flex min-w-max">{tabs.map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={tab === key} onClick={() => setTab(key)} className={`min-h-11 px-3 sm:px-4 py-3 text-sm font-semibold border-b-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 ${tab === key ? "border-indigo-600 text-indigo-700 dark:text-indigo-300" : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200"}`}>{label}</button>)}</div></div>
+        <div className="px-3 sm:px-5 border-t border-gray-100 dark:border-slate-800 overflow-x-auto overscroll-x-contain"><div role="tablist" aria-label={`${equipment.name} maintenance sections`} className="flex min-w-max">{tabs.map(([key, label]) => <button type="button" key={key}  role="tab" aria-selected={tab === key} onClick={() => setTab(key)} className={`min-h-11 px-3 sm:px-4 py-3 text-sm font-semibold border-b-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 ${tab === key ? "border-indigo-600 text-indigo-700 dark:text-indigo-300" : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200"}`}>{label}</button>)}</div></div>
       </div>
 
       {retired && <div className="rounded-lg border border-gray-200 bg-gray-50 dark:bg-slate-900 dark:border-slate-700 px-4 py-3 text-sm text-gray-700 dark:text-slate-300"><b>Retired archive:</b> maintenance history and schedules remain available for review, but new schedules and new work orders are disabled until this equipment is reactivated.</div>}

@@ -6,6 +6,9 @@ import {
   orderIndependentPullEvidenceModel,
 } from './orderIndependentPullEvidenceModel.mjs';
 import { startOrderBatchReview, appendOrderBatchReviewPage } from './orderBatchReviewSummary.mjs';
+import { usePolling } from '@/lib/usePolling';
+import { staffEntities } from "@/components/staff/staffEntities";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 // Order Form ONLY: read-only admin review. The shared Sales coordinator can
 // change without affecting this independent permanent-ID evidence.
@@ -22,6 +25,10 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
   const [resolveResult, setResolveResult] = useState(null);
   const reviewEpoch = useRef(0);
   const batchReviewInFlight = useRef(false);
+  const refreshRef = useRef(async () => {});
+
+  // Read only for Order Form admins and never at the coordinator's 1s rate.
+  usePolling(() => refreshRef.current(), 60000, { enabled: isAdmin, runOnMount: false });
 
   useEffect(() => {
     if (!isAdmin) {
@@ -45,12 +52,16 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
       if (inFlight) return;
       inFlight = true;
       try {
-        const rows = await base44.entities.GlobalSettings.filter({
-          setting_key: ORDER_PULL_EVIDENCE_KEY,
+        const row = await loadSingleGlobalSetting({
+          entity: staffEntities.GlobalSettings,
+          settingKey: ORDER_PULL_EVIDENCE_KEY,
+          label: "Order pull evidence",
+          fresh: true,
         });
         if (active) {
+          const rows = row ? [row] : [];
           const nextView = orderIndependentPullEvidenceModel(rows);
-          const version = JSON.stringify(rows?.[0]?.setting_value ?? null);
+          const version = JSON.stringify(rows[0]?.setting_value ?? null);
           if (lastEvidenceVersion !== null && lastEvidenceVersion !== version) {
             reviewEpoch.current++;
             batchReviewInFlight.current = false;
@@ -78,21 +89,13 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
         inFlight = false;
       }
     };
+    refreshRef.current = refresh;
     refresh();
-    // Read only for Order Form admins and never at the coordinator's 1s rate.
-    const interval = setInterval(refresh, 15000);
-    const refreshVisible = () => {
-      if (document.visibilityState === 'visible') refresh();
-    };
-    window.addEventListener('focus', refresh);
-    document.addEventListener('visibilitychange', refreshVisible);
     return () => {
       active = false;
       reviewEpoch.current++;
       batchReviewInFlight.current = false;
-      clearInterval(interval);
-      window.removeEventListener('focus', refresh);
-      document.removeEventListener('visibilitychange', refreshVisible);
+      refreshRef.current = async () => {};
     };
   }, [isAdmin, refreshKey]);
 

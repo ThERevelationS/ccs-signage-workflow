@@ -22,7 +22,11 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const user = await authenticateSignShopSession(base44, body?.session_token);
+    // Fall back to auth.me() when no sign-shop session token is supplied so
+    // request-context users can still complete the guarded cleanup write.
+    let user = null;
+    try { user = await authenticateSignShopSession(base44, body?.session_token); }
+    catch { user = await base44.auth.me().catch(() => null); }
     if (!user?.id) return Response.json({ error: 'Authentication required.' }, { status: 401 });
 
     const id = text(body?.id);
@@ -81,7 +85,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'The duplicate Work Order changed while cleanup was being confirmed and was left intact.' }, { status: 409 });
   } catch (error: any) {
     const status = Number(error?.status || error?.statusCode || 500);
-    const safeStatus = [400, 401, 403, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 409, 429, 503].includes(status) ? status : 500;
     console.error('deleteCreatedDuplicateWorkOrder error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Duplicate Work Order cleanup failed safely.' : error.message,

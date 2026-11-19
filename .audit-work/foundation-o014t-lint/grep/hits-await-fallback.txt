@@ -1,0 +1,9 @@
+./src/components/estimator/builder/historicalBackfill.js:156:    await markBatchComplete(latestEstimates || [], processedCount);
+./src/components/estimator/customerSync.js:445:    ? await upsertCustomerFromEstimate(estimate, customers || [], { changedKeys: customerChangedKeys, sessionToken })
+./src/components/estimator/customerSync.js:446:    : await resolveCustomerForEstimate(estimate, customers || []);
+./src/components/estimator/parts/MasterPartPickerModal.jsx:125:      await onAdd?.(selected, mode === "switch" ? Math.max(0, Number(initialQuantity || 0)) : mode === "select" ? 1 : Math.max(0, Number(quantity || 0)));
+./src/components/estimator/parts/partGroupService.js:599:  await ensureBuilderPriceRevision(pending.source_revision_key || `${pending.key}:source`, pending.source_revision || {});
+./src/components/estimator/parts/partGroupService.js:600:  await ensureBuilderPriceRevision(pending.target_revision_key || `${pending.key}:target`, pending.target_revision || {});
+./src/components/estimator/products/blankProductService.js:98:        createdSource = await entity.create({ ...(pending.source_create_data || {}), notes: pending.source_recovery_tag });
+./src/components/estimator/products/productRemovalService.js:196:  await applyRemovalPlan(pending.delete_plan || {});
+./src/pages/EstimatorCustomers.jsx:346:      const merged = await backfillCustomersFromWorkOrders(current || [], { sessionToken });

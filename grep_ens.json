@@ -1,0 +1,1006 @@
+{
+  "matches": [
+    {
+      "path": "AGENTS.md",
+      "line": 17,
+      "text": "- `/WalkIn` page (`src/pages/WalkIn.jsx` + `src/components/walkin/*`) — CoreBridge \"on-the-spot checkout\" (COREBRIDGE_MAP.md §6): line-item grid, Walk-in customer default (create-if-missing via `ensureNewCustomer` w/ deterministic key), tax group, tendered/change, receipt.\r"
+    },
+    {
+      "path": "AGENTS.md",
+      "line": 31,
+      "text": "- Idempotent creates: `createFoundationRecordWithRecovery` / `ensureIdempotentEntityCreate` with `creation_request_key`.\r"
+    },
+    {
+      "path": "public/permitting-evidence/harrison-addyston/harrison-sign-instructions-page-1-raw-ocr.txt",
+      "line": 10,
+      "text": "A permit is required for all signs to control visual clutter and to ensure signs are safely and properly"
+    },
+    {
+      "path": "public/permitting/sources/kenton-ky/adopted-unincorporated-kenton-article-xiv.html",
+      "line": 1611,
+      "text": "\t\t\t\t<li>If the plans and drawings require an engineer&rsquo;s or architect&rsquo;s seal, signature or certificate, such shall show current Kentucky registration or licensure;</li>"
+    },
+    {
+      "path": "public/permitting/sources/boone-ky/planning-commission-agendas-minutes-index-2026-10-03.html",
+      "line": 1407,
+      "text": "        Please ensure Javascript is enabled for purposes of"
+    },
+    {
+      "path": "public/permitting/sources/boone-ky/planning-commission-home-page-2026-09-28.html",
+      "line": 843,
+      "text": "        Please ensure Javascript is enabled for purposes of"
+    },
+    {
+      "path": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+      "line": 723,
+      "text": "        Please ensure Javascript is enabled for purposes of"
+    },
+    {
+      "path": "public/permitting/sources/boone-ky/building-permits-page-2026-09-28.html",
+      "line": 1000,
+      "text": "<p><span style=\"font-size: 18px;\">Social media and the internet have an endless supply of inspiration and step-by-step instructions for improving your home. We&rsquo;re here to help make sure your work follows all building and electrical codes, as required by law. These codes are in place to ensure that your project is done properly.</span><br /><br /><span style=\"font-size: 18px;\">Every year, we help homeowners, contractors and commercial builders safely complete thousands of projects across Boone County. Whether your project is big or small, the permitting process follows the same basic steps:</span></p>"
+    },
+    {
+      "path": "INTEGRATION_PROGRESS.md",
+      "line": 28,
+      "text": "- Phase 2: Edit auto-opens/creates revision via existing startEstimateRevision/ensureOpenEstimateRevision (handleEditProtected), all guards kept (CAS, price-acceptance, pipeline_sync_pending); cancelled stays locked (decision, flippable); trash open to all statuses, WO-delete guard deep-links to job; EstimatorQueues quick actions dup/archive/trash + FIXED pre-existing missing useRef import crash; ZERO InventoryMovement on estimate paths confirmed. PASS estimate-relax + lifecycle/save-recovery/persistence regression."
+    },
+    {
+      "path": "INTEGRATION_PROGRESS.md",
+      "line": 98,
+      "text": "- #363 ensureIdempotentEntityCreate concurrent-dup guard (RESIDUAL: backend unique constraint on creation_request_key still needed)"
+    },
+    {
+      "path": "INTEGRATION_PROGRESS.md",
+      "line": 107,
+      "text": "- Drive-per-job folders: googleDriveOperations.ensureJobFolder — reuses saved WorkOrder.google_drive_folder_url, else resolves configured roots (GlobalSettings driveConfig/googleDriveConfig) or app-owned CCS Jobs root, creates WO-number+client folder, CAS-safe write only-if-empty. JobWorkspace Drive button. Needs googledrive connector scope (owner action)."
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 7508,
+      "text": "       * Ensure the encoded size of the writeBuffer is below the maxPayload value sent by the server (only for HTTP"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 8858,
+      "text": "       * this method ensures the manager stops tracking us and"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 18024,
+      "text": "                throw new Error(\"The `document` global was defined when React was initialized, but is not defined anymore. This can happen in a test environment if a component schedules an update from an asynchronous callback, but the test has already finished running. To solve this, you can either unmount the component at the end of your test (and ensure that any asynchronous operations get canceled in `componentWillUnmount`), or you can change the test itself to be asynchronous.\");"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 28106,
+      "text": "                error(\"`%s` uses `getDerivedStateFromProps` but its initial state is %s. This is not recommended. Instead, define the initial state by assigning an object to `this.state` in the constructor of `%s`. This ensures that `getDerivedStateFromProps` arguments have a consistent shape.\", componentName, instance.state === null ? \"null\" : \"undefined\", componentName);"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 32973,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 32985,
+      "text": "          ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 32994,
+      "text": "        function ensureRootIsScheduled(root2, currentTime) {"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 33102,
+      "text": "              ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 33123,
+      "text": "                  ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 33132,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 33285,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 33300,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 33310,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 33316,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 33810,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 33967,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 33997,
+      "text": "                  ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 34023,
+      "text": "          ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 34033,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 34274,
+      "text": "                error(\"An update to %s inside a test was not wrapped in act(...).\\n\\nWhen testing, code that causes React state updates should be wrapped into act(...):\\n\\nact(() => {\\n  /* fire events that update state */\\n});\\n/* assert on the output */\\n\\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\", getComponentNameFromFiber(fiber));"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 34288,
+      "text": "              error(\"A suspended resource finished loading inside a test, but the event was not wrapped in act(...).\\n\\nWhen testing, code that resolves suspended data should be wrapped into act(...):\\n\\nact(() => {\\n  /* finish loading suspended data */\\n});\\n/* assert on the output */\\n\\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\");"
+    },
+    {
+      "path": "scripts/.tmp-wo-mut.mjs",
+      "line": 36229,
+      "text": "    // ensures we check React component tree (not just DOM tree)"
+    },
+    {
+      "path": "scripts/validate-sips-checklist-performance.mjs",
+      "line": 5,
+      "text": "// ensure render paths reuse typed child arrays instead of repeatedly filtering"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 7508,
+      "text": "       * Ensure the encoded size of the writeBuffer is below the maxPayload value sent by the server (only for HTTP"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 8858,
+      "text": "       * this method ensures the manager stops tracking us and"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 18024,
+      "text": "                throw new Error(\"The `document` global was defined when React was initialized, but is not defined anymore. This can happen in a test environment if a component schedules an update from an asynchronous callback, but the test has already finished running. To solve this, you can either unmount the component at the end of your test (and ensure that any asynchronous operations get canceled in `componentWillUnmount`), or you can change the test itself to be asynchronous.\");"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 28106,
+      "text": "                error(\"`%s` uses `getDerivedStateFromProps` but its initial state is %s. This is not recommended. Instead, define the initial state by assigning an object to `this.state` in the constructor of `%s`. This ensures that `getDerivedStateFromProps` arguments have a consistent shape.\", componentName, instance.state === null ? \"null\" : \"undefined\", componentName);"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 32973,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 32985,
+      "text": "          ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 32994,
+      "text": "        function ensureRootIsScheduled(root2, currentTime) {"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 33102,
+      "text": "              ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 33123,
+      "text": "                  ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 33132,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 33285,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 33300,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 33310,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 33316,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 33810,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 33967,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 33997,
+      "text": "                  ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 34023,
+      "text": "          ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 34033,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 34274,
+      "text": "                error(\"An update to %s inside a test was not wrapped in act(...).\\n\\nWhen testing, code that causes React state updates should be wrapped into act(...):\\n\\nact(() => {\\n  /* fire events that update state */\\n});\\n/* assert on the output */\\n\\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\", getComponentNameFromFiber(fiber));"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 34288,
+      "text": "              error(\"A suspended resource finished loading inside a test, but the event was not wrapped in act(...).\\n\\nWhen testing, code that resolves suspended data should be wrapped into act(...):\\n\\nact(() => {\\n  /* finish loading suspended data */\\n});\\n/* assert on the output */\\n\\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\");"
+    },
+    {
+      "path": "scripts/.tmp-cust-pricing.mjs",
+      "line": 36229,
+      "text": "    // ensures we check React component tree (not just DOM tree)"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 7508,
+      "text": "       * Ensure the encoded size of the writeBuffer is below the maxPayload value sent by the server (only for HTTP"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 8858,
+      "text": "       * this method ensures the manager stops tracking us and"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 18024,
+      "text": "                throw new Error(\"The `document` global was defined when React was initialized, but is not defined anymore. This can happen in a test environment if a component schedules an update from an asynchronous callback, but the test has already finished running. To solve this, you can either unmount the component at the end of your test (and ensure that any asynchronous operations get canceled in `componentWillUnmount`), or you can change the test itself to be asynchronous.\");"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 28106,
+      "text": "                error(\"`%s` uses `getDerivedStateFromProps` but its initial state is %s. This is not recommended. Instead, define the initial state by assigning an object to `this.state` in the constructor of `%s`. This ensures that `getDerivedStateFromProps` arguments have a consistent shape.\", componentName, instance.state === null ? \"null\" : \"undefined\", componentName);"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 32973,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 32985,
+      "text": "          ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 32994,
+      "text": "        function ensureRootIsScheduled(root2, currentTime) {"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 33102,
+      "text": "              ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 33123,
+      "text": "                  ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 33132,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 33285,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 33300,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 33310,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 33316,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 33810,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 33967,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 33997,
+      "text": "                  ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 34023,
+      "text": "          ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 34033,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 34274,
+      "text": "                error(\"An update to %s inside a test was not wrapped in act(...).\\n\\nWhen testing, code that causes React state updates should be wrapped into act(...):\\n\\nact(() => {\\n  /* fire events that update state */\\n});\\n/* assert on the output */\\n\\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\", getComponentNameFromFiber(fiber));"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 34288,
+      "text": "              error(\"A suspended resource finished loading inside a test, but the event was not wrapped in act(...).\\n\\nWhen testing, code that resolves suspended data should be wrapped into act(...):\\n\\nact(() => {\\n  /* finish loading suspended data */\\n});\\n/* assert on the output */\\n\\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\");"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 36229,
+      "text": "    // ensures we check React component tree (not just DOM tree)"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 43508,
+      "text": "async function ensureBuilderPriceRevision(idempotencyKey, revision) {"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 43513,
+      "text": "  const response = await base44.functions.invoke(\"ensureBuilderPriceRevision\", {"
+    },
+    {
+      "path": "scripts/.tmp-extract-parts.mjs",
+      "line": 43750,
+      "text": "    await ensureBuilderPriceRevision(pending.key, revision);"
+    },
+    {
+      "path": "scripts/check-timeclock-prepublish.mjs",
+      "line": 53,
+      "text": "const recoveryIndex = backend.indexOf('let state = await ensureState(stateEntity, target)', diagnosticIndex);"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 7508,
+      "text": "       * Ensure the encoded size of the writeBuffer is below the maxPayload value sent by the server (only for HTTP"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 8858,
+      "text": "       * this method ensures the manager stops tracking us and"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 18024,
+      "text": "                throw new Error(\"The `document` global was defined when React was initialized, but is not defined anymore. This can happen in a test environment if a component schedules an update from an asynchronous callback, but the test has already finished running. To solve this, you can either unmount the component at the end of your test (and ensure that any asynchronous operations get canceled in `componentWillUnmount`), or you can change the test itself to be asynchronous.\");"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 28106,
+      "text": "                error(\"`%s` uses `getDerivedStateFromProps` but its initial state is %s. This is not recommended. Instead, define the initial state by assigning an object to `this.state` in the constructor of `%s`. This ensures that `getDerivedStateFromProps` arguments have a consistent shape.\", componentName, instance.state === null ? \"null\" : \"undefined\", componentName);"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 32973,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 32985,
+      "text": "          ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 32994,
+      "text": "        function ensureRootIsScheduled(root2, currentTime) {"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 33102,
+      "text": "              ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 33123,
+      "text": "                  ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 33132,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 33285,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 33300,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 33310,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 33316,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 33810,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 33967,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 33997,
+      "text": "                  ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 34023,
+      "text": "          ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 34033,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 34274,
+      "text": "                error(\"An update to %s inside a test was not wrapped in act(...).\\n\\nWhen testing, code that causes React state updates should be wrapped into act(...):\\n\\nact(() => {\\n  /* fire events that update state */\\n});\\n/* assert on the output */\\n\\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\", getComponentNameFromFiber(fiber));"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 34288,
+      "text": "              error(\"A suspended resource finished loading inside a test, but the event was not wrapped in act(...).\\n\\nWhen testing, code that resolves suspended data should be wrapped into act(...):\\n\\nact(() => {\\n  /* finish loading suspended data */\\n});\\n/* assert on the output */\\n\\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\");"
+    },
+    {
+      "path": "scripts/.tmp-inventoryPersistence.mjs",
+      "line": 36229,
+      "text": "    // ensures we check React component tree (not just DOM tree)"
+    },
+    {
+      "path": "scripts/validate-timeclock-pay-period-recovery.mjs",
+      "line": 5714,
+      "text": "  // A normal (non-missed-punch) shift ensures the suffix ambiguity check,\r"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 7508,
+      "text": "       * Ensure the encoded size of the writeBuffer is below the maxPayload value sent by the server (only for HTTP"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 8858,
+      "text": "       * this method ensures the manager stops tracking us and"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 18260,
+      "text": "                throw new Error(\"The `document` global was defined when React was initialized, but is not defined anymore. This can happen in a test environment if a component schedules an update from an asynchronous callback, but the test has already finished running. To solve this, you can either unmount the component at the end of your test (and ensure that any asynchronous operations get canceled in `componentWillUnmount`), or you can change the test itself to be asynchronous.\");"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 28342,
+      "text": "                error(\"`%s` uses `getDerivedStateFromProps` but its initial state is %s. This is not recommended. Instead, define the initial state by assigning an object to `this.state` in the constructor of `%s`. This ensures that `getDerivedStateFromProps` arguments have a consistent shape.\", componentName, instance.state === null ? \"null\" : \"undefined\", componentName);"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 33209,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 33221,
+      "text": "          ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 33230,
+      "text": "        function ensureRootIsScheduled(root2, currentTime) {"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 33338,
+      "text": "              ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 33359,
+      "text": "                  ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 33368,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 33521,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 33536,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 33546,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 33552,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 34046,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 34203,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 34233,
+      "text": "                  ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 34259,
+      "text": "          ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 34269,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 34510,
+      "text": "                error(\"An update to %s inside a test was not wrapped in act(...).\\n\\nWhen testing, code that causes React state updates should be wrapped into act(...):\\n\\nact(() => {\\n  /* fire events that update state */\\n});\\n/* assert on the output */\\n\\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\", getComponentNameFromFiber(fiber));"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 34524,
+      "text": "              error(\"A suspended resource finished loading inside a test, but the event was not wrapped in act(...).\\n\\nWhen testing, code that resolves suspended data should be wrapped into act(...):\\n\\nact(() => {\\n  /* finish loading suspended data */\\n});\\n/* assert on the output */\\n\\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\");"
+    },
+    {
+      "path": "scripts/.tmp-legacy-migrator.mjs",
+      "line": 36465,
+      "text": "    // ensures we check React component tree (not just DOM tree)"
+    },
+    {
+      "path": "scripts/test-estimator-workflow-batch.mjs",
+      "line": 103,
+      "text": "    assert.ok(calls.every(({ name }) => name === 'ensureNewEstimate'));"
+    },
+    {
+      "path": "scripts/test-estimator-workflow-batch.mjs",
+      "line": 229,
+      "text": "    assert.match(page, /ensureEstimateCustomerLocation/);"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 7508,
+      "text": "       * Ensure the encoded size of the writeBuffer is below the maxPayload value sent by the server (only for HTTP"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 8858,
+      "text": "       * this method ensures the manager stops tracking us and"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 18024,
+      "text": "                throw new Error(\"The `document` global was defined when React was initialized, but is not defined anymore. This can happen in a test environment if a component schedules an update from an asynchronous callback, but the test has already finished running. To solve this, you can either unmount the component at the end of your test (and ensure that any asynchronous operations get canceled in `componentWillUnmount`), or you can change the test itself to be asynchronous.\");"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 28106,
+      "text": "                error(\"`%s` uses `getDerivedStateFromProps` but its initial state is %s. This is not recommended. Instead, define the initial state by assigning an object to `this.state` in the constructor of `%s`. This ensures that `getDerivedStateFromProps` arguments have a consistent shape.\", componentName, instance.state === null ? \"null\" : \"undefined\", componentName);"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 32973,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 32985,
+      "text": "          ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 32994,
+      "text": "        function ensureRootIsScheduled(root2, currentTime) {"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 33102,
+      "text": "              ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 33123,
+      "text": "                  ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 33132,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 33285,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 33300,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 33310,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 33316,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 33810,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 33967,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 33997,
+      "text": "                  ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 34023,
+      "text": "          ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 34033,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 34274,
+      "text": "                error(\"An update to %s inside a test was not wrapped in act(...).\\n\\nWhen testing, code that causes React state updates should be wrapped into act(...):\\n\\nact(() => {\\n  /* fire events that update state */\\n});\\n/* assert on the output */\\n\\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\", getComponentNameFromFiber(fiber));"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 34288,
+      "text": "              error(\"A suspended resource finished loading inside a test, but the event was not wrapped in act(...).\\n\\nWhen testing, code that resolves suspended data should be wrapped into act(...):\\n\\nact(() => {\\n  /* finish loading suspended data */\\n});\\n/* assert on the output */\\n\\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\");"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 36229,
+      "text": "    // ensures we check React component tree (not just DOM tree)"
+    },
+    {
+      "path": "scripts/permitting-research-identity-guard.test.mjs",
+      "line": 8,
+      "text": "const start=source.indexOf('async function ensureProfileForQueueRow(');"
+    },
+    {
+      "path": "scripts/permitting-research-identity-guard.test.mjs",
+      "line": 11,
+      "text": "const ensure=new Function('resolveResearchProfile','jurisdictionProfileTypeForQueueRow','assessOfficialQueueIdentity',compiled+';return ensureProfileForQueueRow;')(resolveResearchProfile,jurisdictionProfileTypeForQueueRow,assessOfficialQueueIdentity);"
+    },
+    {
+      "path": "scripts/permitting-research-identity-guard.test.mjs",
+      "line": 22,
+      "text": " await assert.rejects(ensure(row,[profile('village')],{create:async()=>{writes++;}}),/identity is conflicting/);"
+    },
+    {
+      "path": "scripts/permitting-research-identity-guard.test.mjs",
+      "line": 28,
+      "text": " let writes=0;await assert.rejects(ensure(row,profiles,{create:async()=>{writes++;}}));assert.equal(writes,0);"
+    },
+    {
+      "path": "scripts/permitting-research-identity-guard.test.mjs",
+      "line": 34,
+      "text": " let writes=0;const result=await ensure(row,[p],{create:async()=>{writes++;}});"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 7508,
+      "text": "       * Ensure the encoded size of the writeBuffer is below the maxPayload value sent by the server (only for HTTP"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 8858,
+      "text": "       * this method ensures the manager stops tracking us and"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 18024,
+      "text": "                throw new Error(\"The `document` global was defined when React was initialized, but is not defined anymore. This can happen in a test environment if a component schedules an update from an asynchronous callback, but the test has already finished running. To solve this, you can either unmount the component at the end of your test (and ensure that any asynchronous operations get canceled in `componentWillUnmount`), or you can change the test itself to be asynchronous.\");"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 28106,
+      "text": "                error(\"`%s` uses `getDerivedStateFromProps` but its initial state is %s. This is not recommended. Instead, define the initial state by assigning an object to `this.state` in the constructor of `%s`. This ensures that `getDerivedStateFromProps` arguments have a consistent shape.\", componentName, instance.state === null ? \"null\" : \"undefined\", componentName);"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 32973,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 32985,
+      "text": "          ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 32994,
+      "text": "        function ensureRootIsScheduled(root2, currentTime) {"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 33102,
+      "text": "              ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 33123,
+      "text": "                  ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 33132,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 33285,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 33300,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 33310,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 33316,
+      "text": "            ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 33810,
+      "text": "          ensureRootIsScheduled(root2, now());"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 33967,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 33997,
+      "text": "                  ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 34023,
+      "text": "          ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 34033,
+      "text": "            ensureRootIsScheduled(root2, eventTime);"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 34274,
+      "text": "                error(\"An update to %s inside a test was not wrapped in act(...).\\n\\nWhen testing, code that causes React state updates should be wrapped into act(...):\\n\\nact(() => {\\n  /* fire events that update state */\\n});\\n/* assert on the output */\\n\\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\", getComponentNameFromFiber(fiber));"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 34288,
+      "text": "              error(\"A suspended resource finished loading inside a test, but the event was not wrapped in act(...).\\n\\nWhen testing, code that resolves suspended data should be wrapped into act(...):\\n\\nact(() => {\\n  /* finish loading suspended data */\\n});\\n/* assert on the output */\\n\\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\");"
+    },
+    {
+      "path": "scripts/.tmp-mutation-guard.mjs",
+      "line": 36229,
+      "text": "    // ensures we check React component tree (not just DOM tree)"
+    },
+    {
+      "path": "scripts/.tmp-idempotentEntityCreate.mjs",
+      "line": 97,
+      "text": "async function ensureIdempotentEntityCreate({"
+    },
+    {
+      "path": "scripts/.tmp-idempotentEntityCreate.mjs",
+      "line": 185,
+      "text": "  ensureIdempotentEntityCreate,"
+    },
+    {
+      "path": "scripts/test-estimate-relax.mjs",
+      "line": 26,
+      "text": "assert.match(revisionService, /ensureOpenEstimateRevision/, 'the deployed ensureOpenEstimateRevision function backs revision creation');"
+    },
+    {
+      "path": "scripts/test-estimate-relax.mjs",
+      "line": 52,
+      "text": "assert.match(queues, /ensureEstimateLifecycleRevision\\(\\{[\\s\\S]*?queue_archive:/, 'queue archive must record a lifecycle audit row');"
+    },
+    {
+      "path": "scripts/test-customer-summary-service-role.mjs",
+      "line": 5,
+      "text": "  new URL(\"../base44/functions/ensureCustomerSummary/entry.ts\", import.meta.url),"
+    },
+    {
+      "path": "scripts/test-quote-recipient-contact.mjs",
+      "line": 4,
+      "text": "  ensureQuoteRecipientContact,"
+    },
+    {
+      "path": "scripts/test-quote-recipient-contact.mjs",
+      "line": 43,
+      "text": "  const result = await ensureQuoteRecipientContact({"
+    },
+    {
+      "path": "scripts/test-quote-recipient-contact.mjs",
+      "line": 65,
+      "text": "  const first = await ensureQuoteRecipientContact({"
+    },
+    {
+      "path": "scripts/test-quote-recipient-contact.mjs",
+      "line": 71,
+      "text": "  const retry = await ensureQuoteRecipientContact({"
+    },
+    {
+      "path": "scripts/test-quote-recipient-contact.mjs",
+      "line": 86,
+      "text": "    ensureQuoteRecipientContact({"
+    },
+    {
+      "path": "scripts/test-entity-persistence.mjs",
+      "line": 16,
+      "text": "const { newCreationRequestKey, ensureIdempotentEntityCreate } = idem;"
+    },
+    {
+      "path": "scripts/test-entity-persistence.mjs",
+      "line": 55,
+      "text": "// --- ensureIdempotentEntityCreate with an in-memory entity"
+    },
+    {
+      "path": "scripts/test-entity-persistence.mjs",
+      "line": 70,
+      "text": "  const first = await ensureIdempotentEntityCreate({ entity, keyField: 'creation_request_key', key: 'k1', data, label: 'Widget' });"
+    },
+    {
+      "path": "scripts/test-entity-persistence.mjs",
+      "line": 72,
+      "text": "  const second = await ensureIdempotentEntityCreate({ entity, keyField: 'creation_request_key', key: 'k1', data, label: 'Widget' });"
+    },
+    {
+      "path": "scripts/test-entity-persistence.mjs",
+      "line": 80,
+      "text": "    await ensureIdempotentEntityCreate({ entity, keyField: 'creation_request_key', key: 'k2', data: { name: 'A' }, label: 'Widget' });"
+    },
+    {
+      "path": "scripts/test-entity-persistence.mjs",
+      "line": 81,
+      "text": "    await ensureIdempotentEntityCreate({ entity, keyField: 'creation_request_key', key: 'k2', data: { name: 'B' }, label: 'Widget' });"
+    },
+    {
+      "path": "scripts/test-entity-persistence.mjs",
+      "line": 91,
+      "text": "    await ensureIdempotentEntityCreate({ entity, keyField: 'creation_request_key', key: 'k3', data: {}, label: 'Widget' });"
+    },
+    {
+      "path": "scripts/test-admin-account-changed-fields.mjs",
+      "line": 797,
+      "text": " assert.match(backend,/await ensureAnotherAdminExists\\(AuthorizedEmail, id\\)/);"
+    },
+    {
+      "path": "scripts/test-customer-location-opt-in.mjs",
+      "line": 2,
+      "text": "import { ensureEstimateCustomerLocation } from \"../src/components/estimator/customerLocationService.js\";"
+    },
+    {
+      "path": "scripts/test-customer-location-opt-in.mjs",
+      "line": 26,
+      "text": "assert.equal(await ensureEstimateCustomerLocation({ customerId: \"\", siteAddress: input.siteAddress }), null);"
+    },
+    {
+      "path": "scripts/test-customer-location-opt-in.mjs",
+      "line": 27,
+      "text": "assert.equal(await ensureEstimateCustomerLocation({ customerId: input.customerId, siteAddress: \" \" }), null);"
+    },
+    {
+      "path": "scripts/test-customer-location-opt-in.mjs",
+      "line": 31,
+      "text": "  const first = await ensureEstimateCustomerLocation({ entity, ...input });"
+    }
+  ],
+  "truncated": true,
+  "returnedMatches": 200
+}

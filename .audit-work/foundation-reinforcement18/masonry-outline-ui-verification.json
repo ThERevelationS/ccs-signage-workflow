@@ -1,0 +1,96 @@
+{
+  "results": [
+    {
+      "id": "invalid-rect-l-\"\"",
+      "ok": true
+    },
+    {
+      "id": "invalid-rect-w-\"\"",
+      "ok": true
+    },
+    {
+      "id": "invalid-rect-l-\"0\"",
+      "ok": true
+    },
+    {
+      "id": "invalid-rect-w-\"0\"",
+      "ok": true
+    },
+    {
+      "id": "invalid-rect-l-\"-5\"",
+      "ok": true
+    },
+    {
+      "id": "invalid-rect-w-\"-5\"",
+      "ok": true
+    },
+    {
+      "id": "invalid-rect-l-\"abc\"",
+      "ok": true
+    },
+    {
+      "id": "invalid-rect-w-\"abc\"",
+      "ok": true
+    },
+    {
+      "id": "invalid-rect-l-\"1e999\"",
+      "ok": true
+    },
+    {
+      "id": "invalid-rect-w-\"1e999\"",
+      "ok": true
+    },
+    {
+      "id": "invalid-rect-l-\"NaN\"",
+      "ok": true
+    },
+    {
+      "id": "invalid-rect-w-\"NaN\"",
+      "ok": true
+    },
+    {
+      "id": "valid-rect-8x8-exact-geometry-metadata",
+      "ok": true
+    },
+    {
+      "id": "valid-rect-decimal-8_5x4_25",
+      "ok": true
+    },
+    {
+      "id": "valid-rect-numeric-string-events",
+      "ok": true
+    },
+    {
+      "id": "malformed-points-no-crash-no-guessed-preview",
+      "ok": true
+    },
+    {
+      "id": "one-point-drawable-undo-clear",
+      "ok": true
+    },
+    {
+      "id": "valid-open-closed-unaffected",
+      "ok": true
+    },
+    {
+      "id": "legacy-segments-only-no-polygon-warning",
+      "ok": true
+    },
+    {
+      "id": "two-editors-unique-grid-and-error-ids",
+      "ok": true
+    },
+    {
+      "id": "scaled-svg-click-maps-to-viewbox-inches",
+      "ok": true
+    },
+    {
+      "id": "malformed-clear-available",
+      "ok": true
+    },
+    {
+      "id": "consecutive-duplicate-point-not-appended-after-clamp",
+      "ok": true
+    }
+  ]
+}

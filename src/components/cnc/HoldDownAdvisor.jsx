@@ -99,11 +99,11 @@ export default function HoldDownAdvisor({ item, onUpdate, letterPerimFactor }) {
             ))}
           </div>
 
-          {result.reasons.length > 0 && (
+          {(result.reasons || []).length > 0 && (
             <details className="text-xs text-slate-600">
-              <summary className="cursor-pointer font-medium text-slate-700">Why this recommendation ({result.reasons.length} factors)</summary>
+              <summary className="cursor-pointer font-medium text-slate-700">Why this recommendation ({(result.reasons || []).length} factors)</summary>
               <ul className="list-disc pl-5 mt-1 space-y-0.5">
-                {result.reasons.map((r, i) => <li key={i}>{r}</li>)}
+                {(result.reasons || []).map((r, i) => <li key={i}>{r}</li>)}
               </ul>
             </details>
           )}

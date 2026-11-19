@@ -1,0 +1,17 @@
+{
+  "kind": [
+    "api",
+    "fetch",
+    "GET"
+  ],
+  "exit": 1,
+  "data": {
+    "error": "Error calling GET /api/apps/68dfcc5e57bbbc35387da97c: terminated",
+    "code": "API_ERROR",
+    "hints": [
+      {
+        "message": "Check your network connection and try again"
+      }
+    ]
+  }
+}

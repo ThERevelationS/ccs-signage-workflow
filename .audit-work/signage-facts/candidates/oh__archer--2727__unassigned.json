@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6ae0470d4332e690fb502727",
+ "jurisdiction_name": "Archer",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "BUILDING DEPARTMENT Rick Hugh, Inspector — Misty Bailie, Clerk Instructional Information Permits will be required for the following: 1. Residential (new construction & additions), the fee is $360.00 plus $4.00 per 100 sq ft. 2. Reinspection’s $150.00 Floodplain permits are required for any construction in a special flood hazard area (i.e., floodplain). See floodplain administrator for application and regulations. (Engineer Del George at 740 - 942 - 8867) . You will need to contact the Health Department (740 - 942 - 2616) if you have a well or septic system. There will be a total of three inspections: 1. Footer 2. Rough - in (before any wall coverings applied to the interior) 3. Final All inspections must be approved before Certificate of Occupancy will be issued. Contact Rick Hugh to schedule inspections at 740 - 391 - 5966, and please allow 24/48 hours for all inspections. Permits must ",
+   "tags": [
+    "fee",
+    "area",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "b5d172c641726b1d0fe20e98bd83e47a8d0708cc7516b93ae2aec1dfd59b0391",
+   "source_document_id": null,
+   "source_title": "b5d172c641726b1d0fe20e98bd83e47a8d0708cc7516b93ae2aec1dfd59b0391.pdf",
+   "official_url": "https://www.harrisoncountyohio.gov/media/Auditor/Building%20Permit%20Instructions.pdf"
+  }
+ ]
+}

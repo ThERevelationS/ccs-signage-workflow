@@ -1,0 +1,29 @@
+{
+ "authorized": true,
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "98c44955e087138a1a8552714f3db734997f158c",
+ "restoreCheckpointId": "6aef63da7b024cca8716d1dd",
+ "candidateHashes": {
+  "channelLetterPricingAvailability.js": "559cd862b1562025ddf74277634727e466ccdd3a9bdaffd07d8bf9c8e0c5efe1",
+  "BackerFabPanel.jsx": "fff6a050cef5509132bbe94d58679a6fa3f3a0e32b69cf67dc25c275cf0730ba",
+  "BackerSection.jsx": "b460bd906258b66778bfee69aeb090ef83df6b98f527d958b80fd9f8ffa29b57",
+  "DimensionalFabPanel.jsx": "b5231c85193bc03806bca290a0d0eaa453044c7d72139d604667571cd6839a8c",
+  "EquipmentSelector.jsx": "d5d0e89dc95718536fa7695e342cde457f87eb8b7dc4c56ca4ad0950030c0e41",
+  "InstallLineItem.jsx": "78944fd207de673ffb5d3139b89ed57aaa3808b9aadc866cb4cca2bcd58cb073",
+  "InstallSummaryCard.jsx": "ffa71e812cc8e0e217b466dacded2062e781a86b8e9d5aea8876f1ea16322a51",
+  "ItemsList.jsx": "9ad325e06b8f57a19b1099f6b87549ce80134b282a4f7d7c68072b2fbffb564b",
+  "LadderSelector.jsx": "bf8cc28d535d531c010c8389c57f9c831a1622d70a9f04b59434c2dbf999ee9b",
+  "LetterPurchaseRow.jsx": "8d6afb2049a2671f8f24c1a284477dcc0ac59796563597ce8614d404ec1750a9",
+  "LettersPurchaseTab.jsx": "e0260fb1a3cde97edaf48f888a50826b957c46499fbbf4e8df5fa2283a166bf8",
+  "MaterialsList.jsx": "9b5c8ca5c68c951e310b1da2b431bafb820727bf0c845771d372ddb24f04aeee",
+  "PersonnelSelector.jsx": "86166997f8fed04635e5ec7852ffb3a89b1447d69526c7f280497dda9c08ad16",
+  "SummaryDetailsCard.jsx": "43b5153e6128bc22366afdea48adc6f25b85c43009c04128d9441d21d306011b",
+  "ValidationWarnings.jsx": "a9f4a0a5112ac968090253b7ca062fcc78c8f7e08f589d60bccbfd2d459343da",
+  "installExport.jsx": "6d0e871431fb4f4fa179891a005dc00c88c2a979ca382dcecaccbc033a135590",
+  "ChannelLetterEstimator.jsx": "49a7f9f5acd833476ef7c27109f5d47a0eae583910f1327d28e86ea8b41cd2e0"
+ },
+ "reviewedProtocolHash": "056e4c767d0bd877f3c2b55ee17960ca745dd5bfcda956bb255d231c5a23ef20",
+ "createdAt": "2026-11-07T17:46:11.271Z",
+ "resumedAt": "2026-11-07T18:06:58.855Z"
+}

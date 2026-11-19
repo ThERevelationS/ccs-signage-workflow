@@ -1,0 +1,129 @@
+{
+  "synthetic": true,
+  "results": [
+    {
+      "name": "real paged loader requests the second Product page and retains all505 frozen amounts",
+      "ok": true,
+      "calls": [
+        {
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          },
+          "sort": "created_date",
+          "limit": 500,
+          "skip": 0
+        },
+        {
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          },
+          "sort": "created_date",
+          "limit": 500,
+          "skip": 0
+        },
+        {
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          },
+          "sort": "created_date",
+          "limit": 500,
+          "skip": 500
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "real pagination includes mixed stamped and legacy rows without duplicate amounts",
+      "ok": true,
+      "calls": [
+        {
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          },
+          "sort": "created_date",
+          "limit": 500,
+          "skip": 0
+        },
+        {
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          },
+          "sort": "created_date",
+          "limit": 500,
+          "skip": 0
+        },
+        {
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          },
+          "sort": "created_date",
+          "limit": 500,
+          "skip": 500
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "a failed second page prevents a partial500-part Work Order write",
+      "ok": true,
+      "calls": [
+        {
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          },
+          "sort": "created_date",
+          "limit": 500,
+          "skip": 0
+        },
+        {
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          },
+          "sort": "created_date",
+          "limit": 500,
+          "skip": 0
+        },
+        {
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          },
+          "sort": "created_date",
+          "limit": 500,
+          "skip": 500
+        }
+      ],
+      "writes": []
+    },
+    {
+      "name": "a malformed second page remains unavailable rather than an empty complete result",
+      "ok": true,
+      "calls": [
+        {
+          "query": {
+            "estimate_id": "synthetic-estimate"
+          },
+          "sort": "created_date",
+          "limit": 500,
+          "skip": 0
+        },
+        {
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          },
+          "sort": "created_date",
+          "limit": 500,
+          "skip": 0
+        },
+        {
+          "query": {
+            "builder_product_id": "synthetic-builder"
+          },
+          "sort": "created_date",
+          "limit": 500,
+          "skip": 500
+        }
+      ],
+      "writes": []
+    }
+  ]
+}

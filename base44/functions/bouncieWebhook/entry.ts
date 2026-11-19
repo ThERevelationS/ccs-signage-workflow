@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { secrets } from 'base44:runtime';
 import { normalizeWebhookEvent, applyLiveState, patchConnection, milSemanticState } from '../../shared/bouncie.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 const SEMANTIC_TRIP_EVENTS = new Set(['tripStart', 'tripEnd', 'tripMetrics']);
 
@@ -65,7 +66,13 @@ export default async function(req) {
     }
 
     const normalizedProvidedKey = providedKey.replace(/^Bearer\s+/i, '');
-    if (!normalizedProvidedKey || normalizedProvidedKey !== expectedKey) {
+    const keyBytes = new TextEncoder().encode(normalizedProvidedKey);
+    const expectedBytes = new TextEncoder().encode(expectedKey);
+    let keyDiff = keyBytes.length === expectedBytes.length ? 0 : 1;
+    for (let i = 0; i < Math.max(keyBytes.length, expectedBytes.length); i += 1) {
+      keyDiff |= (keyBytes[i % Math.max(keyBytes.length, 1)] || 0) ^ (expectedBytes[i % Math.max(expectedBytes.length, 1)] || 0);
+    }
+    if (!normalizedProvidedKey || keyDiff !== 0) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -80,7 +87,7 @@ export default async function(req) {
     const cleanHeaders = new Headers(req.headers);
     cleanHeaders.delete('Authorization');
     cleanHeaders.delete('X-Bouncie-Authorization');
-    const base44 = createClientFromRequest(new Request(req.url, { method: 'POST', headers: cleanHeaders }));
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(new Request(req.url, { method: 'POST', headers: cleanHeaders })), { maxRetries: 2 });
 
     const normalized = normalizeWebhookEvent(event);
     const vin = event.vin || '';

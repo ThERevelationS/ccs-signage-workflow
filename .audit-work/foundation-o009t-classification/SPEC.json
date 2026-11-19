@@ -1,0 +1,60 @@
+{
+  "unit": "O-009t / CMP-A09 — inactive/unpriced/free classification on the Foundation catalog",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "mode": "candidate-only (no remote writes, no publish/deploy/entity ops)",
+  "source_of_truth": "remote sandbox pulls taken this session; remote md5 re-verified unchanged after implementation",
+  "candidate_file": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+  "candidate_copy": ".audit-work/foundation-o009t-classification/foundationCatalogIntegrity.js",
+  "remote_baseline": ".audit-work/foundation-o009t-classification/remote/foundationCatalogIntegrity.js",
+  "remote_baseline_md5": "e415db232534bf67eb1c9f92a71db660",
+
+  "schema_finding": {
+    "FoundationInventory.jsonc": "no active/status/archived/free field. Deactivation in this estimator's context is `show_in_foundation === false` (schema default true).",
+    "LaborServiceInventory.jsonc": "has `is_active` (default true, used in the page's service query) and `show_in_foundation` (default true, NOT in the query).",
+    "load_path": "FoundationEstimator loads FoundationInventory with query {show_in_foundation:true} and LaborServiceInventory with {service_category:'concrete_service', is_active:true}, then merges normalizeConcreteSupplier rows client-side. A labor supplier carrying show_in_foundation:false therefore ENTERS the priced inventory flagged-but-present; a FoundationInventory row flagged false is filtered at the query and looks identical to a deleted row from inside the scan."
+  },
+
+  "classification_contract": {
+    "foundationCatalogRowAvailability(row)": "exported; 'deleted' tombstones (deleted/is_deleted/deleted_at/status in {deleted,removed,purged}) win over 'inactive' markers (show_in_foundation===false, is_active===false, active===false, archived/is_archived/disabled===true, status in {inactive,disabled,archived,discontinued,retired,deactivated}); else 'active'.",
+    "foundationCatalogPriceClass(value)": "exported; 'unpriced' (inventoryNonnegativeNumber null: absent/malformed/negative), 'free' (recorded explicit 0), 'priced'.",
+    "foundationItemCatalogAudit(item, inventory, index)": "exported advisory mirror — per consumed basis emits {kind,index,componentId,field,inventoryId,selection:authored|unassigned|defaulted,availability:active|inactive|deleted|missing|unassigned,priceClass:priced|free|unpriced|override|deferred|unconsumed}. Non-blocking; nothing in it gates pricing.",
+    "issue_field_order": "existence -> material_type (structural fit) -> lifecycle (inactive/deleted) -> consumed price basis. A wrong-type row was never a valid selection so type beats lifecycle."
+  },
+
+  "new_issue_codes": {
+    "catalog_item_inactive": "selected id resolves to a row carrying an inactivity marker — blocks via the existing catalogIssues channel; acknowledged snapshot retained through the unchanged calcItem/delivery holds.",
+    "catalog_item_deleted": "selected id resolves to a present tombstone row (soft-delete markers).",
+    "catalog_item_unpriced": "row resolves, right type, active — but the price basis the item actually consumes is absent/malformed/negative. Recorded 0 (deliberate free) never flags.",
+    "catalog_item_unassigned_default": "an implicit default is consumed: pillar item with falsy pillar_rebar_size (ported `|| '#4'` pick), or a falsy project_concrete_type while a concrete_service supplier is selected (ported `|| '4000_ae'` mix pick, kind 'concrete_delivery' field 'project_concrete_type').",
+    "catalog_item_unassigned_extended": "existing code, new emission sites — selected_concrete_id unassigned (item silently rides the first supplier's delivery catalog or prices concrete at $0) and selected_forming_id unassigned while include_forming (silently $0 material). Forming's flag is suppressed when custom_forming_rate is authored (custom replaces the catalog basis entirely)."
+  },
+
+  "consumed_basis_mirroring": {
+    "selected_concrete_id": "unpriced checked only for bagged_concrete rows when custom_concrete_cost_per_cy is not authored — mirrors calcItemCost `conc_cost`/`concreteBags` consumption; concrete_service rows defer to the delivery scan's mix/admix/fee checks (never duplicated).",
+    "selected_forming_id": "unpriced checked on cost_per_unit only when custom_forming_rate is not authored (mirrors `forming_rate` `??` pick).",
+    "rebar (v1)": "size-matched row checked on cost_per_unit only when custom_rebar_cost_per_ft is not authored; the availability scan keeps the existing manualRebar (finite && >=0) gate, the unpriced flag uses the calc's authored (non-null) gate.",
+    "reinforcement_material.inventory_id (v2)": "availability classification added; price basis stays with the reinforcement module (never duplicated)."
+  },
+
+  "parity_notes": {
+    "preserved_codes": "catalog_item_unavailable / catalog_item_type_mismatch / catalog_item_ambiguous / catalog_item_unassigned keep their codes on the same conditions they previously covered; messages are refined to name the class (e.g. 'is unavailable — the catalog row may have been deleted or deactivated' keeps the 'is unavailable' substring the page's diagnostics render).",
+    "changed_code": "pillar item with falsy pillar_rebar_size AND no #4 rebar row: was catalog_item_unavailable, now catalog_item_unassigned_default (the condition is unassigned-ness; the default row is absent).",
+    "new_blocking_flags": "unassigned concrete, unassigned forming (no custom rate), implicit #4 pillar default, implicit 4000_ae mix default, inactive/deleted/unpriced resolved rows — all previously unflagged or lumped; all retain acknowledged-snapshot amounts via the unchanged item/delivery holds."
+  },
+
+  "residual_gaps_documented_not_fixed": [
+    "Sibling pricing checks (poleCalculator, wallCalculator, wallCapCalculator, foundationEquipmentBindings) own their own catalog_item_* emitters — a selected-but-inactive row still prices silently on those paths because the row resolves. They are separate owned units; foundationCatalogRowAvailability is exported for their adoption.",
+    "FoundationInventory rows marked show_in_foundation:false are query-filtered upstream, so referenced ones classify 'unavailable' (deleted-or-deactivated message) rather than 'inactive' — distinguishing requires an unfiltered catalog reference, a page/caller concern outside this file's ownership.",
+    "The mix-default flag fires on falsy project_concrete_type + a resolved service supplier regardless of shipped yards (volume math is the delivery scan's; flagging earlier than consumption is the honest posture).",
+    "normalizeConcreteSupplier mints cost_per_unit: row.default_rate || 0 — absent default_rate becomes authored free; noted in materials14 DESIGN as a normalizer-unit issue (O-008 tail), not changed here."
+  ],
+
+  "verification": {
+    "harness": ".audit-work/foundation-o009t-classification/verify-o009t.mjs — 46 assertions, all pass",
+    "method": "esbuild bundle of REMOTE calc graph (foundationCalc, legacyFoundationCalc, wall/pole/cap calculators, equipment bindings, input validation, construction checks, landscape, geometry inputs, reinforcement model, normalization boundary) with the candidate substituted for foundationCatalogIntegrity.js and foundationReinforcementItemProjection stubbed to null (v1-only through calcProject; the v2 branch is exercised directly on foundationItemCatalogIssues).",
+    "coverage": "lifecycle classifier (9 inactive markers, 5 deleted markers, active), price classifier (free/unpriced/priced/negative/malformed), every new issue code firing + controls (override suppression, free-not-flagged, manualRebar gate, service-row deferral), parity cases (type_mismatch, ambiguous, unassigned rebar, missing rows), acknowledged-snapshot retention under the new flags, calcProject end-to-end (itemPricing.available, catalogIssues channel, delivery hold).",
+    "fixture_audit": "materials14 complete-before.json: cases 5,6,8-12,16,22 (blank mix + service supplier) and 21 (unassigned concrete) will diverge from recorded expectations by design — the recorded silent-default consumption is exactly what this unit flags. Case fixtures' selected rows are all priced+active otherwise. test-foundation-material-ui T3/T4 and the catalog-integrity suite use items:[] or fully-assigned priced rows — unaffected.",
+    "no_message_regressions": "the only exact-message assertion in the suite is 'Pole 1: selected catalog material is unavailable' — emitted by poleCalculator.js (untouched); the assembly-scan pole path keeps the same prefix too."
+  }
+}

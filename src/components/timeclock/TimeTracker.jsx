@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/auth/EmailGate";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
+import { invokeTimeClockAction } from "@/components/timeclock/timeClockReadCache";
 import { useToast } from "@/components/ui/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { playSoundEffect } from "@/components/announcements/AnnouncementContext";
@@ -78,6 +80,11 @@ const ANIMATION_CLASSES = new Set([
   "flicker", "rainbow", "pop", "wobble", "ripple", "shake", "gradient",
 ]);
 
+function newRequestId() {
+  try { return crypto.randomUUID(); } catch {}
+  return `tt-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 const MILESTONE_STORAGE = "ccs_time_tracker_milestones";
 
 function milestoneKey(email, day) {
@@ -141,6 +148,10 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   const scopeKey = `${email}|${sessionToken ? "t" : ""}`;
 
   const [snapshotRecord, setSnapshotRecord] = useState({ scope: scopeKey, data: null, receivedAt: 0, serverOffset: 0 });
+  const [historyBusy, setHistoryBusy] = useState(false);
+  const [historyStats, setHistoryStats] = useState(null);
+  const [myPendingCorrections, setMyPendingCorrections] = useState(0);
+  const [lastManagerNote, setLastManagerNote] = useState(null);
   const [pollError, setPollError] = useState("");
   const [open, setOpen] = useState(false);
   const [pulse, setPulse] = useState(false);
@@ -148,6 +159,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   const scopeRef = useRef(scopeKey);
   scopeRef.current = scopeKey;
   const inFlightRef = useRef(null);
+  const lastSnapshotRefreshAtRef = useRef(0);
   const snapshotRef = useRef(null);
   snapshotRef.current = snapshotRecord.scope === scopeKey ? snapshotRecord : null;
 
@@ -157,19 +169,44 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     sessionToken && snapshot && prefs?.tracker_enabled === true,
   );
 
+  // Employee self-service: count own correction requests still awaiting review.
+  // Skipped in low-data mode - it is a secondary fetch, not core clock state.
+  const lowData = prefs?.low_data_mode === true;
+  useEffect(() => {
+    if (!sessionToken || !enabled || lowData) return undefined;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await invokeTimeClockAction({
+          action: "list_correction_requests", payload: { session_token: sessionToken, request_id: newRequestId() },
+        });
+        const data = res?.data || res;
+        if (!cancelled && data?.success === true && Array.isArray(data.requests)) {
+          const pending = data.requests.filter((r) => r.status === "pending" || r.status === "reviewing");
+          setMyPendingCorrections(pending.length);
+          // Latest manager note visible to the employee - "why was it rejected/edited?"
+          const reviewed = [...data.requests].filter((r) => r.review_reason || r.manager_reason).sort((a, b) => String(b.updated_date || "").localeCompare(String(a.updated_date || "")))[0];
+          setLastManagerNote(reviewed ? { reason: reviewed.review_reason || reviewed.manager_reason || "", status: reviewed.status || "" } : null);
+        }
+      } catch {}
+    };
+    load();
+    const timer = setInterval(() => { if (!document.hidden && !isFleetCoolingDown()) load(); }, 300000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [sessionToken, enabled]);
+
   const refresh = useCallback(async ({ force = false } = {}) => {
     const requestScope = scopeRef.current;
     const requestEmail = String(currentUser?.email || "").trim().toLowerCase();
     if (!sessionToken || !requestEmail) return null;
     if (inFlightRef.current && !force) return inFlightRef.current;
     const promise = (async () => {
+      lastSnapshotRefreshAtRef.current = Date.now();
       try {
-        const response = await base44.functions.invoke("timeClockAction", {
+        const data = await invokeTimeClockAction({
           action: "time_tracker_snapshot",
-          session_token: sessionToken,
-          target_email: requestEmail,
+          payload: { session_token: sessionToken, target_email: requestEmail },
         });
-        const data = response?.data || response;
         if (scopeRef.current !== requestScope) return data;
         if (!data?.success) throw new Error(data?.error || "Time Tracker status could not be verified.");
         const receivedAt = Date.now();
@@ -195,20 +232,38 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     return promise;
   }, [currentUser?.email, sessionToken]);
 
-  // Initial + interval polling at the employee's chosen cadence.
-  const intervalSeconds = Math.min(300, Math.max(15, Number(prefs?.update_interval_seconds) || 60));
+  // Initial + interval polling at the employee's chosen cadence (floor: 60s —
+  // every open Time Tracker tab shares the app's function rate budget).
+  const lowDataMode = prefs?.low_data_mode === true;
+  const intervalSeconds = lowDataMode
+    ? Math.max(120, Math.min(300, Math.max(60, Number(prefs?.update_interval_seconds) || 60)))
+    : Math.min(300, Math.max(60, Number(prefs?.update_interval_seconds) || 60));
   useEffect(() => {
     if (!sessionToken || !email) return undefined;
     let cancelled = false;
-    const run = () => { if (!cancelled) refresh({ force: true }).catch(() => {}); };
-    run();
+    const run = () => {
+      if (cancelled || document.hidden || isFleetCoolingDown()) return;
+      refresh({ force: true }).catch(() => {});
+    };
+    // The header tracker is chrome — its first snapshot yields to the page's
+    // own data on mount, then resumes its normal poll cadence.
+    const initial = window.setTimeout(run, 1500);
     const id = window.setInterval(run, intervalSeconds * 1000);
-    return () => { cancelled = true; window.clearInterval(id); };
+    return () => { cancelled = true; window.clearTimeout(initial); window.clearInterval(id); };
   }, [sessionToken, email, intervalSeconds, refresh]);
 
-  // Re-poll when Time Clock activity signals a state change.
+  // Re-poll when Time Clock activity signals a state change. Every listener
+  // routes through one throttle: explicit change signals bypass the freshness
+  // gap, cross-tab/storage pings refresh at most every 15s, and becoming
+  // visible again only refreshes when the poll interval was already due.
+  // Nothing refreshes while the shared 429 breaker is open.
   useEffect(() => {
     if (!sessionToken || !email) return undefined;
+    const requestSnapshotRefresh = (minGapMs = 15000) => {
+      if (isFleetCoolingDown()) return;
+      if (Date.now() - lastSnapshotRefreshAtRef.current < minGapMs) return;
+      refresh({ force: true }).catch(() => {});
+    };
     const onChange = (event) => {
       const incoming = event?.detail?.prefs;
       if (incoming && typeof incoming === "object") {
@@ -216,10 +271,10 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
           ? { ...prev, data: { ...prev.data, prefs: incoming } }
           : prev);
       }
-      refresh({ force: true }).catch(() => {});
+      requestSnapshotRefresh(0);
     };
-    const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") onChange(); };
-    const onVisible = () => { if (document.visibilityState === "visible") onChange(); };
+    const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") requestSnapshotRefresh(); };
+    const onVisible = () => { if (document.visibilityState === "visible") requestSnapshotRefresh(intervalSeconds * 1000); };
     window.addEventListener("ccs-timeclock-work-pause-changed", onChange);
     window.addEventListener("ccs:timeTrackerRefresh", onChange);
     window.addEventListener("storage", onStorage);
@@ -230,7 +285,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
       window.removeEventListener("storage", onStorage);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [sessionToken, email, refresh]);
+  }, [sessionToken, email, refresh, intervalSeconds]);
 
   // Local 1s tick between authoritative snapshots.
   useEffect(() => {
@@ -246,22 +301,30 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     const accruingPaid = snapshot.accruing_paid === true;
     const accruingElapsed = snapshot.status === "clocked_in";
     return {
-      paid: Number(snapshot.paid_minutes_today || 0) + (accruingPaid ? sinceReceipt : 0),
-      elapsed: Number(snapshot.elapsed_minutes_today || 0) + (accruingElapsed ? sinceReceipt : 0),
+      paid: Number(snapshot.tracker_paid_minutes ?? snapshot.paid_minutes_today ?? 0) + (accruingPaid ? sinceReceipt : 0),
+      elapsed: Number(snapshot.tracker_elapsed_minutes ?? snapshot.elapsed_minutes_today ?? 0) + (accruingElapsed ? sinceReceipt : 0),
       weekly: Number(snapshot.weekly_paid_minutes || 0) + (accruingPaid ? sinceReceipt : 0),
+      unpaidNow: Number(snapshot.live_unpaid_minutes || 0) + (accruingElapsed && !accruingPaid ? sinceReceipt : 0),
       frozen: snapshot.status === "clocked_in" && !accruingPaid,
     };
   }, [snapshot, snapshotRecord, nowMs]);
 
-  const goalMinutes = Math.max(60, Number(prefs?.daily_goal_minutes) || 480);
+  // Per-day-of-week goal overrides fall back to the single daily goal.
+  const dayKey = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date().getDay()];
+  const goalMinutes = Math.max(60, Number(prefs?.daily_goal_overrides?.[dayKey]) || Number(prefs?.daily_goal_minutes) || 480);
   const displayMinutes = live ? (prefs?.count_mode === "elapsed" ? live.elapsed : live.paid) : 0;
+  const POMODORO_MINUTES = 25;
+  const pomodoroCycles = prefs?.count_mode === "pomodoro" ? Math.floor(displayMinutes / POMODORO_MINUTES) : 0;
+  const pomodoroCurrent = prefs?.count_mode === "pomodoro" ? displayMinutes % POMODORO_MINUTES : 0;
   const progress = goalMinutes > 0 ? displayMinutes / goalMinutes : 0;
   const overtimeMinutes = Math.max(0, displayMinutes - goalMinutes);
   const overtime = overtimeMinutes > 0.5;
   const tone = toneFor(progress, overtime);
-  const shown = prefs?.direction === "down" && !overtime
+  const roundingStep = Math.max(0, Number(prefs?.display_rounding) || 0);
+  const rawShown = prefs?.direction === "down" && !overtime
     ? Math.max(0, goalMinutes - displayMinutes)
     : displayMinutes;
+  const shown = roundingStep > 0 ? Math.round(rawShown / roundingStep) * roundingStep : rawShown;
 
   // Milestone detection: thresholds crossed on the live counter.
   const milestoneThresholds = useMemo(() => {
@@ -307,6 +370,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
       }
       if (prefs?.milestone_behavior === "toast_sound") playSoundEffect(prefs?.milestone_sound || "chime");
     }
+    // Forget-to-clock-out warning once elapsed passes goal + 4h.
+    if (!next.includes(88888) && live.elapsed >= goalMinutes + 240) {
+      next.push(88888);
+      toast({ description: "Time Tracker: still clocked in - did you forget to clock out?" });
+    }
     if (prefs?.weekly_celebrate === true) {
       const weeklyGoal = Math.max(60, Number(prefs?.weekly_goal_minutes) || 2400);
       if (live.weekly >= weeklyGoal && !next.includes(2000)) {
@@ -330,16 +398,42 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     if (!source.length) return;
     const fired = readMilestones(email, snapshot.company_day);
     const next = [...fired];
+    // Quiet hours: when the employee has a schedule, reminders stay inside it.
+    const sched = snapshot?.todays_schedule;
+    const outsideSchedule = (() => {
+      if (!sched?.end_time || !snapshot?.company_day) return false;
+      const [eh, em] = String(sched.end_time).split(":").map(Number);
+      const end = new Date(); end.setHours(eh || 0, (em || 0) + 60, 0, 0); // 1h grace
+      return Date.now() > end.getTime();
+    })();
+
+    // Catch-up toasts collapse to the single most recent pending event — a
+    // mount mid-shift must not stack a backlog of reminder + nudge toasts.
+    const pending = [];
     for (const r of source) {
-      const minute = Number(typeof r === "object" && r !== null ? r.minutes : r);
+      const minute = Number(typeof r === "object" && r !== null && Number(r.percent) > 0
+        ? Number(r.percent) * goalMinutes
+        : (typeof r === "object" && r !== null ? r.minutes : r));
       if (!Number.isFinite(minute) || minute <= 0) continue;
       const label = typeof r === "object" && r !== null ? String(r.label || "").trim() : "";
       const marker = 10000 + minute;
       if (displayMinutes >= minute && !next.includes(marker)) {
         next.push(marker);
-        toast({ description: `Time Tracker reminder: ${label || formatClock(minute, "hours_minutes") + " on the clock"}` });
-        if (prefs?.milestone_behavior === "toast_sound") playSoundEffect(prefs?.milestone_sound || "chime");
+        if (!outsideSchedule) {
+          pending.push({ at: minute, description: `Time Tracker reminder: ${label || formatClock(minute, "hours_minutes") + " on the clock"}` });
+        }
       }
+      // Escalation: if the reminder was ignored, re-fire once 10 minutes later.
+      const nudge = 30000 + minute;
+      if (displayMinutes >= minute + 10 && !next.includes(nudge)) {
+        next.push(nudge);
+        pending.push({ at: minute + 10, description: `Time Tracker reminder: ${label || formatClock(minute, "hours_minutes") + " on the clock"} - still on the clock` });
+      }
+    }
+    if (pending.length) {
+      pending.sort((a, b) => a.at - b.at);
+      toast({ description: pending[pending.length - 1].description });
+      if (prefs?.milestone_behavior === "toast_sound") playSoundEffect(prefs?.milestone_sound || "chime");
     }
     if (next.length !== fired.length) writeMilestones(email, snapshot.company_day, next);
   }, [enabled, live, displayMinutes, prefs, email, snapshot?.company_day, toast]);
@@ -357,12 +451,41 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     return () => { document.removeEventListener("visibilitychange", mark); window.removeEventListener("blur", mark); window.removeEventListener("focus", mark); mq?.removeEventListener?.("change", onMq); };
   }, []);
 
+  // Idle-hide preference: track real user activity and suppress the tracker
+  // after the configured idle window.
+  const lastActivityRef = useRef(0);
+  useEffect(() => {
+    lastActivityRef.current = Date.now();
+    const mark = () => { lastActivityRef.current = Date.now(); };
+    window.addEventListener("pointermove", mark);
+    window.addEventListener("pointerdown", mark);
+    window.addEventListener("keydown", mark);
+    return () => {
+      window.removeEventListener("pointermove", mark);
+      window.removeEventListener("pointerdown", mark);
+      window.removeEventListener("keydown", mark);
+    };
+  }, []);
+  const idleLimitMs = Math.max(0, Number(prefs?.hide_when_idle_minutes || 0)) * 60000;
+  const idleExpired = idleLimitMs > 0 && lastActivityRef.current > 0 && nowMs - lastActivityRef.current > idleLimitMs;
+
+  // One source of truth for other widgets/components that want the live totals.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.__timeTrackerLive = live
+        ? { paid: live.paid, elapsed: live.elapsed, weekly: live.weekly, goalMinutes, status: snapshot?.status || null }
+        : null;
+    }
+  }, [live, goalMinutes, snapshot?.status]);
+
   const matchesPref = locationPref === "both" ||
     (locationPref === "top" && position !== "side") ||
     (locationPref === "side" && position === "side");
   const visibleHere = enabled && locationPref !== "hidden" &&
     !(prefs?.show_only_clocked_in === true && snapshot?.status !== "clocked_in") &&
     !(prefs?.hide_when_unfocused === true && !focused) &&
+    !(prefs?.hide_on_weekend === true && (dayKey === "sun" || dayKey === "sat")) &&
+    !idleExpired &&
     !(prefs?.timeclock_page_only === true && !onTimeClock) &&
     !(prefs?.device_scope === "desktop_only" && isMobileView) &&
     !(prefs?.device_scope === "mobile_only" && !isMobileView) &&
@@ -386,9 +509,22 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   const circumference = 2 * Math.PI * 100;
   const ringFraction = Math.min(1, progress);
 
+  const schedule = snapshot?.todays_schedule || null;
+  const scheduleLabel = schedule?.start_time ? `Scheduled ${schedule.start_time}${schedule.end_time ? `-${schedule.end_time}` : ""}${schedule.label ? ` · ${schedule.label}` : ""}` : "";
+  const punchVariance = (() => {
+    if (!clockedIn || !schedule?.start_time || !snapshot?.clock_in) return null;
+    const [hh, mm] = schedule.start_time.split(":").map(Number);
+    const sched = new Date(snapshot.clock_in); sched.setHours(hh || 0, mm || 0, 0, 0);
+    const diff = Math.round((new Date(snapshot.clock_in) - sched) / 60000);
+    if (Math.abs(diff) < 1) return null;
+    return { minutes: Math.abs(diff), early: diff < 0 };
+  })();
+
   const popoverStats = snapshot ? [
     { label: "Clocked in", value: snapshot.clock_in ? formatCompanyDateTime(snapshot.clock_in) : "—" },
     { label: "Paid time", value: formatClock(live?.paid || 0, prefs?.time_format), accent: true },
+    ...(Number(snapshot.monthly_paid_minutes) > 0 ? [{ label: "This month", value: formatClock(live ? live.paid - (snapshot.paid_minutes_today || 0) + Number(snapshot.monthly_paid_minutes || 0) : snapshot.monthly_paid_minutes, "hours_minutes") }] : []),
+    ...(snapshot.pto_balance ? [{ label: "PTO balance", value: formatClock(snapshot.pto_balance.available_minutes || 0, "hours_minutes") }] : []),
     { label: "Unpaid break", value: formatMinutes(Math.round((snapshot.break_minutes || 0) - (snapshot.paid_break_minutes || 0) + (snapshot.on_unpaid_break_now ? snapshot.live_unpaid_minutes || 0 : 0))) },
     { label: "Work Pause", value: formatMinutes(Math.round((snapshot.pause_minutes || 0) + (snapshot.paused_now ? snapshot.live_unpaid_minutes || 0 : 0))) },
   ] : [];
@@ -415,6 +551,28 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
       : { label: `${formatMinutes(Math.round(-diff))} behind pace`, minutes: diff };
   }, [snapshot, live, clockedIn, goalMinutes]);
 
+  // Next unfired milestone - "45m to 8h" chip.
+  const nextMilestone = useMemo(() => {
+    if (!live || !clockedIn || !milestoneThresholds.length) return null;
+    for (const marker of [...milestoneThresholds].sort((a, b) => a - b)) {
+      const target = marker * goalMinutes;
+      if (target > displayMinutes) return { remaining: target - displayMinutes, target };
+    }
+    return null;
+  }, [live, clockedIn, milestoneThresholds, goalMinutes, displayMinutes]);
+
+  // Approaching the overtime threshold - shifts the chip amber before OT hits.
+  const otNearMinutes = !overtime && clockedIn ? Math.max(0, goalMinutes - displayMinutes) : 0;
+  const otNear = !overtime && clockedIn && otNearMinutes > 0 && otNearMinutes <= 30;
+
+  // "Last action" line for the popover header.
+  const lastActionText = (() => {
+    if (!snapshot || !clockedIn) return null;
+    if (snapshot.paused_now) return "Work paused";
+    if (snapshot.on_unpaid_break_now) return "On break";
+    return snapshot.clock_in ? `Clocked in ${formatCompanyDateTime(snapshot.clock_in)}` : null;
+  })();
+
   const weeklyDaily = Array.isArray(snapshot?.weekly_daily_minutes) ? snapshot.weekly_daily_minutes : [];
   const weekGoal = Math.max(60, Number(prefs?.weekly_goal_minutes) || 2400);
   const todayIndex = (() => {
@@ -423,13 +581,34 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     return (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7;
   })();
 
+  // Goal streak: consecutive days at/above the daily goal, ending today.
+  const goalStreak = useMemo(() => {
+    if (weeklyDaily.length !== 7) return 0;
+    let streak = 0;
+    for (let i = weeklyDaily.length - 1; i >= 0; i -= 1) {
+      const minutes = i === todayIndex && live ? live.paid : Number(weeklyDaily[i] || 0);
+      if (minutes >= goalMinutes) streak += 1;
+      else break;
+    }
+    return streak;
+  }, [weeklyDaily, live, goalMinutes, todayIndex]);
+
+  // Yesterday's total for context, and the trailing average for pace compare.
+  const yesterdayMinutes = todayIndex > 0 ? Number(weeklyDaily[todayIndex - 1] || 0) : null;
+  const weekAvgMinutes = useMemo(() => {
+    const days = weeklyDaily.map(Number).filter((m, i) => i < todayIndex && m > 0);
+    return days.length ? days.reduce((a, b) => a + b, 0) / days.length : null;
+  }, [weeklyDaily, todayIndex]);
+
   const trackerLabel = clockedIn
     ? (String(prefs?.custom_label || "").trim() || (prefs?.direction === "down" && !overtime ? "Remaining" : "Today"))
     : "";
   const trackerTime = clockedIn
-    ? (prefs?.show_seconds === false
-        ? formatClock(shown, "hours_minutes")
-        : formatClockSeconds(shown, prefs?.time_format))
+    ? (prefs?.count_mode === "pomodoro"
+        ? `${pomodoroCycles}x${POMODORO_MINUTES}m +${formatMinutes(pomodoroCurrent)}`
+        : prefs?.show_seconds === false
+          ? formatClock(shown, "hours_minutes")
+          : formatClockSeconds(shown, prefs?.time_format))
     : "Off the clock";
   const bgStyle = String(prefs?.background_style || "minimal");
   const bgClass = bgStyle === "minimal"
@@ -441,6 +620,19 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     "--tracker-accent-text": accent.text,
   };
 
+  if (sessionToken && email && !snapshot) {
+    return (
+      <div
+        data-time-tracker-status
+        role="status"
+        className="ccs-glass-control ccs-glass-neutral flex items-center gap-1.5 whitespace-nowrap rounded-xl px-2 py-1 text-xs text-slate-700 dark:text-slate-100"
+        title={pollError ? "Time Tracker could not load. It will retry automatically." : "Checking Time Tracker settings"}
+      >
+        <Hourglass className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
+        <span>{pollError ? "Clock unavailable" : "Loading clock..."}</span>
+      </div>
+    );
+  }
   if (!visibleHere) return null;
 
   return (
@@ -450,6 +642,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
           type="button"
           data-time-tracker
           aria-label={`Time Tracker. ${clockedIn ? `${formatClock(displayMinutes, "hours_minutes")} of ${formatClock(goalMinutes, "hours_minutes")} today` : "Not clocked in"}`}
+          title={live ? `Paid ${formatClock(live.paid, "hours_minutes")} · Elapsed ${formatClock(live.elapsed, "hours_minutes")} · Week ${formatClock(live.weekly, "hours_minutes")} · Goal ${formatClock(goalMinutes, "hours_minutes")}` : "Time Tracker"}
           className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none transition-[transform,opacity] duration-200 focus-visible:ring-4 focus-visible:ring-indigo-300/60 ${bgClass} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animFor("all")} ${prefs?.goal_celebrate !== false && clockedIn && progress >= 1 ? "tracker-celebrate" : ""}`}
           style={{
             zoom: prefs?.scale || 1,
@@ -478,6 +671,25 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
               )}
             </span>
           )}
+          {prefs?.display_style === "dual" && (() => {
+            const weeklyGoal = Math.max(60, Number(prefs?.weekly_goal_minutes) || 2400);
+            const weeklyFraction = live ? Math.min(1, (live.weekly || 0) / weeklyGoal) : 0;
+            const outerR = 116, outerC = 2 * Math.PI * outerR;
+            return (
+              <span className="relative shrink-0" style={{ width: ringSize, height: ringSize }}>
+                <svg viewBox="0 0 260 260" style={{ width: ringSize, height: ringSize }} className={animFor("ring")} aria-hidden="true">
+                  <circle cx="130" cy="130" r={outerR} fill="none" stroke="currentColor" strokeOpacity="0.12" strokeWidth={10} />
+                  <circle cx="130" cy="130" r={outerR} fill="none" stroke={ringColor} strokeOpacity="0.45" strokeWidth={10} strokeLinecap="round"
+                    strokeDasharray={outerC} strokeDashoffset={outerC * (1 - weeklyFraction)} transform="rotate(-90 130 130)"
+                    className={prefs?.animation_style === "none" ? "" : "transition-[stroke-dashoffset] duration-700 ease-out"} />
+                  <circle cx="130" cy="130" r="100" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth={18} />
+                  <circle cx="130" cy="130" r="100" fill="none" stroke={ringColor} strokeWidth={18} strokeLinecap="round"
+                    strokeDasharray={circumference} strokeDashoffset={circumference * (1 - ringFraction)} transform="rotate(-90 130 130)"
+                    className={prefs?.animation_style === "none" ? "" : "transition-[stroke-dashoffset] duration-700 ease-out"} />
+                </svg>
+              </span>
+            );
+          })()}
           {prefs?.display_style === "arc" && (
             <svg viewBox="0 0 120 62" style={{ width: ringSize * 1.5, height: Math.round(ringSize * 0.78) }} className={`shrink-0 ${animFor("ring")}`} aria-hidden="true">
               <path d="M10 58 A50 50 0 0 1 110 58" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="11" strokeLinecap="round" />
@@ -501,6 +713,8 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
                 ? <span className="rounded-md px-1.5 py-0.5 text-white" style={{ background: accent.ring }}>{trackerTime}</span>
                 : trackerTime}
               {prefs?.show_percent === true && clockedIn && <span className={`ml-1.5 font-semibold opacity-60 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{Math.round(Math.min(1, progress) * 100)}%</span>}
+              {prefs?.show_overtime !== false && overtime && prefs?.size !== "expanded" && <span className="ml-1.5 text-[9px] font-semibold text-violet-600 dark:text-violet-300">+{formatClock(overtimeMinutes, prefs?.time_format)} OT</span>}
+              {prefs?.show_overtime !== false && !overtime && otNear && prefs?.size !== "expanded" && <span className="ml-1.5 text-[9px] font-semibold text-amber-600 dark:text-amber-400">{formatMinutes(Math.ceil(otNearMinutes))} to OT</span>}
             </span>
             {prefs?.display_style === "bar" && (
               <span className="mt-1 block h-1 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
@@ -510,12 +724,25 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
                 />
               </span>
             )}
-            {prefs?.show_overtime !== false && overtime && (
+            {prefs?.show_overtime !== false && overtime && prefs?.size === "expanded" && (
               <span className="mt-0.5 text-[10px] font-semibold text-violet-600 dark:text-violet-300">
                 +{formatClock(overtimeMinutes, prefs?.time_format)} OT
               </span>
             )}
+            {prefs?.show_overtime !== false && !overtime && otNear && prefs?.size === "expanded" && (
+              <span className="mt-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                {formatMinutes(Math.ceil(otNearMinutes))} to OT
+              </span>
+            )}
           </span>
+          {Number(snapshot?.pending_shift_review?.count || 0) > 0 && (
+            <span
+              className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white shadow"
+              title={`${snapshot.pending_shift_review.count} shift review${snapshot.pending_shift_review.count === 1 ? "" : "s"} awaiting approval`}
+            >
+              {snapshot.pending_shift_review.count}
+            </span>
+          )}
         </button>
       </PopoverTrigger>
       <PopoverContent align="center" className="w-80 rounded-2xl border-indigo-200/60 bg-white/95 p-4 shadow-2xl backdrop-blur-xl dark:border-indigo-500/30 dark:bg-slate-950/95">
@@ -529,6 +756,22 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
             {!clockedIn ? "Off" : frozen ? (snapshot?.paused_now ? "Paused" : "Break") : "Working"}
           </span>
         </div>
+        {lastActionText && (
+          <p className="mt-1 text-[10px] text-slate-400">
+            {lastActionText}
+            {frozen && live?.unpaidNow > 0 ? ` - ${formatMinutes(Math.round(live.unpaidNow))} so far` : ""}
+          </p>
+        )}
+        {Number(snapshot?.consecutive_worked_days) >= 6 && (
+          <p className="mt-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+            Day {snapshot.consecutive_worked_days} in a row - check the rest policy.
+          </p>
+        )}
+        {clockedIn && Number.isFinite(Number(snapshot?.rest_hours_since_last_shift)) && Number(snapshot.rest_hours_since_last_shift) < 10 && snapshot?.last_clock_out && (
+          <p className="mt-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+            Only {Math.round(Number(snapshot.rest_hours_since_last_shift) * 10) / 10}h since your last shift.
+          </p>
+        )}
 
         {!snapshot && (
           <p className="mt-3 text-sm text-slate-500">{pollError || "Loading your day…"}</p>
@@ -566,9 +809,15 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
 
             {prefs?.show_week_strip !== false && weeklyDaily.length === 7 && (
               <div className="mt-4">
-                <div className="mb-1.5 flex items-center justify-between text-xs font-semibold text-slate-500">
-                  <span>This week</span>
-                  <span>{formatClock(live?.weekly || 0, "hours_minutes")} / {formatClock(weekGoal, "hours_minutes")}</span>
+                <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-2 text-xs font-semibold text-slate-500">
+                  <span className="whitespace-nowrap">
+                    This week
+                    <span className="text-slate-800 dark:text-slate-100"> {formatClock(live?.weekly || 0, "hours_minutes")}</span>
+                    <span className="font-normal"> / {formatClock(weekGoal, "hours_minutes")}</span>
+                  </span>
+                  <span className="shrink-0 whitespace-nowrap text-[10px] font-medium text-slate-400">
+                    {[yesterdayMinutes !== null ? `yesterday ${formatClock(yesterdayMinutes, "hours_minutes")}` : "", weekAvgMinutes ? `avg ${formatClock(weekAvgMinutes, "hours_minutes")}/day` : ""].filter(Boolean).join(" · ")}
+                  </span>
                 </div>
                 <div className="flex items-end gap-1">
                   {weeklyDaily.map((minutes, index) => {
@@ -579,7 +828,13 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
                         <div className="flex h-14 w-full items-end rounded-md bg-black/[0.06] dark:bg-white/10">
                           <div
                             className={`w-full rounded-md ${isToday ? "tracker-today-bar" : ""}`}
-                            style={{ height: `${Math.max(4, fraction * 100)}%`, backgroundImage: `linear-gradient(180deg, ${accent.barStart}, ${accent.barEnd})` }}
+                            style={{
+                              height: `${Math.max(4, fraction * 100)}%`,
+                              backgroundImage: fraction >= 1
+                                ? "linear-gradient(180deg, #34d399, #059669)"
+                                : `linear-gradient(180deg, ${accent.barStart}, ${accent.barEnd})`,
+                              opacity: fraction < 0.5 && !isToday ? 0.45 : 1,
+                            }}
                           />
                         </div>
                         <span className={`text-[9px] font-bold ${isToday ? "text-indigo-600" : "text-slate-400"}`}>{WEEK_LABELS[index]}</span>
@@ -611,19 +866,191 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
                     <span key={marker}>{Math.round(marker * 100)}%</span>
                   ))}
                 </div>
+                {nextMilestone && (
+                  <p className="mt-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-300">
+                    {formatMinutes(Math.ceil(nextMilestone.remaining))} to {formatClock(nextMilestone.target, prefs?.time_format)}
+                  </p>
+                )}
+                {goalStreak >= 2 && (
+                  <p className="mt-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    {goalStreak}-day goal streak
+                  </p>
+                )}
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={() => navigate("/TimeClock")}
-              className="mt-3 w-full rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100"
-            >
-              Open Time Clock
-            </button>
+            {/* Session timeline - today's punches + breaks as a colored band */}
+        {clockedIn && snapshot?.clock_in && (
+          <div className="mt-3">
+            <div className="relative h-3 overflow-hidden rounded-full bg-emerald-400/70">
+              {(Array.isArray(snapshot.todays_segments) ? snapshot.todays_segments : []).map((seg, i) => {
+                const start = new Date(snapshot.clock_in).getTime();
+                const span = Math.max(1, Date.now() - start);
+                const s = Math.max(0, (new Date(seg.start) - start) / span);
+                const e = seg.end ? (new Date(seg.end) - start) / span : 1;
+                return (
+                  <span key={i} className={`absolute top-0 h-full ${seg.kind === "pause" ? "bg-purple-400" : seg.kind === "paid_break" ? "bg-sky-400" : "bg-amber-400"}`}
+                    style={{ left: `${Math.min(100, s * 100)}%`, width: `${Math.max(2, (e - s) * 100)}%` }}
+                    title={`${seg.kind.replace(/_/g, " ")} ${seg.start ? "" : ""}`} />
+                );
+              })}
+            </div>
+            <div className="mt-1 flex gap-3 text-[9px] text-slate-400">
+              <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />working</span>
+              <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-amber-400" />break</span>
+              <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-purple-400" />pause</span>
+            </div>
+          </div>
+        )}
+
+        {/* Weekly schedule variance - scheduled minutes this week vs worked */}
+        {schedule?.start_time && schedule?.end_time && Number(snapshot?.weekly_paid_minutes) > 0 && (() => {
+          const [sh, sm] = schedule.start_time.split(":").map(Number);
+          const [eh, em] = schedule.end_time.split(":").map(Number);
+          const perDay = (eh * 60 + em) - (sh * 60 + sm) - (Number(schedule.break_minutes) || 0);
+          if (perDay <= 0) return null;
+          const todayIdx = (new Date().getDay() + 6) % 7; // Mon=0
+          const scheduledSoFar = perDay * (todayIdx + 1);
+          const worked = Math.round(Number(snapshot.weekly_paid_minutes) + (live?.paid || 0) - (snapshot.paid_minutes_today || 0));
+          const diff = Math.round(worked - scheduledSoFar);
+          if (Math.abs(diff) < 15) return null;
+          return (
+            <p className={`mt-2 text-[10px] font-medium ${diff >= 0 ? "text-emerald-600" : "text-amber-600"}`}>
+              {diff >= 0 ? `+${formatMinutes(diff)}` : `-${formatMinutes(-diff)}`} vs your schedule this week
+            </p>
+          );
+        })()}
+
+        {/* Pace ghost - this week vs the employee's own weekly average */}
+        {clockedIn && Number(snapshot?.weekly_paid_minutes) > 0 && (() => {
+          const weeklyDaily = Array.isArray(snapshot.weekly_daily_minutes) ? snapshot.weekly_daily_minutes : [];
+          const todayIdx = (new Date().getDay() + 6) % 7;
+          const priorDays = weeklyDaily.slice(0, todayIdx).filter((m) => m > 0);
+          if (!priorDays.length) return null;
+          const avg = priorDays.reduce((a, b) => a + b, 0) / priorDays.length;
+          const diff = Math.round((live?.paid || 0) - avg);
+          if (Math.abs(diff) < 10) return null;
+          return (
+            <p className={`mt-2 text-[10px] font-medium ${diff > 0 ? "text-emerald-600" : "text-slate-400"}`}>
+              {diff > 0 ? `${formatMinutes(diff)} ahead of your usual pace` : `${formatMinutes(-diff)} behind your usual pace`}
+            </p>
+          );
+        })()}
+        {schedule?.break_minutes > 0 && (
+          <p className="mt-2 text-[10px] text-slate-400">Lunch window: ~{schedule.break_minutes}min scheduled</p>
+        )}
+
+        {Number(snapshot?.team_clocked_in_count) > 0 && (
+          <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-medium text-emerald-700">
+            {snapshot.team_clocked_in_count} coworker{snapshot.team_clocked_in_count === 1 ? "" : "s"} clocked in right now
+          </p>
+        )}
+
+        {scheduleLabel && (
+          <p className="mt-3 flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] text-slate-600">
+            <span>{scheduleLabel}</span>
+            {punchVariance && (
+              <span className={`font-semibold ${punchVariance.early ? "text-sky-700" : "text-amber-700"}`}>
+                {punchVariance.minutes}m {punchVariance.early ? "early" : "late"}
+              </span>
+            )}
+          </p>
+        )}
+
+        {myPendingCorrections > 0 && (
+              <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] font-medium text-amber-800">
+                {myPendingCorrections} correction{myPendingCorrections === 1 ? "" : "s"} awaiting manager review
+              </p>
+            )}
+            {lastManagerNote && (
+              <p className={`mt-2 rounded-lg border px-2.5 py-1.5 text-[11px] ${lastManagerNote.status === "rejected" ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
+                Manager{lastManagerNote.status ? ` (${lastManagerNote.status})` : ""}: {lastManagerNote.reason}
+              </p>
+            )}
+
+            {snapshot?.next_timeoff?.start_date && (
+              <p className="mt-3 rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-[11px] font-medium text-sky-800">
+                Upcoming {snapshot.next_timeoff.type || "time off"}: {snapshot.next_timeoff.start_date}{snapshot.next_timeoff.end_date && snapshot.next_timeoff.end_date !== snapshot.next_timeoff.start_date ? ` - ${snapshot.next_timeoff.end_date}` : ""}
+              </p>
+            )}
+
+            {snapshot?.pay_period?.start_date && (() => {
+              const start = Date.parse(`${snapshot.pay_period.start_date}T00:00:00`);
+              const end = Date.parse(`${snapshot.pay_period.end_date}T23:59:59`);
+              const frac = Number.isFinite(start) && Number.isFinite(end) && end > start
+                ? Math.min(1, Math.max(0, (Date.now() - start) / (end - start)))
+                : 0;
+              return (
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500">
+                    <span>{snapshot.pay_period.label || "Pay period"}</span>
+                    <span>{Math.round(frac * 100)}%</span>
+                  </div>
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-black/[0.07] dark:bg-white/10">
+                    <div className="h-full rounded-full" style={{ width: `${frac * 100}%`, backgroundImage: `linear-gradient(90deg, ${accent.barStart}, ${accent.barEnd})` }} />
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => navigate("/TimeClock")}
+                className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100"
+              >
+                Open Time Clock
+              </button>
+              <button
+                type="button"
+                disabled={historyBusy || !sessionToken}
+                onClick={async () => {
+                  setHistoryBusy(true);
+                  try {
+                    const res = await invokeTimeClockAction({ action: "my_history", payload: { session_token: sessionToken, request_id: newRequestId() } });
+                    const data = res?.data || res;
+                    const entries = Array.isArray(data?.entries) ? data.entries : [];
+                    if (!entries.length) { setHistoryStats({ count: 0 }); return; }
+                    // Personal stats: completed shifts only.
+                    const done = entries.filter((e) => e.clock_out);
+                    const mins = done.map((e) => (new Date(e.clock_out) - new Date(e.clock_in)) / 60000 - (Number(e.lunch_minutes) || 0)).filter((m) => m > 0);
+                    const avg = mins.length ? mins.reduce((a, b) => a + b, 0) / mins.length : 0;
+                    setHistoryStats({ count: entries.length, avgMinutes: Math.round(avg), completed: done.length });
+                    // CSV export of the same rows.
+                    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+                    const csv = ["clock_in,clock_out,status,lunch_minutes,approval_status",
+                      ...entries.map((e) => [e.clock_in, e.clock_out || "", e.status || "", e.lunch_minutes || 0, e.approval_status || ""].map(esc).join(","))].join("\r\n");
+                    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+                    const a = document.createElement("a");
+                    a.href = url; a.download = `punch-history-${snapshot?.company_day || "export"}.csv`; a.click();
+                    URL.revokeObjectURL(url);
+                  } catch (e) { setHistoryStats({ error: e?.message || "Export failed" }); }
+                  finally { setHistoryBusy(false); }
+                }}
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+              >
+                {historyBusy ? "Exporting…" : "Export punches"}
+              </button>
+            </div>
+            {historyStats && !historyStats.error && historyStats.count > 0 && (
+              <p className="mt-1.5 text-center text-[10px] text-slate-400">
+                {historyStats.completed} completed shifts exported · avg {formatClock(historyStats.avgMinutes, "hours_minutes")}/shift
+              </p>
+            )}
+            {historyStats?.error && <p className="mt-1.5 text-center text-[10px] text-red-500">{historyStats.error}</p>}
             <p className="mt-3 text-[10px] leading-relaxed text-slate-400">
               Counts {prefs?.count_mode === "elapsed" ? "elapsed" : "paid"} time against a {formatClock(goalMinutes, "hours_minutes")} daily goal, in {TIME_CLOCK_COMPANY_TIME_LABEL}. Configure in Time Clock → Settings.
             </p>
+            {snapshotRecord.receivedAt > 0 && (
+              <p className="mt-1 text-[9px] text-slate-400">
+                Synced {Math.max(0, Math.round((nowMs - snapshotRecord.receivedAt) / 1000))}s ago{pollError ? ` · refresh issue: ${pollError}` : ""}
+              </p>
+            )}
+            {Math.abs(Number(snapshotRecord.serverOffset || 0)) > 120000 && (
+              <p className="mt-1 text-[9px] font-semibold text-amber-600 dark:text-amber-400">
+                Device clock is off by {Math.round(Math.abs(Number(snapshotRecord.serverOffset || 0)) / 60000)}min vs the server - punches use server time.
+              </p>
+            )}
           </>
         )}
       </PopoverContent>

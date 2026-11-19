@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6adef5a03976596b52c88722",
+ "jurisdiction_name": "Woodburn",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "WARREN COUNTY BUILDING PERMIT APPLICATION - SIGN 1141 STATE ST / BOWLING GREEN KY / 42101 PHONE: 270-843-5360 WEBSITE: www.warrencountyky.gov/building-electrical-services APPLICANT INFORMATION: APPLICANT NAME: _ ________________________________________________________________________________________ APPLICANT ADDRESS: _ ________________________________________________________________________________________ APPLICANT PHONE: _ ________________________________________________________________________________________ APPLICANT EMAIL: _ ________________________________________________________________________________________ OWNER INFORMATION: OWNER NAME: _ ________________________________________________________________________________________ OWNER ADDRESS: _ ________________________________________________________________________________________ OWNER PHONE: _ ______________________________",
+   "tags": [
+    "sign",
+    "billboard",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "75d2f95fd5e2eb5ffd61b4a13fd3dc186873184ccb3f70dbe67667a0432f561e",
+   "source_document_id": null,
+   "source_title": "75d2f95fd5e2eb5ffd61b4a13fd3dc186873184ccb3f70dbe67667a0432f561e.pdf",
+   "official_url": "https://www.warrencountyky.gov/wp-content/uploads/2024/04/BLANK-PERMIT-APP_SIGN-2024.pdf"
+  }
+ ]
+}

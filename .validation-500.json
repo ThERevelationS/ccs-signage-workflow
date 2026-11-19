@@ -1,0 +1,4712 @@
+{
+  "summary": {
+    "total": 279,
+    "resolved": 271,
+    "rate": "97.1%",
+    "failure_stages": {
+      "geocode": 7,
+      "city_conflict": 1
+    },
+    "geocode_misses": 7,
+    "boundary_errors": 0,
+    "city_conflicts": 1,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "114 Vine St, Cincinnati, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.096782,
+        "lng": -84.511734
+      },
+      "matched": "114, Rosa Parks Street, The Banks, Central Business District, Cincinnati, Hamilton County, Ohio, 45202, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cincinnati city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "428 Bardstown Rd, Louisville, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.2103952,
+        "lng": -85.6704716
+      },
+      "matched": "Bardstown Road, Strathmoor Gardens, Louisville, Jefferson County, Kentucky, 40205, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Louisville city"
+      },
+      "county": "Jefferson County"
+    },
+    {
+      "address": "220 Main St, Cincinnati, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.107056,
+        "lng": -84.511126
+      },
+      "matched": "Main Street, Court Street Historic District, Central Business District, Cincinnati, Hamilton County, Ohio, 45210, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cincinnati city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "517 Dixie Hwy, Louisville, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.1679945,
+        "lng": -85.828705
+      },
+      "matched": "Dixie Highway, Hunters Trace, Louisville, Jefferson County, Kentucky, 40216, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Louisville/Jefferson County metro government (balance)"
+      },
+      "county": "Jefferson County"
+    },
+    {
+      "address": "305 Reading Rd, Cincinnati, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1083262,
+        "lng": -84.5095
+      },
+      "matched": "305, Reading Road, Pendleton, Cincinnati, Hamilton County, Ohio, 45202, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cincinnati city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "640 Shelbyville Rd, Louisville, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.2409515,
+        "lng": -85.4946081
+      },
+      "matched": "Shelbyville Road, Louisville, Jefferson County, Kentucky, 40245, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Louisville/Jefferson County metro government (balance)"
+      },
+      "county": "Jefferson County"
+    },
+    {
+      "address": "428 Madison Rd, Cincinnati, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1319769,
+        "lng": -84.4630749
+      },
+      "matched": "Madison Road, O’Bryonville, Evanston, Cincinnati, Hamilton County, Ohio, 45207, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cincinnati city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "755 Preston Hwy, Louisville, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.1029491,
+        "lng": -85.6724029
+      },
+      "matched": "Preston Highway, Louisville, Jefferson County, Kentucky, 40229, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Louisville/Jefferson County metro government (balance)"
+      },
+      "county": "Jefferson County"
+    },
+    {
+      "address": "517 Colerain Ave, Cincinnati, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1186126,
+        "lng": -84.5328666
+      },
+      "matched": "Colerain Avenue, Brighton, West End, Cincinnati, Hamilton County, Ohio, 45214, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cincinnati city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "812 Frankfort Ave, Louisville, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.2611284,
+        "lng": -85.7234073
+      },
+      "matched": "Frankfort Avenue, Clifton, Louisville, Jefferson County, Kentucky, 40207, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Louisville city"
+      },
+      "county": "Jefferson County"
+    },
+    {
+      "address": "640 Montgomery Rd, Cincinnati, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1873582,
+        "lng": -84.4169483
+      },
+      "matched": "Montgomery Road, Kennedy Heights, Cincinnati, Hamilton County, Ohio, 45213, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cincinnati city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "905 Poplar Level Rd, Louisville, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.1577751,
+        "lng": -85.6457977
+      },
+      "matched": "Poplar Level Road, Louisville, Jefferson County, Kentucky, 40225, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Louisville/Jefferson County metro government (balance)"
+      },
+      "county": "Jefferson County"
+    },
+    {
+      "address": "755 Eastern Ave, Cincinnati, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1150167,
+        "lng": -84.4865399
+      },
+      "matched": "Riverside Drive, East End, Corryville, Cincinnati, Hamilton County, Ohio, 45202, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cincinnati city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1010 Brownsboro Rd, Louisville, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.3214424,
+        "lng": -85.5613807
+      },
+      "matched": "Brownsboro Road, Worthington, Louisville, Jefferson County, Kentucky, 40241, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Louisville/Jefferson County metro government (balance)"
+      },
+      "county": "Jefferson County"
+    },
+    {
+      "address": "812 Glenway Ave, Cincinnati, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1188636,
+        "lng": -84.5994406
+      },
+      "matched": "Glenway Avenue, Covedale, Cincinnati, Hamilton County, Ohio, 45238, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cincinnati city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1118 Outer Loop, Louisville, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.1290187,
+        "lng": -85.7401993
+      },
+      "matched": "1118, Outer Loop, Louisville, Jefferson County, Kentucky, 40219, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Louisville/Jefferson County metro government (balance)"
+      },
+      "county": "Jefferson County"
+    },
+    {
+      "address": "905 Hamilton Ave, Cincinnati, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1720458,
+        "lng": -84.5434787
+      },
+      "matched": "Hamilton Avenue, Northside, Cincinnati, Hamilton County, Ohio, 45223, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cincinnati city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1225 Hurstbourne Pkwy, Louisville, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.1856847,
+        "lng": -85.6061473
+      },
+      "matched": "South Hurstbourne Parkway, Louisville, Jefferson County, Kentucky, 40222, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Louisville/Jefferson County metro government (balance)"
+      },
+      "county": "Jefferson County"
+    },
+    {
+      "address": "1010 Warsaw Ave, Cincinnati, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.110547,
+        "lng": -84.5718653
+      },
+      "matched": "Warsaw Avenue, Saint Lawrence Corners, Cincinnati, Hamilton County, Ohio, 45205, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cincinnati city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1330 Taylorsville Rd, Louisville, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.1912391,
+        "lng": -85.4760903
+      },
+      "matched": "Taylorsville Road, Louisville, Jefferson County, Kentucky, 40023, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Louisville/Jefferson County metro government (balance)"
+      },
+      "county": "Jefferson County"
+    },
+    {
+      "address": "1118 High St, Columbus, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.9391825,
+        "lng": -82.9960709
+      },
+      "matched": "1118, South High Street, Merion Village, Columbus, Franklin County, Ohio, 43206, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Columbus city"
+      },
+      "county": "Franklin County"
+    },
+    {
+      "address": "1440 Main St, Lexington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.0467585,
+        "lng": -84.4974604
+      },
+      "matched": "West Main Street, Central Business District, Lexington, Fayette County, Kentucky, 40707, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Lexington-Fayette urban county"
+      },
+      "county": "Fayette County"
+    },
+    {
+      "address": "1225 Broad St, Columbus, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.9581227,
+        "lng": -83.0336767
+      },
+      "matched": "1225, West Broad Street, Franklinton, Columbus, Franklin County, Ohio, 43222, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Columbus city"
+      },
+      "county": "Franklin County"
+    },
+    {
+      "address": "1555 Richmond Rd, Lexington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 37.9914248,
+        "lng": -84.43482
+      },
+      "matched": "Richmond Road, Lexington, Fayette County, Kentucky, 40509, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Lexington-Fayette urban county"
+      },
+      "county": "Fayette County"
+    },
+    {
+      "address": "1330 Main St, Columbus, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.9995518,
+        "lng": -82.9913397
+      },
+      "matched": "Main Street, Coliseum District, Columbus, Franklin County, Ohio, 43211, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Columbus city"
+      },
+      "county": "Franklin County"
+    },
+    {
+      "address": "1620 Nicholasville Rd, Lexington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.0215991,
+        "lng": -84.5126769
+      },
+      "matched": "1620, Nicholasville Road, Seven Parks, Shawneetown, Lexington, Fayette County, Kentucky, 40546, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Lexington-Fayette urban county"
+      },
+      "county": "Fayette County"
+    },
+    {
+      "address": "1440 Cleveland Ave, Columbus, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.9944916,
+        "lng": -82.9807165
+      },
+      "matched": "1440, Cleveland Avenue, South Linden, Milo-Grogan, Columbus, Franklin County, Ohio, 43211, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Columbus city"
+      },
+      "county": "Franklin County"
+    },
+    {
+      "address": "1780 Winchester Rd, Lexington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.0423317,
+        "lng": -84.446927
+      },
+      "matched": "1780, Winchester Road, Eastland, Lexington, Fayette County, Kentucky, 40505, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Lexington-Fayette urban county"
+      },
+      "county": "Fayette County"
+    },
+    {
+      "address": "1555 Morse Rd, Columbus, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 40.0605153,
+        "lng": -82.9780966
+      },
+      "matched": "1555, Morse Road, Clinton Estates, Columbus, Franklin County, Ohio, 43229, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Columbus city"
+      },
+      "county": "Franklin County"
+    },
+    {
+      "address": "1905 Versailles Rd, Lexington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.0484166,
+        "lng": -84.5387489
+      },
+      "matched": "1905, Versailles Road, Cardinal Hill, Lexington, Fayette County, Kentucky, 40504, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Lexington-Fayette urban county"
+      },
+      "county": "Fayette County"
+    },
+    {
+      "address": "1620 Dublin Rd, Columbus, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.9881395,
+        "lng": -83.0663754
+      },
+      "matched": "1620, Dublin Road, Marble Cliff, Franklin County, Ohio, 43215, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Marble Cliff village"
+      },
+      "county": "Franklin County"
+    },
+    {
+      "address": "2050 Tates Creek Rd, Lexington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 37.9982375,
+        "lng": -84.4956693
+      },
+      "matched": "Tates Creek Road, Shadeland, Lexington, Fayette County, Kentucky, 40517, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Lexington-Fayette urban county"
+      },
+      "county": "Fayette County"
+    },
+    {
+      "address": "1780 Parsons Ave, Columbus, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.9269301,
+        "lng": -82.9841622
+      },
+      "matched": "1780, Parsons Avenue, Merion Village, South Side, Steelton, Columbus, Franklin County, Ohio, 43207, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Columbus city"
+      },
+      "county": "Franklin County"
+    },
+    {
+      "address": "2145 New Circle Rd, Lexington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.0103443,
+        "lng": -84.4591397
+      },
+      "matched": "New Circle Road, Lexington, Fayette County, Kentucky, 40509, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Lexington-Fayette urban county"
+      },
+      "county": "Fayette County"
+    },
+    {
+      "address": "1905 Henderson Rd, Columbus, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 40.0548243,
+        "lng": -83.070304
+      },
+      "matched": "McDonald's, 1905, West Henderson Road, Columbus, Franklin County, Ohio, 43220, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Upper Arlington city"
+      },
+      "county": "Franklin County"
+    },
+    {
+      "address": "2260 Georgetown St, Lexington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.060411,
+        "lng": -84.5012484
+      },
+      "matched": "Georgetown Street, Lexington, Fayette County, Kentucky, 40542, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Lexington-Fayette urban county"
+      },
+      "county": "Fayette County"
+    },
+    {
+      "address": "2050 Fifth Ave, Columbus, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "census",
+      "point": {
+        "lat": 39.98953901903,
+        "lng": -83.061104848474
+      },
+      "matched": "2050 W 5TH AVE, COLUMBUS, OH, 43212",
+      "target": {
+        "type": "municipality",
+        "name": "Upper Arlington city"
+      },
+      "county": "Franklin County"
+    },
+    {
+      "address": "2400 Broadway, Lexington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.0335981,
+        "lng": -84.5170738
+      },
+      "matched": "South Broadway Park, Lexington, Fayette County, Kentucky, 40536, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Lexington-Fayette urban county"
+      },
+      "county": "Fayette County"
+    },
+    {
+      "address": "2145 Georgesville Rd, Columbus, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.9149622,
+        "lng": -83.1463254
+      },
+      "matched": "2145, Georgesville Road, Westland, Columbus, Franklin County, Ohio, 43119, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Columbus city"
+      },
+      "county": "Franklin County"
+    },
+    {
+      "address": "114 Liberty Rd, Lexington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.0199392,
+        "lng": -84.4357676
+      },
+      "matched": "Liberty Road, Cadentown, Lexington, Fayette County, Kentucky, 40509, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Lexington-Fayette urban county"
+      },
+      "county": "Fayette County"
+    },
+    {
+      "address": "2260 Euclid Ave, Cleveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.5015121,
+        "lng": -81.6750842
+      },
+      "matched": "2260, Euclid Avenue, Central, Cleveland, Cuyahoga County, Ohio, 44115, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cleveland city"
+      },
+      "county": "Cuyahoga County"
+    },
+    {
+      "address": "220 Madison Ave, Covington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0888257,
+        "lng": -84.5113908
+      },
+      "matched": "220, Madison Avenue, Covington, Kenton County, Kentucky, 41011, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Covington city"
+      },
+      "county": "Kenton County"
+    },
+    {
+      "address": "2400 Superior Ave, Cleveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.508726,
+        "lng": -81.674875
+      },
+      "matched": "2400, Superior Avenue East, Downtown Cleveland, Goodrich-Kirtland Park, Cleveland, Cuyahoga County, Ohio, 44114, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cleveland city"
+      },
+      "county": "Cuyahoga County"
+    },
+    {
+      "address": "305 Scott St, Covington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0664996,
+        "lng": -84.5040906
+      },
+      "matched": "Scott Street, Wallace Woods, Austinburg, Covington, Kenton County, Kentucky, 41014, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Covington city"
+      },
+      "county": "Kenton County"
+    },
+    {
+      "address": "114 Lorain Ave, Cleveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.4870968,
+        "lng": -81.6970777
+      },
+      "matched": "Lorain Avenue, Ohio City, Cleveland, Cuyahoga County, Ohio, 44106, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cleveland city"
+      },
+      "county": "Cuyahoga County"
+    },
+    {
+      "address": "428 Greenup St, Covington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0867998,
+        "lng": -84.5075248
+      },
+      "matched": "428, Greenup Street, Licking Riverside Historic District, Covington, Kenton County, Kentucky, 41011, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Covington city"
+      },
+      "county": "Kenton County"
+    },
+    {
+      "address": "220 Detroit Ave, Cleveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.4825984,
+        "lng": -81.7358356
+      },
+      "matched": "Detroit Avenue, Kilbane Town, Detroit-Shoreway, Detroit - Shoreway, Cleveland, Cuyahoga County, Ohio, 44102, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cleveland city"
+      },
+      "county": "Cuyahoga County"
+    },
+    {
+      "address": "517 Pike St, Covington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0775563,
+        "lng": -84.518066
+      },
+      "matched": "517, West Pike Street, Mainstrasse Village, Covington, Kenton County, Kentucky, 41011, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Covington city"
+      },
+      "county": "Kenton County"
+    },
+    {
+      "address": "305 Pearl Rd, Cleveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.4452914,
+        "lng": -81.7021136
+      },
+      "matched": "Pearl Road, Old Brooklyn, Cleveland, Cuyahoga County, Ohio, 44109, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cleveland city"
+      },
+      "county": "Cuyahoga County"
+    },
+    {
+      "address": "640 Dixie Hwy, Covington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0718284,
+        "lng": -84.5261192
+      },
+      "matched": "Dixie Highway, Lewisburg, Covington, Kenton County, Kentucky, 41018, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Covington city"
+      },
+      "county": "Kenton County"
+    },
+    {
+      "address": "428 Kinsman Rd, Cleveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.4685644,
+        "lng": -81.6052631
+      },
+      "matched": "Kinsman Road, Buckeye-Woodhill, Mount Pleasant, Cleveland, Cuyahoga County, Ohio, 44120, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cleveland city"
+      },
+      "county": "Cuyahoga County"
+    },
+    {
+      "address": "755 Holman St, Covington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0659459,
+        "lng": -84.5089562
+      },
+      "matched": "Russell Street, Wallace Woods, Austinburg, Covington, Kenton County, Kentucky, 41014, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Covington city"
+      },
+      "county": "Kenton County"
+    },
+    {
+      "address": "517 St Clair Ave, Cleveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.5290656,
+        "lng": -81.6369198
+      },
+      "matched": "Saint Clair Avenue, St. Clair-Superior, Cleveland, Cuyahoga County, Ohio, 44117, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cleveland city"
+      },
+      "county": "Cuyahoga County"
+    },
+    {
+      "address": "812 Monmouth St, Newport, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0890616,
+        "lng": -84.491287
+      },
+      "matched": "812, Monmouth Street, Monmouth Street Business District, Clifton, Newport, Campbell County, Kentucky, 41071, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Newport city"
+      },
+      "county": "Campbell County"
+    },
+    {
+      "address": "640 West 25th St, Cleveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.4583056,
+        "lng": -81.7009699
+      },
+      "matched": "West 25th Street, Clark-Fulton, Cleveland, Cuyahoga County, Ohio, 44109, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cleveland city"
+      },
+      "county": "Cuyahoga County"
+    },
+    {
+      "address": "905 York St, Newport, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0873312,
+        "lng": -84.4915878
+      },
+      "matched": "905, York Street, Clifton, Newport, Campbell County, Kentucky, 41071, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Newport city"
+      },
+      "county": "Campbell County"
+    },
+    {
+      "address": "755 Lee Rd, Cleveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.4332683,
+        "lng": -81.5647821
+      },
+      "matched": "Lee Road, Lee-Seville, Cleveland, Cuyahoga County, Ohio, 44137, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cleveland city"
+      },
+      "county": "Cuyahoga County"
+    },
+    {
+      "address": "1010 Washington Ave, Newport, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0880712,
+        "lng": -84.4864706
+      },
+      "matched": "1010, Washington Avenue, The Estates at Wiedemann Mansion, Newport, Campbell County, Kentucky, 41071, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Newport city"
+      },
+      "county": "Campbell County"
+    },
+    {
+      "address": "812 Denison Ave, Cleveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.4494124,
+        "lng": -81.6817605
+      },
+      "matched": "812, Denison Avenue, Brooklyn Centre, Tremont, Cleveland, Cuyahoga County, Ohio, 44109, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cleveland city"
+      },
+      "county": "Cuyahoga County"
+    },
+    {
+      "address": "1118 Carothers Rd, Newport, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0859324,
+        "lng": -84.479421
+      },
+      "matched": "Carothers Road, The Estates at Wiedemann Mansion, Newport, Campbell County, Kentucky, 41071, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Newport city"
+      },
+      "county": "Campbell County"
+    },
+    {
+      "address": "905 Main St, Dayton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.7729649,
+        "lng": -84.1977164
+      },
+      "matched": "905, North Main Street, McPherson Town Historic District, Riverdale, Dayton, Montgomery County, Ohio, 45405, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Dayton city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "1225 Alexandria Pike, Newport, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0849551,
+        "lng": -84.4858798
+      },
+      "matched": "1225, Monmouth Street, Clifton, Newport, Campbell County, Kentucky, 41071, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Newport city"
+      },
+      "county": "Campbell County"
+    },
+    {
+      "address": "1010 Salem Ave, Dayton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.7739357,
+        "lng": -84.2159939
+      },
+      "matched": "1010, Salem Avenue, Dayton View Historic District, Daytonview, Dayton, Montgomery County, Ohio, 45406, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Dayton city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "1330 Dixie Hwy, Florence, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.9796074,
+        "lng": -84.6196536
+      },
+      "matched": "Dixie Highway, Florence, Boone County, Kentucky, 41094, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Florence city"
+      },
+      "county": "Boone County"
+    },
+    {
+      "address": "1118 Third St, Dayton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.7561959,
+        "lng": -84.2121696
+      },
+      "matched": "West Third Street Historic District, West Side, Dayton, Montgomery County, Ohio, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Dayton city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "1440 Houston Rd, Florence, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0064683,
+        "lng": -84.6518981
+      },
+      "matched": "Houston Road, Florence, Boone County, Kentucky, 41042, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Florence city"
+      },
+      "county": "Boone County"
+    },
+    {
+      "address": "1225 Dixie Dr, Dayton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.904759,
+        "lng": -84.1991484
+      },
+      "matched": "North Dixie Drive, Dayton, Butler Township, Montgomery County, Ohio, 45377, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Dayton city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "1555 Turfway Rd, Florence, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0135385,
+        "lng": -84.6313291
+      },
+      "matched": "Turfway Road, Florence, Boone County, Kentucky, 41018, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Florence city"
+      },
+      "county": "Boone County"
+    },
+    {
+      "address": "1330 Alex Bell Rd, Dayton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "census",
+      "point": {
+        "lat": 39.642955766149,
+        "lng": -84.127957142135
+      },
+      "matched": "1330 E ALEX BELL RD, DAYTON, OH, 45459",
+      "target": {
+        "type": "municipality",
+        "name": "Centerville city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "1620 Main St, Florence, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0009548,
+        "lng": -84.6272713
+      },
+      "matched": "Main Street, Florence, Boone County, Kentucky, 41018, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Florence city"
+      },
+      "county": "Boone County"
+    },
+    {
+      "address": "1440 Smithville Rd, Dayton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.7477027,
+        "lng": -84.1393928
+      },
+      "matched": "1440, South Smithville Road, Oakland, Dayton, Montgomery County, Ohio, 45410, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Dayton city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "1780 Industrial Rd, Florence, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.9805264,
+        "lng": -84.6325525
+      },
+      "matched": "Industrial Road, Florence, Boone County, Kentucky, 41042, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Florence city"
+      },
+      "county": "Boone County"
+    },
+    {
+      "address": "1555 Keowee St, Dayton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.7858441,
+        "lng": -84.1888949
+      },
+      "matched": "1555, North Keowee Street, Dayton, Montgomery County, Ohio, 45404, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Dayton city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "1905 Madison Pike, Independence, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.9568406,
+        "lng": -84.5408194
+      },
+      "matched": "Madison Pike, Independence, Kenton County, Kentucky, 41051, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Independence city"
+      },
+      "county": "Kenton County"
+    },
+    {
+      "address": "1620 Gettysburg Ave, Dayton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.7700153,
+        "lng": -84.2533957
+      },
+      "matched": "1620, North Gettysburg Avenue, Dayton, Montgomery County, Ohio, 45417, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Dayton city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "2050 Taylor Mill Rd, Independence, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.9508956,
+        "lng": -84.5042149
+      },
+      "matched": "Taylor Mill Road, Independence, Kenton County, Kentucky, 41051, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Independence city"
+      },
+      "county": "Kenton County"
+    },
+    {
+      "address": "1780 Watervliet Ave, Dayton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.7306933,
+        "lng": -84.1413379
+      },
+      "matched": "Watervliet Avenue, Belmont, Dayton, Montgomery County, Ohio, 45420, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Dayton city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "2145 McFarland Rd, Independence, KY",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match"
+    },
+    {
+      "address": "1905 Harshman Rd, Dayton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.785719,
+        "lng": -84.1206581
+      },
+      "matched": "Harshman Road, Dayton, Montgomery County, Ohio, 45424, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Dayton city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "2260 Richardson Rd, Independence, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 38.976073,
+        "lng": -84.5431635
+      },
+      "matched": "2260, Richardson Road, Independence, Kenton County, Kentucky, 41051, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Independence city"
+      },
+      "county": "Kenton County"
+    },
+    {
+      "address": "2050 Monroe St, Toledo, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.6556648,
+        "lng": -83.5513628
+      },
+      "matched": "2050, Monroe Street, Uptown, Toledo, Lucas County, Ohio, 43604, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Toledo city"
+      },
+      "county": "Lucas County"
+    },
+    {
+      "address": "2400 Dixie Hwy, Erlanger, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0086546,
+        "lng": -84.6113761
+      },
+      "matched": "Dixie Highway, Erlanger, Kenton County, Kentucky, 41018, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Erlanger city"
+      },
+      "county": "Kenton County"
+    },
+    {
+      "address": "2145 Sylvania Ave, Toledo, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.6921464,
+        "lng": -83.5957814
+      },
+      "matched": "2145, West Sylvania Avenue, Deveaux, Fitch, Toledo, Lucas County, Ohio, 43613, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Toledo city"
+      },
+      "county": "Lucas County"
+    },
+    {
+      "address": "114 Commonwealth Ave, Erlanger, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0180831,
+        "lng": -84.6018793
+      },
+      "matched": "114, Donaldson Highway, Erlanger, Kenton County, Kentucky, 41018, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Erlanger city"
+      },
+      "county": "Kenton County"
+    },
+    {
+      "address": "2260 Laskey Rd, Toledo, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.7059808,
+        "lng": -83.5995059
+      },
+      "matched": "2260, West Laskey Road, Deveaux, Mellwood, Toledo, Lucas County, Ohio, 43613, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Toledo city"
+      },
+      "county": "Lucas County"
+    },
+    {
+      "address": "220 Donaldson Hwy, Erlanger, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0192736,
+        "lng": -84.6031781
+      },
+      "matched": "220, Donaldson Highway, Erlanger, Kenton County, Kentucky, 41018, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Erlanger city"
+      },
+      "county": "Kenton County"
+    },
+    {
+      "address": "2400 Reynolds Rd, Toledo, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.5963177,
+        "lng": -83.664515
+      },
+      "matched": "2400, South Reynolds Road, Southwyck, Toledo, Lucas County, Ohio, 43614, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Toledo city"
+      },
+      "county": "Lucas County"
+    },
+    {
+      "address": "305 Kentucky Ave, Erlanger, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0081548,
+        "lng": -84.607748
+      },
+      "matched": "305, Lytle Avenue, Erlanger, Kenton County, Kentucky, 41018, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Elsmere city"
+      },
+      "county": "Kenton County"
+    },
+    {
+      "address": "114 Central Ave, Toledo, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.6785636,
+        "lng": -83.5426693
+      },
+      "matched": "114, East Central Avenue, Birckhead Place, Toledo, Lucas County, Ohio, 43608, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Toledo city"
+      },
+      "county": "Lucas County"
+    },
+    {
+      "address": "428 Alexandria Pike, Fort Thomas, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0641638,
+        "lng": -84.4552378
+      },
+      "matched": "Alexandria Pike, Fort Thomas, Campbell County, Kentucky, 41099, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Fort Thomas city"
+      },
+      "county": "Campbell County"
+    },
+    {
+      "address": "220 Dorr St, Toledo, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.6527861,
+        "lng": -83.6238938
+      },
+      "matched": "Dorr Street, Secor Gardens, Toledo, Lucas County, Ohio, 43607, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Toledo city"
+      },
+      "county": "Lucas County"
+    },
+    {
+      "address": "517 Highland Ave, Fort Thomas, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0752595,
+        "lng": -84.4584152
+      },
+      "matched": "517, Highland Avenue, Fort Thomas, Campbell County, Kentucky, 41075, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Fort Thomas city"
+      },
+      "county": "Campbell County"
+    },
+    {
+      "address": "305 Summit St, Toledo, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.6509957,
+        "lng": -83.5338013
+      },
+      "matched": "305, North Summit Street, Saint Clair Street Historic District, Toledo, Lucas County, Ohio, 43604, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Toledo city"
+      },
+      "county": "Lucas County"
+    },
+    {
+      "address": "640 N Fort Thomas Ave, Fort Thomas, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0855101,
+        "lng": -84.452454
+      },
+      "matched": "640, North Fort Thomas Avenue, Fort Thomas, Campbell County, Kentucky, 41075, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Fort Thomas city"
+      },
+      "county": "Campbell County"
+    },
+    {
+      "address": "428 Alexis Rd, Toledo, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.721828,
+        "lng": -83.5558505
+      },
+      "matched": "428, West Alexis Road, North Towne, Northgate, Toledo, Lucas County, Ohio, 43612, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Toledo city"
+      },
+      "county": "Lucas County"
+    },
+    {
+      "address": "755 River Rd, Fort Thomas, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0566098,
+        "lng": -84.4342275
+      },
+      "matched": "River Road, Brent, Fort Thomas, Campbell County, Kentucky, 45228, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Fort Thomas city"
+      },
+      "county": "Campbell County"
+    },
+    {
+      "address": "517 Secor Rd, Toledo, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.6907505,
+        "lng": -83.6231945
+      },
+      "matched": "Secor Road, Deveaux, Toledo, Lucas County, Ohio, 43613, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Toledo city"
+      },
+      "county": "Lucas County"
+    },
+    {
+      "address": "812 Burlington Pike, Burlington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0087523,
+        "lng": -84.7811021
+      },
+      "matched": "Burlington Pike, Arborwood, Burlington, Boone County, Kentucky, 41005, United States",
+      "target": {
+        "type": "township",
+        "name": "Burlington CCD",
+        "county": "Boone County"
+      },
+      "county": "Boone County"
+    },
+    {
+      "address": "640 Jackman Rd, Toledo, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.701447,
+        "lng": -83.5853035
+      },
+      "matched": "Jackman Road, Deveaux, Fitch, Toledo, Lucas County, Ohio, 43613, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Toledo city"
+      },
+      "county": "Lucas County"
+    },
+    {
+      "address": "905 Camp Ernst Rd, Burlington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0203714,
+        "lng": -84.7020132
+      },
+      "matched": "Camp Ernst Road, Burlington, Boone County, Kentucky, 41091, United States",
+      "target": {
+        "type": "township",
+        "name": "Florence CCD",
+        "county": "Boone County"
+      },
+      "county": "Boone County"
+    },
+    {
+      "address": "755 Main St, Akron, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.1059053,
+        "lng": -81.5107324
+      },
+      "matched": "755, North Main Street, Temple Square, North Hill, Akron, Summit County, Ohio, 44310, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Akron city"
+      },
+      "county": "Summit County"
+    },
+    {
+      "address": "1010 Bullittsville Rd, Burlington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0561361,
+        "lng": -84.7228358
+      },
+      "matched": "Bullittsville Road, Brentwood, Burlington, Boone County, Kentucky, 41048, United States",
+      "target": {
+        "type": "township",
+        "name": "Hebron CCD",
+        "county": "Boone County"
+      },
+      "county": "Boone County"
+    },
+    {
+      "address": "812 Market St, Akron, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.0964777,
+        "lng": -81.54362
+      },
+      "matched": "Southern Comfort Kitchen Ohio, 812, West Market Street, Highland Square, Akron, Summit County, Ohio, 44303, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Akron city"
+      },
+      "county": "Summit County"
+    },
+    {
+      "address": "1118 North Bend Rd, Burlington, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0237531,
+        "lng": -84.7013282
+      },
+      "matched": "North Bend Road, Burlington, Boone County, Kentucky, 41048, United States",
+      "target": {
+        "type": "township",
+        "name": "Burlington CCD",
+        "county": "Boone County"
+      },
+      "county": "Boone County"
+    },
+    {
+      "address": "905 Copley Rd, Akron, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.0841977,
+        "lng": -81.5547198
+      },
+      "matched": "905, Copley Road, West Akron, Akron, Summit County, Ohio, 44320, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Akron city"
+      },
+      "county": "Summit County"
+    },
+    {
+      "address": "1225 Petersburg Rd, Hebron, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.07218,
+        "lng": -84.6774188
+      },
+      "matched": "Petersburg Road, Hebron, Boone County, Kentucky, 41048, United States",
+      "target": {
+        "type": "township",
+        "name": "Florence CCD",
+        "county": "Boone County"
+      },
+      "county": "Boone County"
+    },
+    {
+      "address": "1010 Arlington Rd, Akron, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "census",
+      "point": {
+        "lat": 41.068077869466,
+        "lng": -81.491743856301
+      },
+      "matched": "1010 ARLINGTON PL, AKRON, OH, 44306",
+      "target": {
+        "type": "municipality",
+        "name": "Akron city"
+      },
+      "county": "Summit County"
+    },
+    {
+      "address": "1330 North Bend Rd, Hebron, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0788937,
+        "lng": -84.7070143
+      },
+      "matched": "North Bend Road, Hebron, Boone County, Kentucky, 41048, United States",
+      "target": {
+        "type": "township",
+        "name": "Hebron CCD",
+        "county": "Boone County"
+      },
+      "county": "Boone County"
+    },
+    {
+      "address": "1118 Canton Rd, Akron, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.0550613,
+        "lng": -81.439402
+      },
+      "matched": "Canton Road, Ellet, Akron, Summit County, Ohio, 44685, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Akron city"
+      },
+      "county": "Summit County"
+    },
+    {
+      "address": "1440 Litton Ln, Hebron, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0749762,
+        "lng": -84.7138457
+      },
+      "matched": "Litton Lane, Hebron, Boone County, Kentucky, 41048, United States",
+      "target": {
+        "type": "township",
+        "name": "Hebron CCD",
+        "county": "Boone County"
+      },
+      "county": "Boone County"
+    },
+    {
+      "address": "1225 Tallmadge Ave, Akron, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.1020448,
+        "lng": -81.471294
+      },
+      "matched": "1225, East Tallmadge Avenue, Chapel Hill, Akron, Summit County, Ohio, 44310, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Akron city"
+      },
+      "county": "Summit County"
+    },
+    {
+      "address": "1555 Limaburg Rd, Hebron, KY",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.0453966,
+        "lng": -84.701307
+      },
+      "matched": "Limaburg Road, Hebron, Boone County, Kentucky, 41005, United States",
+      "target": {
+        "type": "township",
+        "name": "Hebron CCD",
+        "county": "Boone County"
+      },
+      "county": "Boone County"
+    },
+    {
+      "address": "1330 Kenmore Blvd, Akron, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.0385422,
+        "lng": -81.5686151
+      },
+      "matched": "1330, Kenmore Boulevard, Lawndale, Kenmore, Akron, Summit County, Ohio, 44314, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Akron city"
+      },
+      "county": "Summit County"
+    },
+    {
+      "address": "1440 Brittain Rd, Akron, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.1017225,
+        "lng": -81.4665037
+      },
+      "matched": "1440, Brittain Road, Chapel Hill, Goodyear Heights, Akron, Summit County, Ohio, 44310, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Akron city"
+      },
+      "county": "Summit County"
+    },
+    {
+      "address": "1555 East Ave, Akron, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.0586391,
+        "lng": -81.5589382
+      },
+      "matched": "1555, East Avenue, Akron, Summit County, Ohio, 44314, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Akron city"
+      },
+      "county": "Summit County"
+    },
+    {
+      "address": "1620 Manchester Rd, Akron, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.0547771,
+        "lng": -81.5495463
+      },
+      "matched": "1620, Manchester Road, Summit Lake, Akron, Summit County, Ohio, 44314, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Akron city"
+      },
+      "county": "Summit County"
+    },
+    {
+      "address": "1780 Main St, Milford, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1812487,
+        "lng": -84.2751881
+      },
+      "matched": "Main Street, Indian Knolls, Milford, Clermont County, Ohio, 45111, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Milford city"
+      },
+      "county": "Clermont County"
+    },
+    {
+      "address": "1905 Lila Ave, Milford, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.172961,
+        "lng": -84.2739623
+      },
+      "matched": "Lila Avenue, Indian Knolls, Milford, Clermont County, Ohio, 45150, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Milford city"
+      },
+      "county": "Clermont County"
+    },
+    {
+      "address": "2050 Garfield Ave, Milford, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1729404,
+        "lng": -84.2966392
+      },
+      "matched": "Garfield Avenue, Milford, Clermont County, Ohio, 45150, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Milford city"
+      },
+      "county": "Clermont County"
+    },
+    {
+      "address": "2145 Chamber Dr, Milford, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1612827,
+        "lng": -84.2781239
+      },
+      "matched": "Chamber Drive, Milford, Clermont County, Ohio, 45174, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Milford city"
+      },
+      "county": "Clermont County"
+    },
+    {
+      "address": "2260 Water St, Milford, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1718788,
+        "lng": -84.2981596
+      },
+      "matched": "Water Street, Milford, Clermont County, Ohio, 45174, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Milford city"
+      },
+      "county": "Clermont County"
+    },
+    {
+      "address": "2400 High St, Milford, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1770063,
+        "lng": -84.2926851
+      },
+      "matched": "High Street, Milford, Clermont County, Ohio, 45111, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Milford city"
+      },
+      "county": "Clermont County"
+    },
+    {
+      "address": "114 Cleveland Ave, Milford, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1691828,
+        "lng": -84.2927461
+      },
+      "matched": "114, Cleveland Avenue, Milford, Clermont County, Ohio, 45150, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Milford city"
+      },
+      "county": "Clermont County"
+    },
+    {
+      "address": "220 Mill St, Milford, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1717532,
+        "lng": -84.296917
+      },
+      "matched": "COhatch Milford, 220, Mill Street, Milford, Clermont County, Ohio, 45150, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Milford city"
+      },
+      "county": "Clermont County"
+    },
+    {
+      "address": "305 Loveland Ave, Loveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2681396,
+        "lng": -84.259639
+      },
+      "matched": "305, West Loveland Avenue, Loveland, Clermont County, Ohio, 45140, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Loveland city"
+      },
+      "county": "Clermont County"
+    },
+    {
+      "address": "428 Second St, Loveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.270147,
+        "lng": -84.2541465
+      },
+      "matched": "428, South 2nd Street, Loveland, Clermont County, Ohio, 45140, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Loveland city"
+      },
+      "county": "Clermont County"
+    },
+    {
+      "address": "517 Lebanon Rd, Loveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2666323,
+        "lng": -84.2847643
+      },
+      "matched": "517, South Lebanon Road, Claiborne, Loveland, Hamilton County, Ohio, 45140, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Loveland city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "640 Wards Corner Rd, Loveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2351824,
+        "lng": -84.2697917
+      },
+      "matched": "640, Wards Corner Road, Sundale, Loveland, Miami Township, Clermont County, Ohio, 45140, United States",
+      "target": {
+        "type": "township",
+        "name": "Miami township",
+        "county": "Clermont County"
+      },
+      "county": "Clermont County"
+    },
+    {
+      "address": "755 Rich Rd, Loveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2791695,
+        "lng": -84.2727287
+      },
+      "matched": "Rich Road, River Oaks, Loveland, Symmes Township, Hamilton County, Ohio, 45140, United States",
+      "target": {
+        "type": "township",
+        "name": "Symmes township",
+        "county": "Hamilton County"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "812 Kemper Rd, Loveland, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2637285,
+        "lng": -84.2660057
+      },
+      "matched": "East Kemper Road, Loveland, Hamilton County, Ohio, 45140, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Loveland city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "905 Main St, Mason, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3608297,
+        "lng": -84.3076661
+      },
+      "matched": "East Main Street, Mason, Warren County, Ohio, 45040, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Mason city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "1010 Mason Montgomery Rd, Mason, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3352152,
+        "lng": -84.3112929
+      },
+      "matched": "South Mason Montgomery Road, Mason, Warren County, Ohio, 45040, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Mason city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "1118 Western Row Rd, Mason, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3372604,
+        "lng": -84.3385464
+      },
+      "matched": "1118, Western Row Road, Mason, Warren County, Ohio, 45040, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Mason city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "1225 Snider Rd, Mason, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3303521,
+        "lng": -84.3304552
+      },
+      "matched": "Snider Road, Sterling Lakes, Mason, Warren County, Ohio, 45040, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Mason city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "1330 Tylersville Rd, Mason, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3380017,
+        "lng": -84.2929025
+      },
+      "matched": "Tylersville Road, Luxottica, Mason, Warren County, Ohio, 45040, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Mason city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "1440 Reading Rd, Mason, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3450242,
+        "lng": -84.3314345
+      },
+      "matched": "Reading Road, Mason, Warren County, Ohio, 45241, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Mason city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "1555 High St, Hamilton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3926245,
+        "lng": -84.5418241
+      },
+      "matched": "1555, Old High Street, East Hamilton, Hamilton, Butler County, Ohio, 45011, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Hamilton city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1620 Main St, Hamilton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1131513,
+        "lng": -84.5124005
+      },
+      "matched": "1620, Main Street, Main Street Business District, Mount Auburn, Cincinnati, Hamilton County, Ohio, 45202, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cincinnati city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1780 Eaton Ave, Hamilton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.4232998,
+        "lng": -84.5766657
+      },
+      "matched": "Eaton Avenue, Hamilton, Butler County, Ohio, 45013, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Hamilton city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1905 Dixie Hwy, Hamilton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3773618,
+        "lng": -84.5512334
+      },
+      "matched": "1905, Dixie Highway, South Hamilton, Hamilton, Butler County, Ohio, 45011, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Hamilton city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "2050 Pleasant Ave, Hamilton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3759266,
+        "lng": -84.5570343
+      },
+      "matched": "2050, Pleasant Avenue, South Hamilton, Hamilton, Butler County, Ohio, 45015, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Hamilton city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "2145 Symmes Rd, Hamilton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3451378,
+        "lng": -84.5125245
+      },
+      "matched": "Symmes Road, Hamilton, Butler County, Ohio, 45014, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Hamilton city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "2260 Millville Ave, Hamilton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.4011963,
+        "lng": -84.6334502
+      },
+      "matched": "2260, Millville Avenue, Queen Acres, Millville, Hanover Township, Butler County, Ohio, 45013, United States",
+      "target": {
+        "type": "township",
+        "name": "Hanover township",
+        "county": "Butler County"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "2400 Ross Ave, Hamilton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1182277,
+        "lng": -84.5697641
+      },
+      "matched": "Ross Avenue, Saint Lawrence Corners, Cincinnati, Hamilton County, Ohio, 45205, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cincinnati city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "114 Cincinnati Dayton Rd, West Chester, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3227348,
+        "lng": -84.4107724
+      },
+      "matched": "Cincinnati-Dayton Road, Olde West Chester, West Chester Township, Butler County, Ohio, 45069, United States",
+      "target": {
+        "type": "township",
+        "name": "West Chester township",
+        "county": "Butler County"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "220 Tylersville Rd, West Chester, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3518499,
+        "lng": -84.3483569
+      },
+      "matched": "Tylersville Road, West Chester Township, Butler County, Ohio, 45069, United States",
+      "target": {
+        "type": "township",
+        "name": "West Chester township",
+        "county": "Butler County"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "305 Union Centre Blvd, West Chester, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3413724,
+        "lng": -84.4500858
+      },
+      "matched": "Union Centre Boulevard, West Chester Township, Butler County, Ohio, 45069, United States",
+      "target": {
+        "type": "township",
+        "name": "West Chester township",
+        "county": "Butler County"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "428 Duff Dr, West Chester, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3088836,
+        "lng": -84.4539103
+      },
+      "matched": "Duff Drive, West Chester Township, Butler County, Ohio, 45246, United States",
+      "target": {
+        "type": "township",
+        "name": "West Chester township",
+        "county": "Butler County"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "517 Schumacher Park Dr, West Chester, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.310112,
+        "lng": -84.4220995
+      },
+      "matched": "Schumacher Park Drive, Gano, West Chester Township, Butler County, Ohio, 45069, United States",
+      "target": {
+        "type": "township",
+        "name": "West Chester township",
+        "county": "Butler County"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "640 Pleasant Ave, Fairfield, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.7204533,
+        "lng": -82.5907813
+      },
+      "matched": "640, North Mount Pleasant Avenue, Whites, Lancaster, Fairfield County, Ohio, 43130, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Lancaster city"
+      },
+      "county": "Fairfield County"
+    },
+    {
+      "address": "755 Nilles Rd, Fairfield, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3373534,
+        "lng": -84.5554356
+      },
+      "matched": "755, Nilles Road, Fairfield, Butler County, Ohio, 45014, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Fairfield city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "812 Mack Rd, Fairfield, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3145452,
+        "lng": -84.4879831
+      },
+      "matched": "Mack Road, Fairfield, Butler County, Ohio, 45246, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Fairfield city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "905 Dixie Hwy, Fairfield, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3143058,
+        "lng": -84.4877276
+      },
+      "matched": "Dixie Highway, Fairfield, Butler County, Ohio, 45014, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Fairfield city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1010 Seward Rd, Fairfield, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3164394,
+        "lng": -84.4954622
+      },
+      "matched": "Seward Road, Stockton Station, Stockton, Fairfield, Butler County, Ohio, 45014, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Fairfield city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1118 River Rd, Fairfield, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3580649,
+        "lng": -84.5651997
+      },
+      "matched": "River Road, Lindenwald, Hamilton, Butler County, Ohio, 45014, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Fairfield city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1225 Central Ave, Middletown, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.5156384,
+        "lng": -84.4015405
+      },
+      "matched": "1225, Central Avenue, South Main Street Historic District, Oakland, Middletown, Butler County, Ohio, 45044, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Middletown city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1330 Main St, Middletown, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.5015926,
+        "lng": -84.4175378
+      },
+      "matched": "1330, South Main Street, Middletown, Butler County, Ohio, 45044, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Middletown city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1440 Verity Pkwy, Middletown, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.5263288,
+        "lng": -84.3857952
+      },
+      "matched": "North Verity Parkway, Harlan Park, Middletown, Butler County, Ohio, 45042, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Middletown city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1555 Towne Blvd, Middletown, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.4922884,
+        "lng": -84.3305036
+      },
+      "matched": "Towne Boulevard, Blue Ball, Middletown, Franklin Township, Warren County, Ohio, 45005, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Middletown city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "1620 University Blvd, Middletown, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.4989761,
+        "lng": -84.3973269
+      },
+      "matched": "1620, South University Boulevard, Oakland, Middletown, Butler County, Ohio, 45044, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Middletown city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1780 Roosevelt Blvd, Middletown, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.5026351,
+        "lng": -84.3863944
+      },
+      "matched": "Roosevelt Boulevard, South Highlands, Middletown, Butler County, Ohio, 45042, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Middletown city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1905 Springfield Pike, Springdale, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2843861,
+        "lng": -84.4854124
+      },
+      "matched": "Springfield Pike, Springdale, Hamilton County, Ohio, 45246, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Springdale city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "2050 Northland Blvd, Springdale, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.282489,
+        "lng": -84.4848928
+      },
+      "matched": "Northland Boulevard, Springdale, Hamilton County, Ohio, 45240, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Springdale city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "2145 Kemper Rd, Springdale, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2870476,
+        "lng": -84.4859673
+      },
+      "matched": "West Kemper Road, Springdale, Hamilton County, Ohio, 45252, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Springdale city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "2260 West Chester Rd, Springdale, OH",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match"
+    },
+    {
+      "address": "2400 Ray Norrish Dr, Springdale, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.301321,
+        "lng": -84.4906063
+      },
+      "matched": "Ray Norrish Drive, Springdale, Hamilton County, Ohio, 45246, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Springdale city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "114 Kenwood Rd, Blue Ash, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2536492,
+        "lng": -84.3749772
+      },
+      "matched": "Kenwood Road, Blue Ash, Hamilton County, Ohio, 45242, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Blue Ash city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "220 Reed Hartman Hwy, Blue Ash, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2312472,
+        "lng": -84.3947904
+      },
+      "matched": "Reed Hartman Highway, Sycamore Trace, Blue Ash, Hamilton County, Ohio, 45242, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Blue Ash city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "305 Hunt Rd, Blue Ash, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2256851,
+        "lng": -84.3986962
+      },
+      "matched": "Hunt Road, Deercross Apartments, Blue Ash, Hamilton County, Ohio, 45236, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Blue Ash city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "428 Cooper Rd, Blue Ash, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2294149,
+        "lng": -84.37136
+      },
+      "matched": "Cooper Road, Park Manor, Blue Ash, Hamilton County, Ohio, 45242, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Montgomery city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "517 Plainfield Rd, Blue Ash, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2527415,
+        "lng": -84.3947895
+      },
+      "matched": "Plainfield Road, Blue Ash, Hamilton County, Ohio, 45241, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Evendale village"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "640 Montgomery Rd, Montgomery, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2507757,
+        "lng": -84.3443325
+      },
+      "matched": "Montgomery Road, Montgomery, Hamilton County, Ohio, 45269, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Montgomery city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "755 Cooper Rd, Montgomery, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2269622,
+        "lng": -84.3578981
+      },
+      "matched": "Cooper Road, Montgomery Heights, Montgomery, Hamilton County, Ohio, 45242, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Montgomery city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "812 Zig Zag Rd, Montgomery, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2399852,
+        "lng": -84.3642632
+      },
+      "matched": "Zig Zag Road, The Winds, Montgomery Heights, Montgomery, Hamilton County, Ohio, 45242, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Montgomery city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "905 Remington Rd, Montgomery, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2289512,
+        "lng": -84.3566928
+      },
+      "matched": "Remington Road, Montgomery Heights, Montgomery, Hamilton County, Ohio, 45242, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Montgomery city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1010 Main St, Montgomery, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2276822,
+        "lng": -84.3531678
+      },
+      "matched": "Main Street, Montgomery Heights, Montgomery, Hamilton County, Ohio, 45242, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Montgomery city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1118 Montgomery Rd, Norwood, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1509079,
+        "lng": -84.4636335
+      },
+      "matched": "Montgomery Road, United Dairy Farmers, Norwood, Hamilton County, Ohio, 45207, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Norwood city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1225 Sherman Ave, Norwood, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1611576,
+        "lng": -84.4651345
+      },
+      "matched": "Sherman Avenue, Paddock Hills, Norwood, Hamilton County, Ohio, 45212, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Norwood city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1330 Floral Ave, Norwood, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1588996,
+        "lng": -84.4495128
+      },
+      "matched": "Floral Avenue, Norwood, Hamilton County, Ohio, 45212, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Norwood city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1440 Smith Rd, Norwood, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1501987,
+        "lng": -84.4458236
+      },
+      "matched": "Smith Road, Norwood, Hamilton County, Ohio, 45212, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Norwood city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1555 Williams Ave, Norwood, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1527921,
+        "lng": -84.4653905
+      },
+      "matched": "Williams Avenue, United Dairy Farmers, Norwood, Hamilton County, Ohio, 45212, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Norwood city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1620 Harris Ave, Norwood, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1626309,
+        "lng": -84.4420834
+      },
+      "matched": "Harris Avenue, Norwood, Hamilton County, Ohio, 45212, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Norwood city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1780 Winton Rd, Forest Park, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3004531,
+        "lng": -84.523876
+      },
+      "matched": "Winton Road, Forest Park, Hamilton County, Ohio, 45231, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Forest Park city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1905 Smiley Ave, Forest Park, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2952996,
+        "lng": -84.5237244
+      },
+      "matched": "Smiley Avenue, Forest Park, Hamilton County, Ohio, 45240, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Forest Park city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "2050 Waycross Rd, Forest Park, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2815337,
+        "lng": -84.5573689
+      },
+      "matched": "2050, Waycross Road, Forest Park, Hamilton County, Ohio, 45240, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Forest Park city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "2145 Kemper Meadow Dr, Forest Park, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2925174,
+        "lng": -84.5229431
+      },
+      "matched": "Kemper Meadow Drive, Forest Park, Hamilton County, Ohio, 45240, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Forest Park city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "2260 Northland Blvd, Forest Park, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2812996,
+        "lng": -84.4973265
+      },
+      "matched": "Northland Boulevard, Forest Park, Hamilton County, Ohio, 45240, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Forest Park city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "2400 Reading Rd, Sharonville, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2936744,
+        "lng": -84.4095311
+      },
+      "matched": "Reading Road, Sharonville, Hamilton County, Ohio, 45241, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Sharonville city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "114 Lebanon Rd, Sharonville, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2952361,
+        "lng": -84.3924223
+      },
+      "matched": "Lebanon Road, Sharonville, Hamilton County, Ohio, 45241, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Sharonville city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "220 Mosteller Rd, Sharonville, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2764835,
+        "lng": -84.4301158
+      },
+      "matched": "Mosteller Road, Sharonville, Hamilton County, Ohio, 45241, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Sharonville city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "305 Creek Rd, Sharonville, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2702923,
+        "lng": -84.4132594
+      },
+      "matched": "Creek Road, Sharonville, Hamilton County, Ohio, 45241, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Sharonville city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "428 Kemper Rd, Sharonville, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2854349,
+        "lng": -84.445696
+      },
+      "matched": "East Kemper Road, Northern Lights District, Sharonville, Hamilton County, Ohio, 45140, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Sharonville city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "517 Plainfield Rd, Deer Park, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2029237,
+        "lng": -84.3996009
+      },
+      "matched": "Plainfield Road, Beechwood, Deer Park, Hamilton County, Ohio, 45236, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Deer Park city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "640 Blue Ash Rd, Deer Park, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1994635,
+        "lng": -84.3981349
+      },
+      "matched": "Blue Ash Road, Beechwood, Deer Park, Hamilton County, Ohio, 45236, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Deer Park city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "755 Galbraith Rd, Deer Park, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2084207,
+        "lng": -84.3986935
+      },
+      "matched": "East Galbraith Road, Beechwood, Deer Park, Hamilton County, Ohio, 45236, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Deer Park city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "812 Chamberlain Park Ave, Deer Park, OH",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match"
+    },
+    {
+      "address": "905 Miami Ave, Madeira, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1831514,
+        "lng": -84.3638303
+      },
+      "matched": "Miami Avenue, Madeira, Hamilton County, Ohio, 45243, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Madeira city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1010 Euclid Ave, Madeira, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.190709,
+        "lng": -84.3562889
+      },
+      "matched": "Euclid Avenue, Madeira, Hamilton County, Ohio, 45243, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Madeira city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1118 Camargo Rd, Madeira, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.173884,
+        "lng": -84.3769759
+      },
+      "matched": "Camargo Road, Madeira, Columbia Township, Hamilton County, Ohio, 45243, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Madeira city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1225 Dawson Rd, Madeira, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.1880351,
+        "lng": -84.363613
+      },
+      "matched": "Dawson Road, Madeira, Hamilton County, Ohio, 45243, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Madeira city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1330 Springfield Pike, Wyoming, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.238961,
+        "lng": -84.4714354
+      },
+      "matched": "1330, Springfield Pike, Park Place, Wyoming, Hamilton County, Ohio, 45215, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Wyoming city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1440 Wyoming Ave, Wyoming, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2272328,
+        "lng": -84.4683939
+      },
+      "matched": "Wyoming Avenue, Wyoming, Hamilton County, Ohio, 45215, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Wyoming city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1555 Burns Ave, Wyoming, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2324635,
+        "lng": -84.4680045
+      },
+      "matched": "Burns Avenue, Park Place, Wyoming, Hamilton County, Ohio, 45215, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Wyoming city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1620 Reily Rd, Wyoming, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2288432,
+        "lng": -84.4799442
+      },
+      "matched": "Reily Road, Wyoming, Hamilton County, Ohio, 45215, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Wyoming city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1780 Reading Rd, Reading, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.2065058,
+        "lng": -84.4517756
+      },
+      "matched": "Reading Road, Roselawn, Reading, Sycamore Township, Hamilton County, Ohio, 45241, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Cincinnati city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "1905 Benson St, Reading, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.224016,
+        "lng": -84.4481451
+      },
+      "matched": "West Benson Street, Reading, Hamilton County, Ohio, 45215, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Reading city"
+      },
+      "county": "Hamilton County"
+    },
+    {
+      "address": "2050 Haffey Ave, Reading, OH",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match"
+    },
+    {
+      "address": "2145 South St, Reading, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.8026166,
+        "lng": -82.2951909
+      },
+      "matched": "South Columbus Street, Somerset Historic District, Somerset, Reading Township, Perry County, Ohio, 43783, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Somerset village"
+      },
+      "county": "Perry County"
+    },
+    {
+      "address": "2260 Broadway, Lebanon, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.4375595,
+        "lng": -84.2063256
+      },
+      "matched": "North Broadway Historic District, Lebanon, Warren County, Ohio, 45036, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Lebanon city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "2400 Main St, Lebanon, OH",
+      "ok": false,
+      "stage": "city_conflict",
+      "detail": "city sources disagree (census:1 state:0)",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.3603733,
+        "lng": -84.2048028
+      },
+      "matched": "Main Street, Vista Pointe at River’s Bend, South Lebanon, Hamilton Township, Warren County, Ohio, 45152, United States"
+    },
+    {
+      "address": "114 Mechanic St, Lebanon, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.4356563,
+        "lng": -84.2065108
+      },
+      "matched": "114, North Mechanic Street, North Broadway Historic District, Lebanon, Warren County, Ohio, 45036, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Lebanon city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "220 Silver St, Lebanon, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.4358181,
+        "lng": -84.2114013
+      },
+      "matched": "220, West Silver Street, Lebanon Commercial Historic District, Lebanon, Warren County, Ohio, 45036, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Lebanon city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "305 Turtle Creek Union Rd, Lebanon, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "census",
+      "point": {
+        "lat": 39.404400936153,
+        "lng": -84.206941327735
+      },
+      "matched": "305 E TURTLECREEK UNION RD, LEBANON, OH, 45036",
+      "target": {
+        "type": "municipality",
+        "name": "Lebanon city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "428 High St, Oxford, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.5672718,
+        "lng": -84.8140231
+      },
+      "matched": "High Street, College Corner, Oxford Township, Butler County, Ohio, 45056, United States",
+      "target": {
+        "type": "municipality",
+        "name": "College Corner village"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "517 Main St, Oxford, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.5658873,
+        "lng": -84.8132078
+      },
+      "matched": "Main Street, College Corner, Oxford Township, Butler County, Ohio, 45003, United States",
+      "target": {
+        "type": "municipality",
+        "name": "College Corner village"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "640 College Ave, Oxford, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.5029264,
+        "lng": -84.7458288
+      },
+      "matched": "640, South College Avenue, Oxford, Oxford Township, Butler County, Ohio, 45056, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Oxford city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "755 Spring St, Oxford, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.5071416,
+        "lng": -84.7316155
+      },
+      "matched": "755, East Spring Street, Oxford, Oxford Township, Butler County, Ohio, 45056, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Oxford city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "812 Brown Rd, Oxford, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.5167662,
+        "lng": -84.7459129
+      },
+      "matched": "Brown Road, Oxford, Oxford Township, Butler County, Ohio, 45056, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Oxford city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "905 Main St, Trenton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.4798533,
+        "lng": -84.4575077
+      },
+      "matched": "East Main Street, Trenton, Butler County, Ohio, 45067, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Trenton city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1010 State St, Trenton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.4808256,
+        "lng": -84.4670905
+      },
+      "matched": "West State Street, Trenton, Butler County, Ohio, 45067, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Trenton city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1118 Edgewood Dr, Trenton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.4779665,
+        "lng": -84.4715793
+      },
+      "matched": "Edgewood Drive, Trenton, Butler County, Ohio, 45067, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Trenton city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1225 Wayne Madison Rd, Trenton, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.4840341,
+        "lng": -84.4774774
+      },
+      "matched": "Wayne Madison Road, Trenton, Butler County, Ohio, 45067, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Trenton city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1330 Main St, Monroe, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.7660827,
+        "lng": -80.8729392
+      },
+      "matched": "Main Street, Clarington, Salem Township, Monroe County, Ohio, 43915, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Clarington village"
+      },
+      "county": "Monroe County"
+    },
+    {
+      "address": "1440 Cincinnati Dayton Rd, Monroe, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.4728071,
+        "lng": -84.3433904
+      },
+      "matched": "Cincinnati-Dayton Road, Middletown, Lemon Township, Butler County, Ohio, 45050, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Middletown city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1555 Garver Rd, Monroe, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.4476961,
+        "lng": -84.3376069
+      },
+      "matched": "Garver Road, Monroe, Lemon Township, Butler County, Ohio, 45044, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Monroe city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "1620 Britton Ln, Monroe, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.450835,
+        "lng": -84.3659933
+      },
+      "matched": "Britton Lane, Monroe, Lemon Township, Butler County, Ohio, 45050, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Monroe city"
+      },
+      "county": "Butler County"
+    },
+    {
+      "address": "1780 Second St, Franklin, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.8151792,
+        "lng": -82.9512785
+      },
+      "matched": "Second Street, Hamilton Township, Franklin County, Ohio, 43137, United States",
+      "target": {
+        "type": "township",
+        "name": "Hamilton township",
+        "county": "Franklin County"
+      },
+      "county": "Franklin County"
+    },
+    {
+      "address": "1905 Main St, Franklin, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.9145816,
+        "lng": -83.1631727
+      },
+      "matched": "1905, Galloway Road, Westland, Galloway, Prairie Township, Franklin County, Ohio, 43119, United States",
+      "target": {
+        "type": "township",
+        "name": "Prairie township",
+        "county": "Franklin County"
+      },
+      "county": "Franklin County"
+    },
+    {
+      "address": "2050 Riley Blvd, Franklin, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.560456,
+        "lng": -84.3021699
+      },
+      "matched": "Riley Boulevard, Franklin, Franklin Township, Warren County, Ohio, 45005, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Franklin city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "2145 Shotwell Dr, Franklin, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.5306671,
+        "lng": -84.2897805
+      },
+      "matched": "2145, Shotwell Drive, Franklin Business Park, Franklin, Franklin Township, Warren County, Ohio, 45005, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Franklin city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "2260 Main St, Springboro, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.5769698,
+        "lng": -84.2308399
+      },
+      "matched": "Main Street, Royal Springs Estates, Springboro, Clearcreek Township, Warren County, Ohio, 45066, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Springboro city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "2400 Central Ave, Springboro, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.562658,
+        "lng": -84.266902
+      },
+      "matched": "2400, West Central Avenue, Springboro, Clearcreek Township, Warren County, Ohio, 45066, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Springboro city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "114 Patterson Blvd, Springboro, OH",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match"
+    },
+    {
+      "address": "220 Pioneer Blvd, Springboro, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.5558088,
+        "lng": -84.2563692
+      },
+      "matched": "220, South Pioneer Boulevard, Springboro, Clearcreek Township, Warren County, Ohio, 45066, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Springboro city"
+      },
+      "county": "Warren County"
+    },
+    {
+      "address": "305 Main St, Centerville, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.6206778,
+        "lng": -84.1599835
+      },
+      "matched": "305, South Main Street, Centerville, Washington Township, Montgomery County, Ohio, 45458, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Centerville city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "428 Franklin St, Centerville, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.6286126,
+        "lng": -84.1479415
+      },
+      "matched": "428, East Franklin Street, Centerville, Washington Township, Montgomery County, Ohio, 45459, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Centerville city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "517 Yankee St, Centerville, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.599529,
+        "lng": -84.2000269
+      },
+      "matched": "Yankee Street, Centerville, Washington Township, Montgomery County, Ohio, 45458, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Centerville city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "640 Alex Bell Rd, Centerville, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.643572,
+        "lng": -84.1428856
+      },
+      "matched": "640, Alexandersville-Bellbrook Road East, Whispering Oaks Condominiums, Centerville, Washington Township, Montgomery County, Ohio, 45459, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Centerville city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "755 Far Hills Ave, Kettering, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.6743664,
+        "lng": -84.1648279
+      },
+      "matched": "Far Hills Avenue, Grantland Gardens, Woodbourne, Kettering, Washington Township, Montgomery County, Ohio, 45429, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Kettering city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "812 Dorothy Ln, Kettering, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.7059168,
+        "lng": -84.1865438
+      },
+      "matched": "812, West Dorothy Lane, South Dale, Kettering, Montgomery County, Ohio, 45409, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Kettering city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "905 Woodman Dr, Kettering, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.7270651,
+        "lng": -84.1224433
+      },
+      "matched": "Woodman Drive, Shakertown, Kettering, Montgomery County, Ohio, 45420, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Kettering city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "1010 Stroop Rd, Kettering, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.6888627,
+        "lng": -84.1499955
+      },
+      "matched": "1010, East Stroop Road, Kettering, Montgomery County, Ohio, 45429, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Kettering city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "1118 Wilmington Pike, Kettering, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.6825298,
+        "lng": -84.1249126
+      },
+      "matched": "Wilmington Pike, Oakdale, Kettering, Montgomery County, Ohio, 45440, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Kettering city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "1225 Dayton Xenia Rd, Beavercreek, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.7284892,
+        "lng": -84.0583915
+      },
+      "matched": "Dayton-Xenia Road, Zimmerman, Beavercreek, Beavercreek Township, Greene County, Ohio, 45432, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Beavercreek city"
+      },
+      "county": "Greene County"
+    },
+    {
+      "address": "1330 Fairfield Rd, Beavercreek, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.7285781,
+        "lng": -84.0572058
+      },
+      "matched": "1330, North Fairfield Road, Zimmerman, Beavercreek, Beavercreek Township, Greene County, Ohio, 45432, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Beavercreek city"
+      },
+      "county": "Greene County"
+    },
+    {
+      "address": "1440 Indian Ripple Rd, Beavercreek, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.6928925,
+        "lng": -84.0592192
+      },
+      "matched": "Indian Ripple Road, Woodview Estates, Beavercreek, Beavercreek Township, Greene County, Ohio, 45440, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Beavercreek city"
+      },
+      "county": "Greene County"
+    },
+    {
+      "address": "1555 Kemp Rd, Beavercreek, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.7546947,
+        "lng": -84.0443135
+      },
+      "matched": "Kemp Road, Beavercreek, Beavercreek Township, Greene County, Ohio, 45431, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Beavercreek city"
+      },
+      "county": "Greene County"
+    },
+    {
+      "address": "1620 Old Troy Pike, Huber Heights, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.8393074,
+        "lng": -84.1399344
+      },
+      "matched": "Old Troy Pike, Huber Heights, Montgomery County, Ohio, 45424, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Huber Heights city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "1780 Brandt Pike, Huber Heights, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.8291862,
+        "lng": -84.1220484
+      },
+      "matched": "Brandt Pike, Huber Heights, Montgomery County, Ohio, 45424, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Huber Heights city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "1905 Chambersburg Rd, Huber Heights, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.8489629,
+        "lng": -84.1536217
+      },
+      "matched": "Chambersburg Road, Miami Villa, Huber Heights, Montgomery County, Ohio, 45424, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Huber Heights city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "2050 Taylorsville Rd, Huber Heights, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.862428,
+        "lng": -84.129685
+      },
+      "matched": "Taylorsville Road, Huber Heights, Montgomery County, Ohio, 45424, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Huber Heights city"
+      },
+      "county": "Montgomery County"
+    },
+    {
+      "address": "2145 Main St, Fairborn, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.8216905,
+        "lng": -84.0231575
+      },
+      "matched": "West Main Street, Fairborn, Bath Township, Greene County, Ohio, 45324, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Fairborn city"
+      },
+      "county": "Greene County"
+    },
+    {
+      "address": "2260 Dayton Dr, Fairborn, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.8208486,
+        "lng": -84.0164622
+      },
+      "matched": "East Dayton Drive, Fairborn, Bath Township, Greene County, Ohio, 45324, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Fairborn city"
+      },
+      "county": "Greene County"
+    },
+    {
+      "address": "2400 Kauffman Ave, Fairborn, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.8151001,
+        "lng": -84.0204399
+      },
+      "matched": "Kauffman Avenue, Pleasant View, Fairborn, Bath Township, Greene County, Ohio, 45324, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Fairborn city"
+      },
+      "county": "Greene County"
+    },
+    {
+      "address": "114 Central Ave, Fairborn, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.8191183,
+        "lng": -84.021203
+      },
+      "matched": "114, South Central Avenue, Pleasant View, Fairborn, Bath Township, Greene County, Ohio, 45324, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Fairborn city"
+      },
+      "county": "Greene County"
+    },
+    {
+      "address": "220 Main St, Xenia, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.6845674,
+        "lng": -83.9343375
+      },
+      "matched": "220, West Main Street, Waterstreet Historic District, Xenia, Greene County, Ohio, 45385, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Xenia city"
+      },
+      "county": "Greene County"
+    },
+    {
+      "address": "305 Detroit St, Xenia, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.67975,
+        "lng": -83.9296111
+      },
+      "matched": "305, South Detroit Street, East Second Street Historic District, Xenia, Greene County, Ohio, 45385, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Xenia city"
+      },
+      "county": "Greene County"
+    },
+    {
+      "address": "428 Church St, Xenia, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.6852804,
+        "lng": -83.9352609
+      },
+      "matched": "428, Church Street, Waterstreet Historic District, Xenia, Greene County, Ohio, 45385, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Xenia city"
+      },
+      "county": "Greene County"
+    },
+    {
+      "address": "517 West St, Xenia, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 39.6914826,
+        "lng": -83.9350222
+      },
+      "matched": "517, North West Street, Waterstreet Historic District, Xenia, Greene County, Ohio, 45385, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Xenia city"
+      },
+      "county": "Greene County"
+    },
+    {
+      "address": "640 Main St, Piqua, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 40.1526787,
+        "lng": -84.2398479
+      },
+      "matched": "640, North Main Street, Piqua-Caldwell Historic District, Piqua, Miami County, Ohio, 45356, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Piqua city"
+      },
+      "county": "Miami County"
+    },
+    {
+      "address": "755 Sunset Dr, Piqua, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 40.1355684,
+        "lng": -84.2658316
+      },
+      "matched": "755, South Sunset Drive, Landin Park, Piqua, Miami County, Ohio, 45356, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Piqua city"
+      },
+      "county": "Miami County"
+    },
+    {
+      "address": "812 High St, Piqua, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 40.1485564,
+        "lng": -84.2507767
+      },
+      "matched": "812, West High Street, Piqua-Caldwell Historic District, Piqua, Miami County, Ohio, 45356, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Piqua city"
+      },
+      "county": "Miami County"
+    },
+    {
+      "address": "905 College St, Piqua, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 40.1388561,
+        "lng": -84.2449032
+      },
+      "matched": "905, South College Street, Piqua, Miami County, Ohio, 45356, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Piqua city"
+      },
+      "county": "Miami County"
+    },
+    {
+      "address": "1010 Main St, Troy, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 41.4505962,
+        "lng": -83.4828579
+      },
+      "matched": "Main Street, Luckey, Troy Township, Wood County, Ohio, 43443, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Luckey village"
+      },
+      "county": "Wood County"
+    },
+    {
+      "address": "1118 Market St, Troy, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 40.051914,
+        "lng": -84.1919007
+      },
+      "matched": "1118, North Market Street, Troy, Concord Township, Miami County, Ohio, 45373, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Troy city"
+      },
+      "county": "Miami County"
+    },
+    {
+      "address": "1225 Dorset Rd, Troy, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 40.0614903,
+        "lng": -84.2276594
+      },
+      "matched": "1225, North Dorset Road, Troy, Concord Township, Miami County, Ohio, 45373, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Troy city"
+      },
+      "county": "Miami County"
+    },
+    {
+      "address": "1330 Experiment Farm Rd, Troy, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 40.0580874,
+        "lng": -84.2408915
+      },
+      "matched": "1330, Experiment Farm Road, Troy, Concord Township, Miami County, Ohio, 45373, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Troy city"
+      },
+      "county": "Miami County"
+    },
+    {
+      "address": "1440 Main Ave, Sidney, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 40.300843685133,
+        "lng": -84.155280139084
+      },
+      "matched": "1440 N MAIN AVE, SIDNEY, OH, 45365",
+      "target": {
+        "type": "municipality",
+        "name": "Sidney city"
+      },
+      "county": "Shelby County"
+    },
+    {
+      "address": "1555 Ohio Ave, Sidney, OH",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429"
+    },
+    {
+      "address": "1620 Court St, Sidney, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 40.285132678122,
+        "lng": -84.130443176702
+      },
+      "matched": "1620 E COURT ST, SIDNEY, OH, 45365",
+      "target": {
+        "type": "township",
+        "name": "Clinton township",
+        "county": "Shelby County"
+      },
+      "county": "Shelby County"
+    },
+    {
+      "address": "1780 Russell Rd, Sidney, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 40.302041819255,
+        "lng": -84.183523129686
+      },
+      "matched": "1780 W RUSSELL RD, SIDNEY, OH, 45365",
+      "target": {
+        "type": "township",
+        "name": "Clinton township",
+        "county": "Shelby County"
+      },
+      "county": "Shelby County"
+    },
+    {
+      "address": "1905 Main St, Findlay, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 41.017136941205,
+        "lng": -83.650265604859
+      },
+      "matched": "1905 S MAIN ST, FINDLAY, OH, 45840",
+      "target": {
+        "type": "municipality",
+        "name": "Findlay city"
+      },
+      "county": "Hancock County"
+    },
+    {
+      "address": "2050 Tiffin Ave, Findlay, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 41.054303877717,
+        "lng": -83.604828092066
+      },
+      "matched": "2050 TIFFIN AVE, FINDLAY, OH, 45840",
+      "target": {
+        "type": "municipality",
+        "name": "Findlay city"
+      },
+      "county": "Hancock County"
+    },
+    {
+      "address": "2145 Bright Rd, Findlay, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 41.067583860997,
+        "lng": -83.617174378078
+      },
+      "matched": "2145 BRIGHT RD, FINDLAY, OH, 45840",
+      "target": {
+        "type": "municipality",
+        "name": "Findlay city"
+      },
+      "county": "Hancock County"
+    },
+    {
+      "address": "2260 Sandusky St, Findlay, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 41.037024199095,
+        "lng": -83.693164046148
+      },
+      "matched": "2260 W SANDUSKY ST, FINDLAY, OH, 45840",
+      "target": {
+        "type": "township",
+        "name": "Liberty township",
+        "county": "Hancock County"
+      },
+      "county": "Hancock County"
+    },
+    {
+      "address": "2400 Main St, Lima, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 40.705167981223,
+        "lng": -84.10537461957
+      },
+      "matched": "2400 S MAIN ST, LIMA, OH, 45804",
+      "target": {
+        "type": "township",
+        "name": "Perry township",
+        "county": "Allen County"
+      },
+      "county": "Allen County"
+    },
+    {
+      "address": "114 Elm St, Lima, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 40.737209985802,
+        "lng": -84.10392897152
+      },
+      "matched": "114 E ELM ST, LIMA, OH, 45801",
+      "target": {
+        "type": "municipality",
+        "name": "Lima city"
+      },
+      "county": "Allen County"
+    },
+    {
+      "address": "220 Allentown Rd, Lima, OH",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429"
+    },
+    {
+      "address": "305 Robb Ave, Lima, OH",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 40.759282050778,
+        "lng": -84.10211328773
+      },
+      "matched": "305 E ROBB AVE, LIMA, OH, 45801",
+      "target": {
+        "type": "municipality",
+        "name": "Lima city"
+      },
+      "county": "Allen County"
+    }
+  ]
+}

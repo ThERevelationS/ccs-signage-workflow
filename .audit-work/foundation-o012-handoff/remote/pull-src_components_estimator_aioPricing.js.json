@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/estimator/aioPricing.js",
+      "content": "import { acceptedCustomerUnitPrice } from \"./customerPricing\";\n\n// Customer pricing waterfall for an All-In-One estimate:\n// accepted customer unit price -> quantity -> per-section adjustments ->\n// discount -> contingency -> fees -> tax -> deposit.\n// Historical lines without a dedicated customer snapshot fall back to the old\n// total_snapshot value so existing quotes remain unchanged.\nexport function computePricing(estimate) {\n  const lines = estimate.line_items || [];\n\n  const sections = lines.map((line) => {\n    const unitRaw = acceptedCustomerUnitPrice(line);\n    const quantity = Math.max(0, Number(line.customer_quantity ?? 1) || 0);\n    const raw = unitRaw * quantity;\n    const adj = Number(line.adjustment_percent || 0) + Number(estimate?.category_adjustments?.[line.product_category] || 0);\n    return { ...line, unitRaw, quantity, raw, adjusted: raw * (1 + adj / 100) };\n  });\n\n  const rawTotal = sections.reduce((s, l) => s + l.raw, 0);\n  const subtotal = sections.reduce((s, l) => s + l.adjusted, 0);\n\n  const discount = subtotal * (Number(estimate.discount_percent || 0) / 100);\n  const afterDiscount = subtotal - discount;\n  const contingency = afterDiscount * (Number(estimate.contingency_percent || 0) / 100);\n  const fees = Number(estimate.shipping_fee || 0) + Number(estimate.permit_fee || 0);\n  const taxableBase = afterDiscount + contingency + fees;\n  const tax = taxableBase * (Number(estimate.tax_percent || 0) / 100);\n  const quoteTotal = estimate.round_quote_total ? Math.round(taxableBase + tax) : taxableBase + tax;\n  const deposit = quoteTotal * (Number(estimate.deposit_percent || 0) / 100);\n\n  return {\n    sections,\n    rawTotal,\n    subtotal,\n    discount,\n    contingency,\n    fees,\n    tax,\n    quoteTotal,\n    deposit,\n    balance: quoteTotal - deposit,\n  };\n}\n\nexport const money = (n) =>\n  `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;",
+      "startLine": 1,
+      "endLine": 46,
+      "totalLines": 46,
+      "truncated": false
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+ "inputs": [
+  "node_modules/react/cjs/react.development.js",
+  "node_modules/react/index.js",
+  "node_modules/scheduler/cjs/scheduler.development.js",
+  "node_modules/scheduler/index.js",
+  "node_modules/react-dom/cjs/react-dom.development.js",
+  "node_modules/react-dom/index.js",
+  "node_modules/react-dom/client.js",
+  "s:C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\stub-__api_base44Client",
+  "s:C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\stub-__components_ui_dialog",
+  "s:C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\stub-lucide_react",
+  "s:C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\stub-__components_estimator_products_reusableSaveIdempotency",
+  "s:C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\stub-__components_estimator_builder_builderEntityPersistence",
+  ".audit-work/foundation-o007-templates/baseline/foundationTemplateService.js",
+  ".audit-work/foundation-o007-templates/baseline/foundationAssemblyModel.js",
+  ".audit-work/foundation-o007-templates/candidates/src/components/estimator/foundation/foundationTemplateModel.js",
+  "s:C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\stub-__components_estimator_loadAllEntityRows",
+  "s:C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\stub-__components_estimator_idempotentEntityCreate",
+  "node_modules/react/cjs/react-jsx-runtime.development.js",
+  "node_modules/react/jsx-runtime.js",
+  ".audit-work/foundation-o007-templates/baseline/FoundationTemplateDialog.jsx",
+  "h:harness"
+ ]
+}

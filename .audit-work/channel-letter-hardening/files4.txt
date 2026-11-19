@@ -1,0 +1,4 @@
+src/components/estimator/builder/partSync.js
+src/components/signMaintenance/maintenanceCalculator.jsx
+src/components/channelLetterInstall/gatedEntities.js
+src/api/gatedEntities.js

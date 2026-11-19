@@ -1,0 +1,33 @@
+--- .audit-work/foundation-template05/before-svc.norm	2026-11-05 11:05:53.895375700 -0500
++++ .audit-work/foundation-template05/svc.cur.norm	2026-11-05 11:14:12.940631600 -0500
+@@ -11,16 +11,26 @@
+   });
+ }
+ 
++const isNotFound = (e) => e?.status === 404 || e?.response?.status === 404;
++
+ export async function deleteFoundationTemplate(templateId) {
+   const id = String(templateId || "").trim();
+   if (!id) throw new Error("Foundation template id is required.");
+ 
+-  const current = await base44.entities.ProjectTemplate.get(id).catch(() => null);
+-  if (!current) return true;
++  let current;
++  try {
++    current = await base44.entities.ProjectTemplate.get(id);
++  } catch (e) {
++    if (isNotFound(e)) return true;
++    throw e;
++  }
++  if (current === null || current === undefined || typeof current !== "object" || Array.isArray(current) || current.id !== id) {
++    throw new Error("Foundation template record could not be verified; delete aborted.");
++  }
+   await deleteEntityIfUnchanged({
+     entity: base44.entities.ProjectTemplate,
+     record: current,
+     label: "Foundation template",
+   });
+   return true;
+-}
+\ No newline at end of file
++}

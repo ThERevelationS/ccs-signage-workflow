@@ -1,0 +1,272 @@
+./src/components/estimator/aio/AddProductGrid.jsx:113:    try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
+./src/components/estimator/aio/AddProductGrid.jsx:194:    } catch (error) {
+./src/components/estimator/aio/AddProductGrid.jsx:217:    } catch (error) {
+./src/components/estimator/aio/AddProductGrid.jsx:233:    } catch (error) {
+./src/components/estimator/aio/AddProductGrid.jsx:258:    } catch (error) {
+./src/components/estimator/aio/BuilderPartsPanel.jsx:150:                    } catch (error) {
+./src/components/estimator/aio/BuilderPartsPanel.jsx:339:    } catch (error) {
+./src/components/estimator/aio/BuilderPartsPanel.jsx:359:    } catch (error) {
+./src/components/estimator/aio/BuilderPartsPanel.jsx:412:                  } catch (error) {
+./src/components/estimator/aio/BuilderPartsPanel.jsx:448:                  } catch (error) {
+./src/components/estimator/aio/BuilderPartsPanel.jsx:538:          } catch (error) {
+./src/components/estimator/aio/BuilderPartsPanel.jsx:643:        } catch (error) {
+./src/components/estimator/aio/BuilderPartsPanel.jsx:670:        } catch (error) {
+./src/components/estimator/aio/BuilderPartsPanel.jsx:703:    } catch (error) {
+./src/components/estimator/aio/ClipboardManagerModal.jsx:27:    } catch (err) {
+./src/components/estimator/aio/ClipboardManagerModal.jsx:67:    } catch (err) {
+./src/components/estimator/aio/CreatePartGroupModal.jsx:24:    } catch (err) {
+./src/components/estimator/aio/CreateQuickProductModal.jsx:58:    } catch (err) {
+./src/components/estimator/aio/CustomerSearchDialog.jsx:18:  } catch {
+./src/components/estimator/aio/CustomerSearchDialog.jsx:28:  } catch {
+./src/components/estimator/aio/DetachedPartOverrideModal.jsx:85:    } catch (err) {
+./src/components/estimator/aio/EstimateProductsList.jsx:39:    } catch (error) {
+./src/components/estimator/aio/EstimateProductsList.jsx:94:    } catch {}
+./src/components/estimator/aio/MergeEstimateDialog.jsx:43:      } catch (e) {
+./src/components/estimator/aio/MergeEstimateDialog.jsx:62:    } catch {
+./src/components/estimator/aio/MovePartGroupModal.jsx:29:    } catch (err) {
+./src/components/estimator/aio/NewCustomerDialog.jsx:119:    } catch (e) {
+./src/components/estimator/aio/ProductNotesModal.jsx:24:    } catch (err) {
+./src/components/estimator/aio/ProductRow.jsx:156:    } catch {
+./src/components/estimator/aio/ProductRow.jsx:461:            } catch (error) {
+./src/components/estimator/aio/ProductRow.jsx:656:          } catch (error) {
+./src/components/estimator/brick/BrickGeometryPanel.jsx:29:    } catch { /* storage unavailable */ }
+./src/components/estimator/brick/BrickGeometryPanel.jsx:42:            try { localStorage.setItem("estimator:last_material:brick_stone", e.target.value); } catch { /* storage unavailable */ }
+./src/components/estimator/brick/brickSellPricing.js:55:  } catch {
+./src/components/estimator/brick/brickSellPricing.js:94:  } catch {
+./src/components/estimator/builder/builderEntityPersistence.js:97:    } catch (error) {
+./src/components/estimator/builder/builderEntityPersistence.js:136:  } catch (error) {
+./src/components/estimator/builder/builderEntityPersistence.js:140:    } catch (verificationError) {
+./src/components/estimator/builder/builderEntityPersistence.js:162:  } catch (verificationError) {
+./src/components/estimator/builder/builderMutationRecovery.js:123:  } catch {
+./src/components/estimator/builder/builderPartGroupPersistence.js:66:  } catch (error) {
+./src/components/estimator/builder/builderPartGroupPersistence.js:73:  } catch (verifyError) {
+./src/components/estimator/builder/builderPartPersistence.js:66:  } catch (error) {
+./src/components/estimator/builder/builderPartPersistence.js:73:  } catch (verifyError) {
+./src/components/estimator/builder/builderProductPersistence.js:62:  } catch (error) {
+./src/components/estimator/builder/builderProductPersistence.js:72:  } catch (verificationError) {
+./src/components/estimator/builder/builderService.js:557:          } catch (error) {
+./src/components/estimator/builder/builderService.js:575:    } catch (error) {
+./src/components/estimator/builder/historicalBackfill.js:33:  } catch {
+./src/components/estimator/builder/historicalBackfill.js:41:  } catch {
+./src/components/estimator/builder/partSync.js:188:  } catch (error) {
+./src/components/estimator/builder/partSync.js:264:    } catch (error) {
+./src/components/estimator/builder/partSync.js:3345:      } catch (error) {
+./src/components/estimator/builder/ReattachPartsModal.jsx:51:    } catch (err) {
+./src/components/estimator/builder/sourceProjectPersistence.js:74:  } catch (error) {
+./src/components/estimator/cnc/cncSellPricing.js:54:  } catch {
+./src/components/estimator/cnc/cncSellPricing.js:92:  } catch {
+./src/components/estimator/ConvertToWorkOrder.jsx:80:    } catch (error) {
+./src/components/estimator/customerLocationService.js:126:    } catch { /* advisory — lookup outage never blocks a save */ }
+./src/components/estimator/CustomerMergeDialog.jsx:67:    } catch (e) {
+./src/components/estimator/CustomerMergeDialog.jsx:91:    } catch (e) {
+./src/components/estimator/customerPersistence.js:108:    } catch (error) {
+./src/components/estimator/CustomerQuotePanel.jsx:221:    } catch (error) {
+./src/components/estimator/CustomerQuotePanel.jsx:241:    } catch (error) {
+./src/components/estimator/CustomerQuotePanel.jsx:259:    } catch (error) {
+./src/components/estimator/CustomerQuotePanel.jsx:275:      } catch {}
+./src/components/estimator/CustomerQuotePanel.jsx:386:    } catch (error) {
+./src/components/estimator/customerSync.js:67:    } catch (error) {
+./src/components/estimator/customerSync.js:395:    } catch (stampError) {
+./src/components/estimator/customerSync.js:414:    } catch (e) {
+./src/components/estimator/customerSync.js:431:    } catch (linkError) {
+./src/components/estimator/customItems/customItemsSellPricing.js:55:  } catch {
+./src/components/estimator/customItems/customItemsSellPricing.js:95:  } catch {
+./src/components/estimator/deepLinks.js:11:  } catch {
+./src/components/estimator/deepLinks.js:30:  } catch {
+./src/components/estimator/deepLinks.js:111:  } catch {
+./src/components/estimator/deepLinks.js:128:  } catch {
+./src/components/estimator/EstimateAcceptancePanel.jsx:137:    } catch (err) {
+./src/components/estimator/EstimateAcceptancePanel.jsx:222:        } catch { /* signature upload failure never blocks the acceptance */ }
+./src/components/estimator/EstimateAcceptancePanel.jsx:236:    } catch (err) {
+./src/components/estimator/EstimateAcceptancePanel.jsx:255:    } catch (err) {
+./src/components/estimator/EstimateAcceptancePanel.jsx:273:    } catch (err) {
+./src/components/estimator/EstimateAcceptancePanel.jsx:307:    } catch (err) {
+./src/components/estimator/EstimateAcceptancePanel.jsx:339:    } catch (err) {
+./src/components/estimator/EstimateActivityPanel.jsx:43:      } catch (e) {
+./src/components/estimator/estimateConversionService.js:316:      } catch { /* openAr stays null — the block reason says it could not be verified */ }
+./src/components/estimator/estimateConversionService.js:526:    } catch (error) {
+./src/components/estimator/estimateConversionService.js:612:    } catch (error) {
+./src/components/estimator/EstimateMarginSection.jsx:62:    } catch (e) {
+./src/components/estimator/estimatePersistence.js:119:    } catch (error) {
+./src/components/estimator/estimatePersistence.js:212:  } catch (error) {
+./src/components/estimator/EstimateRevisionPanel.jsx:135:  const wantVersion = (() => { try { return Number(new URLSearchParams(window.location.search).get("version")) || 0; } catch { return 0; } })();
+./src/components/estimator/EstimateRevisionPanel.jsx:142:  } catch {
+./src/components/estimator/EstimateRevisionPanel.jsx:171:    } catch (err) {
+./src/components/estimator/EstimateRevisionPanel.jsx:204:    } catch (err) {
+./src/components/estimator/estimateRevisionService.js:29:  } catch (error) {
+./src/components/estimator/EstimatorAuditPanel.jsx:75:      } catch (e) {
+./src/components/estimator/foundation/AiEngineeringAssistant.jsx:22:  } catch (e) {
+./src/components/estimator/foundation/AiEngineeringAssistant.jsx:54:    } catch (e) {
+./src/components/estimator/foundation/foundationAssemblyModel.js:20:  try { return deepClone(v); } catch { return v; }
+./src/components/estimator/foundation/foundationDraftRecovery.js:85:  try { env = JSON.parse(raw); } catch { return { ok: false, message: "Stored draft is not valid JSON." }; }
+./src/components/estimator/foundation/foundationDraftRecovery.js:101:  try { data = pickDraft(env.data); } catch (e) { return { ok: false, message: String(e.message || e) }; }
+./src/components/estimator/foundation/foundationDraftRecovery.js:117:    } catch (e) { return { __err: String(e.message || e) }; }
+./src/components/estimator/foundation/foundationDraftRecovery.js:119:  const getItem = (s) => { try { return { raw: s.getItem(key) }; } catch (e) { return { err: `Draft read failed: ${e.message || e}` }; } };
+./src/components/estimator/foundation/foundationDraftRecovery.js:162:        } catch { return false; }
+./src/components/estimator/foundation/foundationDraftRecovery.js:172:      try { s.setItem(key, serialized); } catch (e) {
+./src/components/estimator/foundation/foundationDraftRecovery.js:179:    } catch (e) { return { status: "invalid", message: String(e.message || e) }; }
+./src/components/estimator/foundation/foundationDraftRecovery.js:189:    try { s.removeItem(key); } catch (e) { return unavailable(`Draft clear failed: ${e.message || e}`); }
+./src/components/estimator/foundation/FoundationEquipmentTab.jsx:46:    } catch (e) { setErr(e.message || 'Quantity change rejected.'); }
+./src/components/estimator/foundation/FoundationLayoutCanvas.jsx:63:    catch { cancelDrag(); return; }
+./src/components/estimator/foundation/FoundationLayoutCanvas.jsx:81:    try { boxRef.current?.releasePointerCapture(e.pointerId); } catch { }
+./src/components/estimator/foundation/foundationReinforcementEditorSession.js:47:    } catch {
+./src/components/estimator/foundation/foundationReinforcementEditorSession.js:154:      } catch (error) { entry.activeId = null; return report(entry, error.message || "The proposal could not be calculated."); }
+./src/components/estimator/foundation/foundationReinforcementProposal.js:122:  } catch (error) {
+./src/components/estimator/foundation/foundationSaveSession.js:21:        } catch { return false; }
+./src/components/estimator/foundation/foundationSaveSession.js:27:      } catch (error) {
+./src/components/estimator/foundation/foundationSaveSession.js:43:        } catch (error) {
+./src/components/estimator/foundation/foundationSellPricing.js:62:  } catch {
+./src/components/estimator/foundation/foundationSellPricing.js:102:  } catch {
+./src/components/estimator/foundation/FoundationTemplateDialog.jsx:105:    } catch (e) {
+./src/components/estimator/foundation/FoundationTemplateDialog.jsx:134:        } catch (e) {
+./src/components/estimator/foundation/FoundationTemplateDialog.jsx:153:    } catch (e) {
+./src/components/estimator/foundation/FoundationTemplateDialog.jsx:175:    } catch (e) {
+./src/components/estimator/foundation/foundationTemplateService.js:39:  } catch (e) {
+./src/components/estimator/foundation/foundationTotalsSummary.js:114:    } catch {
+./src/components/estimator/idempotentEntityCreate.js:84:  } catch (error) {
+./src/components/estimator/idempotentEntityCreate.js:92:  } catch (error) {
+./src/components/estimator/idempotentEntityCreate.js:104:    } catch (error) {
+./src/components/estimator/importEstimates.js:400:    } catch (error) {
+./src/components/estimator/IntegrationsSurface.jsx:665:      } catch (err) {
+./src/components/estimator/IntegrationsSurface.jsx:831:    } catch (err) {
+./src/components/estimator/laser/laserSellPricing.js:54:  } catch {
+./src/components/estimator/laser/laserSellPricing.js:92:  } catch {
+./src/components/estimator/loadAllEntityRows.js:34:    } catch (error) {
+./src/components/estimator/maintenance/maintenanceSellPricing.js:55:  } catch {
+./src/components/estimator/maintenance/maintenanceSellPricing.js:95:  } catch {
+./src/components/estimator/metal/metalSellPricing.js:54:  } catch {
+./src/components/estimator/metal/metalSellPricing.js:92:  } catch {
+./src/components/estimator/moduleShared/ModuleActionBar.jsx:27:    } catch (e) {
+./src/components/estimator/moduleShared/ModuleTemplateDialog.jsx:69:    } catch {
+./src/components/estimator/NewEstimateDialog.jsx:74:    } catch (e) {
+./src/components/estimator/paint/paintCalc.js:112:  } catch {
+./src/components/estimator/paint/paintPricingAvailability.js:129:      } catch {
+./src/components/estimator/paint/paintSellPricing.js:56:  } catch {
+./src/components/estimator/paint/paintSellPricing.js:95:  } catch {
+./src/components/estimator/parts/MasterPartPickerModal.jsx:113:    } catch (err) {
+./src/components/estimator/parts/PartLibraryPickerModal.jsx:54:    } catch (err) {
+./src/components/estimator/parts/SavePartTemplateModal.jsx:70:    } catch (err) {
+./src/components/estimator/products/blankProductService.js:99:      } catch (error) {
+./src/components/estimator/products/blankProductService.js:110:      } catch (verificationError) {
+./src/components/estimator/products/clipboardService.js:191:    } catch {
+./src/components/estimator/products/quickProductService.js:574:  } catch (error) {
+./src/components/estimator/products/quickProductService.js:585:  } catch (verificationError) {
+./src/components/estimator/products/quickProductService.js:665:      } catch (error) {
+./src/components/estimator/products/quickProductService.js:676:      } catch (verificationError) {
+./src/components/estimator/quickPricePersistence.js:43:  } catch (error) {
+./src/components/estimator/quoteDefaultsPersistence.js:53:  } catch (error) {
+./src/components/estimator/quoteDefaultsPersistence.js:63:  } catch (verificationError) {
+./src/components/estimator/quoteDeliveryService.js:95:  } catch {
+./src/components/estimator/quoteDeliveryService.js:124:  } catch (error) {
+./src/components/estimator/quoteDeliveryService.js:144:  } catch (error) {
+./src/components/estimator/quoteDeliveryService.js:190:  } catch (sendError) {
+./src/components/estimator/quoteDeliveryService.js:250:  } catch (error) {
+./src/components/estimator/quoteLifecycle.js:33:  } catch {
+./src/components/estimator/recentCustomerHistory.js:22:  } catch {
+./src/components/estimator/recentCustomerHistory.js:37:  } catch {
+./src/components/estimator/settings/PricingAdminTabs.jsx:530:        } catch {
+./src/components/estimator/settings/PricingAdminTabs.jsx:857:    } catch (err) {
+./src/components/estimator/settings/PricingAdminTabs.jsx:894:    } catch (err) {
+./src/components/estimator/settings/PricingAdminTabs.jsx:910:    } catch (err) {
+./src/components/estimator/settings/PricingAdminTabs.jsx:1096:    } catch (err) {
+./src/components/estimator/settings/PricingAdminTabs.jsx:1138:    } catch (err) {
+./src/components/estimator/settings/settingsSaveGuard.js:54:  } catch (error) {
+./src/components/estimator/settings/settingsSaveGuard.js:67:  } catch (verificationError) {
+./src/components/estimator/settings/settingsSaveGuard.js:178:    } catch (error) {
+./src/components/estimator/settings/SettingsTransferBar.jsx:41:    } catch (e) {
+./src/components/estimator/userDateDisplay.js:23:  catch { return false; }
+./src/components/estimator/userDateDisplay.js:39:    } catch {
+./src/components/estimator/userDateDisplay.js:59:  } catch {
+./src/components/estimator/vinyl/vinylEnginePricing.js:54:  } catch {
+./src/components/estimator/vinyl/vinylEnginePricing.js:92:  } catch {
+./src/components/estimator/workOrderConversion.js:704:    } catch { /* notify is best-effort */ }
+./src/components/estimator/workOrderSyncPersistence.js:35:  } catch (error) {
+./src/components/estimator/workOrderSyncPersistence.js:47:  } catch (readError) {
+./src/components/estimator/workOrderSyncPersistence.js:88:  } catch (error) {
+./src/components/estimator/workOrderSyncPersistence.js:92:    } catch (verificationError) {
+./src/components/estimator/workOrderSyncPersistence.js:108:  } catch (verificationError) {
+./src/components/foundation/EquipmentInventoryTab.jsx:82:    } catch (error) {
+./src/components/foundation/EquipmentInventoryTab.jsx:115:    } catch (error) {
+./src/components/foundation/EquipmentInventoryTab.jsx:357:                } catch (error) {
+./src/components/foundation/EquipmentInventoryTab.jsx:371:        } catch (error) {
+./src/components/foundation/foundationInventoryPersistence.js:38:    } catch (error) {
+./src/components/foundation/WallCapsInventoryTab.jsx:167:    } catch (error) {
+./src/components/foundation/WallCapsInventoryTab.jsx:193:    } catch (error) {
+./src/components/masterInventory/equipmentPersistence.js:66:      } catch (error) {
+./src/components/masterInventory/ExcelImporterDialog.jsx:109:          } catch (e) {
+./src/components/masterInventory/ExcelImporterDialog.jsx:152:    } catch (err) {
+./src/components/masterInventory/ExcelImporterDialog.jsx:211:      } catch (error) {
+./src/components/masterInventory/ExcelImporterDialog.jsx:282:          } catch (err) {
+./src/components/masterInventory/FoundationMaterialDialog.jsx:76:    } catch (error) {
+./src/components/masterInventory/InventoryFormModal.jsx:158:    } catch (err) {
+./src/components/masterInventory/inventoryImportPersistence.js:68:  } catch (error) {
+./src/components/masterInventory/inventoryPersistence.js:52:  } catch (error) {
+./src/components/masterInventory/InventoryTable.jsx:151:    } catch (e) {
+./src/components/masterInventory/legacyInventoryMigrator.jsx:202:    } catch (error) {
+./src/components/masterInventory/legacyInventoryMigrator.jsx:213:    } catch (error) {
+./src/components/masterInventory/legacyInventoryMigrator.jsx:293:      } catch (operationError) {
+./src/components/masterInventory/legacyInventoryMigrator.jsx:308:    } catch (err) {
+./src/components/masterInventory/MasterEquipmentTab.jsx:128:    } catch (e) {
+./src/components/masterInventory/MasterEquipmentTab.jsx:190:    } catch (error) {
+./src/components/masterInventory/MasterEquipmentTab.jsx:224:    } catch (error) {
+./src/components/masterInventory/MasterEquipmentTab.jsx:252:    } catch (error) {
+./src/components/masterInventory/MasterEquipmentTab.jsx:784:          } catch (error) {
+./src/components/masterInventory/MasterEquipmentTab.jsx:802:          } catch (error) {
+./src/components/masterInventory/MasterEquipmentTab.jsx:825:    } catch (error) {
+./src/components/masterInventory/MasterExtrudedMetalsPolesTab.jsx:171:    } catch (e) {
+./src/components/masterInventory/MasterExtrudedMetalsPolesTab.jsx:250:    } catch (error) {
+./src/components/masterInventory/MasterExtrudedMetalsPolesTab.jsx:295:    } catch (e) {
+./src/components/masterInventory/MasterExtrudedMetalsPolesTab.jsx:409:                } catch { failures.push(item.id); }
+./src/components/masterInventory/MasterSuppliesTab.jsx:102:    } catch (e) {
+./src/components/masterInventory/MasterSuppliesTab.jsx:154:    } catch (error) {
+./src/components/masterInventory/MasterSuppliesTab.jsx:185:    } catch (error) {
+./src/components/masterInventory/MasterSuppliesTab.jsx:384:    } catch (error) {
+./src/pages/Estimator.jsx:79:      const bomDone = (() => { try { return Boolean(localStorage.getItem("ccs.bomMigration.done.v1")); } catch { return false; } })();
+./src/pages/Estimator.jsx:86:            try { localStorage.setItem("ccs.bomMigration.done.v1", new Date().toISOString()); } catch {}
+./src/pages/Estimator.jsx:95:    } catch (error) {
+./src/pages/EstimatorCustomers.jsx:275:    try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
+./src/pages/EstimatorCustomers.jsx:308:    } catch (e) { window.alert(e?.message || "Re-markup failed."); } finally { setReMarkBusy(false); }
+./src/pages/EstimatorCustomers.jsx:352:    } catch (error) {
+./src/pages/EstimatorCustomers.jsx:414:        } catch { skipped++; }
+./src/pages/EstimatorCustomers.jsx:419:    } catch (e) {
+./src/pages/EstimatorCustomers.jsx:448:    } catch (error) {
+./src/pages/EstimatorCustomers.jsx:476:    } catch (e) {
+./src/pages/EstimatorCustomers.jsx:505:    } catch (e) {
+./src/pages/EstimatorParts.jsx:106:    } catch (err) {
+./src/pages/EstimatorParts.jsx:202:    } catch (e) { window.alert(e?.message || "Insert failed."); }
+./src/pages/EstimatorParts.jsx:251:    } catch (err) {
+./src/pages/EstimatorProducts.jsx:117:    } catch (err) {
+./src/pages/EstimatorProducts.jsx:279:    } catch (err) {
+./src/pages/EstimatorQueues.jsx:158:    } catch (e) { window.alert(e?.message || "Import failed."); }
+./src/pages/EstimatorQueues.jsx:170:    try { cs = JSON.parse(row.custom_statuses || "[]") || []; } catch {}
+./src/pages/EstimatorQueues.jsx:171:    try { tr = JSON.parse(row.status_transitions || "{}") || {}; } catch {}
+./src/pages/EstimatorQueues.jsx:206:      } catch (error) {
+./src/pages/EstimatorQueues.jsx:218:    try { const b = await fetchEstimateQueueBundle(); setEstimates(b.estimates || []); } catch {}
+./src/pages/EstimatorQueues.jsx:289:          } catch (err) {
+./src/pages/EstimatorQueues.jsx:302:      try { const b = await fetchEstimateQueueBundle(); setEstimates(b.estimates || []); } catch {}
+./src/pages/EstimatorQueues.jsx:303:    } catch (err) {
+./src/pages/EstimatorQueues.jsx:315:    } catch {}
+./src/pages/EstimatorQueues.jsx:335:      } catch (err) {
+./src/pages/EstimatorQueues.jsx:362:    } catch (err) {
+./src/pages/EstimatorQueues.jsx:393:    } catch (err) {
+./src/pages/EstimatorQueues.jsx:422:    } catch (err) {
+./src/pages/EstimatorQueues.jsx:471:      } catch {}
+./src/pages/EstimatorQueues.jsx:472:    } catch (err) {
+./src/pages/EstimatorQueues.jsx:506:    } catch (err) {
+./src/pages/EstimatorQueues.jsx:637:    } catch (e) {
+./src/pages/EstimatorQueues.jsx:683:            } catch (e) { window.alert(e?.message || "Wrap failed."); }
+./src/pages/EstimatorSettings.jsx:208:    } catch (err) {
+./src/pages/EstimatorSettings.jsx:240:    } catch (err) {
+./src/pages/EstimatorSettings.jsx:260:    } catch (err) {
+./src/pages/FoundationEstimator.jsx:245:        } catch (e) {
+./src/pages/FoundationEstimator.jsx:338:    catch (e) {
+./src/pages/FoundationEstimator.jsx:417:      try { url = new URL(href, window.location.href); } catch { return; }
+./src/pages/FoundationEstimator.jsx:430:      try { window.history.pushState({ ccsFoundationLeaveGuard: true }, "", window.location.href); navGuardArmedRef.current = true; } catch { /* best effort */ }
+./src/pages/FoundationEstimator.jsx:437:      else { try { window.history.forward(); } catch { /* best effort */ } }
+./src/pages/FoundationEstimator.jsx:524:    } catch (e) {
+./src/pages/FoundationEstimator.jsx:883:        try { onSaved?.(); } catch (e) { console.error(e); outcome.warnings.push("observer_error"); }
+./src/pages/FoundationEstimator.jsx:980:    } catch (e) {
+./src/pages/FoundationEstimator.jsx:1000:      } catch (e) {
+./src/pages/FoundationEstimator.jsx:1029:    } catch (e) {
+./src/pages/FoundationEstimator.jsx:1043:    } catch (e) {
+./src/pages/FoundationEstimator.jsx:1439:          } catch (e) {

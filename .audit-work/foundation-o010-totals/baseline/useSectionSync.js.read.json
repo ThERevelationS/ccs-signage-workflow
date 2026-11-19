@@ -1,0 +1,15 @@
+Reading file
+Reading file
+Read file
+{
+  "files": [
+    {
+      "path": "src/components/estimator/useSectionSync.js",
+      "content": "import { base44 } from \"@/api/base44Client\";\nimport { getModule } from \"./moduleRegistry\";\nimport { sourceProjectTotal } from \"./builder/builderService\";\nimport { liveCustomerUnitPrice, sourceProjectEconomics } from \"./customerPricing\";\n\n// Re-reads source sub-estimates for compatibility. Builder-backed Products have\n// already been reconciled by ensureEstimateBuilderProducts(), which is the single\n// authoritative Product/Part pricing path; do not overwrite those live snapshots\n// here with a second, less-complete calculation.\nexport async function refreshSectionSnapshots(lineItems) {\n  const lines = lineItems || [];\n  const refreshed = await Promise.all(\n    lines.map(async (line) => {\n      const mod = getModule(line.module_key);\n      if (!mod || !line.project_id) return line;\n\n      const record = await base44.entities[mod.entity].get(line.project_id).catch(() => null);\n      if (!record) return line;\n\n      if (line.builder_product_id) {\n        return {\n          ...line,\n          project_name: record.project_name || line.project_name,\n          updated_date_snapshot: record.updated_date,\n        };\n      }\n\n      const sourceTotal = sourceProjectTotal(line, record);\n      const frozenTotal = Number(line.total_snapshot || 0);\n      const keepLegacyState = line.price_state === \"legacy_frozen\";\n      const economics = keepLegacyState\n        ? { internalCost: sourceTotal, customerPrice: liveCustomerUnitPrice(line) }\n        : sourceProjectEconomics(line.module_key, record, sourceTotal);\n      const liveTotal = economics.internalCost;\n      const changed = Math.abs(liveTotal - frozenTotal) > 0.005;\n      const hasDetachedParts = Number(line.detached_part_count || 0) > 0 || line.needs_reattach_review;\n\n      return {\n        ...line,\n        project_name: record.project_name || line.project_name,\n        live_total_snapshot: liveTotal,\n        live_customer_price_snapshot: economics.customerPrice,\n        price_state: hasDetachedParts\n          ? \"detached_parts\"\n          : keepLegacyState\n            ? \"legacy_frozen\"\n            : changed\n              ? \"changed\"\n              : \"current\",\n        last_price_check_at: new Date().toISOString(),\n        updated_date_snapshot: record.updated_date,\n      };\n    })\n  );\n  return refreshed;\n}\n\n// Owned sections are created by the estimate, so removing one removes its record.\nexport async function deleteOwnedSection(line) {\n  const mod = getModule(line?.module_key);\n  if (!line?.owned || !mod || !line.project_id) return;\n  await base44.entities[mod.entity].delete(line.project_id).catch(() => null);\n}",
+      "startLine": 1,
+      "endLine": 63,
+      "totalLines": 63,
+      "truncated": false
+    }
+  ]
+}

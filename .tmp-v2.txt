@@ -1,0 +1,15 @@
+PASS meeting week starts Monday 00:00 local
+evalmachine.<anonymous>:469
+const WO_STAGE_ORDER = ["estimating", "sales", "permitting", "design", "production", "fabrication", "installation", "completed"];
+      ^
+
+SyntaxError: Identifier 'WO_STAGE_ORDER' has already been declared
+    at new Script (node:vm:117:7)
+    at createScript (node:vm:269:10)
+    at Object.runInContext (node:vm:300:10)
+    at harness (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/scripts/validate-mmm-board.mjs:179:6)
+    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/scripts/validate-mmm-board.mjs:207:13
+    at check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/scripts/validate-mmm-board.mjs:194:9)
+    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/scripts/validate-mmm-board.mjs:206:7
+
+Node.js v24.22.1

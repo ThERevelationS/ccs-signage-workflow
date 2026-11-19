@@ -1,0 +1,131 @@
+{
+  "results": [
+    {
+      "name": "finite cut fitting stock keeps full-stock pricing rather than pricing a fraction of stock",
+      "ok": true
+    },
+    {
+      "name": "cut exactly matching stock is valid",
+      "ok": true
+    },
+    {
+      "name": "explicit legacy-only cut remains readable without automatic canonical-field migration",
+      "ok": true
+    },
+    {
+      "name": "the current cut is authoritative over a stale legacy hint",
+      "ok": true
+    },
+    {
+      "name": "an explicitly blank current cut cannot fall back to a legacy 18-inch value",
+      "ok": true
+    },
+    {
+      "name": "an explicitly null current cut cannot fall back to a legacy 18-inch value",
+      "ok": true
+    },
+    {
+      "name": "an explicitly undefined current cut cannot fall back to a legacy 18-inch value",
+      "ok": true
+    },
+    {
+      "name": "zero cut is rejected without clamping or changing acknowledged values",
+      "ok": true
+    },
+    {
+      "name": "negative cut is rejected without clamping or changing acknowledged values",
+      "ok": true
+    },
+    {
+      "name": "whitespace cut is rejected without clamping or changing acknowledged values",
+      "ok": true
+    },
+    {
+      "name": "nonnumeric cut is rejected without clamping or changing acknowledged values",
+      "ok": true
+    },
+    {
+      "name": "boolean cut is rejected without clamping or changing acknowledged values",
+      "ok": true
+    },
+    {
+      "name": "array cut is rejected without clamping or changing acknowledged values",
+      "ok": true
+    },
+    {
+      "name": "object cut is rejected without clamping or changing acknowledged values",
+      "ok": true
+    },
+    {
+      "name": "infinite cut is rejected without clamping or changing acknowledged values",
+      "ok": true
+    },
+    {
+      "name": "no cut field is unknown, not a manufactured 48-inch cut",
+      "ok": true
+    },
+    {
+      "name": "missing live stock length cannot borrow an old 48-inch snapshot",
+      "ok": true
+    },
+    {
+      "name": "null live stock length cannot borrow an old 48-inch snapshot",
+      "ok": true
+    },
+    {
+      "name": "blank live stock length cannot borrow an old 48-inch snapshot",
+      "ok": true
+    },
+    {
+      "name": "zero live stock length cannot borrow an old 48-inch snapshot",
+      "ok": true
+    },
+    {
+      "name": "negative live stock length cannot borrow an old 48-inch snapshot",
+      "ok": true
+    },
+    {
+      "name": "boolean live stock length cannot borrow an old 48-inch snapshot",
+      "ok": true
+    },
+    {
+      "name": "infinite live stock length cannot borrow an old 48-inch snapshot",
+      "ok": true
+    },
+    {
+      "name": "an oversized cut stays authored and priced quantity stays one, with no guessed extra stock",
+      "ok": true
+    },
+    {
+      "name": "longer replacement stock preserves an 18-inch cut while shorter stock blocks current repricing",
+      "ok": true
+    },
+    {
+      "name": "an incomplete first row does not freeze an unrelated valid row",
+      "ok": true
+    },
+    {
+      "name": "unknown cost stays unknown when the physical input is infeasible",
+      "ok": true
+    },
+    {
+      "name": "an explicit zero price only becomes current when the cut fits the selected stock",
+      "ok": true
+    },
+    {
+      "name": "price stock and cut diagnostics are all returned together without converting blanks to zero",
+      "ok": true
+    },
+    {
+      "name": "recorded decimal strings remain supported and scalar parsing keeps blank/boolean values unknown",
+      "ok": true
+    },
+    {
+      "name": "project save/handoff gate receives stock-fit issues while keeping stored amounts and source data intact",
+      "ok": true
+    }
+  ],
+  "syntheticOnly": true,
+  "realStorageVerified": false,
+  "reinforcementV2Activated": false
+}

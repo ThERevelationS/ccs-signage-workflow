@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const num = (value: unknown, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -92,9 +93,14 @@ function assertSameOperation(existing: any, revision: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
-    await authenticateSignShopSession(base44, body?.session_token);
+    // Fall back to auth.me() when no sign-shop session token is supplied so
+    // request-context auth can write price-revision rows too.
+    let actor = null;
+    try { actor = await authenticateSignShopSession(base44, body?.session_token); }
+    catch { actor = await base44.auth.me().catch(() => null); }
+    if (!actor?.id && !actor?.email) return Response.json({ error: 'Authentication required.' }, { status: 401 });
     const idempotencyKey = String(body?.idempotency_key || '').trim();
     const revision = body?.revision && typeof body.revision === 'object' ? body.revision : {};
     const builderProductId = String(revision?.builder_product_id || '').trim();
@@ -138,8 +144,16 @@ Deno.serve(async (req) => {
 
     const allRows = await RevisionService.filter({ builder_product_id: builderProductId });
     const revisionNumber = Math.max(0, ...(allRows || []).map((row) => num(row?.revision_number))) + 1;
+    // Only schema-declared revision fields may persist — and any previous_*
+    // snapshot fields are derived from the live Product, never caller input,
+    // so the immutable audit row reflects server-verified state.
+    const ALLOWED_REVISION_FIELDS = ['builder_snapshot_after','builder_snapshot_before','changed_parts','new_customer_price','new_total_cost','notes','previous_customer_price','previous_total_cost','price_snapshot_after','price_snapshot_before','reason','actor','accepted_by','created_by_user'];
+    const cleanRevision: Record<string, unknown> = {};
+    for (const key of ALLOWED_REVISION_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(revision, key)) cleanRevision[key] = revision[key];
+    }
     const created = await RevisionService.create({
-      ...revision,
+      ...cleanRevision,
       builder_product_id: builderProductId,
       estimate_id: estimateId,
       idempotency_key: idempotencyKey,
@@ -178,7 +192,7 @@ Deno.serve(async (req) => {
     return Response.json({ revision: settled, reused: false });
   } catch (error) {
     const status = Number(error?.status || error?.statusCode || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('ensureBuilderPriceRevision error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Builder price revision could not be recorded safely.' : error.message,

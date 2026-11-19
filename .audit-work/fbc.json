@@ -1,0 +1,15 @@
+Reading file
+Reading file
+Read file
+{
+  "files": [
+    {
+      "path": "base44/entities/FileBridgeChunk.jsonc",
+      "content": "{\n  \"name\": \"FileBridgeChunk\",\n  \"type\": \"object\",\n  \"description\": \"In-flight chunk reassembly for >48MB deliveries. Rows expire quickly — TTL-swept.\",\n  \"properties\": {\n    \"schema_version\": {\n      \"type\": \"number\",\n      \"default\": 1\n    },\n    \"command_id\": {\n      \"type\": \"string\"\n    },\n    \"seq\": {\n      \"type\": \"number\"\n    },\n    \"file_url\": {\n      \"type\": \"string\"\n    },\n    \"bytes\": {\n      \"type\": \"number\"\n    },\n    \"sha256\": {\n      \"type\": \"string\"\n    },\n    \"received_at\": {\n      \"type\": \"number\"\n    }\n  },\n  \"required\": [\n    \"command_id\",\n    \"seq\"\n  ],\n  \"rls\": {\n    \"create\": {\n      \"user_condition\": {\n        \"role\": \"__filebridge_backend_only__\"\n      }\n    },\n    \"read\": {\n      \"user_condition\": {\n        \"role\": \"__filebridge_backend_only__\"\n      }\n    },\n    \"update\": {\n      \"user_condition\": {\n        \"role\": \"__filebridge_backend_only__\"\n      }\n    },\n    \"delete\": {\n      \"user_condition\": {\n        \"role\": \"__filebridge_backend_only__\"\n      }\n    }\n  }\n}",
+      "startLine": 1,
+      "endLine": 55,
+      "totalLines": 55,
+      "truncated": false
+    }
+  ]
+}

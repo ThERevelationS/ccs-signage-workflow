@@ -1,0 +1,11 @@
+diff --git a/.audit-work/foundation-reinforcement18/remote-original.js b/src/components/jobs/printTemplates/templates/original.js
+index 593c79135..64c123500 100644
+--- a/.audit-work/foundation-reinforcement18/remote-original.js
++++ b/src/components/jobs/printTemplates/templates/original.js
+@@ -210,4 +210,4 @@ export default {
+   id: "original",
+   label: "Original",
+   renderHtml: renderOriginalHtml,
+-};
+\ No newline at end of file
++};

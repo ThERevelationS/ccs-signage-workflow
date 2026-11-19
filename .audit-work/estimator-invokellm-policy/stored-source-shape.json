@@ -1,0 +1,7 @@
+{
+  "stdout": "[{\"file\":\"src/components/estimator/foundation/AiEngineeringAssistant.jsx\",\"crlf\":94,\"lf\":94,\"normalizedSha256\":\"1229972a5dfb038095ffcbbb332d3ee4a2204100ec3408df6ecb305efe305b9c\"},{\"file\":\"src/components/vinylEstimator/VinylArtworkUploadDialog.jsx\",\"crlf\":0,\"lf\":208,\"normalizedSha256\":\"306f7ea726f1319dd02c578db8321e8952459d013275efc3978c7f370786d766\"},{\"file\":\"src/components/channelLetterInstall/AIScopeWriterModal.jsx\",\"crlf\":0,\"lf\":168,\"normalizedSha256\":\"7c37dadd791adacff497636587d20fcb14908620b0726041c16861dbb2d79892\"},{\"file\":\"src/components/channelLetterInstall/AIInstallScopeModal.jsx\",\"crlf\":0,\"lf\":317,\"normalizedSha256\":\"ed3195aa16de9bae941d7f84bc66376720e5f2cc868fb0936705c82c005f4665\"},{\"file\":\"src/components/channelLetterInstall/AddressAutocomplete.jsx\",\"crlf\":155,\"lf\":155,\"normalizedSha256\":\"2929b5464d43807deedc114e8f39a323da5fb33402891d788457ab95761a8287\"},{\"file\":\"src/components/channelLetterInstall/PhotoEstimateModal.jsx\",\"crlf\":0,\"lf\":192,\"normalizedSha256\":\"1d420712cf35e1f2bb27b43876d8259ec03d4b8017de0fbee3bc45e54e69c23b\"}]\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 1105
+}

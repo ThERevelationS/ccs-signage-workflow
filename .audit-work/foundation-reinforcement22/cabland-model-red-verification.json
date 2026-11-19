@@ -1,0 +1,228 @@
+{
+  "red": true,
+  "results": [
+    {
+      "name": "valid cabinets price identically to ported formulas; no authored mutation",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "calcProject totals match ported math for valid cabinets + landscape",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'every')"
+    },
+    {
+      "name": "landscapeSummary prices the recorded grid identically to the ported rollup",
+      "ok": true
+    },
+    {
+      "name": "absent/blank quantity keeps the ported single-cabinet default",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "invalid cabinet quantity holds the row (zero)",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "invalid cabinet quantity holds the row (negative)",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "invalid cabinet quantity holds the row (malformed)",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "invalid cabinet quantity holds the row (NaN)",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "invalid cabinet quantity holds the row (Infinity)",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "invalid cabinet quantity holds the row (record)",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "fractional positive quantity stays valid — it already billed at face value",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "numeric-string quantity normalizes on the calculation copy only",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "explicit-zero unit cost is a legitimate free cabinet",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "invalid unit cost holds the row (missing)",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "invalid unit cost holds the row (null)",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "invalid unit cost holds the row (blank)",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "invalid unit cost holds the row (negative)",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "invalid unit cost holds the row (malformed)",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "invalid unit cost holds the row (NaN)",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "invalid unit cost holds the row (record)",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "cabinet dimensions are not price-consuming — malformed dims do not hold",
+      "ok": false,
+      "error": "api.calcSignageCabinetPricing is not a function"
+    },
+    {
+      "name": "one bad row withholds the cabinet subtotal — acknowledged total held",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'signage_cabinet_quantity_unavailable'\n"
+    },
+    {
+      "name": "bad row with no acknowledged total reports null, not $0",
+      "ok": false,
+      "error": "null — never laundered to $0\n+ actual - expected\n\n+ undefined\n- null\n"
+    },
+    {
+      "name": "non-explicit snapshot keeps the authored basis for totals",
+      "ok": false,
+      "error": "project's own recorded total kept\n\nundefined !== 950\n"
+    },
+    {
+      "name": "cabinet issues do not leak into item pricing or catalog gate",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n"
+    },
+    {
+      "name": "landscape missing cell size is unavailable, not guessed-12",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'find')"
+    },
+    {
+      "name": "invalid cell_size_inches unavailable (zero)",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'some')"
+    },
+    {
+      "name": "invalid cell_size_inches unavailable (negative)",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'some')"
+    },
+    {
+      "name": "invalid cell_size_inches unavailable (malformed)",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'some')"
+    },
+    {
+      "name": "invalid cell_size_inches unavailable (NaN)",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'some')"
+    },
+    {
+      "name": "invalid cell_size_inches unavailable (record)",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'some')"
+    },
+    {
+      "name": "missing cell size with nothing painted is not an issue — nothing bills",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "name": "numeric-string cell size normalizes like the ported coercion",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "name": "unknown material key is unavailable, never a silent $0",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'find')"
+    },
+    {
+      "name": "malformed cells record is unavailable, not silently empty",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'some')"
+    },
+    {
+      "name": "landscape issues hold the acknowledged project total",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'available')"
+    },
+    {
+      "name": "dirt cells and eraser rows never price or flag",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "name": "clone preserves a malformed segments row raw — no crash, source untouched",
+      "ok": false,
+      "error": "(rows || []).forEach is not a function"
+    },
+    {
+      "name": "clone tolerates nonarray segments (record)",
+      "ok": false,
+      "error": "(rows || []).forEach is not a function"
+    },
+    {
+      "name": "clone tolerates nonarray segments (number)",
+      "ok": false,
+      "error": "(rows || []).forEach is not a function"
+    },
+    {
+      "name": "clone tolerates nonarray segments (boolean)",
+      "ok": false,
+      "error": "(rows || []).forEach is not a function"
+    },
+    {
+      "name": "wall cap segment index resolves to undefined on a malformed parent wall",
+      "ok": false,
+      "error": "(rows || []).forEach is not a function"
+    },
+    {
+      "name": "normalize still rejects malformed segments on the load path",
+      "ok": true
+    },
+    {
+      "name": "clone with no walls or clean walls is byte-identical to pre-guard output",
+      "ok": true
+    },
+    {
+      "name": "project input issues still reject nonarray items",
+      "ok": true
+    }
+  ],
+  "okCount": 4,
+  "failCount": 41
+}

@@ -1,4 +1,3 @@
-import { base44 } from "@/api/base44Client";
 import { snapshotHash } from "@/components/estimator/builder/builderService";
 import { instantiateProductSnapshot } from "@/components/estimator/products/quickProductService";
 import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
@@ -32,9 +31,9 @@ function sourceMeta(estimate, line) {
 
 async function captureProductPayload({ line }) {
   const [builder, parts, groups] = await Promise.all([
-    base44.entities.BuilderProduct.get(line.builder_product_id),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Clipboard Product Parts" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Clipboard Product Part Groups" }),
+    staffEntities.BuilderProduct.get(line.builder_product_id),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Clipboard Product Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Clipboard Product Part Groups" }),
   ]);
   if (!builder) throw new Error("Product could not be loaded for clipboard copy.");
   const activeParts = (parts || []).filter((part) => part.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
@@ -131,7 +130,7 @@ async function createClipboardRecord(data) {
 
 export async function copyProductToClipboard({ estimateId, line }) {
   if (!estimateId || !line?.builder_product_id) throw new Error("Product is not ready to copy.");
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   const payload = await captureProductPayload({ line });
   return createClipboardRecord({
     item_type: "product",
@@ -144,7 +143,7 @@ export async function copyProductToClipboard({ estimateId, line }) {
 
 export async function copyPartToClipboard({ estimateId, builderProductId, part }) {
   if (!estimateId || !builderProductId || !part) throw new Error("Part is not ready to copy.");
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   const line = await getEstimateLine(estimate, builderProductId);
   return createClipboardRecord({
     item_type: "part",
@@ -158,7 +157,7 @@ export async function copyPartToClipboard({ estimateId, builderProductId, part }
 
 export async function copyPartGroupToClipboard({ estimateId, builderProductId, group, parts }) {
   if (!estimateId || !builderProductId || !group) throw new Error("Part Group is not ready to copy.");
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   const line = await getEstimateLine(estimate, builderProductId);
   return createClipboardRecord({
     item_type: "part_group",
@@ -201,10 +200,38 @@ export async function listClipboardItems() {
     .sort((a, b) => new Date(b.copied_at || b.created_date || 0) - new Date(a.copied_at || a.created_date || 0));
 }
 
+// Mirrors the canonical not-found detection in builderEntityPersistence
+// (isEntityNotFoundError): a genuinely-missing record is "already gone" while
+// every other fetch failure stays an error so the clipboard never drops a
+// live row. All message fields are scanned (not just the first) so a generic
+// top-level message cannot hide a nested "not found" detail.
+const isNotFound = (e) => {
+  const status = Number(e?.status || e?.response?.status || e?.response?.statusCode || e?.data?.status || 0);
+  if (status === 404) return true;
+  const message = [
+    e?.message,
+    e?.response?.data?.message,
+    e?.response?.data?.error,
+    e?.data?.message,
+    e?.data?.error,
+  ].map((v) => String(v || "").toLowerCase()).join(" ");
+  return message.includes("not found") || message.includes("does not exist");
+};
+
 export async function removeClipboardItem(id) {
   const itemId = String(id || "").trim();
   if (!itemId) return;
-  const current = await staffEntities.EstimateClipboardItem.get(itemId).catch(() => null);
+  let current;
+  try {
+    current = await staffEntities.EstimateClipboardItem.get(itemId);
+  } catch (e) {
+    // Only a definitive not-found is "already gone". A transient read error
+    // (500/429/timeout) must rethrow — the caller only filters the row out of
+    // the list after a confirmed removal, so it can never stale-remove a row
+    // that still exists.
+    if (isNotFound(e)) return;
+    throw e;
+  }
   if (!current) return;
   await deleteEntityIfUnchanged({
     entity: staffEntities.EstimateClipboardItem,

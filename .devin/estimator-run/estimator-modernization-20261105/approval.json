@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "approved": true,
+  "run_id": "estimator-modernization-20261105",
+  "owner_session_id": "deef8cc533744350",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "project_root": "C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean",
+  "module_queue": [
+    "foundation",
+    "channel_letters",
+    "maintenance",
+    "painting",
+    "laser",
+    "cnc",
+    "metal",
+    "vinyl"
+  ],
+  "allowed_effects": [
+    "local_source",
+    "frontend_sandbox",
+    "backend_sandbox",
+    "schema_sandbox",
+    "checkpoint",
+    "live_integration"
+  ],
+  "max_credits": 5,
+  "max_attempts": 5,
+  "max_workers": 1,
+  "scope_fingerprint": "578f7baf458d38238dfc86457953302d866b5a1185809198b4c22492f750ef93",
+  "recorded_at": "2026-11-05T11:21:10.381Z",
+  "approval_source": "User explicitly selected Approve and begin (Recommended) in the final approval question, including the five-credit and five-attempt total limits.",
+  "plan_file": "C:\\Users\\BrettHeinlein\\.devin\\plans\\plan-5b765e93515537c8.md",
+  "prohibited_effects": [
+    "site_publish",
+    "traditional_deploy",
+    "destructive_migration",
+    "production_record_testing",
+    "customer_photo_processing",
+    "outside_paid_api",
+    "purchases",
+    "git_push",
+    "foreign_work_reset"
+  ]
+}

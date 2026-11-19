@@ -1,0 +1,40 @@
+{
+  "results": [
+    {
+      "name": "current valid row retains original caption, quantity, and numeric price",
+      "ok": true
+    },
+    {
+      "name": "current free material row remains present",
+      "ok": true
+    },
+    {
+      "name": "held history cannot claim the replacement catalog material name",
+      "ok": true
+    },
+    {
+      "name": "new unavailable row remains visible with unknown quantity and amount",
+      "ok": true
+    },
+    {
+      "name": "missing saved price cannot be displayed as free",
+      "ok": true
+    },
+    {
+      "name": "unknown internal history remains visible when currently selected",
+      "ok": true
+    },
+    {
+      "name": "saved internal quantities are not omitted just because the draft disables them",
+      "ok": true
+    },
+    {
+      "name": "saved numeric zero remains a numeric zero",
+      "ok": true
+    },
+    {
+      "name": "empty wall set remains empty",
+      "ok": true
+    }
+  ]
+}

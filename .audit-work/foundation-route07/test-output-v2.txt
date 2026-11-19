@@ -1,0 +1,11 @@
+=== TEMPLATE ===
+ok service delete: 404 absent ok, 500 propagates, wrong-id throws, normal CAS delete
+PASS template passed=17 failed=0
+=== SAVE-HANDLER ===
+    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/scripts/test-foundation-save-handler.mjs:826:29
+PASS save-handler passed=57 failed=0
+=== BUNDLE ===
+
+Done in 37ms
+=== ESLINT ===
+eslint_exit=0

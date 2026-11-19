@@ -1,0 +1,3 @@
+Applied 1 whole-file edits; verify remains required.
+
+exit=0

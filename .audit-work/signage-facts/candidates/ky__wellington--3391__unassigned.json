@@ -1,0 +1,921 @@
+{
+ "jurisdiction_id": "6adf60eb9e4b26ea70b83391",
+ "jurisdiction_name": "Wellington",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 105,
+   "snippet": "8 Wellington - Traffic Code official control device or any railroad sign or signal. No person shall place or maintain, nor shall any public authority permit on any street, any traffic sign or signal bearing any commercial advertising. Nothing in this section shall be construed as restricting any public department or public utility of the city in any emergency or temporarily from marking or erecting any traffic barrier or sign whose placing has been approved by the city. (B) Every such prohibited sign, signal, or marking is declared to be a public nuisance and the city is empowered forthwith to remove it or cause it to be removed. Penalty, see § 70.99 § 70.20 DEVICE TO BE LEGIBLE AND IN PROPER POSITION. No provision of this traffic code for which signs or any other traffic-control device is required shall be enforceable against an alleged violator if at the time and place of the alleged v",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 79,
+   "snippet": "Public Records 35 § 34.11 ACCESS TO RECORDS RELATING TO PARTICULAR INDIVIDUAL. Any person shall have access to any public record relating to him or in which he is mentioned by name, upon presentation of appropriate identification, subject to the provisions of § 34.16 of these rules and regulations. (KRS 61.884) § 34.12 FORMAT OF COPIES. (A) Upon inspection, the applicant shall have the right to make abstracts of the public records and memoranda thereof, and to obtain copies of all public records not exempted by the terms of § 34.16. When copies are requested, the custodian may require a written request and advance payment of the prescribed fee, including postage where appropriate. If the applicant desires copies of public records other than written records, the custodian of the records shall duplicate the records or permit the applicant to duplicate the records; however, the custodian sh",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 103,
+   "snippet": "6 Wellington - Traffic Code problems, the City Commission or any authorized city official shall, at his discretion, have authority to impose such traffic regulations as he may deem necessary for temporary periods not to exceed two weeks. If these temporary regulations are necessary for a period longer than two weeks, the City Clerk shall be notified in writing of the extended order. TRAFFIC-CONTROL DEVICES § 70.15 SIGNAL LEGENDS. Whenever traffic is regulated or controlled exclusively by a traffic-control sign or signs exhibiting the words “Go,” “Caution,” or “Stop,” or exhibiting different colored lights for purposes of traffic control, the following colors only shall be used, and these terms and lights shall indicate and be obeyed as follows: (A) Green alone or “Go”: Vehicular traffic facing the signal may proceed straight through or turn right or left unless a sign at such place prohi",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 104,
+   "snippet": "General Provisions 7 (G) Lane lights: When lane lights are installed over any street for the purpose of controlling the direction of flow of traffic, vehicular traffic shall move only in traffic lanes over which green arrows appear. However, when flashing amber lights appear above a lane all left turns shall be made from that lane. Where red arrows appear above such lanes, vehicles shall not move against them. If flashing amber lights show above a lane, that lane shall be used only for passing and for left turns unless a sign at such place prohibits such turn. Penalty, see § 70.99 Statutory reference: Traffic-control signals, see KRS 189.338 § 70.16 ESTABLISHMENT AND MAINTENANCE OF TRAFFIC-CONTROL DEVICES. The city shall establish and maintain all official traffic-control devices necessary within the city. All traffic- control devices, including signs, shall be employed to indicate one p",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 116,
+   "snippet": "Parking Regulations 15 § 72.03 LIMITATIONS OF STOPPING AND PARKING. (A) No person shall stop or park a vehicle, except when necessary to avoid contact with other traffic or in compliance with the directions of a police officer or traffic control device, in the following places: (1) On a sidewalk; (2) In front of sidewalk ramps provided for persons with disabilities; (3) In front of a public or private driveway; (4) Within an intersection or on a crosswalk; (5) At any place where official signs prohibit stopping or parking; (6) Within 30 feet upon the approach of any flashing beacon, stop sign or traffic control signal located at the side of the roadway; (7) On any controlled access highway; (8) Within a highway tunnel; (9) Within 15 feet of a fire hydrant; or (10) In an area between the roadways of a divided highway. (B) No person shall move a vehicle not lawfully under his control into ",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 129,
+   "snippet": "CHAPTER 73: BICYCLES AND MOTORCYCLES Section 73.01 Skating and coasting 73.02 Clinging to vehicles 73.99 Penalty Cross-reference: Required obedience to traffic directions, see § 70.02(C) Statutory reference: Bicycles; safety regulations and standards, see KRS 189.287 Regulations for operating and riding on motorcycles, see KRS 189.285 § 73.01 SKATING AND COASTING. Except on streets which may be declared from time to time as “play streets” by the city and protected by barriers or official signs, it shall be unlawful for any person on skates or riding on a coaster sled or toy vehicle of any kind, to go on any roadway except at a crosswalk. Penalty, see § 73.99 § 73.02 CLINGING TO VEHICLES. (A) No person while riding on a bicycle, coaster sled, roller skates, or any toy vehicle shall cling to any moving vehicle on any street, or fasten or attach the vehicle on which he is riding thereto. (B",
+   "tags": [
+    "sign",
+    "fee",
+    "dimension",
+    "illumination",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 26,
+   "snippet": "6 Wellington - Administration (B) Bond. Official bonds shall, if required, meet the standards of KRS 62.060. § 31.02 COMPENSATION. (A) The Commission shall by ordinance fix the compensation of every elected city officer not later than the first Monday in May in the year in which the officer is elected. An elected officer's compensation shall not be changed after his election or during his term of office. (1) In order to equate the compensation of the Mayor and Commissioners with the purchasing power of the dollar, the Department of Local Government computes by the second Friday in February of every year the annual increase or decrease in the consumer price index of the preceding year by using 1949 as the base year in accordance with section 246 of the Constitution of Kentucky, which provides that the Mayor and Commissioners shall be paid at a rate no greater than $7,200 per annum. (2) Th",
+   "tags": [
+    "fee",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 100,
+   "snippet": "CHAPTER 70: GENERAL PROVISIONS Section 70.01 Definitions 70.02 Required obedience to traffic directions 70.03 Powers and duties of Police Department 70.04 Authority for enforcement 70.05 Temporary regulations Traffic-Control Devices 70.15 Signal legends 70.16 Establishment and maintenance of traffic-control devices 70.17 Obedience to signals 70.18 Interference with signals 70.19 Unauthorized signals or markings 70.20 Device to be legible and in proper position 70.21 Temporary disregard of devices by police officer 70.99 General penalty § 70.01 DEFINITIONS. For the purpose of this title the following definitions shall apply unless the context clearly indicates or requires a different meaning. AUTHORIZED EMERGENCY VEHICLES. Vehicles of the Police Department, vehicles of the Commonwealth Attorney's office when on official business, and ambulances on an authorized emergency run. BOULEVARD. A",
+   "tags": [
+    "dimension",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 108,
+   "snippet": "Traffic Rules 11 involved in an accident in which any person is injured or property damaged to stop immediately and ascertain the extent of the injury or damage and render such assistance as may be needed. Penalty, see § 71.99 Statutory reference: Duty in case of accident, see KRS 189.580 § 71.16 ACCIDENT REPORT. The operator, owner, or passenger involved in an accident resulting in the injury or death of any person, or an accident in which property is damaged, shall immediately report the accident or property damage to the Police Department. Penalty, see § 71.99 PROHIBITIONS § 71.25 OPERATOR OF VEHICLE TO DRIVE CAREFULLY. (A) The operator of any vehicle upon a highway shall operate the vehicle in a careful manner, with regard for the safety and convenience of pedestrians and other vehicles upon the highway. (B) No person shall willfully operate any vehicle on any highway in such a manne",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 135,
+   "snippet": "4 Wellington - General Regulations OWNER. Every person having a right of property to an animal and every person who keeps or harbors an animal, has it in his care, or permits it to remain on or about the premises owned or occupied by him. § 90.02 ANIMALS RUNNING AT LARGE. (A) No person who is the owner of any animal shall permit it to run at large in any public road, highway, street, lane, or alley, or upon unenclosed land, or permit it to go on any private yard, lot, or enclosure without the consent of the owner of the yard, lot, or enclosure. (B) The owner of an animal who permits it to run at large in violation of this section is liable for all damages caused by such animal upon the premises of another. Penalty, see § 90.99 § 90.03 CRUELTY TO ANIMALS IN THE SECOND DEGREE. (A) A person is guilty of cruelty to animals in the second degree when except as authorized by law he intentionall",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 173,
+   "snippet": "6 Wellington - Business Regulations (2) Has made willful misstatements in the application; or (3) Has committed prior violations of ordinances pertaining to itinerant merchants, peddlers, solicitors, and the like; or (4) Has committed prior fraudulent acts; or (5) Has a record of continual breaches of solicited contracts; or (6) Has an unsatisfactory moral character will constitute valid reasons for disapproval of an application. § 110.05 REVOCATION PROCEDURE. Any license or permit granted under this chapter may be revoked by the City Clerk after notice and hearing, pursuant to the standards in § 110.06. Notice of hearing for revocation shall be given in writing, setting forth specifically the grounds of the complaint and the time and place of the hearing. Such notice shall be mailed to the licensee at his last known address, at least ten days prior to the date set for the hearing. § 110",
+   "tags": [
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 185,
+   "snippet": "14 Wellington - Business Regulations (B) If the owner contests the permit denial, the owner many appeal the denial to the full city commission. The appeal must be filed within 20 days of the receipt of the denial by owner. The appeal will be heard by the full commission at its next regular city meeting, at which time the owner may present evidence relevant to whether the property is in compliance with all City of Wellington Ordinances, as well as Metro Louisville Ordinances. (Ord. 2, Series 2016-2017, passed 11-22-16) § 112.99 PENALTIES. (A) Criminal. (1) Any person who shall violate any provision of this section shall be guilty of a violation and fined not less than $20 nor more than $200. (2) Where Kentucky Revised Statutes mandates a fine higher than that stipulated herein, the fine contained in Kentucky Revised Statutes shall apply. (3) Any continuing violation of this chapter shall ",
+   "tags": [
+    "fee",
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 192,
+   "snippet": "CHAPTER 150: BUILDING REGULATIONS Section 150.01 Adoption of Kentucky Building Code and Standards of Safety; enforcement agents 150.02 Application 150.03 Appeals 150.99 Penalty § 150.01 ADOPTION OF KENTUCKY BUILDING CODE AND STANDARDS OF SAFETY; ENFORCEMENT AGENTS. (A) The Kentucky Building Code, as contained in Chapter 7, Title 815 of the Kentucky Administrative Regulations; the Kentucky Plumbing Code, as contained in Chapter 20, Title 815 of the Kentucky Administrative Regulations; the Kentucky Standards of Safety, as contained in Chapter 10, Title 815 of the Kentucky Administrative Regulations, together with any amendments, are hereby adopted by reference as if fully set forth in this code of ordinances. Copies of the above codes and any amendments thereto shall be placed on file in the office of the City Clerk where they shall be available for public inspection during normal business",
+   "tags": [
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 194,
+   "snippet": "CHAPTER 151: SATELLITE ANTENNAS Section 151.01 Definitions 151.02 Location of satellite antenna 151.03 Prohibitions and judicial action 151.04 Existing structures 151.99 Penalty § 151.01 DEFINITIONS. The following terms shall have the following meanings, unless the context clearly indicates that a different meaning is intended. CITY. The City of Wellington, Kentucky. SATELLITE ANTENNA. An antenna of any size, shape or description designed for the purpose of receiving microwave transmissions from satellites. (Ord. 95.01, passed 9-16-02) § 151.02 LOCATION OF SATELLITE ANTENNA. A satellite antenna may be located within the city limits of the city, provided that it complies with the following requirements: (A) It must be neutral in color and bear no advertising emblem or other information other than the name of the manufacturer in letters not to exceed two inches in height; (B) There may be ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 199,
+   "snippet": "8 Wellington - Land Usage § 152.03 REQUIRED ACTION. No temporary structure or accessory structure shall be erected, constructed or placed upon any residential property without first obtaining a permit from the Clerk. All permits are subject to approval by the City Council and must be submitted in writing. The request must include the arrival date of the pod. The City Council may impose certain reasonable requirements as may be required to keep the temporary structure from becoming unsightly to the surrounding properties. No temporary structure or accessory structure can remain on residential property within the city limits for more than 30 days. (A) Pods must be well-maintained and in good working condition, displaying the name or logo and telephone number of the owner of the pod, and be suitably supported at each contact point to prevent damage to paved surfaces. (B) Pods must be kept c",
+   "tags": [
+    "fee",
+    "prohibited",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 242,
+   "snippet": "PARKING (See TRAFFIC CODE) 2023 S-5 Index 13 PEDDLERS Definitions, 110.01 Foodstuffs, 110.03 License requirement, 110.02 Appeal rights and procedure, 110.07 Application requirements and procedure, 110.03 Disapproval of application, grounds for, 110.04 Exhibition of, 110.08 Expiration date, 110.02 Fee, 110.02 Investigation of applicant, 110.04 Nontransferability, 110.02 Revocation after notice and hearing, 110.05 Grounds for, 110.06 Penalty, 110.99 PERMITS Excavations, 91.01 PODS (See TEMPORARY PORTABLE STORAGE CONTAINERS) POLICE DEPARTMENT Arrests, 70.03, 70.04 Defined, 70.01 PUBLIC EMPLOYEES Compensation, 31.02 PUBLIC OFFICERS Bond, 31.01 Code references to, 10.16 Compensation, 31.02 Elected, 31.20 et seq. (See also ELECTED OFFICERS) Nonelected, 31.35 et seq. (See also NONELECTED OFFICERS) Oath, 31.01",
+   "tags": [
+    "dimension",
+    "process",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 243,
+   "snippet": "PUBLIC RECORDS Definitions, 34.01 Procedures for requesting public records Access to records relating to particular individual, 34.11 Concealing or destroying records prohibited, 34.10 Fees for copies, 34.13 Format of copies, 34.12 Initial request with immediate inspection, 34.05 2023 S-5 14 Wellington - Index PUBLIC RECORDS (Cont’d) Procedures for requesting public records (Cont’d) Misstatement of purpose prohibited, 34.14 Notification of Attorney General, 34.17 Online access to public records in electronic form, 34.15 Public records not immediately available, 34.07 Public records protected from disclosure, 34.16 Referral to proper custodian, 34.06 Refusal of unreasonable requests, 34.08 Time limitation; denial of inspection, 34.09 PUBLICATION REQUIREMENTS Ordinances, 32.42 Suspension of requirement in emergency, 32.38 READING REQUIREMENTS, 32.38 REASONABLE TIME, 10.04 RECORDS Ordinance",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "CHAPTER 10: RULES OF CONSTRUCTION; GENERAL PENALTY Section 10.01 Short titles 10.02 Definitions 10.03 Rules of construction 10.04 Computation of time 10.05 Majority may act for all; authorized agent 10.06 Writings and signatures 10.07 Severability 10.08 Revivor 10.09 Rights and liabilities accruing before repeal of ordinance 10.10 Construction of section references 10.11 Ordinances repealed 10.12 Ordinances unaffected 10.13 Ordinances saved 10.14 Amendments to code; amendatory language 10.15 Conflicting provisions 10.16 Reference to offices 10.17 Errors and omissions 10.18 Historical and statutory references 10.99 Penalty § 10.01 SHORT TITLES. (A) All ordinances of a permanent and general nature of the city as revised, codified, rearranged, renumbered, and consolidated into component codes, titles, chapters, and sections shall be known and designated as the Wellington Code, for which des",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "Rules of Construction; General Penalty 9 § 10.09 RIGHTS AND LIABILITIES ACCRUING BEFORE REPEAL OF ORDINANCE. No new ordinance shall be construed to repeal a former ordinance as to any offense committed against a former ordinance, nor as to any act done, or penalty, forfeiture, or punishment incurred, or any right accrued or claim arising under the former ordinance, or in any way whatever to affect any such offense or act so committed or done, or any penalty, forfeiture, or punishment so incurred, or any right accrued or claim arising before the new ordinance takes effect, except that the proceedings thereafter had shall conform, so far as practicable, to the laws in force at the time of such proceedings. If any penalty, forfeiture, or punishment is mitigated by any provision of the new ordinance, such provision may, by the consent of the party affected, be applied to any judgment pronoun",
+   "tags": [
+    "illumination",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 27,
+   "snippet": "City Officials 7 § 31.04 CITATION OFFICERS. (A) The legislative body of the city may authorize the employment of citation officers as needed. Citation officers shall have the qualifications prescribed by ordinance. Citation officers shall not have the powers of peace officers to make arrests or carry deadly weapons, but may issue citations as authorized by ordinance upon observation of: (1) Nonmoving motor vehicle offenses. (2) Violations of ordinances except for moving motor vehicle offenses and except for offenses which constitute a violation of the Kentucky Penal Code. (B) The procedure for citations issued by a citation officer shall be as provided in KRS 431.015. (C) This section shall not be a limitation on the power of a citation officer to make an arrest as a private person as provided in KRS 431.005. (KRS 83A.087) ELECTED OFFICERS § 31.20 ELECTION PROCEDURE. (A) Election of city",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 52,
+   "snippet": "2023 S-5 24 Wellington - Administration (L) To the extent practical, the system utilized in the administration and implementation of the adopted budget ordinance shall be consistent in form with the accounting system called for in § 33.02. (M) No city agency, or member, director, officer, or employee of any city agency, may bind the city in any way to any extent beyond the amount of money at that time appropriated for the purpose of the agency. All contracts, agreements, and obligations, express or implied, beyond such existing appropriations are void; nor shall any city officer issue any bond, certificate, or warrant for the payment of money by the city in any way to any extent, beyond the balance of any appropriation made for the purpose. (KRS 91A.030) § 33.04 ANNUAL AUDIT OF CITY FUNDS. (A) A city with a population of less than 1,000 based upon the most recent Federal decennial census",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 75,
+   "snippet": "Public Records 33 RESIDENT OF THE COMMONWEALTH. (1) An individual residing in the Commonwealth; (2) A domestic business entity with a location in the Commonwealth; (3) A foreign business entity registered with the Secretary of State; (4) An individual that is employed and works at a location or locations within the Commonwealth; (5) An individual or business entity that owns real property within the Commonwealth; (6) Any individual or business entity that has been authorized to act on behalf of an individual or business entity defined in divisions (1) to (5) of this definition; or (7) A news-gathering organization as defined in KRS 189.635(8)(b)1.a. to e.. SOFTWARE. The program code which makes a computer system function, but does not include that portion of the program code which contains public records exempted from inspection as provided by KRS 61.878 or specific addresses of files, p",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 80,
+   "snippet": "36 Wellington - Administration to persons who intend to use them for commercial purposes, if copies of nonexempt public records are requested for commercial purposes, the public agency may establish a reasonable fee. (2) The public agency from which copies of nonexempt public records are requested for a commercial purpose may require a certified statement from the requestor stating the commercial purpose for which they shall be used, and may require the requestor to enter into a contract with the agency. The contract shall permit use of the public records for the stated commercial purpose for a specified fee. (3) The fee provided for in division (B)(1) of this section may be based on one or both of the following: (a) Cost to the public agency of media, mechanical processing, and staff required to produce a copy of the public record or records; (b) Cost to the public agency of the creatio",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 81,
+   "snippet": "Public Records 37 (B) Fees shall not exceed: (1) The cost of physical connection to the system and reasonable cost of computer time access charges; and (2) If the records are requested for a commercial purpose, a reasonable fee based on the factors set forth in § 34.13. (KRS 61.874(6)) § 34.16 PUBLIC RECORDS PROTECTED FROM DISCLOSURE. (A) The following public records are excluded from the application of this chapter and these rules and regulations and shall be subject to inspection only upon order of a court of competent jurisdiction, except as provided in KRS 61.878(1) that no court shall authorize the inspection by any party of any materials pertaining to civil litigation beyond that which is provided by the Rules of Civil Procedure governing pretrial discovery: (1) Public records containing information of a personal nature where the public disclosure thereof would constitute a clearly",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 82,
+   "snippet": "38 Wellington - Administration (4) Public records pertaining to a prospective location of a business or industry where no previous public disclosure has been made of the business' or industry's interest in locating in, relocating within, or expanding within the Commonwealth. This exemption shall not include those records pertaining to applications to agencies for permits or licenses necessary to do business or to expand business operations within the state, except as provided in division (A) (2) above. (5) Public records which are developed by an agency in conjunction with the regulation or supervision of financial institutions, including but not limited to, banks, savings and loan associations, and credit unions, which disclose the agency's internal examining or audit criteria and related analytical methods. (6) The contents of real estate appraisals or engineering or feasibility estima",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 86,
+   "snippet": "(a) 1. Any victim depicted in the photographs or videos, his or her immediate family, or legal representative; 2. Any involved insurance company or its representative; or 3. The legal representative of any involved party; (b) Any state agency or political subdivision investigating official misconduct; or (c) A legal representative for a person under investigation for, charged with, pled guilty to, or found guilty of a crime related to the underlying incident. The person under investigation for, charged with, pled guilty to, or found guilty of a crime related to the underlying incident or their immediate family shall not be permitted to have access to the photographs or videos; and (20) Communications of a purely personal nature unrelated to any governmental function. (B) No exemption under this section shall be construed to prohibit disclosure of statistical information not descriptive o",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 91,
+   "snippet": "Code of Ethics 45 § 36.04 FINANCIAL DISCLOSURE. (A) All elected officials shall be required to file an annual financial disclosure statement. (B) The financial disclosure statement should include the following information: (1) Name of filer. (2) Current home and business addresses. (3) Filer's office held. (4) A list of any income which has been derived from any financial dealings with the city during the past three years or may reasonably expect or anticipate to have any financial dealings within the next 12 months above $2,000. (C) Each statement shall be signed and dated by the elected official filing the disclosure of financial interest. (D) The financial disclosure statements shall be filed with the City Ethics Committee Chairperson and a copy to be filed with the City Clerk. (Ord. 1995-1, passed - -95) § 36.05 CITY ETHICS COMMITTEE. (A) The City Ethics Committee shall consist of at",
+   "tags": [
+    "fee",
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 107,
+   "snippet": "10 Wellington - Traffic Code (C) Any intersection deemed by the city to be of special or critical importance to the movement of traffic shall be marked in a distinctive manner in order to indicate its importance. Should the operator of any vehicle enter any intersection so marked when there is insufficient room on the other side of the intersection to accommodate the vehicle, the indication of any traffic-control signal notwithstanding, he shall be deemed to have violated this division rather than division (B) above. Penalty, see § 71.99 § 71.02 REVERSE OR U TURNS. The operator of any vehicle shall not turn such vehicle so as to proceed in the opposite direction unless such movement can be made in safety without interfering with other traffic. (KRS 189.330(8)) Penalty, see § 71.99 § 71.03 BACKING VEHICLES. It shall be unlawful for the operator of any vehicle to back the vehicle at any in",
+   "tags": [
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 119,
+   "snippet": "Parking Regulations 16A § 72.07 PARKING ON PARADE ROUTE. (A) The City Commission or any authorized city official shall have the authority, whenever in his judgment it is necessary, to prohibit or restrict the parking of vehicles along a street or part thereof constituting a part of the route of a parade or procession, to erect temporary traffic signs to that effect, and to prohibit and prevent such parking.",
+   "tags": [
+    "sign",
+    "prohibited",
+    "temporary",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 127,
+   "snippet": "22 Wellington - Traffic Code § 72.37 SNOW EMERGENCY ROUTES. The term SNOW EMERGENCY ROUTE shall mean any route designated by the City Commission or any authorized city official. On such street or highway designated as a snow emergency route, special signs shall be posted to this effect. § 72.99 PENALTY. (A) For a first offense, a warning shall be placed on the violator’s windshield and the license plate number of the offending vehicle shall be recorded. (B) For a second offense, a notice of violation shall be placed on the offender’s windshield, and the violator shall be fined $50. (C) For a third offense and each subsequent offense, a notice of violation shall be placed on the offender’s windshield, and the offender shall be fined $100. (D) If the offender fails to pay the fines for a period of 60 days, the city may file an action in the state courts located in Jefferson County, Kentuck",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 156,
+   "snippet": "Nuisances 19 (G) Keeping of animals. The failure to keep an animal's pen, yard, lot, or other enclosure in a sanitary condition and free from preventable offensive odors. (H) Junk; scrap metal; motor vehicles. The storage of motor vehicles in an inoperative condition, motor vehicles unfit for further use, automobile parts, or scrap metal within the city limits except on premises authorized by the city for such purposes. Penalty, see § 92.99 § 92.04 ABATEMENT PROCEDURE. (A) It shall be unlawful for the owner, occupant, or person having control or management of any land within the city to permit a public nuisance, health hazard, or source of filth to develop thereon. (B) Whenever a nuisance situation is discovered, the authorized city official shall give five days' written notice to remedy the nuisance situation. The notice shall be mailed to the last known address of the owner of property",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 164,
+   "snippet": "CHAPTER 94: SIGNS Section 94.01 Signs in the city 94.02 Exemptions 94.99 Penalty § 94.01 SIGNS IN THE CITY. It shall be unlawful for any person to place a commercial sign within the city limits/corporate boundaries of the city. For purposes of this chapter, commercial sign is defined as any device or surface on which letters, illustrations, designs, figures or any other symbols are painted printed, stamped, raised or in any manner outlined or attached and used as a display for business purposes. (Ord. - -, passed 1-15-01) Penalty, see § 94.99 § 94.02 EXEMPTIONS. (A) Real estate signs. Signs relating to the sale of real property within the city limits/corporate boundaries of the city, provided that said sign is placed only on the property to be sold. (B) Temporary signs. Signs which pertain to persons or firms supplying services, labor or materials to individual residents, provided that s",
+   "tags": [
+    "sign",
+    "fee",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 204,
+   "snippet": "12 Wellington - Land Usage (B) Dumpsters must be covered when materials inside are easily airborne, pose a hazard, emitting an odor or are otherwise offensive. (C) Debris must be placed inside the dumpster, not along side or on top of it. (D) All dumpsters are required to be emptied when full. For the purpose of this chapter, FULL is defined as when the contents of the dumpster reach an average level of one foot below the top edge of the dumpster sides. Any dumpster which has reached the full status and is not emptied within seven calendar days shall be considered in violation of this chapter. (E) The dumpster must be placed on the drive behind the front line of the home. Where this is not possible and the dumpster is placed in the public right-of-way, it must have a flasher or reflector on the outside corner facing traffic at all times. Where traffic may approach from either side, the d",
+   "tags": [
+    "fee",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 249,
+   "snippet": "16 Wellington - Index TRAFFIC CODE Accidents Duty of operator, 71.15 Investigation of, 70.03 Report required, 71.16 Alley, driving in and out of, 71.04 Animals, application of code, 70.02 Arrests, 70.03, 70.04 Backing vehicles, 71.03 Barriers or signs, erected by departments or utilities, 70.17, 70.19 Bicycles Application of code, 70.02 Clinging to vehicles, 73.02 Coasting on play streets, 73.01 Commercial advertising on traffic signs prohibited, 70.19 Compliance with code required, 70.02 Crosswalks, entering unlawfully, 71.01 Definitions governing traffic code, 70.01 Departments, erection of barrier or sign by, 70.17, 70.19 Directing traffic, unlawful for citizen, 70.04 Double parking, 72.01 Emergency, disregard of traffic-control devices, 70.21 Emergency vehicles Duty of operator on approach of, 71.26 Following, 71.26 Right-of-way of, 71.26 Enforcement of, 70.03, 70.04 Fire hose, drivi",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 251,
+   "snippet": "Index 17 TRAFFIC CODE (Cont'd) Nuisances, 71.27 Obedience to traffic-control devices required, 70.17 Obstruction of traffic by vehicles prohibited, 71.01 Obstructional parking, 72.01 Operator of vehicle to drive carefully, 71.25 Parking Abandoned or junked vehicles, storing on property, 72.14 Curb requirements, 72.02 Diagonal parking, 72.02 Display for sale or display of advertising, prohibition of, 72.11 Double parking, 72.01 Handicapped persons, 72.12 Illegally parked vehicle, 72.09 Lines, parking outside of, 72.02 Obstructional parking, 72.01 Off-street facilities, 72.08 Parade route, parking on, 72.07 Parking in excess of certain number of hours, 72.06 Parking outside parking and roadway areas, 72.10 Penalty, 72.99 Prohibited on certain streets, 72.04 Restricted parking areas, 72.03 Street cleaning restrictions, 72.05 Trucks, boats, trailers, 72.13 Penalty, 70.99, 71.99 Police Depart",
+   "tags": [
+    "sign",
+    "prohibited",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "8 Wellington - General Provisions (B) When the law requires an act to be done which may by law as well be done by an agent as by the principal, such requirement shall be construed to include such acts when done by an authorized agent. § 10.06 WRITINGS AND SIGNATURES. (A) When this code requires any writing to be signed by a party thereto, it shall not be deemed to be signed unless the signature is subscribed at the end or close of the writing. (B) Every writing contemplated by this code shall be in the English language. (KRS 446.060) § 10.07 SEVERABILITY. It shall be considered that it is the intent of City Commission in enacting any ordinance, that if any part of the ordinance be held unconstitutional the remaining parts shall remain in force, unless the ordinance provides otherwise, or unless the remaining parts are so essentially and inseparably connected with and dependent upon the u",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "Rules of Construction; General Penalty 11 published. No alteration shall be made or permitted if any question exists regarding the nature or extent of such error. § 10.18 HISTORICAL AND STATUTORY REFERENCES. (A) As histories for the code sections, the specific number and passage date of the original ordinance, and the most recent three amending ordinances, if any, are listed following the text of the code section. Example: (Ord. 10, passed 5-13-60; Am. Ord. 15, passed 1-1-70; Am. Ord. 20, passed 1-1-80; Am. Ord. 25, passed 1-1-85) (B) If a KRS cite is included in the history, this indicates that the text of the section reads word-for-word the same as the statute. Example: (KRS 83A.090) (Ord. 10, passed 1-17-80; Am. Ord. 20, passed 1-1-85). If a KRS cite is set forth as a “statutory reference” following the text of the section, this indicates that the reader should refer to that statute f",
+   "tags": [
+    "fee",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 28,
+   "snippet": "8 Wellington - Administration (F) No ordinance abolishing any elected office shall be enacted later than 240 days preceding the regular election for that office, except in the event of a vacancy in the office. (G) The city may not create any elected office. Existing elected offices may be continued under provision of divisions (D), (E), and (F) above, but no existing elected office may be changed. Statutory reference: Election of city officers, see KRS 83A.050 Creation, abolishment of city offices, see KRS 83A.080(3), (4) § 31.21 MAYOR; MAYOR PRO TEM. (A) Election; term of office. The Mayor of this city shall be elected by the voters of the city at a regular election. A candidate for Mayor shall be a resident of the city for not less than one year prior to his or her election. His term of office shall begin on the first day of January following his election and shall be for four years an",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 47,
+   "snippet": "City Commission 19 § 32.44 PERIODIC REVIEW REQUIRED. Not less than once every five years all ordinances in this code of ordinances shall be examined for consistency with state law and with one another and shall be revised to eliminate redundant, obsolete, inconsistent, and invalid provisions. (KRS 83A.060(11)) § 32.45 MUNICIPAL ORDERS. (A) The Commission may adopt municipal orders. All municipal orders shall be in writing and shall be adopted only at an official meeting. Orders may be amended only by a subsequent municipal order or ordinance. All orders adopted shall be maintained in an official order book. (B) In lieu of an ordinance, municipal orders may be used for matters relating to the internal operation and functions of the city and to appoint or remove or approve appointment or removal of members of boards, commissions, and other agencies over which the Commission has control. (K",
+   "tags": [
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 54,
+   "snippet": "be charged for duplication costs at a rate that shall not exceed $0.25 per page; and 2023 S-5 26 Wellington - Administration (6) A statement that copies of the financial statement prepared in accordance with KRS 424.220, when a financial statement is required by Section 309 of this Act, are available to the public at no cost at the business address of the officer responsible for preparation of such statement. (F) Any person who violates any provision of this section shall be fined not less than $50 nor more than $500. In addition, any officer who fails to comply with any of the provisions of this section shall, for each failure, be subject to a forfeiture of not less than $50 nor more than $500, in the discretion of the court, which may be recovered only once, in a civil action brought by any resident of the city. The costs of all proceedings, including a reasonable fee for the attorney ",
+   "tags": [
+    "fee",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 77,
+   "snippet": "Public Records 34A § 34.08 REFUSAL OF UNREASONABLE REQUESTS. If the application places an unreasonable burden in producing public records, or if the custodian has reason to believe that repeated requests are intended to disrupt other essential functions of the public agency, the official custodian may refuse to permit inspection of the public records or mail copies thereof. However, refusal under this section must be sustained by clear and convincing evidence. (KRS 61.872(6)) § 34.09 TIME LIMITATION; DENIAL OF INSPECTION. The official custodian, upon any request for records made under this chapter, shall determine within five days (excepting Saturdays, Sundays, and legal holidays) after the receipt of any request whether to comply with the request and shall notify in writing the person making the request within the five-day period of its decision. Any agency response denying, in whole or",
+   "tags": [
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 102,
+   "snippet": "General Provisions 5 TRAFFIC. Pedestrians, ridden or herded animals, vehicles, buses, and other conveyances, individually or collectively, while using any street for the purpose of travel. VEHICLE. Every device in, on, or by which any person or property is or may be transported or drawn on any street except devices moved by human power or used exclusively on stationary rails or tracks. § 70.02 REQUIRED OBEDIENCE TO TRAFFIC DIRECTIONS. (A) It shall be unlawful for any person to fail or refuse to comply with any lawful order, signal, or direction given by a uniformed police officer, or to fail or refuse to comply with any of the traffic regulations of this traffic code. (B) The provisions of this traffic code shall apply to the driver of any vehicle owned or used in the service of the United States government, this state, county, or city, and it shall be unlawful for any such driver to vio",
+   "tags": [
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 109,
+   "snippet": "12 Wellington - Traffic Code (C) No operator of any vehicle, unless he is on official business, shall follow any emergency vehicle being operated in conformity with the provisions of division (A) above closer than 500 feet, nor shall he drive into, park the vehicle into, or park the vehicle within the block where the vehicle has stopped in answer to an emergency call or alarm, unless he is directed otherwise by a police officer or firefighter. (D) No vehicle, train, or other equipment shall be driven over any unprotected hose of a fire department when the hose is laid down on any street, private driveway, or track for use at any fire or fire alarm unless the fire department official in command consents that the hose be driven over. (E) Upon approaching a stationary emergency vehicle or public safety vehicle, when the emergency vehicle or public safety vehicle is giving a signal by displa",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 115,
+   "snippet": "14 Wellington - Traffic Code PARKING GENERALLY § 72.01 OBSTRUCTIONAL PARKING; DOUBLE PARKING. (A) It shall be unlawful for any person to leave any vehicle or any other thing that may be a nuisance, obstruction, or hindrance in or on any street, alley, or sidewalk within the city either during the day or night. (B) It shall be unlawful for any person to stop or park any vehicle on the roadway side of any other vehicle stopped or parked at the edge or curb of a street. Penalty, see § 72.99 § 72.02 MANNER OF PARKING. (A) It shall be unlawful for the operator of any vehicle to stop or park the vehicle in a manner other than with its right-hand side toward and parallel with the curb, except that where parking is permitted on the left side of a one-way street, the left-hand side shall be so parked, and except for commercial loading and unloading on one- way streets. (B) No vehicle shall be par",
+   "tags": [
+    "sign",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 117,
+   "snippet": "2009 S-2 16 Wellington - Traffic Code (D) When a curb has been painted in compliance with the provisions of division (F) below, no person shall park a vehicle at any time at or adjacent to any curb so marked. (E) When signs are erected in compliance with the provisions of division (F) below, in each block giving notice thereof, no person shall park a vehicle between the hours specified by official signs on any day except Sundays on any street so marked. (F) (1) The city shall determine on what streets or portions thereof stopping or parking shall be restricted or prohibited. Whenever under authority of or by this traffic code or any other ordinance any parking limit is imposed or parking is prohibited on designated streets, or parking areas are restricted to handicapped parking, appropriate signs shall be erected giving notice thereof. However, in lieu of erecting such signs or in conjun",
+   "tags": [
+    "sign",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 122,
+   "snippet": "Parking Regulations 17 (B) It shall be unlawful to park or leave unattended any vehicle in violation of such signs or directions. Penalty, see § 72.99 § 72.08 PARKING ON OFF-STREET FACILITY. (A) It shall be unlawful for the driver of a motor vehicle to park or abandon the vehicle or drive on or otherwise trespass on another's property, or on an area developed as an off-street parking facility, without the consent of the owner, lessee, or person in charge of such property or facility. (B) If at any time a vehicle is parked, abandoned, or otherwise trespasses in violation of division (A) of this section, the owner, lessee, or person in charge of the property or facility may have the unauthorized motor vehicle removed in accordance with the provisions of §§ 72.20 through 72.22. (C) Every property owner or operator of an off-street parking facility shall post signs stating thereon that the p",
+   "tags": [
+    "sign",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 160,
+   "snippet": "nuisance. 2023 S-5 Nuisances 20C (f) Owner's rights. 1. Eviction as a defense. It shall be a defense to a violation of this section if the owner has instituted an eviction proceeding within 30 days against the offending tenants or occupants of the subject premises, and completes the eviction within 75 days of commencement or as soon thereafter as court procedures allow. In the event that judicial or quasi-judicial proceedings prohibit an owner from proceeding with an eviction, abatement of the public nuisance by eviction will be stayed until the judicial or quasi-judicial proceeding is resolved. In the case of multi-unit dwellings, apartment buildings, or mixed uses, the only parties necessary to name in an eviction proceeding are the occupants of the actual unit involved with the activity suspected, or the occupants suspected of the activity described in the notice. 2. Other defenses. T",
+   "tags": [
+    "fee",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 181,
+   "snippet": "12 Wellington - Business Regulations any other consideration, but which person(s) is not acquiring an ownership interest in the dwelling. It does not include dwellings that are occupied only by members of the owner's immediate family, who do not pay rent. TENANT. Any person, other than an owner, occupying all or part of a rental dwelling. (Ord. 2, Series 2016-2017, passed 11-22-16) § 112.02 REGISTRATION OF RENTAL DWELLINGS. (A) Registration required. All owners of rental dwellings shall annually register the rental property with the city on an application in a form provided by the city. At the time an application is filed, a registration fee of $100 shall be paid in full. The fee shall be accounted for by the city as a separate line item in its general funds and is intended to defray the costs of administrating this chapter; the cost for the city to insure that ail permits are obtained e",
+   "tags": [
+    "fee",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 198,
+   "snippet": "CHAPTER 152: TEMPORARY PORTABLE STORAGE CONTAINERS Section 152.01 Purpose 152.02 Definitions 152.03 Required action 152.04 Permit fees 152.99 Penalty § 152.01 PURPOSE. The purpose of this chapter is to amend the city’s land usage laws concerning the increased usage of temporary portable storage containers (commonly referred to as “pods”). The City Council recognizes that the usage of these containers is appropriate and necessary in certain circumstances. However, the Council also finds that it is in the best interests of the community to regulate the usage of mobile storage containers by monitoring the number, location and duration of use. (Ord. passed 8-25-09) § 152.02 DEFINITIONS. For the purpose of this chapter, the following definitions shall apply unless the context clearly indicates or requires a different meaning. TEMPORARY STRUCTURE. Any shed, structure, building, trailer, tent o",
+   "tags": [
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 203,
+   "snippet": "CHAPTER 153: TEMPORARY REFUSE DUMPSTERS Section 153.01 Purpose 153.02 Definitions 153.03 Required action 153.04 Permit fees 153.99 Penalty § 153.01 PURPOSE. The purpose of this chapter is to amend the city’s land usage laws concerning the usage of temporary refuse dumpsters (commonly referred to as “dumpsters”). The City Council recognizes that the usage of these containers is appropriate and necessary in certain circumstances. However, the Council also finds that it is in the best interests of the community to regulate their usage by monitoring the number, location and duration of use. (Ord. passed 8-25-09) § 153.02 DEFINITIONS. For the purpose of this chapter, the following definitions shall apply unless the context clearly indicates or requires a different meaning. REFUSE DUMPSTER or DUMPSTER. Any portable container used or designed for collection of, transportation of, or disposal of",
+   "tags": [
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "Rules of Construction; General Penalty 7 (C) Liberal construction. All sections of this code shall be liberally construed with a view to promote their objects and carry out the intent of City Commission. (KRS 446.080(1)) (D) Retroactivity. No ordinance shall be construed to be retroactive, unless expressly so declared. (KRS 446.080(3)) (E) Technical terms. All words and phrases shall be construed according to the common and approved usage of language, but technical words and phrases and such others as may have acquired a peculiar and appropriate meaning in the law, shall be construed according to such meaning. (KRS 446.080(4)) § 10.04 COMPUTATION OF TIME. (A) In computing any period of time prescribed or allowed by order of court, or by any applicable ordinance or regulation, the day of the act, event, or default after which the designated period of time begins to run is not to be includ",
+   "tags": [
+    "illumination",
+    "authority",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 33,
+   "snippet": "City Officials 9 (D) Powers and duties. (1) The Mayor shall preside at all meetings of the Commission and may vote in all proceedings. (2) All bonds, notes, contracts, and written obligations of the city authorized by ordinance or resolution shall be executed by the Mayor on behalf of the city. (KRS 83A.140(4)) (E) Mayor Pro Tem. (1) The Commission shall designate one City Commissioner to serve as Mayor Pro Tem. The Mayor Pro Tem shall act for the Mayor whenever the Mayor is unable to attend to the duties of his office and he shall then possess all rights, powers, and duties of Mayor. (2) If the disability of the Mayor to attend to his duties continues for 60 consecutive days, the office of Mayor may be declared vacant by a majority vote of the Commission membership, and the provisions of division (C) above shall apply. (KRS 83A.140(4)) § 31.22 COMMISSIONERS. For provisions concerning th",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority"
+   ],
+   "weight": 4,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 34,
+   "snippet": "10 Wellington - Administration (3) The employee willfully failed or refused to assist the defense of the cause of action, including the failure to give notice to the executive authority of the local government pursuant to subsection (B) of this section; (4) The employee compromised or settled the claim without the approval of the governing body of the local government; or (5) The employee obtained private counsel without the consent of the city, in which case, the city may also refuse to pay any legal fees incurred by the employee. (KRS 65.2005) NONELECTED CITY OFFICIALS § 31.35 ESTABLISHMENT OF NONELECTED CITY OFFICES. (A) All nonelected city offices shall be created by ordinance which shall specify: (1) Title of office; (2) Powers and duties of office; (3) Oath of office; (4) Bond, if required; and (5) Compensation, which may be specifically established or set by reference to another o",
+   "tags": [
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 43,
+   "snippet": "City Commission 16A ORDINANCES § 32.35 ONE SUBJECT; TITLE. Each ordinance shall embrace only one subject and shall have a title that shall clearly state the subject. (KRS 83A.060(1)) § 32.36 INTRODUCTION; ENACTING CLAUSE. Each ordinance shall be introduced in writing and shall have an enacting clause styled “Be it ordained by the City of Wellington.” (KRS 83A.060(2)) 2005 S-1",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority"
+   ],
+   "weight": 4,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 61,
+   "snippet": "Finance and Revenue 29 and containing all necessary terms, including the items referred to in § 33.13 and a description of all properties. Promptly upon passage the city shall publish such ordinance pursuant to KRS Chapter 424 and shall mail by certified mail to each affected property owner a notice of determination to proceed with the project, the fair basis of assessment to be utilized, the estimated cost to the property owner, and the ratio the cost to each property owner bears to the total cost of the entire project. (KRS 91A.260) § 33.16 AFFECTED OWNER MAY CONTEST. (A) Within 30 days of the mailing of the notice provided for in § 33.15, any affected property owner may file an action in the circuit court of the county, contesting the undertaking of the project by special assessment, the inclusion of his property in the improvement, or the amount of his assessment. If the action conte",
+   "tags": [
+    "illumination",
+    "authority",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 66,
+   "snippet": "(1) Audited financial statements demonstrating compliance with state and federal capital adequacy guidelines; 2023 S-5 30D Wellington - Administration (2) Proof of state registration; and (3) Evidence of adequate insurance coverage. (E) A periodic review of the financial condition and registration of all qualified financial institutions and broker/dealers will be conducted by the Designated Officials. (1) Minority, emerging and community financial institutions. From time to time, the Designated Officials may choose to invest in instruments offered by minority, emerging, and community financial institutions. All terms and relationships will be fully disclosed prior to purchase and will be reported to the appropriate entity on a consistent basis and should be consistent with Kentucky law and city ordinance. (2) Competitive transactions. (a) The Designated Officials shall obtain competitive",
+   "tags": [
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 90,
+   "snippet": "44 Wellington - Administration CITY OFFICER. Any individual whether or not compensated, full or part-time, elected to any city office; or any individual who serves as a member of the governing body of any city agency, excluding employees of a school district or school board. MEMBER OF IMMEDIATE FAMILY. A spouse, an unemancipated child residing in the household, or a person claimed by the individual or spouse as a tax dependent. (Ord. 1995-1, passed - -95) § 36.02 STANDARDS OF CONDUCT. (A) No city officer or employee or member of his immediate family shall have an interest in a business organization or engage in any business, transaction, or professional activity, which is in substantial conflict with the proper discharge of his duties in the public interest. (B) No city government officer or employee shall use or attempt to use his official position to secure unwarranted privileges or ad",
+   "tags": [
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 106,
+   "snippet": "CHAPTER 71: TRAFFIC RULES Section Operation Generally 71.01 Obstructing traffic 71.02 Reverse or U turns 71.03 Backing vehicles 71.04 Vehicles crossing sidewalks Accidents 71.15 Duty of operator 71.16 Accident report Prohibitions 71.25 Operator of vehicle to drive carefully 71.26 Right-of-way of emergency vehicles; following emergency vehicles; driving over fire hose 71.27 Smoke emission or other nuisance 71.28 Reckless operation 71.99 Penalty OPERATION GENERALLY § 71.01 OBSTRUCTING TRAFFIC. (A) It shall be unlawful to operate any vehicle or permit it to remain standing in any street in such manner as to create an obstruction thereof. (B) It shall be unlawful for the operator of any vehicle to enter any intersection or crosswalk unless there is sufficient space on the other side of the intersection or crosswalk to accommodate the vehicle without obstructing the passage of other vehicles ",
+   "tags": [
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 123,
+   "snippet": "18 Wellington - Traffic Code demonstrations are being made on any street. Penalty, see § 72.99 § 72.12 PARKING WITH HANDICAPPED PERMITS. (A) Any other provision to the contrary notwithstanding, a motor vehicle bearing a decal in its front windshield issued by the County Clerk pursuant to appropriate county ordinances for handicapped persons, when operated by a handicapped person or when transporting a handicapped person, may be parked in a designated handicapped parking place, or when parked in a metered parking space may be parked for two hours for no fee, or when parked where any parking limit is imposed may be parked for two hours in excess of the parking limit. The motor vehicle may be parked in a loading zone for that period of time necessary to permit entrance or exit of the handicapped person to or from the parked vehicle, but in no circumstances longer than 30 minutes. (B) This s",
+   "tags": [
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  },
+  {
+   "page": 126,
+   "snippet": "Parking Regulations 21 (D) The storage or towing company shall not be responsible for contents in a vehicle's trunk or other locked compartment to which the storage or towing company is without access, unless the towing company intentionally opens the area without the owner's consent. (E) This section shall not apply when a local government causes a vehicle to be towed pursuant to KRS 82.605 to 82.640 or if state government causes a vehicle to be towed. (KRS 376.275(1) - (5)) SNOW EMERGENCY § 72.35 ANNOUNCEMENT OF SNOW EMERGENCY. Whenever the City Commission or any authorized city official finds that falling snow, sleet, or freezing rain will create a condition which makes it necessary that the parking of motor vehicles on snow emergency routes be prohibited, or whenever it is found on the basis of a firm forecast of snow, sleet, or freezing rain that the weather conditions so forecasted",
+   "tags": [
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da",
+   "source_document_id": null,
+   "source_title": "c64cff9456458b40158d08d807f60dd4e9285d87dd7bbd6ecb647742e459f6da.pdf",
+   "official_url": "https://storage.googleapis.com/juniper-media-library/458/2025/11/CODE-OF-ORDINANCES.pdf"
+  }
+ ]
+}

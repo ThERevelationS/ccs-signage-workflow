@@ -1,0 +1,47 @@
+{
+  "results": [
+    {
+      "name": "exact saved fields and explicit zero cost return verified catalog data after one conditional write",
+      "ok": true
+    },
+    {
+      "name": "server dropping declared-looking diameter/weight cannot be acknowledged as a successful metadata save",
+      "ok": true
+    },
+    {
+      "name": "explicit null metadata clear must not be accepted if server preserves the old recorded diameter",
+      "ok": true
+    },
+    {
+      "name": "server replacing authored zero price with another rate cannot be reported as success",
+      "ok": true
+    },
+    {
+      "name": "a newer competing saved record is rejected rather than closing the editor as saved",
+      "ok": true
+    },
+    {
+      "name": "exact null clears remain unknown and survive the returned receipt without zero substitution",
+      "ok": true
+    },
+    {
+      "name": "lost update reply recovers exact persisted values without a second write",
+      "ok": true
+    },
+    {
+      "name": "lost reply plus dropped metadata retains the original error and never claims recovery",
+      "ok": true
+    },
+    {
+      "name": "unavailable readback remains blocked after an acknowledged write",
+      "ok": true
+    },
+    {
+      "name": "retry converges when the exact intended values already exist without rewriting a newer timestamp",
+      "ok": true
+    }
+  ],
+  "syntheticOnly": true,
+  "realStorageVerified": false,
+  "schemaChanged": false
+}

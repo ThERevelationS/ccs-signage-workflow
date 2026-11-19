@@ -8,7 +8,7 @@ const out = resolve(here, '.tmp-module-registry.mjs');
 buildSync({ entryPoints: [resolve(here, '../src/components/estimator/moduleRegistry.js')], bundle: true, format: 'esm', outfile: out, logLevel: 'silent' });
 const { ESTIMATOR_MODULES, MODULE_TOTAL_FIELD, getModule, getModuleLabel } = await import(pathToFileURL(out).href);
 
-assert.equal(ESTIMATOR_MODULES.length, 9, 'nine estimator modules registered');
+assert.equal(ESTIMATOR_MODULES.length, 10, 'ten estimator modules registered');
 for (const m of ESTIMATOR_MODULES) {
   assert.ok(m.key && m.label && m.entity && m.page, `${m.key} fully declared`);
   assert.equal(getModule(m.key).key, m.key, `${m.key} resolves`);

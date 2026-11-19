@@ -1,7 +1,7 @@
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
-export default function SalesPipelineImportProgress({ importProgress, importStateRef }) {
+export default function SalesPipelineImportProgress({ importProgress, importStateRef: _importStateRef }) {
   if (!importProgress) return null;
 
   const { done, indeterminate, current, total, message } = importProgress;

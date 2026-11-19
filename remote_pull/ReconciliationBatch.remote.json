@@ -1,0 +1,11 @@
+{
+  "files": [
+    {
+      "path": "base44/entities/ReconciliationBatch.jsonc",
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "File not found."
+      }
+    }
+  ]
+}

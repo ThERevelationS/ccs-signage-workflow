@@ -11,6 +11,7 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
   const [productGroup, setProductGroup] = useState("my");
   const [categories, setCategories] = useState([]);
   const [availableCategories, setAvailableCategories] = useState([]);
+  const [catsFailed, setCatsFailed] = useState(false);
   const [extraCategories, setExtraCategories] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -25,7 +26,7 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
     setSaving(false);
     setError("");
     Promise.all([
-      loadAllEntityRows({ entity: base44.entities.QuickProductCategory, sort: "category_name", label: "Quick Product categories" }).catch(() => []),
+      loadAllEntityRows({ entity: base44.entities.QuickProductCategory, sort: "category_name", label: "Quick Product categories" }).catch(() => { setCatsFailed(true); return []; }),
       base44.auth.me().catch(() => null),
     ]).then(([rows, me]) => setAvailableCategories((rows || [])
       .filter((row) => row.product_group === "global" || !row.created_by_id || (!!me?.id && row.created_by_id === me.id))
@@ -72,7 +73,7 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
       <DialogContent className="sm:max-w-[680px] p-0 overflow-hidden border-gray-300 shadow-2xl">
         <DialogHeader className="px-5 py-4 bg-[#3f3f3f] text-white border-b-4 border-lime-300">
           <DialogTitle className="text-white text-[17px] flex items-center gap-2">
-            <PackagePlus className="w-5 h-5 text-lime-300" /> Create Quick Product
+            <PackagePlus className="w-5 h-5 text-lime-300" aria-hidden="true" /> Create Quick Product
           </DialogTitle>
           <p className="text-[11px] text-gray-300 mt-1">
             Saves the complete Product package — not just its price. Builder configuration, Parts, Part Groups, inventory snapshots, frozen pricing, overrides and notes are preserved.
@@ -119,24 +120,29 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
                   {visibleCategories.map((category) => {
                     const selected = categories.includes(category.category_name);
                     return (
-                      <button key={category.id} type="button" onClick={() => toggleCategory(category.category_name)} className={`h-[26px] px-2.5 rounded-full border text-[10px] font-semibold ${selected ? "border-lime-400 bg-lime-100 text-gray-900" : "border-gray-300 bg-white text-gray-600"}`}>
+                      <button key={category.id} type="button" onClick={() => toggleCategory(category.category_name)} aria-pressed={selected} className={`h-[26px] px-2.5 rounded-full border text-[10px] font-semibold ${selected ? "border-lime-400 bg-lime-100 text-gray-900" : "border-gray-300 bg-white text-gray-600"}`}>
                         {category.category_name}
                       </button>
                     );
                   })}
                 </div>
               )}
-              <input value={extraCategories} onChange={(event) => setExtraCategories(event.target.value)} placeholder="Add categories, comma separated..." className="w-full h-[34px] px-3 border border-gray-300 rounded text-[11px]" />
+              {catsFailed && (
+                <div role="status" className="mb-2 rounded border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[10px] text-amber-800">
+                  Saved categories could not be loaded — the picker may be incomplete, not necessarily empty. Reopen to retry.
+                </div>
+              )}
+              <input value={extraCategories} onChange={(event) => setExtraCategories(event.target.value)} aria-label="Add extra categories" placeholder="Add categories, comma separated..." className="w-full h-[34px] px-3 border border-gray-300 rounded text-[11px]" />
               <div className="text-[9px] text-gray-400 mt-1">Existing selected: {categories.length ? categories.join(", ") : "none"}</div>
             </div>
           </div>
 
-          {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
+          {error && <div role="alert" className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
 
           <div className="flex justify-end gap-2">
             <button type="button" disabled={saving} onClick={onClose} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600">Cancel</button>
             <button type="submit" disabled={saving || !name.trim()} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50 inline-flex items-center gap-1.5">
-              <Save className="w-3.5 h-3.5" /> {saving ? "Saving…" : "Save Quick Product"}
+              <Save className="w-3.5 h-3.5" aria-hidden="true" /> {saving ? "Saving…" : "Save Quick Product"}
             </button>
           </div>
         </form>

@@ -9,6 +9,143 @@
     "setting_value": {
       "type": "object",
       "description": "The setting value as JSON object"
+    },
+    "hoursOfOperation": {
+      "type": "object",
+      "description": "Two clocks for deadline vs follow-up math (sales center vs production)",
+      "properties": {
+        "sales_center_hours": {
+          "type": "array",
+          "description": "Sales center operating-hours entries (e.g. per-day open/close windows) used for follow-up math",
+          "items": {
+            "type": "object"
+          }
+        },
+        "production_hours": {
+          "type": "array",
+          "description": "Production shop operating-hours entries used for deadline math",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "emailDelivery": {
+      "type": "object",
+      "description": "Outbound email delivery defaults",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Master switch for outbound email delivery"
+        },
+        "default_from": {
+          "type": "string",
+          "description": "Default from-address for outgoing email"
+        },
+        "authorized_domains": {
+          "type": "array",
+          "description": "Domains authorized to send email",
+          "items": {
+            "type": "string"
+          }
+        },
+        "from_salesperson_toggle": {
+          "type": "boolean",
+          "description": "Allow sending from the salesperson's address"
+        }
+      }
+    },
+    "deadlineRules": {
+      "type": "object",
+      "description": "Deadline recalculation rules",
+      "properties": {
+        "recalc_on_proof_approval": {
+          "type": "boolean",
+          "description": "Recalculate deadlines when a proof is approved"
+        },
+        "respect_hard_dates": {
+          "type": "boolean",
+          "description": "Never move dates flagged as hard deadlines"
+        }
+      }
+    },
+    "creditTermsDefaults": {
+      "type": "object",
+      "description": "Default credit terms for new customer accounts",
+      "properties": {
+        "terms_days": {
+          "type": "number",
+          "description": "Default payment terms in days (e.g. 30)"
+        },
+        "credit_limit": {
+          "type": "number",
+          "description": "Default credit limit in dollars"
+        }
+      }
+    },
+    "autoInactiveMonths": {
+      "type": "number",
+      "description": "Months without activity before a record is auto-marked inactive"
+    },
+    "pricing_variables": {
+      "type": "array",
+      "description": "Global pricing-formula variable registry (F-07). Custom variables usable in pricing formulas alongside the builtins (Quantity, Width, Height, Depth, PartBaseCost, PartRetail, StitchCount); normalized via shared/pricingVariables.normalizePricingVariables.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Formula identifier — must match ^[A-Za-z_][A-Za-z0-9_]*$ and must not collide with a builtin name or formula literal (case-insensitive)"
+          },
+          "label": {
+            "type": "string",
+            "description": "Operator-facing label shown in pricing admin"
+          },
+          "description": {
+            "type": "string",
+            "description": "What the variable feeds / where it is used"
+          },
+          "default_value": {
+            "type": "number",
+            "description": "Numeric fallback injected into the formula env when no explicit override supplies a value"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle status ('active' resolves in formula envs; 'error' marks failed validation; other values e.g. 'archived' pass through but do not resolve)"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "status_override_reasons": {
+      "type": "array",
+      "description": "Status-override required-reason list (B-11). Reasons staff must pick from when forcing a manual override (e.g. cancel-estimate, forced status move); when an active reason applies to the override type the override dialog cannot submit without one, and the pick lands in the ProductActivity 'override' audit row. Normalized via src/components/jobs/overrideReasonModel.js.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Operator-facing reason label shown in the override dialog (e.g. 'Customer cancelled', 'Other')"
+          },
+          "applies_to": {
+            "type": "string",
+            "description": "Override type this reason applies to (e.g. 'status', 'cancel_estimate', 'due_date'); blank/'all'/'*' means it applies to every override type"
+          },
+          "requires_text": {
+            "type": "boolean",
+            "description": "When true the picker must also type free-form detail (the stock 'Other' entry is always treated as requiring text even if unset)"
+          },
+          "sort": {
+            "type": "number",
+            "description": "Display ordering in the override dialog (ascending, then label)"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle status — 'active' (or unset) participates in validation; 'archived'/'inactive' rows are inert"
+          }
+        },
+        "additionalProperties": true
+      }
     }
   },
   "required": [
@@ -17,18 +154,22 @@
   "rls": {
     "create": {
       "user_condition": {
-        "role": "admin"
+        "role": "__globalsettings_backend_only__"
       }
     },
-    "read": null,
+    "read": {
+      "user_condition": {
+        "role": "__globalsettings_backend_only__"
+      }
+    },
     "update": {
       "user_condition": {
-        "role": "admin"
+        "role": "__globalsettings_backend_only__"
       }
     },
     "delete": {
       "user_condition": {
-        "role": "admin"
+        "role": "__globalsettings_backend_only__"
       }
     }
   }

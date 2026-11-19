@@ -1,0 +1,50 @@
+{
+ "jurisdiction_id": "6ac1a37a4aae4b0408867779",
+ "jurisdiction_name": "Union County",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "1. Applications for a free - standing sign must include a site plan of the property indicating the location of the proposed sign on the property with respect to the right - of - way lines and the property lines. Indicate length of road frontage(s). 2. Applications for a building mounted sign must include a plan indicating the width of the building frontage on the street or, in the case of a multi - tenant building, the portion of the building to be occupied by the applicant. 3. Plans for all applications must include scaled drawings indicating the total area of the proposed sign and the total height of the sign if it is a free - standing sign. 4. Plans must include a written description of the proposed sign including the type of the sign and supporting structure, method of illumination (if any), and construction materials to be used. 5. Applications must include the property owners signa",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "type",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 16,
+   "source_sha256": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880",
+   "source_document_id": null,
+   "source_title": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880.pdf",
+   "official_url": "https://cms3.revize.com/revize/boonectyplanning/Documents/Applications%20Forms/Checklists/SignPermit_checklist.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Free - Standing Signs and Monument Signs $250.00 if sign is between 0 - 50 sq. ft. in size (flat fee for each sign) $375.00 if sign is between 51 - 100 sq. ft. in size (Section 3408.6) $425.00 if sign is more than 100 sq. ft. in size Incidental Electronically Changeable Message Sign $50.00 plus applicable building mounted or free - (Sections 3408.5.A.2.h and 3408.5.B.2.h) standing/monument signs fees above Temporary Advertising Display Permits $45.00 for each permit (Section 3409) Electronically Changeable Message Signs Conditional Use Permit Required (see fee schedule) (Section 3408.5) PLUS $200.00 if sign is less than 50 sq. ft. in size $375.00 is sign is equal to or greater than 50 sq. ft. In size Small Community Overlay District Signs $50.00 is sign is between 0 - 32 sq. ft. in size (Building Mounted and Free - Standing Signs) $80.00 is sign is between 33 - 50 sq. ft. in size (Sectio",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "illumination",
+    "temporary",
+    "type",
+    "authority",
+    "process"
+   ],
+   "weight": 15,
+   "source_sha256": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880",
+   "source_document_id": null,
+   "source_title": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880.pdf",
+   "official_url": "https://cms3.revize.com/revize/boonectyplanning/Documents/Applications%20Forms/Checklists/SignPermit_checklist.pdf"
+  }
+ ]
+}

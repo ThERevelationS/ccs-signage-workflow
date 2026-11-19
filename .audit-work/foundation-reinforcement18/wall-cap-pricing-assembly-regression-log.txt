@@ -1,0 +1,30 @@
+ok legacy migration: canon IDs + derived indices, input frozen, real geometry preserved
+ok insert foundation before targets keeps canon refs, reindexes
+ok remove attached foundation: priced children keep dangling canon, no reattach, durable issue
+ok remove wall: cap retained + warned; reassign clears
+ok remove pole: cabinet orphan retained + warned
+ok legacy index semantics: 0 valid, -1 unassigned, out-of-range -> unresolved token (not raw idx)
+ok canonical ID wins over contradictory legacy index; canon "" never falls back to index
+ok fail-closed: duplicate/invalid/reserved IDs, object refs, future version, colliding generator
+ok fresh mint never collides with later existing ID or dangling ref
+ok legacy child + previous graph: prev-first resolution, no occupant grab
+ok real geometry: identical rebuild retains seg IDs + cap; closing adds one edge; removed edge warns
+ok reversed points: oriented endpoints not equal -> fresh IDs + cap warns, not retargeted
+ok clone: fresh IDs all nodes + remap incl nested; catalog/zero/root untouched; second clone unique; partial only
+ok clone roundtrip JSON preserves graph + index adapters
+ok price invariance: nonzero calc scalars identical after normalization (identity metadata stripped)
+ok present-null canon -> explicit unassigned, never index fallback
+ok legacy cap resolves previous graph first; removed wall/segment -> unresolved token
+ok ambiguous identical endpoint pairs -> no heuristic retention
+ok unknown mount stays unsupported, visible orphan, durable issue
+ok SignageCabinetsPanel renders orphan cabinet (unknown + dangling) with cost + reassign
+ok FoundationPolesPanel canon select: value, missing option, none clears
+ok FoundationWallCapsPanel: missing wall/segment options + new wall clears segment
+ok prior unique edge duplicated incoming -> neither duplicate retains prior ID, cap orphan
+ok non-record incoming segment row fails closed
+ok prev graph lacks wall; incoming legacy wall_index -> unresolved token, not occupant
+ok clone: factory yielding a dangling referenced ID first is not used for minted node
+ok cap canon wall + legacy segment_index with prev graph: unresolved segment token
+ok issue classifications durable across JSON roundtrip (null refs, mounts)
+assembly passed=28 failed=0
+exit=0

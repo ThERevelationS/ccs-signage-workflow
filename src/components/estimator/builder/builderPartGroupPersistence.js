@@ -1,3 +1,7 @@
+// String fields can differ only by stray or repeated whitespace; normalize
+// whitespace (but not case) so stored rows match their create payloads.
+const cleanString = (value) => String(value ?? "").trim().replace(/\s+/g, " ");
+
 function comparable(value) {
   if (Array.isArray(value)) return value.map(comparable);
   if (!value || typeof value !== "object") return value;
@@ -13,6 +17,9 @@ function sameValue(a, b) {
   if (emptyA && emptyB) return true;
   if (!emptyA && !emptyB && Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
     return Math.abs(Number(a) - Number(b)) <= 0.000001;
+  }
+  if (typeof a === "string" && typeof b === "string") {
+    return cleanString(a) === cleanString(b);
   }
   return JSON.stringify(comparable(a)) === JSON.stringify(comparable(b));
 }

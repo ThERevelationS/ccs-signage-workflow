@@ -1,0 +1,72 @@
+{
+ "src/components/vinylEstimator/vinylPricingAvailability.js": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/vinylEstimator/vinylProjectHelpers.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/vinylEstimator/vinylCostHelpers.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/vinylEstimator/VinylWorkflowCard.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/vinylEstimator/VinylWorkflowCardHeader.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/vinylEstimator/VinylWorkflowMetricsBadge.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/vinylEstimator/VinylPartsTable.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/vinylEstimator/VinylCuttingExtrasCard.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/vinylEstimator/VinylWorkflowPersonnel.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/vinylEstimator/VinylMaterialPicker.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/vinylEstimator/VinylMachinePicker.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/vinylEstimator/VinylRollWidthRecommender.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/components/vinylEstimator/VinylProjectSummaryCard.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/pages/VinylEstimator.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ }
+}

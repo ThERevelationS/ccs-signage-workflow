@@ -1,0 +1,11 @@
+const fs = require('fs');
+const p = 'scripts/test-foundation-layout.mjs';
+let s = fs.readFileSync(p, 'utf8');
+const old = `  const it = itemOf(c);
+  await act(async () => { c.unmount(); });
+  it.props.onKeyDown({ key: 'ArrowRight', preventDefault: () => { } });`;
+const nw = `  const onKeyDown = itemOf(c).props.onKeyDown;
+  await act(async () => { c.unmount(); });
+  onKeyDown({ key: 'ArrowRight', preventDefault: () => { } });`;
+if (s.includes(old)) s = s.replace(old, nw); else console.log('MISS');
+fs.writeFileSync(p, s);

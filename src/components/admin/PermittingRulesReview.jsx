@@ -1,4 +1,5 @@
 import { invokePermittingReview } from "@/api/permittingReviewClient";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { isPermittingPreviewHost } from "./permittingPreviewQa";
 import PermittingReviewBrowserFixture from "./PermittingReviewBrowserFixture";
 import RuleCard from "./PermittingRuleCard";
@@ -59,6 +60,7 @@ const CONFLICT_STATES = [
 
 export default function PermittingRulesReview() {
   const [rules, setRules] = useState([]);
+  const [uncoveredLocalities, setUncoveredLocalities] = useState([]);
   const [showBrowserFixture, setShowBrowserFixture] = useState(false);
   const [counts, setCounts] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -66,6 +68,16 @@ export default function PermittingRulesReview() {
   const [filters, setFilters] = useState({ jurisdiction_name: "Boone County", rule_category: "", status: "", confidence: "", conflict_state: "" });
   const [expandedId, setExpandedId] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const copyChecklist = async () => {
+    const items = (rules || []).filter((r) => (r.requirement || "").trim());
+    const text = `Permit checklist — ${filters.jurisdiction_name || "Jurisdiction"}` + String.fromCharCode(10) + String.fromCharCode(10)
+      + items.map((r) => `- [ ] ${r.requirement}`).join(String.fromCharCode(10));
+    try {
+      await navigator.clipboard.writeText(text || "No requirements loaded.");
+      setCopied(true); setTimeout(() => setCopied(false), 2000);
+    } catch { /* clipboard unavailable */ }
+  };
   const [editDialog, setEditDialog] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [cursor, setCursor] = useState(null);
@@ -116,7 +128,23 @@ export default function PermittingRulesReview() {
   }, [filters.jurisdiction_name]);
 
   useEffect(() => { setCounts(null); loadCounts(); }, [filters.jurisdiction_name]);
-  useEffect(() => { loadRules(true); }, [filters.jurisdiction_name, filters.rule_category, filters.status, filters.confidence, filters.conflict_state]);
+  useEffect(() => {
+    const t = setTimeout(() => loadRules(true), 350);
+    return () => clearTimeout(t);
+  }, [filters.jurisdiction_name, filters.rule_category, filters.status, filters.confidence, filters.conflict_state]);
+
+  useEffect(() => {
+    let alive = true;
+    Promise.all([
+      staffEntities.PermitLocality.list().catch(() => []),
+      invokePermittingReview({ action: "list", limit: 300 }).then((r) => (r?.data || r)?.rules || []).catch(() => []),
+    ]).then(([localities, allRules]) => {
+      if (!alive) return;
+      const covered = new Set((allRules || []).map((r) => (r.jurisdiction_name || "").trim().toLowerCase()).filter(Boolean));
+      setUncoveredLocalities((localities || []).map((l) => l.name || "").filter((n) => n && !covered.has(n.trim().toLowerCase())));
+    });
+    return () => { alive = false; };
+  }, []);
 
   const handleApprove = async (rule) => {
     setActionLoading(rule.id);
@@ -242,6 +270,21 @@ export default function PermittingRulesReview() {
           <SelectTrigger><SelectValue placeholder="Conflict" /></SelectTrigger>
           <SelectContent>{CONFLICT_STATES.map(c => <SelectItem key={c.value} value={c.value || "all"}>{c.label}</SelectItem>)}</SelectContent>
         </Select>
+        <Button type="button" variant="outline" size="sm" onClick={copyChecklist} disabled={!rules?.length}
+          className="h-9 text-xs" title="Copy a checkbox list of every loaded requirement">
+          {copied ? "Copied!" : "Copy checklist"}
+        </Button>
+        {uncoveredLocalities.length > 0 && (
+          <span className="rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-800"
+            title={uncoveredLocalities.join(", ")}>
+            {uncoveredLocalities.length} localit{uncoveredLocalities.length === 1 ? "y" : "ies"} with no rules
+          </span>
+        )}
+        {rules.filter(r => r.conflict_state === "conflicting_sources" || r.conflict_state === "under_review").length > 0 && (
+          <span className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+            {rules.filter(r => r.conflict_state === "conflicting_sources" || r.conflict_state === "under_review").length} conflict{rules.filter(r => r.conflict_state === "conflicting_sources" || r.conflict_state === "under_review").length === 1 ? "" : "s"} to review
+          </span>
+        )}
         <Select value={filters.confidence || "all"} onValueChange={(v) => setFilter("confidence", v === "all" ? "" : v)}>
           <SelectTrigger><SelectValue placeholder="Confidence" /></SelectTrigger>
           <SelectContent>
@@ -319,4 +362,3 @@ export default function PermittingRulesReview() {
     </div>
   );
 }
-

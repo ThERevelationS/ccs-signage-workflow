@@ -1,0 +1,77 @@
+{
+  "synthetic": true,
+  "rendererMocked": true,
+  "webGLVerified": false,
+  "realBase44StorageVerified": false,
+  "results": [
+    {
+      "name": "actual overview mounts eight physical bars under their concrete and leaves all pricing/proposal inputs unchanged",
+      "ok": true
+    },
+    {
+      "name": "concrete and ground fade only around visible versioned steel with shared rotation/grade coordinates",
+      "ok": true
+    },
+    {
+      "name": "reinforcement visibility restores opaque concrete/ground and disposes each old renderer without writing a design",
+      "ok": true
+    },
+    {
+      "name": "hide/show releases and recreates canvas, listeners, observer and animation ownership",
+      "ok": true
+    },
+    {
+      "name": "unsupported versions remain visibly rejected while ordinary legacy foundations acquire no invented steel",
+      "ok": true
+    },
+    {
+      "name": "unavailable WebGL retains the mount and Retry actually creates a renderer without a false shown count",
+      "ok": true
+    },
+    {
+      "name": "failure after listener registration is fully cleaned and can be retried without duplicate listeners",
+      "ok": true
+    },
+    {
+      "name": "resize and existing camera/mode controls stay functional without altering the project",
+      "ok": true
+    },
+    {
+      "name": "invalid counts draw no replacement foundation; valid large quantities are explicitly preview-limited only",
+      "ok": true
+    },
+    {
+      "name": "unknown supports and fabrication omissions remain explicit instead of advertising zero supports or engineering approval",
+      "ok": true
+    },
+    {
+      "name": "explicit Saved2DAnchors mode applies saved poses to actual meshes and keeps recorded pole markers aligned",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: 1.25 != -1.25\n    at near (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:56:43)\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:214:70\n    at async check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:9)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:195:1"
+    },
+    {
+      "name": "layout draws only one anchor for quantity2 and switching back restores inspection copies without edits",
+      "ok": true
+    },
+    {
+      "name": "malformed independent poles are diagnosed without losing the valid concrete or rendering at zero",
+      "ok": true
+    },
+    {
+      "name": "legacy default height is labeled unknown and explicit active zero cannot create an8ft pole",
+      "ok": true
+    },
+    {
+      "name": "independent pole quantity budgets cap render markers only and remain explicit",
+      "ok": true
+    },
+    {
+      "name": "broken saved Foundation coordinates do not become a zero anchor while inspection remains usable",
+      "ok": true
+    },
+    {
+      "name": "saved mode survives unavailable WebGL retry and hide-show without leaking resources",
+      "ok": true
+    }
+  ]
+}

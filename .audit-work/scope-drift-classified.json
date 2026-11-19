@@ -1,0 +1,522 @@
+[
+ {
+  "p": "src/components/estimator/EstimateHeaderForm.jsx",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/a11y.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/brick/BrickGeometryPanel.jsx",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/brick/BrickTotals.jsx",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/brick/brickPricingAvailability.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/builder/builderMutationRecovery.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/builder/builderPartGroupPersistence.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/builder/historicalBackfill.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/builder/itemIdentity.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/builder/legacyBomReconcile.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/cnc/cncPricingAvailability.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/customerCreationService.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/customerPersistence.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/customerQuote.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/deepLinks.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/depositGate.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/estimateConcurrency.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/estimateLifecycle.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/estimateMutationGuard.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/estimateSaveRecovery.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/estimateStatusTransitions.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/FoundationBulkMaterialPanel.jsx",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/FoundationDesignBasisPanel.jsx",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/FoundationEquipmentTab.jsx",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/FoundationSectionBanner.jsx",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/FoundationSyncConflictDialog.jsx",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/ReinforcementDraftField.jsx",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/ReinforcementDraftList.jsx",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/foundationAssemblyPresets.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/foundationBulkMaterialChange.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/foundationDesignBasis.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/foundationDuplicateMirror.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/foundationFtInEntry.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/foundationReinforcementFrozenPricing.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/foundationReinforcementSupport.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/foundationReinforcementThreePreview.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/foundationReinforcementWorkOrderPart.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/foundationSceneEditOps.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/foundationSceneSelection.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/foundation/foundationTotalsSummary.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/home/StatCards.jsx",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/idempotentEntityCreate.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/laser/laserPricingAvailability.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/moduleShared/ModuleTemplateDialog.jsx",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/paint/paintCalc.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/parts/partCatalog.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/parts/partState.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/parts/partTemplateService.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/pipelineStatus.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/productStageSync.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/products/reusableSaveIdempotency.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/products/snapshotUtils.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/profitability.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/quickPricePersistence.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/quoteDefaultsPersistence.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/quoteDeliveryService.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/recentCustomerHistory.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/settings/moduleSettingDefaults.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/settings/settingsSaveGuard.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/components/estimator/userDateDisplay.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/components/estimator/workOrderSyncPersistence.js",
+  "onlyL": 0,
+  "onlyR": 0,
+  "trivial": true,
+  "localDirty": false,
+  "remoteEqHead": true
+ },
+ {
+  "p": "src/pages/BrickStoneEstimator.jsx",
+  "onlyL": 4,
+  "onlyR": 45,
+  "trivial": false,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/pages/LaserEstimator.jsx",
+  "onlyL": 170,
+  "onlyR": 235,
+  "trivial": false,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/pages/PaintingEstimator.jsx",
+  "onlyL": 44,
+  "onlyR": 142,
+  "trivial": false,
+  "localDirty": true,
+  "remoteEqHead": false
+ },
+ {
+  "p": "src/pages/VinylEstimator.jsx",
+  "onlyL": 24,
+  "onlyR": 108,
+  "trivial": false,
+  "localDirty": true,
+  "remoteEqHead": false
+ }
+]

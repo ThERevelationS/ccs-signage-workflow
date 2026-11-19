@@ -1,0 +1,38 @@
+{
+ "jurisdiction_id": "6acc7ef24af002dd0a297b69",
+ "jurisdiction_name": "Gates Mills",
+ "state": "OH",
+ "office_id": "scan-6acc7ef24af002dd0a297b69-office-0",
+ "office_name": "Gates Mills permitting office",
+ "snippets": [
+  {
+   "page": 3,
+   "snippet": "Gates Mills Community House Activity Guidelines Page 2 2. Any right or privilege granted to any person is personal and exclusive, and shall not be transferable to any other person(s). 3. The cost of repairing any damage to the facility or its contents will be charged directly to the permit holder. Excessive or unusual damage to building will disqualify residents from future use. 4. All use of the building requires building to be left in same condition as found. 5. Security Services are required for private parties. Applicant will be responsible for arranging and paying for security personnel who must be approved by the Village of Gates Mills. The arrangement for this service may be made by calling the Gates Mills Police at (440) 423 - 4456. The policeman is to be paid at the time of the event. The number of police required will be determined by the following scale: 1 Person – Under 100 G",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "3276cedcba5ecffd5cbc930e8919c027db05cc6d4ea9564457d9cbb1564d0b1e",
+   "source_document_id": null,
+   "source_title": "3276cedcba5ecffd5cbc930e8919c027db05cc6d4ea9564457d9cbb1564d0b1e.pdf",
+   "official_url": "https://www.gatesmillsvillage.com/sites/default/files/files/community%20building%20private%20application%20and%20guidelines%20-%20REVISED%207-10-25.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Cc: Community House / Custodian Service Director Mayor Clerk’s Office Police Chief NO SMOKING *Police _________ Community House: (440) 423 - 4633 Date of Application _______ __ Town Hall: (440) 423 - 4405 FAX: (440) 423 - 20 0 2 GATES MILLS COMMUNITY HOUSE 1460 CHAGRIN RIVER ROAD GATES MILLS, OHIO 44040 PRIVATE USE APPLICATION Applicant _________________________________ Phone # __________________ (Gates Mills Resident 21 - Yrs. or Older) Business # __________________ Address _________________________________ Signature ________________________________ (Applicant) NOTE: COMPLETING THIS APPLICATION DOES NOT GUARANTEE APPROVAL. YOU WILL BE INFORMED PROMPTLY IF YOUR APPLICATION HAS BEEN APPROVED OR DISAPPROVED. Setup Hours _________________ Date Desired _______________________________ * Event Hours _________________ Event / Purpose _____________________________________________________________",
+   "tags": [
+    "fee",
+    "prohibited",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "3276cedcba5ecffd5cbc930e8919c027db05cc6d4ea9564457d9cbb1564d0b1e",
+   "source_document_id": null,
+   "source_title": "3276cedcba5ecffd5cbc930e8919c027db05cc6d4ea9564457d9cbb1564d0b1e.pdf",
+   "official_url": "https://www.gatesmillsvillage.com/sites/default/files/files/community%20building%20private%20application%20and%20guidelines%20-%20REVISED%207-10-25.pdf"
+  }
+ ]
+}

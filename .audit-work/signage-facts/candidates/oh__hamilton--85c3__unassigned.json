@@ -1,0 +1,27 @@
+{
+ "jurisdiction_id": "6ac19f0b612abdd8404285c3",
+ "jurisdiction_name": "Hamilton",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "(513) 785-7360 | building@hamilton-oh.gov | www.hamilton-city.org SIGN PERMIT / APPLICATION FOR PLAN APPROVAL (NOT FOR TEMPORARY, BANNER, STICK-ON OR PAINTED SIGNS) ADDRESS OF PROJECT : APPLICANT NAME : PHONE : APPLICANT COMPANY (if any): APPLICANT EMAIL : PROPERTY OWNER NAME : PHONE : PROPERTY OWNER EMAIL : BRIEF DESCRIPTION OF WORK / APPROVAL REQUEST : CIRCLE ALL THAT APPLY : NEW SIGN | EXISTING SIGN ALTERATION, REPAIR OR REPLACEMENT WALL-MOUNTED | PROJECTING | MONUMENT | POLE | AWNING | MARQUEE | OTHER: Note: Monument signs 6 feet tall or less do not require a Sign Permit. Contact Planning Department for approval. PROVIDE THE FOLLOWING INFORMATION APPLICABLE TO THIS PROJECT : ESTIMATED VALUE OF THIS CONSTRUCTION: $ TOTAL # OF SIGNS UNDER THIS PERMIT: WILL SIGNAGE REQUIRE NEW, ADDED, EXTENDED OR REPLACED ELECTRIC CIRCUIT(S)? YES NO IF THIS IS FOR A CHANGE OF OCCUPANCY WHAT ARE THE EXIS",
+   "tags": [
+    "sign",
+    "permit_required",
+    "dimension",
+    "illumination",
+    "temporary",
+    "type",
+    "process"
+   ],
+   "weight": 12,
+   "source_sha256": "70a2b74df6e9e5684915351b9b3868adc0e85849fc935d4c8043e6a0ae8fca91",
+   "source_document_id": null,
+   "source_title": "70a2b74df6e9e5684915351b9b3868adc0e85849fc935d4c8043e6a0ae8fca91.pdf",
+   "official_url": "https://gis.hamilton-oh.gov/webdocs/Dept%20Building/Permit%20Application%20-%20Sign_4.pdf"
+  }
+ ]
+}

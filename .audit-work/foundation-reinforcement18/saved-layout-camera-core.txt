@@ -1,0 +1,6 @@
+ok known cube uses bounded sphere radius and narrower horizontal half-angle with10percent framing clearance
+ok every actual bounding corner stays in frame at desktop phone narrow aspect and all existing view angles
+ok invalid or empty bounds and invalid projection parameters return no fit rather than nonfinite state
+ok tiny and collapsed previews retain safe nonzero camera distance and near/far planes
+ok wide and very tall layouts can fit beyond old200ft wheel clamp without touching geometry
+exit=0

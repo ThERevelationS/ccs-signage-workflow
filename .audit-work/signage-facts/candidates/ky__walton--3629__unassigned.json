@@ -1,0 +1,891 @@
+{
+ "jurisdiction_id": "6aeb58363a814760ad5a3629",
+ "jurisdiction_name": "Walton",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "1. Applications for a free - standing sign must include a site plan of the property indicating the location of the proposed sign on the property with respect to the right - of - way lines and the property lines. Indicate length of road frontage(s). 2. Applications for a building mounted sign must include a plan indicating the width of the building frontage on the street or, in the case of a multi - tenant building, the portion of the building to be occupied by the applicant. 3. Plans for all applications must include scaled drawings indicating the total area of the proposed sign and the total height of the sign if it is a free - standing sign. 4. Plans must include a written description of the proposed sign including the type of the sign and supporting structure, method of illumination (if any), and construction materials to be used. 5. Applications must include the property owners signa",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "type",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 16,
+   "source_sha256": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880",
+   "source_document_id": null,
+   "source_title": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Checklists/SignPermit_checklist.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Free - Standing Signs and Monument Signs $250.00 if sign is between 0 - 50 sq. ft. in size (flat fee for each sign) $375.00 if sign is between 51 - 100 sq. ft. in size (Section 3408.6) $425.00 if sign is more than 100 sq. ft. in size Incidental Electronically Changeable Message Sign $50.00 plus applicable building mounted or free - (Sections 3408.5.A.2.h and 3408.5.B.2.h) standing/monument signs fees above Temporary Advertising Display Permits $45.00 for each permit (Section 3409) Electronically Changeable Message Signs Conditional Use Permit Required (see fee schedule) (Section 3408.5) PLUS $200.00 if sign is less than 50 sq. ft. in size $375.00 is sign is equal to or greater than 50 sq. ft. In size Small Community Overlay District Signs $50.00 is sign is between 0 - 32 sq. ft. in size (Building Mounted and Free - Standing Signs) $80.00 is sign is between 33 - 50 sq. ft. in size (Sectio",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "illumination",
+    "temporary",
+    "type",
+    "authority",
+    "process"
+   ],
+   "weight": 15,
+   "source_sha256": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880",
+   "source_document_id": null,
+   "source_title": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Checklists/SignPermit_checklist.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Temporary Advertising Display Page 3 SECTION 3409 TEMPORARY ADVERTISING A. Temporary devices utilized for advertising or attracting attention to a permitted use in Commercial or, Employment, or Recreation districts , when not part of a sign , shall be permitted only under the following rules and procedures: 1. A Temporary Advertising Permit shall be obtained prior to the placement of any combination of banners, poster, pennants, flags, ribbons, streamers, spinners, or other similar moving devices, as well as strings of lights or spot lights. The procedure for ob taining a Temporary Advertising Display Permit shall be the same as the procedure for obtaining a Sign Permit a except that Temporary Advertising Display Permits must contain the dates the advertising devices will be utilized. 2. A Temporary Advertising Display permit shall allow the use of temporary advertising devices for any e",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "process"
+   ],
+   "weight": 15,
+   "source_sha256": "89b66bf9154501386c6aa73f463d9845881041b2ef0fb49ea9d60ab51c083ef2",
+   "source_document_id": null,
+   "source_title": "89b66bf9154501386c6aa73f463d9845881041b2ef0fb49ea9d60ab51c083ef2.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/TAD.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "One (1 ) cop y of submitted drawings are required An application consists of all fees paid in full, submitted drawings, and a completed application form The information on the drawings shall contain the following items: (a) location of proposed sign(s); (b) height of proposed sign(s); (c) dimensions of sign or signage area; (d) type of illumination; and (e) type of construction material SECTION A : (To be completed by applicant) 1 . Name of Business : 2 . Location of Business : 3. Current Owner : Address: City State Zip Code Phone Number: Fax Number: Email: 4. Applicant: Address: City State Zip Code Phone Number: Fax Number: Email: 5. Proposed Signs A. Sign 1 (1) Type of Sign (check one) Canopy Menu Board (drive through) Directional Monument (free standing ) Electronic Message Board/ Architectural Free Standing Display Screen Other: (2) Height of Proposed Sign (feet) : (3) Area of Propos",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d",
+   "source_document_id": null,
+   "source_title": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/SignPermit.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Sign Permit Page 4 (4) Is this a face change : Yes No (5) Linear feet of building width, or lease space, on which the sign will be mounted (for building mounted signs only): (6) Linear feet of lot frontage along the road where the sign will be visible: (7) Is the sign replacing an existing sign: Yes No If yes, indicate the height (in feet) and sign area (in square feet) of the existing sign: (8) Are there any other signs of this type on the building (or lease area) or on the property: Yes No If yes, indicate the number, height (in feet), and sign area (in square feet) for each sign: G. Sign 7 (1) Type of Sign (check one) Canopy Menu Board (drive through) Directional Monument (free standing) Electronic Message Board/ Architectural Free Standing Display Screen Other: (2) Height of Proposed Sign (feet): (3) Area of Proposed Sign (square feet): (4) Is this a face change: Yes No (5) Linear fe",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d",
+   "source_document_id": null,
+   "source_title": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/SignPermit.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "X. SIGN PERMIT REVIEW Entrance and Monum ent Signs $150.00 per sign (flat fee for each sign) $ 60.00 (Directional Sign and per sign) (Sections 3410 & 3412) Museum Signs, Church Signs, School $100.00 Signs, Library Signs, etc. (flat fee for each sign) (Section 3411) Building-Mounted Signs (flat fee $100.00 if Sign is Between 0-32 s.f. in Size for each sign) (Section 3413) $150.00 if Sign is Between 33-50 s.f. in Size $300.00 if Sign is Between 51-100 s.f. in Size $375.00 if Sign is More than 100 s.f. in Size Free-Standing/Canopy Signs $100.00 (flat fee for each sign) (Section 3413) Drive-Through Signs or Menu Boards $100.00 per Sign Free-Standing/Monum ent Signs (flat fee) $250.00 if Sign is Between 0-50 s.f. in Size for each sign) (Section 3413) $375.00 if Sign is Between 51-100 s.f. in Size $425.00 if Sign is More Than 100 s.f. in Size Incidental Electronically Changeable $ 50.00 plus A",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "illumination",
+    "type",
+    "authority",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a",
+   "source_document_id": null,
+   "source_title": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/About%20us/FeeSchedule.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Sign Permit Page 2 (for building mounted signs only): (6) Linear feet of lot frontage along the road where the sign w ill be visible: (7) Is the sign replacing an existing sign : Yes No If yes, indicate the height (in feet) and sign area (in square feet) o f the existing sign : (8) Are there any other signs of this type on the building (or lease area) o r on the property: Yes No If yes, indicate the number, height (in feet), and sign area (in square feet ) for each sign: B. Sign 2 (1) Type of Sign (check one) Canopy Menu Board (drive through) Directional Monument (free standing) Electronic Message Board/ Architectural Free Standing Display Screen Other: (2) Height of Proposed Sign (feet): (3) Area of Proposed Sign (square feet): (4) Is this a face change : Yes No (5) Linear feet of building width, or lease space, on which the sign will be mounted (for building mounted signs only): (6) Li",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 10,
+   "source_sha256": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d",
+   "source_document_id": null,
+   "source_title": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/SignPermit.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Sign Permit Page 3 D. Sign 4 (1) Type of Sign (check one) Canopy Menu Board (drive through) Directional Monument (free standing) Electronic Message Board/ Architectural Free Standing Display Screen Other: (2) Height of Proposed Sign (feet): (3) Area of Proposed Sign (square feet): (4) Is this a face change : Yes No (5) Linear feet of building width, or lease space, on which the sign will be mounted (for building mounted signs only): (6) Linear feet of lot frontage along the road where the sign will be visible: (7) Is the sign replacing an existing sign: Yes No If yes, indicate the height (in feet) and sign area (in square feet) of the existing sign: (8) Are there any other signs of this type on the building (or lease area) or on the property: Yes No If yes, indicate the number, height (in feet), and sign area (in square feet) for each sign: E. Sign 5 (1) Type of Sign (check one) Canopy M",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 10,
+   "source_sha256": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d",
+   "source_document_id": null,
+   "source_title": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/SignPermit.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Boone County Planning Commission will issue a 911 address once the tower or pole is approved. SECTION A : (To be completed by applicant) 1. Application Type A. Cellular Antenna Tower – Public Hearing Process ($2,500.00) One (1) copy of the Uniform Application submittal requirements shall be furnished (see Section 3197 of the Boone County Zoning Regulations ) Check One: Newly proposed cellular antenna tower (permanent and temporary structures) Proposed modification to an existing tower, public utility tower, athletic stadium light pole or co - location on a building or other tall structure and all preferred approval criteria are not met (see Table 1 in Section 3197 of the Boone County Zoning Regulations ) B. Cellular Antenna Tower – Administrative Process ($1.250.00) One (1) copy of 11” x 17” plans (cover page, tower location, tower elevations, lease compound) stamped by a KY Professional",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "7ea68d1eb70ab84766b0593c0125d1ac13600ce44dd8519b56521520496cbfce",
+   "source_document_id": null,
+   "source_title": "7ea68d1eb70ab84766b0593c0125d1ac13600ce44dd8519b56521520496cbfce.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/UniformWireless.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Three (3) copies of submitted drawings are required A separate sign permit needs to be obtained for any exterior signage SECTION A : (To be completed by applicant) Fee: $200.00 for tenant Finish for new office, retail, industrial, etc. uses 1. Name of Business : 2. Applicant: 3. Mailing Address: City State Zip Code Phone Number: Fax Number: Email: 4. Location of Business : City State Zip Code 5. Detailed Description of Business : 6. Gross square footage of overall tenant space : 7. If business is an eating/drinking establishment, indicate the number of indoor and outdoor seats: 8. If business is an industrial, warehouse, or manufacturing use, indicate: A. Gross square footage of office areas: B. Number of employees on maximum shift in warehouse and/or production areas : C. Explain any chemicals/quantities stored on site 10 . Applicant’s Signature: TENANT FINISH BOONE COUNTY PLANNING COMM",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "illumination"
+   ],
+   "weight": 9,
+   "source_sha256": "f3201126e030d73fdf3da59c6f6c0176d0f637547202599732b4d164ddd7b552",
+   "source_document_id": null,
+   "source_title": "f3201126e030d73fdf3da59c6f6c0176d0f637547202599732b4d164ddd7b552.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/TenantFinish.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Planning Commission . The minimum Development Plan requirements for applications involving the Industrial Three District (I - 3) are listed in ARTICLE 11 . 1. Minimum Requirements i. General Site Characteristics - ownership, topography, soils, drainage, vegetation and other physical characteristics. ii. Transportation Patterns - public and private roads and internal and external circulation patterns. iii. Land Use Characteristics - existing and proposed land uses, open spaces , impervious surfaces including streets , parking areas, structures and buildings (general description of size, area, intensities / densities , and height ). iv. Utilities and Infrastructure . v. Relationship of Proposed Zone Change with Comprehensive Plan - how specifically the proposed zone change would conflict, conform, compliment or otherwise affect the Comprehensive Plan as well as any special studies that are",
+   "tags": [
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c",
+   "source_document_id": null,
+   "source_title": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Checklists/ZoningMapAmendment_checklist.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Temporary Storage Trailer Page 3 SECTION 3506 TEMPORARY STORAGE TRAILER PERMITS A. Temporary Storage Trailers , as defined in ARTICLE 40 , are permitted within Commercial Two (C - 2), Commercial Services (C - 3) and Recreation (R) districts subject to the terms and provisions of this Article and other applicable provisions of these regulations. B. Within the City of Florence: 1. Temporary storage trailers shall not be located within any required off - street parking space or drive aisle. 2. Temporary storage trailers may be located on a sidewalk as long as it does not impede pedestrian circulation. 3. No sales shall be conducted from the temporary storage trailer. SECTION 3507 TIME LIMITS FOR TEMPORARY STORAGE TRAILERS A. Temporary Storage Trailers are permitted on a site for one period of up to sixty (60) consecutive calendar days per calendar year, per address. SECTION 3508 TEMPORARY S",
+   "tags": [
+    "prohibited",
+    "process",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "99f7a0307e9dac44365e98fa085553155361002c7b564a1c2992980917689dd3",
+   "source_document_id": null,
+   "source_title": "99f7a0307e9dac44365e98fa085553155361002c7b564a1c2992980917689dd3.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/TST.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "ALL OF THE FOLLOWING MUST BE SUPPLIED: 1. Completed application including property owner’s signature . 2. Legal description of the property including Deed Book, Page Number, and Group Number. 3. N ames and mailing addresses of all adjoining property owners, including those located across any road, street, or highway. 4. A site plan for the development/use of the property in accordance with Article 30 of the Zoning Regulations. 5 . Fee paid in full at the time of application. VARIANCE REVIEW: Agricultural and $350.00 (flat fee) + $250.00 (legal ad, adjoining property owners, and sign posting Residential Zones notification) + $66.00 (CLUR) (each variance) All Other Zones $6 50.00 (flat fee) + $250.00 (legal ad, adjoining property owners, and sign posting (each variance) notification) + $66.00 (CLUR) The Boone County Zoning Regulations require, through Section 204. D and 204.E, finding of f",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "ddf90a1349db3f359140977856f127941c4e5fdd366e9ee1244caca5af8bcd61",
+   "source_document_id": null,
+   "source_title": "ddf90a1349db3f359140977856f127941c4e5fdd366e9ee1244caca5af8bcd61.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Checklists/Variance_checklist.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Temporary Use Page 3 SECTION 3511 TEMPORARY USE PERMITS A. Temporary Use Permits allow seasonal commercial activities which are open to the public and of limited duration on farms which contain at least fifty (50) contiguous acres, regardless of district . The seasonal commercial activities must be accessory to active agricultural production occurring on the property. Examples include but are not limited to farm tours, hay rides, agricultural exhibits, corn mazes, petting zoos, barn dances, and other agri - tourism activities. Sales of produce grown on the premises or other goods that are related to the seasonal commercial activities are also permitted. B. If the proposed activities are listed under the applicable district as a Conditional Use , a property owner may elect to apply for a Conditional Use Permit per the requirements of ARTICLE 2 . If a Conditional Use Permit is obtained for",
+   "tags": [
+    "prohibited",
+    "process",
+    "temporary"
+   ],
+   "weight": 7,
+   "source_sha256": "26c0583a93b72019c49fc27dd57f9d4640953218a8f89a7f0109392400122721",
+   "source_document_id": null,
+   "source_title": "26c0583a93b72019c49fc27dd57f9d4640953218a8f89a7f0109392400122721.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/TempUsePermit.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "ALL OF THE FOLLOWING MUST BE SUPPLIED: 1. Completed application including property owner’s signature (no fax or copy). 2. Legal description of the property including Deed Book, Page Number, and Group Number. 3. If development is planned by this application, then the Board requires the submission of a Site Plan for the development/use of the property in accordance with Article 30, of the Boone County Zoning Regulations. 3. N ames and mailing addresses of all adjoining property owners, including those located across any road, street, or highway. 4. Fee paid in full at the time of application. APPEAL REVIEW: Agricultural and $400.00 (flat fee) + $250.00 (legal ad, adjoining property owners, and sign posting Residential Zones notification) + $66.00 (CLUR) All Other Zones $400.00 (flat fee) + $250.00 (legal ad, adjoining property owners, and sign posting ) + $66.00 (CLUR) CHANGE OF NONCONFORM",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "28a67406a9556617b1a711957093c321ff43520c517afbee3c7690dca0bbbe63",
+   "source_document_id": null,
+   "source_title": "28a67406a9556617b1a711957093c321ff43520c517afbee3c7690dca0bbbe63.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Checklists/ChangeNonConformingandAppeals_checklist.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Temporary Storage Trailer Page 4 5. The placement of a Temporary Storage Trailer must meet a minimum five (5) foot setback, except that any trailer with a refrigeration unit or other device used for power shall not be located within two hundred (200) feet of a property line adjacent to a residential district or use . Any Temporary Storage Trailer without a refrigeration unit or other device for power shall not be located within fifty (50) feet of a property line adjacent to a residential district or use . 6. Merchandise shall not be sold directly out of a Temporary Storage Trailer , nor shall a Temporary Storage Trailer be used for the storage of bulk hazardous or toxic materials. 7. No Temporary Storage Trailer shall block , impair, or otherwise unduly inconvenience patrons of existing commercial developments on a site . To ensure the safety of the individuals utilizing the site , a pos",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "temporary",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "99f7a0307e9dac44365e98fa085553155361002c7b564a1c2992980917689dd3",
+   "source_document_id": null,
+   "source_title": "99f7a0307e9dac44365e98fa085553155361002c7b564a1c2992980917689dd3.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/TST.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "REVISED January 10, 2020 BOONE COUNTY PLANNING COMMISSION FEE SCHEDULE To Administer the Boone County Zoning & Subdivision Regulations and all Documents and Products Sold by the Boone County Planning Commission I. MAJOR SITE PLAN REVIEW ** A. M inimum M ajor Site Plan Review Fee (All Zones except Engineered Retaining W all on Single-Family Residential Lot) (Applicable if the fee calculated below $ 750.00 Flat Fee is less than $1,016.00) + $200.00 Inspection + $ 66.00 CLUR $1,016.00 Total M inimum Fee Engineered Retaining W all on Single- $ 400.00 Flat Fee Fam ily Residential Lot (m ore than 4 feet in height) B. M ajor Site Plan Review Procedure In I-1, I-2, I-3, I-4, EPD & A Zones - first 20,000 sq. ft. of bldg. 2.0 Cents Per Square Foot. of Building - next 60,000 sq. ft. of bldg. 2.5 Cents Per Square Foot of Building - any additional sq. ft. of bldg. 2.0 Cent Per Square Foot of Building",
+   "tags": [
+    "fee",
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a",
+   "source_document_id": null,
+   "source_title": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/About%20us/FeeSchedule.pdf"
+  },
+  {
+   "page": 8,
+   "snippet": "ZONING MAP AMENDMENT AND CONCEPT DEVELOPMENT PLAN REVIEWS (Cont’d) I-1 & I-2 Zones $2,000.00 Flat fee + $250.00 Legal Ad, Adjoining Property Owners and Sign Posting (Notification) + $ 66.00 CLUR + $ 20.00 Per Acre of Land Under Review I-3, I-4 & A Zones $3,000.00 Flat Fee + $250.00 Legal Ad, Adjoining Property Owners and Sign Posting (Notification) + $ 66.00 CLUR + $ 20.00 Per Acre of Land Under Review Postponem ent or continuance 80% of the Above Flat Fee of a Zoning Map Am endm ent Request + $250.00 Legal Ad, Adjoining Property Owners and or Concept Developm ent Plan Sign Posting (Notification) Approval requiring a new Public Hearing (when requested by the applicant and as a result of the applicant's action) Deferral of Zoning Map Am endm ent or 30% of the Above Flat Fee Concept Developm ent Request from scheduled Business Meeting or Zone Change Com m ittee Meeting (when requested by t",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a",
+   "source_document_id": null,
+   "source_title": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/About%20us/FeeSchedule.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "Documents & Publications (Cont’d) 2010 & 2005 Com prehensive Plan (Book) $ 35.00 each 2010 & 2005 Com prehensive Plan (CD) $ 20.00 each 2010 & 2005 Existing & Future Land Use Map $ 5.00 each **************************************************************************************************************************************************** 1994 Florence Main Street Zoning Study $ 10.00 2002 Historic Structures of Boone County $ 10.00 1992 Houston-Donaldson Study $ 20.00 2012 Mall Road District Study $ 25.00 PDR/TDR Study $ 10.00 Central Florence Strategic Plan $ 20.00 (An Update of the Parkway Corridor Study) 2000 Union Town Plan $ 20.00 2000 Union Town Plan Map $ 5.00 (11\" x 17\") 1998 W estern Boone County Study $ 10.00 Docum ents Not Listed Actual Reproduction Costs XX. GIS SERVICES, GIS DATA & MAPPING RELATED PRODUCTS (Attachment A) The fees which appear in Attachm ent A are subject to ",
+   "tags": [
+    "area",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a",
+   "source_document_id": null,
+   "source_title": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/About%20us/FeeSchedule.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Design Review Page 2 12. Is the site subject to any of the following (check all that apply): Conditional Use Permit Variance Map Amendment If yes, date of action: 13. Current Zoning of Property: 14. Deed Book Page Number Group Number 15. Do the submitted design plans or architectural drawings and submitted Site Plan address the following standards (check all that apply): Architectural Details Placement or Location of Buildings Building Facades Relationship of Color Detention/Retention Ponds or Lakes Relationship of Materials Elevation Retaining Walls Entrances and Porch Projections Roof Types and Shapes Fences, Walls, and Landscaped Berms Scale Ground Cover or Paved Surfaces Signage Height Utilities Landscaping Windows and Doors Lighting 16. Design Review Jurisdiction/Location (check all that apply): Unincorporated Boone Florence Walton Union Property Owner’s Signature : Applicant ’s Sig",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "c8ebf0386a4ed903f9a498c9ba990d03098d1fc2fae433cbe415371c22bc9654",
+   "source_document_id": null,
+   "source_title": "c8ebf0386a4ed903f9a498c9ba990d03098d1fc2fae433cbe415371c22bc9654.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/DesignReview.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "ALL OF THE FOLLOWING MUST BE SUPPLIED: 1. Completed application including property owner’s signature . 2. Legal description of the property including Deed Book, Page Number, and Group Number. 3. N ames and mailing addresses of all adjoining property owners, including those located across any road, street, or highway. 4. Fee paid in full at the time of application. CONDITIONAL USE PERMIT REVIEW: In A - 1 or A - 2 Zones $450.00 (flat fee) + $250.00 (legal ad, adjoining property owners, and sign posting notification) + $66.00 (CLUR) In PF, R, or CONS Zones $450.00 (flat fee) + $250.00 (legal ad, adjoining property owners, and sign posting notification) + $66.00 (CLUR) In RS, RSE, SR - 1, SR - 2, $500.00 (flat fee) + $250.00 (legal ad, adjoining property owners, and sign posting SR - 3, or R - 1F Zones notification) + $66.00 (CLUR) In UR - 1, UR - 2, UR - 3, $500.00 (flat fee) + $250.00 (leg",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "d2dd9e55aad6283a1496b4147b814143f6005c8a79ca3d14f71388976911778b",
+   "source_document_id": null,
+   "source_title": "d2dd9e55aad6283a1496b4147b814143f6005c8a79ca3d14f71388976911778b.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Checklists/ConditionalUsePermit_checklist.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "requested by the applicant and as a result of the applicant’s action) Deferral of Zoning Map 30% of the above flat fee Amendment or Concept Development Plan request from scheduled Business Meeting or Zone Change Committee Meeting (when requested by the applicant and as a result of the applicant’s action) 5. If all principally permitted, conditional, and accessory uses for the proposed zone requested are not just those shown on the Concept Development Plan, this must be indicated on the Application for Zoning Action form under Description request. 6. Submittal of a Concept Development Plan as per Section 30 2 of the Boone County Zoning Regulations. SECTION 302 ZONING MAP AMENDMENT APPLICATION AND CONCEPT DEVELOPMENT PLAN A. The following standards and procedures apply to zoning map amendment applications and Concept Development Plans . 1. Application forms for zoning map amendments shall ",
+   "tags": [
+    "sign",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c",
+   "source_document_id": null,
+   "source_title": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Checklists/ZoningMapAmendment_checklist.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Temporary Commercial Display - Unincorporated Page 3 SECTION 3501.1 Time Limits For Displays A. Temporary Commercial Displays cannot exist or be present on a site in any form, whether open for viewing or not, more than seven (7) consecutive days. Seasonal Temporary Commercial Displays may not exist or be present on a site in any form, whether open for viewing or not, more than thirty (30) consecutive days. SECTION 3501.2 Permit Required A. Prior to placing any Temporary Commercial Display or Seasonal Temporary Commercial Display on any property, the person or persons owning or having control or supervisory authority of such display shall apply and be required to obtain a permit from the Zoning Administrator for the display. SECTION 3501.3 Application Contents A. The application must contain the following information and be submitted with three (3) copies of the appropriate drawings or pl",
+   "tags": [
+    "dimension",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "3628f1b0702615d4fb0b39bf03bf2ee4a0cfacb307dc8c20c58a92fb673b2b16",
+   "source_document_id": null,
+   "source_title": "3628f1b0702615d4fb0b39bf03bf2ee4a0cfacb307dc8c20c58a92fb673b2b16.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/TCDBooneCounty.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Temporary Commercial Display - I ncorporated Page 4 FLORENCE SECTION 3502.1 Time Limits For Displays A. Temporary Commercial Displays cannot exist or be present on a site in any form, whether open for viewing or not, more than ten (10) consecutive days. SECTION 3502.2 Permit Required A. Prior to placing any Temporary Commercial Display on any property, the person or persons owning or having control or supervisory authority of such display shall apply and be required to obtain a permit from the Zoning Administrator for the display. SECTION 3502.3 Application Contents A. The application must contain the following information and be submitted with three (3) copies of the appropriate drawings or plans: a. Name, address, telephone number and signature of the owner of the property where the display is proposed to be located and the operator of the business activity where the display is propose",
+   "tags": [
+    "dimension",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "698cdb1fa464bce9ae51fdfc7897bc2b7729b28460751477c1905ff93ca44442",
+   "source_document_id": null,
+   "source_title": "698cdb1fa464bce9ae51fdfc7897bc2b7729b28460751477c1905ff93ca44442.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/TCDFlorenceUnionWalton.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Temporary Commercial Display - I ncorporated Page 5 SECTION 3502.9 Limit Of Permits On Each Site A. The purpose of this Article is to provide access by the public to commercial displays, exhibits or events of limited duration rather than to establish a regular or long - term use of land. Thus, no permit shall be issued for a site under this Article that has had five (5) prior Temporary Commercial Display permits issued during the same calendar year for the same site . UNION AND WALTON SECTION 3503.1 Time Limits For Displays A. Temporary Commercial Displays cannot exist or be present on a site in any form, whether open for viewing or not, more than seven (7) consecutive days. Seasonal Temporary Commercial Displays may not exist or be present on a site in any form, whether open for viewing or not, more than thirty (30) consecutive days. SECTION 3503.2 Permit Required A. Prior to placing an",
+   "tags": [
+    "dimension",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "698cdb1fa464bce9ae51fdfc7897bc2b7729b28460751477c1905ff93ca44442",
+   "source_document_id": null,
+   "source_title": "698cdb1fa464bce9ae51fdfc7897bc2b7729b28460751477c1905ff93ca44442.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/TCDFlorenceUnionWalton.pdf"
+  },
+  {
+   "page": 9,
+   "snippet": "Variances: (Cont’d) All Other Zones $ 650.00 Flat Fee (Each Variance) + $250.00 Legal Ad, Adjoining Property Owners and Sign Posting (Notification) + $ 66.00 CLUR Conditional Use Permit: A-1, A-2 Zones $ 450.00 Flat Fee + $250.00 Legal Ad, Adjoining Property Owners and Sign Posting (Notification) + $ 66.00 CLUR PF, R, & CONS Zones $ 450.00 Flat Fee + $250.00 Legal Ad, Adjoining Property Owners and Sign Posting (Notification) + $ 66.00 CLUR RS, RSE, SR-1, SR-2 $ 500.00 Flat Fee SR-3 &R1F Zones + $250.00 Legal Ad, Adjoining Property Owners and Sign Posting (Notification) + $ 66.00 CLUR Conditional Use Permit: (Cont’d) UR-1, UR-2, UR-3, $ 500.00 Flat Fee MHP & Zones + $250.00 Legal Ad, Adjoining Property Owners and Sign Posting (Notification) + $ 66.00 CLUR C-1, C-2, C-3, C-4, $ 800.00 Flat Fee O-1, O-1A & O-2, + $250.00 Legal Ad, Adjoining Property Owners and FMS & W D Zones Sign Posting (",
+   "tags": [
+    "sign",
+    "fee",
+    "dimension",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a",
+   "source_document_id": null,
+   "source_title": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/About%20us/FeeSchedule.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Seasonal Temporary Commercial Display Page 3 SECTION 3501.1 Time Limits For Displays A. Temporary Commercial Displays cannot exist or be present on a site in any form, whether open for viewing or not, more than seven (7) consecutive days. Seasonal Temporary Commercial Displays may not exist or be present on a site in any form, whether open for viewing or not, more than thirty (30) consecutive days. SECTION 3501.2 Permit Required A. Prior to placing any Temporary Commercial Display or Seasonal Temporary Commercial Display on any property, the person or persons owning or having control or supervisory authority of such display shall apply and be required to obtain a permit from the Zoning Administrator for the display. SECTION 3501.3 Application Contents A. The application must contain the following information and be submitted with three (3) copies of the appropriate drawings or plans: a. ",
+   "tags": [
+    "dimension",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "ae3be76260c5be717b63bb4fa510fa381d58246815b3f79cd9a941a4b4b0b255",
+   "source_document_id": null,
+   "source_title": "ae3be76260c5be717b63bb4fa510fa381d58246815b3f79cd9a941a4b4b0b255.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/TCDSeasonal.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Sign Permit Page 5 SECTION B : (To be completed by Planning Commission staff) 1. Date Received: Fee Received: Receipt #: 2. Number of Copies Received: 3. Is application complete: Yes No 4 . Staff Reviewer: 5. Staff Action: Date of Action: Permit Number: Approved Approved with Conditions (see #6) Denial (See #7) 6. Conditions of Approval: 7. Reasons for Denial: 8. Date copy sent to Building Department : Boone County Planning Commission Boone County Administration Building 2950 Washington Street, Room 317 P.O. Box 958 Burlington, Kentucky 41005 Phone: 859 - 334 - 2196 plancom@boonecountyky.org www.boonecountyky.org BCPC: Ma y 2024",
+   "tags": [
+    "sign",
+    "permit_required",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d",
+   "source_document_id": null,
+   "source_title": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/SignPermit.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "6. The Planning Commission may recommend, and the legislative body or Fiscal Court may approve, the proposed zoning district subject to any agreed conditions or qualifications found merited in the Concept Development Plan or conditions on the site . 7. Where following a Concept Development Plan is an agreed condition of a zoning map amendment , as a further condition to the approval of a zone change involving a Concept Development Plan , the Planning Commission may require that substantial construction be initiated within a certain period of time of not less than one (1) year; provided that such zoning change shall not revert to its original designation unless there has been a public hearing. 8. If an approved Zoning Map Amendment is subject to a Concept Development Plan and/or conditions pursuant to a written agreement, and/or is approved in conjunction with a variance or conditional us",
+   "tags": [
+    "prohibited",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c",
+   "source_document_id": null,
+   "source_title": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Checklists/ZoningMapAmendment_checklist.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "xv. Detailed traffic study if the proposed development is large - scaled or if the project would significantly alter existing traffic patterns or volume (refer to ARTICLE 32 ). xvi. Images of the proposed buildings to demonstrate the intended architectural appearance and character. For applications involving the EPD, RPD or PD overlay, design guidelines that include architectural standards shall be provided for multi - phased projects . xvii. For applications involving the EPD or RPD districts , a table of proposed dimensional standards for the proposed land uses or phases including lot sizes and frontages , building heights and intensities , and setbacks. For applications involving the PD overlay district , a description of any requested exceptions to the requirements of the underlying district . xviii. For applications involving the PD overlay, EPD, or RPD districts , a written narrati",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c",
+   "source_document_id": null,
+   "source_title": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Checklists/ZoningMapAmendment_checklist.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Temporary Use Page 4 than the access drive, all activities authorized by a Temporary Use Permit shall not be located within fifty (50) feet from a road right - of - way . f. The Zoning Administrator may approve exceptions to the performance standards in this section provided a specific proposal fulfills the essential purpose and effect of the stated requirements. SECTION 3515 TEMPORARY USE PERMIT FEE A. At the time of application for a Temporary Use Permit, the applicant shall pay in full to the Boone County Planning Commission a fee as indicated in the adopted fee schedule.",
+   "tags": [
+    "prohibited",
+    "temporary",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "26c0583a93b72019c49fc27dd57f9d4640953218a8f89a7f0109392400122721",
+   "source_document_id": null,
+   "source_title": "26c0583a93b72019c49fc27dd57f9d4640953218a8f89a7f0109392400122721.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/TempUsePermit.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Final Plat Review Page 2 13. Review Fees: $ 5 00.00 Flat fee (first 2 pages) + $ 20 .00 Per acre + $100.00 Per sheet if submittal is more than two (2) sheets Revisions: 80% of the original fee Review Fee: 14. Subdivision Jurisdiction/Location (check all that apply): Unincorporated Boone Florence Walton Union 15. Check one of the following that applies to this submittal : All public improvements, as defined in the Boone County Subdivision Regulations , have been installed and inspected. A minimum of 75% of the public improvements have been installed and inspected and a guarantee Or agreement for the remaining 25% will be posted with the appropriate legislative unit. This Final Plat application is being filed in order to obtain two zoning permits only and will not be Recorded until the public improvements have been installed and inspected. 1 6 . This Final Plat may require the dedication o",
+   "tags": [
+    "fee",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "29eef2919d174153bc5f4e663ee91a443203a2a5c88476f1f09430de2e6aa0ae",
+   "source_document_id": null,
+   "source_title": "29eef2919d174153bc5f4e663ee91a443203a2a5c88476f1f09430de2e6aa0ae.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/FinalPlat.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Temporary Commercial Display - I ncorporated Page 2 6. Description Of Any Temporary Signs To Be Used With Display: (Size, Height, Type, and Location): 7 Requested Starting Date : Requested Ending Date : I, the undersigned, understand and agree that the above described advertisement will be removed no later than the expiration date shown on the approved Temporary Commercial Display Permit. Property Owner’s Signature : Business Operator Signature : Applicant’s Signature : Applicant’s Name (Please Print or Type):",
+   "tags": [
+    "sign",
+    "dimension",
+    "temporary"
+   ],
+   "weight": 5,
+   "source_sha256": "698cdb1fa464bce9ae51fdfc7897bc2b7729b28460751477c1905ff93ca44442",
+   "source_document_id": null,
+   "source_title": "698cdb1fa464bce9ae51fdfc7897bc2b7729b28460751477c1905ff93ca44442.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/TCDFlorenceUnionWalton.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Zoning Map Amendment Page 3 SECTION B : (To be completed by Planning Commission staff) 1. Date Received: Fee Received: Receipt #: 2. Number of Copies Received: 3. Has the following been submitted (check all that apply): Completed Application Concept Development Plan Legal Description Names and Mailing Addresses of Adjacent Property Owners 4. Date the application is Administratively Complete (as defined in KRS 100.211) : 5 . Staff Reviewer: 6. Committee Chairperson : 7. Scheduled Public Hearing Date: 8 . Boone County Planning Commission Action: Date of Action: Approved Approved with Conditions Denial Other 9. Resolution Number: Boone County Planning Commission Boone County Administration Building 2950 Washington Street, Room 317 P.O. Box 958 Burlington, Kentucky 41005 Phone: 859 - 334 - 2196 plancom@boonecountyky.org www.boonecountyky.org BCPC: Ma y 2024",
+   "tags": [
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "78a0fd401145d17aaf133db6a08b72dcb2313b35b7dd1ddc806727f040b37757",
+   "source_document_id": null,
+   "source_title": "78a0fd401145d17aaf133db6a08b72dcb2313b35b7dd1ddc806727f040b37757.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/ZMA.pdf"
+  },
+  {
+   "page": 38,
+   "snippet": "-37- multi-pane sidelights. Windows, which appear singly or in pairs, contain double-hung multi-light sash and are often framed by shutters with ornamental cutouts. Porch treatments range from the simple entry porch to the colossal full-height portico. The mode achieved popularity in the county c. 1900 and its popularity has never waned. A diverse group, Boone County's Colonial Revival houses range from Cape Cod cottages, to imposing two-story houses of center-hall plan; a few gambrel-roofed examples, such as BE-1013 in Florence and BE-934 in Walton, exhibit the influence of the Dutch Colonial Revival mode. Perhaps the earliest extant example of the Colonial Revival is the Alonzo Gaines House (BE-118; c. 1900) in Hebron, a stylish side-passage dwelling whose design combines late Victorian and neo- Colonial elements. Colonial Revival detailing is present on several rural dwellings of the ",
+   "tags": [
+    "dimension",
+    "illumination"
+   ],
+   "weight": 5,
+   "source_sha256": "79ab88e3a2e892180dd786489166430a177b52320af484e92cd36f3bd5a38df6",
+   "source_document_id": null,
+   "source_title": "79ab88e3a2e892180dd786489166430a177b52320af484e92cd36f3bd5a38df6.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Community%20Development/Historic%20Preservation/ArchitecturalSurvey.pdf"
+  },
+  {
+   "page": 51,
+   "snippet": "-50- largest in northern Kentucky. An 1876 newspaper account states that the distillery paid $59,848.20 in revenue taxes, placing it far ahead of others in the Sixth (Covington) District (see Newport Leader, October 14, 1876). The decline of river traffic in the late 19th century--steamboats ceased stopping at Petersburg in 1890--adversely affected the distillery, and in 1910 it ceased operations. The Kentucky Post mourned the loss: \"The removal will effect the revenue service of this district and deprives many Petersburg families of employment\" (October 15, 1910, p. 2). The distillery buildings were subsequently dismantled; the bricks from the warehouses were used to construct many buildings in Petersburg, including the jail (BE-39) and the Baptist church (BE-50). The foundations of the distillery are still visible, and the former cooperage presently serves as a barn (BE-29; NR, 1988). ",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "79ab88e3a2e892180dd786489166430a177b52320af484e92cd36f3bd5a38df6",
+   "source_document_id": null,
+   "source_title": "79ab88e3a2e892180dd786489166430a177b52320af484e92cd36f3bd5a38df6.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Community%20Development/Historic%20Preservation/ArchitecturalSurvey.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "C. M inor Site Plan Review Procedure All Reviews $ 250.00 Flat Fee (including a retaining wall less than +$100.00 Inspection 4 feet in height for uses other than + $66.00 CLUR single-fam ily residential) $ 416.00 Total M inor Site Plan Fee D. Design Review (W hen Submitted w ith Site Plan Review)** 1. Central Florence Strategic Plan/Parkw ay Corridor Overlay Staff Design Review W ith a Major Site Plan $ 250.00 in Addition to Above Major Site Plan Review Fee W ith a Minor Site Plan $125.00 in Addition to Above Minor Site Plan Review Fee 2. Business Districts (Section 3199) W ith a Major Site Plan $ 300.00 if Building is Less Than 3,000 s.f. $ 400.00 if Building is Between 3,000-10,000 s.f. $ 500.00 if Building is Between 10,001-15,000 s.f. $ 600.00 if Building is over 15,001 s.f. or greater (The above 4 fees are in addition to the Above M ajor Site Plan Review Fee) W ith a Minor Site Plan",
+   "tags": [
+    "fee",
+    "dimension",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a",
+   "source_document_id": null,
+   "source_title": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/About%20us/FeeSchedule.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "XI. TEMPORARY AND SEASONAL TEMPORARY COMMERCIAL DISPLAY REVIEW, STORAGE TRAILER PERMITS & TEMPORARY USE PERMITS Seasonal Tem porary Com m ercial Displays $300.00 per Perm it Tem porary Com m ercial Displays $200.00 per Perm it Tem porary Storage Trailer Perm its $300.00 per Perm it Tem porary Use Perm its $200.00 per Perm it XII. DESIGN REVIEW A) Design Review (Houston-Donaldson $ 600.00 if Building is Less Than 25,000 s.f. Study) $ 750.00 if Building is Between 25,001-50,000 s.f. (Based on Building Under Review) $ 900.00 if Building is Between 50,001-100,000 s.f. $1,100.00 if Building is Equal or Greater Than 100,000 s.f. Review of Sign under Houston- $300.00 Plus Sign Perm it Fees Donaldson Study B) Design Review (Florence Main $ 75.00 Residential Bldg. Review-Single-Fam ily Residence Street Zoning Study) $150.00 Residential Bldg. Review-Multiple Units (W hen reviewed before the Floren",
+   "tags": [
+    "sign",
+    "fee",
+    "temporary",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a",
+   "source_document_id": null,
+   "source_title": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/About%20us/FeeSchedule.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Seven (7 ) copies of submitted drawings are required An application consists of all fees paid in full, submitted drawings, and a completed application form SECTION A : (To be completed by applicant) 1. Type of review (check all that apply): Major Site Plan Minor Site Plan 2. Name of Project : 3. Location of Project : 4. Total Acreage of Project : 5 . Total Acreage Under Review: 6. Lot Number and Name of Subdivision (if part of a subdivision) : 7. Current Owner : Address: City State Zip Code Phone Number: Fax Number: Email: 8. Applicant: Address: City State Zip Code Phone Number: Fax Number: Email: 9. Height of Proposed Building or Addition: 10. Square Footage of Existing Building(s): 11. Square Footage of Proposed Building(s): 12. Briefly describe the proposed improvements pertaining to this site plan application: S URFACE MINING SPECIAL USE PERMIT BOONE COUNTY PLANNING COMMISSION",
+   "tags": [
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "bab7b4e367f3adfcc7449d0cd102694dc44f09f574a99a17eeca3b2e09007412",
+   "source_document_id": null,
+   "source_title": "bab7b4e367f3adfcc7449d0cd102694dc44f09f574a99a17eeca3b2e09007412.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/SurfaceMining.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Site Plan Review Page 2 13. Is the site subject to any of the following (check all that apply): Conditional Use Permit Variance Map Amendment If yes, date of action: 14. Current Zoning of Property : 15. Deed Book Page Number Group Number 16. Have you had a pre - application meeting with the BCPC staff: Yes No 17. Have you met or received preliminary approval from any of the following organizations/agencies (check all that apply): Prior to construction of improvements , the applicant is recommended to submit copies of the Site Plan to the appropriate organizations/agencies prior to approval by the Boone County Planning Commission. Boone County Building Department Kentucky Division of Water Boone County Public Works Department Kentucky Transportation Cabinet Boone County Water District Northern Kentucky Health Department C incinnati Bell Owen Cooperative Electric, Inc. Cincinnati/Northern ",
+   "tags": [
+    "dimension",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "bab7b4e367f3adfcc7449d0cd102694dc44f09f574a99a17eeca3b2e09007412",
+   "source_document_id": null,
+   "source_title": "bab7b4e367f3adfcc7449d0cd102694dc44f09f574a99a17eeca3b2e09007412.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/SurfaceMining.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "One (1) full set of paper plans and one (1) full set of plans in pdf file format are required (Major) Seven (7) copies of submitted drawings are required (Minor) An application consists of all fees paid in full, submitted drawings, pdf file and a completed application form SECTION A : (To be completed by applicant) 1. Type of review (check all that apply): Major Site Plan Minor Site Plan Central Florence Strategic Plan/Parkway Overlay Zone Business District Design Standards (per Section 3199 of the Boone County Zoning Regulations ) 2. Name of Project : 3. Location of Project : 4. Total Acreage of Project : 5 . Total Acreage Under Review: 6. Lot Number and Name of Subdivision (if part of a subdivision) : 7. Current Owner : Address: City State Zip Code Phone Number: Fax Number: Email: 8. Applicant: Address: City State Zip Code Phone Number: Fax Number: Email: 9. Height of Proposed Building",
+   "tags": [
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "c08b314c71f5d9a8c6f3bb32b6fb166400d3692246c58fe341d76e7617e3c9cf",
+   "source_document_id": null,
+   "source_title": "c08b314c71f5d9a8c6f3bb32b6fb166400d3692246c58fe341d76e7617e3c9cf.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/SitePlan.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Site Plan Review Page 2 12. Briefly describe the proposed improvements pertaining to this site plan application: 13. Is the site subject to any of the following (check all that apply): Conditional Use Permit Variance Map Amendment If yes, date of action: 14. Current Zoning of Property : 15. Deed Book Page Number Group Number 16. Have you had a pre - application meeting with the BCPC staff: Yes No 17. Have you met or received preliminary approval from any of the following organizations/agencies (check all that apply): Prior to construction of improvements , the applicant is recommended to submit copies of the Site Plan to the appropriate organizations/agencies prior to approval by the Boone County Planning Commission. Boone County Building Department Kentucky Division of Water Boone County Public Works Department Kentucky Transportation Cabinet Boone County Water District Northern Kentuck",
+   "tags": [
+    "dimension",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "c08b314c71f5d9a8c6f3bb32b6fb166400d3692246c58fe341d76e7617e3c9cf",
+   "source_document_id": null,
+   "source_title": "c08b314c71f5d9a8c6f3bb32b6fb166400d3692246c58fe341d76e7617e3c9cf.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/SitePlan.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Seven (7 ) copies of submitted drawings are required An application consists of all fees paid in full, submitted drawings, and a completed application form See Houston - Donaldson Study and Boone County Zoning Regulations SECTION A : (To be completed by applicant) 1. Type of review (check all that apply): Building Review Signage Review 2 . Name of Project : 3 . Location of Project : 4 . Total Acreage of Project : 5. Total Acreage Under Review: 6. Lot Number and Name of Subdivision (if part of a subdivision): 7. Current Owner : Address: City State Zip Code Phone Number: Fax Number: Email: 8. Applicant: Address: City State Zip Code Phone Number: Fax Number: Email: 9. Height of Proposed Building (s) : 10. Square Footage of Proposed Building(s): 11. Are there any existing buildings on the site: Yes No If yes, indicate how many: DESIGN REVIEW BOONE COUNTY PLANNING COMMISSION",
+   "tags": [
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "c8ebf0386a4ed903f9a498c9ba990d03098d1fc2fae433cbe415371c22bc9654",
+   "source_document_id": null,
+   "source_title": "c8ebf0386a4ed903f9a498c9ba990d03098d1fc2fae433cbe415371c22bc9654.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/DesignReview.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "One (1 ) scaled cop y and one (1) 11 x 17 reduction of submitted drawings are required Site Plan Review is not granted by the appropriate Board of Adjustment An application consists of all fees paid in full, submitted drawings , and a completed application form SECTION A : (To be completed by applicant) 1. Check One Boone Florence Walton Union 2. Check One Conditional Use Permit Variance Appeal Change in Non - Conforming Use 3. Applicant : Address: City State Zip Code Phone Number: Fax Number: Email: 4. Description of Request: 5. Name of Development: 6. Location of Development: City State Zip Code 7. Acreage Under Review: 8. Lot Number and Name of Subdivision (if part of a subdivision ) : 9 . Current Owner : Address: City State Zip Code Phone Number: Fax Number: Email: BOARD OF ADJUSTMENT BOONE COUNTY PLANNING COMMISSION",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "d68df6cbdf222712e3f31286491b36f4dae140df618727a8e6169930c76626dc",
+   "source_document_id": null,
+   "source_title": "d68df6cbdf222712e3f31286491b36f4dae140df618727a8e6169930c76626dc.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/BOA.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Board of Adjustment Page 2 10. Proposed Use(s) on Site: 11. Total Square Footage of Existing and/or Proposed Buildings: 12. Current Zoning: 13. Deed Book Page Group Number 14. Is the site subject to a zone change: Yes No If yes, date of approval: 15. Have you submitted a Site Plan with this request: Yes No 16. Have you submitted a list of adjoining property owners with this request: Yes No 17. I, or we, understand and agree that this application and drawing(s) are being filed in accordance with the Boone County Zoning Regulations . Property Owner’s Signature : Applicant ’s Signature :",
+   "tags": [
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "d68df6cbdf222712e3f31286491b36f4dae140df618727a8e6169930c76626dc",
+   "source_document_id": null,
+   "source_title": "d68df6cbdf222712e3f31286491b36f4dae140df618727a8e6169930c76626dc.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/BOA.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "BCPC OPEN RECORDS REQUEST FORM Section 1: Contact Information Name: (Please Print) ________________________________ Date of Request: ___________ Mailing Address: ______________________________________________________________ City: _ _______________________ State: _ ______________________ Zip Code: _________ E - Mail (if applicable): ______________________________ Phone (Optional): __ ___________ Statement of Reside ncy: I certify that I am a resident of Kentucky because I am (check one): _____ Individual residing in Kentucky _____ Individual employed and working in Kentucky _____ Foreign business registered with Kentucky Secretary of State _____ Domestic business with location in Kentucky _____ Individual/business owning real property in Kentucky _____ Individual or business entity authorized to act on behalf of an entity listed above _____ New - gathering agency (defined in KRS 189.635 ",
+   "tags": [
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "3104a1a2c7abd25916ee0f9431cd26b9696d430110a7801bd97ae103af5bb1d5",
+   "source_document_id": null,
+   "source_title": "3104a1a2c7abd25916ee0f9431cd26b9696d430110a7801bd97ae103af5bb1d5.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Forms/PublicRecordsRequest.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Improvement Plan Review Page 2 12. Have you met or received preliminary approval from any of the following organizations/agencies (check all that apply): Prior to construction of improvements , the applicant or subdivider is recommended to submit copies of the Improvement Plan to the appropriate organizations/agencies prior to approval by the Boone County Planning Commission. Boone County Public Works Department Kentucky Transportation Cabinet Boone County Water District Northern Kentucky Health Department Cincinnati Bell Owen Cooperative Electric, Inc. Cincinnati/Northern Kentucky International Sanitation District No. 1 Airport (Kentucky Airport Zoning Commission USDA NRCS/Boone County for height restrictions near the airport) Conservation District Duke Energy Other: Florence Public Services Department Kentucky Division of Water 1 3 . Subdivision Jurisdiction/Location (check all that ap",
+   "tags": [
+    "fee",
+    "dimension",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "59aa77477b84b463bc2359758555e25610c8e11d3b46fbf7443961acd3021eae",
+   "source_document_id": null,
+   "source_title": "59aa77477b84b463bc2359758555e25610c8e11d3b46fbf7443961acd3021eae.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/ImprovementPlan.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "Temporary Commercial Display - I ncorporated Page 6 B. The zoning administrator shall review the application and determine within three (3) working days from submittal date whether or not the plan conforms with this ARTICLE 35 and all other applicable provisions of these zoning regulations . SECTION 3503.7 Fee A. At the time of application for a Temporary Commercial Display permit, the applicant shall pay in full to the Boone County Planning Commission a fee as indicated in the adopted fee schedule. SECTION 3503.9 Limit Of Permits On Each Site A. The purpose of this Article is to provide access by the public to commercial displays, exhibits or events of limited duration rather than to establish a regular or long - term use of land. Thus, no permit shall be issued for a site under this Article that has had five (5) prior Temporary Commercial Display permits issued during the same calendar",
+   "tags": [
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "698cdb1fa464bce9ae51fdfc7897bc2b7729b28460751477c1905ff93ca44442",
+   "source_document_id": null,
+   "source_title": "698cdb1fa464bce9ae51fdfc7897bc2b7729b28460751477c1905ff93ca44442.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/TCDFlorenceUnionWalton.pdf"
+  },
+  {
+   "page": 43,
+   "snippet": "-42- Hartman Farm (BE-666) near Hamilton; another can be found on the B.P. Fowler farm (BE-284; NR, 19??) near Union. Cellars. Root or fruit cellars provided underground storage space, protected from extreme fluctuations in temperature, for produce and canned goods. Those dating from the 19th and early 20th century are almost always built of fieldstone or quarried limestone; those few constructed during the mid-20th century (before the widespread availability of electricity rendered such structures superfluous) are generally of concrete block. Three major types have been identified in the county. Hillside cellars are dug into a slope with the outward-facing wall buttressed for stability; examples can be found on the Crisler Farm (BE-162) and at BE-513. Another type is the circular stone cellar, built of quarried limestone fitted precisely together; the roof is domed with earth and pierce",
+   "tags": [
+    "area",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "79ab88e3a2e892180dd786489166430a177b52320af484e92cd36f3bd5a38df6",
+   "source_document_id": null,
+   "source_title": "79ab88e3a2e892180dd786489166430a177b52320af484e92cd36f3bd5a38df6.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Community%20Development/Historic%20Preservation/ArchitecturalSurvey.pdf"
+  },
+  {
+   "page": 48,
+   "snippet": "-47- African-American sites BE-583, Adam Senour Farm BE-983, First Baptist Church BE-356, Sand Run Baptist Church (cemetery) BE-1248, Zion Baptist Church Slave houses BE-79, Duncan Farm BE-128, Winston-Gaines property BE-387, Surface-Noel Farm BE-413, Joseph C. Hughes Farm BE-1033, T.A. Huey Farm German. During the early 19th century many German immigrants relocated to the county from Virginia's Shenandoah Valley. Originally from northern Germany, they had been part of the Germanna colony in Madison and Culpeper counties (William A. Fitzgerald, \"The German Colony of Virginia,\" typescript). Many settled in the vicinity of what is now Hebron, which they named for their former community in the Old Dominion. Others established homesteads in Hopeful Heights, west of Florence. In both communities they founded Lutheran churches that are discussed further in the context of religion (\"History of ",
+   "tags": [
+    "dimension",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "79ab88e3a2e892180dd786489166430a177b52320af484e92cd36f3bd5a38df6",
+   "source_document_id": null,
+   "source_title": "79ab88e3a2e892180dd786489166430a177b52320af484e92cd36f3bd5a38df6.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Community%20Development/Historic%20Preservation/ArchitecturalSurvey.pdf"
+  },
+  {
+   "page": 52,
+   "snippet": "-51- IV. COMMERCE Inns and taverns. The oldest commercial establishments in the county include inns and taverns, which housed travelers, provided resting places for drovers and served as social and political centers. Several famous hostelries of the settlement and antebellum periods have been honored with National Register listing, including the Gaines Tavern (BE-350), a c. 1805 stagecoach stop, tavern and inn. Others include the Loder House (BE-37) and Schramm's Tavern (BE-40) in Petersburg, and the Central House in the Burlington Historic District. The Boone House Hotel (BE-140; NR, 1988) in Burlington, later known as the Renaker House, was used as a tavern and inn c. 1830-1870, as was the Florence Hotel (BE-184; NR, 1988), which dates from the late Victorian era. The Rosa King Hotel in Walton (BE-218), built as a hostelry in the 1880s, has since been converted to apartments and retain",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "79ab88e3a2e892180dd786489166430a177b52320af484e92cd36f3bd5a38df6",
+   "source_document_id": null,
+   "source_title": "79ab88e3a2e892180dd786489166430a177b52320af484e92cd36f3bd5a38df6.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Community%20Development/Historic%20Preservation/ArchitecturalSurvey.pdf"
+  },
+  {
+   "page": 64,
+   "snippet": "-63- VIII. RELIGION The importance of religion in the lives of settlers is evident in number of churches founded during the late 18th and early 19th centuries. The earliest settlers to the county, as is typical of Kentucky, included many Baptists and Presbyterians, with the former more numerous by far. Baptists played a major role in the early settlement of the county: John Tanner, founder of Tanner's Station (later Petersburg) was a Baptist preacher (see Overview). One of the best-known and most historically significant of the churches founded in the settlement period was the Bullittsburg Baptist Church (BE-82), established in 1794 in an early settlement above the river. The congregation raised its first church, a log and frame structure, in 1797; it was replaced in 1819 by the present house of worship, which has subsequently been remodeled and enlarged several times. Other significant ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "79ab88e3a2e892180dd786489166430a177b52320af484e92cd36f3bd5a38df6",
+   "source_document_id": null,
+   "source_title": "79ab88e3a2e892180dd786489166430a177b52320af484e92cd36f3bd5a38df6.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Community%20Development/Historic%20Preservation/ArchitecturalSurvey.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "INDEX October 5, 2016 Revised May 19, 2021 Pages I. Site Plan Review - Major 1 Site Plan Review - Minor 2 Design Review when Subm itted with Site Plan 2 Special Use Perm it Review 2 II. Subdivision Review Boone County Planning Com m ission Review Fees 3-4 City/County Construction Inspection Fees 4 III. Houston-Donaldson Study Review 5 IV. Union Town Plan Review 5 V. Central Florence Strategic Plan/Parkway Corridor Overlay/Mall Road District Review / 5 Graves Road Interchange Study Districts Review VI. Planning Com m ission Com m ittee Review 5 VII. Zoning Map Am endm ent and Concept Developm ent 5-6 Plan Review (Subject to Public Hearing Process) VIII. Boards of Adjustm ent and Zoning Appeal Review 6-7 IX. Zoning Perm it Review 7 Hom e Occupational Review 7 Tenant Finish Review 7 X Sign Perm it Review 8 XI. Tem porary & Seasonal Tem porary Com m ercial Display Review, Storage Trailer Per",
+   "tags": [
+    "sign",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a",
+   "source_document_id": null,
+   "source_title": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/About%20us/FeeSchedule.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Preliminary Plat Review Page 2 Prior to the design of a proposed subdivision , the applicant or subdivider is recommended to submit copies of the Preliminary Plat to the appropriate organizations/agencies prior to approval by the Boone County Planning Commission. Boone County Public Works Department Kentucky Transportation Cabinet Boone County Water District Northern Kentucky Health Department Cincinnati Bell Owen Cooperative Electric, Inc. Cincinnati/Northern Kentucky International Sanitation District No. 1 Airport (Kentucky Airport Zoning Commission USDA NRCS/Boone County f or height restrictions near the airport ) Conservation District Duke Energy Other: Florence Public Services Department Kentucky Division of Water 12. Subdivision Jurisdiction/Location (check all that apply): Unincorporated Boone Florence Walton Union 13. Review Fees $700.00 Flat fee for single - family detached resi",
+   "tags": [
+    "fee",
+    "dimension",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "d202dee95cd274a676b247cf2fb6d4e860c6e0e6a1f8e222c58a7acd8057c231",
+   "source_document_id": null,
+   "source_title": "d202dee95cd274a676b247cf2fb6d4e860c6e0e6a1f8e222c58a7acd8057c231.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/PreliminaryPlat.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Three (3 ) copies of submitted drawings are required An application consists of all fees paid in full, submitted drawings, and a completed application form If the surveyor wants their original drawing (e.g., mylar , transparency, tracing paper, or vellum) signed by an officer of the Boone County Planning Commission, then it may also be submitted in addition to the three copies SECTION A : (To be completed by applicant) Fee: $250. 00 For each reviewed lot 1. Name of S ite/S ubdivision: 2. Location of Site/Subdivision : 3 . Area (acres) : or Number of Lots: 4 . Current Owner : Address: City State Zip Code Phone Number: Fax Number: Email: 5 . Applicant: Address: City State Zip Code Phone Number: Fax Number: Email: 6. Current Zoning of Property : 7. Deed Book Page Number Group Number 8. Is the site subject to any of the following (check all that apply): Conditional Use Permit Variance Map Am",
+   "tags": [
+    "fee",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "f059307b7640b6704a4b619dca4d79000acd9dd2133788b2c78e0e1a1cf22af2",
+   "source_document_id": null,
+   "source_title": "f059307b7640b6704a4b619dca4d79000acd9dd2133788b2c78e0e1a1cf22af2.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/ConveyancePlat.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "UTILITIES: 1. Location of storm sewer lines and any storm sewer inlets or outlets (he a d walls, culverts , catch basins, yard boxes , drainage channels, swales, water course changes) as well as the location and boundary of s tormwater retention/detention ponds on or adjoining the subject lot; 2. Location of all existing and proposed utility poles and boxes; 3. Identify the width and type of existing and proposed easements on the lot (e.g., sanitary sewer, storm sewer, water, electric, telephone, gas, cable , access, recreational, etc.). STORMWATER /DRAINAGE/GRADING: 1. Location and description of erosion control provisions ; 2. Show the difference in elevation from the street curb, at the center of the driveway, to the basement floor elevation and the first floor elevation; 3. Sufficient proposed elevations shall be identified to show future surface drainage of the lot. Said drainage sh",
+   "tags": [
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "ff8f3fb26e177f894e8c75d845b1b2e9de8b11fbed317a4156339b5e4d7bb51e",
+   "source_document_id": null,
+   "source_title": "ff8f3fb26e177f894e8c75d845b1b2e9de8b11fbed317a4156339b5e4d7bb51e.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Applications/ZoningPermitRes.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "- 4 - that crowns the building to this day. The outline of the base of the clock tower is visible about halfway up the slope of the current pyramidal roof, especially after a light snow has fallen. The courthouse has undergone various repairs and “updates” in the nearly 110 years since the clock tower was replaced by the cupola. Some of the more notable events included installation (in 1910) of a central steam heating system and replacement of that system (in 1993) by a central heating/air conditioning system. In the mid-1960s, the exterior of the building was sand-blasted, an event that has resulted in slow deterioration of the outer brick and stone details, particularly on the building’s west side. The long-term impact of the sand-blasting is particularly notable on the sandstone water-table, which is spalling badly in some places. At about this time (c. 1967) the second floor courtroo",
+   "tags": [
+    "illumination",
+    "penalties"
+   ],
+   "weight": 3,
+   "source_sha256": "00a41838e89e2e0a17d32f9fbc4fe87f0cf2a5e77fe441c7f678027627e4f1e7",
+   "source_document_id": null,
+   "source_title": "00a41838e89e2e0a17d32f9fbc4fe87f0cf2a5e77fe441c7f678027627e4f1e7.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Community%20Development/Historic%20Preservation/History%20of%20old%20Courthouse/HistoryOldCourthouse.pdf"
+  },
+  {
+   "page": 8,
+   "snippet": "- 8 - the Simpson courthouse were built in Hickman County, KY (1884-1885), Carroll County, KY (c. 1885), Laurel County, KY (c. 1885), Adair County, KY (1887), Cumberland County, IL (1887), and Fort Bend County, TX (1887) (see Figures 10 – 14). All of these buildings featured a four-sided or “pyramidal” roofed clock tower. By contrast, the courthouses built in Boone County, KY (1889), and Bandera County, TX (1891), featured domed clock towers (Figures 3 & 15). Virtually all McDonald Brothers courthouses featured a clock or bell tower, although some of them (e.g., Henry County, KY; Washington County, IN) were located in the front of the building, either centered or in one corner. An interesting, and certainly unintended, characteristic of a number of the central clock tower courthouses is the propensity for leaking roofs and/or structural instability. The bell tower of the 1884 Trimble Cou",
+   "tags": [
+    "fee",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "00a41838e89e2e0a17d32f9fbc4fe87f0cf2a5e77fe441c7f678027627e4f1e7",
+   "source_document_id": null,
+   "source_title": "00a41838e89e2e0a17d32f9fbc4fe87f0cf2a5e77fe441c7f678027627e4f1e7.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Community%20Development/Historic%20Preservation/History%20of%20old%20Courthouse/HistoryOldCourthouse.pdf"
+  },
+  {
+   "page": 24,
+   "snippet": "- 24 - ENDNOTES 1 Boone County Recorder: Special Illustrated Edition , August 19, 1903. 2 A cupola and colonnaded entry were added in 1828, but the most notable (and final) remodeling took place in 1878. Some sources erroneously state that the 1817 courthouse fire substantially damaged by fire and completely rebuilt in 1878, but in fact it was simply expanded and updated. 3 The final cost of the building was established by adding the amount of cost overruns and changes specified in the McDonald Brothers final invoice (dated June 4, 1889) to the $18,595 specified in the original contract. 4 The walls of the main room in the first attic space have become a canvas for the signatures of many individuals over the years. The earliest signatures date to 1898 and everyone from county officials to boy scout troops have left their mark in the intervening years. 5 Letter from Kenneth McDonald to Bo",
+   "tags": [
+    "fee",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "00a41838e89e2e0a17d32f9fbc4fe87f0cf2a5e77fe441c7f678027627e4f1e7",
+   "source_document_id": null,
+   "source_title": "00a41838e89e2e0a17d32f9fbc4fe87f0cf2a5e77fe441c7f678027627e4f1e7.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Community%20Development/Historic%20Preservation/History%20of%20old%20Courthouse/HistoryOldCourthouse.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "ALL OF THE FOLLOWING MUST BE SUPPLIED: 1. Completed application including applicant’s signature and property owner’s signature . 2. Legal description of the property including Deed Book, Page Number, and Group Number. 3. N ames and mailing addresses of all adjoining property owners, including those located across any road, street, or highway. 4. A site plan for the development/use of the property in accordance with Article 30 of the Zoning Regulations. 5 . Fee paid in full at the time of application. ZONING MAP AMENDMENT AND CONCEPT DEVELOPMENT PLAN REVIEWS ARE SUBJECT TO PUBLIC HEARING PROCESS : Zoning Map Amendments and Concept Development Plan Reviews (including revisions) in the following zones: A - 1, A - 2, R, RS, RSE, $1,300.00 (flat fee for single - family detached residential developments wit h SR - 1, SR - 2, SR - 3, R - 1F, less than 20 acres and 50 units) a nd CONS zones $1,6",
+   "tags": [
+    "sign",
+    "fee",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c",
+   "source_document_id": null,
+   "source_title": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c.pdf",
+   "official_url": "https://www.bcpcky.org/Documents/Applications%20Forms/Checklists/ZoningMapAmendment_checklist.pdf"
+  }
+ ]
+}

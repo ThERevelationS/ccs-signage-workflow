@@ -1,0 +1,1 @@
+{"files": [{"path": "src/components/channelLetterInstall/installExport.jsx", "content": "// Export helpers for Channel Letter Installation estimates\nimport { TYPE_LABELS, SIZE_LABELS } from \"./insta

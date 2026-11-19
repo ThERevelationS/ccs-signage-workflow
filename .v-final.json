@@ -1,0 +1,42 @@
+{
+  "summary": {
+    "total": 2,
+    "resolved": 2,
+    "rate": "100.0%",
+    "failure_stages": {},
+    "geocode_misses": 0,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "9036A KY-132 W, Clay, KY 42404",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "address override: 9036a ky-132 w -> clay",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "clay"
+      },
+      "county": "webster",
+      "ms": 1760,
+      "worker": 1
+    },
+    {
+      "address": "1400 OH-125, Amelia, OH 45102",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: amelia -> pierce township",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "township",
+        "name": "pierce township"
+      },
+      "county": "",
+      "ms": 1282,
+      "worker": 1
+    }
+  ]
+}

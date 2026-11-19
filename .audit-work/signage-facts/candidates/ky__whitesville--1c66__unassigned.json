@@ -1,0 +1,63 @@
+{
+ "jurisdiction_id": "6adf0127b46ab5b1cc211c66",
+ "jurisdiction_name": "Whitesville",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "OMPC Signs Summary of Zoning Ordinance Article 9 Sign Regulations 07/02 113 2 /3 SIGN DEFINITION: ON-PREMISES, OFF-PREMISES \"Sign\" means any device that is sufficiently visible to persons not located on the lot where such device is located to accomplish either of the following objectives: to attract the attention of such persons or to communicate message(s) to them. Where one (1) or more display modules are connected to the same structural supports, the entire assemblage of modules and supports shall be considered one (1) sign. \"On-premises sign\" means a sign that attracts attention to or contains a message relating to an occupant, activity, or product on the premises where the sign is displayed. \"Off-premises sign\" means a sign that contains a message that does not relate to any activity or product on the premises where the sign is displayed; or a sign erected by a company or individual",
+   "tags": [
+    "sign",
+    "permit_required",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 16,
+   "source_sha256": "c99eca98efa5c705dc756d0fa50307dd5e2d8894c010938d9ba6074ad07686ba",
+   "source_document_id": null,
+   "source_title": "c99eca98efa5c705dc756d0fa50307dd5e2d8894c010938d9ba6074ad07686ba.pdf",
+   "official_url": "https://cms2.revize.com/revize/owensborometropolitanplanningcommission/Documents/Documents/Forms/f113.pdf?t=202603051351170&t=202603051351170"
+  },
+  {
+   "page": 1,
+   "snippet": "OWENSBORO METROPOLITAN PLANNING COMMISSION Signs Summary of Zoning Ordinance Article 9 Sign Regulations 03/07 113 1 /3 270-687-8650 PLANNING • Zoning • Subdivision • Addresses • Street Access Points FAX 270-687-8664 270-687-8665 BUILDING & ELECTRICAL • Plan Review • Permits • Inspections ZONES > Business, Industrial Professional, Agricultural, EX-1 Residential, MHP Permanent On-Premises Signs Business Sign, Farm Sign, Institution Sign Max sign area = 672 SF. Building sign max height = roofline + 15'. Yard sign max height = 10' + ½ distance to off-site Res/MHP zone boundary, up to 80' max. Min separation between yard signs > 10 SF in area and less than 25' from street R/W = 100'. Electronic changeable copy permitted; see Section 9- 4(a)(5). Projection over public R/W permitted; see Section 9- 4(a)(6). Max sign area = 150 SF. Building sign max height = roof line. Yard sign max height = 10'",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 13,
+   "source_sha256": "c99eca98efa5c705dc756d0fa50307dd5e2d8894c010938d9ba6074ad07686ba",
+   "source_document_id": null,
+   "source_title": "c99eca98efa5c705dc756d0fa50307dd5e2d8894c010938d9ba6074ad07686ba.pdf",
+   "official_url": "https://cms2.revize.com/revize/owensborometropolitanplanningcommission/Documents/Documents/Forms/f113.pdf?t=202603051351170&t=202603051351170"
+  },
+  {
+   "page": 3,
+   "snippet": "OMPC Signs Summary of Zoning Ordinance Article 9 Sign Regulations 07/02 113 3 /3 Exhibit: Billboard-Controlled Highways Billboard-Controlled Highways Parkway or Interstate State-sign-controlled highway Other National Highway System or Federal-Aid Primary State-sign-controlled highway Scenic Highway Proposed for state designation From Natcher Bridge to Wrights Landing Road 12/10/2001 US 60 E William H Natcher Pkwy US 431 Audubon Pkwy US 60 E William H Natche r Bridge & Approach Wendell Ford Exwy (US 60 Byp) Extension William H Natcher Pkwy Audubon Pkwy E Parrish Av New Hartford Rd 2nd St Frederica St 4th St 5th St Triplett St Breckenridge St Glover Cary Bridge J R Miller Blvd Wendell Ford Exw y (US 60 Byp)",
+   "tags": [
+    "sign",
+    "illumination",
+    "billboard",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "c99eca98efa5c705dc756d0fa50307dd5e2d8894c010938d9ba6074ad07686ba",
+   "source_document_id": null,
+   "source_title": "c99eca98efa5c705dc756d0fa50307dd5e2d8894c010938d9ba6074ad07686ba.pdf",
+   "official_url": "https://cms2.revize.com/revize/owensborometropolitanplanningcommission/Documents/Documents/Forms/f113.pdf?t=202603051351170&t=202603051351170"
+  }
+ ]
+}

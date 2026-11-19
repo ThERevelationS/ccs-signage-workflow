@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
@@ -58,10 +59,10 @@ async function validateRule(base44:any, patch:any, existing:any=null) {
 
 Deno.serve(async req => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(()=>({}));
     const action = norm(body?.action);
-    const auth = await authorize(base44, ['create','update','delete'].includes(action, body?.session_token));
+    const auth = await authorize(base44, ['create','update','delete'].includes(action), body?.session_token);
     if (auth.error) return auth.error;
     const Rule = base44.asServiceRole.entities.FleetMaintenanceMeterRule;
     const Equipment = base44.asServiceRole.entities.FleetEquipment;

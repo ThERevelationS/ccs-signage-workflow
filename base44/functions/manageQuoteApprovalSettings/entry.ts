@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Invalid quote approval settings action.' }, { status: 400 });
   } catch (error: any) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 404, 409].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 429].includes(status) ? status : 500;
     if (safeStatus === 500) console.error('manageQuoteApprovalSettings error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Quote approval settings could not be saved safely.' : error?.message,

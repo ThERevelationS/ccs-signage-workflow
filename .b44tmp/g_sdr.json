@@ -1,0 +1,121 @@
+{
+  "matches": [
+    {
+      "path": "src/api/base44Client.js",
+      "line": 28,
+      "text": "  if (fnName === 'staffDataRead' || fnName === 'fleetDataRead') return true;"
+    },
+    {
+      "path": "src/api/base44Client.js",
+      "line": 38,
+      "text": "  if (['staffDataRead', 'fleetDataRead', 'verifySession', 'permittingScanStatus'].includes(fnName)) return true;"
+    },
+    {
+      "path": "src/api/base44Client.js",
+      "line": 62,
+      "text": "// staffDataRead gateway, so direct reads are routed there instead."
+    },
+    {
+      "path": "src/api/gatedEntities.js",
+      "line": 3,
+      "text": "// backend-only under RLS: staff sessions go through the staffDataRead gateway"
+    },
+    {
+      "path": "src/pages/CommsFollowups.jsx",
+      "line": 27,
+      "text": "// data feeds (sent estimates via staffDataRead, invoices via the"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 32,
+      "text": "//   BuilderProduct/Inventory are staffDataRead entities; PurchaseOrder is not"
+    },
+    {
+      "path": "src/components/fleet/fleetInvoke.js",
+      "line": 22,
+      "text": "// dozens of staffDataRead calls at mount — an unbounded burst 429s itself. The"
+    },
+    {
+      "path": "src/components/staff/staffEntities.js",
+      "line": 7,
+      "text": "// session-authenticated staffDataRead gateway (reads) and staffEntityWrite"
+    },
+    {
+      "path": "src/components/staff/staffEntities.js",
+      "line": 12,
+      "text": "// became its own staffDataRead invoke on the shared service budget. Calls made in"
+    },
+    {
+      "path": "src/components/staff/staffEntities.js",
+      "line": 110,
+      "text": "  invokeFleet(\"staffDataRead\", { entity, ...args }).then(asRows, (err) => {"
+    },
+    {
+      "path": "src/components/staff/staffEntities.js",
+      "line": 135,
+      "text": "      const r = await invokeFleet(\"staffDataRead\", { entities: chunk.map((e) => ({ entity: e.entity, ...e.args })) });"
+    },
+    {
+      "path": "src/components/staff/staffEntities.js",
+      "line": 209,
+      "text": "    return invokeFleet(\"staffDataRead\", { entity, id }).then("
+    },
+    {
+      "path": "src/components/staff/staffEntities.js",
+      "line": 217,
+      "text": "    return invokeFleet(\"staffDataRead\", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip, count: true }).then("
+    },
+    {
+      "path": "src/components/staff/staffEntities.js",
+      "line": 233,
+      "text": "  // backend-only), so subscribe polls staffDataRead and emits a synthetic"
+    },
+    {
+      "path": "src/components/staff/staffEntities.js",
+      "line": 246,
+      "text": "        const r = await invokeFleet(\"staffDataRead\", { entity, limit: 50, sort: \"-updated_date\" });"
+    },
+    {
+      "path": "src/components/staff/staffEntities.js",
+      "line": 280,
+      "text": "// One gateway call → rows for many entities. Uses staffDataRead batch mode so"
+    },
+    {
+      "path": "src/components/staff/staffEntities.js",
+      "line": 291,
+      "text": "  return invokeFleet(\"staffDataRead\", { entities: live }).then((r) => {"
+    },
+    {
+      "path": "src/components/crm/crmActivityPersistence.js",
+      "line": 7,
+      "text": "// through the staffDataRead gateway; writes go through staffEntityWrite —"
+    },
+    {
+      "path": "src/components/queues/savedViewsPersistence.js",
+      "line": 9,
+      "text": "// SavedQueueView persistence. Reads page through the staffDataRead gateway"
+    },
+    {
+      "path": "src/components/queues/savedViewsPersistence.js",
+      "line": 21,
+      "text": "// a 403/404 from staffDataRead/staffEntityWrite, or the gateway's"
+    },
+    {
+      "path": "src/components/pricing/pricingPersistence.js",
+      "line": 6,
+      "text": "// staffDataRead gateway via the staffEntities facade and writes go through"
+    },
+    {
+      "path": "src/components/pricing/pricingPersistence.js",
+      "line": 12,
+      "text": "//   staffDataRead  STAFF_READABLE: PricingTierMatrix, LaborLevel, MachineRate"
+    },
+    {
+      "path": "src/components/comms/FollowupQueue.jsx",
+      "line": 14,
+      "text": "// the host page loads estimates (staffDataRead), invoices (invoicingAction"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 23
+}

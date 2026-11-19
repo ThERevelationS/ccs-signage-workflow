@@ -1,0 +1,658 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Project, Settings } from "@/api/gatedEntities";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { AlertTriangle, ArrowLeft, Palette, Plus, Save, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
+import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
+import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
+import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
+import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
+import { categorizePaintProject } from "@/components/markup/projectCategorizer";
+import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
+import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
+import {
+  PAINT_THICKNESSES,
+  autoPaintMaskSqft,
+  normalizePaintingItem,
+} from "@/components/estimator/paint/paintCalc";
+import {
+  calcPaintingProject,
+  hasIssueFor,
+  hasPaintCostSnapshot,
+  paintDraftValue,
+} from "@/components/estimator/paint/paintPricingAvailability";
+import { staffEntities } from "@/components/staff/staffEntities";
+
+const money = (value) => Number(value || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
+const number = (value, digits = 2) => Number(value || 0).toLocaleString("en-US", { maximumFractionDigits: digits });
+
+// Saved-fallback display: a non-finite live value is either the saved
+// acknowledged snapshot (shown plainly) or genuinely unsaved ("Not saved").
+const sumOrNull = (...xs) => xs.every((v) => Number.isFinite(v)) ? xs.reduce((s, v) => s + v, 0) : null;
+const moneyCell = (v) => hasPaintCostSnapshot(v)
+  ? money(v)
+  : <span className="text-amber-700 font-medium">Not saved</span>;
+const numCell = (v, digits = 2) => Number.isFinite(v) ? number(v, digits) : "—";
+
+const emptyItem = () => normalizePaintingItem({
+  builder_item_id: newBuilderItemId("paint-item"),
+  paint_colors: [""],
+});
+
+export default function PaintingEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = embeddedProjectId || searchParams.get("edit") || searchParams.get("id");
+  const estimateId = embeddedEstimateId || searchParams.get("estimateId");
+  const [project, setProject] = useState(null);
+  const [settings, setSettings] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const persistedProjectIdRef = useRef(editId || "");
+  const createAttemptRef = useRef({ signature: "", key: "" });
+  const copyAttemptRef = useRef({ signature: "", key: "" });
+  const [templateMode, setTemplateMode] = useState(null);
+
+  useEffect(() => {
+    persistedProjectIdRef.current = editId || "";
+    createAttemptRef.current = { signature: "", key: "" };
+    copyAttemptRef.current = { signature: "", key: "" };
+  }, [editId]);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [settingsRows, existing, estimate] = await Promise.all([
+          loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
+          editId ? Project.get(editId) : Promise.resolve(null),
+          estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
+        ]);
+        if (!active) return;
+        const settingsMap = {};
+        (settingsRows || []).forEach((row) => { settingsMap[row.setting_name] = row.setting_value; });
+        setSettings(settingsMap);
+        const suppliesDefault = Number(settingsMap.default_paint_supplies_per_sqft) || 1.25;
+        if (existing) {
+          setProject({
+            ...existing,
+            client_name: estimate?.client_name || existing.client_name || "",
+            customer_id: estimate?.customer_id || existing.customer_id || null,
+            estimate_number: estimate?.estimate_number || existing.estimate_number || "",
+            items: seedBuilderItemIds((existing.items || []).map(normalizePaintingItem), "paint-item"),
+            paint_supplies_per_sqft: existing.paint_supplies_per_sqft ?? suppliesDefault,
+          });
+        } else {
+          setProject({
+            project_name: estimate?.project_name ? `${estimate.project_name} — Painting` : "",
+            client_name: estimate?.client_name || "",
+            customer_id: estimate?.customer_id || null,
+            estimate_number: estimate?.estimate_number || "",
+            hyperlink: "",
+            status: "draft",
+            items: [],
+            paint_supplies_per_sqft: suppliesDefault,
+            notes: settingsMap.default_notes_template || "",
+          });
+        }
+      } catch (e) {
+        console.error("Could not load Painting estimator:", e);
+        if (active) setError(e.message || "Could not load Painting estimator.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    load();
+    return () => { active = false; };
+  }, [editId, estimateId]);
+
+  // Pricing-availability: one strict calc pass shared by the banner, the
+  // totals panel, the per-field diagnostics, and the save guard.
+  const priced = useMemo(
+    () => (project ? calcPaintingProject(project, settings) : null),
+    [project, settings]
+  );
+  const calculated = priced?.calc || null;
+  const totals = calculated?.totals || {};
+  const allIssues = priced?.issues || [];
+  // Any settings-side unavailability → stronger save message; any issue at
+  // all blocks the save — unavailable pricing is never written as $0.
+  const catalogBlocked = allIssues.some((i) => i.kind === "paint_catalog");
+  const pricingBlocked = allIssues.length > 0;
+  const pricingUnavailable = !!calculated?.pricingUnavailable;
+  const itemIssues = (index) => allIssues.filter((i) => i.itemIndex === index);
+
+  const patchProject = (changes) => setProject((prev) => ({ ...prev, ...changes }));
+
+  const patchItem = (index, changes, { autoMask = false } = {}) => {
+    setProject((prev) => {
+      const items = [...(prev.items || [])];
+      let item = normalizePaintingItem({ ...items[index], ...changes });
+      if (item.item_type === "lettering") item.quantity = 1;
+      if (Object.prototype.hasOwnProperty.call(changes, "width") && item.item_type === "lettering") {
+        const height = Number(item.width || 0);
+        item.letter_size = height <= 4 ? "extra_small"
+          : height <= 8 ? "small"
+            : height <= 12 ? "normal"
+              : height <= 20 ? "medium"
+                : height <= 30 ? "large"
+                  : "extra_large";
+      }
+      if (autoMask) item.paint_mask_sqft = autoPaintMaskSqft(item);
+      items[index] = item;
+      return { ...prev, items };
+    });
+  };
+
+  const addItem = () => {
+    setTimeout(() => document.querySelector(`input[data-item-desc="${(project.items || []).length}"]`)?.focus(), 60);
+    patchProject({ items: [...(project.items || []), emptyItem()] });
+  };
+  const removeItem = (index) => {
+    const label = project.items?.[index]?.description || `item ${index + 1}`;
+    if (!window.confirm(`Delete "${label}"?`)) return;
+    patchProject({ items: project.items.filter((_, i) => i !== index) });
+  };
+
+  const updateColor = (itemIndex, colorIndex, value) => {
+    const colors = [...(project.items[itemIndex].paint_colors || [])];
+    colors[colorIndex] = value;
+    patchItem(itemIndex, { paint_colors: colors });
+  };
+  const addColor = (itemIndex) => patchItem(itemIndex, { paint_colors: [...(project.items[itemIndex].paint_colors || []), ""] });
+  const removeColor = (itemIndex, colorIndex) => patchItem(itemIndex, {
+    paint_colors: (project.items[itemIndex].paint_colors || []).filter((_, i) => i !== colorIndex),
+  });
+
+  // Ctrl+S / Cmd+S saves the section without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!saving) saveProject();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saving]);
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!saving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saving]);
+  const saveProject = async () => {
+    // Pricing-availability guard: a malformed or unavailable pricing input
+    // must never be persisted as $0 or an inferred default. Block the write
+    // and point the user at the flagged values.
+    if (pricingBlocked) {
+      setError(catalogBlocked
+        ? "Save paused: a Painting Settings value is missing or unusable — update it in Painting Settings, then save."
+        : "Save paused: fix the flagged pricing values before saving — unavailable pricing is never written as $0.");
+      return;
+    }
+    if (!project?.project_name?.trim() || !project?.client_name?.trim()) {
+      setError("Project name and client name are required.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      const cleanItems = (calculated?.items || []).map((item) => ({
+        ...item,
+        paint_colors: (item.paint_colors || []).filter((color) => String(color || "").trim()),
+      }));
+      const pricingProject = {
+        ...project,
+        total_paint_mask_cost: totals.total_paint_mask_cost,
+        total_liquid_paint_and_supplies_cost: totals.total_liquid_paint_and_supplies_cost,
+        total_labor_cost: totals.total_labor_cost,
+      };
+      const customerPricing = project.customer_pricing?.applied === true
+        ? await calculateSavedCustomerPricing({
+            project: pricingProject,
+            categorize: categorizePaintProject,
+            tierNumber: project.customer_pricing?.tier_number,
+          })
+        : project.customer_pricing;
+      const payload = {
+        project_name: project.project_name,
+        client_name: project.client_name,
+        customer_id: project.customer_id || null,
+        estimate_number: project.estimate_number || "",
+        hyperlink: project.hyperlink || "",
+        status: "calculated",
+        items: cleanItems,
+        paint_supplies_per_sqft: Number(project.paint_supplies_per_sqft || 0),
+        total_paint_mask_cost: totals.total_paint_mask_cost,
+        total_liquid_paint_and_supplies_cost: totals.total_liquid_paint_and_supplies_cost,
+        total_labor_cost: totals.total_labor_cost,
+        customer_pricing: customerPricing,
+        notes: project.notes || "",
+      };
+
+      let projectId = persistedProjectIdRef.current || editId || "";
+      let savedProject;
+      if (projectId) {
+        savedProject = await updateBuilderSourceProject({
+          entity: Project,
+          sourceId: projectId,
+          expectedUpdatedAt: project.updated_date,
+          data: payload,
+          estimateId,
+          label: "Painting project",
+        });
+      } else {
+        await preflightBuilderSourceMutation({ estimateId });
+        const signature = JSON.stringify(payload);
+        if (createAttemptRef.current.signature !== signature) {
+          createAttemptRef.current = {
+            signature,
+            key: newCreationRequestKey("painting_project"),
+          };
+        }
+        savedProject = await ensureIdempotentEntityCreate({
+          entity: Project,
+          keyField: "creation_request_key",
+          key: createAttemptRef.current.key,
+          data: payload,
+          label: "Painting project",
+        });
+        if (!savedProject?.id) throw new Error("Painting project create could not be verified.");
+        projectId = savedProject.id;
+        persistedProjectIdRef.current = projectId;
+      }
+
+      if (!savedProject?.id) savedProject = await Project.get(projectId);
+      if (estimateId) {
+        await recordBuilderSave({
+          estimateId,
+          line: { project_id: projectId, module_key: "painting" },
+          sourceProject: savedProject,
+          liveTotal: totals.total_cost,
+        });
+      }
+      setProject((prev) => ({ ...prev, ...savedProject, items: seedBuilderItemIds(savedProject.items || [], "paint-item") }));
+      onSaved?.();
+      if (!embedded && !editId) navigate(`/PaintingEstimator?id=${projectId}`);
+    } catch (e) {
+      console.error("Could not save Painting estimator:", e);
+      setError(e.message || "Could not save Painting estimator.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // #78 — clone the current save payload into a brand-new Painting project.
+  const handleSaveAsCopy = async () => {
+    if (pricingBlocked) {
+      setError("Save paused: fix the flagged pricing values before saving a copy — unavailable pricing is never written as $0.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      const cleanItems = (calculated?.items || []).map((item) => ({
+        ...item,
+        paint_colors: (item.paint_colors || []).filter((color) => String(color || "").trim()),
+      }));
+      const copy = await saveModuleProjectCopy({
+        entity: Project,
+        payload: {
+          project_name: project.project_name,
+          client_name: project.client_name,
+          customer_id: project.customer_id || null,
+          estimate_number: project.estimate_number || "",
+          hyperlink: project.hyperlink || "",
+          status: "calculated",
+          items: cleanItems,
+          paint_supplies_per_sqft: Number(project.paint_supplies_per_sqft || 0),
+          total_paint_mask_cost: totals.total_paint_mask_cost,
+          total_liquid_paint_and_supplies_cost: totals.total_liquid_paint_and_supplies_cost,
+          total_labor_cost: totals.total_labor_cost,
+          customer_pricing: project.customer_pricing,
+          notes: project.notes || "",
+        },
+        attemptRef: copyAttemptRef,
+        keyPrefix: "painting_project_copy",
+        baseName: project.project_name || "Painting",
+        label: "Painting project copy",
+      });
+      if (embedded) onSaved?.();
+      else navigate(`/PaintingEstimator?id=${copy.id}`);
+    } catch (e) {
+      console.error("Could not copy Painting estimator:", e);
+      setError(e.message || "Could not copy Painting estimator.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // #79 — template payload = the editable setup a user would reuse.
+  const buildPaintingTemplateData = (p) => ({
+    items: p.items || [],
+    paint_supplies_per_sqft: p.paint_supplies_per_sqft,
+    notes: p.notes,
+  });
+
+  if (loading) return <div className="p-10 text-center text-gray-400">Loading Painting Builder…</div>;
+  if (!project) return <div className="p-10 text-center text-red-600">{error || "Painting project not found."}</div>;
+
+  return (
+    <div className="min-h-full bg-gray-50">
+      <div className="max-w-[1220px] mx-auto p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          {embedded ? (
+            <button type="button" onClick={onClose} className="inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600 hover:text-gray-900">
+              <ArrowLeft className="w-4 h-4" /> Back to products
+            </button>
+          ) : (
+            <Link to={estimateId ? `/EstimateDetail?id=${estimateId}` : "/Estimator"} className="inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600 hover:text-gray-900">
+              <ArrowLeft className="w-4 h-4" /> Back to estimator
+            </Link>
+          )}
+          {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
+          <Button onClick={saveProject} disabled={saving || !project.project_name?.trim() || !project.client_name?.trim()} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold">
+            <Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : "Save Painting"}
+          </Button>
+          <ModuleActionBar
+            onTemplates={() => setTemplateMode("load")}
+            onSaveAsTemplate={() => setTemplateMode("save")}
+            onSaveAsCopy={handleSaveAsCopy}
+            estimateId={estimateId}
+            saving={saving}
+          />
+        </div>
+
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-md bg-sky-100 text-sky-700 flex items-center justify-center"><Palette className="w-5 h-5" /></div>
+          <div>
+            <h1 className="text-[20px] font-bold text-gray-900">Painting Builder</h1>
+            <p className="text-[11px] text-gray-500">Panels, dimensional lettering and complex shapes using the migrated SignEstimate Pro paint formulas.</p>
+          </div>
+        </div>
+
+        {error && <div className="mb-3 px-3 py-2 text-[12px] text-red-700 bg-red-50 border border-red-200 rounded">{error}</div>}
+
+        {/* Pricing-availability banner — visible on every state so a blocked
+            save always shows why. */}
+        {allIssues.length > 0 && (
+          <div
+            role="status"
+            id="paint-pricing-issues"
+            className="mb-3 flex items-start gap-2 text-[11px] text-amber-900 bg-amber-50 border border-amber-300 rounded px-3 py-2"
+          >
+            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600" />
+            <div className="min-w-0">
+              <div className="font-semibold">
+                Pricing unavailable — {allIssues.length} value{allIssues.length === 1 ? "" : "s"} need{allIssues.length === 1 ? "s" : ""} attention before this estimate can be priced or saved.
+              </div>
+              <ul className="mt-1 space-y-0.5 list-disc list-inside">
+                {allIssues.slice(0, 5).map((it, i) => <li key={i}>{it.message}</li>)}
+                {allIssues.length > 5 && <li>…and {allIssues.length - 5} more</li>}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_310px] gap-4">
+          <div className="space-y-4 min-w-0">
+            <section className="bg-white border border-gray-200 rounded-md p-4">
+              <div className="text-[12px] font-bold text-gray-800 mb-3">Project</div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <label className="text-[11px] text-gray-600">Project name
+                  <Input value={project.project_name || ""} onChange={(e) => patchProject({ project_name: e.target.value })} className="mt-1 h-[32px] text-[12px]" />
+                </label>
+                <label className="text-[11px] text-gray-600">Client
+                  <Input value={project.client_name || ""} onChange={(e) => patchProject({ client_name: e.target.value })} disabled={!!estimateId} className="mt-1 h-[32px] text-[12px]" />
+                </label>
+                <label className="text-[11px] text-gray-600">Estimate number
+                  <Input value={project.estimate_number || ""} onChange={(e) => patchProject({ estimate_number: e.target.value })} disabled={!!estimateId} className="mt-1 h-[32px] text-[12px]" />
+                </label>
+                <label className="text-[11px] text-gray-600">Paint application supplies / sq ft / color
+                  <Input type="number" step="0.01" min="0" value={project.paint_supplies_per_sqft ?? ""} onChange={(e) => patchProject({ paint_supplies_per_sqft: paintDraftValue(e.target.value) })}
+                    aria-invalid={hasIssueFor(allIssues, "paint_supplies_per_sqft") || undefined}
+                    aria-describedby={hasIssueFor(allIssues, "paint_supplies_per_sqft") ? "paint-pricing-issues" : undefined}
+                    className="mt-1 h-[32px] text-[12px]" />
+                </label>
+              </div>
+              <label className="block text-[11px] text-gray-600 mt-3">Notes
+                <Textarea value={project.notes || ""} onChange={(e) => patchProject({ notes: e.target.value })} className="mt-1 min-h-[70px] text-[12px]" />
+              </label>
+            </section>
+
+            <section className="bg-white border border-gray-200 rounded-md">
+              <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[12px] font-bold text-gray-800">Paint Items</div>
+                  <div className="text-[10px] text-gray-500">Geometry drives paintable area; colors drive paint, mask and labor.</div>
+                </div>
+                <Button onClick={addItem} variant="outline" className="h-[30px] px-3 text-[11px]"><Plus className="w-3.5 h-3.5 mr-1" /> Add Item</Button>
+              </div>
+
+              {(project.items || []).length === 0 ? (
+                <div className="py-12 text-center text-[12px] text-gray-400">No paint items yet.</div>
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {project.items.map((rawItem, index) => {
+                    const item = calculated.items[index] || rawItem;
+                    const lettering = rawItem.item_type === "lettering";
+                    const rowIssues = itemIssues(index);
+                    const rowIssuesId = `paint-item-${index}-issues`;
+                    const fieldFlag = (field) => hasIssueFor(allIssues, field, index) || undefined;
+                    const fieldDesc = (field) => hasIssueFor(allIssues, field, index) ? rowIssuesId : undefined;
+                    return (
+                      <div key={rawItem.builder_item_id || index} className="p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 rounded bg-gray-100 text-gray-600 flex items-center justify-center text-[10px] font-bold">{index + 1}</span>
+                          <Input data-item-desc={index} value={rawItem.description || ""} onChange={(e) => patchItem(index, { description: e.target.value })} placeholder="Item description" className="h-[30px] text-[12px] flex-1" />
+                          <button type="button" onClick={() => removeItem(index)} className="w-8 h-8 inline-flex items-center justify-center rounded text-red-500 hover:bg-red-50" aria-label="Remove item"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+
+                        {!lettering && (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-[9px] font-bold tracking-wide text-gray-400">SURFACE PRESETS</span>
+                            {[["4′×8′ face", 48, 96], ["8′×4′ face", 96, 48], ["2′×4′ face", 24, 48], ["4′×4′ face", 48, 48]].map(([label, l, w]) => (
+                              <button key={label} type="button" onClick={() => patchItem(index, { length: l, width: w }, { autoMask: true })} className="px-2 h-[24px] rounded border border-gray-300 text-[10px] text-gray-600 hover:bg-gray-50">{label}</button>
+                            ))}
+                          </div>
+                        )}
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                          <Field label="Type">
+                            <Select value={rawItem.item_type || "panel"} onValueChange={(value) => patchItem(index, { item_type: value }, { autoMask: true })}>
+                              <SelectTrigger className="h-[30px] text-[11px]"
+                                aria-invalid={fieldFlag("item_type")}
+                                aria-describedby={fieldDesc("item_type")}><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="panel">Panel</SelectItem>
+                                <SelectItem value="lettering">Lettering</SelectItem>
+                                <SelectItem value="complex_shapes">Complex Shape</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </Field>
+                          <Field label="Thickness">
+                            <Select value={rawItem.thickness || "1/2"} onValueChange={(value) => patchItem(index, { thickness: value }, { autoMask: true })}>
+                              <SelectTrigger className="h-[30px] text-[11px]"
+                                aria-invalid={fieldFlag("thickness")}
+                                aria-describedby={fieldDesc("thickness")}><SelectValue /></SelectTrigger>
+                              <SelectContent>{PAINT_THICKNESSES.map((size) => <SelectItem value={size} key={size}>{size}&quot;</SelectItem>)}</SelectContent>
+                            </Select>
+                          </Field>
+                          <Field label={lettering ? "Letter height (in)" : "Length (in)"}>
+                            <Input type="number" min="0" step="0.01" value={rawItem[lettering ? "width" : "length"] ?? ""} onChange={(e) => patchItem(index, { [lettering ? "width" : "length"]: paintDraftValue(e.target.value) }, { autoMask: true })}
+                              aria-invalid={fieldFlag(lettering ? "width" : "length")}
+                              aria-describedby={fieldDesc(lettering ? "width" : "length")}
+                              className="h-[30px] text-[11px]" />
+                          </Field>
+                          <Field label={lettering ? "Number of letters" : "Width (in)"}>
+                            <Input type="number" min="0" step={lettering ? "1" : "0.01"} value={rawItem[lettering ? "length" : "width"] ?? ""} onChange={(e) => patchItem(index, { [lettering ? "length" : "width"]: paintDraftValue(e.target.value) }, { autoMask: true })}
+                              aria-invalid={fieldFlag(lettering ? "length" : "width")}
+                              aria-describedby={fieldDesc(lettering ? "length" : "width")}
+                              className="h-[30px] text-[11px]" />
+                          </Field>
+                          {!lettering && <Field label="Quantity"><Input type="number" min="1" step="1" value={rawItem.quantity ?? ""} onChange={(e) => patchItem(index, { quantity: paintDraftValue(e.target.value) })}
+                            aria-invalid={fieldFlag("quantity")}
+                            aria-describedby={fieldDesc("quantity")}
+                            className="h-[30px] text-[11px]" /></Field>}
+                          <Field label="Paint sides">
+                            <Select value={rawItem.paint_sides || "one_side"} onValueChange={(value) => patchItem(index, { paint_sides: value })}>
+                              <SelectTrigger className="h-[30px] text-[11px]"
+                                aria-invalid={fieldFlag("paint_sides")}
+                                aria-describedby={fieldDesc("paint_sides")}><SelectValue /></SelectTrigger>
+                              <SelectContent><SelectItem value="one_side">One side + edges</SelectItem><SelectItem value="both_sides">Both sides + edges</SelectItem></SelectContent>
+                            </Select>
+                          </Field>
+                          {rawItem.item_type === "complex_shapes" && <Field label="Edge complexity"><Input type="number" min="0" step="0.1" value={rawItem.edge_complexity_multiplier ?? ""} onChange={(e) => patchItem(index, { edge_complexity_multiplier: paintDraftValue(e.target.value) })}
+                            aria-invalid={fieldFlag("edge_complexity_multiplier")}
+                            aria-describedby={fieldDesc("edge_complexity_multiplier")}
+                            className="h-[30px] text-[11px]" /></Field>}
+                          <Field label="Paint mask sq ft"><Input type="number" min="0" step="0.01" value={rawItem.paint_mask_sqft ?? ""} onChange={(e) => patchItem(index, { paint_mask_sqft: paintDraftValue(e.target.value) })}
+                            aria-invalid={fieldFlag("paint_mask_sqft")}
+                            aria-describedby={fieldDesc("paint_mask_sqft")}
+                            className="h-[30px] text-[11px]" /></Field>
+                          <Field label="Item fixed waste (gal)"><Input type="number" min="0" step="0.01" value={rawItem.fixed_waste_gallons ?? ""} onChange={(e) => patchItem(index, { fixed_waste_gallons: paintDraftValue(e.target.value) })}
+                            aria-invalid={fieldFlag("fixed_waste_gallons")}
+                            aria-describedby={fieldDesc("fixed_waste_gallons")}
+                            className="h-[30px] text-[11px]" /></Field>
+                          <Field label="Base supplies"><Input type="number" min="0" step="0.01" value={rawItem.base_supplies_cost ?? ""} onChange={(e) => patchItem(index, { base_supplies_cost: paintDraftValue(e.target.value) })}
+                            aria-invalid={fieldFlag("base_supplies_cost")}
+                            aria-describedby={fieldDesc("base_supplies_cost")}
+                            className="h-[30px] text-[11px]" /></Field>
+                        </div>
+
+                        {/* Per-item diagnostics — a malformed value stays on
+                            the row and is explained here, never dropped. */}
+                        {rowIssues.length > 0 && (
+                          <div role="status" id={rowIssuesId}
+                            className="flex items-start gap-2 text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                            <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                            <div className="space-y-0.5">
+                              {rowIssues.map((it, i) => <div key={i}>{it.message}</div>)}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="bg-gray-50 border border-gray-100 rounded p-2.5">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-[10px] font-bold uppercase tracking-wide text-gray-500">Paint colors</div>
+                            <button type="button" onClick={() => addColor(index)} className="text-[10px] font-semibold text-sky-700 hover:text-sky-900">+ Add color</button>
+                          </div>
+                          {(rawItem.paint_colors || []).length === 0 ? <div className="text-[10px] text-gray-400">No colors selected — no liquid paint is charged.</div> : (
+                            <div className="flex flex-wrap gap-2">
+                              {(rawItem.paint_colors || []).map((color, colorIndex) => (
+                                <div className="flex items-center gap-1" key={colorIndex}>
+                                  <Input value={color || ""} onChange={(e) => updateColor(index, colorIndex, e.target.value)} placeholder="PMS / color" className="h-[28px] w-[145px] text-[11px]" />
+                                  <button type="button" onClick={() => removeColor(index, colorIndex)} className="w-6 h-6 rounded text-gray-400 hover:text-red-600 hover:bg-white">×</button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-[10px]">
+                          <Metric label="Paintable area" value={Number.isFinite(item.paintable_sqft) ? `${number(item.paintable_sqft)} sf` : "—"} />
+                          <Metric label="Paint mask" value={moneyOrHeld(item.supplies_cost)} />
+                          <Metric label="Paint + supplies" value={moneyOrHeld(item.paint_cost)} />
+                          <Metric label="Labor" value={moneyOrHeld(item.labor_cost)} />
+                          <Metric label="Paint volume" value={Number.isFinite(item.paint_gallons) ? `${number(item.paint_gallons, 3)} gal` : "—"} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </div>
+
+          <aside className="space-y-3">
+            <section className="bg-white border border-gray-200 rounded-md sticky top-4">
+              <div className="px-4 py-3 border-b border-gray-200">
+                <div className="text-[12px] font-bold text-gray-800">Cost Summary</div>
+                <div className="text-[10px] text-gray-500">Internal Builder cost before estimate-level markup.</div>
+              </div>
+              <div className="p-4 space-y-2 text-[11px]">
+                {pricingUnavailable && (
+                  <p className="text-[11px] text-amber-800 mb-1">Saved amounts (not current pricing) — fix the flagged values to reprice.</p>
+                )}
+                <SummaryRow label="Paint mask" value={moneyCell(Number.isFinite(totals.total_paint_mask_cost) ? totals.total_paint_mask_cost : project.total_paint_mask_cost)} />
+                <SummaryRow label="Liquid paint & supplies" value={moneyCell(Number.isFinite(totals.total_liquid_paint_and_supplies_cost) ? totals.total_liquid_paint_and_supplies_cost : project.total_liquid_paint_and_supplies_cost)} />
+                <SummaryRow label="Painting labor" value={moneyCell(Number.isFinite(totals.total_labor_cost) ? totals.total_labor_cost : project.total_labor_cost)} />
+                <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between items-center">
+                  <span className="font-bold text-gray-800">Total cost</span>
+                  <span className="text-[16px] font-bold text-gray-900">{moneyCell(Number.isFinite(totals.total_cost) ? totals.total_cost : sumOrNull(project.total_paint_mask_cost, project.total_liquid_paint_and_supplies_cost, project.total_labor_cost))}</span>
+                </div>
+              </div>
+              <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 space-y-1.5 text-[10px] text-gray-500">
+                <SummaryRow label="Paint needed" value={`${numCell(totals.total_paint_gallons, 3)} gal`} subtle />
+                <SummaryRow label="Labor time" value={`${numCell(totals.total_labor_hours)} hr`} subtle />
+                <SummaryRow label="Unique colors" value={numCell(totals.unique_color_count, 0)} subtle />
+                <SummaryRow label="Mixes" value={numCell(totals.number_of_mixes, 0)} subtle />
+                <SummaryRow label="Setup / cleanup" value={`${numCell(totals.setup_hours)} hr`} subtle />
+                <SummaryRow label="Mixing" value={`${numCell(totals.mixing_hours)} hr`} subtle />
+              </div>
+              <div className="px-4 py-3 border-t border-gray-100 text-[10px] text-gray-500">
+                Mixed paint rate: <span className="font-semibold text-gray-700">{Number.isFinite(calculated.liquidPaintRate) ? `${money(calculated.liquidPaintRate)}/sf` : "—"}</span>
+              </div>
+            </section>
+          </aside>
+        </div>
+
+        <div className="mt-4">
+          <CustomerPricingTab
+            project={{
+              ...project,
+              // Feed live totals so the categorizer sees current numbers. Held
+              // values surface as 0 here — this tab is advisory only; the
+              // blocked save keeps them from reaching the record.
+              total_paint_mask_cost: totals.total_paint_mask_cost ?? 0,
+              total_liquid_paint_and_supplies_cost: totals.total_liquid_paint_and_supplies_cost ?? 0,
+              total_labor_cost: totals.total_labor_cost ?? 0,
+            }}
+            categorize={categorizePaintProject}
+            accentColor="blue"
+            onApplyTier={(tier) => patchProject({
+              customer_pricing: { ...(project.customer_pricing || {}), applied: true, tier_number: tier },
+            })}
+          />
+        </div>
+      </div>
+      <ModuleTemplateDialog
+        open={!!templateMode}
+        mode={templateMode}
+        onClose={() => setTemplateMode(null)}
+        project={project}
+        onApply={(data) => patchProject(data)}
+        moduleKey="painting"
+        title="Painting"
+        buildTemplateData={buildPaintingTemplateData}
+        describeTemplate={(t) => `${(t.project_data?.items || []).length} items`}
+      />
+    </div>
+  );
+}
+
+function moneyOrHeld(v) {
+  return Number.isFinite(v) ? money(v) : "—";
+}
+
+function Field({ label, children }) {
+  return <label className="text-[10px] text-gray-500 min-w-0"><span className="block mb-1">{label}</span>{children}</label>;
+}
+
+function Metric({ label, value }) {
+  return <div className="bg-white border border-gray-100 rounded px-2 py-1.5"><div className="text-gray-400">{label}</div><div className="font-semibold text-gray-700 mt-0.5">{value}</div></div>;
+}
+
+function SummaryRow({ label, value, subtle = false }) {
+  return <div className={`flex items-center justify-between gap-3 ${subtle ? "text-gray-500" : "text-gray-600"}`}><span>{label}</span><span className={subtle ? "font-medium" : "font-semibold text-gray-800"}>{value}</span></div>;
+}

@@ -1,0 +1,285 @@
+{
+  "inputs": {
+    "src/components/estimator/foundation/legacyFoundationCalc.js": {
+      "bytes": 16412,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/wallCalculator.js": {
+      "bytes": 8725,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/poleCalculator.js": {
+      "bytes": 2602,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/wallCapCalculator.js": {
+      "bytes": 1130,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationEquipmentBindings.js": {
+      "bytes": 5494,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationCatalogIntegrity.js": {
+      "bytes": 4168,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationEquipmentBindings.js",
+          "kind": "import-statement",
+          "original": "./foundationEquipmentBindings"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationGeometryInputs.js": {
+      "bytes": 2674,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementModel.js": {
+      "bytes": 16449,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationInputValidation.js": {
+      "bytes": 3233,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementModel"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementBasis.js": {
+      "bytes": 6986,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementCost.js": {
+      "bytes": 7643,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementProjection.js": {
+      "bytes": 1642,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementModel.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementModel"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementBasis.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementBasis"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementCost.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementCost"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementItemProjection.js": {
+      "bytes": 7862,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+          "kind": "import-statement",
+          "original": "./legacyFoundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementProjection.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementProjection"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationCalc.js": {
+      "bytes": 16155,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+          "kind": "import-statement",
+          "original": "./legacyFoundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/wallCalculator.js",
+          "kind": "import-statement",
+          "original": "./wallCalculator"
+        },
+        {
+          "path": "src/components/estimator/foundation/poleCalculator.js",
+          "kind": "import-statement",
+          "original": "./poleCalculator"
+        },
+        {
+          "path": "src/components/estimator/foundation/wallCapCalculator.js",
+          "kind": "import-statement",
+          "original": "./wallCapCalculator"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationEquipmentBindings.js",
+          "kind": "import-statement",
+          "original": "./foundationEquipmentBindings"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationInputValidation.js",
+          "kind": "import-statement",
+          "original": "./foundationInputValidation"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementItemProjection.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementItemProjection"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementDraft.js": {
+      "bytes": 4626,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementBasisKey.js": {
+      "bytes": 2913,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementProposal.js": {
+      "bytes": 11613,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationInputValidation.js",
+          "kind": "import-statement",
+          "original": "./foundationInputValidation"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementDraft.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementDraft"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementItemProjection.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementItemProjection"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementBasisKey.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementBasisKey"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    ".audit-work/foundation-reinforcement18/persistence-proposal-bundle.mjs": {
+      "imports": [],
+      "exports": [
+        "acceptFoundationReinforcementProposal",
+        "createFoundationReinforcementProposal"
+      ],
+      "entryPoint": "src/components/estimator/foundation/foundationReinforcementProposal.js",
+      "inputs": {
+        "src/components/estimator/foundation/legacyFoundationCalc.js": {
+          "bytesInOutput": 8108
+        },
+        "src/components/estimator/foundation/foundationCatalogIntegrity.js": {
+          "bytesInOutput": 2473
+        },
+        "src/components/estimator/foundation/foundationGeometryInputs.js": {
+          "bytesInOutput": 2545
+        },
+        "src/components/estimator/foundation/foundationReinforcementModel.js": {
+          "bytesInOutput": 16667
+        },
+        "src/components/estimator/foundation/foundationInputValidation.js": {
+          "bytesInOutput": 2867
+        },
+        "src/components/estimator/foundation/foundationReinforcementBasis.js": {
+          "bytesInOutput": 7019
+        },
+        "src/components/estimator/foundation/foundationReinforcementCost.js": {
+          "bytesInOutput": 7653
+        },
+        "src/components/estimator/foundation/foundationReinforcementProjection.js": {
+          "bytesInOutput": 1265
+        },
+        "src/components/estimator/foundation/foundationReinforcementItemProjection.js": {
+          "bytesInOutput": 7555
+        },
+        "src/components/estimator/foundation/foundationCalc.js": {
+          "bytesInOutput": 4619
+        },
+        "src/components/estimator/foundation/foundationReinforcementDraft.js": {
+          "bytesInOutput": 3682
+        },
+        "src/components/estimator/foundation/foundationReinforcementBasisKey.js": {
+          "bytesInOutput": 2864
+        },
+        "src/components/estimator/foundation/foundationReinforcementProposal.js": {
+          "bytesInOutput": 11151
+        }
+      },
+      "bytes": 79484
+    }
+  }
+}

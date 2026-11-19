@@ -1,0 +1,516 @@
+{
+  "summary": {
+    "total": 55,
+    "resolved": 1,
+    "rate": "1.8%",
+    "failure_stages": {
+      "geocode": 54
+    },
+    "geocode_misses": 54,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "6333 Key Ln #1428, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1894,
+      "worker": 1
+    },
+    {
+      "address": "222 Court St, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 2714,
+      "worker": 2
+    },
+    {
+      "address": "6499 KY-1428, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1555,
+      "worker": 1
+    },
+    {
+      "address": "60 Court St, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1687,
+      "worker": 2
+    },
+    {
+      "address": "6363 KY-1428, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1698,
+      "worker": 1
+    },
+    {
+      "address": "234 Sam Walton Dr, Russellville, KY 42276",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1705,
+      "worker": 2
+    },
+    {
+      "address": "16 Winter Hawk Ln, Albany, KY 42602",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1668,
+      "worker": 1
+    },
+    {
+      "address": "6459 KY-1428, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1680,
+      "worker": 2
+    },
+    {
+      "address": "23 Cemetery Loop Rd, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1684,
+      "worker": 1
+    },
+    {
+      "address": "6089 KY-1428, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1693,
+      "worker": 2
+    },
+    {
+      "address": "8498 US-23, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 2688,
+      "worker": 1
+    },
+    {
+      "address": "6486 KY-1428, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 2712,
+      "worker": 2
+    },
+    {
+      "address": "100 Railroad St, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1733,
+      "worker": 1
+    },
+    {
+      "address": "6333 KY-1428, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1688,
+      "worker": 2
+    },
+    {
+      "address": "11565 KY-558, Albany, KY 42602",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1680,
+      "worker": 1
+    },
+    {
+      "address": "540 West Industrial Park Drive, Russellville, KY 42276",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1702,
+      "worker": 2
+    },
+    {
+      "address": "194 McWhorter Spur Rd Suite B, Albany, KY 42602",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1673,
+      "worker": 1
+    },
+    {
+      "address": "100 Jimmy Dyer Ln, Albany, KY 42602",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1686,
+      "worker": 2
+    },
+    {
+      "address": "100 Emergency Dr, Albany, KY 42602",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1679,
+      "worker": 1
+    },
+    {
+      "address": "1533 KY-80, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1698,
+      "worker": 2
+    },
+    {
+      "address": "55 Swafford St, Manchester, KY 40962",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1706,
+      "worker": 1
+    },
+    {
+      "address": "4846 KY-1428, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1693,
+      "worker": 2
+    },
+    {
+      "address": "8177 KY-1428, Allen City, KY 41601",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 2688,
+      "worker": 1
+    },
+    {
+      "address": "1440 Simonton Rd, Ashland, OH 44805",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 2694,
+      "worker": 2
+    },
+    {
+      "address": "1380 Enterprise Pl, Ashland, OH 44805",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1716,
+      "worker": 1
+    },
+    {
+      "address": "256 Russell Rd, Ashland, KY 41101",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1704,
+      "worker": 2
+    },
+    {
+      "address": "433 Diederich Blvd, Ashland, KY 41101",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1690,
+      "worker": 1
+    },
+    {
+      "address": "1028 Commerce Pk, Ashland, KY 41102",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1682,
+      "worker": 2
+    },
+    {
+      "address": "5425 N Forty Rd, Ashland, KY 41102",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1701,
+      "worker": 1
+    },
+    {
+      "address": "12352 Cr-1307, Ashland, KY 41102",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1693,
+      "worker": 2
+    },
+    {
+      "address": "106 public square, Auburn, KY 42206",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1699,
+      "worker": 1
+    },
+    {
+      "address": "379 Old US 68 Loop, Auburn, KY 42206",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1701,
+      "worker": 2
+    },
+    {
+      "address": "200 Park Ave, WARRENSVL HTS, OH 44122",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1724,
+      "worker": 1
+    },
+    {
+      "address": "24086 OH-697, Delphos, OH 45833",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1694,
+      "worker": 2
+    },
+    {
+      "address": "46 Flegle St, Bardwell, KY 42023",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1642,
+      "worker": 1
+    },
+    {
+      "address": "435 Ed Embry Dr, Leitchfield, KY 42754",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 2700,
+      "worker": 2
+    },
+    {
+      "address": "100 Entrance Rd, Wickliffe, KY 42087",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 2692,
+      "worker": 1
+    },
+    {
+      "address": "3rd St, 615 Old State Rd 60 Bldg, Hardinsburg, KY 40143",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1768,
+      "worker": 2
+    },
+    {
+      "address": "4537 A Redhewn Lane, South Lebanon, OH 45065",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1691,
+      "worker": 1
+    },
+    {
+      "address": "525 Beech Grove St, Calhoun, KY 42327",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1620,
+      "worker": 2
+    },
+    {
+      "address": "590 U.S. Highway 41 Alternate South, 590 US-41 ALT, Dixon, KY 42409",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1760,
+      "worker": 1
+    },
+    {
+      "address": "10548 Harrison Ave Ste 1500, Harrison, OH 45030",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1720,
+      "worker": 2
+    },
+    {
+      "address": "10791 Aerohub Blvd, Cincinnati, OH 45215",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1771,
+      "worker": 1
+    },
+    {
+      "address": "216 Cedar Rapids Rd, Mt Vernon, KY 40456",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1677,
+      "worker": 2
+    },
+    {
+      "address": "2100 UNITED GRINDING Boulevard, Miamisburg, OH 45342",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1567,
+      "worker": 1
+    },
+    {
+      "address": "100 Conley Ln, Greensburg, KY 42743",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1679,
+      "worker": 2
+    },
+    {
+      "address": "8989 Lake Rd, Seville, OH 44273",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1677,
+      "worker": 1
+    },
+    {
+      "address": "675 Western Kentucky Pkwy # 2, Beaver Dam, KY 42320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beaver dam -> beaver dam",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beaver dam"
+      },
+      "county": "",
+      "ms": 2696,
+      "worker": 2
+    },
+    {
+      "address": "1400 OH-125, Amelia, OH 45102",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 2686,
+      "worker": 1
+    },
+    {
+      "address": "400 Geissel St, Wapakoneta, OH 45895",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1687,
+      "worker": 2
+    },
+    {
+      "address": "2221 US-68, Carlisle, KY 40311",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1681,
+      "worker": 1
+    },
+    {
+      "address": "122 Old State Rd 60, Hardinsburg, KY 40143",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1733,
+      "worker": 2
+    },
+    {
+      "address": "140A Old State Rd 60, Hardinsburg, KY 40143",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1736,
+      "worker": 1
+    },
+    {
+      "address": "381 Sam Ball Way, Henderson, KY 42420",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1667,
+      "worker": 2
+    },
+    {
+      "address": "273 Parkway Plaza #18, Barbourville, KY 40906",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1664,
+      "worker": 1
+    }
+  ]
+}

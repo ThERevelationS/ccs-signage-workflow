@@ -1,14 +1,15 @@
+import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, FileText, RefreshCw, Edit, Clock, CheckCircle, ShieldAlert, ChevronRight } from "lucide-react";
+import { ExternalLink, FileText, RefreshCw, Edit, Clock, CheckCircle, ShieldAlert, ChevronRight, Phone } from "lucide-react";
 import { format } from "date-fns";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";
 
 const DOC_TYPE_LABELS = {
-  sign_ordinance: "Sign Ordinance",
-  permit_application: "Permit Application",
-  zoning_code: "Zoning Code",
-  fee_schedule: "Fee Schedule",
+  sign_ordinance: "Sign rules",
+  permit_application: "Permit form",
+  zoning_code: "Zoning rules",
+  fee_schedule: "Fees",
   checklist: "Checklist",
   other: "Other"
 };
@@ -29,7 +30,7 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
     ? format(lastUpdatedDate, "MM/dd/yy")
     : null;
   const hasRequirements = jurisdiction.permit_requirements?.requires_permit !== undefined;
-  const trust = assessJurisdictionTrust(jurisdiction, duplicateCount);
+  const trust = useMemo(() => assessJurisdictionTrust(jurisdiction, duplicateCount), [jurisdiction, duplicateCount]);
 
   return (
     <div
@@ -48,12 +49,23 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
               <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${trust.className}`} title={trust.description}>
                 <ShieldAlert className="w-3 h-3" /> {trust.label}
               </span>
+              {(() => { const days = jurisdiction.verified_at ? Math.floor((Date.now() - new Date(jurisdiction.verified_at).getTime()) / 86400000) : null; return days != null && days > 90 ? <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800" title={"Checked " + days + " days ago"}>checked {days}d ago</span> : null; })()}
               {trust.issues.length > 0 && (
-                <span className="text-[10px] text-gray-500">{trust.issues.length} review item{trust.issues.length === 1 ? '' : 's'}</span>
+                <span className="text-[10px] text-gray-500">{trust.issues.length} thing{trust.issues.length === 1 ? '' : 's'} to check</span>
               )}
             </div>
             {jurisdiction.type !== "county" && jurisdiction.parent_county?.name && (
-              <div className="mt-1 text-[11px] text-gray-500">Parent County: {jurisdiction.parent_county.name}</div>
+              <div className="mt-1 text-[11px] text-gray-500">In {jurisdiction.parent_county.name} County</div>
+            )}
+            {(jurisdiction.contact_info?.phone || (jurisdiction.offices || []).find((o) => o.contact_phone)?.contact_phone) && (
+              <a
+                href={`tel:${(jurisdiction.contact_info?.phone || (jurisdiction.offices || []).find((o) => o.contact_phone)?.contact_phone || "").replace(/[^+\d]/g, "")}`}
+                className="mt-1 flex items-center gap-1 text-xs font-semibold text-green-700 hover:underline"
+                onClick={e => e.stopPropagation()}
+              >
+                <Phone className="w-3 h-3" />
+                {jurisdiction.contact_info?.phone || (jurisdiction.offices || []).find((o) => o.contact_phone)?.contact_phone}
+              </a>
             )}
             {jurisdiction.permitting_url && (
               <a
@@ -64,8 +76,25 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
                 onClick={e => e.stopPropagation()}
               >
                 <ExternalLink className="w-3 h-3" />
-                Permitting Page
+                Permit page
               </a>
+            )}
+            {jurisdiction.ordinance_url && (
+              <a
+                href={jurisdiction.ordinance_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-purple-600 hover:underline flex items-center gap-1 mt-1"
+                onClick={e => e.stopPropagation()}
+              >
+                <FileText className="w-3 h-3" />
+                Sign code
+              </a>
+            )}
+            {jurisdiction.office_research?.ordinance?.sign_permit_required_hint && (
+              <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-green-300 bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-800" title="Sign code text says a permit is required">
+                sign permit required
+              </span>
             )}
           </div>
           <div className="flex w-full gap-2 sm:w-auto sm:flex-shrink-0 sm:gap-1">
@@ -75,7 +104,7 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
               className="min-h-11 min-w-11 flex-1 gap-1.5 px-3 sm:flex-none sm:px-2.5"
               onClick={(e) => { e.stopPropagation(); onRefresh(jurisdiction); }}
               disabled={isRefreshing}
-              title="AI Refresh"
+              title="Ask AI to re-check"
               aria-label={`Refresh ${jurisdiction.name}`}
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-blue-500' : 'text-gray-500'}`} />
@@ -107,7 +136,7 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
           {hasRequirements && (
             <span className="flex items-center gap-1 text-xs text-green-600">
               <CheckCircle className="w-3 h-3" />
-              Requirements extracted
+              Rules saved
             </span>
           )}
           {lastUpdatedLabel && (

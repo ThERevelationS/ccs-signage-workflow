@@ -1,0 +1,16 @@
+{
+ "suite": "maintenance-model",
+ "passed": 123,
+ "failed": 0,
+ "result": "PASS",
+ "sections": {
+  "A_valid_path_parity": 9,
+  "B_strict_parsers": 10,
+  "C_settings_scanner": 23,
+  "D_item_scanner": 43,
+  "E_held_calc_semantics": 11,
+  "F_explicit_zero": 6,
+  "G_project_scanner": 14,
+  "H_ui_helpers": 7
+ }
+}

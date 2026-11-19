@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6aea6df273dc631b2ae6769b",
+ "jurisdiction_name": "Washington",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 3,
+   "snippet": "General Application Requirements in Designated A Zones • Submission of materials required in a designated AE or AH zone. • Designation of the floodway boundaries • Designation of the base flood elevations • Computer model input and output used to determine the existing base flood elevation and floodway limits. • Computer model input and output used to determine the base flood elevation and floodway elevation using the existing floodway limits with the proposed development completed. • Any additional information or exhibits deemed necessary for property consideration of the application. Note – In designated flood hazard areas for which the Federal Emergency Management Agency has not determined detailed flood elevations and Floodway boundaries, the applicant shall be required to furnish such information prepared by qualified personnel to enable the administration of Franklin County’s Natio",
+   "tags": [
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "ceff07c9f559dbfcc8773df6da3eba331f09c5c1407b8d790c98f1391c9cb8f4",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\washington--769b\\unassigned\\sources\\ceff07c9f559dbfcc8773df6da3eba331f09c5c1407b8d790c98f1391c9cb8f4.pdf",
+   "official_url": "https://wtwpdublinoh.gov/cdn/flood-plain-permit-application.pdf"
+  }
+ ]
+}

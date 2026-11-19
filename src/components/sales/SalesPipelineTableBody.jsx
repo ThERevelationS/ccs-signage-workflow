@@ -6,7 +6,7 @@ const SalesPipelineTableBody = memo(function SalesPipelineTableBody({
   getTaskDescStyle, getDeadlineCellColor, calculateDays, openDatePopover, setOpenDatePopover,
   setClearDateConfirm, updateWorkOrder, isRegistered, isAdmin, selectedRows, toggleRowSelection,
   handleContextMenu, setSelectedWorkOrder, onCompleteFollowUp, openCorbridgeDialog, handleDuplicateClient, deleteWorkOrder,
-  leadSources, users, taskDescriptions, projectTypes, rowVirtualizer,
+  leadSources, users, taskDescriptions, projectTypes, rowVirtualizer, measureElement,
 }) {
   return (
     <tbody>
@@ -20,6 +20,7 @@ const SalesPipelineTableBody = memo(function SalesPipelineTableBody({
             key={wo.id}
             wo={wo}
             index={index}
+            measureElement={measureElement}
             visibleColumnIds={visibleColumnIds}
             focusedRowId={focusedRowId}
             setFocusedRowId={setFocusedRowId}
@@ -48,7 +49,7 @@ const SalesPipelineTableBody = memo(function SalesPipelineTableBody({
           />
         );
       })}
-      <tr style={{ height: `${rowVirtualizer.getTotalSize() - (rowVirtualizer.getVirtualItems()[rowVirtualizer.getVirtualItems().length - 1]?.end || 0)}px` }}><td colSpan={100} /></tr>
+      <tr style={{ height: `${rowVirtualizer.getTotalSize() - (virtualItems[virtualItems.length - 1]?.end || 0)}px` }}><td colSpan={100} /></tr>
     </tbody>
   );
 });

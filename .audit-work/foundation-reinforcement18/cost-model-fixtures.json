@@ -1,0 +1,542 @@
+{
+  "sourceHash": "439dd9dd3873bf632af505884547b86372b04334d0911059abb9ba714ef63041",
+  "synthetic": true,
+  "models": {
+    "single": {
+      "version": 2,
+      "componentId": "f1",
+      "instanceCount": 1,
+      "engineeringApproved": false,
+      "status": "valid",
+      "issues": [
+        {
+          "field": "supports",
+          "code": "reinforcement_supports_off_explained",
+          "message": "Support items are off with an explicit explanation; this is not an engineering approval.",
+          "severity": "warning"
+        },
+        {
+          "field": "geometry",
+          "code": "reinforcement_geometry_truncated",
+          "message": "8 steel primitives are omitted from this per-instance preview; complete quantities remain reported.",
+          "severity": "warning"
+        }
+      ],
+      "perInstance": {
+        "horizontal_count": 8,
+        "horizontal_length_inches": 240,
+        "longitudinal_count": 0,
+        "longitudinal_length_inches": 0,
+        "hoop_count": 0,
+        "hoop_length_inches": 0,
+        "inter_mat_tie_count": 0,
+        "inter_mat_tie_length_inches": 0,
+        "mat_crossings": 16,
+        "hoop_bar_crossings": 0,
+        "tie_ends": 0
+      },
+      "totals": {
+        "horizontal_count": 8,
+        "horizontal_feet": 20,
+        "longitudinal_count": 0,
+        "longitudinal_feet": 0,
+        "hoop_count": 0,
+        "hoop_feet": 0,
+        "inter_mat_tie_count": 0,
+        "inter_mat_tie_feet": 0,
+        "mat_crossings": 16,
+        "hoop_bar_crossings": 0,
+        "tie_ends": 0,
+        "total_steel_feet": 20
+      },
+      "groups": [
+        {
+          "id": "top/x",
+          "role": "horizontal",
+          "count": 4,
+          "cut_length_inches": 30,
+          "diameter_inches": 0.5
+        },
+        {
+          "id": "top/z",
+          "role": "horizontal",
+          "count": 4,
+          "cut_length_inches": 30,
+          "diameter_inches": 0.5
+        }
+      ],
+      "geometry": [],
+      "omittedGeometryCount": 8,
+      "supports": {
+        "status": "off_explained",
+        "count": 0,
+        "reason": "Synthetic explicit support condition; not an engineering recommendation."
+      }
+    },
+    "triple": {
+      "version": 2,
+      "componentId": "f1",
+      "instanceCount": 3,
+      "engineeringApproved": false,
+      "status": "valid",
+      "issues": [
+        {
+          "field": "supports",
+          "code": "reinforcement_supports_off_explained",
+          "message": "Support items are off with an explicit explanation; this is not an engineering approval.",
+          "severity": "warning"
+        },
+        {
+          "field": "geometry",
+          "code": "reinforcement_geometry_truncated",
+          "message": "8 steel primitives are omitted from this per-instance preview; complete quantities remain reported.",
+          "severity": "warning"
+        }
+      ],
+      "perInstance": {
+        "horizontal_count": 8,
+        "horizontal_length_inches": 240,
+        "longitudinal_count": 0,
+        "longitudinal_length_inches": 0,
+        "hoop_count": 0,
+        "hoop_length_inches": 0,
+        "inter_mat_tie_count": 0,
+        "inter_mat_tie_length_inches": 0,
+        "mat_crossings": 16,
+        "hoop_bar_crossings": 0,
+        "tie_ends": 0
+      },
+      "totals": {
+        "horizontal_count": 24,
+        "horizontal_feet": 60,
+        "longitudinal_count": 0,
+        "longitudinal_feet": 0,
+        "hoop_count": 0,
+        "hoop_feet": 0,
+        "inter_mat_tie_count": 0,
+        "inter_mat_tie_feet": 0,
+        "mat_crossings": 48,
+        "hoop_bar_crossings": 0,
+        "tie_ends": 0,
+        "total_steel_feet": 60
+      },
+      "groups": [
+        {
+          "id": "top/x",
+          "role": "horizontal",
+          "count": 4,
+          "cut_length_inches": 30,
+          "diameter_inches": 0.5
+        },
+        {
+          "id": "top/z",
+          "role": "horizontal",
+          "count": 4,
+          "cut_length_inches": 30,
+          "diameter_inches": 0.5
+        }
+      ],
+      "geometry": [],
+      "omittedGeometryCount": 8,
+      "supports": {
+        "status": "off_explained",
+        "count": 0,
+        "reason": "Synthetic explicit support condition; not an engineering recommendation."
+      }
+    },
+    "off": {
+      "version": 2,
+      "componentId": "f1",
+      "instanceCount": 1,
+      "engineeringApproved": false,
+      "status": "off",
+      "issues": [],
+      "perInstance": {
+        "horizontal_count": 0,
+        "horizontal_length_inches": 0,
+        "longitudinal_count": 0,
+        "longitudinal_length_inches": 0,
+        "hoop_count": 0,
+        "hoop_length_inches": 0,
+        "inter_mat_tie_count": 0,
+        "inter_mat_tie_length_inches": 0,
+        "mat_crossings": 0,
+        "hoop_bar_crossings": 0,
+        "tie_ends": 0
+      },
+      "totals": {
+        "horizontal_count": 0,
+        "horizontal_feet": 0,
+        "longitudinal_count": 0,
+        "longitudinal_feet": 0,
+        "hoop_count": 0,
+        "hoop_feet": 0,
+        "inter_mat_tie_count": 0,
+        "inter_mat_tie_feet": 0,
+        "mat_crossings": 0,
+        "hoop_bar_crossings": 0,
+        "tie_ends": 0,
+        "total_steel_feet": 0
+      },
+      "groups": [],
+      "geometry": [],
+      "omittedGeometryCount": 0,
+      "supports": {
+        "status": "not_required",
+        "count": 0
+      }
+    },
+    "invalid": {
+      "version": 2,
+      "componentId": "f1",
+      "instanceCount": null,
+      "engineeringApproved": false,
+      "status": "invalid",
+      "issues": [
+        {
+          "field": "quantity",
+          "code": "foundation_quantity_invalid",
+          "message": "Foundation 1: quantity must be a positive whole number within the supported range.",
+          "severity": "error"
+        }
+      ],
+      "perInstance": null,
+      "totals": null,
+      "groups": [],
+      "geometry": [],
+      "omittedGeometryCount": 0,
+      "supports": {
+        "status": "unconfigured",
+        "count": null
+      }
+    },
+    "supportsUnknown": {
+      "version": 2,
+      "componentId": "f1",
+      "instanceCount": 1,
+      "engineeringApproved": false,
+      "status": "valid",
+      "issues": [
+        {
+          "field": "supports",
+          "code": "reinforcement_supports_unconfigured",
+          "message": "Supports have not been modeled or priced; no zero quantity or build-ready status is inferred.",
+          "severity": "warning"
+        },
+        {
+          "field": "geometry",
+          "code": "reinforcement_geometry_truncated",
+          "message": "8 steel primitives are omitted from this per-instance preview; complete quantities remain reported.",
+          "severity": "warning"
+        }
+      ],
+      "perInstance": {
+        "horizontal_count": 8,
+        "horizontal_length_inches": 240,
+        "longitudinal_count": 0,
+        "longitudinal_length_inches": 0,
+        "hoop_count": 0,
+        "hoop_length_inches": 0,
+        "inter_mat_tie_count": 0,
+        "inter_mat_tie_length_inches": 0,
+        "mat_crossings": 16,
+        "hoop_bar_crossings": 0,
+        "tie_ends": 0
+      },
+      "totals": {
+        "horizontal_count": 8,
+        "horizontal_feet": 20,
+        "longitudinal_count": 0,
+        "longitudinal_feet": 0,
+        "hoop_count": 0,
+        "hoop_feet": 0,
+        "inter_mat_tie_count": 0,
+        "inter_mat_tie_feet": 0,
+        "mat_crossings": 16,
+        "hoop_bar_crossings": 0,
+        "tie_ends": 0,
+        "total_steel_feet": 20
+      },
+      "groups": [
+        {
+          "id": "top/x",
+          "role": "horizontal",
+          "count": 4,
+          "cut_length_inches": 30,
+          "diameter_inches": 0.5
+        },
+        {
+          "id": "top/z",
+          "role": "horizontal",
+          "count": 4,
+          "cut_length_inches": 30,
+          "diameter_inches": 0.5
+        }
+      ],
+      "geometry": [],
+      "omittedGeometryCount": 8,
+      "supports": {
+        "status": "unconfigured",
+        "count": null
+      }
+    },
+    "pillar": {
+      "version": 2,
+      "componentId": "f1",
+      "instanceCount": 1,
+      "engineeringApproved": false,
+      "status": "valid",
+      "issues": [
+        {
+          "field": "pillar.hoops",
+          "code": "reinforcement_hoop_allowance_authored",
+          "message": "Hoop cut allowance is authored explicitly; hooks, laps and structural adequacy require review.",
+          "severity": "warning"
+        },
+        {
+          "field": "supports",
+          "code": "reinforcement_supports_off_explained",
+          "message": "Support items are off with an explicit explanation; this is not an engineering approval.",
+          "severity": "warning"
+        },
+        {
+          "field": "geometry",
+          "code": "reinforcement_geometry_truncated",
+          "message": "5 steel primitives are omitted from this per-instance preview; complete quantities remain reported.",
+          "severity": "warning"
+        }
+      ],
+      "perInstance": {
+        "horizontal_count": 0,
+        "horizontal_length_inches": 0,
+        "longitudinal_count": 4,
+        "longitudinal_length_inches": 120,
+        "hoop_count": 1,
+        "hoop_length_inches": 53.40707511102649,
+        "inter_mat_tie_count": 0,
+        "inter_mat_tie_length_inches": 0,
+        "mat_crossings": 0,
+        "hoop_bar_crossings": 4,
+        "tie_ends": 0
+      },
+      "totals": {
+        "horizontal_count": 0,
+        "horizontal_feet": 0,
+        "longitudinal_count": 4,
+        "longitudinal_feet": 10,
+        "hoop_count": 1,
+        "hoop_feet": 4.4505895925855405,
+        "inter_mat_tie_count": 0,
+        "inter_mat_tie_feet": 0,
+        "mat_crossings": 0,
+        "hoop_bar_crossings": 4,
+        "tie_ends": 0,
+        "total_steel_feet": 14.45058959258554
+      },
+      "groups": [
+        {
+          "id": "pillar/longitudinal",
+          "role": "longitudinal",
+          "count": 4,
+          "cut_length_inches": 30,
+          "diameter_inches": 0.5
+        },
+        {
+          "id": "h1",
+          "role": "hoop",
+          "count": 1,
+          "cut_length_inches": 53.40707511102649,
+          "diameter_inches": 0.5
+        }
+      ],
+      "geometry": [],
+      "omittedGeometryCount": 5,
+      "supports": {
+        "status": "off_explained",
+        "count": 0,
+        "reason": "Synthetic explicit support condition; not an engineering recommendation."
+      }
+    },
+    "disconnected": {
+      "version": 2,
+      "componentId": "f1",
+      "instanceCount": 1,
+      "engineeringApproved": false,
+      "status": "valid",
+      "issues": [
+        {
+          "field": "pillar.hoops.0",
+          "code": "reinforcement_connection_unverified",
+          "message": "Hoop-to-longitudinal connections are not established by this geometry.",
+          "severity": "warning"
+        },
+        {
+          "field": "pillar.hoops",
+          "code": "reinforcement_hoop_allowance_authored",
+          "message": "Hoop cut allowance is authored explicitly; hooks, laps and structural adequacy require review.",
+          "severity": "warning"
+        },
+        {
+          "field": "supports",
+          "code": "reinforcement_supports_off_explained",
+          "message": "Support items are off with an explicit explanation; this is not an engineering approval.",
+          "severity": "warning"
+        },
+        {
+          "field": "geometry",
+          "code": "reinforcement_geometry_truncated",
+          "message": "5 steel primitives are omitted from this per-instance preview; complete quantities remain reported.",
+          "severity": "warning"
+        }
+      ],
+      "perInstance": {
+        "horizontal_count": 0,
+        "horizontal_length_inches": 0,
+        "longitudinal_count": 4,
+        "longitudinal_length_inches": 120,
+        "hoop_count": 1,
+        "hoop_length_inches": 53.40707511102649,
+        "inter_mat_tie_count": 0,
+        "inter_mat_tie_length_inches": 0,
+        "mat_crossings": 0,
+        "hoop_bar_crossings": 0,
+        "tie_ends": 0
+      },
+      "totals": {
+        "horizontal_count": 0,
+        "horizontal_feet": 0,
+        "longitudinal_count": 4,
+        "longitudinal_feet": 10,
+        "hoop_count": 1,
+        "hoop_feet": 4.4505895925855405,
+        "inter_mat_tie_count": 0,
+        "inter_mat_tie_feet": 0,
+        "mat_crossings": 0,
+        "hoop_bar_crossings": 0,
+        "tie_ends": 0,
+        "total_steel_feet": 14.45058959258554
+      },
+      "groups": [
+        {
+          "id": "pillar/longitudinal",
+          "role": "longitudinal",
+          "count": 4,
+          "cut_length_inches": 30,
+          "diameter_inches": 0.5
+        },
+        {
+          "id": "h1",
+          "role": "hoop",
+          "count": 1,
+          "cut_length_inches": 53.40707511102649,
+          "diameter_inches": 0.5
+        }
+      ],
+      "geometry": [],
+      "omittedGeometryCount": 5,
+      "supports": {
+        "status": "off_explained",
+        "count": 0,
+        "reason": "Synthetic explicit support condition; not an engineering recommendation."
+      }
+    },
+    "ties": {
+      "version": 2,
+      "componentId": "f1",
+      "instanceCount": 1,
+      "engineeringApproved": false,
+      "status": "valid",
+      "issues": [
+        {
+          "field": "spread.inter_mat_ties",
+          "code": "reinforcement_tie_path_only",
+          "message": "Tie paths are references; authored cut lengths include any hook/bend allowance and require engineering/fabrication review.",
+          "severity": "warning"
+        },
+        {
+          "field": "supports",
+          "code": "reinforcement_supports_off_explained",
+          "message": "Support items are off with an explicit explanation; this is not an engineering approval.",
+          "severity": "warning"
+        },
+        {
+          "field": "geometry",
+          "code": "reinforcement_geometry_truncated",
+          "message": "17 steel primitives are omitted from this per-instance preview; complete quantities remain reported.",
+          "severity": "warning"
+        }
+      ],
+      "perInstance": {
+        "horizontal_count": 16,
+        "horizontal_length_inches": 480,
+        "longitudinal_count": 0,
+        "longitudinal_length_inches": 0,
+        "hoop_count": 0,
+        "hoop_length_inches": 0,
+        "inter_mat_tie_count": 1,
+        "inter_mat_tie_length_inches": 29,
+        "mat_crossings": 32,
+        "hoop_bar_crossings": 0,
+        "tie_ends": 2
+      },
+      "totals": {
+        "horizontal_count": 16,
+        "horizontal_feet": 40,
+        "longitudinal_count": 0,
+        "longitudinal_feet": 0,
+        "hoop_count": 0,
+        "hoop_feet": 0,
+        "inter_mat_tie_count": 1,
+        "inter_mat_tie_feet": 2.4166666666666665,
+        "mat_crossings": 32,
+        "hoop_bar_crossings": 0,
+        "tie_ends": 2,
+        "total_steel_feet": 42.416666666666664
+      },
+      "groups": [
+        {
+          "id": "top/x",
+          "role": "horizontal",
+          "count": 4,
+          "cut_length_inches": 30,
+          "diameter_inches": 0.5
+        },
+        {
+          "id": "top/z",
+          "role": "horizontal",
+          "count": 4,
+          "cut_length_inches": 30,
+          "diameter_inches": 0.5
+        },
+        {
+          "id": "bottom/x",
+          "role": "horizontal",
+          "count": 4,
+          "cut_length_inches": 30,
+          "diameter_inches": 0.5
+        },
+        {
+          "id": "bottom/z",
+          "role": "horizontal",
+          "count": 4,
+          "cut_length_inches": 30,
+          "diameter_inches": 0.5
+        },
+        {
+          "id": "t1",
+          "role": "inter_mat_tie",
+          "count": 1,
+          "cut_length_inches": 29,
+          "diameter_inches": 0.5
+        }
+      ],
+      "geometry": [],
+      "omittedGeometryCount": 17,
+      "supports": {
+        "status": "off_explained",
+        "count": 0,
+        "reason": "Synthetic explicit support condition; not an engineering recommendation."
+      }
+    }
+  }
+}

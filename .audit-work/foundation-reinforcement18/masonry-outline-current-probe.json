@@ -1,0 +1,210 @@
+{
+  "sourceHead": "1b672bf8ed786b5d79cab4cbdb003ecf814e91ff",
+  "sourceHash": "4ab4a2b473ae9b6a350d9e4c8f0a416f4062521f1e797f359d53d8077c00c7d5",
+  "fixtureArtifact": "masonry-pricing-baseline-probe.json",
+  "results": [
+    {
+      "id": "no-shape",
+      "rawShape": null,
+      "issues": [],
+      "calculated": {
+        "totalBricks": 0,
+        "materialCost": 0,
+        "mortarCost": 0,
+        "laborHours": 0,
+        "laborCost": 0,
+        "totalCost": 0,
+        "totalLinearInches": 0,
+        "numCourses": 0,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      }
+    },
+    {
+      "id": "null-shape",
+      "rawShape": null,
+      "issues": [],
+      "calculated": {
+        "totalBricks": 0,
+        "materialCost": 0,
+        "mortarCost": 0,
+        "laborHours": 0,
+        "laborCost": 0,
+        "totalCost": 0,
+        "totalLinearInches": 0,
+        "numCourses": 0,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      }
+    },
+    {
+      "id": "empty-shape",
+      "rawShape": {},
+      "issues": [],
+      "calculated": {
+        "totalBricks": 0,
+        "materialCost": 0,
+        "mortarCost": 0,
+        "laborHours": 0,
+        "laborCost": 0,
+        "totalCost": 0,
+        "totalLinearInches": 0,
+        "numCourses": 0,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      }
+    },
+    {
+      "id": "empty-segments",
+      "rawShape": {
+        "closed": false,
+        "segments": []
+      },
+      "issues": [],
+      "calculated": {
+        "totalBricks": 0,
+        "materialCost": 0,
+        "mortarCost": 0,
+        "laborHours": 0,
+        "laborCost": 1,
+        "totalCost": 1,
+        "totalLinearInches": 0,
+        "numCourses": 2.25,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      }
+    },
+    {
+      "id": "nonarray-segments",
+      "rawShape": {
+        "closed": false,
+        "segments": {
+          "length": 1
+        }
+      },
+      "issues": [],
+      "error": "wallShape.segments.reduce is not a function"
+    },
+    {
+      "id": "missing-length",
+      "rawShape": {
+        "closed": false,
+        "segments": [
+          {}
+        ]
+      },
+      "issues": [],
+      "calculated": {
+        "totalBricks": 0,
+        "materialCost": 0,
+        "mortarCost": 0,
+        "laborHours": 0,
+        "laborCost": 0,
+        "totalCost": 0,
+        "totalLinearInches": 0,
+        "numCourses": 2.25,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      }
+    },
+    {
+      "id": "zero-length",
+      "rawShape": {
+        "closed": false,
+        "segments": [
+          {
+            "length": 0
+          }
+        ]
+      },
+      "issues": [],
+      "calculated": {
+        "totalBricks": 0,
+        "materialCost": 0,
+        "mortarCost": 0,
+        "laborHours": 0,
+        "laborCost": 1,
+        "totalCost": 1,
+        "totalLinearInches": 0,
+        "numCourses": 2.25,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      }
+    },
+    {
+      "id": "negative-length",
+      "rawShape": {
+        "closed": false,
+        "segments": [
+          {
+            "length": -8
+          }
+        ]
+      },
+      "issues": [],
+      "calculated": {
+        "totalBricks": -3,
+        "materialCost": -6,
+        "mortarCost": 0,
+        "laborHours": -0.06,
+        "laborCost": 1,
+        "totalCost": -5,
+        "totalLinearInches": -8,
+        "numCourses": 2.25,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      }
+    },
+    {
+      "id": "numeric-string-lengths",
+      "rawShape": {
+        "closed": false,
+        "segments": [
+          {
+            "length": "8"
+          },
+          {
+            "length": "8"
+          }
+        ]
+      },
+      "issues": [],
+      "calculated": {
+        "totalBricks": 6,
+        "materialCost": 12,
+        "mortarCost": 0,
+        "laborHours": 0.12,
+        "laborCost": 247.5,
+        "totalCost": 259.5,
+        "totalLinearInches": "088",
+        "numCourses": 2.25,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      }
+    }
+  ]
+}

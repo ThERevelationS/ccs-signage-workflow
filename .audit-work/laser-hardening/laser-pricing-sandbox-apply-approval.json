@@ -1,0 +1,17 @@
+{
+ "authorized": true,
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "8878a353d67523a061078aa85672717735be4420",
+ "restoreCheckpointId": "6aef8e562cbfb724c425581b",
+ "candidateHashes": {
+  "laserPricingAvailability.js": "82275a855f3cc2d2058a8416a62ccf40a52a0c8cebacac573232bf22e55cd380",
+  "LaserEstimator.jsx": "0f996fd442ad9361a38820f63078966e5ba85016171e965d890be8f0fcac54cc"
+ },
+ "reviewedProtocolHash": "789b3eceb49c23be1faec61c5dc86089c40df9c0b7c049009ac7b17ca7b7fe5d",
+ "reviewedProtocolFile": "laser-pricing-sandbox-unit.mjs",
+ "dryRunEvidence": "laser-pricing-sandbox-dry-run-diffs.json + laser-pricing-sandbox-staged-build-meta.json (2 previews applied=false; 2 bundles 0 warnings)",
+ "baselineEvidence": "laser-pricing-baseline-v2.json @ 8878a353d — LaserEstimator.jsx byte-identical to implementer baseline 745e3333, new-remote file absent, 179 guard+target files hash-locked",
+ "createdAt": "2026-11-07T20:47:25.940Z",
+ "authority": "standing autonomous grant (Brett) — remote transport for laser pricing-availability hardening"
+}

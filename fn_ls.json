@@ -1,0 +1,885 @@
+{
+  "entries": [
+    {
+      "name": "permittingOfficeAuthorityReview",
+      "path": "base44/functions/permittingOfficeAuthorityReview",
+      "type": "directory"
+    },
+    {
+      "name": "dailyAnomalyDigest",
+      "path": "base44/functions/dailyAnomalyDigest",
+      "type": "directory"
+    },
+    {
+      "name": "fleetMeterMaintenanceAction",
+      "path": "base44/functions/fleetMeterMaintenanceAction",
+      "type": "directory"
+    },
+    {
+      "name": "opportunityBridgeProductionApply",
+      "path": "base44/functions/opportunityBridgeProductionApply",
+      "type": "directory"
+    },
+    {
+      "name": "fleetCutoverControl",
+      "path": "base44/functions/fleetCutoverControl",
+      "type": "directory"
+    },
+    {
+      "name": "manageMigration",
+      "path": "base44/functions/manageMigration",
+      "type": "directory"
+    },
+    {
+      "name": "googleDriveCustomCallback",
+      "path": "base44/functions/googleDriveCustomCallback",
+      "type": "directory"
+    },
+    {
+      "name": "ensureCustomerSummary",
+      "path": "base44/functions/ensureCustomerSummary",
+      "type": "directory"
+    },
+    {
+      "name": "shiftSwapAction",
+      "path": "base44/functions/shiftSwapAction",
+      "type": "directory"
+    },
+    {
+      "name": "manageWorkflowSchedules",
+      "path": "base44/functions/manageWorkflowSchedules",
+      "type": "directory"
+    },
+    {
+      "name": "bouncieStatus",
+      "path": "base44/functions/bouncieStatus",
+      "type": "directory"
+    },
+    {
+      "name": "permittingSourceAuthorityReview",
+      "path": "base44/functions/permittingSourceAuthorityReview",
+      "type": "directory"
+    },
+    {
+      "name": "manageAccountDeletionRequest",
+      "path": "base44/functions/manageAccountDeletionRequest",
+      "type": "directory"
+    },
+    {
+      "name": "workOrderTraveler",
+      "path": "base44/functions/workOrderTraveler",
+      "type": "directory"
+    },
+    {
+      "name": "manageCalendarEvents",
+      "path": "base44/functions/manageCalendarEvents",
+      "type": "directory"
+    },
+    {
+      "name": "importWipSheet",
+      "path": "base44/functions/importWipSheet",
+      "type": "directory"
+    },
+    {
+      "name": "sourceMonitorSeed",
+      "path": "base44/functions/sourceMonitorSeed",
+      "type": "directory"
+    },
+    {
+      "name": "refreshJurisdiction",
+      "path": "base44/functions/refreshJurisdiction",
+      "type": "directory"
+    },
+    {
+      "name": "fleetBouncieNotificationAction",
+      "path": "base44/functions/fleetBouncieNotificationAction",
+      "type": "directory"
+    },
+    {
+      "name": "gmailAuthCallback",
+      "path": "base44/functions/gmailAuthCallback",
+      "type": "directory"
+    },
+    {
+      "name": "adminBootstrapLogin",
+      "path": "base44/functions/adminBootstrapLogin",
+      "type": "directory"
+    },
+    {
+      "name": "downloadPermitPDF",
+      "path": "base44/functions/downloadPermitPDF",
+      "type": "directory"
+    },
+    {
+      "name": "fleetWorkOrderAction",
+      "path": "base44/functions/fleetWorkOrderAction",
+      "type": "directory"
+    },
+    {
+      "name": "fleetWarrantyAction",
+      "path": "base44/functions/fleetWarrantyAction",
+      "type": "directory"
+    },
+    {
+      "name": "opportunityWorkspaceAction",
+      "path": "base44/functions/opportunityWorkspaceAction",
+      "type": "directory"
+    },
+    {
+      "name": "jobCostingAction",
+      "path": "base44/functions/jobCostingAction",
+      "type": "directory"
+    },
+    {
+      "name": "smartsheetSyncAction",
+      "path": "base44/functions/smartsheetSyncAction",
+      "type": "directory"
+    },
+    {
+      "name": "listAuthorizedUserDirectory",
+      "path": "base44/functions/listAuthorizedUserDirectory",
+      "type": "directory"
+    },
+    {
+      "name": "permittingProxy",
+      "path": "base44/functions/permittingProxy",
+      "type": "directory"
+    },
+    {
+      "name": "purchaseOrderAction",
+      "path": "base44/functions/purchaseOrderAction",
+      "type": "directory"
+    },
+    {
+      "name": "placesAutocomplete",
+      "path": "base44/functions/placesAutocomplete",
+      "type": "directory"
+    },
+    {
+      "name": "permittingRuleInvalidate",
+      "path": "base44/functions/permittingRuleInvalidate",
+      "type": "directory"
+    },
+    {
+      "name": "correctJurisdictionIdentityType",
+      "path": "base44/functions/correctJurisdictionIdentityType",
+      "type": "directory"
+    },
+    {
+      "name": "detectSalesDuplicates",
+      "path": "base44/functions/detectSalesDuplicates",
+      "type": "directory"
+    },
+    {
+      "name": "updateJurisdictionRewriteAuthority",
+      "path": "base44/functions/updateJurisdictionRewriteAuthority",
+      "type": "directory"
+    },
+    {
+      "name": "sourceMonitorScan",
+      "path": "base44/functions/sourceMonitorScan",
+      "type": "directory"
+    },
+    {
+      "name": "permittingSourceOcrEvidence",
+      "path": "base44/functions/permittingSourceOcrEvidence",
+      "type": "directory"
+    },
+    {
+      "name": "fleetRepairEstimateAction",
+      "path": "base44/functions/fleetRepairEstimateAction",
+      "type": "directory"
+    },
+    {
+      "name": "checkDeadlineReminders",
+      "path": "base44/functions/checkDeadlineReminders",
+      "type": "directory"
+    },
+    {
+      "name": "googleDriveCustomAuth",
+      "path": "base44/functions/googleDriveCustomAuth",
+      "type": "directory"
+    },
+    {
+      "name": "bouncieWebhook",
+      "path": "base44/functions/bouncieWebhook",
+      "type": "directory"
+    },
+    {
+      "name": "aiResearchOffice",
+      "path": "base44/functions/aiResearchOffice",
+      "type": "directory"
+    },
+    {
+      "name": "driveBrowseFolder",
+      "path": "base44/functions/driveBrowseFolder",
+      "type": "directory"
+    },
+    {
+      "name": "fleetDataRead",
+      "path": "base44/functions/fleetDataRead",
+      "type": "directory"
+    },
+    {
+      "name": "streetViewPreview",
+      "path": "base44/functions/streetViewPreview",
+      "type": "directory"
+    },
+    {
+      "name": "bouncieAuthCallback",
+      "path": "base44/functions/bouncieAuthCallback",
+      "type": "directory"
+    },
+    {
+      "name": "permittingResearchBacklogDispatch",
+      "path": "base44/functions/permittingResearchBacklogDispatch",
+      "type": "directory"
+    },
+    {
+      "name": "getAddressResearchCollections",
+      "path": "base44/functions/getAddressResearchCollections",
+      "type": "directory"
+    },
+    {
+      "name": "manageAutomationConfig",
+      "path": "base44/functions/manageAutomationConfig",
+      "type": "directory"
+    },
+    {
+      "name": "checkGmailConnection",
+      "path": "base44/functions/checkGmailConnection",
+      "type": "directory"
+    },
+    {
+      "name": "ensureEstimateLifecycleRevision",
+      "path": "base44/functions/ensureEstimateLifecycleRevision",
+      "type": "directory"
+    },
+    {
+      "name": "fleetNotificationWorker",
+      "path": "base44/functions/fleetNotificationWorker",
+      "type": "directory"
+    },
+    {
+      "name": "verifySession",
+      "path": "base44/functions/verifySession",
+      "type": "directory"
+    },
+    {
+      "name": "linkAddressResearchDocument",
+      "path": "base44/functions/linkAddressResearchDocument",
+      "type": "directory"
+    },
+    {
+      "name": "googleDriveAuth",
+      "path": "base44/functions/googleDriveAuth",
+      "type": "directory"
+    },
+    {
+      "name": "managePTOConfig",
+      "path": "base44/functions/managePTOConfig",
+      "type": "directory"
+    },
+    {
+      "name": "smartsheetMetadataAdminAction",
+      "path": "base44/functions/smartsheetMetadataAdminAction",
+      "type": "directory"
+    },
+    {
+      "name": "calculateTravelMiles",
+      "path": "base44/functions/calculateTravelMiles",
+      "type": "directory"
+    },
+    {
+      "name": "fleetSettingsAction",
+      "path": "base44/functions/fleetSettingsAction",
+      "type": "directory"
+    },
+    {
+      "name": "fleetScheduledMaintenanceGeneration",
+      "path": "base44/functions/fleetScheduledMaintenanceGeneration",
+      "type": "directory"
+    },
+    {
+      "name": "backupToGoogleDrive",
+      "path": "base44/functions/backupToGoogleDrive",
+      "type": "directory"
+    },
+    {
+      "name": "fleetBulkMaintenancePlan",
+      "path": "base44/functions/fleetBulkMaintenancePlan",
+      "type": "directory"
+    },
+    {
+      "name": "permittingHtmlEvidence",
+      "path": "base44/functions/permittingHtmlEvidence",
+      "type": "directory"
+    },
+    {
+      "name": "corebridgeApiAction",
+      "path": "base44/functions/corebridgeApiAction",
+      "type": "directory"
+    },
+    {
+      "name": "opportunityBridgePilotVerification",
+      "path": "base44/functions/opportunityBridgePilotVerification",
+      "type": "directory"
+    },
+    {
+      "name": "manageAuthorizedUsers",
+      "path": "base44/functions/manageAuthorizedUsers",
+      "type": "directory"
+    },
+    {
+      "name": "fleetEquipmentAction",
+      "path": "base44/functions/fleetEquipmentAction",
+      "type": "directory"
+    },
+    {
+      "name": "workspacePrefsAction",
+      "path": "base44/functions/workspacePrefsAction",
+      "type": "directory"
+    },
+    {
+      "name": "fleetEquipmentDocumentAction",
+      "path": "base44/functions/fleetEquipmentDocumentAction",
+      "type": "directory"
+    },
+    {
+      "name": "sessionAdminAction",
+      "path": "base44/functions/sessionAdminAction",
+      "type": "directory"
+    },
+    {
+      "name": "manageFeatureReports",
+      "path": "base44/functions/manageFeatureReports",
+      "type": "directory"
+    },
+    {
+      "name": "invoicingAction",
+      "path": "base44/functions/invoicingAction",
+      "type": "directory"
+    },
+    {
+      "name": "ensureOpenEstimateRevision",
+      "path": "base44/functions/ensureOpenEstimateRevision",
+      "type": "directory"
+    },
+    {
+      "name": "processWorkflowTriggers",
+      "path": "base44/functions/processWorkflowTriggers",
+      "type": "directory"
+    },
+    {
+      "name": "fleetPartLookupAction",
+      "path": "base44/functions/fleetPartLookupAction",
+      "type": "directory"
+    },
+    {
+      "name": "fleetNotificationDispatcher",
+      "path": "base44/functions/fleetNotificationDispatcher",
+      "type": "directory"
+    },
+    {
+      "name": "manageSops",
+      "path": "base44/functions/manageSops",
+      "type": "directory"
+    },
+    {
+      "name": "fleetRequestAction",
+      "path": "base44/functions/fleetRequestAction",
+      "type": "directory"
+    },
+    {
+      "name": "accessRequestAction",
+      "path": "base44/functions/accessRequestAction",
+      "type": "directory"
+    },
+    {
+      "name": "opportunityBridgeSimulation",
+      "path": "base44/functions/opportunityBridgeSimulation",
+      "type": "directory"
+    },
+    {
+      "name": "permittingOfficeCandidate",
+      "path": "base44/functions/permittingOfficeCandidate",
+      "type": "directory"
+    },
+    {
+      "name": "sendStaffEmail",
+      "path": "base44/functions/sendStaffEmail",
+      "type": "directory"
+    },
+    {
+      "name": "issueTimeClockBadge",
+      "path": "base44/functions/issueTimeClockBadge",
+      "type": "directory"
+    },
+    {
+      "name": "searchJurisdictions",
+      "path": "base44/functions/searchJurisdictions",
+      "type": "directory"
+    },
+    {
+      "name": "issueAdminSettingsAccess",
+      "path": "base44/functions/issueAdminSettingsAccess",
+      "type": "directory"
+    },
+    {
+      "name": "validateDocumentUrl",
+      "path": "base44/functions/validateDocumentUrl",
+      "type": "directory"
+    },
+    {
+      "name": "restoreMasterInventory",
+      "path": "base44/functions/restoreMasterInventory",
+      "type": "directory"
+    },
+    {
+      "name": "fleetLifecycleAction",
+      "path": "base44/functions/fleetLifecycleAction",
+      "type": "directory"
+    },
+    {
+      "name": "batchUpdateJurisdictions",
+      "path": "base44/functions/batchUpdateJurisdictions",
+      "type": "directory"
+    },
+    {
+      "name": "manageUserCapacity",
+      "path": "base44/functions/manageUserCapacity",
+      "type": "directory"
+    },
+    {
+      "name": "onboardingAccountAction",
+      "path": "base44/functions/onboardingAccountAction",
+      "type": "directory"
+    },
+    {
+      "name": "getPermittingSourceTextPages",
+      "path": "base44/functions/getPermittingSourceTextPages",
+      "type": "directory"
+    },
+    {
+      "name": "ensureEstimateCustomer",
+      "path": "base44/functions/ensureEstimateCustomer",
+      "type": "directory"
+    },
+    {
+      "name": "bouncieRepairWebhook",
+      "path": "base44/functions/bouncieRepairWebhook",
+      "type": "directory"
+    },
+    {
+      "name": "dataIntegrityAction",
+      "path": "base44/functions/dataIntegrityAction",
+      "type": "directory"
+    },
+    {
+      "name": "permittingRuleReview",
+      "path": "base44/functions/permittingRuleReview",
+      "type": "directory"
+    },
+    {
+      "name": "fleetAlertSettingsAction",
+      "path": "base44/functions/fleetAlertSettingsAction",
+      "type": "directory"
+    },
+    {
+      "name": "hostedAssetManifest",
+      "path": "base44/functions/hostedAssetManifest",
+      "type": "directory"
+    },
+    {
+      "name": "fleetSearch",
+      "path": "base44/functions/fleetSearch",
+      "type": "directory"
+    },
+    {
+      "name": "bouncieSyncNotifications",
+      "path": "base44/functions/bouncieSyncNotifications",
+      "type": "directory"
+    },
+    {
+      "name": "changeOrderAction",
+      "path": "base44/functions/changeOrderAction",
+      "type": "directory"
+    },
+    {
+      "name": "fleetSystemReportAction",
+      "path": "base44/functions/fleetSystemReportAction",
+      "type": "directory"
+    },
+    {
+      "name": "fieldHistoryAction",
+      "path": "base44/functions/fieldHistoryAction",
+      "type": "directory"
+    },
+    {
+      "name": "continueAddressResearchDiscovery",
+      "path": "base44/functions/continueAddressResearchDiscovery",
+      "type": "directory"
+    },
+    {
+      "name": "setPassword",
+      "path": "base44/functions/setPassword",
+      "type": "directory"
+    },
+    {
+      "name": "searchExternalClients",
+      "path": "base44/functions/searchExternalClients",
+      "type": "directory"
+    },
+    {
+      "name": "weeklyAdminDigest",
+      "path": "base44/functions/weeklyAdminDigest",
+      "type": "directory"
+    },
+    {
+      "name": "jurisdictionResearchAgent",
+      "path": "base44/functions/jurisdictionResearchAgent",
+      "type": "directory"
+    },
+    {
+      "name": "findLocalityByAddress",
+      "path": "base44/functions/findLocalityByAddress",
+      "type": "directory"
+    },
+    {
+      "name": "boardFeed",
+      "path": "base44/functions/boardFeed",
+      "type": "directory"
+    },
+    {
+      "name": "fleetFuelAction",
+      "path": "base44/functions/fleetFuelAction",
+      "type": "directory"
+    },
+    {
+      "name": "migrateCredentials",
+      "path": "base44/functions/migrateCredentials",
+      "type": "directory"
+    },
+    {
+      "name": "fleetPublicIssueReport",
+      "path": "base44/functions/fleetPublicIssueReport",
+      "type": "directory"
+    },
+    {
+      "name": "updateEstimateRevisionAudit",
+      "path": "base44/functions/updateEstimateRevisionAudit",
+      "type": "directory"
+    },
+    {
+      "name": "checkPermitFollowupReminders",
+      "path": "base44/functions/checkPermitFollowupReminders",
+      "type": "directory"
+    },
+    {
+      "name": "issuePasswordReset",
+      "path": "base44/functions/issuePasswordReset",
+      "type": "directory"
+    },
+    {
+      "name": "googleDriveOAuth",
+      "path": "base44/functions/googleDriveOAuth",
+      "type": "directory"
+    },
+    {
+      "name": "manageReconciliation",
+      "path": "base44/functions/manageReconciliation",
+      "type": "directory"
+    },
+    {
+      "name": "getGoogleMapsKey",
+      "path": "base44/functions/getGoogleMapsKey",
+      "type": "directory"
+    },
+    {
+      "name": "sendEmail",
+      "path": "base44/functions/sendEmail",
+      "type": "directory"
+    },
+    {
+      "name": "staffDataRead",
+      "path": "base44/functions/staffDataRead",
+      "type": "directory"
+    },
+    {
+      "name": "callJurisdictionAgent",
+      "path": "base44/functions/callJurisdictionAgent",
+      "type": "directory"
+    },
+    {
+      "name": "driveOAuthInitiate",
+      "path": "base44/functions/driveOAuthInitiate",
+      "type": "directory"
+    },
+    {
+      "name": "manageSalesFilters",
+      "path": "base44/functions/manageSalesFilters",
+      "type": "directory"
+    },
+    {
+      "name": "timeClockAction",
+      "path": "base44/functions/timeClockAction",
+      "type": "directory"
+    },
+    {
+      "name": "ensureNewCustomer",
+      "path": "base44/functions/ensureNewCustomer",
+      "type": "directory"
+    },
+    {
+      "name": "translateSmartsheetNotes",
+      "path": "base44/functions/translateSmartsheetNotes",
+      "type": "directory"
+    },
+    {
+      "name": "archiveAddressResearchFile",
+      "path": "base44/functions/archiveAddressResearchFile",
+      "type": "directory"
+    },
+    {
+      "name": "continuePermittingSourceText",
+      "path": "base44/functions/continuePermittingSourceText",
+      "type": "directory"
+    },
+    {
+      "name": "resolvePermittingAddress",
+      "path": "base44/functions/resolvePermittingAddress",
+      "type": "directory"
+    },
+    {
+      "name": "ensureBuilderPriceRevision",
+      "path": "base44/functions/ensureBuilderPriceRevision",
+      "type": "directory"
+    },
+    {
+      "name": "manageAnnouncements",
+      "path": "base44/functions/manageAnnouncements",
+      "type": "directory"
+    },
+    {
+      "name": "permittingHealth",
+      "path": "base44/functions/permittingHealth",
+      "type": "directory"
+    },
+    {
+      "name": "googleDriveOperations",
+      "path": "base44/functions/googleDriveOperations",
+      "type": "directory"
+    },
+    {
+      "name": "recordEstimateQuoteDelivery",
+      "path": "base44/functions/recordEstimateQuoteDelivery",
+      "type": "directory"
+    },
+    {
+      "name": "permittingScanStatus",
+      "path": "base44/functions/permittingScanStatus",
+      "type": "directory"
+    },
+    {
+      "name": "manageUserCalendarSettings",
+      "path": "base44/functions/manageUserCalendarSettings",
+      "type": "directory"
+    },
+    {
+      "name": "scanPermittingOffice",
+      "path": "base44/functions/scanPermittingOffice",
+      "type": "directory"
+    },
+    {
+      "name": "fleetReservationAction",
+      "path": "base44/functions/fleetReservationAction",
+      "type": "directory"
+    },
+    {
+      "name": "fleetMaintenanceAction",
+      "path": "base44/functions/fleetMaintenanceAction",
+      "type": "directory"
+    },
+    {
+      "name": "auditJurisdictionAccuracy",
+      "path": "base44/functions/auditJurisdictionAccuracy",
+      "type": "directory"
+    },
+    {
+      "name": "backupPermittingRepository",
+      "path": "base44/functions/backupPermittingRepository",
+      "type": "directory"
+    },
+    {
+      "name": "customerPortalAction",
+      "path": "base44/functions/customerPortalAction",
+      "type": "directory"
+    },
+    {
+      "name": "recordEstimateAcceptance",
+      "path": "base44/functions/recordEstimateAcceptance",
+      "type": "directory"
+    },
+    {
+      "name": "generateDocNumber",
+      "path": "base44/functions/generateDocNumber",
+      "type": "directory"
+    },
+    {
+      "name": "deleteCreatedDuplicateWorkOrder",
+      "path": "base44/functions/deleteCreatedDuplicateWorkOrder",
+      "type": "directory"
+    },
+    {
+      "name": "driveOAuthCallback",
+      "path": "base44/functions/driveOAuthCallback",
+      "type": "directory"
+    },
+    {
+      "name": "permittingRuleExtraction",
+      "path": "base44/functions/permittingRuleExtraction",
+      "type": "directory"
+    },
+    {
+      "name": "smartsheetSyncTraceRead",
+      "path": "base44/functions/smartsheetSyncTraceRead",
+      "type": "directory"
+    },
+    {
+      "name": "analyzeDocument",
+      "path": "base44/functions/analyzeDocument",
+      "type": "directory"
+    },
+    {
+      "name": "verifyLogin",
+      "path": "base44/functions/verifyLogin",
+      "type": "directory"
+    },
+    {
+      "name": "fleetIntegrityAudit",
+      "path": "base44/functions/fleetIntegrityAudit",
+      "type": "directory"
+    },
+    {
+      "name": "importSalesPipeline",
+      "path": "base44/functions/importSalesPipeline",
+      "type": "directory"
+    },
+    {
+      "name": "inventoryAction",
+      "path": "base44/functions/inventoryAction",
+      "type": "directory"
+    },
+    {
+      "name": "fleetScheduledReminders",
+      "path": "base44/functions/fleetScheduledReminders",
+      "type": "directory"
+    },
+    {
+      "name": "bouncieApi",
+      "path": "base44/functions/bouncieApi",
+      "type": "directory"
+    },
+    {
+      "name": "fleetInspectionAction",
+      "path": "base44/functions/fleetInspectionAction",
+      "type": "directory"
+    },
+    {
+      "name": "gmailAuthInitiate",
+      "path": "base44/functions/gmailAuthInitiate",
+      "type": "directory"
+    },
+    {
+      "name": "fleetDashboardPreferenceAction",
+      "path": "base44/functions/fleetDashboardPreferenceAction",
+      "type": "directory"
+    },
+    {
+      "name": "cagisSearch",
+      "path": "base44/functions/cagisSearch",
+      "type": "directory"
+    },
+    {
+      "name": "ensureNewEstimate",
+      "path": "base44/functions/ensureNewEstimate",
+      "type": "directory"
+    },
+    {
+      "name": "fleetInventoryAction",
+      "path": "base44/functions/fleetInventoryAction",
+      "type": "directory"
+    },
+    {
+      "name": "continueJurisdictionArchives",
+      "path": "base44/functions/continueJurisdictionArchives",
+      "type": "directory"
+    },
+    {
+      "name": "manageOwnProfile",
+      "path": "base44/functions/manageOwnProfile",
+      "type": "directory"
+    },
+    {
+      "name": "monitorJurisdictionChanges",
+      "path": "base44/functions/monitorJurisdictionChanges",
+      "type": "directory"
+    },
+    {
+      "name": "staffEntityWrite",
+      "path": "base44/functions/staffEntityWrite",
+      "type": "directory"
+    },
+    {
+      "name": "importOrders",
+      "path": "base44/functions/importOrders",
+      "type": "directory"
+    },
+    {
+      "name": "manageQuoteApprovalSettings",
+      "path": "base44/functions/manageQuoteApprovalSettings",
+      "type": "directory"
+    },
+    {
+      "name": "bouncieAuthInitiate",
+      "path": "base44/functions/bouncieAuthInitiate",
+      "type": "directory"
+    },
+    {
+      "name": "fleetMeterMaintenanceGeneration",
+      "path": "base44/functions/fleetMeterMaintenanceGeneration",
+      "type": "directory"
+    },
+    {
+      "name": "permittingOperationalAlerts",
+      "path": "base44/functions/permittingOperationalAlerts",
+      "type": "directory"
+    },
+    {
+      "name": "migrateEstimatorConfig",
+      "path": "base44/functions/migrateEstimatorConfig",
+      "type": "directory"
+    },
+    {
+      "name": "sendGmail",
+      "path": "base44/functions/sendGmail",
+      "type": "directory"
+    },
+    {
+      "name": "propertySearch",
+      "path": "base44/functions/propertySearch",
+      "type": "directory"
+    },
+    {
+      "name": "fleetMechanicPortal",
+      "path": "base44/functions/fleetMechanicPortal",
+      "type": "directory"
+    },
+    {
+      "name": "notificationAction",
+      "path": "base44/functions/notificationAction",
+      "type": "directory"
+    }
+  ],
+  "truncated": false
+}

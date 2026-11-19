@@ -1,0 +1,256 @@
+{
+  "inputs": {
+    "synthetic:@/api/base44Client": {
+      "bytes": 34,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:./moduleRegistry": {
+      "bytes": 45,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:./customerPricing": {
+      "bytes": 158,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:./estimateSalesActivity.mjs": {
+      "bytes": 55,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:./estimateRevisionService": {
+      "bytes": 121,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:./estimateMutationGuard": {
+      "bytes": 125,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:./quoteLifecycle": {
+      "bytes": 45,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/lib/loadAllEntityRows.js": {
+      "bytes": 8105,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:./customerSync": {
+      "bytes": 327,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:@/components/workflow/workOrderPersistence": {
+      "bytes": 93,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:./workOrderSyncPersistence": {
+      "bytes": 148,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:./estimatePersistence": {
+      "bytes": 227,
+      "imports": [],
+      "format": "esm"
+    },
+    "synthetic:@/components/staff/staffEntities": {
+      "bytes": 124,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementPartDescriptors.js": {
+      "bytes": 12700,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementFrozenPricing.js": {
+      "bytes": 9593,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementWorkOrderPart.js": {
+      "bytes": 10902,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementPartDescriptors.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementPartDescriptors"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementFrozenPricing.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementFrozenPricing"
+        }
+      ],
+      "format": "esm"
+    },
+    "synthetic:./workOrderConversion": {
+      "bytes": 406,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/estimateConversionService.js": {
+      "bytes": 28744,
+      "imports": [
+        {
+          "path": "synthetic:@/api/base44Client",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "synthetic:./moduleRegistry",
+          "kind": "import-statement",
+          "original": "./moduleRegistry"
+        },
+        {
+          "path": "synthetic:./customerPricing",
+          "kind": "import-statement",
+          "original": "./customerPricing"
+        },
+        {
+          "path": "synthetic:./estimateSalesActivity.mjs",
+          "kind": "import-statement",
+          "original": "./estimateSalesActivity.mjs"
+        },
+        {
+          "path": "synthetic:./estimateRevisionService",
+          "kind": "import-statement",
+          "original": "./estimateRevisionService"
+        },
+        {
+          "path": "synthetic:./estimateMutationGuard",
+          "kind": "import-statement",
+          "original": "./estimateMutationGuard"
+        },
+        {
+          "path": "synthetic:./quoteLifecycle",
+          "kind": "import-statement",
+          "original": "./quoteLifecycle"
+        },
+        {
+          "path": "src/lib/loadAllEntityRows.js",
+          "kind": "import-statement",
+          "original": "./loadAllEntityRows"
+        },
+        {
+          "path": "synthetic:./customerSync",
+          "kind": "import-statement",
+          "original": "./customerSync"
+        },
+        {
+          "path": "synthetic:@/components/workflow/workOrderPersistence",
+          "kind": "import-statement",
+          "original": "@/components/workflow/workOrderPersistence"
+        },
+        {
+          "path": "synthetic:./workOrderSyncPersistence",
+          "kind": "import-statement",
+          "original": "./workOrderSyncPersistence"
+        },
+        {
+          "path": "synthetic:./estimatePersistence",
+          "kind": "import-statement",
+          "original": "./estimatePersistence"
+        },
+        {
+          "path": "synthetic:@/components/staff/staffEntities",
+          "kind": "import-statement",
+          "original": "@/components/staff/staffEntities"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementWorkOrderPart.js",
+          "kind": "import-statement",
+          "original": "./foundation/foundationReinforcementWorkOrderPart"
+        },
+        {
+          "path": "synthetic:./workOrderConversion",
+          "kind": "import-statement",
+          "original": "./workOrderConversion"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "out/estimateConversionService.js": {
+      "imports": [],
+      "exports": [
+        "ESTIMATE_SECTION_TASK_TEMPLATES",
+        "buildEstimateMaterialsManifest",
+        "buildEstimateWorkOrderSeedTasks",
+        "checkEstimateConversionCredit",
+        "commitEstimateConversion",
+        "convertEstimateToWorkOrder",
+        "convertEstimatesToSharedWorkOrder",
+        "mergeWorkOrderMaterials",
+        "mergeWorkOrderTasks",
+        "prepareEstimateConversion"
+      ],
+      "entryPoint": "src/components/estimator/estimateConversionService.js",
+      "inputs": {
+        "synthetic:@/api/base44Client": {
+          "bytesInOutput": 31
+        },
+        "synthetic:./moduleRegistry": {
+          "bytesInOutput": 41
+        },
+        "synthetic:./customerPricing": {
+          "bytesInOutput": 153
+        },
+        "synthetic:./estimateSalesActivity.mjs": {
+          "bytesInOutput": 51
+        },
+        "synthetic:./estimateRevisionService": {
+          "bytesInOutput": 121
+        },
+        "synthetic:./estimateMutationGuard": {
+          "bytesInOutput": 125
+        },
+        "synthetic:./quoteLifecycle": {
+          "bytesInOutput": 41
+        },
+        "src/lib/loadAllEntityRows.js": {
+          "bytesInOutput": 4903
+        },
+        "synthetic:./customerSync": {
+          "bytesInOutput": 325
+        },
+        "synthetic:@/components/workflow/workOrderPersistence": {
+          "bytesInOutput": 90
+        },
+        "synthetic:./workOrderSyncPersistence": {
+          "bytesInOutput": 140
+        },
+        "synthetic:./estimatePersistence": {
+          "bytesInOutput": 226
+        },
+        "synthetic:@/components/staff/staffEntities": {
+          "bytesInOutput": 132
+        },
+        "src/components/estimator/foundation/foundationReinforcementPartDescriptors.js": {
+          "bytesInOutput": 12065
+        },
+        "src/components/estimator/foundation/foundationReinforcementFrozenPricing.js": {
+          "bytesInOutput": 7993
+        },
+        "src/components/estimator/foundation/foundationReinforcementWorkOrderPart.js": {
+          "bytesInOutput": 5317
+        },
+        "synthetic:./workOrderConversion": {
+          "bytesInOutput": 392
+        },
+        "src/components/estimator/estimateConversionService.js": {
+          "bytesInOutput": 22291
+        }
+      },
+      "bytes": 55584
+    }
+  }
+}

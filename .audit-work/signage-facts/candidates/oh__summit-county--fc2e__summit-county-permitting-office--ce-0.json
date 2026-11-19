@@ -1,0 +1,256 @@
+{
+ "jurisdiction_id": "6ac339973946144db554fc2e",
+ "jurisdiction_name": "Summit County",
+ "state": "OH",
+ "office_id": "scan-6ac339973946144db554fc2e-office-0",
+ "office_name": "Summit County permitting office",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMIT APPLICA TION Page 1 of 1 REV. 4/24 PERMIT # JOB ADDRESS VILLAGE/TWP/CITY DATE INIT. PARCEL # SQ. FT.  RESIDENTIAL  NEW CONSTRUCTION  ADDITION  RETRIEVE PERMIT BY WEB (DEFAULT)  SEND PERMIT BY FAX  COMMERCIAL  EXISTING  ALTERATION  SEND PERMIT BY EMAIL RESIDENTIAL NEW CONSTRUCTION/ADDITION $145 APPLICATION FEE PLUS $6/100 SQ. FT) ALTERATIONS OR ACCESSORY BLDG $60 APPLICATION FEE PLUS $6/100 SQ. FT. MINIMUM OF $25 COMMERCIAL NEW CONSTRUCTION/ADDITION $1 67 APPLICATION FEE PLUS $6/100 SQ. FT. ALTERATIONS $ 102 APPLICATION FEE PLUS $6/100 SQ. FT. FOUNDATION DAMP PROOFING ....... $30 + APP FEE A RE-INSPECTION FEE will be charged for each failed inspection, Residential and Commercial COMMERCIAL: APPLICATION FEE ............................. $ 87 RE-ROOF ..................................................... $ 77 + APP FEE SIDING .........................................",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "4999c9699e405b3da2d10d2103e563197b0101192ce4c2a9548dc595e564745e",
+   "source_document_id": null,
+   "source_title": "4999c9699e405b3da2d10d2103e563197b0101192ce4c2a9548dc595e564745e.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15231/file/buildingpermit-updated-2024.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "NO TES AND ADDITIONAL SUBMITTAL REQUIREMENTS: • In addition to completion of this form the applicant agrees to submit any additional information required By the floodplain administrator in order to determine that the proposed dev elopment is compliant with the Local and federal flood damage prevention criteria of the National Flood Insurance Program. Site plans for All development proposals must: • The proposed lowest floor elevation based on the datum used on the effective Flood Insurance Rate Map and base flood elevation for the site. • Identification of whether the structure has a basement or enclosure be low the lowest floor, and if it contains a basement or enclosure, detailed drawings showing foundation openings to allow passage of floodwaters. • De scription of how building utilities will be protected from flood waters including drawings showing locations of such utilities. • Deta",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "66ef6232ccc69e514debfe39ebde3eaff30a2f18a19dfd5a2f687f051e94ffab",
+   "source_document_id": null,
+   "source_title": "66ef6232ccc69e514debfe39ebde3eaff30a2f18a19dfd5a2f687f051e94ffab.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15233/file/flood-hazard-area-development-permit-application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "COUNTY OF SUMMIT, OHIO Ilene Shapiro, Executive Building Standards Division · buildingstandards.summitoh.net 1030 East Tallmadge Avenue · Akron, Ohio 44310 · 330.630.7280 · fax 330.630.7296 COMMERCIAL PLAN REVIEW SUBMITTAL CHECKLIST: SUBMIT “2” COMPLETE SETS for BUILDING PLAN REVIEW: CONTACT the LOCAL ZONING ADMINSTRATOR FOR SPECIFIC SITE REVIEW PROCESS □ Completed commercial plan review application form □ Correct project address (verify with local zoning department) and zoning certificate □ Permanent parcel number SITE PLAN: □ Topographic site plan; indicating elevations and finish grade (minimum legible scale) □ Include all property lines, building locations and easements for the entire parcel ARCHITECTURAL / STRUCTURAL DRAWINGS SHALL INCLUDE THE FOLLOWING: □ Code data including; construction type, use group(s), mixed use(s) and separation ratings □ Soil bearing; geo-technical analysis",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "cb0d078c0c22fe52afdde210e7b168b8d44dfba6b6d3cec52f5543949c34bd5a",
+   "source_document_id": null,
+   "source_title": "cb0d078c0c22fe52afdde210e7b168b8d44dfba6b6d3cec52f5543949c34bd5a.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15256/file/commercial-plan-review-submittal-checklist.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "DIVISION OF BUILDING STANDARDS Our dedicated Building, Electrical, Plumbing, and Fire Inspectors ensure that all construction meets the minimum safety standards of Ohio’s adopted building codes to keep Summit County safe. Our goal is to make building safety in Summit County as efficient as possible. We are the county’s backbone ensuring safe structures during fires, floods, damaging winds, other severe weather events, and more. We are proud to be leaders in Building Standards service delivery in the State of Ohio, utilizing new technology for streamlined customer service that meets your needs and keeps you safe. WE OFFER: 24/7 online portal access for permits & inspections Virtual inspections An average Commercial Plan Review turnaround time of 10 days – 3x faster than the statewide average SUMMIT COUNTY WE SERVE: PERMITS INSPECTIONS ISSUE PERMITS ELECTRONICALLY PERMIT & INSPECTION SCHED",
+   "tags": [
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "0f6f815f9b4f498363febe36e9f6e328d1c89d5348a14d9cfebf4f4aa6559dc8",
+   "source_document_id": null,
+   "source_title": "0f6f815f9b4f498363febe36e9f6e328d1c89d5348a14d9cfebf4f4aa6559dc8.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/23569/file/building-standards-booklet-digital.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "MECHANICAL PERMIT APPLICATION Page 1 of 1 REV. 0 3 .2 4 PERMIT # JOB ADDRESS VILLAGE/TWP/CITY BUILDING PERMIT# PARCEL # SQ. FT. DATE INIT. FEE SCHEDULE: PERMITS (PLEASE CALL FOR ANY FEES NOT LISTED) RESIDENTIAL: APPLICATION FEE .................................... $60 NEW CONSTRUCTION/ADD’T ............. $4.00/100 SQ. FT INTERIOR ALTERATIONS ...................... $2.00/100 SQ. FT REPAIR/REPLACEMENT ....................... $40 EACH FIREPLACE ..................................................... $25 EACH COMMERCIAL: APPLICATION FEE ................................. $ 102 ......................................................... NEW CONSTRUCTION/ADD’T ........ $5.00/100 SQ. FT ........................... INTERIOR ALTERATIONS .................. $2.50/100 SQ. FT ........................... REPAIR/REPLACEMENT .................... $60 EACH ........................................... FIREPLACE ",
+   "tags": [
+    "fee",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "2b40db0ee120a2a4e64c150c16170899d4260699d54c8fe30454bad28f801103",
+   "source_document_id": null,
+   "source_title": "2b40db0ee120a2a4e64c150c16170899d4260699d54c8fe30454bad28f801103.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15236/file/mechanicalpermit-2024-update.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "FIRE P R O TECTIO N S Y STEM PERMI T APPLIC A TION DIVISION O F BUILDING S T ANDARDS COUNTY O F SUMMIT  EXECUTIVE ILENE SHAPIRO 1030 E. T ALLMADGE A VENUE  AKRON, OHI O 44310 330.630.7280  F AX: 330.630.7296 buildingstandards.summitoh.net Page 1 o f 1 REV. 0 3 .2 4 PERMIT # JOB ADDRESS VILLAGE/TWP/CITY BUILDING PERMIT# P ARCEL # SQ. F T . D A TE INI T .  NE W CONSTRUCTION  ADDITION  EXISTING  ALTERATION  RETRIEVE PERMIT BY WEB (DEFAULT)  SEND PERMIT BY EMAIL  SEND PERMIT BY FAX  REPLACEMENT  SPRINKLER  FIRE ALARM/DETECTION  CLEAN AGENT  UG FIRE MAIN  HOOD SUPPRESSION RESIDENTIAL: APPLICATION FEE ........................... . $ 9 0 COMMERCIAL : APPLICATION FEE ................................. $ 102 ........................................................ SPRINKLER/DRY CHEMICA L ......... . $ 1 . 50 / 100 SQ . FT . ........................ . FIRE ALARM ....................",
+   "tags": [
+    "fee",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "a40aaae4f2921632ff8bf394860d08937268902c5fe2405d98047ae42561c441",
+   "source_document_id": null,
+   "source_title": "a40aaae4f2921632ff8bf394860d08937268902c5fe2405d98047ae42561c441.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15262/file/fireprotectionpermit-2024-update.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "ELECTRICAL PERMIT APPLICA TION Page 1 of 1 REV. 03 .2 4 PERMIT # JOB ADDRESS VILLAGE/TWP/CITY BUILDING PERMIT# DATE INIT. PARCEL # SQ. FT.  RESIDENTIAL  NEW CONSTRUCTION  ADDITION  ALTERATION  RETRIEVE PERMIT BY WEB (DEFAULT)  COMMERCIAL  EXISTING  REPLACEMENT  SEND PERMIT BY EMAIL  SEND PERMIT BY FAX RESIDENTIAL: COMMERCIAL: APPLICATION FEE ........................ .... ....... $60 APPLICATION FEE ................................ . $ 102 NEW CONSTRUCTION ................... .... ... $4/100 SQ. FT INTERIOR ALTERATIONS .......... ....... $2/100 SQ. FT MISCELLANEOUS CIRCUITS ...... ... .. $12 EACH TEMP POLE/SERVICE UPGRADE INTERIOR/ EXT ERIOR LIGHTING........... . $40 EACH NEW CONSTRUCTION ........................ $ 5 /100 SQ. FT INTERIOR ALTERATIONS ............... .. $ 2 /100 SQ. FT T RANSFORMER .......................... .. $ 7 2 EACH TEMP POLE, INT/EXT LIGHTING $ 72 EACH SERV",
+   "tags": [
+    "fee",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "a7df2378853af04a9c25d7deba6f70230a100da805f27801f09ad41904fab477",
+   "source_document_id": null,
+   "source_title": "a7df2378853af04a9c25d7deba6f70230a100da805f27801f09ad41904fab477.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15232/file/electricalpermit-2024-update.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "PLUMBING PERMIT APPLICATION Page 1 of 1 REV. 0 3 .2 4 PERMIT # JOB ADDRESS VILLAGE/TWP/CITY BUILDING PERMIT# DATE INIT. PARCEL # SQUARE FOOTAGE RESIDENTIAL: APPLICATION FEE .................................................... $60 NEW CONSTRUCTION/ADD'T ............................ $4.00/100 SQ. FT INTERIOR ALTERATIONS .................................... $2.00/100 SQ. FT GAS LINE ........................................................................ $40 REPAIR/REPLACEMENT ....................................... $40 EACH HOT WATER TANK REPLACEMENT ............. $40 EACH COMMERCIAL: APPLICATION FEE ...................................................... $ 102 ................................... NEW CONSTRUCTION/ADD'T ............................ $5.00/100 SQ. FT ...... INTERIOR ALTERATIONS ..................................... $3.00/100 SQ. FT ..... GASLINE ...............................",
+   "tags": [
+    "fee",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "be4acb565f85142ccd35864bb99de36499173e97070adb31c3c035251b68aa98",
+   "source_document_id": null,
+   "source_title": "be4acb565f85142ccd35864bb99de36499173e97070adb31c3c035251b68aa98.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15238/file/plumbingpermit-2024-update.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "COUNTY OF SUMMIT, OHIO Ilene Shapiro, Executive Building Standards Division · buildingstandards.summitoh.net 1030 East Tallmadge Avenue · Akron, Ohio 44310 · 330.630.7280 · fax 330.630.7296 January 1, 2020 Requirements for Tent Permits The following is a list of pre-requisites that shall be provided prior to a tent permit being issued by Summit County Building Standards. 1. The permit application shall be accompanied by the written consent of the owner or lessee of the property upon which the tent will be erected. 2. A detailed site plan indicating property lines and the locations and separation distances to other structures including other tents. 3. Zoning Department permit or letter from the local zoning office that states a zoning permit is not required for the installation. 4. Fire Department permit or letter from the local fire official that states Fire Department approval is not re",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "d228b9ebd3dd8377697952d1ce3ae3adadea901ebbd6ca63151e13a01e4333d2",
+   "source_document_id": null,
+   "source_title": "d228b9ebd3dd8377697952d1ce3ae3adadea901ebbd6ca63151e13a01e4333d2.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15275/file/tentrequirements.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "COMMERCIAL SITE IMPROVEMENT INSPECTION FEES Page 1 of 1 REV. 02.18 PERMIT # JOB ADDRESS ____________________________________________________ VILLAGE/TWP/CITY ________________________________________________ DATE ___________________________ INIT. ____________________________ PARCEL # _____________________ SQ. FT. _____________________________  NEW CONSTRUCTION  EXISTING  ALTERATION  ADDITION  COMMERCIAL COMMERCIAL SITE IMPROVEMENT INSPECTION FEES $100 BASE FEE PLUS THE FOLLOWING __________________________________________________________________________________________________________________ GRADED AREAS .......................................................................................................................................................... $5 PER $1,000 OF JOB COST _______________________ PAVED AREAS/PARKING LOTS/DRIVEWAYS ............................................",
+   "tags": [
+    "fee",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "f8463340000aa17276194bfce8eb9a0acb36d6ba6b412bdc137e0b8ddfa20c39",
+   "source_document_id": null,
+   "source_title": "f8463340000aa17276194bfce8eb9a0acb36d6ba6b412bdc137e0b8ddfa20c39.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15257/file/commercial-site-improvement-permit-application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "COUNTY OF SUMMIT, OHIO Ilene Shapiro, Executive Building Standards Division · buildingstandards.summitoh.net 1030 East Tallmadge Avenue · Akron, Ohio 44310 · 330.630.7280 · fax 330.630.7296 Gas Pressure Test Form This Form Applies to Commercial Projects Only Specific Project Details / Information: Project Name: ____________________________ Address: ___________________________ City / Township: _________________________________ Zip Code: ______________ Gas Line Details: (Exposed / Above Grade after Meter) Test Pressure / Duration Minutes: ____________ psig @ _________ Minutes. Installed and Tested by: __________________________________ Date: _________________ Installing Firm / Contractor: _______________________________ State ID #: ______________ Address: _______________________________ City: _______________ Zip Code: ________ Witness: ______________________________________________ Contact",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "15a32823c4e957b5093e1b2326a45063924ddad9ecfbc9ff2099b7919e778e4d",
+   "source_document_id": null,
+   "source_title": "15a32823c4e957b5093e1b2326a45063924ddad9ecfbc9ff2099b7919e778e4d.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15264/file/gas-pressure-test-form.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Page #2 ACCESSIBILITY PLAN REVIEW: □ Accessible route; include areas of rescue assistance □ General site and building elements (parking spaces, clearances, access aisles and signage) □ Complete accessibility details; equipment specifications; tactile signage locations □ Provide 5’ x 5’ minimal dimensioned frost slab at all means of egress door locations ENERGY PLAN REVIEW: □ Design criteria □ Interior / exterior envelope design: including mechanical and lighting systems □ Complete energy documentation and calculations □ Submission of energy code calculation report. Additional information: www.energycodes.gov City of Akron projects: Summit County Building Standards now provides commercial site inspections for all projects that include site improvements located within the City. Upon approval by the City, our office will issue a site improvement permit and provide field inspections based on",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "cb0d078c0c22fe52afdde210e7b168b8d44dfba6b6d3cec52f5543949c34bd5a",
+   "source_document_id": null,
+   "source_title": "cb0d078c0c22fe52afdde210e7b168b8d44dfba6b6d3cec52f5543949c34bd5a.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15256/file/commercial-plan-review-submittal-checklist.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Special Inspection Statement 17 EFIS system (1705.17 OBC) 18 Fire - resistant penetrations and joints (1705.18 OBC) 19 Testing for smoke control system (1705.19) 20 Sealing of Mass Timber (1705.20 OBC) 21 Medium/High Voltage System (1705.21 OBC) The above statement of special inspections has been prepared by the applicant in accordance with the provision of section 1704.3 Ohio Building Code 2024. The project registered design professional in responsible charge also acknowledges that he or she is responsible for reviewing and approving the special inspection reports submitted by the special inspectors at the required inspection periods. Any discrepancies in special inspection reports shall be brought to the attention of the building official. A final special inspection report documenting required special inspections and tests, and corrections of any discrepancies noted in the inspections ",
+   "tags": [
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "4df46da8e2210e24e23020050297709d095ba7e73c182aa8e2323ad9f10d9e41",
+   "source_document_id": null,
+   "source_title": "4df46da8e2210e24e23020050297709d095ba7e73c182aa8e2323ad9f10d9e41.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15274/file/specialinspectionstatement_2024.pdf.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "COUNTY OF SUMMIT, OHIO Ilene Shapiro, Executive Building Standards Division · WEBSITE: buildingstandards.summitoh.net · 1030 East Tallmadge Avenue · Akron, Ohio 44310 · 330.630.7280 · fax 330.630.7296 After-Hours Inspection Request Form Date: _ Permit #: FEE $250.00 Payable at time of request Project Location: City: Specific type of inspection requested: □ Building / Structural □ Electrical □ Fire / Life-Safety □ HVAC / Mechanical □ Plumbing □ Other: Specific details for inspection request: Contractor Information: Contractor Name: Authorized Signature: Contact Name: Contact Number: Date Requested: Time Preference: am / pm NOTES: After-hours inspection request shall be scheduled a minimum of 72 hours (3 days) in advance. The contractor shall be responsible to provide safe access to the jobsite. Please allow a 2-hour window for inspector to arrive on-site. AFTER HOURS INSPECTION EMAIL TO :",
+   "tags": [
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "c5424d4c4216a8a2a8dbb695ecf587049c1430a83e3341a3ec1a6f178aab9a48",
+   "source_document_id": null,
+   "source_title": "c5424d4c4216a8a2a8dbb695ecf587049c1430a83e3341a3ec1a6f178aab9a48.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/24505/file/afterhoursinspection.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "COUNTY OF SUMMIT, OHIO Ilene Shapiro, Executive Building Standards Division · buildingstandards.summitoh.net · 1030 East Tallmadge Avenue · Akron, Ohio 44310 · 330.630.7280 · fax 330.630.7296 After-Hours Inspection Request Form Date: _ Permit #: FEE $250.00 Payable at time of request Project Location: City: Specific type of inspection requested: □ Building / Structural □ Electrical □ Fire / Life-Safety □ HVAC / Mechanical □ Plumbing □ Other: Specific details for inspection request: Contractor Information: Contractor Name: Authorized Signature: Contact Name: Contact Number: Date Requested: Time Preference: am / pm NOTES: After-hours inspection request shall be scheduled a minimum of 72 hours (3 days) in advance. The contractor shall be responsible to provide safe access to the jobsite. Please allow a 2-hour window for inspector to arrive on-site.",
+   "tags": [
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "c64d3f1d469e50dc4dd33678ae6d2655ee43770ab8575f2a35b7ecfb6a5460ec",
+   "source_document_id": null,
+   "source_title": "c64d3f1d469e50dc4dd33678ae6d2655ee43770ab8575f2a35b7ecfb6a5460ec.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15251/file/after-hours-inspection-request.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Zoning Permit # _________________ Date: __________________ County of Summit; Building Standards Division 1030 East Tallmadge Avenue Akron, Ohio 44310 330.630.7280 330.630.7296 FAX Residential Plan Submittal New House / Addition / Attached Garage $ 60.60 Fee) (Accessory Buildings / Alterations / Decks /Detached Garages $ 30.30 Fee) Project Location : _ ______________________________ ____________________________ _ City / Village / Township : _________________ _______ __ Zip: __________ (Addresses for new residential projects can be obtained by calling (330) 630-7305 for City of Akron Projects, or contact the County of Summit; Community and Economic Development Department (330) 643-7440 for all other locations under our jurisdiction. The applicant is responsible to verify that the project location is within the jurisdiction of the County of Summit Building Standards Division). Refunds will ",
+   "tags": [
+    "fee",
+    "area"
+   ],
+   "weight": 3,
+   "source_sha256": "0e4fc4eae3b94979cddbf21bd8b1a6703b2a3dd41c145d952ac1f8d812968532",
+   "source_document_id": null,
+   "source_title": "0e4fc4eae3b94979cddbf21bd8b1a6703b2a3dd41c145d952ac1f8d812968532.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15243/file/residential-plan-submittal-form.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "DIVISION OF BUILDING STANDARDS COUNTY OF SUMMIT   EXECUTIVE ILENE SHAPIRO PERMIT # 1030 E. TALLMADGE AVENUE   AKRON, OHIO 44310 330.630.7280   FAX: 330.630.7296 DATE buildingstandar ds.summitoh.net FLOOD HAZARD AREA DEVELOPMENT PERMIT APPLICATION Application is hereby made for a DEVELOPMENT PERMIT as required by the Special Purpose Flood Damage Reduction Regulations No._____________ of ____________________ (village/county) for development in an identified flood hazard area. All activities shall be completed in accordance with the requirements of said regulations. The development to be perf ormed is described below and in attachments hereto. The applica nt understands and agrees that: • The permit applied for, if granted, is issued on the representations made herein; • Any permit issued may be revoked because of any breach o f representation; • Once a permit is revoked all work shal",
+   "tags": [
+    "prohibited",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "66ef6232ccc69e514debfe39ebde3eaff30a2f18a19dfd5a2f687f051e94ffab",
+   "source_document_id": null,
+   "source_title": "66ef6232ccc69e514debfe39ebde3eaff30a2f18a19dfd5a2f687f051e94ffab.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15233/file/flood-hazard-area-development-permit-application.pdf"
+  }
+ ]
+}

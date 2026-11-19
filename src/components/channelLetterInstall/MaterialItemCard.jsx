@@ -96,7 +96,12 @@ export default function MaterialItemCard({
                 <Zap className="w-2.5 h-2.5" /> Auto
               </Badge>
             )}
-            {usageCount > 0 && (
+            {usageCount === null ? (
+              <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200 gap-1">
+                <Activity className="w-2.5 h-2.5" />
+                Usage unverified
+              </Badge>
+            ) : usageCount > 0 && (
               <Badge variant="outline" className="text-[10px] bg-slate-50 text-slate-700 border-slate-200 gap-1">
                 <Activity className="w-2.5 h-2.5" />
                 Used in {usageCount} project{usageCount !== 1 ? "s" : ""}

@@ -1,0 +1,2192 @@
+{
+ "AllInOneEstimate": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "EstimateOption": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "EstimateRevision": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin+user",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "EstimateSectionAcceptance": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "EstimateAcceptance": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin+user",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "EstimateQuoteDelivery": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin+user",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "EstimateClipboardItem": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "EstimatingRequest": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "FoundationProject": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "FoundationInventory": {
+  "rls": {
+   "create": "admin",
+   "read": "admin+user",
+   "update": "admin",
+   "delete": "admin"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "deleteMany"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "BuilderProduct": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "BuilderPart": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "BuilderPartGroup": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "updateMany"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": true
+ },
+ "BuilderPriceRevision": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin+user",
+   "update": "BACKEND-ONLY",
+   "delete": "admin"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "CatalogPartGroup": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "PartTemplate": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin",
+   "update": "admin",
+   "delete": "admin"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "ModifierOption": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "QuickProduct": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "QuickProductCategory": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin+user",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "Customer": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "updateMany"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "CustomerContact": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin+user",
+   "update": "BACKEND-ONLY",
+   "delete": "admin"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "CustomerInfo": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "CustomerLocation": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "CustomerNote": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "CustomerSummary": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin",
+   "update": "admin",
+   "delete": "admin"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "CustomerPortalLink": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "CustomerFolderLink": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "WorkOrder": {
+  "rls": {
+   "create": "admin+user",
+   "read": "admin+user",
+   "update": "admin+user",
+   "delete": "admin"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "Order": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "ChangeOrder": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "Invoice": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "Payment": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "StoreCreditLedger": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "DocNumberCounter": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "Opportunity": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "OpportunityActivity": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "OpportunityIntake": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "PricingMode": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "PricingModifier": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "PricingTemplate": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "PricingTierMatrix": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "GlobalPricingTier": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "MarkupTier": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "update"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "MarkupCategory": {
+  "rls": {
+   "create": "admin",
+   "read": "admin+user",
+   "update": "admin",
+   "delete": "admin"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "LaborLevel": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "Machine": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "MachineRate": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "QuoteDefaults": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "QuoteScopeLine": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "CostPlusConfig": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "GlobalSettings": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "updateMany"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "DefaultModuleSettings": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "ModuleStatus": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "Settings": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "SaveColor": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin",
+   "update": "admin",
+   "delete": "admin"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "Responsibility": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "ProductActivity": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "ProductSubstatus": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "OriginationNode": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "CrmEventType": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "FeatureReport": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "admin-only",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "deleteMany"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "Inventory": {
+  "rls": {
+   "create": "admin",
+   "read": "admin+user",
+   "update": "admin",
+   "delete": "admin"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "InventoryCostHistory": {
+  "rls": {
+   "create": "admin",
+   "read": "admin+user",
+   "update": "admin",
+   "delete": "admin"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "InventoryMovement": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "VinylInventory": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "SignHardwareInventory": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "SignLightingInventory": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "SignPartsSuppliesInventory": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "ChannelLetterInstallInventory": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "ChannelLetterInstallEquipment": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "updateMany",
+   "deleteMany"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "LaborServiceInventory": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "DimensionalLetterMaterial": {
+  "rls": {
+   "create": "admin",
+   "read": "admin+user",
+   "update": "admin",
+   "delete": "admin"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "BrickStoneInventory": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "Project": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "ProjectTemplate": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin+user",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "CNCProject": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "LaserProject": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "MetalProject": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "VinylProject": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "BrickStoneProject": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "CustomItemsProject": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "update",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "ChannelLetterInstallation": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "MaintenanceProject": {
+  "rls": {
+   "create": "admin+user",
+   "read": "admin+user",
+   "update": "admin+user",
+   "delete": "admin"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "MaintenanceInventory": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "MaintenanceEquipment": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "MaintenanceActionRate": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "VinylMachine": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "VinylPartTemplate": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "VinylWorkflowTemplate": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "TaskTemplate": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "ChecklistTemplate": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "ChecklistSubItem": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "deleteMany"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "SipChecklistTemplate": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "update",
+   "delete"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "GeneralTask": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "update",
+   "updateMany",
+   "delete",
+   "deleteMany"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "SalesLocation": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "update"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "SalesFilter": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin+user",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "SavedQueueView": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "SignageFact": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "update"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "SignageFactIndex": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "update",
+   "updateMany"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "Vendor": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "PurchaseOrder": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "ReconciliationBatch": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "TaxGroup": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "update",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "TaxAgency": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "admin-only",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "COGSAccount": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "admin-only",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "IncomeAccount": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "admin-only",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "PortalMessage": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "ProofShareLink": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "ActivityLog": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "FieldAudit": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "AdminAuditLog": {
+  "rls": {
+   "create": "admin",
+   "read": "admin",
+   "update": "admin",
+   "delete": "admin"
+  },
+  "staffDataRead": "admin-only",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "Notification": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "NotificationTemplate": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "NotificationPreference": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "SyncConflict": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "admin-only",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "ImportJob": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "update"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "PendingImport": {
+  "rls": {
+   "create": "admin",
+   "read": "admin+user",
+   "update": "BACKEND-ONLY",
+   "delete": "admin"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "Report": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "ReportRun": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "ScheduledReport": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "RegulationAlert": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "update",
+   "delete"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "User": {
+  "rls": {
+   "create": "absent",
+   "read": "BACKEND-ONLY",
+   "update": "absent",
+   "delete": "absent"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "UserSession": {
+  "rls": {
+   "create": "admin",
+   "read": "admin",
+   "update": "admin",
+   "delete": "admin"
+  },
+  "staffDataRead": "admin-only",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "AuthorizedEmail": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "AccessRequest": {
+  "rls": {
+   "create": "admin",
+   "read": "admin",
+   "update": "admin",
+   "delete": "admin"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "LegacyMigrationMap": {
+  "rls": {
+   "create": "admin",
+   "read": "admin",
+   "update": "admin",
+   "delete": "admin"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "SmartsheetSyncTrace": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "CellHistory": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "EmailGroup": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin+user",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "admin-only",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "EmailNotificationSettings": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin+user",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "admin-only",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "Announcement": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin+user",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "AutomationRule": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin+user",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "admin-only",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "CalendarEvent": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "RAW:{}",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "UserCapacity": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "RAW:{}",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "JurisdictionProfile": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "update"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "PermitLocality": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "update"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": true
+ },
+ "PermitLineItem": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "update",
+   "updateMany",
+   "delete"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": true
+ },
+ "PermitResolutionRule": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "update",
+   "updateMany"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "PermitLookupIndex": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "PermittingAddressArchive": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "SourceCollectionQueue": {
+  "rls": {
+   "create": "admin",
+   "read": "admin+user",
+   "update": "admin",
+   "delete": "admin"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "updateMany"
+  ],
+  "writeAdminGated": true,
+  "clientProxyRouted": false
+ },
+ "SourceMonitorState": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "PermittingWorkflowDraft": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": [
+   "create",
+   "update"
+  ],
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "PermittingOfficeAuthorityReview": {
+  "rls": {
+   "create": "admin",
+   "read": "admin+user",
+   "update": "RAW:\"update\": false,\n    \"delete\": false\n  }",
+   "delete": "RAW:\"delete\": false\n  }"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "PermittingRule": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "PermittingSourceDocument": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "PermittingSourceTextSegment": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "staff",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "PermittingScanRun": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "PermittingHtmlEvidence": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "PermittingRuleExtractionRun": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "PermittingSourceAuthorityReview": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "AccountDeletionRequest": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "BACKEND-ONLY",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "admin-only",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "FailedAdminAttempt": {
+  "rls": {
+   "create": "admin",
+   "read": "admin",
+   "update": "admin",
+   "delete": "admin"
+  },
+  "staffDataRead": "admin-only",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "BackupLog": {
+  "rls": {
+   "create": "BACKEND-ONLY",
+   "read": "admin",
+   "update": "BACKEND-ONLY",
+   "delete": "BACKEND-ONLY"
+  },
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ },
+ "Estimate": {
+  "rls": null,
+  "staffDataRead": "denied",
+  "ownerScoped": false,
+  "staffEntityWrite": "denied",
+  "writeAdminGated": false,
+  "clientProxyRouted": false
+ }
+}

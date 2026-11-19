@@ -1,0 +1,42 @@
+{
+ "synthetic": true,
+ "telemetry": {
+  "foreign": [],
+  "consoleErrors": [],
+  "pageErrors": []
+ },
+ "results": [
+  {
+   "case": "V1 qty0: invalid -> banner, saved amounts, blocked, zero writes",
+   "ok": true
+  },
+  {
+   "case": "V2 invalid variants: raw kept, errors, autosave zero writes",
+   "ok": true
+  },
+  {
+   "case": "V3 unsupported type: unavailable option, choose spread_foot -> valid, save CAS v1->v2",
+   "ok": true
+  },
+  {
+   "case": "V4 draft restore preserves invalid qty0; undo/redo roundtrip",
+   "ok": true
+  },
+  {
+   "case": "V5 explicit zero concrete override: valid, save CAS v1, cost fields persisted",
+   "ok": true
+  },
+  {
+   "case": "V6 held save + qty0 midflight: older saved, invalid retained, retry CAS v2",
+   "ok": true
+  },
+  {
+   "case": "V7 new item qty0: Not saved row, blocked, original f1 amount preserved",
+   "ok": true
+  },
+  {
+   "case": "V8 pillar diameter0 -> error; ignored inactive dims; valid save volume PI/9",
+   "ok": true
+  }
+ ]
+}

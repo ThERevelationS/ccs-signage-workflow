@@ -1,0 +1,35 @@
+{
+ "jurisdiction_id": "6aea11892f7d6a2c6a82e930",
+ "jurisdiction_name": "Troy",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "CITY OF TROY ERU ADJUSTMENT REQUEST FORM Date: Billing Account : Property Address: Property Owner : CURRENT ERU: REVISION REQUEST: ATTACHMENTS: check all that apply SITE PLAN – a current site plan showing to scale all buildings, hard surfaces, landscaping areas and detention basins CALCULATIONS – Calculations indicating the amount of impervious area on the site OTHER – Any other information that would show that an adjustment is appropriate CERTIFICATION: I certify to the best of my knowledge that the information provided is true, accurate and complete. _____________________________ ____________________________ Signature Date Completed form should be mailed to City of Troy, 100 S. Market Street, Troy, Ohio 45373, Attn: Engineering D epartment or faxed to (937) 440-9423 CITY REVIEW – DO NOT WRITE BELOW THIS LINE Reviewed by Date Reviewed Adjusted ERU Billing Adjustment The City Engineering",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "552b2e6432c7accce38d22b855a5a9229d948c26c9c64f5c0a3434cd5667757b",
+   "source_document_id": null,
+   "source_title": "552b2e6432c7accce38d22b855a5a9229d948c26c9c64f5c0a3434cd5667757b.pdf",
+   "official_url": "https://www.troyohio.gov/Documents/Development/Forms%20and%20Documents/Stormwater%20ERU%20Adjustment%20Request.pdf?t=202609161554580"
+  },
+  {
+   "page": 2,
+   "snippet": "Applicant should show activities that are completed that are to improve the post construction stormwater quality or reduce permanent runoff control. This could include identifying forested and grass buffer strips, infiltration trenches, bio-retention area, or other areas that are for the express purpose of stormwater treatment or water quality Improvement. CERTIFICATION: I hereby request consideration for a Stormwater ERU Credit. I certify that I have authority to make such a request and authorization for this property. I further certify that the above information is true and correct to the best of my knowledge. ________________________________ ____________________________ Name (please print) Title ________________________________ ____________________________ Signature Date Submit complete application and all data to : Jillian A. Rhoades , P.E., City Engineer Engineering D epartment City",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "5bdd60cb7055371093eb2b2c07de8ba5e44cc39d09eedd635b2d8c77c35e898f",
+   "source_document_id": null,
+   "source_title": "5bdd60cb7055371093eb2b2c07de8ba5e44cc39d09eedd635b2d8c77c35e898f.pdf",
+   "official_url": "https://www.troyohio.gov/Documents/Development/Forms%20and%20Documents/Stormwater%20ERU%20Credit%20Application.pdf?t=202609161555080"
+  }
+ ]
+}

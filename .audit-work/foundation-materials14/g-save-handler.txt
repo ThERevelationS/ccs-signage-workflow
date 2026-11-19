@@ -1,0 +1,26 @@
+Error: observer broke
+    at onSaved (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/scripts/test-foundation-save-handler.mjs:249:53)
+    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-save01/fe-patched.bundle.mjs:1289:20
+    at async Object.handleSaveAndExit [as onSaveAndExit] (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-save01/fe-patched.bundle.mjs:1328:21)
+Error: lost reply
+    at globalThis.__ensureIdempotent (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/scripts/test-foundation-save-handler.mjs:697:110)
+    at ensureIdempotentEntityCreate (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-save01/fe-patched.bundle.mjs:733:109)
+    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-save01/fe-patched.bundle.mjs:1384:28
+    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/scripts/test-foundation-save-handler.mjs:700:29
+Error: boom
+    at globalThis.__ensureIdempotent (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/scripts/test-foundation-save-handler.mjs:823:90)
+    at ensureIdempotentEntityCreate (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-save01/fe-patched.bundle.mjs:733:109)
+    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-save01/fe-patched.bundle.mjs:1384:28
+    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/scripts/test-foundation-save-handler.mjs:826:29
+Foundation Builder prerequisites could not be loaded: Error: synthetic reload failure
+    at globalThis.__getProject (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/scripts/test-foundation-save-handler.mjs:990:52)
+    at Object.get (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-save01/fe-patched.bundle.mjs:744:100)
+    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-save01/fe-patched.bundle.mjs:876:39
+    at commitHookEffectListMount (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:13038:26)
+    at commitPassiveMountOnFiber (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:14461:11)
+    at commitPassiveMountEffects_complete (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:14421:9)
+    at commitPassiveMountEffects_begin (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:14408:7)
+    at commitPassiveMountEffects (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:14396:3)
+    at flushPassiveEffectsImpl (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:16287:3)
+    at flushPassiveEffects (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:16236:14)
+PASS save-handler passed=58 failed=0

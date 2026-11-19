@@ -3,6 +3,9 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import AppErrorBoundary from '@/components/auth/AppErrorBoundary'
+import { CcsMantineProvider } from '@/components/ui/ccs-date-field'
+import '@mantine/core/styles.css'
+import '@mantine/dates/styles.css'
 import '@/index.css'
 
 const previewQaHost = isPermittingPreviewHost(window.location.hostname, import.meta.env.DEV);
@@ -10,10 +13,10 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 if (previewQaHost && new URLSearchParams(window.location.search).get('permittingReviewQa') === '1') {
   // Fixture-only local callbacks; no application sessions or records are exposed.
   import('./components/admin/PermittingReviewBrowserFixture.jsx').then(({ default: Fixture }) => {
-    root.render(<AppErrorBoundary><Fixture /></AppErrorBoundary>);
+    root.render(<AppErrorBoundary><CcsMantineProvider><Fixture /></CcsMantineProvider></AppErrorBoundary>);
   });
 } else {
-  root.render(<AppErrorBoundary><App /></AppErrorBoundary>);
+  root.render(<AppErrorBoundary><CcsMantineProvider><App /></CcsMantineProvider></AppErrorBoundary>);
 }
 
 if (import.meta.hot) {
@@ -24,6 +27,5 @@ if (import.meta.hot) {
     window.parent?.postMessage({ type: 'sandbox:afterUpdate' }, '*');
   });
 }
-
 
 

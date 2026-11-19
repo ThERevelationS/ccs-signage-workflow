@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/estimator/foundation/foundationTemplateService.js",
+      "content": "import { base44 } from \"@/api/base44Client\";\nimport { ensureReusableRecord } from \"@/components/estimator/products/reusableSaveIdempotency\";\nimport { deleteEntityIfUnchanged } from \"@/components/estimator/builder/builderEntityPersistence\";\n\nexport async function saveFoundationTemplate({ idempotencyKey, data }) {\n  return ensureReusableRecord({\n    entity: base44.entities.ProjectTemplate,\n    idempotencyKey,\n    data,\n    label: \"Foundation template\",\n  });\n}\n\nconst isNotFound = (e) => e?.status === 404 || e?.response?.status === 404;\n\nexport async function deleteFoundationTemplate(templateId) {\n  const id = String(templateId || \"\").trim();\n  if (!id) throw new Error(\"Foundation template id is required.\");\n\n  let current;\n  try {\n    current = await base44.entities.ProjectTemplate.get(id);\n  } catch (e) {\n    if (isNotFound(e)) return true;\n    throw e;\n  }\n  if (current === null || current === undefined || typeof current !== \"object\" || Array.isArray(current) || current.id !== id) {\n    throw new Error(\"Foundation template record could not be verified; delete aborted.\");\n  }\n  await deleteEntityIfUnchanged({\n    entity: base44.entities.ProjectTemplate,\n    record: current,\n    label: \"Foundation template\",\n  });\n  return true;\n}\n",
+      "startLine": 1,
+      "endLine": 37,
+      "totalLines": 37,
+      "truncated": false
+    }
+  ]
+}

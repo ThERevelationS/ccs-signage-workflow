@@ -1,10 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { getActiveConnection, callBouncieApi, WEBHOOK_EVENTS } from '../../shared/bouncie.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 export default async function(req) {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const user = await authenticateSignShopSession(base44, body?.session_token);
     const isAdmin = user.role === 'admin';
@@ -57,8 +58,11 @@ export default async function(req) {
       expectedWebhookEvents: WEBHOOK_EVENTS
     });
   } catch (error) {
-    const status = Number(error?.status || 500);
-    const safeStatus = [401, 409, 503].includes(status) ? status : 500;
+    const status = Number(error?.status || error?.response?.status || 500);
+    if (status === 429 || /rate limit|too many requests/i.test(String(error?.message || ''))) {
+      return Response.json({ error: 'Bouncie status is busy. Try again shortly.', retry_after_ms: 3000 }, { status: 429, headers: { 'Retry-After': '3' } });
+    }
+    const safeStatus = [401, 409, 429, 503].includes(status) ? status : 500;
     return Response.json({ error: safeStatus === 401 ? 'Authentication required' : error.message }, { status: safeStatus });
   }
 }

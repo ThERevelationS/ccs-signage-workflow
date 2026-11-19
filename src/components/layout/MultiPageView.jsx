@@ -110,7 +110,7 @@ export function MultiPageContainer({ children, additionalPages, onRemovePage, on
                 <span className="text-xs font-medium text-purple-800">{page.title}</span>
               </div>
               <div className="flex items-center gap-1">
-                <button
+                <button type="button"
                   onClick={onToggleOrientation}
                   title={stacked ? "Split pages side by side" : "Stack pages vertically"}
                   aria-label={stacked ? "Split pages side by side" : "Stack pages vertically"}
@@ -118,7 +118,7 @@ export function MultiPageContainer({ children, additionalPages, onRemovePage, on
                 >
                   {stacked ? <Columns className="w-3.5 h-3.5 text-purple-600" /> : <Rows2 className="w-3.5 h-3.5 text-purple-600" />}
                 </button>
-                <button
+                <button type="button"
                   onClick={() => onRemovePage(page.id || page.name)}
                   className="p-1 hover:bg-purple-200 rounded transition-colors"
                 >

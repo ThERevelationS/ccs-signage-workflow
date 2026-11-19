@@ -1,0 +1,156 @@
+{
+  "matches": [
+    {
+      "path": "base44/entities/PermittingRuleExtractionRun.jsonc",
+      "line": 53,
+      "text": "    \"llm_started_at\": {"
+    },
+    {
+      "path": "base44/entities/EstimateRevision.jsonc",
+      "line": 78,
+      "text": "    \"started_at\": {"
+    },
+    {
+      "path": "base44/entities/FleetRepairEstimateCreateGate.jsonc",
+      "line": 43,
+      "text": "    \"started_at\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockWorkPause.jsonc",
+      "line": 17,
+      "text": "    \"started_at\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockWorkPause.jsonc",
+      "line": 60,
+      "text": "    \"started_at\","
+    },
+    {
+      "path": "base44/entities/TimeClockAudit.jsonc",
+      "line": 8,
+      "text": "        \"clock_in\","
+    },
+    {
+      "path": "base44/entities/FleetInspection.jsonc",
+      "line": 43,
+      "text": "    \"started_at\": {"
+    },
+    {
+      "path": "base44/entities/FleetInspection.jsonc",
+      "line": 132,
+      "text": "    \"started_at\","
+    },
+    {
+      "path": "base44/entities/BouncieVehicleLiveState.jsonc",
+      "line": 38,
+      "text": "    \"started_at\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockEmployeeState.jsonc",
+      "line": 40,
+      "text": "    \"pending_started_at\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockEmployeeState.jsonc",
+      "line": 64,
+      "text": "    \"break_pending_started_at\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockEmployeeState.jsonc",
+      "line": 88,
+      "text": "    \"work_pause_pending_started_at\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockEmployeeState.jsonc",
+      "line": 108,
+      "text": "    \"labor_pending_started_at\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockEmployeeState.jsonc",
+      "line": 138,
+      "text": "    \"time_off_create_started_at\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockEmployeeState.jsonc",
+      "line": 168,
+      "text": "    \"correction_create_started_at\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockCorrectionRequest.jsonc",
+      "line": 58,
+      "text": "    \"review_started_at\": {"
+    },
+    {
+      "path": "base44/entities/OpportunityBridgeOperationReceipt.jsonc",
+      "line": 75,
+      "text": "    \"started_at\": {"
+    },
+    {
+      "path": "base44/entities/FleetCutoverState.jsonc",
+      "line": 39,
+      "text": "    \"cutover_started_at\": {"
+    },
+    {
+      "path": "base44/entities/FleetPublicReportThrottle.jsonc",
+      "line": 10,
+      "text": "    \"window_started_at\": {"
+    },
+    {
+      "path": "base44/entities/FleetPublicReportThrottle.jsonc",
+      "line": 25,
+      "text": "    \"window_started_at\","
+    },
+    {
+      "path": "base44/entities/TimeClockAdminCorrectionGate.jsonc",
+      "line": 32,
+      "text": "    \"started_at\": {"
+    },
+    {
+      "path": "base44/entities/ImportJob.jsonc",
+      "line": 47,
+      "text": "    \"started_at\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockLaborSegment.jsonc",
+      "line": 51,
+      "text": "    \"started_at\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockLaborSegment.jsonc",
+      "line": 107,
+      "text": "    \"started_at\","
+    },
+    {
+      "path": "base44/entities/PermittingScanRun.jsonc",
+      "line": 5,
+      "text": "  \"status\":{\"type\":\"string\",\"enum\":[\"running\",\"complete\",\"completed_with_errors\",\"failed\"]},\"stage\":{\"type\":\"string\"},\"current_url\":{\"type\":\"string\"},\"processed\":{\"type\":\"integer\"},\"total\":{\"type\":\"integer\"},\"indeterminate\":{\"type\":\"boolean\"},\"started_at\":{\"type\":\"string\"},\"finished_at\":{\"type\":\"string\"},\"last_event_at\":{\"type\":\"string\"},\"error\":{\"type\":\"string\"},\"events\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"additionalProperties\":true}},\"omitted_events\":{\"type\":\"integer\"}"
+    },
+    {
+      "path": "base44/entities/FleetMigrationAudit.jsonc",
+      "line": 23,
+      "text": "    \"started_at\": {"
+    },
+    {
+      "path": "base44/entities/TimeClockPayPeriod.jsonc",
+      "line": 38,
+      "text": "    \"review_started_at\": {"
+    },
+    {
+      "path": "base44/entities/FleetOperationReceipt.jsonc",
+      "line": 49,
+      "text": "    \"started_at\": {"
+    },
+    {
+      "path": "base44/entities/FleetRepairApprovalPolicyCreateGate.jsonc",
+      "line": 30,
+      "text": "    \"started_at\": {"
+    },
+    {
+      "path": "base44/entities/FleetSettings.jsonc",
+      "line": 52,
+      "text": "    \"cutover_started_at\": {"
+    }
+  ],
+  "truncated": true,
+  "returnedMatches": 30
+}

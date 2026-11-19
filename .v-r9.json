@@ -1,0 +1,567 @@
+{
+  "summary": {
+    "total": 40,
+    "resolved": 37,
+    "rate": "92.5%",
+    "failure_stages": {
+      "geocode": 3
+    },
+    "geocode_misses": 3,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "7124 Richfield Hudson Road, Windham, OH 44288",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: windham -> windham",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "windham"
+      },
+      "county": "",
+      "ms": 1795,
+      "worker": 1
+    },
+    {
+      "address": "4934 Fulton Road Northwest, Canton, OH 44718",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: canton -> canton",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "canton"
+      },
+      "county": "",
+      "ms": 2622,
+      "worker": 2
+    },
+    {
+      "address": "4981 Dressler Road Northwest, Canton, OH 44718",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: canton -> canton",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "canton"
+      },
+      "county": "",
+      "ms": 1586,
+      "worker": 1
+    },
+    {
+      "address": "200 Loveland–Madeira Road, Loveland, OH 45140",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: loveland -> loveland",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "loveland"
+      },
+      "county": "",
+      "ms": 1712,
+      "worker": 2
+    },
+    {
+      "address": "2001 Madison Avenue, Covington, KY 41014",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: covington -> covington",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "covington"
+      },
+      "county": "",
+      "ms": 1669,
+      "worker": 1
+    },
+    {
+      "address": "12100 County Road 99, Findlay, OH 45840",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: findlay -> findlay",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "findlay"
+      },
+      "county": "",
+      "ms": 1713,
+      "worker": 2
+    },
+    {
+      "address": "3069 Dixie Highway, Erlanger, KY 41018",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: erlanger -> erlanger",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "erlanger"
+      },
+      "county": "",
+      "ms": 1697,
+      "worker": 1
+    },
+    {
+      "address": "15830 Foltz Industrial Pkwy, Strongsville, OH 44149",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: strongsville -> strongsville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "strongsville"
+      },
+      "county": "",
+      "ms": 1640,
+      "worker": 2
+    },
+    {
+      "address": "175 Industrial Drive, Taylorsville, KY 40071",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: taylorsville -> taylorsville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "taylorsville"
+      },
+      "county": "",
+      "ms": 1688,
+      "worker": 1
+    },
+    {
+      "address": "9000 KY-132, Clay, KY 42404",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1695,
+      "worker": 2
+    },
+    {
+      "address": "141 Industry Rd, Lancaster, KY 40444",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: lancaster -> lancaster",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "lancaster"
+      },
+      "county": "",
+      "ms": 2708,
+      "worker": 1
+    },
+    {
+      "address": "1985 James E. Sauls Sr. Dr, Batavia, OH 45103",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: batavia -> batavia",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "batavia"
+      },
+      "county": "",
+      "ms": 2751,
+      "worker": 2
+    },
+    {
+      "address": "1079 S Main St, Centerville, OH 45458",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: centerville -> centerville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "centerville"
+      },
+      "county": "",
+      "ms": 1746,
+      "worker": 1
+    },
+    {
+      "address": "2835 I 71, La Grange, KY 40031",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: la grange -> la grange",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "la grange"
+      },
+      "county": "",
+      "ms": 1710,
+      "worker": 2
+    },
+    {
+      "address": "175 Old Lawrenceburg Rd, Frankfort, KY 40601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: frankfort -> frankfort",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "frankfort"
+      },
+      "county": "",
+      "ms": 1653,
+      "worker": 1
+    },
+    {
+      "address": "7424 Brookpark Road, Brooklyn, OH 44144",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1673,
+      "worker": 2
+    },
+    {
+      "address": "610 Emily Drive, Fort Mitchell, KY 41017",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: fort mitchell -> fort mitchell",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "fort mitchell"
+      },
+      "county": "",
+      "ms": 1677,
+      "worker": 1
+    },
+    {
+      "address": "6330 Hamilton Cleves Pike, Whitewater Township, OH 45041",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: whitewater -> whitewater township",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "township",
+        "name": "whitewater township"
+      },
+      "county": "",
+      "ms": 1642,
+      "worker": 2
+    },
+    {
+      "address": "101 Front St, Sabina, OH 45169",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: sabina -> sabina",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "sabina"
+      },
+      "county": "",
+      "ms": 1748,
+      "worker": 1
+    },
+    {
+      "address": "3110 Kingsdale Center, Upper Arlington, OH 43221",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: upper arlington -> upper arlington",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "upper arlington"
+      },
+      "county": "",
+      "ms": 1745,
+      "worker": 2
+    },
+    {
+      "address": "2700 KY-11, Beattyville, KY 41311",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: beattyville -> beattyville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "beattyville"
+      },
+      "county": "",
+      "ms": 1722,
+      "worker": 1
+    },
+    {
+      "address": "911 Bypass Rd, Pikeville, KY 41501",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: pikeville -> pikeville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "pikeville"
+      },
+      "county": "",
+      "ms": 1723,
+      "worker": 2
+    },
+    {
+      "address": "9901 La Grange Road, Lyndon, KY 40223",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 38.270966783863,
+        "lng": -85.569217778839
+      },
+      "matched": "9901 LA GRANGE RD, LOUISVILLE, KY, 40223",
+      "target": {
+        "type": "municipality",
+        "name": "Lyndon city"
+      },
+      "county": "Jefferson County",
+      "ms": 2964,
+      "worker": 1
+    },
+    {
+      "address": "1050 Gtwy Pk Dr, West Jefferson, OH 43162",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: west jefferson -> west jefferson",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "west jefferson"
+      },
+      "county": "",
+      "ms": 2619,
+      "worker": 2
+    },
+    {
+      "address": "5649 Main St b, Clay, KY 42404",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1345,
+      "worker": 1
+    },
+    {
+      "address": "2052 Bohlke Blvd, Fairfield, OH 45014",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: fairfield -> fairfield",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "fairfield"
+      },
+      "county": "",
+      "ms": 1685,
+      "worker": 2
+    },
+    {
+      "address": "805 Gardner Lane Rd, Morgantown, KY 42261",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: morgantown -> morgantown",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "morgantown"
+      },
+      "county": "",
+      "ms": 1722,
+      "worker": 1
+    },
+    {
+      "address": "1384 Slater Rd, Wickliffe, KY 42087",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: wickliffe -> wickliffe",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "wickliffe"
+      },
+      "county": "",
+      "ms": 1706,
+      "worker": 2
+    },
+    {
+      "address": "9188 Plainfield Road, Blue Ash, OH 45236",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: blue ash -> blue ash",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "blue ash"
+      },
+      "county": "",
+      "ms": 2656,
+      "worker": 1
+    },
+    {
+      "address": "601 Broad Street, Elyria, OH 44035",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: elyria -> elyria",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "elyria"
+      },
+      "county": "",
+      "ms": 2705,
+      "worker": 2
+    },
+    {
+      "address": "851 State Route 97, Bellville, OH 44813",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bellville -> bellville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bellville"
+      },
+      "county": "",
+      "ms": 1702,
+      "worker": 1
+    },
+    {
+      "address": "4903 Vine St, St Bernard, OH 45217",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: saint bernard -> saint bernard",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "saint bernard"
+      },
+      "county": "",
+      "ms": 1701,
+      "worker": 2
+    },
+    {
+      "address": "9404 State Rte 2096, Robards, KY 42452",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: robards -> robards",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "robards"
+      },
+      "county": "",
+      "ms": 1701,
+      "worker": 1
+    },
+    {
+      "address": "265 Olinger Cir, Wilmington, OH 45177",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "address override: 265 olinger cir -> wilmington",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "wilmington"
+      },
+      "county": "",
+      "ms": 1675,
+      "worker": 2
+    },
+    {
+      "address": "4200 Vine Street, Saint Bernard, OH 45217",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: saint bernard -> saint bernard",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "saint bernard"
+      },
+      "county": "",
+      "ms": 1663,
+      "worker": 1
+    },
+    {
+      "address": "1000 Tennessee Short Cut Rd, Albany, KY 42602",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: albany -> albany",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "albany"
+      },
+      "county": "",
+      "ms": 1713,
+      "worker": 2
+    },
+    {
+      "address": "1210 Streetsboro Road, Streetsboro, OH 44241",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: streetsboro -> streetsboro",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "streetsboro"
+      },
+      "county": "",
+      "ms": 1709,
+      "worker": 1
+    },
+    {
+      "address": "7076 N Main St, Camden, OH 45311",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: camden -> camden",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "camden"
+      },
+      "county": "",
+      "ms": 1692,
+      "worker": 2
+    },
+    {
+      "address": "2000 Corporation Center, Broadview Heights, OH 44147",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: broadview -> broadview heights",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "broadview heights"
+      },
+      "county": "",
+      "ms": 1681,
+      "worker": 1
+    },
+    {
+      "address": "100 Barnett St, Hazel, KY 42049",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: hazel -> hazel",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "hazel"
+      },
+      "county": "",
+      "ms": 1687,
+      "worker": 2
+    }
+  ]
+}

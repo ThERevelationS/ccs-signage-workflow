@@ -1,0 +1,1359 @@
+{
+  "name": "FoundationProject",
+  "type": "object",
+  "description": "Concrete | Masonry | Poles estimator project. Holds foundation items (spread footings / pillars) with concrete, rebar, excavation, forming and finishing costs, plus placed poles, masonry walls, wall caps, signage cabinets, site landscaping, selected equipment and the rolled-up totals.",
+  "properties": {
+    "project_name": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "estimate_number": {
+      "type": "string"
+    },
+    "hyperlink": {
+      "type": "string"
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Internal retry receipt used only to make the first create of this Builder source project idempotent."
+    },
+    "builder_sync_attempt": {
+      "type": "object",
+      "description": "Internal source-save receipt; synchronization is acknowledged by the linked estimate line at the same source updated_date.",
+      "properties": {
+        "schema_version": {
+          "type": "integer"
+        },
+        "key": {
+          "type": "string"
+        },
+        "source_project_id": {
+          "type": "string"
+        },
+        "estimate_id": {
+          "type": "string"
+        },
+        "requested_at": {
+          "type": "string"
+        }
+      }
+    },
+    "assembly_schema_version": {
+      "type": "integer"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "project_concrete_type": {
+      "type": "string"
+    },
+    "project_concrete_admixtures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "component_id": {
+            "type": "string"
+          },
+          "foundation_type": {
+            "type": "string",
+            "enum": [
+              "spread_foot",
+              "pillar"
+            ],
+            "default": "spread_foot"
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number",
+            "default": 1
+          },
+          "length_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "width_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "diameter": {
+            "type": "number",
+            "default": 0
+          },
+          "depth_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "grade_offset_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "rotation_degrees": {
+            "type": "number",
+            "default": 0
+          },
+          "x_inches": {
+            "type": "number",
+            "default": 0,
+            "description": "Left/right position on the layout canvas, in inches."
+          },
+          "z_inches": {
+            "type": "number",
+            "default": 0,
+            "description": "Front/back position on the layout canvas, in inches."
+          },
+          "include_rebar": {
+            "type": "boolean",
+            "default": false
+          },
+          "reinforcement_calculation_version": {
+            "type": "integer",
+            "description": "Absent or 1 uses legacy reinforcement; 2 uses the explicitly accepted preliminary model. Unsupported versions must not fall back to legacy pricing."
+          },
+          "support_class": {
+            "type": "string",
+            "description": "O-111 \u2014 authored support method/class; blank = not recorded"
+          },
+          "support_count": {
+            "type": "number",
+            "description": "B-3 \u2014 projected required support units (reinforcement projection)"
+          },
+          "support_purchased_units": {
+            "type": "number",
+            "description": "B-3 \u2014 projected purchased support units"
+          },
+          "support_packs": {
+            "type": "number",
+            "description": "B-3 \u2014 projected support packs"
+          },
+          "support_material_cost": {
+            "type": "number",
+            "description": "B-3 \u2014 projected support material cost"
+          },
+          "support_labor_cost": {
+            "type": "number",
+            "description": "B-3 \u2014 projected support labor cost"
+          },
+          "support_labor_hours": {
+            "type": "number",
+            "description": "B-3 \u2014 projected support labor hours"
+          },
+          "support_cost": {
+            "type": "number",
+            "description": "B-3 \u2014 projected support total cost"
+          },
+          "reinforcement_design": {
+            "type": "object",
+            "description": "Accepted versioned raw reinforcement geometry. Not engineering approval, structural capacity or a stock purchasing schedule.",
+            "additionalProperties": true
+          },
+          "reinforcement_material": {
+            "type": "object",
+            "description": "Explicit stable catalog identity or authored manual per-foot material basis for the accepted reinforcement design.",
+            "additionalProperties": true
+          },
+          "reinforcement_proposal": {
+            "type": "object",
+            "description": "Unapplied versioned editor draft, including incomplete raw text. Never authoritative for live pricing or downstream material handoff.",
+            "additionalProperties": true
+          },
+          "reinforcement_cost_snapshot": {
+            "type": "object",
+            "description": "Latest deterministic version-2 steel quantities, material/labor amounts and basis. Builder frozen pricing is separate; engineering and procurement approval remain false.",
+            "additionalProperties": true
+          },
+          "reinforcement_acceptance": {
+            "type": "object",
+            "description": "Historical local model-acceptance receipt with origin actor, source, component, revision, timestamp and warnings. Audit metadata only, never authorization or engineering approval.",
+            "additionalProperties": true
+          },
+          "include_forming": {
+            "type": "boolean",
+            "default": true
+          },
+          "selected_forming_id": {
+            "type": "string"
+          },
+          "include_finishing": {
+            "type": "boolean",
+            "default": true
+          },
+          "rebar_size": {
+            "type": "string",
+            "default": "#4"
+          },
+          "rebar_spacing_length": {
+            "type": "number"
+          },
+          "rebar_spacing_width": {
+            "type": "number"
+          },
+          "selected_pole_id": {
+            "type": "string",
+            "description": "LEGACY item-level pole selection (CMP-E01). Never priced \u2014 the canonical representation is project.poles; migrate via the Poles panel."
+          },
+          "pole_offset_from_bottom_inches": {
+            "type": "number",
+            "default": 0,
+            "description": "LEGACY item-level pole offset above the footing bottom. Not interpreted as embedment."
+          },
+          "pole_total_height_inches": {
+            "type": "number",
+            "default": 0,
+            "description": "LEGACY item-level total pole height in inches. Never priced \u2014 see project.poles."
+          },
+          "include_pole_painting": {
+            "type": "boolean",
+            "default": false,
+            "description": "LEGACY item-level pole-painting flag; the canonical flag lives on project.poles rows."
+          },
+          "include_wall_material": {
+            "type": "boolean",
+            "default": false
+          },
+          "wall_length_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "wall_width_inches": {
+            "type": "number",
+            "default": 8
+          },
+          "wall_height_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "selected_brick_id": {
+            "type": "string"
+          },
+          "mortar_gap_inches": {
+            "type": "number",
+            "default": 0.375
+          },
+          "brick_layer_offset_inches": {
+            "type": "number"
+          },
+          "include_fill_material": {
+            "type": "boolean",
+            "default": false
+          },
+          "selected_fill_material_id": {
+            "type": "string"
+          },
+          "concrete_volume_cy": {
+            "type": "number"
+          },
+          "excavation_volume_cy": {
+            "type": "number"
+          },
+          "concrete_bags": {
+            "type": "number"
+          },
+          "concrete_rate": {
+            "type": "number"
+          },
+          "rebar_feet": {
+            "type": "number"
+          },
+          "rebar_weight_lbs": {
+            "type": "number"
+          },
+          "rebar_rate": {
+            "type": "number"
+          },
+          "excavation_hours": {
+            "type": "number"
+          },
+          "forming_qty": {
+            "type": "number"
+          },
+          "concrete_cost": {
+            "type": "number"
+          },
+          "rebar_cost": {
+            "type": "number"
+          },
+          "rebar_material_cost": {
+            "type": "number",
+            "description": "Calculated version-2 steel material cost, separate from reinforcement labor."
+          },
+          "rebar_labor_cost": {
+            "type": "number",
+            "description": "Calculated version-2 reinforcement labor cost."
+          },
+          "rebar_labor_hours": {
+            "type": "number",
+            "description": "Recorded version-2 reinforcement labor hours; absent is unknown, not zero."
+          },
+          "rebar_geometry_feet": {
+            "type": "number",
+            "description": "Physical modeled steel footage, distinct from the priced rebar_feet override."
+          },
+          "rebar_geometry_weight_lbs": {
+            "type": "number",
+            "description": "Physical modeled steel weight, distinct from the priced rebar_weight_lbs."
+          },
+          "rebar_connection_count": {
+            "type": "integer",
+            "description": "Modeled reinforcement connections, independent of an aggregate priced-footage override."
+          },
+          "excavation_cost": {
+            "type": "number"
+          },
+          "forming_hours": {
+            "type": "number"
+          },
+          "forming_cost": {
+            "type": "number"
+          },
+          "forming_materials_cost": {
+            "type": "number"
+          },
+          "pouring_hours": {
+            "type": "number"
+          },
+          "pouring_cost": {
+            "type": "number"
+          },
+          "finishing_hours": {
+            "type": "number"
+          },
+          "finishing_cost": {
+            "type": "number"
+          },
+          "pole_cost": {
+            "type": "number",
+            "description": "LEGACY item-level pole cost snapshot \u2014 never summed into totals (poles are priced on project.poles only, CMP-E01)."
+          },
+          "pole_painting_cost": {
+            "type": "number",
+            "description": "LEGACY item-level pole painting cost snapshot \u2014 never summed into totals."
+          },
+          "brick_count": {
+            "type": "number"
+          },
+          "brick_cost": {
+            "type": "number"
+          },
+          "fill_volume_cy": {
+            "type": "number"
+          },
+          "fill_cost": {
+            "type": "number"
+          },
+          "item_total_cost": {
+            "type": "number"
+          },
+          "custom_concrete_cost_per_cy": {
+            "type": "number"
+          },
+          "custom_rebar_cost_per_ft": {
+            "type": "number"
+          },
+          "custom_concrete_qty": {
+            "type": "number"
+          },
+          "custom_rebar_qty": {
+            "type": "number"
+          },
+          "custom_forming_rate": {
+            "type": "number"
+          },
+          "custom_forming_qty": {
+            "type": "number"
+          },
+          "custom_finishing_rate": {
+            "type": "number"
+          },
+          "custom_finishing_hours": {
+            "type": "number"
+          },
+          "custom_excavation_rate": {
+            "type": "number"
+          },
+          "custom_excavation_hours": {
+            "type": "number"
+          },
+          "rebar_layers": {
+            "type": "number"
+          },
+          "rebar_layer_separation_inches": {
+            "type": "number"
+          },
+          "pillar_rebar_size": {
+            "type": "string"
+          },
+          "pillar_rebar_hoop_diameter": {
+            "type": "number"
+          },
+          "pillar_rebar_layer_separation_inches": {
+            "type": "number"
+          },
+          "pillar_rebar_layers": {
+            "type": "number"
+          },
+          "pillar_vertical_rebar_count": {
+            "type": "number"
+          },
+          "selected_concrete_id": {
+            "type": "string"
+          },
+          "excavation_method": {
+            "type": "string",
+            "enum": [
+              "hand_dig",
+              "equipment_excavation"
+            ]
+          },
+          "is_new_sign_location": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "beautify_data_url": {
+      "type": "string"
+    },
+    "poles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pole_id": {
+            "type": "string"
+          },
+          "x_inches": {
+            "type": "number"
+          },
+          "z_inches": {
+            "type": "number"
+          },
+          "height_inches": {
+            "type": "number",
+            "description": "Height of the pole above finished grade in inches \u2014 a distinct required quantity (CMP-E02)."
+          },
+          "y_offset_inches": {
+            "type": "number",
+            "description": "Legacy spelling of embedment below grade in inches; the canonical field is embedment_inches. When both are recorded they must agree."
+          },
+          "embedment_inches": {
+            "type": "number",
+            "description": "Canonical depth of the pole below finished grade in inches; supersedes the legacy y_offset_inches spelling of the same quantity."
+          },
+          "base_offset_inches": {
+            "type": "number",
+            "description": "Height of the pole's base above finished grade (wall/pier mounting). Placement metadata only \u2014 never contributes to billed material length."
+          },
+          "total_length_inches": {
+            "type": "number",
+            "description": "Explicit purchased/billed total stock length override; when recorded it is the billed length instead of height above grade plus embedment."
+          },
+          "required_length_inches": {
+            "type": "number",
+            "description": "Calculated billed material length snapshot \u2014 the explicit total stock length when recorded, else height above grade plus embedment."
+          },
+          "stock_pieces": {
+            "type": "integer",
+            "description": "Calculated stock-piece count under the catalog stock_price pricing mode; null under per-foot pricing."
+          },
+          "pole_shape": {
+            "type": "string",
+            "description": "Actual cross-section shape (round/square/rectangular/elliptical/other or a catalog value); falls back to the catalog row's pole_shape when unrecorded."
+          },
+          "component_id": {
+            "type": "string"
+          },
+          "foundation_component_id": {
+            "type": "string"
+          },
+          "foundation_idx": {
+            "type": "number"
+          },
+          "paint": {
+            "type": "boolean"
+          },
+          "include_pole_painting": {
+            "type": "boolean",
+            "default": false,
+            "description": "Canonical pole-painting flag consumed by the priced path (the 'paint' boolean is a legacy alias not read by pricing)."
+          },
+          "custom_cost_per_unit": {
+            "type": "number",
+            "description": "Per-pole rate override \u2014 $/linear foot or $/stock piece depending on the catalog row's pole_pricing_mode."
+          },
+          "pole_name": {
+            "type": "string",
+            "description": "Calculated snapshot of the resolved catalog material name."
+          },
+          "pole_cost": {
+            "type": "number",
+            "description": "Calculated pole material cost snapshot."
+          },
+          "pole_painting_cost": {
+            "type": "number",
+            "description": "Calculated pole painting cost snapshot."
+          },
+          "total_cost": {
+            "type": "number",
+            "description": "Calculated pole + painting cost snapshot."
+          },
+          "migrated_from": {
+            "type": "string",
+            "description": "Provenance marker; 'legacy_item' when the row was created from legacy item-level pole fields (CMP-E01)."
+          },
+          "source_item_component_id": {
+            "type": "string",
+            "description": "Foundation item this pole was migrated from, when migrated_from is set."
+          },
+          "legacy_pole_offset_from_bottom_inches": {
+            "type": "number",
+            "description": "Preserved legacy item field \u2014 offset of the pole above the footing bottom. Never interpreted as embedment."
+          },
+          "rotation_degrees": {
+            "type": "number"
+          },
+          "anchor_assembly": {
+            "type": "string",
+            "description": "Lane E \u2014 authored pole anchor-assembly note; blank = not recorded"
+          },
+          "feasible_candidate": {
+            "type": "boolean",
+            "description": "Lane E \u2014 operator-recorded feasible-dimension candidate flag"
+          },
+          "dim_range": {
+            "type": "string",
+            "description": "Lane E \u2014 operator-recorded feasible dimension range note"
+          },
+          "signs": {
+            "type": "array",
+            "description": "Freeform sign-canvas records mounted on this pole - component_id is the identity key; geometry, artwork, mount, link and cost fields are authored per sign (like reinforcement_design, the record evolves with the canvas).",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      }
+    },
+    "walls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "component_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "heightInches": {
+            "type": "number",
+            "default": 24
+          },
+          "materialId": {
+            "type": "string"
+          },
+          "internalMaterialId": {
+            "type": "string"
+          },
+          "includeInternalWall": {
+            "type": "boolean"
+          },
+          "internalWallHeightInches": {
+            "type": "number"
+          },
+          "internalMortarGapInches": {
+            "type": "number"
+          },
+          "useExistingFoundation": {
+            "type": "boolean",
+            "default": false
+          },
+          "mortarGapInches": {
+            "type": "number",
+            "default": 0.375
+          },
+          "offsetFraction": {
+            "type": "number",
+            "default": 0.5
+          },
+          "brick_bond_type": {
+            "type": "string",
+            "description": "O-047 \u2014 authored coursing bond kind (running/stack/Flemish/soldier); blank = not recorded"
+          },
+          "corner_return_count": {
+            "type": "number",
+            "description": "O-047 \u2014 operator-recorded corner-return count"
+          },
+          "shape": {
+            "type": "object",
+            "properties": {
+              "points": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "z": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "closed": {
+                "type": "boolean"
+              },
+              "segments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "component_id": {
+                      "type": "string"
+                    },
+                    "length": {
+                      "type": "number",
+                      "description": "Segment length in inches (derived from recorded points)"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "calculatedCosts": {
+            "type": "object",
+            "properties": {
+              "totalBricks": {
+                "type": "number"
+              },
+              "materialCost": {
+                "type": "number"
+              },
+              "mortarCost": {
+                "type": "number"
+              },
+              "laborHours": {
+                "type": "number"
+              },
+              "laborCost": {
+                "type": "number"
+              },
+              "totalCost": {
+                "type": "number"
+              },
+              "totalLinearInches": {
+                "type": "number"
+              },
+              "numCourses": {
+                "type": "number"
+              },
+              "internalTotalBricks": {
+                "type": "number"
+              },
+              "internalMaterialCost": {
+                "type": "number"
+              },
+              "internalMortarCost": {
+                "type": "number"
+              },
+              "internalLaborCost": {
+                "type": "number"
+              },
+              "internalLaborHours": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "wall_caps": {
+      "type": "array",
+      "description": "Wall cap pieces placed on top of outer walls.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "cap_inventory_id": {
+            "type": "string"
+          },
+          "component_id": {
+            "type": "string"
+          },
+          "wall_component_id": {
+            "type": "string"
+          },
+          "segment_component_id": {
+            "type": "string"
+          },
+          "wall_index": {
+            "type": "number"
+          },
+          "segment_index": {
+            "type": "number"
+          },
+          "position_along_segment_inches": {
+            "type": "number"
+          },
+          "length_inches": {
+            "type": "number",
+            "description": "Actual cut length used. May be shorter than stock; full stock is still charged."
+          },
+          "rotation_offset_degrees": {
+            "type": "number",
+            "default": 0
+          },
+          "lateral_offset_inches": {
+            "type": "number",
+            "default": 0,
+            "description": "Side-to-side offset from wall centerline (negative = outer side)"
+          },
+          "width_inches": {
+            "type": "number",
+            "description": "Cap width in inches"
+          },
+          "height_inches": {
+            "type": "number",
+            "description": "Cap height in inches"
+          },
+          "elevation_inches": {
+            "type": "number",
+            "description": "Cap elevation above wall top in inches"
+          },
+          "joint_spacing_inches": {
+            "type": "number",
+            "description": "Cap joint spacing in inches"
+          },
+          "joint_width_inches": {
+            "type": "number",
+            "description": "Cap joint width in inches"
+          },
+          "overhang_inches": {
+            "type": "number",
+            "description": "Cap overhang in inches"
+          },
+          "miter_angle_deg": {
+            "type": "number",
+            "description": "Lane E \u2014 authored miter angle (deg) for the cap end"
+          },
+          "purchased_pieces": {
+            "type": "number",
+            "description": "Lane E \u2014 operator-recorded purchased cap piece count"
+          },
+          "cut_labor_cost": {
+            "type": "number",
+            "description": "Cap cut labor cost"
+          },
+          "supplies_cost": {
+            "type": "number",
+            "description": "Cap supplies cost"
+          },
+          "profile": {
+            "type": "string",
+            "description": "Cap profile kind"
+          },
+          "slope": {
+            "type": "string",
+            "description": "Cap slope kind"
+          },
+          "end_treatment": {
+            "type": "string",
+            "description": "Cap end treatment kind"
+          },
+          "cap_anchor_state": {
+            "type": "string",
+            "description": "Lane E \u2014 authored cap anchor state"
+          },
+          "locked": {
+            "type": "boolean",
+            "description": "Operator lock on the cap's authored fields"
+          },
+          "offcut_reuse_elected": {
+            "type": "boolean",
+            "description": "Lane E \u2014 operator elected to reuse offcuts"
+          },
+          "reanchor_log": {
+            "type": "array",
+            "description": "Lane E \u2014 recorded bulk re-anchor entries ({at, by, ...})",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      }
+    },
+    "signage_cabinets": {
+      "type": "array",
+      "description": "Signage cabinets mounted directly on a foundation or on a placed pole.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "mount": {
+            "type": "string",
+            "enum": [
+              "foundation",
+              "pole"
+            ],
+            "default": "foundation"
+          },
+          "component_id": {
+            "type": "string"
+          },
+          "foundation_component_id": {
+            "type": "string"
+          },
+          "pole_component_id": {
+            "type": "string"
+          },
+          "foundation_index": {
+            "type": "number"
+          },
+          "pole_index": {
+            "type": "number"
+          },
+          "width_inches": {
+            "type": "number",
+            "default": 48
+          },
+          "height_inches": {
+            "type": "number",
+            "default": 24
+          },
+          "depth_inches": {
+            "type": "number",
+            "default": 8
+          },
+          "mount_height_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "quantity": {
+            "type": "number",
+            "default": 1
+          },
+          "unit_cost": {
+            "type": "number",
+            "default": 0
+          },
+          "mount_hardware": {
+            "type": "string",
+            "description": "O-061 \u2014 authored cabinet mount hardware kind (bracket/base_plate/anchor/other)"
+          },
+          "mount_hardware_model": {
+            "type": "string",
+            "description": "O-061 \u2014 typed mount model reference"
+          }
+        }
+      }
+    },
+    "landscape": {
+      "type": "object",
+      "description": "Site landscaping painted on the landscape designer grid. cells maps 'x,y' grid keys to a material key; cell_size_inches is the size of one cell.",
+      "additionalProperties": true
+    },
+    "estimate_id": {
+      "type": "string",
+      "description": "Back-reference to the estimate line this foundation project prices"
+    },
+    "walkthrough_step": {
+      "type": "number",
+      "description": "O-101 \u2014 operator-recorded walkthrough position"
+    },
+    "walkthrough_video_url": {
+      "type": "string",
+      "description": "O-101 \u2014 authored walkthrough video URL"
+    },
+    "customer_markup_percent": {
+      "type": "number",
+      "default": 0,
+      "description": "Markup applied to this section's cost to reach the customer price."
+    },
+    "customer_price_override": {
+      "type": "number",
+      "description": "Manual customer price for this section; overrides the markup calculation when set."
+    },
+    "customer_pricing": {
+      "type": "object",
+      "description": "Optional saved customer sell-price snapshot from the shared Markup Tier engine. Manual Foundation markup/override remains the fallback until a tier is explicitly applied.",
+      "additionalProperties": true
+    },
+    "pricing_engine": {
+      "type": "object",
+      "description": "F-23h: optional pricing-engine context block \u2014 {customer_tier, tier_rules[], templates[], default_markup_pct, tax_percent, setup_fee, minimum_charge}. When present, foundationPricingWire routes the sell side through the shared engine; absent = legacy pricing verbatim.",
+      "additionalProperties": true
+    },
+    "selected_equipment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "equipment_id": {
+            "type": "string"
+          },
+          "rental_period": {
+            "type": "string",
+            "enum": [
+              "day",
+              "week",
+              "month"
+            ]
+          },
+          "rental_duration": {
+            "type": "number"
+          },
+          "include_delivery": {
+            "type": "boolean"
+          },
+          "equipment_cost": {
+            "type": "number"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "selected_concrete_id": {
+      "type": "string"
+    },
+    "excavation_method": {
+      "type": "string",
+      "enum": [
+        "hand_dig",
+        "equipment_excavation"
+      ]
+    },
+    "concrete_cost_per_cy": {
+      "type": "number",
+      "default": 135
+    },
+    "rebar_cost_per_ft": {
+      "type": "number",
+      "default": 0.75
+    },
+    "forming_materials_cost_spread_foot": {
+      "type": "number",
+      "default": 0.5
+    },
+    "forming_materials_cost_pillar": {
+      "type": "number",
+      "default": 0.75
+    },
+    "min_excavation_time_hours": {
+      "type": "number",
+      "default": 1
+    },
+    "hand_dig_excavation_cost_per_cy": {
+      "type": "number",
+      "default": 10
+    },
+    "equipment_excavation_cost_per_cy": {
+      "type": "number",
+      "default": 15
+    },
+    "forming_labor_rate": {
+      "type": "number",
+      "default": 55
+    },
+    "pouring_labor_rate": {
+      "type": "number",
+      "default": 60
+    },
+    "finishing_labor_rate": {
+      "type": "number",
+      "default": 50
+    },
+    "hand_dig_labor_rate": {
+      "type": "number",
+      "default": 45
+    },
+    "equipment_excavation_labor_rate": {
+      "type": "number",
+      "default": 35
+    },
+    "total_concrete_cost": {
+      "type": "number"
+    },
+    "concrete_delivery_snapshot": {
+      "type": "object",
+      "description": "Versioned historical order snapshot saved atomically with the source design; never current pricing when catalog items are unavailable.",
+      "properties": {
+        "version": {
+          "type": "integer"
+        },
+        "concrete_total": {
+          "type": "number"
+        },
+        "rounded_yards": {
+          "type": "number"
+        },
+        "rate_per_yard": {
+          "type": "number"
+        },
+        "additional_stops_cost": {
+          "type": "number"
+        },
+        "trucks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "yards": {
+                "type": "number"
+              },
+              "rounded_yards": {
+                "type": "number"
+              },
+              "cost": {
+                "type": "number"
+              },
+              "small_order_fee": {
+                "type": "number"
+              },
+              "fuel_fee": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "total_rebar_cost": {
+      "type": "number"
+    },
+    "total_excavation_cost": {
+      "type": "number"
+    },
+    "total_labor_cost": {
+      "type": "number"
+    },
+    "total_equipment_cost": {
+      "type": "number"
+    },
+    "total_forming_materials_cost": {
+      "type": "number"
+    },
+    "total_pole_cost": {
+      "type": "number"
+    },
+    "total_pole_painting_cost": {
+      "type": "number"
+    },
+    "total_brick_cost": {
+      "type": "number"
+    },
+    "total_fill_cost": {
+      "type": "number"
+    },
+    "total_wall_cost": {
+      "type": "number"
+    },
+    "total_wall_cap_cost": {
+      "type": "number"
+    },
+    "total_signage_cabinet_cost": {
+      "type": "number"
+    },
+    "total_landscape_cost": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "ai_engineering_recommendation": {
+      "type": "string"
+    },
+    "ai_engineering_data": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "design_basis": {
+      "type": "object",
+      "description": "O-104/CMP-I03 \u2014 the project's recorded design basis: which locally adopted code edition and jurisdiction the preliminary foundation engineering stands on. Captured explicitly per project \u2014 the newest published edition is never assumed to equal the locally adopted one. Written only through the design-basis surface with basis_source/timestamp provenance; nothing rewrites an existing project's basis silently.",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "description": "Block shape version; 1 = the O-104 capture layout."
+        },
+        "code_edition": {
+          "type": "string",
+          "description": "The locally adopted code/standard edition this project's preliminary basis uses (e.g. 'ASCE 7-16', 'ASCE 7-22', 'OBC 2019'). Authored only \u2014 never auto-filled with a newest-published value."
+        },
+        "code_edition_prior": {
+          "type": "string",
+          "description": "Superseded edition preserved when code_edition changes after a basis was captured \u2014 the recorded trail that keeps an edition change visible instead of silent."
+        },
+        "jurisdiction": {
+          "type": "string",
+          "description": "Free-text adopted-code locality (e.g. 'City of Milford, Clermont County, OH'). A future PermitLocality/JurisdictionProfile link may refine this text, never replace it."
+        },
+        "basis_notes": {
+          "type": "string",
+          "description": "Adopted-code nuance a bare edition cannot hold \u2014 local amendments, ordinance references, partial adoptions (CMP-I02 keeps these distinct from the referenced standards)."
+        },
+        "basis_source": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "official_report",
+            "api"
+          ],
+          "description": "How this basis was recorded. 'api' is reserved \u2014 no current writer; any authored content edit re-marks the block 'manual' unless an official-report transcription is explicitly selected."
+        },
+        "basis_captured_at": {
+          "type": "string",
+          "description": "ISO-8601 timestamp of the FIRST authored basis capture; not rewritten by later edits."
+        },
+        "basis_updated_at": {
+          "type": "string",
+          "description": "ISO-8601 timestamp of the most recent authored basis edit \u2014 a basis never changes without a recorded when."
+        },
+        "basis_locked": {
+          "type": "boolean",
+          "description": "Operator lock on a captured basis: while true, basis edits require an explicit re-capture confirmation. Stripped when no basis content remains."
+        },
+        "sign_wind": {
+          "type": "string",
+          "description": "O-106 \u2014 authored sign-wind method/source note"
+        },
+        "footing_basis": {
+          "type": "string",
+          "description": "O-107 \u2014 authored footing-bearing method/source note"
+        },
+        "shaft_basis": {
+          "type": "string",
+          "description": "O-108 \u2014 authored drilled-shaft/embedment method/source note"
+        },
+        "lateral": {
+          "type": "string",
+          "description": "O-108 \u2014 authored lateral-load method/source note"
+        },
+        "frost_depth": {
+          "type": "string",
+          "description": "O-110 \u2014 authored frost-depth source note"
+        },
+        "pillar_bar": {
+          "type": "string",
+          "description": "O-111 \u2014 authored pillar-bar method/source note"
+        },
+        "base_plate": {
+          "type": "string",
+          "description": "O-111 \u2014 authored base-plate method/source note"
+        },
+        "cap_detail": {
+          "type": "string",
+          "description": "O-112 \u2014 authored masonry cap detail method/source note"
+        },
+        "basis_reference": {
+          "type": "string",
+          "description": "Lane E \u2014 free-text source citation (e.g. 'ACI 318'); distinct from basis_source enum provenance"
+        },
+        "license_class": {
+          "type": "string",
+          "description": "O-120 \u2014 license class of the source the basis relies on"
+        },
+        "licensed_source": {
+          "type": "boolean",
+          "description": "O-120 \u2014 whether the basis relies on a licensed engineering source"
+        },
+        "bearing": {
+          "type": "string",
+          "description": "Legacy authored footing-bearing note (superseded by footing_basis; preserved for pre-rename records)"
+        },
+        "shaft": {
+          "type": "string",
+          "description": "Legacy authored shaft note (superseded by shaft_basis; preserved for pre-rename records)"
+        },
+        "soil": {
+          "type": "string",
+          "description": "O-109 \u2014 authored soil assumption note"
+        },
+        "groundwater": {
+          "type": "string",
+          "description": "O-109 \u2014 authored groundwater assumption note"
+        },
+        "wind": {
+          "type": "string",
+          "description": "O-109 \u2014 authored wind assumption note"
+        },
+        "concrete": {
+          "type": "string",
+          "description": "O-110 \u2014 authored concrete assumption note"
+        },
+        "rebar": {
+          "type": "string",
+          "description": "O-110 \u2014 authored rebar assumption note"
+        },
+        "cover": {
+          "type": "string",
+          "description": "O-110 \u2014 authored cover assumption note"
+        },
+        "durability": {
+          "type": "string",
+          "description": "O-110 \u2014 authored durability assumption note"
+        },
+        "masonry": {
+          "type": "string",
+          "description": "O-112 \u2014 authored masonry assumption note"
+        },
+        "cap_material": {
+          "type": "string",
+          "description": "O-112 \u2014 authored cap material assumption note"
+        },
+        "coping": {
+          "type": "string",
+          "description": "O-112 \u2014 authored coping assumption note"
+        },
+        "site": {
+          "type": "string",
+          "description": "O-118 \u2014 authored site note"
+        },
+        "signs_loads": {
+          "type": "string",
+          "description": "O-118 \u2014 authored signs/loads note"
+        },
+        "geometry": {
+          "type": "string",
+          "description": "O-118 \u2014 authored geometry note"
+        },
+        "open_questions": {
+          "type": "string",
+          "description": "O-118 \u2014 authored open-questions note"
+        },
+        "quantity_cost_revision": {
+          "type": "string",
+          "description": "O-118 \u2014 authored quantity/cost revision note"
+        },
+        "policy_sensitivity": {
+          "type": "string",
+          "description": "O-118 \u2014 authored policy-sensitivity note"
+        }
+      }
+    },
+    "site_hazard": {
+      "type": "object",
+      "description": "O-105/CMP-I04 \u2014 site/hazard inputs recorded for this project: coordinates, unit system, risk category, exposure assumptions, and entry provenance/timestamp. Manual and official-report transcription are supported now; 'api' is a reserved enum value with no current writer. The adopted standard edition is recorded once in design_basis.code_edition, not duplicated here.",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "description": "Block shape version; 1 = the O-105 capture layout."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "Site latitude in decimal degrees (-90..90); null = recorded-but-unset, absent = never captured \u2014 never zero-filled."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "Site longitude in decimal degrees (-180..180); null = recorded-but-unset, absent = never captured."
+        },
+        "units": {
+          "type": "string",
+          "enum": [
+            "imperial",
+            "metric"
+          ],
+          "description": "Unit system the site/hazard values are authored in. Absent = unstated; never assumed."
+        },
+        "risk_category": {
+          "type": "string",
+          "enum": [
+            "I",
+            "II",
+            "III",
+            "IV"
+          ],
+          "description": "Risk category I\u2013IV recorded for the structure (ASCE 7-style). Absent = unrecorded."
+        },
+        "exposure_category": {
+          "type": "string",
+          "enum": [
+            "B",
+            "C",
+            "D"
+          ],
+          "description": "Wind exposure category recorded for the site. Absent = unrecorded."
+        },
+        "exposure_assumption": {
+          "type": "string",
+          "description": "Free-text exposure/terrain assumption (e.g. 'Exposure C assumed \u2014 open terrain, verify on site')."
+        },
+        "entry_method": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "official_report",
+            "api"
+          ],
+          "description": "How these inputs were entered; only manual/official_report are written today \u2014 'api' reserved for a future automation writer."
+        },
+        "input_timestamp": {
+          "type": "string",
+          "description": "ISO-8601 timestamp of the most recent authored change to this block."
+        }
+      }
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__foundationproject_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__foundationproject_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__foundationproject_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__foundationproject_backend_only__"
+      }
+    }
+  }
+}

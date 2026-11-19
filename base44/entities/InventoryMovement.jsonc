@@ -1,9 +1,12 @@
 {
   "name": "InventoryMovement",
   "type": "object",
-  "description": "Append-only audit ledger for stock changes on Master Inventory items. All writes go through inventoryAction — never edited directly.",
+  "description": "Append-only audit ledger for stock changes on Master Inventory items. All writes go through inventoryAction \u2014 never edited directly.",
   "properties": {
-    "schema_version": { "type": "number", "default": 1 },
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
     "creation_request_key": {
       "type": "string",
       "description": "Retry-safe key; a repeated request must resolve to this same movement."
@@ -18,7 +21,12 @@
     },
     "reason": {
       "type": "string",
-      "enum": ["receive", "issue", "adjust", "return"],
+      "enum": [
+        "receive",
+        "issue",
+        "adjust",
+        "return"
+      ],
       "description": "receive = stock received in; issue = consumed on a job; adjust = manual correction; return = job stock returned."
     },
     "delta": {
@@ -37,14 +45,40 @@
       "type": "string",
       "description": "Job the stock was issued to / returned from, when applicable."
     },
-    "note": { "type": "string" },
-    "created_by": { "type": "string" }
+    "note": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string"
+    }
   },
-  "required": ["creation_request_key", "item_id", "reason", "delta", "resulting_qty"],
+  "required": [
+    "creation_request_key",
+    "item_id",
+    "reason",
+    "delta",
+    "resulting_qty"
+  ],
   "rls": {
-    "create": { "user_condition": { "role": "__inventory_backend_only__" } },
-    "read": { "user_condition": { "role": "__inventory_backend_only__" } },
-    "update": { "user_condition": { "role": "__inventory_backend_only__" } },
-    "delete": { "user_condition": { "role": "__inventory_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__inventory_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__inventory_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__inventory_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__inventory_backend_only__"
+      }
+    }
   }
 }

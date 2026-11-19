@@ -4,6 +4,9 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Clock3, Loader2, Pause, Play, X } from "lucide-react";
 import { format } from "date-fns";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
+import { invokeTimeClockAction } from "@/components/timeclock/timeClockReadCache";
+import { useTimeClockStatus } from "@/components/timeclock/TimeClockStatusContext";
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -35,6 +38,15 @@ export default function WorkPauseOverlay({
         target_email: currentUser?.email,
       };
   const hasCredential = Boolean(credentialPayload.badge_code || credentialPayload.session_token);
+  const providerStatus = useTimeClockStatus();
+  const providerStatusRefresh = providerStatus?.refresh;
+  // Default-session path shares the app-wide provider (status_lite with a
+  // full-status escalation on transitional states) instead of self-fetching —
+  // the provider's poll and event listeners already cover refresh triggers.
+  // Badge/custom-credential scopes keep their own fetch loop below.
+  const useProvider = providerStatus?.isFallback !== true &&
+    !credentialOverride?.badgeCode && !credentialOverride?.sessionToken &&
+    !sessionTokenOverride && !userOverride;
   // Bind every status result to its employee and signed credential, not just
   // whether the component is still mounted when a request returns.
   const scopeKey = JSON.stringify([
@@ -61,12 +73,9 @@ export default function WorkPauseOverlay({
   const pauseIdRef = useRef("");
   const dismissedAtRef = useRef(0);
   const lastActivityAtRef = useRef(Date.now());
+  const lastPollAtRef = useRef(0);
 
-  const loadStatus = useCallback(async ({ preservePausedOnError = true } = {}) => {
-    if (resumeInFlightRef.current) return null;
-    const sequence = ++statusSequenceRef.current;
-    const isCurrent = () => mountedRef.current &&
-      sequence === statusSequenceRef.current && scopeRef.current === scopeKey;
+  const applyStatusData = useCallback((data) => {
     if (disabled || !currentUser?.email || !hasCredential) {
       pauseStateRef.current = null;
       if (mountedRef.current) {
@@ -76,41 +85,49 @@ export default function WorkPauseOverlay({
       }
       return null;
     }
+    if (data.status === "clocked_in" && data.work_pause_status === "paused" && data.active_work_pause?.id) {
+      const pauseId = String(data.active_work_pause.id);
+      pauseStateRef.current = data;
+      setPauseState(data);
+      setPauseStateScope(scopeKey);
+      if (pauseIdRef.current !== pauseId) {
+        pauseIdRef.current = pauseId;
+        dismissedAtRef.current = 0;
+        lastActivityAtRef.current = Date.now();
+        setShowResumePrompt(true);
+      }
+    } else if (data.status === "clocked_in" && data.work_pause_status === "resuming" && pauseStateRef.current) {
+      setPauseState(pauseStateRef.current);
+      setPauseStateScope(scopeKey);
+      setShowResumePrompt(true);
+      setError("Resume Work is still being finalized by the server. Your timer remains treated as paused until working state is confirmed.");
+    } else {
+      pauseStateRef.current = null;
+      setPauseState(null);
+      setPauseStateScope("");
+      setShowResumePrompt(false);
+      setError("");
+      resumeRequestRef.current = "";
+      pauseIdRef.current = "";
+      dismissedAtRef.current = 0;
+    }
+    return data;
+  }, [currentUser?.email, hasCredential, disabled, scopeKey]);
+
+  const loadStatus = useCallback(async ({ preservePausedOnError = true } = {}) => {
+    if (resumeInFlightRef.current) return null;
+    const sequence = ++statusSequenceRef.current;
+    const isCurrent = () => mountedRef.current &&
+      sequence === statusSequenceRef.current && scopeRef.current === scopeKey;
+    if (disabled || !currentUser?.email || !hasCredential) return applyStatusData(null);
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
-        action: "status",
-        ...credentialPayload,
-      });
-      const data = response?.data || response;
+      lastPollAtRef.current = Date.now();
+      const data = useProvider
+        ? await providerStatusRefresh({ force: true })
+        : await invokeTimeClockAction({ action: "status", payload: credentialPayload });
       if (!data?.success) throw new Error(data?.error || "Work Pause status could not be verified.");
       if (!isCurrent()) return null;
-      if (data.status === "clocked_in" && data.work_pause_status === "paused" && data.active_work_pause?.id) {
-        const pauseId = String(data.active_work_pause.id);
-        pauseStateRef.current = data;
-        setPauseState(data);
-        setPauseStateScope(scopeKey);
-        if (pauseIdRef.current !== pauseId) {
-          pauseIdRef.current = pauseId;
-          dismissedAtRef.current = 0;
-          lastActivityAtRef.current = Date.now();
-          setShowResumePrompt(true);
-        }
-      } else if (data.status === "clocked_in" && data.work_pause_status === "resuming" && pauseStateRef.current) {
-        setPauseState(pauseStateRef.current);
-        setPauseStateScope(scopeKey);
-        setShowResumePrompt(true);
-        setError("Resume Work is still being finalized by the server. Your timer remains treated as paused until working state is confirmed.");
-      } else {
-        pauseStateRef.current = null;
-        setPauseState(null);
-        setPauseStateScope("");
-        setShowResumePrompt(false);
-        setError("");
-        resumeRequestRef.current = "";
-        pauseIdRef.current = "";
-        dismissedAtRef.current = 0;
-      }
-      return data;
+      return applyStatusData(data);
     } catch (err) {
       if (!isCurrent()) return null;
       if (!preservePausedOnError) {
@@ -121,7 +138,17 @@ export default function WorkPauseOverlay({
       if (pauseStateRef.current) setError(err?.response?.data?.error || err?.message || "Paused status could not be refreshed. The timer remains treated as paused until confirmed otherwise.");
       return null;
     }
-  }, [currentUser?.email, hasCredential, credentialPayload.badge_code, credentialPayload.session_token, disabled, scopeKey]);
+  }, [currentUser?.email, hasCredential, credentialPayload.badge_code, credentialPayload.session_token, disabled, scopeKey, useProvider, providerStatusRefresh, applyStatusData]);
+
+  // Provider path: the shared context's poll + event listeners deliver fresh
+  // status — apply each result through the same reducer. The sequence bump
+  // keeps an in-flight self-fetch from overwriting newer provider data.
+  useEffect(() => {
+    if (!useProvider || !providerStatus?.version || !providerStatus?.data?.success) return;
+    if (resumeInFlightRef.current) { deferredInvalidationRef.current = true; return; }
+    statusSequenceRef.current += 1;
+    applyStatusData(providerStatus.data);
+  }, [useProvider, providerStatus?.version, providerStatus?.data, applyStatusData]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -136,10 +163,17 @@ export default function WorkPauseOverlay({
     setPauseStateScope("");
     setShowResumePrompt(false);
     setError("");
-    loadStatus({ preservePausedOnError: false });
-    const interval = setInterval(() => loadStatus(), 15000);
-    const onFocus = () => loadStatus();
-    const onVisibility = () => { if (document.visibilityState === "visible") loadStatus(); };
+    // The first status read yields to the page's own data on mount; a paused
+    // overlay appearing a beat later is preferable to delaying the board.
+    const initialStatusTimer = setTimeout(() => {
+      loadStatus({ preservePausedOnError: false });
+    }, 1200);
+    // Hidden tabs and an open 429 breaker skip the poll; the visibility
+    // handler refreshes on return. On the provider path the shared context
+    // owns polling — no per-overlay interval.
+    const interval = useProvider ? null : setInterval(() => { if (!document.hidden && !isFleetCoolingDown()) loadStatus(); }, 60000);
+    const onFocus = () => { if (Date.now() - lastPollAtRef.current > 45000) loadStatus(); };
+    const onVisibility = () => { if (document.visibilityState === "visible" && Date.now() - lastPollAtRef.current > 45000) loadStatus(); };
     const onPauseChanged = (event) => {
       const confirmed = event?.detail;
       const confirmedEmail = String(confirmed?.user?.email || confirmed?.entry?.user_email || "").trim().toLowerCase();
@@ -167,11 +201,13 @@ export default function WorkPauseOverlay({
       // signal and let the settled Resume drain it with a fresh status read.
       if (resumeInFlightRef.current) {
         deferredInvalidationRef.current = true;
-      } else {
+      } else if (!useProvider) {
+        // The provider listens for the same signal and refreshes itself;
+        // the version effect above applies the result here.
         void loadStatus();
       }
     };
-    const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") loadStatus(); };
+    const onStorage = (event) => { if (event.key === "ccs_work_pause_signal" && !useProvider) loadStatus(); };
     window.addEventListener("focus", onFocus);
     window.addEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
     window.addEventListener("storage", onStorage);
@@ -181,6 +217,7 @@ export default function WorkPauseOverlay({
       statusSequenceRef.current += 1;
       resumeSequenceRef.current += 1;
       resumeInFlightRef.current = false;
+      clearTimeout(initialStatusTimer);
       clearInterval(interval);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);

@@ -1,0 +1,51 @@
+{
+ "jurisdiction_id": "6aea8b608a91476ac0ab62dd",
+ "jurisdiction_name": "Bellefonte",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "STAFF REVIEW (FOR CITY STAFF USE ONLY) SETBACKS LOT COVERAGE LOT COVERAGE: CALCULATIONS: DECK/SHED/POOL/PATIO/OTHER ZONING REVIEW ALL NEW DWELLING UNIT PERMITS CALCULATIONS: NOTES: BUILDING CODE REVIEW _______________________________________________________________________________________________________________ _______________________________________________________________________________________________________________ _______________________________________________________________________________________________________________ _______________________________________________________________________________________________________________ _______________________________________________________________________________________________________________ _______________________________________________________________________________________________________________ __________________________",
+   "tags": [
+    "dimension",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "09a4336c29a8ccb402361c13b558ad8a495e3ecd594a59410ede1b766c1e9d27",
+   "source_document_id": null,
+   "source_title": "09a4336c29a8ccb402361c13b558ad8a495e3ecd594a59410ede1b766c1e9d27.pdf",
+   "official_url": "https://cityofbellefonte.com/wp-content/uploads/2025/08/Residential-Permit-Application-2.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "PERMIT NUMBER: REVIEW CONCLUSIONS ( OWNER INFORMATION APPLICANT INFORMATION PROJECT INFORMATION (IF APPLICABLE) ) DATE/TIME RECEIVED: DATE/TIME ISSUED: SITE ADDRESS: APPLICANT/BUSINESS NAME: ADDRESS: CITY, STATE, ZIP: DESCRIPTION OF WORK: APPROVED APPROVED CHECK IF INFORMATION PROVIDED ABOVE IS THE SAME NAME: ADDRESS: CITY, STATE, ZIP: NOT APPROVED NOT APPROVED AREA OF A HOME/DWELLING (IN SQUARE FEET): 1ST STORY: 2ND STORY: GARAGE: PROJECT TOTAL AREA (FOR ALL OTHER PROJECTS): APPROVED CONTRACTOR/BUILDER CONTACT NUMBER: NOT APPROVED BASEMENT: PROJECT CONSTRUCTION VALUE: TELEPHONE: HOME CELL E-MAIL: WORK PERSONAL FAX: TELEPHONE: HOME CELL E-MAIL: WORK PERSONAL FAX: PARCEL NUMBER: LOT/UNIT: CONTRACTOR/BUILDER: TOTAL AREA: City of Bellefonte 705 Bellefonte Princess Road 606-324-6035 bellefonte@earthlink.net A PLAT OF SURVEY MUST ACCOMPANY ALL PERMIT APPLICATIONS FOR CONSTRUCTION OF ANY NEW S",
+   "tags": [
+    "area",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "09a4336c29a8ccb402361c13b558ad8a495e3ecd594a59410ede1b766c1e9d27",
+   "source_document_id": null,
+   "source_title": "09a4336c29a8ccb402361c13b558ad8a495e3ecd594a59410ede1b766c1e9d27.pdf",
+   "official_url": "https://cityofbellefonte.com/wp-content/uploads/2025/08/Residential-Permit-Application-2.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "PERMIT NUMBER: REVIEW CONCLUSIONS ( OWNER INFORMATION PROJECT INFORMATION APPLICANT INFORMATION ): DATE/TIME RECEIVED: DATE/TIME ISSUED: SITE ADDRESS: HEIGHT OF FENCE: FENCE CONTRACTOR: APPLICANT/BUSINESS NAME: ADDRESS: CITY, STATE, ZIP: APPROVED APPROVED CHECK IF INFORMATION PROVIDED ABOVE IS THE SAME NAME: ADDRESS: CITY, STATE, ZIP: NOT APPROVED NOT APPROVED APPROVED NOT APPROVED TYPE OF FENCE (E.G CEDAR, VINYL) PROJECT CONSTRUCTION VALUE: TELEPHONE: HOME CELL E-MAIL: WORK PERSONAL FAX: TELEPHONE: HOME CELL E-MAIL: WORK PERSONAL FAX: PARCEL NUMBER: LOT/UNIT: all staff comments on back of application Call 811 for assistance in locating utilities. 24 hours a day PLEASE NOTE: A PLAT OF SURVEY showing the LOCATION OF THE FENCE must must accompany all fence permit applications or any alteration to existing fences. Attach fence contractor’s proposal and a release and hold harmless form if ap",
+   "tags": [
+    "dimension",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "cabf22cc6f9b0038d26e42772b4a76fb137872f53d8043b95eb9c309fc8a10f2",
+   "source_document_id": null,
+   "source_title": "cabf22cc6f9b0038d26e42772b4a76fb137872f53d8043b95eb9c309fc8a10f2.pdf",
+   "official_url": "https://cityofbellefonte.com/wp-content/uploads/2025/08/Fence-Permit-v22.pdf"
+  }
+ ]
+}

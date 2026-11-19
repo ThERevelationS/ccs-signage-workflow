@@ -3,7 +3,9 @@
   "type": "object",
   "description": "Immutable audit record that a customer accepted or rejected ONE section of an issued customer quote version. Rows are append-only; the current decision for a section is its latest row. Whole-quote acceptance continues to live on EstimateAcceptance.",
   "properties": {
-    "estimate_id": { "type": "string" },
+    "estimate_id": {
+      "type": "string"
+    },
     "quote_issue_key": {
       "type": "string",
       "description": "Stable identity shared with the issued quote version, matching EstimateAcceptance/EstimateQuoteDelivery."
@@ -14,7 +16,7 @@
     },
     "section_key": {
       "type": "string",
-      "description": "Stable identity of the accepted/rejected section — the line_item key or module source-project id on the estimate."
+      "description": "Stable identity of the accepted/rejected section \u2014 the line_item key or module source-project id on the estimate."
     },
     "section_label": {
       "type": "string",
@@ -31,7 +33,11 @@
     },
     "decision": {
       "type": "string",
-      "enum": ["accepted", "rejected", "question"]
+      "enum": [
+        "accepted",
+        "rejected",
+        "question"
+      ]
     },
     "note": {
       "type": "string",
@@ -41,11 +47,20 @@
       "type": "string",
       "format": "date-time"
     },
-    "decided_by_name": { "type": "string" },
-    "decided_by_email": { "type": "string" },
+    "decided_by_name": {
+      "type": "string"
+    },
+    "decided_by_email": {
+      "type": "string"
+    },
     "method": {
       "type": "string",
-      "enum": ["portal", "verbal", "written", "other"],
+      "enum": [
+        "portal",
+        "verbal",
+        "written",
+        "other"
+      ],
       "description": "How the decision was recorded."
     },
     "delivery_id": {
@@ -54,8 +69,36 @@
     },
     "creation_request_key": {
       "type": "string",
-      "description": "Client-supplied idempotency key — retries must reuse an identical key to avoid duplicate decisions."
+      "description": "Client-supplied idempotency key \u2014 retries must reuse an identical key to avoid duplicate decisions."
     }
   },
-  "required": ["estimate_id", "quote_version", "section_key", "decision", "decided_at"]
+  "required": [
+    "estimate_id",
+    "quote_version",
+    "section_key",
+    "decision",
+    "decided_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__estimatesectionacceptance_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__estimatesectionacceptance_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__estimatesectionacceptance_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__estimatesectionacceptance_backend_only__"
+      }
+    }
+  }
 }

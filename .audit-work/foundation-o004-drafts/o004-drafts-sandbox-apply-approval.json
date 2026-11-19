@@ -1,0 +1,11 @@
+{
+  "authorized": true,
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "3258e9b244991711e965b65f566d420b204f3144",
+  "restoreCheckpointId": "6aefdccd97dba4bc4cdb8c65",
+  "candidateHashes": {
+    "foundationDraftRecovery.js": "84e739062efbb5308662d8ff913800d617c1a71fdf793d1930157bb806ed6e82",
+    "FoundationEstimator.jsx": "d781338d4f5bcb8412b0ef71c7988dae394b8307d5034275079d4df2048c99c7"
+  }
+}

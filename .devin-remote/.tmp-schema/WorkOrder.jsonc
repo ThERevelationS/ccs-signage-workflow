@@ -1,0 +1,1092 @@
+{
+  "name": "WorkOrder",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Work order title"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer (Client) record id."
+    },
+    "opportunity_id": {
+      "type": "string",
+      "description": "Optional transitional link to the canonical Opportunity. Blank on legacy/unmigrated WorkOrders."
+    },
+    "estimating_request_id": {
+      "type": "string",
+      "description": "Optional link to the EstimatingRequest that produced or is associated with this WorkOrder. Blank is valid during compatibility migration."
+    },
+    "estimate_id": {
+      "type": "string",
+      "description": "Linked AllInOneEstimate id, when this job was created from an estimate."
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the work"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "URL of the work order image"
+    },
+    "attachment_refs": {
+      "type": "array",
+      "description": "References to files/photos carried over from the linked estimate (no binary copies).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "description": "Uploaded files for this work order",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          },
+          "uploaded_by": {
+            "type": "string"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "google_drive_folder_url": {
+      "type": "string",
+      "description": "Google Drive folder URL for this work order"
+    },
+    "google_drive_file_ids": {
+      "type": "array",
+      "description": "Array of Google Drive file IDs",
+      "items": {
+        "type": "string"
+      }
+    },
+    "current_stage": {
+      "type": "string",
+      "enum": [
+        "estimating",
+        "sales",
+        "permitting",
+        "design",
+        "production",
+        "fabrication",
+        "installation",
+        "completed"
+      ],
+      "default": "estimating",
+      "description": "Current workflow stage"
+    },
+    "priority": {
+      "type": "number",
+      "description": "Priority order"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Email of assigned user"
+    },
+    "notes": {
+      "type": "array",
+      "description": "Array of tasks with timestamps, completion status, and dependencies",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          },
+          "assigned_to": {
+            "type": "string"
+          },
+          "estimated_hours": {
+            "type": "number"
+          },
+          "actual_hours": {
+            "type": "number"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "is_milestone": {
+            "type": "boolean",
+            "default": false
+          },
+          "is_critical_path": {
+            "type": "boolean",
+            "default": false
+          },
+          "checklist_context": {
+            "type": "string"
+          },
+          "sub_tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "completed": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "assigned_to": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "completed": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "assigned_to": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "milestones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          },
+          "completed_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string"
+          },
+          "linked_task_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "project_health": {
+      "type": "string",
+      "enum": [
+        "on_track",
+        "at_risk",
+        "delayed",
+        "blocked"
+      ],
+      "default": "on_track"
+    },
+    "health_override": {
+      "type": "boolean",
+      "default": false
+    },
+    "health_notes": {
+      "type": "string"
+    },
+    "work_notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "fabrication",
+              "vinyl",
+              "permitting",
+              "design",
+              "installation",
+              "client",
+              "other"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sub_tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "number"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "completed": {
+                  "type": "boolean",
+                  "default": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "follow_up": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_rider": {
+      "type": "boolean",
+      "default": false
+    },
+    "parent_work_order_id": {
+      "type": "string"
+    },
+    "rider_stage": {
+      "type": "string",
+      "enum": [
+        "estimating",
+        "sales",
+        "permitting",
+        "design",
+        "production",
+        "fabrication",
+        "installation"
+      ]
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "asap": {
+      "type": "boolean",
+      "default": false
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "in_pipeline": {
+      "type": "boolean",
+      "default": false
+    },
+    "sales_import_source_id": {
+      "type": "string",
+      "description": "Stable external source row identity used by repeat Sales Pipeline spreadsheet imports."
+    },
+    "sales_import_last_synced_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the last successful Sales Pipeline spreadsheet sync for this WorkOrder."
+    },
+    "sales_import_snapshot": {
+      "type": "object",
+      "description": "Last imported values for spreadsheet-owned Sales fields, used to detect stale spreadsheet overwrites."
+    },
+    "smartsheet_sheet_id": {
+      "type": "string",
+      "description": "Stable Smartsheet sheet identity for the linked mirror record. Never derived from row or column position."
+    },
+    "smartsheet_row_id": {
+      "type": "string",
+      "description": "Stable Smartsheet row identity for the linked mirror record. Used instead of visible row position, customer name, or sorting."
+    },
+    "smartsheet_parent_row_id": {
+      "type": "string",
+      "description": "Stable parent-row identity from the Workflow Smartsheet hierarchy. Order Form uses this to suppress automatic child/rider rows without relying on row position or customer-name guessing."
+    },
+    "smartsheet_last_synced_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the last fully verified Smartsheet synchronization for this WorkOrder."
+    },
+    "smartsheet_sync_snapshot": {
+      "type": "object",
+      "description": "Last successfully synchronized mapped values used for three-way Smartsheet/Base44 conflict detection."
+    },
+    "smartsheet_create_attempt": {
+      "type": "object",
+      "description": "Sales-only durable Smartsheet row creation reservation. Stores a pre-POST mapped snapshot and, if confirmed, a permanent row ID for verified one-time recovery. Never auto-repeat an uncertain create or infer row identity from its values."
+    },
+    "automation_deadline_fired": {
+      "type": "object",
+      "description": "Durable deadline-automation claim markers. Keys are ruleId|triggerType|dueDate, values are the ISO date the rule last fired for that combination, so daily reminder runs never re-fire the same rule for the same deadline."
+    },
+    "sales_status": {
+      "type": "string",
+      "enum": [
+        "lead",
+        "quoted",
+        "follow_up",
+        "won",
+        "lost",
+        "on_hold"
+      ],
+      "default": "lead"
+    },
+    "sales_neutral_closed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Explicit user-confirmed neutral Sales archive timestamp for Closed - Did not Lose. Never counted as Won or Lost; no legacy task inference."
+    },
+    "lead_source": {
+      "type": "string"
+    },
+    "current_task_deadline": {
+      "type": "string",
+      "format": "date"
+    },
+    "current_task_assigned_to": {
+      "type": "string"
+    },
+    "designer": {
+      "type": "string"
+    },
+    "surveyor": {
+      "type": "string"
+    },
+    "site_survey_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "site_survey_time": {
+      "type": "string"
+    },
+    "site_survey_am_pm": {
+      "type": "string",
+      "enum": [
+        "AM",
+        "PM"
+      ]
+    },
+    "project_manager": {
+      "type": "string"
+    },
+    "estimator": {
+      "type": "string"
+    },
+    "est_inv_at": {
+      "type": "string"
+    },
+    "corbridge_invoice_number": {
+      "type": "string"
+    },
+    "corbridge_link": {
+      "type": "string"
+    },
+    "estimate_amount": {
+      "type": "number"
+    },
+    "estimate_revision_required": {
+      "type": "boolean",
+      "description": "Set when the linked estimate's quote total diverges from the amount this Work Order was built on. Sticky until manually reviewed."
+    },
+    "current_task_description": {
+      "type": "string"
+    },
+    "date_initial_contact": {
+      "type": "string",
+      "format": "date"
+    },
+    "date_estimate_sent": {
+      "type": "string",
+      "format": "date"
+    },
+    "sales_quote_sent_verified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp proving the current date_estimate_sent was explicitly confirmed by a verified Base44 Sales/Estimator action. Blank means the stored date is legacy or otherwise unverified and must not drive quote-aging analytics."
+    },
+    "date_order_created": {
+      "type": "string",
+      "format": "date"
+    },
+    "project_install_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "permit_submitted_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "permit_receipt_confirmed_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "permit_number": {
+      "type": "string"
+    },
+    "permit_approved_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "actual_cost": {
+      "type": "number"
+    },
+    "profit_margin": {
+      "type": "number"
+    },
+    "contact_name": {
+      "type": "string"
+    },
+    "contact_email": {
+      "type": "string"
+    },
+    "contact_phone": {
+      "type": "string"
+    },
+    "representative": {
+      "type": "string"
+    },
+    "additional_contact": {
+      "type": "string"
+    },
+    "follow_up_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "sales_last_follow_up_completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the latest completed Sales Pipeline follow-up. Each change is preserved in CellHistory."
+    },
+    "sales_last_follow_up_outcome": {
+      "type": "string",
+      "description": "Business-readable outcome of the latest completed Sales Pipeline follow-up. Each change is preserved in CellHistory."
+    },
+    "close_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "expected_close_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expected sales close date for an open opportunity."
+    },
+    "sales_last_activity_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the latest verified sales-specific activity. Used for stale-opportunity reporting going forward."
+    },
+    "sales_stage_changed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the latest verified Sales Pipeline status change."
+    },
+    "lost_reason": {
+      "type": "string",
+      "description": "Sales reason captured when an opportunity is marked Lost. Preserved in change history when reopened."
+    },
+    "project_type": {
+      "type": "string"
+    },
+    "install_location": {
+      "type": "string"
+    },
+    "address_line_2": {
+      "type": "string"
+    },
+    "billing_address": {
+      "type": "string"
+    },
+    "billing_address_line_2": {
+      "type": "string"
+    },
+    "billing_schedule": {
+      "type": "array",
+      "description": "Progress (milestone) billing schedule. Each row is a percentage of contract value; saved schedules are normalized so cumulative pct never exceeds 100.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "pct": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "deposit_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, this job requires a deposit before production work begins. Product moves into production statuses prompt a deposit warning until deposit_invoiced is set."
+    },
+    "deposit_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Deposit amount required on this order, in dollars."
+    },
+    "deposit_invoiced": {
+      "type": "boolean",
+      "default": false,
+      "description": "Deposit has been invoiced \u2014 maintained from the Job Workspace financials card with a compare-and-set write."
+    },
+    "sales_rep": {
+      "type": "string"
+    },
+    "permitting": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no",
+        "maybe",
+        "na"
+      ]
+    },
+    "township_city": {
+      "type": "string"
+    },
+    "county": {
+      "type": "string"
+    },
+    "permit_code": {
+      "type": "string"
+    },
+    "permit_class": {
+      "type": "string"
+    },
+    "property_owner": {
+      "type": "string"
+    },
+    "pud": {
+      "type": "string"
+    },
+    "parcel_number": {
+      "type": "string"
+    },
+    "electrical_ibi": {
+      "type": "boolean",
+      "default": false
+    },
+    "electrical_nkyei": {
+      "type": "boolean",
+      "default": false
+    },
+    "electrical_nec": {
+      "type": "boolean",
+      "default": false
+    },
+    "electrical_city": {
+      "type": "boolean",
+      "default": false
+    },
+    "electrical_county": {
+      "type": "boolean",
+      "default": false
+    },
+    "customer_is_building_owner": {
+      "type": "boolean",
+      "default": false
+    },
+    "customer_is_tenant": {
+      "type": "boolean",
+      "default": false
+    },
+    "customer_is_marketing_co": {
+      "type": "boolean",
+      "default": false
+    },
+    "business_co_coo_reminder": {
+      "type": "boolean",
+      "default": false
+    },
+    "business_co_coo_date": {
+      "type": "string"
+    },
+    "install_yes": {
+      "type": "boolean",
+      "default": false
+    },
+    "install_no": {
+      "type": "boolean",
+      "default": false
+    },
+    "budget_less_than": {
+      "type": "number"
+    },
+    "removal_yes": {
+      "type": "boolean",
+      "default": false
+    },
+    "removal_no": {
+      "type": "boolean",
+      "default": false
+    },
+    "service_repair": {
+      "type": "string"
+    },
+    "origination": {
+      "type": "string"
+    },
+    "patch": {
+      "type": "string"
+    },
+    "paint": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string"
+    },
+    "products": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "product_type": {
+            "type": "string"
+          },
+          "estimate_line_id": {
+            "type": "string",
+            "description": "Source All-In-One estimate Product line id when this product was carried from the estimator."
+          },
+          "builder_product_id": {
+            "type": "string",
+            "description": "Linked BuilderProduct id. BuilderProduct/BuilderPart remain the authoritative production BOM/configuration."
+          },
+          "source_project_id": {
+            "type": "string",
+            "description": "Source Builder project/entity record id."
+          },
+          "module_key": {
+            "type": "string",
+            "description": "Estimator Builder module key."
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "quoted_unit_price": {
+            "type": "number",
+            "description": "Accepted customer unit price at WorkOrder conversion; never internal Product cost."
+          },
+          "quoted_total": {
+            "type": "number",
+            "description": "Customer Product total after quantity and Product adjustment at WorkOrder conversion."
+          },
+          "category": {
+            "type": "string"
+          },
+          "customer_description": {
+            "type": "string"
+          },
+          "estimator_notes": {
+            "type": "string"
+          },
+          "operational_status": {
+            "type": "string",
+            "enum": [
+              "order_review",
+              "site_survey",
+              "awaiting_customer_action",
+              "awaiting_proof_approval",
+              "permitting",
+              "proof_approved",
+              "design_review",
+              "in_design",
+              "in_production",
+              "quality_control",
+              "service_repair",
+              "install_or_removal_only",
+              "vended",
+              "none"
+            ],
+            "description": "CoreBridge-style WIP operational state for this product, independent of the work-order stage."
+          },
+          "operational_substatus": {
+            "type": "string"
+          },
+          "customer_facing_status": {
+            "type": "string"
+          },
+          "fulfillment_state": {
+            "type": "string",
+            "enum": [
+              "none",
+              "awaiting_pickup",
+              "awaiting_installation",
+              "awaiting_shipping",
+              "awaiting_delivery",
+              "picked_up",
+              "installed",
+              "shipped",
+              "delivered"
+            ]
+          },
+          "design_due_date": {
+            "type": "string"
+          },
+          "product_due_date": {
+            "type": "string"
+          },
+          "hard_due_date": {
+            "type": "boolean",
+            "default": false
+          },
+          "designer": {
+            "type": "string"
+          },
+          "assigned_to": {
+            "type": "string"
+          },
+          "responsibility": {
+            "type": "string"
+          },
+          "queue_priority": {
+            "type": "number"
+          },
+          "proof_status": {
+            "type": "string",
+            "enum": [
+              "none",
+              "draft",
+              "sent",
+              "awaiting_approval",
+              "approved",
+              "revision_requested"
+            ]
+          },
+          "proof_file_url": {
+            "type": "string",
+            "description": "URL of the current proof file version for this product."
+          },
+          "proof_file_name": {
+            "type": "string",
+            "description": "Display name of the current proof file."
+          },
+          "proof_version": {
+            "type": "number",
+            "description": "Current proof file version (1-based). 0 means no proof file."
+          },
+          "proof_approved_version": {
+            "type": "number",
+            "description": "Proof version the current approval applies to. 0 means no versioned approval; approvals do not carry to newer versions."
+          },
+          "operational_status_changed_at": {
+            "type": "string",
+            "description": "ISO timestamp of the last operational_status change on this product."
+          },
+          "status_history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string"
+                },
+                "field": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "product_1": {
+      "type": "string"
+    },
+    "product_2": {
+      "type": "string"
+    },
+    "product_3": {
+      "type": "string"
+    },
+    "product_4": {
+      "type": "string"
+    },
+    "product_5": {
+      "type": "string"
+    },
+    "product_6": {
+      "type": "string"
+    },
+    "cb_complete": {
+      "type": "boolean",
+      "default": false
+    },
+    "cf_complete": {
+      "type": "boolean",
+      "default": false
+    },
+    "cc_complete": {
+      "type": "boolean",
+      "default": false
+    },
+    "sms_complete": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deleted_by": {
+      "type": "string"
+    },
+    "production_type": {
+      "type": "string",
+      "enum": [
+        "inhouse",
+        "outsource"
+      ]
+    },
+    "sip_checklist": {
+      "type": "array",
+      "description": "SIP meeting checklist with product groupings and hierarchy",
+      "items": {
+        "type": "object"
+      }
+    },
+    "mmm_sip_checklist": {
+      "type": "array",
+      "description": "Monday Morning Meeting checklist - completely separate from SIPs",
+      "items": {
+        "type": "object"
+      }
+    },
+    "mmm_checklist": {
+      "type": "array",
+      "description": "Legacy Monday Morning Meeting checklist items",
+      "items": {
+        "type": "object"
+      }
+    },
+    "sip_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this item has been completed/discussed in SIPs or MMM meeting"
+    },
+    "sip_revisit_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date to revisit this project in SIPs - jobs with a future date are separated from the active list"
+    },
+    "mmm_last_discussed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the last Monday Morning Meeting discussion mark. Rows move to the Discussed section for the current week (Mon-Sun) and return to the active list next Monday. Independent of sip_completed."
+    },
+    "mmm_defer_until": {
+      "type": "string",
+      "format": "date",
+      "description": "Monday Morning Meeting snooze date - rows with a future date are parked in the Discussed & Scheduled section and return automatically when it passes"
+    },
+    "mmm_tasks": {
+      "type": "array",
+      "description": "Monday Morning Meeting task list - MMM-only items shown inline under the board row until completed. Separate from the shared notes task list.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "assigned_to": {
+            "type": "string"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "title",
+    "client_name"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

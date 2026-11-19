@@ -1,0 +1,511 @@
+{
+  "matches": [
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 2419,
+      "text": "  const isEnd = action === 'break_end';\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 2594,
+      "text": "  const isResume = action === 'work_pause_resume';\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 2722,
+      "text": "  }, action === 'labor_change' ? 'Current Work change audit' : 'Current Work start audit');\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3319,
+      "text": "    if (action === 'monitor_stale_shifts') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3360,
+      "text": "    if (action === 'admin_correction_gate_diagnostics') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3448,
+      "text": "    if (action === 'status_lite') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3460,
+      "text": "    if (action === 'admin_load_data') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3499,
+      "text": "    if (action === 'time_tracker_snapshot' || action === 'time_tracker_prefs_get') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3510,
+      "text": "      if (action === 'time_tracker_prefs_get') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3695,
+      "text": "    if (action === 'time_tracker_prefs_update') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3746,
+      "text": "    if (action === 'status') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3915,
+      "text": "    if (action === 'labor_allocation_preview') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3952,
+      "text": "    if (action === 'pay_period_create') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 4098,
+      "text": "    if (action === 'pay_period_history_verify') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 5021,
+      "text": "    if (action === 'pay_period_status') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 5985,
+      "text": "                  if (action === 'admin_archive') return change.change_type === 'removed';\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 5986,
+      "text": "                  if (action === 'admin_correction') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6009,
+      "text": "                  if (action === 'clock_out') return String(row.details?.result_clock_out || '') === String(semanticAfter.clock_out || '') &&\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6011,
+      "text": "                  if (action === 'clock_in') return change.change_type === 'added' &&\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6033,
+      "text": "                const linkedCorrectionRequestId = String(cause.action === 'admin_correction' ? cause.details?.correction_request_id || '' : '');\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6092,
+      "text": "                    semantic_before_clock_in: String(cause.action === 'admin_correction' ? cause.details?.original?.clock_in || '' : change.before?.clock_in || ''),\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6093,
+      "text": "                    semantic_before_clock_out: String(cause.action === 'admin_correction' ? cause.details?.original?.clock_out || '' : change.before?.clock_out || ''),\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6094,
+      "text": "                    semantic_before_total_hours: Number(cause.action === 'admin_correction' ? cause.details?.original?.total_hours || 0 : change.before?.total_hours || 0),\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6095,
+      "text": "                    semantic_after_clock_in: String(cause.action === 'admin_correction' ? cause.details?.corrected?.clock_in || '' : change.after?.clock_in || ''),\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6096,
+      "text": "                    semantic_after_clock_out: String(cause.action === 'admin_correction' ? cause.details?.corrected?.clock_out || '' : change.after?.clock_out || ''),\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6097,
+      "text": "                    semantic_after_total_hours: Number(cause.action === 'admin_correction' ? cause.details?.corrected?.total_hours || 0 : change.after?.total_hours || 0),\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6357,
+      "text": "      const expectedLaborStatus = action === 'labor_start' ? 'starting' : action === 'labor_change' ? 'changing' : 'stopping';\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6369,
+      "text": "      if (action === 'labor_stop') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6437,
+      "text": "        if (action === 'labor_change') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6450,
+      "text": "          action: action === 'labor_change' ? 'labor_change' : 'labor_start',\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6472,
+      "text": "      if (action === 'labor_start' && active?.id) return Response.json({ success: false, error: 'Current Work is already active. Use Change Work instead.' }, { status: 409 });\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6473,
+      "text": "      if (action === 'labor_change' && !active?.id && !resumingLaborAction) return Response.json({ success: false, error: 'No Current Work is active. Use Start Work instead.' }, { status: 409 });\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6489,
+      "text": "      if (action === 'labor_change') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6527,
+      "text": "        action: action === 'labor_change' ? 'labor_change' : 'labor_start',\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6541,
+      "text": "    if (action === 'break_start') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6644,
+      "text": "    if (action === 'break_end') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6730,
+      "text": "    if (action === 'work_pause_start') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6832,
+      "text": "    if (action === 'work_pause_resume') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6933,
+      "text": "    if (action === 'work_pause_report_missed') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7048,
+      "text": "    if (action === 'time_off_request_create' || action === 'time_off_request_update') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7076,
+      "text": "      if (action === 'time_off_request_create') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7501,
+      "text": "    if (action === 'list_time_off_requests') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7513,
+      "text": "    if (action === 'time_off_decision') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7718,
+      "text": "    if (action === 'list_correction_requests') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7730,
+      "text": "    if (action === 'who_is_in') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7741,
+      "text": "    if (action === 'toggle_payroll_hold') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7756,
+      "text": "    if (action === 'admin_archive_entry') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7777,
+      "text": "    if (action === 'my_labor_history') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7802,
+      "text": "    if (action === 'my_history') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7817,
+      "text": "    if (action === 'list_shift_templates') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7824,
+      "text": "    if (action === 'upsert_shift_template') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7850,
+      "text": "    if (action === 'delete_shift_template') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7859,
+      "text": "    if (action === 'pto_liability_report') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7877,
+      "text": "    if (action === 'send_timeclock_announcement') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7921,
+      "text": "    if (action === 'payroll_export') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7970,
+      "text": "    if (action === 'register_device') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7990,
+      "text": "    if (action === 'list_devices') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7996,
+      "text": "    if (action === 'update_device') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8010,
+      "text": "    if (action === 'admin_period_compare') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8031,
+      "text": "    if (action === 'list_pending_requests') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8048,
+      "text": "    if (action === 'list_timeclock_audit') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8068,
+      "text": "    if (action === 'list_face_enrollment') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8085,
+      "text": "    if (action === 'update_notes') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8301,
+      "text": "    if (action === 'submit_correction_request') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8554,
+      "text": "    if (action === 'review_correction_request') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 9290,
+      "text": "    if (action === 'admin_correct_entry') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 9668,
+      "text": "    if (action === 'admin_set_entry_approval') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 9974,
+      "text": "    if (action === 'admin_archive_entry') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10162,
+      "text": "    if (action === 'recover_missed_clock_in' || action === 'report_missed_clock_in') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10165,
+      "text": "      if (action === 'recover_missed_clock_in' && (!Number.isInteger(companyMinutes) || companyMinutes < 15 * 60)) {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10333,
+      "text": "            resolution_note: action === 'report_missed_clock_in'\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10373,
+      "text": "          reason: action === 'report_missed_clock_in'\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10449,
+      "text": "    if (action === 'resolve_punch_exception') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10818,
+      "text": "    if (action === 'clock_in') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10967,
+      "text": "    if (action === 'clock_out') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11223,
+      "text": "    if (action === 'punch_webhook') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11235,
+      "text": "    if (action === 'labor_split') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11249,
+      "text": "    if (action === 'labor_vs_estimate') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11267,
+      "text": "    if (action === 'set_delegated_approvers') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11276,
+      "text": "    if (action === 'set_two_step_threshold') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11285,
+      "text": "    if (action === 'overtime_cost_report') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11307,
+      "text": "    if (action === 'differential_hours_report') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11332,
+      "text": "    if (action === 'buddy_punch_report') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11351,
+      "text": "    if (action === 'session_audit_alerts') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11361,
+      "text": "    if (action === 'bulk_import_entries') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11376,
+      "text": "    if (action === 'my_data_export') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11382,
+      "text": "    if (action === 'auto_clockout_sweep') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11391,
+      "text": "    if (action === 'kiosk_config') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11410,
+      "text": "    if (action === 'punch_fraud_scan') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11428,
+      "text": "    if (action === 'punch_velocity_scan') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11441,
+      "text": "    if (action === 'staffing_recommendation') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11456,
+      "text": "    if (action === 'device_rate_limit_check') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11467,
+      "text": "    if (action === 'suspicious_login_scan') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11478,
+      "text": "    if (action === 'feature_flags') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11485,
+      "text": "    if (action === 'crew_view') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11500,
+      "text": "    if (action === 'device_usage_report') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11511,
+      "text": "    if (action === 'break_compliance_report') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11521,
+      "text": "    if (action === 'pause_reason_rollup') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11535,
+      "text": "    if (action === 'bulk_auto_approve') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11562,
+      "text": "    if (action === 'report_camera_health') {\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11576,
+      "text": "    if (action === 'attach_correction_document') {\r"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 101
+}

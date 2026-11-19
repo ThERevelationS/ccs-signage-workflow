@@ -1,0 +1,40 @@
+{
+ "jurisdiction_id": "6adf63ea49f088843390a5bf",
+ "jurisdiction_name": "Bloomfield",
+ "state": "KY",
+ "office_id": "scan-6adf63ea49f088843390a5bf-office-1",
+ "office_name": "Nelson County Code Enforcement Department",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Building Permit # Zoning Compliance Permit # Building & Zoning Compliance Permit Application Cities of Bardstown, Bloomfield, Fairfield, & New Haven & Nelson County General P roperty Information Project Address: City: Subdivision/Development Name: Lot/Building #: Project Name: Property Size: Are there an y structures on the property? Yes No If yes, specify type: What is the existing/current use of the property? Identification Name Mailing Address City/State/Zip Phone # Perm it Applicant: * Property Owner: Contractor: * Permit Applicant must be an owner or individual with an interest in the property involved, which interest may consist of an ownership interest, valid and effective sales contract, or option agreement signed by the owner of record or letter of permission signed by said owner. Improvement Type (check applicable) New building/structure Exterior Alteration Demolition HVAC Use ",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "d84df49b223de0a117b399df40658cb06d2f3d195a82b7e5a19001c39a73863e",
+   "source_document_id": null,
+   "source_title": "d84df49b223de0a117b399df40658cb06d2f3d195a82b7e5a19001c39a73863e.pdf",
+   "official_url": "https://nelsoncountyky.gov/wp-content/uploads/2023/05/Building-Zoning-Compliance-Permit-Application-revised-5-3-12.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Required Documentation Checklist Building Permit The following documentation and fees, if applicable, must be submitted to the Nelson County Code Enforcement Department: 1. Building Permit/Zoning Compliance application, completed and signed. 2. One (1) set of construction documents. 3. Plot plan. 4. Address request form, completed and signed. 5. County Encroachment Permit – copy of approved permit from County Road Department. 6. Zoning Compliance Permit - copy of approved permit from the Planning Commission. 7. Fees for building and permits (payable to Nelson County Fiscal Court). Zoning Compliance Permit The following documentation and fees, if applicable, must be submitted to the Planning Commission: 1. Building/Zoning Compliance Permit application, completed and signed. 2. Copy of deed or plat/survey; 3. Plot plan, drawn to scale and showing the following information: lot/tract dimens",
+   "tags": [
+    "dimension",
+    "process",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "d84df49b223de0a117b399df40658cb06d2f3d195a82b7e5a19001c39a73863e",
+   "source_document_id": null,
+   "source_title": "d84df49b223de0a117b399df40658cb06d2f3d195a82b7e5a19001c39a73863e.pdf",
+   "official_url": "https://nelsoncountyky.gov/wp-content/uploads/2023/05/Building-Zoning-Compliance-Permit-Application-revised-5-3-12.pdf"
+  }
+ ]
+}

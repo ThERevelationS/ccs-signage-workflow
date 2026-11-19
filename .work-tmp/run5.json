@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "recordEstimateAcceptance error: Authentication required\nrecordEstimateAcceptance error: Authentication required\nnode:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: estimate mirror fields patched\n    at file:///app/scripts/test-estimate-acceptance.mjs:104:10 {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: undefined,\n  expected: true,\n  operator: '==',\n  diff: 'simple'\n}\n\nNode.js v24.22.1\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 2286
+}

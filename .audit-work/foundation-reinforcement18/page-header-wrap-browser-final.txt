@@ -1,0 +1,6 @@
+ok accept-undo-save-bom 1440
+ok invalid-draft-reload-restore 1440
+ok accept-undo-save-bom 390
+ok invalid-draft-reload-restore 390
+Foundation page browser: 4/4; failed=0
+exit=0

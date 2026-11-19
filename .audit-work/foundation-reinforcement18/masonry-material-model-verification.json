@@ -1,0 +1,244 @@
+{
+  "results": [
+    {
+      "name": "legacy: concrete material, positive settings",
+      "ok": true
+    },
+    {
+      "name": "legacy: genuine zero material price",
+      "ok": true
+    },
+    {
+      "name": "legacy: brick, explicit dry joint",
+      "ok": true
+    },
+    {
+      "name": "legacy: brick_stone type and mortar joint",
+      "ok": true
+    },
+    {
+      "name": "legacy: stone units, two unequal segments",
+      "ok": true
+    },
+    {
+      "name": "legacy: closed outline with internal brick",
+      "ok": true
+    },
+    {
+      "name": "legacy: open outline with internal brick",
+      "ok": true
+    },
+    {
+      "name": "legacy: internal concrete units",
+      "ok": true
+    },
+    {
+      "name": "legacy: outer explicit price override",
+      "ok": true
+    },
+    {
+      "name": "legacy: outer explicit free override",
+      "ok": true
+    },
+    {
+      "name": "legacy: internal explicit price override",
+      "ok": true
+    },
+    {
+      "name": "legacy: internal explicit free override",
+      "ok": true
+    },
+    {
+      "name": "legacy: outer explicit quantity override",
+      "ok": true
+    },
+    {
+      "name": "legacy: outer explicit zero quantity",
+      "ok": true
+    },
+    {
+      "name": "legacy: internal explicit quantity override",
+      "ok": true
+    },
+    {
+      "name": "legacy: internal explicit zero quantity",
+      "ok": true
+    },
+    {
+      "name": "legacy: fractional explicit material price",
+      "ok": true
+    },
+    {
+      "name": "legacy: numeric-string material price",
+      "ok": true
+    },
+    {
+      "name": "legacy: numeric-string free price",
+      "ok": true
+    },
+    {
+      "name": "legacy: irrelevant catalog row cannot change wall calculation",
+      "ok": true
+    },
+    {
+      "name": "legacy: zero labor setting behavior deliberately unchanged in this unit",
+      "ok": true
+    },
+    {
+      "name": "legacy: zero minimum setting behavior deliberately unchanged in this unit",
+      "ok": true
+    },
+    {
+      "name": "legacy: zero mortar setting behavior deliberately unchanged in this unit",
+      "ok": true
+    },
+    {
+      "name": "all frozen valid material cases remain available",
+      "ok": true
+    },
+    {
+      "name": "per-row pricing diagnostic preserves its actual index and component identity",
+      "ok": true
+    },
+    {
+      "name": "unknown price: absent",
+      "ok": true
+    },
+    {
+      "name": "unknown price: null",
+      "ok": true
+    },
+    {
+      "name": "unknown price: empty",
+      "ok": true
+    },
+    {
+      "name": "unknown price: whitespace",
+      "ok": true
+    },
+    {
+      "name": "unknown price: malformed",
+      "ok": true
+    },
+    {
+      "name": "unknown price: true",
+      "ok": true
+    },
+    {
+      "name": "unknown price: false",
+      "ok": true
+    },
+    {
+      "name": "unknown price: array",
+      "ok": true
+    },
+    {
+      "name": "unknown price: object",
+      "ok": true
+    },
+    {
+      "name": "unknown price: NaN",
+      "ok": true
+    },
+    {
+      "name": "unknown price: Infinity",
+      "ok": true
+    },
+    {
+      "name": "unknown price: negative",
+      "ok": true
+    },
+    {
+      "name": "unknown price: negative string",
+      "ok": true
+    },
+    {
+      "name": "missing price cannot mutate source or acknowledged history",
+      "ok": true
+    },
+    {
+      "name": "base price zero is current, not held history",
+      "ok": true
+    },
+    {
+      "name": "outer override zero is sufficient even without base price",
+      "ok": true
+    },
+    {
+      "name": "explicit invalid outer override cannot borrow valid base price",
+      "ok": true
+    },
+    {
+      "name": "null override keeps legacy base-price precedence",
+      "ok": true
+    },
+    {
+      "name": "catalog unassigned holds one acknowledged vector",
+      "ok": true
+    },
+    {
+      "name": "catalog deleted holds one acknowledged vector",
+      "ok": true
+    },
+    {
+      "name": "catalog ambiguous holds one acknowledged vector",
+      "ok": true
+    },
+    {
+      "name": "catalog wrong type holds one acknowledged vector",
+      "ok": true
+    },
+    {
+      "name": "missing inner price cannot mix new outer and old inner amounts",
+      "ok": true
+    },
+    {
+      "name": "wall-owned internal zero override survives absent catalog rate",
+      "ok": true
+    },
+    {
+      "name": "invalid wall-owned internal override cannot borrow catalog rate",
+      "ok": true
+    },
+    {
+      "name": "unmatched history remains unknown: new identity",
+      "ok": true
+    },
+    {
+      "name": "unmatched history remains unknown: missing identity",
+      "ok": true
+    },
+    {
+      "name": "unmatched history remains unknown: duplicate current identity",
+      "ok": true
+    },
+    {
+      "name": "unmatched history remains unknown: duplicate saved identity",
+      "ok": true
+    },
+    {
+      "name": "unmatched history remains unknown: no saved row",
+      "ok": true
+    },
+    {
+      "name": "unmatched history remains unknown: explicit null saved rows",
+      "ok": true
+    },
+    {
+      "name": "missing acknowledged cost field cannot inherit a draft preview",
+      "ok": true
+    },
+    {
+      "name": "acknowledged genuine zero is not discarded",
+      "ok": true
+    },
+    {
+      "name": "saved identity matching is independent of row order",
+      "ok": true
+    },
+    {
+      "name": "legacy standalone caller retains its own snapshot when option omitted",
+      "ok": true
+    }
+  ]
+}

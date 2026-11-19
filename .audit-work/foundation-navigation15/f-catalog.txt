@@ -1,0 +1,10 @@
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+ok A: empty catalog -> global alert, saved amounts, no $0 claims
+ok A2: scoped pole row: unknown->Not saved, explicit 0->$0.00, pricing stub gated
+ok B: Save/SaveExit/Copy/Swap/CtrlS/autosave blocked -> zero I/O, route+receipt intact
+ok C: reload -> exact 3 reads, alert clears, draft/receipt intact, save->saved CAS v1 recalculated body
+ok D: failed reload keeps draft+alert+busy false; retry succeeds
+ok E: deferred A reload settling while on B installs nothing; A-B-A reopen gets new flight
+ok F: overlapping reload — second click zero reads, one flight completes, busy false
+PASS catalog-integrity passed=7 failed=0

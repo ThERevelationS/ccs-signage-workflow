@@ -96,7 +96,7 @@ export default function WeekView({ currentDate, events, onEventClick, onDayClick
                   const top = getEventTop(ev);
                   const height = getEventHeight(ev);
                   return (
-                    <button
+                    <button type="button"
                       key={ei}
                       onClick={() => onEventClick?.(ev)}
                       className="absolute left-1 right-1 rounded-md px-1.5 py-0.5 text-xs font-medium overflow-hidden hover:opacity-90 transition-opacity text-white shadow-sm z-20"
@@ -115,7 +115,7 @@ export default function WeekView({ currentDate, events, onEventClick, onDayClick
 
                 {/* All-day events (shown at top as small banners) */}
                 {allDayEvents.map((ev, ei) => (
-                  <button
+                  <button type="button"
                     key={`allday-${ei}`}
                     onClick={() => onEventClick?.(ev)}
                     className="absolute left-0.5 right-0.5 rounded text-xs px-1 py-0.5 text-white z-30"

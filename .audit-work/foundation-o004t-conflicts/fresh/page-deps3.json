@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "path": "base44/shared/estimatorAiModelPolicy.js",
+      "content": "export const ESTIMATOR_AI_MODEL = \"gpt_6_sol\";\nexport const ESTIMATOR_AI_TRANSPORT = \"base44.integrations.Core.InvokeLLM\";\nexport const ESTIMATOR_AI_POLICY_VERSION = \"2026-11-06.sol.v1\";\nexport const ESTIMATOR_AI_MODULE_KEYS = Object.freeze([\n  \"foundation\", \"channel_letters\", \"maintenance\", \"painting\", \"laser\", \"cnc\", \"metal\", \"vinyl\",\n]);\n\nexport function estimatorAiModelFor(moduleKey) {\n  if (!ESTIMATOR_AI_MODULE_KEYS.includes(moduleKey)) {\n    throw new Error(\"Unsupported estimator AI module.\");\n  }\n  return ESTIMATOR_AI_MODEL;\n}",
+      "startLine": 1,
+      "endLine": 13,
+      "totalLines": 13,
+      "truncated": false
+    },
+    {
+      "path": "src/components/estimator/products/reusableSaveIdempotency.js",
+      "content": "import { ensureIdempotentEntityCreate } from \"@/components/estimator/idempotentEntityCreate\";\n\nexport async function ensureReusableRecord({ entity, idempotencyKey, data, label = \"Reusable item\" }) {\n  return ensureIdempotentEntityCreate({\n    entity,\n    keyField: \"idempotency_key\",\n    key: idempotencyKey,\n    data,\n    label,\n  });\n}",
+      "startLine": 1,
+      "endLine": 11,
+      "totalLines": 11,
+      "truncated": false
+    }
+  ]
+}

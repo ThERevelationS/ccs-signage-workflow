@@ -1,0 +1,2966 @@
+{
+  "inputs": {
+    "src/lib/utils.js": {
+      "bytes": 197,
+      "imports": [
+        {
+          "path": "clsx",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "tailwind-merge",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/ui/input.jsx": {
+      "bytes": 707,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/lib/utils.js",
+          "kind": "import-statement",
+          "original": "@/lib/utils"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/ui/tabs.jsx": {
+      "bytes": 1568,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "@radix-ui/react-tabs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/lib/utils.js",
+          "kind": "import-statement",
+          "original": "@/lib/utils"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/legacyFoundationCalc.js": {
+      "bytes": 16412,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/wallCalculator.js": {
+      "bytes": 8725,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/poleCalculator.js": {
+      "bytes": 2602,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/wallCapCalculator.js": {
+      "bytes": 1130,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationEquipmentBindings.js": {
+      "bytes": 5494,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationCatalogIntegrity.js": {
+      "bytes": 1733,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationEquipmentBindings.js",
+          "kind": "import-statement",
+          "original": "./foundationEquipmentBindings"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationCalc.js": {
+      "bytes": 8386,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+          "kind": "import-statement",
+          "original": "./legacyFoundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/wallCalculator.js",
+          "kind": "import-statement",
+          "original": "./wallCalculator"
+        },
+        {
+          "path": "src/components/estimator/foundation/poleCalculator.js",
+          "kind": "import-statement",
+          "original": "./poleCalculator"
+        },
+        {
+          "path": "src/components/estimator/foundation/wallCapCalculator.js",
+          "kind": "import-statement",
+          "original": "./wallCapCalculator"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationEquipmentBindings.js",
+          "kind": "import-statement",
+          "original": "./foundationEquipmentBindings"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationItemCard.jsx": {
+      "bytes": 10091,
+      "imports": [
+        {
+          "path": "src/components/ui/input.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/input"
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationRatesPanel.jsx": {
+      "bytes": 2630,
+      "imports": [
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/ui/card.jsx": {
+      "bytes": 1488,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/lib/utils.js",
+          "kind": "import-statement",
+          "original": "@/lib/utils"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/ui/button.jsx": {
+      "bytes": 2026,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "@radix-ui/react-slot",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "class-variance-authority",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/lib/utils.js",
+          "kind": "import-statement",
+          "original": "@/lib/utils"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/ui/label.jsx": {
+      "bytes": 539,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "@radix-ui/react-label",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "class-variance-authority",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/lib/utils.js",
+          "kind": "import-statement",
+          "original": "@/lib/utils"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/ui/select.jsx": {
+      "bytes": 4796,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "@radix-ui/react-select",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/lib/utils.js",
+          "kind": "import-statement",
+          "original": "@/lib/utils"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/ui/badge.jsx": {
+      "bytes": 1305,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "class-variance-authority",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/lib/utils.js",
+          "kind": "import-statement",
+          "original": "@/lib/utils"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/ui/checkbox.jsx": {
+      "bytes": 900,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "@radix-ui/react-checkbox",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/lib/utils.js",
+          "kind": "import-statement",
+          "original": "@/lib/utils"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationEquipmentTab.jsx": {
+      "bytes": 21862,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/ui/card.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/card"
+        },
+        {
+          "path": "src/components/ui/button.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/button"
+        },
+        {
+          "path": "src/components/ui/label.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/label"
+        },
+        {
+          "path": "src/components/ui/select.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/select"
+        },
+        {
+          "path": "src/components/ui/badge.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/badge"
+        },
+        {
+          "path": "src/components/ui/checkbox.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/checkbox"
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationEquipmentBindings.js",
+          "kind": "import-statement",
+          "original": "./foundationEquipmentBindings"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationTotals.jsx": {
+      "bytes": 2484,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/ConcreteDeliveryPanel.jsx": {
+      "bytes": 3751,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationBOM.jsx": {
+      "bytes": 4645,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/WallShapeEditor.jsx": {
+      "bytes": 5341,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/ui/button.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/button"
+        },
+        {
+          "path": "src/components/ui/input.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/input"
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationWallsPanel.jsx": {
+      "bytes": 8688,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/ui/button.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/button"
+        },
+        {
+          "path": "src/components/ui/input.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/input"
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "src/components/estimator/foundation/WallShapeEditor.jsx",
+          "kind": "import-statement",
+          "original": "./WallShapeEditor"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationWallCapsPanel.jsx": {
+      "bytes": 8563,
+      "imports": [
+        {
+          "path": "src/components/ui/button.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/button"
+        },
+        {
+          "path": "src/components/ui/input.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/input"
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationPolesPanel.jsx": {
+      "bytes": 6890,
+      "imports": [
+        {
+          "path": "src/components/ui/button.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/button"
+        },
+        {
+          "path": "src/components/ui/input.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/input"
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+          "kind": "import-statement",
+          "original": "./foundationCatalogIntegrity"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationToolbar.jsx": {
+      "bytes": 4646,
+      "imports": [
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react-router-dom",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationSectionBanner.jsx": {
+      "bytes": 1317,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/lib/app-params.js": {
+      "bytes": 1633,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/api/requestGovernor.mjs": {
+      "bytes": 6112,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/api/rateLimitCooldown.js": {
+      "bytes": 662,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/ui/dialog.jsx": {
+      "bytes": 3377,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "@radix-ui/react-dialog",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/lib/utils.js",
+          "kind": "import-statement",
+          "original": "@/lib/utils"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/auth/EmailGate.jsx": {
+      "bytes": 13573,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/api/base44Client.js",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "src/components/ui/dialog.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/dialog"
+        },
+        {
+          "path": "src/components/ui/button.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/button"
+        },
+        {
+          "path": "src/components/ui/input.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/input"
+        },
+        {
+          "path": "src/components/ui/label.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/label"
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/fleet/fleetInvoke.js": {
+      "bytes": 2823,
+      "imports": [
+        {
+          "path": "src/api/base44Client.js",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "src/components/auth/EmailGate.jsx",
+          "kind": "import-statement",
+          "original": "@/components/auth/EmailGate"
+        },
+        {
+          "path": "src/api/requestGovernor.mjs",
+          "kind": "import-statement",
+          "original": "@/api/requestGovernor.mjs"
+        },
+        {
+          "path": "src/api/rateLimitCooldown.js",
+          "kind": "import-statement",
+          "original": "@/api/rateLimitCooldown"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/staff/staffEntities.js": {
+      "bytes": 14731,
+      "imports": [
+        {
+          "path": "src/components/fleet/fleetInvoke.js",
+          "kind": "import-statement",
+          "original": "@/components/fleet/fleetInvoke"
+        },
+        {
+          "path": "src/components/auth/EmailGate.jsx",
+          "kind": "import-statement",
+          "original": "@/components/auth/EmailGate"
+        },
+        {
+          "path": "src/api/rateLimitCooldown.js",
+          "kind": "import-statement",
+          "original": "@/api/rateLimitCooldown"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/api/base44Client.js": {
+      "bytes": 16929,
+      "imports": [
+        {
+          "path": "@base44/sdk",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/lib/app-params.js",
+          "kind": "import-statement",
+          "original": "@/lib/app-params"
+        },
+        {
+          "path": "src/api/requestGovernor.mjs",
+          "kind": "import-statement",
+          "original": "./requestGovernor.mjs"
+        },
+        {
+          "path": "src/api/rateLimitCooldown.js",
+          "kind": "import-statement",
+          "original": "./rateLimitCooldown.js"
+        },
+        {
+          "path": "src/components/staff/staffEntities.js",
+          "kind": "dynamic-import",
+          "original": "@/components/staff/staffEntities"
+        },
+        {
+          "path": "src/components/staff/staffEntities.js",
+          "kind": "dynamic-import",
+          "original": "@/components/staff/staffEntities"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/AiEngineeringAssistant.jsx": {
+      "bytes": 3845,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/api/base44Client.js",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react-markdown",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/Foundation3DPreview.jsx": {
+      "bytes": 10395,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "three",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/builderEntityPersistence.js": {
+      "bytes": 7332,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/idempotentEntityCreate.js": {
+      "bytes": 6456,
+      "imports": [
+        {
+          "path": "src/components/estimator/builder/builderEntityPersistence.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/builder/builderEntityPersistence"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/products/reusableSaveIdempotency.js": {
+      "bytes": 347,
+      "imports": [
+        {
+          "path": "src/components/estimator/idempotentEntityCreate.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/idempotentEntityCreate"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationTemplateService.js": {
+      "bytes": 1285,
+      "imports": [
+        {
+          "path": "src/api/base44Client.js",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "src/components/estimator/products/reusableSaveIdempotency.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/products/reusableSaveIdempotency"
+        },
+        {
+          "path": "src/components/estimator/builder/builderEntityPersistence.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/builder/builderEntityPersistence"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationAssemblyModel.js": {
+      "bytes": 21515,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationTemplateModel.js": {
+      "bytes": 2825,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+          "kind": "import-statement",
+          "original": "./foundationAssemblyModel.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/loadAllEntityRows.js": {
+      "bytes": 8105,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationTemplateDialog.jsx": {
+      "bytes": 10041,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/api/base44Client.js",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "src/components/ui/dialog.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/dialog"
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationTemplateService.js",
+          "kind": "import-statement",
+          "original": "./foundationTemplateService"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+          "kind": "import-statement",
+          "original": "./foundationTemplateModel"
+        },
+        {
+          "path": "src/components/estimator/loadAllEntityRows.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/loadAllEntityRows"
+        },
+        {
+          "path": "src/components/estimator/idempotentEntityCreate.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/idempotentEntityCreate"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationLayoutModel.js": {
+      "bytes": 2913,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationLayoutCanvas.jsx": {
+      "bytes": 10109,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+          "kind": "import-statement",
+          "original": "./foundationLayoutModel"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/SignageCabinetsPanel.jsx": {
+      "bytes": 11195,
+      "imports": [
+        {
+          "path": "src/components/ui/input.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/input"
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/landscapeMaterials.js": {
+      "bytes": 1681,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/LandscapeDesigner.jsx": {
+      "bytes": 4522,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/estimator/foundation/landscapeMaterials.js",
+          "kind": "import-statement",
+          "original": "./landscapeMaterials"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/CustomerPricingPanel.jsx": {
+      "bytes": 2362,
+      "imports": [
+        {
+          "path": "src/components/ui/input.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/input"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "./foundationCalc"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/markup/markupEngine.jsx": {
+      "bytes": 8756,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/markup/savedCustomerPricing.js": {
+      "bytes": 4994,
+      "imports": [
+        {
+          "path": "src/api/base44Client.js",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "src/components/markup/markupEngine.jsx",
+          "kind": "import-statement",
+          "original": "./markupEngine"
+        },
+        {
+          "path": "src/components/estimator/loadAllEntityRows.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/loadAllEntityRows"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/markup/TierBadge.jsx": {
+      "bytes": 2208,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/markup/CustomerPricingTab.jsx": {
+      "bytes": 13996,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/ui/card.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/card"
+        },
+        {
+          "path": "src/components/ui/select.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/select"
+        },
+        {
+          "path": "src/components/ui/label.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/label"
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/markup/markupEngine.jsx",
+          "kind": "import-statement",
+          "original": "./markupEngine"
+        },
+        {
+          "path": "src/components/markup/savedCustomerPricing.js",
+          "kind": "import-statement",
+          "original": "./savedCustomerPricing"
+        },
+        {
+          "path": "src/components/markup/TierBadge.jsx",
+          "kind": "import-statement",
+          "original": "./TierBadge"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/markup/projectCategorizer.jsx": {
+      "bytes": 14873,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/moduleRegistry.js": {
+      "bytes": 2162,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/parts/partState.js": {
+      "bytes": 448,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/vinylInventory/vinylConstants.jsx": {
+      "bytes": 6295,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/vinylEstimator/vinylNestingCalculator.jsx": {
+      "bytes": 13445,
+      "imports": [
+        {
+          "path": "src/components/vinylInventory/vinylConstants.jsx",
+          "kind": "import-statement",
+          "original": "@/components/vinylInventory/vinylConstants"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/brick/brickCalc.js": {
+      "bytes": 2406,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/signMaintenance/constants.jsx": {
+      "bytes": 6331,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/signMaintenance/repaintDefaults.jsx": {
+      "bytes": 2313,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/signMaintenance/dimLetterPaintCalculator.jsx": {
+      "bytes": 6867,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/signMaintenance/repaintCalculator.jsx": {
+      "bytes": 6258,
+      "imports": [
+        {
+          "path": "src/components/signMaintenance/repaintDefaults.jsx",
+          "kind": "import-statement",
+          "original": "./repaintDefaults"
+        },
+        {
+          "path": "src/components/signMaintenance/dimLetterPaintCalculator.jsx",
+          "kind": "import-statement",
+          "original": "./dimLetterPaintCalculator"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/signMaintenance/maintenanceCalculator.jsx": {
+      "bytes": 9336,
+      "imports": [
+        {
+          "path": "src/components/signMaintenance/constants.jsx",
+          "kind": "import-statement",
+          "original": "./constants"
+        },
+        {
+          "path": "src/components/signMaintenance/repaintCalculator.jsx",
+          "kind": "import-statement",
+          "original": "./repaintCalculator"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/pricingEngine.ts": {
+      "bytes": 38417,
+      "imports": [],
+      "format": "esm"
+    },
+    "base44/shared/pricingTemplateModel.ts": {
+      "bytes": 57789,
+      "imports": [],
+      "format": "esm"
+    },
+    "base44/shared/channelPricingWire.ts": {
+      "bytes": 47873,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/channel/channelSellPricing.js": {
+      "bytes": 2002,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/channelPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/channelPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/vinylPricingWire.ts": {
+      "bytes": 36140,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/vinyl/vinylEnginePricing.js": {
+      "bytes": 4752,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/vinylPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/vinylPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/brickPricingWire.ts": {
+      "bytes": 46600,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/brick/brickSellPricing.js": {
+      "bytes": 4930,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/brickPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/brickPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/cncPricingWire.ts": {
+      "bytes": 36756,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/cnc/cncSellPricing.js": {
+      "bytes": 4719,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/cncPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/cncPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/metalPricingWire.ts": {
+      "bytes": 43545,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/metal/metalSellPricing.js": {
+      "bytes": 4776,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/metalPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/metalPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/laserPricingWire.ts": {
+      "bytes": 36982,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/laser/laserSellPricing.js": {
+      "bytes": 4779,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/laserPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/laserPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/paintPricingWire.ts": {
+      "bytes": 41330,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/paint/paintSellPricing.js": {
+      "bytes": 4929,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/paintPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/paintPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/foundationPricingWire.ts": {
+      "bytes": 58030,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationSellPricing.js": {
+      "bytes": 5357,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/foundationPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/foundationPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/customItemsPricingWire.ts": {
+      "bytes": 37390,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/customItems/customItemsSellPricing.js": {
+      "bytes": 4969,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/customItemsPricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/customItemsPricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "base44/shared/maintenancePricingWire.ts": {
+      "bytes": 41110,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/maintenance/maintenanceSellPricing.js": {
+      "bytes": 4967,
+      "imports": [
+        {
+          "path": "base44/shared/pricingEngine.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingEngine.ts"
+        },
+        {
+          "path": "base44/shared/pricingTemplateModel.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/pricingTemplateModel.ts"
+        },
+        {
+          "path": "base44/shared/maintenancePricingWire.ts",
+          "kind": "import-statement",
+          "original": "../../../../base44/shared/maintenancePricingWire.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/customerPricing.js": {
+      "bytes": 12016,
+      "imports": [
+        {
+          "path": "src/components/estimator/channel/channelSellPricing.js",
+          "kind": "import-statement",
+          "original": "./channel/channelSellPricing"
+        },
+        {
+          "path": "src/components/estimator/vinyl/vinylEnginePricing.js",
+          "kind": "import-statement",
+          "original": "./vinyl/vinylEnginePricing"
+        },
+        {
+          "path": "src/components/estimator/brick/brickSellPricing.js",
+          "kind": "import-statement",
+          "original": "./brick/brickSellPricing"
+        },
+        {
+          "path": "src/components/estimator/cnc/cncSellPricing.js",
+          "kind": "import-statement",
+          "original": "./cnc/cncSellPricing"
+        },
+        {
+          "path": "src/components/estimator/metal/metalSellPricing.js",
+          "kind": "import-statement",
+          "original": "./metal/metalSellPricing"
+        },
+        {
+          "path": "src/components/estimator/laser/laserSellPricing.js",
+          "kind": "import-statement",
+          "original": "./laser/laserSellPricing"
+        },
+        {
+          "path": "src/components/estimator/paint/paintSellPricing.js",
+          "kind": "import-statement",
+          "original": "./paint/paintSellPricing"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSellPricing.js",
+          "kind": "import-statement",
+          "original": "./foundation/foundationSellPricing"
+        },
+        {
+          "path": "src/components/estimator/customItems/customItemsSellPricing.js",
+          "kind": "import-statement",
+          "original": "./customItems/customItemsSellPricing"
+        },
+        {
+          "path": "src/components/estimator/maintenance/maintenanceSellPricing.js",
+          "kind": "import-statement",
+          "original": "./maintenance/maintenanceSellPricing"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/estimateLifecycle.js": {
+      "bytes": 4669,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/estimatePersistence.js": {
+      "bytes": 9666,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/estimateRevisionService.js": {
+      "bytes": 12439,
+      "imports": [
+        {
+          "path": "src/api/base44Client.js",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "src/components/estimator/estimateLifecycle.js",
+          "kind": "import-statement",
+          "original": "./estimateLifecycle"
+        },
+        {
+          "path": "src/components/estimator/loadAllEntityRows.js",
+          "kind": "import-statement",
+          "original": "./loadAllEntityRows"
+        },
+        {
+          "path": "src/components/estimator/estimatePersistence.js",
+          "kind": "import-statement",
+          "original": "./estimatePersistence"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/estimateMutationGuard.js": {
+      "bytes": 3160,
+      "imports": [
+        {
+          "path": "src/components/estimator/estimateLifecycle.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimateLifecycle"
+        },
+        {
+          "path": "src/components/estimator/estimateRevisionService.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimateRevisionService"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/builderPartGroupPersistence.js": {
+      "bytes": 4026,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/builderMutationRecovery.js": {
+      "bytes": 23728,
+      "imports": [
+        {
+          "path": "src/api/base44Client.js",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "src/components/estimator/estimateMutationGuard.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimateMutationGuard"
+        },
+        {
+          "path": "src/components/estimator/loadAllEntityRows.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/loadAllEntityRows"
+        },
+        {
+          "path": "src/components/estimator/estimatePersistence.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimatePersistence"
+        },
+        {
+          "path": "src/components/estimator/builder/builderEntityPersistence.js",
+          "kind": "import-statement",
+          "original": "./builderEntityPersistence"
+        },
+        {
+          "path": "src/components/estimator/builder/builderPartGroupPersistence.js",
+          "kind": "import-statement",
+          "original": "./builderPartGroupPersistence"
+        },
+        {
+          "path": "src/components/staff/staffEntities.js",
+          "kind": "import-statement",
+          "original": "@/components/staff/staffEntities"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/builderPartPersistence.js": {
+      "bytes": 3975,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/partSync.js": {
+      "bytes": 191858,
+      "imports": [
+        {
+          "path": "src/api/base44Client.js",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "src/components/estimator/loadAllEntityRows.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/loadAllEntityRows"
+        },
+        {
+          "path": "src/components/estimator/parts/partState.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/parts/partState"
+        },
+        {
+          "path": "src/components/vinylEstimator/vinylNestingCalculator.jsx",
+          "kind": "import-statement",
+          "original": "@/components/vinylEstimator/vinylNestingCalculator"
+        },
+        {
+          "path": "src/components/estimator/brick/brickCalc.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/brick/brickCalc"
+        },
+        {
+          "path": "src/components/signMaintenance/maintenanceCalculator.jsx",
+          "kind": "import-statement",
+          "original": "@/components/signMaintenance/maintenanceCalculator"
+        },
+        {
+          "path": "src/components/estimator/customerPricing.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/customerPricing"
+        },
+        {
+          "path": "src/components/estimator/estimateMutationGuard.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimateMutationGuard"
+        },
+        {
+          "path": "src/components/estimator/builder/builderMutationRecovery.js",
+          "kind": "import-statement",
+          "original": "./builderMutationRecovery"
+        },
+        {
+          "path": "src/components/estimator/builder/builderEntityPersistence.js",
+          "kind": "import-statement",
+          "original": "./builderEntityPersistence"
+        },
+        {
+          "path": "src/components/estimator/builder/builderPartPersistence.js",
+          "kind": "import-statement",
+          "original": "./builderPartPersistence"
+        },
+        {
+          "path": "src/components/staff/staffEntities.js",
+          "kind": "import-statement",
+          "original": "@/components/staff/staffEntities"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/builderProductPersistence.js": {
+      "bytes": 4661,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/builderService.js": {
+      "bytes": 57422,
+      "imports": [
+        {
+          "path": "src/api/base44Client.js",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "src/components/estimator/moduleRegistry.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/moduleRegistry"
+        },
+        {
+          "path": "src/components/estimator/builder/partSync.js",
+          "kind": "import-statement",
+          "original": "./partSync"
+        },
+        {
+          "path": "src/components/estimator/customerPricing.js",
+          "kind": "import-statement",
+          "original": "../customerPricing"
+        },
+        {
+          "path": "src/components/estimator/estimateMutationGuard.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimateMutationGuard"
+        },
+        {
+          "path": "src/components/estimator/builder/builderMutationRecovery.js",
+          "kind": "import-statement",
+          "original": "./builderMutationRecovery"
+        },
+        {
+          "path": "src/components/estimator/loadAllEntityRows.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/loadAllEntityRows"
+        },
+        {
+          "path": "src/components/estimator/estimatePersistence.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimatePersistence"
+        },
+        {
+          "path": "src/components/estimator/builder/builderEntityPersistence.js",
+          "kind": "import-statement",
+          "original": "./builderEntityPersistence"
+        },
+        {
+          "path": "src/components/estimator/builder/builderProductPersistence.js",
+          "kind": "import-statement",
+          "original": "./builderProductPersistence"
+        },
+        {
+          "path": "src/components/staff/staffEntities.js",
+          "kind": "import-statement",
+          "original": "@/components/staff/staffEntities"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/builder/sourceProjectPersistence.js": {
+      "bytes": 3808,
+      "imports": [
+        {
+          "path": "src/components/estimator/estimateMutationGuard.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/estimateMutationGuard"
+        },
+        {
+          "path": "src/components/staff/staffEntities.js",
+          "kind": "import-statement",
+          "original": "@/components/staff/staffEntities"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationSaveSession.js": {
+      "bytes": 2391,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationSyncRecovery.js": {
+      "bytes": 4007,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/convertToBrickStone.js": {
+      "bytes": 1918,
+      "imports": [
+        {
+          "path": "src/components/staff/staffEntities.js",
+          "kind": "import-statement",
+          "original": "@/components/staff/staffEntities"
+        },
+        {
+          "path": "src/components/estimator/idempotentEntityCreate.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/idempotentEntityCreate"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/portal/PortalPanel.jsx": {
+      "bytes": 8852,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/api/base44Client.js",
+          "kind": "import-statement",
+          "original": "@/api/base44Client"
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/moduleShared/moduleProjectActions.js": {
+      "bytes": 2829,
+      "imports": [
+        {
+          "path": "src/components/estimator/idempotentEntityCreate.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/idempotentEntityCreate"
+        },
+        {
+          "path": "src/components/auth/EmailGate.jsx",
+          "kind": "import-statement",
+          "original": "@/components/auth/EmailGate"
+        },
+        {
+          "path": "src/components/portal/PortalPanel.jsx",
+          "kind": "import-statement",
+          "original": "@/components/portal/PortalPanel"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/pages/FoundationEstimator.jsx": {
+      "bytes": 54230,
+      "imports": [
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react-router-dom",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/ui/input.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/input"
+        },
+        {
+          "path": "src/components/ui/tabs.jsx",
+          "kind": "import-statement",
+          "original": "@/components/ui/tabs"
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationItemCard.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationItemCard"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationRatesPanel.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationRatesPanel"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationEquipmentTab.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationEquipmentTab"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationTotals.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationTotals"
+        },
+        {
+          "path": "src/components/estimator/foundation/ConcreteDeliveryPanel.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/ConcreteDeliveryPanel"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationBOM.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationBOM"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationWallsPanel"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationWallCapsPanel"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationPolesPanel"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationToolbar.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationToolbar"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationSectionBanner.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationSectionBanner"
+        },
+        {
+          "path": "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/AiEngineeringAssistant"
+        },
+        {
+          "path": "src/components/estimator/foundation/Foundation3DPreview.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/Foundation3DPreview"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationTemplateDialog"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationLayoutCanvas"
+        },
+        {
+          "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/SignageCabinetsPanel"
+        },
+        {
+          "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/LandscapeDesigner"
+        },
+        {
+          "path": "src/components/estimator/foundation/CustomerPricingPanel.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/CustomerPricingPanel"
+        },
+        {
+          "path": "src/components/markup/CustomerPricingTab.jsx",
+          "kind": "import-statement",
+          "original": "@/components/markup/CustomerPricingTab"
+        },
+        {
+          "path": "src/components/markup/projectCategorizer.jsx",
+          "kind": "import-statement",
+          "original": "@/components/markup/projectCategorizer"
+        },
+        {
+          "path": "src/components/markup/savedCustomerPricing.js",
+          "kind": "import-statement",
+          "original": "@/components/markup/savedCustomerPricing"
+        },
+        {
+          "path": "src/components/estimator/foundation/landscapeMaterials.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/landscapeMaterials"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationCalc.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationCalc"
+        },
+        {
+          "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/legacyFoundationCalc"
+        },
+        {
+          "path": "src/components/estimator/builder/builderService.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/builder/builderService"
+        },
+        {
+          "path": "src/components/estimator/loadAllEntityRows.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/loadAllEntityRows"
+        },
+        {
+          "path": "src/components/estimator/builder/sourceProjectPersistence.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/builder/sourceProjectPersistence"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSaveSession.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationSaveSession"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationSyncRecovery.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationSyncRecovery"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationAssemblyModel"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationTemplateModel"
+        },
+        {
+          "path": "src/components/estimator/idempotentEntityCreate.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/idempotentEntityCreate"
+        },
+        {
+          "path": "src/components/estimator/foundation/convertToBrickStone.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/convertToBrickStone"
+        },
+        {
+          "path": "src/components/estimator/moduleShared/moduleProjectActions.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/moduleShared/moduleProjectActions"
+        },
+        {
+          "path": "src/components/staff/staffEntities.js",
+          "kind": "import-statement",
+          "original": "@/components/staff/staffEntities"
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    ".audit-work/foundation-equipment13/page-real-bundle.js": {
+      "imports": [
+        {
+          "path": "clsx",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "tailwind-merge",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "@radix-ui/react-slot",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "class-variance-authority",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "@radix-ui/react-label",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "class-variance-authority",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "@radix-ui/react-dialog",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "@base44/sdk",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react-router-dom",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "@radix-ui/react-tabs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "@radix-ui/react-select",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "class-variance-authority",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "@radix-ui/react-checkbox",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react-router-dom",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react-markdown",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "three",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "lucide-react",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "react/jsx-runtime",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "exports": [
+        "default"
+      ],
+      "entryPoint": "src/pages/FoundationEstimator.jsx",
+      "inputs": {
+        "src/lib/utils.js": {
+          "bytesInOutput": 245
+        },
+        "src/components/ui/input.jsx": {
+          "bytesInOutput": 848
+        },
+        "src/components/ui/button.jsx": {
+          "bytesInOutput": 2194
+        },
+        "src/components/ui/label.jsx": {
+          "bytesInOutput": 667
+        },
+        "src/lib/app-params.js": {
+          "bytesInOutput": 1923
+        },
+        "src/api/requestGovernor.mjs": {
+          "bytesInOutput": 5330
+        },
+        "src/api/rateLimitCooldown.js": {
+          "bytesInOutput": 651
+        },
+        "src/components/ui/dialog.jsx": {
+          "bytesInOutput": 3861
+        },
+        "src/components/auth/EmailGate.jsx": {
+          "bytesInOutput": 639
+        },
+        "src/components/fleet/fleetInvoke.js": {
+          "bytesInOutput": 1563
+        },
+        "src/components/staff/staffEntities.js": {
+          "bytesInOutput": 11139
+        },
+        "src/api/base44Client.js": {
+          "bytesInOutput": 13975
+        },
+        "src/pages/FoundationEstimator.jsx": {
+          "bytesInOutput": 51332
+        },
+        "src/components/ui/tabs.jsx": {
+          "bytesInOutput": 1560
+        },
+        "src/components/estimator/foundation/FoundationItemCard.jsx": {
+          "bytesInOutput": 11761
+        },
+        "src/components/estimator/foundation/legacyFoundationCalc.js": {
+          "bytesInOutput": 14680
+        },
+        "src/components/estimator/foundation/wallCalculator.js": {
+          "bytesInOutput": 7998
+        },
+        "src/components/estimator/foundation/poleCalculator.js": {
+          "bytesInOutput": 2067
+        },
+        "src/components/estimator/foundation/wallCapCalculator.js": {
+          "bytesInOutput": 927
+        },
+        "src/components/estimator/foundation/foundationEquipmentBindings.js": {
+          "bytesInOutput": 5334
+        },
+        "src/components/estimator/foundation/foundationCatalogIntegrity.js": {
+          "bytesInOutput": 1493
+        },
+        "src/components/estimator/foundation/foundationCalc.js": {
+          "bytesInOutput": 6655
+        },
+        "src/components/estimator/foundation/FoundationRatesPanel.jsx": {
+          "bytesInOutput": 2786
+        },
+        "src/components/estimator/foundation/FoundationEquipmentTab.jsx": {
+          "bytesInOutput": 23809
+        },
+        "src/components/ui/card.jsx": {
+          "bytesInOutput": 1501
+        },
+        "src/components/ui/select.jsx": {
+          "bytesInOutput": 4705
+        },
+        "src/components/ui/badge.jsx": {
+          "bytesInOutput": 1065
+        },
+        "src/components/ui/checkbox.jsx": {
+          "bytesInOutput": 928
+        },
+        "src/components/estimator/foundation/FoundationTotals.jsx": {
+          "bytesInOutput": 2815
+        },
+        "src/components/estimator/foundation/ConcreteDeliveryPanel.jsx": {
+          "bytesInOutput": 4148
+        },
+        "src/components/estimator/foundation/FoundationBOM.jsx": {
+          "bytesInOutput": 4992
+        },
+        "src/components/estimator/foundation/FoundationWallsPanel.jsx": {
+          "bytesInOutput": 10056
+        },
+        "src/components/estimator/foundation/WallShapeEditor.jsx": {
+          "bytesInOutput": 5961
+        },
+        "src/components/estimator/foundation/FoundationWallCapsPanel.jsx": {
+          "bytesInOutput": 8764
+        },
+        "src/components/estimator/foundation/FoundationPolesPanel.jsx": {
+          "bytesInOutput": 7327
+        },
+        "src/components/estimator/foundation/FoundationToolbar.jsx": {
+          "bytesInOutput": 5538
+        },
+        "src/components/estimator/foundation/FoundationSectionBanner.jsx": {
+          "bytesInOutput": 1786
+        },
+        "src/components/estimator/foundation/AiEngineeringAssistant.jsx": {
+          "bytesInOutput": 4175
+        },
+        "src/components/estimator/foundation/Foundation3DPreview.jsx": {
+          "bytesInOutput": 10992
+        },
+        "src/components/estimator/foundation/FoundationTemplateDialog.jsx": {
+          "bytesInOutput": 9675
+        },
+        "src/components/estimator/foundation/foundationTemplateService.js": {
+          "bytesInOutput": 1005
+        },
+        "src/components/estimator/builder/builderEntityPersistence.js": {
+          "bytesInOutput": 6744
+        },
+        "src/components/estimator/idempotentEntityCreate.js": {
+          "bytesInOutput": 5227
+        },
+        "src/components/estimator/products/reusableSaveIdempotency.js": {
+          "bytesInOutput": 235
+        },
+        "src/components/estimator/foundation/foundationAssemblyModel.js": {
+          "bytesInOutput": 21037
+        },
+        "src/components/estimator/foundation/foundationTemplateModel.js": {
+          "bytesInOutput": 2161
+        },
+        "src/components/estimator/loadAllEntityRows.js": {
+          "bytesInOutput": 4914
+        },
+        "src/components/estimator/foundation/FoundationLayoutCanvas.jsx": {
+          "bytesInOutput": 9945
+        },
+        "src/components/estimator/foundation/foundationLayoutModel.js": {
+          "bytesInOutput": 2304
+        },
+        "src/components/estimator/foundation/SignageCabinetsPanel.jsx": {
+          "bytesInOutput": 11713
+        },
+        "src/components/estimator/foundation/LandscapeDesigner.jsx": {
+          "bytesInOutput": 5181
+        },
+        "src/components/estimator/foundation/landscapeMaterials.js": {
+          "bytesInOutput": 1477
+        },
+        "src/components/estimator/foundation/CustomerPricingPanel.jsx": {
+          "bytesInOutput": 3056
+        },
+        "src/components/markup/CustomerPricingTab.jsx": {
+          "bytesInOutput": 15041
+        },
+        "src/components/markup/markupEngine.jsx": {
+          "bytesInOutput": 3865
+        },
+        "src/components/markup/savedCustomerPricing.js": {
+          "bytesInOutput": 4483
+        },
+        "src/components/markup/TierBadge.jsx": {
+          "bytesInOutput": 1930
+        },
+        "src/components/markup/projectCategorizer.jsx": {
+          "bytesInOutput": 2778
+        },
+        "src/components/estimator/builder/builderService.js": {
+          "bytesInOutput": 35381
+        },
+        "src/components/estimator/moduleRegistry.js": {
+          "bytesInOutput": 1488
+        },
+        "src/components/estimator/builder/partSync.js": {
+          "bytesInOutput": 149205
+        },
+        "src/components/vinylInventory/vinylConstants.jsx": {
+          "bytesInOutput": 575
+        },
+        "src/components/vinylEstimator/vinylNestingCalculator.jsx": {
+          "bytesInOutput": 10842
+        },
+        "src/components/estimator/brick/brickCalc.js": {
+          "bytesInOutput": 2008
+        },
+        "src/components/signMaintenance/constants.jsx": {
+          "bytesInOutput": 3856
+        },
+        "src/components/signMaintenance/repaintDefaults.jsx": {
+          "bytesInOutput": 649
+        },
+        "src/components/signMaintenance/dimLetterPaintCalculator.jsx": {
+          "bytesInOutput": 4913
+        },
+        "src/components/signMaintenance/repaintCalculator.jsx": {
+          "bytesInOutput": 4783
+        },
+        "src/components/signMaintenance/maintenanceCalculator.jsx": {
+          "bytesInOutput": 7057
+        },
+        "base44/shared/pricingEngine.ts": {
+          "bytesInOutput": 17885
+        },
+        "base44/shared/pricingTemplateModel.ts": {
+          "bytesInOutput": 29166
+        },
+        "base44/shared/channelPricingWire.ts": {
+          "bytesInOutput": 25352
+        },
+        "src/components/estimator/channel/channelSellPricing.js": {
+          "bytesInOutput": 340
+        },
+        "base44/shared/vinylPricingWire.ts": {
+          "bytesInOutput": 19606
+        },
+        "src/components/estimator/vinyl/vinylEnginePricing.js": {
+          "bytesInOutput": 1138
+        },
+        "base44/shared/brickPricingWire.ts": {
+          "bytesInOutput": 23870
+        },
+        "src/components/estimator/brick/brickSellPricing.js": {
+          "bytesInOutput": 1138
+        },
+        "base44/shared/cncPricingWire.ts": {
+          "bytesInOutput": 19398
+        },
+        "src/components/estimator/cnc/cncSellPricing.js": {
+          "bytesInOutput": 1128
+        },
+        "base44/shared/metalPricingWire.ts": {
+          "bytesInOutput": 22458
+        },
+        "src/components/estimator/metal/metalSellPricing.js": {
+          "bytesInOutput": 1138
+        },
+        "base44/shared/laserPricingWire.ts": {
+          "bytesInOutput": 19427
+        },
+        "src/components/estimator/laser/laserSellPricing.js": {
+          "bytesInOutput": 1138
+        },
+        "base44/shared/paintPricingWire.ts": {
+          "bytesInOutput": 20829
+        },
+        "src/components/estimator/paint/paintSellPricing.js": {
+          "bytesInOutput": 1138
+        },
+        "base44/shared/foundationPricingWire.ts": {
+          "bytesInOutput": 29859
+        },
+        "src/components/estimator/foundation/foundationSellPricing.js": {
+          "bytesInOutput": 1223
+        },
+        "base44/shared/customItemsPricingWire.ts": {
+          "bytesInOutput": 19571
+        },
+        "src/components/estimator/customItems/customItemsSellPricing.js": {
+          "bytesInOutput": 1168
+        },
+        "base44/shared/maintenancePricingWire.ts": {
+          "bytesInOutput": 19965
+        },
+        "src/components/estimator/maintenance/maintenanceSellPricing.js": {
+          "bytesInOutput": 1170
+        },
+        "src/components/estimator/customerPricing.js": {
+          "bytesInOutput": 5748
+        },
+        "src/components/estimator/estimateLifecycle.js": {
+          "bytesInOutput": 193
+        },
+        "src/components/estimator/estimateRevisionService.js": {
+          "bytesInOutput": 399
+        },
+        "src/components/estimator/estimatePersistence.js": {
+          "bytesInOutput": 4465
+        },
+        "src/components/estimator/estimateMutationGuard.js": {
+          "bytesInOutput": 2200
+        },
+        "src/components/estimator/builder/builderMutationRecovery.js": {
+          "bytesInOutput": 18815
+        },
+        "src/components/estimator/builder/builderPartGroupPersistence.js": {
+          "bytesInOutput": 3756
+        },
+        "src/components/estimator/builder/builderPartPersistence.js": {
+          "bytesInOutput": 3713
+        },
+        "src/components/estimator/builder/builderProductPersistence.js": {
+          "bytesInOutput": 4345
+        },
+        "src/components/estimator/builder/sourceProjectPersistence.js": {
+          "bytesInOutput": 3007
+        },
+        "src/components/estimator/foundation/foundationSaveSession.js": {
+          "bytesInOutput": 2406
+        },
+        "src/components/estimator/foundation/foundationSyncRecovery.js": {
+          "bytesInOutput": 3810
+        },
+        "src/components/estimator/foundation/convertToBrickStone.js": {
+          "bytesInOutput": 1364
+        },
+        "src/components/estimator/moduleShared/moduleProjectActions.js": {
+          "bytesInOutput": 727
+        },
+        "src/components/portal/PortalPanel.jsx": {
+          "bytesInOutput": 599
+        }
+      },
+      "bytes": 922297
+    }
+  }
+}

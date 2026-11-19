@@ -1,0 +1,32 @@
+{
+  "warnings": 0,
+  "inputs": 57,
+  "loaded": {
+    "/app/pole-consumer-entry.jsx": "f47abc5890c2f271136cdf814bc4346e7b26967ddcf8334cd84aded3ae4fbc1f",
+    "/app/src/components/estimator/foundation/FoundationWallsPanel.jsx": "514c64e72b9a2a9b12f0fd213d15af84905c566233da98bce4ce43bd0d947891",
+    "/app/src/pages/FoundationEstimator.jsx": "084a90cb3a7ff116bdd55f05f6fd75b601971ef311cacd4915a332ea02735b56",
+    "/app/src/components/estimator/foundation/FoundationTotals.jsx": "571795bd9b2a2cd77fd776255903efa74edb0733cffefcf7fdb230f6936c5cb7",
+    "/app/src/components/estimator/foundation/FoundationBOM.jsx": "f85657e3f52eb5855f6eb251dd67378b9872c7e107c6afd2e4811708fead4698",
+    "/app/src/components/estimator/foundation/FoundationPolesPanel.jsx": "2016265a3e7f8367f0788390460d97e9e0cd2177b9f6016e5c58a5a1dc26663f",
+    "/app/src/components/estimator/foundation/FoundationWallCapsPanel.jsx": "3d2c186e797001661798cf1cb787ea35ee7cb63d3f5e73e1d2aac5b25c4f974d",
+    "/app/src/components/estimator/foundation/foundationCalc.js": "cf744d530e198dbdf5499646cb9e49e63211a2ed7de884556ecf39bacd061332",
+    "/app/src/components/estimator/foundation/wallCalculator.js": "7f0d8cf7c0c3f1564661af2aa1dda3b922be135cb3fcdb9fa46ddcf2750b3cf3",
+    "/app/src/components/estimator/foundation/foundationCatalogIntegrity.js": "702f1405b1cae1256da4eda2e7ed4d50085a5be1b4cd3324cf232a84938eca4e",
+    "/app/src/components/estimator/foundation/WallShapeEditor.jsx": "37a14e19c8a89bbebd0100f164d1ae4d8b9148e120514452105c187875f9a22b",
+    "/app/src/components/estimator/foundation/wallCapCalculator.js": "90e64ee49d8fe815ea63506ab21c25e9fd449c55581afe0a21f19371c87695eb",
+    "/app/src/components/estimator/foundation/foundationInputValidation.js": "4738e7a15635cdfa9eac09d95db518fade3448b42caa9474d0188d4d7de36c03",
+    "/app/src/components/estimator/foundation/legacyFoundationCalc.js": "d7b60db418f41663bc74f24d04fd65937b08b1156e2c322a577fae38156a21ff",
+    "/app/src/components/estimator/foundation/poleCalculator.js": "8cdfbb75492817b8628eda4d10f133b7d05c9b50c46f1dd745ae1a50e201596e",
+    "/app/src/components/estimator/foundation/foundationEquipmentBindings.js": "df7c4479c79cbaa589e6d7f1db3639ad6c85b8488d9ddba0eb04ef206f03952b",
+    "/app/src/components/estimator/foundation/FoundationRatesPanel.jsx": "3987b0742829f98bbddc5f0b3db17be4672e385e4044f78af20705bf92de194c",
+    "/app/src/components/estimator/foundation/foundationBuilderRecovery.js": "7e6fa754eac96e7d4b689cf028163a1a99f69617e151c0698ec3cf122e00629c",
+    "/app/src/components/estimator/foundation/foundationSaveSession.js": "f9c6984e8ea679a81a7d3d6933714b31a1b7e215dff3d84c2d90b9dc394be4de",
+    "/app/src/components/estimator/foundation/foundationDraftRecovery.js": "16cf0d383ef46a3bf21557cff04ca2a6f0ad50ef0b5928ad3ad601f361de8904",
+    "/app/src/components/estimator/foundation/foundationSyncRecovery.js": "ab08ffc8345ce29d177377768d2d5c4a19eabfd4ff778c01d2248131969c3251",
+    "/app/src/components/estimator/foundation/foundationAssemblyModel.js": "0ee3319accf578669a01209b182ef45e7e494bf3df51bede0c6171f429bc65c1",
+    "/app/src/components/estimator/builder/sourceProjectPersistence.js": "6d6381c9f6d7c81235259a889562e99a85d9bc53fc2c87ffb8ab461ff76844f2",
+    "/app/src/components/estimator/foundation/foundationTemplateModel.js": "a475bfd50def02443331df581a90b5ebfc0a2292788afad070bb52003e92fdcb",
+    "/app/src/components/estimator/builder/builderMutationRecovery.js": "1ae3f26b325cceba093c0ea7e9bdce192672744760779ce2ecd76913039aaa85",
+    "/app/src/components/estimator/builder/builderEntityPersistence.js": "6b2ebe467e42d438d52b77bf380f47a6322da37f1678133d6a9fd4708db44577"
+  }
+}

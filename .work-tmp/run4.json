@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "=== test-estimate-acceptance\n  code: 'ERR_ASSERTION',\n  actual: undefined,\n  expected: true,\n  operator: '==',\n  diff: 'simple'\n}\n\nNode.js v24.22.1\n=== test-quote-delivery-safeurl\nrecordEstimateQuoteDelivery error: clean is not defined\nrecordEstimateQuoteDelivery error: clean is not defined\nrecordEstimateQuoteDelivery error: clean is not defined\nrecordEstimateQuoteDelivery error: clean is not defined\nrecordEstimateQuoteDelivery error: clean is not defined\nrecordEstimateQuoteDelivery error: clean is not defined\nrecordEstimateQuoteDelivery error: clean is not defined\nPASS quote delivery safeUrl sanitizers (10 cases)\n=== test-revision-functions\nopportunityWorkspaceAction error: Authentication required\nopportunityWorkspaceAction error: Authentication required\nopportunityWorkspaceAction error: Unsupported opportunity workspace action: bogus_action\nPASS revision + workspace function guards (17 cases)\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 12793
+}

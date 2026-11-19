@@ -1,0 +1,19 @@
+[
+ "node_modules/react/cjs/react.development.js",
+ "node_modules/react/index.js",
+ "node_modules/scheduler/cjs/scheduler.development.js",
+ "node_modules/scheduler/index.js",
+ "node_modules/react-dom/cjs/react-dom.development.js",
+ "node_modules/react-dom/index.js",
+ "node_modules/react-dom/client.js",
+ "s:D:\\DevinProjects\\ccs-signage-workflow-clean\\s-lucide_react",
+ ".audit-work/foundation-o034-selection/staging-src/components/estimator/foundation/foundationSceneTransforms.js",
+ ".audit-work/foundation-o034-selection/staging-src/components/estimator/foundation/foundationLayoutModel.js",
+ ".audit-work/foundation-o034-selection/staging-src/components/estimator/foundation/foundationSceneInput.js",
+ ".audit-work/foundation-o034-selection/staging-src/components/estimator/foundation/foundationSceneHistory.js",
+ ".audit-work/foundation-o034-selection/staging-src/components/estimator/foundation/foundationSceneSelection.js",
+ "node_modules/react/cjs/react-jsx-runtime.development.js",
+ "node_modules/react/jsx-runtime.js",
+ ".audit-work/foundation-o034-selection/staging-src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+ "h:harness"
+]

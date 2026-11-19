@@ -1,0 +1,26 @@
+{
+ "jurisdiction_id": "6adeee8e4ac92ea66cad6aa1",
+ "jurisdiction_name": "Uhrichsville",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "CITY OF UHRICHSVILLE, OHIO 44683 DEPARTMENT OF PUBLIC SERVICE APPLICATION AND PERMIT FOR BUILDING PERMIT DATE FEE $ N o □ GOOD FOR 6 MONTHS FROM THE ABOVE DATE ***** NOTE: Fill out only those sections that are applicable I. II. III. IV. IDENTIFICATION OWNER LLC BUILDING CONTRACTOR SEWER CONTRACTOR WATER LINE CONTRACTOR PAVING CONTRACTOR ADDRESS ADDRESS ADDRESS ADDRESS ADDRESS ADDRESS LOCATION ADDRESS OF IMPROVEMENT LOT NUMBER ON THE □ NORTH SOUTH □ EAST WEST □ □ SIDE OF THE STREET. BETWEEN THE INTERSECTION OF AND EXISTING INFORMATION PRESENT USE LOT AREA = SQ. FT. VACANT □ PROJECT □ NEW CONSTRUCTION □ □ □ □ □ □ ADDITION REMODELING or ALTERATION REPAIR OR REPLACEMENT DEMOLITION DRIVEWAY WALK or CURB SINGLE-FAMILY or DUPLEX MULTI-FAMILY - No. OF UNITS FENCE - TYPE SIGN - TYPE RECREATIONAL - CERTIFICATE OF OCCUPANCY OTHER ROOF □ □ □ □ □ □ □ □ STATE PERMIT NUMBER IF REQUIRED TOTAL COST OF PR",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "eb5813ffe003ad83a30a3ccd3d7b6974365c621a458399a29afb789c275d469d",
+   "source_document_id": null,
+   "source_title": "eb5813ffe003ad83a30a3ccd3d7b6974365c621a458399a29afb789c275d469d.pdf",
+   "official_url": "https://cityofuhrichsville.org/wp-content/uploads/2024/03/UHRICHSVILLE-APP-PERMIT.pdf"
+  }
+ ]
+}

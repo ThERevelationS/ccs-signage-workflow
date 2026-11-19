@@ -31,3 +31,20 @@ dist-ssr
 base44/.app.jsonc
 
 .playwright-mcp/
+
+# Local test credentials
+.audit-work/creds.mjs
+.permit-creds.json
+.permit-session-token
+.permit-token.txt
+.audit-work/session-token.txt
+
+# CoreBridge migration data (customer PII) - never commit
+imports/
+
+# Large session-scratch artifacts (probe/event dumps)
+.audit-work/outbox*.jsonl*
+.audit-work/cb-inv-plan*.json
+.live-events*.jsonl
+.cp-list*.json
+%TEMP%*

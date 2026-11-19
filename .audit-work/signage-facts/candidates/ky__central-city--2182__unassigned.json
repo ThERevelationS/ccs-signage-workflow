@@ -1,0 +1,923 @@
+{
+ "jurisdiction_id": "6adef9b483473416272f2182",
+ "jurisdiction_name": "Central City",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 19,
+   "snippet": "920.14 Page 19 \"thoroughfare\". A public street is a street accepted according to the Subdivision Regulations and maintained by the governing body. A private street is a street not so accepted or maintained. Street Line: The line or boundary separating the public right - of - way and a contiguous lot or tract. Structure: Anything constructed or erected, the use of which requires fixed location on the ground, or attachment to something having a fixed location on the ground, including buildings, radio towers, swimming pools, and walls or fences exceeding three and one - half (3 1/2) feet in height, billboards and poster panels; reference to buildings includes structures and vice versa. Structural Alteration: Any change in the supporting members of a building or structure, each as bearing walls or partitions, columns, beams or girders or any change in the width or number of exits, or any str",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "temporary"
+   ],
+   "weight": 12,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 28,
+   "snippet": "920.14 Page 28 structures such as pipes and transmission lines, transformers and meters. Large utility structures such as electrical substations or gas pumping stations are permitted only as conditional uses. (b) Public streets and all official appurtenances necessary for traffic direction and safety. All street and traffic control signs shall conform to the code established and adopted by the Kentucky Department of Transportation or the City of Central City, whichever is applicable. (c) Private drives, private parking areas, and the parking of vehicles incidental to the principal use on the same premises. (d) Real estate signs located on the premises or subdivision signs advertising property for sale or rent. (e) Signs not over four square feet in area identifying permitted hove occupations or the renting of sleeping rooms on the same premises. (f) Horticulture and landscaping of any pr",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "process",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 12,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "920.14 Page 14 c. Through Lot: A lot other than a corner lot with frontage on more than one street; may be referred to as double frontage lots. d. Reversed Frontage Lot: A lot on which the frontage is at right angles or approximately right angles to the general pattern in the area. A reversed frontage lot may also be a corner lot, an interior lot or a through lot. Lot Width: The mean horizontal distance between the side lines at the building line measured along the building line. Major Thoroughfare: The major streets which carry a relatively large amount of vehicular traffic and may connect to secondary or regional thoroughfares. The major thorough fares are as delineated on the Comprehensive Land Use Plan as adopted by the Governing Body. Mini - Warehouse: A building or group of buildings in a controlled - access compound that contains varying sizes of individual compartmentalized, and ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 26,
+   "snippet": "920.14 Page 26 (e) Townhouse Minimum Area Requirement: No lot shall contain less than 2,000 square feet of land; however, there shall be a minimum open area or play area of one - half acre per two acres or fraction thereof developed exclusive of streets, public ways, parking areas, and any other non - residential uses. It shall be the responsibility of the developer to make the necessary provisions for the perpetual maintenance of such open area and parking area subject to the approval of the Planning Commission. (f) Townhouse Lot Size: Minimum Frontage for Attached Dwellings: 18 ft. Minimum Depth: 80 ft. (g) Other requirements for Townhouses: 1. The total dwelling units in any group of attached dwellings shall not exceed 10 units. 2. Off - street parking shall be permitted on each lot. Off - street parking shall be in compliance with provisions presented in this Zoning Ordinance. 3. Max",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 63,
+   "snippet": "920.14 Page 63 ARTICLE VII SIGNS AND OUTDOOR ADVERTISING DISPLAYS Section 7.01. SIGNS AND OUTDOOR ADVERTISING DISPLAYS PERMITTED Signs and outdoor advertising displays shall be permitted in all districts subject to the provisions and regulations contained herein. Section 7.02. DEFINITIONS - SIGNS AND OUTDOOR ADVERTISING DISPLAYS (a) Signs: Any advertising display affixed to land or improvements thereon, which it is located and which may be either illuminated or non - illuminated, except where illumination is otherwise specifically prohibited in this chapter . No billboards (an advertising display that is not affixed to the improvements but is affixed to the land) are allowed in B - 2 districts unless the proposed billboard is advertising the business located on the same property or unless the billboard was in existence prior to the enactment of this ordinance amendment. (b) Outdoor Adver",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 70,
+   "snippet": "920.14 Page 70 in such a manner that the first twelve (12) feet back from the street shall be four (4) feet high and the balance shall be provided to prevent vehicles striking said wall or shrubbery. (s) In all cases where such parking lots abut public sidewalks, concrete curbing, at least six (6) inches in height, set end to end, shall be placed so that a motor vehicle cannot be driven or parked with any part thereof extending within two (2) feet of a public sidewalk. In all cases where necessary for the protection of the public and adjoining properties, streets and sidewalks, curbs as described above, shall be installed. (t) Means of ingress and egress shall be provided and shown on plans submitted. Minimum shall be fifteen (15) feet wide for one - way and twenty - four (24) feet wide for two - way traffic. (u) Where street setback lines are provided by ordinance or established through",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "920.14 Page 63 Section 7.01. herein. Section 7.02. Signs and outdoor advertising displays shall be permitted in all districts subject to the provisions and requlations Contained ARTICLE VII SIGNS AND OUTDOOR ADVERTISING DISPLAYS SIGNS AND OUTDOOR ADVERTISING DISPLAYS PERMITTED (b) DEFINITIONS DISPLAYS (a) Signs : Any advertising display affixed to land or improvements thereon, which it is located and which may be either illuminated Or non-illuminated, except where illumination is otherwise specifically prohibited in this chapter. No billboards (an advertising display that is not affixed to the improvements but is affixed to the land) are allowed in B-2 districts unless the proposed billboard is advertising the business located on the same property or unless the billboard was in existence prior to the enactment of this ordinance amendment. SIGNS AND OUTDOOR ADVERTISING Outdoor Advertising",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "c424c5035576ff31455f8678b07fe0995cfdc008707be51f54ea06733155be6f",
+   "source_document_id": null,
+   "source_title": "c424c5035576ff31455f8678b07fe0995cfdc008707be51f54ea06733155be6f.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_2d97a864d65c4da8b926de78b8a2b629.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "920.14 Page 38 a mobile home park shall not be less than 4, 000 square feet in area and in no instance shall there be more than one (1) mobile home permitted on a single lot. The minimum lot width shall be forty (40) feet at the building line. The minimum lot depth shal l be one hundred (100) feet from the front lot line. (d) Buffer: A SCreening of evergreen trees and/or shrubs not less than six (6) feet in height after one full growing season and which at maturity is not less than twelve (121 feet high, shall be located and effectively maintained at all times along all park boundary lines except at established entrances and exits serving the park. Each mobile home shall be located at least ten (10) feet from the buffer. (e) Spacing: For a Mobile Home Park; No mobile home unit or other structure shall be located within twenty-five (25) feet of a mobile home park boundary line or public r",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2",
+   "source_document_id": null,
+   "source_title": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_011ed10f961c48389cc7be8b8eca7322.pdf"
+  },
+  {
+   "page": 34,
+   "snippet": "920.14 Page 34 Before a permit may be issued for moving a building or structure, the enforcement officer shall inspect same and shall determine if it is in a safe condition to be moved, whether it may be reconditioned to comply with the Building Code and other requirements of the City Council for the use and occupancy for which it is to be used. Section 4.32. EXCAVATION OR HOLES Removal and filling of land, the construction, maintenance or existence within the jurisdiction of the governing body of any unprotected, unbarricaded, open and dangerous excavations, holes, pits which constitute or are reasonably likely to constitute a danger or menace to the public health, safety or welfare, are hereby prohibited; provided however, this section shall not prevent any excavation under a permit issued pursuant to these regulations or the Building Code of the governing body where such excavations a",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited",
+    "billboard",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 38,
+   "snippet": "920.14 Page 38 a mobile home park shall not be less than 4,000 square feet in area and in no instance shall there be more than one (1) mobile home permitted on a single lot. The minimum lot width shall be forty (40) feet at the building line. The minimum lot depth shall be one hundred (100) feet from the front lot line. (d) Buffer: A screening of evergreen trees and/or shrubs not less than six (6) feet in height after one full growing season and which at maturity is not less than twelve (12) feet high, shall be located and effectively maintained at all times along all park boundary lines except at established entrances and exits serving the park. Each mobile home shall be located at least ten (10) feet from the buffer. (e) Spacing: For a Mobile Home Park; No mobile home unit or other structure shall be located within twenty - five (25) feet of a mobile home park boundary line or public r",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 64,
+   "snippet": "920.14 Page 64 pennants and special event signs. Any buildings located in the area designated B - 3 shall be required to apply for a conditional use permit for any proposed alterations to the outside of a commercial building related to change in building color, signs, or artwork on said building(s). Any alterations to the outside appearance of a commercial building related to change of building color, signs painted on said building(s) and/or artwork on said building(s) located in areas zoned B - 3 shall not be made to said building if the conditional use permit is denied. Section 7.04. LOCATION (a) Signs - No sign shall be erected or placed nearer to any street right - of - way upon which said display faces than the building lines provided in zones where the use is permitted, except one sign advertising the primary nature of the business or industry conducted on the premises may be place",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "type",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 65,
+   "snippet": "920.14 Page 65 (c) Direction sign - Directional signs shall be permitted in all commercial and industrial districts only. Such signs shall not be placed closer than five feet to any street right - of - way line nor shall it be permitted to obstruct the flow or view of traffic. (d) Pennants and special events signs - Pennants and special events signs are allowed in commercial districts and shall not be permitted to obstruct the view or flow of traffic. (e) Signs, advertising, billboards and “bench” advertising erected on public property other than signs erected by public authority for public purposes are prohibited. (f) Signs so located as to prevent free ingress or egress from any door, window, or fire escape are prohibited. No sign shall be attached to a standpipe or fire escape. (g) On - premise signs erected, maintained, or continued which cause any interference to sight distance are ",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "920.14 Page 64 pennants and special event signs. Any buildings located in the area designated B-3 shal| be required to apply for a conditional use permit for any proposed alterations to the outside of a commercil building related to change in building color, signs, or artwork on said building(s). Any alterations to the outside appearance of a commercial building related to change of buiding color, signs painted on said building(s) and/or artwork on said building(s) located in areas zoned B-3 shall not be made to said building if the conditional use pemit is denied. Section 7.04. LOCATION (a) Signs No sign shall be erected or placed nearer to any right-of-way street upon which said display faces than the building lines provided in Zones where the use is permitted, except one sign advertising the primary nature of the business or industry conducted on the premises may be placed not closer ",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "type",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "c424c5035576ff31455f8678b07fe0995cfdc008707be51f54ea06733155be6f",
+   "source_document_id": null,
+   "source_title": "c424c5035576ff31455f8678b07fe0995cfdc008707be51f54ea06733155be6f.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_2d97a864d65c4da8b926de78b8a2b629.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "920.14 Page 44 5.05. (1). The intent of the central business district is to provide a focus of commerce and administrative activities of the trade area. Building upon its location at the convergence of principle thorough fares and highways, district requlations are designed to permit further development of the district for its purpoSe compact and convenient arrangenent of uses structures that is urban character. 5.05. in a (2). 5.05. (3) . of this Article. Statement of Purpose 5.05. (4). Permitted Uses See chart at end of this Article. (a) Churches, including parish houses, comunity house and educational buildings. to Conditional Uses (b) Fire Station. (c) Nursery, day care center or kindergarten. (d) Revival church (temporary) . General Regulations (a) There shall be not outdoor storage merchandise or materials and not outdoor processing in business district unless authorized as a condi",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "temporary",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2",
+   "source_document_id": null,
+   "source_title": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_011ed10f961c48389cc7be8b8eca7322.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "920.14 Page 45 It is intended that light industrial districts be located within the city so that such uses may be integrated with land uses, such as commercial and residential areas. Limitations are placed upon the degree of noise, smoke, glare, waste, and other features of industrial operations so as to avoid adverse effects. It is further intended that these light industrial uses act as a transition between heavier industrial uses and non industrial uses and not necessarily require railroad access major utility facilities. 5.06. (2). Permitted Uses 5.06. (3). uses 5.06. Regulations See chart at end of this Article. Conditional Uses (a) Gasoline, oil, alcohol or liquefied petroleum and will require the approval of the Board of Zoning Adjustment. district. (b) Uses which constitute a fire hazard or emit smoke, noise, odor Or dust which Would obnoxious Or detrimental to neighboring proper",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2",
+   "source_document_id": null,
+   "source_title": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_011ed10f961c48389cc7be8b8eca7322.pdf"
+  },
+  {
+   "page": 8,
+   "snippet": "920.14 Page 8 a. A statement of the factual determination by the Board of Zoning Adjustment which justifies the issuance of the permit; and b. A statement of the specific conditions which must be met for the use to be permitted. Convalescent Home: A home for the care of the aged or inform, or a place of rest for those suffering bodily disorders wherein two or more persons are cared for. Said home shall confirm and qualify for license under state law. Court: An open, unoccupied, unobstructed space, other than a yard on the same lot as a building. Day Care Center: Facilities for the day care and maintenance of children without living accommodations for the clientele. Such facilities shall be regulated if the center is designated to accommodate more than twelve children or if the center operates outside the residence of the owners regardless of the number of children. The definition shall i",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 44,
+   "snippet": "920.14 Page 44 5.05. (1). Statement of Purpose The intent of the central business district is to provide a focus of commerce and administrative activities of the trade area. Building upon its location at the convergence of principle thoroughfares and highways, district regulations are designed to permit further development of the district for its purpose in a compact and convenient arrangement of uses and structures that is urban character. 5.05. (2). Permitted Uses See chart at end of this Article. 5.05. (3). Conditional Uses (a) Churches, including parish houses, community house and educational buildings. (b) Fire Station. (c) Nursery, day care center or kindergarten. (d) Revival church (temporary). See chart at end of this Article. 5.05. (4). General Regulations (a) There shall be not outdoor storage of merchandise or materials and not outdoor processing in any business district unles",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "temporary",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 45,
+   "snippet": "920.14 Page 45 It is intended that light industrial districts be located within the city so that such uses may be integrated with land uses, such as commercial and residential areas. Limitations are placed upon the degree of noise, smoke, glare, waste, and other features of industrial operations so as to avoid adverse effects. It is further intended that these light industrial uses act as a transition between heavier industrial uses and non - industrial uses and not necessarily require railroad access or major utility facilities. 5.06. (2). Permitted Uses See chart at end of this Article. 5.06. (3). Conditional Uses (a) Gasoline, oil, alcohol or liquefied petroleum uses and will require the approval of the Board of Zoning Adjustment. (b) Uses which constitute a fire hazard or emit smoke, noise, odor or dust which would be obnoxious or detrimental to neighboring properties shall not be al",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 85,
+   "snippet": "920.14 Page 85 be continued, although such use does not conform to the provisions of such regulations except as otherwise provided herein. The Board of Adjustments shall not allow the enlargement or extension of a non - conforming use beyond the scope and area of its operation at the time the regulation which makes its use non - conforming was adopted, nor shall the Board permit a change from one non - conforming use is in the same or a more restrictive classification provided, however, the Board of Adjustments may grant approval, effective to maintain non - conforming use status, for enlargements, or extensions, made or to be made of the facilities of a non - conforming use where the use consists of the presenting of a major public attraction or attractions such as a sports event or events, which has been presented at the same site over such period of years and has such attributes and p",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "920.14 Page 85 be continued, although such use does not conform to the provisions of such regulations except as otherwise provided herein. The Board of Adjustments shall not allow the enlargement Or extension of a non-confOrming use beyond the scope and area of its operation at the time the regulation which makes its use non conforming was adopted, nor shall the Board permit a change from One non-con forming use is in the same Or nore restrictive classification provided, however, the Board of Adjustments may grant approval, effective to maintain non-conforming use status, for enlargements, Or extensions, made Or to be nade of the facilities of a non-conforming use where the use consists of the presenting of a major public attraction or attractions such as a sports event or events, which has been presented at the same site Over such period of years and has such attributes and public accep",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "cd540b29c7da35aae7c44ac80b3b0da1d01753181fc02d721a828887ba21c62a",
+   "source_document_id": null,
+   "source_title": "cd540b29c7da35aae7c44ac80b3b0da1d01753181fc02d721a828887ba21c62a.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_50c0d65c3bf84eadb357f396da10b611.pdf"
+  },
+  {
+   "page": 8,
+   "snippet": "920.14 Page 42 parks, recreational faci lities, hospital and institutions. (b) Uses similar to the above permitted uses, when in the opinion of the Board of Zoning Adjustment, it meets the regular needs and convenience of the adjacent residential areas . The burden of proof that the proposed use meets those criteria lies with the prospective developer. (c) 5.03. (4) . General Regulations for all Business Districts (a) There shall be no outdoor storage of merchandise or materials and no outdoor processing in any business district unless authorized as a conditional use. All above ground structures accessory to any outdoor use shal1 be located a minimum of twenty-five (25) feet from any front lot lines. Apartments. All business districts located On lots adj acent to a residential district shall maintain a minimum setback of twenty-five (25) feet on the side adj acent to the residential dist",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2",
+   "source_document_id": null,
+   "source_title": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_011ed10f961c48389cc7be8b8eca7322.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "920.14 Page 2 4.19 Permitted Area 4.20 Zoning Lot 4.21 Visibility 4.22 Dwellings In Non - residential Districts 4.23 Number of Buildings on Lot 4.24 Accessory Buildings 4.25 Prohibited Uses in All Residential District 4.26 Excavations, Soil Removal and Filling of Land 4.27 Construction Begun Prior to Adoption of Regulation 4.28 Voting Place 4.29 Essential Services 4.30 Building Grades 4.31 Building to be Moved 4.32 Excavation or Holes 4.33 Signs 4.34 Junk and/or Used Auto Parts Yard 4.35 Exclusive Use District 4.36 Public Notice Requirements ARTICLE V DISTRICT REGULATIONS SECTION 5.01 General Provisions 5.02 Residential Districts 5.03 B - 1: Neighborhood Business District 5.04 B - 2: General Business District 5.05 B - 3: Central Business District 5.06 M - 1: Light Industrial District 5.07 M - 2: Heavy Industrial District 5.08 FP : Floodprone Areas District 5.09 AG : Agricultural District",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "920.14 Page 11 story building covering one - quarter of the lot. Floor Area, Total: The area of all floors of a building including finished basements and covered porches. Floor Area, Usable: Any floor area within outside walls of a building, exclusive of areas in cellars, unfinished basements, utility area, unfinished attics, garages, open porches and accessory buildings. Foster Child: A child unrelated to a family by blood or adoption with whom he or she lives for the purposes of care and/or education. Garage, Private: An accessory building designed or used for the storage of motor driven vehicles owned and used by the occupants of the building to which it is accessory, for personal use only. Garage, Public: Any premises used for the storage or care of motor driven vehicles or place where any such vehicles are equipped for operation, repaired, or kept for enumeration, hire or sale. Home",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "temporary"
+   ],
+   "weight": 7,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 29,
+   "snippet": "920.14 Page 29 streets and lots, and which will not be so subdivided to where the existing or contemplated street and lot layout make it impractical to apply the requirements of this chapter to the individual building units in such group housing, the application of the terms of this chapter may be varied by the Board of Zoning Adjustment in a manner which will be in harmony with the character of the neighborhood. However, in no case shall the Board of Zoning Adjustment authorize a use prohibited in the district in which the housing is to be located, or a smaller lot area per family than the minimum required in such district or a greater height, or a smaller yard area than the requirements of this chapter permit in such an area. Section 4.17. STREETS, ALLEYS AND RAILROAD RIGHT - OF - WAY All streets, alleys and railroad right - of - way, if not otherwise specifically designated, shall be ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 33,
+   "snippet": "920.14 Page 33 Section 4.28. VOTING PLACE The provisions of these regulations shall not be so construed as to interfere with the temporary use of any property as a voting place in connection with a public election or referendum. Section 4.29. ESSENTIAL SERVICES The erection, construction, alteration or maintenance by public utilities or governmental departments or commission, of underground or overhead gas, electrical, steam or water distribution or transmission systems, collection, communication supply or disposal systems including mains, drains, sewers, pipes, conduits, wires, cables, fire alarm boxes, police call boxes, traffic signals, hydrants, towers, poles and other similar equipment and accessories in connection therewith, but not including buildings, reasonably necessary furnishing of adequate service by such public utilities or governmental departments or commissions, or for th",
+   "tags": [
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 42,
+   "snippet": "920.14 Page 42 parks, recreational facilities, hospital and institutions. (b) Apartments. (c) Uses similar to the above permitted uses, when in the opinion of the Board of Zoning Adjustment, it meets the regular needs and convenience of the adjacent residential areas. The burden of proof that the proposed use meets those criteria lies with the prospective developer. 5.03. (4). General Regulations for all Business Districts (a) There shall be no outdoor storage of merchandise or materials and no outdoor processing in any business district unless authorized as a conditional use. All above ground structures accessory to any outdoor use shall be located a minimum of twenty - five (25) feet from any front lot lines. (b) All business districts located on lots adjacent to a residential district shall maintain a minimum setback of twenty - five (25) feet on the side adjacent to the residential d",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 90,
+   "snippet": "920.14 Page 90 for amendment to the Zoning Ordinance be granted or denied, the Planning Commission shall forward its findings of fact and recommendation in writing to the City Council. Once the Planning Commission has made a determination of fact and recommendation to the City Council concerning the disposition of zoning on an individual tract of land, said tract of land, or any portion thereof, shall not be reconsidered for reclassification to the same zone by the Planning Commission for a period of at least six (6) months. Section 12.06. ACTION BY THE LEGISLATIVE BODY ON ZONING ORDINANCE AMENDMENT The City Council shall not act upon a proposed amendment to the Zoning Ordinance until it shall have received written findings of fact and recommendation thereon from the Planning Commission. Before an amendment to the Zoning Ordinance is granted the City Council must find that the map amendm",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "920.14 Page 65 (C) Direction sign - Directional signs shall be permitted in all commercial and industrial districts only. Such signs shall not be placed closer than five feet to any street right-of-way line nor shall it be permitted to obstruct the flow or view of traffic. (d) Pennants and special events signs - Pennants and special events signs are allowed in commercial districts and shall not be permitted to obstruct the view or flow of traffic. (e) Signs, advertising, bllboards and \"bench\" advertising erected on public property other than signs erected by public authority for public purposes are prohibited. () Signs so located as to prevent free ingress or egress from any do0r, window, or fire escape are prohibited. No sign shall be attached to a standpipe or fire escape. (9) On-premise signs erected, maintained, or continued which cause any interference to sight distance are prohibit",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "c424c5035576ff31455f8678b07fe0995cfdc008707be51f54ea06733155be6f",
+   "source_document_id": null,
+   "source_title": "c424c5035576ff31455f8678b07fe0995cfdc008707be51f54ea06733155be6f.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_2d97a864d65c4da8b926de78b8a2b629.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "920.14 Page 83 the request can be initiated or conditions of a continuing nature. Any such conditions shall be recorded in the Board's ninutes and the use the conditional permit along with a reference to specific section in the zoning regulation listing the conditional The Board shall have the power to revoke use under Consideration. Conditional use permits or variances for non-Compliance with the condition thereof. Furthermore, the Board shall have a right of actin to Compel offending structures or uses removed at the cost of the violator and may have judgment in perSonam for such cost. on 2. Granting of a conditional use permit does not exempt the applicant from complying with all of the requirements of building, housing and other requlations. permit has Board, set, 3 In any case where a conditional use not been exercised within the time limit set by the within one year if no specific ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "cd540b29c7da35aae7c44ac80b3b0da1d01753181fc02d721a828887ba21c62a",
+   "source_document_id": null,
+   "source_title": "cd540b29c7da35aae7c44ac80b3b0da1d01753181fc02d721a828887ba21c62a.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_50c0d65c3bf84eadb357f396da10b611.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "920.14 Page 40 regulations of the zoning regulations and all special conditions. 5.02. (3) (h). Non-con forming Mobile Homes (a) In cases where a lawful mobile hone park exists on the effective date of this ordinance or an amendment thereto and such Would be prohibited by the terms of this ordinance, then, such mobi le home park shall not be modified, reconstructed, replaced, enlarged or extended to occupy a larger area of land than occupied on the date of the ordinance. All regulations pertaining to any such existing mobile home park shall continue in full force and effect until modified by ordinance. Any other provision of this ordinance notwithstanding, all existing mobile homes within the City of Central which comply with all existing requlations at the time of passage of this ordinance shall be allowed to remain in their present location, but shall be required to maintain a lot size",
+   "tags": [
+    "area",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 6,
+   "source_sha256": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2",
+   "source_document_id": null,
+   "source_title": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_011ed10f961c48389cc7be8b8eca7322.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "920.14 Page 46 (b) Manufacturing, fabrication and/or processing of any commodity, subject to limitations inposed under \"conditional uses\" below. (c) Accessory buildings and uses garages and uses accessory to the principle use. other buildings and (d) See Chart at the end of this Article. 5.07. (3). Conditional Uses The following shall require a Conditional use permit in accordance with the procedure in Section 4.03. Any use not in conflict with other Ordinances of the City, provided however, that the following uses shall be considered conditional uses and require approval by the Board of Zoning Adjustments: bag cleaning, boiler works, tank works, central mizing plant for cement, mortar, plaster or paving materials, Coke oven, Curing tanning and storage of raw hides and skins, distillation of bones, coal, wood or tar, fat rendering forge plant, foundry o metal fabrication plant, gasoline ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2",
+   "source_document_id": null,
+   "source_title": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_011ed10f961c48389cc7be8b8eca7322.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "920.14 Page 47 (FIA) or an FIA Flood Hazard Boundary Map for Central City or, based on other reliable engineering data, areas determined by the Planning Commission to be subject to inundation by a 100-year flood. 5.08. (3). Definitions (a) Intermediate Regional Flood: An intermediate Regional Flood is a flood that could occur once in 100 years on an although it could occur in any year, as determined by average, flood plain studies conducted by the U.S. Corps of Engineers for maior watersheds in Central City. The peak flow of this flood was developed from statistical analyses of stream flow, precipitation records and runoff characteristics for the study areas. (b) 100-year Flood: A 100-year flood is one that could occur once in 100 years on an average, although it could Occur in any year. 5.08. (4). Warning The intent of this section is to ensure that potential land buyers and developers ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 6,
+   "source_sha256": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2",
+   "source_document_id": null,
+   "source_title": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_011ed10f961c48389cc7be8b8eca7322.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "920.14 Page 49 part shall comply with off-street parking requirements, except for prohibition of sales *Auto Wrecking, Dismantling or Salvage Must be enclosed within a fence at least seven feet in height and adequate to obstruct view, noise and passage of persons; chain link or similar fence will be permitted if screen planting adequate to obstruct view is provided *Bait Store or Sales (live bait) Bakery, Retail Bakery, Wholesale Bicycde and/or Lawnmower Sales and Repair Boat & Marine Sales Book Store Book Store, Adult Building Specialties Store Business Machines & Office Equipment Camera & Photographic Supplies Candy, Nut and Confectionery Catering Shop Curb Market or Farmer's Market Dairy Product Sales Delicatessen Department Store *Distilled spirits and wine retail Package store Drug Store Fabric Store Farm Equipment & Supplies Sales Feed Store Fixture Sales Floor Covering Sales Flora",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 6,
+   "source_sha256": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2",
+   "source_document_id": null,
+   "source_title": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_011ed10f961c48389cc7be8b8eca7322.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "920.14 Page 5 \"shall\" is mandatory, not merely directive, the word \"may\" is permissive. The word \"person\" includes a firm, association, organization, partnership, trust, company, or corporation, as well as an individual. The words \"used or occupied\" include the words \"intended, designed, or arranged to be used or occupied.\" The word \"lot\" includes the words \"plot\" or \"parcel\". The words \"erected or altered\" include the words \"constructed, reconstructed, restored, extended or structurally altered\". Section 2.02. Definitions Words and phrases used in this Ordinance are defined as follows: Accessory Use of Structure: A use or structure on the same lot with, and of a nature customarily incidental and subordinate to, the principal use or structure. Administrative Official: The City Administrator of the City of Central City, Kentucky; or in the alternative, such person designated by the Mayor ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 9,
+   "snippet": "920.14 Page 9 themselves and may eat or drink the food, refreshments, or beverages in automobiles on the premises. Dwelling Unit: A single unit providing complete, independent living facilities for one (1) or more persons including permanent provisions for living, sleeping, eating, cooking and sanitation. Dwelling Unit, Single Family: A detached conventional or prefabricated building containing one dwelling unit and used exclusively by one family; it shall not be construed to include mobile homes. Dwelling Unit, Two - family: A building designed exclusively for occupancy by two (2) families independent of each other, such as a duplex dwelling unit. Dwelling, Group: A group of two (2) or more single - family semi - detached or multiple dwellings occupying a parcel of land in common ownership and having yards or courts in common. Dwelling, Mobile Home: A detached, movable or portable, dwel",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "920.14 Page 12 mounted flat against the wall of the principle building. (3) No substantial traffic increase shall be generated in the residential area. (4) Home occupations shall not generate any atmospheric pollution, light flashes, glare, odors, noise, vibration or truck or other heavy traffic. Hospital: An institution providing health services, primarily for in - patients and medical or surgical care of the sick or injured, including as an integral part of the institution, such related facilities as laboratories, out - patient department, training facilities, central service facilities and staff officers. Hotel - Motel: A building occupied or used as a more or less temporary abiding place of individuals or groups of individuals with or without meals, and in which there are more than five (5) sleeping rooms. Inspector: The Building Inspector of the city or his authorized agent. Junk: T",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 6,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 20,
+   "snippet": "920.14 Page 20 Underground Transportation of Coal: The transportation of coal underground through mines, entries, tunnels, workings, haulways, and passageways in coal seams and subsurface strata lying more than 150 feet in depth below surface elevation. The transportation of coal underground shall include the extraction and removal of coal and subsurface strata and the provision of adequate roof support and ventillation to create and operate the mines, entries, tunnels,workings, haulways, and passageways necessary for the transportation of coal underground, but shall not include the creation of or extraction of coal from working panels not developed for the underground transportation of coal mined from other areas. Access, ingress and egress to and from areas where the coal is to be, is being, or has been mined may be had through the mines, entries, tunnels, workings, haulways and passag",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 32,
+   "snippet": "920.14 Page 32 plates shall not be parked or stored in any residential district other than in completely enclosed buildings. Boats and boat trailers are exempt from the provisions of this section. (b) Commercial highway trucks and semi - trailers shall not be parked or stored in residentially zoned districts at any time with the exception that a commercial highway truck used for business purposes by the occupant of a residential property may be parked in a driveway of that property. (c) It shall be a prohibited use in an open area in all residentially zoned district to park or store wrecked or junked vehicles, power driven construction equipment, used lumber or metal, or any other miscellaneous scrap or salvageable material. Section 4.26. EXCAVATION, SOIL REMOVAL AND FILLING OF LAND The principal use of land for the excavation, soil removal, filling or depositing of any type of earth mat",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 40,
+   "snippet": "920.14 Page 40 regulations of the zoning regulations and all special conditions. 5.02. (3)(h). Non - conforming Mobile Homes (a) In cases where a lawful mobile home park exists on the effective date of this ordinance or an amendment thereto and such would be prohibited by the terms of this ordinance, then, such mobile home park shall not be modified, reconstructed, replaced, enlarged or extended to occupy a larger area of land than occupied on the date of the ordinance. All regulations pertaining to any such existing mobile home park shall continue in full force and effect until modified by ordinance. (b) Any other provision of this ordinance notwithstanding, all existing mobile homes within the City of Central which comply with all existing regulations at the time of passage of this ordinance shall be allowed to remain in their present location, but shall be required to maintain a lot s",
+   "tags": [
+    "area",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 6,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 46,
+   "snippet": "920.14 Page 46 (b) Manufacturing, fabrication and/or processing of any commodity, subject to limitations imposed under \"conditional uses\" below. (c) Accessory buildings and uses - garages and other buildings and uses accessory to the principle use. (d) See Chart at the end of this Article. 5.07. (3). Conditional Uses The following shall require a conditional use permit in accordance with the procedure in Section 4.03. Any use not in conflict with other Ordinances of the City, provided however, that the following uses shall be considered conditional uses and require approval by the Board of Zoning Adjustments: bag cleaning, boiler works, tank works, central mixing plant for cement, mortar, plaster or paving materials, coke oven, curing tanning and storage of raw hides and skins, distillation of bones, coal, wood or tar, fat rendering, forge plant, foundry or metal fabrication plant, gasol",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 47,
+   "snippet": "920.14 Page 47 (FIA) or an FIA Flood Hazard Boundary Map for Central City or, based on other reliable engineering data, areas determined by the Planning Commission to be subject to inundation by a 100 - year flood. 5.08. (3). Definitions (a) Intermediate Regional Flood: An intermediate Regional Flood is a flood that could occur once in 100 years on an average, although it could occur in any year, as determined by flood plain studies conducted by the U.S. Corps of Engineers for major watersheds in Central City. The peak flow of this flood was developed from statistical analyses of stream flow, precipitation records and runoff characteristics for the study areas. (b) 100 - year Flood: A 100 - year flood is one that could occur once in 100 years on an average, although it could occur in any year. 5.08. (4). Warning The intent of this section is to ensure that potential land buyers and devel",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 6,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 49,
+   "snippet": "920.14 Page 49 part shall comply with off - street parking requirements, except for prohibition of sales *Auto Wrecking, Dismantling or Salvage * * * * * * C C Must be enclosed within a fence at least seven feet in height and adequate to obstruct view, noise and passage of persons; chain link or similar fence will be permitted if screen planting adequate to obstruct view is provided *Bait Store or Sales (live bait) * * * C R R C * Bakery, Retail * * * R R R C * Bakery, Wholesale * * * * R R R * Bicycle and/or Lawnmower Sales and * * * * R R C * Repair Boat & Marine Sales * * * C R R R * R - 1 R - 2 R - 3 B - 1 B - 2 B - 3 M - 1 M - 2 Book Store * * * R R R C * Book Store, Adult C Building Specialties Store * * * R R R R * Business Machines & Office Equipment * * * * R R C * Camera & Photographic Supplies * * * R R R C * Candy, Nut and Confectionery * * * R R R C * Catering Shop * * * R R",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 6,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 67,
+   "snippet": "920.14 Page 67 (a) Local public utility distributing and collecting structures such as pipes and transmission lines, transformers and meters. Large utility structures such as electrical substations or gas pumping stations are permitted only as conditional uses. ARTICLE VIII OFF - STREET PARKING AND LOADING REQUIREMENTS Section 8.01. OFF - STREET PARKING REQUIREMENTS In all zoning districts, except B - 3, Central Business District, off - street parking spaces for the storage and parking of motor vehicles for the use of occupants, employees and patrons of the buildings hereafter erected, or enlarged after the effective date of these regulations, shall be provided as herein prescribed. The remodeling or alteration of present buildings would be exempt from these provisions if: (a) the exterior dimensions are not changed; and (b) any increase in floor space is confined within the basic struct",
+   "tags": [
+    "area",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 77,
+   "snippet": "920.14 Page 77 erected on any single lot of record at the effective date of adoption or amendment of this Ordinance, notwithstanding limitations imposed by other provisions of this Ordinance. Such lot must be in separate ownership and not of continuous frontage with other lots in the same ownership. This provision shall apply even though such lot fails to meet the requirements for area or width, or both that are applicable in the district, provided that yard dimensions and other requirements other than these applying to area or width of the lot shall conform to the regulations for the district in which such lot is located. Variance of yard requirements shall be obtained only through action of the Board of Zoning Adjustment. If two or more lots or combinations of lots and portions of lots with continuous frontage in single ownership are of record at the time of passage or amendment of thi",
+   "tags": [
+    "fee",
+    "dimension",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 78,
+   "snippet": "920.14 Page 78 the same or a more restrictive classification. (e) Cessation. If any such non - conforming use of land ceases for any reason for a period of more than thirty (30) days, any subsequent use of such land shall conform to the regulations specified by this Ordinance for the district in which such land is located. However, for mobile homes, see Section 5.02(3)(i). Section 9.04. NON - CONFORMING STRUCTURES (a) Continuance. In cases where a lawful structure exists on the effective date of this Ordinance or of an amendment thereto and such structure could not be built under the terms of this Ordinance or amendment thereto by reason of restrictions on area, building site, coverage, height, yards, location on the building site, or other requirements concerning the structure, the structure may be continued as long as it remains otherwise lawful. (b) Enlargement. No such non - conformi",
+   "tags": [
+    "fee",
+    "dimension",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 83,
+   "snippet": "920.14 Page 83 the request can be initiated or conditions of a continuing nature. Any such conditions shall be recorded in the Board's minutes and on the conditional use permit along with a reference to the specific section in the zoning regulation listing the conditional use under consideration. The Board shall have the power to revoke conditional use permits or variances for non - compliance with the condition thereof. Furthermore, the Board shall have a right of action to compel offending structures or uses removed at the cost of the violator and may have judgment in personam for such cost. 2. Granting of a conditional use permit does not exempt the applicant from complying with all of the requirements of building, housing and other regulations. 3. In any case where a conditional use permit has not been exercised within the time limit set by the Board, or within one year, if no specif",
+   "tags": [
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 88,
+   "snippet": "920.14 Page 88 (a) Remedies. In case any building or structure is, or is proposed to be erected, constructed or reconstructed, or any building structure or land is, or is proposed to be used in violation of this ordinance, the enforcement officer or any other appropriate property owner who would be damaged by such violation, in addition to other remedies may institute an injunction, mandamus or appropriate action or proceeding to prevent the work or occupancy of such building, structure or land in any court of competent jurisdiction. (b) Penalties. Any person violating any provision of this Ordinance shall, upon conviction, be fined not less that $10 nor more that $500 for each conviction. Each day of violation shall constitute a separate offense. Section 11.05. CLARIFICATION OF ADMINISTRATIVE JURISDICTION The following is a recapitulation of the administrative agencies with jurisdiction",
+   "tags": [
+    "fee",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Green River Green River Little Cypress Creek Nelson Creek Green River Cypress Creek Green River Green River £ ¤ 431 £ ¤ 62 £ ¤ 431 \" ) WK ¾ À 1379 ¾ À 2107 ¾ À 70 ¾ À 604 ¾ À 1031 ¾ À 277 ¾ À 2687 ¾ À 3038 ¾ À 189 ¾ À 6114 ¾ À 602 ¾ À 304 ¾ À 2103 ¾ À 2697 ¾ À 2691 ¾ À 2106 ¾ À 189 ¾ À 277 Holt Rd Clark St N 8Th St S Cherry Hill Rd Keeling Rd Bevier Rd Charlie Brown Rd W Whitmer St Cleaton Rd Humphrey Rd River Rd H uehl s H ill S t Main St Youngstown Rd R i v e r v i e w D r B r a ke St Beech St O ld G re e nvi l le R d Knight Hill Rd Kameron St Ferguso n L n Ford St Premium Dr Mc C on n a l D r Sears St Doss Ln For t ne y S t Hillside Rd Wat e rworks R d Ob a nn o n Ln James Ter r ac e D r Clifton Ln P o w e r L i n e S t W i llow Glen R d Lynch Ln Old Central City Rd Allen Ln B l ue Bird S t Circle Dr K eeling D r Church St Stillhouse Bend Ln Cl y de Wee B r o w n J u nio r Blvd String",
+   "tags": [
+    "dimension",
+    "illumination"
+   ],
+   "weight": 5,
+   "source_sha256": "79e65e16cdad4de8aad6ce9a83452a4704ec34c41c4afee5a400acd4f0a864d8",
+   "source_document_id": null,
+   "source_title": "79e65e16cdad4de8aad6ce9a83452a4704ec34c41c4afee5a400acd4f0a864d8.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_7d19e4ba4a7c46a19d8dabd11542eb5c.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "920.14 Page 39 permitted on both sides -- 32 feet. e. permitted on one si de only 23 feet. permitted -- 14 feet. f. One-way street with guest parking g. The mobile home park entrance shall be thirty-six (36) feet wide with no parking permitted. (h) All mobile homes shal l be underpinned or skirted in an attractive manner; each mobile home shall provide an accessory structure of a minimum of 100 square feet of outside storage which shall be placed a minimum of ten (10) feet. One-way street with no parking seasons. (i) Not less than eight (8) percent of the aross site area of the mobile home park shall be devoted to recreational facilities generally provided in a central location. Recreation areas may include space for community buildings and Communmity use facilities, such as indoor recreation areas, swimming pools, park office and service buildings, and self service laundry facilities to",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 5,
+   "source_sha256": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2",
+   "source_document_id": null,
+   "source_title": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_011ed10f961c48389cc7be8b8eca7322.pdf"
+  },
+  {
+   "page": 19,
+   "snippet": "920.14 Page 53 Hospital or Sanitarium Incinerator *Junk Yard; ind. Storage, bailing or sale of rags, paper, iron or junk, must be enclosed within a fence at least 6 ft. high and to the ground and adequate to obstruct view, noise and passage of persons, rodents and other vermin Laboratory Laboratory, Dental or Medical Laundry, Self Service Laundry and/or Dry Cleaning Pick-up Station Laundry, Linen Supply or Diaper Service Loan Office Locksmith Machine Shop Nursery, Day Care or Kindergarten Nursing Home, Intermediate or Skilled Nursing Home, Personal Care Office Optician Painting and Decorating Contractor Photographic Studio and/or Processing Picture Framing and/or miror silvering Plumbing Shop Police Sub-station inc. State Police Post Offce Post Office Branch Pressing, Altering and Repair of Apparel Radio and TV Store and Repair Shop Reducing/Exercise Salon Revival Church (temporary) on p",
+   "tags": [
+    "dimension",
+    "illumination",
+    "temporary"
+   ],
+   "weight": 5,
+   "source_sha256": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2",
+   "source_document_id": null,
+   "source_title": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_011ed10f961c48389cc7be8b8eca7322.pdf"
+  },
+  {
+   "page": 20,
+   "snippet": "920.14 Page 54 duration with renewal for not more than three such periods Rug and Carpet Cleaning *Sand and Gravel Storage Yard Schools, Elementary and/or Secondary meeting all requirements of compulsory education laws of the State of Kentucky Shoe Repair Shop Sign Shop Studio for professional teaching of Fine Arts Studio for dance or music Tailor Shop Tattoo Shop Taxidermist Trade School Travel Trailer Park *Transit & Taxi Vehicle Storage & Service Venetian Blind & Metal Cleaning & Fabrication Veterinary Clinic Vulcanizing Shop CULTURE, ENTERTAINMENT RECREATION *Amusement, Commercial (e.g. bowling, miniature golf, arcades, biliard parlors, pool halls, etc. Art Gallery or Museum Auditorium *Carnival or Circus; as a temporary use or permit issued by Administrative Official permit to be valid for period not exceeding 3 days with renewal limited to one more such period Club or Lodge, Privat",
+   "tags": [
+    "sign",
+    "temporary",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2",
+   "source_document_id": null,
+   "source_title": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_011ed10f961c48389cc7be8b8eca7322.pdf"
+  },
+  {
+   "page": 25,
+   "snippet": "920.14 Page 59 3 sub ject to approval of the Board of 2oning hdjstmerts accordance with the provi sions of this ordinanre. Encl osure of Uses. Every use in any district, e1ep ar M-1 and M-2 District, shall be conduct ed entireiy M1 in a comp letely encl osed structure unless expressly Kemped fr enclOSure regu1rements. Uses that are not regui red Mithi a completely enciosed structure are indícated by ar asterisr (located at the end of the named use, not in the P-2, et al. columns. Asterisks located in the R-2, et al. coluTnS indicate uses that are not permitted. ] (Uses that are in exístence at the time of passage of an amendment to the Chart of Permítted Uses that prohibits the further usage of that type are al lowed to continue unless the is terminated/ends for a period of thirty (30) days and are indi cated by a (+) at the end of the named use.] use 5. The location of any distilled spi",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2",
+   "source_document_id": null,
+   "source_title": "7df24ea603fa2dd817a1c58b54963482f1a6951fbe946db567a650b3422104b2.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_011ed10f961c48389cc7be8b8eca7322.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "ZONING ORDINANCE FOR THE CITY OF CENTRAL CITY, KENTUCKY ARTICLE I TITLE, ENACTING CLAUSE, PURPOSE AND SCOPE SECTION 1.01 Title 1.02 Enacting Clause 1.03 Purpose and Scope ARTICLE II DEFINITIONS SECTION 2.01 General Rules 2.02 Definitions ARTICLE III ESTABLISHMENT OF ZONING DISTRICTS SECTION 3.01 Establishment of Districts 3.02 Zoning Maps 3.03 Interpretation of Zoning District Boundaries 3.04 Changes in Zoning Maps 3.05 Annexed Territory ARTICLE IV GENERAL PROVISIONS SECTION 4.01 Application of Regulations 4.02 Coordination with Subdivision Regulations 4.03 Conditional Use Regulations 4.04 Approved Water Supply and Sewerage Disposal for Buildings 4.05 Townhouses 4.06 Duplexes 4.07 Junkyards 4.08 Obstructions to Vision at Street Intersections on Corner Lots 4.09 Side Yard Regulations for Corner Lots 4.10 Regulations for Double - frontage Lots 4.11 Application of Yards to One Building Only",
+   "tags": [
+    "dimension",
+    "authority",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "920.14 Page 4 TITLE, ENACTING CLAUSE, PURPOSE AND SCOPE Section 1.01. Title This document shall be known as \"The Zoning Ordinance of the City of Central City, Kentucky\", and all explanatory matter therein is hereby adopted and incorporated as part of this Ordinance. Section 1.02. Enacting Clause Be it ordained by the City of Central City, Kentucky as follows: Pursuant to the authority granted by Kentucky Revised Statutes, Chapter 100, Section 100.201 through 100.271 to a legislative body to regulate and restrict the height, number of stories, size of buildings and other structures, the percentage of the lot that may be occupied, the sizes of yards, courts and open spaces, the density of population, and the location and use of purposes, that the City of Central City be divided into districts as hereinafter described and that the regulations, restrictions, and boundaries of districts shall",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "920.14 Page 18 parts. Service Station: A building or structure designed or used for the retail sale or supply of fuels, lubricants, air, water and other operating commodities for motor vehicles, aircraft or boats, and including the customary space and facilities for the installation of such commodities on or in vehicles and including space for facilities for the temporary storage of vehicles, minor repair or servicing. Setback: The required distance between every structure and any lot line of the lot on which its located. Shopping Center: A group of two (2) or more adjoining or adjacent retail stores or service establishments to be planned, constructed, and developed as a single unit, and including any additional such stores or establishments subsequently adjoining or adjacent thereto. Sign: An identification, description, illustration, or device which is affixed to or represented, direc",
+   "tags": [
+    "sign",
+    "dimension",
+    "temporary"
+   ],
+   "weight": 5,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 25,
+   "snippet": "920.14 Page 25 use permit authorizes. (j) Permanent Approval: Once the Board of Zoning Adjustment has completed a conditional use permit and all the conditions required are of such type that they can be completely and permanently satisfied, the administrative official, upon request by the applicant, may if the facts warrant, make a determination that the conditions have been satisfied and enter the facts which indicae that the conditions have been satisfied and the conclusion in the margin of the conditional use permit, which is on file with the City Clerk. Thereafter, the said use, if it continues to meet the other requirements of the regulations, will be treated as a permitted use. Section 4.04. APPROVED WATER SUPPLY AND SEWERAGE DISPOSAL FOR BUILDINGS No person shall construct any building without water supply and sewerage disposal facilities approved by the State Plumbing Inspector a",
+   "tags": [
+    "dimension",
+    "authority",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 27,
+   "snippet": "920.14 Page 27 property owners. Section 4.07. JUNKYARDS Junkyards are not designated as permitted uses in any district and consequently are non - conforming uses in all districts. They shall conform with articles prescribing regulations for non - conforming uses. Section 4.08. OBSTRUCTIONS TO VISION AT STREET INTERSECTIONS ON CORNER LOTS Within the area defined by the intersection of any two right - of - way lines of streets or railroads and a straight line intersecting those two right - of - way lines a points thirty (30) feet from the intersection, no obstructions to vision between a height of two and one - half (2 1/2) feet and twelve (12) feet above the imaginary plane defined by those three points of intersection are permitted. Section 4.09. SIDE YARD REGULATIONS FOR CORNER LOTS The side yard requirement for all principal buildings on corner lots shall be such that no corner buildin",
+   "tags": [
+    "dimension",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 30,
+   "snippet": "920.14 Page 30 unobstructed triangular area formed by the street from the intersection of the street lines, or in the case of a rounded corner, from the intersection of the street property lines extended. Section 4.22. DWELLINGS IN NON - RESIDENTIAL DISTRICTS No dwelling shall be erected in the M - 1 or M - 2 districts. Dwellings shall be permitted in business districts only by conditional use permit as noted in the Chart of Permitted Uses. Section 4.23 NUMBER OF BUILDINGS ON LOT Restriction: Each dwelling hereafter erected or structurally altered shall be located on a lot and except in the case of a multiple housing project, or PUD, there shall be not more than one main building and an accessory building on any single lot. Section 4.24. ACCESSORY BUILDINGS Except as otherwise permitted in these regulations, accessory buildings shall be subject to the following regulations: (a) Where the",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 31,
+   "snippet": "920.14 Page 31 building shall not project beyond the front yard line required on the lot in rear of such corner lot. (g) In any residential zone no garage shall be erected closer to the side lot line than the permitted distance for the dwelling unless the garage shall be completely to the rear of the dwelling in which event the garage may be erected five (5) feet from the side and rear lot line. No garage or portion thereof shall extend beyond the front building line of the dwelling. Attached garages of fireproof construction may be erected to extend beyond the front line of the house in those areas which are being developed according to a common plan that includes the construction of attached garages extending beyond the front line of the house, except that such garages shall not encroach in or upon the minimum front yard areas as required by these regulations and provided the cornice, ",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  },
+  {
+   "page": 39,
+   "snippet": "920.14 Page 39 permitted on both sides -- 32 feet. e. One - way street with guest parking permitted on one side only 23 feet. f. One - way street with no parking permitted -- 14 feet. g. The mobile home park entrance shall be thirty - six (36) feet wide with no parking permitted. (h) All mobile homes shall be underpinned or skirted in an attractive manner; each mobile home shall provide an accessory structure of a minimum of 100 square feet of outside storage which shall be placed a minimum of ten (10) feet. (i) Not less than eight (8) percent of the gross site area of the mobile home park shall be devoted to recreational facilities generally provided in a central location. Recreation areas may include space for community buildings and community use facilities, such as indoor recreation areas, swimming pools, park office and service buildings, and self - service laundry facilities to ser",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 5,
+   "source_sha256": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832",
+   "source_document_id": null,
+   "source_title": "8970f428a6221755491db84bc2327a0004a462ee9917ed699055f551c1a00832.pdf",
+   "official_url": "https://www.centralcityky.org/_files/ugd/9aaaf7_ffc46c2a839b4ad99abc945f3fa28da1.pdf"
+  }
+ ]
+}

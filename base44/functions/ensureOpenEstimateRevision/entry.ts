@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { estimateAuditSnapshot, estimateQuoteIssueKey } from '../../shared/estimateRevisionAudit.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
@@ -97,9 +98,15 @@ async function settleCreatedRevisionNumber(RevisionService: any, estimateId: str
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
-    await authenticateSignShopSession(base44, body?.session_token);
+    // Revision writes were gated solely on the custom session token, which left
+    // the audit trail empty when callers ran under plain request-context auth.
+    // Fall back to auth.me() so either auth path unblocks the write.
+    let actor = null;
+    try { actor = await authenticateSignShopSession(base44, body?.session_token); }
+    catch { actor = await base44.auth.me().catch(() => null); }
+    if (!actor?.id && !actor?.email) return Response.json({ error: 'Authentication required.' }, { status: 401 });
     const estimateId = String(body?.estimate_id || '').trim();
     const expectedUpdatedDate = String(body?.expected_estimate_updated_date || '').trim();
     const reason = String(body?.reason || '').trim();
@@ -158,7 +165,7 @@ Deno.serve(async (req) => {
       new_quote_total: num(before.quote_total),
       previous_total_cost: num(before.total_cost),
       new_total_cost: num(before.total_cost),
-      change_summary: ['Revision opened — changes not yet finalized'],
+      change_summary: ['Revision opened â€” changes not yet finalized'],
       estimate_snapshot_before: before,
       estimate_snapshot_after: {},
       work_order_id: estimate.work_order_id || '',
@@ -198,7 +205,7 @@ Deno.serve(async (req) => {
     return Response.json({ revision: settled, reused: false });
   } catch (error) {
     const status = Number(error?.status || error?.statusCode || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('ensureOpenEstimateRevision error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Estimate revision could not be started safely.' : error.message,

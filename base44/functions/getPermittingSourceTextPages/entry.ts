@@ -1,9 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { readSourceEvidencePages } from '../../shared/jurisdictionSourceTextSegments.mjs';
 
 Deno.serve(async req => {
   try {
-    const base44=createClientFromRequest(req);
+    const base44=withEntityRateLimitRetry(createClientFromRequest(req));
     const user=await base44.auth.me().catch(()=>null);
     if (!user || !['admin','user'].includes(user.role)) return Response.json({error:'Staff access required'},{status:403});
     const body=await req.json().catch(()=>({}));

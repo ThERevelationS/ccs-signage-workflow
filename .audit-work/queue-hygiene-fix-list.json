@@ -1,0 +1,38 @@
+[
+  {
+    "id": "outbox-pending:6ae9b6d981ef452c73ec4482",
+    "status": "sources_found",
+    "reason": "county-less row matches no profile — cannot place",
+    "t": "2026-11-10T08:40:30.083Z"
+  },
+  {
+    "id": "outbox-pending:6ae9b2c53cf111bf03658a6d",
+    "status": "sources_found",
+    "reason": "county-less row matches no profile — cannot place",
+    "t": "2026-11-10T08:40:30.092Z"
+  },
+  {
+    "id": "outbox-pending:6ae9b1889c4839d8aff26b92",
+    "status": "sources_found",
+    "reason": "county-less row matches no profile — cannot place",
+    "t": "2026-11-10T08:40:30.101Z"
+  },
+  {
+    "id": "outbox-pending:6ae99f20c55548d901b74afb",
+    "status": "sources_found",
+    "reason": "county-less row matches no profile — cannot place",
+    "t": "2026-11-10T08:40:30.107Z"
+  },
+  {
+    "id": "outbox-pending:6ae99f1cc4361c714c40ef19",
+    "status": "sources_found",
+    "reason": "county-less row matches no profile — cannot place",
+    "t": "2026-11-10T08:40:30.112Z"
+  },
+  {
+    "id": "outbox-pending:6ae99ed3a726f91a534e3e0f",
+    "status": "sources_found",
+    "reason": "county-less row matches no profile — cannot place",
+    "t": "2026-11-10T08:40:30.118Z"
+  }
+]

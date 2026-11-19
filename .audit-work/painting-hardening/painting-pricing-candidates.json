@@ -1,0 +1,32 @@
+{
+ "src/components/estimator/paint/paintCalc.js": {
+  "candidateFile": "painting-pricing-candidate-paintCalc.js",
+  "sha256": "49fc1502d9072e6adf96bad1360bc448e7e50928d96fd7a6bc249a43a1178dde",
+  "bytes": 17210,
+  "lines": 369,
+  "lineEndings": "LF",
+  "terminalLF": true,
+  "existsOnRemote": true,
+  "remoteSha256": "d6785bf2cb5676603c299528acc446de3202c6691ee47a7260e7699e984e1761"
+ },
+ "src/components/estimator/paint/paintPricingAvailability.js": {
+  "candidateFile": "painting-pricing-candidate-paintPricingAvailability.js",
+  "sha256": "da5a648bfe4bbda3e7ee1f3de798afe1bf6dc4f2b024314167083e46b6e384fc",
+  "bytes": 18061,
+  "lines": 358,
+  "lineEndings": "LF",
+  "terminalLF": true,
+  "existsOnRemote": false,
+  "remoteSha256": null
+ },
+ "src/pages/PaintingEstimator.jsx": {
+  "candidateFile": "painting-pricing-candidate-PaintingEstimator.jsx",
+  "sha256": "96e45eb0954746cbbaadf0af67085b0997131b15dfb4252053f72b055e34ffcc",
+  "bytes": 38056,
+  "lines": 659,
+  "lineEndings": "LF",
+  "terminalLF": true,
+  "existsOnRemote": true,
+  "remoteSha256": "ec3e893f942fed3a0adb0787834c9017f3e9ef8e9f45dd27e530a45b7b1d8bfb"
+ }
+}

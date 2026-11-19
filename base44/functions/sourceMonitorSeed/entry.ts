@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.52";
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { defaultCadence, computeNextCheckDue } from "../../shared/sourceMonitorScanner.ts";
 
 // ── Source Monitor Seed (Phase 11) ──
@@ -8,7 +9,7 @@ import { defaultCadence, computeNextCheckDue } from "../../shared/sourceMonitorS
 
 Deno.serve(async (req: Request) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const user = await base44.auth.me().catch(() => null);
     if (!user) return Response.json({ error: "Authentication required" }, { status: 401 });
     if (user.role !== "admin") return Response.json({ error: "Forbidden — admin only" }, { status: 403 });

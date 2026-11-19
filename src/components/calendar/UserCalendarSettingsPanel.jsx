@@ -173,7 +173,7 @@ export default function UserCalendarSettingsPanel({ userEmail, sessionToken, onS
             {STAGES.map(s => {
               const active = (settings.work_order_stages || []).includes(s.value);
               return (
-                <button
+                <button type="button"
                   key={s.value}
                   onClick={() => toggleStage(s.value)}
                   className="px-3 py-1 rounded-full text-xs font-medium border transition-all"

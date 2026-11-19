@@ -1,0 +1,206 @@
+{
+  "synthetic": true,
+  "localOnly": true,
+  "results": [
+    {
+      "name": "manual explicit basis uses documented missing-setting defaults and prices frozen20ft to112",
+      "ok": true
+    },
+    {
+      "name": "catalog stableID with explicit nominal metadata prices112",
+      "ok": true
+    },
+    {
+      "name": "same-size different-ID rows do not choose first bysize",
+      "ok": true
+    },
+    {
+      "name": "duplicate stableID fails rather than choosing first revision",
+      "ok": true
+    },
+    {
+      "name": "explicit foot alias:ft",
+      "ok": true
+    },
+    {
+      "name": "explicit foot alias: Foot ",
+      "ok": true
+    },
+    {
+      "name": "explicit foot alias:FEET",
+      "ok": true
+    },
+    {
+      "name": "explicit foot alias:LF",
+      "ok": true
+    },
+    {
+      "name": "explicit foot alias:linear ft",
+      "ok": true
+    },
+    {
+      "name": "explicit foot alias:linear foot",
+      "ok": true
+    },
+    {
+      "name": "explicit foot alias:linear feet",
+      "ok": true
+    },
+    {
+      "name": "unsupported unit:undefined",
+      "ok": true
+    },
+    {
+      "name": "unsupported unit:",
+      "ok": true
+    },
+    {
+      "name": "unsupported unit:each",
+      "ok": true
+    },
+    {
+      "name": "unsupported unit:20 ft stick",
+      "ok": true
+    },
+    {
+      "name": "unsupported unit:lb",
+      "ok": true
+    },
+    {
+      "name": "unsupported unit:m",
+      "ok": true
+    },
+    {
+      "name": "malformed settings do not infer defaults:null",
+      "ok": true
+    },
+    {
+      "name": "malformed settings do not infer defaults:",
+      "ok": true
+    },
+    {
+      "name": "malformed settings do not infer defaults:false",
+      "ok": true
+    },
+    {
+      "name": "malformed settings do not infer defaults:Wed Dec 31 1969 19:00:00 GMT-0500 (Eastern Standard Time)",
+      "ok": true
+    },
+    {
+      "name": "malformed settings do not infer defaults:[object Map]",
+      "ok": true
+    },
+    {
+      "name": "explicit invalid setting:null",
+      "ok": true
+    },
+    {
+      "name": "explicit invalid setting:",
+      "ok": true
+    },
+    {
+      "name": "explicit invalid setting:60USD",
+      "ok": true
+    },
+    {
+      "name": "explicit invalid setting:1e2",
+      "ok": true
+    },
+    {
+      "name": "explicit invalid setting:false",
+      "ok": true
+    },
+    {
+      "name": "explicit invalid setting:-1",
+      "ok": true
+    },
+    {
+      "name": "explicit invalid setting:Infinity",
+      "ok": true
+    },
+    {
+      "name": "explicit zero labor rates:number",
+      "ok": true
+    },
+    {
+      "name": "explicit zero labor rates:string",
+      "ok": true
+    },
+    {
+      "name": "null-prototype settings record works without hasOwnProperty method",
+      "ok": true
+    },
+    {
+      "name": "explicit material zero stays free, never defaults",
+      "ok": true
+    },
+    {
+      "name": "ambiguous zero catalog rate requires explicit confirmation",
+      "ok": true
+    },
+    {
+      "name": "explicit zero override confirms zero catalog rate",
+      "ok": true
+    },
+    {
+      "name": "override0 can replace missing rate, not missing unit/diameter/weight",
+      "ok": true
+    },
+    {
+      "name": "aggregate zero override is preserved separately from geometric20ft",
+      "ok": true
+    },
+    {
+      "name": "invalid aggregate override:",
+      "ok": true
+    },
+    {
+      "name": "invalid aggregate override:5ft",
+      "ok": true
+    },
+    {
+      "name": "invalid aggregate override:-1",
+      "ok": true
+    },
+    {
+      "name": "invalid aggregate override:Infinity",
+      "ok": true
+    },
+    {
+      "name": "missing manual reason blocks acceptance without hiding known preliminary steel112",
+      "ok": true
+    },
+    {
+      "name": "unknown weight is null, never0/standard fallback",
+      "ok": true
+    },
+    {
+      "name": "missing catalog diameter is not inferred from #4",
+      "ok": true
+    },
+    {
+      "name": "#9 label does not invent ninth-eighths diameter or default weight",
+      "ok": true
+    },
+    {
+      "name": "known diameter mismatch is rejected by model/cost compatibility",
+      "ok": true
+    },
+    {
+      "name": "missing catalog and failed catalog read are distinguishable",
+      "ok": true
+    },
+    {
+      "name": "wrong material type cannot borrow matching-looking price metadata",
+      "ok": true
+    },
+    {
+      "name": "fresh catalog values are resolved, not stale reference snapshots",
+      "ok": true
+    },
+    {
+      "name": "frozen inputs are not mutated and outputs do not share state",
+      "ok": true
+    }
+  ]
+}

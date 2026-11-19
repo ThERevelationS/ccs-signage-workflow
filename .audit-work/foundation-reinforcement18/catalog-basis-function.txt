@@ -1,0 +1,20 @@
+// Check the selected catalog basis only; this is not geometry or settings validation.
+function foundationReinforcementCatalogBasisIsCurrent(descriptor, row) {
+  const saved = descriptor.pricing_basis_snapshot?.reinforcement?.material;
+  if (!saved || saved.kind !== "catalog" ||
+      typeof saved.inventory_updated_date !== "string" || !saved.inventory_updated_date.trim() ||
+      !row || row.id !== descriptor.inventory_item_id) return false;
+  const resolution = resolveFoundationReinforcementBasis({
+    material: descriptor.builder_data?.reinforcement_material,
+    inventory: [row],
+    settings: {},
+    quantityOverride: descriptor.builder_data?.custom_rebar_qty ?? null,
+    rateOverride: descriptor.builder_data?.custom_rebar_cost_per_ft ?? null,
+  });
+  if (resolution.issues.length) return false;
+  const current = resolution.materialSnapshot;
+  return [
+    "kind", "inventory_id", "inventory_updated_date", "pricing_unit", "original_unit",
+    "bar_diameter_inches", "weight_lb_per_ft", "cost_per_ft", "rate_source",
+  ].every(field => saved[field] === current[field]);
+}

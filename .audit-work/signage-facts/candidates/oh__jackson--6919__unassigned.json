@@ -1,0 +1,25 @@
+{
+ "jurisdiction_id": "6adf896f2c89eb6a799b6919",
+ "jurisdiction_name": "Jackson",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Jackson Township Zoning Fees Description Fee 2024 Single Family 400.00 $ Two Family 500.00 $ Porches, Carports, Decks, Patio Roofs 100.00 $ Garage or Accessory Buildings 200 Sq Ft and up 150.00 $ Garage or Accessory Buildings 101 Sq Ft to 199 Sq Ft 100.00 $ Accessory Building 100 Sq Ft or Less No Charge Room Additions 150.00 $ Multiple Family , per unit 400.00 $ Swimming Pools above ground 100.00 $ Swimming Pools in ground 125.00 $ Concrete patio No Charge Agricultural Building Permit No Charge In Home occupation No Charge Lot split/consolidation (per lot) 100.00 $ New Address No Charge Non Conforming zoning certificate No Charge Ponds, Lakes No Charge Residential Wind/Solar Permits 250.00 $ Commercial Wind/Solar Permits 8,000.00 $ Zoning verification Letter 60.00 $ Commerical / Industrial & Up 500.00 $ Zone Change 400.00 $ Change of Use 400.00 $ Conditional Use 400.00 $ Signs small 100.",
+   "tags": [
+    "sign",
+    "area",
+    "process",
+    "billboard",
+    "temporary"
+   ],
+   "weight": 10,
+   "source_sha256": "5918e41443fab1ad9db0870dd1ea88ece9e5f5fb59606e04d81613189956516b",
+   "source_document_id": null,
+   "source_title": "5918e41443fab1ad9db0870dd1ea88ece9e5f5fb59606e04d81613189956516b.pdf",
+   "official_url": "https://www.jacksontwpclermontoh.gov/uploads/1/0/6/6/10667116/fee_zoning_schedule_final_.pdf"
+  }
+ ]
+}

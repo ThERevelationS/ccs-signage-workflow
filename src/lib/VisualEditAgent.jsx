@@ -411,9 +411,14 @@ export default function VisualEditAgent() {
 			}
 		};
 
+		const ALLOWED_MESSAGE_ORIGIN_SUFFIXES = ['.base44.com', '.base44.app'];
 		const handleMessage = (event) => {
-			// Check origin if desired
-			//if (event.origin !== 'parent-origin') return;
+			// Only the Base44 visual editor (or same origin) may drive this agent —
+			// without a check any embedding site could postMessage DOM edits.
+			try {
+				const originHost = new URL(event.origin || 'about:blank').hostname;
+				if (originHost !== window.location.hostname && !ALLOWED_MESSAGE_ORIGIN_SUFFIXES.some((sfx) => originHost.endsWith(sfx))) return;
+			} catch { return; }
 
 			const message = event.data;
 

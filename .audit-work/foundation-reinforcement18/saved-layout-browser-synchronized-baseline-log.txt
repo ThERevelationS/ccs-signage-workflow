@@ -1,0 +1,11 @@
+FAIL recorded 1280 Saved scene is outside the view at: saved-mode, moved-anchor, undo-move, Top, Front, Side, Reset, resized, restored-width, hide-show
+FAIL recorded 390 Saved scene is outside the view at: saved-mode, moved-anchor, undo-move, Top, Front, Side, Reset, resized, restored-width, hide-show
+ok legacy-height 1280
+ok legacy-height 390
+ok invalid-poles 1280
+ok invalid-poles 390
+ok quantity 1280
+ok quantity 390
+FAIL wide-layout 1280 Saved scene is outside the view at: saved-mode, Top, Front, Side, Reset, resized, restored-width, hide-show
+FAIL wide-layout 390 Saved scene is outside the view at: saved-mode, Top, Front, Side, Reset, resized, restored-width, hide-show
+exit=1

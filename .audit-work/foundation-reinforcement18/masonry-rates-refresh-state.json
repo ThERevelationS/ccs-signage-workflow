@@ -1,0 +1,23 @@
+{
+ "app": {
+  "id": "68dfcc5e57bbbc35387da97c",
+  "name": "CCS Signage Workflow",
+  "status": "ready",
+  "git_repo_pending": null,
+  "dev_environment_enabled": false
+ },
+ "git": {
+  "stdout": "3d1aaf013cf0c845777f14ba594ee058b3f3fa70\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 828
+ },
+ "panel": [
+  {
+   "p": "src/components/estimator/foundation/FoundationRatesPanel.jsx",
+   "b": 2577,
+   "e": null
+  }
+ ]
+}

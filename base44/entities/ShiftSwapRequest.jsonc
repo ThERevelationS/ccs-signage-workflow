@@ -1,0 +1,62 @@
+{
+  "name": "ShiftSwapRequest",
+  "properties": {
+    "requester_email": {
+      "type": "string",
+      "description": "Employee asking to swap their schedule"
+    },
+    "partner_email": {
+      "type": "string",
+      "description": "Employee whose schedule would be received"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "reviewer_email": {
+      "type": "string"
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decided_note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "requester_email",
+    "partner_email",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

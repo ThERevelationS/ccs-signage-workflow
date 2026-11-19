@@ -1,8 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
+import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';
 
 const ACTIVE = new Set(['open','assigned','in_progress']);
 const DUE_TASK_STATUSES = new Set(['pending','overdue']);
@@ -160,7 +162,7 @@ async function releaseTaskGenerationLock(Task:any, task:any, receipt:any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const requestBody = await req.json().catch(() => ({}));
     const user = (await base44.auth.me().catch(()=>null)) || await resolveFleetStaffUser(base44, requestBody?.session_token);
     if (!user || user.role !== 'admin') return Response.json({error:'Forbidden'},{status:403});
@@ -318,7 +320,7 @@ Deno.serve(async (req) => {
         await advanceLockedTask(Task,Receipt,lockedTask.id,key,receipt.receipt,lockedTask.start_date);
         const stamp = nowIso();
         await Receipt.update(receipt.receipt.id,{status:'applied',applied_at:stamp,error_message:'',result_summary:{...(receipt.receipt.result_summary||{}),work_order_id:created.id,work_order_number:created.work_order_number}});
-        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher',{event_type:'work_order_created',target_id:created.id,event_token:key}).catch(()=>null);
+        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher',{ _internal_capability: INTERNAL_FUNCTION_CAPABILITY,event_type:'work_order_created',target_id:created.id,event_token:key}).catch(()=>null);
         results.push({task_id:lockedTask.id,status:byKey||byNumber?'recovered':'created',work_order_id:created.id,work_order_number:created.work_order_number});
       } catch (error:any) {
         const message = error?.message || String(error);
@@ -359,7 +361,7 @@ Deno.serve(async (req) => {
     return Response.json({success:true,disabled:false,date:today,due:due.length,created:createdCount,results,meter_generation:meterGeneration});
   } catch (error) {
     console.error('fleetScheduledMaintenanceGeneration error:',error);
-    try { await logRun(createClientFromRequest(req),'error','Fleet scheduled maintenance generation failed.',{error:error?.message || String(error)}); } catch {}
+    try { await logRun(withEntityRateLimitRetry(createClientFromRequest(req)),'error','Fleet scheduled maintenance generation failed.',{error:error?.message || String(error)}); } catch {}
     return Response.json({error:error?.message || 'Fleet scheduled maintenance generation failed.'},{status:500});
   }
 });

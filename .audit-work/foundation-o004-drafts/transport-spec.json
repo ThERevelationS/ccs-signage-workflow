@@ -1,0 +1,107 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "3258e9b244991711e965b65f566d420b204f3144",
+  "proofSpec": "SPEC.json",
+  "targetOrder": [
+    "src/components/estimator/foundation/foundationDraftRecovery.js",
+    "src/pages/FoundationEstimator.jsx"
+  ],
+  "candidateDir": "candidates/",
+  "candidateHashes": {
+    "foundationDraftRecovery.js": "84e739062efbb5308662d8ff913800d617c1a71fdf793d1930157bb806ed6e82",
+    "FoundationEstimator.jsx": "d781338d4f5bcb8412b0ef71c7988dae394b8307d5034275079d4df2048c99c7"
+  },
+  "baselineHashes": {
+    "foundationDraftRecovery.js": "8c25d6ff634949e84cc78a125ab16aa0d510b4f7a094a0022c3d4f31e44d7473",
+    "FoundationEstimator.jsx": "475599547f426b61cc514d3e0921efe3c0fd78ba7a3d818bb8816284070af555"
+  },
+  "atomicEditPerFile": true,
+  "candidateLineEndings": "LF",
+  "candidateTerminalLF": {
+    "foundationDraftRecovery.js": false,
+    "FoundationEstimator.jsx": false,
+    "note": "remote files have no terminal LF — candidates match exactly"
+  },
+  "protectedFiles": [
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/components/estimator/foundation/legacyFoundationCalc.js",
+    "src/components/estimator/foundation/wallCalculator.js",
+    "src/components/estimator/foundation/poleCalculator.js",
+    "src/components/estimator/foundation/wallCapCalculator.js",
+    "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+    "src/components/estimator/foundation/foundationEquipmentBindings.js",
+    "src/components/estimator/foundation/foundationInputValidation.js",
+    "src/components/estimator/foundation/foundationAssemblyModel.js",
+    "src/components/estimator/foundation/foundationTemplateModel.js",
+    "src/components/estimator/foundation/foundationSaveSession.js",
+    "src/components/estimator/foundation/foundationSyncRecovery.js",
+    "src/components/estimator/foundation/foundationBuilderRecovery.js",
+    "src/components/estimator/foundation/foundationSellPricing.js",
+    "src/components/estimator/foundation/foundationLayoutModel.js",
+    "src/components/estimator/foundation/landscapeMaterials.js",
+    "src/components/estimator/foundation/foundationAiReview.js",
+    "src/components/estimator/foundation/FoundationItemCard.jsx",
+    "src/components/estimator/foundation/ConcreteDeliveryPanel.jsx",
+    "src/components/estimator/foundation/CustomerPricingPanel.jsx",
+    "src/components/estimator/foundation/FoundationBOM.jsx",
+    "src/components/estimator/foundation/FoundationTotals.jsx",
+    "src/components/estimator/foundation/FoundationToolbar.jsx",
+    "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+    "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+    "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+    "src/components/estimator/foundation/FoundationEquipmentTab.jsx",
+    "src/components/estimator/foundation/FoundationRatesPanel.jsx",
+    "src/components/estimator/foundation/FoundationSectionBanner.jsx",
+    "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+    "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+    "src/components/estimator/foundation/Foundation3DPreview.jsx",
+    "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+    "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+    "src/components/estimator/foundation/LandscapeDesigner.jsx",
+    "src/components/estimator/foundation/WallShapeEditor.jsx",
+    "src/components/estimator/foundation/convertToBrickStone.js",
+    "src/components/markup/CustomerPricingTab.jsx",
+    "src/components/markup/savedCustomerPricing.js",
+    "src/components/markup/projectCategorizer.js",
+    "src/components/estimator/builder/builderService.js",
+    "src/components/estimator/builder/builderMutationRecovery.js",
+    "src/components/estimator/builder/sourceProjectPersistence.js",
+    "src/components/estimator/idempotentEntityCreate.js",
+    "src/components/estimator/loadAllEntityRows.js",
+    "src/components/estimator/estimateMutationGuard.js",
+    "src/components/staff/staffEntities.js",
+    "base44/entities/FoundationProject.jsonc",
+    "base44/shared/pricingEngine.ts",
+    "base44/shared/pricingTemplateModel.ts"
+  ],
+  "editSpec": {
+    "foundationDraftRecovery.js": [
+      "FOUNDATION_DRAFT_FIELDS += customer_markup_percent, customer_price_override, customer_pricing (explicit allowlist kept, no catch-all)",
+      "checkAssembly(): customer_pricing must be a plain record",
+      "validEnvelope(): env.draftLost===true -> {ok,lost} before data check",
+      "read(): lost -> status 'invalid' with graceful-loss message",
+      "write(): getItem moved ahead of size check; leaveLossMarker() writes small tombstone ONLY when nothing stored; size-cap and setItem-throw paths leave marker or note retained prior draft"
+    ],
+    "FoundationEstimator.jsx": [
+      "new useEffect: dirty-route-leave guard — document capture-phase internal-anchor click confirm + same-URL history sentinel with popstate confirm (sentinel armed only when !embedded && needsGuard; cancel re-enters via history.forward() so sentinels never accumulate; confirm disarms and really goes back; stale sentinel popped while clean passes through)",
+      "backedUp message now honest: design + customer-pricing, tab-only",
+      "both draft-offer strings: 'Recovery covers design and customer-pricing fields; customer links and saved receipts stay as stored.'",
+      "no other lines touched"
+    ]
+  },
+  "verification": {
+    "model": "draft-model-verification.json — 11/11",
+    "pageStatic": "draft-page-verification.json — 8/8",
+    "browser": "browser/browser-verification.json — 7/7 (desktop 1280 + mobile 390); 0 foreign requests, 0 console errors, 0 page errors",
+    "lint": "esbuild parse clean on both candidates",
+    "remoteHeadVerified": "git rev-parse HEAD -> 3258e9b244991711e965b65f566d420b204f3144"
+  },
+  "notesForTransporter": [
+    "Apply candidate bodies exactly (single edit per file or full-file write of the candidate bytes — files are LF, no trailing newline).",
+    "Order: foundationDraftRecovery.js first, then FoundationEstimator.jsx — the page references the store only by import so order is not strict, but keep it.",
+    "After apply: run a fresh load of /FoundationEstimator?id=<p>&estimateId=<e> — expect zero console errors; make an edit, attempt Back -> leave confirm should appear.",
+    "The tombstone path only engages on storage rejection — no normal-flow behavior change.",
+    "Do NOT publish/deploy; checkpoint after apply if checkpoints are in the unit protocol."
+  ]
+}

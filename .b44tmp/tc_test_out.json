@@ -1,0 +1,7 @@
+{
+  "stdout": "PASS scale-functions\n===ESBUILD===\npurchaseOrderAction OK\nchangeOrderAction OK\ninventoryAction OK\njobCostingAction OK\ncustomerPortalAction OK\nboardFeed OK\ndataIntegrityAction OK\nstaffDataRead OK\ntimeClockAction OK\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 5276
+}

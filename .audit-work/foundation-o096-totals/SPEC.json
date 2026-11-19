@@ -1,0 +1,174 @@
+{
+  "item": "O-096",
+  "workstream": "WS-O — Concrete | Masonry | Pole",
+  "component": "CMP-H05",
+  "acceptance_text": "O-096 [OPEN] (CMP-H05) Sticky totals with separate cost/sell/margin, itemized takeoff, and missing-input checklist.",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remote_head_verified": "db94d76159265e342c56ad7dd766ad926d93f1b1",
+  "remote_head_verified_at": "post-verification re-check (unchanged since baseline pull)",
+  "mode": "audit-candidate-only",
+  "remote_writes": false,
+  "checkpoint": false,
+  "deploy": false,
+  "publish": false,
+  "entity_ops": false,
+
+  "baseline": {
+    "source": "sandbox read @ db94d76159265e342c56ad7dd766ad926d93f1b1",
+    "files": {
+      "src/components/estimator/foundation/FoundationTotals.jsx": {
+        "pulled_to": "baseline/FoundationTotals.jsx",
+        "bytes": 4233,
+        "lines": 79,
+        "md5_lf_normalized": "9a99f5de02c818da26471bbd1f4936fa",
+        "verified": "byte-identical to remote working tree (git status clean; blob == tree)"
+      },
+      "src/components/estimator/foundation/CustomerPricingPanel.jsx": {
+        "pulled_to": "baseline/CustomerPricingPanel.jsx",
+        "md5_lf_normalized_plus_eof_lf": "8f2ba9a089305a46c2eb17e55384bcfc",
+        "verified": "content-identical to remote blob modulo LF normalization"
+      },
+      "src/components/estimator/foundation/FoundationEstimator.jsx": {
+        "pulled_to": "baseline/FoundationEstimator.jsx",
+        "role": "read-only call-site/issue-channel reference — NOT modified (ownership-protected)"
+      }
+    },
+    "read_only_dependency_pulls": "fixture-pulls/ (24 files: calc chain, calculators, pricing wire, BOM, builderService partition fields, validation/assembly/catalog/construction issue producers)",
+    "dependency_md5_verified_remote": [
+      "foundationCalc.js 75a9ae5c456ebb7be8785808ba016e2e",
+      "foundationAssemblyModel.js e5e5d2f25ff527d6ce493f0bbe9f5ec9",
+      "foundationSellPricing.js 3ceaf7546a7b0102d800d34c3982c84b",
+      "landscapeMaterials.js 6b05c2b1fd5dbf09bed554313a3e13e0",
+      "foundationInputValidation.js f19942d7b7b2e9d2fda9099467594aa8",
+      "foundationCatalogIntegrity.js 8310f54467b98a7a01db72d0d130e6c3"
+    ]
+  },
+
+  "candidates": {
+    "candidates/foundationTotalsSummary.js": {
+      "status": "new file (pure helper)",
+      "lines": 451,
+      "exports": [
+        "FOUNDATION_STICKY_PARTITION_FIELDS",
+        "resolveFoundationStickySummary",
+        "buildFoundationTakeoff",
+        "buildFoundationInputChecklist"
+      ],
+      "notes": "No React, no imports, no entity access. Held contract: non-finite -> null -> 'Not saved'/'—'; never $0, never fabricated margin."
+    },
+    "candidates/FoundationTotals.jsx": {
+      "status": "modified (baseline 79 -> candidate 251 lines; strictly additive + 2 new optional props)",
+      "diff": "diffs/diff-FoundationTotals.patch (334 lines)",
+      "new_optional_props": ["project", "calc"],
+      "preserved": [
+        "amt()/known() 'Not saved' held semantics",
+        "12-row cost breakdown and total row",
+        "sticky container classes (bg-white rounded-xl border p-4 sticky top-4)",
+        "pricingUnavailable banner",
+        "saved-vs-current advisory with 0.005 tolerance",
+        "original 4-prop call signature works unchanged"
+      ]
+    },
+    "candidates/CustomerPricingPanel.jsx": {
+      "status": "modified (+13 lines)",
+      "diff": "diffs/diff-CustomerPricingPanel.patch (22 lines)",
+      "change": "Adds 'Tier N snapshot margin (acknowledged)' row under Gross margin when an applied customer_pricing tier shadows the manual baseline and raw_subtotal is finite — acknowledged margin reads snapshot fields (total vs raw_subtotal), never recomputed from the shadowed manual baseline."
+    }
+  },
+
+  "implementation": {
+    "sticky_trio": {
+      "cost": "live sectionTotal when finite; else acknowledged savedSectionTotal; else 'Not saved'. Cell labeled 'current'/'acknowledged saved'.",
+      "sell_precedence": "pricing engine (foundationEngineEconomics, gated on foundationHasEnginePricing + live baseline) > applied tier snapshot (customer_pricing.applied && finite total) > customer_price_override > 0 > markup % over live cost. Sell cell carries its source label so a tier/engine number never masquerades as the manual baseline.",
+      "sell_held_rules": "Computed sells (engine, markup) require the LIVE cost — never projected over a held/saved amount. Recorded sells (tier snapshot, override) display even while pricing is paused because they are acknowledged values, not guesses.",
+      "margin": "sell - cost only when BOTH are finite; pct = amount/sell. Basis label 'sell − cost' (live) or 'vs saved cost' (saved). Null margin renders '—' — never fabricated.",
+      "acknowledged_footnote": "When tier sell is live and customer_pricing.raw_subtotal is finite, acknowledged pair (snapshot cost vs snapshot sell) is shown as a footnote whenever it differs from the displayed cost by > $0.005."
+    },
+    "itemized_takeoff": {
+      "groups": ["Foundations (per-item rows + delivery)", "Masonry walls", "Poles", "Wall caps", "Equipment", "Signage cabinets", "Site landscape"],
+      "row_content": "label + quantity basis (CY, LF rebar, forming qty, material counts, LF billed, stock pcs, sq ft/cells, pcs) + amount",
+      "held_rows": "flagged '(saved)' with acknowledged amount, or 'Not saved' when no amount exists",
+      "collapsible": "<details> under row count so the sticky card stays compact; max-h scroll region",
+      "unwired_fallback": "totals-quantity snapshot still renders (concrete CY, delivery yards/trucks, wall-cap material rollup) when calc/project are absent"
+    },
+    "missing_input_checklist": {
+      "channels": {
+        "Design inputs (blocking)": "calc.inputIssues — same list the page pricingBlocked gate reads",
+        "Catalog & settings (blocking)": "calc.catalogIssues",
+        "Placement (advisory)": "foundationAssemblyIssues(project) — recomputed inside the panel when project is wired",
+        "Construction checks (advisory)": "calc.constructionWarnings",
+        "Held amounts": "partition-field enumeration — any non-finite FOUNDATION_STICKY_PARTITION_FIELDS bucket is listed; catches wall-cap holds whose issues never reach calc channels; plus delivery.pricingUnavailable and a pricing-paused catch-all"
+      },
+      "presentation": "auto-expands when blocking issues exist; collapsed <details> otherwise; counts by severity in the summary line",
+      "complete_state": "'All inputs recorded' only when issue channels were actually consulted (calc or explicit issues prop present) AND nothing is outstanding",
+      "unwired_state": "with neither calc nor issues passed, channelsKnown=false — checklist shows only held-amount derivations and NEVER claims completeness",
+      "dedup": "issues de-duplicated on code|kind|index|componentId|field|message key across all channels"
+    }
+  },
+
+  "verification": {
+    "model": {
+      "harness": "verify-o096-model.mjs (pure Node, imports only the candidate helper)",
+      "results": "verify-o096-model-results.json — PASS 38/38",
+      "coverage": [
+        "margin math (amount/pct/basis, negative margin, zero-sell guard)",
+        "sell precedence: engine > tier > override > markup; no-markup = cost",
+        "held states: saved-cost-only trio, markup suppression on held cost, recorded sell on paused pricing",
+        "acknowledged tier footnote differs/equals cases",
+        "checklist: blocking/advisory/held severities, wall-cap-only hold, pricing-paused catch-all, de-dup, unwired channelsKnown=false",
+        "issues-prop override wins over calc",
+        "FOUNDATION_STICKY_PARTITION_FIELDS parity with builderService FOUNDATION_RECORD_TOTAL_FIELDS (order + set)",
+        "garbage-input robustness (undefined/null/string/array fields never throw)"
+      ]
+    },
+    "real_component_browser": {
+      "harness": "verify-o096-browser.mjs — esbuild bundle (30 inputs: real candidate components + real calc/pricing/assembly/landscape chain + React + UI stub), rendered in a real browser",
+      "metafile": "o096-browser-metafile.json",
+      "results": "o096-browser-verification.json — PASS 17/17, 0 console errors, 0 page errors, 0 foreign requests",
+      "cases": [
+        "trio manual/tier/tier-equal/override/engine sell sources",
+        "blocked: acknowledged cost shown as saved, sell —, margin —, checklist auto-open",
+        "held tier: acknowledged sell + margin vs saved cost",
+        "takeoff itemized rows incl. held '(saved)' flags + 'Not saved' amounts",
+        "held-amount enumeration + wall-cap-only hold with zero upstream issues",
+        "unwired panel: live cost, sell —, no false completeness claim",
+        "clean wired project: 'All inputs recorded' fires",
+        "CustomerPricingPanel acknowledged tier-snapshot margin row",
+        "mobile 390px: trio + checklist + footnote wrap inside viewport"
+      ],
+      "screenshots": [
+        "trio-manual-1280.png", "trio-tier-1280.png", "trio-tier-390.png",
+        "trio-engine-1280.png", "trio-blocked-1280.png", "trio-blocked-390.png",
+        "trio-held-tier-1280.png", "takeoff-open-1280.png",
+        "wallcap-hold-1280.png", "unwired-1280.png", "panel-tier-margin-1280.png"
+      ]
+    },
+    "baseline_integrity": "baseline + fixture md5s verified against remote git blobs at HEAD (identical modulo read-API LF normalization); remote working tree git-status clean; HEAD re-verified unchanged post-verification"
+  },
+
+  "deferred_wiring": {
+    "needed_for_full_surface": true,
+    "reason": "FoundationEstimator.jsx is ownership-protected (Phase B-3) — not modified in this unit",
+    "one_line_change": "FoundationEstimator.jsx:1347 — append ` project={project} calc={calc}` to the existing <FoundationTotals ... /> call (both symbols already in scope: calc @ L294, project state)",
+    "effect_when_wired": "sell trio (tier/override/engine), full per-component takeoff incl. cabinets/landscape, and all issue-channel checklist groups light up",
+    "effect_unwired": "cost column (live), totals-quantity takeoff, held-amounts checklist — honest degraded mode, no false completeness claims"
+  },
+
+  "ownership_guard": {
+    "not_modified": [
+      "FoundationEstimator.jsx",
+      "foundationCalc.js",
+      "foundationReinforcementBasis.js / Cost.js / ItemProjection.js / Model.js / Projection.js",
+      "partSync.js",
+      "FoundationBOM.jsx"
+    ],
+    "candidate_surface_limited_to": ["FoundationTotals.jsx", "CustomerPricingPanel.jsx", "foundationTotalsSummary.js (new)"]
+  },
+
+  "claim_boundaries": [
+    "Evidence is model + bundled-real-component browser verification in this audit workspace — NOT live-app deploy evidence and NOT business-record evidence.",
+    "Checklist 'complete' claim is only made when issue channels are wired; unwired panel explicitly reports channels unknown.",
+    "Margin is computed only on acknowledged/finite cost-vs-sell pairs; nothing is inferred on held or unavailable amounts."
+  ]
+}

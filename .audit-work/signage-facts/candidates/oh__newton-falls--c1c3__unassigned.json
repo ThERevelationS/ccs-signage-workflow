@@ -1,0 +1,111 @@
+{
+ "jurisdiction_id": "6adef110f61f72466b8dc1c3",
+ "jurisdiction_name": "Newton Falls",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "1 of 2 Sign Permit Application Date Submitted: _________________ Property Location: _____________________________________________________________ If Corner Lot, Provide Cross Street: ________________________________________________ Owner’s Name: ______________________________________________________________ Address: _________________________________ City: ________________________ State: _____________ Zip: _________________ Phone #: ____________________ Lessee’s Name: ______________________________________________________________ Address: _________________________________ City: ________________________ State: _____________ Zip: _________________ Phone #: ____________________ Reason for Application and Description of Proposed Improvements (circle all that apply): Freestanding Sign Wall Sign Window Sign Marquee Sign Details: __________________________________________________________________",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "type",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "edbc0dee66863a120357d6abb4e8fc2dfbf7f5742cf8964a59323934b09d8ec5",
+   "source_document_id": null,
+   "source_title": "edbc0dee66863a120357d6abb4e8fc2dfbf7f5742cf8964a59323934b09d8ec5.pdf",
+   "official_url": "https://ci.newtonfalls.oh.us/wp-content/uploads/2020/04/sign-permit-application.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "2 of 2 Initial once WITH THIS APPLICATION YOU MUST : Completed 1. READ Article 6 & 9 of the Zoning Code (attached) _________ 2. Provide a detailed WRITTEN description of your proposed change(s) in land use, existing structures, new structures, occupancy, or any improvements to the land. _________ 3. If proposing a wall, marquee or window sign, provide a FAÇADE ELEVATION PLAN drawn to scale depicting the location and dimensions existing signs and the proposed sign. _________ 4. Provide a PICTURE or ILLUSTRATION of proposed sign, with dimensions. _________ 5. If proposing a freestanding sign, provide a SITE LOCATION PLAN depicting the location and dimensions of all existing structures, property boundary dimensions, etc. _________ 6. Indicate on Site Location Plan the SCALE used. Typical scale for a residential proposal is 1 inch = 20 feet (1”=20’) _________ 7. If applicant is NOT the prope",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "type",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "edbc0dee66863a120357d6abb4e8fc2dfbf7f5742cf8964a59323934b09d8ec5",
+   "source_document_id": null,
+   "source_title": "edbc0dee66863a120357d6abb4e8fc2dfbf7f5742cf8964a59323934b09d8ec5.pdf",
+   "official_url": "https://ci.newtonfalls.oh.us/wp-content/uploads/2020/04/sign-permit-application.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Zoning Application 2 of 2 WITH THIS APPLICATION YOU MUST: Completed 1. I have read and comply with all Planning and Zoning Codes under Part Eleven located on amlegal.com the follow link has been provided https://codelibrary.amlegal.com/codes/newtonfalls/latest/newtonfalls_ oh/0-0-0-12538 _________ 2. Provide a detailed written description of your proposed change(s) in land use, existing structures, new structures, occupancy, or any improvements to the land. _________ 3. Provide a SITE LOCATION PLAN drawn to scale depicting the LOCATION and DIMENSIONS of ALL existing structures, existing driveways, existing fences, ALL proposed structures, proposed driveways, proposed fences, property boundary dimensions, etc. _________ 4. Indicate on Site Location Plan the scale used. Typical scale for a residential proposal is 1 inch = 20 feet (1”=20’) _________ 5. Attach any other letters or comments t",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "d647a3f1f60ee3f9ad3a9381af88cd10aff5a48ba6b76be2fa211b143272d27f",
+   "source_document_id": null,
+   "source_title": "d647a3f1f60ee3f9ad3a9381af88cd10aff5a48ba6b76be2fa211b143272d27f.pdf",
+   "official_url": "https://ci.newtonfalls.oh.us/wp-content/uploads/2021/03/Zoning-Permit-Application1.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "City of Newton Falls – Finance Department 419 N. Center Street Newton Falls, OH 44444 (330)872-1010 GARAGE SALE PERMIT APPLICATION Applicant Information: Applicant Name: Address of Garage Sale: (Must be residents at the location of the garage sale) Phone Number: Date(s) of Garage Sale: (8 AM - 8 PM) Signature of Applicant Date Conditions of Approval: • Garage sale means a garage, yard, lawn, patio, or similar type sale held anywhere on any residential premises for the purpose of disposing of personal property, typically found in a residential household or garage, by the resident of the premises where the sale is held. • The individual conducting the garage sale shall provide for control of parking for motor vehicles so as to reasonably prevent unsafe conditions and traffic congestion on the public street or streets adjacent not the premises upon which the sale is being conducted. • Garag",
+   "tags": [
+    "sign",
+    "fee",
+    "penalties",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "4fd869d6915e69f2928caaf122504a93c30141f07b5be09b63bed033b7a9a625",
+   "source_document_id": null,
+   "source_title": "4fd869d6915e69f2928caaf122504a93c30141f07b5be09b63bed033b7a9a625.pdf",
+   "official_url": "https://ci.newtonfalls.oh.us/wp-content/uploads/2020/05/City-of-Newton-Falls-Garage-Sale-Permit-Application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "1 of 2 Demolition Permit Application Date Submitted: _________________ Property Location: _____________________________________________________________ If Corner Lot, Provide Cross Street: ________________________________________________ Owner’s Name: ______________________________________________________________ Address: _________________________________ City: ________________________ State: _____________ Zip: _________________ Phone #: ____________________ Contractor’s Name: _____________________________________________________________ Address: _________________________________ City: ________________________ State: _____________ Zip: _________________ Phone #: ____________________ Number of buildings included in demolition: ______________ Square Footage of Structure(s) to be demolished: ______________ Reason(s) for demolition: ________________________________________________________ __",
+   "tags": [
+    "area",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "abb6e26a6cf067df24fefadb13d637c62f87dbe7f4e8117a4b62ebc9b0681c0a",
+   "source_document_id": null,
+   "source_title": "abb6e26a6cf067df24fefadb13d637c62f87dbe7f4e8117a4b62ebc9b0681c0a.pdf",
+   "official_url": "https://ci.newtonfalls.oh.us/wp-content/uploads/2020/04/demolition-application.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "2 of 2 Applicant’s Acknowledgement I, the applicant, herby acknowledge that I understand and agree that any error, misstatement or misrepresentation of material fact, whether or not deliberate, that might or would otherwise cause this application to be denied, or any material alteration or change in the plans, specifications or proposed structure accompanying this application made subsequent to the issuance of a permit relating to this application, without the approval of the City of Newton Falls, shall constitute sufficient ground for the immediate revocation of such permit. I understand that I contact the Ohio Utilities Protection Service at 1-800-362-2764 to inform them of potential digging on property 48 hours prior to the demolition. I, being dully sworn according to law, hereby swear and attest that I am the lawful owner or agent for the owner of the previously described property a",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "abb6e26a6cf067df24fefadb13d637c62f87dbe7f4e8117a4b62ebc9b0681c0a",
+   "source_document_id": null,
+   "source_title": "abb6e26a6cf067df24fefadb13d637c62f87dbe7f4e8117a4b62ebc9b0681c0a.pdf",
+   "official_url": "https://ci.newtonfalls.oh.us/wp-content/uploads/2020/04/demolition-application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "1 of 2 Zoning Certificate Application Date Submitted: _________________ Property Location: _____________________________________________________________ Lot/Parcel # (needed if vacant lot): _________________________________________________ If Corner Lot, Provide Cross Street: ________________________________________________ Owner’s Name: ______________________________________________________________ Address: _________________________________ City: ________________________ State: _____________ Zip: _________________ Phone #: ____________________ Contractor’s Name: _____________________________________________________________ Address: _________________________________ City: ________________________ State: _____________ Zip: _________________ Phone #: ____________________ Reason for Application and Description of Proposed Improvements (circle all that apply): New Structure Addition Pool Cha",
+   "tags": [
+    "area",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "d647a3f1f60ee3f9ad3a9381af88cd10aff5a48ba6b76be2fa211b143272d27f",
+   "source_document_id": null,
+   "source_title": "d647a3f1f60ee3f9ad3a9381af88cd10aff5a48ba6b76be2fa211b143272d27f.pdf",
+   "official_url": "https://ci.newtonfalls.oh.us/wp-content/uploads/2021/03/Zoning-Permit-Application1.pdf"
+  }
+ ]
+}

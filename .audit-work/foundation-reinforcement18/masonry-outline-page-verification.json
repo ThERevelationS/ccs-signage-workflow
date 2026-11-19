@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "id": "acknowledged-empty-outline-holds-baseline",
+      "ok": true
+    },
+    {
+      "id": "outline-geometry-mismatch-holds-baseline",
+      "ok": true
+    },
+    {
+      "id": "new-unknown-outline-cannot-adopt-rendered-history",
+      "ok": true
+    },
+    {
+      "id": "numeric-string-segments-save-and-update-acknowledged-basis",
+      "ok": true
+    },
+    {
+      "id": "rectangle-edit-saves-points-costs-retains-ids",
+      "ok": true
+    },
+    {
+      "id": "invalid-rectangle-draft-never-mutates-wall",
+      "ok": true
+    },
+    {
+      "id": "non-array-segments-load-fails-closed",
+      "ok": true
+    }
+  ],
+  "unexpectedNetwork": 0,
+  "unexpectedSdk": 0
+}

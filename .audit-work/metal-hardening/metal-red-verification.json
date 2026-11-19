@@ -1,0 +1,15 @@
+{
+ "suite": "metal-red",
+ "passed": 7,
+ "failed": 0,
+ "result": "PASS",
+ "defects": [
+  "remote laundered a malformed stored fabrication_cost (NaN) to $0 silently — and persisted the NaN itself",
+  "remote silently wrote fallback welding_rate=75 for malformed setting",
+  "remote repriced quantity 0 as quantity 1 silently",
+  "remote kept stale material_cost=50 * 2 = $100 in totals for a dropped material link",
+  "remote laundered blank hours to 0 and saved silently",
+  "remote resurrected authored 0 welding rate to default 75",
+  "remote exposes no issues/pricingUnavailable channel"
+ ]
+}

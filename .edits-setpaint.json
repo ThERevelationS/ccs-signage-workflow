@@ -1,0 +1,18 @@
+[
+  {
+    "old_text": "import { ArrowLeft, Beaker, Clock, DollarSign, Paintbrush, Plus, Save, Scissors, Trash2 } from \"lucide-react\";",
+    "new_text": "import { ArrowLeft, Beaker, Clock, DollarSign, Paintbrush, Plus, RotateCcw, Save, Scissors, Trash2 } from \"lucide-react\";"
+  },
+  {
+    "old_text": "import SettingsTransferBar from \"@/components/estimator/settings/SettingsTransferBar\";",
+    "new_text": "import SettingsTransferBar from \"@/components/estimator/settings/SettingsTransferBar\";\nimport { PAINTING_SETTINGS_DEFAULTS, resetValuesToDefaults } from \"@/components/estimator/settings/moduleSettingDefaults\";"
+  },
+  {
+    "old_text": "  const handleSave = async () => {\n    if (settingsSaveRef.current) return;",
+    "new_text": "  // #83 — stage every managed key back to the calculator's documented fallback.\n  const handleResetDefaults = () => {\n    setValues((prev) => resetValuesToDefaults(prev, PAINTING_SETTINGS_DEFAULTS, Object.keys(prev)));\n    setMessage(\"Defaults staged — click Save to persist them.\");\n  };\n\n  const handleSave = async () => {\n    if (settingsSaveRef.current) return;"
+  },
+  {
+    "old_text": "<Button onClick={handleSave} disabled={saving || dirtyCount === 0} className=\"h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50\">",
+    "new_text": "<Button variant=\"outline\" onClick={handleResetDefaults} disabled={saving} className=\"h-[32px] text-[12px] font-semibold\" title=\"Stage calculator fallback defaults — Save to persist\"><RotateCcw className=\"w-4 h-4 mr-1.5\" /> Reset to defaults</Button><Button onClick={handleSave} disabled={saving || dirtyCount === 0} className=\"h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50\">"
+  }
+]

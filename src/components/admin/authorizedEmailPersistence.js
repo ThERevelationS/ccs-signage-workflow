@@ -3,7 +3,7 @@ import {
   expectedEntityFields,
   replaceEntityFieldsIfUnchanged,
 } from "@/components/estimator/builder/builderEntityPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 
 const cleanEmail = value => String(value || "").trim().toLowerCase();
 const cleanUsername = value => String(value || "").trim().toLowerCase();

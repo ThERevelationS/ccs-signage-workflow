@@ -1,0 +1,57 @@
+--- .audit-work/foundation-template05/dlg.cur.norm	2026-11-05 11:14:12.857064200 -0500
++++ .audit-work/foundation-template05/dlg.cur3.norm	2026-11-05 11:17:19.243907900 -0500
+@@ -20,6 +20,8 @@
+   const generationRef = useRef(0);
+   const loadSeqRef = useRef(0);
+   const mountedRef = useRef(true);
++  const draftRef = useRef(null);
++  draftRef.current = { project, name };
+ 
+   const identity = `${open ? 1 : 0}|${mode}|${project?.id ?? ""}`;
+   if (contextRef.current.identity !== identity) {
+@@ -36,7 +38,7 @@
+     contextRef.current.open = open;
+     contextRef.current.project = project;
+   }
+-  const saveContext = contextRef.current;
++  const saveContext = { ...contextRef.current };
+   const sameContext = (c) =>
+     mountedRef.current &&
+     c.open &&
+@@ -92,11 +94,10 @@
+     const sc = saveContext;
+     if (saveFlightRef.current) return saveFlightRef.current;
+     const trimmed = name.trim();
+-    if (!trimmed || !sameContext(sc)) return null;
+-    const projectSnapshot = JSON.parse(JSON.stringify(sc.project || {}));
++    if (!trimmed || !sameContext(sc) || sc.mode !== "save" || draftRef.current.project !== project || draftRef.current.name !== name) return null;
+     let snapshot;
+     try {
+-      snapshot = createFoundationTemplateSnapshot(projectSnapshot, {
++      snapshot = createFoundationTemplateSnapshot(project, {
+         createId: (kind) => newCreationRequestKey(`template_${kind}`),
+       });
+     } catch (e) {
+@@ -120,6 +121,10 @@
+         try {
+           await saveFoundationTemplate({ idempotencyKey: attempt.key, data: attempt.data });
+           if (!sameContext(sc)) return;
++          if (draftRef.current.project !== project || draftRef.current.name !== name) {
++            setError("The earlier template snapshot was saved. Current changes have not been saved as a template.");
++            return;
++          }
+           setName("");
+           saveAttemptRef.current = { signature: "", key: "" };
+           setError(null);
+@@ -129,8 +134,9 @@
+         }
+       })
+       .finally(() => {
+-        if (saveFlightRef.current === run) saveFlightRef.current = null;
+-        if (mountedRef.current && contextRef.current.identity === sc.identity) setBusy(false);
++        if (saveFlightRef.current !== run) return;
++        saveFlightRef.current = null;
++        if (mountedRef.current) setBusy(false);
+       });
+     saveFlightRef.current = run;
+     return run;

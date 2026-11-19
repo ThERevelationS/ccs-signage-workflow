@@ -1,0 +1,449 @@
+{
+  "synthetic": true,
+  "results": [
+    {
+      "name": "complete frozen model unchanged: bag spread",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: bag spread all options single layer",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: bag spread multilayer",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: bag pillar default size",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: bag pillar size5 hoops and quantity",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: ready spread",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: ready pillar",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: ready mix and admixtures",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: three delivery trucks",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: quarter yard order",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: multiple service foundations",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: mixed bag and ready foundations",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: legacy two supplier grouping unchanged",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: manual zero rebar and quantity",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: all explicit zero overrides",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: free bag catalog rate",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: free ready supplier explicit zero fields",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: inactive dangling selections",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: manual rebar without matching catalog",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: manual zero rebar without matching catalog",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: bag manual quantity legacy units unchanged",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: unassigned project delivery assumptions unchanged",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: new sign stops",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: project equipment excavation",
+      "ok": true
+    },
+    {
+      "name": "complete frozen model unchanged: custom settings",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_length: invalid boundary 0 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_length: invalid boundary 1 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_length: invalid boundary 2 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_length: invalid boundary 3 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_length: invalid boundary 4 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_length: invalid boundary 5 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_length: invalid boundary 6 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_length: invalid boundary 7 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_length: invalid boundary 8 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_length: invalid boundary 9 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_length: invalid boundary 10 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_length: invalid boundary 11 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_length: invalid boundary 12 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_width: invalid boundary 0 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_width: invalid boundary 1 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_width: invalid boundary 2 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_width: invalid boundary 3 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_width: invalid boundary 4 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_width: invalid boundary 5 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_width: invalid boundary 6 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_width: invalid boundary 7 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_width: invalid boundary 8 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_width: invalid boundary 9 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_width: invalid boundary 10 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_width: invalid boundary 11 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_spacing_width: invalid boundary 12 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_layers: invalid boundary 0 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_layers: invalid boundary 1 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_layers: invalid boundary 2 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_layers: invalid boundary 3 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_layers: invalid boundary 4 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_layers: invalid boundary 5 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_layers: invalid boundary 6 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_layers: invalid boundary 7 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_layers: invalid boundary 8 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_layers: invalid boundary 9 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_layers: invalid boundary 10 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_layers: invalid boundary 11 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "rebar_layers: invalid boundary 12 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_rebar_layers: invalid boundary 0 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_rebar_layers: invalid boundary 1 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_rebar_layers: invalid boundary 2 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_rebar_layers: invalid boundary 3 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_rebar_layers: invalid boundary 4 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_rebar_layers: invalid boundary 5 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_rebar_layers: invalid boundary 6 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_rebar_layers: invalid boundary 7 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_rebar_layers: invalid boundary 8 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_rebar_layers: invalid boundary 9 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_rebar_layers: invalid boundary 10 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_rebar_layers: invalid boundary 11 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_rebar_layers: invalid boundary 12 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_vertical_rebar_count: invalid boundary 0 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_vertical_rebar_count: invalid boundary 1 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_vertical_rebar_count: invalid boundary 2 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_vertical_rebar_count: invalid boundary 3 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_vertical_rebar_count: invalid boundary 4 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_vertical_rebar_count: invalid boundary 5 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_vertical_rebar_count: invalid boundary 6 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_vertical_rebar_count: invalid boundary 7 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_vertical_rebar_count: invalid boundary 8 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_vertical_rebar_count: invalid boundary 9 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_vertical_rebar_count: invalid boundary 10 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_vertical_rebar_count: invalid boundary 11 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar_vertical_rebar_count: invalid boundary 12 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar hoop diameter: invalid boundary 0 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar hoop diameter: invalid boundary 1 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar hoop diameter: invalid boundary 2 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar hoop diameter: invalid boundary 3 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar hoop diameter: invalid boundary 4 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar hoop diameter: invalid boundary 5 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar hoop diameter: invalid boundary 6 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar hoop diameter: invalid boundary 7 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar hoop diameter: invalid boundary 8 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar hoop diameter: invalid boundary 9 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar hoop diameter: invalid boundary 10 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "pillar hoop diameter: invalid boundary 11 preserves prices",
+      "ok": true
+    },
+    {
+      "name": "missing/null legacy spread fields retain defaults and exact prices",
+      "ok": true
+    },
+    {
+      "name": "missing/null legacy pillar fields retain one hoop and four longitudinal bars",
+      "ok": true
+    },
+    {
+      "name": "ordinary signed decimal steel inputs retain exact current prices",
+      "ok": true
+    },
+    {
+      "name": "rebar off ignores every inactive steel input",
+      "ok": true
+    },
+    {
+      "name": "inactive shape steel fields do not block valid pricing",
+      "ok": true
+    },
+    {
+      "name": "physical diameter bound does not invent cover requirements",
+      "ok": true
+    },
+    {
+      "name": "zero rate and quantity overrides remain valid",
+      "ok": true
+    },
+    {
+      "name": "new invalid steel item cannot borrow acknowledged costs",
+      "ok": true
+    },
+    {
+      "name": "repair restores exact live cost without altering unrelated description",
+      "ok": true
+    }
+  ]
+}

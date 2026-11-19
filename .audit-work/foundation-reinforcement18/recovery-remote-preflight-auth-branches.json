@@ -1,0 +1,10 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "authenticatedAccountConfirmed": true,
+  "branches": [
+    {
+      "name": "main",
+      "status": "active"
+    }
+  ]
+}

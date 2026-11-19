@@ -1,0 +1,14 @@
+[
+  {
+    "old_text": "import { staffEntities } from \"@/components/staff/staffEntities\";",
+    "new_text": "import { staffEntities } from \"@/components/staff/staffEntities\";\nimport { openProductsBlockingCompletion } from \"@/components/estimator/productStageSync\";"
+  },
+  {
+    "old_text": "  const activeTasks = tasks.filter((n) => !n.completed);\n  const completedTasks = tasks.filter((n) => n.completed);",
+    "new_text": "  const activeTasks = tasks.filter((n) => !n.completed);\n  const completedTasks = tasks.filter((n) => n.completed);\n\n  // Products still in a non-terminal status — listed inside the complete\n  // confirm so a job with open product work is never closed silently.\n  const openProducts = React.useMemo(\n    () => openProductsBlockingCompletion(workOrder?.products),\n    [workOrder?.products]\n  );"
+  },
+  {
+    "old_text": "              Are you sure you want to mark \"{workOrder.title}\" as complete?\n              <br /><br />\n              This will send an email notification to the team.\n            </AlertDialogDescription>\n          </AlertDialogHeader>\n          <AlertDialogFooter>",
+    "new_text": "              Are you sure you want to mark \"{workOrder.title}\" as complete?\n              <br /><br />\n              This will send an email notification to the team.\n            </AlertDialogDescription>\n          </AlertDialogHeader>\n\n          {openProducts.length > 0 && (\n            <div className=\"mx-1 mb-2 rounded border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800\">\n              <span className=\"font-semibold\">\n                {openProducts.length} product{openProducts.length === 1 ? \"\" : \"s\"} still open:\n              </span>\n              <ul className=\"mt-1 list-disc pl-4\">\n                {openProducts.slice(0, 6).map((p) => (\n                  <li key={p.id || p.name}>\n                    {p.name}{p.status !== \"none\" ? ` (${p.status.replace(/_/g, \" \")})` : \"\"}\n                  </li>\n                ))}\n              </ul>\n              {openProducts.length > 6 && <div className=\"mt-1\">+{openProducts.length - 6} more</div>}\n            </div>\n          )}\n          <AlertDialogFooter>"
+  }
+]

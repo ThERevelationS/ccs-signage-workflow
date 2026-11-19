@@ -107,6 +107,14 @@
     "dispatch_rank": {
       "type": "number",
       "description": "Dispatch ordering key: miles from downtown Cincinnati (Census gazetteer centroid). Lower ranks dispatch first; rows without a rank fall back to the Ohio-first ordering."
+    },
+    "demand_weight": {
+      "type": "number",
+      "description": "Derived demand score: count of parked resolved_needs_office_check + located_no_locality index entries + live-lookup auto-queued rows tied to this jurisdiction. Work queues sort demand-first."
+    },
+    "evidence_role_count": {
+      "type": "number",
+      "description": "Truth-audit field: roles actually present on the linked profile's office_research — a sources_found row with <3 is an empty success and reopens."
     }
   },
   "required": [

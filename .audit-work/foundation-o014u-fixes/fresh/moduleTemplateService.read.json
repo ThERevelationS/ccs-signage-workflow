@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/estimator/moduleShared/moduleTemplateService.js",
+      "content": "import { base44 } from \"@/api/base44Client\";\nimport { ensureReusableRecord } from \"@/components/estimator/products/reusableSaveIdempotency\";\nimport { deleteEntityIfUnchanged } from \"@/components/estimator/builder/builderEntityPersistence\";\nimport { loadAllEntityRows } from \"@/components/estimator/loadAllEntityRows\";\n\n// Generic module-keyed template persistence on the shared ProjectTemplate\n// entity. Mirrors foundationTemplateService exactly so every estimator module\n// gets identical idempotent save/list/delete semantics without duplicating the\n// recovery logic per module (#79).\nexport async function saveModuleTemplate({ moduleKey, idempotencyKey, data, label = \"Module template\" }) {\n  return ensureReusableRecord({\n    entity: base44.entities.ProjectTemplate,\n    idempotencyKey,\n    data: { ...data, module_key: moduleKey },\n    label,\n  });\n}\n\nexport async function listModuleTemplates({ moduleKey }) {\n  return loadAllEntityRows({\n    entity: base44.entities.ProjectTemplate,\n    query: { module_key: moduleKey },\n    sort: \"created_date\",\n    label: \"Module templates\",\n  });\n}\n\nexport async function deleteModuleTemplate(templateId, label = \"Module template\") {\n  const id = String(templateId || \"\").trim();\n  if (!id) throw new Error(`${label} id is required.`);\n\n  const current = await base44.entities.ProjectTemplate.get(id).catch(() => null);\n  if (!current) return true;\n  await deleteEntityIfUnchanged({\n    entity: base44.entities.ProjectTemplate,\n    record: current,\n    label,\n  });\n  return true;\n}",
+      "startLine": 1,
+      "endLine": 40,
+      "totalLines": 40,
+      "truncated": false
+    }
+  ]
+}

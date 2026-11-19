@@ -1,0 +1,6 @@
+src/components/estimator/moduleRegistry.js
+src/components/estimator/aio/InlineProductEditor.jsx
+src/components/admin/deletionImpactValidation.js
+base44/entities/MetalProject.jsonc
+base44/entities/Inventory.jsonc
+base44/entities/Settings.jsonc

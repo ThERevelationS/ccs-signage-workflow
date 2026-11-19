@@ -1,0 +1,14 @@
+ok local-zero 1280
+ok local-zero 390
+ok local-unknown-labor 1280
+ok local-unknown-labor 390
+ok local-ordinary 1280
+ok local-ordinary 390
+ok sandbox-candidate-zero 1280
+ok sandbox-candidate-zero 390
+ok sandbox-candidate-unknown-labor 1280
+ok sandbox-candidate-unknown-labor 390
+ok sandbox-candidate-ordinary 1280
+ok sandbox-candidate-ordinary 390
+Work Order print browser: 12/12; failed=0
+exit=0

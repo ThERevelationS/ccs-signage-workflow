@@ -1,0 +1,1873 @@
+{
+ "head": "1840b224140634135d546377b1878a283443463e",
+ "dirty": "",
+ "changed": "base44/functions/staffEntityWrite/entry.ts\nsrc/components/permitting/PermitSetupWizard.jsx\nsrc/pages/Permitting.jsx\n",
+ "files": [
+  {
+   "path": "src/components/estimator/brick/brickPricingAvailability.js",
+   "exists": false,
+   "role": "target",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/brick/BrickGeometryPanel.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "3614bcf17c7c3839a1e49ba3465eed5bfaa3b5505fea29e98e306f1d35e14501",
+   "role": "target",
+   "text": "import React from \"react\";\r\nimport { Input } from \"@/components/ui/input\";\r\n\r\nconst selectCls = \"flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm\";\r\n\r\nconst FIELDS = [\r\n  { key: \"bricks_along_length\", label: \"Bricks along length\", def: 6 },\r\n  { key: \"bricks_along_width\", label: \"Bricks along width\", def: 9 },\r\n  { key: \"courses_high\", label: \"Courses high\", def: 5 },\r\n  { key: \"layers\", label: \"Layers (depth)\", def: 1 },\r\n  { key: \"mortar_gap\", label: 'Mortar gap (in)', def: 0.375, step: \"0.0625\" },\r\n  { key: \"waste_factor\", label: \"Waste factor\", def: 1.1, step: \"0.01\" },\r\n];\r\n\r\nexport default function BrickGeometryPanel({ project, materials, derived, onChange }) {\r\n  const material = materials.find((m) => m.id === project.selected_material_id);\r\n\r\n  React.useEffect(() => {\r\n    if (project.selected_material_id) return;\r\n    try {\r\n      const last = localStorage.getItem(\"estimator:last_material:brick_stone\");\r\n      const m = materials.find((x) => x.id === last);\r\n      if (m) onChange({ selected_material_id: m.id, material_name: m.material_name || \"\", material_dimensions: { length: m.length, width: m.width, height: m.height } });\r\n    } catch { /* storage unavailable */ }\r\n     \r\n  }, []);\r\n\r\n  return (\r\n    <div className=\"bg-white rounded-xl border border-gray-200 p-4 space-y-3\">\r\n      <h2 className=\"font-semibold text-gray-900\">Masonry Base</h2>\r\n\r\n      <label className=\"text-xs text-gray-500 block\">\r\n        Brick / stone\r\n        <select\r\n          value={project.selected_material_id || \"\"}\r\n          onChange={(e) => {\r\n            try { localStorage.setItem(\"estimator:last_material:brick_stone\", e.target.value); } catch { /* storage unavailable */ }\r\n            const m = materials.find((x) => x.id === e.target.value);\r\n            onChange({\r\n              selected_material_id: e.target.value,\r\n              material_name: m?.material_name || \"\",\r\n              material_dimensions: m\r\n                ? { length: m.length, width: m.width, height: m.height }\r\n                : undefined,\r\n            });\r\n          }}\r\n          className={selectCls}\r\n        >\r\n          <option value=\"\">— select material —</option>\r\n          {materials.map((m) => (\r\n            <option key={m.id} value={m.id}>\r\n              {m.material_name} — {m.length}×{m.width}×{m.height}\" · $\r\n              {Number(m.cost_per_unit || 0).toFixed(2)}\r\n            </option>\r\n          ))}\r\n        </select>\r\n      </label>\r\n\r\n      <div className=\"grid grid-cols-2 sm:grid-cols-3 gap-3\">\r\n        {FIELDS.map((f) => (\r\n          <label key={f.key} className=\"text-xs text-gray-500\">\r\n            {f.label}\r\n            <Input\r\n              type=\"number\"\r\n              step={f.step}\r\n              value={project[f.key] ?? f.def}\r\n              onChange={(e) => onChange({ [f.key]: parseFloat(e.target.value) || 0 })}\r\n            />\r\n          </label>\r\n        ))}\r\n      </div>\r\n\r\n      {material ? (\r\n        <div className=\"text-xs text-gray-500 border-t border-gray-100 pt-2 space-y-1\">\r\n          <div>\r\n            Derived footprint: {derived.derived_length.toFixed(1)}\" ×{\" \"}\r\n            {derived.derived_width.toFixed(1)}\" × {derived.derived_height.toFixed(1)}\" high\r\n          </div>\r\n          <div>\r\n            {derived.bricks_per_course} per course · {derived.calculated_bricks} total (with waste) ·{\" \"}\r\n            {derived.calculated_surface_area.toFixed(1)} sq ft face\r\n          </div>\r\n        </div>\r\n      ) : (\r\n        <p className=\"text-xs text-amber-600 border-t border-gray-100 pt-2\">\r\n          Select a brick or stone to calculate quantities.\r\n        </p>\r\n      )}\r\n    </div>\r\n  );\r\n}",
+   "base64": "aW1wb3J0IFJlYWN0IGZyb20gInJlYWN0IjsNCmltcG9ydCB7IElucHV0IH0gZnJvbSAiQC9jb21wb25lbnRzL3VpL2lucHV0IjsNCg0KY29uc3Qgc2VsZWN0Q2xzID0gImZsZXggaC05IHctZnVsbCByb3VuZGVkLW1kIGJvcmRlciBib3JkZXItaW5wdXQgYmctdHJhbnNwYXJlbnQgcHgtMiB0ZXh0LXNtIjsNCg0KY29uc3QgRklFTERTID0gWw0KICB7IGtleTogImJyaWNrc19hbG9uZ19sZW5ndGgiLCBsYWJlbDogIkJyaWNrcyBhbG9uZyBsZW5ndGgiLCBkZWY6IDYgfSwNCiAgeyBrZXk6ICJicmlja3NfYWxvbmdfd2lkdGgiLCBsYWJlbDogIkJyaWNrcyBhbG9uZyB3aWR0aCIsIGRlZjogOSB9LA0KICB7IGtleTogImNvdXJzZXNfaGlnaCIsIGxhYmVsOiAiQ291cnNlcyBoaWdoIiwgZGVmOiA1IH0sDQogIHsga2V5OiAibGF5ZXJzIiwgbGFiZWw6ICJMYXllcnMgKGRlcHRoKSIsIGRlZjogMSB9LA0KICB7IGtleTogIm1vcnRhcl9nYXAiLCBsYWJlbDogJ01vcnRhciBnYXAgKGluKScsIGRlZjogMC4zNzUsIHN0ZXA6ICIwLjA2MjUiIH0sDQogIHsga2V5OiAid2FzdGVfZmFjdG9yIiwgbGFiZWw6ICJXYXN0ZSBmYWN0b3IiLCBkZWY6IDEuMSwgc3RlcDogIjAuMDEiIH0sDQpdOw0KDQpleHBvcnQgZGVmYXVsdCBmdW5jdGlvbiBCcmlja0dlb21ldHJ5UGFuZWwoeyBwcm9qZWN0LCBtYXRlcmlhbHMsIGRlcml2ZWQsIG9uQ2hhbmdlIH0pIHsNCiAgY29uc3QgbWF0ZXJpYWwgPSBtYXRlcmlhbHMuZmluZCgobSkgPT4gbS5pZCA9PT0gcHJvamVjdC5zZWxlY3RlZF9tYXRlcmlhbF9pZCk7DQoNCiAgUmVhY3QudXNlRWZmZWN0KCgpID0+IHsNCiAgICBpZiAocHJvamVjdC5zZWxlY3RlZF9tYXRlcmlhbF9pZCkgcmV0dXJuOw0KICAgIHRyeSB7DQogICAgICBjb25zdCBsYXN0ID0gbG9jYWxTdG9yYWdlLmdldEl0ZW0oImVzdGltYXRvcjpsYXN0X21hdGVyaWFsOmJyaWNrX3N0b25lIik7DQogICAgICBjb25zdCBtID0gbWF0ZXJpYWxzLmZpbmQoKHgpID0+IHguaWQgPT09IGxhc3QpOw0KICAgICAgaWYgKG0pIG9uQ2hhbmdlKHsgc2VsZWN0ZWRfbWF0ZXJpYWxfaWQ6IG0uaWQsIG1hdGVyaWFsX25hbWU6IG0ubWF0ZXJpYWxfbmFtZSB8fCAiIiwgbWF0ZXJpYWxfZGltZW5zaW9uczogeyBsZW5ndGg6IG0ubGVuZ3RoLCB3aWR0aDogbS53aWR0aCwgaGVpZ2h0OiBtLmhlaWdodCB9IH0pOw0KICAgIH0gY2F0Y2ggeyAvKiBzdG9yYWdlIHVuYXZhaWxhYmxlICovIH0NCiAgICAgDQogIH0sIFtdKTsNCg0KICByZXR1cm4gKA0KICAgIDxkaXYgY2xhc3NOYW1lPSJiZy13aGl0ZSByb3VuZGVkLXhsIGJvcmRlciBib3JkZXItZ3JheS0yMDAgcC00IHNwYWNlLXktMyI+DQogICAgICA8aDIgY2xhc3NOYW1lPSJmb250LXNlbWlib2xkIHRleHQtZ3JheS05MDAiPk1hc29ucnkgQmFzZTwvaDI+DQoNCiAgICAgIDxsYWJlbCBjbGFzc05hbWU9InRleHQteHMgdGV4dC1ncmF5LTUwMCBibG9jayI+DQogICAgICAgIEJyaWNrIC8gc3RvbmUNCiAgICAgICAgPHNlbGVjdA0KICAgICAgICAgIHZhbHVlPXtwcm9qZWN0LnNlbGVjdGVkX21hdGVyaWFsX2lkIHx8ICIifQ0KICAgICAgICAgIG9uQ2hhbmdlPXsoZSkgPT4gew0KICAgICAgICAgICAgdHJ5IHsgbG9jYWxTdG9yYWdlLnNldEl0ZW0oImVzdGltYXRvcjpsYXN0X21hdGVyaWFsOmJyaWNrX3N0b25lIiwgZS50YXJnZXQudmFsdWUpOyB9IGNhdGNoIHsgLyogc3RvcmFnZSB1bmF2YWlsYWJsZSAqLyB9DQogICAgICAgICAgICBjb25zdCBtID0gbWF0ZXJpYWxzLmZpbmQoKHgpID0+IHguaWQgPT09IGUudGFyZ2V0LnZhbHVlKTsNCiAgICAgICAgICAgIG9uQ2hhbmdlKHsNCiAgICAgICAgICAgICAgc2VsZWN0ZWRfbWF0ZXJpYWxfaWQ6IGUudGFyZ2V0LnZhbHVlLA0KICAgICAgICAgICAgICBtYXRlcmlhbF9uYW1lOiBtPy5tYXRlcmlhbF9uYW1lIHx8ICIiLA0KICAgICAgICAgICAgICBtYXRlcmlhbF9kaW1lbnNpb25zOiBtDQogICAgICAgICAgICAgICAgPyB7IGxlbmd0aDogbS5sZW5ndGgsIHdpZHRoOiBtLndpZHRoLCBoZWlnaHQ6IG0uaGVpZ2h0IH0NCiAgICAgICAgICAgICAgICA6IHVuZGVmaW5lZCwNCiAgICAgICAgICAgIH0pOw0KICAgICAgICAgIH19DQogICAgICAgICAgY2xhc3NOYW1lPXtzZWxlY3RDbHN9DQogICAgICAgID4NCiAgICAgICAgICA8b3B0aW9uIHZhbHVlPSIiPuKAlCBzZWxlY3QgbWF0ZXJpYWwg4oCUPC9vcHRpb24+DQogICAgICAgICAge21hdGVyaWFscy5tYXAoKG0pID0+ICgNCiAgICAgICAgICAgIDxvcHRpb24ga2V5PXttLmlkfSB2YWx1ZT17bS5pZH0+DQogICAgICAgICAgICAgIHttLm1hdGVyaWFsX25hbWV9IOKAlCB7bS5sZW5ndGh9w5d7bS53aWR0aH3Dl3ttLmhlaWdodH0iIMK3ICQNCiAgICAgICAgICAgICAge051bWJlcihtLmNvc3RfcGVyX3VuaXQgfHwgMCkudG9GaXhlZCgyKX0NCiAgICAgICAgICAgIDwvb3B0aW9uPg0KICAgICAgICAgICkpfQ0KICAgICAgICA8L3NlbGVjdD4NCiAgICAgIDwvbGFiZWw+DQoNCiAgICAgIDxkaXYgY2xhc3NOYW1lPSJncmlkIGdyaWQtY29scy0yIHNtOmdyaWQtY29scy0zIGdhcC0zIj4NCiAgICAgICAge0ZJRUxEUy5tYXAoKGYpID0+ICgNCiAgICAgICAgICA8bGFiZWwga2V5PXtmLmtleX0gY2xhc3NOYW1lPSJ0ZXh0LXhzIHRleHQtZ3JheS01MDAiPg0KICAgICAgICAgICAge2YubGFiZWx9DQogICAgICAgICAgICA8SW5wdXQNCiAgICAgICAgICAgICAgdHlwZT0ibnVtYmVyIg0KICAgICAgICAgICAgICBzdGVwPXtmLnN0ZXB9DQogICAgICAgICAgICAgIHZhbHVlPXtwcm9qZWN0W2Yua2V5XSA/PyBmLmRlZn0NCiAgICAgICAgICAgICAgb25DaGFuZ2U9eyhlKSA9PiBvbkNoYW5nZSh7IFtmLmtleV06IHBhcnNlRmxvYXQoZS50YXJnZXQudmFsdWUpIHx8IDAgfSl9DQogICAgICAgICAgICAvPg0KICAgICAgICAgIDwvbGFiZWw+DQogICAgICAgICkpfQ0KICAgICAgPC9kaXY+DQoNCiAgICAgIHttYXRlcmlhbCA/ICgNCiAgICAgICAgPGRpdiBjbGFzc05hbWU9InRleHQteHMgdGV4dC1ncmF5LTUwMCBib3JkZXItdCBib3JkZXItZ3JheS0xMDAgcHQtMiBzcGFjZS15LTEiPg0KICAgICAgICAgIDxkaXY+DQogICAgICAgICAgICBEZXJpdmVkIGZvb3RwcmludDoge2Rlcml2ZWQuZGVyaXZlZF9sZW5ndGgudG9GaXhlZCgxKX0iIMOXeyIgIn0NCiAgICAgICAgICAgIHtkZXJpdmVkLmRlcml2ZWRfd2lkdGgudG9GaXhlZCgxKX0iIMOXIHtkZXJpdmVkLmRlcml2ZWRfaGVpZ2h0LnRvRml4ZWQoMSl9IiBoaWdoDQogICAgICAgICAgPC9kaXY+DQogICAgICAgICAgPGRpdj4NCiAgICAgICAgICAgIHtkZXJpdmVkLmJyaWNrc19wZXJfY291cnNlfSBwZXIgY291cnNlIMK3IHtkZXJpdmVkLmNhbGN1bGF0ZWRfYnJpY2tzfSB0b3RhbCAod2l0aCB3YXN0ZSkgwrd7IiAifQ0KICAgICAgICAgICAge2Rlcml2ZWQuY2FsY3VsYXRlZF9zdXJmYWNlX2FyZWEudG9GaXhlZCgxKX0gc3EgZnQgZmFjZQ0KICAgICAgICAgIDwvZGl2Pg0KICAgICAgICA8L2Rpdj4NCiAgICAgICkgOiAoDQogICAgICAgIDxwIGNsYXNzTmFtZT0idGV4dC14cyB0ZXh0LWFtYmVyLTYwMCBib3JkZXItdCBib3JkZXItZ3JheS0xMDAgcHQtMiI+DQogICAgICAgICAgU2VsZWN0IGEgYnJpY2sgb3Igc3RvbmUgdG8gY2FsY3VsYXRlIHF1YW50aXRpZXMuDQogICAgICAgIDwvcD4NCiAgICAgICl9DQogICAgPC9kaXY+DQogICk7DQp9",
+   "normalized": "import React from \"react\";\nimport { Input } from \"@/components/ui/input\";\n\nconst selectCls = \"flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm\";\n\nconst FIELDS = [\n  { key: \"bricks_along_length\", label: \"Bricks along length\", def: 6 },\n  { key: \"bricks_along_width\", label: \"Bricks along width\", def: 9 },\n  { key: \"courses_high\", label: \"Courses high\", def: 5 },\n  { key: \"layers\", label: \"Layers (depth)\", def: 1 },\n  { key: \"mortar_gap\", label: 'Mortar gap (in)', def: 0.375, step: \"0.0625\" },\n  { key: \"waste_factor\", label: \"Waste factor\", def: 1.1, step: \"0.01\" },\n];\n\nexport default function BrickGeometryPanel({ project, materials, derived, onChange }) {\n  const material = materials.find((m) => m.id === project.selected_material_id);\n\n  React.useEffect(() => {\n    if (project.selected_material_id) return;\n    try {\n      const last = localStorage.getItem(\"estimator:last_material:brick_stone\");\n      const m = materials.find((x) => x.id === last);\n      if (m) onChange({ selected_material_id: m.id, material_name: m.material_name || \"\", material_dimensions: { length: m.length, width: m.width, height: m.height } });\n    } catch { /* storage unavailable */ }\n     \n  }, []);\n\n  return (\n    <div className=\"bg-white rounded-xl border border-gray-200 p-4 space-y-3\">\n      <h2 className=\"font-semibold text-gray-900\">Masonry Base</h2>\n\n      <label className=\"text-xs text-gray-500 block\">\n        Brick / stone\n        <select\n          value={project.selected_material_id || \"\"}\n          onChange={(e) => {\n            try { localStorage.setItem(\"estimator:last_material:brick_stone\", e.target.value); } catch { /* storage unavailable */ }\n            const m = materials.find((x) => x.id === e.target.value);\n            onChange({\n              selected_material_id: e.target.value,\n              material_name: m?.material_name || \"\",\n              material_dimensions: m\n                ? { length: m.length, width: m.width, height: m.height }\n                : undefined,\n            });\n          }}\n          className={selectCls}\n        >\n          <option value=\"\">— select material —</option>\n          {materials.map((m) => (\n            <option key={m.id} value={m.id}>\n              {m.material_name} — {m.length}×{m.width}×{m.height}\" · $\n              {Number(m.cost_per_unit || 0).toFixed(2)}\n            </option>\n          ))}\n        </select>\n      </label>\n\n      <div className=\"grid grid-cols-2 sm:grid-cols-3 gap-3\">\n        {FIELDS.map((f) => (\n          <label key={f.key} className=\"text-xs text-gray-500\">\n            {f.label}\n            <Input\n              type=\"number\"\n              step={f.step}\n              value={project[f.key] ?? f.def}\n              onChange={(e) => onChange({ [f.key]: parseFloat(e.target.value) || 0 })}\n            />\n          </label>\n        ))}\n      </div>\n\n      {material ? (\n        <div className=\"text-xs text-gray-500 border-t border-gray-100 pt-2 space-y-1\">\n          <div>\n            Derived footprint: {derived.derived_length.toFixed(1)}\" ×{\" \"}\n            {derived.derived_width.toFixed(1)}\" × {derived.derived_height.toFixed(1)}\" high\n          </div>\n          <div>\n            {derived.bricks_per_course} per course · {derived.calculated_bricks} total (with waste) ·{\" \"}\n            {derived.calculated_surface_area.toFixed(1)} sq ft face\n          </div>\n        </div>\n      ) : (\n        <p className=\"text-xs text-amber-600 border-t border-gray-100 pt-2\">\n          Select a brick or stone to calculate quantities.\n        </p>\n      )}\n    </div>\n  );\n}",
+   "semanticMatchV1": true,
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/brick/BrickTotals.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "5c96fcd7841fdde822aba3301d1e755a1bb4b00f5bca7818e6fd444ae5f6bdf5",
+   "role": "target",
+   "text": "import { Input } from \"@/components/ui/input\";\r\n\r\nconst money = (n) => `$${Number(n || 0).toFixed(2)}`;\r\n\r\nconst RATES = [\r\n  { key: \"mortar_bag_cost\", label: \"Mortar bag $\", def: 12 },\r\n  { key: \"bricks_per_hour\", label: \"Bricks laid /hr\", def: 40 },\r\n  { key: \"labor_rate_per_hour\", label: \"Mason $/hr\", def: 55 },\r\n  { key: \"markup_percent\", label: \"Markup %\", def: 0 },\r\n];\r\n\r\nexport default function BrickTotals({ project, totals, onChange }) {\r\n  return (\r\n    <div className=\"space-y-4 sticky top-4\">\r\n      <div className=\"bg-white rounded-xl border border-gray-200 p-4\">\r\n        <h3 className=\"font-semibold text-gray-900 text-sm mb-3\">Rates</h3>\r\n        <div className=\"grid grid-cols-2 gap-3\">\r\n          {RATES.map((f) => (\r\n            <label key={f.key} className=\"text-xs text-gray-500\">\r\n              {f.label}\r\n              <Input\r\n                type=\"number\"\r\n                value={project[f.key] ?? f.def}\r\n                onChange={(e) => onChange({ [f.key]: parseFloat(e.target.value) || 0 })}\r\n              />\r\n            </label>\r\n          ))}\r\n        </div>\r\n      </div>\r\n\r\n      <div className=\"bg-white rounded-xl border border-red-200 p-4\">\r\n        <h3 className=\"font-semibold text-gray-900 mb-3\">Section Total</h3>\r\n        <div className=\"space-y-1.5 text-sm\">\r\n          <div className=\"flex justify-between text-xs text-gray-400\">\r\n            <span>Bricks / stones</span>\r\n            <span>{totals.calculated_bricks}</span>\r\n          </div>\r\n          <div className=\"flex justify-between text-xs text-gray-400\">\r\n            <span>Mortar bags</span>\r\n            <span>{totals.mortar_bags_needed}</span>\r\n          </div>\r\n          <div className=\"flex justify-between text-xs text-gray-400\">\r\n            <span>Labor hours</span>\r\n            <span>{totals.labor_hours.toFixed(2)}</span>\r\n          </div>\r\n          {[\r\n            [\"Material\", totals.material_cost],\r\n            [\"Mortar\", totals.mortar_cost],\r\n            [\"Labor\", totals.labor_cost],\r\n          ].map(([label, val]) => (\r\n            <div key={label} className=\"flex justify-between\">\r\n              <span className=\"text-gray-500\">{label}</span>\r\n              <span className=\"text-gray-900\">{money(val)}</span>\r\n            </div>\r\n          ))}\r\n          <div className=\"flex justify-between border-t border-gray-100 pt-2\">\r\n            <span className=\"text-gray-500\">Subtotal</span>\r\n            <span className=\"text-gray-900\">{money(totals.subtotal)}</span>\r\n          </div>\r\n          <div className=\"flex justify-between\">\r\n            <span className=\"text-gray-500\">Markup</span>\r\n            <span className=\"text-gray-900\">{money(totals.markup_amount)}</span>\r\n          </div>\r\n          <div className=\"flex justify-between border-t border-red-200 pt-2 mt-2 font-bold text-lg\">\r\n            <span className=\"text-gray-900\">Total</span>\r\n            <span className=\"text-red-600\">{money(totals.total_cost)}</span>\r\n          </div>\r\n        </div>\r\n      </div>\r\n    </div>\r\n  );\r\n}",
+   "base64": "aW1wb3J0IHsgSW5wdXQgfSBmcm9tICJAL2NvbXBvbmVudHMvdWkvaW5wdXQiOw0KDQpjb25zdCBtb25leSA9IChuKSA9PiBgJCR7TnVtYmVyKG4gfHwgMCkudG9GaXhlZCgyKX1gOw0KDQpjb25zdCBSQVRFUyA9IFsNCiAgeyBrZXk6ICJtb3J0YXJfYmFnX2Nvc3QiLCBsYWJlbDogIk1vcnRhciBiYWcgJCIsIGRlZjogMTIgfSwNCiAgeyBrZXk6ICJicmlja3NfcGVyX2hvdXIiLCBsYWJlbDogIkJyaWNrcyBsYWlkIC9ociIsIGRlZjogNDAgfSwNCiAgeyBrZXk6ICJsYWJvcl9yYXRlX3Blcl9ob3VyIiwgbGFiZWw6ICJNYXNvbiAkL2hyIiwgZGVmOiA1NSB9LA0KICB7IGtleTogIm1hcmt1cF9wZXJjZW50IiwgbGFiZWw6ICJNYXJrdXAgJSIsIGRlZjogMCB9LA0KXTsNCg0KZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24gQnJpY2tUb3RhbHMoeyBwcm9qZWN0LCB0b3RhbHMsIG9uQ2hhbmdlIH0pIHsNCiAgcmV0dXJuICgNCiAgICA8ZGl2IGNsYXNzTmFtZT0ic3BhY2UteS00IHN0aWNreSB0b3AtNCI+DQogICAgICA8ZGl2IGNsYXNzTmFtZT0iYmctd2hpdGUgcm91bmRlZC14bCBib3JkZXIgYm9yZGVyLWdyYXktMjAwIHAtNCI+DQogICAgICAgIDxoMyBjbGFzc05hbWU9ImZvbnQtc2VtaWJvbGQgdGV4dC1ncmF5LTkwMCB0ZXh0LXNtIG1iLTMiPlJhdGVzPC9oMz4NCiAgICAgICAgPGRpdiBjbGFzc05hbWU9ImdyaWQgZ3JpZC1jb2xzLTIgZ2FwLTMiPg0KICAgICAgICAgIHtSQVRFUy5tYXAoKGYpID0+ICgNCiAgICAgICAgICAgIDxsYWJlbCBrZXk9e2Yua2V5fSBjbGFzc05hbWU9InRleHQteHMgdGV4dC1ncmF5LTUwMCI+DQogICAgICAgICAgICAgIHtmLmxhYmVsfQ0KICAgICAgICAgICAgICA8SW5wdXQNCiAgICAgICAgICAgICAgICB0eXBlPSJudW1iZXIiDQogICAgICAgICAgICAgICAgdmFsdWU9e3Byb2plY3RbZi5rZXldID8/IGYuZGVmfQ0KICAgICAgICAgICAgICAgIG9uQ2hhbmdlPXsoZSkgPT4gb25DaGFuZ2UoeyBbZi5rZXldOiBwYXJzZUZsb2F0KGUudGFyZ2V0LnZhbHVlKSB8fCAwIH0pfQ0KICAgICAgICAgICAgICAvPg0KICAgICAgICAgICAgPC9sYWJlbD4NCiAgICAgICAgICApKX0NCiAgICAgICAgPC9kaXY+DQogICAgICA8L2Rpdj4NCg0KICAgICAgPGRpdiBjbGFzc05hbWU9ImJnLXdoaXRlIHJvdW5kZWQteGwgYm9yZGVyIGJvcmRlci1yZWQtMjAwIHAtNCI+DQogICAgICAgIDxoMyBjbGFzc05hbWU9ImZvbnQtc2VtaWJvbGQgdGV4dC1ncmF5LTkwMCBtYi0zIj5TZWN0aW9uIFRvdGFsPC9oMz4NCiAgICAgICAgPGRpdiBjbGFzc05hbWU9InNwYWNlLXktMS41IHRleHQtc20iPg0KICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGp1c3RpZnktYmV0d2VlbiB0ZXh0LXhzIHRleHQtZ3JheS00MDAiPg0KICAgICAgICAgICAgPHNwYW4+QnJpY2tzIC8gc3RvbmVzPC9zcGFuPg0KICAgICAgICAgICAgPHNwYW4+e3RvdGFscy5jYWxjdWxhdGVkX2JyaWNrc308L3NwYW4+DQogICAgICAgICAgPC9kaXY+DQogICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImZsZXgganVzdGlmeS1iZXR3ZWVuIHRleHQteHMgdGV4dC1ncmF5LTQwMCI+DQogICAgICAgICAgICA8c3Bhbj5Nb3J0YXIgYmFnczwvc3Bhbj4NCiAgICAgICAgICAgIDxzcGFuPnt0b3RhbHMubW9ydGFyX2JhZ3NfbmVlZGVkfTwvc3Bhbj4NCiAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleCBqdXN0aWZ5LWJldHdlZW4gdGV4dC14cyB0ZXh0LWdyYXktNDAwIj4NCiAgICAgICAgICAgIDxzcGFuPkxhYm9yIGhvdXJzPC9zcGFuPg0KICAgICAgICAgICAgPHNwYW4+e3RvdGFscy5sYWJvcl9ob3Vycy50b0ZpeGVkKDIpfTwvc3Bhbj4NCiAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICB7Ww0KICAgICAgICAgICAgWyJNYXRlcmlhbCIsIHRvdGFscy5tYXRlcmlhbF9jb3N0XSwNCiAgICAgICAgICAgIFsiTW9ydGFyIiwgdG90YWxzLm1vcnRhcl9jb3N0XSwNCiAgICAgICAgICAgIFsiTGFib3IiLCB0b3RhbHMubGFib3JfY29zdF0sDQogICAgICAgICAgXS5tYXAoKFtsYWJlbCwgdmFsXSkgPT4gKA0KICAgICAgICAgICAgPGRpdiBrZXk9e2xhYmVsfSBjbGFzc05hbWU9ImZsZXgganVzdGlmeS1iZXR3ZWVuIj4NCiAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPSJ0ZXh0LWdyYXktNTAwIj57bGFiZWx9PC9zcGFuPg0KICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9InRleHQtZ3JheS05MDAiPnttb25leSh2YWwpfTwvc3Bhbj4NCiAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICkpfQ0KICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGp1c3RpZnktYmV0d2VlbiBib3JkZXItdCBib3JkZXItZ3JheS0xMDAgcHQtMiI+DQogICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9InRleHQtZ3JheS01MDAiPlN1YnRvdGFsPC9zcGFuPg0KICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPSJ0ZXh0LWdyYXktOTAwIj57bW9uZXkodG90YWxzLnN1YnRvdGFsKX08L3NwYW4+DQogICAgICAgICAgPC9kaXY+DQogICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImZsZXgganVzdGlmeS1iZXR3ZWVuIj4NCiAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT0idGV4dC1ncmF5LTUwMCI+TWFya3VwPC9zcGFuPg0KICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPSJ0ZXh0LWdyYXktOTAwIj57bW9uZXkodG90YWxzLm1hcmt1cF9hbW91bnQpfTwvc3Bhbj4NCiAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleCBqdXN0aWZ5LWJldHdlZW4gYm9yZGVyLXQgYm9yZGVyLXJlZC0yMDAgcHQtMiBtdC0yIGZvbnQtYm9sZCB0ZXh0LWxnIj4NCiAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT0idGV4dC1ncmF5LTkwMCI+VG90YWw8L3NwYW4+DQogICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9InRleHQtcmVkLTYwMCI+e21vbmV5KHRvdGFscy50b3RhbF9jb3N0KX08L3NwYW4+DQogICAgICAgICAgPC9kaXY+DQogICAgICAgIDwvZGl2Pg0KICAgICAgPC9kaXY+DQogICAgPC9kaXY+DQogICk7DQp9",
+   "normalized": "import { Input } from \"@/components/ui/input\";\n\nconst money = (n) => `$${Number(n || 0).toFixed(2)}`;\n\nconst RATES = [\n  { key: \"mortar_bag_cost\", label: \"Mortar bag $\", def: 12 },\n  { key: \"bricks_per_hour\", label: \"Bricks laid /hr\", def: 40 },\n  { key: \"labor_rate_per_hour\", label: \"Mason $/hr\", def: 55 },\n  { key: \"markup_percent\", label: \"Markup %\", def: 0 },\n];\n\nexport default function BrickTotals({ project, totals, onChange }) {\n  return (\n    <div className=\"space-y-4 sticky top-4\">\n      <div className=\"bg-white rounded-xl border border-gray-200 p-4\">\n        <h3 className=\"font-semibold text-gray-900 text-sm mb-3\">Rates</h3>\n        <div className=\"grid grid-cols-2 gap-3\">\n          {RATES.map((f) => (\n            <label key={f.key} className=\"text-xs text-gray-500\">\n              {f.label}\n              <Input\n                type=\"number\"\n                value={project[f.key] ?? f.def}\n                onChange={(e) => onChange({ [f.key]: parseFloat(e.target.value) || 0 })}\n              />\n            </label>\n          ))}\n        </div>\n      </div>\n\n      <div className=\"bg-white rounded-xl border border-red-200 p-4\">\n        <h3 className=\"font-semibold text-gray-900 mb-3\">Section Total</h3>\n        <div className=\"space-y-1.5 text-sm\">\n          <div className=\"flex justify-between text-xs text-gray-400\">\n            <span>Bricks / stones</span>\n            <span>{totals.calculated_bricks}</span>\n          </div>\n          <div className=\"flex justify-between text-xs text-gray-400\">\n            <span>Mortar bags</span>\n            <span>{totals.mortar_bags_needed}</span>\n          </div>\n          <div className=\"flex justify-between text-xs text-gray-400\">\n            <span>Labor hours</span>\n            <span>{totals.labor_hours.toFixed(2)}</span>\n          </div>\n          {[\n            [\"Material\", totals.material_cost],\n            [\"Mortar\", totals.mortar_cost],\n            [\"Labor\", totals.labor_cost],\n          ].map(([label, val]) => (\n            <div key={label} className=\"flex justify-between\">\n              <span className=\"text-gray-500\">{label}</span>\n              <span className=\"text-gray-900\">{money(val)}</span>\n            </div>\n          ))}\n          <div className=\"flex justify-between border-t border-gray-100 pt-2\">\n            <span className=\"text-gray-500\">Subtotal</span>\n            <span className=\"text-gray-900\">{money(totals.subtotal)}</span>\n          </div>\n          <div className=\"flex justify-between\">\n            <span className=\"text-gray-500\">Markup</span>\n            <span className=\"text-gray-900\">{money(totals.markup_amount)}</span>\n          </div>\n          <div className=\"flex justify-between border-t border-red-200 pt-2 mt-2 font-bold text-lg\">\n            <span className=\"text-gray-900\">Total</span>\n            <span className=\"text-red-600\">{money(totals.total_cost)}</span>\n          </div>\n        </div>\n      </div>\n    </div>\n  );\n}",
+   "semanticMatchV1": true,
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/pages/BrickStoneEstimator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "2837722bbd6222a4b2717a297efba12729276e220f98f68228018262dc7fd779",
+   "role": "target",
+   "text": "import { useState, useEffect, useMemo, useRef } from \"react\";\nimport { Link, useNavigate } from \"react-router-dom\";\nimport { Button } from \"@/components/ui/button\";\nimport { Input } from \"@/components/ui/input\";\nimport { ArrowLeft, Save } from \"lucide-react\";\nimport BrickGeometryPanel from \"@/components/estimator/brick/BrickGeometryPanel\";\nimport BrickTotals from \"@/components/estimator/brick/BrickTotals\";\nimport { calcBrickStoneProject } from \"@/components/estimator/brick/brickCalc\";\nimport { recordBuilderSave } from \"@/components/estimator/builder/builderService\";\nimport { loadAllEntityRows } from \"@/components/estimator/loadAllEntityRows\";\nimport { updateBuilderSourceProject } from \"@/components/estimator/builder/sourceProjectPersistence\";\nimport ModuleActionBar from \"@/components/estimator/moduleShared/ModuleActionBar\";\nimport ModuleTemplateDialog from \"@/components/estimator/moduleShared/ModuleTemplateDialog\";\nimport { saveModuleProjectCopy } from \"@/components/estimator/moduleShared/moduleProjectActions\";\nimport CustomerPricingTab from \"@/components/markup/CustomerPricingTab\";\nimport { categorizeBrickStoneProject } from \"@/components/markup/projectCategorizer\";\nimport { calculateSavedCustomerPricing } from \"@/components/markup/savedCustomerPricing\";\nimport { staffEntities } from \"@/components/staff/staffEntities\";\n\nexport default function BrickStoneEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {\n  const params = new URLSearchParams(window.location.search);\n  const id = embeddedProjectId || params.get(\"id\") || params.get(\"edit\");\n  const estimateId = embeddedEstimateId || params.get(\"estimateId\");\n\n  const [project, setProject] = useState(null);\n  const [materials, setMaterials] = useState([]);\n  const [loading, setLoading] = useState(true);\n  const [loadError, setLoadError] = useState(\"\");\n  const [saving, setSaving] = useState(false);\n  const [templateMode, setTemplateMode] = useState(null);\n  const saveRef = useRef(null);\n  const copyAttemptRef = useRef({ signature: \"\", key: \"\" });\n  const navigate = useNavigate();\n\n  useEffect(() => {\n    copyAttemptRef.current = { signature: \"\", key: \"\" };\n    const load = async () => {\n      setLoading(true);\n      setLoadError(\"\");\n      try {\n        const [p, legacyMats, foundationMats] = await Promise.all([\n          id ? staffEntities.BrickStoneProject.get(id) : Promise.resolve(null),\n          // Legacy entity is optional compatibility data; the modern Foundation\n          // inventory below is the authoritative masonry catalog and is strict.\n          loadAllEntityRows({ entity: staffEntities.BrickStoneInventory, sort: \"material_name\", label: \"Legacy Brick & Stone inventory\" }).catch(() => []),\n          loadAllEntityRows({ entity: staffEntities.FoundationInventory, sort: \"material_name\", label: \"Foundation masonry inventory\" }),\n        ]);\n\n      // The committed SignEstimate Pro repo defined BrickStoneInventory but never\n      // shipped a Brick estimator implementation or any BrickStoneInventory data.\n      // Modern Master Inventory stores masonry units in FoundationInventory. Use\n      // those rows as the primary catalog while keeping the legacy entity readable\n      // for compatibility if an older record is ever encountered.\n      const modernMats = (foundationMats || [])\n        .filter((row) =>\n          row.show_in_foundation !== false && (\n            row.material_type === \"brick_stone\" ||\n            (row.material_type === \"wall_material\" && [\"brick\", \"stone\", \"cinderblock\"].includes(row.wall_material_subtype))\n          )\n        )\n        .map((row) => ({\n          ...row,\n          length: row.material_type === \"brick_stone\" ? row.brick_length_inches : row.wall_unit_length_inches,\n          width: row.material_type === \"brick_stone\" ? row.brick_width_inches : row.wall_unit_width_inches,\n          height: row.material_type === \"brick_stone\" ? row.brick_height_inches : row.wall_unit_height_inches,\n          _inventory_entity: \"FoundationInventory\",\n        }));\n      const legacyNormalized = (legacyMats || []).map((row) => ({\n        ...row,\n        _inventory_entity: \"BrickStoneInventory\",\n      }));\n\n        setProject(p);\n        setMaterials([...modernMats, ...legacyNormalized]);\n      } catch (error) {\n        console.error(\"Brick & Stone prerequisites could not be loaded:\", error);\n        setLoadError(error?.message || \"Brick & Stone Builder prerequisites could not be verified.\");\n      } finally {\n        setLoading(false);\n      }\n    };\n    load();\n  }, [id]);\n\n  const material = useMemo(\n    () => materials.find((m) => m.id === project?.selected_material_id),\n    [materials, project]\n  );\n  const totals = useMemo(\n    () => (project ? calcBrickStoneProject(project, material) : null),\n    [project, material]\n  );\n\n  // Ctrl+S / Cmd+S saves the section without leaving the editor.\n  useEffect(() => {\n    const handler = (e) => {\n      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === \"s\") {\n        e.preventDefault();\n        if (!saving) saveRef.current?.();\n      }\n    };\n    window.addEventListener(\"keydown\", handler);\n    return () => window.removeEventListener(\"keydown\", handler);\n  }, [saving]);\n  // Block accidental navigation while a save is in flight.\n  useEffect(() => {\n    if (!saving) return undefined;\n    const warn = (e) => { e.preventDefault(); e.returnValue = \"\"; };\n    window.addEventListener(\"beforeunload\", warn);\n    return () => window.removeEventListener(\"beforeunload\", warn);\n  }, [saving]);\n\n  if (loading) return <div className=\"p-10 text-center text-gray-400\">Loading section…</div>;\n  if (loadError) return <div className=\"p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded\">Brick & Stone Builder unavailable. Required project data or the primary masonry catalog could not be verified. {loadError}</div>;\n  if (!project) return <div className=\"p-10 text-center text-gray-500\">Section not found.</div>;\n\n  const patch = (changes) => setProject((prev) => ({ ...prev, ...changes }));\n\n  const handleSave = async () => {\n    if (!(Number(totals?.calculated_surface_area) > 0)) {\n      window.alert(\"Wall area must be greater than zero before this section can be saved. Check the wall dimensions and material selection.\");\n      return;\n    }\n    setSaving(true);\n    try {\n      const pricingProject = {\n        ...project,\n        material_cost: totals.material_cost,\n        mortar_cost: totals.mortar_cost,\n        labor_cost: totals.labor_cost,\n        subtotal: totals.subtotal,\n      };\n      const customerPricing = project.customer_pricing?.applied === true\n        ? await calculateSavedCustomerPricing({\n            project: pricingProject,\n            categorize: categorizeBrickStoneProject,\n            tierNumber: project.customer_pricing?.tier_number,\n          })\n        : project.customer_pricing;\n      const dataToSave = {\n        project_name: project.project_name,\n        notes: project.notes,\n        status: \"calculated\",\n        selected_material_id: project.selected_material_id,\n        material_name: project.material_name,\n        material_dimensions: project.material_dimensions,\n        bricks_along_length: project.bricks_along_length,\n        bricks_along_width: project.bricks_along_width,\n        courses_high: project.courses_high,\n        layers: project.layers,\n        mortar_gap: project.mortar_gap,\n        waste_factor: project.waste_factor,\n        mortar_bag_cost: project.mortar_bag_cost,\n        bricks_per_hour: project.bricks_per_hour,\n        labor_rate_per_hour: project.labor_rate_per_hour,\n        markup_percent: project.markup_percent,\n        base_length: totals.derived_length,\n        base_width: totals.derived_width,\n        base_height: totals.derived_height,\n        calculated_bricks: totals.calculated_bricks,\n        calculated_surface_area: totals.calculated_surface_area,\n        mortar_bags_needed: totals.mortar_bags_needed,\n        material_cost: totals.material_cost,\n        mortar_cost: totals.mortar_cost,\n        labor_hours: totals.labor_hours,\n        labor_cost: totals.labor_cost,\n        subtotal: totals.subtotal,\n        markup_amount: totals.markup_amount,\n        total_cost: totals.total_cost,\n        customer_pricing: customerPricing,\n      };\n      const savedProject = await updateBuilderSourceProject({\n        entity: staffEntities.BrickStoneProject,\n        sourceId: project.id,\n        expectedUpdatedAt: project.updated_date,\n        data: dataToSave,\n        estimateId,\n        label: \"Brick & Stone project\",\n      });\n      if (savedProject?.updated_date) {\n        setProject((prev) => ({ ...prev, updated_date: savedProject.updated_date }));\n      }\n\n      if (estimateId) {\n        await recordBuilderSave({\n          estimateId,\n          line: { project_id: project.id, module_key: \"brick_stone\" },\n          sourceProject: savedProject,\n          liveTotal: totals.total_cost,\n        });\n      }\n      onSaved?.();\n    } catch (e) {\n      console.error(e); alert(\"Save failed: \" + e.message);\n    } finally {\n      setSaving(false);\n    }\n  };\n  saveRef.current = handleSave;\n\n  // #78 — clone the current save payload into a brand-new Brick & Stone project.\n  const handleSaveAsCopy = async () => {\n    setSaving(true);\n    try {\n      const copy = await saveModuleProjectCopy({\n        entity: staffEntities.BrickStoneProject,\n        payload: {\n          project_name: project.project_name,\n          client_name: project.client_name,\n          customer_id: project.customer_id,\n          estimate_number: project.estimate_number,\n          hyperlink: project.hyperlink,\n          notes: project.notes,\n          status: \"calculated\",\n          selected_material_id: project.selected_material_id,\n          material_name: project.material_name,\n          material_dimensions: project.material_dimensions,\n          bricks_along_length: project.bricks_along_length,\n          bricks_along_width: project.bricks_along_width,\n          courses_high: project.courses_high,\n          layers: project.layers,\n          mortar_gap: project.mortar_gap,\n          waste_factor: project.waste_factor,\n          mortar_bag_cost: project.mortar_bag_cost,\n          bricks_per_hour: project.bricks_per_hour,\n          labor_rate_per_hour: project.labor_rate_per_hour,\n          markup_percent: project.markup_percent,\n          base_length: totals.derived_length,\n          base_width: totals.derived_width,\n          base_height: totals.derived_height,\n          calculated_bricks: totals.calculated_bricks,\n          calculated_surface_area: totals.calculated_surface_area,\n          mortar_bags_needed: totals.mortar_bags_needed,\n          material_cost: totals.material_cost,\n          mortar_cost: totals.mortar_cost,\n          labor_hours: totals.labor_hours,\n          labor_cost: totals.labor_cost,\n          subtotal: totals.subtotal,\n          markup_amount: totals.markup_amount,\n          total_cost: totals.total_cost,\n          customer_pricing: project.customer_pricing,\n        },\n        attemptRef: copyAttemptRef,\n        keyPrefix: \"brick_stone_project_copy\",\n        baseName: project.project_name || \"Brick & Stone\",\n        label: \"Brick & Stone project copy\",\n      });\n      if (embedded) onSaved?.();\n      else navigate(`/BrickStoneEstimator?id=${copy.id}`);\n    } catch (e) {\n      console.error(e); alert(\"Save copy failed: \" + e.message);\n    } finally {\n      setSaving(false);\n    }\n  };\n\n  // #79 — template payload = the editable masonry setup a user would reuse.\n  const buildBrickStoneTemplateData = (p) => ({\n    selected_material_id: p.selected_material_id,\n    material_name: p.material_name,\n    material_dimensions: p.material_dimensions,\n    bricks_along_length: p.bricks_along_length,\n    bricks_along_width: p.bricks_along_width,\n    courses_high: p.courses_high,\n    layers: p.layers,\n    mortar_gap: p.mortar_gap,\n    waste_factor: p.waste_factor,\n    mortar_bag_cost: p.mortar_bag_cost,\n    bricks_per_hour: p.bricks_per_hour,\n    labor_rate_per_hour: p.labor_rate_per_hour,\n    markup_percent: p.markup_percent,\n    notes: p.notes,\n  });\n\n  return (\n    <div className=\"clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50\">\n      <div className=\"max-w-6xl mx-auto p-4 sm:p-6\">\n        <div className=\"flex items-center justify-between gap-4 mb-5\">\n          {embedded ? (\n            <button\n              type=\"button\"\n              onClick={onClose}\n              className=\"flex items-center gap-1 text-sm text-gray-600 hover:text-red-600\"\n            >\n              <ArrowLeft className=\"w-4 h-4\" /> Back to products\n            </button>\n          ) : (\n            <Link\n              to={estimateId ? `/EstimateDetail?id=${estimateId}` : \"/Estimator\"}\n              className=\"flex items-center gap-1 text-sm text-gray-600 hover:text-red-600\"\n            >\n              <ArrowLeft className=\"w-4 h-4\" /> Back to estimate\n            </Link>\n          )}\n          {project?.updated_date && (<div className=\"mt-1 text-[10px] text-gray-400\">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}\n          <Button onClick={handleSave} disabled={saving || !project.selected_material_id} className=\"clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold\">\n            <Save className=\"w-4 h-4\" /> {saving ? \"Saving…\" : \"Save Section\"}\n          </Button>\n          <ModuleActionBar\n            onTemplates={() => setTemplateMode(\"load\")}\n            onSaveAsTemplate={() => setTemplateMode(\"save\")}\n            onSaveAsCopy={handleSaveAsCopy}\n            estimateId={estimateId}\n            saving={saving}\n          />\n        </div>\n\n        <div className=\"mb-4\">\n          <h1 className=\"text-2xl font-bold text-gray-900\">Brick &amp; Stone</h1>\n          <p className=\"text-sm text-gray-500\">{project.client_name}</p>\n        </div>\n\n        <div className=\"grid grid-cols-1 lg:grid-cols-3 gap-5\">\n          <div className=\"lg:col-span-2 space-y-4\">\n            <div className=\"bg-white rounded-xl border border-gray-200 p-4\">\n              <label className=\"text-xs text-gray-500\">\n                Section name\n                <Input\n                  value={project.project_name || \"\"}\n                  onChange={(e) => patch({ project_name: e.target.value })}\n                />\n              </label>\n            </div>\n\n            <BrickGeometryPanel\n              project={project}\n              materials={materials}\n              derived={totals}\n              onChange={patch}\n            />\n\n            {materials.length === 0 && (\n              <div className=\"bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-700\">\n                No masonry materials in the catalog yet.{\" \"}\n                <Link to=\"/FoundationCatalog\" className=\"font-semibold underline hover:text-amber-900\">\n                  Add brick or stone in the foundation catalog →\n                </Link>\n              </div>\n            )}\n          </div>\n\n          <div>\n            <BrickTotals\n              project={project}\n              totals={totals}\n              onChange={(changes) => patch({\n                ...changes,\n                ...(Object.prototype.hasOwnProperty.call(changes, \"markup_percent\")\n                  ? { customer_pricing: { ...(project.customer_pricing || {}), applied: false } }\n                  : {}),\n              })}\n            />\n          </div>\n        </div>\n\n        <div className=\"mt-5\">\n          <CustomerPricingTab\n            project={{\n              ...project,\n              material_cost: totals.material_cost,\n              mortar_cost: totals.mortar_cost,\n              labor_cost: totals.labor_cost,\n              subtotal: totals.subtotal,\n            }}\n            categorize={categorizeBrickStoneProject}\n            accentColor=\"red\"\n            onApplyTier={(tier) => patch({\n              customer_pricing: { ...(project.customer_pricing || {}), applied: true, tier_number: tier },\n            })}\n          />\n        </div>\n\n        <ModuleTemplateDialog\n          open={!!templateMode}\n          mode={templateMode}\n          onClose={() => setTemplateMode(null)}\n          project={project}\n          onApply={(data) => patch(data)}\n          moduleKey=\"brick_stone\"\n          title=\"Brick & Stone\"\n          buildTemplateData={buildBrickStoneTemplateData}\n          describeTemplate={(t) => (t.project_data?.material_name || \"Saved wall setup\")}\n        />\n      </div>\n    </div>\n  );\n}",
+   "base64": "aW1wb3J0IHsgdXNlU3RhdGUsIHVzZUVmZmVjdCwgdXNlTWVtbywgdXNlUmVmIH0gZnJvbSAicmVhY3QiOwppbXBvcnQgeyBMaW5rLCB1c2VOYXZpZ2F0ZSB9IGZyb20gInJlYWN0LXJvdXRlci1kb20iOwppbXBvcnQgeyBCdXR0b24gfSBmcm9tICJAL2NvbXBvbmVudHMvdWkvYnV0dG9uIjsKaW1wb3J0IHsgSW5wdXQgfSBmcm9tICJAL2NvbXBvbmVudHMvdWkvaW5wdXQiOwppbXBvcnQgeyBBcnJvd0xlZnQsIFNhdmUgfSBmcm9tICJsdWNpZGUtcmVhY3QiOwppbXBvcnQgQnJpY2tHZW9tZXRyeVBhbmVsIGZyb20gIkAvY29tcG9uZW50cy9lc3RpbWF0b3IvYnJpY2svQnJpY2tHZW9tZXRyeVBhbmVsIjsKaW1wb3J0IEJyaWNrVG90YWxzIGZyb20gIkAvY29tcG9uZW50cy9lc3RpbWF0b3IvYnJpY2svQnJpY2tUb3RhbHMiOwppbXBvcnQgeyBjYWxjQnJpY2tTdG9uZVByb2plY3QgfSBmcm9tICJAL2NvbXBvbmVudHMvZXN0aW1hdG9yL2JyaWNrL2JyaWNrQ2FsYyI7CmltcG9ydCB7IHJlY29yZEJ1aWxkZXJTYXZlIH0gZnJvbSAiQC9jb21wb25lbnRzL2VzdGltYXRvci9idWlsZGVyL2J1aWxkZXJTZXJ2aWNlIjsKaW1wb3J0IHsgbG9hZEFsbEVudGl0eVJvd3MgfSBmcm9tICJAL2NvbXBvbmVudHMvZXN0aW1hdG9yL2xvYWRBbGxFbnRpdHlSb3dzIjsKaW1wb3J0IHsgdXBkYXRlQnVpbGRlclNvdXJjZVByb2plY3QgfSBmcm9tICJAL2NvbXBvbmVudHMvZXN0aW1hdG9yL2J1aWxkZXIvc291cmNlUHJvamVjdFBlcnNpc3RlbmNlIjsKaW1wb3J0IE1vZHVsZUFjdGlvbkJhciBmcm9tICJAL2NvbXBvbmVudHMvZXN0aW1hdG9yL21vZHVsZVNoYXJlZC9Nb2R1bGVBY3Rpb25CYXIiOwppbXBvcnQgTW9kdWxlVGVtcGxhdGVEaWFsb2cgZnJvbSAiQC9jb21wb25lbnRzL2VzdGltYXRvci9tb2R1bGVTaGFyZWQvTW9kdWxlVGVtcGxhdGVEaWFsb2ciOwppbXBvcnQgeyBzYXZlTW9kdWxlUHJvamVjdENvcHkgfSBmcm9tICJAL2NvbXBvbmVudHMvZXN0aW1hdG9yL21vZHVsZVNoYXJlZC9tb2R1bGVQcm9qZWN0QWN0aW9ucyI7CmltcG9ydCBDdXN0b21lclByaWNpbmdUYWIgZnJvbSAiQC9jb21wb25lbnRzL21hcmt1cC9DdXN0b21lclByaWNpbmdUYWIiOwppbXBvcnQgeyBjYXRlZ29yaXplQnJpY2tTdG9uZVByb2plY3QgfSBmcm9tICJAL2NvbXBvbmVudHMvbWFya3VwL3Byb2plY3RDYXRlZ29yaXplciI7CmltcG9ydCB7IGNhbGN1bGF0ZVNhdmVkQ3VzdG9tZXJQcmljaW5nIH0gZnJvbSAiQC9jb21wb25lbnRzL21hcmt1cC9zYXZlZEN1c3RvbWVyUHJpY2luZyI7CmltcG9ydCB7IHN0YWZmRW50aXRpZXMgfSBmcm9tICJAL2NvbXBvbmVudHMvc3RhZmYvc3RhZmZFbnRpdGllcyI7CgpleHBvcnQgZGVmYXVsdCBmdW5jdGlvbiBCcmlja1N0b25lRXN0aW1hdG9yKHsgZW1iZWRkZWQgPSBmYWxzZSwgZW1iZWRkZWRQcm9qZWN0SWQsIGVtYmVkZGVkRXN0aW1hdGVJZCwgb25DbG9zZSwgb25TYXZlZCB9KSB7CiAgY29uc3QgcGFyYW1zID0gbmV3IFVSTFNlYXJjaFBhcmFtcyh3aW5kb3cubG9jYXRpb24uc2VhcmNoKTsKICBjb25zdCBpZCA9IGVtYmVkZGVkUHJvamVjdElkIHx8IHBhcmFtcy5nZXQoImlkIikgfHwgcGFyYW1zLmdldCgiZWRpdCIpOwogIGNvbnN0IGVzdGltYXRlSWQgPSBlbWJlZGRlZEVzdGltYXRlSWQgfHwgcGFyYW1zLmdldCgiZXN0aW1hdGVJZCIpOwoKICBjb25zdCBbcHJvamVjdCwgc2V0UHJvamVjdF0gPSB1c2VTdGF0ZShudWxsKTsKICBjb25zdCBbbWF0ZXJpYWxzLCBzZXRNYXRlcmlhbHNdID0gdXNlU3RhdGUoW10pOwogIGNvbnN0IFtsb2FkaW5nLCBzZXRMb2FkaW5nXSA9IHVzZVN0YXRlKHRydWUpOwogIGNvbnN0IFtsb2FkRXJyb3IsIHNldExvYWRFcnJvcl0gPSB1c2VTdGF0ZSgiIik7CiAgY29uc3QgW3NhdmluZywgc2V0U2F2aW5nXSA9IHVzZVN0YXRlKGZhbHNlKTsKICBjb25zdCBbdGVtcGxhdGVNb2RlLCBzZXRUZW1wbGF0ZU1vZGVdID0gdXNlU3RhdGUobnVsbCk7CiAgY29uc3Qgc2F2ZVJlZiA9IHVzZVJlZihudWxsKTsKICBjb25zdCBjb3B5QXR0ZW1wdFJlZiA9IHVzZVJlZih7IHNpZ25hdHVyZTogIiIsIGtleTogIiIgfSk7CiAgY29uc3QgbmF2aWdhdGUgPSB1c2VOYXZpZ2F0ZSgpOwoKICB1c2VFZmZlY3QoKCkgPT4gewogICAgY29weUF0dGVtcHRSZWYuY3VycmVudCA9IHsgc2lnbmF0dXJlOiAiIiwga2V5OiAiIiB9OwogICAgY29uc3QgbG9hZCA9IGFzeW5jICgpID0+IHsKICAgICAgc2V0TG9hZGluZyh0cnVlKTsKICAgICAgc2V0TG9hZEVycm9yKCIiKTsKICAgICAgdHJ5IHsKICAgICAgICBjb25zdCBbcCwgbGVnYWN5TWF0cywgZm91bmRhdGlvbk1hdHNdID0gYXdhaXQgUHJvbWlzZS5hbGwoWwogICAgICAgICAgaWQgPyBzdGFmZkVudGl0aWVzLkJyaWNrU3RvbmVQcm9qZWN0LmdldChpZCkgOiBQcm9taXNlLnJlc29sdmUobnVsbCksCiAgICAgICAgICAvLyBMZWdhY3kgZW50aXR5IGlzIG9wdGlvbmFsIGNvbXBhdGliaWxpdHkgZGF0YTsgdGhlIG1vZGVybiBGb3VuZGF0aW9uCiAgICAgICAgICAvLyBpbnZlbnRvcnkgYmVsb3cgaXMgdGhlIGF1dGhvcml0YXRpdmUgbWFzb25yeSBjYXRhbG9nIGFuZCBpcyBzdHJpY3QuCiAgICAgICAgICBsb2FkQWxsRW50aXR5Um93cyh7IGVudGl0eTogc3RhZmZFbnRpdGllcy5Ccmlja1N0b25lSW52ZW50b3J5LCBzb3J0OiAibWF0ZXJpYWxfbmFtZSIsIGxhYmVsOiAiTGVnYWN5IEJyaWNrICYgU3RvbmUgaW52ZW50b3J5IiB9KS5jYXRjaCgoKSA9PiBbXSksCiAgICAgICAgICBsb2FkQWxsRW50aXR5Um93cyh7IGVudGl0eTogc3RhZmZFbnRpdGllcy5Gb3VuZGF0aW9uSW52ZW50b3J5LCBzb3J0OiAibWF0ZXJpYWxfbmFtZSIsIGxhYmVsOiAiRm91bmRhdGlvbiBtYXNvbnJ5IGludmVudG9yeSIgfSksCiAgICAgICAgXSk7CgogICAgICAvLyBUaGUgY29tbWl0dGVkIFNpZ25Fc3RpbWF0ZSBQcm8gcmVwbyBkZWZpbmVkIEJyaWNrU3RvbmVJbnZlbnRvcnkgYnV0IG5ldmVyCiAgICAgIC8vIHNoaXBwZWQgYSBCcmljayBlc3RpbWF0b3IgaW1wbGVtZW50YXRpb24gb3IgYW55IEJyaWNrU3RvbmVJbnZlbnRvcnkgZGF0YS4KICAgICAgLy8gTW9kZXJuIE1hc3RlciBJbnZlbnRvcnkgc3RvcmVzIG1hc29ucnkgdW5pdHMgaW4gRm91bmRhdGlvbkludmVudG9yeS4gVXNlCiAgICAgIC8vIHRob3NlIHJvd3MgYXMgdGhlIHByaW1hcnkgY2F0YWxvZyB3aGlsZSBrZWVwaW5nIHRoZSBsZWdhY3kgZW50aXR5IHJlYWRhYmxlCiAgICAgIC8vIGZvciBjb21wYXRpYmlsaXR5IGlmIGFuIG9sZGVyIHJlY29yZCBpcyBldmVyIGVuY291bnRlcmVkLgogICAgICBjb25zdCBtb2Rlcm5NYXRzID0gKGZvdW5kYXRpb25NYXRzIHx8IFtdKQogICAgICAgIC5maWx0ZXIoKHJvdykgPT4KICAgICAgICAgIHJvdy5zaG93X2luX2ZvdW5kYXRpb24gIT09IGZhbHNlICYmICgKICAgICAgICAgICAgcm93Lm1hdGVyaWFsX3R5cGUgPT09ICJicmlja19zdG9uZSIgfHwKICAgICAgICAgICAgKHJvdy5tYXRlcmlhbF90eXBlID09PSAid2FsbF9tYXRlcmlhbCIgJiYgWyJicmljayIsICJzdG9uZSIsICJjaW5kZXJibG9jayJdLmluY2x1ZGVzKHJvdy53YWxsX21hdGVyaWFsX3N1YnR5cGUpKQogICAgICAgICAgKQogICAgICAgICkKICAgICAgICAubWFwKChyb3cpID0+ICh7CiAgICAgICAgICAuLi5yb3csCiAgICAgICAgICBsZW5ndGg6IHJvdy5tYXRlcmlhbF90eXBlID09PSAiYnJpY2tfc3RvbmUiID8gcm93LmJyaWNrX2xlbmd0aF9pbmNoZXMgOiByb3cud2FsbF91bml0X2xlbmd0aF9pbmNoZXMsCiAgICAgICAgICB3aWR0aDogcm93Lm1hdGVyaWFsX3R5cGUgPT09ICJicmlja19zdG9uZSIgPyByb3cuYnJpY2tfd2lkdGhfaW5jaGVzIDogcm93LndhbGxfdW5pdF93aWR0aF9pbmNoZXMsCiAgICAgICAgICBoZWlnaHQ6IHJvdy5tYXRlcmlhbF90eXBlID09PSAiYnJpY2tfc3RvbmUiID8gcm93LmJyaWNrX2hlaWdodF9pbmNoZXMgOiByb3cud2FsbF91bml0X2hlaWdodF9pbmNoZXMsCiAgICAgICAgICBfaW52ZW50b3J5X2VudGl0eTogIkZvdW5kYXRpb25JbnZlbnRvcnkiLAogICAgICAgIH0pKTsKICAgICAgY29uc3QgbGVnYWN5Tm9ybWFsaXplZCA9IChsZWdhY3lNYXRzIHx8IFtdKS5tYXAoKHJvdykgPT4gKHsKICAgICAgICAuLi5yb3csCiAgICAgICAgX2ludmVudG9yeV9lbnRpdHk6ICJCcmlja1N0b25lSW52ZW50b3J5IiwKICAgICAgfSkpOwoKICAgICAgICBzZXRQcm9qZWN0KHApOwogICAgICAgIHNldE1hdGVyaWFscyhbLi4ubW9kZXJuTWF0cywgLi4ubGVnYWN5Tm9ybWFsaXplZF0pOwogICAgICB9IGNhdGNoIChlcnJvcikgewogICAgICAgIGNvbnNvbGUuZXJyb3IoIkJyaWNrICYgU3RvbmUgcHJlcmVxdWlzaXRlcyBjb3VsZCBub3QgYmUgbG9hZGVkOiIsIGVycm9yKTsKICAgICAgICBzZXRMb2FkRXJyb3IoZXJyb3I/Lm1lc3NhZ2UgfHwgIkJyaWNrICYgU3RvbmUgQnVpbGRlciBwcmVyZXF1aXNpdGVzIGNvdWxkIG5vdCBiZSB2ZXJpZmllZC4iKTsKICAgICAgfSBmaW5hbGx5IHsKICAgICAgICBzZXRMb2FkaW5nKGZhbHNlKTsKICAgICAgfQogICAgfTsKICAgIGxvYWQoKTsKICB9LCBbaWRdKTsKCiAgY29uc3QgbWF0ZXJpYWwgPSB1c2VNZW1vKAogICAgKCkgPT4gbWF0ZXJpYWxzLmZpbmQoKG0pID0+IG0uaWQgPT09IHByb2plY3Q/LnNlbGVjdGVkX21hdGVyaWFsX2lkKSwKICAgIFttYXRlcmlhbHMsIHByb2plY3RdCiAgKTsKICBjb25zdCB0b3RhbHMgPSB1c2VNZW1vKAogICAgKCkgPT4gKHByb2plY3QgPyBjYWxjQnJpY2tTdG9uZVByb2plY3QocHJvamVjdCwgbWF0ZXJpYWwpIDogbnVsbCksCiAgICBbcHJvamVjdCwgbWF0ZXJpYWxdCiAgKTsKCiAgLy8gQ3RybCtTIC8gQ21kK1Mgc2F2ZXMgdGhlIHNlY3Rpb24gd2l0aG91dCBsZWF2aW5nIHRoZSBlZGl0b3IuCiAgdXNlRWZmZWN0KCgpID0+IHsKICAgIGNvbnN0IGhhbmRsZXIgPSAoZSkgPT4gewogICAgICBpZiAoKGUuY3RybEtleSB8fCBlLm1ldGFLZXkpICYmIGUua2V5LnRvTG93ZXJDYXNlKCkgPT09ICJzIikgewogICAgICAgIGUucHJldmVudERlZmF1bHQoKTsKICAgICAgICBpZiAoIXNhdmluZykgc2F2ZVJlZi5jdXJyZW50Py4oKTsKICAgICAgfQogICAgfTsKICAgIHdpbmRvdy5hZGRFdmVudExpc3RlbmVyKCJrZXlkb3duIiwgaGFuZGxlcik7CiAgICByZXR1cm4gKCkgPT4gd2luZG93LnJlbW92ZUV2ZW50TGlzdGVuZXIoImtleWRvd24iLCBoYW5kbGVyKTsKICB9LCBbc2F2aW5nXSk7CiAgLy8gQmxvY2sgYWNjaWRlbnRhbCBuYXZpZ2F0aW9uIHdoaWxlIGEgc2F2ZSBpcyBpbiBmbGlnaHQuCiAgdXNlRWZmZWN0KCgpID0+IHsKICAgIGlmICghc2F2aW5nKSByZXR1cm4gdW5kZWZpbmVkOwogICAgY29uc3Qgd2FybiA9IChlKSA9PiB7IGUucHJldmVudERlZmF1bHQoKTsgZS5yZXR1cm5WYWx1ZSA9ICIiOyB9OwogICAgd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoImJlZm9yZXVubG9hZCIsIHdhcm4pOwogICAgcmV0dXJuICgpID0+IHdpbmRvdy5yZW1vdmVFdmVudExpc3RlbmVyKCJiZWZvcmV1bmxvYWQiLCB3YXJuKTsKICB9LCBbc2F2aW5nXSk7CgogIGlmIChsb2FkaW5nKSByZXR1cm4gPGRpdiBjbGFzc05hbWU9InAtMTAgdGV4dC1jZW50ZXIgdGV4dC1ncmF5LTQwMCI+TG9hZGluZyBzZWN0aW9u4oCmPC9kaXY+OwogIGlmIChsb2FkRXJyb3IpIHJldHVybiA8ZGl2IGNsYXNzTmFtZT0icC0xMCB0ZXh0LWNlbnRlciB0ZXh0LXJlZC03MDAgYmctcmVkLTUwIGJvcmRlciBib3JkZXItcmVkLTIwMCByb3VuZGVkIj5CcmljayAmIFN0b25lIEJ1aWxkZXIgdW5hdmFpbGFibGUuIFJlcXVpcmVkIHByb2plY3QgZGF0YSBvciB0aGUgcHJpbWFyeSBtYXNvbnJ5IGNhdGFsb2cgY291bGQgbm90IGJlIHZlcmlmaWVkLiB7bG9hZEVycm9yfTwvZGl2PjsKICBpZiAoIXByb2plY3QpIHJldHVybiA8ZGl2IGNsYXNzTmFtZT0icC0xMCB0ZXh0LWNlbnRlciB0ZXh0LWdyYXktNTAwIj5TZWN0aW9uIG5vdCBmb3VuZC48L2Rpdj47CgogIGNvbnN0IHBhdGNoID0gKGNoYW5nZXMpID0+IHNldFByb2plY3QoKHByZXYpID0+ICh7IC4uLnByZXYsIC4uLmNoYW5nZXMgfSkpOwoKICBjb25zdCBoYW5kbGVTYXZlID0gYXN5bmMgKCkgPT4gewogICAgaWYgKCEoTnVtYmVyKHRvdGFscz8uY2FsY3VsYXRlZF9zdXJmYWNlX2FyZWEpID4gMCkpIHsKICAgICAgd2luZG93LmFsZXJ0KCJXYWxsIGFyZWEgbXVzdCBiZSBncmVhdGVyIHRoYW4gemVybyBiZWZvcmUgdGhpcyBzZWN0aW9uIGNhbiBiZSBzYXZlZC4gQ2hlY2sgdGhlIHdhbGwgZGltZW5zaW9ucyBhbmQgbWF0ZXJpYWwgc2VsZWN0aW9uLiIpOwogICAgICByZXR1cm47CiAgICB9CiAgICBzZXRTYXZpbmcodHJ1ZSk7CiAgICB0cnkgewogICAgICBjb25zdCBwcmljaW5nUHJvamVjdCA9IHsKICAgICAgICAuLi5wcm9qZWN0LAogICAgICAgIG1hdGVyaWFsX2Nvc3Q6IHRvdGFscy5tYXRlcmlhbF9jb3N0LAogICAgICAgIG1vcnRhcl9jb3N0OiB0b3RhbHMubW9ydGFyX2Nvc3QsCiAgICAgICAgbGFib3JfY29zdDogdG90YWxzLmxhYm9yX2Nvc3QsCiAgICAgICAgc3VidG90YWw6IHRvdGFscy5zdWJ0b3RhbCwKICAgICAgfTsKICAgICAgY29uc3QgY3VzdG9tZXJQcmljaW5nID0gcHJvamVjdC5jdXN0b21lcl9wcmljaW5nPy5hcHBsaWVkID09PSB0cnVlCiAgICAgICAgPyBhd2FpdCBjYWxjdWxhdGVTYXZlZEN1c3RvbWVyUHJpY2luZyh7CiAgICAgICAgICAgIHByb2plY3Q6IHByaWNpbmdQcm9qZWN0LAogICAgICAgICAgICBjYXRlZ29yaXplOiBjYXRlZ29yaXplQnJpY2tTdG9uZVByb2plY3QsCiAgICAgICAgICAgIHRpZXJOdW1iZXI6IHByb2plY3QuY3VzdG9tZXJfcHJpY2luZz8udGllcl9udW1iZXIsCiAgICAgICAgICB9KQogICAgICAgIDogcHJvamVjdC5jdXN0b21lcl9wcmljaW5nOwogICAgICBjb25zdCBkYXRhVG9TYXZlID0gewogICAgICAgIHByb2plY3RfbmFtZTogcHJvamVjdC5wcm9qZWN0X25hbWUsCiAgICAgICAgbm90ZXM6IHByb2plY3Qubm90ZXMsCiAgICAgICAgc3RhdHVzOiAiY2FsY3VsYXRlZCIsCiAgICAgICAgc2VsZWN0ZWRfbWF0ZXJpYWxfaWQ6IHByb2plY3Quc2VsZWN0ZWRfbWF0ZXJpYWxfaWQsCiAgICAgICAgbWF0ZXJpYWxfbmFtZTogcHJvamVjdC5tYXRlcmlhbF9uYW1lLAogICAgICAgIG1hdGVyaWFsX2RpbWVuc2lvbnM6IHByb2plY3QubWF0ZXJpYWxfZGltZW5zaW9ucywKICAgICAgICBicmlja3NfYWxvbmdfbGVuZ3RoOiBwcm9qZWN0LmJyaWNrc19hbG9uZ19sZW5ndGgsCiAgICAgICAgYnJpY2tzX2Fsb25nX3dpZHRoOiBwcm9qZWN0LmJyaWNrc19hbG9uZ193aWR0aCwKICAgICAgICBjb3Vyc2VzX2hpZ2g6IHByb2plY3QuY291cnNlc19oaWdoLAogICAgICAgIGxheWVyczogcHJvamVjdC5sYXllcnMsCiAgICAgICAgbW9ydGFyX2dhcDogcHJvamVjdC5tb3J0YXJfZ2FwLAogICAgICAgIHdhc3RlX2ZhY3RvcjogcHJvamVjdC53YXN0ZV9mYWN0b3IsCiAgICAgICAgbW9ydGFyX2JhZ19jb3N0OiBwcm9qZWN0Lm1vcnRhcl9iYWdfY29zdCwKICAgICAgICBicmlja3NfcGVyX2hvdXI6IHByb2plY3QuYnJpY2tzX3Blcl9ob3VyLAogICAgICAgIGxhYm9yX3JhdGVfcGVyX2hvdXI6IHByb2plY3QubGFib3JfcmF0ZV9wZXJfaG91ciwKICAgICAgICBtYXJrdXBfcGVyY2VudDogcHJvamVjdC5tYXJrdXBfcGVyY2VudCwKICAgICAgICBiYXNlX2xlbmd0aDogdG90YWxzLmRlcml2ZWRfbGVuZ3RoLAogICAgICAgIGJhc2Vfd2lkdGg6IHRvdGFscy5kZXJpdmVkX3dpZHRoLAogICAgICAgIGJhc2VfaGVpZ2h0OiB0b3RhbHMuZGVyaXZlZF9oZWlnaHQsCiAgICAgICAgY2FsY3VsYXRlZF9icmlja3M6IHRvdGFscy5jYWxjdWxhdGVkX2JyaWNrcywKICAgICAgICBjYWxjdWxhdGVkX3N1cmZhY2VfYXJlYTogdG90YWxzLmNhbGN1bGF0ZWRfc3VyZmFjZV9hcmVhLAogICAgICAgIG1vcnRhcl9iYWdzX25lZWRlZDogdG90YWxzLm1vcnRhcl9iYWdzX25lZWRlZCwKICAgICAgICBtYXRlcmlhbF9jb3N0OiB0b3RhbHMubWF0ZXJpYWxfY29zdCwKICAgICAgICBtb3J0YXJfY29zdDogdG90YWxzLm1vcnRhcl9jb3N0LAogICAgICAgIGxhYm9yX2hvdXJzOiB0b3RhbHMubGFib3JfaG91cnMsCiAgICAgICAgbGFib3JfY29zdDogdG90YWxzLmxhYm9yX2Nvc3QsCiAgICAgICAgc3VidG90YWw6IHRvdGFscy5zdWJ0b3RhbCwKICAgICAgICBtYXJrdXBfYW1vdW50OiB0b3RhbHMubWFya3VwX2Ftb3VudCwKICAgICAgICB0b3RhbF9jb3N0OiB0b3RhbHMudG90YWxfY29zdCwKICAgICAgICBjdXN0b21lcl9wcmljaW5nOiBjdXN0b21lclByaWNpbmcsCiAgICAgIH07CiAgICAgIGNvbnN0IHNhdmVkUHJvamVjdCA9IGF3YWl0IHVwZGF0ZUJ1aWxkZXJTb3VyY2VQcm9qZWN0KHsKICAgICAgICBlbnRpdHk6IHN0YWZmRW50aXRpZXMuQnJpY2tTdG9uZVByb2plY3QsCiAgICAgICAgc291cmNlSWQ6IHByb2plY3QuaWQsCiAgICAgICAgZXhwZWN0ZWRVcGRhdGVkQXQ6IHByb2plY3QudXBkYXRlZF9kYXRlLAogICAgICAgIGRhdGE6IGRhdGFUb1NhdmUsCiAgICAgICAgZXN0aW1hdGVJZCwKICAgICAgICBsYWJlbDogIkJyaWNrICYgU3RvbmUgcHJvamVjdCIsCiAgICAgIH0pOwogICAgICBpZiAoc2F2ZWRQcm9qZWN0Py51cGRhdGVkX2RhdGUpIHsKICAgICAgICBzZXRQcm9qZWN0KChwcmV2KSA9PiAoeyAuLi5wcmV2LCB1cGRhdGVkX2RhdGU6IHNhdmVkUHJvamVjdC51cGRhdGVkX2RhdGUgfSkpOwogICAgICB9CgogICAgICBpZiAoZXN0aW1hdGVJZCkgewogICAgICAgIGF3YWl0IHJlY29yZEJ1aWxkZXJTYXZlKHsKICAgICAgICAgIGVzdGltYXRlSWQsCiAgICAgICAgICBsaW5lOiB7IHByb2plY3RfaWQ6IHByb2plY3QuaWQsIG1vZHVsZV9rZXk6ICJicmlja19zdG9uZSIgfSwKICAgICAgICAgIHNvdXJjZVByb2plY3Q6IHNhdmVkUHJvamVjdCwKICAgICAgICAgIGxpdmVUb3RhbDogdG90YWxzLnRvdGFsX2Nvc3QsCiAgICAgICAgfSk7CiAgICAgIH0KICAgICAgb25TYXZlZD8uKCk7CiAgICB9IGNhdGNoIChlKSB7CiAgICAgIGNvbnNvbGUuZXJyb3IoZSk7IGFsZXJ0KCJTYXZlIGZhaWxlZDogIiArIGUubWVzc2FnZSk7CiAgICB9IGZpbmFsbHkgewogICAgICBzZXRTYXZpbmcoZmFsc2UpOwogICAgfQogIH07CiAgc2F2ZVJlZi5jdXJyZW50ID0gaGFuZGxlU2F2ZTsKCiAgLy8gIzc4IOKAlCBjbG9uZSB0aGUgY3VycmVudCBzYXZlIHBheWxvYWQgaW50byBhIGJyYW5kLW5ldyBCcmljayAmIFN0b25lIHByb2plY3QuCiAgY29uc3QgaGFuZGxlU2F2ZUFzQ29weSA9IGFzeW5jICgpID0+IHsKICAgIHNldFNhdmluZyh0cnVlKTsKICAgIHRyeSB7CiAgICAgIGNvbnN0IGNvcHkgPSBhd2FpdCBzYXZlTW9kdWxlUHJvamVjdENvcHkoewogICAgICAgIGVudGl0eTogc3RhZmZFbnRpdGllcy5Ccmlja1N0b25lUHJvamVjdCwKICAgICAgICBwYXlsb2FkOiB7CiAgICAgICAgICBwcm9qZWN0X25hbWU6IHByb2plY3QucHJvamVjdF9uYW1lLAogICAgICAgICAgY2xpZW50X25hbWU6IHByb2plY3QuY2xpZW50X25hbWUsCiAgICAgICAgICBjdXN0b21lcl9pZDogcHJvamVjdC5jdXN0b21lcl9pZCwKICAgICAgICAgIGVzdGltYXRlX251bWJlcjogcHJvamVjdC5lc3RpbWF0ZV9udW1iZXIsCiAgICAgICAgICBoeXBlcmxpbms6IHByb2plY3QuaHlwZXJsaW5rLAogICAgICAgICAgbm90ZXM6IHByb2plY3Qubm90ZXMsCiAgICAgICAgICBzdGF0dXM6ICJjYWxjdWxhdGVkIiwKICAgICAgICAgIHNlbGVjdGVkX21hdGVyaWFsX2lkOiBwcm9qZWN0LnNlbGVjdGVkX21hdGVyaWFsX2lkLAogICAgICAgICAgbWF0ZXJpYWxfbmFtZTogcHJvamVjdC5tYXRlcmlhbF9uYW1lLAogICAgICAgICAgbWF0ZXJpYWxfZGltZW5zaW9uczogcHJvamVjdC5tYXRlcmlhbF9kaW1lbnNpb25zLAogICAgICAgICAgYnJpY2tzX2Fsb25nX2xlbmd0aDogcHJvamVjdC5icmlja3NfYWxvbmdfbGVuZ3RoLAogICAgICAgICAgYnJpY2tzX2Fsb25nX3dpZHRoOiBwcm9qZWN0LmJyaWNrc19hbG9uZ193aWR0aCwKICAgICAgICAgIGNvdXJzZXNfaGlnaDogcHJvamVjdC5jb3Vyc2VzX2hpZ2gsCiAgICAgICAgICBsYXllcnM6IHByb2plY3QubGF5ZXJzLAogICAgICAgICAgbW9ydGFyX2dhcDogcHJvamVjdC5tb3J0YXJfZ2FwLAogICAgICAgICAgd2FzdGVfZmFjdG9yOiBwcm9qZWN0Lndhc3RlX2ZhY3RvciwKICAgICAgICAgIG1vcnRhcl9iYWdfY29zdDogcHJvamVjdC5tb3J0YXJfYmFnX2Nvc3QsCiAgICAgICAgICBicmlja3NfcGVyX2hvdXI6IHByb2plY3QuYnJpY2tzX3Blcl9ob3VyLAogICAgICAgICAgbGFib3JfcmF0ZV9wZXJfaG91cjogcHJvamVjdC5sYWJvcl9yYXRlX3Blcl9ob3VyLAogICAgICAgICAgbWFya3VwX3BlcmNlbnQ6IHByb2plY3QubWFya3VwX3BlcmNlbnQsCiAgICAgICAgICBiYXNlX2xlbmd0aDogdG90YWxzLmRlcml2ZWRfbGVuZ3RoLAogICAgICAgICAgYmFzZV93aWR0aDogdG90YWxzLmRlcml2ZWRfd2lkdGgsCiAgICAgICAgICBiYXNlX2hlaWdodDogdG90YWxzLmRlcml2ZWRfaGVpZ2h0LAogICAgICAgICAgY2FsY3VsYXRlZF9icmlja3M6IHRvdGFscy5jYWxjdWxhdGVkX2JyaWNrcywKICAgICAgICAgIGNhbGN1bGF0ZWRfc3VyZmFjZV9hcmVhOiB0b3RhbHMuY2FsY3VsYXRlZF9zdXJmYWNlX2FyZWEsCiAgICAgICAgICBtb3J0YXJfYmFnc19uZWVkZWQ6IHRvdGFscy5tb3J0YXJfYmFnc19uZWVkZWQsCiAgICAgICAgICBtYXRlcmlhbF9jb3N0OiB0b3RhbHMubWF0ZXJpYWxfY29zdCwKICAgICAgICAgIG1vcnRhcl9jb3N0OiB0b3RhbHMubW9ydGFyX2Nvc3QsCiAgICAgICAgICBsYWJvcl9ob3VyczogdG90YWxzLmxhYm9yX2hvdXJzLAogICAgICAgICAgbGFib3JfY29zdDogdG90YWxzLmxhYm9yX2Nvc3QsCiAgICAgICAgICBzdWJ0b3RhbDogdG90YWxzLnN1YnRvdGFsLAogICAgICAgICAgbWFya3VwX2Ftb3VudDogdG90YWxzLm1hcmt1cF9hbW91bnQsCiAgICAgICAgICB0b3RhbF9jb3N0OiB0b3RhbHMudG90YWxfY29zdCwKICAgICAgICAgIGN1c3RvbWVyX3ByaWNpbmc6IHByb2plY3QuY3VzdG9tZXJfcHJpY2luZywKICAgICAgICB9LAogICAgICAgIGF0dGVtcHRSZWY6IGNvcHlBdHRlbXB0UmVmLAogICAgICAgIGtleVByZWZpeDogImJyaWNrX3N0b25lX3Byb2plY3RfY29weSIsCiAgICAgICAgYmFzZU5hbWU6IHByb2plY3QucHJvamVjdF9uYW1lIHx8ICJCcmljayAmIFN0b25lIiwKICAgICAgICBsYWJlbDogIkJyaWNrICYgU3RvbmUgcHJvamVjdCBjb3B5IiwKICAgICAgfSk7CiAgICAgIGlmIChlbWJlZGRlZCkgb25TYXZlZD8uKCk7CiAgICAgIGVsc2UgbmF2aWdhdGUoYC9Ccmlja1N0b25lRXN0aW1hdG9yP2lkPSR7Y29weS5pZH1gKTsKICAgIH0gY2F0Y2ggKGUpIHsKICAgICAgY29uc29sZS5lcnJvcihlKTsgYWxlcnQoIlNhdmUgY29weSBmYWlsZWQ6ICIgKyBlLm1lc3NhZ2UpOwogICAgfSBmaW5hbGx5IHsKICAgICAgc2V0U2F2aW5nKGZhbHNlKTsKICAgIH0KICB9OwoKICAvLyAjNzkg4oCUIHRlbXBsYXRlIHBheWxvYWQgPSB0aGUgZWRpdGFibGUgbWFzb25yeSBzZXR1cCBhIHVzZXIgd291bGQgcmV1c2UuCiAgY29uc3QgYnVpbGRCcmlja1N0b25lVGVtcGxhdGVEYXRhID0gKHApID0+ICh7CiAgICBzZWxlY3RlZF9tYXRlcmlhbF9pZDogcC5zZWxlY3RlZF9tYXRlcmlhbF9pZCwKICAgIG1hdGVyaWFsX25hbWU6IHAubWF0ZXJpYWxfbmFtZSwKICAgIG1hdGVyaWFsX2RpbWVuc2lvbnM6IHAubWF0ZXJpYWxfZGltZW5zaW9ucywKICAgIGJyaWNrc19hbG9uZ19sZW5ndGg6IHAuYnJpY2tzX2Fsb25nX2xlbmd0aCwKICAgIGJyaWNrc19hbG9uZ193aWR0aDogcC5icmlja3NfYWxvbmdfd2lkdGgsCiAgICBjb3Vyc2VzX2hpZ2g6IHAuY291cnNlc19oaWdoLAogICAgbGF5ZXJzOiBwLmxheWVycywKICAgIG1vcnRhcl9nYXA6IHAubW9ydGFyX2dhcCwKICAgIHdhc3RlX2ZhY3RvcjogcC53YXN0ZV9mYWN0b3IsCiAgICBtb3J0YXJfYmFnX2Nvc3Q6IHAubW9ydGFyX2JhZ19jb3N0LAogICAgYnJpY2tzX3Blcl9ob3VyOiBwLmJyaWNrc19wZXJfaG91ciwKICAgIGxhYm9yX3JhdGVfcGVyX2hvdXI6IHAubGFib3JfcmF0ZV9wZXJfaG91ciwKICAgIG1hcmt1cF9wZXJjZW50OiBwLm1hcmt1cF9wZXJjZW50LAogICAgbm90ZXM6IHAubm90ZXMsCiAgfSk7CgogIHJldHVybiAoCiAgICA8ZGl2IGNsYXNzTmFtZT0iY2xheS1zY29wZSBtaW4taC1mdWxsIGJnLWdyYWRpZW50LXRvLWJyIGZyb20tcm9zZS01MCB0by1vcmFuZ2UtNTAiPgogICAgICA8ZGl2IGNsYXNzTmFtZT0ibWF4LXctNnhsIG14LWF1dG8gcC00IHNtOnAtNiI+CiAgICAgICAgPGRpdiBjbGFzc05hbWU9ImZsZXggaXRlbXMtY2VudGVyIGp1c3RpZnktYmV0d2VlbiBnYXAtNCBtYi01Ij4KICAgICAgICAgIHtlbWJlZGRlZCA/ICgKICAgICAgICAgICAgPGJ1dHRvbgogICAgICAgICAgICAgIHR5cGU9ImJ1dHRvbiIKICAgICAgICAgICAgICBvbkNsaWNrPXtvbkNsb3NlfQogICAgICAgICAgICAgIGNsYXNzTmFtZT0iZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTEgdGV4dC1zbSB0ZXh0LWdyYXktNjAwIGhvdmVyOnRleHQtcmVkLTYwMCIKICAgICAgICAgICAgPgogICAgICAgICAgICAgIDxBcnJvd0xlZnQgY2xhc3NOYW1lPSJ3LTQgaC00IiAvPiBCYWNrIHRvIHByb2R1Y3RzCiAgICAgICAgICAgIDwvYnV0dG9uPgogICAgICAgICAgKSA6ICgKICAgICAgICAgICAgPExpbmsKICAgICAgICAgICAgICB0bz17ZXN0aW1hdGVJZCA/IGAvRXN0aW1hdGVEZXRhaWw/aWQ9JHtlc3RpbWF0ZUlkfWAgOiAiL0VzdGltYXRvciJ9CiAgICAgICAgICAgICAgY2xhc3NOYW1lPSJmbGV4IGl0ZW1zLWNlbnRlciBnYXAtMSB0ZXh0LXNtIHRleHQtZ3JheS02MDAgaG92ZXI6dGV4dC1yZWQtNjAwIgogICAgICAgICAgICA+CiAgICAgICAgICAgICAgPEFycm93TGVmdCBjbGFzc05hbWU9InctNCBoLTQiIC8+IEJhY2sgdG8gZXN0aW1hdGUKICAgICAgICAgICAgPC9MaW5rPgogICAgICAgICAgKX0KICAgICAgICAgIHtwcm9qZWN0Py51cGRhdGVkX2RhdGUgJiYgKDxkaXYgY2xhc3NOYW1lPSJtdC0xIHRleHQtWzEwcHhdIHRleHQtZ3JheS00MDAiPkxhc3Qgc2F2ZWQge25ldyBEYXRlKHByb2plY3QudXBkYXRlZF9kYXRlKS50b0xvY2FsZVN0cmluZygpfTwvZGl2Pil9CiAgICAgICAgICA8QnV0dG9uIG9uQ2xpY2s9e2hhbmRsZVNhdmV9IGRpc2FibGVkPXtzYXZpbmcgfHwgIXByb2plY3Quc2VsZWN0ZWRfbWF0ZXJpYWxfaWR9IGNsYXNzTmFtZT0iY2xheS1idXR0b24gYm9yZGVyLTIgYm9yZGVyLXJlZC0zMDAgYmctcmVkLTUwIGhvdmVyOmJnLXJlZC0xMDAgdGV4dC1yZWQtNzAwIGZvbnQtYm9sZCI+CiAgICAgICAgICAgIDxTYXZlIGNsYXNzTmFtZT0idy00IGgtNCIgLz4ge3NhdmluZyA/ICJTYXZpbmfigKYiIDogIlNhdmUgU2VjdGlvbiJ9CiAgICAgICAgICA8L0J1dHRvbj4KICAgICAgICAgIDxNb2R1bGVBY3Rpb25CYXIKICAgICAgICAgICAgb25UZW1wbGF0ZXM9eygpID0+IHNldFRlbXBsYXRlTW9kZSgibG9hZCIpfQogICAgICAgICAgICBvblNhdmVBc1RlbXBsYXRlPXsoKSA9PiBzZXRUZW1wbGF0ZU1vZGUoInNhdmUiKX0KICAgICAgICAgICAgb25TYXZlQXNDb3B5PXtoYW5kbGVTYXZlQXNDb3B5fQogICAgICAgICAgICBlc3RpbWF0ZUlkPXtlc3RpbWF0ZUlkfQogICAgICAgICAgICBzYXZpbmc9e3NhdmluZ30KICAgICAgICAgIC8+CiAgICAgICAgPC9kaXY+CgogICAgICAgIDxkaXYgY2xhc3NOYW1lPSJtYi00Ij4KICAgICAgICAgIDxoMSBjbGFzc05hbWU9InRleHQtMnhsIGZvbnQtYm9sZCB0ZXh0LWdyYXktOTAwIj5CcmljayAmYW1wOyBTdG9uZTwvaDE+CiAgICAgICAgICA8cCBjbGFzc05hbWU9InRleHQtc20gdGV4dC1ncmF5LTUwMCI+e3Byb2plY3QuY2xpZW50X25hbWV9PC9wPgogICAgICAgIDwvZGl2PgoKICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZ3JpZCBncmlkLWNvbHMtMSBsZzpncmlkLWNvbHMtMyBnYXAtNSI+CiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0ibGc6Y29sLXNwYW4tMiBzcGFjZS15LTQiPgogICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iYmctd2hpdGUgcm91bmRlZC14bCBib3JkZXIgYm9yZGVyLWdyYXktMjAwIHAtNCI+CiAgICAgICAgICAgICAgPGxhYmVsIGNsYXNzTmFtZT0idGV4dC14cyB0ZXh0LWdyYXktNTAwIj4KICAgICAgICAgICAgICAgIFNlY3Rpb24gbmFtZQogICAgICAgICAgICAgICAgPElucHV0CiAgICAgICAgICAgICAgICAgIHZhbHVlPXtwcm9qZWN0LnByb2plY3RfbmFtZSB8fCAiIn0KICAgICAgICAgICAgICAgICAgb25DaGFuZ2U9eyhlKSA9PiBwYXRjaCh7IHByb2plY3RfbmFtZTogZS50YXJnZXQudmFsdWUgfSl9CiAgICAgICAgICAgICAgICAvPgogICAgICAgICAgICAgIDwvbGFiZWw+CiAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgPEJyaWNrR2VvbWV0cnlQYW5lbAogICAgICAgICAgICAgIHByb2plY3Q9e3Byb2plY3R9CiAgICAgICAgICAgICAgbWF0ZXJpYWxzPXttYXRlcmlhbHN9CiAgICAgICAgICAgICAgZGVyaXZlZD17dG90YWxzfQogICAgICAgICAgICAgIG9uQ2hhbmdlPXtwYXRjaH0KICAgICAgICAgICAgLz4KCiAgICAgICAgICAgIHttYXRlcmlhbHMubGVuZ3RoID09PSAwICYmICgKICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iYmctYW1iZXItNTAgYm9yZGVyIGJvcmRlci1hbWJlci0yMDAgcm91bmRlZC14bCBwLTQgdGV4dC14cyB0ZXh0LWFtYmVyLTcwMCI+CiAgICAgICAgICAgICAgICBObyBtYXNvbnJ5IG1hdGVyaWFscyBpbiB0aGUgY2F0YWxvZyB5ZXQueyIgIn0KICAgICAgICAgICAgICAgIDxMaW5rIHRvPSIvRm91bmRhdGlvbkNhdGFsb2ciIGNsYXNzTmFtZT0iZm9udC1zZW1pYm9sZCB1bmRlcmxpbmUgaG92ZXI6dGV4dC1hbWJlci05MDAiPgogICAgICAgICAgICAgICAgICBBZGQgYnJpY2sgb3Igc3RvbmUgaW4gdGhlIGZvdW5kYXRpb24gY2F0YWxvZyDihpIKICAgICAgICAgICAgICAgIDwvTGluaz4KICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgKX0KICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgIDxkaXY+CiAgICAgICAgICAgIDxCcmlja1RvdGFscwogICAgICAgICAgICAgIHByb2plY3Q9e3Byb2plY3R9CiAgICAgICAgICAgICAgdG90YWxzPXt0b3RhbHN9CiAgICAgICAgICAgICAgb25DaGFuZ2U9eyhjaGFuZ2VzKSA9PiBwYXRjaCh7CiAgICAgICAgICAgICAgICAuLi5jaGFuZ2VzLAogICAgICAgICAgICAgICAgLi4uKE9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHkuY2FsbChjaGFuZ2VzLCAibWFya3VwX3BlcmNlbnQiKQogICAgICAgICAgICAgICAgICA/IHsgY3VzdG9tZXJfcHJpY2luZzogeyAuLi4ocHJvamVjdC5jdXN0b21lcl9wcmljaW5nIHx8IHt9KSwgYXBwbGllZDogZmFsc2UgfSB9CiAgICAgICAgICAgICAgICAgIDoge30pLAogICAgICAgICAgICAgIH0pfQogICAgICAgICAgICAvPgogICAgICAgICAgPC9kaXY+CiAgICAgICAgPC9kaXY+CgogICAgICAgIDxkaXYgY2xhc3NOYW1lPSJtdC01Ij4KICAgICAgICAgIDxDdXN0b21lclByaWNpbmdUYWIKICAgICAgICAgICAgcHJvamVjdD17ewogICAgICAgICAgICAgIC4uLnByb2plY3QsCiAgICAgICAgICAgICAgbWF0ZXJpYWxfY29zdDogdG90YWxzLm1hdGVyaWFsX2Nvc3QsCiAgICAgICAgICAgICAgbW9ydGFyX2Nvc3Q6IHRvdGFscy5tb3J0YXJfY29zdCwKICAgICAgICAgICAgICBsYWJvcl9jb3N0OiB0b3RhbHMubGFib3JfY29zdCwKICAgICAgICAgICAgICBzdWJ0b3RhbDogdG90YWxzLnN1YnRvdGFsLAogICAgICAgICAgICB9fQogICAgICAgICAgICBjYXRlZ29yaXplPXtjYXRlZ29yaXplQnJpY2tTdG9uZVByb2plY3R9CiAgICAgICAgICAgIGFjY2VudENvbG9yPSJyZWQiCiAgICAgICAgICAgIG9uQXBwbHlUaWVyPXsodGllcikgPT4gcGF0Y2goewogICAgICAgICAgICAgIGN1c3RvbWVyX3ByaWNpbmc6IHsgLi4uKHByb2plY3QuY3VzdG9tZXJfcHJpY2luZyB8fCB7fSksIGFwcGxpZWQ6IHRydWUsIHRpZXJfbnVtYmVyOiB0aWVyIH0sCiAgICAgICAgICAgIH0pfQogICAgICAgICAgLz4KICAgICAgICA8L2Rpdj4KCiAgICAgICAgPE1vZHVsZVRlbXBsYXRlRGlhbG9nCiAgICAgICAgICBvcGVuPXshIXRlbXBsYXRlTW9kZX0KICAgICAgICAgIG1vZGU9e3RlbXBsYXRlTW9kZX0KICAgICAgICAgIG9uQ2xvc2U9eygpID0+IHNldFRlbXBsYXRlTW9kZShudWxsKX0KICAgICAgICAgIHByb2plY3Q9e3Byb2plY3R9CiAgICAgICAgICBvbkFwcGx5PXsoZGF0YSkgPT4gcGF0Y2goZGF0YSl9CiAgICAgICAgICBtb2R1bGVLZXk9ImJyaWNrX3N0b25lIgogICAgICAgICAgdGl0bGU9IkJyaWNrICYgU3RvbmUiCiAgICAgICAgICBidWlsZFRlbXBsYXRlRGF0YT17YnVpbGRCcmlja1N0b25lVGVtcGxhdGVEYXRhfQogICAgICAgICAgZGVzY3JpYmVUZW1wbGF0ZT17KHQpID0+ICh0LnByb2plY3RfZGF0YT8ubWF0ZXJpYWxfbmFtZSB8fCAiU2F2ZWQgd2FsbCBzZXR1cCIpfQogICAgICAgIC8+CiAgICAgIDwvZGl2PgogICAgPC9kaXY+CiAgKTsKfQ==",
+   "normalized": "import { useState, useEffect, useMemo, useRef } from \"react\";\nimport { Link, useNavigate } from \"react-router-dom\";\nimport { Button } from \"@/components/ui/button\";\nimport { Input } from \"@/components/ui/input\";\nimport { ArrowLeft, Save } from \"lucide-react\";\nimport BrickGeometryPanel from \"@/components/estimator/brick/BrickGeometryPanel\";\nimport BrickTotals from \"@/components/estimator/brick/BrickTotals\";\nimport { calcBrickStoneProject } from \"@/components/estimator/brick/brickCalc\";\nimport { recordBuilderSave } from \"@/components/estimator/builder/builderService\";\nimport { loadAllEntityRows } from \"@/components/estimator/loadAllEntityRows\";\nimport { updateBuilderSourceProject } from \"@/components/estimator/builder/sourceProjectPersistence\";\nimport ModuleActionBar from \"@/components/estimator/moduleShared/ModuleActionBar\";\nimport ModuleTemplateDialog from \"@/components/estimator/moduleShared/ModuleTemplateDialog\";\nimport { saveModuleProjectCopy } from \"@/components/estimator/moduleShared/moduleProjectActions\";\nimport CustomerPricingTab from \"@/components/markup/CustomerPricingTab\";\nimport { categorizeBrickStoneProject } from \"@/components/markup/projectCategorizer\";\nimport { calculateSavedCustomerPricing } from \"@/components/markup/savedCustomerPricing\";\nimport { staffEntities } from \"@/components/staff/staffEntities\";\n\nexport default function BrickStoneEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {\n  const params = new URLSearchParams(window.location.search);\n  const id = embeddedProjectId || params.get(\"id\") || params.get(\"edit\");\n  const estimateId = embeddedEstimateId || params.get(\"estimateId\");\n\n  const [project, setProject] = useState(null);\n  const [materials, setMaterials] = useState([]);\n  const [loading, setLoading] = useState(true);\n  const [loadError, setLoadError] = useState(\"\");\n  const [saving, setSaving] = useState(false);\n  const [templateMode, setTemplateMode] = useState(null);\n  const saveRef = useRef(null);\n  const copyAttemptRef = useRef({ signature: \"\", key: \"\" });\n  const navigate = useNavigate();\n\n  useEffect(() => {\n    copyAttemptRef.current = { signature: \"\", key: \"\" };\n    const load = async () => {\n      setLoading(true);\n      setLoadError(\"\");\n      try {\n        const [p, legacyMats, foundationMats] = await Promise.all([\n          id ? staffEntities.BrickStoneProject.get(id) : Promise.resolve(null),\n          // Legacy entity is optional compatibility data; the modern Foundation\n          // inventory below is the authoritative masonry catalog and is strict.\n          loadAllEntityRows({ entity: staffEntities.BrickStoneInventory, sort: \"material_name\", label: \"Legacy Brick & Stone inventory\" }).catch(() => []),\n          loadAllEntityRows({ entity: staffEntities.FoundationInventory, sort: \"material_name\", label: \"Foundation masonry inventory\" }),\n        ]);\n\n      // The committed SignEstimate Pro repo defined BrickStoneInventory but never\n      // shipped a Brick estimator implementation or any BrickStoneInventory data.\n      // Modern Master Inventory stores masonry units in FoundationInventory. Use\n      // those rows as the primary catalog while keeping the legacy entity readable\n      // for compatibility if an older record is ever encountered.\n      const modernMats = (foundationMats || [])\n        .filter((row) =>\n          row.show_in_foundation !== false && (\n            row.material_type === \"brick_stone\" ||\n            (row.material_type === \"wall_material\" && [\"brick\", \"stone\", \"cinderblock\"].includes(row.wall_material_subtype))\n          )\n        )\n        .map((row) => ({\n          ...row,\n          length: row.material_type === \"brick_stone\" ? row.brick_length_inches : row.wall_unit_length_inches,\n          width: row.material_type === \"brick_stone\" ? row.brick_width_inches : row.wall_unit_width_inches,\n          height: row.material_type === \"brick_stone\" ? row.brick_height_inches : row.wall_unit_height_inches,\n          _inventory_entity: \"FoundationInventory\",\n        }));\n      const legacyNormalized = (legacyMats || []).map((row) => ({\n        ...row,\n        _inventory_entity: \"BrickStoneInventory\",\n      }));\n\n        setProject(p);\n        setMaterials([...modernMats, ...legacyNormalized]);\n      } catch (error) {\n        console.error(\"Brick & Stone prerequisites could not be loaded:\", error);\n        setLoadError(error?.message || \"Brick & Stone Builder prerequisites could not be verified.\");\n      } finally {\n        setLoading(false);\n      }\n    };\n    load();\n  }, [id]);\n\n  const material = useMemo(\n    () => materials.find((m) => m.id === project?.selected_material_id),\n    [materials, project]\n  );\n  const totals = useMemo(\n    () => (project ? calcBrickStoneProject(project, material) : null),\n    [project, material]\n  );\n\n  // Ctrl+S / Cmd+S saves the section without leaving the editor.\n  useEffect(() => {\n    const handler = (e) => {\n      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === \"s\") {\n        e.preventDefault();\n        if (!saving) saveRef.current?.();\n      }\n    };\n    window.addEventListener(\"keydown\", handler);\n    return () => window.removeEventListener(\"keydown\", handler);\n  }, [saving]);\n  // Block accidental navigation while a save is in flight.\n  useEffect(() => {\n    if (!saving) return undefined;\n    const warn = (e) => { e.preventDefault(); e.returnValue = \"\"; };\n    window.addEventListener(\"beforeunload\", warn);\n    return () => window.removeEventListener(\"beforeunload\", warn);\n  }, [saving]);\n\n  if (loading) return <div className=\"p-10 text-center text-gray-400\">Loading section…</div>;\n  if (loadError) return <div className=\"p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded\">Brick & Stone Builder unavailable. Required project data or the primary masonry catalog could not be verified. {loadError}</div>;\n  if (!project) return <div className=\"p-10 text-center text-gray-500\">Section not found.</div>;\n\n  const patch = (changes) => setProject((prev) => ({ ...prev, ...changes }));\n\n  const handleSave = async () => {\n    if (!(Number(totals?.calculated_surface_area) > 0)) {\n      window.alert(\"Wall area must be greater than zero before this section can be saved. Check the wall dimensions and material selection.\");\n      return;\n    }\n    setSaving(true);\n    try {\n      const pricingProject = {\n        ...project,\n        material_cost: totals.material_cost,\n        mortar_cost: totals.mortar_cost,\n        labor_cost: totals.labor_cost,\n        subtotal: totals.subtotal,\n      };\n      const customerPricing = project.customer_pricing?.applied === true\n        ? await calculateSavedCustomerPricing({\n            project: pricingProject,\n            categorize: categorizeBrickStoneProject,\n            tierNumber: project.customer_pricing?.tier_number,\n          })\n        : project.customer_pricing;\n      const dataToSave = {\n        project_name: project.project_name,\n        notes: project.notes,\n        status: \"calculated\",\n        selected_material_id: project.selected_material_id,\n        material_name: project.material_name,\n        material_dimensions: project.material_dimensions,\n        bricks_along_length: project.bricks_along_length,\n        bricks_along_width: project.bricks_along_width,\n        courses_high: project.courses_high,\n        layers: project.layers,\n        mortar_gap: project.mortar_gap,\n        waste_factor: project.waste_factor,\n        mortar_bag_cost: project.mortar_bag_cost,\n        bricks_per_hour: project.bricks_per_hour,\n        labor_rate_per_hour: project.labor_rate_per_hour,\n        markup_percent: project.markup_percent,\n        base_length: totals.derived_length,\n        base_width: totals.derived_width,\n        base_height: totals.derived_height,\n        calculated_bricks: totals.calculated_bricks,\n        calculated_surface_area: totals.calculated_surface_area,\n        mortar_bags_needed: totals.mortar_bags_needed,\n        material_cost: totals.material_cost,\n        mortar_cost: totals.mortar_cost,\n        labor_hours: totals.labor_hours,\n        labor_cost: totals.labor_cost,\n        subtotal: totals.subtotal,\n        markup_amount: totals.markup_amount,\n        total_cost: totals.total_cost,\n        customer_pricing: customerPricing,\n      };\n      const savedProject = await updateBuilderSourceProject({\n        entity: staffEntities.BrickStoneProject,\n        sourceId: project.id,\n        expectedUpdatedAt: project.updated_date,\n        data: dataToSave,\n        estimateId,\n        label: \"Brick & Stone project\",\n      });\n      if (savedProject?.updated_date) {\n        setProject((prev) => ({ ...prev, updated_date: savedProject.updated_date }));\n      }\n\n      if (estimateId) {\n        await recordBuilderSave({\n          estimateId,\n          line: { project_id: project.id, module_key: \"brick_stone\" },\n          sourceProject: savedProject,\n          liveTotal: totals.total_cost,\n        });\n      }\n      onSaved?.();\n    } catch (e) {\n      console.error(e); alert(\"Save failed: \" + e.message);\n    } finally {\n      setSaving(false);\n    }\n  };\n  saveRef.current = handleSave;\n\n  // #78 — clone the current save payload into a brand-new Brick & Stone project.\n  const handleSaveAsCopy = async () => {\n    setSaving(true);\n    try {\n      const copy = await saveModuleProjectCopy({\n        entity: staffEntities.BrickStoneProject,\n        payload: {\n          project_name: project.project_name,\n          client_name: project.client_name,\n          customer_id: project.customer_id,\n          estimate_number: project.estimate_number,\n          hyperlink: project.hyperlink,\n          notes: project.notes,\n          status: \"calculated\",\n          selected_material_id: project.selected_material_id,\n          material_name: project.material_name,\n          material_dimensions: project.material_dimensions,\n          bricks_along_length: project.bricks_along_length,\n          bricks_along_width: project.bricks_along_width,\n          courses_high: project.courses_high,\n          layers: project.layers,\n          mortar_gap: project.mortar_gap,\n          waste_factor: project.waste_factor,\n          mortar_bag_cost: project.mortar_bag_cost,\n          bricks_per_hour: project.bricks_per_hour,\n          labor_rate_per_hour: project.labor_rate_per_hour,\n          markup_percent: project.markup_percent,\n          base_length: totals.derived_length,\n          base_width: totals.derived_width,\n          base_height: totals.derived_height,\n          calculated_bricks: totals.calculated_bricks,\n          calculated_surface_area: totals.calculated_surface_area,\n          mortar_bags_needed: totals.mortar_bags_needed,\n          material_cost: totals.material_cost,\n          mortar_cost: totals.mortar_cost,\n          labor_hours: totals.labor_hours,\n          labor_cost: totals.labor_cost,\n          subtotal: totals.subtotal,\n          markup_amount: totals.markup_amount,\n          total_cost: totals.total_cost,\n          customer_pricing: project.customer_pricing,\n        },\n        attemptRef: copyAttemptRef,\n        keyPrefix: \"brick_stone_project_copy\",\n        baseName: project.project_name || \"Brick & Stone\",\n        label: \"Brick & Stone project copy\",\n      });\n      if (embedded) onSaved?.();\n      else navigate(`/BrickStoneEstimator?id=${copy.id}`);\n    } catch (e) {\n      console.error(e); alert(\"Save copy failed: \" + e.message);\n    } finally {\n      setSaving(false);\n    }\n  };\n\n  // #79 — template payload = the editable masonry setup a user would reuse.\n  const buildBrickStoneTemplateData = (p) => ({\n    selected_material_id: p.selected_material_id,\n    material_name: p.material_name,\n    material_dimensions: p.material_dimensions,\n    bricks_along_length: p.bricks_along_length,\n    bricks_along_width: p.bricks_along_width,\n    courses_high: p.courses_high,\n    layers: p.layers,\n    mortar_gap: p.mortar_gap,\n    waste_factor: p.waste_factor,\n    mortar_bag_cost: p.mortar_bag_cost,\n    bricks_per_hour: p.bricks_per_hour,\n    labor_rate_per_hour: p.labor_rate_per_hour,\n    markup_percent: p.markup_percent,\n    notes: p.notes,\n  });\n\n  return (\n    <div className=\"clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50\">\n      <div className=\"max-w-6xl mx-auto p-4 sm:p-6\">\n        <div className=\"flex items-center justify-between gap-4 mb-5\">\n          {embedded ? (\n            <button\n              type=\"button\"\n              onClick={onClose}\n              className=\"flex items-center gap-1 text-sm text-gray-600 hover:text-red-600\"\n            >\n              <ArrowLeft className=\"w-4 h-4\" /> Back to products\n            </button>\n          ) : (\n            <Link\n              to={estimateId ? `/EstimateDetail?id=${estimateId}` : \"/Estimator\"}\n              className=\"flex items-center gap-1 text-sm text-gray-600 hover:text-red-600\"\n            >\n              <ArrowLeft className=\"w-4 h-4\" /> Back to estimate\n            </Link>\n          )}\n          {project?.updated_date && (<div className=\"mt-1 text-[10px] text-gray-400\">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}\n          <Button onClick={handleSave} disabled={saving || !project.selected_material_id} className=\"clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold\">\n            <Save className=\"w-4 h-4\" /> {saving ? \"Saving…\" : \"Save Section\"}\n          </Button>\n          <ModuleActionBar\n            onTemplates={() => setTemplateMode(\"load\")}\n            onSaveAsTemplate={() => setTemplateMode(\"save\")}\n            onSaveAsCopy={handleSaveAsCopy}\n            estimateId={estimateId}\n            saving={saving}\n          />\n        </div>\n\n        <div className=\"mb-4\">\n          <h1 className=\"text-2xl font-bold text-gray-900\">Brick &amp; Stone</h1>\n          <p className=\"text-sm text-gray-500\">{project.client_name}</p>\n        </div>\n\n        <div className=\"grid grid-cols-1 lg:grid-cols-3 gap-5\">\n          <div className=\"lg:col-span-2 space-y-4\">\n            <div className=\"bg-white rounded-xl border border-gray-200 p-4\">\n              <label className=\"text-xs text-gray-500\">\n                Section name\n                <Input\n                  value={project.project_name || \"\"}\n                  onChange={(e) => patch({ project_name: e.target.value })}\n                />\n              </label>\n            </div>\n\n            <BrickGeometryPanel\n              project={project}\n              materials={materials}\n              derived={totals}\n              onChange={patch}\n            />\n\n            {materials.length === 0 && (\n              <div className=\"bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-700\">\n                No masonry materials in the catalog yet.{\" \"}\n                <Link to=\"/FoundationCatalog\" className=\"font-semibold underline hover:text-amber-900\">\n                  Add brick or stone in the foundation catalog →\n                </Link>\n              </div>\n            )}\n          </div>\n\n          <div>\n            <BrickTotals\n              project={project}\n              totals={totals}\n              onChange={(changes) => patch({\n                ...changes,\n                ...(Object.prototype.hasOwnProperty.call(changes, \"markup_percent\")\n                  ? { customer_pricing: { ...(project.customer_pricing || {}), applied: false } }\n                  : {}),\n              })}\n            />\n          </div>\n        </div>\n\n        <div className=\"mt-5\">\n          <CustomerPricingTab\n            project={{\n              ...project,\n              material_cost: totals.material_cost,\n              mortar_cost: totals.mortar_cost,\n              labor_cost: totals.labor_cost,\n              subtotal: totals.subtotal,\n            }}\n            categorize={categorizeBrickStoneProject}\n            accentColor=\"red\"\n            onApplyTier={(tier) => patch({\n              customer_pricing: { ...(project.customer_pricing || {}), applied: true, tier_number: tier },\n            })}\n          />\n        </div>\n\n        <ModuleTemplateDialog\n          open={!!templateMode}\n          mode={templateMode}\n          onClose={() => setTemplateMode(null)}\n          project={project}\n          onApply={(data) => patch(data)}\n          moduleKey=\"brick_stone\"\n          title=\"Brick & Stone\"\n          buildTemplateData={buildBrickStoneTemplateData}\n          describeTemplate={(t) => (t.project_data?.material_name || \"Saved wall setup\")}\n        />\n      </div>\n    </div>\n  );\n}",
+   "semanticMatchV1": true,
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/pages/VinylEstimator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a31428b6b864128902ac89a998c870cf0ccd9b5bcd403461c4f24ec84a944eb3",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/pages/PaintingEstimator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "96e45eb0954746cbbaadf0af67085b0997131b15dfb4252053f72b055e34ffcc",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/pages/LaserEstimator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "745e33332f6133302a955d7b02a6b06838b6f24e1f536718d2ffa4badddaccd3",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/pages/CNCEstimator.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "64961cb44b078775a58af3974b15caae1e87e965ffdc284b86817d16aed2080d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/pages/MetalEstimator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "044d4e7d44156a2b6b94a122a0de5b7d2e82770733a2b6d25658df253b0d7cff",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/pages/MaintenanceEstimator.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "9b17a2a26909ecda9359a87f1092be746fe720fe271b53b5465eb04844602e31",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/pages/LaserSettings.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "5bbfb8f59900b54d0480804763b3335f99107480ada4ba545bb237c6a3234075",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/pages/CNCSettings.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "b70d68baf9bc1aed606f6182d6a88d551611388129dfa9f057d3030a4dda74c1",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/pages/MetalSettings.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "a98b040217f71de60e6071a127d997a8ee5c6bdd45af40ac26ab7aec6493ee42",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/pages/MaintenanceSettings.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "1d5a33fb25cbab6213af9a36b915f50c2a4358976d4e7645d23de127a094c44c",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/pages/FoundationEstimator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "680c4a45e3db7af339dd5e3a775c7322e4dbf8277aea5d97b3c8c1a74f1375d6",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/pages/Fabrication.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "75e3c94572b9d7185fdd04dc8e8bddf62d9d2de8238c73c56f00b77d1f38eaae",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/AIInstallScopeModal.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "b1ea55f45ed7f427c5f69c46dee0788a6c8f4c67936e739f308c728f1c6b628e",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/AIScopeWriterModal.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "121f7c70d0bff3df7cbc0a896db9a574098c6467e061099abc4d261700636be3",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/AddressAutocomplete.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "6363902bb99025acafa9a99c1cddbf1d7c54e101e1efdcb517ee02b39021cc55",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/AppliesToMultiSelect.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "ddf96186c9742a8aa44f06ade559e1d2e457fbbf68333cf7260f086905e38d7d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/AutoGrowNotes.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "3e8e0080c48d0b8cebc3810d49b464fb304aefbb5f0f82e3466996216e142878",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BackerFabModal.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "c21a101eefa21787fc8c98e0f8b2cb28fce459fddc2600c1fba4960fe99bbbb5",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BackerFabPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "fff6a050cef5509132bbe94d58679a6fa3f3a0e32b69cf67dc25c275cf0730ba",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BackerLetterTimesCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "ee6ba39084ae0632151c958872e6686a04bfccb769a1a01dc339709814e9c1fb",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BackerPanelTimesCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "326639bf2632ef609b4c77debd55f48e0c97c4bb630f2da035cc00a51271a470",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BackerSection.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "b460bd906258b66778bfee69aeb090ef83df6b98f527d958b80fd9f8ffa29b57",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BaseTimesSizeCard.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "00aae816da790e0be0770c2189347a645e810fc0764aa9a04f26f84c6ec28943",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BoomLiftReachChart.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "836c5124b4ea2d8c30da0aebd96150773b5e372c75cd7c256b9e811510c23ac4",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BulkActionsBar.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "f0bfcf595b59408a14d9a80a8e9f7f5ad126f5afceea4be71863e836c0d17751",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/BulkPriceAdjustDialog.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "2837869a00e08bb1fac57b77d67b1ef7b68d7a627590800a4f7ed01891034e49",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/ChannelLetterHelpAssistant.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "f29d5db2491932e7e8aef23465de66da60f3939991845179c7a8e91d359620fd",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/ConditionPicker.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "966922966d982469b7484f31111f25b9ca1aeee8efc8d2e345275f7cd9592fbd",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/ConfirmModal.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "e39e61f567259395ed41b5749a5a6a4c5d52bc085b68dd20468c69abd0f1d204",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/CostBreakdownBar.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "4937690b18e98d4195c77557b396c3f114414e78adb3cab96b982959bb8aa03e",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/CrewEquipmentHint.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d999e1d2607a100ae925b8e8d86fb43cba0271012bd0e6f89b6f8aa770253d49",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/CuttingMethodSlider.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "98a0bb435969deb2caebc4f9435efc440b495a74cdbabf211eb4f5d581e8df12",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/CyclingImage.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "1cc1bfbe5542a744869e7492e3f61ff8001473df8b4e518b57635b064d252e34",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/DimensionalFabModal.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "f972287091beddd45d1643dd5c8fecc9e404001f6216c60fbfb2f7d25f11cdd7",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/DimensionalFabPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "b5231c85193bc03806bca290a0d0eaa453044c7d72139d604667571cd6839a8c",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/DimensionalMaterialPickerDialog.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "8408828a92e95a9ce8233126f63cd55aea88f733b24ea46937ae9cc8a217a9a3",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/DimensionalMaterialsTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "f862343d4f4cb7173a45ba4c7f342273cdf5678033e8b5e8c0f951e829854f88",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/EquipmentInventoryTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "00f047a5c3eac2b5c62a3bdd2ff41d903485174e00556ae5a2c6720f4d640b22",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/EquipmentSelector.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d5d0e89dc95718536fa7695e342cde457f87eb8b7dc4c56ca4ad0950030c0e41",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/InstallHeightSlider.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "9d9ec4ff247c15f6e422282054470abe13cf02df37a7f4e8e23691a3cb49933e",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/InstallLineItem.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "78944fd207de673ffb5d3139b89ed57aaa3808b9aadc866cb4cca2bcd58cb073",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/InstallSummaryCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "ffa71e812cc8e0e217b466dacded2062e781a86b8e9d5aea8876f1ea16322a51",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/InstallTypePicker.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "ad956700c25fe12c26cdda32b8a23bb7eeba4061ddfee64d499aa8c582221347",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/ItemsList.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "9ad325e06b8f57a19b1099f6b87549ce80134b282a4f7d7c68072b2fbffb564b",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/LadderSelector.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "bf8cc28d535d531c010c8389c57f9c831a1622d70a9f04b59434c2dbf999ee9b",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/LetterPurchaseRow.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "8d6afb2049a2671f8f24c1a284477dcc0ac59796563597ce8614d404ec1750a9",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/LetterSizePicker.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "248ced9fa710894451389cde6ac3d95bb551dfb72daf7b0892815a614c8f359a",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/LettersPurchaseTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "e0260fb1a3cde97edaf48f888a50826b957c46499fbbf4e8df5fa2283a166bf8",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/MaterialItemCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "13be314a1f302171f36686c249ee75be701fe88e99e079b5fb32f1c16687bfea",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/MaterialsInventoryTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a6c2d6aac572d1e5c3cbf59b1258399e284ea826a782fde4a3775f6a536ecdb9",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/MaterialsList.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "9b5c8ca5c68c951e310b1da2b431bafb820727bf0c845771d372ddb24f04aeee",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/PaintCoverageHelper.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a5c6d4bf3c4a72132d452399008f4037fe05e19e9bd85bffe60a2a69300d3622",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/PersonnelSelector.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "86166997f8fed04635e5ec7852ffb3a89b1447d69526c7f280497dda9c08ad16",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/PhotoEstimateModal.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "5eb14a7827292626cd1aaa961cbb9c08fe39c77abcb78506b8b9735214102979",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/PriceHistoryDialog.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d7b65d8bdef803e91a1e474545219f839a6ccb8514a2f9817b0b44da716e58cd",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/QuantityTiersEditor.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "c60ad34afed6d47bb98abd731857aaf6fe342383735461b006ceca4e9a0628e7",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/RacewayTimesCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "bef953689cc805c60071ebd2b4822cb54311d22ff64c0d314246e388c470c314",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/SummaryDetailsCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "43b5153e6128bc22366afdea48adc6f25b85c43009c04128d9441d21d306011b",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/TabBadgeTrigger.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d2fe4259f0899eb6dd16635a3541347278805ff42b32c14029722b950fb13757",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/TravelCostCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "2d145274a6397c1e2879bfa523c0f67c35055722bacabd5b0867e7ed29f663f2",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/ValidationWarnings.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a9f4a0a5112ac968090253b7ca062fcc78c8f7e08f589d60bccbfd2d459343da",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/WallMaterialPicker.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "23c9bcd92da51a76ce0fbd0fbe1e4fe7976db53b15b2158dcdaa797f108e731c",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/channelLetterPricingAvailability.js",
+   "exists": true,
+   "crlf": true,
+   "hash": "559cd862b1562025ddf74277634727e466ccdd3a9bdaffd07d8bf9c8e0c5efe1",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/dimensionalFabCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "dc65044d57effdca8e018c4ad98545593296b49881c7f444a07049f435b1166c",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/equipmentSuggester.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "9d1980dc7bcb0f090989f40a95b5972dd5c6ff2468b6fc9844bd7f8d29e2be78",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/installCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "43e7a14be4e933233e282a98548e8bd0317da5c298e7375b1661d401c70164bf",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/installExport.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "6d0e871431fb4f4fa179891a005dc00c88c2a979ca382dcecaccbc033a135590",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/installSizeRates.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "c61c261016a0e6abb676827fcda7ad393ae509be3e1185efd97a8340484d0025",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/letterWidthCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "1c134535863f0c0fa87ec5be95c05d1f3d3780e6d4579f574ffe1ecb2f65df40",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/lettersCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d95def8378e3a71766c7f1a979557f53805570a1ddb287a78d985597d4a55d03",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/materialsConstants.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "40b194976380339df8ebaa6f687d9b9dd2cbd525aba4acd893a6f8670f1b7bbf",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/materialsHelpers.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "81d5d726358a52f8fc4c57f4877315458c22b2ad84fc65e07a9449bced18800a",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/channelLetterInstall/wallMaterials.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "3d940d042d3defb9f77a729cf997d7902ff231528e8c3fcc73ac8043e6bba4fb",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylAlternativeCompare.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "aaf074ed52bba01e46b9d822b0a64ac6c7171b11964d1ddf09f2f63beb2d20d0",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylArtworkUploadDialog.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "fd01fc654d5bf70b6f76077570fa776d9af5c3954c3dd7bd21fafb3ba0e697dc",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylBulkImportDialog.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "91483c264a9a1d7e3e783521239d136664caf9a571c73a0f620e50c99cb46610",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylCuttingExtrasCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "7602b55138e3b5c29784196a8712b3cb3cfdd3fe0b2b26dfb23c1fc4972e9da4",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylMachinePicker.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "3a10f3ea188e53f45e00c3a7a29d72c3f495862d785a309ec15a7470723ce371",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylMaterialPicker.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "b7f2b2182b0d1e3d37bebf66f676d793594c61533b29d105c7b5d4e2ace0e30c",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylMoveToWorkflowMenu.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "635dbe9be3ac00a48083505e67f418054b120b59b448f49d824d74cc456f6914",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylPartsLibraryDialog.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "4a3cf716f9fda3405b93dd7390c50847f9f860fea6c6decde5961cd91a6246ae",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylPartsTable.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "03b900f0634b09806810bb8410b2c42a256c567801d9341302bd01b9c91eed2a",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylPresetBar.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "e786dc38d69a8b2451274a06cad78104b67a8e206197e8f29f6450d667ea72d8",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylProjectSummaryCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "fb78a1c4a258c16a1128aee6e8083520a86870cb5394e16ab7f8c2e75921da5d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylRollVisualizer.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "9503e0a66f65827e8bdc463b8282af66b8737ffbac4c145e7184d123ec1d0ee6",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylRollWidthRecommender.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d6b779c92e3cb9f1396e202a8e4ed32d9f90f536f95dea0a0abc3ad9faf7dd78",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylSearchPickerDialog.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "84e1fd955052640601480b2d611d806eda9e6a54832758468fc8d43d9f1c69c9",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylStockWarning.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d69297c12c592cb59edbe6dfc122b63d9f09993f27da492ecebedb83c509fc7d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylSummaryPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "0b3e3c2d609aa770d4d512fd529f2fc3bc3fce0e97665ded20eac6401a24cbd9",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylWorkflowCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "4dc9bd8fc215cdd39c7860369e2862dea8527e7f547c8461831a33c6f480a8d1",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylWorkflowCardHeader.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "b6d4d27fecbd341b52442435e89fe24cb73b7aff3d247729d0e1a548a03a5fbe",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylWorkflowMetricsBadge.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "54d100d43fd3c33d744712fb3d41162c0a5f28355b82b1c259c619ce127b4271",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylWorkflowPersonnel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "6c00c3bf54a27a5b8ea28f5db184a8f447d69911b55c41770f438162afcaf0f4",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/VinylWorkflowTemplatesDialog.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "1f69871048ffb4a2278d9697e5ffc5eb4de14b73206940fbed46451915e03d7d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/vinylCostHelpers.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "0a5c6b9d9ebdeb32724db2785acafd43a69b4ce3201d75637cc87f8b88bfdde5",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/vinylLaborRoles.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "0f91e78126552523e64a4080fb42ff354105802498d15da00f403ad57eac9f3f",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/vinylNestingCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a87bb0a61f0700781a4046c8eb681bcf33d32b038ab10ca412c609cadf047f44",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/vinylPricingAvailability.js",
+   "exists": true,
+   "crlf": true,
+   "hash": "0bb8c5813dbccf63b5b6a39dee437993ddd1baaaa8f45142a4c437d8fc9a5f8a",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/vinylProjectHelpers.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "ed2ceb7acef7942c0e1a68e441a1460c741389852ee0d42b7f35a57886d41512",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/vinylTemplatePersistence.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "21e8718201b7c3f1c5217823a15d085ec3049c1a3e54ea233c53603a433517ca",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylEstimator/vinylWorkflowPresets.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "042fd683b2d6d521292e2bdaa6463e51b467abc8abd6416a7595af267ffae791",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylInventory/VinylEditDialog.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "a37478a18ee235d27698e6340df7f6edae2fd3e02c42217fc27c0a0aa5754374",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylInventory/VinylInventoryTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "ab4e169efec8028714ca02bdf3815ebf4fb3b79038c8b78fdb6a3ebe83cfc766",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylInventory/VinylRowCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d2160011471d705a7425bbfde5d9123af9c2487154a0daf49013870f86fac356",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylInventory/vinylConstants.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "8cb1cb64fcd11bfb969f6f340e770d94c08c9b4360978a3caeda7dbf3364bc96",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylInventory/vinylInventoryPersistence.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "d2a3a271fa211e73733565f4c8df5bf816cfd0767d5ef8c8feb9cd19cf07a941",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/vinylInventory/vinylMachinePersistence.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "f4bae4f92197f1dff0351a83fc6c5a9ebdae30e2678846cf729dc7f04f8958ab",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/ActionPicker.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "88e043f6d2f6192431a5b9e296e9f764b83549dfcae5299b29dfc8c1043cd82d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/ActionRateCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "873b00f675eddb0d03176c8566498bf70c2c650f963d82f3747213b1567f75be",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/DimLetterPaintSubPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "cb1a9a1bb4d2752e8513cd30b83bb7242f27e1ee2eec6865ae238ce6469ce762",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/MaintenanceDimensionalSheetsTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "bc5e629860c99ef732ccdaaa0561f08fc6ec4128e0511a5a9f39af6cc33185fd",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/MaintenanceMaterialItem.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a6cc64e566d21e02a60d15b4a4359a5fc3658e23ea36bdde47342158af3f2f46",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/MaintenanceMaterialRulesTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "aa974238cf2500aa347bc27b450334898f82c0fb094fbc929eb4f088ec03b53d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/MaintenanceMaterialsByAxis.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a5c534e1e58543ba4f5529b1d8eebacb0d24638ef8e15b3cee8c5e1c0b456a84",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/MaintenanceMaterialsTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "33d0acf570ab5bf93a6c5a586b78287d88c6b8735937a8c4e1267b1de4eaa265",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/MinimumsTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "011169d72326a7ea7d47b122d3c80d2f37c05956eb0ba381b4ac12ceada59ce9",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/RatesBySignTypeTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "cee882abba42f2b5bd97a75da2bd1ebbdab385fff3dd749cd6769331fd456830",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/RepaintMonumentPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "4d9c3ba4809ecc84cb2d5d416c7f635059166e1dcedd2ff7442c1b6e10192b2b",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/RepaintSettingsTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "a19baf51cce57902c29f90a34c771ba3023d78e0fff6a7ef6959f78362026e17",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/SectionCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "4e70b492bcd6ca448cdd382ddfcde0a30f541251ed5cedf9e5566e91c8765f5d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/ServiceItemRow.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "f72c33a2a558e6f99690506493954fbcb8df109e506410e14441ae86fa1c5ebe",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/SettingInput.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "f1d7efa6316be3cab5eb9c03cad9c9f55392b1242a7c507268971a543cf5d263",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/SignTypePicker.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "2776caa409ce62f969cfe91bc1cc6bf35624f285ff85484ce7669d7b856d9b74",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/SiteConditionsTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "b53d8859f734639633c094b3a3569eaa00629d38fc7af39ec98e5f2a3e0a56ca",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/TravelTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "e5295f376dbb30c6bfc81c6dc9c074d58edf5dae6fc8c78068ae2ffef965c0a3",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/constants.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "01fd816a6ebd28d7858876cfc5bc8d98b34cfbc28176117ba0ce1a03898db965",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/defaults.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "d66649196fe731588bb963659302df515ad5c0c7dcd96a58d0d6b7a61f60e713",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/dimLetterPaintCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "71b8ce366872fed4b69f372e21dde077bb4d228c5c8bc03b290bea6d6618ee43",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/maintenanceActionRatePersistence.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "82661f1d333a01bf6c89cca48092661ee45029ae56dfbe8bed6eccda5d6b7cf7",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/maintenanceCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "db1e4f3a9dfcd0df539dca171ecc697d348804164e09e228e07643ad7fac6b0d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/maintenanceMaterialRulePersistence.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "c94216bf914bd234006fcd4289d17362f606080290a7ffd275d95d8a2aa48b39",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/maintenanceMaterialRules.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "f41321b4adbef978f278e154decb36d1c98a223f0adcb3757769a1bda4d25a9e",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/maintenanceTravelSiteDefs.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "7c93a7d940d633539ff79cdceff0b763b56dd50f6eafad55062a587e2b89cba9",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/repaintCalculator.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "699c8354fb0671b65e100c176ed5995772dac3a98b33debf2f14d657d6719e0a",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/signMaintenance/repaintDefaults.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "347c8d55d4f75bc59134f50c9d5356290ccfb4b8f878d61baf2922d3f7711546",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/paint/paintCalc.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "49fc1502d9072e6adf96bad1360bc448e7e50928d96fd7a6bc249a43a1178dde",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/paint/paintPricingAvailability.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "da5a648bfe4bbda3e7ee1f3de798afe1bf6dc4f2b024314167083e46b6e384fc",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/paint/paintSellPricing.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "3a67ab09b22da8fe078157065b3accda8b164c42d73b182c01848c906048cfcc",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/laser/laserCalc.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "1fa16a6bd53a6fc39bb0827bace3ccc5b288edc20b205156d3bae06ca67402dc",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/laser/laserSellPricing.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "dc358e510b33e3d2451f5ea7a2dd4f4c557d0a278cf74313f84288aa53eb33e2",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/cnc/cncCalc.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "2107414056f93a6c538df14a55c35a67446455ab5acf7e353913e2676fa1360d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/cnc/cncSellPricing.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "cf74d33b49310ca83a6c71aa43b358e61cb8e72a6c4bd5715cb06d5fce0cfd5f",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/metal/metalSellPricing.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "d799f42cb0108238bd5edd692320982a03a076ecc976f9a35acf2b0ee95fde85",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/maintenance/maintenanceSellPricing.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "5bfb4ccd5ce2549991e12d82eaf996e753ae0d96ef9f6ae1a4f1f5c3284117d5",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "b02a4baa889c8b09656f8b22ed0d638ba8d33a4c07b54850003b9f64819465d8",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/ConcreteDeliveryPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "1f33ce28ef0ed5217fcfb5d01778bf0efbd6c9c404540c05c8632f51a954e0cb",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/CustomerPricingPanel.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "d3720bb8df80cff5b2bfe2e5a132e99bed59c736c864877e456ab9252522e669",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/Foundation3DPreview.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "523ad3977cb181064c66509a4ca5a3e72d65bf375cbf2167e82b9f783b1e29e3",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationBOM.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "af99e00cb818eb0229a572e614615c5ec75a609644bc5989dd4791b07e2ed25f",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationEquipmentTab.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "e621b4959702d1e6ad825a919bbf5a0afefe1d87682b9c2a21764dfc9ab7cfe9",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationItemCard.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "bbc699269f1e4d254a2d5c95ffe07a465ee1d5e929314478120e0a9fc76ac43e",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "ac4f9e0cc6f948f9000fa2f740f5532817e9d00fc9baf929a71414090163125c",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "2016265a3e7f8367f0788390460d97e9e0cd2177b9f6016e5c58a5a1dc26663f",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationRatesPanel.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "3987b0742829f98bbddc5f0b3db17be4672e385e4044f78af20705bf92de194c",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationSectionBanner.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "06ece3c5746fec82fda05007989d63838d8d2aaa6a19c576ab8260cc51c0a4f9",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "70233a10b07274571a9d27e693cad3a51c705bc561514fe5c688d5648085f152",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationToolbar.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "688b7e9eb9645bb4b7f57b69f336e4a977c4237adbabf5930ffb3a62a0a74edc",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationTotals.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "571795bd9b2a2cd77fd776255903efa74edb0733cffefcf7fdb230f6936c5cb7",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "3d2c186e797001661798cf1cb787ea35ee7cb63d3f5e73e1d2aac5b25c4f974d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "857456235bc823bbf535380c90c66490e7087ec057dbc539cb8c972e7eb42186",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/LandscapeDesigner.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "4956450d189584ffdfcaf190aeef79c03953e8678840657c4a346c7915f0fd23",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "7cc8d401338d284fd0e24483eebf79cd75c31930aed6d91d476d60cb21d73ff5",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/WallShapeEditor.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "37a14e19c8a89bbebd0100f164d1ae4d8b9148e120514452105c187875f9a22b",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/convertToBrickStone.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "1e2af87c581e1f6aa4813e94f7f88e90ce058c38b2965b37d40778c5bfb2847e",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationAiReview.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "3a8339fb498a91475bd7e4783fd10f657cd3ebdeea7545eefffae63e096c6657",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "8e197f9559b4bfbc4861040ee323ea526fb0fcfd84341ca9c7ece78efd57ac79",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationBuilderRecovery.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "7e6fa754eac96e7d4b689cf028163a1a99f69617e151c0698ec3cf122e00629c",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationCalc.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "ac9c53eb4c08a023ac7c2268c07de09b6591528976cf38a322e8b82d7769557a",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "702f1405b1cae1256da4eda2e7ed4d50085a5be1b4cd3324cf232a84938eca4e",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationDraftRecovery.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "16cf0d383ef46a3bf21557cff04ca2a6f0ad50ef0b5928ad3ad601f361de8904",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationEquipmentBindings.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "9770051bb7cce5424d5075b6fff2910288f2eba6b5724dc3194d2a59928b543f",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationInputValidation.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "cd2cd349650134af3137be7a7a200c11fb52bd5d7a2429b9faf436abbb657f63",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "a2178910f6a564ccb2662c9d1a7fce4c91fbaacea4f9e7ced8cb786c61380fb3",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationSaveSession.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "f9c6984e8ea679a81a7d3d6933714b31a1b7e215dff3d84c2d90b9dc394be4de",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationSellPricing.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "b7c632d16b79f1a19e750e9bd3462dca8793a41aae2c52bdb70e7cd3c7c038c1",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationSyncRecovery.js",
+   "exists": true,
+   "crlf": true,
+   "hash": "ab08ffc8345ce29d177377768d2d5c4a19eabfd4ff778c01d2248131969c3251",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "a475bfd50def02443331df581a90b5ebfc0a2292788afad070bb52003e92fdcb",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationTemplateService.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "570d264e27d81f6c3a00fefdcca9332584eddbb0191275bc995990572587196d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/landscapeMaterials.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "ba13081706de2a5e2e1f6429c1e8a058ecb11f72535ed2fefd40b31927ab906a",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/legacyFoundationCalc.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "b799f3d33a794f6249beadb0b527a710f7df42d9aad0d0e062edb846dee4d1e4",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/poleCalculator.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "8cdfbb75492817b8628eda4d10f133b7d05c9b50c46f1dd745ae1a50e201596e",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/wallCalculator.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "4bb6795851b678bd6f72dc7146bbdc6a5ab486528605d12a2058d5ed5b1e8f9d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/foundation/wallCapCalculator.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "90e64ee49d8fe815ea63506ab21c25e9fd449c55581afe0a21f19371c87695eb",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/customItems/customItemsSellPricing.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "8cef699cc08151c5c6b7d4b893f1d7e8953766d2cd769aa73d9947456a6785bf",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/builder/partSync.js",
+   "exists": true,
+   "crlf": true,
+   "hash": "f188ca71fb4935d890a4e3f50b8c5d47f8590dd40922ed93aef01644bafe4a36",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/builder/builderService.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "e6175c22dc7d098169682de5aa0e3231ff2df34edaa9eeb334fcdf1645ba5cdf",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/builder/sourceProjectPersistence.js",
+   "exists": true,
+   "crlf": true,
+   "hash": "6d6381c9f6d7c81235259a889562e99a85d9bc53fc2c87ffb8ab461ff76844f2",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/builder/itemIdentity.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "3f6700c4155350056dfed2f9442bdd174a870854d1c7229beb0c39ace7d1582d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/brick/brickCalc.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "c54ed2c11a12e917dbc047c23d33afd9e0b1694f2b350bdb89e6808a661506a6",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/brick/brickSellPricing.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "89a347e5ba23309d55f2dcafcd0b5744d949eea2940b11a7c6e183180e51936d",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/moduleShared/moduleProjectActions.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "d21e225d2274917731855aef4cff8e9a0eecf470cc6508d3981cf91aad75c9ab",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/moduleShared/ModuleActionBar.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "33d0bc602e0971af1ffc930cc911a0c3a1232f045ddce5a5a79cf0ee4ead18a2",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/moduleShared/ModuleTemplateDialog.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "c9a28c71da3668d05d688f6321af25109c0d52dbfefafa1bee5f3fe662bb8b95",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/moduleRegistry.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "b1fe92128a7ef375c6e6ec0a7f68d624d0ad360e7864816bf20a4be513e964ed",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/customerPricing.js",
+   "exists": true,
+   "crlf": true,
+   "hash": "3bcaba41cfd9b3c3d9c8c220964229ae73797ee91ff0378f6479224884c04f75",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/estimator/settings/moduleSettingDefaults.js",
+   "exists": true,
+   "crlf": false,
+   "hash": "86e9efbad755883d0d359f137ef28336354e359d98754741e45071db8d3ed611",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/markup/CustomerPricingTab.jsx",
+   "exists": true,
+   "crlf": true,
+   "hash": "47d0108fe556f3c3069c798ee4da6d764b4401475ffb3465f221ff74a22fed36",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/markup/projectCategorizer.jsx",
+   "exists": true,
+   "crlf": false,
+   "hash": "69d9df4fa6892f10a40ddefc87583fc94fddfd5e5be880c46a03b8df63efa0e4",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "src/components/markup/savedCustomerPricing.js",
+   "exists": true,
+   "crlf": true,
+   "hash": "339f7da3ed7238e9dd8e5139021243bbf513b0b95bd75feba2dffc707c884acb",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "base44/shared/brickPricingWire.ts",
+   "exists": true,
+   "crlf": false,
+   "hash": "94cbc000110f41e28a069ba51d15b5dd0201d3ddbbbac247627cbc5c0dd9e1b8",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "base44/shared/pricingEngine.ts",
+   "exists": true,
+   "crlf": false,
+   "hash": "61848dc20fc3eacc1faf056619d7b0371b65bedf354155eed69378245966ca67",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  },
+  {
+   "path": "base44/shared/pricingTemplateModel.ts",
+   "exists": true,
+   "crlf": false,
+   "hash": "8dbbc6797f0d1347e637a9fa55e2b94fc4c5794462388b03d0cd8730daffaf4a",
+   "role": "protected",
+   "inV2Baseline": true,
+   "driftVsV2": false
+  }
+ ],
+ "headAfter": "1840b224140634135d546377b1878a283443463e",
+ "dirtyAfter": ""
+}

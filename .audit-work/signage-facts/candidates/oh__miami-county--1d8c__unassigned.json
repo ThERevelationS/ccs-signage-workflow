@@ -1,0 +1,69 @@
+{
+ "jurisdiction_id": "6ae99d85593cefa840af1d8c",
+ "jurisdiction_name": "Miami County",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Planning & Zoning Fee Schedule Preliminary Plan $250 Per Platted Lot $10 Final Plat $200 Per Platted Lot $10 Replat $50 Minor Subdivision \\ Large Lot Subdivision $50 Parking Lot $150 Board of Zoning Appeals Zoning – Variance $225 Zoning – Conditional Use $225 Zoning – Appeal $225 Zoning – Change of Use $225 Planning Commission Zoning Map Amendment $425 Zoning Permits New Dwelling $225 Additions $50 Accessory Building $50 Recreational Pond $50 Commercial $200 Each Additional 1000 square feet $20 Change of Use $150 Sign or Temporary Permits Temporary Permit $50 Sign-On Premises $50 Per Square Foot $1 Sign-Off Premises $150 Per Square Foot $5 Floodplain Development Permit Development Permit $200 Penalty Fee $50 Comprehensive Plan / CD Version $50 / $5 Zoning Resolution $25 Subdivision Regulation Book $25",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "process",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "ffa0ca9ea38a013c2fc4a7f1fc57f90854d33545480298e14b17e7d35bebc519",
+   "source_document_id": null,
+   "source_title": "ffa0ca9ea38a013c2fc4a7f1fc57f90854d33545480298e14b17e7d35bebc519.pdf",
+   "official_url": "https://www.miamicountyohio.gov/wp-content/uploads/2025/10/ProposedFeeScheduleJune2014addponds_201408131337028445.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Miami County Planning and Zoning Guides Accessory Structures 2 Site Plan: In order to receive a permit from our department you will need to provide a site plan. The plan itself should include:  The location of the new structure  The setbacks from the property lines  Any other accessory structures and their square footage o This does include existing sheds of 200 sq uare f eet or less o Existing accessory building square footage will feed into the overall total The site plan itself does not need to be professionally drawn. You can use a google maps image or, preferably, an aerial image from the auditor ’ s website. The location can be noted with a box or square showing the location you are planning on building your structure. Later Additions Additions, such as a lean to or a porch, with a roof will add onto that structures floor area. Meaning that it can possibly push the structure ove",
+   "tags": [
+    "fee",
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "f5cca2becae953c7ff8ba91409089cdf16fc921ea1a1e559082176ec48f9178b",
+   "source_document_id": null,
+   "source_title": "f5cca2becae953c7ff8ba91409089cdf16fc921ea1a1e559082176ec48f9178b.pdf",
+   "official_url": "https://www.miamicountyohio.gov/wp-content/uploads/2025/10/Zoning-Guides-Accessory-Uses-Final-Text_202110130807172068-1.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Miami County Planning and Zoning Guides Accessory Structures 1 Accessory Structures The Miami County Zoning Resolution allows property owners to cons truct 2 additional structures on their property . Our department refers to these additional structures as accessory structures , and will require a permit based on a few criteria. Accessory Structures include:  Pole Barns  Workshops  Garages  Sheds What do I need for a permit? Size: The maximum size of your build is dictated by the acreage of your property. Section 7.10 (to the right) of the Miami County Zoning Resolution shows the maximum square footage and minimum setback for specific acreage. If your parcel exceeds 10 acres then you are not subjected to a maxi mum square footage or number of buildings. T he structure must be at least 10 feet away from the main dwelling and other accessory structures.",
+   "tags": [
+    "area",
+    "dimension",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "f5cca2becae953c7ff8ba91409089cdf16fc921ea1a1e559082176ec48f9178b",
+   "source_document_id": null,
+   "source_title": "f5cca2becae953c7ff8ba91409089cdf16fc921ea1a1e559082176ec48f9178b.pdf",
+   "official_url": "https://www.miamicountyohio.gov/wp-content/uploads/2025/10/Zoning-Guides-Accessory-Uses-Final-Text_202110130807172068-1.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Mt�vitt Gouvit � D��Yi:vitevit of Developvitevit 1 5 0 6 On e St op C our t , .Sul't\"• 6 'Troy, Ohio -403'73 Phon• (93'7) ......a-a121 p- (93'7) ......a- 5 4 86 What you will need when applying for a Zoning Permit: New Dwelling • Site Plan- A detailed sketch or drawing of the property with le ) dimensions and showing the location of existing and ( set$(1111P proposed structures, and other features. • Health Department Approval- Approval letter from the Health Department for septic system and well. • Building Drawings- One set of complete building drawings. • Driveway Permit- Permit from Miami County Engineer's or ODOT (if located on a State Route). (Turn around for a new dwelling is about one week.) Accessory Building • Site Plan- A detailed sketch or drawing of the property with le ) dimensions and showing the location of existing and ( see $(ll1IP proposed structures, and other feature",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "7c8fee1379c05d29919f6636c36ac106f1f56f2a1c3f03be67d3d94ee9cba51e",
+   "source_document_id": null,
+   "source_title": "7c8fee1379c05d29919f6636c36ac106f1f56f2a1c3f03be67d3d94ee9cba51e.pdf",
+   "official_url": "https://www.miamicountyohio.gov/wp-content/uploads/2025/10/Application-Requirments_202504181052406875-1.pdf"
+  }
+ ]
+}

@@ -1,0 +1,46 @@
+{
+  "matches": [
+    {
+      "path": "src/components/estimator/foundation/WallShapeEditor.jsx",
+      "line": 22,
+      "text": "  const points = shape?.points || [];\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "line": 8,
+      "text": "  if (!wallShape || !wallMaterial || !wallShape.segments) return null;"
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "line": 19,
+      "text": "  const totalLinearInches = wallShape.segments.reduce((s, seg) => s + seg.length, 0);"
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "line": 23,
+      "text": "  wallShape.segments.forEach(seg => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "line": 75,
+      "text": "    wallShape.segments.forEach(seg => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 21,
+      "text": "  const pts = shape?.points;"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 169,
+      "text": "      shape.segments = segs.map((s, i) => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 329,
+      "text": "      shape: isRecord(w.shape) ? { ...w.shape, segments: (w.shape.segments || []).map((s) => ({ ...s, component_id: remap(s.component_id, \"wall_segment\") })) } : w.shape,"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 8
+}

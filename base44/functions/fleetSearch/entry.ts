@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 
 const LIMIT = 8;
@@ -31,12 +32,18 @@ function sortByRelevance<T>(query: string, rows: T[], values: (row: T) => unknow
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, body?.session_token);
     if (!user?.email) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     if (!['admin', 'user'].includes(String(user.role || ''))) {
       return Response.json({ error: 'Fleet search requires CCS Fleet access.' }, { status: 403 });
+    }
+    // A platform role claim alone is not enough — the caller must exist in the
+    // authorized staff directory like every other fleet function requires.
+    const staffRows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: String(user.email).trim().toLowerCase() }).catch(() => []);
+    if (!Array.isArray(staffRows) || staffRows.length !== 1) {
+      return Response.json({ error: 'Fleet search requires an authorized staff account.' }, { status: 403 });
     }
 
 

@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6adeebec5f514a5f6e9765d1",
+ "jurisdiction_name": "Van Wert",
+ "state": "OH",
+ "office_id": "scan-6adeebec5f514a5f6e9765d1-office-5",
+ "office_name": "Van Wert County Engineer",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "1 SPECIFICATIONS PART 1 – GENERAL CONDITIONS 1. APPLICATION FOR WORK WITHIN ROAD RIGHT-OF-WAY LIMITS A. Application by a landowner or contractor for authorization to perform work within the right-of-way limits of a county road shall be made in writing on a form available at the County Engineer’s Office, 1192 Grill Road, Van Wert, Ohio 45891. (See example attached) B. Application shall be made seven (7) days or more prior to the time contemplated to commence work at any crossing. C. No work may proceed within any county road right-of-way without written prior approval of the Van Wert County Engineer. (Revised code, section 5589.10) 2. SCOPE SPECIFICATIONS ARE APPLICABLE TO: A. Any work performed within road right-of-way limits. B. In the installation and maintenance of such structures, the work performed shall consist of the contractor engaged, furnishing all materials, supplies, labor, t",
+   "tags": [
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "6224d5f8e749548332703209166dc5887f96da43bf89ad0859048cae781a340b",
+   "source_document_id": null,
+   "source_title": "6224d5f8e749548332703209166dc5887f96da43bf89ad0859048cae781a340b.pdf",
+   "official_url": "https://www.vanwertcountyohio.gov/Document_Center/Government/Engineer's%20Office/Permit/Rightofway.pdf"
+  }
+ ]
+}

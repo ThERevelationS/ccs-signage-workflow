@@ -1,0 +1,46 @@
+{
+  "pass": 10,
+  "fail": 0,
+  "results": [
+    {
+      "name": "R1 malformed cnc_machine_rate → silent 75 default",
+      "ok": true
+    },
+    {
+      "name": "R2 authored-0 rates resurrected (75/45/20)",
+      "ok": true
+    },
+    {
+      "name": "R3 pct edit 20→50 leaves totals stale (no reprice)",
+      "ok": true
+    },
+    {
+      "name": "R4 malformed cnc_cut_speed_1_4 → silent 50 write",
+      "ok": true
+    },
+    {
+      "name": "R5 malformed wood multiplier → silent 1× (identical price, no signal)",
+      "ok": true
+    },
+    {
+      "name": "R6 NaN stored costs → silent $0 totals",
+      "ok": true
+    },
+    {
+      "name": "R7 absent quantity → NaN cost laundered to $0 silently",
+      "ok": true
+    },
+    {
+      "name": "R8 quantity 0 → silent $0 item",
+      "ok": true
+    },
+    {
+      "name": "R9 letter factor 0 → resurrected 3.5 (nonzero cutLength prices anyway)",
+      "ok": true
+    },
+    {
+      "name": "R10 remote math exposes no issues/held channel",
+      "ok": true
+    }
+  ]
+}

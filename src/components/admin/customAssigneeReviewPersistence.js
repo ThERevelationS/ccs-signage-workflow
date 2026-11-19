@@ -1,6 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { getSmartsheetColumns } from "@/components/admin/smartsheetSyncPersistence";
 import { CUSTOM_ASSIGNEE_SETTING_KEY, reviewedCustomAssigneeNames, resolveSmartsheetTaskAssignee } from "@/components/admin/smartsheetTaskAssigneeModel";
 import { validateCustomAssigneeName } from "@/components/sales/customAssigneeName";
@@ -9,9 +9,9 @@ import { staffEntities } from "@/components/staff/staffEntities";
 export async function confirmSmartsheetCustomAssignee({ label, sheetId, column, loadedRecord, sessionToken }) {
   const name = validateCustomAssigneeName(label);
   const [setting, metadata, users] = await Promise.all([
-    loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: "smartsheetSyncConfig" }),
+    loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "smartsheetSyncConfig" }),
     getSmartsheetColumns({ sessionToken, sheetId }),
-    loadAllEntityRows({ entity: staffEntities.AuthorizedEmail, sort: "full_name", pageSize: 200, maxRows: 1000, label: "Task-assignee review" }),
+    loadAllEntityRows({ entity: staffEntities.AuthorizedEmail, sort: "full_name", pageSize: 200, maxRows: 1000, cacheTtlMs: 30000, label: "Task-assignee review" }),
   ]);
   const config = setting?.setting_value;
   const flags = ["mirror_enabled", "importer_enabled", "pull_enabled", "push_enabled", "create_base44_from_smartsheet", "create_smartsheet_from_base44"];
@@ -36,7 +36,7 @@ export async function confirmSmartsheetCustomAssignee({ label, sheetId, column, 
     kind: "custom_name", label: name, sheet_id: String(sheetId), column_id: String(column.id), confirmed_at: new Date().toISOString(),
   }] };
   const saved = await saveGlobalSettingValueIfUnchanged({
-    entity: base44.entities.GlobalSettings, loadedRecord, settingKey: CUSTOM_ASSIGNEE_SETTING_KEY,
+    entity: staffEntities.GlobalSettings, loadedRecord, settingKey: CUSTOM_ASSIGNEE_SETTING_KEY,
     nextValue, label: "Confirmed Smartsheet custom assigned names",
   });
   if (!reviewedCustomAssigneeNames(saved?.setting_value, sheetId, column.id).includes(name)) {

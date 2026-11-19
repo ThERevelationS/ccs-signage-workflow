@@ -1,0 +1,8 @@
+ok dialog 1440
+ok new 1440
+ok legacy 1440
+ok dialog 390
+ok new 390
+ok legacy 390
+Catalog browser: 6/6; failed=0
+exit=0

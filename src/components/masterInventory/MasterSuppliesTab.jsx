@@ -3,16 +3,16 @@
 // Merges supply items from two underlying entities:
 //   - ChannelLetterInstallInventory (channel-letter install / maintenance supplies)
 //   - FoundationInventory rows that are NOT equipment/attachment/sub_attachment
-//     (i.e. concrete_service, bagged_concrete, rebar, forming_material, pole,
-//      brick_stone, fill_material, wall_material, wall_cap)
+//     (i.e. concrete_service, bagged_concrete, rebar, rebar_support,
+//      forming_material, pole, brick_stone, fill_material, wall_material,
+//      wall_cap)
 //
 // Each row gets cross-estimator visibility toggles.
 // The Add form lets the user choose which storage entity + which type the new
 // item is, so all existing fields/settings are still available.
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { useEffect, useMemo, useRef, useState, Fragment } from "react";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,13 +24,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Trash2, Edit, Plus, Wrench } from "lucide-react";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createInventoryRecordWithRecovery } from "@/components/masterInventory/inventoryPersistence";
+// groupInventoryBySupplier (CMP-A08 tail) renders the explicit supply
+// grouping in the merged table — rows section by canonical supplier key;
+// "—" (unrecorded) sorts last instead of silently merging vendors.
+import { inventoryNumberInput, groupInventoryBySupplier } from "@/components/masterInventory/inventoryNormalization";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const ChannelLetterInstallInventoryEntity = base44.entities.ChannelLetterInstallInventory;
-const FoundationInventoryEntity = base44.entities.FoundationInventory;
+const ChannelLetterInstallInventoryEntity = staffEntities.ChannelLetterInstallInventory;
+const FoundationInventoryEntity = staffEntities.FoundationInventory;
 
 const FOUNDATION_SUPPLY_TYPES = [
-  "concrete_service", "bagged_concrete", "rebar", "forming_material",
-  "pole", "brick_stone", "fill_material", "wall_material", "wall_cap",
+  "concrete_service", "bagged_concrete", "rebar", "rebar_support",
+  "forming_material", "pole", "brick_stone", "fill_material", "wall_material",
+  "wall_cap",
 ];
 
 const FOUNDATION_TYPE_OPTIONS = FOUNDATION_SUPPLY_TYPES.map((t) => ({
@@ -46,7 +52,10 @@ function normalize(row, source) {
       id: row.id,
       name: row.item_name,
       subtype: row.pricing_mode || "—",
-      cost_display: row.cost_per_letter || row.cost_per_foot || row.cost_flat || 0,
+      // First RECORDED price field wins for the display column — an authored
+      // explicit 0 stays 0 (a real free price), an unrecorded price stays
+      // null ("not priced") rather than minting a display zero.
+      cost_display: row.cost_per_letter ?? row.cost_per_foot ?? row.cost_flat ?? null,
       supplier: row.supplier || "",
       show_in_channel_letters:  row.show_in_install_materials ?? true,
       show_in_foundation:       row.show_in_foundation_materials ?? false,
@@ -59,7 +68,7 @@ function normalize(row, source) {
     id: row.id,
     name: row.material_name,
     subtype: row.material_type,
-    cost_display: row.cost_per_unit || 0,
+    cost_display: row.cost_per_unit ?? null,
     supplier: row.supplier || "",
     show_in_channel_letters:  row.show_in_channel_letters ?? false,
     show_in_foundation:       row.show_in_foundation ?? true,
@@ -227,11 +236,24 @@ export default function MasterSuppliesTab({ isAdmin }) {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {rows.map((row) => (
+                {groupInventoryBySupplier(rows).map((group) => (
+                  // CMP-A08 tail: explicit supply grouping — a supplier header
+                  // row sections the merged list by canonical supplier key;
+                  // unrecorded suppliers stay visible last, never merged.
+                  <Fragment key={group.key ?? "__unassigned__"}>
+                    <tr className="bg-slate-50/80">
+                      <td colSpan={isAdmin ? 9 : 8} className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Supplier: <span className="text-slate-700 normal-case">{group.label || "— not recorded"}</span>
+                        <span className="ml-2 font-normal normal-case text-slate-400">({group.rows.length})</span>
+                      </td>
+                    </tr>
+                    {group.rows.map((row) => (
                   <tr key={`${row._source}-${row.id}`} className="hover:bg-slate-50">
                     <td className="px-4 py-3 font-medium text-slate-900">{row.name}</td>
                     <td className="px-4 py-3"><Badge variant="outline" className="font-normal capitalize">{row.subtype.replace(/_/g, " ")}</Badge></td>
-                    <td className="px-4 py-3 text-slate-700">${parseFloat(row.cost_display || 0).toFixed(2)}</td>
+                    {/* Authored prices render as dollars — including an explicit
+                        $0.00; unpriced/malformed stays "—" (not a minted zero). */}
+                    <td className="px-4 py-3 text-slate-700">{Number.isFinite(parseFloat(row.cost_display)) ? `$${parseFloat(row.cost_display).toFixed(2)}` : "—"}</td>
                     <td className="px-4 py-3 text-slate-700">{row.supplier || "—"}</td>
                     <td className="px-4 py-3"><Badge variant="secondary" className="font-normal">{row._source === "channel_letter" ? "CL Inventory" : "Foundation"}</Badge></td>
                     <td className="px-4 py-3"><Switch checked={!!row.show_in_channel_letters}  onCheckedChange={(v) => toggleVisibility(row, "show_in_channel_letters",  v)} disabled={!isAdmin} /></td>
@@ -244,6 +266,8 @@ export default function MasterSuppliesTab({ isAdmin }) {
                       </td>
                     )}
                   </tr>
+                    ))}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -274,20 +298,24 @@ function SupplyForm({ row, onCancel, onSaved }) {
   const saveRef = useRef(false);
 
   // Init form from raw row, with safe defaults per source.
+  // CMP-A08 tail: every numeric price field starts null when the row carries
+  // no recorded value — an absent price is "not cataloged", never a minted 0
+  // that would persist a fabricated free price on save. An authored explicit
+  // 0 still initializes to 0 and round-trips as a real free price.
   const buildInitial = (src, raw) => {
     if (src === "channel_letter") {
       return {
         item_name: raw.item_name || "",
         pricing_mode: raw.pricing_mode || "per_letter_flat",
-        cost_per_letter: raw.cost_per_letter || 0,
-        cost_per_foot: raw.cost_per_foot || 0,
-        cost_flat: raw.cost_flat || 0,
-        cost_extra_small: raw.cost_extra_small || 0,
-        cost_small: raw.cost_small || 0,
-        cost_medium: raw.cost_medium || 0,
-        cost_large: raw.cost_large || 0,
-        cost_extra_large: raw.cost_extra_large || 0,
-        cost_extra_extra_large: raw.cost_extra_extra_large || 0,
+        cost_per_letter: raw.cost_per_letter ?? null,
+        cost_per_foot: raw.cost_per_foot ?? null,
+        cost_flat: raw.cost_flat ?? null,
+        cost_extra_small: raw.cost_extra_small ?? null,
+        cost_small: raw.cost_small ?? null,
+        cost_medium: raw.cost_medium ?? null,
+        cost_large: raw.cost_large ?? null,
+        cost_extra_large: raw.cost_extra_large ?? null,
+        cost_extra_extra_large: raw.cost_extra_extra_large ?? null,
         unit: raw.unit || "",
         supplier: raw.supplier || "",
         notes: raw.notes || "",
@@ -300,7 +328,7 @@ function SupplyForm({ row, onCancel, onSaved }) {
       material_name: raw.material_name || "",
       material_type: raw.material_type || "concrete_service",
       material_description: raw.material_description || "",
-      cost_per_unit: raw.cost_per_unit || 0,
+      cost_per_unit: raw.cost_per_unit ?? null,
       unit: raw.unit || "",
       supplier: raw.supplier || "",
       notes: raw.notes || "",
@@ -443,16 +471,19 @@ function ChannelLetterFields({ form, set }) {
         </Select>
       </div>
       <div className="grid grid-cols-3 gap-3">
-        <div><Label className="text-xs">$ / Letter</Label><Input type="number" className="h-8" value={form.cost_per_letter} onChange={(e) => set("cost_per_letter", parseFloat(e.target.value) || 0)} /></div>
-        <div><Label className="text-xs">$ / Foot</Label><Input type="number" className="h-8" value={form.cost_per_foot} onChange={(e) => set("cost_per_foot", parseFloat(e.target.value) || 0)} /></div>
-        <div><Label className="text-xs">Flat $</Label><Input type="number" className="h-8" value={form.cost_flat} onChange={(e) => set("cost_flat", parseFloat(e.target.value) || 0)} /></div>
+        {/* CMP-A08 tail: drafts ride the boundary's numeric catalog input —
+            blank -> null (not cataloged), numeric -> Number, malformed stays
+            verbatim; `?? ""` renders null as an empty input, never a minted 0. */}
+        <div><Label className="text-xs">$ / Letter</Label><Input type="number" className="h-8" value={form.cost_per_letter ?? ""} onChange={(e) => set("cost_per_letter", inventoryNumberInput(e.target.value))} /></div>
+        <div><Label className="text-xs">$ / Foot</Label><Input type="number" className="h-8" value={form.cost_per_foot ?? ""} onChange={(e) => set("cost_per_foot", inventoryNumberInput(e.target.value))} /></div>
+        <div><Label className="text-xs">Flat $</Label><Input type="number" className="h-8" value={form.cost_flat ?? ""} onChange={(e) => set("cost_flat", inventoryNumberInput(e.target.value))} /></div>
       </div>
       {form.pricing_mode === "per_letter_by_size" && (
         <div className="grid grid-cols-3 gap-2">
           {["extra_small", "small", "medium", "large", "extra_large", "extra_extra_large"].map((sz) => (
             <div key={sz}>
               <Label className="text-xs capitalize">{sz.replace(/_/g, " ")}</Label>
-              <Input type="number" className="h-8" value={form[`cost_${sz}`] || 0} onChange={(e) => set(`cost_${sz}`, parseFloat(e.target.value) || 0)} />
+              <Input type="number" className="h-8" value={form[`cost_${sz}`] ?? ""} onChange={(e) => set(`cost_${sz}`, inventoryNumberInput(e.target.value))} />
             </div>
           ))}
         </div>
@@ -474,7 +505,7 @@ function FoundationFields({ form, set }) {
             </SelectContent>
           </Select>
         </div>
-        <div><Label className="text-xs">Cost / Unit ($)</Label><Input type="number" className="h-8" value={form.cost_per_unit} onChange={(e) => set("cost_per_unit", parseFloat(e.target.value) || 0)} /></div>
+        <div><Label className="text-xs">Cost / Unit ($)</Label><Input type="number" className="h-8" value={form.cost_per_unit ?? ""} onChange={(e) => set("cost_per_unit", inventoryNumberInput(e.target.value))} /></div>
       </div>
       <div>
         <Label className="text-xs">Description</Label>
@@ -494,7 +525,12 @@ function passThroughFoundation(raw) {
     "fill_material_subtype", "wall_material_subtype",
     "wall_unit_length_inches", "wall_unit_width_inches", "wall_unit_height_inches", "wall_color", "wall_texture",
     "cap_stock_length_inches", "cap_width_inches", "cap_height_inches", "cap_profile", "cap_color", "cap_stock_price", "is_cuttable",
-    "rebar_size", "minimum_order_yards", "below_minimum_cost_per_cy", "minimum_cost",
+    "rebar_size", "rebar_support_kind", "rebar_support_height_inches",
+    "rebar_support_height_min_inches", "rebar_support_height_max_inches",
+    "rebar_support_footprint_length_inches", "rebar_support_footprint_width_inches",
+    "rebar_support_material", "rebar_support_pack_size",
+    "rebar_support_compatible_bar_sizes", "rebar_support_placement_notes",
+    "minimum_order_yards", "below_minimum_cost_per_cy", "minimum_cost",
     "mix_3500_price", "mix_4000_price", "mix_4500_price", "mix_5000_price", "mix_fast_set_price",
     "admix_calcium_chloride_price", "admix_set_retarding_price", "admix_water_reducing_price", "admix_fibers_price", "admix_winter_service_price",
     "small_load_fee_1_1_75", "small_load_fee_2_2_75", "small_load_fee_3_3_75", "small_load_fee_4_4_25", "small_load_fee_4_5_4_75",

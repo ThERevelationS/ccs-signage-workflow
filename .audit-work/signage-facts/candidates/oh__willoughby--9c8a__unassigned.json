@@ -1,0 +1,67 @@
+{
+ "jurisdiction_id": "6ad46b7ae8b2c06f65009c8a",
+ "jurisdiction_name": "Willoughby",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Job Address ____________________________________________________S/L______________ Owners Name ____________________________________________________________________ Applicants Name _________________________ Signature _______________________________ Company Name __________________________ Phone __________________________________ Address _________________________________________________________________________ Email Address ____________________________________________________________________ Contract Value _______________________________ Square Foot Area_____________________ Description Of Work: Permit No ______________ Date___________________ Bldg Permit No__________ Total Fee Application Review Fee Residential: $ 25.00 + $ .25 (tax) Commercial: $100.00 + $ 3.00 (tax) New Construction All Residential and Multi-Family R-3: $ 75.00/per unit plus $2.00/100 sq. ft. All other OBC uses: $100.00/p",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "684034b42903df3d0e8d8053ee55dffc3a16e89aad043027359251c392805a17",
+   "source_document_id": null,
+   "source_title": "684034b42903df3d0e8d8053ee55dffc3a16e89aad043027359251c392805a17.pdf",
+   "official_url": "https://willoughbyohio.com/wp-content/uploads/2020/02/application-for-electrical-permit-1.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "ALL APPLICANTS SHALL PROVlDE EVIDENCE OF EXPERIENCE BY SUBMITTING COPIES OF REGISTRATIONS FROM ANY OTHER MUNICIPALITY. COPIES SHALL INDICATE AT LEAST TWO SEPARATE YEARS OF REGISTRATION. Do you at present, hold a registration in any other municipality? YES ______ NO ______ If yes, where? (Submit copies) IF NONE, THE WILLOUGHBY BOARD OF BUILDING CODE APPEALS MUST APPROVE REGISTRATION (BOARD MEETING 1ST MONDAY EACH MONTH) REGISTRATION FEE: $ 100.00 I hereby affirm that all the above facts are true to the best of my knowledge and belief. Applicant Signature _____________________________________________________________ The above,____________________________________ did personally appear before me, a Notary Public, and signed his/her free act and deed. Notary Public _____________________________________________________________ My commission expires ________________ City Of Willoughby Applicati",
+   "tags": [
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "68f9317af4400da3e0315c4fa0f298c6bed35344a3601a864a43bbd857ea78d0",
+   "source_document_id": null,
+   "source_title": "68f9317af4400da3e0315c4fa0f298c6bed35344a3601a864a43bbd857ea78d0.pdf",
+   "official_url": "https://willoughbyohio.com/wp-content/uploads/2020/01/contractor-registration.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Contractor Registration City Of Willoughby Building Department One Public Square Willoughby, Ohio 44094 P: (440) 953-4118 (440) 953-4119 Procedures 1. Complete the attached application form completely. Applicants having a current certificate of qualification from the Ohio Construction Industry Examining Board or registration from any other State Certified Building Department may be issued the same type of registration upon a submittal of photocopies of the certificates or registrations . 2. If you are registering as a HVAC, PLUMBING OR ELECTRICAL contractor, a copy of your current state license is required. 3. The application fee is $100.00 per category . Make the check payable to the City of Willoughby. 4. If registering as a Fire Protection Contractor, a copy of your current Fire Marshal’s Certificate is REQUIRED . 5. The attached Surety Bond form in the amount of $25,000.00 should be ",
+   "tags": [
+    "sign",
+    "fee",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "68f9317af4400da3e0315c4fa0f298c6bed35344a3601a864a43bbd857ea78d0",
+   "source_document_id": null,
+   "source_title": "68f9317af4400da3e0315c4fa0f298c6bed35344a3601a864a43bbd857ea78d0.pdf",
+   "official_url": "https://willoughbyohio.com/wp-content/uploads/2020/01/contractor-registration.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Contractor Application for:# _____ (Choose one category from below.) Date: _____________________ 1. General Contractor 2. OwnerOccupied/Limited Premises 3. Fence/Deck/Accessory Structures 4. Siding /Windows/Roofing 5. Electrician 6. Plumber 7. HV AC 8. Paving 9. Sewer/Excavating 10. Sign 11. Demolition 12. Fire Protection (A copy of State Fire Marshal’s certificate is required.) Owner/Applicant Name __________________________________________________________________________________________ Address________________________________________________________________________________________ City_____________________________________________ State___________Zip ___________________________ Phone_________________________ Mobile__________________________ Email___________________________ Contractor DBA/Company Name_____________________________________________________________________________ Address___",
+   "tags": [
+    "sign",
+    "process"
+   ],
+   "weight": 2,
+   "source_sha256": "68f9317af4400da3e0315c4fa0f298c6bed35344a3601a864a43bbd857ea78d0",
+   "source_document_id": null,
+   "source_title": "68f9317af4400da3e0315c4fa0f298c6bed35344a3601a864a43bbd857ea78d0.pdf",
+   "official_url": "https://willoughbyohio.com/wp-content/uploads/2020/01/contractor-registration.pdf"
+  }
+ ]
+}

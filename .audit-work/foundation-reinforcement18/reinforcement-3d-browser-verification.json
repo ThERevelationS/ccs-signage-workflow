@@ -1,0 +1,34 @@
+{
+  "synthetic": true,
+  "rendererMocked": false,
+  "softwareWebGLRequested": true,
+  "realBase44StorageVerified": false,
+  "realWebGLVerified": false,
+  "results": [
+    {
+      "mode": "spread",
+      "width": 1440,
+      "ok": false,
+      "error": "page.waitForFunction: Timeout 30000ms exceeded.\n    at check (D:\\DevinProjects\\ccs-signage-workflow-clean\\.audit-work\\foundation-reinforcement18\\verify-reinforcement-3d-browser.mjs:95:16)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-browser.mjs:171:5",
+      "screenshot": ".audit-work/foundation-reinforcement18/reinforcement-3d-browser-failed-spread-1440.png",
+      "telemetry": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      },
+      "snapshot": {
+        "frames": 0,
+        "created": 0,
+        "disposed": 0,
+        "glErrors": [],
+        "pixels": null,
+        "primitives": [],
+        "concrete": [],
+        "ground": [],
+        "canvasCount": 0,
+        "inputUnchanged": true
+      }
+    }
+  ]
+}

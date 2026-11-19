@@ -1,0 +1,2 @@
+FAIL new-accepted-costs 390 Existing print-sheet width must not increase
+exit=1

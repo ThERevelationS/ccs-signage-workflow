@@ -1,0 +1,7 @@
+ok invalid live rate shows the saved cost as saved despite an available material option
+ok valid full stock rate is current and never labeled as a frozen amount
+ok explicit catalog zero is current and visible as zero, not unavailable
+ok missing history stays Not saved without a fabricated zero cost
+ok recorded zero history remains saved zero when the current price is missing
+ok deleted material keeps its unavailable selection and acknowledged amount
+exit=0

@@ -1,0 +1,24 @@
+{
+ "jurisdiction_id": "6ae03dc0914be0ef8f10b292",
+ "jurisdiction_name": "Washington",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Centerville High School Cross Point Shopping Center Southview Medical Center Kennedy E. S. Hadley Watts M.S. Weller E.S. Normandy E.S. Spring Valley Academy #44 #43 Primary Village North #42 Post Office Driscoll E. S. Stingley E. S. Magsig M. S. John Hole E.S. Centerville Library Washington Township Recreation Center Cline E. S. Woodbourne Library #45 Public Works Miami Valley School Centerville City Building Washington Township Government Center Centerville Police Miami Valley Hospital South Tower Heights M.S. Centerville Public Works #41 Centerville Place Shopping Center Bethany Village Primary Village South Rec West/ Hithergreen Incarnation E.S. Dayton Christian School Veterans Memorial Amphitheater St. Leonard School Bus Garage Miami Valley Firefighters/EMS Memorial St. Leonard NCR Country Club Town Hall Theatre H H E. Rahn Rd. Wilmington Pike E. Whipp Rd. Munger Rd. Polen Dr. Glenhe",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "d1f55dc1664c0ed25e68b2da479e99844a8881a419011a1c6fb8bcce7807b0e3",
+   "source_document_id": null,
+   "source_title": "d1f55dc1664c0ed25e68b2da479e99844a8881a419011a1c6fb8bcce7807b0e3.pdf",
+   "official_url": "https://www.washingtontwp.org/UserFiles/Servers/Server_12463606/File/Services/Zoning%20and%20Development/ZoningMap.pdf"
+  }
+ ]
+}

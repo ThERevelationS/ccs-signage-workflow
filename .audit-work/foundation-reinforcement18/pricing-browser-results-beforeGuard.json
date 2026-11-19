@@ -1,0 +1,107 @@
+{
+  "results": [
+    {
+      "name": "changed",
+      "viewport": "1280",
+      "ok": true
+    },
+    {
+      "name": "changed",
+      "viewport": "390",
+      "ok": true
+    },
+    {
+      "name": "labor",
+      "viewport": "1280",
+      "ok": true
+    },
+    {
+      "name": "labor",
+      "viewport": "390",
+      "ok": true
+    },
+    {
+      "name": "legacy-labor",
+      "viewport": "1280",
+      "ok": true
+    },
+    {
+      "name": "legacy-labor",
+      "viewport": "390",
+      "ok": true
+    },
+    {
+      "name": "zero",
+      "viewport": "1280",
+      "ok": true
+    },
+    {
+      "name": "zero",
+      "viewport": "390",
+      "ok": true
+    },
+    {
+      "name": "stale",
+      "viewport": "1280",
+      "ok": true
+    },
+    {
+      "name": "stale",
+      "viewport": "390",
+      "ok": true
+    },
+    {
+      "name": "invalid",
+      "viewport": "1280",
+      "ok": true
+    },
+    {
+      "name": "invalid",
+      "viewport": "390",
+      "ok": true
+    },
+    {
+      "name": "removal",
+      "viewport": "1280",
+      "ok": true
+    },
+    {
+      "name": "removal",
+      "viewport": "390",
+      "ok": true
+    },
+    {
+      "name": "independent",
+      "viewport": "1280",
+      "ok": true
+    },
+    {
+      "name": "independent",
+      "viewport": "390",
+      "ok": true
+    },
+    {
+      "name": "large",
+      "viewport": "1280",
+      "ok": true
+    },
+    {
+      "name": "large",
+      "viewport": "390",
+      "ok": true
+    },
+    {
+      "name": "legacy-control",
+      "viewport": "1280",
+      "ok": true
+    },
+    {
+      "name": "legacy-control",
+      "viewport": "390",
+      "ok": true
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "shots": 4
+}

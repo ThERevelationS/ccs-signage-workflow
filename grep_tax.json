@@ -1,0 +1,406 @@
+{
+  "matches": [
+    {
+      "path": "src/api/gatedEntities.js",
+      "line": 67,
+      "text": "export const TaxGroup = staffEntities.TaxGroup;"
+    },
+    {
+      "path": "src/components/estimator/estimateLifecycle.js",
+      "line": 63,
+      "text": "    \"discount_percent\", \"contingency_percent\", \"tax_percent\", \"deposit_percent\", \"shipping_fee\", \"permit_fee\",\r"
+    },
+    {
+      "path": "src/components/estimator/EstimateRevisionPanel.jsx",
+      "line": 40,
+      "text": "  [\"tax_percent\", \"Tax %\", (v) => `${Number(v || 0)}%`],"
+    },
+    {
+      "path": "src/components/estimator/CustomerQuotePanel.jsx",
+      "line": 524,
+      "text": "              {defaultBool(estimate, \"show_tax_line\") && Math.abs(pricing.tax) > 0.005 && <TotalRow label={`Tax (${Number(estimate.tax_percent || 0)}%)`} value={pricing.tax} round={round} />}"
+    },
+    {
+      "path": "src/components/estimator/PricingSummary.jsx",
+      "line": 9,
+      "text": "  { key: \"tax_percent\", label: \"Tax %\" },\r"
+    },
+    {
+      "path": "src/components/estimator/aioPricing.js",
+      "line": 27,
+      "text": "  const tax = taxableBase * (Number(estimate.tax_percent || 0) / 100);\r"
+    },
+    {
+      "path": "src/components/estimator/customerSync.js",
+      "line": 15,
+      "text": "const CUSTOMER_SYNC_KEYS = [\"client_name\", \"office_phone\", \"order_contact\", \"contact_email\", \"office_phone_ext\", \"salesperson\", \"sales_center\", \"tax_group\", \"terms\", \"site_address\"];"
+    },
+    {
+      "path": "src/components/estimator/customerSync.js",
+      "line": 136,
+      "text": "    ...(include(\"tax_group\") ? { default_tax_group: form.tax_group } : {}),"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 37,
+      "text": "  taxGroups,\r"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 79,
+      "text": "    const defaultTaxGroup = taxGroups.find((group) => group.name === c.default_tax_group);\r"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 80,
+      "text": "    const defaultTaxPercent = Number(defaultTaxGroup?.tax_percent);\r"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 81,
+      "text": "    const taxDefaults = defaultTaxGroup && Number.isFinite(defaultTaxPercent) && defaultTaxPercent >= 0 && defaultTaxPercent <= 100\r"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 82,
+      "text": "      ? { tax_group: defaultTaxGroup.name, tax_percent: defaultTaxPercent }\r"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 455,
+      "text": "              value={form.tax_group}\r"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 457,
+      "text": "                const g = taxGroups.find((t) => t.name === e.target.value);\r"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 458,
+      "text": "                patch({ tax_group: e.target.value, tax_percent: g?.tax_percent || 0 });\r"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 463,
+      "text": "              {taxGroups.map((t, i) => (\r"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 465,
+      "text": "                  {t.name} ({t.tax_percent}%)\r"
+    },
+    {
+      "path": "src/components/estimator/aio/Step1EstimateDetails.jsx",
+      "line": 471,
+      "text": "            Tax applied to this estimate: {Number(form.tax_percent || 0)}%\r"
+    },
+    {
+      "path": "src/components/imports/ImportWizard.jsx",
+      "line": 33,
+      "text": "  \"default_tax_group\", \"terms\", \"location_address_1\", \"billing_address_1\", \"notes\","
+    },
+    {
+      "path": "src/components/imports/importModel.js",
+      "line": 143,
+      "text": "      { key: \"default_tax_group\", label: \"Tax Group\", synonyms: [\"default_tax_group\", \"tax_group\"] },\r"
+    },
+    {
+      "path": "src/components/customer360/Sections.jsx",
+      "line": 126,
+      "text": "          <InfoRow label=\"Tax group\">{clean(c.default_tax_group)}</InfoRow>"
+    },
+    {
+      "path": "src/components/walkin/walkInModel.js",
+      "line": 54,
+      "text": "// invoicingAction's computeTotals (tax_rate is a fraction; tax applies to the"
+    },
+    {
+      "path": "src/components/walkin/walkInModel.js",
+      "line": 79,
+      "text": "    tax_percent: Math.max(0, num(taxPercent)),"
+    },
+    {
+      "path": "src/components/walkin/walkInModel.js",
+      "line": 207,
+      "text": "    tax_percent: totals.tax_percent,"
+    },
+    {
+      "path": "src/components/walkin/walkInModel.js",
+      "line": 263,
+      "text": "    tax_rate: totals.tax_percent / 100,"
+    },
+    {
+      "path": "src/components/walkin/WalkInReceipt.jsx",
+      "line": 128,
+      "text": "              <div>Tax{num(totals.tax_percent) ? ` (${totals.tax_percent}%)` : \"\"}: <span className=\"font-medium\">{usd(totals.tax_amount)}</span></div>"
+    },
+    {
+      "path": "src/components/walkin/WalkInSale.jsx",
+      "line": 104,
+      "text": "export default function WalkInSale({ customers = [], taxGroups = [], quickProducts = [], sessionToken = \"\", actor = \"\", onCustomersChanged }) {"
+    },
+    {
+      "path": "src/components/walkin/WalkInSale.jsx",
+      "line": 109,
+      "text": "  const [taxGroup, setTaxGroup] = useState(\"\");"
+    },
+    {
+      "path": "src/components/walkin/WalkInSale.jsx",
+      "line": 138,
+      "text": "  const pickTaxGroup = (name) => {"
+    },
+    {
+      "path": "src/components/walkin/WalkInSale.jsx",
+      "line": 139,
+      "text": "    setTaxGroup(name);"
+    },
+    {
+      "path": "src/components/walkin/WalkInSale.jsx",
+      "line": 141,
+      "text": "    const group = taxGroups.find((g) => (g.group_name || g.name) === name);"
+    },
+    {
+      "path": "src/components/walkin/WalkInSale.jsx",
+      "line": 142,
+      "text": "    setTaxPercent(num(group?.tax_percent, 0));"
+    },
+    {
+      "path": "src/components/walkin/WalkInSale.jsx",
+      "line": 371,
+      "text": "          {receipt.totals.tax_amount > 0 && <div>Tax ({receipt.totals.tax_percent}%): <span className=\"font-medium\">{usd(receipt.totals.tax_amount)}</span></div>}"
+    },
+    {
+      "path": "src/components/walkin/WalkInSale.jsx",
+      "line": 452,
+      "text": "            <select className={inputCls} value={taxGroup} onChange={(e) => pickTaxGroup(e.target.value)}>"
+    },
+    {
+      "path": "src/components/walkin/WalkInSale.jsx",
+      "line": 454,
+      "text": "              {taxGroups.map((g) => ("
+    },
+    {
+      "path": "src/components/walkin/WalkInSale.jsx",
+      "line": 455,
+      "text": "                <option key={g.id || g.group_name || g.name} value={g.group_name || g.name}>{g.group_name || g.name} ({num(g.tax_percent)}%)</option>"
+    },
+    {
+      "path": "src/components/walkin/WalkInSale.jsx",
+      "line": 510,
+      "text": "          <div>Tax{totals.tax_percent ? ` (${totals.tax_percent}%)` : \"\"}: <span className=\"font-medium\">{usd(totals.tax_amount)}</span></div>"
+    },
+    {
+      "path": "src/components/reconciliation/LocationsPanel.jsx",
+      "line": 10,
+      "text": "const EMPTY_FORM = { name: \"\", code: \"\", tax_group: \"\", address: \"\", hours: \"\", active: true };"
+    },
+    {
+      "path": "src/components/reconciliation/LocationsPanel.jsx",
+      "line": 18,
+      "text": "  const [taxGroups, setTaxGroups] = useState([]);"
+    },
+    {
+      "path": "src/components/reconciliation/LocationsPanel.jsx",
+      "line": 28,
+      "text": "    staffEntities.TaxGroup.list(\"group_name\", 200)"
+    },
+    {
+      "path": "src/components/reconciliation/LocationsPanel.jsx",
+      "line": 29,
+      "text": "      .then((rows) => { if (!cancelled) setTaxGroups(Array.isArray(rows) ? rows : []); })"
+    },
+    {
+      "path": "src/components/reconciliation/LocationsPanel.jsx",
+      "line": 30,
+      "text": "      .catch(() => { if (!cancelled) setTaxGroups([]); });"
+    },
+    {
+      "path": "src/components/reconciliation/LocationsPanel.jsx",
+      "line": 45,
+      "text": "        tax_group: clean(row.tax_group),"
+    },
+    {
+      "path": "src/components/reconciliation/LocationsPanel.jsx",
+      "line": 63,
+      "text": "        tax_group: clean(form.tax_group),"
+    },
+    {
+      "path": "src/components/reconciliation/LocationsPanel.jsx",
+      "line": 131,
+      "text": "                  <td className=\"py-2 pr-3 text-slate-600 dark:text-slate-300\">{clean(loc.tax_group) || \"—\"}</td>"
+    },
+    {
+      "path": "src/components/reconciliation/LocationsPanel.jsx",
+      "line": 185,
+      "text": "                <select className={inputCls} value={form.tax_group} onChange={(e) => setForm((f) => ({ ...f, tax_group: e.target.value }))}>"
+    },
+    {
+      "path": "src/components/reconciliation/LocationsPanel.jsx",
+      "line": 187,
+      "text": "                  {taxGroups.map((g) => ("
+    },
+    {
+      "path": "src/components/reconciliation/LocationsPanel.jsx",
+      "line": 189,
+      "text": "                      {clean(g.group_name)}{Number.isFinite(Number(g.tax_percent)) ? ` (${g.tax_percent}%)` : \"\"}"
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 786,
+      "text": "    const rate = num(inv?.tax_rate);"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1793,
+      "text": "          taxPercent={estimate.tax_percent}"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 381,
+      "text": "          default_tax_group: col(row, \"tax_group\"),"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 541,
+      "text": "            <button type=\"button\" onClick={() => importInputRef.current?.click()} disabled={importing} className=\"h-8 px-3 inline-flex items-center gap-1.5 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50\" title=\"Import customers from a CSV — columns: company_name, email, phone, first_name, last_name, terms, tax_group\">"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 26,
+      "text": "// no separate tax group id: tax_group is the TaxGroup name and pairs with"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 27,
+      "text": "// tax_percent."
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 45,
+      "text": "  \"tax_group\","
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 46,
+      "text": "  \"tax_percent\","
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 75,
+      "text": "  tax_group: \"\","
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 76,
+      "text": "  tax_percent: 0,"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 91,
+      "text": "  const [taxGroups, setTaxGroups] = useState([]);"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 114,
+      "text": "    loadAllEntityRows({ entity: staffEntities.TaxGroup, sort: null, label: \"New Estimate tax groups\" }).then((r) => setTaxGroups(r || [])).catch((err) => setError(err?.message || \"Tax groups could not be loaded.\"));"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 281,
+      "text": "          taxPercent={form.tax_percent}"
+    },
+    {
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "line": 368,
+      "text": "            taxGroups={taxGroups}"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 249,
+      "text": "    tax_rate: invoice?.tax_rate ?? \"\","
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 281,
+      "text": "        tax_rate: Number(form.tax_rate) || 0,"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 330,
+      "text": "          <div><label className={labelCls}>Tax rate</label><input className={inputCls} type=\"number\" min=\"0\" step=\"any\" value={form.tax_rate} onChange={set(\"tax_rate\")} placeholder=\"0.0825\" /></div>"
+    },
+    {
+      "path": "src/pages/Invoices.jsx",
+      "line": 497,
+      "text": "                {Number(inv.tax_amount) > 0 && <div>Tax ({(Number(inv.tax_rate) * 100).toFixed(2)}%): <span className=\"font-medium\">{usd(inv.tax_amount)}</span></div>}"
+    },
+    {
+      "path": "src/pages/WalkIn.jsx",
+      "line": 14,
+      "text": "  const [taxGroups, setTaxGroups] = useState([]);"
+    },
+    {
+      "path": "src/pages/WalkIn.jsx",
+      "line": 24,
+      "text": "    loadAllEntityRows({ entity: staffEntities.TaxGroup, sort: null, label: \"Walk-in tax groups\" })"
+    },
+    {
+      "path": "src/pages/WalkIn.jsx",
+      "line": 25,
+      "text": "      .then((rows) => { if (live) setTaxGroups(rows || []); })"
+    },
+    {
+      "path": "src/pages/WalkIn.jsx",
+      "line": 26,
+      "text": "      .catch(() => { if (live) setTaxGroups([]); });"
+    },
+    {
+      "path": "src/pages/WalkIn.jsx",
+      "line": 80,
+      "text": "            taxGroups={taxGroups}"
+    },
+    {
+      "path": "src/pages/QuoteSettings.jsx",
+      "line": 188,
+      "text": "        <TaxGroupsSection canEdit={canEdit} />"
+    },
+    {
+      "path": "src/pages/QuoteSettings.jsx",
+      "line": 199,
+      "text": "function TaxGroupsSection({ canEdit }) {"
+    },
+    {
+      "path": "src/pages/QuoteSettings.jsx",
+      "line": 207,
+      "text": "    try { setGroups(await staffEntities.TaxGroup.list(\"sort_order\", 200)); }"
+    },
+    {
+      "path": "src/pages/QuoteSettings.jsx",
+      "line": 216,
+      "text": "      await staffEntities.TaxGroup.create({"
+    },
+    {
+      "path": "src/pages/QuoteSettings.jsx",
+      "line": 218,
+      "text": "        tax_percent: Math.max(0, Math.min(100, Number(newPct) || 0)),"
+    },
+    {
+      "path": "src/pages/QuoteSettings.jsx",
+      "line": 230,
+      "text": "    try { await staffEntities.TaxGroup.update(row.id, patchFields); await load(); }"
+    },
+    {
+      "path": "src/pages/QuoteSettings.jsx",
+      "line": 238,
+      "text": "    try { await staffEntities.TaxGroup.delete(row.id); await load(); }"
+    },
+    {
+      "path": "src/pages/QuoteSettings.jsx",
+      "line": 254,
+      "text": "            <input type=\"number\" min=\"0\" max=\"100\" step=\"0.001\" value={g.tax_percent ?? 0} onChange={(e) => setGroups((prev) => prev.map((r) => r.id === g.id ? { ...r, tax_percent: e.target.value } : r))} onBlur={() => patchRow(g, { tax_percent: Number(g.tax_percent) || 0 })} className=\"h-[30px] rounded border border-gray-300 px-2 text-[11px] text-gray-800\" disabled={!canEdit || busy} />"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 80
+}

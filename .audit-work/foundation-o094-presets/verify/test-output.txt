@@ -1,0 +1,27 @@
+ok catalog: 6 named presets, all snapshot-shaped with the 5 assembly arrays + schema v1
+ok catalog: every preset survives the real template gates (snapshot validate + prepare)
+ok catalog: preset refs remap consistently (pole->item, cap->wall+segment, cabinet->pole)
+ok templateData: deep-cloned (catalog frozen, mutating output cannot corrupt presets)
+ok describe: counts + label for dialog rows
+ok applyFoundationAssemblyPreset replace: patch through the prepare gate; merge replaces arrays
+ok applyFoundationAssemblyPreset append: clones onto existing rows, refs remapped, indexes rebuilt
+ok duplicate: selected item pulls dependents (pole+cabinet) with remapped refs + offset
+ok duplicate: cap without its wall keeps original refs; explicit unknown id fails closed
+ok duplicate: no component_ids duplicates the whole assembly; createId collision guard works
+ok duplicate: wall clone remaps segment ids + cap refs follow
+ok mirror copy: reflected clone across default centerline (x=240)
+ok mirror copy across a foundation edge (edge_of + max_x)
+ok mirror copy on walls: points reflected, segment lengths preserved, cap refs remapped
+ok mirror in_place: same ids, reflected rows only in changed arrays
+ok mirror z-axis + edge validation errors
+ok bulk concrete: items + project default, per-field applicability only
+ok bulk applicability: unknown target fails closed listing valid keys
+ok bulk replace mode: only rows holding `from` move; blanks stay blank
+ok bulk fill_blank: only empty slots written
+ok bulk wall targets: materialId vs internalMaterialId are separate slots; caps and poles
+ok bulk component_ids scope + clear ("") + no-change empty patch
+ok dialog: preset section renders all 6 presets with counts + replace disclosure
+ok dialog: preset Apply passes snapshot-shaped data through onApply
+ok dialog: presets render even when saved-template load fails
+
+PASS o094-presets (25 passed, 0 failed)

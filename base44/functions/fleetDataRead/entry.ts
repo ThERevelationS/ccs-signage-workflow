@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 
 // Session-authenticated read gateway for Fleet entities. Direct entity reads
@@ -92,7 +93,7 @@ function cleanSkip(value: unknown) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const user = await resolveFleetStaffUser(base44, body?.session_token);
     if (!user?.email) return Response.json({ error: 'Authentication required' }, { status: 401 });
@@ -122,11 +123,14 @@ Deno.serve(async (req) => {
       : await entity.list(sort || null, limit, skip);
     return Response.json({ success: true, items: Array.isArray(items) ? items : [] });
   } catch (error: any) {
-    const status = Number(error?.status || 500);
-    if ([400, 401, 403].includes(status)) {
+    const status = Number(error?.status || error?.response?.status || 500);
+    if (status === 429 || /rate limit|too many requests/i.test(String(error?.message || ''))) {
+      return Response.json({ error: 'Fleet data is busy. Try again shortly.', retry_after_ms: 3000 }, { status: 429, headers: { 'Retry-After': '3' } });
+    }
+    if ([400, 401, 403, 429].includes(status)) {
       return Response.json({ error: error?.message || 'Fleet read failed.' }, { status });
     }
     console.error('fleetDataRead error:', error);
-    return Response.json({ error: 'Fleet data could not be loaded. Try again.' }, { status: 500 });
+    return Response.json({ error: 'Fleet data could not be loaded. Try again.', detail: String(error?.message || error) }, { status: 500 });
   }
 });

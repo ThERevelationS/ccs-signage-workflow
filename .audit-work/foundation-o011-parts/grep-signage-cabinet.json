@@ -1,0 +1,206 @@
+{
+  "matches": [
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 233,
+      "text": "          signage_cabinets: proj.signage_cabinets || [],"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 524,
+      "text": "  const cabinetCost = calc.totals.total_signage_cabinet_cost;"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 568,
+      "text": "    signage_cabinets: project.signage_cabinets || [],"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 570,
+      "text": "    total_signage_cabinet_cost: cabinetCost,"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 862,
+      "text": "            signage_cabinets: project.signage_cabinets || [],"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 1171,
+      "text": "                  cabinets={project.signage_cabinets || []}"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 1174,
+      "text": "                  onChange={(signage_cabinets) => patch({ signage_cabinets })}"
+    },
+    {
+      "path": "src/components/markup/projectCategorizer.jsx",
+      "line": 150,
+      "text": "  const cabinets = num(p.total_signage_cabinet_cost);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 1,
+      "text": "const ARRAYS = [\"items\", \"walls\", \"poles\", \"wall_caps\", \"signage_cabinets\"];"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 63,
+      "text": "  (project?.signage_cabinets || []).forEach((c) => { add(c?.foundation_component_id); add(c?.pole_component_id); });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 103,
+      "text": "    const kinds = [\"items\", \"walls\", \"poles\", \"wall_caps\", \"signage_cabinets\"];"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 224,
+      "text": "    const n = ensureNodeId(c, createId, \"signage_cabinet\", used, seen);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 264,
+      "text": "  next.signage_cabinets = normalizeCabinets(project.signage_cabinets, next.items, next.poles, previous?.items, previous?.poles, createId, used, seen);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 293,
+      "text": "  for (const c of project.signage_cabinets || []) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 296,
+      "text": "      if (canon === \"\" || canon === undefined || canon === null) issues.push({ code: \"missing-mount\", kind: \"signage_cabinet\", componentId: c?.component_id, parentId: undefined, message: \"Cabinet has no pole or foundation assigned; it stays priced until assigned.\" });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 297,
+      "text": "      else if (isReserved(canon)) issues.push({ code: \"unresolved-parent\", kind: \"signage_cabinet\", componentId: c?.component_id, parentId: canon, message: \"Cabinet pole could not be resolved; left unresolved until reassigned.\" });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 298,
+      "text": "      else if (!byId(poles, canon)) issues.push({ code: \"dangling-parent\", kind: \"signage_cabinet\", componentId: c?.component_id, parentId: canon, message: \"Cabinet references a pole that is not present; it stays priced until reassigned.\" });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 301,
+      "text": "      if (canon === \"\" || canon === undefined || canon === null) issues.push({ code: \"missing-mount\", kind: \"signage_cabinet\", componentId: c?.component_id, parentId: undefined, message: \"Cabinet has no pole or foundation assigned; it stays priced until assigned.\" });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 302,
+      "text": "      else if (isReserved(canon)) issues.push({ code: \"unresolved-parent\", kind: \"signage_cabinet\", componentId: c?.component_id, parentId: canon, message: \"Cabinet foundation could not be resolved; left unresolved until reassigned.\" });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 303,
+      "text": "      else if (!byId(items, canon)) issues.push({ code: \"dangling-parent\", kind: \"signage_cabinet\", componentId: c?.component_id, parentId: canon, message: \"Cabinet references a foundation that is not present; it stays priced until reassigned.\" });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 305,
+      "text": "      issues.push({ code: \"unsupported-mount\", kind: \"signage_cabinet\", componentId: c?.component_id, parentId: undefined, message: \"Cabinet mount is not supported; it stays priced and visible until reassigned.\" });"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 377,
+      "text": "  if (project.signage_cabinets !== undefined) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 378,
+      "text": "    components.signage_cabinets = copyRows(normalized.signage_cabinets, \"signage_cabinet\").map((c) => ({"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "line": 394,
+      "text": "  (components.signage_cabinets || []).forEach((c) => {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 399,
+      "text": "  const cabinetCalc = calcSignageCabinetPricing(project.signage_cabinets);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 494,
+      "text": "    total_signage_cabinet_cost: category(\"total_signage_cabinet_cost\", signageCabinetCostTotal(cabinetCalc)),"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 145,
+      "text": "    kind: \"signage_cabinet\", index,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 152,
+      "text": "    add(\"quantity\", \"signage_cabinet_quantity_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 156,
+      "text": "    add(\"unit_cost\", \"signage_cabinet_price_unavailable\","
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 214,
+      "text": "    ...signageCabinetsInputIssues(project?.signage_cabinets || []),"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationDraftRecovery.js",
+      "line": 5,
+      "text": "  \"items\", \"walls\", \"poles\", \"wall_caps\", \"signage_cabinets\", \"selected_equipment\", \"landscape\","
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationDraftRecovery.js",
+      "line": 18,
+      "text": "const ASSEMBLY_ARRAYS = [\"items\", \"walls\", \"poles\", \"wall_caps\", \"signage_cabinets\", \"selected_equipment\"];"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+      "line": 10,
+      "text": "  \"signage_cabinets\","
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+      "line": 22,
+      "text": "const ASSEMBLY_ARRAYS = [\"items\", \"walls\", \"poles\", \"wall_caps\", \"signage_cabinets\"];"
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 2562,
+      "text": "  (project.signage_cabinets || []).forEach((cabinet, index) => {\r"
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 2567,
+      "text": "      subtype: \"signage_cabinet\",\r"
+    },
+    {
+      "path": "src/components/estimator/builder/partSync.js",
+      "line": 2568,
+      "text": "      sourcePath: `signage_cabinets[${index}]`,\r"
+    },
+    {
+      "path": "src/components/estimator/builder/builderService.js",
+      "line": 81,
+      "text": "      \"total_signage_cabinet_cost\","
+    },
+    {
+      "path": "src/components/estimator/builder/legacyBomReconcile.js",
+      "line": 69,
+      "text": "  cabinet: { label: \"Legacy Signage Cabinet\", type: \"fabrication\", subtype: \"legacy_signage_cabinet\", sourceFields: [\"total_signage_cabinet_cost\"] },"
+    },
+    {
+      "path": "src/components/estimator/builder/legacyBomReconcile.js",
+      "line": 101,
+      "text": "    cabinet: num(project.total_signage_cabinet_cost),"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 40
+}

@@ -1,0 +1,16 @@
+{
+ "suite": "metal-model",
+ "passed": 93,
+ "failed": 0,
+ "result": "PASS",
+ "sections": {
+  "A": 5,
+  "B": 4,
+  "C": 32,
+  "D": 35,
+  "E": 8,
+  "F": 4,
+  "G": 4,
+  "H": 1
+ }
+}

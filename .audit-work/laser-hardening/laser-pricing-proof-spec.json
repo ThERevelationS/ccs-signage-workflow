@@ -1,0 +1,66 @@
+{
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "8878a353d67523a061078aa85672717735be4420",
+ "jsonProofs": [
+  {
+   "file": "laser-model-verification.json",
+   "resultCount": 248
+  },
+  {
+   "file": "laser-model-red-verification.json",
+   "resultCount": 26
+  },
+  {
+   "file": "laser-page-verification.json",
+   "resultCount": 9
+  },
+  {
+   "file": "laser-browser-results.json",
+   "resultCount": 6
+  },
+  {
+   "file": "laser-consumer-build.json",
+   "resultCount": 4
+  },
+  {
+   "file": "laser-lint-results.json",
+   "resultCount": 2
+  },
+  {
+   "file": "laser-page-import-edges.json",
+   "resultCount": "see file"
+  },
+  {
+   "file": "laser-page-meta.json",
+   "resultCount": "see file"
+  }
+ ],
+ "allResultsMustHaveOkTrue": true,
+ "scopedLintLogs": [
+  {
+   "file": "laser-lint-results.json",
+   "line": "0 errors / 0 warnings over 2 candidate files"
+  }
+ ],
+ "candidateHashes": {
+  "src/components/estimator/laser/laserPricingAvailability.js": "82275a855f3cc2d2058a8416a62ccf40a52a0c8cebacac573232bf22e55cd380",
+  "src/pages/LaserEstimator.jsx": "0f996fd442ad9361a38820f63078966e5ba85016171e965d890be8f0fcac54cc"
+ },
+ "remoteBaselineHashes": {
+  "src/pages/LaserEstimator.jsx": "745e33332f6133302a955d7b02a6b06838b6f24e1f536718d2ffa4badddaccd3"
+ },
+ "allowedBuildWarningCount": 0,
+ "remoteOperationsPermitted": [
+  "sandbox read",
+  "sandbox run (read-only shell)"
+ ],
+ "remoteMutationsPerformed": 0,
+ "applyRequiresLeadApproval": true,
+ "remoteWriteAuthorized": false,
+ "checkpointAuthorized": false,
+ "entityOperationsAuthorized": false,
+ "schemaOrMetadataAuthorized": false,
+ "publishOrDeployAuthorized": false,
+ "baselineFile": "laser-pricing-baseline-v2.json"
+}

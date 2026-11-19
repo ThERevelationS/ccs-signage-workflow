@@ -1,0 +1,22 @@
+{
+ "jurisdiction_id": "6adf7f3f98a4063af4fe1bef",
+ "jurisdiction_name": "Johnson",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "CHAMPAIGN COUNTY BUILDING REGULATIONS HOW TO OBTAIN A PERMIT Step One Obtain Zoning Permit from city, township or village. Step Two Obtain Site Evaluation approval from Health Department. Step Three Obtain driveway permit & house number from Champaign County Engineering Department if property in on county or township roads. If property is on state highway, contact ODOT. If the property is located within a city or village, the house numbers are issued by local government. Step Four Obtain sewage disposal permit, plumbing permit and well permit from Champaign Health District. Step Five Apply for a building permit from the Champaign County Building Regulations Office. A. Completely fill out permit application. B. Submit copies of zoning permit & site evaluation approval. C. Submit two (2) sets of detailed plans for review and approval. Step Six When notified of approval, return to the Build",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "c2d07618d3d937bb5f89326fd2f9f1ffb4f3bb27392b0421d4edc64b6bbc5540",
+   "source_document_id": null,
+   "source_title": "c2d07618d3d937bb5f89326fd2f9f1ffb4f3bb27392b0421d4edc64b6bbc5540.pdf",
+   "official_url": "https://www.co.champaign.oh.us/Building-Regulations/Building_Information/How_To_Obtain_A_Permit.PDF"
+  }
+ ]
+}

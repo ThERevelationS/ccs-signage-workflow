@@ -1,0 +1,11 @@
+ok zero-labor 1280
+ok zero-labor 390
+ok zero-minimum 1280
+ok zero-minimum 390
+ok zero-mortar 1280
+ok zero-mortar 390
+ok genuine-free 1280
+ok genuine-free 390
+ok internal-zero-rates 1280
+ok internal-zero-rates 390
+masonry-browser passed=10 failed=0

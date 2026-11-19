@@ -8,6 +8,8 @@ import { orderSyncToastState } from "@/components/orders/orderSyncToastModel";
 import { orderSyncLiveProgress } from "@/components/orders/orderSyncLiveProgress.mjs";
 import { recoverStalledOrderSync } from "@/components/orders/orderSyncRecovery";
 import { orderFormSyncStatusRelevant } from "@/components/orders/orderSyncWidgetRelevance.mjs";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 const STATUS_KEYS = {
   orders: 'smartsheetOrderSyncStatus',
@@ -37,16 +39,15 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
 
   const loadStatus = useCallback(async () => {
     try {
-      const [orderRecords, salesRecords, legacyRecords, configRecords] = await Promise.all([
-        base44.entities.GlobalSettings.filter({ setting_key: STATUS_KEYS.orders }),
-        base44.entities.GlobalSettings.filter({ setting_key: STATUS_KEYS.sales }),
-        base44.entities.GlobalSettings.filter({ setting_key: STATUS_KEYS.legacy }),
-        base44.entities.GlobalSettings.filter({ setting_key: CONFIG_KEY }),
+      const [orderRecord, salesRecord, legacyRecord, configRecord] = await Promise.all([
+        loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: STATUS_KEYS.orders, label: "Smartsheet order sync status" }),
+        loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: STATUS_KEYS.sales, label: "Smartsheet sales sync status" }),
+        loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: STATUS_KEYS.legacy, label: "Smartsheet legacy sync status" }),
+        loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: CONFIG_KEY, label: "Smartsheet sync config" }),
       ]);
-      const orderValue = (Array.isArray(orderRecords) ? orderRecords[0] : orderRecords)?.setting_value || null;
-      const salesValue = (Array.isArray(salesRecords) ? salesRecords[0] : salesRecords)?.setting_value || null;
-      const legacyValue = (Array.isArray(legacyRecords) ? legacyRecords[0] : legacyRecords)?.setting_value || null;
-      const configRecord = Array.isArray(configRecords) ? configRecords[0] : configRecords;
+      const orderValue = orderRecord?.setting_value || null;
+      const salesValue = salesRecord?.setting_value || null;
+      const legacyValue = legacyRecord?.setting_value || null;
       // Order Form reads only its own coordinator so a Sales review can never
       // look like an Order problem. Other consumers see an active run first,
       // otherwise the most recently updated dataset status; the legacy shared
@@ -75,18 +76,29 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   }, [compactOrderForm]);
 
   useEffect(() => {
-    loadStatus();
+    // Advisory widget — defer the first read past the mount burst; a running
+    // sync's heartbeat still arrives on the 5s poll once status lands.
+    const first = setTimeout(loadStatus, 4000 + Math.floor(Math.random() * 3000));
     // Running Order syncs publish row-level heartbeat data. Poll quickly enough
-    // for that activity to feel live without increasing idle background traffic.
-    const interval = setInterval(loadStatus,
-      compactOrderForm && status?.status === 'running' ? 1000 : 5000);
-    return () => clearInterval(interval);
+    // for that activity to feel live; once idle, back off to a slow check so
+    // the widget stops spending the shared rate budget in the background.
+    const interval = setInterval(
+      () => { if (!document.hidden && !isFleetCoolingDown()) loadStatus(); },
+      compactOrderForm && status?.status === 'running' ? 5000 : 120000);
+    return () => { clearTimeout(first); clearInterval(interval); };
   }, [loadStatus, compactOrderForm, status?.status]);
 
+  const lastEventRefreshRef = useRef(0);
   useEffect(() => {
-    const refresh = () => loadStatus();
+    const refresh = () => {
+      // focus + online + visibility can fire together; one guarded call per
+      // 15s window instead of 3 back-to-back GlobalSettings reads.
+      if (Date.now() - lastEventRefreshRef.current < 15000) return;
+      lastEventRefreshRef.current = Date.now();
+      loadStatus();
+    };
     const refreshVisible = () => {
-      if (document.visibilityState === 'visible') loadStatus();
+      if (document.visibilityState === 'visible') refresh();
     };
     window.addEventListener('online', refresh);
     window.addEventListener('focus', refresh);
@@ -329,7 +341,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
             </div>
           </div>
           {!isRunning && (
-            <button
+            <button type="button"
               onClick={() => compactOrderForm ? setDismissedSuccessRun(orderToast.key) : setDismissed(true)}
               className="flex-shrink-0 p-1 rounded hover:bg-gray-100"
               title="Dismiss"
@@ -446,9 +458,9 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
             <div className="text-[10px] text-gray-400 pt-0.5">
               {compactOrderForm
                 ? orderScheduledPullEnabled
-                  ? "Order pull every 15 min · background push off · Save & Sync sends changes"
+                  ? "Order pull every 30 min · background push off · Save & Sync sends changes"
                   : "Automatic Order pull off · background push off · Save & Sync sends changes"
-                : "Auto-syncs every 15 min"}
+                : "Sales pull hourly · Order pull every 30 min"}
               {' · '}<Link to="/AdminSettings?tab=smartsheet" className="text-blue-600 hover:underline font-medium">Settings →</Link>
             </div>
           </div>

@@ -1,0 +1,17 @@
+{
+  "authorized": true,
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "1e99963215ce57335366551cbbcaf700a9f8bcad",
+  "restoreCheckpointId": "6aeee3a3f5d8b91c56669d1b",
+  "candidateHashes": {
+    "wallCalculator.js": "4bb6795851b678bd6f72dc7146bbdc6a5ab486528605d12a2058d5ed5b1e8f9d",
+    "foundationCalc.js": "c266a7e2289cb08438c33c8a179b9e6e07f427ce1432ddb9b713a0c5945341af",
+    "foundationInputValidation.js": "dfc23f2b07865d5ddb3f34a1824dfbc8cd0d40503878f9f11264d46903eed282",
+    "FoundationWallsPanel.jsx": "857456235bc823bbf535380c90c66490e7087ec057dbc539cb8c972e7eb42186",
+    "FoundationItemCard.jsx": "bbc699269f1e4d254a2d5c95ffe07a465ee1d5e929314478120e0a9fc76ac43e",
+    "FoundationBOM.jsx": "af99e00cb818eb0229a572e614615c5ec75a609644bc5989dd4791b07e2ed25f",
+    "FoundationEstimator.jsx": "be681eceb7c7770d65e84110e6018df3b27a3c77bc5a520bb00767efb3ba1d56"
+  },
+  "reviewedProtocolHash": "6e2bf4aab22c3abb995c1675204fb62fca3ec060a28bf5ffa730cf09b48466ef"
+}

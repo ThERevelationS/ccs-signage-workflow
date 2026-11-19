@@ -7,6 +7,7 @@ import { builderMutationHash, ensureBuilderPriceRevision, markBuilderMutationPen
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -16,9 +17,9 @@ function estimateLine(estimate, builderProductId) {
 }
 
 async function loadGroupMutationContext(builderProductId, expectedEstimateUpdatedAt = "") {
-  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  const builder = await staffEntities.BuilderProduct.get(builderProductId);
   if (!builder?.id || !builder.estimate_id) throw new Error("The Product could not be verified against an estimate.");
-  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  const estimate = await staffEntities.AllInOneEstimate.get(builder.estimate_id);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   if (!estimateLine(estimate, builder.id)) throw new Error("This Product is no longer part of the estimate. Reload before changing its Part Groups.");
@@ -40,9 +41,9 @@ function assertMemberVersions(parts, expectedPartVersions = {}) {
 
 export async function createPartGroupInProduct({ builderProductId, partIds = [], groupName = "Part Group", expectedEstimateUpdatedAt = "", expectedPartVersions = {} }) {
   if (!builderProductId || partIds.length < 2) throw new Error("Select at least two Parts to create a Part Group.");
-  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  const builder = await staffEntities.BuilderProduct.get(builderProductId);
   if (!builder?.id || !builder.estimate_id) throw new Error("The Product could not be verified against an estimate.");
-  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  const estimate = await staffEntities.AllInOneEstimate.get(builder.estimate_id);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   const currentLine = estimateLine(estimate, builder.id);
   if (!currentLine) throw new Error("This Product is no longer part of the estimate. Reload before creating a Part Group.");
@@ -60,8 +61,8 @@ export async function createPartGroupInProduct({ builderProductId, partIds = [],
   const targetGroupKey = `create-group-${builderMutationHash({ operation_key: operationKey })}`;
 
   const [allParts, allGroups] = await Promise.all([
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
   ]);
   if (!Array.isArray(allParts) || !Array.isArray(allGroups)) throw new Error("Part Group prerequisites could not be fully verified.");
 
@@ -72,8 +73,8 @@ export async function createPartGroupInProduct({ builderProductId, partIds = [],
     }
     const recovered = await resumeBuilderMutation({ estimateId: estimate.id, estimate, builder, parts: allParts, line: currentLine, pending: existingPending, applyPartPlan: applyBuilderPartPriceAcceptancePlan });
     const [groupsAfter, partsAfter] = await Promise.all([
-      loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
-      loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
+      loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
+      loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
     ]);
     const group = (groupsAfter || []).find((row) => row.group_key === existingPending.target_group_key) || null;
     if (!group) throw new Error("The recovered Part Group could not be verified after creation.");
@@ -130,7 +131,7 @@ export async function createPartGroupInProduct({ builderProductId, partIds = [],
   };
   const marked = await markBuilderMutationPending({ estimate, builder, pending });
   const recovered = await resumeBuilderMutation({ estimateId: estimate.id, estimate: marked.markedEstimate, builder: marked.currentBuilder, parts: marked.currentParts, line: marked.markedLine, pending: marked.canonicalPending, applyPartPlan: applyBuilderPartPriceAcceptancePlan });
-  const groupsAfter = await loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" });
+  const groupsAfter = await loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" });
   const group = (groupsAfter || []).find((row) => row.group_key === targetGroupKey) || null;
   if (!group) throw new Error("The new Part Group could not be verified after recovery completed.");
   return { ...group, recovered: true, line: recovered?.line || currentLine };
@@ -140,13 +141,13 @@ export async function renamePartGroup({ builderProductId, groupId, groupName, ex
   if (!builderProductId || !groupId) throw new Error("Part Group is required.");
   const [{ builder }, group] = await Promise.all([
     loadGroupMutationContext(builderProductId, expectedEstimateUpdatedAt),
-    base44.entities.BuilderPartGroup.get(groupId),
+    staffEntities.BuilderPartGroup.get(groupId),
   ]);
   if (!group || group.builder_product_id !== builder.id) throw new Error("Part Group could not be loaded.");
   assertVersion(group, expectedGroupUpdatedAt, "Part Group");
   const groupPatch = { group_name: String(groupName || "Part Group").trim() || "Part Group" };
   return replaceBuilderEntityFieldsIfUnchanged({
-    entity: base44.entities.BuilderPartGroup,
+    entity: staffEntities.BuilderPartGroup,
     id: group.id,
     expectedUpdatedAt: group.updated_date || "",
     expectedFields: expectedBuilderEntityFields(group, groupPatch),
@@ -158,9 +159,9 @@ export async function renamePartGroup({ builderProductId, groupId, groupName, ex
 
 export async function dissolvePartGroup({ builderProductId, groupId, expectedEstimateUpdatedAt = "", expectedGroupUpdatedAt = "", expectedPartVersions = {} }) {
   if (!builderProductId || !groupId) throw new Error("Part Group is required.");
-  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  const builder = await staffEntities.BuilderProduct.get(builderProductId);
   if (!builder?.id || !builder.estimate_id) throw new Error("The Product could not be verified against an estimate.");
-  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  const estimate = await staffEntities.AllInOneEstimate.get(builder.estimate_id);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   const currentLine = estimateLine(estimate, builder.id);
   if (!currentLine) throw new Error("This Product is no longer part of the estimate. Reload before dissolving its Part Group.");
@@ -178,7 +179,7 @@ export async function dissolvePartGroup({ builderProductId, groupId, expectedEst
     if (existingPending.kind !== "builder_part_group_dissolve" || existingPending.key !== operationKey) {
       throw new Error("Another Builder mutation is still being recovered for this Product. Resume it before dissolving a Part Group.");
     }
-    const parts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+    const parts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
     if (!Array.isArray(parts)) throw new Error("Part Group members could not be verified during dissolve recovery.");
     const recovered = await resumeBuilderMutation({ estimateId: estimate.id, estimate, builder, parts, line: currentLine, pending: existingPending, applyPartPlan: applyBuilderPartPriceAcceptancePlan });
     return { dissolved: groupId, partCount: (existingPending.target_part_ids || []).length, recovered: true, line: recovered?.line || currentLine };
@@ -186,8 +187,8 @@ export async function dissolvePartGroup({ builderProductId, groupId, expectedEst
 
   if (currentLine.last_part_group_mutation_key === operationKey && currentLine.last_part_group_mutation_kind === "dissolve") {
     const [groupAfter, partsAfter] = await Promise.all([
-      base44.entities.BuilderPartGroup.get(groupId),
-      loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
+      staffEntities.BuilderPartGroup.get(groupId),
+      loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
     ]);
     const targetIds = new Set(Object.keys(expectedPartVersions || {}));
     const complete = !groupAfter && Array.isArray(partsAfter) && partsAfter.filter((part) => targetIds.has(String(part.id)) && !part.part_group_id).length === targetIds.size;
@@ -196,9 +197,9 @@ export async function dissolvePartGroup({ builderProductId, groupId, expectedEst
   }
 
   const [group, allParts, allGroups] = await Promise.all([
-    base44.entities.BuilderPartGroup.get(groupId),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
+    staffEntities.BuilderPartGroup.get(groupId),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
   ]);
   if (!Array.isArray(allParts) || !Array.isArray(allGroups)) throw new Error("Part Group dissolve prerequisites could not be fully verified.");
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
@@ -251,9 +252,9 @@ export async function dissolvePartGroup({ builderProductId, groupId, expectedEst
 export async function clonePartGroupInProduct({ builderProductId, groupId, expectedEstimateUpdatedAt = "", expectedGroupUpdatedAt = "", expectedPartVersions = {} }) {
   if (!builderProductId || !groupId) throw new Error("Part Group is required.");
 
-  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  const builder = await staffEntities.BuilderProduct.get(builderProductId);
   if (!builder?.id || !builder.estimate_id) throw new Error("The Product could not be verified against an estimate.");
-  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  const estimate = await staffEntities.AllInOneEstimate.get(builder.estimate_id);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   const currentLine = estimateLine(estimate, builder.id);
   if (!currentLine) throw new Error("This Product is no longer part of the estimate. Reload before cloning its Part Group.");
@@ -268,9 +269,9 @@ export async function clonePartGroupInProduct({ builderProductId, groupId, expec
   })}`;
 
   const [group, allParts, allGroups, revisions] = await Promise.all([
-    base44.entities.BuilderPartGroup.get(groupId),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Part Groups" }),
+    staffEntities.BuilderPartGroup.get(groupId),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Part Groups" }),
     loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Builder price revisions" }),
   ]);
   if (!Array.isArray(allParts) || !Array.isArray(allGroups) || !Array.isArray(revisions)) {
@@ -292,8 +293,8 @@ export async function clonePartGroupInProduct({ builderProductId, groupId, expec
       applyPartPlan: applyBuilderPartPriceAcceptancePlan,
     });
     const [groupsAfter, partsAfter] = await Promise.all([
-      loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
-      loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
+      loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
+      loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
     ]);
     const recoveredGroup = (groupsAfter || []).find((row) => row.group_key === existingPending.target_group_key) || null;
     const targetPartKeys = new Set(existingPending.target_part_keys || []);
@@ -473,8 +474,8 @@ export async function clonePartGroupInProduct({ builderProductId, groupId, expec
     applyPartPlan: applyBuilderPartPriceAcceptancePlan,
   });
   const [groupsAfter, partsAfter] = await Promise.all([
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
   ]);
   const clonedGroup = (groupsAfter || []).find((row) => row.group_key === targetGroupKey) || null;
   const targetPartKeys = new Set(partSteps.map((step) => step.part_key));
@@ -511,7 +512,7 @@ function assertMoveRecordState(record, step, sourceBuilderProductId, label) {
 
 export async function resumeIndependentPartGroupMove({ estimateId, lineId = "" }) {
   if (!estimateId) throw new Error("Estimate is required to resume a Part Group move.");
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   const sourceLine = lineId
     ? (estimate.line_items || []).find((line) => line.line_id === lineId)
@@ -526,10 +527,10 @@ export async function resumeIndependentPartGroupMove({ estimateId, lineId = "" }
   await assertEstimateProductMutationAllowed(estimate, { allowPriceAcceptanceKey: pending.key });
 
   const [sourceBuilder, targetBuilder, group, movingParts] = await Promise.all([
-    base44.entities.BuilderProduct.get(pending.builder_product_id),
-    base44.entities.BuilderProduct.get(pending.target_builder_product_id),
-    base44.entities.BuilderPartGroup.get(pending.group_move_step?.id),
-    Promise.all((pending.part_move_steps || []).map((step) => base44.entities.BuilderPart.get(step.id))),
+    staffEntities.BuilderProduct.get(pending.builder_product_id),
+    staffEntities.BuilderProduct.get(pending.target_builder_product_id),
+    staffEntities.BuilderPartGroup.get(pending.group_move_step?.id),
+    Promise.all((pending.part_move_steps || []).map((step) => staffEntities.BuilderPart.get(step.id))),
   ]);
   if (!sourceBuilder?.id || !targetBuilder?.id || sourceBuilder.estimate_id !== estimateId || targetBuilder.estimate_id !== estimateId) {
     throw new Error("Both Products could not be verified in this estimate while recovering the Part Group move.");
@@ -542,7 +543,7 @@ export async function resumeIndependentPartGroupMove({ estimateId, lineId = "" }
 
   if (groupNeedsWrite) {
     await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderPartGroup,
+      entity: staffEntities.BuilderPartGroup,
       id: group.id,
       expectedUpdatedAt: group.updated_date || "",
       expectedFields: expectedBuilderEntityFields(group, pending.group_move_step.target_patch),
@@ -556,7 +557,7 @@ export async function resumeIndependentPartGroupMove({ estimateId, lineId = "" }
     const part = movingParts[index];
     const targetPatch = pending.part_move_steps[index].target_patch;
     await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderPart,
+      entity: staffEntities.BuilderPart,
       id: part.id,
       expectedUpdatedAt: part.updated_date || "",
       expectedFields: expectedBuilderEntityFields(part, targetPatch),
@@ -567,14 +568,14 @@ export async function resumeIndependentPartGroupMove({ estimateId, lineId = "" }
   }
 
   const [sourceBeforePriceWrite, targetBeforePriceWrite] = await Promise.all([
-    base44.entities.BuilderProduct.get(sourceBuilder.id),
-    base44.entities.BuilderProduct.get(targetBuilder.id),
+    staffEntities.BuilderProduct.get(sourceBuilder.id),
+    staffEntities.BuilderProduct.get(targetBuilder.id),
   ]);
   sourceBuilderNeedsWrite = assertMoveBuilderState(sourceBeforePriceWrite, pending.source_builder_patch || {}, pending.source_builder_updated_date_before, "Source Product");
   targetBuilderNeedsWrite = assertMoveBuilderState(targetBeforePriceWrite, pending.target_builder_patch || {}, pending.target_builder_updated_date_before, "Target Product");
   if (sourceBuilderNeedsWrite) {
     await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderProduct,
+      entity: staffEntities.BuilderProduct,
       id: sourceBuilder.id,
       expectedUpdatedAt: sourceBeforePriceWrite.updated_date || "",
       expectedFields: expectedBuilderEntityFields(sourceBeforePriceWrite, pending.source_builder_patch),
@@ -585,7 +586,7 @@ export async function resumeIndependentPartGroupMove({ estimateId, lineId = "" }
   }
   if (targetBuilderNeedsWrite) {
     await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderProduct,
+      entity: staffEntities.BuilderProduct,
       id: targetBuilder.id,
       expectedUpdatedAt: targetBeforePriceWrite.updated_date || "",
       expectedFields: expectedBuilderEntityFields(targetBeforePriceWrite, pending.target_builder_patch),
@@ -598,7 +599,7 @@ export async function resumeIndependentPartGroupMove({ estimateId, lineId = "" }
   await ensureBuilderPriceRevision(pending.source_revision_key || `${pending.key}:source`, pending.source_revision || {});
   await ensureBuilderPriceRevision(pending.target_revision_key || `${pending.key}:target`, pending.target_revision || {});
 
-  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const latestEstimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!latestEstimate) throw new Error("Estimate could not be verified while completing the Part Group move.");
   const latestSourceLine = (latestEstimate.line_items || []).find((line) => line.builder_product_id === sourceBuilder.id);
   const latestTargetLine = (latestEstimate.line_items || []).find((line) => line.builder_product_id === targetBuilder.id);
@@ -618,7 +619,7 @@ export async function resumeIndependentPartGroupMove({ estimateId, lineId = "" }
     return line;
   });
   await replaceEstimateFieldsIfUnchanged({
-    entity: base44.entities.AllInOneEstimate,
+    entity: staffEntities.AllInOneEstimate,
     estimateId,
     expectedFields: expectedEstimateFields(latestEstimate, { line_items: lineItems }),
     nextFields: { line_items: lineItems },
@@ -632,13 +633,13 @@ export async function moveIndependentPartGroup({ sourceBuilderProductId, targetB
   if (sourceBuilderProductId === targetBuilderProductId) throw new Error("Choose a different target Product.");
 
   const [sourceBuilder, targetBuilder] = await Promise.all([
-    base44.entities.BuilderProduct.get(sourceBuilderProductId),
-    base44.entities.BuilderProduct.get(targetBuilderProductId),
+    staffEntities.BuilderProduct.get(sourceBuilderProductId),
+    staffEntities.BuilderProduct.get(targetBuilderProductId),
   ]);
   if (!sourceBuilder?.id || !targetBuilder?.id || !sourceBuilder.estimate_id || sourceBuilder.estimate_id !== targetBuilder.estimate_id) {
     throw new Error("Direct Move is only available between Products in the same estimate. Use Copy/Paste for another estimate.");
   }
-  const estimate = await base44.entities.AllInOneEstimate.get(sourceBuilder.estimate_id);
+  const estimate = await staffEntities.AllInOneEstimate.get(sourceBuilder.estimate_id);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   const sourceLine = estimateLine(estimate, sourceBuilder.id);
   const targetLine = estimateLine(estimate, targetBuilder.id);
@@ -662,11 +663,11 @@ export async function moveIndependentPartGroup({ sourceBuilderProductId, targetB
   }
 
   const [group, sourceParts, sourceGroups, targetParts, targetGroups, sourceRevisions, targetRevisions] = await Promise.all([
-    base44.entities.BuilderPartGroup.get(groupId),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: sourceBuilder.id }, sort: "sort_order", label: "Source Builder Parts" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: sourceBuilder.id }, sort: "sort_order", label: "Source Builder Part Groups" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: targetBuilder.id }, sort: "sort_order", label: "Target Builder Parts" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: targetBuilder.id }, sort: "sort_order", label: "Target Builder Part Groups" }),
+    staffEntities.BuilderPartGroup.get(groupId),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: sourceBuilder.id }, sort: "sort_order", label: "Source Builder Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: sourceBuilder.id }, sort: "sort_order", label: "Source Builder Part Groups" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: targetBuilder.id }, sort: "sort_order", label: "Target Builder Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: targetBuilder.id }, sort: "sort_order", label: "Target Builder Part Groups" }),
     loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: sourceBuilder.id }, sort: "revision_number", label: "Source Builder price revisions" }),
     loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: targetBuilder.id }, sort: "revision_number", label: "Target Builder price revisions" }),
   ]);

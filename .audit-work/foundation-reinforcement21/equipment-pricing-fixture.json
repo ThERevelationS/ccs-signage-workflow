@@ -1,0 +1,139 @@
+{
+  "fixture": {
+    "project": {
+      "id": "synthetic-equipment-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "Equipment pricing proof project",
+      "items": [
+        {
+          "component_id": "synthetic-item-1",
+          "foundation_type": "spread_foot",
+          "quantity": 2,
+          "length_inches": 48,
+          "width_inches": 24,
+          "depth_inches": 12,
+          "include_rebar": false,
+          "include_forming": false,
+          "include_finishing": false,
+          "item_total_cost": 111.11,
+          "concrete_volume_cy": 0.5,
+          "concrete_cost": 11.11,
+          "excavation_cost": 22.22
+        }
+      ],
+      "walls": [],
+      "poles": [],
+      "wall_caps": [],
+      "selected_equipment": [
+        {
+          "component_id": "synthetic-eq-1",
+          "equipment_id": "synthetic-excavator",
+          "rental_period": "day",
+          "rental_duration": 2,
+          "include_delivery": false,
+          "attachment_counts": { "synthetic-bucket": 2 },
+          "sub_attachment_counts": { "synthetic-tooth": 1 },
+          "equipment_cost": 680
+        }
+      ],
+      "signage_cabinets": [],
+      "excavation_method": "hand_dig",
+      "landscape": { "cell_size_inches": 12, "cells": {} },
+      "customer_pricing": { "applied": false },
+      "total_equipment_cost": 680,
+      "concrete_delivery_snapshot": {
+        "version": 1,
+        "concrete_total": 330.75,
+        "rounded_yards": 0.75,
+        "rate_per_yard": 441,
+        "additional_stops_cost": 0,
+        "trucks": [
+          { "yards": 0.5925925925925926, "rounded_yards": 0.75, "cost": 330.75, "small_order_fee": 0, "fuel_fee": 0 }
+        ]
+      }
+    },
+    "inventory": [
+      {
+        "id": "synthetic-excavator",
+        "material_type": "excavation_equipment",
+        "material_name": "Mini excavator",
+        "equipment_type": "excavator",
+        "rental_company": "RentCo",
+        "cost_per_day": 250,
+        "cost_per_week": 900,
+        "cost_per_month": 2500,
+        "pickup_delivery_cost": 75,
+        "compatible_attachment_ids": ["synthetic-bucket", "synthetic-misc-att"]
+      },
+      {
+        "id": "synthetic-bucket",
+        "material_type": "attachment",
+        "material_name": "24in digging bucket",
+        "cost_per_day": 40,
+        "cost_per_week": 150,
+        "cost_per_month": 400,
+        "compatible_sub_attachment_ids": ["synthetic-tooth"]
+      },
+      {
+        "id": "synthetic-tooth",
+        "material_type": "sub_attachment",
+        "material_name": "Ripper tooth",
+        "cost_per_day": 10,
+        "cost_per_week": 35,
+        "cost_per_month": 90
+      },
+      {
+        "id": "synthetic-compactor",
+        "material_type": "excavation_equipment",
+        "material_name": "Plate compactor",
+        "is_non_excavation_equipment": true,
+        "cost_per_day": 60,
+        "cost_per_week": 200,
+        "cost_per_month": 500,
+        "pickup_delivery_cost": 0,
+        "compatible_attachment_ids": []
+      },
+      {
+        "id": "synthetic-misc-att",
+        "material_type": "attachment",
+        "material_name": "Misc grapple",
+        "is_miscellaneous_attachment": true,
+        "cost_per_day": 25,
+        "cost_per_week": 80,
+        "cost_per_month": 200
+      }
+    ],
+    "settings": {
+      "wall_labor_rate": "45",
+      "wall_minimum_charge": "150",
+      "wall_labor_bricks_per_hour": "50",
+      "wall_mortar_cost_per_bag": "10",
+      "foundation_main_labor_rate": "60",
+      "foundation_pouring_cost_per_cy": "15",
+      "foundation_hand_dig_time_per_cy": "2"
+    },
+    "expectedValid": {
+      "equipment": {
+        "baseCost": 500,
+        "deliveryCost": 0,
+        "bucketCost": 160,
+        "toothCost": 20,
+        "totalCost": 680,
+        "withDelivery": 755,
+        "weeklyTotal": 2470,
+        "customQtyThree": 1020,
+        "customRateHundred": 380,
+        "freeRate": 180,
+        "defaultDuration": 340
+      },
+      "item": {
+        "item_total_cost": 97.77777777777777,
+        "concrete_volume_cy": 0.5925925925925926,
+        "excavation_cost": 88.88888888888889,
+        "concrete_cost": 0
+      },
+      "deliveryConcreteTotal": 330.75,
+      "grandTotal": 1108.5277777777778
+    }
+  }
+}

@@ -36,7 +36,7 @@ const source = [
   block(persistence, 'function normalize(value) {', '\nexport function sanitizeWorkOrderFormPatch'),
   block(persistence, 'export function createWorkOrderArrayItemLocator', '\nexport async function mutateWorkOrderArrayField').replaceAll(/^export /gm, ''),
   block(persistence, 'function normalize(', '\nexport function sanitizeWorkOrderFormPatch'),
-  block(persistence, 'export async function replaceWorkOrderFieldsIfUnchanged', '\nexport async function transitionWorkOrderFromLoadedSnapshot').replace(/^export /, ''),
+  block(persistence, 'export async function replaceWorkOrderFieldsIfUnchanged', '\nconst WO_STAGE_ORDER').replace(/^export /, ''),
   block(persistence, 'export async function mutateWorkOrderArrayField', '\nexport async function softDeleteWorkOrderFromLoadedSnapshot').replace(/^export /, ''),
   trackedPersistence.slice(trackedPersistence.indexOf('export async function saveTrackedFields(')).replace(/^export /, ''),
   'this.handlers = { getMeetingWeekStart, getMondayWeeksAhead, isDiscussedThisWeek, isDeferred, isParked, toggleDiscussed, deferUntilMonday, updateWorkOrder, openMmmTasks, otherJobTaskCount, addMmmTask, toggleMmmTask, addWorkNote };',

@@ -1,0 +1,15 @@
+{
+ "authorized": true,
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "1840b224140634135d546377b1878a283443463e",
+ "restoreCheckpointId": "6aef84a451274613764e79e2",
+ "candidateHashes": {
+  "brickPricingAvailability.js": "0c3b68d549709d9b03ce54001de5f3128cf30e7d221df4e2888b90eb2de13d09",
+  "BrickGeometryPanel.jsx": "1f5c2cf5eddcc29020b0058476f50d0d831bae55b476d25c257fffacee7b206e",
+  "BrickTotals.jsx": "9d3e323eb7748ecffe2e86ba729652289385d9c5dbf5bfa0e9b63e64be62ed38",
+  "BrickStoneEstimator.jsx": "ad9701b43a195f535228d70a1dab2861b088a307dba384232ff247a2e970c7cf"
+ },
+ "createdAt": "2026-11-07T20:06:04.228Z",
+ "authority": "standing autonomous grant (Brett) — remote transport for brick-stone pricing-availability mop-up"
+}

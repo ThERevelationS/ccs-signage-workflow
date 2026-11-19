@@ -1,0 +1,11 @@
+Total messages: 9 (Errors: 9, Warnings: 0)
+
+[ERROR] Failed to load resource: the server responded with a status of 500 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/staffDataRead:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/timeClockAction:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/manageAnnouncements:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/timeClockAction:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/staffDataRead:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/opportunityWorkspaceAction:0
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/staffDataRead:0
+[ERROR] Failed to load resource: the server responded with a status of 403 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/staffDataRead:0
+[ERROR] Failed to load resource: the server responded with a status of 403 () @ https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions/staffDataRead:0

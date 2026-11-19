@@ -1,0 +1,15 @@
+Reading file
+Reading file
+Read file
+{
+  "files": [
+    {
+      "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+      "content": "export const foundationInputNumber = value => {\n  if (typeof value === \"number\") return Number.isFinite(value) ? value : null;\n  if (typeof value !== \"string\" || !/^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)$/.test(value.trim())) return null;\n  const number = Number(value);\n  return Number.isFinite(number) ? number : null;\n};\n\nexport const foundationPositiveWholeNumber = value => {\n  const number = foundationInputNumber(value);\n  const whole = typeof value !== \"string\" || /^[+-]?\\d+(?:\\.0*)?$/.test(value.trim());\n  return whole && Number.isSafeInteger(number) && number > 0;\n};\n\nexport function foundationGeometryValidation(item, index = 0) {\n  const record = item ?? {};\n  const issues = [];\n  const add = (field, code, message) => issues.push({\n    kind: \"foundation\", index, componentId: record.component_id ?? null, field, code,\n    message: `Foundation ${index + 1}: ${message}`,\n  });\n  const type = record.foundation_type;\n  if (type !== \"spread_foot\" && type !== \"pillar\") {\n    add(\"foundation_type\", \"foundation_type_invalid\", \"select Spread Footing or Pillar / Caisson.\");\n  }\n  const count = record.quantity ?? 1;\n  const quantity = foundationInputNumber(count);\n  if (!foundationPositiveWholeNumber(count)) {\n    add(\"quantity\", \"foundation_quantity_invalid\", \"quantity must be a positive whole number within the supported range.\");\n  }\n  const fields = type === \"spread_foot\"\n    ? [[\"length_inches\", \"length\"], [\"width_inches\", \"width\"], [\"depth_inches\", \"depth\"]]\n    : type === \"pillar\" ? [[\"diameter\", \"diameter\"], [\"depth_inches\", \"depth\"]] : [];\n  const dimensions = {};\n  for (const [field, label] of fields) {\n    const value = foundationInputNumber(record[field]);\n    dimensions[field] = value;\n    if (value === null || value <= 0) {\n      add(field, \"foundation_dimension_invalid\", `${label} (inches) must be a finite positive number.`);\n    }\n  }\n  if (!issues.length) {\n    const depth = dimensions.depth_inches / 12;\n    const radius = dimensions.diameter / 24;\n    const volume = type === \"spread_foot\"\n      ? ((dimensions.length_inches / 12) * (dimensions.width_inches / 12) * depth) / 27 * quantity\n      : (Math.PI * radius * radius * depth) / 27 * quantity;\n    // This is numeric-range validation, not a structural design or engineering minimum.\n    if (!Number.isFinite(volume) || volume <= 0) {\n      add(\"dimensions\", \"foundation_volume_out_of_range\", \"dimensions and quantity cannot produce a finite positive volume in the supported calculation range.\");\n    }\n  }\n  return { issues, type, quantity, dimensions };\n}\n\nexport function foundationItemGeometryIssues(item, index = 0) {\n  return foundationGeometryValidation(item, index).issues;\n}",
+      "startLine": 1,
+      "endLine": 57,
+      "totalLines": 57,
+      "truncated": false
+    }
+  ]
+}

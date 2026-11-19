@@ -1,0 +1,1256 @@
+import { allocateDocNumber } from '../../shared/docNumberAllocation.ts';
+import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
+import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
+import {
+  createFoundationRecordWithRecovery,
+  expectedFoundationFields,
+  replaceFoundationFieldsIfUnchanged,
+} from "../../shared/opportunityFoundationPersistence.mjs";
+import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
+import {
+  creditMemoLedgerRow,
+  creditBalanceCents,
+  creditMemoNotificationDraft,
+} from "../../shared/creditMemoModel.ts";
+import { contactMailable, resolveBillingContact } from "../../shared/contactRolesModel.ts";
+import { renderTemplate } from "../../shared/templateRender.ts";
+
+const clean = (value: any) => String(value ?? "").trim();
+const num = (value: any, fallback = 0) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+const money = (value: number) => Math.round(value * 100) / 100;
+const today = () => new Date().toISOString().slice(0, 10);
+
+// Derive a due_date from freeform payment terms ("Net 30", "Net 45 days", "Due on receipt", "COD").
+const dueDateFromTerms = (terms: string, baseDate: string): string => {
+  const t = clean(terms).toLowerCase();
+  if (!t || !baseDate) return "";
+  const base = new Date(`${baseDate}T00:00:00Z`);
+  if (Number.isNaN(base.getTime())) return "";
+  const net = t.match(/net\s*(\d{1,3})/);
+  if (net) base.setUTCDate(base.getUTCDate() + parseInt(net[1], 10));
+  else if (/due on receipt|cod|cash on delivery|due now|immediate/.test(t)) { /* base date as-is */ }
+  else return "";
+  return base.toISOString().slice(0, 10);
+};
+
+const INVOICE_STATUSES = ["draft", "sent", "partially_paid", "paid", "void"];
+const OPEN_AR_STATUSES = new Set(["sent", "partially_paid"]);
+const PAYMENT_METHODS = ["cash", "check", "card", "ach", "financing", "other"];
+
+const EDITABLE_INVOICE_FIELDS = [
+  "customer_id", "customer_display_name",
+  "opportunity_id", "estimating_request_id", "estimate_id", "work_order_id",
+  "contact_id", "location_id", "billing_type",
+  "line_items", "discount_amount", "tax_rate", "deposit_applied",
+  "issue_date", "due_date", "terms", "notes", "internal_notes",
+];
+
+const bad = (message: string, status = 400) =>
+  Object.assign(new Error(message), { statusCode: status });
+
+function sanitizeLineItems(raw: any) {
+  if (raw === undefined || raw === null) return undefined;
+  if (!Array.isArray(raw)) throw bad("line_items must be a list.");
+  return raw.map((row: any, i: number) => {
+    const description = clean(row?.description);
+    const quantity = num(row?.quantity, NaN);
+    const unit_price = num(row?.unit_price, NaN);
+    if (!description) throw bad(`Line ${i + 1} needs a description.`);
+    if (!(quantity > 0)) throw bad(`Line ${i + 1} needs a positive quantity.`);
+    if (!(unit_price >= 0)) throw bad(`Line ${i + 1} needs a non-negative unit price.`);
+    return {
+      description,
+      quantity: money(quantity),
+      unit_price: money(unit_price),
+      taxable: row?.taxable === true,
+      line_total: money(quantity * unit_price),
+    };
+  });
+}
+
+function computeTotals(fields: any) {
+  const items = Array.isArray(fields.line_items) ? fields.line_items : [];
+  const subtotal = money(items.reduce((s: number, r: any) => s + money(num(r.quantity) * num(r.unit_price)), 0));
+  const taxableSubtotal = money(items.filter((r: any) => r.taxable === true)
+    .reduce((s: number, r: any) => s + money(num(r.quantity) * num(r.unit_price)), 0));
+  const discount = Math.max(0, money(num(fields.discount_amount)));
+  const taxRate = Math.max(0, num(fields.tax_rate));
+  const taxBase = Math.max(0, taxableSubtotal - discount);
+  const taxAmount = money(taxBase * taxRate);
+  const deposit = Math.max(0, money(num(fields.deposit_applied)));
+  const total = money(subtotal - discount + taxAmount - deposit);
+  return { subtotal, discount_amount: discount, tax_rate: taxRate, tax_amount: taxAmount, deposit_applied: deposit, total };
+}
+
+function invoiceSnapshot(row: any) {
+  return {
+    id: clean(row?.id),
+    invoice_number: clean(row?.invoice_number),
+    status: clean(row?.status),
+    billing_type: clean(row?.billing_type),
+    customer_id: clean(row?.customer_id),
+    customer_display_name: clean(row?.customer_display_name || row?.customer_name),
+    opportunity_id: clean(row?.opportunity_id),
+    estimate_id: clean(row?.estimate_id),
+    work_order_id: clean(row?.work_order_id),
+    issue_date: clean(row?.issue_date),
+    due_date: clean(row?.due_date),
+    terms: clean(row?.terms),
+    subtotal: num(row?.subtotal),
+    discount_amount: num(row?.discount_amount),
+    tax_rate: num(row?.tax_rate),
+    tax_amount: num(row?.tax_amount),
+    deposit_applied: num(row?.deposit_applied),
+    total: num(row?.total),
+    amount_paid: num(row?.amount_paid),
+    balance_due: num(row?.balance_due),
+    sent_date: clean(row?.sent_date),
+    paid_date: clean(row?.paid_date),
+  };
+}
+
+async function nextInvoiceNumber(Invoice: any, svc: any) {
+  return allocateDocNumber({ svc, configName: 'invoice', prefix: 'INV-', seedEntity: Invoice, seedField: 'invoice_number' });
+}
+
+async function findByCreationKey(entity: any, key: string) {
+  const rows = await entity.filter({ creation_request_key: clean(key) }, undefined, 500);
+  if (!Array.isArray(rows)) throw bad("Creation receipt lookup did not return a record list.", 409);
+  return rows;
+}
+
+async function recomputeInvoiceAfterPayments({ Invoice, Payment, invoiceId, actor }: any) {
+  const payments = await Payment.filter({ invoice_id: invoiceId }, undefined, 500);
+  if (!Array.isArray(payments)) throw bad("Payment lookup failed while updating the invoice.", 500);
+  // Counted ledger rows: positive payments and negative credit-memo rows stay
+  // "recorded"; refund rows carry "refunded". All net into amount_paid so
+  // credits/refunds reopen balance_due without deleting any record.
+  const amountPaid = money(payments
+    .filter((p: any) => ["recorded", "refunded"].includes(clean(p?.status)))
+    .reduce((s: number, p: any) => s + num(p?.amount), 0));
+  const invoice = await Invoice.get(invoiceId);
+  if (!invoice?.id) throw bad("The invoice no longer exists.", 409);
+  // I-12: store-credit applications live on the invoice (credit_applied), not
+  // in the Payment table — a recompute that ignored them would silently
+  // re-open balances a credit already closed.
+  const creditApplied = money(num(invoice.credit_applied));
+  const balanceDue = money(num(invoice.total) - amountPaid - creditApplied);
+  let status = clean(invoice.status);
+  if (status !== "void") {
+    if (balanceDue <= 0.005 && num(invoice.total) > 0) status = "paid";
+    else if (amountPaid > 0) status = "partially_paid";
+    else status = clean(invoice.sent_date) ? "sent" : "draft";
+  }
+  const desired: any = {
+    amount_paid: amountPaid,
+    balance_due: balanceDue,
+    status,
+    paid_date: status === "paid" ? clean(invoice.paid_date) || today() : "",
+    updated_by: actor,
+  };
+  const expected = expectedFoundationFields(invoice, desired);
+  await replaceFoundationFieldsIfUnchanged({
+    entity: Invoice,
+    recordId: invoiceId,
+    expectedFields: expected,
+    nextFields: desired,
+    label: "Invoice payment totals",
+  });
+  return Invoice.get(invoiceId);
+}
+
+function agingSummary(invoices: any[]) {
+  const summary = {
+    open_invoices: 0,
+    open_balance: 0,
+    overdue_invoices: 0,
+    overdue_balance: 0,
+    buckets: { current: 0, days_1_30: 0, days_31_60: 0, days_61_90: 0, days_90_plus: 0 },
+  };
+  const now = Date.now();
+  for (const inv of invoices) {
+    if (!OPEN_AR_STATUSES.has(clean(inv?.status))) continue;
+    const balance = num(inv?.balance_due);
+    if (balance <= 0) continue;
+    summary.open_invoices += 1;
+    summary.open_balance = money(summary.open_balance + balance);
+    const due = Date.parse(clean(inv?.due_date));
+    const daysOver = Number.isFinite(due) ? Math.floor((now - due) / 86400000) : 0;
+    if (daysOver <= 0) summary.buckets.current = money(summary.buckets.current + balance);
+    else if (daysOver <= 30) summary.buckets.days_1_30 = money(summary.buckets.days_1_30 + balance);
+    else if (daysOver <= 60) summary.buckets.days_31_60 = money(summary.buckets.days_31_60 + balance);
+    else if (daysOver <= 90) summary.buckets.days_61_90 = money(summary.buckets.days_61_90 + balance);
+    else summary.buckets.days_90_plus = money(summary.buckets.days_90_plus + balance);
+    if (daysOver > 0) {
+      summary.overdue_invoices += 1;
+      summary.overdue_balance = money(summary.overdue_balance + balance);
+    }
+  }
+  return summary;
+}
+
+function csvCell(value: any) {
+  const s = String(value ?? "");
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+const csvRow = (cells: any[]) => cells.map(csvCell).join(",");
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
+    const body = await req.json().catch(() => ({}));
+    const user = await authenticateSignShopSession(base44, body?.session_token);
+    const actor = clean(user?.email) || clean(user?.id) || "unknown";
+    const action = clean(body?.action);
+    if (!action) throw bad("An action is required.");
+
+    const Invoice = base44.asServiceRole.entities.Invoice;
+    const Payment = base44.asServiceRole.entities.Payment;
+    const Customer = base44.asServiceRole.entities.Customer;
+    const CustomerContact = base44.asServiceRole.entities.CustomerContact;
+    const Estimate = base44.asServiceRole.entities.AllInOneEstimate;
+    const WorkOrder = base44.asServiceRole.entities.WorkOrder;
+    const Opportunity = base44.asServiceRole.entities.Opportunity;
+
+    if (action === "list_invoices") {
+      const status = clean(body?.status);
+      if (status && !INVOICE_STATUSES.includes(status)) throw bad("Unknown invoice status filter.");
+      // Page the full status-scoped set — AR aging and counts must reflect
+      // every matching invoice, not just the first default-size page.
+      const rows = await loadAllEntityRows({
+        entity: Invoice,
+        query: status ? { status } : {},
+        sort: '-created_date',
+        label: 'Invoice list',
+      });
+      const query = clean(body?.query).toLowerCase();
+      const limit = Math.max(1, Math.min(500, Math.floor(Number(body?.limit) || 250)));
+      const matched = rows
+        .filter((r: any) => !query
+          || clean(r?.invoice_number).toLowerCase().includes(query)
+          || clean(r?.customer_display_name).toLowerCase().includes(query))
+        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
+      const invoices = matched.slice(0, limit).map(invoiceSnapshot);
+      return Response.json({
+        success: true,
+        action,
+        invoices,
+        total_count: matched.length,
+        showing: invoices.length,
+        truncated: matched.length > invoices.length,
+        limit,
+        aging: agingSummary(rows),
+      });
+    }
+
+    if (action === "revenue_summary") {
+      const months = Math.max(3, Math.min(24, Number(body?.months) || 12));
+      const [rows, payments] = await Promise.all([
+        loadAllEntityRows({ entity: Invoice, query: {}, sort: null, label: 'Revenue summary invoices' }),
+        loadAllEntityRows({ entity: Payment, query: {}, sort: null, label: 'Revenue summary payments' }).catch(() => []),
+      ]);
+      if (!Array.isArray(rows)) throw bad("Invoice lookup failed.", 500);
+      const live = rows.filter((r: any) => clean(r?.status) !== "void");
+      // Trailing `months` window keyed YYYY-MM, oldest first.
+      const now = new Date();
+      const buckets: any[] = [];
+      for (let i = months - 1; i >= 0; i -= 1) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        buckets.push({ key: d.toISOString().slice(0, 7), label: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }), invoiced: 0, collected: 0, invoice_count: 0 });
+      }
+      const bucketByKey = new Map(buckets.map((b) => [b.key, b]));
+      const startKey = buckets[0].key;
+      for (const r of live) {
+        const key = clean(r?.issue_date || r?.created_date).slice(0, 7);
+        if (key < startKey) continue;
+        const b = bucketByKey.get(key);
+        if (!b) continue;
+        b.invoiced += num(r?.total);
+        b.invoice_count += 1;
+      }
+      for (const p of Array.isArray(payments) ? payments : []) {
+        if (clean(p?.status) === "void") continue;
+        const key = clean(p?.paid_date || p?.created_date).slice(0, 7);
+        if (key < startKey) continue;
+        const b = bucketByKey.get(key);
+        if (b) b.collected += num(p?.amount);
+      }
+      for (const b of buckets) { b.invoiced = money(b.invoiced); b.collected = money(b.collected); }
+      const today = new Date().toISOString().slice(0, 10);
+      let openAr = 0; let overdueAr = 0; let overdueCount = 0;
+      for (const r of live) {
+        const bal = num(r?.balance_due);
+        if (bal <= 0) continue;
+        openAr += bal;
+        if (clean(r?.due_date) && clean(r.due_date) < today && ["sent", "partially_paid"].includes(clean(r?.status))) {
+          overdueAr += bal; overdueCount += 1;
+        }
+      }
+      return Response.json({
+        success: true, action,
+        months: buckets,
+        open_ar: money(openAr),
+        overdue_ar: money(overdueAr),
+        overdue_count: overdueCount,
+        invoiced_total: money(live.reduce((s: number, r: any) => s + num(r?.total), 0)),
+        collected_total: money(live.reduce((s: number, r: any) => s + num(r?.amount_paid), 0)),
+      });
+    }
+
+    if (action === "export_ar") {
+      const status = clean(body?.status);
+      if (status && !INVOICE_STATUSES.includes(status)) throw bad("Unknown invoice status filter.");
+      const rows = await loadAllEntityRows({
+        entity: Invoice,
+        query: status ? { status } : {},
+        sort: '-created_date',
+        label: 'AR export invoices',
+      });
+      const query = clean(body?.query).toLowerCase();
+      const startDate = clean(body?.start_date);
+      const endDate = clean(body?.end_date);
+      const inRange = (r: any) => {
+        const d = clean(r?.issue_date || r?.created_date?.slice(0, 10));
+        return (!startDate || d >= startDate) && (!endDate || d <= endDate);
+      };
+      const invoices = rows
+        .filter((r: any) => (!query
+          || clean(r?.invoice_number).toLowerCase().includes(query)
+          || clean(r?.customer_display_name || r?.customer_name).toLowerCase().includes(query)) && inRange(r))
+        .sort((a: any, b: any) => clean(a?.invoice_number).localeCompare(clean(b?.invoice_number)));
+      const invoiceLines = [
+        csvRow(["Invoice Number", "Customer", "Issue Date", "Due Date", "Terms", "Item Description", "Qty", "Rate", "Line Total", "Subtotal", "Discount", "Tax", "Deposit Applied", "Total", "Amount Paid", "Balance Due", "Status"]),
+        ...invoices.flatMap((inv: any) => {
+          const items = Array.isArray(inv?.line_items) && inv.line_items.length ? inv.line_items : [{}];
+          return items.map((li: any, i: number) => csvRow([
+            inv.invoice_number, inv.customer_display_name || inv.customer_name, inv.issue_date, inv.due_date, inv.terms,
+            li.description || "", li.quantity ?? "", li.unit_price ?? "",
+            li.description ? money(num(li.quantity) * num(li.unit_price)) : "",
+            i === 0 ? inv.subtotal : "", i === 0 ? inv.discount_amount : "", i === 0 ? inv.tax_amount : "",
+            i === 0 ? inv.deposit_applied : "", i === 0 ? inv.total : "",
+            i === 0 ? inv.amount_paid : "", i === 0 ? inv.balance_due : "", i === 0 ? inv.status : "",
+          ]));
+        }),
+      ];
+      const payments = await loadAllEntityRows({
+        entity: Payment,
+        query: {},
+        sort: 'created_date',
+        label: 'AR export payments',
+      });
+      const invoiceById = new Map(invoices.map((r: any) => [clean(r?.id), r]));
+      const paymentLines = [
+        csvRow(["Date", "Invoice Number", "Customer", "Amount", "Method", "Reference", "Status", "Notes"]),
+        ...payments
+          .filter((p: any) => invoiceById.has(clean(p?.invoice_id)))
+          .sort((a: any, b: any) => clean(a?.paid_date).localeCompare(clean(b?.paid_date)))
+          .map((p: any) => {
+            const inv = invoiceById.get(clean(p?.invoice_id));
+            return csvRow([p.paid_date, inv?.invoice_number, inv?.customer_display_name || inv?.customer_name || p.customer_id, p.amount, p.method, p.reference_number, p.status, p.notes]);
+          }),
+      ];
+      return Response.json({
+        success: true,
+        action,
+        invoice_count: invoices.length,
+        payment_count: paymentLines.length - 1,
+        invoices_csv: invoiceLines.join("\n"),
+        payments_csv: paymentLines.join("\n"),
+      });
+    }
+
+    if (action === "get_invoice") {
+      const invoiceId = clean(body?.invoice_id);
+      const invoice = await Invoice.get(invoiceId).catch(() => null);
+      if (!invoice?.id) throw bad("Invoice not found.", 404);
+      const [payments, customer, estimate, workOrder, opportunity] = await Promise.all([
+        Payment.filter({ invoice_id: invoiceId }, undefined, 500),
+        clean(invoice.customer_id) ? Customer.get(clean(invoice.customer_id)).catch(() => null) : null,
+        clean(invoice.estimate_id) ? Estimate.get(clean(invoice.estimate_id)).catch(() => null) : null,
+        clean(invoice.work_order_id) ? WorkOrder.get(clean(invoice.work_order_id)).catch(() => null) : null,
+        clean(invoice.opportunity_id) ? Opportunity.get(clean(invoice.opportunity_id)).catch(() => null) : null,
+      ]);
+      if (!Array.isArray(payments)) throw bad("Payment lookup failed.", 500);
+      const invoiceForView = { ...invoice, customer_display_name: clean(invoice.customer_display_name || invoice.customer_name || customer?.company_name) };
+      return Response.json({
+        success: true,
+        action,
+        invoice: invoiceForView,
+        payments: payments.sort((a: any, b: any) => clean(b?.paid_date || b?.created_date).localeCompare(clean(a?.paid_date || a?.created_date))),
+        customer: customer || null,
+        estimate: estimate || null,
+        work_order: workOrder || null,
+        opportunity: opportunity || null,
+      });
+    }
+
+    if (action === "list_invoiceable_estimates") {
+      // Page all approved estimates + all invoices so already_billed reflects
+      // complete billing history, not just the first default-size page.
+      const rows = await loadAllEntityRows({
+        entity: Estimate,
+        query: { status: "approved" },
+        sort: '-created_date',
+        label: 'Invoiceable estimates',
+      });
+      const query = clean(body?.query).toLowerCase();
+      const invoices = await loadAllEntityRows({
+        entity: Invoice,
+        query: {},
+        sort: '-created_date',
+        label: 'Estimate billed-invoice map',
+      });
+      const billedByEstimate = new Map<string, number>();
+      for (const inv of invoices) {
+        const eid = clean(inv?.estimate_id);
+        if (!eid || clean(inv?.status) === "void") continue;
+        billedByEstimate.set(eid, money((billedByEstimate.get(eid) || 0) + num(inv?.total)));
+      }
+      const limit = Math.max(1, Math.min(500, Math.floor(Number(body?.limit) || 50)));
+      const matchedEstimates = rows
+        .filter((e: any) => !e?.deleted && num(e?.quote_total) > 0)
+        .filter((e: any) => !query
+          || clean(e?.project_name).toLowerCase().includes(query)
+          || clean(e?.client_name).toLowerCase().includes(query)
+          || clean(e?.estimate_number).toLowerCase().includes(query))
+        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
+      const estimates = matchedEstimates
+        .slice(0, limit)
+        .map((e: any) => {
+          const billed = billedByEstimate.get(clean(e?.id)) || 0;
+          return {
+            id: clean(e?.id),
+            estimate_number: clean(e?.estimate_number),
+            project_name: clean(e?.project_name),
+            client_name: clean(e?.client_name),
+            quote_total: num(e?.quote_total),
+            deposit_percent: num(e?.deposit_percent, 50),
+            already_billed: billed,
+            remaining_billable: money(num(e?.quote_total) - billed),
+          };
+        });
+      return Response.json({
+        success: true,
+        action,
+        estimates,
+        total_count: matchedEstimates.length,
+        showing: estimates.length,
+        truncated: matchedEstimates.length > estimates.length,
+        limit,
+      });
+    }
+
+    if (action === "create_from_estimate") {
+      const estimateId = clean(body?.estimate_id);
+      const estimate = await Estimate.get(estimateId).catch(() => null);
+      if (!estimate?.id) throw bad("Estimate not found.", 404);
+      if (clean(estimate.status) !== "approved") throw bad("Only approved estimates can be invoiced.", 409);
+      const quoteTotal = num(estimate.quote_total);
+      if (!(quoteTotal > 0)) throw bad("The approved estimate has no billable total.", 409);
+
+      const prior = await Invoice.filter({ estimate_id: estimateId }, undefined, 500);
+      if (!Array.isArray(prior)) throw bad("Prior invoice lookup failed.", 500);
+      const live = prior.filter((inv: any) => clean(inv?.status) !== "void");
+      const billed = money(live.reduce((s: number, inv: any) => s + num(inv?.total), 0));
+      const remaining = money(quoteTotal - billed);
+
+      const mode = clean(body?.billing_mode) || "full";
+      const projectName = clean(estimate.project_name) || `Estimate ${clean(estimate.estimate_number)}`;
+      const ref = clean(estimate.estimate_number) ? `Estimate ${clean(estimate.estimate_number)}` : "Approved estimate";
+      let amount = 0;
+      let billingType = "standard";
+      let lineDescription = `${ref} — ${projectName}`;
+
+      if (mode === "full") {
+        if (billed > 0) throw bad(`This estimate already has ${money(billed)} invoiced — use the final billing mode for the remainder.`, 409);
+        amount = quoteTotal;
+        billingType = "standard";
+      } else if (mode === "deposit") {
+        const explicitAmount = num(body?.deposit_amount, NaN);
+        const pct = num(body?.deposit_percent, NaN);
+        amount = Number.isFinite(explicitAmount) && explicitAmount > 0
+          ? money(explicitAmount)
+          : money(quoteTotal * (Number.isFinite(pct) && pct > 0 ? pct : num(estimate.deposit_percent, 50)) / 100);
+        if (!(amount > 0)) throw bad("A positive deposit amount is required.");
+        if (money(billed + amount) > quoteTotal) throw bad(`Deposit would exceed the billable remainder of ${money(remaining)}.`, 409);
+        billingType = "deposit";
+        lineDescription = `Deposit — ${ref} — ${projectName}`;
+      } else if (mode === "final") {
+        if (!(remaining > 0)) throw bad("Nothing left to bill — the estimate is already fully invoiced.", 409);
+        amount = remaining;
+        billingType = "final";
+        lineDescription = `Final billing — ${ref} — ${projectName}`;
+      } else {
+        throw bad("billing_mode must be full, deposit, or final.");
+      }
+
+      const customerId = clean(estimate.customer_id);
+      let customerDisplayName = clean(estimate.client_name);
+      if (customerId) {
+        const customer = await Customer.get(customerId).catch(() => null);
+        if (customer?.id) customerDisplayName = clean(customer.company_name) || customerDisplayName;
+      }
+      const invoiceNumber = await nextInvoiceNumber(Invoice, base44.asServiceRole);
+      const invoiceKey = clean(body?.creation_request_key)
+        || `invoice-from-estimate:${estimateId}:${mode}:${Date.now()}`;
+      const totals = computeTotals({
+        line_items: [{ description: lineDescription, quantity: 1, unit_price: amount, taxable: false }],
+        discount_amount: 0, tax_rate: 0, deposit_applied: 0,
+      });
+      const createdResult = await createFoundationRecordWithRecovery({
+        entity: Invoice,
+        data: {
+          creation_request_key: invoiceKey,
+          invoice_number: invoiceNumber,
+          status: "draft",
+          billing_type: billingType,
+          customer_id: customerId,
+          customer_display_name: customerDisplayName,
+          opportunity_id: clean(estimate.opportunity_id),
+          estimating_request_id: clean(estimate.estimating_request_id),
+          estimate_id: estimateId,
+          work_order_id: clean(estimate.work_order_id),
+          line_items: sanitizeLineItems([{ description: lineDescription, quantity: 1, unit_price: amount, taxable: false }]),
+          ...totals,
+          amount_paid: 0,
+          balance_due: totals.total,
+          issue_date: clean(body?.issue_date) || today(),
+          due_date: clean(body?.due_date) || dueDateFromTerms(clean(body?.terms) || clean(estimate?.terms), clean(body?.issue_date) || today()),
+          terms: clean(body?.terms) || clean(estimate?.terms),
+          notes: clean(body?.notes),
+          internal_notes: clean(body?.internal_notes),
+          created_by: actor,
+          updated_by: actor,
+          source_summary: {
+            kind: "create_from_estimate",
+            estimate_id: estimateId,
+            estimate_number: clean(estimate.estimate_number),
+            billing_mode: mode,
+            quote_total: quoteTotal,
+            previously_billed: billed,
+          },
+        },
+        readMatches: () => findByCreationKey(Invoice, invoiceKey),
+        label: "Invoice",
+      });
+      return Response.json({
+        success: true,
+        action,
+        invoice: createdResult.record,
+        billing: { mode, amount, quote_total: quoteTotal, previously_billed: billed, remaining_after: money(remaining - amount) },
+      });
+    }
+
+    if (action === "create_invoice") {
+      const fields = body?.fields && typeof body.fields === "object" ? body.fields : {};
+      const customerId = clean(fields.customer_id);
+      if (!customerId) throw bad("A customer is required.");
+      const customer = await Customer.get(customerId).catch(() => null);
+      if (!customer?.id) throw bad("The selected Customer no longer exists.", 409);
+      const lineItems = sanitizeLineItems(fields.line_items) || [];
+      const linkChecks: Array<[string, any]> = [
+        ["estimate_id", Estimate], ["work_order_id", WorkOrder], ["opportunity_id", Opportunity],
+      ];
+      for (const [key, entity] of linkChecks) {
+        const id = clean((fields as any)[key]);
+        if (id) {
+          const linked = await entity.get(id).catch(() => null);
+          if (!linked?.id) throw bad(`The linked ${key.replace(/_/g, " ")} no longer exists.`, 409);
+        }
+      }
+      const totals = computeTotals({ ...fields, line_items: lineItems });
+      const invoiceNumber = clean(fields.invoice_number) || await nextInvoiceNumber(Invoice, base44.asServiceRole);
+      // O-010 (CMP-A10) -- WO->invoice exact-once ownership: when the invoice
+      // carries a `work_order_id`, the creation key derives `invoice:wo:<woId>`
+      // (one invoice per WO, CAS-recoverable), not a per-call timestamp. The
+      // caller's explicit `creation_request_key` still wins.
+      const woKey = clean(fields.work_order_id) ? `invoice:wo:${clean(fields.work_order_id)}` : null;
+      const invoiceKey = clean(body?.creation_request_key) || woKey || `invoice:${customerId}:${Date.now()}`;
+      const createdResult = await createFoundationRecordWithRecovery({
+        entity: Invoice,
+        data: {
+          creation_request_key: invoiceKey,
+          invoice_number: invoiceNumber,
+          status: "draft",
+          customer_id: customerId,
+          customer_display_name: clean(fields.customer_display_name) || clean(customer.company_name),
+          opportunity_id: clean(fields.opportunity_id),
+          estimating_request_id: clean(fields.estimating_request_id),
+          estimate_id: clean(fields.estimate_id),
+          work_order_id: clean(fields.work_order_id),
+          contact_id: clean(fields.contact_id),
+          location_id: clean(fields.location_id),
+          line_items: lineItems,
+          ...totals,
+          amount_paid: 0,
+          balance_due: totals.total,
+          issue_date: clean(fields.issue_date),
+          due_date: clean(fields.due_date) || dueDateFromTerms(clean(fields.terms) || clean(customer?.terms), clean(fields.issue_date) || today()),
+          terms: clean(fields.terms) || clean(customer?.terms),
+          notes: clean(fields.notes),
+          internal_notes: clean(fields.internal_notes),
+          created_by: actor,
+          updated_by: actor,
+          source_summary: fields.source_summary && typeof fields.source_summary === "object" ? fields.source_summary : {},
+        },
+        readMatches: () => findByCreationKey(Invoice, invoiceKey),
+        label: "Invoice",
+      });
+      return Response.json({ success: true, action, invoice: createdResult.record });
+    }
+
+    if (action === "update_invoice") {
+      const invoiceId = clean(body?.invoice_id);
+      const current = await Invoice.get(invoiceId).catch(() => null);
+      if (!current?.id) throw bad("Invoice not found.", 404);
+      if (["paid", "void"].includes(clean(current.status))) throw bad("Paid or void invoices cannot be edited.", 409);
+      const desired: any = {};
+      const incoming = body?.fields && typeof body.fields === "object" ? body.fields : {};
+      for (const key of EDITABLE_INVOICE_FIELDS) {
+        if (Object.prototype.hasOwnProperty.call(incoming, key)) desired[key] = incoming[key];
+      }
+      if (Object.keys(desired).length === 0) throw bad("No editable fields supplied.");
+      if (Object.prototype.hasOwnProperty.call(desired, "line_items")) {
+        desired.line_items = sanitizeLineItems(desired.line_items) || [];
+      }
+      if (Object.prototype.hasOwnProperty.call(desired, "customer_id")) {
+        const cid = clean(desired.customer_id);
+        const customer = cid ? await Customer.get(cid).catch(() => null) : null;
+        if (!customer?.id) throw bad("The selected Customer no longer exists.", 409);
+        desired.customer_id = cid;
+        desired.customer_display_name = clean(desired.customer_display_name) || clean(customer.company_name);
+      }
+      const merged = { ...current, ...desired };
+      const totals = computeTotals(merged);
+      Object.assign(desired, totals, {
+        balance_due: money(totals.total - num(current.amount_paid)),
+        updated_by: actor,
+      });
+      const baseline = body?.baseline && typeof body.baseline === "object" ? body.baseline : current;
+      const expected = expectedFoundationFields({ ...current, ...baseline }, desired);
+      const updated = await replaceFoundationFieldsIfUnchanged({
+        entity: Invoice,
+        recordId: invoiceId,
+        expectedFields: expected,
+        nextFields: desired,
+        label: "Invoice fields",
+      });
+      return Response.json({ success: true, action, invoice: updated });
+    }
+
+    if (action === "mark_sent") {
+      const invoiceId = clean(body?.invoice_id);
+      const current = await Invoice.get(invoiceId).catch(() => null);
+      if (!current?.id) throw bad("Invoice not found.", 404);
+      if (clean(current.status) !== "draft") throw bad("Only draft invoices can be marked sent.", 409);
+      const desired = {
+        status: "sent",
+        sent_date: today(),
+        issue_date: clean(current.issue_date) || today(),
+        updated_by: actor,
+      };
+      const expected = expectedFoundationFields(current, desired);
+      const updated = await replaceFoundationFieldsIfUnchanged({
+        entity: Invoice, recordId: invoiceId, expectedFields: expected, nextFields: desired, label: "Invoice send",
+      });
+      return Response.json({ success: true, action, invoice: updated });
+    }
+
+    if (action === "email_invoice" || action === "send_past_due_reminder") {
+      const reminder = action === "send_past_due_reminder";
+      const invoiceId = clean(body?.invoice_id);
+      const invoice = await Invoice.get(invoiceId).catch(() => null);
+      if (!invoice?.id) throw bad("Invoice not found.", 404);
+      if (clean(invoice.status) === "void" || clean(invoice.status) === "draft") {
+        throw bad("Only issued invoices (sent/partial/paid) can be emailed.", 409);
+      }
+      const today = new Date().toISOString().slice(0, 10);
+      const daysPastDue = clean(invoice.due_date) ? Math.max(0, Math.floor((Date.parse(today) - Date.parse(clean(invoice.due_date))) / 86400000)) : 0;
+      if (reminder) {
+        if (num(invoice.balance_due) <= 0) throw bad("This invoice has no open balance — nothing to remind about.", 409);
+        if (daysPastDue <= 0) throw bad("This invoice is not past due yet — use the regular invoice email instead.", 409);
+      }
+      const customer = clean(invoice.customer_id)
+        ? await Customer.get(clean(invoice.customer_id)).catch(() => null)
+        : null;
+      // G-04: invoices/reminders are AR documents — resolve the billing
+      // recipient at contact level first (billing-role > accounts_payable
+      // authority > primary contact > customer-level fields). The contact
+      // read degrades to [] so an entity hiccup never blocks a send.
+      const contacts = clean(invoice.customer_id)
+        ? await CustomerContact.filter({ customer_id: clean(invoice.customer_id) }, '-created_date', 500).catch(() => [])
+        : [];
+      const billing = resolveBillingContact({ contacts, customer });
+      const onFile = [
+        billing?.email,
+        ...(Array.isArray(contacts) ? contacts.filter((ct: any) => contactMailable(ct)).map((ct: any) => ct?.email) : []),
+        customer?.billing_email, customer?.billing_contact_email,
+        customer?.email, customer?.contact_email, customer?.contact_office_email,
+      ].map((v: any) => clean(v).toLowerCase()).filter((v: string) => v.includes("@"));
+      const requested = clean(body?.email).toLowerCase();
+      const to = (requested && onFile.includes(requested)) ? requested : (onFile[0] || '');
+      if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
+      const portalBase = (String(Deno.env.get('PUBLIC_APP_URL') || 'https://clay-flow-signage-suite-387da97c.base44.app').replace(/\/+$/, ''));
+
+      // Reuse or mint an invoice-scoped portal link so the recipient can view/pay online.
+      const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;
+      let portalUrl = "";
+      const existing = await PortalLink.filter({ kind: "invoice", record_id: invoiceId }, undefined, 500).catch(() => []);
+      let link = (Array.isArray(existing) ? existing : []).find((l: any) => l?.id && l?.revoked !== true && (!l?.expires_at || Date.parse(String(l.expires_at)) > Date.now()));
+      if (!link) {
+        const token = `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
+        const key = `portal-link:invoice:${invoiceId}:email:${clean(body?.creation_request_key) || Date.now()}`.slice(0, 256);
+        const created = await createFoundationRecordWithRecovery({
+          entity: PortalLink,
+          data: {
+            creation_request_key: key,
+            token,
+            kind: "invoice",
+            record_id: invoiceId,
+            customer_id: clean(invoice.customer_id),
+            label: `Invoice ${clean(invoice.invoice_number) || invoiceId}`,
+            created_by: actor,
+            // Per-link expiry override: caller may pass expires_days (clamped 1-365); default stays 90.
+            expires_at: new Date(Date.now() + Math.min(365, Math.max(1, Math.floor(Number(body?.expires_days || 0)) || 90)) * 24 * 60 * 60 * 1000).toISOString(),
+            revoked: false,
+            open_count: 0,
+          },
+          readMatches: () => PortalLink.filter({ creation_request_key: key }, undefined, 500),
+          label: "Invoice portal link",
+        });
+        link = created.record;
+      }
+      if (portalBase && link?.token) portalUrl = `${portalBase}/customerportal?token=${encodeURIComponent(clean(link.token))}`;
+
+      const invNum = clean(invoice.invoice_number) || "Invoice";
+      const companyName = clean(body?.company_name) || "CCS Signage";
+      const items = Array.isArray(invoice.line_items) ? invoice.line_items : [];
+      const money = (n: any) => `$${num(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      const rows = items.map((i: any) =>
+        `<tr><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${clean(i?.description || i?.name) || "Item"}${num(i?.quantity) > 1 ? ` × ${num(i.quantity)}` : ""}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:right">${money(num(i?.quantity) * num(i?.unit_price))}</td></tr>`).join("");
+      const subject = reminder
+        ? `${companyName} — Payment reminder: ${invNum} (${daysPastDue} day${daysPastDue === 1 ? "" : "s"} past due, ${money(invoice.balance_due)} open)`
+        : `${companyName} — ${invNum} ${num(invoice.balance_due) > 0 ? `(${money(invoice.balance_due)} due)` : ""}`;
+      const html = `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
+        ${reminder ? `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;margin-bottom:16px"><p style="margin:0;font-weight:700;color:#b91c1c">Payment reminder</p><p style="margin:4px 0 0;font-size:13px;color:#7f1d1d">This invoice is ${daysPastDue} day${daysPastDue === 1 ? "" : "s"} past its due date. We'd appreciate payment at your earliest convenience — or a quick note so we know it's on the way.</p></div>` : ""}
+        <h2 style="color:#1d4ed8;margin-bottom:4px">${companyName}</h2>
+        <p style="margin-top:0;color:#64748b;font-size:13px">${invNum}${clean(invoice.issue_date) ? ` · issued ${clean(invoice.issue_date)}` : ""}${clean(invoice.due_date) ? ` · due ${clean(invoice.due_date)}` : ""}</p>
+        ${rows ? `<table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0">${rows}</table>` : ""}
+        <table style="width:100%;font-size:14px;margin-top:8px">
+          <tr><td style="color:#64748b">Total</td><td style="text-align:right;font-weight:600">${money(invoice.total)}</td></tr>
+          <tr><td style="color:#64748b">Paid</td><td style="text-align:right;color:#059669">${money(num(invoice.total) - num(invoice.balance_due))}</td></tr>
+          <tr><td style="color:#64748b;font-weight:600">Balance due</td><td style="text-align:right;font-weight:700;color:${num(invoice.balance_due) > 0 ? "#b91c1c" : "#059669"}">${money(invoice.balance_due)}</td></tr>
+        </table>
+        ${portalUrl ? `<p style="text-align:center;margin:28px 0"><a href="${portalUrl}" style="background:#2563eb;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">View invoice online</a></p>
+        <p style="font-size:12px;color:#64748b;text-align:center">Your portal link is valid for 90 days — view the invoice, message us, or let us know a payment is on the way.</p>` : ""}
+      </div>`;
+      const sent = await base44.asServiceRole.functions
+        .invoke("sendGmail", { to, subject, body: html, _workflow_capability: "ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc" })
+        .catch((e: any) => ({ data: { error: e?.message || String(e) } }));
+      const sendResult = sent?.data || sent;
+      if (sendResult?.error || sendResult?.success === false) {
+        throw bad(`Invoice email could not be sent: ${sendResult?.error || "sendGmail failed"}`);
+      }
+      return Response.json({ success: true, action, sent_to: to, portal_url: portalUrl || undefined });
+    }
+
+    if (action === "email_statement") {
+      let cid = clean(body?.customer_id);
+      if (!cid && clean(body?.invoice_id)) {
+        const inv = await Invoice.get(clean(body?.invoice_id)).catch(() => null);
+        cid = clean(inv?.customer_id);
+      }
+      if (!cid) throw bad("customer_id or invoice_id is required.");
+      const customer = await Customer.get(cid).catch(() => null);
+      if (!customer?.id) throw bad("Customer not found.", 404);
+      // G-04: statements are AR documents — default to the billing contact.
+      // Contact-level chain (billing role > accounts_payable > primary) then
+      // the customer-level billing fields, matching statementBatchModel's
+      // billing-first order. Previously generic email fields outranked the
+      // billing columns here. The contact read degrades to [] so an entity
+      // hiccup never blocks a send.
+      const contacts = await CustomerContact.filter({ customer_id: cid }, '-created_date', 500).catch(() => []);
+      const to = clean(body?.email).toLowerCase() || resolveBillingContact({ contacts, customer }).email;
+      if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
+      // Full paged invoice history for this customer — a statement built from
+      // a truncated first page would silently understate the open balance.
+      const rows = await loadAllEntityRows({
+        entity: Invoice,
+        query: { customer_id: cid },
+        sort: 'created_date',
+        label: 'Statement invoices',
+      });
+      const open = rows
+        .filter((i: any) => OPEN_AR_STATUSES.has(clean(i?.status)) && num(i?.balance_due) > 0)
+        .sort((a: any, b: any) => clean(a?.due_date).localeCompare(clean(b?.due_date)));
+      if (!open.length) throw bad("This customer has no open balance — nothing to put on a statement.", 409);
+      const today = new Date().toISOString().slice(0, 10);
+      const total = open.reduce((s: number, i: any) => s + num(i?.balance_due), 0);
+      const overdue = open.filter((i: any) => clean(i?.due_date) && clean(i?.due_date) < today);
+      // Estimate-level subtotals: resolve the linked estimate for each open
+      // invoice so the statement shows quote context, not just invoice numbers.
+      const stmtEstimates = await loadAllEntityRows({
+        entity: Estimate,
+        query: { customer_id: cid },
+        sort: 'created_date',
+        label: 'Statement estimates',
+      }).catch(() => []);
+      const estById = new Map((Array.isArray(stmtEstimates) ? stmtEstimates : []).map((e: any) => [clean(e?.id), e]));
+
+      const portalBase = (String(Deno.env.get('PUBLIC_APP_URL') || 'https://clay-flow-signage-suite-387da97c.base44.app').replace(/\/+$/, ''));
+      const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;
+      let portalUrl = "";
+      const existing = await PortalLink.filter({ kind: "customer", record_id: cid }, undefined, 500).catch(() => []);
+      let link = (Array.isArray(existing) ? existing : []).find((l: any) => l?.id && l?.revoked !== true && (!l?.expires_at || Date.parse(String(l.expires_at)) > Date.now()));
+      if (!link) {
+        const token = `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
+        const key = `portal-link:customer:${cid}:statement:${clean(body?.creation_request_key) || Date.now()}`.slice(0, 256);
+        const created = await createFoundationRecordWithRecovery({
+          entity: PortalLink,
+          data: {
+            creation_request_key: key,
+            token,
+            kind: "customer",
+            record_id: cid,
+            customer_id: cid,
+            label: `${clean(customer.company_name) || clean(customer.name) || "Customer"} portal`,
+            created_by: actor,
+            // Per-link expiry override: caller may pass expires_days (clamped 1-365); default stays 90.
+            expires_at: new Date(Date.now() + Math.min(365, Math.max(1, Math.floor(Number(body?.expires_days || 0)) || 90)) * 24 * 60 * 60 * 1000).toISOString(),
+            revoked: false,
+            open_count: 0,
+          },
+          readMatches: () => PortalLink.filter({ creation_request_key: key }, undefined, 500),
+          label: "Customer portal link",
+        });
+        link = created.record;
+      }
+      if (portalBase && link?.token) portalUrl = `${portalBase}/customerportal?token=${encodeURIComponent(clean(link.token))}`;
+
+      const companyName = clean(body?.company_name) || "CCS Signage";
+      const money = (n: any) => `$${num(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      const custName = clean(customer.company_name) || clean(customer.name) || "Customer";
+      const stmtRows = open.map((i: any) => {
+        const past = clean(i?.due_date) && clean(i?.due_date) < today;
+        const est = estById.get(clean(i?.estimate_id));
+        const estLabel = est ? `${clean(est?.estimate_number) || "Estimate"} (${money(est?.quote_total)})` : "";
+        return `<tr><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${clean(i?.invoice_number) || "Invoice"}${past ? ' <span style="color:#b91c1c;font-size:11px;font-weight:700">PAST DUE</span>' : ""}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${estLabel}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${clean(i?.due_date) || "—"}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:right">${money(i?.balance_due)}</td></tr>`;
+      }).join("");
+      const subject = `${companyName} — Account statement for ${custName} (${money(total)} open)`;
+      const html = `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
+        ${overdue.length ? `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;margin-bottom:16px"><p style="margin:0;font-weight:700;color:#b91c1c">Your account has ${overdue.length} past-due invoice${overdue.length === 1 ? "" : "s"}</p><p style="margin:4px 0 0;font-size:13px;color:#7f1d1d">Please arrange payment at your earliest convenience — or reply so we know it is on the way.</p></div>` : ""}
+        <h2 style="color:#1d4ed8;margin-bottom:4px">${companyName}</h2>
+        <p style="margin-top:0;color:#64748b;font-size:13px">Account statement for ${custName} · as of ${today}</p>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0">
+          <tr><th style="text-align:left;padding:6px 10px;border-bottom:2px solid #cbd5e1;color:#64748b;font-size:12px">INVOICE</th><th style="text-align:left;padding:6px 10px;border-bottom:2px solid #cbd5e1;color:#64748b;font-size:12px">ESTIMATE</th><th style="text-align:left;padding:6px 10px;border-bottom:2px solid #cbd5e1;color:#64748b;font-size:12px">DUE</th><th style="text-align:right;padding:6px 10px;border-bottom:2px solid #cbd5e1;color:#64748b;font-size:12px">BALANCE</th></tr>
+          ${stmtRows}
+        </table>
+        <table style="width:100%;font-size:14px;margin-top:8px">
+          <tr><td style="color:#64748b;font-weight:600">Total open balance</td><td style="text-align:right;font-weight:700;color:${overdue.length ? "#b91c1c" : "#1e293b"}">${money(total)}</td></tr>
+        </table>
+        ${portalUrl ? `<p style="text-align:center;margin:28px 0"><a href="${portalUrl}" style="background:#2563eb;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">View your account online</a></p>
+        <p style="font-size:12px;color:#64748b;text-align:center">Your portal link is valid for 90 days — view invoices, message us, or let us know a payment is on the way.</p>` : ""}
+      </div>`;
+      const sent = await base44.asServiceRole.functions
+        .invoke("sendGmail", { to, subject, body: html, _workflow_capability: "ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc" })
+        .catch((e: any) => ({ data: { error: e?.message || String(e) } }));
+      const sendResult = sent?.data || sent;
+      if (sendResult?.error || sendResult?.success === false) {
+        throw bad(`Statement email could not be sent: ${sendResult?.error || "sendGmail failed"}`);
+      }
+      return Response.json({ success: true, action, sent_to: to, open_invoices: open.length, open_total: money(total), portal_url: portalUrl || undefined });
+    }
+
+    if (action === "void_invoice") {
+      const invoiceId = clean(body?.invoice_id);
+      const current = await Invoice.get(invoiceId).catch(() => null);
+      if (!current?.id) throw bad("Invoice not found.", 404);
+      if (clean(current.status) === "void") throw bad("Invoice is already void.", 409);
+      const payments = await Payment.filter({ invoice_id: invoiceId }, undefined, 500);
+      // Guard on the net collected balance rather than row presence — a payment
+      // fully offset by credit-memo or refund rows nets to zero and no longer
+      // blocks the void. Any money still held does.
+      const netCollected = Array.isArray(payments)
+        ? money(payments
+            .filter((p: any) => ["recorded", "refunded"].includes(clean(p?.status)))
+            .reduce((s: number, p: any) => s + num(p?.amount), 0))
+        : 0;
+      if (netCollected > 0.005) {
+        throw bad("Void the recorded payments before voiding this invoice — refund collected money first.", 409);
+      }
+      const desired = {
+        status: "void",
+        voided_date: new Date().toISOString(),
+        void_reason: clean(body?.void_reason),
+        balance_due: 0,
+        updated_by: actor,
+      };
+      const expected = expectedFoundationFields(current, desired);
+      const updated = await replaceFoundationFieldsIfUnchanged({
+        entity: Invoice, recordId: invoiceId, expectedFields: expected, nextFields: desired, label: "Invoice void",
+      });
+      return Response.json({ success: true, action, invoice: updated });
+    }
+
+    if (action === "record_payment") {
+      const invoiceId = clean(body?.invoice_id);
+      const invoice = await Invoice.get(invoiceId).catch(() => null);
+      if (!invoice?.id) throw bad("Invoice not found.", 404);
+      if (!OPEN_AR_STATUSES.has(clean(invoice.status))) {
+        throw bad("Payments can only be recorded on sent or partially paid invoices.", 409);
+      }
+      const amount = num(body?.amount, NaN);
+      if (!(amount > 0)) throw bad("Payment amount must be positive.");
+      if (amount - num(invoice.balance_due) > 0.005) {
+        throw bad(`Payment exceeds the open balance of $${money(num(invoice.balance_due)).toFixed(2)}.`, 409);
+      }
+      const method = clean(body?.method) || "other";
+      if (!PAYMENT_METHODS.includes(method)) throw bad(`method must be one of ${PAYMENT_METHODS.join(", ")}.`);
+      const paymentKey = clean(body?.creation_request_key) || `payment:${invoiceId}:${Date.now()}`;
+      const createdResult = await createFoundationRecordWithRecovery({
+        entity: Payment,
+        data: {
+          creation_request_key: paymentKey,
+          invoice_id: invoiceId,
+          customer_id: clean(invoice.customer_id),
+          opportunity_id: clean(invoice.opportunity_id),
+          estimate_id: clean(invoice.estimate_id),
+          work_order_id: clean(invoice.work_order_id),
+          amount: money(amount),
+          method,
+          reference_number: clean(body?.reference_number),
+          paid_date: clean(body?.paid_date) || today(),
+          status: "recorded",
+          notes: clean(body?.notes),
+          created_by: actor,
+          // I-06 passthrough: staff entering a payment the customer reported
+          // through the portal stamps the A-15 attribution fields.
+          portal_source: clean(body?.portal_source),
+          portal_link_kind: clean(body?.portal_link_kind),
+          portal_actor: clean(body?.portal_actor),
+          recorded_via: clean(body?.recorded_via),
+          portal_recorded_at: clean(body?.portal_recorded_at),
+        },
+        readMatches: () => findByCreationKey(Payment, paymentKey),
+        label: "Payment",
+      });
+      const updated = await recomputeInvoiceAfterPayments({ Invoice, Payment, invoiceId, actor });
+      return Response.json({ success: true, action, payment: createdResult.record, invoice: updated });
+    }
+
+    if (action === "void_payment") {
+      const paymentId = clean(body?.payment_id);
+      const payment = await Payment.get(paymentId).catch(() => null);
+      if (!payment?.id) throw bad("Payment not found.", 404);
+      const status = clean(payment.status);
+      // A fully-refunded original (positive row flipped to "refunded") cannot be
+      // voided while its refund rows still point at it — void the refund row.
+      if (status === "refunded" && !clean(payment.refund_of_payment_id)) {
+        throw bad("Fully refunded payments cannot be voided — void the refund row to restore the balance.", 409);
+      }
+      if (!["recorded", "refunded"].includes(status)) {
+        throw bad("Only recorded payments or refund rows can be voided.", 409);
+      }
+      const desired = {
+        status: "void",
+        void_reason: clean(body?.void_reason),
+        voided_date: new Date().toISOString(),
+      };
+      const expected = expectedFoundationFields(payment, desired);
+      await replaceFoundationFieldsIfUnchanged({
+        entity: Payment, recordId: paymentId, expectedFields: expected, nextFields: desired, label: "Payment void",
+      });
+      // Voiding a refund row restores the original payment's refundable amount
+      // (and flips it back to "recorded" if it had been marked fully refunded).
+      const originId = clean(payment.refund_of_payment_id);
+      if (status === "refunded" && originId) {
+        const original = await Payment.get(originId).catch(() => null);
+        if (original?.id) {
+          const restored = Math.max(0, money(num(original.refunded_amount) + num(payment.amount)));
+          const origDesired: any = { refunded_amount: restored };
+          if (clean(original.status) === "refunded" && restored < num(original.amount) - 0.005) {
+            origDesired.status = "recorded";
+          }
+          const origExpected = expectedFoundationFields(original, origDesired);
+          await replaceFoundationFieldsIfUnchanged({
+            entity: Payment, recordId: clean(original.id), expectedFields: origExpected, nextFields: origDesired,
+            label: "Payment refund reversal",
+          });
+        }
+      }
+      const updated = await recomputeInvoiceAfterPayments({ Invoice, Payment, invoiceId: clean(payment.invoice_id), actor });
+      return Response.json({ success: true, action, invoice: updated });
+    }
+
+    if (action === "issue_credit_memo") {
+      // A credit memo is a negative "recorded" Payment row (method credit_memo)
+      // — it reopens the invoice balance while preserving the payment trail.
+      const invoiceId = clean(body?.invoice_id);
+      const invoice = await Invoice.get(invoiceId).catch(() => null);
+      if (!invoice?.id) throw bad("Invoice not found.", 404);
+      if (clean(invoice.status) === "void") throw bad("Void invoices cannot be credited.", 409);
+      const payments = await Payment.filter({ invoice_id: invoiceId }, undefined, 500);
+      if (!Array.isArray(payments)) throw bad("Payment lookup failed.", 500);
+      const creditKey = clean(body?.creation_request_key) || `credit:${invoiceId}:${Date.now()}`;
+      // Net money held, excluding any row this same request already wrote so a
+      // retried call does not trip its own over-credit validation.
+      const netHeld = money(payments
+        .filter((p: any) => ["recorded", "refunded"].includes(clean(p?.status))
+          && clean(p?.creation_request_key) !== creditKey)
+        .reduce((s: number, p: any) => s + num(p?.amount), 0));
+      if (!(netHeld > 0)) throw bad("Nothing collected on this invoice to credit.", 409);
+      const requested = num(body?.amount, NaN);
+      const amount = Number.isFinite(requested) ? money(requested) : netHeld;
+      if (!(amount > 0)) throw bad("Credit amount must be positive.");
+      if (amount - netHeld > 0.005) {
+        throw bad(`Credit exceeds the collected amount of $${money(netHeld).toFixed(2)}.`, 409);
+      }
+      const reason = clean(body?.reason);
+      const createdResult = await createFoundationRecordWithRecovery({
+        entity: Payment,
+        data: {
+          creation_request_key: creditKey,
+          invoice_id: invoiceId,
+          customer_id: clean(invoice.customer_id),
+          opportunity_id: clean(invoice.opportunity_id),
+          estimate_id: clean(invoice.estimate_id),
+          work_order_id: clean(invoice.work_order_id),
+          amount: money(-amount),
+          method: "credit_memo",
+          reference_number: clean(body?.reference_number),
+          paid_date: today(),
+          status: "recorded",
+          notes: reason ? `Credit memo: ${reason}` : "Credit memo",
+          created_by: actor,
+        },
+        readMatches: () => findByCreationKey(Payment, creditKey),
+        label: "Credit memo",
+      });
+      const updated = await recomputeInvoiceAfterPayments({ Invoice, Payment, invoiceId, actor });
+
+      // I-12: post the credit to the in-store credit ledger + notify the
+      // customer. Both legs are non-fatal — the credit memo Payment row is
+      // already persisted; a downstream failure must not roll it back, so
+      // problems surface as warnings on the response (stage_sync_warning
+      // pattern) rather than 500s.
+      let ledger_warning = "";
+      let notification_warning = "";
+      try {
+        const Ledger = (base44.asServiceRole.entities as any).StoreCreditLedger;
+        const customer = await Customer.get(clean(invoice.customer_id)).catch(() => null);
+        if (customer?.id && Ledger) {
+          const priorRows = await loadAllEntityRows({
+            entity: Ledger,
+            query: { customer_id: customer.id },
+            sort: "created_date",
+            label: "Store credit ledger",
+          }).catch(() => []);
+          const row = creditMemoLedgerRow({
+            payment: createdResult.record,
+            invoice,
+            customer,
+            prior_balance_cents: creditBalanceCents(customer, priorRows),
+            actor,
+            now: new Date().toISOString(),
+          });
+          if (row?.ledger_row) {
+            const key = clean(row.ledger_row.creation_request_key);
+            await createFoundationRecordWithRecovery({
+              entity: Ledger,
+              data: row.ledger_row,
+              readMatches: () => findByCreationKey(Ledger, key),
+              label: "Store credit ledger",
+            });
+            if (Object.keys(row.customer_patch || {}).length > 0) {
+              const expected = expectedFoundationFields(customer, row.customer_patch);
+              await replaceFoundationFieldsIfUnchanged({
+                entity: Customer,
+                recordId: customer.id,
+                expectedFields: expected,
+                nextFields: row.customer_patch,
+                label: "Customer store-credit balance",
+              });
+            }
+          }
+        }
+      } catch (e: any) {
+        ledger_warning = clean(e?.message || e) || "credit ledger write failed";
+      }
+      try {
+        const customer = await Customer.get(clean(invoice.customer_id)).catch(() => null);
+        const template = await base44.asServiceRole.entities.NotificationTemplate
+          .filter({ key: "credit_memo" }, undefined, 1)
+          .then((rows: any) => (Array.isArray(rows) ? rows[0] : null))
+          .catch(() => null);
+        const draft = creditMemoNotificationDraft({
+          invoice, customer, payment: createdResult.record,
+          amount, reason, actor,
+        });
+        if (template?.id && draft?.to) {
+          const subject = renderTemplate(clean(template.subject), draft.context).text;
+          const bodyText = renderTemplate(clean(template.body), draft.context).text;
+          const sent = await base44.asServiceRole.functions
+            .invoke("sendGmail", {
+              to: draft.to,
+              cc: draft.cc || undefined,
+              subject,
+              body: bodyText,
+              _workflow_capability: "ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc",
+            })
+            .catch((e: any) => ({ data: { error: e?.message || String(e) } }));
+          const sendResult = sent?.data || sent;
+          if (sendResult?.error || sendResult?.success === false) {
+            notification_warning = clean(sendResult?.error) || "credit memo email failed";
+          }
+        }
+      } catch (e: any) {
+        notification_warning = clean(e?.message || e) || "credit memo notification failed";
+      }
+
+      return Response.json({
+        success: true, action,
+        credit_memo: createdResult.record,
+        credited_amount: amount,
+        invoice: updated,
+        ledger_warning: ledger_warning || undefined,
+        notification_warning: notification_warning || undefined,
+      });
+    }
+
+    if (action === "refund_payment") {
+      // A refund is a negative "refunded" Payment row linked to the original via
+      // refund_of_payment_id. The original payment is never deleted — its
+      // refunded_amount accumulates and it flips to "refunded" only when fully
+      // returned, keeping the whole trail auditable.
+      const paymentId = clean(body?.payment_id);
+      const payment = await Payment.get(paymentId).catch(() => null);
+      if (!payment?.id) throw bad("Payment not found.", 404);
+      if (clean(payment.status) !== "recorded" || !(num(payment.amount) > 0)) {
+        throw bad("Only recorded payments can be refunded.", 409);
+      }
+      const invoiceId = clean(payment.invoice_id);
+      const invoice = await Invoice.get(invoiceId).catch(() => null);
+      if (!invoice?.id) throw bad("The invoice this payment applied to no longer exists.", 409);
+      if (clean(invoice.status) === "void") throw bad("Void invoices cannot be refunded.", 409);
+      const payments = await Payment.filter({ invoice_id: invoiceId }, undefined, 500);
+      if (!Array.isArray(payments)) throw bad("Payment lookup failed.", 500);
+      const refundKey = clean(body?.creation_request_key) || `refund:${paymentId}:${Date.now()}`;
+      // Sum existing refund rows for this payment, excluding any row this same
+      // request already wrote (retry-safe under creation_request_key).
+      const alreadyRefunded = money(payments
+        .filter((p: any) => clean(p?.refund_of_payment_id) === paymentId
+          && ["recorded", "refunded"].includes(clean(p?.status))
+          && clean(p?.creation_request_key) !== refundKey)
+        .reduce((s: number, p: any) => s + Math.abs(num(p?.amount)), 0));
+      const paymentRemaining = money(num(payment.amount) - alreadyRefunded);
+      // Also cap by the invoice's net collected balance so a refund cannot
+      // stack on top of a credit memo against the same dollars.
+      const netHeld = money(payments
+        .filter((p: any) => ["recorded", "refunded"].includes(clean(p?.status))
+          && clean(p?.creation_request_key) !== refundKey)
+        .reduce((s: number, p: any) => s + num(p?.amount), 0));
+      const refundable = money(Math.min(paymentRemaining, Math.max(0, netHeld)));
+      if (!(refundable > 0)) throw bad("This payment is already fully refunded or credited.", 409);
+      const requested = num(body?.amount, NaN);
+      const amount = Number.isFinite(requested) ? money(requested) : refundable;
+      if (!(amount > 0)) throw bad("Refund amount must be positive.");
+      if (amount - refundable > 0.005) {
+        throw bad(`Refund exceeds the refundable amount of $${money(refundable).toFixed(2)}.`, 409);
+      }
+      const reason = clean(body?.reason);
+      const createdResult = await createFoundationRecordWithRecovery({
+        entity: Payment,
+        data: {
+          creation_request_key: refundKey,
+          invoice_id: invoiceId,
+          customer_id: clean(payment.customer_id) || clean(invoice.customer_id),
+          opportunity_id: clean(payment.opportunity_id) || clean(invoice.opportunity_id),
+          estimate_id: clean(payment.estimate_id) || clean(invoice.estimate_id),
+          work_order_id: clean(payment.work_order_id) || clean(invoice.work_order_id),
+          amount: money(-amount),
+          method: clean(payment.method) || "other",
+          reference_number: clean(payment.reference_number),
+          paid_date: today(),
+          status: "refunded",
+          refund_of_payment_id: paymentId,
+          notes: reason ? `Refund: ${reason}` : `Refund on ${clean(invoice.invoice_number) || invoiceId}`,
+          created_by: actor,
+        },
+        readMatches: () => findByCreationKey(Payment, refundKey),
+        label: "Payment refund",
+      });
+      // Mark the original payment's cumulative refunded_amount (flips it to
+      // "refunded" at full return). Anchored CAS keeps concurrent refunds honest.
+      const nextRefunded = money(Math.min(num(payment.amount), alreadyRefunded + amount));
+      const origDesired: any = { refunded_amount: Math.max(num(payment.refunded_amount), nextRefunded) };
+      if (origDesired.refunded_amount >= num(payment.amount) - 0.005) origDesired.status = "refunded";
+      const origExpected = expectedFoundationFields(payment, origDesired);
+      await replaceFoundationFieldsIfUnchanged({
+        entity: Payment, recordId: paymentId, expectedFields: origExpected, nextFields: origDesired,
+        label: "Payment refund mark",
+      });
+      // Restock: real only when invoice lines reference inventory items. No
+      // linkage exists in the data model today, so the honest result is an
+      // explanatory note — never a fake movement.
+      const restock: any = { requested: body?.restock === true, performed: false, movements: [], note: "" };
+      if (restock.requested) {
+        const lines = Array.isArray(invoice.line_items) ? invoice.line_items : [];
+        const restockable = lines
+          .map((li: any) => ({ itemId: clean(li?.inventory_item_id || li?.item_id), qty: num(li?.quantity) }))
+          .filter((r: any) => r.itemId && r.qty > 0);
+        if (restockable.length === 0) {
+          restock.note = "No restock performed: these invoice lines carry no inventory_item_id/item_id linkage (aggregate billing milestones, not per-product lines). The movement-write path is live — when a line carries the linkage, the refund returns stock automatically.";
+        } else {
+          const Inventory = base44.asServiceRole.entities.Inventory;
+          const Movement = base44.asServiceRole.entities.InventoryMovement;
+          for (const r of restockable) {
+            const item = await Inventory.get(r.itemId).catch(() => null);
+            if (!item?.id) continue;
+            const next = money(num(item.quantity_on_hand) + r.qty);
+            const invExpected = expectedFoundationFields(item, { quantity_on_hand: next });
+            await replaceFoundationFieldsIfUnchanged({
+              entity: Inventory, recordId: clean(item.id), expectedFields: invExpected,
+              nextFields: { quantity_on_hand: next }, label: "Refund restock",
+            });
+            const itemLabel = [item.material_type, item.product_type, item.size].map((v: any) => clean(v)).filter(Boolean).join(" · ");
+            const moveKey = `${refundKey}:restock:${r.itemId}`.slice(0, 256);
+            const moveResult = await createFoundationRecordWithRecovery({
+              entity: Movement,
+              data: {
+                creation_request_key: moveKey,
+                item_id: clean(item.id),
+                item_label: itemLabel,
+                reason: "return",
+                delta: money(r.qty),
+                unit_cost: num(item.cost_per_unit),
+                resulting_qty: next,
+                work_order_id: clean(invoice.work_order_id),
+                note: `Refund restock — ${clean(invoice.invoice_number) || invoiceId}`,
+                created_by: actor,
+              },
+              readMatches: async () => Movement.filter({ creation_request_key: moveKey }, undefined, 500),
+              label: "Refund restock movement",
+            });
+            restock.movements.push(moveResult.record);
+          }
+          restock.performed = restock.movements.length > 0;
+          if (!restock.performed) restock.note = "Restock requested but no linked inventory items could be loaded.";
+        }
+      }
+      const updated = await recomputeInvoiceAfterPayments({ Invoice, Payment, invoiceId, actor });
+      return Response.json({ success: true, action, refund: createdResult.record, refunded_amount: amount, restock, invoice: updated });
+    }
+
+    throw bad(`Unsupported action "${action}".`);
+  } catch (error: any) {
+    const status = error?.statusCode || error?.status || 500;
+    return Response.json(
+      { success: false, error: error?.message || "Request failed." },
+      { status: status >= 400 && status < 600 ? status : 500 },
+    );
+  }
+});

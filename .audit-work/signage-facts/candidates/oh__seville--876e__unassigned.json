@@ -1,0 +1,962 @@
+{
+ "jurisdiction_id": "6ad9adf71f4097fcfe1c876e",
+ "jurisdiction_name": "Seville",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 123,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 122 A. Permanent Signs. 1. One sign, which may be a wall or window sign, not exceeding four (4) square feet in area may be permitted for each lot or parcel. 2. A residential development containing more than fifty (50) dwelling units may be permitted two (2) free-standing signs, one at each entrance to the development provided that each sign does not exceed twenty-five (25) square feet in area, does not exceed six (6) feet in height, is constructed exclusively of natural material, is spot lit and is located at least fifteen (15) feet from any street right-of-way or property line. The base and foundation of each such sign shall be landscaped with no fewer than five (5) evergreen shrubs. 3. In lieu of the signs permitted in Subsections 1 - 2 above, approved conditional uses of lots and structures may be permitted such signs as may be established by",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "type"
+   ],
+   "weight": 16,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 125,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 124 height of 100 feet and a maximum area of 300 square feet. High Rise Signs are a Conditional Use and approval is subject to the requirements of Article IX. 4. Window signs. Window signs shall not obscure more than fifty percent (50%) of the glazed surface of any window. 5. Awning signs shall not be larger than eighty (80) square feet or ten percent (10%) of the area of the surface of the building on which said sign is located. In addition, no awning sign shall project from the face of a wall more than thirty-six (36) inches and shall not extend beyond the building wall. C. Changeable Electronic Signs. Changeable Electronic Signs shall be permitted based on the following regulations: 1. Changeable Electronic Signs are subject to all regulations set forth in Article VII of the Seville Zoning Code. 2. Standards for electronic sign copy and image",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "type",
+    "authority",
+    "process"
+   ],
+   "weight": 14,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 126,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 125 Zoning Inspector and make adjustments to meet all requirements of this Section. The sign may not be turned back on until all operating adjustments have approval by the Village Zoning Inspector. SECTION 711 NON-ACCESSORY SIGNS (BILLBOARDS) Non-accessory signs (billboards) shall be permitted only in a commercial or industrial district and upon lands used for agricultural purposes, as required by Section 519.20 Ohio Revised Code, and shall require a zoning certificate. Such signs shall be located so as to maintain the same minimum front, side, and rear yard requirements if located closer than five hundred (500) feet to a dwelling. The maximum area for said individual billboard shall be three hundred (300) square feet and a maximum height of thirty-five (35) feet. Such signs visible to approaching traffic on either or both sides of a right-of-wa",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 14,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 120,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 119 traffic and parking on private property, such as signs designating handicapped parking, reserved parking, visitor parking, and loading areas, provided that such signs do not bear advertising or logo material; E. Wall signs not exceeding three (3) square feet in area that cannot be seen from a public street or right-of-way or from adjacent properties; F. Up to three temporary signs, each not exceeding four (4) square feet in area and four (4) feet in height per lot or parcel. Such signs shall not be displayed for more than thirty (30) days and shall not be located less than ten (10) feet from the right-of-way of any street or side lot line; G. Holiday decorations. SECTION 706 GENERAL REQUIREMENTS The regulations in this section shall apply to all signs in all zoning districts. 706.01 Illumination Any illuminated sign shall only emit light of ",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "type"
+   ],
+   "weight": 13,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 46,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 45 setback distance will be measured from the outermost location of the guywires, instead of the center of the system’s base. 2. Height: a. The total height of a system shall not exceed 60 (sixty) feet in height and shall be measured from the system base. b. The applicant shall provide evidence that the proposed tower height of a tower mounted wind energy system does not exceed the height recommended by the manufacturer of the wind energy system. 3. Sound Level: Operation of wind energy systems shall not exceed forty-five (45) decibels, except during short-term events such as severe wind storms and utility outages. This information shall be obtained from the manufacturer of the wind energy system, and all readings shall be taken from the nearest neighboring property line not located within the defined property block. In the case of structure-mount",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 12,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 119,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 118 and necessary to the public safety and welfare are exempt from regulation under this Article. 703.01 ODOT Permits All signs within six hundred sixty (660) feet of the right-of-way of Interstates 71 and 76; and Routes 3 and 224 are also subject to regulation by the ODOT under Ohio Revised Code Chapter 5516 and the regulations adopted pursuant to Chapter 5516. Zoning certificates for signs within 660 feet of these rights-of-way shall not be issued without evidence that a permit has first been issued by the ODOT confirming that a state permit is not necessary. 703.02 Outdoor Advertising Section 519.20 of the Ohio Revised Code states that for the purpose of Village zoning, “outdoor advertising shall be classified as a business use and be permitted in all districts zoned for industry, business, or trade or lands used for agricultural purposes”. S",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 12,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 38,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 37 requirements to ensure that such operations, if appropriate for a residential or commercial area, shall not adversely impact adjacent uses as a result of the commercial aspects of the structure and property. Bed and breakfast inns shall be subordinate to the principal use of a single-family dwelling. The intent is not to provide an opportunity for the establishment of an intensive commercial lodging business, which would be considered appropriate within an intensive commercial, or highway commercial zoning district. 414.02 Conditional Use Permit Required A bed and breakfast inn is classified as a conditional use in those zoning districts were noted in the Zoning Ordinance. The corresponding standards and requirements of Article IX thereby apply. In submitting an application for conditional use permit, the applicant shall provide to the Planning",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 51,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 50 C. In the event that an applicant fails to give such notice, the system shall be considered decommissioned or discontinued if the system is out of service for a continuous two-year period. After two (2) years of inoperability, the Zoning Inspector may issue a Notice of Abandonment to the owner of the wind energy system. The owner shall have the right to respond to the Notice of Decommission within 30 days from Notice receipt date. The Zoning Inspector shall withdraw the Notice of Decommission and notify the owner that the Notice has been withdrawn if the owner provides information that demonstrates the wind energy system has not been decommissioned. D. If the owner fails to respond to the Notice of Decommission or if after review by Zoning Inspector it is determined that the wind energy system has been decommissioned or discontinued, the owner ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 11,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "ARTICLE IV GENERAL REGULATIONS 5 Assisted Living Facility - Assisted living facilities are residential care facilities that provide housing, meals, personal care and supportive services to older persons and disabled adults who are unable to live independently. Automobile Service Station - see “Gasoline Service Station”. Awning - A roof like cover that is temporary or portable in nature and that projects from the wall of a building for the purpose of shielding a doorway or window from the elements and is periodically retracted into the face of the building. See Figure 1. Comment: Awnings are temporary or portable devices. Once they become permanent, incapable of being retracted, then all setbacks should be measured from the end of the awning. Basement - That portion of a building, having more than one half (½) of its height below the average grade. Bed and Breakfast Inn - A private reside",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "billboard",
+    "temporary",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 17,
+   "snippet": "ARTICLE IV GENERAL REGULATIONS 16 Sign, Off Premises - Any sign unrelated to a business or profession conducted, or to a commodity or service sold or offered upon the premises where such sign is located. Sign, On Premises - Any sign related to a business or profession conducted upon, or a commodity or service sold or offered upon the premises where such sign is located. Story - That portion of a building included between the surface of any floor and surface of the floor next above it; or if there is no floor above it, then the space between the floor and the ceiling next above it. Story, half - A story with at least two (2) opposite exterior sides meeting a sloping roof not more than two (2) feet above the floor of such story. Street - A publicly or privately owned strip of land fifty (50) feet or more in width between property lines, which provides or is intended to provide public vehic",
+   "tags": [
+    "sign",
+    "illumination",
+    "process",
+    "billboard",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 22,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 21 material. Concrete or cinder block walls shall not be permitted unless the wall face is improved with brick, natural cut stone or similar façade treatments. 3. No barbed wire in residential districts or areas designated for public use. C. Fences or walls required to surround and enclose public utility installations are not limited as to height in any zoning district. The Planning Commission may require higher fences or walls in a commercial or industrial district in cases where such higher screening is necessary. D. The finished side of a fence or wall shall face outward from the property on which the fence or wall is located. [The finished side is the side that does not contain the frame/poles.] E. Fences and walls shall be designed and be of such materials that are compatible and harmonious with the design of the principle building or structu",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 47,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 46 Wind energy systems shall be built to comply with all applicable Federal Aviation Administration regulations. Evidence of compliance or non-applicability shall be submitted with the application. 7. Impacts: It is inherent that wind energy systems may pose some impacts due to the total height needed to access the wind resources. The purpose of this section is to reduce the visual impacts, without restricting the owner’s access to wind resources. a. The applicant shall demonstrate through project site planning and proposed mitigation that a wind energy system’s visual impacts will be minimalized for surrounding neighbors and the community. This may include, but not be limited to information regarding site selection, wind energy system design or appearance, buffering, and screening of ground mounted electrical and control equipment. b. The color o",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 124,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 123 and one half (1.5) square foot for each one (1) lineal foot of the building wall which is most parallel to the frontage of the lot on which the building is located. B. Permanent Signs. Total permanent sign area may be allocated to any or all of the following sign types subject to the restrictions and requirements set forth herein: 1. Wall Signs shall not be larger than eighty (80) square feet or ten percent (10%) of the area of the surface of the building of which the sign is located, whichever sign area is smaller. In addition, a wall sign shall not project from the face of the wall more than eighteen (18) inches and shall not extend above or beyond the building wall. Buildings facing more than one (1) adjacent right-of-way may have one (1) wall sign facing each adjacent right-of-way. 2. Free-standing Signs. Each use, parcel, building, or l",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "prohibited",
+    "type"
+   ],
+   "weight": 10,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "ARTICLE IV GENERAL REGULATIONS 14 Off Street Parking Facility - An off-street parking area for the exclusive use of the property owner. Open Space, Common - Land within or related to a development, not individually owned or dedicated for public use, that is designed and intended for the common use or enjoyment of the residents and their guests and may include such complementary structures and improvements as necessary and appropriate. Open Space, Restricted - That portion of the open space within an open space development or cluster development that is of sufficient size and shape to meet the minimum zoning requirement, and on which further development is restricted. Open Space, Usable - The required portion of a lot excluding the required front yard area, which is unoccupied by principal or accessory buildings and available to all occupants of the buildings for the use of recreational a",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 34,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 33 409.13 All garbage, rubbish and refuse must be removed from the premises. 409.14 (A) No poultry or livestock is to be kept on land within the Village except as follows: (1) Upon receipt of a zoning permit, not more than 6 Hens (Gallus Domesticus) may be kept upon lots within all zones of the Village for personal use. Neither Hens nor their products may be sold within the Village. (2) Roosters shall not be permitted with the Village. (3) Hens shall at all times be kept in sanitary pens or coops which provide humane, sanitary and inoffensive quarters for such Hens. (4) Pens or coops are only permitted in rear or side yards no less than 10 feet from the rear or side lot line, and 15 feet from the dwelling on said lot. (5) Pens or coops may not cover an area greater than 48 square feet. (6) Pens or coops must not be visible from the public street o",
+   "tags": [
+    "fee",
+    "area",
+    "dimension",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 117,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 116 When Commercial and Industrial buildings are adjacent to a residential area within the MU, the minimum side yard and/or rear yard depth shall be 50 feet adjacent to the residential area. An obscuring fence, wall, or solid hedge, at least six (6) feet in height shall be located along all side or rear lines adjacent to a residential area. The side or rear yard areas within the \\fence or hedge may be used for off street parking or loading only as specifically approved upon site plan approval. 611.07 Performance Standards The following provisions shall apply to all uses within this district: A. There shall be no storage or handling of hazards, explosive, or highly flammable materials, which would cause fire, explosion, or safety hazards, except for materials used in the maintenance of or incidental to the operations of that on-site. B. There sha",
+   "tags": [
+    "sign",
+    "dimension",
+    "billboard",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 121,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 120 706.05 Roof Signs No sign shall be placed on a roof of any building except those signs whose supporting structure is screened so the sign appears to be a continuation of the face of the building. 706.06 Location Signs shall be erected so as not to obstruct traffic sight lines or traffic control lights at road intersections. 706.07 Similarity to Traffic Control Devices Signs visible from a road shall not contain any words or symbols that would cause confusion because of their resemblance to highway traffic control or directional signals. 706.08 Satellite Dishes Satellite dishes containing printing large enough to be visible from any roadway shall be considered a sign for the purpose of this Ordinance and must meet all appropriate sign regulations. SECTION 707 AREA OF A SIGN A. The total area of all signs permitted on a lot in accordance with ",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "prohibited",
+    "type"
+   ],
+   "weight": 9,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 122,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 121 landscaping, up to a height of two (2) feet, shall not be calculated as sign area. C. The height of a free-standing sign shall be measured from the average natural finished grade at the base of the sign to the highest point or element of the sign. A ground sign on a man-made base, including a graded earth mound, shall be measured from the average site grade prior to addition of the sign. SECTION 708 PROHIBITED SIGNS Unless otherwise specifically permitted herein, the following signs are prohibited in all districts: A. Pennants, ribbons, streamers, strings of light bulbs, spinners, or other similar devices; B. Mobile, portable, or wheeled signs; C. Signs placed on parked vehicles or trailers for the purpose of advertising a product or business located on the same or adjacent property, excepting an identification sign which is affixed to a veh",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 9,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 178,
+   "snippet": "ARTICLE XI NON - CONFORMING USES, STRUCTURES AND LOTS 177 SECTION 1104 NONCONFORMING LOT When a nonconforming lot can be used in conformity with all applicable provisions of this Ordinance, except that the area of the lot is nonconforming, then the lot may be used as if its area were conforming. When conforming use of a nonconforming lot cannot reasonably be established due to the setback requirements of the district in which it is located, the Board of Zoning Appeals may grant variances to setback requirements as necessary to establish a permitted use of the district, provided that there is no contiguous land in common ownership with the subject lot which could be used to reduce or eliminate the nonconformity and the variance meets all other variance standards of this Ordinance. SECTION 1105 COMPLETION OF APPROVED CONSTRUCTION Nothing in this Ordinance shall prohibit the completion of c",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited",
+    "process",
+    "temporary"
+   ],
+   "weight": 9,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 191,
+   "snippet": "ARTICLE XIV BOARD OF ZONING APPEALS 190 1406.02 Findings by the Board A. Area Variance In order to approve an area variance, that is, a variance involving provisions relating to yard dimensions, setback, height, or similar spatial or dimensional requirements, the following factors shall be considered and weighed by the Board to determine practical difficulty: 1. Whether the property in question will yield a reasonable return or whether there can be a beneficial use of the property without the variance. 2. Whether the variance is substantial. 3. Whether the essential character of the neighborhood will be substantially altered or whether adjoining properties will suffer a substantial detriment to their proper future development and rights as a result of the variance. 4. Whether the variance will adversely affect the delivery of governmental services. 5. Whether the property owner purchased",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 207,
+   "snippet": "ARTICLE XVI WIRELESS TELECOMMUNICATIONS REGULATIONS 206 if necessary. F. Engineering Report A report shall be prepared and submitted by a qualified and licensed professional engineer and shall provide proof of compliance with all applicable federal, state, county, and Village regulations. The report shall include a detailed description of the Wireless Telecommunication Tower, Antenna(s), Equipment Shelter, and appurtenances. The report shall certify that: (1.) Radio frequency emissions are in compliance with the regulations of the FCC, and (2.) The use of the facilities will not adversely affect or interfere with radio transmissions for public safety purposes. G. Maintenance 1. The applicant shall submit a plan documenting how the Wireless Telecommunication Facility will be maintained on the site in an ongoing manner that meets industry standards. 2. On each biennial anniversary of the i",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 9,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "ARTICLE IV GENERAL REGULATIONS 13 Minimum Building Setback Line - A line parallel to the street right-of-way line at such distance from the street right-of-way line as required by the minimum front yard depth in the district in which it is located. Where the right-of-way is not established, i.e., a private street, the point of measurement shall be twenty- five feet from the centerline of the road. Mobile Home - Any non-self-propelled vehicle designed, constructed, reconstructed, or added to by means of accessories in such a manner as will permit the use and occupancy thereof for human habitation, when connected to utilities, whether resting on wheels, jacks, blocks, or other temporary foundation and used or so constructed as to permit its being used as a conveyance upon the public streets and highways. Mobile Home Park - A plot of ground upon which mobile homes, occupied for dwelling or ",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "temporary",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 24,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 23 1. Maximum size for a detached garage shall be 10% of the rear yard building area. 2. Maximum size for the accessory building other than a garage shall be 300 square feet. 3. Any accessory building greater than 64 square feet or with a foundation shall require a permit. 405.02 Lot Storage A. Motor Vehicles - Vehicles that do not have valid license plates and/or are not operational, shall not be left on any private property for more than 72 hours [three (3) business days], unless parked in an enclosed structure. These vehicles shall not be limited to cars, trucks, farm tractors, or garden tractors. B. Motor Vehicle Parts - Vehicle parts from any vehicle including but not limited to, cars, trucks, farm tractors, garden tractors or any other motor vehicle, shall not be permitted to be left outdoors in the open on private property for more than 72 ",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 8,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 26,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 25 406.05 Temporary Parking A. Off-street parking facilities shall be installed within twenty-four (24) hours, after foundation or footer digging has been completed. B. Temporary parking facilities shall not require hard surface or permanent material, but may consist of gravel, stone, or other suitable material, which may be later used as base for a permanent driveway or may be later removed. C. Such temporary parking facilities may be located at any suitable place within the side-line and back-line setback of the property and shall not interfere with the natural drainage nor be injurious to adjacent property owners. 406.06 Restoring Unsafe Buildings Nothing in this Ordinance shall prevent the strengthening or restoring to a safe condition of structures or part thereof declared unsafe by the Zoning Inspector. SECTION 407 HOME OCCUPATIONS A. The us",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 8,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 48,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 47 b. Ground mounted systems shall have either: i. Tower climbing apparatus located no closer than fifteen (15) feet to the ground level at the base of the structure; ii. A locked anti-climb devise installed on the tower; or iii. Shall be completely enclosed with a locked fence within twenty (20) feet of the tower and at least six (6) feet in height to prevent uncontrolled access from unauthorized personnel. Fences shall comply with Section 404.04. Wiring and electrical apparatuses: All wires and electrical apparatuses associated with the operation of a ground mounted wind energy system shall be located underground. 10. Maintenance: a. All wind energy systems shall be maintained in good working order. b. Any physical modification to the wind energy system that alters the mechanical load, mechanical load path, or major electrical components shall r",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 55,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 54 ARTICLE VI DISTRICT REGULATIONS SECTION 601 FLOOD DAMAGE PROTECTION OVERLAY DISTRICT 601.01 Definitions Unless specifically defined below, words or phrases used in this Section shall be interpreted to give them the meaning they have in common usage and to give this Section its most reasonable application. Appeal - means a request for review of the Zoning Inspector's interpretation of any provision of this ordinance or a request for a variance. Area of shallow flooding - means a designated A0 or AH zone on a community's Flood Insurance Rate Map (FIRM) with a one percent or greater annual chance of flooding to an average depth of one to three feet where a clearly defined channel does not exist, where the path of flooding is unpredictable and where velocity flow may be evident. Such flooding is characterized by ponding or sheet flow. Area of spe",
+   "tags": [
+    "illumination",
+    "process",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 56,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 55 (1) The overflow of inland or tidal waters, and/or (2) The unusual and rapid accumulation or runoff of surface waters from any source. Flood Insurance Rate Map (FIRM) - means an official map on which the Federal Emergency Management Agency or the U. S. Department of Housing and Urban Development has delineated the areas of special flood hazard. Flood Insurance Study - means the official report in which the Federal Emergency Management Agency or the U. S. Department of Housing and Urban Development has provided flood profiles, floodway boundaries, and the water surface elevations of the base flood. Historic structure - means any structure that is: (1) Listed individually in the National Register of Historic Places (a listing maintained by the U.S. Department of Interior) or preliminarily determined by the Secretary of the Interior as meeting t",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "temporary"
+   ],
+   "weight": 8,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 59,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 58 development permit as stated in Section 601.03.2, Exemption from Filing a Development Permit. 601.02.4 Abrogation and Greater Restrictions This ordinance is not intended to repeal, abrogate, or impair any existing easements, covenants, or deed restrictions. However, where this ordinance and another ordinance, easement, covenant, or deed restriction conflict or overlap, whichever imposes the more stringent restrictions shall prevail. 601.02.5 Interpretation In the interpretation and application of this ordinance, all provisions shall be: (1) Considered as minimum requirements; (2) Liberally construed in favor of the governing body; and, (3) Deemed neither to limit nor repeal any other powers granted under state statutes. Where a provision of this ordinance may be in conflict with a state law, such state law shall take precedence over the ordin",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 89,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 88 landscaped strip 25 feet in width adjacent to the right-of-way and running the entire frontage of the parcel. F. Side Yard – 25 feet, except when adjacent to a residential district. Side Yards Adjacent to Residential District – Side yards when adjacent to a residential district shall be 50 feet wide and shall consist of a twenty-five foot (25’) wide landscaped and planted buffer strip for their entire length adjacent to the residential district. G. Rear Yard – 50 feet, and when adjacent to a residential district there shall be a twenty-five foot (25’) landscaped and planted buffer strip for the entire length adjacent to the residential district. H. Limited Access Right-of-way – When a parcel is adjacent to a limited access right-of-way to which the parcel has no direct access, such right-of-way shall not be defined as lot frontage for the pur",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 131,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 130 802.05 Institutional A. Churches and School Auditoriums - One (1) for each four (4) seats of seating capacity in principal auditorium. B. Medical and dental offices and clinics - Five (5) for each physician or dentist, and one for every other employee. C. Nursing Homes - One (1) for every two beds. SECTION 803 LOADING SPACE REQUIREMENTS 803.01 Spaces Required Every building used for non-residential purposes, which customarily receives or distributes goods by motor vehicle, shall provide sufficient space on the premises for all loading and service purposes. Every building having over 5,000 square feet of gross floor area shall be provided with at least one (1) truck loading and unloading space not less than 12 feet in width, 40 feet in length and 14 feet clearance. An additional truck space of these dimensions shall be provided for every addi",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 134,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 133 possible and no nearer than twenty (20) feet to any public right of way, sidewalk or established pedestrian walkway. Any vehicle attached to the Recreational Vehicle shall not block any public right of way. F. A parked Recreational Vehicle cannot be positioned to block line of clear sight at an intersection as illustrated by the Clear Sight Triangle. G. A parked Recreational Vehicle cannot block any neighbor's primary view. H. The wheels or any similar transporting devices of any such trailer permitted within any Residential District shall not be removed, except for service, nor shall any trailer be permanently affixed to the ground. I. For the purpose of these regulations, Recreational Vehicle is not a Vehicle used for commercial use and as further defined by Seville Zoning Ordinance Section 808(N). J. For the purposes of this section “fron",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 208,
+   "snippet": "ARTICLE XVI WIRELESS TELECOMMUNICATIONS REGULATIONS 207 number of the owner/user of each set of antennas on the site. The owner/user shall also provide the Zoning Inspector, the Fire Department and the Village Police Department with information regarding whom to contact, an address, and a telephone number in the event of an emergency. J. Outdoor Storage There shall be no outdoor storage of equipment or other items on the Wireless Telecommunication Facility site except during the Facility construction period and to supply temporary emergency power to the Facility only during a power outage. K. Access to Facility The access driveway to the Wireless Telecommunication Facility shall, whenever feasible, be provided along with circulation driveways of the existing use on the lot, if any. Where use of an existing driveway is not feasible, the driveway to the facility shall be a minimum of eight",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 8,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 210,
+   "snippet": "ARTICLE XVI WIRELESS TELECOMMUNICATIONS REGULATIONS 209 and advise that the Facility must be reactivated within ninety (90) days or it must be dismantled and removed from the site and the site restored to a landscaped condition within the same ninety (90) day period, all at the cost of the owner/user. The owner/user shall have the right to appeal the Zoning Commissioner’s decision to require removal of an abandoned Facility to the Board of Zoning Appeals, pursuant to Section 1104 and 1106 of the Zoning Code. SECTION 1606 FEES In addition to any other fees required under the Village’s Zoning Code and Building Code, the Zoning Inspector shall collect the following fees in connection with applications for Facilities covered by this Chapter. A. New Wireless Telecommunication Facility-Five Hundred Dollar ($500.00) deposit upon which expenses incurred by the Village will be drawn and the unuse",
+   "tags": [
+    "fee",
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "ARTICLE IV GENERAL REGULATIONS 3 ARTICLE II ADMINISTRATION, ENFORCEMENT AND PENALTY Section 201 Interpretation, Application and Enforcement Section 202 Intent: Conflicts of Law Section 203 Separability SECTION 201 INTERPRETATIONS, APPLICATION AND ENFORCEMENT A. Interpretation and Application In their interpretation and application, the provisions of this Ordinance shall be held to be the minimum requirements adopted for the promotion of the public health, safety, convenience, comfort, prosperity, and general welfare of the citizens of the Village of Seville. To protect the public, among other purposes, such provisions are intended to provide for adequate light, pure air, safety from fire and other danger, prevent overcrowding of lots, provide ample parking facilities, and control traffic. B. Enforcement. (1) Except under the most unusual circumstances, Council desires that every requirem",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "ARTICLE IV GENERAL REGULATIONS 12 Junk Yard - Any lot, land or structure, or part thereof, used primarily for the collection, storage and sale of wastepaper, rags, scrap metal or discarded material, or for the collecting, dismantling, storage and salvaging of machinery or vehicles not in operating condition, and for the sale of parts thereof. Landscaping - The use of natural materials (stones, shrubs, trees, etc.) in a planned fashion to enhance the visual appeal of a property. Loading Space - An off-street space or berth on the same lot with a building, or contiguous to a group of buildings, for the temporary parking of a commercial vehicle while loading or unloading merchandise or materials, and which abuts upon a street, alley or other appropriate means of access. Lot - A designated parcel, tract, or area of land established by plat, subdivision, or as otherwise permitted by law, to b",
+   "tags": [
+    "dimension",
+    "process",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "ARTICLE IV GENERAL REGULATIONS 17 Vehicle, Passenger - A motor vehicle with no more than two axles and/or four wheels, not more than 4,500 pounds in gross weight, and designed primarily for the transport of persons . Vehicle, Recreational - A vehicular-type portable structure without permanent foundation that can be towed, hauled, or driven and primarily designed as a temporary living accommodation for recreational, camping, and travel use and including, but not limited to, travel trailers, truck campers, camping trailers, and self-propelled motor homes. Yard - A required open space other than a court unoccupied and unobstructed by any structure or portion of a structure from three (3) feet above the general ground level of the graded lot upward; provided, however, that accessories, ornaments, and furniture may be permitted in any yard; subject to height limitations and requirements limi",
+   "tags": [
+    "dimension",
+    "illumination",
+    "temporary",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 35,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 34 committed each day during or on which a noncompliance occurs or continues. C. Whoever removes the notice provided for in Section 409.09 shall be guilty of a minor misdemeanor and shall be fined not more than one hundred dollars ($100.00). SECTION 410 DRIVEWAYS AN SIDEWALKS 410.01 Driveways shall be constructed of asphalt or concrete. A. Asphalt driveways shall have a compacted fill, six (6) inch granular sub- base, at least two (2) inches base material and at least one (1) inch top material. B. Concrete driveways shall have compacted fill not less than three (3) inches thick utilizing minimum four (4) inch thick reinforced concrete. C. Professional curb-cuts shall be mandatory D. Driveways shall be mandatory for all new home construction and the sidewalk and apron areas of the driveway shall have six (6) inches thick concrete 410.02 Sidewalks s",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 43,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 42 911\" sticker or sign). (6) All sleeping areas in any STR must be approved by the Fire Code Official. No sleeping area will be permitted in the basement of the dwelling. Exception: The basement sleeping area has two (2) exits. Each exit in the basement shall be marked and illuminated per Ohio Fire Code Section 1013.1 Signage and Section 1008.1 Illumination. E. Meals - Meals shall not be served by the owner/operator to registered guests of the STR. The sale of alcoholic beverages to paying guests is strictly prohibited. F. Consecutive Nights - Each paying guest may stay at a STR for not more than fourteen (14) consecutive nights at any single visit or more than a total of twenty-eight (28) nights in any given calendar year. G. Kitchen Facilities – A minimum of one (1) kitchen facility shall be required per dwelling for which a conditional use per",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 57,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 56 or seasonal use. Start of construction - means the date the building permit was issued, provided the actual start of construction, repair, reconstruction, rehabilitation, addition, placement, or other improvement was within 180 days of the permit date. The actual start means either the first placement of permanent construction of a structure on a site, such as the pouring of slab or footings, the installation of piles, the construction of columns, or any work beyond the stage of excavation; or the placement of a manufactured home on a foundation. Permanent construction does not include land preparation, such as clearing, grading and filling; nor does it include the installation of streets and/or walkways; nor does it include excavation for a basement, footings, piers, or foundations or the erection of temporary forms; nor does it include the ",
+   "tags": [
+    "sign",
+    "billboard",
+    "temporary",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 73,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 72 development is protected by methods to minimize flood damages. (2) Variances shall not be issued within any designated floodway if any increase in flood levels during the base flood discharge would result. (3) Variances shall only be issued upon a determination that the variance is the minimum necessary, considering the flood hazard, to afford relief. (4) Generally, variances may be issued for new construction and substantial improvements to be erected on a lot of one-half acre or less in size contiguous to and surrounded by lots with existing structures constructed below the base flood level, providing items (i-xi) in Section 6.1-1 (4) have been fully considered. As the lot size increases beyond one- half acre, the technical justification required for issuing the variance increases. (5) Variances may be issued for the repair or rehabilitatio",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 75,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 74 D. Minimum Lot Frontage on a cul-de-sac shall be sixty (60) feet. E. Minimum Front Yard Depth – fifty (50) feet from the street right-of- way line, or fifty (50) feet from the edge of pavement for private streets. F. Minimum Side Yard Depth – twenty (20) feet. G. Minimum Rear Yard Depth - fifty (50) feet H. Minimum Side Yard on Corner Lots – thirty-five (35) feet from the street right-of –way line or 25 from the edge of pavement on a private street I. Maximum Building Height – 2 ½ stories, or 35 feet in height, whichever is greater. 602.04 Area Regulations on Accessory Buildings or Structures A. Minimum Rear or Side Yard Setback – 5 feet, providing further that it will not be less than fifteen (15) feet from any existing building on the same lot. B. Maximum size for accessory buildings shall be 300 square feet. If used for licensed vehicles, ",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 88,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 87 6. Servicing motor vehicles of greater than 1½ ton rated capacity including the dispensing of fuel and lubricants, cooling system and ignition service, sale and installation of batteries, lamps, fan belts, spark plugs, tires, and accessories, not requiring a change in the chassis, body, or engine of the vehicle. Motor vehicles of greater than 1½ ton rated capacity waiting for or under repair must be stored within the building or to the rear of the building and screened. 7. Wireless Telecommunication Tower as regulated by Article XVI. 8. New and/or Used Car and/or Truck Sales Establishments – Except that outdoor sales space for new and/or used car and/or truck sales is only permitted if carried on in conjunction with a new and/or used car and/or truck sales and/or service agency which is housed in a permanent building upon the same or an adjac",
+   "tags": [
+    "area",
+    "dimension",
+    "authority",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 91,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 90 B. Above the First Floor 1. Any use permitted pursuant to Section 1. Permitted Uses above. 2. Dwelling units. 3. Medical offices and clinics for the treatment and aid of humans. 4. Offices. C. Existing Residential Structures: All dwelling units in the DMU District shall be subject to the following requirements: 1. All uses permitted under in the DMU District other than one and two-family residences, shall be permitted only after review and approval of site plans by the Planning Commission according to the standards, criteria, and regulations of Article X. 2. Exterior lighting shall not shine directly on adjacent properties and shall be designed to be compatible with a residential area. 3. Nothing in this Section shall be interpreted to prohibit multiple or mixed uses within a single structure. 4. No fire escapes or other exterior stairways to",
+   "tags": [
+    "area",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 99,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 98 12. Schools, Specialized Instructional. 13 Theaters and Assembly Halls. 14. Utilities (including substations, transmission facilities and related facilities). 15. Bed and Breakfast, subject to Section 905C. 16 STR (Short Term Rental), subject to Section 905H. 17. Multi-family dwellings up to eight (8) dwelling units per acre subject to the following requirements: a) Permitted only after review and approval of site plans (preliminary and final) by the Planning Commission according to the standards, criteria, and regulations of Article X. b) Exterior lighting shall not shine directly on adjacent properties and shall be designed to be compatible with a residential area. c) No fire escapes or other exterior stairways to upper floors of a building shall be located on a building facade facing a street. d) All buildings shall be compatible with the ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 102,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 101 or structures. Subject to Article XVII. C. Conditional Uses: 1. Self-service storage facilities subject to Section 905 E. 2. Outdoor storage shall be located in the rear yard and screened. 3. The manufacture, compounding, processing, packaging, or treatment of such products as; bakery goods, candy, cosmetics, pharmaceuticals, toiletries, food products, hardware and cutlery; tools, die gauge, and machine shops. 4. The manufacture, compounding, assembling, or treatment of articles or merchandise from previously prepared materials such as; canvas, cellophane, cloth, cork, glass, leather, paper, plastics, precious or semiprecious metals or stones, sheet metal (excluding large stamping such as automobile fenders or bodies), shell textiles, tobacco, wax, wire, wood (excluding saw and planing mills), and yarns. 5. The manufacture of pottery and fig",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 133,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 132 2. Off-street parking spaces shall be surfaced with concrete, asphalt or other material approved by the Village Council. 3. Off-street parking spaces shall be maintained in good condition and free from debris and trash. 4. Required screening must be maintained in good condition at all times. SECTION 807 ENTRANCES AND EXITS Entrances and exits shall be located to minimize traffic congestion and avoid undue interference with pedestrian access at road intersection corners. There shall not be more than two (2) curb cuts on any one road as per the site plan unless further restricted along S.R. 3 which shall have no additional curb cuts between I-76 and Greenwich Road. SECTION 808 YARD RESTRICTIONS A. Off-street parking facilities shall not occupy any part of any front yard in all R zoning districts. In all C zoning districts and I zoning district",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 139,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 138 under the following conditions: 1. The use shall be for the purpose of servicing motor vehicles under 1½ tons rated capacity including the dispensing of fuel and lubricants, cooling system and ignition service, sale and installation of batteries, lamps, fan belts, spark plugs, tires, and accessories, not requiring a change in the chassis, body, or engine of the vehicle. 2. All activities, except those required to be performed at the fuel pumps, and car washing shall be carried on inside a building; if work is performed on a vehicle, such vehicle shall be entirely within a building. 3. No more than two (2) curb cuts shall be permitted directly from any road each of which shall not exceed thirty (30) feet in width at the property line. On corner lots, curb cuts shall be limited to one (1) per road 4. The property of the facility shall be maint",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 173,
+   "snippet": "ARTICLE XI NON - CONFORMING USES, STRUCTURES AND LOTS 172 G. Additional Screening Required. Whenever the lot required to provide screening and buffering has a lower elevation than the abutting street, the height of the required screening shall be sufficient to adequately screen the site. The Planning and Zoning Commission may, in its review of the landscaping plan, require more, than the minimum requirements specified in this section to accomplish the desired screening effect. 1006.05 Interior Parking Lot Landscaping Interior landscaping of parking lots shall be provided in accordance with the following requirements: A. For any parking area designed to accommodate 25 or more vehicles, a minimum of five percent (5%) of the parking lot shall be planted as landscaped island areas. B. Landscaped islands shall be developed and distributed throughout the parking lot to define major circulation",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 183,
+   "snippet": "ARTICLE XIII ADMINISTRATION AND ENFORCEMENT 182 ARTICLE XIII ADMINISTRATION AND ENFORCEMENT Section 1301 Zoning Inspector Section 1302 Board of Zoning Appeals Section 1303 Planning and Zoning Commission Section 1304 Zoning Permit; Application and Issuance Section 1305 Schedule of Fees, Charges, and Expenses Section 1306 Violations Section 1307 Inspection and Correction of Violations Section 1308 Correction Period Section 1309 Penalties Section 1310 Complaints Regarding Violations SECTION 1301 ZONING INSPECTOR 1301.01 General A Zoning Inspector shall be employed to enforce this Zoning Ordinance. The term of employment, rate of compensation, and other such conditions shall be set by the Village Council. For the purpose of enforcing this Ordinance, the Zoning Inspector shall have the powers of a police officer. 1301.02 Bond The Zoning Inspector before entering upon the duties of his office,",
+   "tags": [
+    "fee",
+    "dimension",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 187,
+   "snippet": "ARTICLE XIII ADMINISTRATION AND ENFORCEMENT 186 1304.04 Application for Conditional Zoning Permit If the application is for a conditional zoning permit, the application procedure defined in Section 902 will be followed in lieu of the above regulations. SECTION 1305 SCHEDULE OF FEES, CHARGES, AND EXPENSES The Village Council shall by Ordinance establish a schedule of fees, charges and expenses, and a written procedure for zoning permits, amendments, appeals variances, conditional use permits, site plan approvals, and other matters pertaining to the administration and enforcement of this Ordinance requiring investigations, inspections, legal advertising, postage and other expenses. The schedule of fees shall be included in this Zoning Ordinance as Appendix A, and posted in the office of the Zoning Inspector. It may be altered or amended only by Village Council. Until all applicable fees, c",
+   "tags": [
+    "fee",
+    "dimension",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 190,
+   "snippet": "ARTICLE XIV BOARD OF ZONING APPEALS 189 1403.03 The Board shall meet at the call of its Chairman and at such other times as it may determine. All meetings of the Board shall be open to the public. 1403.04 The Board Chairman or acting Chairman may administer oaths and the Board may compel the attendance of witnesses in all matters coming within the purview of the Board. 1403.05 The Board shall keep minutes of its proceedings showing the vote of each member upon each question, or, if absent or failing to vote, indicating such fact and shall keep records of its examinations and other official actions all of which shall be immediately filed at the office of the Mayor, Village Municipal Building and shall be public record. SECTION 1404 POWERS The Board of Zoning Appeals shall have the following powers: 1404.01 Appeals A. Administrative appeals as further described in Section 1405 below. B. Va",
+   "tags": [
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 192,
+   "snippet": "ARTICLE XIV BOARD OF ZONING APPEALS 191 1. That there is no viable use of the property under the Zoning Code without the variance. 2. That the essential character of the neighborhood will not be substantially altered or adjoining properties will not suffer interference with their future development and rights as a result of the variance. 3. That the hardship condition was not created by actions of the applicant. 4. That the spirit and intent of the Zoning Ordinance will be observed, and substantial justice done by granting the variance. 1406.04 Supplementary Conditions In granting a variance appeal, the Board may impose such conditions as it may deem necessary to protect the public health, safety, and morals and in furtherance of the purposes and intent of the Ordinance, including the requirements of a bond to guarantee that all special conditions imposed by the Board will be complied wi",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 205,
+   "snippet": "ARTICLE XVI WIRELESS TELECOMMUNICATIONS REGULATIONS 204 must be included in the applicant’s lease with the landowner, if different from the owner/user of the Tower. Written documentation must be provided to the Zoning Inspector evidencing that the landowner of the property on which the tower is to be located has agreed to the terms of this subsection. As an additional condition of issuing a conditional use permit, the owner/user shall respond in writing to any inquiries regarding Collocation of another user of the Facility within thirty (30) days after receipt of a written inquiry. Copies of all written requests to Collocate and all written responses shall be sent to the Zoning Inspector and the Planning Commission. C. Permitted Accessory Use The installation of a Wireless Telecommunication Antenna(s) where the construction or erection of a Tower if not proposed by the applicant, shall b",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 25,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 24 406.02 Building under Construction Prior to the Ordinance Nothing in this Ordinance shall be deemed to require any change in the plans, construction, or designated use of any building upon which actual construction, or designated uses of any building upon which actual construction was lawfully begun prior to the adoption of this Ordinance and provided further that such building shall be completed within one (1) year from the date of passage of this Ordinance. If not completed within one (1) year, applicant must reapply at a cost of $100.00. Applicant may be granted an extension of six (6) months. Each six (6) month extension will require a reapplication fee of $100.00. 406.03 Temporary Buildings/Temporary Dwelling Units A. Temporary sales offices, construction trailers and/or temporary buildings constructed for uses incidental to construction w",
+   "tags": [
+    "fee",
+    "prohibited",
+    "temporary",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 40,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 39 dwelling. No premises shall be utilized for a bed and breakfast inn unless there are at least two (2) separate exits to the outdoors in the remaining stories of the dwelling. Exception: The basement sleeping area has two (2) exits. Each exit in the basement shall be marked and laminated per Ohio Fire Code Section 1013.1 Signage and Section 1008.1 Illumination. E. Meals - Meals shall be served only to registered guests of the bed and breakfast inn and the bed and breakfast inn’s owners and employees. The sale and consumption of alcoholic beverages to paying guests is strictly prohibited. F. Consecutive Nights - Each paying guest may stay at a bed and breakfast inn for not more than fourteen (14) consecutive nights at any single visit or more than a total of twenty-eight (28) nights in any given calendar year. G. Kitchen Facilities - Only one (1)",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 44,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 43 416.01 Purpose The purpose of this section is to accommodate alternative energy systems, including solar panels/systems and small wind energy systems and outdoor wood fired boilers in appropriate locations, while minimizing any adverse visual, safety and environmental impacts of the system. In addition, this section provides a permitting process for alternative energy systems to ensure compliance with the provisions of the requirements and standards established herein. A. Permitted Uses 1. Solar Energy Panel/System a. Solar panels may be installed on any surface of an existing structure, provided such installation does not result in violation of the permitted height exceptions in the applicable district in which the structure is located as is set forth in Article VI. b. Solar Panels may be installed as a free-standing array, provided the array ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 49,
+   "snippet": "ARTICLE V DISTRICTS AND THEIR BOUNDARIES 48 i. Aerodynamic over-speed controls which include variable pitch, tip and other similar systems and; ii. Mechanical brakes which must be operated in fail- safe mode. b. Stall regulation shall not be considered a sufficient braking system for over-speed protection. 416.04 Procedure for Review A. In accordance with Article IX of the Seville Village Zoning Ordinance, a wind energy system shall be subject to receiving a conditional use permit prior to installation or modification thereof. B. The issuance of a conditional use permit shall abide with the following requirements: 1. Site Plan Review: Prior to issuance of a zoning certificate, a site plan shall be submitted to the Planning and Zoning Commission for review. The following items shall be the minimum requirements for a completed application. The site plan shall include the following in addit",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 58,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 57 will not preclude the structure's continued designation as a \"historic structure\"; or (3) Any improvement to a structure which is considered new construction. Variance - means a grant of relief from the standards of this ordinance consistent with the variance conditions herein. Violation - means the failure of a structure or other development to be fully compliant with this ordinance. 601.02 General Provisions 601.02.1 Lands to Which This Ordinance Applies This ordinance shall apply to all areas of special flood hazard within the jurisdiction of the Village of Seville, Ohio, as identified by the Federal Emergency Management Agency or the U.S. Department of Housing and Urban Development referenced in Section 3.2, including any additional areas of special flood hazard annexed by the Village of Seville in the future. 601.02.2 Basis for Establish",
+   "tags": [
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 67,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 66 sanitary facilities, shall: a. be flood-proofed so that the structure is watertight with walls substantially impermeable to the passage of water to the level of the base flood elevation. In order to be eligible for lower flood insurance rates, the structure should be flood-proofed at least one foot above the base flood elevation; b. have structural components capable of resisting hydrostatic and hydrodynamic loads and effects of buoyancy; and, c. be certified by a registered professional engineer or architect that the design and methods of construction are in accordance with accepted standards of practice for meeting the standards of this subsection. Such certification shall be provided to the official as set forth in Section 601.03.1-3. 2. In AO zones new construction and substantial improvements shall either have the lowest floor, including",
+   "tags": [
+    "fee",
+    "area",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  },
+  {
+   "page": 70,
+   "snippet": "ARTICLE IX CONDITIONAL ZONING CERTIFICATES 69 construction, substantial improvements, and other development unless a hydrologic and hydraulic analysis performed in accordance with standard engineering practices demonstrates that the proposed encroachment would not result in any increase in flood levels during the occurrence of the base flood discharge. (2) If Section 601.04.3-1(1) is satisfied, all new construction and substantial improvements shall comply with all applicable flood hazard reduction provisions of Section 601.04.2, Specific Standards. (3) Any encroachment within the floodway that would result in an increase in base flood elevations can only be granted upon the prior approval by the Federal Emergency Management Agency. Such requests must be submitted by the Zoning Inspector to the Federal Emergency Management Agency and must meet the requirements of the National Flood Insur",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35",
+   "source_document_id": null,
+   "source_title": "cadafcc09b716bff4d5932fc91247ccedc2b23b4cdb481f499e913e7a8ad9f35.pdf",
+   "official_url": "https://villageofseville.org/wp-content/uploads/2026/06/Zoning-Code-Book.pdf"
+  }
+ ]
+}

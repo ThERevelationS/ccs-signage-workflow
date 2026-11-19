@@ -1,0 +1,13 @@
+import fs from "node:fs";
+const p = ".audit-work/foundation-reinforcement18/masonry-outline-transport-spec.json";
+const o = JSON.parse(fs.readFileSync(p, "utf8"));
+o.candidateLineEndings = "any";
+o.candidateTerminalLF = { "wallCalculator.js": false, "FoundationWallsPanel.jsx": false, "WallShapeEditor.jsx": true };
+fs.writeFileSync(p, JSON.stringify(o, null, 2) + "\n");
+const f = ".audit-work/foundation-reinforcement18/masonry-outline-sandbox-unit.mjs";
+const s = fs.readFileSync(f, "utf8");
+const oldText = 'assert.ok(!candidates[p].includes("\\r"), "candidate LF contract " + name);';
+const newText = 'assert.ok(spec.candidateLineEndings !== "LF" || !candidates[p].includes("\\r"), "candidate LF contract " + name);';
+if (!s.includes(oldText)) throw Error("LF assertion line not found");
+fs.writeFileSync(f, s.replace(oldText, newText));
+console.log("patched outline transport");

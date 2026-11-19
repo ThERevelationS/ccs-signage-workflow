@@ -1,0 +1,62 @@
+{
+  "results": [
+    {
+      "id": "valid 1280",
+      "ok": true
+    },
+    {
+      "id": "valid 390",
+      "ok": true
+    },
+    {
+      "id": "held-missing-mix 1280",
+      "ok": true
+    },
+    {
+      "id": "held-missing-mix 390",
+      "ok": true
+    },
+    {
+      "id": "held-missing-fee 1280",
+      "ok": true
+    },
+    {
+      "id": "held-missing-fee 390",
+      "ok": true
+    },
+    {
+      "id": "held-unsaved 1280",
+      "ok": true
+    },
+    {
+      "id": "held-unsaved 390",
+      "ok": true
+    },
+    {
+      "id": "free-fuel-zero 1280",
+      "ok": true
+    },
+    {
+      "id": "free-fuel-zero 390",
+      "ok": true
+    },
+    {
+      "id": "no-supplier 1280",
+      "ok": true
+    },
+    {
+      "id": "no-supplier 390",
+      "ok": true
+    },
+    {
+      "id": "partial-catalog 1280",
+      "ok": true
+    },
+    {
+      "id": "partial-catalog 390",
+      "ok": true
+    }
+  ],
+  "port": 54363,
+  "pid": 165180
+}

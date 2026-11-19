@@ -4,6 +4,7 @@ import { builderMutationHash, pendingBuilderMutation, recoveryPatchDiffers } fro
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { expectedBuilderEntityFields, expectedEntityFields, replaceBuilderEntityFieldsIfUnchanged, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const nowIso = () => new Date().toISOString();
 
@@ -33,7 +34,7 @@ function completedInsertion(line, key) {
 }
 
 async function persistSourceAnchor({ estimateId, lineId, pending, sourceId }) {
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be verified while anchoring the new Product source.");
   const line = findLine(estimate, lineId);
   const currentPending = pendingBuilderMutation(line);
@@ -50,13 +51,13 @@ async function persistSourceAnchor({ estimateId, lineId, pending, sourceId }) {
       : item
   );
   await replaceEstimateFieldsIfUnchanged({
-    entity: base44.entities.AllInOneEstimate,
+    entity: staffEntities.AllInOneEstimate,
     estimateId,
     expectedFields: expectedEstimateFields(estimate, { line_items: lineItems }),
     nextFields: { line_items: lineItems },
     label: "Blank Product source anchor",
   });
-  const anchored = await base44.entities.AllInOneEstimate.get(estimateId);
+  const anchored = await staffEntities.AllInOneEstimate.get(estimateId);
   const anchoredLine = findLine(anchored, lineId);
   const anchoredPending = pendingBuilderMutation(anchoredLine);
   if (!anchoredLine || !anchoredPending || anchoredPending.key !== pending.key || anchoredPending.source_project_id !== sourceId) {
@@ -66,7 +67,7 @@ async function persistSourceAnchor({ estimateId, lineId, pending, sourceId }) {
 }
 
 async function resolveSourceProject({ estimateId, lineId, pending }) {
-  if (pending.is_custom) return { source: null, estimate: await base44.entities.AllInOneEstimate.get(estimateId), line: null, pending };
+  if (pending.is_custom) return { source: null, estimate: await staffEntities.AllInOneEstimate.get(estimateId), line: null, pending };
   const entityName = String(pending.source_entity || "").trim();
   if (!entityName) throw new Error("The Builder source entity is missing from the new Product recovery marker.");
   const entity = base44.entities[entityName];
@@ -158,7 +159,7 @@ async function resolveSourceProject({ estimateId, lineId, pending }) {
 
 export async function resumeBlankProductInsertion({ estimateId, lineId = "" }) {
   if (!estimateId) throw new Error("Estimate is required to resume Product creation.");
-  let estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  let estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   let line = lineId
     ? findLine(estimate, lineId)
@@ -211,13 +212,13 @@ export async function resumeBlankProductInsertion({ estimateId, lineId = "" }) {
       current_recalculated_cost: 0,
       notes: "Blank / Custom Product. Pricing is driven directly by its Parts rather than a dedicated estimator Builder.",
     };
-    const currentBuilder = await base44.entities.BuilderProduct.get(builderProduct.id);
+    const currentBuilder = await staffEntities.BuilderProduct.get(builderProduct.id);
     if (!currentBuilder?.id || (currentBuilder.estimate_id && currentBuilder.estimate_id !== estimateId)) {
       throw new Error("The Custom Product Builder record changed ownership while creation was pending.");
     }
     if (recoveryPatchDiffers(currentBuilder, customPatch)) {
       builderProduct = await replaceBuilderEntityFieldsIfUnchanged({
-        entity: base44.entities.BuilderProduct,
+        entity: staffEntities.BuilderProduct,
         id: builderProduct.id,
         expectedUpdatedAt: currentBuilder.updated_date || "",
         expectedFields: expectedBuilderEntityFields(currentBuilder, customPatch),
@@ -231,7 +232,7 @@ export async function resumeBlankProductInsertion({ estimateId, lineId = "" }) {
     completedLine = { ...completedLine, price_state: "current" };
   }
 
-  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const latestEstimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!latestEstimate) throw new Error("Estimate could not be verified while completing Product creation.");
   const latestLine = findLine(latestEstimate, line.line_id);
   if (!latestLine) throw new Error("The provisional Product line disappeared before creation could complete.");
@@ -260,7 +261,7 @@ export async function resumeBlankProductInsertion({ estimateId, lineId = "" }) {
   };
   const lineItems = (latestEstimate.line_items || []).map((item) => item.line_id === latestLine.line_id ? finalLine : item);
   const updateResult = await replaceEstimateFieldsIfUnchanged({
-    entity: base44.entities.AllInOneEstimate,
+    entity: staffEntities.AllInOneEstimate,
     estimateId,
     expectedFields: expectedEstimateFields(latestEstimate, { line_items: lineItems }),
     nextFields: { line_items: lineItems },
@@ -280,7 +281,7 @@ export async function addBlankProduct({
   expectedEstimateUpdatedAt = "",
 }) {
   if (!estimateId || !moduleKey || !productName || !builderName) throw new Error("Estimate, Product type, and Product name are required.");
-  const current = await base44.entities.AllInOneEstimate.get(estimateId);
+  const current = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!current) throw new Error("Estimate could not be loaded.");
   const requestVersion = expectedEstimateUpdatedAt || current.updated_date || "";
   const identity = insertionIdentity({
@@ -300,7 +301,7 @@ export async function addBlankProduct({
     }
     if (completedInsertion(existingLine, identity.key)) {
       const builderProduct = existingLine.builder_product_id
-        ? await base44.entities.BuilderProduct.get(existingLine.builder_product_id)
+        ? await staffEntities.BuilderProduct.get(existingLine.builder_product_id)
         : null;
       if (!builderProduct?.id) throw new Error("The completed Product insertion receipt exists, but its Builder Product is missing.");
       return { line: existingLine, builderProduct, alreadyCompleted: true };
@@ -354,7 +355,7 @@ export async function addBlankProduct({
   };
   const lineItems = [...(current.line_items || []), provisionalLine];
   await replaceEstimateFieldsIfUnchanged({
-    entity: base44.entities.AllInOneEstimate,
+    entity: staffEntities.AllInOneEstimate,
     estimateId,
     expectedFields: expectedEstimateFields(current, { line_items: lineItems }),
     nextFields: { line_items: lineItems },

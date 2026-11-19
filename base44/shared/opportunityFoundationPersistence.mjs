@@ -13,6 +13,15 @@ export function sameFoundationValue(a, b) {
       return Math.abs(Number(a) - Number(b)) <= 0.000001;
     }
   }
+  // `undefined`, `null`, and `""` form ONE empty class. Storage persists unset
+  // fields as `null` (or omits the key) while CAS baselines and cleaned
+  // payloads legitimately carry `""`/`undefined` for that same unset value —
+  // comparing representations strictly manufactured false conflicts (the
+  // `?? ""` vs `null` defect family). Collapse all three before comparing;
+  // real values — `0`, `false`, `[]`, `{}` — stay distinct and still conflict.
+  const aEmpty = a === null || a === undefined || a === '';
+  const bEmpty = b === null || b === undefined || b === '';
+  if (aEmpty || bEmpty) return aEmpty === bEmpty;
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 }
 

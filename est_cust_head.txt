@@ -1,0 +1,226 @@
+
+const usd = (n) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const escHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function statementHtml(data) {
+  const c = data?.customer || {};
+  const inv = (data?.invoices || []).filter((i) => !["draft", "void"].includes(i.status));
+  const pays = (data?.payments || []).filter((p) => p.status !== "void");
+  const invById = new Map(inv.map((i) => [i.id, i.invoice_number || i.id]));
+  const aging = data?.ar_aging || {};
+  const totals = data?.summary || {};
+  const addr = [c.billing_address_1, c.billing_address_2, [c.billing_city, c.billing_state, c.billing_postal_code].filter(Boolean).join(" ")].filter(Boolean);
+  const billTo = [c.billing_contact_name || c.company_name, ...addr].filter(Boolean).map(escHtml).join("<br>");
+  const row = (cells, cls = "") => `<tr>${cells.map((x, i) => `<td class="${cls}" style="padding:6px 10px;${i === 0 ? "" : "text-align:right;"}">${x}</td>`).join("")}</tr>`;
+  const agingRow = [["Current", aging.current], ["1â€“30 days", aging.d1_30], ["31â€“60", aging.d31_60], ["61â€“90", aging.d61_90], ["90+", aging.d90_plus]]
+    .map(([l, v]) => `<td style="text-align:center;padding:6px;border:1px solid #e2e8f0"><div style="font-size:10px;text-transform:uppercase;color:#64748b">${l}</div><div style="font-weight:700">${usd(v)}</div></td>`).join("");
+  return `<!doctype html><html><head><title>Statement â€” ${escHtml(c.company_name || "Customer")}</title><style>
+    body{font-family:system-ui,-apple-system,sans-serif;color:#0f172a;margin:32px;font-size:13px}
+    table{border-collapse:collapse;width:100%} td,th{border-bottom:1px solid #e2e8f0}
+    th{text-align:left;font-size:10px;text-transform:uppercase;color:#64748b;padding:6px 10px}
+    h1{font-size:20px;margin:0} .muted{color:#64748b;font-size:12px}
+    @media print{button{display:none}}
+  </style></head><body>
+  <button type="button" onclick="window.print()" style="float:right;padding:8px 14px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer">Print / Save PDF</button>
+  <h1>CCS Signage â€” Account Statement</h1>
+  <p class="muted">Statement date: ${escHtml(aging.as_of || localDateStamp())}</p>
+  <h2 style="font-size:14px;margin:24px 0 4px">Bill to</h2><p>${billTo || "â€”"}</p>
+  <h2 style="font-size:14px;margin:20px 0 4px">Open activity</h2>
+  <table><tr><th>Invoice</th><th>Issued</th><th>Due</th><th>Status</th><th>Total</th><th>Paid</th><th>Balance</th></tr>
+  ${inv.map((i) => row([
+    escHtml(i.invoice_number || "â€”"), escHtml(i.issue_date || "â€”"), escHtml(i.due_date || "â€”"),
+    escHtml(i.status), usd(i.total), usd(i.amount_paid), `<b>${usd(i.balance_due)}</b>`,
+  ])).join("") || `<tr><td colspan="7" style="padding:12px;color:#94a3b8">No invoices.</td></tr>`}
+  </table>
+  ${pays.length ? `<h2 style="font-size:14px;margin:20px 0 4px">Payments received</h2>
+  <table><tr><th>Date</th><th>Invoice</th><th>Method</th><th>Reference</th><th>Amount</th></tr>
+  ${pays.map((p) => row([escHtml(p.paid_date || "â€”"), escHtml(invById.get(p.invoice_id) || p.invoice_id || "â€”"), escHtml(p.method || "â€”"), escHtml(p.reference_number || ""), usd(p.amount)])).join("")}
+  </table>` : ""}
+  <h2 style="font-size:14px;margin:20px 0 8px">Balance aging</h2>
+  <table style="width:auto">${`<tr>${agingRow}</tr>`}</table>
+  <p style="margin-top:16px;font-size:15px"><b>Total balance due: ${usd(totals.open_ar)}</b></p>
+  <p class="muted">Questions about this statement? Contact CCS Signage.</p>
+  </body></html>`;
+}
+
+function CustomerDetail({ sessionToken, customerId, onClose }) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let live = true;
+    base44.functions.invoke("opportunityWorkspaceAction", {
+      session_token: sessionToken, action: "get_customer_360", customer_id: customerId,
+    }).then((r) => {
+      const d = r?.data || r;
+      if (!live) return;
+      if (d?.success) setData(d); else setError(d?.error || "Load failed.");
+    }).catch((e) => { if (live) setError(e?.response?.data?.error || e?.message || "Load failed."); });
+    return () => { live = false; };
+  }, [sessionToken, customerId]);
+
+  const c = data?.customer;
+  const s = data?.summary;
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4" onClick={onClose}>
+      <div className="my-8 w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        {!data ? (
+          error ? <div className="py-8 text-center text-sm text-red-600">{error}</div>
+            : <div className="flex items-center justify-center py-16 text-gray-400"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loadingâ€¦</div>
+        ) : (
+          <>
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">{c?.company_name || "Customer"}</h2>
+                <div className="text-xs text-gray-500 capitalize">{c?.customer_status || "prospect"}</div>
+              </div>
+              <button type="button" onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><X className="h-5 w-5" /></button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6">
+              {[
+                ["Open opps", s?.open_opportunities],
+                ["Pipeline", usd(s?.open_pipeline_value)],
+                ["Invoiced", usd(s?.invoiced_total)],
+                ["Collected", usd(s?.collected_total)],
+                ["Open AR", usd(s?.open_ar)],
+                ["Jobs", s?.jobs_count],
+              ].map(([label, val]) => (
+                <div key={label} className="rounded-lg border border-gray-200 p-2 text-center">
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</div>
+                  <div className="mt-0.5 text-sm font-bold text-gray-800">{val ?? 0}</div>
+                </div>
+              ))}
+            </div>
+
+            {data.ar_aging && Number(s?.open_ar) > 0 && (
+              <div className="mt-3 rounded-lg border border-gray-200 p-3">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">AR aging Â· as of {data.ar_aging.as_of}</h3>
+                <div className="mt-2 grid grid-cols-5 gap-2 text-center">
+                  {[
+                    ["Current", data.ar_aging.current, "text-gray-800"],
+                    ["1â€“30", data.ar_aging.d1_30, "text-amber-700"],
+                    ["31â€“60", data.ar_aging.d31_60, "text-orange-700"],
+                    ["61â€“90", data.ar_aging.d61_90, "text-red-600"],
+                    ["90+", data.ar_aging.d90_plus, "text-red-800"],
+                  ].map(([label, val, cls]) => (
+                    <div key={label}>
+                      <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</div>
+                      <div className={`text-sm font-bold ${cls}`}>{usd(val)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(Array.isArray(data.estimates) && data.estimates.length > 0) || Object.keys(data.estimate_funnel || {}).length > 0 ? (
+              <div className="mt-4 rounded-lg border border-gray-200 p-3">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Estimates</h3>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {Object.entries(data.estimate_funnel || {}).map(([status, count]) => (
+                    <span key={status} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700 capitalize">
+                      {status} <b>Ã—{count}</b>
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-2 space-y-1">
+                  {(data.estimates || []).slice(0, 6).map((e) => (
+                    <Link key={e.id} to={`/EstimateDetail?id=${e.id}`} className="flex items-center justify-between rounded border border-gray-100 px-2 py-1 text-[11px] hover:border-red-300 hover:bg-red-50/40">
+                      <span className="truncate text-gray-700">{e.project_name || e.estimate_number || e.id}</span>
+                      <span className="ml-2 shrink-0 text-gray-500 capitalize">{e.status} Â· ${Number(e.quote_total || 0).toLocaleString()}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-gray-200 p-3">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Contacts</h3>
+                {(data.contacts || []).length === 0 && <div className="mt-1 text-xs text-gray-400">None recorded</div>}
+                {(data.contacts || []).map((p) => (
+                  <div key={p.id} className="mt-1.5 text-sm">
+                    <span className="font-medium text-gray-800">{p.display_name || [p.first_name, p.last_name].filter(Boolean).join(" ")}</span>
+                    <span className="text-xs text-gray-400"> {p.position || p.authority_role || ""}</span>
+                    {(p.email || p.phone) && <div className="text-xs text-gray-500">{[p.email, p.phone].filter(Boolean).join(" Â· ")}</div>}
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-lg border border-gray-200 p-3">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Locations</h3>
+                {(data.locations || []).length === 0 && <div className="mt-1 text-xs text-gray-400">None recorded</div>}
+                {(data.locations || []).map((l) => (
+                  <div key={l.id} className="mt-1.5 flex items-start gap-1.5 text-sm">
+                    <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
+                    <div>
+                      <span className="font-medium text-gray-800">{l.label || "Site"}</span>
+                      <div className="text-xs text-gray-500">{[l.address_line_1, l.city, l.state].filter(Boolean).join(", ")}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-lg border border-gray-200 p-3">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Opportunities</h3>
+                {(() => {
+                  const bySource = {};
+                  (data.opportunities || []).forEach((o) => {
+                    const src = String(o.lead_source || "").trim() || "unknown";
+                    bySource[src] = (bySource[src] || 0) + 1;
+                  });
+                  const parts = Object.entries(bySource).sort((a, b) => b[1] - a[1]);
+                  return parts.length > 1 ? (
+                    <div className="mt-0.5 text-[10px] text-gray-400">By source: {parts.map(([src, n]) => `${src} ${n}`).join(" · ")}</div>
+                  ) : null;
+                })()}
+                {(data.opportunities || []).length === 0 && <div className="mt-1 text-xs text-gray-400">None</div>}
+                {(data.opportunities || []).map((o) => (
+                  <div key={o.id} className="mt-1.5 flex items-center justify-between text-sm">
+                    <span className="min-w-0 truncate text-gray-800"><Briefcase className="mr-1 inline h-3.5 w-3.5 text-gray-400" />{o.title || "Opportunity"} <span className="text-xs text-gray-400">({o.stage})</span></span>
+                    <span className="shrink-0 text-xs font-medium text-gray-600">{o.budget_amount ? usd(o.budget_amount) : ""}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-lg border border-gray-200 p-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Invoices</h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const w = window.open("", "_blank", "width=900,height=1100");
+                      if (!w) return;
+                      w.document.write(statementHtml(data));
+                      w.document.close();
+                    }}
+                    className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-500 hover:bg-gray-50"
+                  >
+                    <Printer className="h-3 w-3" />Statement
+                  </button>
+                </div>
+                {(data.invoices || []).length === 0 && <div className="mt-1 text-xs text-gray-400">None</div>}
+                {(data.invoices || []).map((i) => (
+                  <div key={i.id} className="mt-1.5 flex items-center justify-between text-sm">
+                    <span className="min-w-0 truncate text-gray-800"><FileText className="mr-1 inline h-3.5 w-3.5 text-gray-400" />{i.invoice_number || "Invoice"} <span className="text-xs text-gray-400">({i.status})</span></span>
+                    <span className="shrink-0 text-xs font-medium text-gray-600">
+                      {usd(i.balance_due)} due
+                      {i.days_overdue > 0 && Number(i.balance_due) > 0 && (
+                        <span className="ml-1 font-semibold text-red-600">{i.days_overdue}d overdue</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-lg border border-gray-200 p-3 sm:col-span-2">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Jobs / Work orders</h3>
+                {(data.jobs || []).length === 0 && <div className="mt-1 text-xs text-gray-400">None</div>}
+                {(data.jobs || []).map((w) => (
+                  <div key={w.id} className="mt-1.5 flex items-center justify-between text-sm">
+                    <span className="min-w-0 truncate text-gray-800">{w.title || "Work order"} <span className="text-xs text-gray-400">({w.current_stage || w.sales_status || "â€”"})</span></span>
+                    <span className="shrink-0 text-xs font-medium text-gray-600">{w.estimate_amount ? usd(w.estimate_amount) : ""}</span>
+                  </div>
+                ))}
+              </div>
+              <PortalPanel sessionToken={sessionToken} customerId={customerId} />
+            </div>
+          </>
+        )}

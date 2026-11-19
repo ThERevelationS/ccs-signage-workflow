@@ -1,0 +1,2 @@
+Dry-run: 1 whole-file edit previews applied=false; staged build 3 bundles 0 warnings; no mutation.
+exit=0

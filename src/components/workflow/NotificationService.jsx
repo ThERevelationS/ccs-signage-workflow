@@ -1,6 +1,9 @@
 import { base44 } from "@/api/base44Client";
 import { getSessionToken } from "@/components/auth/EmailGate";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
+import { emailBodyToPlainText } from "@/components/comms/sendStaffEmail";
+import { appParams } from "@/lib/app-params";
 const EmailNotificationSettings = base44.entities.EmailNotificationSettings;
 const User = base44.entities.User;
 
@@ -131,8 +134,14 @@ const getRecipients = async (rule, workOrder) => {
         break;
       case "assigned_user":
         if (workOrder?.assigned_to) {
-          // Try to find user email from assigned_to field
-          const users = await loadAllEntityRows({ entity: User, sort: null, label: "Notification user catalog" });
+          // EmailGate staff can't read the platform User entity (guaranteed
+          // 401), so resolve assignees through the session-authenticated
+          // authorized-user directory instead.
+          const sessionToken = getSessionToken();
+          const directory = sessionToken
+            ? await loadAuthorizedUserDirectory({ sessionToken }).catch(() => null)
+            : null;
+          const users = directory?.users || [];
           const user = users.find(u => 
             u.email === workOrder.assigned_to || 
             u.full_name === workOrder.assigned_to
@@ -144,8 +153,12 @@ const getRecipients = async (rule, workOrder) => {
         if (workOrder?.created_by) emails.add(workOrder.created_by);
         break;
       case "all_admins":
-        const admins = await loadAllEntityRows({ entity: User, query: { role: "admin" }, sort: null, label: "Notification admin recipients" });
-        admins.forEach(admin => emails.add(admin.email));
+        // Platform User reads only succeed for Base44-authenticated sessions —
+        // for EmailGate staff this was a guaranteed 401 per rule trigger.
+        if (appParams.token) {
+          const admins = await loadAllEntityRows({ entity: User, query: { role: "admin" }, sort: null, label: "Notification admin recipients" });
+          admins.forEach(admin => emails.add(admin.email));
+        }
         break;
       case "custom_list":
         if (recipient.value) {
@@ -219,13 +232,28 @@ export const triggerNotification = async (triggerType, workOrder, extraData = {}
       // Generate AI-enhanced email
       const { subject, body } = await generateAIEmail(templateSubject, templateBody, workOrder, extraData);
 
+      // EmailGate sessions carry neither platform auth nor a workflow
+      // capability, so a direct sendGmail invoke always 401s for them — route
+      // through the session-authenticated sendStaffEmail bridge instead.
+      // Platform-authed sessions keep the original sendGmail path (HTML body).
+      const ruleSessionToken = getSessionToken();
       for (const email of recipients) {
         try {
-          await base44.functions.invoke('sendGmail', {
-            to: email,
-            subject: subject,
-            body: body
-          });
+          if (ruleSessionToken) {
+            await base44.functions.invoke('sendStaffEmail', {
+              session_token: ruleSessionToken,
+              to: email,
+              subject: subject,
+              body: emailBodyToPlainText(body),
+              kind: 'notification_rule',
+            });
+          } else {
+            await base44.functions.invoke('sendGmail', {
+              to: email,
+              subject: subject,
+              body: body
+            });
+          }
           console.log(`Notification sent to ${email} for trigger: ${triggerType}`);
         } catch (emailError) {
           console.error(`Failed to send email to ${email}:`, emailError);
@@ -457,6 +485,27 @@ export const NotificationTriggers = {
     });
   },
 
+  // Emits every order save event for one CAS-verified write: ordered/received
+  // first-sets, cancel transitions, and one field-changed event per actually
+  // changed mapped field. Callers pass the fields they intended to write so
+  // server-managed keys never fire phantom change events.
+  orderSaveEvents: async ({ baseline, saved, fields, changedBy }) => {
+    if (!saved?.id) return;
+    const changedFields = (fields || []).filter((f) => baseline?.[f] !== saved?.[f]);
+    if (saved.date_ordered && !baseline?.date_ordered) {
+      await NotificationTriggers.orderOrdered(saved, changedBy);
+    }
+    if (saved.date_received && !baseline?.date_received) {
+      await NotificationTriggers.orderReceived(saved, changedBy);
+    }
+    if (changedFields.includes("status") && saved.status === "cancelled") {
+      await NotificationTriggers.orderCancelled(saved, changedBy);
+    }
+    for (const field of changedFields) {
+      await NotificationTriggers.orderFieldChanged(saved, field, baseline?.[field], saved?.[field], changedBy);
+    }
+  },
+
   workOrderRestored: async (workOrder, changedBy) => {
     await triggerNotification("work_order_restored", workOrder, { changedBy, eventDescription: "Work order restored from trash" });
   },
@@ -603,5 +652,59 @@ if (anyField) {
         eventDescription: `Work order moved ${movedDelta} position${movedDelta === 1 ? "" : "s"} in the list`,
       });
     }
+  },
+
+  // --- Unified alerts (ops) ---------------------------------------------------
+  // Work-order-context events: the engine re-reads the Work Order server-side,
+  // so every automation action can run; product details ride in extras.
+  proofSent: async (workOrder, { productId, productDescription, proofVersion, changedBy } = {}) => {
+    await triggerNotification("proof_sent", workOrder, {
+      productId, productDescription, proofVersion, changedBy,
+      eventDescription: `Proof sent for approval${productDescription ? `: ${productDescription}` : ""}`,
+    });
+  },
+
+  proofApproved: async (workOrder, { productId, productDescription, proofVersion, changedBy } = {}) => {
+    await triggerNotification("proof_approved", workOrder, {
+      productId, productDescription, proofVersion, changedBy,
+      eventDescription: `Proof approved${productDescription ? `: ${productDescription}` : ""}`,
+    });
+  },
+
+  productTransition: async (workOrder, { productId, productDescription, previousStatus, newStatus, changedBy } = {}) => {
+    await triggerNotification("product_transition", workOrder, {
+      productId, productDescription, previousStatus, newStatus, changedBy,
+      eventDescription: `Product "${productDescription || productId || "item"}" moved from ${previousStatus || "none"} to ${newStatus || "none"}`,
+    });
+  },
+
+  // Record-context events: only the record id crosses the wire; the engine
+  // resolves the entity via RECORD_CONTEXT_EVENTS and re-reads it server-side.
+  crmEventCompleted: async (activity, { outcome, changedBy } = {}) => {
+    await triggerNotification("crm_event_completed", null, {
+      recordData: activity, outcome, changedBy,
+      eventDescription: `CRM event "${activity?.summary || activity?.event_type || "event"}" closed as ${outcome || "completed"}`,
+    });
+  },
+
+  purchaseOrderReceived: async (purchaseOrder, changedBy) => {
+    await triggerNotification("po_received", null, {
+      recordData: purchaseOrder, poNumber: purchaseOrder?.po_number, vendor: purchaseOrder?.vendor_name, changedBy,
+      eventDescription: `Purchase order ${purchaseOrder?.po_number || purchaseOrder?.id || ""} fully received`,
+    });
+  },
+
+  purchaseOrderBackordered: async (purchaseOrder, changedBy) => {
+    await triggerNotification("po_backordered", null, {
+      recordData: purchaseOrder, poNumber: purchaseOrder?.po_number, vendor: purchaseOrder?.vendor_name, changedBy,
+      eventDescription: `Purchase order ${purchaseOrder?.po_number || purchaseOrder?.id || ""} partially received - remainder on backorder`,
+    });
+  },
+
+  reconVariance: async (batch, { variance, changedBy } = {}) => {
+    await triggerNotification("recon_variance", null, {
+      recordData: batch, variance, changedBy,
+      eventDescription: `Reconciliation ${batch?.batch_number || batch?.id || ""} closed ${Number(variance) > 0 ? "over" : "short"} by $${Math.abs(Number(variance) || 0).toFixed(2)}`,
+    });
   },
 };

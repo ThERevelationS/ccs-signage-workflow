@@ -1,0 +1,65 @@
+{
+ "jurisdiction_id": "6ac3399ffb89d96091bb0d7f",
+ "jurisdiction_name": "Stark County",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "County Treasurer Instructions Review the form for completeness and verify the accuracy of the penalty amount and date that taxes were due and paid. If the taxpayer has a late payment history, include the amount(s) and tax period(s) for the preceding three years. Retain a copy of the application for your records. Forward the completed application with any attachments to the county auditor. The county treasurer should check all that apply:  Penalty accrued because of the negligence or error of a county officer (explain below). This would include the treasurer accepting a change of address from someone other than the property owner.  Taxpayer failed to receive a tax bill or a correct bill and made a good faith effort to obtain the bill within 30 days after the due date. Date of request  Tax was not time ly paid because of the serious injury , death or hospitalization of the taxpayer with",
+   "tags": [
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "58519c4ce7846f396b6c4caff3f76c87b61519fb5f0c32eb094dda1c0201872b",
+   "source_document_id": null,
+   "source_title": "58519c4ce7846f396b6c4caff3f76c87b61519fb5f0c32eb094dda1c0201872b.pdf",
+   "official_url": "https://www.starkcountyohio.gov/Treasurer/Resources/Applications%20and%20Forms/General/Penalty-Remission-Application_04062020.pdf?t=202605110320490"
+  },
+  {
+   "page": 1,
+   "snippet": "DTE 23A County File this form with the Rev. 10/17 county treasurer. Case no. Application for the Remission of Real Property and Manufactured Home Late-Payment Penalties (R.C. 5715.39) Taxpayer Instructions: Complete the front of this form and file it with the county treasurer. Attach a copy of all evidence to the form, complete the name and address blank and sign the form. If penalties have accrued for more than one late payment, a separate application must be filed for each penalty. Please send completed form to the county treasurer of the county in which the property is located. (The county treasurer may insert his or her name and address here or the taxpayer may obtain the address at ohiocountytreasurers.org .) Date Received by Treasurer Date Received by Auditor Date taxes were due Date taxes and interest were paid Date entered into a payment plan Please check all the reasons the pena",
+   "tags": [
+    "sign",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "58519c4ce7846f396b6c4caff3f76c87b61519fb5f0c32eb094dda1c0201872b",
+   "source_document_id": null,
+   "source_title": "58519c4ce7846f396b6c4caff3f76c87b61519fb5f0c32eb094dda1c0201872b.pdf",
+   "official_url": "https://www.starkcountyohio.gov/Treasurer/Resources/Applications%20and%20Forms/General/Penalty-Remission-Application_04062020.pdf?t=202605110320490"
+  },
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR REAL PROPERTY TAX EXTENSION FOR RESERVISTS CALLED TO ACTIVE DUTY DURING WARTIME Please type or print: Applicant Name: _____________________________________________________________________________ Last First Middle Initial Property Owner Name(s): ______________________________________________________________________ (As listed on deed) ______________________________________________________________________ Name of National Guard member or Reservist called to active duty: National Guard __________________________________________________________________ Armed Forces Reserve Last First Middle Initial Military orders Call to active service: ____/____/_______ (copy must be attached to this application) Release from active status: ____/____/_______ (must be provided within 6 months of release) Reservist is: Sole owner of property Spouse of owner of property Joint owner of propert",
+   "tags": [
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "d41932864119bd9fe22455a298525612685b1c6fc17ddba1c564bb86b86dd154",
+   "source_document_id": null,
+   "source_title": "d41932864119bd9fe22455a298525612685b1c6fc17ddba1c564bb86b86dd154.pdf",
+   "official_url": "https://www.starkcountyohio.gov/Treasurer/Resources/Applications%20and%20Forms/General/Appilacation-Real-Property-Tax-Ext-Res-Active-Duty-1.pdf?t=202605110320160"
+  },
+  {
+   "page": 2,
+   "snippet": "Alexander A. Zumbar, Stark County Treasurer Unclaimed Money Trust Claim Identification Form The undersigned, claims to have legal rights to Unclaimed Funds now in the custody of Stark County. $________________________________ AMOUNT ___________________________________________________________________________________________________ ___________________________________________________________________________________________________ ___________________________________________________________________________________________________ Description of Unclaimed Funds Please explain why you feel you are legally entitled to claim these funds: ______________________________________________________________________________________________________________ ______________________________________________________________________________________________________________ _______________________________________",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "3d65a5039983e0b842a452e938caba65b1b115890908b49d1fd7ba0b9e07d808",
+   "source_document_id": null,
+   "source_title": "3d65a5039983e0b842a452e938caba65b1b115890908b49d1fd7ba0b9e07d808.pdf",
+   "official_url": "https://www.starkcountyohio.gov/Treasurer/Resources/Applications%20and%20Forms/General/Unclaimed%20Funds%20Claim%20Form%2001_2019.pdf?t=202605110320580"
+  }
+ ]
+}

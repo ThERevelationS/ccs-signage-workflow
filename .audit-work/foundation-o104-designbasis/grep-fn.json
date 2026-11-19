@@ -1,0 +1,121 @@
+{
+  "matches": [
+    {
+      "path": "base44/entities/FoundationProject.jsonc",
+      "line": 2,
+      "text": "  \"name\": \"FoundationProject\","
+    },
+    {
+      "path": "base44/entities/FoundationProject.jsonc",
+      "line": 960,
+      "text": "        \"role\": \"__foundationproject_backend_only__\""
+    },
+    {
+      "path": "base44/entities/FoundationProject.jsonc",
+      "line": 965,
+      "text": "        \"role\": \"__foundationproject_backend_only__\""
+    },
+    {
+      "path": "base44/entities/FoundationProject.jsonc",
+      "line": 970,
+      "text": "        \"role\": \"__foundationproject_backend_only__\""
+    },
+    {
+      "path": "base44/entities/FoundationProject.jsonc",
+      "line": 975,
+      "text": "        \"role\": \"__foundationproject_backend_only__\""
+    },
+    {
+      "path": "base44/entities/QuickProduct.jsonc",
+      "line": 32,
+      "text": "      \"description\": \"Dedicated Builder source entity, e.g. FoundationProject. Blank for Custom Products.\""
+    },
+    {
+      "path": "base44/entities/BuilderProduct.jsonc",
+      "line": 20,
+      "text": "      \"description\": \"Entity that owns the detailed estimator record, e.g. FoundationProject.\""
+    },
+    {
+      "path": "base44/shared/foundationPricingWire.ts",
+      "line": 20,
+      "text": "// A FoundationProject record carrying no engine-vocab config resolves"
+    },
+    {
+      "path": "base44/shared/foundationPricingWire.ts",
+      "line": 35,
+      "text": "// Entity contract — FoundationProject.jsonc (module key 'foundation')"
+    },
+    {
+      "path": "base44/shared/foundationPricingWire.ts",
+      "line": 65,
+      "text": "// categorizeFoundationProject (projectCategorizer.jsx): the categorizer rolls"
+    },
+    {
+      "path": "base44/shared/foundationPricingWire.ts",
+      "line": 328,
+      "text": "    // material+internal mortar (categorizeFoundationProject 'Brick / Wall /"
+    },
+    {
+      "path": "base44/shared/foundationPricingWire.ts",
+      "line": 630,
+      "text": " * Project a FoundationProject-like record into granular component cost lines."
+    },
+    {
+      "path": "base44/shared/foundationPricingWire.ts",
+      "line": 1041,
+      "text": " * input.record          FoundationProject-like record"
+    },
+    {
+      "path": "base44/shared/customerMergeModel.ts",
+      "line": 117,
+      "text": "  { entity: 'FoundationProject', label: 'Foundation sections', kind: 'id', match_fields: ['customer_id'], name_fields: ['client_name'] },"
+    },
+    {
+      "path": "base44/functions/ensureEstimateCustomer/entry.ts",
+      "line": 34,
+      "text": "  'FoundationProject',"
+    },
+    {
+      "path": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 22,
+      "text": "  FoundationProject: new Set(['create', 'updateMany']),"
+    },
+    {
+      "path": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 324,
+      "text": "      if (entityName === 'FoundationProject' && (typeof query?.id !== 'string' || typeof query?.updated_date !== 'string')) {"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 207,
+      "text": "  'FoundationProject',\r"
+    },
+    {
+      "path": "base44/functions/ensureCustomerSummary/entry.ts",
+      "line": 7,
+      "text": "  foundation: 'FoundationProject',\r"
+    },
+    {
+      "path": "base44/functions/staffDataRead/entry.ts",
+      "line": 60,
+      "text": "  'FoundationProject',"
+    },
+    {
+      "path": "base44/functions/ensureNewCustomer/entry.ts",
+      "line": 30,
+      "text": "  'FoundationProject',"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 555,
+      "text": "        foundation: \"FoundationProject\", metal: \"MetalProject\","
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 607,
+      "text": "        foundation: \"FoundationProject\", metal: \"MetalProject\","
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 23
+}

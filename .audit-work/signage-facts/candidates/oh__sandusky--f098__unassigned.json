@@ -1,0 +1,27 @@
+{
+ "jurisdiction_id": "6ae03e3b7c81efb85012f098",
+ "jurisdiction_name": "Sandusky",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR ZONING CERTIFICATE Section 519.16 O.R.C (Ohio Revised Code) County Real Estate Parcel ID Number □□ - □□ - □□ - □□□□ - □□ SANDUSKY TOWNSHIP, SANDUSKY COUNTY To the Board of Township Trustees Application No. The undersigned hereby applies for a Zoning Certificate for the following use, to be issued on the basis of the representatives contained herein, all of which applicant says are true. (Project must be started within one (1) year of issuance and completed within eighteen (18) months, after which time, the permit must be renewed). Address/Location of Property Property Owner Name Phone # _ Property Owner Address Proposed Use: _____ commercial _____ residential _____ No. of Families _____ No. stories new construction addition remodel accessory building fence pond pool sign DImensions: a) Highest point of building above the established grade ft. b) front setback ____________",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "06d8f2259783d1148ae0e59ccb0c2f976d1e929dbb5a93af2a46471e406f8d91",
+   "source_document_id": null,
+   "source_title": "06d8f2259783d1148ae0e59ccb0c2f976d1e929dbb5a93af2a46471e406f8d91.pdf",
+   "official_url": "https://mail.sanduskytownship.com/uploads/PDF/Zoning%20Application.docx%20-%20Google%20Docs.pdf"
+  }
+ ]
+}

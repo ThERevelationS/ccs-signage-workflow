@@ -16,13 +16,14 @@ import { Loader2, Link as LinkIcon, ClipboardList, Search, RefreshCw, CalendarCl
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import ProductChecklistDialog from "@/components/sips/ProductChecklistDialog";
 import TemplateBuilder from "@/components/sips/TemplateBuilder";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { usePolling } from "@/lib/usePolling";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 // Helper to parse date string as local date
@@ -247,20 +248,18 @@ export default function SIPs() {
     // a successful, current snapshot proves that the issue has recovered.
     try {
       const [orders, usersData, taskDescSetting, dropdownsSetting] = await Promise.all([
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { is_rider: false, completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "SIPs Work Orders",
-        }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "SIPs authorized users" }),
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.is_rider !== true && wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "SIPs authorized users" }),
         loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
+          entity: staffEntities.GlobalSettings,
           settingKey: "salesTaskDescriptions",
           label: "SIPs sales task descriptions",
         }),
         loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
+          entity: staffEntities.GlobalSettings,
           settingKey: "dropdownConditions",
           label: "SIPs checklist dropdown conditions",
         })
@@ -1008,7 +1007,7 @@ export default function SIPs() {
                       {index + 1}
                     </button>
                     <div className="min-w-0 flex-1">
-                      <button data-sips-active-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
+                      <button type="button" data-sips-active-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
                         <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                         <span className="truncate">{wo.client_name || "Unnamed"}</span>
                       </button>
@@ -1149,7 +1148,7 @@ export default function SIPs() {
                   >
                     {/* Row Number - Clickable Focus Button */}
                     <td className="px-0 py-0 border-r">
-                      <button
+                      <button type="button"
                         onClick={(e) => { anchorFocusedRow(e.currentTarget); setFocusedRowId(focusedRowId === wo.id ? null : wo.id); }}
                         className={`w-full h-full px-2 py-2 text-center font-bold transition-colors ${
                           focusedRowId === wo.id 
@@ -1191,7 +1190,7 @@ export default function SIPs() {
 
                     {/* Customer */}
                      <td className="px-2 py-2 border-r">
-                       <button
+                       <button type="button"
                          data-sips-active-focus-id={wo.id}
                          onClick={() => setSelectedWorkOrder(wo)}
                          className="text-sm text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full truncate"
@@ -1444,7 +1443,7 @@ export default function SIPs() {
                         <CalendarClock className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <button data-sips-job-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
+                        <button type="button" data-sips-job-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
                           <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                           <span className="truncate">{wo.client_name || "Unnamed"}</span>
                         </button>
@@ -1551,7 +1550,7 @@ export default function SIPs() {
                         </Button>
                       </td>
                       <td className="px-2 py-2 border-r">
-                        <button data-sips-job-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="text-sm text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full truncate">
+                        <button type="button" data-sips-job-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="text-sm text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full truncate">
                           <LinkIcon className="w-3 h-3 flex-shrink-0 text-blue-500" />
                           <span className="truncate">{wo.client_name || "Unnamed"}</span>
                         </button>
@@ -1612,7 +1611,7 @@ export default function SIPs() {
                       <CheckCircle2 className="w-4 h-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <button data-sips-job-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
+                      <button type="button" data-sips-job-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
                         <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                         <span className="truncate">{wo.client_name || "Unnamed"}</span>
                       </button>
@@ -1701,7 +1700,7 @@ export default function SIPs() {
                       {reopeningWipIds.has(wo.id) && <Loader2 className="w-3.5 h-3.5 mx-auto mt-1 animate-spin text-green-700" aria-hidden="true" />}
                     </td>
                     <td className="px-2 py-2 border-r" style={{ maxWidth: '150px' }}>
-                      <button
+                      <button type="button"
                         data-sips-job-focus-id={wo.id}
                         onClick={() => setSelectedWorkOrder(wo)}
                         className="text-xs text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full"

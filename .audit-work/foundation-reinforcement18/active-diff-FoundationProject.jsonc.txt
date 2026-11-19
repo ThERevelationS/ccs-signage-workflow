@@ -1,0 +1,125 @@
+diff --git a/.audit-work/foundation-reinforcement18/active-before-remote-FoundationProject.jsonc b/base44/entities/FoundationProject.jsonc
+index 50b12357f..f3f5006e8 100644
+--- a/.audit-work/foundation-reinforcement18/active-before-remote-FoundationProject.jsonc
++++ b/base44/entities/FoundationProject.jsonc
+@@ -23,27 +23,7 @@
+       "type": "string",
+       "description": "Internal retry receipt used only to make the first create of this Builder source project idempotent."
+     },
+-    "builder_sync_attempt": {
+-      "type": "object",
+-      "description": "Internal source-save receipt; synchronization is acknowledged by the linked estimate line at the same source updated_date.",
+-      "properties": {
+-        "schema_version": {
+-          "type": "integer"
+-        },
+-        "key": {
+-          "type": "string"
+-        },
+-        "source_project_id": {
+-          "type": "string"
+-        },
+-        "estimate_id": {
+-          "type": "string"
+-        },
+-        "requested_at": {
+-          "type": "string"
+-        }
+-      }
+-    },
++    "builder_sync_attempt": {"type":"object","description":"Internal source-save receipt; synchronization is acknowledged by the linked estimate line at the same source updated_date.","properties":{"schema_version":{"type":"integer"},"key":{"type":"string"},"source_project_id":{"type":"string"},"estimate_id":{"type":"string"},"requested_at":{"type":"string"}}},
+     "assembly_schema_version": {
+       "type": "integer"
+     },
+@@ -636,7 +616,7 @@
+     },
+     "pricing_engine": {
+       "type": "object",
+-      "description": "F-23h: optional pricing-engine context block \u2014 {customer_tier, tier_rules[], templates[], default_markup_pct, tax_percent, setup_fee, minimum_charge}. When present, foundationPricingWire routes the sell side through the shared engine; absent = legacy pricing verbatim.",
++      "description": "F-23h: optional pricing-engine context block — {customer_tier, tier_rules[], templates[], default_markup_pct, tax_percent, setup_fee, minimum_charge}. When present, foundationPricingWire routes the sell side through the shared engine; absent = legacy pricing verbatim.",
+       "additionalProperties": true
+     },
+     "selected_equipment": {
+@@ -738,41 +718,21 @@
+       "type": "object",
+       "description": "Versioned historical order snapshot saved atomically with the source design; never current pricing when catalog items are unavailable.",
+       "properties": {
+-        "version": {
+-          "type": "integer"
+-        },
+-        "concrete_total": {
+-          "type": "number"
+-        },
+-        "rounded_yards": {
+-          "type": "number"
+-        },
+-        "rate_per_yard": {
+-          "type": "number"
+-        },
+-        "additional_stops_cost": {
+-          "type": "number"
+-        },
++        "version": { "type": "integer" },
++        "concrete_total": { "type": "number" },
++        "rounded_yards": { "type": "number" },
++        "rate_per_yard": { "type": "number" },
++        "additional_stops_cost": { "type": "number" },
+         "trucks": {
+           "type": "array",
+           "items": {
+             "type": "object",
+             "properties": {
+-              "yards": {
+-                "type": "number"
+-              },
+-              "rounded_yards": {
+-                "type": "number"
+-              },
+-              "cost": {
+-                "type": "number"
+-              },
+-              "small_order_fee": {
+-                "type": "number"
+-              },
+-              "fuel_fee": {
+-                "type": "number"
+-              }
++              "yards": { "type": "number" },
++              "rounded_yards": { "type": "number" },
++              "cost": { "type": "number" },
++              "small_order_fee": { "type": "number" },
++              "fuel_fee": { "type": "number" }
+             }
+           }
+         }
+@@ -833,25 +793,9 @@
+     "client_name"
+   ],
+   "rls": {
+-    "create": {
+-      "user_condition": {
+-        "role": "__foundationproject_backend_only__"
+-      }
+-    },
+-    "read": {
+-      "user_condition": {
+-        "role": "__foundationproject_backend_only__"
+-      }
+-    },
+-    "update": {
+-      "user_condition": {
+-        "role": "__foundationproject_backend_only__"
+-      }
+-    },
+-    "delete": {
+-      "user_condition": {
+-        "role": "__foundationproject_backend_only__"
+-      }
+-    }
++    "create": { "user_condition": { "role": "__foundationproject_backend_only__" } },
++    "read": { "user_condition": { "role": "__foundationproject_backend_only__" } },
++    "update": { "user_condition": { "role": "__foundationproject_backend_only__" } },
++    "delete": { "user_condition": { "role": "__foundationproject_backend_only__" } }
+   }
+ }
+\ No newline at end of file

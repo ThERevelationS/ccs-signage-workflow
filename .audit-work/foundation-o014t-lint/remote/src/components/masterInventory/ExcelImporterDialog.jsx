@@ -1,0 +1,561 @@
+import { useState, useRef, useMemo } from "react";
+// xlsx (~1MB) loads on demand when a file is picked — not at dialog open.
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Upload,
+  X,
+  FileSpreadsheet,
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
+  RefreshCw,
+  Plus,
+  SkipForward,
+} from "lucide-react";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { createImportedInventoryRowSafely, importedPayloadMatches } from "./inventoryImportPersistence";
+import {
+  routeRow,
+  validateColumns,
+  TARGETS,
+  nameKey,
+  REQUIRED_COLUMNS,
+} from "./importMappers";
+
+/**
+ * ExcelImporterDialog
+ * -------------------
+ * Drops in an external system's "PartDetailsExport" XLSX, routes each row to
+ * the correct inventory entity, dedupes by name (case-insensitive), and
+ * UPDATES existing items rather than creating duplicates.
+ *
+ *  - Validates required columns (rejects wrong file types).
+ *  - Auto-routes to: Vinyl / Substrates / Metal.
+ *  - Groups same-product different-size vinyl using product_group_key.
+ *  - Shows a preview with counts: New / Update / Skip per category.
+ *  - Idempotent: re-running the import only updates changed prices.
+ */
+const IMPORT_ROW_LIMIT = 2000;
+
+export default function ExcelImporterDialog({ onClose, onComplete }) {
+  const fileInputRef = useRef(null);
+  const importRef = useRef(false);
+  const [file, setFile] = useState(null);
+  const [fileError, setFileError] = useState(null);
+  const [parsing, setParsing] = useState(false);
+  const [rows, setRows] = useState([]); // routed rows: { target_key, payload, name, action, existingId }
+  const [importing, setImporting] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const [result, setResult] = useState(null); // { created, updated, skipped, errors }
+  const [skippedRows, setSkippedRows] = useState(0); // spreadsheet rows dropped before preview (no routable name or merged duplicates)
+  const [skipDetails, setSkipDetails] = useState([]); // per-row reasons for the count above
+  const [cappedRows, setCappedRows] = useState(0); // unique rows beyond IMPORT_ROW_LIMIT that were not loaded
+
+  // ------------------------- Step 1: Pick + validate file -------------------------
+
+  const handleFile = async (f) => {
+    setFileError(null);
+    setRows([]);
+    setResult(null);
+    setSkippedRows(0);
+    setSkipDetails([]);
+
+    if (!f) return;
+
+    const name = f.name.toLowerCase();
+    if (!name.endsWith(".xlsx") && !name.endsWith(".xls")) {
+      setFileError("Wrong file type. Please upload a .xlsx or .xls file exported from your external inventory system.");
+      setFile(null);
+      return;
+    }
+
+    setFile(f);
+    setParsing(true);
+    try {
+      const buf = await f.arrayBuffer();
+      const XLSX = await import("xlsx");
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+      if (!data.length) {
+        setFileError("The spreadsheet is empty.");
+        setParsing(false);
+        return;
+      }
+
+      const headers = Object.keys(data[0]);
+      const { ok, missing } = validateColumns(headers);
+      if (!ok) {
+        setFileError(
+          `This doesn't look like a Part Details export. Missing required columns: ${missing.join(
+            ", "
+          )}. Expected columns include: ${REQUIRED_COLUMNS.join(", ")}.`
+        );
+        setParsing(false);
+        return;
+      }
+
+      // Load existing items from every target entity so we can dedupe by name
+      const existing = {};
+      await Promise.all(
+        Object.entries(TARGETS).map(async ([key, conf]) => {
+          try {
+            const list = await loadAllEntityRows({ entity: conf.entity, sort: "created_date", label: `${conf.label} inventory` });
+            existing[key] = new Map(list.map((it) => [nameKey(it[conf.nameField]), it]));
+          } catch (e) {
+            console.error(`Failed to verify existing ${key}:`, e);
+            const error = new Error(`Could not verify existing ${conf.label} inventory. No import preview was created; retry after the inventory connection is available.`);
+            error.inventoryVerification = true;
+            throw error;
+          }
+        })
+      );
+
+      // Route every row + decide action (create / update / skip)
+      const drops = [];
+      const routed = data
+        .map((row, idx) => {
+          // Spreadsheet row number for skip reporting (header row = 1).
+          const sourceRow = idx + 2;
+          const r = routeRow(row);
+          if (!r.name) { drops.push({ row: sourceRow, reason: "No routable item name" }); return null; }
+          const existingItem = existing[r.target_key].get(nameKey(r.name));
+          return {
+            ...r,
+            sourceRow,
+            action: existingItem ? "update" : "create",
+            existingId: existingItem?.id || null,
+            existingUpdatedDate: existingItem?.updated_date || null,
+          };
+        })
+        .filter(Boolean);
+
+      // De-dupe within the SAME import batch (last occurrence wins)
+      const seen = new Map();
+      routed.forEach((r) => {
+        const k = `${r.target_key}::${nameKey(r.name)}`;
+        const prior = seen.get(k);
+        if (prior) drops.push({ row: prior.sourceRow, reason: `Duplicate in file — kept the later "${r.name}" row ${r.sourceRow}` });
+        seen.set(k, r);
+      });
+
+      const unique = Array.from(seen.values());
+      const capped = unique.slice(0, IMPORT_ROW_LIMIT);
+      setSkippedRows(data.length - unique.length);
+      setSkipDetails(drops);
+      setCappedRows(unique.length - capped.length);
+      setRows(capped);
+    } catch (err) {
+      console.error("Parse error:", err);
+      setRows([]);
+      setFileError(
+        err?.inventoryVerification
+          ? err.message
+          : "Could not read this file. Please make sure it's a valid Excel file."
+      );
+    }
+    setParsing(false);
+  };
+
+  // ------------------------- Step 2: Preview counts -------------------------
+
+  const summary = useMemo(() => {
+    const out = {};
+    Object.keys(TARGETS).forEach((k) => {
+      out[k] = { create: 0, update: 0 };
+    });
+    rows.forEach((r) => {
+      out[r.target_key][r.action] += 1;
+    });
+    return out;
+  }, [rows]);
+
+  // ------------------------- Step 3: Run import -------------------------
+
+  const runImport = async () => {
+    if (importRef.current || !rows.length) return;
+    importRef.current = true;
+    setImporting(true);
+    setProgress({ done: 0, total: rows.length });
+    const res = { created: 0, updated: 0, skipped: 0, errors: [], aborted: false };
+
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const isRateLimit = (err) => {
+      const msg = String(err?.message || "").toLowerCase();
+      const status = err?.response?.status || err?.status;
+      return status === 429 || msg.includes("rate limit") || msg.includes("too many requests");
+    };
+
+    // Process one row at a time with a small delay between requests, and
+    // retry rate-limit failures with exponential backoff.
+    const PER_REQUEST_DELAY_MS = 120;
+    const MAX_RETRIES = 5;
+
+    try {
+      // Full preflight across every target BEFORE the first write. Preview-time
+      // IDs are not trusted blindly: updates must still exist with the same name
+      // and updated_date, while creates must still have no matching name.
+      const liveCatalogs = {};
+      try {
+        await Promise.all(Object.entries(TARGETS).map(async ([key, conf]) => {
+          const list = await loadAllEntityRows({ entity: conf.entity, sort: "created_date", label: `${conf.label} inventory` });
+          liveCatalogs[key] = {
+            byId: new Map((list || []).filter((item) => item.id).map((item) => [item.id, item])),
+            byName: new Map((list || []).map((item) => [nameKey(item[conf.nameField]), item])),
+          };
+        }));
+      } catch (error) {
+        res.aborted = true;
+        res.errors.push({ name: "Inventory preflight", message: error?.message || "Could not verify current inventory." });
+        setResult(res);
+        return;
+      }
+
+      for (const row of rows) {
+        const conf = TARGETS[row.target_key];
+        const catalog = liveCatalogs[row.target_key];
+        if (row.action === "update") {
+          const live = catalog.byId.get(row.existingId);
+          if (!live) {
+            res.errors.push({ name: row.name, message: "The matched inventory item no longer exists. Refresh the import preview." });
+            continue;
+          }
+          if (nameKey(live[conf.nameField]) !== nameKey(row.name)) {
+            res.errors.push({ name: row.name, message: "The matched inventory item was renamed in another session. Refresh the import preview." });
+            continue;
+          }
+          if (row.existingUpdatedDate && live.updated_date && row.existingUpdatedDate !== live.updated_date) {
+            res.errors.push({ name: row.name, message: "The matched inventory item changed in another session. Refresh the import preview before importing." });
+          }
+        } else if (catalog.byName.has(nameKey(row.name))) {
+          res.errors.push({ name: row.name, message: "An item with this name appeared after the preview. Refresh the import preview so it can be treated as an update instead of a duplicate create." });
+        }
+      }
+
+      if (res.errors.length) {
+        res.aborted = true;
+        setResult(res);
+        return;
+      }
+
+      const payloadMatches = importedPayloadMatches;
+      const completedRows = [];
+
+      const writeOne = async (r) => {
+        const conf = TARGETS[r.target_key];
+        const catalog = liveCatalogs[r.target_key];
+        let attempt = 0;
+        while (true) {
+          try {
+            if (r.action === "update") {
+              const live = catalog.byId.get(r.existingId);
+              if (!live) throw new Error("The matched inventory item disappeared after preflight. Refresh the import preview.");
+              await replaceEntityFieldsIfUnchanged({
+                entity: conf.entity,
+                id: r.existingId,
+                expectedUpdatedAt: live.updated_date || "",
+                expectedFields: expectedEntityFields(live, r.payload),
+                nextFields: r.payload,
+                label: `${conf.label} import update “${r.name}”`,
+              });
+              res.updated += 1;
+              completedRows.push(r);
+            } else {
+              const createResult = await createImportedInventoryRowSafely({
+                entity: conf.entity,
+                payload: r.payload,
+                nameField: conf.nameField,
+                name: r.name,
+                label: `${conf.label} import create “${r.name}”`,
+              });
+              if (createResult.status === "existing" || createResult.status === "concurrent_duplicate_discarded") {
+                throw new Error("An item with this name appeared after import preflight. Refresh the preview so the canonical row can be treated as an update instead of creating a duplicate.");
+              }
+              res.created += 1;
+              completedRows.push(r);
+            }
+            return;
+          } catch (err) {
+            if (isRateLimit(err) && attempt < MAX_RETRIES) {
+              const backoff = 500 * Math.pow(2, attempt) + Math.random() * 250;
+              await sleep(backoff);
+              attempt += 1;
+              continue;
+            }
+            if (r.action === "create") {
+              const recoveredRows = await conf.entity.filter({ [conf.nameField]: r.name }).catch(() => []);
+              const recovered = (recoveredRows || []).filter((item) => nameKey(item[conf.nameField]) === nameKey(r.name));
+              if (recovered.length === 1 && payloadMatches(recovered[0], r.payload)) {
+                res.created += 1;
+                completedRows.push(r);
+                return;
+              }
+            }
+            console.error(`Import error for "${r.name}":`, err);
+            res.errors.push({ name: r.name, message: err?.message || "Failed" });
+            return;
+          }
+        }
+      };
+
+      for (let i = 0; i < rows.length; i++) {
+        await writeOne(rows[i]);
+        setProgress({ done: i + 1, total: rows.length });
+        if (i < rows.length - 1) await sleep(PER_REQUEST_DELAY_MS);
+      }
+
+      // Final full-catalog verification makes partial/concurrent outcomes visible.
+      const verificationCatalogs = {};
+      for (const targetKey of [...new Set(completedRows.map((row) => row.target_key))]) {
+        const conf = TARGETS[targetKey];
+        verificationCatalogs[targetKey] = await loadAllEntityRows({ entity: conf.entity, sort: "created_date", label: `${conf.label} inventory final verification` });
+      }
+      for (const row of completedRows) {
+        const conf = TARGETS[row.target_key];
+        const catalogRows = verificationCatalogs[row.target_key] || [];
+        if (row.action === "update") {
+          const current = catalogRows.find((item) => item.id === row.existingId);
+          if (!payloadMatches(current, row.payload)) {
+            res.errors.push({ name: row.name, message: "Final verification found that this updated inventory row no longer matches the imported values. Review the live row before retrying." });
+          }
+        } else {
+          const matches = catalogRows.filter((item) => nameKey(item[conf.nameField]) === nameKey(row.name));
+          if (matches.length !== 1 || !payloadMatches(matches[0], row.payload)) {
+            res.errors.push({ name: row.name, message: matches.length > 1 ? "Final verification found duplicate same-name inventory rows. Review them before retrying this import row." : "Final verification could not confirm the created inventory row." });
+          }
+        }
+      }
+
+      setResult(res);
+      onComplete?.();
+    } finally {
+      setImporting(false);
+      importRef.current = false;
+    }
+  };
+
+  // ------------------------- Render -------------------------
+
+  const hasRoutedRows = rows.length > 0;
+  const totalCreate = Object.values(summary).reduce((s, v) => s + v.create, 0);
+  const totalUpdate = Object.values(summary).reduce((s, v) => s + v.update, 0);
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <Card className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <CardHeader className="border-b sticky top-0 bg-white z-10">
+          <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+              Import Inventory from Excel
+            </CardTitle>
+            <Button variant="ghost" size="icon" onClick={onClose} disabled={importing}>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent className="pt-6 space-y-5">
+          {/* Step 1: pick file */}
+          {!hasRoutedRows && !result && (
+            <>
+              <div className="text-sm text-slate-600 space-y-2">
+                <p>
+                  Drop in a <strong>Part Details Export</strong> spreadsheet from your external
+                  inventory system. Items are automatically routed by name to the right inventory
+                  section.
+                </p>
+                <ul className="list-disc list-inside text-xs text-slate-500 space-y-0.5">
+                  <li>Items with matching names are <strong>updated</strong> — no duplicates.</li>
+                  <li>Same vinyl in different widths is grouped automatically.</li>
+                  <li>Must be a .xlsx with the standard Part Details columns.</li>
+                </ul>
+              </div>
+
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center cursor-pointer hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
+              >
+                <Upload className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+                <p className="text-sm font-medium text-slate-700">
+                  {file ? file.name : "Click to select Excel file"}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">.xlsx or .xls</p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  className="hidden"
+                  onChange={(e) => handleFile(e.target.files?.[0])}
+                />
+              </div>
+
+              {parsing && (
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Parsing and matching items…
+                </div>
+              )}
+
+              {fileError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-red-800">{fileError}</div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Step 2: preview */}
+          {hasRoutedRows && !result && (
+            <div className="space-y-4">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-emerald-900">
+                  <p className="font-medium">Parsed {rows.length} unique items.</p>
+                  <p className="text-xs mt-0.5">
+                    {totalCreate} new item{totalCreate === 1 ? "" : "s"} to create
+                    {totalUpdate > 0 && `, ${totalUpdate} existing item${totalUpdate === 1 ? "" : "s"} to update`}
+                    {skippedRows > 0 && `, ${skippedRows} spreadsheet row${skippedRows === 1 ? "" : "s"} skipped`}.
+                    {skipDetails.length > 0 && (
+                      <span className="block mt-1 text-[10px] text-amber-700">
+                        {skipDetails.slice(0, 5).map((d, i) => <span key={i} className="block">Row {d.row}: {d.reason}</span>)}
+                        {skipDetails.length > 5 && <span className="block">…and {skipDetails.length - 5} more</span>}
+                      </span>
+                    )}
+                    {cappedRows > 0 && ` First ${IMPORT_ROW_LIMIT} rows loaded — ${cappedRows} row${cappedRows === 1 ? "" : "s"} beyond the limit were not loaded. Split the file into smaller batches to import the rest.`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="border rounded-lg divide-y">
+                {Object.entries(summary).map(([key, counts]) => {
+                  const total = counts.create + counts.update;
+                  if (total === 0) return null;
+                  return (
+                    <div key={key} className="p-3 flex items-center justify-between text-sm">
+                      <span className="font-medium text-slate-800">{TARGETS[key].label}</span>
+                      <div className="flex items-center gap-2">
+                        {counts.create > 0 && (
+                          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                            <Plus className="w-3 h-3 mr-1" />
+                            {counts.create} new
+                          </Badge>
+                        )}
+                        {counts.update > 0 && (
+                          <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                            <RefreshCw className="w-3 h-3 mr-1" />
+                            {counts.update} update
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {importing && (
+                <div className="text-sm text-slate-600 flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Importing {progress.done} of {progress.total}…
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button variant="outline" onClick={onClose} disabled={importing}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={runImport}
+                  disabled={importing}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {importing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Importing…
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Import {rows.length} Items
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: results */}
+          {result && (
+            <div className="space-y-4">
+              <div className={`${result.aborted ? "bg-red-50 border-red-200" : "bg-emerald-50 border-emerald-200"} border rounded-lg p-4 flex items-start gap-2`}>
+                {result.aborted ? <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" /> : <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />}
+                <div className={`text-sm ${result.aborted ? "text-red-900" : "text-emerald-900"}`}>
+                  <p className="font-semibold">{result.aborted ? "Import stopped before writing" : "Import complete"}</p>
+                  <p className="text-xs mt-1">
+                    <span className="inline-flex items-center gap-1 mr-3">
+                      <Plus className="w-3 h-3" /> {result.created} created
+                    </span>
+                    <span className="inline-flex items-center gap-1 mr-3">
+                      <RefreshCw className="w-3 h-3" /> {result.updated} updated
+                    </span>
+                    {result.errors.length > 0 && (
+                      <span className="inline-flex items-center gap-1 text-red-700">
+                        <SkipForward className="w-3 h-3" /> {result.errors.length} errors
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {result.errors.length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 max-h-40 overflow-y-auto">
+                  <p className="text-xs font-semibold text-red-800 mb-2">Errors:</p>
+                  <ul className="text-xs text-red-700 space-y-1">
+                    {result.errors.map((e, i) => (
+                      <li key={i}>
+                        • <strong>{e.name}</strong>: {e.message}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                {result.errors.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (result.aborted) {
+                        setResult(null);
+                        handleFile(file);
+                        return;
+                      }
+                      // For per-row write failures after a started import, keep only
+                      // failed rows. The next run still performs a fresh full preflight.
+                      const failedNames = new Set(result.errors.map((e) => e.name));
+                      setRows(rows.filter((r) => failedNames.has(r.name)));
+                      setResult(null);
+                    }}
+                    className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    {result.aborted ? "Refresh Preview" : `Retry ${result.errors.length} Failed`}
+                  </Button>
+                )}
+                <Button onClick={onClose} className="bg-emerald-600 hover:bg-emerald-700">
+                  Done
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

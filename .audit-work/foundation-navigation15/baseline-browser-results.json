@@ -1,0 +1,22 @@
+{
+ "synthetic": true,
+ "telemetry": {
+  "foreign": [],
+  "consoleErrors": [],
+  "pageErrors": []
+ },
+ "results": [
+  {
+   "case": "N1 data_loss_reproduced: browser back/forward returns saved description, draft lost, zero writes",
+   "ok": true
+  },
+  {
+   "case": "N2 data_loss_reproduced: app-shell link away/back returns saved description, draft lost",
+   "ok": true
+  },
+  {
+   "case": "N3 baseline_reproduction: real beforeunload dialog dismiss retains unsent draft",
+   "ok": true
+  }
+ ]
+}

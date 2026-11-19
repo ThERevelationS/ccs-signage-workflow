@@ -1,0 +1,14 @@
+batch cb-customers-2026-11-17 reused true
+
+customers 50/537 {"created":0,"updated":50,"skipped":0,"errors":0}   
+customers 100/537 {"created":0,"updated":100,"skipped":0,"errors":0}   
+customers 150/537 {"created":0,"updated":150,"skipped":0,"errors":0}   
+customers 200/537 {"created":0,"updated":200,"skipped":0,"errors":0}   
+customers 250/537 {"created":0,"updated":250,"skipped":0,"errors":0}   
+customers 300/537 {"created":0,"updated":300,"skipped":0,"errors":0}   
+customers 350/537 {"created":0,"updated":350,"skipped":0,"errors":0}   
+customers 400/537 {"created":0,"updated":400,"skipped":0,"errors":0}   
+customers 450/537 {"created":0,"updated":450,"skipped":0,"errors":0}   
+customers 500/537 {"created":0,"updated":500,"skipped":0,"errors":0}   
+customers 537/537 {"created":0,"updated":537,"skipped":0,"errors":0}   
+{ created: 0, updated: 537, skipped: 0, errors: 0 }

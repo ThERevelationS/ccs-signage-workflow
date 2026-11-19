@@ -1,0 +1,24 @@
+{
+ "inputs": [
+  "node_modules/react/cjs/react.development.js",
+  "node_modules/react/index.js",
+  "node_modules/scheduler/cjs/scheduler.development.js",
+  "node_modules/scheduler/index.js",
+  "node_modules/react-dom/cjs/react-dom.development.js",
+  "node_modules/react-dom/index.js",
+  "node_modules/react-dom/client.js",
+  ".audit-work/foundation-o011-parts/fixture-bom/foundation/legacyFoundationCalc.js",
+  ".audit-work/foundation-o011-parts/fixture-bom/foundation/wallCalculator.js",
+  ".audit-work/foundation-o011-parts/fixture-bom/foundation/poleCalculator.js",
+  ".audit-work/foundation-o011-parts/fixture-bom/foundation/wallCapCalculator.js",
+  ".audit-work/foundation-o011-parts/fixture-bom/foundation/foundationEquipmentBindings.js",
+  ".audit-work/foundation-o011-parts/fixture-bom/foundation/foundationCatalogIntegrity.js",
+  ".audit-work/foundation-o011-parts/fixture-bom/foundation/landscapeMaterials.js",
+  ".audit-work/foundation-o011-parts/fixture-bom/foundation/foundationInputValidation.js",
+  ".audit-work/foundation-o011-parts/fixture-bom/foundation/foundationCalc.js",
+  "node_modules/react/cjs/react-jsx-runtime.development.js",
+  "node_modules/react/jsx-runtime.js",
+  ".audit-work/foundation-o011-parts/fixture-bom/foundation/FoundationBOM.jsx",
+  "h:harness"
+ ]
+}

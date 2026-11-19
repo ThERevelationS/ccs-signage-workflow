@@ -1,0 +1,171 @@
+{
+  "inputs": {
+    "node_modules/react/cjs/react.development.js": {
+      "bytes": 87593,
+      "imports": [],
+      "format": "cjs"
+    },
+    "node_modules/react/index.js": {
+      "bytes": 190,
+      "imports": [
+        {
+          "path": "node_modules/react/cjs/react.development.js",
+          "kind": "require-call",
+          "original": "./cjs/react.development.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react/cjs/react-jsx-runtime.development.js": {
+      "bytes": 42700,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react/jsx-runtime.js": {
+      "bytes": 214,
+      "imports": [
+        {
+          "path": "node_modules/react/cjs/react-jsx-runtime.development.js",
+          "kind": "require-call",
+          "original": "./cjs/react-jsx-runtime.development.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "src/components/estimator/foundation/ReinforcementDraftField.jsx": {
+      "bytes": 1217,
+      "imports": [
+        {
+          "path": "node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/ReinforcementDraftList.jsx": {
+      "bytes": 5859,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "src/components/estimator/foundation/ReinforcementDraftField.jsx",
+          "kind": "import-statement",
+          "original": "./ReinforcementDraftField"
+        },
+        {
+          "path": "node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/ReinforcementDraftGeometry.jsx": {
+      "bytes": 8601,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/ReinforcementDraftField.jsx",
+          "kind": "import-statement",
+          "original": "./ReinforcementDraftField"
+        },
+        {
+          "path": "src/components/estimator/foundation/ReinforcementDraftList.jsx",
+          "kind": "import-statement",
+          "original": "./ReinforcementDraftList"
+        },
+        {
+          "path": "node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/ReinforcementDraftMaterial.jsx": {
+      "bytes": 5789,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/ReinforcementDraftField.jsx",
+          "kind": "import-statement",
+          "original": "./ReinforcementDraftField"
+        },
+        {
+          "path": "node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationReinforcementProposalPanel.jsx": {
+      "bytes": 8122,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/ReinforcementDraftGeometry.jsx",
+          "kind": "import-statement",
+          "original": "./ReinforcementDraftGeometry"
+        },
+        {
+          "path": "src/components/estimator/foundation/ReinforcementDraftMaterial.jsx",
+          "kind": "import-statement",
+          "original": "./ReinforcementDraftMaterial"
+        },
+        {
+          "path": "node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    ".audit-work/foundation-reinforcement18/ack-panel-bundle.js": {
+      "imports": [],
+      "exports": [
+        "default"
+      ],
+      "entryPoint": "src/components/estimator/foundation/FoundationReinforcementProposalPanel.jsx",
+      "inputs": {
+        "node_modules/react/cjs/react.development.js": {
+          "bytesInOutput": 77052
+        },
+        "node_modules/react/index.js": {
+          "bytesInOutput": 227
+        },
+        "node_modules/react/cjs/react-jsx-runtime.development.js": {
+          "bytesInOutput": 36443
+        },
+        "node_modules/react/jsx-runtime.js": {
+          "bytesInOutput": 251
+        },
+        "src/components/estimator/foundation/ReinforcementDraftField.jsx": {
+          "bytesInOutput": 1445
+        },
+        "src/components/estimator/foundation/ReinforcementDraftList.jsx": {
+          "bytesInOutput": 7086
+        },
+        "src/components/estimator/foundation/ReinforcementDraftGeometry.jsx": {
+          "bytesInOutput": 9685
+        },
+        "src/components/estimator/foundation/ReinforcementDraftMaterial.jsx": {
+          "bytesInOutput": 7111
+        },
+        "src/components/estimator/foundation/FoundationReinforcementProposalPanel.jsx": {
+          "bytesInOutput": 9881
+        }
+      },
+      "bytes": 151729
+    }
+  }
+}

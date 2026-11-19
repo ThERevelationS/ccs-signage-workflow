@@ -1,0 +1,38 @@
+{
+ "jurisdiction_id": "6aea681e94467a4fc1f74120",
+ "jurisdiction_name": "Rose Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "1 of 3 Driveway Permit for Construction Within the Township Right-of-Way Limits ($50) Temporary _____ Permanent _____ Applicant :_________________________ Contractor :____________________ Address:__________________________ Address:______________________ _________________________________ _____________________________ Phone:____________________________ Phone:________________________ Email:____________________________ Location: Township:__ROSE____ Road:__________ House Number:_________ Driveway Standards 1. Site Distance: Driveways, or approaches, should be located and designed to enable vehicles traveling at or near legal road speeds to see a driveway or approach. Conversely, the driveway, or approach, should be placed in areas to allow vehicles, while within the approach area, to observe the though roadway for a distance sufficient to make a safe entry onto the roadway. The lengths adequa",
+   "tags": [
+    "sign",
+    "fee",
+    "dimension",
+    "temporary"
+   ],
+   "weight": 5,
+   "source_sha256": "3e5ff9ebdec400c4d8a28a402533c0cd3718d92a9c48ae6091dc71a63160b749",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\rose-township--4120\\unassigned\\sources\\3e5ff9ebdec400c4d8a28a402533c0cd3718d92a9c48ae6091dc71a63160b749.pdf",
+   "official_url": "https://rosetownshipohio.com/wp-content/uploads/2019/03/Rose-Township-Driveway-Permit-1.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "2 of 3 3. Driveways shall be constructed so that they will not permit water or stone to run onto the road pavement. Crowning of the driveway outside of the road berm area is suggested. All commercial driveways constructed on a smooth surface road, shall have a minimum 25 ft. asphalt apron. See the detailed sketch below. 4. The Rose Township office must be contacted 24 hours prior to starting the installation and again upon completion in order for a final inspection of the driveway. Failure to notify the Rose Township office prior to and again upon completion will void this permit. 5. No machinery, vehicles or material are to be stored on the roadway at any time. 6. Do not place any dirt or stone on the traveled portion of the roadway. 7. The existing roadside drainage is to remain undisturbed. 8. The permittee assumes all responsibility for the cleaning and maintenance of the drainage in",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "3e5ff9ebdec400c4d8a28a402533c0cd3718d92a9c48ae6091dc71a63160b749",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\rose-township--4120\\unassigned\\sources\\3e5ff9ebdec400c4d8a28a402533c0cd3718d92a9c48ae6091dc71a63160b749.pdf",
+   "official_url": "https://rosetownshipohio.com/wp-content/uploads/2019/03/Rose-Township-Driveway-Permit-1.pdf"
+  }
+ ]
+}

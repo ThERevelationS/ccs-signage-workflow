@@ -1,0 +1,33 @@
+{
+ "results": [
+  {
+   "case": "desktop valid: cabinet + landscape rows priced",
+   "ok": true
+  },
+  {
+   "case": "mobile valid: same rows at 390px",
+   "ok": true
+  },
+  {
+   "case": "desktop held: saved rows + Not saved + issues banner",
+   "ok": true
+  },
+  {
+   "case": "mobile held: saved rows at 390px",
+   "ok": true
+  },
+  {
+   "case": "held with no acknowledged totals -> Not saved everywhere, no $0",
+   "ok": true
+  },
+  {
+   "case": "malformed landscape record -> saved aggregate row, no crash",
+   "ok": true
+  }
+ ],
+ "telemetry": {
+  "foreign": [],
+  "consoleErrors": [],
+  "pageErrors": []
+ }
+}

@@ -1,0 +1,59 @@
+[
+  {
+    "file": "base44/shared/estimatorAiModelPolicy.js",
+    "result": {
+      "path": "base44/shared/estimatorAiModelPolicy.js",
+      "bytesWritten": 540,
+      "created": true,
+      "overwritten": false
+    }
+  },
+  {
+    "file": "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+    "result": {
+      "path": "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+      "diff": "--- a/src/components/estimator/foundation/AiEngineeringAssistant.jsx\n+++ b/src/components/estimator/foundation/AiEngineeringAssistant.jsx\n@@ -2,6 +2,7 @@\n import { base44 } from \"@/api/base44Client\";\r\n import { Cpu, Loader2 } from \"lucide-react\";\r\n import ReactMarkdown from \"react-markdown\";\r\n+import { ESTIMATOR_AI_MODEL } from \"../../../../base44/shared/estimatorAiModelPolicy.js\";\r\n \r\n export default function AiEngineeringAssistant({ project, onResult }) {\r\n   const [running, setRunning] = useState(false);\r\n@@ -28,6 +29,7 @@\n       }));\r\n \r\n       const res = await base44.integrations.Core.InvokeLLM({\r\n+        model: ESTIMATOR_AI_MODEL,\r\n         prompt: `You are a structural engineer sizing sign foundations and poles.\r\n Foundations: ${JSON.stringify(summary)}\r\n Poles: ${JSON.stringify(poles)}\r\n",
+      "applied": true
+    }
+  },
+  {
+    "file": "src/components/vinylEstimator/VinylArtworkUploadDialog.jsx",
+    "result": {
+      "path": "src/components/vinylEstimator/VinylArtworkUploadDialog.jsx",
+      "diff": "--- a/src/components/vinylEstimator/VinylArtworkUploadDialog.jsx\n+++ b/src/components/vinylEstimator/VinylArtworkUploadDialog.jsx\n@@ -2,13 +2,14 @@\n // Hybrid pipeline: free metadata first (SVG viewBox / PDF MediaBox / image px+DPI),\n // AI vision (InvokeLLM) as fallback.\n \n-import React, { useState } from \"react\";\n+import { useState } from \"react\";\n import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from \"@/components/ui/dialog\";\n import { Button } from \"@/components/ui/button\";\n import { Label } from \"@/components/ui/label\";\n import { Input } from \"@/components/ui/input\";\n import { UploadCloud, FileImage, Wand2, Loader2 } from \"lucide-react\";\n import { base44 } from \"@/api/base44Client\";\n+import { ESTIMATOR_AI_MODEL } from \"../../../base44/shared/estimatorAiModelPolicy.js\";\n \n const svgDims = async (file) => {\n   const text = await file.text();\n@@ -45,6 +46,7 @@\n const aiDims = async (file) => {\n   const { file_url } = await base44.integrations.Core.UploadFile({ file });\n   const response = await base44.integrations.Core.InvokeLLM({\n+    model: ESTIMATOR_AI_MODEL,\n     prompt:\n       \"Look at this artwork file. Return the width and height of the printable artwork \" +\n       \"bounding box in INCHES. If the file shows real-world dimensions or has a known \" +\n",
+      "applied": true
+    }
+  },
+  {
+    "file": "src/components/channelLetterInstall/AIScopeWriterModal.jsx",
+    "result": {
+      "path": "src/components/channelLetterInstall/AIScopeWriterModal.jsx",
+      "diff": "--- a/src/components/channelLetterInstall/AIScopeWriterModal.jsx\n+++ b/src/components/channelLetterInstall/AIScopeWriterModal.jsx\n@@ -1,10 +1,11 @@\n-import React, { useState } from \"react\";\n+import { useState } from \"react\";\n import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from \"@/components/ui/dialog\";\n import { Button } from \"@/components/ui/button\";\n import { Textarea } from \"@/components/ui/textarea\";\n import { Badge } from \"@/components/ui/badge\";\n import { Sparkles, Loader2, Wand2 } from \"lucide-react\";\n import { base44 } from \"@/api/base44Client\";\n+import { ESTIMATOR_AI_MODEL } from \"../../../base44/shared/estimatorAiModelPolicy.js\";\n \n const SCHEMA = {\n   type: \"object\",\n@@ -45,6 +46,7 @@\n     setResult(null);\n     try {\n       const res = await base44.integrations.Core.InvokeLLM({\n+        model: ESTIMATOR_AI_MODEL,\n         prompt: `You are a sign-shop estimator. Parse the following rough client request into structured channel letter purchase line items.\n \n Map letter types as follows:\n",
+      "applied": true
+    }
+  },
+  {
+    "file": "src/components/channelLetterInstall/AIInstallScopeModal.jsx",
+    "result": {
+      "path": "src/components/channelLetterInstall/AIInstallScopeModal.jsx",
+      "diff": "--- a/src/components/channelLetterInstall/AIInstallScopeModal.jsx\n+++ b/src/components/channelLetterInstall/AIInstallScopeModal.jsx\n@@ -1,10 +1,11 @@\n-import React, { useState } from \"react\";\n+import { useState } from \"react\";\n import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from \"@/components/ui/dialog\";\n import { Button } from \"@/components/ui/button\";\n import { Textarea } from \"@/components/ui/textarea\";\n import { Badge } from \"@/components/ui/badge\";\n import { Sparkles, Loader2, Wand2, Image as ImageIcon, X, Upload } from \"lucide-react\";\n import { base44 } from \"@/api/base44Client\";\n+import { ESTIMATOR_AI_MODEL } from \"../../../base44/shared/estimatorAiModelPolicy.js\";\n \n const SCHEMA = {\n   type: \"object\",\n@@ -96,6 +97,7 @@\n ${hasText ? \"Use the written notes below as the primary source of truth; the image fills in gaps.\" : \"Generate items based on what you observe in the image(s).\"}` : \"\";\n \n       const res = await base44.integrations.Core.InvokeLLM({\n+        model: ESTIMATOR_AI_MODEL,\n         prompt: `You are a sign-installation estimator. Parse the input into structured installation line items.\n ${imageInstructions}\n \n",
+      "applied": true
+    }
+  },
+  {
+    "file": "src/components/channelLetterInstall/AddressAutocomplete.jsx",
+    "result": {
+      "path": "src/components/channelLetterInstall/AddressAutocomplete.jsx",
+      "diff": "--- a/src/components/channelLetterInstall/AddressAutocomplete.jsx\n+++ b/src/components/channelLetterInstall/AddressAutocomplete.jsx\n@@ -1,7 +1,8 @@\n-import React, { useState, useEffect, useRef } from \"react\";\r\n+import { useState, useEffect, useRef } from \"react\";\r\n import { Input } from \"@/components/ui/input\";\r\n import { MapPin, Loader2 } from \"lucide-react\";\r\n import { base44 } from \"@/api/base44Client\";\r\n+import { ESTIMATOR_AI_MODEL } from \"../../../base44/shared/estimatorAiModelPolicy.js\";\r\n import { getSessionToken } from \"@/components/auth/EmailGate\";\r\n \r\n const SCHEMA = {\r\n@@ -61,7 +62,7 @@\n Each must look like a real mailing address (street number + street, city, state abbr, ZIP).\r\n Prefer well-known streets/cities. Be FAST — do not search the web. JSON only.`,\r\n         response_json_schema: SCHEMA,\r\n-        model: \"gemini_3_flash\"\r\n+        model: ESTIMATOR_AI_MODEL\r\n       });\r\n       return llm?.suggestions || [];\r\n     };\r\n",
+      "applied": true
+    }
+  },
+  {
+    "file": "src/components/channelLetterInstall/PhotoEstimateModal.jsx",
+    "result": {
+      "path": "src/components/channelLetterInstall/PhotoEstimateModal.jsx",
+      "diff": "--- a/src/components/channelLetterInstall/PhotoEstimateModal.jsx\n+++ b/src/components/channelLetterInstall/PhotoEstimateModal.jsx\n@@ -1,8 +1,9 @@\n-import React, { useState } from \"react\";\n+import { useState } from \"react\";\n import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from \"@/components/ui/dialog\";\n import { Button } from \"@/components/ui/button\";\n import { Camera, Loader2, Upload, Wand2 } from \"lucide-react\";\n import { base44 } from \"@/api/base44Client\";\n+import { ESTIMATOR_AI_MODEL } from \"../../../base44/shared/estimatorAiModelPolicy.js\";\n \n const SCHEMA = {\n   type: \"object\",\n@@ -52,6 +53,7 @@\n     try {\n       const { file_url } = await base44.integrations.Core.UploadFile({ file });\n       const res = await base44.integrations.Core.InvokeLLM({\n+        model: ESTIMATOR_AI_MODEL,\n         prompt: `You're a sign installer reviewing a photo of a site where channel letters will be installed.\n Analyze the photo and estimate:\n - The install height (feet from ground to where letters will go)\n",
+      "applied": true
+    }
+  }
+]

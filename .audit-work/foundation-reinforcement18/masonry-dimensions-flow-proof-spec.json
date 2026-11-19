@@ -1,0 +1,148 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "1b672bf8ed786b5d79cab4cbdb003ecf814e91ff",
+  "sourceArtifact": "masonry-height-sandbox-final-scope.json",
+  "fixtureArtifact": "masonry-pricing-baseline-probe.json",
+  "innerFixtureArtifact": "masonry-material-valid-basis.json",
+  "innerFixtureRowName": "closed outline with internal brick",
+  "candidateCalculator": "masonry-dimensions-candidate-wallCalculator.js",
+  "candidateHash": "322027143feced74e235ec45c659452e555e34d5f8f7a6ec0b339483a0f579d9",
+  "appliedPanelHash": "03620a63e2b273d08d1ad8ecd665173ceade72a8c556e12be64b0fde356e23e0",
+  "dimensionKeys": ["wall_unit_length_inches", "wall_unit_width_inches", "wall_unit_height_inches"],
+  "sourceId": "synthetic-masonry-project",
+  "estimateId": "synthetic-masonry-estimate",
+  "sourceVersion": "synthetic-v1",
+  "savedVersion": "synthetic-v2",
+  "baselineSnapshot": { "totalBricks": 6, "materialCost": 321, "mortarCost": 17, "laborCost": 70, "totalCost": 408 },
+  "validCurrentSnapshotFields": { "totalBricks": 6, "materialCost": 12, "mortarCost": 0, "laborCost": 45, "totalCost": 57 },
+  "badMaterialId": "synthetic-invalid-dimensions",
+  "badMaterialName": "Synthetic replacement with unknown unit length",
+  "badMaterialPatch": { "wall_unit_length_inches": "", "cost_per_unit": 99 },
+  "blockedSaveMessage": "Save paused: fix highlighted design inputs or catalog selections.",
+  "pageCases": [
+    {
+      "id": "missing-outer-unit-length-holds-acknowledged-not-guessed",
+      "setup": "Seed source/project with baselineSnapshot. Delete selected outer inventory wall_unit_length_inches before mount. Change project name through actual input to make dirty, then Save.",
+      "expectSnapshot": "baselineSnapshot",
+      "issueCode": "wall_unit_length_inches_unavailable",
+      "issueField": "materialId",
+      "pricingUnavailable": true,
+      "saveStatus": "failed",
+      "sourceWrites": 0,
+      "builderWrites": 0
+    },
+    {
+      "id": "zero-outer-unit-height-is-not-a-default",
+      "setup": "Seed source/project and selected inventory, but wall_unit_height_inches numeric zero. Edit project name and attempt Save.",
+      "expectSnapshot": "baselineSnapshot",
+      "issueCode": "wall_unit_height_inches_unavailable",
+      "issueField": "materialId",
+      "pricingUnavailable": true,
+      "saveStatus": "failed",
+      "sourceWrites": 0,
+      "builderWrites": 0
+    },
+    {
+      "id": "unknown-internal-unit-width-holds-entire-wall-vector",
+      "setup": "Use frozen closed-outline/internal-brick fixture and its plain settings object. Set selected internal inventory wall_unit_width_inches null. Baseline acknowledged snapshot is unchanged. Edit project name and attempt Save.",
+      "expectSnapshot": "baselineSnapshot",
+      "issueCode": "wall_unit_width_inches_unavailable",
+      "issueField": "internalMaterialId",
+      "pricingUnavailable": true,
+      "saveStatus": "failed",
+      "sourceWrites": 0,
+      "builderWrites": 0
+    },
+    {
+      "id": "new-invalid-unit-dimensions-cannot-adopt-rendered-history",
+      "setup": "Mount acknowledged source with no walls and selected catalog unit length empty string. Use actual FoundationWallsPanel onChange to add a new seed wall with valid height and raw validCurrentSnapshotFields.",
+      "expectSnapshot": {},
+      "expectGrandTotal": null,
+      "expectTotalWallCost": null,
+      "expectTotalBrickCost": null,
+      "pricingUnavailable": true,
+      "saveStatus": "failed",
+      "sourceWrites": 0,
+      "builderWrites": 0
+    },
+    {
+      "id": "numeric-string-unit-dimensions-save-and-establish-new-acknowledged-basis",
+      "setup": "Seed source, inventory unit dimensions all converted to String(original numeric value), settings unchanged. Add a second catalog row by copying seed selected material and applying badMaterialId/name/patch. Verify current validCurrentSnapshotFields, edit name, Save once. Then use actual Wall material select to choose badMaterialId and attempt a fresh Save.",
+      "expectSavedSnapshotFields": "validCurrentSnapshotFields",
+      "expectSavedHeight": 9,
+      "expectNextHeldSnapshotFields": "validCurrentSnapshotFields",
+      "sourceWrites": 1,
+      "builderWrites": 1,
+      "expectedUpdatedAt": "synthetic-v1",
+      "savedVersion": "synthetic-v2",
+      "nextSaveStatus": "failed",
+      "nextIssueCode": "wall_unit_length_inches_unavailable"
+    }
+  ],
+  "browserModes": [
+    {
+      "id": "valid-strings",
+      "setup": "Seed current wall and savedProject. Convert all three selected catalog dimensions to String(original value). Add badMaterialId/name/patch as second catalog row. Keep original acknowledged baselineSnapshot.",
+      "wallAmount": "$57.00",
+      "pricingUnavailable": false,
+      "bomRows": [["Wall 1 — Synthetic wall units", "6 units", "$12.00"]],
+      "interaction": "Select badMaterialId through actual Wall material select; header must become 408 without saving. Select original seed materialId again; header must return to 57. Capture final valid-string state."
+    },
+    {
+      "id": "missing-length",
+      "setup": "Seed project and savedProject, but delete outer selected inventory wall_unit_length_inches.",
+      "wallAmount": "$408.00",
+      "pricingUnavailable": true,
+      "bomRows": [["Wall 1 — saved outer material", "6 units", "$321.00"], ["Wall 1 — saved mortar", "—", "$17.00"]],
+      "invalidInput": "Wall material",
+      "diagnosticTexts": ["Wall 1:", "unit length"]
+    },
+    {
+      "id": "invalid-three",
+      "setup": "Seed project and savedProject, but outer selected inventory unit length empty string, unit width numeric zero, unit height null.",
+      "wallAmount": "$408.00",
+      "pricingUnavailable": true,
+      "bomRows": [["Wall 1 — saved outer material", "6 units", "$321.00"], ["Wall 1 — saved mortar", "—", "$17.00"]],
+      "invalidInput": "Wall material",
+      "diagnosticTexts": ["Wall 1:", "unit length", "unit width", "unit height"],
+      "dimensionIssueCount": 3
+    },
+    {
+      "id": "inner-width",
+      "setup": "Use frozen closed-outline/internal-brick fixture, selected internal unit width null. SavedProject retains the unchanged fixture and baselineSnapshot.",
+      "wallAmount": "$408.00",
+      "pricingUnavailable": true,
+      "bomRows": [["Wall 1 — saved outer material", "6 units", "$321.00"], ["Wall 1 — saved mortar", "—", "$17.00"], ["Wall 1 — saved internal material", "Not saved", "Not saved"]],
+      "invalidInput": "Internal wall material",
+      "diagnosticTexts": ["Internal wall 1:", "unit width"]
+    },
+    {
+      "id": "new",
+      "setup": "Acknowledged source has no walls. Current new component uses valid seed height, valid selected material ID, raw validCurrentSnapshotFields, but selected unit length empty string.",
+      "wallAmount": "Not saved",
+      "pricingUnavailable": true,
+      "bomRows": [["Wall 1 — saved outer material", "Not saved", "Not saved"]],
+      "invalidInput": "Wall material",
+      "diagnosticTexts": ["Wall 1:", "unit length"],
+      "forbiddenAmount": "$0.00"
+    }
+  ],
+  "viewports": [{ "width": 1280, "height": 1100 }, { "width": 390, "height": 1100 }],
+  "pageCaseCount": 5,
+  "browserCaseCount": 10,
+  "constraints": [
+    "Only wallCalculator is a candidate override; applied FoundationWallsPanel, BOM, calcProject and catalog-integrity modules must load from the exact current frozen source graph.",
+    "Load sourceArtifact LAST, assert its HEAD equals sourceHead; pin loaded calculator and applied Panel hashes, and compare other overlapping applied source inputs to captured normalized hashes.",
+    "Use actual settings-row mapping, page save-session and CAS/acknowledged state; settings must be passed as plain objects and actual RatesPanel settings checked.",
+    "Assert complete authored shapes, raw selected material IDs and catalog dimensions remain unchanged by calculation and validation; valid numeric strings normalize only on copied calculation materials.",
+    "Every blocked Save must report exact blockedSaveMessage and zero source/Builder/pricing/create/estimate/Part/converter writes. Other entity writes fail closed through counted traps.",
+    "Successful numeric-string case persists six units, material 12, labor 45, total 57 with one CAS source write at v1 and one Builder call; next invalid selection retains newly acknowledged 57, not old 408.",
+    "Persist per-case JSON-safe raw draft, acknowledged readback, rendered cost vectors/totals, all synthetic write spies, outcomes and CAS payloads, including both phases of final case.",
+    "Use actual styled controlled Panel plus BOM in browser; real Button/Input/lucide, no SDK import, scoped exact BOM td triplets, linked visible field diagnostics and no page overflow.",
+    "For invalid-three, assert exactly three distinct dimension issues and no duplicate React key warnings.",
+    "Capture full before/after raw project, savedProject, inventory, settings and calculations; assert deep equality around screenshots and zero browser fetch/XHR/external origin/console/page-error/key-warning counters.",
+    "Assert complete result counts and nonzero process failure on any failed case.",
+    "Use synthetic data only; no app source writes, schema/metadata/v2 activation, real business records, paid AI, publishing or deployment."
+  ]
+}

@@ -4,6 +4,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { deleteBuilderEntityIfUnchanged, expectedBuilderEntityFields, expectedEntityFields, replaceBuilderEntityFieldsIfUnchanged, replaceEntityFieldsIfUnchanged } from "./builderEntityPersistence";
 import { createBuilderPartGroupWithRecovery } from "./builderPartGroupPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
@@ -65,7 +66,7 @@ export async function markBuilderMutationPending({ estimate, builder, pending })
   if (!estimate?.id || !builder?.id || !pending?.key) {
     throw new Error("Builder mutation recovery could not be initialized.");
   }
-  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimate.id);
+  const latestEstimate = await staffEntities.AllInOneEstimate.get(estimate.id);
   if (!latestEstimate) throw new Error("Estimate could not be verified before starting this Builder mutation.");
   if (
     estimate.updated_date &&
@@ -82,7 +83,7 @@ export async function markBuilderMutationPending({ estimate, builder, pending })
       : item
   );
   await replaceEstimateFieldsIfUnchanged({
-    entity: base44.entities.AllInOneEstimate,
+    entity: staffEntities.AllInOneEstimate,
     estimateId: estimate.id,
     expectedFields: expectedEstimateFields(latestEstimate, { line_items: lineItems }),
     nextFields: { line_items: lineItems },
@@ -90,9 +91,9 @@ export async function markBuilderMutationPending({ estimate, builder, pending })
   });
 
   const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
-    base44.entities.AllInOneEstimate.get(estimate.id),
-    base44.entities.BuilderProduct.get(builder.id),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder recovery Parts" }),
+    staffEntities.AllInOneEstimate.get(estimate.id),
+    staffEntities.BuilderProduct.get(builder.id),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder recovery Parts" }),
   ]);
   const markedLine = (markedEstimate?.line_items || []).find((item) => item.builder_product_id === builder.id);
   const canonicalPending = pendingBuilderMutation(markedLine);
@@ -145,7 +146,7 @@ async function applyPendingSourcePatch(pending) {
   const sourceProjectId = String(pending?.source_project_id || "").trim();
   const sourcePatch = pending?.source_patch && typeof pending.source_patch === "object" ? pending.source_patch : null;
   if (!sourceEntity || !sourceProjectId || !sourcePatch || Object.keys(sourcePatch).length === 0) return null;
-  const entity = base44.entities[sourceEntity];
+  const entity = staffEntities[sourceEntity];
   if (!entity?.get || !entity?.updateMany) throw new Error("The Builder source entity needed for recovery is unavailable.");
   const current = await entity.get(sourceProjectId);
   if (!current) throw new Error("The Builder source project could not be verified while recovering the pending mutation.");
@@ -171,7 +172,7 @@ async function applyPendingGroupCreatePlan(pending, builderProductId) {
   const groups = Array.isArray(plan?.groups) ? plan.groups : [];
   if (!groups.length) return new Map();
 
-  const currentGroups = await loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder recovery Part Groups" });
+  const currentGroups = await loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder recovery Part Groups" });
   if (!Array.isArray(currentGroups) || currentGroups.some((group) => String(group?.builder_product_id || "") !== String(builderProductId || ""))) {
     throw new Error("Part Groups could not be verified while recovering the pending Builder mutation.");
   }
@@ -183,7 +184,7 @@ async function applyPendingGroupCreatePlan(pending, builderProductId) {
     const data = step?.data && typeof step.data === "object" ? step.data : null;
     if (!groupKey || !data) throw new Error("A stored Part Group create step is invalid. Recovery was stopped before creating anything else.");
     const { record: resolved } = await createBuilderPartGroupWithRecovery({
-      entity: base44.entities.BuilderPartGroup,
+      entity: staffEntities.BuilderPartGroup,
       data,
       label: `Builder Part Group “${data.group_name || groupKey}” recovery create`,
     });
@@ -219,13 +220,13 @@ async function verifyPendingPreconditions(pending, builderProductId) {
   const createGroups = Array.isArray(pending?.group_create_plan?.groups) ? pending.group_create_plan.groups : [];
   let createdGroupsByKey = new Map();
   if (createGroups.length) {
-    const currentGroups = await loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder recovery Part Groups" });
+    const currentGroups = await loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder recovery Part Groups" });
     if (!Array.isArray(currentGroups)) throw new Error("Part Groups could not be verified while checking Builder mutation preconditions.");
     createdGroupsByKey = new Map(currentGroups.map((group) => [group.group_key, group]));
   }
 
   for (const step of plan.groups || []) {
-    const group = await base44.entities.BuilderPartGroup.get(step.id);
+    const group = await staffEntities.BuilderPartGroup.get(step.id);
     if (!group) {
       if (step.allow_missing_if_applied) continue;
       throw new Error("A source Part Group disappeared while the Builder mutation was pending.");
@@ -242,7 +243,7 @@ async function verifyPendingPreconditions(pending, builderProductId) {
   }
 
   for (const step of plan.parts || []) {
-    const part = await base44.entities.BuilderPart.get(step.id);
+    const part = await staffEntities.BuilderPart.get(step.id);
     if (!part || String(part.builder_product_id || "") !== String(builderProductId || "")) {
       throw new Error("A source Part changed ownership or disappeared while the Builder mutation was pending.");
     }
@@ -269,7 +270,7 @@ async function applyPendingDeletePlan(pending, builderProductId) {
   const verifiedParts = [];
   const verifiedGroups = [];
   for (const step of plan.parts || []) {
-    const part = await base44.entities.BuilderPart.get(step.id);
+    const part = await staffEntities.BuilderPart.get(step.id);
     if (!part) continue;
     if (String(part.builder_product_id || "") !== String(builderProductId || "")) {
       throw new Error("A Part scheduled for deletion changed ownership while the Builder mutation was pending.");
@@ -282,7 +283,7 @@ async function applyPendingDeletePlan(pending, builderProductId) {
     verifiedParts.push(part);
   }
   for (const step of plan.groups || []) {
-    const group = await base44.entities.BuilderPartGroup.get(step.id);
+    const group = await staffEntities.BuilderPartGroup.get(step.id);
     if (!group) continue;
     if (String(group.builder_product_id || "") !== String(builderProductId || "")) {
       throw new Error("A Part Group scheduled for deletion changed ownership while the Builder mutation was pending.");
@@ -299,7 +300,7 @@ async function applyPendingDeletePlan(pending, builderProductId) {
   let groupDeletes = 0;
   for (const part of verifiedParts) {
     await deleteBuilderEntityIfUnchanged({
-      entity: base44.entities.BuilderPart,
+      entity: staffEntities.BuilderPart,
       record: part,
       guardFields: { builder_product_id: builderProductId },
       label: `Builder Part “${part.part_name || "Part"}”`,
@@ -308,7 +309,7 @@ async function applyPendingDeletePlan(pending, builderProductId) {
   }
   for (const group of verifiedGroups) {
     await deleteBuilderEntityIfUnchanged({
-      entity: base44.entities.BuilderPartGroup,
+      entity: staffEntities.BuilderPartGroup,
       record: group,
       guardFields: { builder_product_id: builderProductId },
       label: `Builder Part Group “${group.group_name || "Part Group"}”`,
@@ -342,7 +343,7 @@ export async function resumeBuilderMutation({
   }
   const plan = pending.part_acceptance_plan || {};
   const builderPatch = pending.builder_patch || {};
-  const preflightBuilder = await base44.entities.BuilderProduct.get(builder.id);
+  const preflightBuilder = await staffEntities.BuilderProduct.get(builder.id);
   if (!preflightBuilder?.id) throw new Error("Builder Product could not be verified before recovering the pending mutation.");
   if (recoveryPatchDiffers(preflightBuilder, builderPatch)) {
     const expectedBuilderUpdatedAt = String(pending.builder_updated_date_before || "").trim();
@@ -367,7 +368,7 @@ export async function resumeBuilderMutation({
   let revision = pending.revision || {};
   const changedParts = Array.isArray(revision.changed_parts) ? revision.changed_parts : [];
   if (changedParts.some((part) => part?.part_key_ref || part?.new_group_key_ref)) {
-    const currentParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder recovery Parts" });
+    const currentParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder recovery Parts" });
     if (!Array.isArray(currentParts)) throw new Error("Created Parts could not be verified before recording the Builder revision.");
     const partsByKey = new Map(currentParts.map((part) => [part.part_key, part]));
     revision = {
@@ -395,7 +396,7 @@ export async function resumeBuilderMutation({
     await ensureBuilderPriceRevision(pending.key, revision);
   }
 
-  const currentBuilder = await base44.entities.BuilderProduct.get(builder.id);
+  const currentBuilder = await staffEntities.BuilderProduct.get(builder.id);
   if (!currentBuilder?.id) throw new Error("Builder Product could not be verified while completing the pending mutation.");
   if (recoveryPatchDiffers(currentBuilder, builderPatch)) {
     const expectedBuilderUpdatedAt = String(pending.builder_updated_date_before || "").trim();
@@ -404,7 +405,7 @@ export async function resumeBuilderMutation({
       throw new Error("This Builder Product changed while a Builder mutation was pending. The recovery marker was retained and no unrelated Builder edit was overwritten.");
     }
     await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderProduct,
+      entity: staffEntities.BuilderProduct,
       id: builder.id,
       expectedUpdatedAt: currentBuilder.updated_date || "",
       expectedFields: expectedBuilderEntityFields(currentBuilder, builderPatch),
@@ -414,7 +415,7 @@ export async function resumeBuilderMutation({
     });
   }
 
-  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const latestEstimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!latestEstimate) throw new Error("Estimate could not be verified while completing the pending Builder mutation.");
   const latestLine = (latestEstimate.line_items || []).find((item) => item.builder_product_id === builder.id);
   if (!latestLine) throw new Error("This Product is no longer part of the estimate. The pending Builder recovery marker could not be completed.");
@@ -444,7 +445,7 @@ export async function resumeBuilderMutation({
       : item
   );
   const updateResult = await replaceEstimateFieldsIfUnchanged({
-    entity: base44.entities.AllInOneEstimate,
+    entity: staffEntities.AllInOneEstimate,
     estimateId,
     expectedFields: expectedEstimateFields(latestEstimate, { line_items: lineItems }),
     nextFields: { line_items: lineItems },
@@ -457,4 +458,21 @@ export async function resumeBuilderMutation({
     changedParts: resolvedPlan.changed_parts || [],
     line: completedLine,
   };
+}
+/**
+ * Copy-time guard (CMP-A12 / O-012): a line's durable recovery marker names
+ * the estimate_id that owns its pending operation. Copying such a line into a
+ * different estimate — merge, duplicate, or split — would transplant an
+ * unresumable marker: the estimate gate would treat the foreign key as a live
+ * pending operation (blocking the target's Product/Part mutations up to its
+ * stale TTL) while the marker's own estimate_id can never validate against
+ * the copied record, leaving the section's Builder Product permanently unable
+ * to reconcile. Refuse the copy up front so the operator can resume the
+ * pending operation on the source estimate first.
+ */
+export function assertNoPendingLinesForCopy(lines = [], action = "copying sections") {
+  const line = (lines || []).find((item) => pendingBuilderMutation(item));
+  if (!line) return;
+  const name = line.client_product_name || line.project_name || "A selected section";
+  throw new Error(`"${name}" has a Builder mutation still being recovered. Resume it on this estimate before ${action}.`);
 }

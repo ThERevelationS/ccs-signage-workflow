@@ -1,0 +1,22 @@
+{
+ "jurisdiction_id": "6aed7888b3de1a8e9d31e0e5",
+ "jurisdiction_name": "Powell County",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "22 CODES CURRENTLY ADOPTED BY KENTUCKY 2018 Kentucky Building Code (Based on the 2015 International Building Code) 2018 Kentucky Residential Code (Based on the 2015 International Residential Code) 2015 International Mechanical Code 2015 International Fire Code (New construction projects, only when specifically referenced by the body of KBC) 2012 International Energy Conservation Code (for use with commercial buildings only) 2009 International Energy Conservation Code (for use with residential buildings only- see definition in IECC) 2009 ICC/ANSI A117.1 Accessible and Usable Buildings and Facilities Kentucky State Plumbing Law, Regulations & Code (815 KAR Chapter 20) State Boiler Regulation (KRS 236, 815 KAR 15) 2013 NFPA 13 - Installation of Sprinkler Systems 2013 NFPA 13D - Installation of Sprinkler Systems in One-and Two-Family Dwellings and Manufactured Homes 2013 NFPA 13R – Installat",
+   "tags": [
+    "dimension",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "a9b7629809def28b5ed43dbfac5be4cf60fe42fba39f18651e68f3eb2cc77c33",
+   "source_document_id": null,
+   "source_title": "a9b7629809def28b5ed43dbfac5be4cf60fe42fba39f18651e68f3eb2cc77c33.pdf",
+   "official_url": "https://dhbc.ky.gov/Documents/Find%20Currently%20Enforced%20Code.pdf"
+  }
+ ]
+}

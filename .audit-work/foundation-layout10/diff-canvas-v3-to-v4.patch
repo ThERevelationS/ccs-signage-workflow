@@ -1,0 +1,20 @@
+--- .audit-work/foundation-layout10/cur-v3.norm	2026-11-05 12:28:41.935173400 -0500
++++ .audit-work/foundation-layout10/cur-v4.norm	2026-11-05 12:30:06.139039800 -0500
+@@ -38,7 +38,7 @@
+   };
+ 
+   const onPointerDown = (e, item, index) => {
+-    if (!editable || e.button !== 0) return;
++    if (!mountedRef.current || !editable || e.button !== 0) return;
+     if (e.isPrimary === false || dragRef.current) return; // secondary touch must not replace an active gesture
+     const fp = foundationLayoutFootprint(item);
+     const pos = layoutPositionInches(item);
+@@ -115,7 +115,7 @@
+ 
+   return (
+     <div className="bg-white rounded-sm border border-gray-200 p-3">
+-      <div className="flex items-center justify-between mb-2">
++      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+         <div>
+           <h3 className="text-[13px] font-bold text-gray-900">Layout Canvas</h3>
+           <p className="text-[11px] text-gray-400">

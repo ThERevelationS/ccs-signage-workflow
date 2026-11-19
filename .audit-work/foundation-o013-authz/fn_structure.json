@@ -1,0 +1,2620 @@
+{
+ "opportunityBridgePilotVerification/entry.ts": {
+  "serve": [
+   16
+  ],
+  "auth": [
+   19
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "purchaseOrderAction/entry.ts": {
+  "serve": [
+   131
+  ],
+  "auth": [
+   135
+  ],
+  "alt": [],
+  "actions": [
+   147,
+   179,
+   197,
+   247,
+   271,
+   289,
+   346,
+   367,
+   388
+  ]
+ },
+ "fleetPublicIssueReport/entry.ts": {
+  "serve": [
+   190
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": [
+   201,
+   208
+  ]
+ },
+ "issueTimeClockBadge/entry.ts": {
+  "serve": [
+   80
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "bouncieAuthCallback/entry.ts": {
+  "serve": [
+   25
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "staffArchiveFile/entry.ts": {
+  "serve": [
+   18
+  ],
+  "auth": [
+   22
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "followUpSweepAction/entry.ts": {
+  "serve": [
+   252
+  ],
+  "auth": [
+   259
+  ],
+  "alt": [
+   256
+  ],
+  "actions": [
+   379,
+   392,
+   410
+  ]
+ },
+ "getGoogleMapsKey/entry.ts": {
+  "serve": [
+   5
+  ],
+  "auth": [
+   9
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "manageCalendarEvents/entry.ts": {
+  "serve": [
+   140
+  ],
+  "auth": [],
+  "alt": [
+   2,
+   144
+  ],
+  "actions": [
+   148,
+   149,
+   150
+  ]
+ },
+ "timeClockAction/entry.ts": {
+  "serve": [
+   3371
+  ],
+  "auth": [],
+  "alt": [
+   8,
+   3428
+  ],
+  "actions": [
+   2503,
+   2678,
+   2806,
+   3406,
+   3469,
+   3557,
+   3590,
+   3613,
+   3642,
+   3653,
+   3858,
+   3909,
+   4094,
+   4131,
+   4277,
+   5200,
+   6164,
+   6165,
+   6188,
+   6190,
+   6212,
+   6271,
+   6272,
+   6273,
+   6274,
+   6275,
+   6276,
+   6536,
+   6548,
+   6616,
+   6629,
+   6651,
+   6652,
+   6668,
+   6706,
+   6720,
+   6823,
+   6909,
+   7011,
+   7112,
+   7227,
+   7255,
+   7680,
+   7692,
+   7897,
+   7916,
+   7933,
+   7948,
+   7969,
+   7994,
+   8009,
+   8017,
+   8043,
+   8052,
+   8070,
+   8114,
+   8168,
+   8188,
+   8197,
+   8211,
+   8234,
+   8253,
+   8275,
+   8294,
+   8333,
+   8370,
+   8428,
+   8496,
+   8546,
+   8762,
+   9015,
+   9751,
+   10161,
+   10175,
+   10486,
+   10568,
+   10756,
+   10759,
+   10777,
+   10934,
+   10974,
+   11050,
+   11230,
+   11599,
+   11754,
+   12010,
+   12022,
+   12036,
+   12061,
+   12070,
+   12079,
+   12106,
+   12138,
+   12164,
+   12174,
+   12189,
+   12195,
+   12204,
+   12223,
+   12241,
+   12254,
+   12269,
+   12280,
+   12291,
+   12298,
+   12313,
+   12331,
+   12346,
+   12367,
+   12394,
+   12408
+  ]
+ },
+ "accountingAdminAction/entry.ts": {
+  "serve": [
+   80
+  ],
+  "auth": [
+   84
+  ],
+  "alt": [],
+  "actions": [
+   92
+  ]
+ },
+ "opportunityBridgeSimulation/entry.ts": {
+  "serve": [
+   52
+  ],
+  "auth": [
+   55
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fieldHistoryAction/entry.ts": {
+  "serve": [
+   209
+  ],
+  "auth": [
+   51
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "bouncieApi/entry.ts": {
+  "serve": [
+   6
+  ],
+  "auth": [
+   10
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "googleDriveCustomCallback/entry.ts": {
+  "serve": [
+   4
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "ensureOpenEstimateRevision/entry.ts": {
+  "serve": [
+   99
+  ],
+  "auth": [
+   105,
+   107,
+   108
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "bouncieWebhook/entry.ts": {
+  "serve": [
+   56
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "invoicingAction/entry.ts": {
+  "serve": [
+   202
+  ],
+  "auth": [
+   206
+  ],
+  "alt": [],
+  "actions": [
+   219,
+   250,
+   304,
+   366,
+   391,
+   447,
+   548,
+   601,
+   640,
+   658,
+   659,
+   756,
+   863,
+   894,
+   940,
+   984,
+   1119
+  ]
+ },
+ "permittingHealth/entry.ts": {
+  "serve": [
+   7
+  ],
+  "auth": [
+   9
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetInspectionAction/entry.ts": {
+  "serve": [
+   134
+  ],
+  "auth": [
+   17
+  ],
+  "alt": [],
+  "actions": [
+   148,
+   159,
+   169,
+   203,
+   220,
+   231
+  ]
+ },
+ "manageSops/entry.ts": {
+  "serve": [
+   269
+  ],
+  "auth": [
+   276
+  ],
+  "alt": [],
+  "actions": [
+   286,
+   303,
+   309,
+   318,
+   371,
+   406,
+   421,
+   449,
+   463,
+   481,
+   505,
+   527
+  ]
+ },
+ "manageUserCapacity/entry.ts": {
+  "serve": [
+   81
+  ],
+  "auth": [
+   85
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetBouncieNotificationAction/entry.ts": {
+  "serve": [
+   21
+  ],
+  "auth": [
+   7
+  ],
+  "alt": [],
+  "actions": [
+   30,
+   40,
+   50
+  ]
+ },
+ "permittingOfficeCandidate/entry.ts": {
+  "serve": [
+   4
+  ],
+  "auth": [
+   6
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "generateDocNumber/entry.ts": {
+  "serve": [
+   7
+  ],
+  "auth": [
+   11
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetEquipmentAction/entry.ts": {
+  "serve": [
+   89
+  ],
+  "auth": [
+   13
+  ],
+  "alt": [],
+  "actions": [
+   106,
+   147,
+   197,
+   239
+  ]
+ },
+ "customerPortalAction/entry.ts": {
+  "serve": [
+   398
+  ],
+  "auth": [
+   1480
+  ],
+  "alt": [],
+  "actions": [
+   445,
+   601,
+   740,
+   785,
+   1088,
+   1192,
+   1231,
+   1315,
+   1390,
+   1459,
+   1484,
+   1502,
+   1566,
+   1584,
+   1613,
+   1647,
+   1676,
+   1764
+  ]
+ },
+ "continueAddressResearchDiscovery/entry.ts": {
+  "serve": [
+   8
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "jobCostingAction/entry.ts": {
+  "serve": [
+   85
+  ],
+  "auth": [
+   89
+  ],
+  "alt": [],
+  "actions": [
+   102,
+   141
+  ]
+ },
+ "shiftSwapAction/entry.ts": {
+  "serve": [],
+  "auth": [
+   9
+  ],
+  "alt": [],
+  "actions": [
+   13,
+   38,
+   43,
+   49,
+   65
+  ]
+ },
+ "resolvePermittingAddress/main.ts": {
+  "serve": [
+   1029
+  ],
+  "auth": [
+   254,
+   1024,
+   1035
+  ],
+  "alt": [],
+  "actions": [
+   1034,
+   1037
+  ]
+ },
+ "resolvePermittingAddress/entry.ts": {
+  "serve": [
+   1008
+  ],
+  "auth": [
+   254,
+   1003,
+   1014
+  ],
+  "alt": [],
+  "actions": [
+   1013,
+   1016
+  ]
+ },
+ "sourceMonitorSeed/entry.ts": {
+  "serve": [
+   10
+  ],
+  "auth": [
+   13
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "placesAutocomplete/entry.ts": {
+  "serve": [
+   13
+  ],
+  "auth": [
+   18,
+   19
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetCutoverControl/entry.ts": {
+  "serve": [
+   246
+  ],
+  "auth": [
+   249
+  ],
+  "alt": [],
+  "actions": [
+   259,
+   260,
+   262,
+   276,
+   294,
+   322,
+   325,
+   328,
+   337
+  ]
+ },
+ "importSalesPipeline/entry.ts": {
+  "serve": [
+   388
+  ],
+  "auth": [
+   399
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "manageReconciliation/entry.ts": {
+  "serve": [
+   170
+  ],
+  "auth": [
+   174
+  ],
+  "alt": [],
+  "actions": [
+   214,
+   240,
+   255,
+   348,
+   370,
+   390,
+   611
+  ]
+ },
+ "notificationAction/entry.ts": {
+  "serve": [
+   132
+  ],
+  "auth": [
+   136
+  ],
+  "alt": [],
+  "actions": [
+   149,
+   168,
+   175,
+   209,
+   215,
+   228,
+   239,
+   245,
+   253,
+   264,
+   310,
+   333,
+   382,
+   404,
+   418,
+   462
+  ]
+ },
+ "manageAccountDeletionRequest/entry.ts": {
+  "serve": [
+   131
+  ],
+  "auth": [
+   135
+  ],
+  "alt": [],
+  "actions": [
+   141,
+   148
+  ]
+ },
+ "seedNotificationTemplates/entry.ts": {
+  "serve": [
+   546
+  ],
+  "auth": [
+   550
+  ],
+  "alt": [],
+  "actions": [
+   560
+  ]
+ },
+ "corebridgeApiAction/entry.ts": {
+  "serve": [
+   33
+  ],
+  "auth": [
+   40
+  ],
+  "alt": [],
+  "actions": [
+   80,
+   95
+  ]
+ },
+ "workOrderTraveler/entry.ts": {
+  "serve": [
+   46
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "permittingRuleInvalidate/entry.ts": {
+  "serve": [
+   4
+  ],
+  "auth": [
+   6
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "recordEstimateAcceptance/entry.ts": {
+  "serve": [
+   281
+  ],
+  "auth": [
+   285
+  ],
+  "alt": [],
+  "actions": [
+   287,
+   288
+  ]
+ },
+ "setPassword/entry.ts": {
+  "serve": [
+   10
+  ],
+  "auth": [
+   59
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "continueJurisdictionArchives/entry.ts": {
+  "serve": [
+   12
+  ],
+  "auth": [
+   16
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "ensureEstimateLifecycleRevision/entry.ts": {
+  "serve": [
+   95
+  ],
+  "auth": [
+   99,
+   102,
+   103
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "manageAnnouncements/entry.ts": {
+  "serve": [
+   206
+  ],
+  "auth": [
+   212
+  ],
+  "alt": [],
+  "actions": [
+   223,
+   229,
+   250,
+   256,
+   264,
+   300,
+   312
+  ]
+ },
+ "aiResearchOffice/entry.ts": {
+  "serve": [
+   8
+  ],
+  "auth": [
+   13
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetDataRead/entry.ts": {
+  "serve": [
+   94
+  ],
+  "auth": [
+   98
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetWarrantyAction/entry.ts": {
+  "serve": [
+   132
+  ],
+  "auth": [
+   24
+  ],
+  "alt": [],
+  "actions": [
+   143,
+   166,
+   196,
+   206
+  ]
+ },
+ "driveOAuthCallback/entry.ts": {
+  "serve": [
+   4
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "fleetWorkOrderAction/entry.ts": {
+  "serve": [
+   668
+  ],
+  "auth": [
+   75
+  ],
+  "alt": [],
+  "actions": [
+   683,
+   829,
+   897,
+   976
+  ]
+ },
+ "fleetDashboardPreferenceAction/entry.ts": {
+  "serve": [
+   28
+  ],
+  "auth": [
+   20
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "googleDriveOperations/entry.ts": {
+  "serve": [
+   15
+  ],
+  "auth": [
+   21
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "continuePermittingSourceText/entry.ts": {
+  "serve": [
+   7
+  ],
+  "auth": [
+   10
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "findLocalityByAddress/entry.ts": {
+  "serve": [
+   1008
+  ],
+  "auth": [
+   254,
+   1003,
+   1014
+  ],
+  "alt": [],
+  "actions": [
+   1013,
+   1016
+  ]
+ },
+ "findLocalityByAddress/main.ts": {
+  "serve": [
+   1029
+  ],
+  "auth": [
+   254,
+   1024,
+   1035
+  ],
+  "alt": [],
+  "actions": [
+   1034,
+   1037
+  ]
+ },
+ "findLocalityByAddress/handler.ts": {
+  "serve": [
+   120
+  ],
+  "auth": [
+   115,
+   128
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetMeterMaintenanceAction/entry.ts": {
+  "serve": [
+   60
+  ],
+  "auth": [
+   16
+  ],
+  "alt": [],
+  "actions": [
+   72,
+   86,
+   99,
+   128,
+   143
+  ]
+ },
+ "boardFeed/entry.ts": {
+  "serve": [
+   144
+  ],
+  "auth": [
+   154
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "deleteCreatedDuplicateWorkOrder/entry.ts": {
+  "serve": [
+   21
+  ],
+  "auth": [
+   25,
+   28,
+   29
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "verifySession/entry.ts": {
+  "serve": [
+   12
+  ],
+  "auth": [
+   27
+  ],
+  "alt": [],
+  "actions": [
+   22
+  ]
+ },
+ "fleetMaintenanceAction/entry.ts": {
+  "serve": [
+   69
+  ],
+  "auth": [
+   26
+  ],
+  "alt": [],
+  "actions": [
+   83,
+   123,
+   154,
+   185,
+   210
+  ]
+ },
+ "fileBridgeMaintenance/entry.ts": {
+  "serve": [
+   21
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "bouncieStatus/entry.ts": {
+  "serve": [
+   6
+  ],
+  "auth": [
+   10
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetNotificationDispatcher/entry.ts": {
+  "serve": [
+   20
+  ],
+  "auth": [
+   29
+  ],
+  "alt": [
+   5,
+   28
+  ],
+  "actions": []
+ },
+ "processWorkflowTriggers/entry.ts": {
+  "serve": [
+   90
+  ],
+  "auth": [
+   94
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "searchJurisdictions/entry.ts": {
+  "serve": [
+   5
+  ],
+  "auth": [
+   8
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "getPermittingSourceTextPages/entry.ts": {
+  "serve": [
+   5
+  ],
+  "auth": [
+   8
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fixtureBusinessSearch/entry.ts": {
+  "serve": [
+   7
+  ],
+  "auth": [
+   11
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "checkDeadlineReminders/entry.ts": {
+  "serve": [
+   10
+  ],
+  "auth": [
+   17
+  ],
+  "alt": [
+   14
+  ],
+  "actions": []
+ },
+ "auditJurisdictionAccuracy/entry.ts": {
+  "serve": [
+   7
+  ],
+  "auth": [
+   14
+  ],
+  "alt": [
+   11
+  ],
+  "actions": []
+ },
+ "opportunityBridgeProductionApply/entry.ts": {
+  "serve": [
+   109
+  ],
+  "auth": [
+   112
+  ],
+  "alt": [],
+  "actions": [
+   157,
+   171,
+   176,
+   204,
+   212
+  ]
+ },
+ "fileBridgeSpike/entry.ts": {
+  "serve": [
+   9
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "fileBridgeIngest/entry.ts": {
+  "serve": [
+   150
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": [
+   168,
+   193,
+   224,
+   234,
+   252,
+   288,
+   327,
+   336,
+   408,
+   417,
+   419,
+   427,
+   462,
+   508,
+   535,
+   546,
+   566,
+   582,
+   601,
+   632
+  ]
+ },
+ "archiveAddressResearchFile/entry.ts": {
+  "serve": [
+   7
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "manageWorkflowSchedules/entry.ts": {
+  "serve": [
+   8
+  ],
+  "auth": [],
+  "alt": [
+   3,
+   12
+  ],
+  "actions": [
+   22,
+   23,
+   24,
+   25,
+   26,
+   27
+  ]
+ },
+ "fleetSystemReportAction/entry.ts": {
+  "serve": [
+   34
+  ],
+  "auth": [
+   26
+  ],
+  "alt": [],
+  "actions": [
+   44
+  ]
+ },
+ "permittingResearchBacklogDispatch/entry.ts": {
+  "serve": [
+   128
+  ],
+  "auth": [
+   131
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "refreshJurisdiction/entry.ts": {
+  "serve": [
+   22
+  ],
+  "auth": [
+   49,
+   50
+  ],
+  "alt": [
+   29,
+   30
+  ],
+  "actions": []
+ },
+ "gmailAuthCallback/entry.ts": {
+  "serve": [
+   4
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "accessRequestAction/entry.ts": {
+  "serve": [
+   4
+  ],
+  "auth": [
+   8
+  ],
+  "alt": [],
+  "actions": [
+   13,
+   45,
+   50,
+   66,
+   87
+  ]
+ },
+ "smartsheetMetadataAdminAction/entry.ts": {
+  "serve": [
+   228
+  ],
+  "auth": [
+   127,
+   129
+  ],
+  "alt": [],
+  "actions": [
+   158
+  ]
+ },
+ "manageCustomerLifecycle/entry.ts": {
+  "serve": [
+   102
+  ],
+  "auth": [
+   106
+  ],
+  "alt": [],
+  "actions": [
+   117,
+   174,
+   215,
+   293
+  ]
+ },
+ "dailyAnomalyDigest/entry.ts": {
+  "serve": [
+   14
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": [
+   31,
+   32
+  ]
+ },
+ "fleetEquipmentDocumentAction/entry.ts": {
+  "serve": [
+   51
+  ],
+  "auth": [
+   20
+  ],
+  "alt": [],
+  "actions": [
+   64,
+   128,
+   146,
+   147
+  ]
+ },
+ "importWipSheet/entry.ts": {
+  "serve": [
+   180
+  ],
+  "auth": [
+   184
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "permittingProxy/entry.ts": {
+  "serve": [
+   31
+  ],
+  "auth": [
+   34
+  ],
+  "alt": [],
+  "actions": [
+   58,
+   67,
+   76,
+   81
+  ]
+ },
+ "permittingRuleExtraction/entry.ts": {
+  "serve": [
+   6
+  ],
+  "auth": [
+   9
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "opportunityWorkspaceAction/entry.ts": {
+  "serve": [
+   284
+  ],
+  "auth": [
+   288
+  ],
+  "alt": [],
+  "actions": [
+   314,
+   349,
+   390,
+   408,
+   413,
+   424,
+   443,
+   472,
+   488,
+   517,
+   547,
+   603,
+   635,
+   646,
+   901,
+   935,
+   1264,
+   1392,
+   1488,
+   1542,
+   1623,
+   1652,
+   1777,
+   1889,
+   1918,
+   1998,
+   2025,
+   2196,
+   2325
+  ]
+ },
+ "backupPermittingRepository/entry.ts": {
+  "serve": [
+   41
+  ],
+  "auth": [
+   44
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "updateEstimateRevisionAudit/entry.ts": {
+  "serve": [
+   28
+  ],
+  "auth": [
+   32,
+   35,
+   36
+  ],
+  "alt": [],
+  "actions": [
+   45,
+   111
+  ]
+ },
+ "fleetSettingsAction/entry.ts": {
+  "serve": [
+   38
+  ],
+  "auth": [
+   42
+  ],
+  "alt": [],
+  "actions": [
+   50
+  ]
+ },
+ "fleetNotificationWorker/entry.ts": {
+  "serve": [
+   101
+  ],
+  "auth": [
+   104
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "streetViewPreview/entry.ts": {
+  "serve": [
+   15
+  ],
+  "auth": [
+   20,
+   21
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "manageAuthorizedUsers/entry.ts": {
+  "serve": [
+   524
+  ],
+  "auth": [
+   528
+  ],
+  "alt": [],
+  "actions": [
+   536,
+   541,
+   551,
+   569,
+   575,
+   591,
+   709,
+   731
+  ]
+ },
+ "bouncieAuthInitiate/entry.ts": {
+  "serve": [
+   9
+  ],
+  "auth": [
+   13
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "changeOrderAction/entry.ts": {
+  "serve": [
+   82
+  ],
+  "auth": [
+   86
+  ],
+  "alt": [],
+  "actions": [
+   98,
+   131,
+   153,
+   212,
+   245,
+   258,
+   276,
+   293
+  ]
+ },
+ "smartsheetSyncAction/entry.ts": {
+  "serve": [
+   5960
+  ],
+  "auth": [
+   3761,
+   3770
+  ],
+  "alt": [
+   3758
+  ],
+  "actions": [
+   1818,
+   1827,
+   3764,
+   3779,
+   3804,
+   3876,
+   3976,
+   4001,
+   4022,
+   4058,
+   4146,
+   4164,
+   4188,
+   4200,
+   4275,
+   4367,
+   4451,
+   4527,
+   4638,
+   4686,
+   4739,
+   4750,
+   4780,
+   4789,
+   4862,
+   4993,
+   4998,
+   5011,
+   5023,
+   5091,
+   5142,
+   5207,
+   5218,
+   5230,
+   5246,
+   5279,
+   5387,
+   5469,
+   5521,
+   5571,
+   5612,
+   5681,
+   5700,
+   5704,
+   5706,
+   5727,
+   5728,
+   5830
+  ]
+ },
+ "bouncieSyncNotifications/entry.ts": {
+  "serve": [
+   197
+  ],
+  "auth": [
+   201
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetScheduledMaintenanceGeneration/entry.ts": {
+  "serve": [
+   163
+  ],
+  "auth": [
+   167
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "correctJurisdictionIdentityType/entry.ts": {
+  "serve": [
+   4
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "manageTraining/entry.ts": {
+  "serve": [
+   133
+  ],
+  "auth": [
+   137
+  ],
+  "alt": [],
+  "actions": [
+   158,
+   183,
+   201,
+   221,
+   231,
+   237,
+   254,
+   325,
+   329
+  ]
+ },
+ "permittingRuleReview/entry.ts": {
+  "serve": [
+   43
+  ],
+  "auth": [
+   48,
+   49
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "manageMigration/entry.ts": {
+  "serve": [
+   156
+  ],
+  "auth": [
+   160
+  ],
+  "alt": [],
+  "actions": [
+   171,
+   176,
+   212,
+   233,
+   498,
+   533,
+   575,
+   629
+  ]
+ },
+ "staffDataRead/entry.ts": {
+  "serve": [
+   546
+  ],
+  "auth": [
+   554
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "searchExternalClients/entry.ts": {
+  "serve": [
+   7
+  ],
+  "auth": [
+   10
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "googleDriveAuth/entry.ts": {
+  "serve": [
+   6
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "driveBrowseFolder/entry.ts": {
+  "serve": [
+   7
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "validateDocumentUrl/entry.ts": {
+  "serve": [
+   4
+  ],
+  "auth": [
+   7
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetFuelAction/entry.ts": {
+  "serve": [
+   113
+  ],
+  "auth": [
+   19
+  ],
+  "alt": [],
+  "actions": [
+   125,
+   151,
+   190,
+   227,
+   236
+  ]
+ },
+ "getAddressResearchCollections/entry.ts": {
+  "serve": [
+   5
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "listAuthorizedUserDirectory/entry.ts": {
+  "serve": [
+   25
+  ],
+  "auth": [
+   31
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "inventoryAction/entry.ts": {
+  "serve": [
+   90
+  ],
+  "auth": [
+   94
+  ],
+  "alt": [],
+  "actions": [
+   106,
+   133,
+   154,
+   235,
+   238,
+   240,
+   262,
+   282,
+   302
+  ]
+ },
+ "staffPermittingDocWrite/entry.ts": {
+  "serve": [
+   48
+  ],
+  "auth": [
+   52
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "manageBroadcasts/entry.ts": {
+  "serve": [
+   40
+  ],
+  "auth": [
+   45
+  ],
+  "alt": [],
+  "actions": [
+   58,
+   69,
+   72,
+   78,
+   99,
+   124,
+   133
+  ]
+ },
+ "fleetScheduledReminders/entry.ts": {
+  "serve": [
+   16
+  ],
+  "auth": [
+   20
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "weeklyAdminDigest/entry.ts": {
+  "serve": [
+   8
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "manageOwnProfile/entry.ts": {
+  "serve": [
+   47
+  ],
+  "auth": [
+   51
+  ],
+  "alt": [],
+  "actions": [
+   59,
+   85,
+   101
+  ]
+ },
+ "fleetInventoryAction/entry.ts": {
+  "serve": [
+   228
+  ],
+  "auth": [
+   9
+  ],
+  "alt": [],
+  "actions": [
+   248,
+   309,
+   471,
+   521
+  ]
+ },
+ "backupToGoogleDrive/entry.ts": {
+  "serve": [
+   9
+  ],
+  "auth": [
+   19
+  ],
+  "alt": [
+   15
+  ],
+  "actions": [
+   39,
+   59,
+   87,
+   108,
+   122
+  ]
+ },
+ "fleetRequestAction/entry.ts": {
+  "serve": [
+   143
+  ],
+  "auth": [
+   26
+  ],
+  "alt": [],
+  "actions": [
+   180,
+   273,
+   309,
+   326,
+   348
+  ]
+ },
+ "bouncieRepairWebhook/entry.ts": {
+  "serve": [
+   5
+  ],
+  "auth": [
+   8
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "sessionAdminAction/entry.ts": {
+  "serve": [],
+  "auth": [
+   8
+  ],
+  "alt": [],
+  "actions": [
+   17,
+   25
+  ]
+ },
+ "manageFeatureReports/entry.ts": {
+  "serve": [
+   175
+  ],
+  "auth": [
+   185,
+   193
+  ],
+  "alt": [],
+  "actions": [
+   184,
+   195,
+   218,
+   232
+  ]
+ },
+ "staffEntityWrite/entry.ts": {
+  "serve": [
+   128
+  ],
+  "auth": [
+   132
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "checkGmailConnection/entry.ts": {
+  "serve": [
+   4
+  ],
+  "auth": [
+   8,
+   15
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "updateJurisdictionRewriteAuthority/entry.ts": {
+  "serve": [
+   8
+  ],
+  "auth": [
+   11
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "googleDriveCustomAuth/entry.ts": {
+  "serve": [
+   6
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "checkPermitFollowupReminders/entry.ts": {
+  "serve": [
+   11
+  ],
+  "auth": [
+   18
+  ],
+  "alt": [
+   15
+  ],
+  "actions": []
+ },
+ "zzCleanupAction/entry.ts": {
+  "serve": [
+   55
+  ],
+  "auth": [
+   59
+  ],
+  "alt": [],
+  "actions": [
+   73,
+   138,
+   166,
+   193,
+   206
+  ]
+ },
+ "issuePasswordReset/entry.ts": {
+  "serve": [
+   37
+  ],
+  "auth": [
+   47
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "issueAdminSettingsAccess/entry.ts": {
+  "serve": [
+   48
+  ],
+  "auth": [
+   84
+  ],
+  "alt": [
+   4,
+   62
+  ],
+  "actions": []
+ },
+ "sendGmail/entry.ts": {
+  "serve": [
+   22
+  ],
+  "auth": [
+   36
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "permittingOfficeAuthorityReview/entry.ts": {
+  "serve": [
+   5
+  ],
+  "auth": [
+   7
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetLifecycleAction/entry.ts": {
+  "serve": [
+   118
+  ],
+  "auth": [
+   18
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "quickbooksExport/entry.ts": {
+  "serve": [
+   46
+  ],
+  "auth": [
+   50
+  ],
+  "alt": [],
+  "actions": [
+   62,
+   104,
+   114,
+   122,
+   141
+  ]
+ },
+ "fleetRepairEstimateAction/entry.ts": {
+  "serve": [
+   26
+  ],
+  "auth": [
+   18
+  ],
+  "alt": [],
+  "actions": [
+   41,
+   45,
+   62,
+   77,
+   86,
+   87,
+   100,
+   122,
+   130
+  ]
+ },
+ "workspacePrefsAction/entry.ts": {
+  "serve": [
+   17
+  ],
+  "auth": [
+   21
+  ],
+  "alt": [],
+  "actions": [
+   37,
+   49
+  ]
+ },
+ "scanPermittingOffice/entry.ts": {
+  "serve": [
+   8
+  ],
+  "auth": [
+   9
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "sendEmail/entry.ts": {
+  "serve": [
+   6
+  ],
+  "auth": [
+   10
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetReservationAction/entry.ts": {
+  "serve": [
+   80
+  ],
+  "auth": [
+   20
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetBulkMaintenancePlan/entry.ts": {
+  "serve": [
+   124
+  ],
+  "auth": [
+   15
+  ],
+  "alt": [],
+  "actions": [
+   159,
+   201,
+   202,
+   203,
+   207,
+   215,
+   219
+  ]
+ },
+ "driveOAuthInitiate/entry.ts": {
+  "serve": [
+   6
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "fleetIntegrityAudit/entry.ts": {
+  "serve": [
+   20
+  ],
+  "auth": [
+   23
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "ensureBuilderPriceRevision/entry.ts": {
+  "serve": [
+   94
+  ],
+  "auth": [
+   98,
+   101,
+   102
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "permittingSourceOcrEvidence/entry.ts": {
+  "serve": [
+   7
+  ],
+  "auth": [
+   10
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "translateSmartsheetNotes/entry.ts": {
+  "serve": [
+   168
+  ],
+  "auth": [
+   172
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "ensureNewEstimate/entry.ts": {
+  "serve": [
+   84
+  ],
+  "auth": [
+   88
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "sourceMonitorScan/entry.ts": {
+  "serve": [
+   19
+  ],
+  "auth": [
+   26
+  ],
+  "alt": [
+   23
+  ],
+  "actions": []
+ },
+ "dataIntegrityAction/entry.ts": {
+  "serve": [
+   64
+  ],
+  "auth": [
+   68
+  ],
+  "alt": [],
+  "actions": [
+   85,
+   91,
+   160,
+   190,
+   203
+  ]
+ },
+ "restoreMasterInventory/entry.ts": {
+  "serve": [
+   1
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "propertySearch/entry.ts": {
+  "serve": [
+   3
+  ],
+  "auth": [
+   6
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetPartLookupAction/entry.ts": {
+  "serve": [
+   118
+  ],
+  "auth": [
+   19
+  ],
+  "alt": [],
+  "actions": [
+   131,
+   173,
+   190,
+   206,
+   213
+  ]
+ },
+ "ensureEstimateCustomer/entry.ts": {
+  "serve": [
+   160
+  ],
+  "auth": [
+   164
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fileBridgeAction/entry.ts": {
+  "serve": [
+   111
+  ],
+  "auth": [
+   117
+  ],
+  "alt": [],
+  "actions": [
+   132,
+   146,
+   155,
+   173,
+   263,
+   343,
+   367,
+   397,
+   414,
+   424,
+   440,
+   465,
+   498,
+   514,
+   521,
+   554,
+   589
+  ]
+ },
+ "smartsheetSyncTraceRead/entry.ts": {
+  "serve": [
+   4
+  ],
+  "auth": [
+   7
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "permittingOperationalAlerts/entry.ts": {
+  "serve": [
+   18
+  ],
+  "auth": [
+   25
+  ],
+  "alt": [
+   22
+  ],
+  "actions": []
+ },
+ "manageSalesFilters/entry.ts": {
+  "serve": [
+   354
+  ],
+  "auth": [
+   358
+  ],
+  "alt": [],
+  "actions": [
+   362,
+   368,
+   374,
+   378,
+   381,
+   385,
+   386,
+   387,
+   388,
+   389
+  ]
+ },
+ "fleetSearch/entry.ts": {
+  "serve": [
+   33
+  ],
+  "auth": [
+   37
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "permittingSourceAuthorityReview/entry.ts": {
+  "serve": [
+   7
+  ],
+  "auth": [
+   9
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "batchUpdateJurisdictions/entry.ts": {
+  "serve": [
+   8
+  ],
+  "auth": [
+   11
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "importOrders/entry.ts": {
+  "serve": [
+   27
+  ],
+  "auth": [
+   45
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "permittingScanStatus/entry.ts": {
+  "serve": [
+   5
+  ],
+  "auth": [
+   5
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetAlertSettingsAction/entry.ts": {
+  "serve": [
+   40
+  ],
+  "auth": [
+   10
+  ],
+  "alt": [],
+  "actions": [
+   65
+  ]
+ },
+ "recordEstimateQuoteDelivery/entry.ts": {
+  "serve": [
+   147
+  ],
+  "auth": [
+   151
+  ],
+  "alt": [],
+  "actions": [
+   157,
+   160
+  ]
+ },
+ "verifyLogin/entry.ts": {
+  "serve": [
+   34
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "jurisdiction_research/entry.ts": {
+  "serve": [
+   9
+  ],
+  "auth": [
+   12
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "manageQuoteApprovalSettings/entry.ts": {
+  "serve": [
+   30
+  ],
+  "auth": [
+   34
+  ],
+  "alt": [],
+  "actions": [
+   40,
+   53
+  ]
+ },
+ "fleetMeterMaintenanceGeneration/entry.ts": {
+  "serve": [
+   44
+  ],
+  "auth": [
+   47
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "adminBootstrapLogin/entry.ts": {
+  "serve": [
+   1
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "permittingHtmlEvidence/entry.ts": {
+  "serve": [
+   4
+  ],
+  "auth": [
+   6
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "monitorJurisdictionChanges/entry.ts": {
+  "serve": [
+   74
+  ],
+  "auth": [],
+  "alt": [
+   78
+  ],
+  "actions": []
+ },
+ "hostedAssetManifest/entry.ts": {
+  "serve": [
+   27
+  ],
+  "auth": [
+   39
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "managePTOConfig/entry.ts": {
+  "serve": [
+   613
+  ],
+  "auth": [],
+  "alt": [
+   3,
+   617
+  ],
+  "actions": [
+   625,
+   626,
+   627,
+   628
+  ]
+ },
+ "migrateEstimatorConfig/entry.ts": {
+  "serve": [
+   1
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "googleDriveOAuth/entry.ts": {
+  "serve": [
+   7
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "cagisSearch/entry.ts": {
+  "serve": [
+   4
+  ],
+  "auth": [
+   7
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "ensureNewCustomer/entry.ts": {
+  "serve": [
+   74
+  ],
+  "auth": [
+   78
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "migrateCredentials/entry.ts": {
+  "serve": [
+   6
+  ],
+  "auth": [
+   13,
+   23
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "gmailAuthInitiate/entry.ts": {
+  "serve": [
+   4
+  ],
+  "auth": [
+   7
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "calculateTravelMiles/entry.ts": {
+  "serve": [
+   45
+  ],
+  "auth": [
+   50,
+   51
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "callJurisdictionAgent/entry.ts": {
+  "serve": [
+   11
+  ],
+  "auth": [
+   14
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "fleetMechanicPortal/entry.ts": {
+  "serve": [
+   1009
+  ],
+  "auth": [
+   671
+  ],
+  "alt": [],
+  "actions": [
+   63,
+   89,
+   341,
+   535,
+   834,
+   1023,
+   1028,
+   1061,
+   1074,
+   1092,
+   1103,
+   1129,
+   1130,
+   1136,
+   1148,
+   1153,
+   1374,
+   1387,
+   1402,
+   1440,
+   1496,
+   1510
+  ]
+ },
+ "detectSalesDuplicates/entry.ts": {
+  "serve": [
+   41
+  ],
+  "auth": [
+   50,
+   63
+  ],
+  "alt": [
+   45
+  ],
+  "actions": []
+ },
+ "queueFeed/entry.ts": {
+  "serve": [
+   380
+  ],
+  "auth": [
+   390
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "manageAutomationConfig/entry.ts": {
+  "serve": [
+   282
+  ],
+  "auth": [],
+  "alt": [
+   3,
+   286
+  ],
+  "actions": [
+   293,
+   294,
+   295,
+   296,
+   297,
+   298,
+   299
+  ]
+ },
+ "ensureCustomerSummary/entry.ts": {
+  "serve": [
+   231
+  ],
+  "auth": [
+   235,
+   238,
+   239
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "downloadPermitPDF/entry.ts": {
+  "serve": [
+   77
+  ],
+  "auth": [
+   82
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "manageUserCalendarSettings/entry.ts": {
+  "serve": [
+   54
+  ],
+  "auth": [
+   58
+  ],
+  "alt": [],
+  "actions": [
+   65
+  ]
+ },
+ "sendStaffEmail/entry.ts": {
+  "serve": [
+   50
+  ],
+  "auth": [
+   57
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "linkAddressResearchDocument/entry.ts": {
+  "serve": [
+   7
+  ],
+  "auth": [],
+  "alt": [],
+  "actions": []
+ },
+ "analyzeDocument/entry.ts": {
+  "serve": [
+   3
+  ],
+  "auth": [
+   6
+  ],
+  "alt": [],
+  "actions": []
+ },
+ "onboardingAccountAction/entry.ts": {
+  "serve": [
+   72
+  ],
+  "auth": [
+   82
+  ],
+  "alt": [],
+  "actions": [
+   79,
+   148,
+   152,
+   186,
+   199
+  ]
+ }
+}

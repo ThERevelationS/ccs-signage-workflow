@@ -1,0 +1,19 @@
+{
+  "accepted": true,
+  "scope": "Concrete basic foundation type/dimension/count validation only",
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "financialCases": 83,
+  "frozenModelParityCases": 25,
+  "browserCases": 8,
+  "baselineCases": 1,
+  "regressions": {
+    "navigation": 10,
+    "saveHandler": 58,
+    "catalog": 7,
+    "materialUi": 10,
+    "materialBrowser": 3
+  },
+  "review": "Full four-file delta and strengthened browser assertions reviewed. Core hashes unchanged. Remote dry-run exact. No schema/backend/publish/business records. Helper/card/page before calculator last.",
+  "acceptedAt": "2026-11-06T08:03:56.313Z"
+}

@@ -1,4 +1,5 @@
 import research from "./cincinnatiElectricalResearch.json";
+import { HostedAssetLink } from "@/shared/hostedAssetUrl";
 
 export default function ElectricalResearchResources({ jurisdiction, isAdmin = false }) {
   if (!isAdmin || jurisdiction?.id !== research.jurisdiction_id ||
@@ -23,7 +24,7 @@ export default function ElectricalResearchResources({ jurisdiction, isAdmin = fa
           <p className="font-medium">{resource.label}</p>
           <p>{resource.note}</p>
           <div className="flex flex-wrap gap-x-4 gap-y-2">
-            <a className="min-h-11 inline-flex items-center underline" href={resource.archive} target="_blank" rel="noopener noreferrer">Retained PDF</a>
+            <HostedAssetLink className="min-h-11 inline-flex items-center underline" href={resource.archive} target="_blank" rel="noopener noreferrer">Retained PDF</HostedAssetLink>
             <a className="min-h-11 inline-flex items-center underline" href={resource.source} target="_blank" rel="noopener noreferrer">Official source</a>
           </div>
         </li>)}
@@ -37,7 +38,7 @@ export default function ElectricalResearchResources({ jurisdiction, isAdmin = fa
         <p>Current sign exemptions and the dated handout's legal applicability remain unresolved. Confirm the zoning request form's current fee before submitting.</p>
         <div className="flex flex-wrap gap-x-4 gap-y-2">
           <a className="min-h-11 inline-flex items-center underline" href={research.scope_review.source} target="_blank" rel="noopener noreferrer">City zoning guidance</a>
-          <a className="min-h-11 inline-flex items-center underline" href={research.scope_review.form_archive} target="_blank" rel="noopener noreferrer">Retained zoning request PDF</a>
+          <HostedAssetLink className="min-h-11 inline-flex items-center underline" href={research.scope_review.form_archive} target="_blank" rel="noopener noreferrer">Retained zoning request PDF</HostedAssetLink>
           <a className="min-h-11 inline-flex items-center underline" href={research.scope_review.form_source} target="_blank" rel="noopener noreferrer">Official zoning request</a>
         </div>
       </section>}

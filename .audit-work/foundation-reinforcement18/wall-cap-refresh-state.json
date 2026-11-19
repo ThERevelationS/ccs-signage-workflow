@@ -1,0 +1,58 @@
+{
+ "readmeBytes": 9791,
+ "whoami": "Logged in as: brettheinlein1@gmail.com",
+ "branches": {
+  "branches": [
+   {
+    "name": "main",
+    "status": "active"
+   }
+  ]
+ },
+ "status": {
+  "state": "ready",
+  "details": null,
+  "request_id": "1b2b0193-a041-493e-b705-4ca7eeb2a1c3",
+  "turn_id": null,
+  "last_updated_date": "2026-11-06T12:00:27.081000",
+  "error_source": null,
+  "paywall_context": null
+ },
+ "freshFiles": [
+  {
+   "path": "src/components/estimator/foundation/wallCapCalculator.js",
+   "bytes": 1096,
+   "sha": "1f118ca799f481bc"
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+   "bytes": 8384,
+   "sha": "b59d8abd9565a5d3"
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+   "bytes": 3454,
+   "sha": "b0baa000d3103a9d"
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationCalc.js",
+   "bytes": 12521,
+   "sha": "2122ac7088ff291c"
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+   "sha": "e3b0c44298fc1c14",
+   "error": {
+    "code": "NOT_FOUND",
+    "message": "File not found."
+   }
+  }
+ ],
+ "git": {
+  "stdout": "5e3c2dbcca3757a4cce16e9c42b3950fed2029bc\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 912
+ }
+}

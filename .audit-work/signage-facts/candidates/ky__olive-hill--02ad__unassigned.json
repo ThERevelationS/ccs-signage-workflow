@@ -1,0 +1,36 @@
+{
+ "jurisdiction_id": "6adf01985312474606c502ad",
+ "jurisdiction_name": "Olive Hill",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "I. LOCATION OF BUILDING AT (Location) ZONING DISTRICT (NO.) (STREET) BETWEEN AND SUBDIVISION LOT II. TYPE AND COST OF BUILDING - All applicants complete Parts A - D A. TYPE OF IMPROVEMENT D. PROPOSED USE - For \"Wrecking\" most recent use 1 _____ New Building Residential Nonresidential 3 _____ Alteration (See 2 above) 4 _____ Repair, replacement 6 _____ Moving (relocation) (CROSS STREET) (CROSS STREET) CITY OF OLIVE HILL APPLICATION FOR PLAN EXAMINATION & BUILDING PERMIT IMPORTANT - Applicant to complete all items in sections: I, II, III, IV, VI, VII 2 _____ Addition (if residential, enter number of new housing units added if any, in Pard D. 13) 5 _____ Wrecking (if multifamily residential, enter number of units in bulding in Pard D. 13) 12 _____ One family 13 _____ Two or more family - Enter number of units ---> _____ 14 _____ Transient hotel, motel, or dormitory - Enter number of units -",
+   "tags": [
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "a8713e160a04fef6234c30a1e89aaed99bd94f29db4a02ea642291d9a3d235e5",
+   "source_document_id": null,
+   "source_title": "a8713e160a04fef6234c30a1e89aaed99bd94f29db4a02ea642291d9a3d235e5.pdf",
+   "official_url": "https://media-olivehill.ky.gov/uploads/Building-Permit-Application.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "E. PRINCIPAL TYPE OF FRAME G. TYPE OF SEWAGE DISPOSAL J. DIMENSIONS 30 _____ Masonary (wall bearing) 40 _____ Public or Private Co. 48 Number of stories ………………………… . 31 _____ Wood frame 41 _____ Private (Septic tank, etc.) 32 _____ Structural Steel H. TYPE OF WATER SUPPLY 49 Total square feet of floor area, all 33 _____ Reinforced concrete 42 _____ Public or Private Co. floors, based on exterior dimensions … 34 _____ Other - Specify: 43 _____ Private (well, cistern) I. TYPE OF MECHANICAL 50 Total land area, sq. ft. …………………… F. PRINCIPAL TYPE OF Will there be central K. NUMBER OF OFF STREET PARKING SPACES HEATING FUEL air conditioning? 51 Enclosed ………………………………………… 35 _____ Gas 52 Outdoors ……………………………………… . 36 _____ Oil 44 _____ Yes 45 _____ No L. RESIDENTIAL BUILDINGS ONLY 37 _____ Electricity 53 Number of bedrooms …………………… . 38 _____ Coal Will there be an elevator? 39 _____ Other - Speci",
+   "tags": [
+    "area",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "a8713e160a04fef6234c30a1e89aaed99bd94f29db4a02ea642291d9a3d235e5",
+   "source_document_id": null,
+   "source_title": "a8713e160a04fef6234c30a1e89aaed99bd94f29db4a02ea642291d9a3d235e5.pdf",
+   "official_url": "https://media-olivehill.ky.gov/uploads/Building-Permit-Application.pdf"
+  }
+ ]
+}

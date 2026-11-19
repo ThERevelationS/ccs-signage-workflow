@@ -1,0 +1,26 @@
+{
+ "jurisdiction_id": "6ae9ad6d870b08b1d483f857",
+ "jurisdiction_name": "Parkman Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Parkman Township Zoning Fees Effective February 1, 2019 Permitted Principal Building………………………………………………………………………………. $ 80.00 Permitted Accessory Building…………………………………………………………………………….. $ 50.00 Addition or Structural Alteration………………………………………………………………………… $ 40.00 Change in use of Building Structure……………………………………………………………………. $ 20.00 Home Occupation including sign………………………………………………………………………… $ 30.00 Fence…………………………………………………………………………………………………………………. $ 20.00 Commercial Zoning Permitted Principal Building………………………………………………………………………………. $ 200.00 Permitted accessory building…………………………………………………………………………… .. $ 150.00 Addition or Structural Alteration………………………………………………………………………… $ 100.00 Change in use of Building Structure…………………………………………………………………… $ 100.00 Sign…………………………………………………………………………………………………………………… ..$ 50.00 Fence………………………………………………………………………………………………………………… ..$ 50.00 Industrial Zoning Permitt",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "dimension",
+    "process",
+    "authority"
+   ],
+   "weight": 9,
+   "source_sha256": "e683ef5821c8460ef43a64b6acefc8f4912d05e60923bb0c4e96e14010e2d2a0",
+   "source_document_id": null,
+   "source_title": "e683ef5821c8460ef43a64b6acefc8f4912d05e60923bb0c4e96e14010e2d2a0.pdf",
+   "official_url": "https://parkman.geauga.oh.gov/wp-content/uploads/sites/38/2026/02/Parkman-Township-Zoning-Fees.pdf"
+  }
+ ]
+}

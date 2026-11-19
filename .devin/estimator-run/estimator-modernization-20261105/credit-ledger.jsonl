@@ -1,0 +1,1 @@
+{"schema_version":1,"run_id":"estimator-modernization-20261105","event":"approval_recorded","max_credits":5,"max_attempts":5,"attempts":0,"reserved_credits":0,"charged_credits":0,"note":"No paid provider requests have been made. Future live attempts require a trustworthy cost bound, durable reservation and consistent run-state/ledger reconciliation; unknown costs defer."}

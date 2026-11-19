@@ -1,0 +1,142 @@
+{
+  "unit": "foundation-o014u-fixes",
+  "parent_audit": "foundation-o014t-lint",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remote_head": "37d401b5aecbafc7ce1773af233efdde22c7ee75",
+  "posture": "candidates only — NO remote writes, edits, checkpoints, deploys, publishes, or entity ops were performed",
+  "remote_mirror": ".audit-work/foundation-o014u-fixes/remote/",
+  "candidates_dir": ".audit-work/foundation-o014u-fixes/candidates/",
+  "harness": ".audit-work/foundation-o014u-fixes/test-o014u-fixes.mjs",
+  "reference_pair": [
+    "remote/src/components/estimator/foundation/foundationTemplateService.js",
+    "remote/src/components/estimator/foundation/FoundationTemplateDialog.jsx"
+  ],
+  "read_only_dependencies_pulled": [
+    "remote/src/components/estimator/builder/builderEntityPersistence.js"
+  ],
+  "defects": [
+    {
+      "id": "R-1",
+      "file": "src/components/estimator/moduleShared/moduleTemplateService.js",
+      "defect": "deleteModuleTemplate pre-read used `.get(id).catch(() => null)` — every transient get failure (500/429/timeout) resolved to `current === null` and minted a FALSE delete success (`return true`), so the dialog dropped a live template row.",
+      "fix": "Explicit try/catch around the pre-read; canonical not-found detection (status 404 OR 'not found'/'does not exist' across message + response.data.message/error + data.message/error) resolves `true` (already gone); every other error rethrows. Fetched record must be a real non-array object with `current.id === id` or the delete aborts with an error. Delete still routes through the anchored CAS helper deleteEntityIfUnchanged.",
+      "harness": "404-family resolves already-gone with no deleteMany; 500/TypeError/403/429 propagate; null/array/wrong-id/scalar fetched records abort; verified record issues exactly one {id, updated_date}-anchored deleteMany via the real helper; blank id rejected."
+    },
+    {
+      "id": "R-2",
+      "file": "src/components/estimator/moduleShared/ModuleTemplateDialog.jsx",
+      "defect": "Load effect ran `listModuleTemplates(...).then(setTemplates)` with no catch — a load rejection both leaked an unhandled rejection and left `templates` empty, rendering a fake 'no templates' list.",
+      "fix": "Added loading / loadFailed / error state, seq-guarded loadRows() with mountedRef + loadSeqRef (stale-response safe), catch marks loadFailed and surfaces the message, and a Retry affordance re-runs the load. Fake-empty is impossible: rows only render after a resolved load.",
+      "harness": "Mount with rejecting loader renders failure copy + Retry (not fake empty); clicking Retry with a now-resolving loader recovers to the real list."
+    },
+    {
+      "id": "R-3",
+      "file": "src/components/estimator/moduleShared/ModuleTemplateDialog.jsx",
+      "defect": "save() had try/finally but NO catch — a save rejection propagated as an unhandled rejection with busy reset but no visible error state.",
+      "fix": "catch surfaces `e.message || 'Template could not be saved.'` inline while the dialog stays open; success path unchanged (idempotent attempt key, name reset, onClose). Compatibility: onApply/onClose contract for the 8 out-of-scope caller pages is preserved — dialog closes after a non-throwing save regardless of any callback return value.",
+      "harness": "Rejecting save surfaces inline error, dialog stays open, busy resets. Successful save closes and service receives moduleKey + idempotency data. Separate case: throwing onApply surfaces error + stays open; success closes even when onApply returns undefined (the actual remote caller contract)."
+    },
+    {
+      "id": "R-4",
+      "file": "src/components/estimator/moduleShared/ModuleTemplateDialog.jsx",
+      "defect": "Row delete had `catch {}` — a silent no-op comment admitted the row 'stays in the list' but the failure was invisible, AND combined with R-1 a transient pre-read error could mint false success and drop the row.",
+      "fix": "catch surfaces `e.message || 'Template could not be deleted.'` in the dialog error region; the row is filtered only after deleteModuleTemplate resolves (which now only happens on verified delete or genuine not-found).",
+      "harness": "Transient PRE-READ 500 -> row kept + error shown; 404 -> row removed; CAS delete rejection -> row kept + error shown."
+    },
+    {
+      "id": "R-5",
+      "files": [
+        "src/components/estimator/products/clipboardService.js",
+        "src/components/estimator/aio/ClipboardManagerModal.jsx"
+      ],
+      "defect": "removeClipboardItem used `.get(id).catch(() => null)` then `if (!current) return` — every transient get failure silently returned success, and the modal filtered the row out of the UI regardless (stale-remove).",
+      "fix": "Service: explicit try/catch; canonical not-found resolves (already gone); transient errors rethrow. Modal: removal wrapped in try/catch with busyId guard + setError; the row is filtered ONLY after removeClipboardItem resolves; failure keeps the row and shows the error.",
+      "harness": "Service: 500/429/TypeError propagate; 404 family + resolved-null return without delete; verified record -> anchored deleteMany. Modal: transient failure keeps the row + surfaces error; confirmed removal drops the row."
+    },
+    {
+      "id": "R-6",
+      "file": "src/pages/EstimatorQueues.jsx",
+      "defect": "handlePermanentDelete ran the EstimateAcceptance warning read with `.catch(() => [])` — a transient failure resolved to 'no acceptances' and skipped the only warning before an IRREVERSIBLE permanent delete.",
+      "fix": "try/catch fails CLOSED: on rejection the handler setTrashError('Linked records could not be verified, so the estimate was not permanently deleted. Try again.' (+ err detail)) and returns BEFORE window.confirm/delete.",
+      "harness": "Rejecting filter read -> confirm never shown, no delete attempted, block reason rendered. Verified acceptances -> confirm warning names 'N recorded customer acceptances' and delete proceeds on confirm."
+    },
+    {
+      "id": "R-7",
+      "file": "src/pages/EstimatorQueues.jsx",
+      "defect": "Quick-trash guard called getOpenEstimateRevision, whose `.catch(() => null)` swallows read errors — a transient failure let an estimate with an open revision be trashed.",
+      "fix": "Replaced with an inline strict read: identical bounded loadAllEntityRows call (entity EstimateRevision, query {estimate_id, revision_status:'open'}, sort '-revision_number', limit 50, label 'Open estimate revision') minus the swallow — rejection propagates to the handler's existing catch which setTrashError + returns (fail closed). getOpenEstimateRevision itself is unchanged (out-of-scope file; its null-on-error posture is correct for its advisory caller ensureEstimateLifecycleRevision); the dead import was removed.",
+      "harness": "Rejecting strict read -> confirm never shown, estimate not trashed, block reason rendered, read args verified identical to the helper's. Open revision present -> blocks with message before confirm. Verified-empty -> confirm -> soft delete proceeds."
+    },
+    {
+      "id": "R-8",
+      "file": "src/components/estimator/aio/BuilderPartsPanel.jsx",
+      "defect": "persistGroupOrder ran `updateMany({id},{sort_order}).catch(() => null)` per moved group — rejections AND CAS no-matches (updated:0) were swallowed, so the drag order LOOKED applied while it silently reverted on reload.",
+      "fix": "Each write is anchored on the loaded updated_date when known and the result is verified (`result.updated === 1`); rejections and non-1 counts collect into failures[]. On any failure the prior order is restored, an alert names the failed groups, and the product is re-read to resync. Signature changed to persistGroupOrder(nextGroups, previousGroups).",
+      "harness": "Write rejection -> visual order reverts + alert + product re-read. result.updated=0 -> counted as failure, order reverts. Success -> order applies, writes anchored on loaded updated_date, no alert."
+    },
+    {
+      "id": "R-9",
+      "file": "src/components/estimator/aio/BuilderPartsPanel.jsx",
+      "defect": "toggleOpen did `.get().catch(() => null)` for the pre-read (transient -> current null -> early return while the optimistic toggle stayed flipped, diverging from persisted is_collapsed) and `.catch(() => null)` on the CAS write (failure -> UI showed a collapse state the record does not hold).",
+      "fix": "Pre-read and write are separately wrapped: any rejection reverts setOpen(!next) and alerts 'Part Group collapsed state could not be saved.' (+ error detail). Success still refreshes groupVersionRef from the verified write result.",
+      "harness": "Pre-read 500 -> open reverts + alert. CAS write rejection -> open reverts + alert. Success -> real {$set:{is_collapsed}} write anchored on loaded updated_date, verified via post-save re-read, no alert."
+    },
+    {
+      "id": "R-10",
+      "file": "src/components/estimator/useSectionSync.js",
+      "defect": "Exported deleteOwnedSection ran `delete(project_id).catch(() => null)` — every failure swallowed. Decision: FIXED rather than removed — the export is part of the documented module-shared API (has jsdoc, sits next to used exports), zero callers at HEAD is noted in a code comment, and a corrected implementation can never silently fail.",
+      "fix": "try/catch: canonical not-found resolves true; transient errors rethrow. Non-owned/unknown-module/missing-project inputs return false (explicit no-op) instead of undefined; verified delete resolves true.",
+      "harness": "500/429/TypeError/403 propagate; 404 resolves true; resolved delete resolves true; non-owned/unknown-module/missing-project return false without touching the entity."
+    },
+    {
+      "id": "L-1",
+      "file": "src/components/estimator/paint/paintPricingAvailability.js",
+      "defect": "unused-imports/no-unused-imports error: paintSettingNumber imported but never used.",
+      "fix": "Removed the dead import specifier only."
+    },
+    {
+      "id": "L-2",
+      "file": "src/components/masterInventory/MasterConcreteStoneTab.jsx",
+      "defect": "unused import React (jsx runtime does not need it; react/react-in-jsx-scope is off).",
+      "fix": "Removed the dead default React import."
+    },
+    {
+      "id": "L-3",
+      "file": "src/components/masterInventory/MasterSuppliesTab.jsx",
+      "defect": "unused import base44 from @/api/base44Client.",
+      "fix": "Removed the dead import."
+    },
+    {
+      "id": "L-4",
+      "file": "src/components/masterInventory/inventorySources.jsx",
+      "defect": "unused lucide-react import Anchor.",
+      "fix": "Removed the dead specifier."
+    },
+    {
+      "id": "L-5",
+      "file": "src/pages/FoundationEstimator.jsx",
+      "defect": "unused import validateFoundationSyncAttempt (O-012 replaced its direct call with resolveFoundationSyncReceiptForSave, which validates internally; symbol remains used by foundationBuilderRecovery.js so only this import is dead).",
+      "fix": "Removed the specifier from the foundationSyncRecovery import; verified zero references remain in the file."
+    },
+    {
+      "id": "L-6",
+      "file": "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+      "defect": "warn-tier unused-imports/no-unused-vars: `priceBasis: row =>` binds row but never uses it (line 121).",
+      "fix": "Changed to a zero-argument lambda `priceBasis: () =>` (preferred over _row: the parameter is genuinely unnecessary)."
+    }
+  ],
+  "verification": {
+    "harness_command": "node .audit-work/foundation-o014u-fixes/test-o014u-fixes.mjs",
+    "harness_result": "PASS o014u-fixes passed=23 failed=0",
+    "harness_notes": "esbuild-bundled candidates run under Node/react-test-renderer with injectable entity/gateway stubs; the REAL builderEntityPersistence CAS helper is bundled (not stubbed) so updateMany/deleteMany result verification, anchoring, and post-write re-read behavior are exercised for real.",
+    "esbuild": "all 13 candidate files: `npx esbuild <f> --loader:.jsx=jsx --outfile=NUL` -> clean",
+    "eslint": "scoped flat-config run (repo rules mirrored into candidates dir): 13 files -> 0 errors, 0 warnings",
+    "diff_review": "every candidate diffed against its fresh remote pull; changes limited to the listed fixes"
+  },
+  "compat_notes": [
+    "ModuleTemplateDialog is shared by 8 out-of-scope estimator pages (BrickStone, Maintenance, Laser, Vinyl, CNC, Channel Letter, Metal, Painting); prop/callback contract unchanged — the dialog closes after a non-throwing save even when onApply returns undefined.",
+    "deleteOwnedSection kept as an export (fixed, not removed) — documented in code comment; zero callers at HEAD 37d401b5a verified by full remote source search.",
+    "getOpenEstimateRevision (out-of-scope estimateRevisionService.js) intentionally left as a null-on-error probe for its advisory caller; the queue page now performs the identical strict read inline."
+  ]
+}

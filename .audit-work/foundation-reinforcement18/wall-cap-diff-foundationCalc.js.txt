@@ -1,0 +1,11 @@
+--- wall-cap-remote-foundationCalc.js	2026-11-06 18:42:50.907344500 -0500
++++ wall-cap-candidate-foundationCalc.js	2026-11-06 18:42:50.905058000 -0500
+@@ -232,7 +232,7 @@
+     total_labor_hours: addKnown(sum("finishing_hours"), sum("excavation_hours")),
+   };
+ 
+-  totals.grand_total = itemsTotal === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
++  totals.grand_total = itemsTotal === null || wallCaps.total === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
+ 
+   return {
+     items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, catalogIssues, inputIssues,

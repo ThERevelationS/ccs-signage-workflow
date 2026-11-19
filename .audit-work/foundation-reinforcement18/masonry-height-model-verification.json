@@ -1,0 +1,248 @@
+{
+  "results": [
+    {
+      "name": "unchanged: concrete material, positive settings",
+      "ok": true
+    },
+    {
+      "name": "unchanged: genuine zero material price",
+      "ok": true
+    },
+    {
+      "name": "unchanged: brick, explicit dry joint",
+      "ok": true
+    },
+    {
+      "name": "unchanged: brick_stone type and mortar joint",
+      "ok": true
+    },
+    {
+      "name": "unchanged: stone units, two unequal segments",
+      "ok": true
+    },
+    {
+      "name": "unchanged: closed outline with internal brick",
+      "ok": true
+    },
+    {
+      "name": "unchanged: open outline with internal brick",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal concrete units",
+      "ok": true
+    },
+    {
+      "name": "unchanged: outer explicit price override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: outer explicit free override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal explicit price override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal explicit free override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: outer explicit quantity override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: outer explicit zero quantity",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal explicit quantity override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal explicit zero quantity",
+      "ok": true
+    },
+    {
+      "name": "unchanged: fractional explicit material price",
+      "ok": true
+    },
+    {
+      "name": "unchanged: numeric-string material price",
+      "ok": true
+    },
+    {
+      "name": "unchanged: numeric-string free price",
+      "ok": true
+    },
+    {
+      "name": "unchanged: irrelevant catalog row cannot change wall calculation",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: absent",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: null",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: empty",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: whitespace",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: zero",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: zero string",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: negative",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: negative string",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: true",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: false",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: array",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: object",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: NaN",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: Infinity",
+      "ok": true
+    },
+    {
+      "name": "outer unknown height: malformed",
+      "ok": true
+    },
+    {
+      "name": "internal authored-invalid height: empty",
+      "ok": true
+    },
+    {
+      "name": "internal authored-invalid height: whitespace",
+      "ok": true
+    },
+    {
+      "name": "internal authored-invalid height: zero",
+      "ok": true
+    },
+    {
+      "name": "internal authored-invalid height: zero string",
+      "ok": true
+    },
+    {
+      "name": "internal authored-invalid height: negative",
+      "ok": true
+    },
+    {
+      "name": "internal authored-invalid height: negative string",
+      "ok": true
+    },
+    {
+      "name": "internal authored-invalid height: true",
+      "ok": true
+    },
+    {
+      "name": "internal authored-invalid height: false",
+      "ok": true
+    },
+    {
+      "name": "internal authored-invalid height: array",
+      "ok": true
+    },
+    {
+      "name": "internal authored-invalid height: object",
+      "ok": true
+    },
+    {
+      "name": "internal authored-invalid height: NaN",
+      "ok": true
+    },
+    {
+      "name": "internal authored-invalid height: Infinity",
+      "ok": true
+    },
+    {
+      "name": "internal authored-invalid height: malformed",
+      "ok": true
+    },
+    {
+      "name": "valid positive height retains exact numeric basis: 9",
+      "ok": true
+    },
+    {
+      "name": "valid positive height retains exact numeric basis: \"9\"",
+      "ok": true
+    },
+    {
+      "name": "valid positive height retains exact numeric basis: \" 9 \"",
+      "ok": true
+    },
+    {
+      "name": "valid positive height retains exact numeric basis: \"9.0\"",
+      "ok": true
+    },
+    {
+      "name": "valid positive height retains exact numeric basis: \"+9\"",
+      "ok": true
+    },
+    {
+      "name": "valid positive height retains exact numeric basis: \"9e0\"",
+      "ok": true
+    },
+    {
+      "name": "valid positive height retains exact numeric basis: \".9e1\"",
+      "ok": true
+    },
+    {
+      "name": "missing internal height retains explicit outer-height inheritance: undefined",
+      "ok": true
+    },
+    {
+      "name": "missing internal height retains explicit outer-height inheritance: null",
+      "ok": true
+    },
+    {
+      "name": "new invalid-height row cannot borrow acknowledged costs",
+      "ok": true
+    },
+    {
+      "name": "invalid height marks BOM rows as acknowledged, not current catalog pricing",
+      "ok": true
+    },
+    {
+      "name": "zero shop rates remain genuine zeros with a valid height",
+      "ok": true
+    },
+    {
+      "name": "disabled internal wall ignores unused invalid internal height",
+      "ok": true
+    }
+  ]
+}

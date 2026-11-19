@@ -1,0 +1,26 @@
+=== NODE 7 ===
+ok A: empty catalog -> global alert, saved amounts, no $0 claims
+ok A2: scoped pole row: unknown->Not saved, explicit 0->$0.00, pricing stub gated
+ok B: Save/SaveExit/Copy/Swap/CtrlS/autosave blocked -> zero I/O, route+receipt intact
+ok C: reload -> exact 3 reads, alert clears, draft/receipt intact, save->saved CAS v1 recalculated body
+ok D: failed reload keeps draft+alert+busy false; retry succeeds
+ok E: deferred A reload settling while on B installs nothing; A-B-A reopen gets new flight
+ok F: overlapping reload — second click zero reads, one flight completes, busy false
+PASS catalog-integrity passed=7 failed=0
+=== SAVE-HANDLER 58 ===
+    at flushPassiveEffects (C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:16236:14)
+PASS save-handler passed=58 failed=0
+=== VISIBILITY 5 ===
+ok walls: outer + internal missing material -> disabled option + warning; honest empty state
+PASS catalog-visibility passed=5 failed=0
+=== BROWSER 4 ===
+ok S1: missing catalog shell — alert, saved amounts, all write paths blocked
+ok S2: reload failure -> retry -> success -> explicit save CAS v1
+ok S3: old A reload settling (success) during NEW A flight cannot hijack it
+ok S4: old A reload failing during NEW A flight leaves new busy + draft intact
+catalog-integrity-browser scenarios=4 failed=0
+=== ESLINT ===
+eslint_exit=0 (13 files, max-warnings 0, run above)
+=== BUNDLE ===
+
+Done in 56ms

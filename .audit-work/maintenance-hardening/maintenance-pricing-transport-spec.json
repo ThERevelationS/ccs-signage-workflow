@@ -1,0 +1,110 @@
+{
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "5f25691b8966137d4c96cafee690a186a797ebb1",
+ "baselineFile": "maintenance-pricing-baseline-v2.json",
+ "proofSpec": "maintenance-pricing-proof-spec.json",
+ "candidateManifest": "maintenance-pricing-candidates.json",
+ "targetOrder": [
+  "src/components/signMaintenance/maintenancePricingAvailability.js",
+  "src/components/signMaintenance/ServiceItemRow.jsx",
+  "src/components/signMaintenance/RepaintMonumentPanel.jsx",
+  "src/components/signMaintenance/DimLetterPaintSubPanel.jsx",
+  "src/pages/MaintenanceEstimator.jsx"
+ ],
+ "candidatePrefix": "maintenance-pricing-candidate-",
+ "newRemoteFiles": [
+  "src/components/signMaintenance/maintenancePricingAvailability.js"
+ ],
+ "atomicEditPerFile": true,
+ "editsPerFile": 1,
+ "candidateLineEndings": "LF",
+ "candidateTerminalLF": {
+  "src/components/signMaintenance/maintenancePricingAvailability.js": true,
+  "src/components/signMaintenance/ServiceItemRow.jsx": true,
+  "src/components/signMaintenance/RepaintMonumentPanel.jsx": true,
+  "src/components/signMaintenance/DimLetterPaintSubPanel.jsx": true,
+  "src/pages/MaintenanceEstimator.jsx": true
+ },
+ "protectedFiles": [
+  "src/components/channelLetterInstall/TravelCostCard.jsx",
+  "src/components/channelLetterInstall/",
+  "src/components/vinylEstimator/",
+  "src/components/estimator/paint/",
+  "src/components/estimator/foundation/",
+  "src/components/signMaintenance/maintenanceCalculator.jsx",
+  "src/components/signMaintenance/repaintCalculator.jsx",
+  "src/components/signMaintenance/dimLetterPaintCalculator.jsx",
+  "src/components/signMaintenance/constants.jsx",
+  "src/components/signMaintenance/defaults.jsx",
+  "src/components/signMaintenance/repaintDefaults.jsx",
+  "src/components/signMaintenance/maintenanceMaterialRules.js",
+  "src/components/signMaintenance/maintenanceActionRatePersistence.js",
+  "src/components/signMaintenance/maintenanceMaterialRulePersistence.js",
+  "src/components/estimator/builder/",
+  "src/components/markup/",
+  "src/pages/PaintingEstimator.jsx",
+  "src/pages/VinylEstimator.jsx",
+  "src/pages/MaintenanceSettings.jsx"
+ ],
+ "liveDeadDetermination": {
+  "liveCore": "src/components/signMaintenance/maintenanceCalculator.jsx (unchanged — formulas byte-identical)",
+  "liveRepaintCore": "src/components/signMaintenance/repaintCalculator.jsx (unchanged)",
+  "liveDimLetterCore": "src/components/signMaintenance/dimLetterPaintCalculator.jsx (unchanged)",
+  "livePage": "src/pages/MaintenanceEstimator.jsx",
+  "builderConsumer": "src/components/estimator/builder/partSync.js → maintenanceCalculator (unchanged API)",
+  "sellPricing": "src/components/estimator/maintenance/maintenanceSellPricing.js → base44/shared (unchanged)",
+  "settingsDefaults": "src/components/estimator/settings/moduleSettingDefaults.js (unchanged — absent rows fall back by design)"
+ },
+ "forbiddenRemoteOperations": [
+  "sandbox edit",
+  "sandbox write",
+  "checkpoint",
+  "entity ops",
+  "schema ops",
+  "deploy",
+  "publish"
+ ],
+ "applyRequiresLeadApproval": true,
+ "remoteWriteAuthorized": false,
+ "deleteOrRestoreAuthorization": false,
+ "businessRecordOperationsAuthorized": false,
+ "schemaOrMetadataActivationAuthorized": false,
+ "publishOrDeployAuthorized": false,
+ "candidateHashes": {
+  "src/components/signMaintenance/maintenancePricingAvailability.js": "b7768ccf480313487e243cafee780669169d07c79cef86e7765087cb3e949090",
+  "src/components/signMaintenance/ServiceItemRow.jsx": "18c647b73036491b02979c761027a16297d037dede6c89e4b1ae96817169d4e0",
+  "src/components/signMaintenance/RepaintMonumentPanel.jsx": "eac0586852059f39478a8c9da4b2628eab9238794c9179d3642bc8194f558b2a",
+  "src/components/signMaintenance/DimLetterPaintSubPanel.jsx": "6934ef7e2782ce97e0c1b70f066e0684e11bcf88291a7bf05021e3d1fbbf6e65",
+  "src/pages/MaintenanceEstimator.jsx": "9e38b7c47e35c470169782e294b607c0e1b748f6fb2cd01e589e02850c20efe8"
+ },
+ "buildEntries": [
+  "src/components/signMaintenance/maintenancePricingAvailability.js",
+  "src/components/signMaintenance/ServiceItemRow.jsx",
+  "src/components/signMaintenance/RepaintMonumentPanel.jsx",
+  "src/components/signMaintenance/DimLetterPaintSubPanel.jsx",
+  "src/pages/MaintenanceEstimator.jsx"
+ ],
+ "buildAlias": {
+  "@": "/app/src"
+ },
+ "forbiddenExternalImportPrefix": "@/",
+ "candidateLineEndingsByFile": {
+  "src/components/signMaintenance/maintenancePricingAvailability.js": "CRLF",
+  "src/components/signMaintenance/ServiceItemRow.jsx": "CRLF",
+  "src/components/signMaintenance/RepaintMonumentPanel.jsx": "CRLF",
+  "src/components/signMaintenance/DimLetterPaintSubPanel.jsx": "CRLF",
+  "src/pages/MaintenanceEstimator.jsx": "CRLF"
+ },
+ "editInput": "stdin",
+ "stageBase64ChunkLength": 3000,
+ "remoteTempPrefix": "/tmp/ccs-maintenance-pricing-",
+ "restoreCheckpointName": "Before Maintenance Pricing Availability Hardening",
+ "finalCheckpointName": "Maintenance Pricing Availability Hardening Verified",
+ "checkpointAuthority": "lead",
+ "notes": [
+  "TravelCostCard.jsx is explicitly protected (concurrent Channel Letter work) — its internal install_* ||defaults are flagged in the availability scanner (resolved maintenance_X ?? install_X), but the component itself is untouched.",
+  "Absent settings are allowed where a documented module default exists (MAINTENANCE_SETTINGS_DEFAULTS / REPAINT_DEFAULTS / PAINTING_SETTINGS_DEFAULTS); recorded-but-unusable values always flag.",
+  "Selected action rate-matrix cells must be positive minutes — an explicit 0 on a selected action is indistinguishable from unconfigured and held."
+ ]
+}

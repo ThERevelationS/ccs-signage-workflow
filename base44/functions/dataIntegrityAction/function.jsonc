@@ -1,0 +1,4 @@
+{
+  "name": "dataIntegrityAction",
+  "entry": "entry.ts"
+}

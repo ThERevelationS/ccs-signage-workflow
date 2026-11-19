@@ -1,0 +1,37 @@
+{
+ "jurisdiction_id": "6ae839a745fdb07eb9154b94",
+ "jurisdiction_name": "Mason County",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "( COMMONWEALTH OF KENTUCKY MASON FISCAL COURT ORDINANCE NO. 15-J2L AN ORDINANCE ADOPTING THE RECOMMENDATIONS OF THE MASON COUNTY JOINT PLANNING COMMISSION AND AMENDING THE SIGN REGULA nONS AT ORDINANCE NO . 02-07, CHAPTER 411, TO DELETE CERTAIN RESTRICnONS ON POLITICAL SIGNS CONSISTENT WITH FEDERAL LAW, AND TO PROHIBIT ELECTRONIC SIGNS IN CERTAIN ZONES, WHILE REGULATING SUCH SIGNS WHERE ALLOWED. WHEREAS, the Mason Fiscal Court adopted a Land Use Ordinance, by virtue of its Ordinance No. 02-07, as amended; and WHEREAS, the Maysville-Mason County Joint Planning Commission held a duly noticed Public Hearing on February 4, 2015, to consider proposed text amendments to such Ordinance pertaining to the sign regulations contained therein; and WHEREAS , the Maysville-Mason County Joint Planning Commission adopted Findings of Fact recommending text amendments to Ordinance No. 02-07; and WHEREAS ,",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "8faea7c23993946b0409b0a2b30dae8d0c4ad6fae96bb11d699f2f508365cfbf",
+   "source_document_id": null,
+   "source_title": "8faea7c23993946b0409b0a2b30dae8d0c4ad6fae96bb11d699f2f508365cfbf.pdf",
+   "official_url": "https://cms3.revize.com/revize/masoncountyky/Ordinance-15-01.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "{ Electronic signs which are capable of displaying words, symbols, figures or images that can be electronically or mechanically changed by remote or automatic means are permitted with a permit in all zones except R-I, R-2, TH-I, MH, A-I and A-2 (other zones recommended by the Planning Commission are solely located within the City of Maysville), subject to the following requirements: (A) Operational Limitations. Such display shall be monochromatic, shall contain static messages only, and shall have not have movement, or the appearance or optical illusion of movement, of any part of the sign structure, design, or pictorial segment ofthe sign, including the movement or appearance of movement of any illumination or the flashing, scintillating or varying of light intensity. (B) Minimum Display Time. Messages may be changed once every 60 minutes. (C) Message Change Sequence. The change of mess",
+   "tags": [
+    "sign",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "8faea7c23993946b0409b0a2b30dae8d0c4ad6fae96bb11d699f2f508365cfbf",
+   "source_document_id": null,
+   "source_title": "8faea7c23993946b0409b0a2b30dae8d0c4ad6fae96bb11d699f2f508365cfbf.pdf",
+   "official_url": "https://cms3.revize.com/revize/masoncountyky/Ordinance-15-01.pdf"
+  }
+ ]
+}

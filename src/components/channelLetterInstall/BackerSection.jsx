@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Layers, X, AlertCircle } from "lucide-react";
-import { ChannelLetterInstallInventory } from "@/entities/all";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { ChannelLetterInstallInventory } from "@/api/gatedEntities";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import BackerFabPanel from "./BackerFabPanel";
 
 const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;

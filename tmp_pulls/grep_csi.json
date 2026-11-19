@@ -1,0 +1,21 @@
+{
+  "matches": [
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 16,
+      "text": "import ClientSearchInput from \"@/components/ClientSearchInput\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 732,
+      "text": "                            <ClientSearchInput"
+    },
+    {
+      "path": "src/components/ClientSearchInput.jsx",
+      "line": 7,
+      "text": "export default function ClientSearchInput({ value, onChange, onSelectProject, className, placeholder }) {"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 3
+}

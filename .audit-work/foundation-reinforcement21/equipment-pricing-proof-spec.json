@@ -1,0 +1,42 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "12a41a3ac89f45e775886d33af4fbf7f4dca178a",
+  "baselineFile": "equipment-pricing-baseline.json",
+  "baselineStatusFile": "equipment-pricing-baseline-status.json",
+  "dependencyArtifact": "equipment-pricing-dependency-source.json",
+  "fixtureArtifact": "equipment-pricing-fixture.json",
+  "flowSpec": "equipment-pricing-flow-proof-spec.json",
+  "jsonProofs": [
+    { "file": "equipment-model-verification.json", "resultCount": 48, "mustBeAllOk": true },
+    { "file": "equipment-model-red-verification.json", "resultCount": 48, "expectedFailuresAgainstPreHardeningSource": 36, "expectedCompatibilityPasses": 12, "mustNotBeAllOk": true },
+    { "file": "equipment-page-verification.json", "resultCount": 7, "mustBeAllOk": true },
+    { "file": "equipment-pricing-browser-verification.json", "resultCount": 12, "mustBeAllOk": true },
+    { "file": "equipment-consumer-build.json", "warnings": 0, "inputs": 62 },
+    { "file": "equipment-page-import-edges.json", "externalOnly": true }
+  ],
+  "allResultsMustHaveOkTrue": true,
+  "scopedLintLogs": [
+    { "file": "equipment-pricing-lint-foundationCalc.txt", "line": "exit=0" },
+    { "file": "equipment-pricing-lint-FoundationEquipmentTab.txt", "line": "exit=0" }
+  ],
+  "esbuildParseChecks": { "count": 2, "allPassed": true },
+  "candidateHashes": {
+    "foundationCalc.js": "845a45841f415a5eb9f7f7cd6553ad38044e713b534035a99358f83657a1abe1",
+    "FoundationEquipmentTab.jsx": "e621b4959702d1e6ad825a919bbf5a0afefe1d87682b9c2a21764dfc9ab7cfe9"
+  },
+  "candidateFiles": {
+    "foundationCalc.js": "equipment-pricing-candidate-foundationCalc.js",
+    "FoundationEquipmentTab.jsx": "equipment-pricing-candidate-FoundationEquipmentTab.jsx"
+  },
+  "candidateLineEndings": "LF",
+  "screenshotDirectory": ".audit-work/foundation-reinforcement21",
+  "screenshotCount": 12,
+  "allowedBuildWarningCount": 0,
+  "remoteWritesPerformed": false,
+  "checkpointsCreated": false,
+  "businessRecordOperationsPerformed": false,
+  "schemaActivationAuthorized": false,
+  "publishDeployAuthorized": false,
+  "transportPerformed": false
+}

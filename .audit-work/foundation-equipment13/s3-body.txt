@@ -1,0 +1,85 @@
+Pricing unavailable: selected materials/rental items catalog entries need attention. Amounts shown are saved snapshots, not current prices. Save and estimate handoff are paused.
+Equipment 1: equipment gone is unavailable.
+Reload catalogs
+Back
+Edit Concrete | Masonry | Poles Estimate
+
+Engineering, foundation, excavation, wall & pole estimating
+
+Total: Pricing unavailable
+Help
+Undo
+Redo
+Templates
+Save as Template
+Save As Copy
+Swap to BrickStone
+Share Link
+Save & Exit
+Auto-save
+All changes saved · Last saved Invalid Date
+Save
+Foundation (0)Walls & Poles (0)Wall CapsSignage & LandscapeEquipmentCost SummaryBill of MaterialsCustomer Pricing
+No foundations yet — add a spread footing or pillar to start.
+Add Foundation Item
+Masonry Walls
+Wall
+No walls on this section.
+Poles
+
+Priced on total length — height above grade plus depth in the ground.
+
+Pole
+Pole catalog unavailable — existing rows remain editable; new poles cannot be added.
+No poles on this section.
+Wall Caps
+
+Full stock price is charged per cut piece.
+
+Cap
+Wall cap catalog unavailable — existing rows remain editable; new caps cannot be added.
+No caps on this section.
+Section name
+Section Total
+
+Saved/known amounts only; current pricing is incomplete.
+
+Concrete
+0.00 CY
+Excavation
+0.00 CY
+Labor
+0.0 hr
+Concrete
+$0.00
+Rebar
+$0.00
+Excavation
+$0.00
+Forming materials
+$0.00
+Labor
+$0.00
+Poles
+$0.00
+Pole painting
+$0.00
+Wall material
+$0.00
+Internal fill wall
+$0.00
+Wall mortar + labor
+$0.00
+Wall caps
+$0.00
+Equipment
+$600.00
+Total
+Pricing unavailable
+Signage cabinets
+$0.00
+Site landscaping
+$0.00
+Section total flowing to estimate: Estimate handoff paused
+Manage foundation catalog →
+Customer pricing unavailable: catalog pricing is incomplete. Resolve catalog materials first.

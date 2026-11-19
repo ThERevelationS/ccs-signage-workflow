@@ -1,0 +1,7 @@
+[
+ {
+  "case": "A6 saved_only never counts toward conflict (overlay restore leaves it)",
+  "ok": false,
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n13 !== 1\n\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-o004t-conflicts/verify-o004t-model.mjs:130:10\n    at R (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-o004t-conflicts/verify-o004t-model.mjs:30:15)\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-o004t-conflicts/verify-o004t-model.mjs:121:1"
+ }
+]

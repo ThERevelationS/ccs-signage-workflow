@@ -1,0 +1,18 @@
+# Remote on-disk md5 (sandbox run md5sum) — poleCalculator/wallCalculator/
+# foundationCatalogIntegrity are CRLF on disk; the read API returns LF content.
+# LF-normalized md5 of the pulled content in the second column.
+poleCalculator.js            remote-disk 48f64dc72c962d59f222d9b80efc37eb   lf c0448f920eb8a98b1cce811aff36e71f
+wallCalculator.js            remote-disk e5449518e3a6205be7c64757bb4e22c1   lf 2a7eb0bd3f0d7e5a74c96d1b44bbdeac
+wallCapCalculator.js         remote-disk f6b83599116695e3c06b096915968bbe   lf f6b83599116695e3c06b096915968bbe
+foundationEquipmentBindings.js remote-disk 8b4993156327c70047add4bcdb4e4188  lf 8b4993156327c70047add4bcdb4e4188
+foundationCatalogIntegrity.js remote-disk 67c2df9c9e94c5748bf2a8b421b49c22   lf 87f22af2ffac6dcd6ef046076e01aca2
+foundationCalc.js            remote-disk 75a9ae5c456ebb7be8785808ba016e2e   lf 75a9ae5c456ebb7be8785808ba016e2e
+legacyFoundationCalc.js      remote-disk 869f00a9b1b175cc942009bb0d59efb9   lf 869f00a9b1b175cc942009bb0d59efb9
+inventoryNormalization.js    remote-disk af7323e0a3bc947b8dfb6f9f870231af   lf af7323e0a3bc947b8dfb6f9f870231af
+# Re-pull verification (post-implementation): poleCalculator.js /
+# wallCalculator.js / foundationCatalogIntegrity.js re-read -> content
+# IDENTICAL to the stored pulls (remote/recheck.json).
+93d61be1bc95b46f766a5a14e131f54c *candidates/foundationEquipmentBindings.js
+a402d5ffab38263c27c9cce736ae03dd *candidates/poleCalculator.js
+3b29a41bc09f1f990ea08d2bad37bab0 *candidates/wallCalculator.js
+a81b61b9b253b73b501df33f72419f20 *candidates/wallCapCalculator.js

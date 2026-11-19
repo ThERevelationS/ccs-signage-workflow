@@ -1,0 +1,115 @@
+{
+  "unit": "foundation-o056-poles",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "date": "2026-11-08",
+  "items": {
+    "O-056": {
+      "code": "CMP-E01",
+      "acceptance_text": "Consolidate legacy item-pole and project-pole representations without double charging.",
+      "source": "ESTIMATOR_MASTERPLAN.md line 651; ESTIMATOR_CONCRETE_MASONRY_POLE_MASTERPLAN.md line 194",
+      "audit_refs": ["CMP-AUD23"]
+    },
+    "O-057": {
+      "code": "CMP-E02",
+      "acceptance_text": "Distinguish total stock length, height above grade, embedment, offset, and actual shape.",
+      "source": "ESTIMATOR_MASTERPLAN.md line 652; ESTIMATOR_CONCRETE_MASONRY_POLE_MASTERPLAN.md line 195",
+      "audit_refs": ["CMP-AUD07"]
+    }
+  },
+  "remote_baseline": {
+    "note": "All candidate files diff against fresh `npx base44@latest sandbox read` output on branch main; local src/ was not used as implementation source. Remote copies under remote/.",
+    "files_read": [
+      "src/components/estimator/foundation/poleCalculator.js",
+      "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+      "src/components/estimator/foundation/FoundationBOM.jsx",
+      "src/components/estimator/foundation/Foundation3DPreview.jsx",
+      "src/components/estimator/foundation/foundationCalc.js",
+      "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+      "src/components/estimator/foundation/foundationAssemblyModel.js",
+      "src/components/estimator/foundation/FoundationItemCard.jsx",
+      "src/components/estimator/foundation/foundationTemplateModel.js",
+      "src/components/estimator/foundation/foundationDraftRecovery.js",
+      "src/components/estimator/foundation/foundationInputValidation.js",
+      "src/components/estimator/foundation/foundationLayoutModel.js",
+      "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+      "src/components/estimator/foundation/FoundationSectionBanner.jsx",
+      "src/components/estimator/foundation/FoundationEquipmentTab.jsx",
+      "src/components/estimator/foundation/foundationGeometryInputs.js",
+      "src/components/masterInventory/MasterExtrudedMetalsPolesTab.jsx",
+      "src/components/masterInventory/foundationFieldSchema.js",
+      "src/components/masterInventory/inventoryNormalization.js",
+      "base44/entities/FoundationProject.jsonc",
+      "src/pages/FoundationEstimator.jsx"
+    ]
+  },
+  "candidate_files": [
+    {
+      "remote_path": "src/components/estimator/foundation/poleCalculator.js",
+      "candidate": "candidates/src__components__estimator__foundation__poleCalculator.js",
+      "diff": "diffs/poleCalculator.js.diff",
+      "summary": "Additive: foundationPoleGeometry resolves five distinct quantities (height_above_grade_inches, embedment_inches canonical with y_offset_inches as legacy spelling of the same quantity, base_offset_inches vertical placement, plan_offset x/z, total_length_inches explicit billed override -> required_length_inches); POLE_SHAPE_VALUES + authored/catalog shape resolution; consolidation exports (POLE_ORIGIN_*, itemHasLegacyPole, deriveLegacyItemPole, consolidateFoundationPoles, migrateLegacyItemPole); fail-closed pole_legacy_representation hold if a legacy_item-marked row reaches the priced path; priced rows snapshot embedment_inches/base_offset_inches/required_length_inches/stock_pieces/pole_shape; acknowledged-snapshot list extended by the two new calculated fields only. Priced math for pre-existing field sets is byte-identical (parity strip in section A)."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+      "candidate": "candidates/src__components__estimator__foundation__FoundationPolesPanel.jsx",
+      "diff": "diffs/FoundationPolesPanel.jsx.diff",
+      "summary": "Canonical 'Embedment below grade' input writes embedment_inches and clears the legacy spelling so authored values cannot diverge into a conflict; blank canonical display falls back to a recorded legacy value (blank-preserving draft input boundary unchanged). New inputs: Shape select (POLE_SHAPE_VALUES + verbatim authored values), Base offset above grade, Total stock length. Legacy item-pole advisory block surfaces derived rows from consolidateFoundationPoles with an optional onMigrateItemPole affordance and an overlap warning. New-pole default records embedment_inches. Required-length/stock-piece/shape/base-offset readout added next to the unchanged Not-saved/saved-amounts display."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/FoundationBOM.jsx",
+      "candidate": "candidates/src__components__estimator__foundation__FoundationBOM.jsx",
+      "diff": "diffs/FoundationBOM.jsx.diff",
+      "summary": "Pole LF aggregation and savedPoleFt consume the required_length_inches snapshot when present, else height + (embedment_inches ?? y_offset_inches) — same billed length the pricing path uses; held rows still skipped; saved-cost display unchanged."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/Foundation3DPreview.jsx",
+      "candidate": "candidates/src__components__estimator__foundation__Foundation3DPreview.jsx",
+      "diff": "diffs/Foundation3DPreview.jsx.diff",
+      "summary": "Project-pole render block only: top = base_offset_inches + height above grade, embedment extends below grade (embedment_inches ?? y_offset_inches — the authored 'depth in ground', no longer read as upward elevation, CMP-AUD07); pole_shape selects box/elliptical/cylinder geometry, unspecified stays the round default. Item-level legacy ghost render left untouched: it disappears when migrate clears the fields to blank defaults."
+    },
+    {
+      "remote_path": "base44/entities/FoundationProject.jsonc",
+      "candidate": "candidates/base44__entities__FoundationProject.jsonc",
+      "diff": "diffs/FoundationProject.jsonc.diff",
+      "summary": "Additive schema: legacy item pole fields annotated LEGACY/never-priced; poles[] gains embedment_inches, base_offset_inches, total_length_inches, required_length_inches, stock_pieces, pole_shape, include_pole_painting, custom_cost_per_unit, pole_name, pole_cost, pole_painting_cost, total_cost, migrated_from, source_item_component_id, legacy_pole_offset_from_bottom_inches — all optional, no fields removed or retyped. JSON.parse clean."
+    }
+  ],
+  "protected_files_untouched": [
+    "src/pages/FoundationEstimator.jsx",
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/components/estimator/foundation/foundationReinforcement*"
+  ],
+  "verification": {
+    "harness": ".audit-work/foundation-o056-poles/test-o056-poles.mjs",
+    "command": "node test-o056-poles.mjs",
+    "result": "PASS o056-poles: 131 passed, 0 failed",
+    "sections": {
+      "A_legacy_output_parity": "12 frozen fixtures priced through both candidate and verbatim remote baseline; row outputs equal on the pre-existing field set (parity strip excludes only newly added snapshot keys), availability + issue kind/index/field/code/message identical.",
+      "B_distinct_geometry": "Canonical embedment prices identically to the legacy spelling; both-spellings-agree -> clean, diverge -> pole_embedment_conflict hold; malformed canonical -> pole_embedment_unavailable, malformed legacy -> unchanged pole_depth_unavailable; base_offset_inches never contributes length (negative -> pole_base_offset_unavailable); total_length_inches overrides billed length for both LF and stock modes (shorter-than-required -> pole_total_length_conflict, malformed -> pole_total_length_unavailable); shape authored > catalog > null, non-string -> pole_shape_unavailable; plan x/z distinct; painting bills the explicit total stick.",
+      "C_consolidation": "itemHasLegacyPole detection incl. dead cost snapshots; deriveLegacyItemPole marks pole_origin legacy_item and never invents embedment; consolidateFoundationPoles returns canonical list refs unchanged, advisory-severity issues, overlap flags by component id and by foundation_idx (incl. asymmetric id case) without deduping; fail-closed pole_legacy_representation hold; calcPoles ignores item ghost fields entirely (no double charge); migrateLegacyItemPole mints canonical row (fresh component_id, provenance, plan position, verbatim legacy offset) + itemPatch clearing all legacy fields incl. dead snapshots; migrated pole holds for embedment then prices exactly once.",
+      "D_hold_contracts": "Missing catalog row holds; acknowledged savedPoles snapshot preserves pole_name/pole_cost/pole_painting_cost/total_cost + new required_length_inches/stock_pieces; ambiguous duplicate component_id refuses acknowledgement; malformed draft values retained verbatim; consolidation advisories never enter the priced issue channel.",
+      "E_issue_shape": "kind/componentId/message-prefix contract preserved; 'Pole N:' prefix unchanged."
+    },
+    "syntax": "esbuild transform (loader jsx) exit 0 for all four code candidates",
+    "schema": "candidates/base44__entities__FoundationProject.jsonc JSON.parse OK",
+    "line_endings": "candidates normalized to LF to match remote files"
+  },
+  "behavior_contract": {
+    "canonical_priced_representation": "project.poles only. calcPoles never reads items; item-level pole fields cannot enter totals. A row marked pole_origin 'legacy_item' that reaches the priced list is held (pole_legacy_representation), never repriced.",
+    "legacy_item_fields": "selected_pole_id, pole_total_height_inches, pole_offset_from_bottom_inches, item include_pole_painting, and dead item pole_cost/pole_painting_cost snapshots are compatibility/migration data only. They surface as advisory derived rows (consolidateFoundationPoles) and move onto the canonical list only via migrateLegacyItemPole, which clears the item fields to blank defaults — after which the 3D ghost render self-suppresses.",
+    "no_double_charge": "A physical pole is billed exactly once: either it lives on project.poles (priced) or it is un-migrated item data (advisory, never priced). Overlaps (a project pole already assigned to the same foundation) are flagged for review, never silently deduplicated — two poles on one footing are legitimate.",
+    "geometry_semantics": "height_inches = above finished grade (required); embedment_inches = below grade, canonical spelling of legacy y_offset_inches (both recorded + divergent = hold); base_offset_inches = base elevation above grade, placement only, never material length; total_length_inches = explicit billed stock length (must cover height + embedment); required_length_inches = billed length snapshot = explicit total else height + embedment; pole_shape = actual cross-section (authored then catalog; unspecified stays null); plan x/z = position only. Stock pricing pieces and LF pricing both read required_length_inches; painting bills the same length.",
+    "holds_and_snapshots": "Missing price, malformed dimensions, invalid painting settings, and representation/geometry conflicts hold the row; acknowledged savedPoles snapshots retain saved amounts incl. the new calculated fields; duplicate component_ids refuse acknowledgement. Explicit zero remains a valid free price. 'Saved amounts (not current pricing)' / 'Not saved' display contracts unchanged.",
+    "structural_disclaimer": "All geometry is preliminary estimating data only — embedment/offset values are authored inputs for pricing, not engineering certification; a real engineer must review any structural use."
+  },
+  "known_limitations": [
+    "onMigrateItemPole wiring lives in FoundationEstimator.jsx, a protected file owned by another unit — the panel renders the advisory and hides the Move-to-Poles button until the page wires the callback in a later unit.",
+    "Pre-migration, the 3D preview still renders the legacy item-pole ghost exactly as before (authored data kept visible pending review); the canonical pole render now honors distinct semantics.",
+    "pole_shape rendering in the preview uses fixed proportions (catalog width/depth not available on the pole row); resolved catalog shape materializes onto the priced row at the next calc pass.",
+    "foundationCalc.js is protected: consolidation advisories are produced by the panel/exports only and are not yet folded into project-level inputIssues — deliberate, since the advisory channel must not gate save/handoff.",
+    "signs[]/rotation_degrees on poles unchanged; CMP-E03+ snap/assignment work remains open."
+  ],
+  "non_actions": "No remote writes, edits, checkpoints, deploys, publishes, or entity operations performed. All work is candidate-only under .audit-work/foundation-o056-poles/."
+}

@@ -1,0 +1,122 @@
+{
+  "fixtures": [
+    {
+      "name": "local-zero",
+      "file": "print-frozen-local-zero.html",
+      "baseline": "print-before-local-zero.html",
+      "expected": [
+        {
+          "type": "material",
+          "quantity": "0 ft",
+          "unitCost": "$2.00",
+          "extended": "$0.00",
+          "note": [
+            "Frozen priced quantity: 0 ft.",
+            "Physical steel (last calculated): 20 ft; 13.36 lb.",
+            "not a purchasing plan"
+          ]
+        },
+        {
+          "type": "labor",
+          "quantity": "1.2 hr",
+          "unitCost": "$60.00",
+          "extended": "$72.00",
+          "note": [
+            "Frozen priced quantity: 1.2 hr.",
+            "Last-calculated labor: 1.2 hr."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "local-unknown-labor",
+      "file": "print-frozen-local-unknown-labor.html",
+      "baseline": "print-before-local-unknown-labor.html",
+      "expected": [
+        {
+          "type": "labor",
+          "quantity": "—",
+          "unitCost": "",
+          "extended": "$72.00",
+          "note": [
+            "Frozen quantity and unit cost: Not recorded.",
+            "Last-calculated labor: 1.2 hr."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "local-ordinary",
+      "file": "print-frozen-local-ordinary.html",
+      "baseline": "print-before-local-ordinary.html",
+      "expected": [
+        {
+          "type": "material",
+          "quantity": "20 ft",
+          "unitCost": "$2.00",
+          "extended": "$40.00",
+          "note": []
+        }
+      ]
+    },
+    {
+      "name": "sandbox-candidate-zero",
+      "file": "print-frozen-sandbox-candidate-zero.html",
+      "baseline": "print-before-sandbox-candidate-zero.html",
+      "expected": [
+        {
+          "type": "material",
+          "quantity": "0 ft",
+          "unitCost": "$2.00",
+          "extended": "$0.00",
+          "note": [
+            "Frozen priced quantity: 0 ft.",
+            "Physical steel (last calculated): 20 ft; 13.36 lb.",
+            "not a purchasing plan"
+          ]
+        },
+        {
+          "type": "labor",
+          "quantity": "1.2 hr",
+          "unitCost": "$60.00",
+          "extended": "$72.00",
+          "note": [
+            "Frozen priced quantity: 1.2 hr.",
+            "Last-calculated labor: 1.2 hr."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "sandbox-candidate-unknown-labor",
+      "file": "print-frozen-sandbox-candidate-unknown-labor.html",
+      "baseline": "print-before-sandbox-candidate-unknown-labor.html",
+      "expected": [
+        {
+          "type": "labor",
+          "quantity": "—",
+          "unitCost": "",
+          "extended": "$72.00",
+          "note": [
+            "Frozen quantity and unit cost: Not recorded.",
+            "Last-calculated labor: 1.2 hr."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "sandbox-candidate-ordinary",
+      "file": "print-frozen-sandbox-candidate-ordinary.html",
+      "baseline": "print-before-sandbox-candidate-ordinary.html",
+      "expected": [
+        {
+          "type": "material",
+          "quantity": "20 ft",
+          "unitCost": "$2.00",
+          "extended": "$40.00",
+          "note": []
+        }
+      ]
+    }
+  ]
+}

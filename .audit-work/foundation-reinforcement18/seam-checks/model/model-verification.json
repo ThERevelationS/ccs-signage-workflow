@@ -1,0 +1,162 @@
+{
+  "synthetic": true,
+  "modelOnly": true,
+  "results": [
+    {
+      "name": "one explicit top mat: 8 straight bars, 20ft, 16 crossings, NO vertical ties",
+      "ok": true
+    },
+    {
+      "name": "maximum spacing uses ceil and evenly distributed edge centerlines",
+      "ok": true
+    },
+    {
+      "name": "two mats remain horizontal-only until an explicit inter-mat tie is authored",
+      "ok": true
+    },
+    {
+      "name": "pillar one hoop keeps all four independently authored longitudinal bars",
+      "ok": true
+    },
+    {
+      "name": "version2 explicit zero longitudinal bars means hoop-only, NOT fallback four",
+      "ok": true
+    },
+    {
+      "name": "longitudinal-only steel is not removed by an explicit empty hoop list",
+      "ok": true
+    },
+    {
+      "name": "authored hoop allowance contributes cut length, not invented default hooks",
+      "ok": true
+    },
+    {
+      "name": "spread invalid top cover: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "spread invalid bottom cover: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "spread invalid side clearance: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "spread invalid overlapping mats: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "spread invalid duplicate mat IDs: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "spread invalid empty enabled mats: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "spread invalid unsafe spacing-derived count: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "spread invalid partial spacing string: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "spread invalid empty enabled design: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "pillar invalid oversized hoop: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "pillar invalid hoop self-overlap: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "pillar invalid hoop top cover: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "pillar invalid overlapping hoops: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "pillar invalid overlapping longitudinal bars: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "pillar invalid longitudinal hoop collision: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "pillar invalid reversed longitudinal ends: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "pillar invalid fractional count: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "pillar invalid negative count: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "pillar invalid explicit empty steel: no partial or fabricated totals",
+      "ok": true
+    },
+    {
+      "name": "preview budget zero/three preserves COMPLETE quantities and exact omitted count",
+      "ok": true
+    },
+    {
+      "name": "instance scaling does not duplicate preview geometry or lose safe-count checks",
+      "ok": true
+    },
+    {
+      "name": "zero centerline span yields one bar in that direction, no division by zero",
+      "ok": true
+    },
+    {
+      "name": "supports unknown/manual/auto never masquerade as zero",
+      "ok": true
+    },
+    {
+      "name": "missing explicit design/cover/tie lists is incomplete, unsupported version invalid",
+      "ok": true
+    },
+    {
+      "name": "invalid basic shapes/counts/null input never produce preview or quantities",
+      "ok": true
+    },
+    {
+      "name": "rebar off requires no design, yields real zeros and no support requirement",
+      "ok": true
+    },
+    {
+      "name": "proposal geometry is independent of legacy steel inputs, never reprices them",
+      "ok": true
+    },
+    {
+      "name": "manual ties require distinct valid parents, fitting positions and adequate cut length",
+      "ok": true
+    },
+    {
+      "name": "CPU list bounds reject oversized designs without partial calculations",
+      "ok": true
+    },
+    {
+      "name": "hoop identifier cannot collide with fixed longitudinal group identities",
+      "ok": true
+    },
+    {
+      "name": "disconnected pillar steel is visible and never counted as proved connections",
+      "ok": true
+    },
+    {
+      "name": "all model authoring inputs remain unchanged and results have no shared mutable state",
+      "ok": true
+    }
+  ]
+}

@@ -1,0 +1,2576 @@
+{
+  "matches": [
+    {
+      "path": "base44/functions/opportunityBridgePilotVerification/entry.ts",
+      "line": 40,
+      "text": "    const WorkOrder = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/opportunityBridgePilotVerification/entry.ts",
+      "line": 41,
+      "text": "    const Opportunity = base44.asServiceRole.entities.Opportunity;"
+    },
+    {
+      "path": "base44/functions/opportunityBridgePilotVerification/entry.ts",
+      "line": 42,
+      "text": "    const Receipt = base44.asServiceRole.entities.OpportunityBridgeOperationReceipt;"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 140,
+      "text": "    const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 141,
+      "text": "    const Estimate = base44.asServiceRole.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 142,
+      "text": "    const WorkOrder = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 143,
+      "text": "    const Opportunity = base44.asServiceRole.entities.Opportunity;"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 144,
+      "text": "    const Inventory = base44.asServiceRole.entities.Inventory;"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 145,
+      "text": "    const InventoryMovement = base44.asServiceRole.entities.InventoryMovement;"
+    },
+    {
+      "path": "base44/functions/followUpSweepAction/entry.ts",
+      "line": 275,
+      "text": "    const Estimate = base44.asServiceRole.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/followUpSweepAction/entry.ts",
+      "line": 276,
+      "text": "    const Customer = base44.asServiceRole.entities.Customer;"
+    },
+    {
+      "path": "base44/functions/followUpSweepAction/entry.ts",
+      "line": 278,
+      "text": "    const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/followUpSweepAction/entry.ts",
+      "line": 279,
+      "text": "    const Notification = base44.asServiceRole.entities.Notification;"
+    },
+    {
+      "path": "base44/functions/followUpSweepAction/entry.ts",
+      "line": 280,
+      "text": "    const Activity = base44.asServiceRole.entities.OpportunityActivity;"
+    },
+    {
+      "path": "base44/functions/followUpSweepAction/entry.ts",
+      "line": 281,
+      "text": "    const Template = base44.asServiceRole.entities.NotificationTemplate;"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3400,
+      "text": "    const workOrderEntity = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 9019,
+      "text": "      const gsRows = await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'timeclockDelegatedApprovers' }).catch(() => []);"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 9067,
+      "text": "      const twoStepThresholdMin = Math.max(0, Number((await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'twoStepThresholdMinutes' }).catch(() => []))[0]?.value ?? 240));"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12064,
+      "text": "      const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'timeclockDelegatedApprovers' }).catch(() => []);"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12065,
+      "text": "      if (Array.isArray(existing) && existing[0]?.id) await base44.asServiceRole.entities.GlobalSettings.update(existing[0].id, { value: emails }).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12066,
+      "text": "      else await base44.asServiceRole.entities.GlobalSettings.create({ key: 'timeclockDelegatedApprovers', value: emails }).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12073,
+      "text": "      const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'twoStepThresholdMinutes' }).catch(() => []);"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12074,
+      "text": "      if (Array.isArray(existing) && existing[0]?.id) await base44.asServiceRole.entities.GlobalSettings.update(existing[0].id, { value: minutes }).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12075,
+      "text": "      else await base44.asServiceRole.entities.GlobalSettings.create({ key: 'twoStepThresholdMinutes', value: minutes }).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12081,
+      "text": "      const rate = Math.max(0, Number((await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'defaultHourlyRate' }).catch(() => []))[0]?.value ?? 0));"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12293,
+      "text": "      const gs = await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'timeclockFeatures' }).catch(() => []);"
+    },
+    {
+      "path": "base44/functions/accountingAdminAction/entry.ts",
+      "line": 89,
+      "text": "    const IncomeAccount = base44.asServiceRole.entities.IncomeAccount;"
+    },
+    {
+      "path": "base44/functions/accountingAdminAction/entry.ts",
+      "line": 90,
+      "text": "    const COGSAccount = base44.asServiceRole.entities.COGSAccount;"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeSimulation/entry.ts",
+      "line": 77,
+      "text": "    const WorkOrder = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeSimulation/entry.ts",
+      "line": 78,
+      "text": "    const Customer = base44.asServiceRole.entities.Customer;"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeSimulation/entry.ts",
+      "line": 79,
+      "text": "    const Estimate = base44.asServiceRole.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeSimulation/entry.ts",
+      "line": 80,
+      "text": "    const Opportunity = base44.asServiceRole.entities.Opportunity;"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeSimulation/entry.ts",
+      "line": 81,
+      "text": "    const Receipt = base44.asServiceRole.entities.OpportunityBridgeOperationReceipt;"
+    },
+    {
+      "path": "base44/functions/fieldHistoryAction/entry.ts",
+      "line": 36,
+      "text": "  const result = await base44.asServiceRole.entities.GlobalSettings.filter({setting_key:'salesTaskDescriptions'}, {limit:2});"
+    },
+    {
+      "path": "base44/functions/fieldHistoryAction/entry.ts",
+      "line": 69,
+      "text": "      const pending=await base44.asServiceRole.entities.FieldAudit.filter(reviewFilter,reviewOptions);"
+    },
+    {
+      "path": "base44/functions/fieldHistoryAction/entry.ts",
+      "line": 74,
+      "text": "      const stillPending=await base44.asServiceRole.entities.FieldAudit.filter(reviewFilter,reviewOptions);"
+    },
+    {
+      "path": "base44/functions/fieldHistoryAction/entry.ts",
+      "line": 97,
+      "text": "        auditDone ? empty : base44.asServiceRole.entities.FieldAudit.filter({...scope,status:'committed'},"
+    },
+    {
+      "path": "base44/functions/fieldHistoryAction/entry.ts",
+      "line": 113,
+      "text": "        pending=await base44.asServiceRole.entities.FieldAudit.filter("
+    },
+    {
+      "path": "base44/functions/fieldHistoryAction/entry.ts",
+      "line": 185,
+      "text": "      base44.asServiceRole.entities.FieldAudit.filter({entity_type:type,entity_id:record.id,field_name:auditField,status:'committed'},{sort:'-modified_at',limit:25,...(body.cursor?{cursor:body.cursor}:{})}),"
+    },
+    {
+      "path": "base44/functions/fieldHistoryAction/entry.ts",
+      "line": 190,
+      "text": "      const config=(await base44.asServiceRole.entities.GlobalSettings.filter({setting_key:'smartsheetSyncConfig'},{limit:2})).items;"
+    },
+    {
+      "path": "base44/functions/ensureOpenEstimateRevision/entry.ts",
+      "line": 118,
+      "text": "    const EstimateUser = base44.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/ensureOpenEstimateRevision/entry.ts",
+      "line": 119,
+      "text": "    const RevisionService = base44.asServiceRole.entities.EstimateRevision;"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 211,
+      "text": "    const Invoice = base44.asServiceRole.entities.Invoice;\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 212,
+      "text": "    const Payment = base44.asServiceRole.entities.Payment;\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 213,
+      "text": "    const Customer = base44.asServiceRole.entities.Customer;\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 214,
+      "text": "    const CustomerContact = base44.asServiceRole.entities.CustomerContact;\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 215,
+      "text": "    const Estimate = base44.asServiceRole.entities.AllInOneEstimate;\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 216,
+      "text": "    const WorkOrder = base44.asServiceRole.entities.WorkOrder;\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 217,
+      "text": "    const Opportunity = base44.asServiceRole.entities.Opportunity;\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 695,
+      "text": "      const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 800,
+      "text": "      const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 1080,
+      "text": "        const template = await base44.asServiceRole.entities.NotificationTemplate\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 1203,
+      "text": "          const Inventory = base44.asServiceRole.entities.Inventory;\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 1204,
+      "text": "          const Movement = base44.asServiceRole.entities.InventoryMovement;\r"
+    },
+    {
+      "path": "base44/functions/permittingHealth/entry.ts",
+      "line": 15,
+      "text": "  checks.repository_read=await check('repository_read',()=>client.asServiceRole.entities.PermitLocality.list('created_date',1,0).then(r=>{if(!Array.isArray(r))throw new Error('read returned non-array');}));"
+    },
+    {
+      "path": "base44/functions/permittingHealth/entry.ts",
+      "line": 16,
+      "text": "  checks.work_order_read=await check('work_order_read',()=>client.asServiceRole.entities.WorkOrder.list('created_date',1,0).then(r=>{if(!Array.isArray(r))throw new Error('read returned non-array');}));"
+    },
+    {
+      "path": "base44/functions/permittingHealth/entry.ts",
+      "line": 17,
+      "text": "  checks.scan_run_read=await check('scan_run_read',()=>client.asServiceRole.entities.PermittingScanRun.list('created_date',1,0).then(r=>{if(!Array.isArray(r))throw new Error('read returned non-array');}));"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 281,
+      "text": "    const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/permittingOfficeCandidate/entry.ts",
+      "line": 10,
+      "text": "  const entities=client.asServiceRole.entities,deps={sourceEntity:entities.PermittingSourceDocument,\r"
+    },
+    {
+      "path": "base44/functions/permittingOfficeCandidate/entry.ts",
+      "line": 11,
+      "text": "   segmentEntity:entities.PermittingSourceTextSegment,profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings};\r"
+    },
+    {
+      "path": "base44/functions/generateDocNumber/entry.ts",
+      "line": 21,
+      "text": "      const defaults = await svc.entities.QuoteDefaults.filter({ config_name: 'default' });"
+    },
+    {
+      "path": "base44/functions/generateDocNumber/entry.ts",
+      "line": 57,
+      "text": "    const Counter = svc.entities.DocNumberCounter;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 121,
+      "text": "  const SectionAcceptance = base44.asServiceRole.entities.EstimateSectionAcceptance;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 405,
+      "text": "    const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 406,
+      "text": "    const PortalMessage = base44.asServiceRole.entities.PortalMessage;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 407,
+      "text": "    const Invoice = base44.asServiceRole.entities.Invoice;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 408,
+      "text": "    const Payment = base44.asServiceRole.entities.Payment;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 409,
+      "text": "    const Estimate = base44.asServiceRole.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 410,
+      "text": "    const WorkOrder = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 411,
+      "text": "    const Customer = base44.asServiceRole.entities.Customer;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 412,
+      "text": "    const EstimatingRequest = base44.asServiceRole.entities.EstimatingRequest;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 413,
+      "text": "    const OpportunityActivity = base44.asServiceRole.entities.OpportunityActivity;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 414,
+      "text": "    const ChangeOrder = base44.asServiceRole.entities.ChangeOrder;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 480,
+      "text": "        const quoteDefaults = await loadAllEntityRows({ entity: base44.asServiceRole.entities.QuoteDefaults, query: { config_name: \"default\" }, label: \"Portal quote defaults\" }).catch(() => []);"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 556,
+      "text": "      const quoteDefaults = await loadAllEntityRows({ entity: base44.asServiceRole.entities.QuoteDefaults, query: { config_name: \"default\" }, label: \"Portal quote defaults\" }).catch(() => []);"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 662,
+      "text": "        const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 664,
+      "text": "        const Notification = base44.asServiceRole.entities.Notification;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 668,
+      "text": "        const Activity = base44.asServiceRole.entities.OpportunityActivity;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 805,
+      "text": "        const SectionAcceptance = base44.asServiceRole.entities.EstimateSectionAcceptance;"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 920,
+      "text": "        const Acceptance = base44.asServiceRole.entities.EstimateAcceptance;"
+    },
+    {
+      "path": "base44/functions/continueAddressResearchDiscovery/entry.ts",
+      "line": 14,
+      "text": "  const entity=client.asServiceRole.entities.PermittingAddressArchive,row=await entity.get(body.collection_id);\r"
+    },
+    {
+      "path": "base44/functions/continueAddressResearchDiscovery/entry.ts",
+      "line": 16,
+      "text": "  if(body.action_token)reporter=await createScanReporter({entity:client.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:row.id,targetName:row.name,kind:'address_discovery',label:(body.retry_page_url?'Retry research page — ':'Continue address website scan — ')+row.name});\r"
+    },
+    {
+      "path": "base44/functions/continueAddressResearchDiscovery/entry.ts",
+      "line": 17,
+      "text": "  const result=await continueOwnedAddressDiscovery({entity,scanEntity:client.asServiceRole.entities.PermittingScanRun,collectionId:row.id,actor,retryPageUrl:body.retry_page_url ?? null,\r"
+    },
+    {
+      "path": "base44/functions/jobCostingAction/entry.ts",
+      "line": 93,
+      "text": "    const WorkOrder = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/jobCostingAction/entry.ts",
+      "line": 94,
+      "text": "    const Invoice = base44.asServiceRole.entities.Invoice;"
+    },
+    {
+      "path": "base44/functions/jobCostingAction/entry.ts",
+      "line": 95,
+      "text": "    const Payment = base44.asServiceRole.entities.Payment;"
+    },
+    {
+      "path": "base44/functions/jobCostingAction/entry.ts",
+      "line": 96,
+      "text": "    const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;"
+    },
+    {
+      "path": "base44/functions/jobCostingAction/entry.ts",
+      "line": 97,
+      "text": "    const ChangeOrder = base44.asServiceRole.entities.ChangeOrder;"
+    },
+    {
+      "path": "base44/functions/jobCostingAction/entry.ts",
+      "line": 99,
+      "text": "    const Movement = base44.asServiceRole.entities.InventoryMovement;"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/main.ts",
+      "line": 1008,
+      "text": "      loadAllEntityRows({ entity: base44.asServiceRole.entities.PermitLocality, query: stateFilter, sort: \"created_date\", label: \"Location matching catalog\" }),"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/main.ts",
+      "line": 1010,
+      "text": "      loadAllEntityRows({ entity: base44.asServiceRole.entities.PermitResolutionRule, query: { active: true }, sort: \"created_date\", label: \"Resolution rules\" }).catch(() => [])"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/main.ts",
+      "line": 1057,
+      "text": "    if (!diagnostic && body.action_token) reporter = await createScanReporter({ entity: base44.asServiceRole.entities.PermittingScanRun, token: body.action_token, user: actor, targetId: \"address-lookup\", targetName: address, kind: \"address\", label: `Find jurisdiction for ${address}` }).catch(() => silentScanReporter);"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/entry.ts",
+      "line": 987,
+      "text": "      loadAllEntityRows({ entity: base44.asServiceRole.entities.PermitLocality, query: stateFilter, sort: \"created_date\", label: \"Location matching catalog\" }),"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/entry.ts",
+      "line": 989,
+      "text": "      loadAllEntityRows({ entity: base44.asServiceRole.entities.PermitResolutionRule, query: { active: true }, sort: \"created_date\", label: \"Resolution rules\" }).catch(() => [])"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/entry.ts",
+      "line": 1036,
+      "text": "    if (!diagnostic && body.action_token) reporter = await createScanReporter({ entity: base44.asServiceRole.entities.PermittingScanRun, token: body.action_token, user: actor, targetId: \"address-lookup\", targetName: address, kind: \"address\", label: `Find jurisdiction for ${address}` }).catch(() => silentScanReporter);"
+    },
+    {
+      "path": "base44/functions/sourceMonitorSeed/entry.ts",
+      "line": 25,
+      "text": "      const page = await base44.asServiceRole.entities.PermittingSourceDocument.filter("
+    },
+    {
+      "path": "base44/functions/importSalesPipeline/entry.ts",
+      "line": 410,
+      "text": "    const WorkOrder = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/importSalesPipeline/entry.ts",
+      "line": 411,
+      "text": "    const ImportJob = base44.asServiceRole.entities.ImportJob;"
+    },
+    {
+      "path": "base44/functions/importSalesPipeline/entry.ts",
+      "line": 766,
+      "text": "      await base44.asServiceRole.entities.ImportJob.update(importJob.id, {"
+    },
+    {
+      "path": "base44/functions/manageReconciliation/entry.ts",
+      "line": 179,
+      "text": "    const Batch = base44.asServiceRole.entities.ReconciliationBatch;"
+    },
+    {
+      "path": "base44/functions/manageReconciliation/entry.ts",
+      "line": 180,
+      "text": "    const Payment = base44.asServiceRole.entities.Payment;"
+    },
+    {
+      "path": "base44/functions/manageReconciliation/entry.ts",
+      "line": 181,
+      "text": "    const Invoice = base44.asServiceRole.entities.Invoice;"
+    },
+    {
+      "path": "base44/functions/manageReconciliation/entry.ts",
+      "line": 406,
+      "text": "        const locs = await base44.asServiceRole.entities.SalesLocation.filter({}).catch(() => []);"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 143,
+      "text": "    const Notification = base44.asServiceRole.entities.Notification;"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 144,
+      "text": "    const Pref = base44.asServiceRole.entities.NotificationPreference;"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 472,
+      "text": "      const Estimate = entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 473,
+      "text": "      const EstimatingRequest = entities.EstimatingRequest;"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 474,
+      "text": "      const Invoice = entities.Invoice;"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 475,
+      "text": "      const BuilderPart = entities.BuilderPart;"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 476,
+      "text": "      const Activity = entities.OpportunityActivity;"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 477,
+      "text": "      const GlobalSettings = entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/seedNotificationTemplates/entry.ts",
+      "line": 558,
+      "text": "    const NotificationTemplate = base44.asServiceRole.entities.NotificationTemplate;"
+    },
+    {
+      "path": "base44/functions/corebridgeApiAction/entry.ts",
+      "line": 62,
+      "text": "      const page = await base44.asServiceRole.entities.WorkOrder.list('id', PAGE_SIZE, skip);"
+    },
+    {
+      "path": "base44/functions/corebridgeApiAction/entry.ts",
+      "line": 85,
+      "text": "      const imports = await loadHistoryRows(base44.asServiceRole.entities.ImportJob, 'ImportJob');"
+    },
+    {
+      "path": "base44/functions/workOrderTraveler/entry.ts",
+      "line": 56,
+      "text": "    const wo = await entities.WorkOrder.get(id).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/workOrderTraveler/entry.ts",
+      "line": 62,
+      "text": "      entities.WorkOrder.filter({ parent_work_order_id: id }).catch(() => []),"
+    },
+    {
+      "path": "base44/functions/workOrderTraveler/entry.ts",
+      "line": 63,
+      "text": "      entities.PermitLineItem.filter({ work_order_id: id }).catch(() => []),"
+    },
+    {
+      "path": "base44/functions/workOrderTraveler/entry.ts",
+      "line": 64,
+      "text": "      entities.InventoryMovement.filter({ work_order_id: id }).catch(() => []),"
+    },
+    {
+      "path": "base44/functions/permittingRuleInvalidate/entry.ts",
+      "line": 9,
+      "text": "  return Response.json(await invalidateSourceRules({sourceEntity:entities.PermittingSourceDocument,ruleEntity:entities.PermittingRule,\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleInvalidate/entry.ts",
+      "line": 10,
+      "text": "   segmentEntity:entities.PermittingSourceTextSegment,profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings,\r"
+    },
+    {
+      "path": "base44/functions/recordEstimateAcceptance/entry.ts",
+      "line": 69,
+      "text": "  const Estimate = base44.asServiceRole.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/recordEstimateAcceptance/entry.ts",
+      "line": 70,
+      "text": "  const EstimatingRequest = base44.asServiceRole.entities.EstimatingRequest;"
+    },
+    {
+      "path": "base44/functions/recordEstimateAcceptance/entry.ts",
+      "line": 184,
+      "text": "  const Estimate = base44.asServiceRole.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/recordEstimateAcceptance/entry.ts",
+      "line": 185,
+      "text": "  const Acceptance = base44.asServiceRole.entities.EstimateAcceptance;"
+    },
+    {
+      "path": "base44/functions/recordEstimateAcceptance/entry.ts",
+      "line": 323,
+      "text": "    const Estimate = base44.asServiceRole.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/recordEstimateAcceptance/entry.ts",
+      "line": 324,
+      "text": "    const Acceptance = base44.asServiceRole.entities.EstimateAcceptance;"
+    },
+    {
+      "path": "base44/functions/recordEstimateAcceptance/entry.ts",
+      "line": 325,
+      "text": "    const Delivery = base44.asServiceRole.entities.EstimateQuoteDelivery;"
+    },
+    {
+      "path": "base44/functions/continueJurisdictionArchives/entry.ts",
+      "line": 35,
+      "text": "      reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user,targetId:jurisdictionId,targetName:profile.name,kind:'archive',label:`Archive document — ${profile.name}`});\r"
+    },
+    {
+      "path": "base44/functions/continueJurisdictionArchives/entry.ts",
+      "line": 41,
+      "text": "      catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument,\r"
+    },
+    {
+      "path": "base44/functions/continueJurisdictionArchives/entry.ts",
+      "line": 56,
+      "text": "    const configs = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: PERMITTING_RESEARCH_CONFIG_KEY }, 'created_date', 2);\r"
+    },
+    {
+      "path": "base44/functions/continueJurisdictionArchives/entry.ts",
+      "line": 59,
+      "text": "    return Response.json(await continuePermittingDocumentArchiveBacklog({...options,addressEntity:base44.asServiceRole.entities.PermittingAddressArchive,scanEntity:base44.asServiceRole.entities.PermittingScanRun,\r"
+    },
+    {
+      "path": "base44/functions/ensureEstimateLifecycleRevision/entry.ts",
+      "line": 118,
+      "text": "    const RevisionService = base44.asServiceRole.entities.EstimateRevision;"
+    },
+    {
+      "path": "base44/functions/ensureEstimateLifecycleRevision/entry.ts",
+      "line": 135,
+      "text": "    const estimate = await base44.entities.AllInOneEstimate.get(estimateId).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/aiResearchOffice/entry.ts",
+      "line": 41,
+      "text": "      reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:'office-search',targetName:query,kind:'office_research',label:`Office research: ${query}`});\r"
+    },
+    {
+      "path": "base44/functions/googleDriveOperations/entry.ts",
+      "line": 38,
+      "text": "        const WorkOrder = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/googleDriveOperations/entry.ts",
+      "line": 39,
+      "text": "        const Settings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/continuePermittingSourceText/entry.ts",
+      "line": 17,
+      "text": "    const options = {entity:base44.asServiceRole.entities.PermittingSourceDocument,\r"
+    },
+    {
+      "path": "base44/functions/continuePermittingSourceText/entry.ts",
+      "line": 18,
+      "text": "      segmentEntity:base44.asServiceRole.entities.PermittingSourceTextSegment,readAndExtract:readAndExtractSourcePdf,\r"
+    },
+    {
+      "path": "base44/functions/continuePermittingSourceText/entry.ts",
+      "line": 21,
+      "text": "    const rows = await base44.asServiceRole.entities.GlobalSettings.filter({setting_key:PERMITTING_RESEARCH_CONFIG_KEY},'created_date',2);\r"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/entry.ts",
+      "line": 987,
+      "text": "      loadAllEntityRows({ entity: base44.asServiceRole.entities.PermitLocality, query: stateFilter, sort: \"created_date\", label: \"Location matching catalog\" }),"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/entry.ts",
+      "line": 989,
+      "text": "      loadAllEntityRows({ entity: base44.asServiceRole.entities.PermitResolutionRule, query: { active: true }, sort: \"created_date\", label: \"Resolution rules\" }).catch(() => [])"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/entry.ts",
+      "line": 1036,
+      "text": "    if (!diagnostic && body.action_token) reporter = await createScanReporter({ entity: base44.asServiceRole.entities.PermittingScanRun, token: body.action_token, user: actor, targetId: \"address-lookup\", targetName: address, kind: \"address\", label: `Find jurisdiction for ${address}` }).catch(() => silentScanReporter);"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/main.ts",
+      "line": 1008,
+      "text": "      loadAllEntityRows({ entity: base44.asServiceRole.entities.PermitLocality, query: stateFilter, sort: \"created_date\", label: \"Location matching catalog\" }),"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/main.ts",
+      "line": 1010,
+      "text": "      loadAllEntityRows({ entity: base44.asServiceRole.entities.PermitResolutionRule, query: { active: true }, sort: \"created_date\", label: \"Resolution rules\" }).catch(() => [])"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/main.ts",
+      "line": 1057,
+      "text": "    if (!diagnostic && body.action_token) reporter = await createScanReporter({ entity: base44.asServiceRole.entities.PermittingScanRun, token: body.action_token, user: actor, targetId: \"address-lookup\", targetName: address, kind: \"address\", label: `Find jurisdiction for ${address}` }).catch(() => silentScanReporter);"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/handler.ts",
+      "line": 98,
+      "text": "   loadAllEntityRows({entity:base44.asServiceRole.entities.PermitLocality,query:stateFilter,sort:'created_date',label:'Location matching catalog'}),\r"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/handler.ts",
+      "line": 100,
+      "text": "   loadAllEntityRows({entity:base44.asServiceRole.entities.PermitResolutionRule,query:{active:true},sort:'created_date',label:'Resolution rules'}).catch(()=>[])]);\r"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/handler.ts",
+      "line": 145,
+      "text": "  if(!diagnostic&&body.action_token)reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:'address-lookup',targetName:address,kind:'address',label:`Find jurisdiction for ${address}`}).catch(()=>silentScanReporter); // telemetry setup must never kill the lookup — degrade to silent on entity-cap pressure\r"
+    },
+    {
+      "path": "base44/functions/deleteCreatedDuplicateWorkOrder/entry.ts",
+      "line": 39,
+      "text": "    const entity = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/fileBridgeMaintenance/entry.ts",
+      "line": 26,
+      "text": "  const settingsRow = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1).catch(() => []);"
+    },
+    {
+      "path": "base44/functions/fileBridgeMaintenance/entry.ts",
+      "line": 127,
+      "text": "  const customers = await sr.entities.Customer.filter({}, 'company_name', 2000)"
+    },
+    {
+      "path": "base44/functions/fileBridgeMaintenance/entry.ts",
+      "line": 139,
+      "text": "      const existing = await sr.entities.CustomerFolderLink.filter("
+    },
+    {
+      "path": "base44/functions/fileBridgeMaintenance/entry.ts",
+      "line": 150,
+      "text": "        const c = await sr.entities.CustomerFolderLink.create({"
+    },
+    {
+      "path": "base44/functions/fileBridgeMaintenance/entry.ts",
+      "line": 173,
+      "text": "  const allLinks = await sr.entities.CustomerFolderLink.filter("
+    },
+    {
+      "path": "base44/functions/fileBridgeMaintenance/entry.ts",
+      "line": 216,
+      "text": "      await sr.entities.CustomerFolderLink.update(l.id, {"
+    },
+    {
+      "path": "base44/functions/fileBridgeMaintenance/entry.ts",
+      "line": 221,
+      "text": "      await sr.entities.CustomerFolderLink.update(l.id, {"
+    },
+    {
+      "path": "base44/functions/processWorkflowTriggers/entry.ts",
+      "line": 114,
+      "text": "      const permitLine = await base44.asServiceRole.entities.PermitLineItem.get(permitLineItemId).catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/getPermittingSourceTextPages/entry.ts",
+      "line": 16,
+      "text": "    const entity=base44.entities.PermittingSourceDocument;\r"
+    },
+    {
+      "path": "base44/functions/getPermittingSourceTextPages/entry.ts",
+      "line": 18,
+      "text": "    const evidence=await readSourceEvidencePages({source,segmentEntity:base44.entities.PermittingSourceTextSegment,startPage,pageCount});\r"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 37,
+      "text": "      entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 88,
+      "text": "          entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 96,
+      "text": "          entity: base44.asServiceRole.entities.Opportunity,"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 291,
+      "text": "            const claim = await claimRecordDeadlineFire(base44, base44.asServiceRole.entities.Order, order, `${rule.id}|${triggerType}|${order.date_needed}`, today);"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 304,
+      "text": "          const claim = await claimRecordDeadlineFire(base44, base44.asServiceRole.entities.Order, order, `${rule.id}|order_date_needed_approaching|${order.date_needed}`, today);"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 332,
+      "text": "            const claim = await claimRecordDeadlineFire(base44, base44.asServiceRole.entities.Opportunity, opp, `${rule.id}|${passedType}|${field}|${dateStr}`, today);"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 341,
+      "text": "            const claim = await claimRecordDeadlineFire(base44, base44.asServiceRole.entities.Opportunity, opp, `${rule.id}|${approachingType}|${field}|${dateStr}`, today);"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 396,
+      "text": "      entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 428,
+      "text": "            entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 453,
+      "text": "              entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 479,
+      "text": "              entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 538,
+      "text": "          const groups = await base44.asServiceRole.entities.EmailGroup.filter({ id: recipient.value });"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 755,
+      "text": "          const groups = await base44.asServiceRole.entities.EmailGroup.filter({ id: recipient.value });"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 872,
+      "text": "          const groups = await base44.asServiceRole.entities.EmailGroup.filter({ id: recipient.value });"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 123,
+      "text": "    const WorkOrder = base44.asServiceRole.entities.WorkOrder;\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 124,
+      "text": "    const Customer = base44.asServiceRole.entities.Customer;\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 125,
+      "text": "    const Estimate = base44.asServiceRole.entities.AllInOneEstimate;\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 126,
+      "text": "    const Opportunity = base44.asServiceRole.entities.Opportunity;\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 127,
+      "text": "    const Receipt = base44.asServiceRole.entities.OpportunityBridgeOperationReceipt;\r"
+    },
+    {
+      "path": "base44/functions/fileBridgeSpike/entry.ts",
+      "line": 158,
+      "text": "      const rows = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1).catch(() => []);"
+    },
+    {
+      "path": "base44/functions/fileBridgeSpike/entry.ts",
+      "line": 161,
+      "text": "        await sr.entities.GlobalSettings.update(rows[0].id, { setting_value: value });"
+    },
+    {
+      "path": "base44/functions/fileBridgeSpike/entry.ts",
+      "line": 164,
+      "text": "        await sr.entities.GlobalSettings.create({ setting_key: 'fileBridge', setting_value: value });"
+    },
+    {
+      "path": "base44/functions/fileBridgeSpike/entry.ts",
+      "line": 193,
+      "text": "      const gs = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 10)"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 66,
+      "text": "  const rows = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1)"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 169,
+      "text": "    const rows = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1).catch(() => []);"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 179,
+      "text": "      const u = await sr.entities.GlobalSettings.update(rows[0].id, { setting_value: next }).catch((e: any) => ({ __err: String(e?.message || e) }));"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 182,
+      "text": "      const c = await sr.entities.GlobalSettings.create({ setting_key: 'fileBridge', setting_value: next }).catch((e: any) => ({ __err: String(e?.message || e) }));"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 649,
+      "text": "    const gs = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1)"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 654,
+      "text": "    const u = await sr.entities.GlobalSettings.update(gs[0].id, { setting_value: nextSettings })"
+    },
+    {
+      "path": "base44/functions/archiveAddressResearchFile/entry.ts",
+      "line": 13,
+      "text": "  const entity=client.asServiceRole.entities.PermittingAddressArchive,collection=await entity.get(body.collection_id);\r"
+    },
+    {
+      "path": "base44/functions/archiveAddressResearchFile/entry.ts",
+      "line": 15,
+      "text": "  if(body.action_token)reporter=await createScanReporter({entity:client.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:collection.id,targetName:collection.name,kind:'address_archive',label:'Save original research file — '+collection.name});\r"
+    },
+    {
+      "path": "base44/functions/permittingResearchBacklogDispatch/entry.ts",
+      "line": 140,
+      "text": "    const Settings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/permittingResearchBacklogDispatch/entry.ts",
+      "line": 190,
+      "text": "        addressEntity:base44.asServiceRole.entities.PermittingAddressArchive,scanEntity:base44.asServiceRole.entities.PermittingScanRun,preferAddressArchives,"
+    },
+    {
+      "path": "base44/functions/permittingResearchBacklogDispatch/entry.ts",
+      "line": 194,
+      "text": "        entity: Profiles, catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument, fetchSource: safeExternalFetch,"
+    },
+    {
+      "path": "base44/functions/permittingResearchBacklogDispatch/entry.ts",
+      "line": 202,
+      "text": "          entity: base44.asServiceRole.entities.PermittingSourceDocument,"
+    },
+    {
+      "path": "base44/functions/permittingResearchBacklogDispatch/entry.ts",
+      "line": 203,
+      "text": "          segmentEntity: base44.asServiceRole.entities.PermittingSourceTextSegment,"
+    },
+    {
+      "path": "base44/functions/refreshJurisdiction/entry.ts",
+      "line": 74,
+      "text": "        reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user,targetId:id,targetName:target.name,kind:discoveryOnly?'discovery':'research',label:`${discoveryOnly?'Rescan':'Research'} ${target.name}, ${target.state}`});"
+    },
+    {
+      "path": "base44/functions/refreshJurisdiction/entry.ts",
+      "line": 290,
+      "text": "          catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument,"
+    },
+    {
+      "path": "base44/functions/accessRequestAction/entry.ts",
+      "line": 10,
+      "text": "    const audit = base44.asServiceRole.entities.AdminAuditLog;"
+    },
+    {
+      "path": "base44/functions/smartsheetMetadataAdminAction/entry.ts",
+      "line": 108,
+      "text": "    entity: base44.asServiceRole.entities.GlobalSettings,"
+    },
+    {
+      "path": "base44/functions/manageCustomerLifecycle/entry.ts",
+      "line": 111,
+      "text": "    const Customer = base44.asServiceRole.entities.Customer;"
+    },
+    {
+      "path": "base44/functions/manageCustomerLifecycle/entry.ts",
+      "line": 112,
+      "text": "    const WorkOrder = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/manageCustomerLifecycle/entry.ts",
+      "line": 113,
+      "text": "    const Invoice = base44.asServiceRole.entities.Invoice;"
+    },
+    {
+      "path": "base44/functions/manageCustomerLifecycle/entry.ts",
+      "line": 114,
+      "text": "    const Opportunity = base44.asServiceRole.entities.Opportunity;"
+    },
+    {
+      "path": "base44/functions/manageCustomerLifecycle/entry.ts",
+      "line": 115,
+      "text": "    const OpportunityActivity = base44.asServiceRole.entities.OpportunityActivity;"
+    },
+    {
+      "path": "base44/functions/importWipSheet/entry.ts",
+      "line": 253,
+      "text": "          page = await base44.asServiceRole.entities.WorkOrder.list('created_date', pageSize, skip);"
+    },
+    {
+      "path": "base44/functions/importWipSheet/entry.ts",
+      "line": 410,
+      "text": "              entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/permittingRuleExtraction/entry.ts",
+      "line": 22,
+      "text": "      const rows=await entities.PermittingSourceDocument.filter(query,'id',21,skip,[\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleExtraction/entry.ts",
+      "line": 30,
+      "text": "      if (body.run_id) run=await entities.PermittingRuleExtractionRun.get(String(body.run_id));\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleExtraction/entry.ts",
+      "line": 34,
+      "text": "        const rows=await entities.PermittingRuleExtractionRun.filter({request_key:'manual-rule-evidence:'+id},'created_date',2,0);\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleExtraction/entry.ts",
+      "line": 44,
+      "text": "    const result=await extractEvidenceUnit({sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment,\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleExtraction/entry.ts",
+      "line": 45,
+      "text": "      runEntity:entities.PermittingRuleExtractionRun,invokeLlm:data=>base44.asServiceRole.integrations.Core.InvokeLLM(data),\r"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 293,
+      "text": "    const Opportunity = base44.asServiceRole.entities.Opportunity;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 294,
+      "text": "    const Intake = base44.asServiceRole.entities.OpportunityIntake;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 295,
+      "text": "    const EstimatingRequest = base44.asServiceRole.entities.EstimatingRequest;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 296,
+      "text": "    const Customer = base44.asServiceRole.entities.Customer;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 297,
+      "text": "    const CustomerContact = base44.asServiceRole.entities.CustomerContact;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 298,
+      "text": "    const CustomerLocation = base44.asServiceRole.entities.CustomerLocation;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 299,
+      "text": "    const WorkOrder = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 300,
+      "text": "    const Order = base44.asServiceRole.entities.Order;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 301,
+      "text": "    const Estimate = base44.asServiceRole.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 302,
+      "text": "    const Invoice = base44.asServiceRole.entities.Invoice;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 303,
+      "text": "    const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 304,
+      "text": "    const ChangeOrder = base44.asServiceRole.entities.ChangeOrder;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 305,
+      "text": "    const Payment = base44.asServiceRole.entities.Payment;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 306,
+      "text": "    const Inventory = base44.asServiceRole.entities.Inventory;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 307,
+      "text": "    const PermitLineItem = base44.asServiceRole.entities.PermitLineItem;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 308,
+      "text": "    const BuilderPart = base44.asServiceRole.entities.BuilderPart;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 309,
+      "text": "    const Activity = base44.asServiceRole.entities.OpportunityActivity;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 310,
+      "text": "    const PortalMessage = base44.asServiceRole.entities.PortalMessage;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 382,
+      "text": "    const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 478,
+      "text": "        base44.asServiceRole.entities.BuilderProduct.filter({ estimate_id: id }, \"-created_date\", 500).catch(() => []),"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 479,
+      "text": "        base44.asServiceRole.entities.BuilderPart.filter({ estimate_id: id }, \"-created_date\", 500).catch(() => []),"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 480,
+      "text": "        base44.asServiceRole.entities.EstimateRevision.filter({ estimate_id: id }, \"-created_date\", 500).catch(() => []),"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 481,
+      "text": "        base44.asServiceRole.entities.EstimateAcceptance.filter({ estimate_id: id }, \"-created_date\", 500).catch(() => []),"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 482,
+      "text": "        base44.asServiceRole.entities.EstimateQuoteDelivery.filter({ estimate_id: id }, \"-created_date\", 500).catch(() => []),"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 501,
+      "text": "          await base44.asServiceRole.entities.BuilderProduct.create({ ...pf, estimate_id: created.id }).catch((err: any) => { importFailures += 1; importWarning = String(err?.message || err); return null; });"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 505,
+      "text": "          const r = await base44.asServiceRole.entities.BuilderPart.create({ ...pf, estimate_id: created.id }).catch((err: any) => { importFailures += 1; importWarning = String(err?.message || err); return null; });"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 525,
+      "text": "        base44.asServiceRole.entities.BuilderProduct.filter({ estimate_id: fromId }, \"-created_date\", 500).catch(() => []),"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 526,
+      "text": "        base44.asServiceRole.entities.BuilderPart.filter({ estimate_id: fromId }, \"-created_date\", 500).catch(() => []),"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 532,
+      "text": "        const r = await base44.asServiceRole.entities.BuilderProduct.create({ ...pf, estimate_id: toId }).catch((err: any) => { copyWarnings.push(`product copy failed: ${String(err?.message || err)}`); return null; });"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 537,
+      "text": "        const r = await base44.asServiceRole.entities.BuilderPart.create({ ...pf, estimate_id: toId }).catch((err: any) => { copyWarnings.push(`part copy failed: ${String(err?.message || err)}`); return null; });"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 580,
+      "text": "          const bp = await base44.asServiceRole.entities.BuilderProduct.get(clean(line.builder_product_id)).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 583,
+      "text": "            const newBp = await base44.asServiceRole.entities.BuilderProduct.create({ ...bf, estimate_id: toId }).catch((err: any) => { copyWarnings.push(`builder product clone failed: ${String(err?.message || err)}`); return null; });"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 640,
+      "text": "      const rows = await base44.asServiceRole.entities.OpportunityActivity"
+    },
+    {
+      "path": "base44/functions/updateEstimateRevisionAudit/entry.ts",
+      "line": 40,
+      "text": "    const RevisionService = base44.asServiceRole.entities.EstimateRevision;"
+    },
+    {
+      "path": "base44/functions/updateEstimateRevisionAudit/entry.ts",
+      "line": 41,
+      "text": "    const EstimateUser = base44.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/updateEstimateRevisionAudit/entry.ts",
+      "line": 134,
+      "text": "        const delivery = await base44.asServiceRole.entities.EstimateQuoteDelivery.get(evidence.delivery_id).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 698,
+      "text": "        await base44.asServiceRole.entities.AdminAuditLog.create({\r"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 91,
+      "text": "    const ChangeOrder = base44.asServiceRole.entities.ChangeOrder;"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 92,
+      "text": "    const Customer = base44.asServiceRole.entities.Customer;"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 93,
+      "text": "    const Estimate = base44.asServiceRole.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 94,
+      "text": "    const WorkOrder = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 95,
+      "text": "    const Opportunity = base44.asServiceRole.entities.Opportunity;"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 96,
+      "text": "    const Invoice = base44.asServiceRole.entities.Invoice;"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 304,
+      "text": "      entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 312,
+      "text": "      entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 852,
+      "text": "    salesCreateAttemptReview = await readSalesPullCreateAttemptRisks(base44.asServiceRole.entities.WorkOrder, sheetId);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 860,
+      "text": "      if (i > 0) salesCreateAttemptReview = await readSalesPullCreateAttemptRisks(base44.asServiceRole.entities.WorkOrder, sheetId);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 874,
+      "text": "        base44.asServiceRole.entities.WorkOrder, sheetId,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 917,
+      "text": "        entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 932,
+      "text": "          const created = await base44.asServiceRole.entities.Order.bulkCreate(allowedCreates);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 938,
+      "text": "            entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1072,
+      "text": "          const latest = await base44.asServiceRole.entities.WorkOrder.get(id);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1129,
+      "text": "          const latest = await base44.asServiceRole.entities.WorkOrder.get(id);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1195,
+      "text": "        entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1284,
+      "text": "        await verifyPulledOrderDates(base44.asServiceRole.entities.Order, item.id, item.previous, item.changes);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1314,
+      "text": "          entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1318,
+      "text": "            entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1414,
+      "text": "        await base44.asServiceRole.entities.Order.bulkUpdate(batch);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1436,
+      "text": "          ? base44.asServiceRole.entities.WorkOrder"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1437,
+      "text": "          : base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1447,
+      "text": "          entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1511,
+      "text": "        const result = await base44.asServiceRole.entities.WorkOrder.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1518,
+      "text": "        const latest = await base44.asServiceRole.entities.WorkOrder.get(record.id).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1635,
+      "text": "  const results = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: SETTING_KEY });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1710,
+      "text": "  const result = await base44.asServiceRole.entities.GlobalSettings.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1717,
+      "text": "  const saved = await base44.asServiceRole.entities.GlobalSettings.get(record.id).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1737,
+      "text": "  const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: key });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1749,
+      "text": "    const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: key });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1757,
+      "text": "  await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: key, setting_value: {} });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1772,
+      "text": "    await base44.asServiceRole.entities.GlobalSettings.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1842,
+      "text": "      const evidenceRecord = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1854,
+      "text": "      await assertNoUnresolvedOrderPullEvidence(base44.asServiceRole.entities.GlobalSettings);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1868,
+      "text": "  const result = await base44.asServiceRole.entities.GlobalSettings.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1875,
+      "text": "  const verified = await base44.asServiceRole.entities.GlobalSettings.get(record.id).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1891,
+      "text": "    const results = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: ALERT_SETTING_KEY });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1919,
+      "text": "  try { openConflicts = Number(await base44.asServiceRole.entities.SyncConflict.count({ status: 'open' })) || 0; } catch {}"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1923,
+      "text": "      const rows = await base44.asServiceRole.entities.SyncConflict.filter({ status: 'open' }, { sort: '-created_date', limit: 10 });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1968,
+      "text": "      await base44.asServiceRole.entities.GlobalSettings.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2000,
+      "text": "    const result = await base44.asServiceRole.entities.GlobalSettings.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2017,
+      "text": "  const entity = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2096,
+      "text": "          entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2103,
+      "text": "          entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2116,
+      "text": "      entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2182,
+      "text": "      base44.asServiceRole.entities.WorkOrder, sheetId, records);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2422,
+      "text": "  const salesReviews = dataset === 'sales' ? await loadAllEntityRows({entity:base44.asServiceRole.entities.SyncConflict,query:{dataset:'sales',sheet_id:sheetId,status:{$in:['open','approved']}},sort:'id',label:'Sales review evidence'}) : [];"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2691,
+      "text": "          entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2775,
+      "text": "          entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2815,
+      "text": "        const finalized = await base44.asServiceRole.entities.Order.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2835,
+      "text": "        const metadataCommit=await base44.asServiceRole.entities.WorkOrder.updateMany({id:record.id,updated_date:record.updated_date},{$set:{smartsheet_sync_snapshot:snapshot,smartsheet_last_synced_at:syncedAt}});"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2838,
+      "text": "          entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2855,
+      "text": "      if(fieldPlan?.decisions?.length)await base44.asServiceRole.entities.SyncConflict.updateMany({id:{$in:fieldPlan.decisions},status:'approved'},{$set:{status:'resolved',resolved_at:new Date().toISOString()}});"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2856,
+      "text": "      await base44.asServiceRole.entities.SyncConflict.updateMany({dataset,entity_id:record.id,status:'open',local_version:pendingRecords[recordIndex].updated_date,...(fieldPlan?.unresolved?.length?{field_name:{$nin:fieldPlan.unresolved}}:{})},{$set:{status:'resolved',resolved_at:new Date().toISOString(),resolved_by:'Verified field reconciliation'}});"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2873,
+      "text": "        entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2957,
+      "text": "          entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3041,
+      "text": "        entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3151,
+      "text": "          entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3187,
+      "text": "        base44.asServiceRole.entities.WorkOrder, sheetId, pendingRecords, eligibleSmartsheetWrites);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3226,
+      "text": "        entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3291,
+      "text": "            base44.asServiceRole.entities.WorkOrder, sheetId, pendingRecords, eligibleSmartsheetWrites);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3505,
+      "text": "          const committed = await base44.asServiceRole.entities.Order.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3524,
+      "text": "            entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3547,
+      "text": "                base44.asServiceRole.entities.Order, recordId,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3562,
+      "text": "            await base44.asServiceRole.entities.Order.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3589,
+      "text": "                entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3606,
+      "text": "              const committed = await base44.asServiceRole.entities.WorkOrder.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3616,
+      "text": "            entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3648,
+      "text": "      try { await base44.asServiceRole.entities.SyncConflict.updateMany({id:{$in:successfulDecisionIds},status:'approved'},{$set:{status:'resolved',resolved_at:new Date().toISOString()}}); } catch {}"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3651,
+      "text": "      try { await base44.asServiceRole.entities.SyncConflict.updateMany({dataset:'orders',entity_id:{$in:[...successfulOrderUpdates]},status:'open'},{$set:{status:'resolved',resolved_at:new Date().toISOString(),resolved_by:'Verified field reconciliation'}}); } catch {}"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3663,
+      "text": "      try { await base44.asServiceRole.entities.SyncConflict.updateMany({id:{$in:verifiedTargets.approvedDecisionIds},status:'approved'},{$set:{status:'resolved',resolved_at:new Date().toISOString()}}); } catch {}"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3666,
+      "text": "      try { await base44.asServiceRole.entities.SyncConflict.updateMany({dataset,entity_id:{$in:verifiedTargets.openReviewWorkOrderIds},status:'open'},{$set:{status:'resolved',resolved_at:new Date().toISOString(),resolved_by:'Verified Sales field reconciliation'}}); } catch {}"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3834,
+      "text": "        base44.asServiceRole.entities.Order.get(orderId),"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3835,
+      "text": "        base44.asServiceRole.entities.WorkOrder.get(cleanText(review.work_order_id, 100)),"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3836,
+      "text": "        loadAllEntityRows({ entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3848,
+      "text": "        base44.asServiceRole.entities.Order.get(orderId),"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3849,
+      "text": "        base44.asServiceRole.entities.WorkOrder.get(cleanText(review.work_order_id, 100)),"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3850,
+      "text": "        loadAllEntityRows({ entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3905,
+      "text": "      const entity = base44.asServiceRole.entities.Order;"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3912,
+      "text": "        base44.asServiceRole.entities.WorkOrder.get(workOrderId),"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3933,
+      "text": "        base44.asServiceRole.entities.WorkOrder.get(workOrderId),"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3987,
+      "text": "      const entity = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4018,
+      "text": "        entity:base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4030,
+      "text": "      const record = await base44.asServiceRole.entities.WorkOrder.get(workorderId);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4081,
+      "text": "      const entity = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4156,
+      "text": "      const entity = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4193,
+      "text": "      const saved=await base44.asServiceRole.entities.GlobalSettings.updateMany({id:record.id,updated_date:record.updated_date},{$set:{setting_value:next}});"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4195,
+      "text": "      const verified=await base44.asServiceRole.entities.GlobalSettings.get(record.id);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4207,
+      "text": "      const evidenceRecord = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4231,
+      "text": "          entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4263,
+      "text": "      const current = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4284,
+      "text": "      const evidenceRecord = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4305,
+      "text": "      const base44Order = await base44.asServiceRole.entities.Order.get(orderId);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4354,
+      "text": "      const current = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4383,
+      "text": "      const evidenceRecord = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4422,
+      "text": "        entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4444,
+      "text": "        base44.asServiceRole.entities.GlobalSettings, { startedAt: runStartedAt });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4480,
+      "text": "      const order = await base44.asServiceRole.entities.Order.get(orderId).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4497,
+      "text": "      const linkedOrders = await base44.asServiceRole.entities.Order.filter({ smartsheet_row_id: newRowId });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4505,
+      "text": "      const updateResult = await base44.asServiceRole.entities.Order.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4513,
+      "text": "      const verified = await base44.asServiceRole.entities.Order.get(orderId).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4557,
+      "text": "      const order = await base44.asServiceRole.entities.Order.get(orderId).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4572,
+      "text": "      const claims = await base44.asServiceRole.entities.Order.filter({ smartsheet_row_id: deadRowId });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4580,
+      "text": "      const cleared = await base44.asServiceRole.entities.Order.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4588,
+      "text": "      const released = await base44.asServiceRole.entities.Order.get(orderId).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4595,
+      "text": "        entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4651,
+      "text": "      const order = await base44.asServiceRole.entities.Order.get(orderId).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4667,
+      "text": "      const deleteResult = await base44.asServiceRole.entities.Order.deleteMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4674,
+      "text": "      const verify = await base44.asServiceRole.entities.Order.get(orderId).then(() => true).catch(() => false);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4687,
+      "text": "      const records = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: SYNC_STATUS_KEYS.orders });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4714,
+      "text": "      const updateResult = await base44.asServiceRole.entities.GlobalSettings.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4722,
+      "text": "      const verified = await base44.asServiceRole.entities.GlobalSettings.get(record.id).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4766,
+      "text": "      const result = await base44.asServiceRole.entities.GlobalSettings.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4773,
+      "text": "      const saved = await base44.asServiceRole.entities.GlobalSettings.get(record.id).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4890,
+      "text": "      const settingRowsResult = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: ORDER_REQUEST_TYPES_SETTING_KEY });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4949,
+      "text": "        const saved = await base44.asServiceRole.entities.GlobalSettings.updateMany("
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4957,
+      "text": "        savedSetting = await base44.asServiceRole.entities.GlobalSettings.get(currentSetting.id);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4959,
+      "text": "        await base44.asServiceRole.entities.GlobalSettings.create({"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4963,
+      "text": "        const afterCreateResult = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: ORDER_REQUEST_TYPES_SETTING_KEY });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5002,
+      "text": "      const results = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: ALERT_SETTING_KEY });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5006,
+      "text": "      if (rows.length > 0) await base44.asServiceRole.entities.GlobalSettings.update(rows[0].id, { setting_value: value });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5007,
+      "text": "      else await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: ALERT_SETTING_KEY, setting_value: value });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5293,
+      "text": "        entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5413,
+      "text": "        entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5443,
+      "text": "        entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5487,
+      "text": "        entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5537,
+      "text": "        entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5586,
+      "text": "        entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5657,
+      "text": "        entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5662,
+      "text": "        entity: base44.asServiceRole.entities.FieldAudit,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5810,
+      "text": "                    await saveOrderPullEvidence(base44.asServiceRole.entities.GlobalSettings, {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5835,
+      "text": "              await verifyCompletedOrderPullEvidence(base44.asServiceRole.entities.GlobalSettings, {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5939,
+      "text": "        const record = await base44Instance.asServiceRole.entities.GlobalSettings.filter({ setting_key: key });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5946,
+      "text": "          await base44Instance.asServiceRole.entities.GlobalSettings.updateMany("
+    },
+    {
+      "path": "base44/functions/manageTraining/entry.ts",
+      "line": 143,
+      "text": "    const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 51,
+      "text": "    const entities=base44.asServiceRole.entities,Rules=entities.PermittingRule;\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 62,
+      "text": "        sourceEntity:entities.PermittingSourceDocument,settingsEntity:entities.GlobalSettings,\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 63,
+      "text": "        segmentEntity:entities.PermittingSourceTextSegment,reviewEntity:entities.PermittingOfficeAuthorityReview,\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 64,
+      "text": "        htmlEntity:entities.PermittingHtmlEvidence},{jurisdictionId,cursor:body.cursor});\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 97,
+      "text": "      const run=await entities.PermittingRuleExtractionRun.get(String(body.run_id || ''));\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 105,
+      "text": "          const snapshots=await verifyRuleForApproval(candidate,{sourceEntity:entities.PermittingSourceDocument,\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 106,
+      "text": "            segmentEntity:entities.PermittingSourceTextSegment,profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 107,
+      "text": "          await assertApprovalSourcesCurrent(snapshots,entities.PermittingSourceDocument,{segmentEntity:entities.PermittingSourceTextSegment,\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 108,
+      "text": "            profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 118,
+      "text": "      return Response.json(await importEvidenceCandidate({sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment,\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 119,
+      "text": "        runEntity:entities.PermittingRuleExtractionRun,ruleEntity:Rules,runId:String(body.run_id || ''),candidateIndex:body.candidate_index}));\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 126,
+      "text": "      const rows=await entities.PermittingRuleExtractionRun.filter({request_key:key},'created_date',2,0);\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 149,
+      "text": "        {sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment,\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 150,
+      "text": "        profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 151,
+      "text": "      await assertApprovalSourcesCurrent(snapshots,entities.PermittingSourceDocument,{segmentEntity:entities.PermittingSourceTextSegment,\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 152,
+      "text": "        profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 160,
+      "text": "      const snapshots=await verifyRuleForApproval(rule,{sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment,\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 161,
+      "text": "        profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 162,
+      "text": "      await assertApprovalSourcesCurrent(snapshots,entities.PermittingSourceDocument,{segmentEntity:entities.PermittingSourceTextSegment,\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 163,
+      "text": "        profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});\r"
+    },
+    {
+      "path": "base44/functions/searchExternalClients/entry.ts",
+      "line": 23,
+      "text": "    const records = await base44.asServiceRole.entities.WorkOrder.filter("
+    },
+    {
+      "path": "base44/functions/getAddressResearchCollections/entry.ts",
+      "line": 11,
+      "text": "  const entity=client.asServiceRole.entities.PermittingAddressArchive,collections=[],actions=[];\r"
+    },
+    {
+      "path": "base44/functions/getAddressResearchCollections/entry.ts",
+      "line": 27,
+      "text": "   const runs=await client.asServiceRole.entities.PermittingScanRun.filter({target_id:id,owner_id:row.owner_id,owner_email:row.owner_email,action_kind:{$in:['address_archive','address_discovery']}},'-created_date',10);\r"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 99,
+      "text": "    const Inventory = base44.asServiceRole.entities.Inventory;"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 100,
+      "text": "    const Movement = base44.asServiceRole.entities.InventoryMovement;"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 101,
+      "text": "    const WorkOrder = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 102,
+      "text": "    const BuilderProduct = base44.asServiceRole.entities.BuilderProduct;"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 103,
+      "text": "    const BuilderPart = base44.asServiceRole.entities.BuilderPart;"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 104,
+      "text": "    const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 89,
+      "text": "      const GlobalSettingsEntity = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 110,
+      "text": "        entity: base44.asServiceRole.entities.GlobalSettings,"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 155,
+      "text": "        entity: base44.asServiceRole.entities.GlobalSettings,"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 393,
+      "text": "          entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 410,
+      "text": "          entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 490,
+      "text": "          entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 562,
+      "text": "          entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 593,
+      "text": "          entity: base44.asServiceRole.entities.GlobalSettings,"
+    },
+    {
+      "path": "base44/functions/sessionAdminAction/entry.ts",
+      "line": 13,
+      "text": "    const audit = base44.asServiceRole.entities.AdminAuditLog;"
+    },
+    {
+      "path": "base44/functions/manageFeatureReports/entry.ts",
+      "line": 180,
+      "text": "    const Report = base44.asServiceRole.entities.FeatureReport;"
+    },
+    {
+      "path": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 367,
+      "text": "        const linked = await base44.asServiceRole.entities.PermitLineItem.filter({ locality_id: id, deleted: { $ne: true } }, null, 5, 0).catch(() => []);"
+    },
+    {
+      "path": "base44/functions/checkPermitFollowupReminders/entry.ts",
+      "line": 29,
+      "text": "      entity: base44.asServiceRole.entities.PermitLineItem,\r"
+    },
+    {
+      "path": "base44/functions/checkPermitFollowupReminders/entry.ts",
+      "line": 35,
+      "text": "      entity: base44.asServiceRole.entities.WorkOrder,\r"
+    },
+    {
+      "path": "base44/functions/checkPermitFollowupReminders/entry.ts",
+      "line": 52,
+      "text": "          entity: base44.asServiceRole.entities.PermitLineItem,\r"
+    },
+    {
+      "path": "base44/functions/zzCleanupAction/entry.ts",
+      "line": 66,
+      "text": "        await base44.asServiceRole.entities.AdminAuditLog.create({"
+    },
+    {
+      "path": "base44/functions/permittingOfficeAuthorityReview/entry.ts",
+      "line": 14,
+      "text": "  const entities=base44.asServiceRole.entities,deps={profileEntity:entities.JurisdictionProfile,sourceEntity:entities.PermittingSourceDocument,\r"
+    },
+    {
+      "path": "base44/functions/permittingOfficeAuthorityReview/entry.ts",
+      "line": 15,
+      "text": "   settingsEntity:entities.GlobalSettings,segmentEntity:entities.PermittingSourceTextSegment,reviewEntity:entities.PermittingOfficeAuthorityReview,htmlEntity:entities.PermittingHtmlEvidence};\r"
+    },
+    {
+      "path": "base44/functions/permittingOfficeAuthorityReview/entry.ts",
+      "line": 18,
+      "text": "   const source=await entities.PermittingSourceDocument.get(String(body.source_document_id || ''));\r"
+    },
+    {
+      "path": "base44/functions/permittingOfficeAuthorityReview/entry.ts",
+      "line": 20,
+      "text": "   const settings=await entities.GlobalSettings.filter({setting_key:'permitOfficeCatalog'},'id',2,0);\r"
+    },
+    {
+      "path": "base44/functions/quickbooksExport/entry.ts",
+      "line": 58,
+      "text": "    const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/scanPermittingOffice/entry.ts",
+      "line": 10,
+      "text": " if(typeof body.locality_id!=='string'||!body.locality_id||typeof body.office_id!=='string'||!body.office_id)return Response.json({error:'Select a saved locality and office.'},{status:400});const locality=await client.asServiceRole.entities.PermitLocality.get(body.locality_id);\r"
+    },
+    {
+      "path": "base44/functions/scanPermittingOffice/entry.ts",
+      "line": 13,
+      "text": " reporter=await createScanReporter({entity:client.asServiceRole.entities.PermittingScanRun,token:body.action_token,user,targetId:locality.id,targetName:office.name || locality.name,kind:'office',label:`Rescan ${office.name || 'office'} — ${locality.name}`});\r"
+    },
+    {
+      "path": "base44/functions/ensureBuilderPriceRevision/entry.ts",
+      "line": 116,
+      "text": "    const RevisionService = base44.asServiceRole.entities.BuilderPriceRevision;"
+    },
+    {
+      "path": "base44/functions/ensureBuilderPriceRevision/entry.ts",
+      "line": 132,
+      "text": "      base44.entities.BuilderProduct.get(builderProductId).catch(() => null),"
+    },
+    {
+      "path": "base44/functions/ensureBuilderPriceRevision/entry.ts",
+      "line": 133,
+      "text": "      base44.entities.AllInOneEstimate.get(estimateId).catch(() => null),"
+    },
+    {
+      "path": "base44/functions/permittingSourceOcrEvidence/entry.ts",
+      "line": 22,
+      "text": "      entity:base44.asServiceRole.entities.PermittingSourceDocument,sourceDocumentId:id,body,actor:user,\r"
+    },
+    {
+      "path": "base44/functions/permittingSourceOcrEvidence/entry.ts",
+      "line": 26,
+      "text": "      entity:base44.asServiceRole.entities.PermittingSourceDocument,sourceDocumentId:id,body,actor:user,\r"
+    },
+    {
+      "path": "base44/functions/permittingSourceOcrEvidence/entry.ts",
+      "line": 29,
+      "text": "    const entity=base44.entities.PermittingSourceDocument;\r"
+    },
+    {
+      "path": "base44/functions/ensureNewEstimate/entry.ts",
+      "line": 68,
+      "text": "  const EstimateService = base44.asServiceRole.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/ensureNewEstimate/entry.ts",
+      "line": 111,
+      "text": "    const EstimateUser = base44.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/ensureNewEstimate/entry.ts",
+      "line": 112,
+      "text": "    const EstimateService = base44.asServiceRole.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/sourceMonitorScan/entry.ts",
+      "line": 46,
+      "text": "    const modeRows = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'permittingPipelineMode' }, 'created_date', 1, 0).catch(() => ({ items: [] }));"
+    },
+    {
+      "path": "base44/functions/sourceMonitorScan/entry.ts",
+      "line": 132,
+      "text": "      await base44.asServiceRole.entities.PermittingSourceDocument.update(monitor.source_document_id, {"
+    },
+    {
+      "path": "base44/functions/dataIntegrityAction/entry.ts",
+      "line": 114,
+      "text": "        await base44.asServiceRole.entities.AdminAuditLog.create({"
+    },
+    {
+      "path": "base44/functions/dataIntegrityAction/entry.ts",
+      "line": 189,
+      "text": "        await base44.asServiceRole.entities.AdminAuditLog.create({"
+    },
+    {
+      "path": "base44/functions/dataIntegrityAction/entry.ts",
+      "line": 226,
+      "text": "        await base44.asServiceRole.entities.AdminAuditLog.create({"
+    },
+    {
+      "path": "base44/functions/ensureEstimateCustomer/entry.ts",
+      "line": 174,
+      "text": "    const CustomerUser = base44.entities.Customer;"
+    },
+    {
+      "path": "base44/functions/ensureEstimateCustomer/entry.ts",
+      "line": 175,
+      "text": "    const CustomerService = base44.asServiceRole.entities.Customer;"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 26,
+      "text": "  const rows = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1)"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 399,
+      "text": "    const links = await sr.entities.CustomerFolderLink.filter("
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 415,
+      "text": "    const rows = await sr.entities.CustomerFolderLink.filter("
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 441,
+      "text": "    const rows = await sr.entities.CustomerFolderLink.filter({ id: String(body.link_id || '') }, '-updated_date', 1).catch(() => []);"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 445,
+      "text": "    await sr.entities.CustomerFolderLink.update(link.id, {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 502,
+      "text": "      await sr.entities.GlobalSettings.update(settingsRow[0].id, { setting_value: next });"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 504,
+      "text": "      await sr.entities.GlobalSettings.create({ setting_key: 'fileBridge', setting_value: next });"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 525,
+      "text": "      await sr.entities.GlobalSettings.update(settingsRow[0].id, { setting_value: next });"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 541,
+      "text": "    await sr.entities.GlobalSettings.update(settingsRow[0].id, { setting_value: next });"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 585,
+      "text": "      await sr.entities.GlobalSettings.update(settingsRow[0].id, { setting_value: next }).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 599,
+      "text": "      await sr.entities.GlobalSettings.update(settingsRow[0].id, { setting_value: next }).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/permittingOperationalAlerts/entry.ts",
+      "line": 53,
+      "text": "    entity: base44.asServiceRole.entities.PermitLineItem,\r"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 364,
+      "text": "      const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 370,
+      "text": "      const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/permittingSourceAuthorityReview/entry.ts",
+      "line": 15,
+      "text": "   const rows=await entities.PermittingSourceAuthorityReview.filter({request_key:'source-authority-review:'+id},'created_date',2,0);\r"
+    },
+    {
+      "path": "base44/functions/permittingSourceAuthorityReview/entry.ts",
+      "line": 18,
+      "text": "   const source=audit?await entities.PermittingSourceDocument.get(audit.source_document_id):null;\r"
+    },
+    {
+      "path": "base44/functions/permittingSourceAuthorityReview/entry.ts",
+      "line": 24,
+      "text": "  const revalidate=()=>invalidateSourceRules({sourceEntity:entities.PermittingSourceDocument,ruleEntity:entities.PermittingRule,\r"
+    },
+    {
+      "path": "base44/functions/permittingSourceAuthorityReview/entry.ts",
+      "line": 25,
+      "text": "   segmentEntity:entities.PermittingSourceTextSegment,profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings,\r"
+    },
+    {
+      "path": "base44/functions/permittingSourceAuthorityReview/entry.ts",
+      "line": 28,
+      "text": "  const result=await reviewSourceAuthority({sourceEntity:entities.PermittingSourceDocument,profileEntity:entities.JurisdictionProfile,\r"
+    },
+    {
+      "path": "base44/functions/permittingSourceAuthorityReview/entry.ts",
+      "line": 29,
+      "text": "   segmentEntity:entities.PermittingSourceTextSegment,settingsEntity:entities.GlobalSettings,auditEntity:entities.PermittingSourceAuthorityReview,\r"
+    },
+    {
+      "path": "base44/functions/importOrders/entry.ts",
+      "line": 102,
+      "text": "      entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/importOrders/entry.ts",
+      "line": 168,
+      "text": "            entity: base44.asServiceRole.entities.Order,"
+    },
+    {
+      "path": "base44/functions/importOrders/entry.ts",
+      "line": 202,
+      "text": "        const orderEntity = base44.asServiceRole.entities.Order;"
+    },
+    {
+      "path": "base44/functions/permittingScanStatus/entry.ts",
+      "line": 5,
+      "text": "Deno.serve(async req=>{try{const client=withEntityRateLimitRetry(createClientFromRequest(req),{maxRetries:1}),body=await req.json();let user=await client.auth.me().catch(()=>null);if(!user && body.session_token)user=await authenticateSignShopSession(client,body.session_token);if(!user?.id||!user?.email)return Response.json({error:'Sign in required'},{status:403});if(!scanToken(body.action_token))return Response.json({error:'Invalid action token'},{status:400});const rows=await client.asServiceRole.entities.PermittingScanRun.filter({action_token:body.action_token,owner_email:String(user.email || '').toLowerCase()},'created_date',2);if(rows.length>1)return Response.json({error:'Duplicate activity identity requires review'},{status:409});if(user.role!=='admin'&&rows[0]&&(!['address','address_archive','address_discovery'].includes(rows[0].action_kind)||rows[0].owner_id!==user.id))return Response.json({error:'This activity requires admin access'},{status:403});return Response.json({run:rows[0] || null});}catch(e){const s=Number(e?.status||e?.response?.status||0);if(s===429||/rate limit|too many requests/i.test(String(e?.message||'')))return Response.json({error:'Scan activity is busy. Try again shortly.',retry_after_ms:3000},{status:429,headers:{'Retry-After':'3'}});return Response.json({error:'Scan activity could not be loaded'},{status:500});}});"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 153,
+      "text": "    const Estimate = base44.asServiceRole.entities.AllInOneEstimate;"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 154,
+      "text": "    const Settings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 201,
+      "text": "    const Delivery = base44.asServiceRole.entities.EstimateQuoteDelivery;"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 202,
+      "text": "    const CustomerContact = base44.asServiceRole.entities.CustomerContact;"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 320,
+      "text": "        await base44.asServiceRole.entities.Customer.updateMany("
+    },
+    {
+      "path": "base44/functions/jurisdiction_research/entry.ts",
+      "line": 163,
+      "text": "      const row=await base44.asServiceRole.entities.PermittingScanRun.get(body.scan_run_id);"
+    },
+    {
+      "path": "base44/functions/jurisdiction_research/entry.ts",
+      "line": 164,
+      "text": "      if(row?.owner_id===user.id && row.target_name===jurisdictionName && row.status==='running')await attachScanReporter(base44.asServiceRole.entities.PermittingScanRun,row.id).emit({kind:'search_instructions',detail:researchPrompt},{stage:'AI research — instructions submitted',indeterminate:true});"
+    },
+    {
+      "path": "base44/functions/manageQuoteApprovalSettings/entry.ts",
+      "line": 37,
+      "text": "    const Settings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/permittingHtmlEvidence/entry.ts",
+      "line": 22,
+      "text": "  const deps={profileEntity:entities.JurisdictionProfile,htmlEntity:entities.PermittingHtmlEvidence};\r"
+    },
+    {
+      "path": "base44/functions/permittingHtmlEvidence/entry.ts",
+      "line": 24,
+      "text": "   const row=await entities.PermittingHtmlEvidence.get(String(body.html_evidence_id || ''));\r"
+    },
+    {
+      "path": "base44/functions/permittingHtmlEvidence/entry.ts",
+      "line": 40,
+      "text": "   const rows=await entities.PermittingHtmlEvidence.filter({jurisdiction_id:jurisdictionId,...(cursor?{id:{$gt:cursor}}:{})},'id',6,0);\r"
+    },
+    {
+      "path": "base44/functions/monitorJurisdictionChanges/entry.ts",
+      "line": 84,
+      "text": "      const settingsArr = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'jurisdiction_monitoring' });"
+    },
+    {
+      "path": "base44/functions/monitorJurisdictionChanges/entry.ts",
+      "line": 111,
+      "text": "      const cursorRows = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'jurisdiction_monitor_cursor' });"
+    },
+    {
+      "path": "base44/functions/monitorJurisdictionChanges/entry.ts",
+      "line": 267,
+      "text": "      const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'jurisdiction_monitor_cursor' });"
+    },
+    {
+      "path": "base44/functions/monitorJurisdictionChanges/entry.ts",
+      "line": 270,
+      "text": "        await base44.asServiceRole.entities.GlobalSettings.update(existing[0].id, { setting_value: value });"
+    },
+    {
+      "path": "base44/functions/monitorJurisdictionChanges/entry.ts",
+      "line": 272,
+      "text": "        await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: 'jurisdiction_monitor_cursor', setting_value: value });"
+    },
+    {
+      "path": "base44/functions/hostedAssetManifest/entry.ts",
+      "line": 20,
+      "text": "  const rows = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: SETTING_KEY });"
+    },
+    {
+      "path": "base44/functions/hostedAssetManifest/entry.ts",
+      "line": 60,
+      "text": "        await base44.asServiceRole.entities.GlobalSettings.update(row.id, { setting_value: value });"
+    },
+    {
+      "path": "base44/functions/hostedAssetManifest/entry.ts",
+      "line": 62,
+      "text": "        await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: SETTING_KEY, setting_value: value });"
+    },
+    {
+      "path": "base44/functions/ensureNewCustomer/entry.ts",
+      "line": 99,
+      "text": "    const CustomerUser = base44.entities.Customer;"
+    },
+    {
+      "path": "base44/functions/ensureNewCustomer/entry.ts",
+      "line": 100,
+      "text": "    const CustomerService = base44.asServiceRole.entities.Customer;"
+    },
+    {
+      "path": "base44/functions/detectSalesDuplicates/entry.ts",
+      "line": 73,
+      "text": "    entity: base44.asServiceRole.entities.WorkOrder,"
+    },
+    {
+      "path": "base44/functions/queueFeed/entry.ts",
+      "line": 465,
+      "text": "        feed === 'crm_events' ? entities.OpportunityActivity"
+    },
+    {
+      "path": "base44/functions/queueFeed/entry.ts",
+      "line": 466,
+      "text": "        : feed === 'estimate_queue' ? entities.AllInOneEstimate"
+    },
+    {
+      "path": "base44/functions/queueFeed/entry.ts",
+      "line": 467,
+      "text": "        : feed === 'my_workflow' ? entities.GeneralTask"
+    },
+    {
+      "path": "base44/functions/queueFeed/entry.ts",
+      "line": 468,
+      "text": "        : entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/queueFeed/entry.ts",
+      "line": 506,
+      "text": "          ? await loadScopedRows(entities.SavedQueueView, { queue_lens: queueLens }, 'created_date')"
+    },
+    {
+      "path": "base44/functions/queueFeed/entry.ts",
+      "line": 507,
+      "text": "          : await loadScopedRows(entities.SavedQueueView, {}, 'created_date');"
+    },
+    {
+      "path": "base44/functions/queueFeed/entry.ts",
+      "line": 518,
+      "text": "        const rows = await entities.GlobalSettings.filter({ setting_key: SETTINGS_KEY_STAGE_MODE });"
+    },
+    {
+      "path": "base44/functions/queueFeed/entry.ts",
+      "line": 532,
+      "text": "          entities.Customer, {}, CRM_CUSTOMER_FIELDS, projectCrmCustomer, { maxRows: MAX_ROWS },"
+    },
+    {
+      "path": "base44/functions/queueFeed/entry.ts",
+      "line": 543,
+      "text": "        const rows = await entities.QuoteDefaults.filter({ config_name: 'default' }, undefined, 1);"
+    },
+    {
+      "path": "base44/functions/queueFeed/entry.ts",
+      "line": 567,
+      "text": "        const rows = await entities.GlobalSettings.filter({ setting_key: SETTINGS_KEY_DROPDOWN_CONDITIONS });"
+    },
+    {
+      "path": "base44/functions/queueFeed/entry.ts",
+      "line": 578,
+      "text": "        const rows = await entities.GlobalSettings.filter({ setting_key: SETTINGS_KEY_TASK_DESCRIPTIONS });"
+    },
+    {
+      "path": "base44/functions/manageAutomationConfig/entry.ts",
+      "line": 290,
+      "text": "    const Group = base44.asServiceRole.entities.EmailGroup;"
+    },
+    {
+      "path": "base44/functions/manageAutomationConfig/entry.ts",
+      "line": 292,
+      "text": "    const WorkOrder = base44.asServiceRole.entities.WorkOrder;"
+    },
+    {
+      "path": "base44/functions/ensureCustomerSummary/entry.ts",
+      "line": 269,
+      "text": "    const Summary = base44.asServiceRole.entities.CustomerSummary;\r"
+    },
+    {
+      "path": "base44/functions/downloadPermitPDF/entry.ts",
+      "line": 98,
+      "text": "    if(action_token && user.role==='admin')reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:action_token,user,targetId:jurisdiction_id,targetName:jurisdiction.name,kind:'document',label:`Download ${document_title || document_url}`});\r"
+    },
+    {
+      "path": "base44/functions/linkAddressResearchDocument/entry.ts",
+      "line": 13,
+      "text": "  if(body.dry_run!==true)reporter=await createScanReporter({entity:client.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:body.collection_id,kind:'address_document_link',label:'Link reviewed original'});\r"
+    },
+    {
+      "path": "base44/functions/linkAddressResearchDocument/entry.ts",
+      "line": 15,
+      "text": "  const result=await linkAddressDocument({collections:entities.PermittingAddressArchive,scans:entities.PermittingScanRun,profiles:entities.JurisdictionProfile,loadProfiles:()=>loadAllEntityRows({entity:entities.JurisdictionProfile,label:'Document link jurisdiction identities'}),actor,body,onProgress:async(stage,processed)=>reporter.emit({kind:'document_link',detail:stage},{stage,processed,total:3,indeterminate:false})});\r"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 514
+}

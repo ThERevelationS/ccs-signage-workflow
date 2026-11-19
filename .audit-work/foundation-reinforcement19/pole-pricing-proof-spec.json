@@ -1,0 +1,49 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "fdd71de8e5fa512a2e85525ab1ed22445c550073",
+  "baselineFile": "pole-pricing-baseline-v2.json",
+  "fixtureArtifact": "pole-pricing-fixture.json",
+  "flowSpec": "pole-pricing-flow-proof-spec.json",
+  "jsonProofs": [
+    { "file": "pole-pricing-model-verification.json", "resultCount": 43, "mustBeAllOk": true },
+    { "file": "pole-pricing-model-red-verification.json", "resultCount": 43, "expectedFailuresAgainstPreHardeningSource": 38, "mustNotBeAllOk": true },
+    { "file": "pole-pricing-page-verification.json", "resultCount": 6, "mustBeAllOk": true },
+    { "file": "pole-pricing-browser-verification.json", "resultCount": 12, "mustBeAllOk": true },
+    { "file": "pole-pricing-consumer-build.json", "warnings": 0, "inputs": 57 },
+    { "file": "pole-pricing-page-import-edges.json", "externalOnly": true }
+  ],
+  "allResultsMustHaveOkTrue": true,
+  "scopedLintLogs": [
+    { "file": "pole-pricing-lint-poleCalculator.txt", "line": "exit=0" },
+    { "file": "pole-pricing-lint-foundationCalc.txt", "line": "exit=0" },
+    { "file": "pole-pricing-lint-FoundationPolesPanel.txt", "line": "exit=0" },
+    { "file": "pole-pricing-lint-FoundationBOM.txt", "line": "exit=0" },
+    { "file": "pole-pricing-lint-FoundationEstimator.txt", "line": "exit=0" }
+  ],
+  "esbuildParseChecks": { "count": 5, "allPassed": true },
+  "candidateHashes": {
+    "poleCalculator.js": "8cdfbb75492817b8628eda4d10f133b7d05c9b50c46f1dd745ae1a50e201596e",
+    "foundationCalc.js": "cf744d530e198dbdf5499646cb9e49e63211a2ed7de884556ecf39bacd061332",
+    "FoundationPolesPanel.jsx": "2016265a3e7f8367f0788390460d97e9e0cd2177b9f6016e5c58a5a1dc26663f",
+    "FoundationBOM.jsx": "f85657e3f52eb5855f6eb251dd67378b9872c7e107c6afd2e4811708fead4698",
+    "FoundationEstimator.jsx": "084a90cb3a7ff116bdd55f05f6fd75b601971ef311cacd4915a332ea02735b56"
+  },
+  "candidateFiles": {
+    "poleCalculator.js": "pole-pricing-candidate-poleCalculator.js",
+    "foundationCalc.js": "pole-pricing-candidate-foundationCalc.js",
+    "FoundationPolesPanel.jsx": "pole-pricing-candidate-FoundationPolesPanel.jsx",
+    "FoundationBOM.jsx": "pole-pricing-candidate-FoundationBOM.jsx",
+    "FoundationEstimator.jsx": "pole-pricing-candidate-FoundationEstimator.jsx"
+  },
+  "candidateLineEndings": "LF",
+  "screenshotDirectory": ".audit-work/foundation-reinforcement19",
+  "screenshotCount": 12,
+  "allowedBuildWarningCount": 0,
+  "remoteWritesPerformed": false,
+  "checkpointsCreated": false,
+  "businessRecordOperationsPerformed": false,
+  "schemaActivationAuthorized": false,
+  "publishDeployAuthorized": false,
+  "transportPerformed": false
+}

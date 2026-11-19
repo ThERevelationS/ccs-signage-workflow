@@ -1,0 +1,11 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "SCHEMA_PARSE_OK\n--- git ---\n62ae24b9cecb1a21c24eb455766ed26c4a987e2d External agent changes\n",
+  "stderr": "\n  ../tmp/ccs-foundation-activation09.js  3.7mb ⚠️\n\n⚡ Done in 1568ms\n",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 3094
+}
+Update available: 0.2.5 → 0.3.1. Run: npm install -g base44@latest

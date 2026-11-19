@@ -1,0 +1,39 @@
+{
+  "synthetic": true,
+  "realBase44StorageVerified": false,
+  "explicitNullClearReadbackVerified": false,
+  "results": [
+    {
+      "name": "missing metadata stays absent, and a #size label is not a measurement",
+      "ok": true
+    },
+    {
+      "name": "positive numeric and exact decimal text remain explicit diameter and pounds per foot",
+      "ok": true
+    },
+    {
+      "name": "clearing is an explicit unknown null, never zero or an invented default",
+      "ok": true
+    },
+    {
+      "name": "zero, signed negative and partial numeric strings cannot become verified metadata",
+      "ok": true
+    },
+    {
+      "name": "boolean, object, array and nonfinite values remain invalid and visibly repairable",
+      "ok": true
+    },
+    {
+      "name": "malformed root records reject rather than normalizing to an eligible empty form",
+      "ok": true
+    },
+    {
+      "name": "frozen source and authored buffers are not mutated or aliased during preparation",
+      "ok": true
+    },
+    {
+      "name": "field projection is restricted to two declared optional metadata keys and detects numeric overflow or underflow",
+      "ok": true
+    }
+  ]
+}

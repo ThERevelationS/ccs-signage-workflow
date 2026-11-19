@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/estimator/builder/itemIdentity.js",
+      "content": "// Stable hidden identities for repeated Builder rows.\n//\n// Existing Git-era records did not carry row IDs, while BuilderPart reconciliation\n// historically used array indexes. Seed old rows with their current legacy index\n// (\"0\", \"1\", ...) so the first adoption does NOT change any existing Part keys.\n// New rows receive generated IDs, which then survive delete/reorder operations.\n\nexport function newBuilderItemId(prefix = \"item\") {\n  const uuid = globalThis.crypto?.randomUUID?.()\n    || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;\n  return `${prefix}-${uuid}`;\n}\n\nexport function seedBuilderItemIds(items = []) {\n  return (items || []).map((item, index) => ({\n    ...(item || {}),\n    builder_item_id: String(item?.builder_item_id ?? index),\n  }));\n}\n\nexport function builderItemToken(item, index) {\n  const value = item?.builder_item_id;\n  return value === undefined || value === null || value === \"\" ? String(index) : String(value);\n}",
+      "startLine": 1,
+      "endLine": 24,
+      "totalLines": 24,
+      "truncated": false
+    }
+  ]
+}

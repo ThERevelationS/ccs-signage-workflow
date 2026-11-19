@@ -51,6 +51,9 @@ async function replaceEstimateFieldsIfUnchanged({
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const current = await entity.get(id);
     if (!current?.id) throw new Error(`${label} could not verify its Estimate before saving.`);
+    if ((current.deleted === true || expected.deleted === true) && !Object.prototype.hasOwnProperty.call(desired, "deleted")) {
+      throw new Error(`${label} was blocked because this Estimate is in Trash. Restore it before saving. No Estimate fields were overwritten.`);
+    }
     for (const fieldName of guardNames) {
       if (!sameValue(current[fieldName], guards[fieldName])) {
         throw new Error(`${label} changed in another session (${fieldName}). Reload before saving. No Estimate fields were overwritten.`);

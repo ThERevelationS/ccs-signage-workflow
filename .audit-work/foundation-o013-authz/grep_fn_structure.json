@@ -1,0 +1,5006 @@
+{
+  "matches": [
+    {
+      "path": "base44/functions/opportunityBridgePilotVerification/entry.ts",
+      "line": 16,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/opportunityBridgePilotVerification/entry.ts",
+      "line": 19,
+      "text": "    const actor = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 131,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 135,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 147,
+      "text": "    if (action === \"list_purchase_orders\") {"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 179,
+      "text": "    if (action === \"get_purchase_order\") {"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 197,
+      "text": "    if (action === \"create_purchase_order\") {"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 247,
+      "text": "    if (action === \"update_purchase_order\") {"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 271,
+      "text": "    if (action === \"mark_sent\") {"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 289,
+      "text": "    if (action === \"receive_items\") {"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 346,
+      "text": "    if (action === \"mark_invoiced\") {"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 367,
+      "text": "    if (action === \"mark_paid\") {"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 388,
+      "text": "    if (action === \"cancel_purchase_order\") {"
+    },
+    {
+      "path": "base44/functions/fleetPublicIssueReport/entry.ts",
+      "line": 190,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetPublicIssueReport/entry.ts",
+      "line": 201,
+      "text": "      if (action === 'list') return Response.json({success:true,disabled:true,equipment:[]});"
+    },
+    {
+      "path": "base44/functions/fleetPublicIssueReport/entry.ts",
+      "line": 208,
+      "text": "    if (action === 'list') {"
+    },
+    {
+      "path": "base44/functions/issueTimeClockBadge/entry.ts",
+      "line": 80,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 25,
+      "text": "export default async function(req) {"
+    },
+    {
+      "path": "base44/functions/staffArchiveFile/entry.ts",
+      "line": 18,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/staffArchiveFile/entry.ts",
+      "line": 22,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/followUpSweepAction/entry.ts",
+      "line": 252,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/followUpSweepAction/entry.ts",
+      "line": 256,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'followUpSweepAction');"
+    },
+    {
+      "path": "base44/functions/followUpSweepAction/entry.ts",
+      "line": 259,
+      "text": "      : await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/followUpSweepAction/entry.ts",
+      "line": 379,
+      "text": "      if (!evaluated || evaluated.action === 'none' || !evaluated.patch) {"
+    },
+    {
+      "path": "base44/functions/followUpSweepAction/entry.ts",
+      "line": 392,
+      "text": "      if (evaluated.action === 'close') {"
+    },
+    {
+      "path": "base44/functions/followUpSweepAction/entry.ts",
+      "line": 410,
+      "text": "      const stage = evaluated.action === 'send_fu1' ? 'fu1' : 'fu2';"
+    },
+    {
+      "path": "base44/functions/getGoogleMapsKey/entry.ts",
+      "line": 5,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/getGoogleMapsKey/entry.ts",
+      "line": 9,
+      "text": "    await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageCalendarEvents/entry.ts",
+      "line": 2,
+      "text": "import { verifyAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';"
+    },
+    {
+      "path": "base44/functions/manageCalendarEvents/entry.ts",
+      "line": 140,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageCalendarEvents/entry.ts",
+      "line": 144,
+      "text": "    await verifyAdminSettingsCapability(base44, body?.admin_capability);"
+    },
+    {
+      "path": "base44/functions/manageCalendarEvents/entry.ts",
+      "line": 148,
+      "text": "    if (action === 'create') return Response.json(await createWithRecovery(CalendarEvent, cleanEvent(body?.data)));"
+    },
+    {
+      "path": "base44/functions/manageCalendarEvents/entry.ts",
+      "line": 149,
+      "text": "    if (action === 'update') return Response.json({ record: await updateExact(CalendarEvent, body) });"
+    },
+    {
+      "path": "base44/functions/manageCalendarEvents/entry.ts",
+      "line": 150,
+      "text": "    if (action === 'delete') return Response.json(await deleteExact(CalendarEvent, body));"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8,
+      "text": "import { verifyBadgeCredential } from '../../shared/timeClockBadgeVerify.ts';"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 2503,
+      "text": "  const isEnd = action === 'break_end';"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 2678,
+      "text": "  const isResume = action === 'work_pause_resume';"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 2806,
+      "text": "  }, action === 'labor_change' ? 'Current Work change audit' : 'Current Work start audit');"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3371,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3406,
+      "text": "    if (action === 'monitor_stale_shifts') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3428,
+      "text": "      const badgeAuth = await verifyBadgeCredential(badgeCode, badgeEntity, authorized);"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3469,
+      "text": "    if (action === 'admin_correction_gate_diagnostics') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3557,
+      "text": "    if (action === 'status_lite') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3590,
+      "text": "    if (action === 'admin_load_all') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3613,
+      "text": "    if (action === 'admin_load_data') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3642,
+      "text": "    if (action === 'time_tracker_snapshot' || action === 'time_tracker_prefs_get') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3653,
+      "text": "      if (action === 'time_tracker_prefs_get') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3858,
+      "text": "    if (action === 'time_tracker_prefs_update') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3909,
+      "text": "    if (action === 'status') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 4094,
+      "text": "    if (action === 'labor_allocation_preview') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 4131,
+      "text": "    if (action === 'pay_period_create') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 4277,
+      "text": "    if (action === 'pay_period_history_verify') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 5200,
+      "text": "    if (action === 'pay_period_status') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6164,
+      "text": "                  if (action === 'admin_archive') return change.change_type === 'removed';"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6165,
+      "text": "                  if (action === 'admin_correction') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6188,
+      "text": "                  if (action === 'clock_out') return String(row.details?.result_clock_out || '') === String(semanticAfter.clock_out || '') &&"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6190,
+      "text": "                  if (action === 'clock_in') return change.change_type === 'added' &&"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6212,
+      "text": "                const linkedCorrectionRequestId = String(cause.action === 'admin_correction' ? cause.details?.correction_request_id || '' : '');"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6271,
+      "text": "                    semantic_before_clock_in: String(cause.action === 'admin_correction' ? cause.details?.original?.clock_in || '' : change.before?.clock_in || ''),"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6272,
+      "text": "                    semantic_before_clock_out: String(cause.action === 'admin_correction' ? cause.details?.original?.clock_out || '' : change.before?.clock_out || ''),"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6273,
+      "text": "                    semantic_before_total_hours: Number(cause.action === 'admin_correction' ? cause.details?.original?.total_hours || 0 : change.before?.total_hours || 0),"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6274,
+      "text": "                    semantic_after_clock_in: String(cause.action === 'admin_correction' ? cause.details?.corrected?.clock_in || '' : change.after?.clock_in || ''),"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6275,
+      "text": "                    semantic_after_clock_out: String(cause.action === 'admin_correction' ? cause.details?.corrected?.clock_out || '' : change.after?.clock_out || ''),"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6276,
+      "text": "                    semantic_after_total_hours: Number(cause.action === 'admin_correction' ? cause.details?.corrected?.total_hours || 0 : change.after?.total_hours || 0),"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6536,
+      "text": "      const expectedLaborStatus = action === 'labor_start' ? 'starting' : action === 'labor_change' ? 'changing' : 'stopping';"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6548,
+      "text": "      if (action === 'labor_stop') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6616,
+      "text": "        if (action === 'labor_change') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6629,
+      "text": "          action: action === 'labor_change' ? 'labor_change' : 'labor_start',"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6651,
+      "text": "      if (action === 'labor_start' && active?.id) return Response.json({ success: false, error: 'Current Work is already active. Use Change Work instead.' }, { status: 409 });"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6652,
+      "text": "      if (action === 'labor_change' && !active?.id && !resumingLaborAction) return Response.json({ success: false, error: 'No Current Work is active. Use Start Work instead.' }, { status: 409 });"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6668,
+      "text": "      if (action === 'labor_change') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6706,
+      "text": "        action: action === 'labor_change' ? 'labor_change' : 'labor_start',"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6720,
+      "text": "    if (action === 'break_start') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6823,
+      "text": "    if (action === 'break_end') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 6909,
+      "text": "    if (action === 'work_pause_start') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7011,
+      "text": "    if (action === 'work_pause_resume') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7112,
+      "text": "    if (action === 'work_pause_report_missed') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7227,
+      "text": "    if (action === 'time_off_request_create' || action === 'time_off_request_update') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7255,
+      "text": "      if (action === 'time_off_request_create') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7680,
+      "text": "    if (action === 'list_time_off_requests') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7692,
+      "text": "    if (action === 'time_off_decision') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7897,
+      "text": "    if (action === 'list_correction_requests') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7916,
+      "text": "    if (action === 'who_is_in') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7933,
+      "text": "    if (action === 'toggle_payroll_hold') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7948,
+      "text": "    if (action === 'admin_archive_entry') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7969,
+      "text": "    if (action === 'my_labor_history') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7994,
+      "text": "    if (action === 'my_history') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8009,
+      "text": "    if (action === 'list_shift_templates') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8017,
+      "text": "    if (action === 'upsert_shift_template') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8043,
+      "text": "    if (action === 'delete_shift_template') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8052,
+      "text": "    if (action === 'pto_liability_report') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8070,
+      "text": "    if (action === 'send_timeclock_announcement') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8114,
+      "text": "    if (action === 'payroll_export') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8168,
+      "text": "    if (action === 'register_device') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8188,
+      "text": "    if (action === 'list_devices') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8197,
+      "text": "    if (action === 'update_device') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8211,
+      "text": "    if (action === 'admin_period_compare') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8234,
+      "text": "    if (action === 'list_pending_requests') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8253,
+      "text": "    if (action === 'list_timeclock_audit') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8275,
+      "text": "    if (action === 'list_face_enrollment') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8294,
+      "text": "    if (action === 'send_admin_note') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8333,
+      "text": "    if (action === 'acknowledge_admin_note') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8370,
+      "text": "    if (action === 'resolve_work_day') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8428,
+      "text": "    if (action === 'group_work_day') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8496,
+      "text": "    if (action === 'ungroup_work_day') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8546,
+      "text": "    if (action === 'update_notes') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 8762,
+      "text": "    if (action === 'submit_correction_request') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 9015,
+      "text": "    if (action === 'review_correction_request') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 9751,
+      "text": "    if (action === 'admin_correct_entry') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10161,
+      "text": "    if (action === 'admin_get_entry') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10175,
+      "text": "    if (action === 'admin_set_entry_approval') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10486,
+      "text": "    if (action === 'admin_auto_review') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10568,
+      "text": "    if (action === 'admin_archive_entry') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10756,
+      "text": "    if (action === 'recover_missed_clock_in' || action === 'report_missed_clock_in') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10759,
+      "text": "      if (action === 'recover_missed_clock_in' && (!Number.isInteger(companyMinutes) || companyMinutes < 15 * 60)) {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10777,
+      "text": "      const outsideWindow = action === 'report_missed_clock_in'"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10934,
+      "text": "            resolution_note: action === 'report_missed_clock_in'"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 10974,
+      "text": "          reason: action === 'report_missed_clock_in'"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11050,
+      "text": "    if (action === 'report_missed_shift') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11230,
+      "text": "    if (action === 'resolve_punch_exception') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11599,
+      "text": "    if (action === 'clock_in') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11754,
+      "text": "    if (action === 'clock_out') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12010,
+      "text": "    if (action === 'punch_webhook') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12022,
+      "text": "    if (action === 'labor_split') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12036,
+      "text": "    if (action === 'labor_vs_estimate') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12061,
+      "text": "    if (action === 'set_delegated_approvers') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12070,
+      "text": "    if (action === 'set_two_step_threshold') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12079,
+      "text": "    if (action === 'overtime_cost_report') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12106,
+      "text": "    if (action === 'differential_hours_report') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12138,
+      "text": "    if (action === 'buddy_punch_report') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12164,
+      "text": "    if (action === 'session_audit_alerts') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12174,
+      "text": "    if (action === 'bulk_import_entries') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12189,
+      "text": "    if (action === 'my_data_export') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12195,
+      "text": "    if (action === 'auto_clockout_sweep') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12204,
+      "text": "    if (action === 'kiosk_config') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12223,
+      "text": "    if (action === 'punch_fraud_scan') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12241,
+      "text": "    if (action === 'punch_velocity_scan') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12254,
+      "text": "    if (action === 'staffing_recommendation') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12269,
+      "text": "    if (action === 'device_rate_limit_check') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12280,
+      "text": "    if (action === 'suspicious_login_scan') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12291,
+      "text": "    if (action === 'feature_flags') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12298,
+      "text": "    if (action === 'crew_view') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12313,
+      "text": "    if (action === 'device_usage_report') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12331,
+      "text": "    if (action === 'break_compliance_report') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12346,
+      "text": "    if (action === 'pause_reason_rollup') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12367,
+      "text": "    if (action === 'bulk_auto_approve') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12394,
+      "text": "    if (action === 'report_camera_health') {"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 12408,
+      "text": "    if (action === 'attach_correction_document') {"
+    },
+    {
+      "path": "base44/functions/accountingAdminAction/entry.ts",
+      "line": 80,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/accountingAdminAction/entry.ts",
+      "line": 84,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/accountingAdminAction/entry.ts",
+      "line": 92,
+      "text": "    if (action === 'seed_gl_accounts') {"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeSimulation/entry.ts",
+      "line": 52,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeSimulation/entry.ts",
+      "line": 55,
+      "text": "    const actor = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/fieldHistoryAction/entry.ts",
+      "line": 51,
+      "text": "    const actor=body.session_token ? await authenticateSignShopSession(base44,body.session_token) : await base44.auth.me();"
+    },
+    {
+      "path": "base44/functions/fieldHistoryAction/entry.ts",
+      "line": 209,
+      "text": "export default async function(req) {"
+    },
+    {
+      "path": "base44/functions/bouncieApi/entry.ts",
+      "line": 6,
+      "text": "export default async function(req) {"
+    },
+    {
+      "path": "base44/functions/bouncieApi/entry.ts",
+      "line": 10,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/googleDriveCustomCallback/entry.ts",
+      "line": 4,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/ensureOpenEstimateRevision/entry.ts",
+      "line": 99,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/ensureOpenEstimateRevision/entry.ts",
+      "line": 105,
+      "text": "    // Fall back to auth.me() so either auth path unblocks the write."
+    },
+    {
+      "path": "base44/functions/ensureOpenEstimateRevision/entry.ts",
+      "line": 107,
+      "text": "    try { actor = await authenticateSignShopSession(base44, body?.session_token); }"
+    },
+    {
+      "path": "base44/functions/ensureOpenEstimateRevision/entry.ts",
+      "line": 108,
+      "text": "    catch { actor = await base44.auth.me().catch(() => null); }"
+    },
+    {
+      "path": "base44/functions/bouncieWebhook/entry.ts",
+      "line": 56,
+      "text": "export default async function(req) {"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 202,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 206,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 219,
+      "text": "    if (action === \"list_invoices\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 250,
+      "text": "    if (action === \"revenue_summary\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 304,
+      "text": "    if (action === \"export_ar\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 366,
+      "text": "    if (action === \"get_invoice\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 391,
+      "text": "    if (action === \"list_invoiceable_estimates\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 447,
+      "text": "    if (action === \"create_from_estimate\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 548,
+      "text": "    if (action === \"create_invoice\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 601,
+      "text": "    if (action === \"update_invoice\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 640,
+      "text": "    if (action === \"mark_sent\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 658,
+      "text": "    if (action === \"email_invoice\" || action === \"send_past_due_reminder\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 659,
+      "text": "      const reminder = action === \"send_past_due_reminder\";\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 756,
+      "text": "    if (action === \"email_statement\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 863,
+      "text": "    if (action === \"void_invoice\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 894,
+      "text": "    if (action === \"record_payment\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 940,
+      "text": "    if (action === \"void_payment\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 984,
+      "text": "    if (action === \"issue_credit_memo\") {\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 1119,
+      "text": "    if (action === \"refund_payment\") {\r"
+    },
+    {
+      "path": "base44/functions/permittingHealth/entry.ts",
+      "line": 7,
+      "text": "Deno.serve(async req=>{try{"
+    },
+    {
+      "path": "base44/functions/permittingHealth/entry.ts",
+      "line": 9,
+      "text": "  let user=await client.auth.me().catch(()=>null);"
+    },
+    {
+      "path": "base44/functions/fleetInspectionAction/entry.ts",
+      "line": 17,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetInspectionAction/entry.ts",
+      "line": 134,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetInspectionAction/entry.ts",
+      "line": 148,
+      "text": "    if (action === 'template_create') {"
+    },
+    {
+      "path": "base44/functions/fleetInspectionAction/entry.ts",
+      "line": 159,
+      "text": "    if (action === 'template_update') {"
+    },
+    {
+      "path": "base44/functions/fleetInspectionAction/entry.ts",
+      "line": 169,
+      "text": "    if (action === 'inspection_start') {"
+    },
+    {
+      "path": "base44/functions/fleetInspectionAction/entry.ts",
+      "line": 203,
+      "text": "    if (action === 'inspection_save' || action === 'inspection_complete') {"
+    },
+    {
+      "path": "base44/functions/fleetInspectionAction/entry.ts",
+      "line": 220,
+      "text": "      const responses = normalizeResponses(template, body?.responses || inspection.responses || [], action === 'inspection_complete');"
+    },
+    {
+      "path": "base44/functions/fleetInspectionAction/entry.ts",
+      "line": 231,
+      "text": "      if (action === 'inspection_save') {"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 269,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 276,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 286,
+      "text": "    if (action === 'bootstrap') {"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 303,
+      "text": "    if (action === 'list') {"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 309,
+      "text": "    if (action === 'get') {"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 318,
+      "text": "    if (action === 'acknowledge') {"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 371,
+      "text": "    if (action === 'suggest_edit') {"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 406,
+      "text": "    if (action === 'create') {"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 421,
+      "text": "    if (action === 'update') {"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 449,
+      "text": "    if (action === 'resolve_suggestion') {"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 463,
+      "text": "    if (action === 'set_status') {"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 481,
+      "text": "    if (action === 'save_settings') {"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 505,
+      "text": "    if (action === 'ack_report') {"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 527,
+      "text": "    if (action === 'delete') {"
+    },
+    {
+      "path": "base44/functions/manageUserCapacity/entry.ts",
+      "line": 81,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageUserCapacity/entry.ts",
+      "line": 85,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetBouncieNotificationAction/entry.ts",
+      "line": 7,
+      "text": "    const user = await authenticateSignShopSession(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetBouncieNotificationAction/entry.ts",
+      "line": 21,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetBouncieNotificationAction/entry.ts",
+      "line": 30,
+      "text": "    if (action === 'list') {"
+    },
+    {
+      "path": "base44/functions/fleetBouncieNotificationAction/entry.ts",
+      "line": 40,
+      "text": "    if (action === 'mark_read') {"
+    },
+    {
+      "path": "base44/functions/fleetBouncieNotificationAction/entry.ts",
+      "line": 50,
+      "text": "    if (action === 'mark_vehicle_read') {"
+    },
+    {
+      "path": "base44/functions/permittingOfficeCandidate/entry.ts",
+      "line": 4,
+      "text": "Deno.serve(async req=>{\r"
+    },
+    {
+      "path": "base44/functions/permittingOfficeCandidate/entry.ts",
+      "line": 6,
+      "text": "  const client=withEntityRateLimitRetry(createClientFromRequest(req)),user=await client.auth.me().catch(()=>null);\r"
+    },
+    {
+      "path": "base44/functions/generateDocNumber/entry.ts",
+      "line": 7,
+      "text": "export default async function (req) {"
+    },
+    {
+      "path": "base44/functions/generateDocNumber/entry.ts",
+      "line": 11,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentAction/entry.ts",
+      "line": 13,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentAction/entry.ts",
+      "line": 89,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentAction/entry.ts",
+      "line": 106,
+      "text": "    if (action === 'create') {"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentAction/entry.ts",
+      "line": 147,
+      "text": "    if (action === 'save_metadata') {"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentAction/entry.ts",
+      "line": 197,
+      "text": "    if (action === 'update') {"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentAction/entry.ts",
+      "line": 239,
+      "text": "    if (action === 'delete') {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 398,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 445,
+      "text": "    if (action === \"bootstrap\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 601,
+      "text": "    if (action === \"post_message\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 740,
+      "text": "    if (action === \"upload_file\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 785,
+      "text": "    if (action === \"estimate_respond\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1088,
+      "text": "    if (action === \"counter_offer\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1192,
+      "text": "    if (action === \"payment_notice\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1231,
+      "text": "    if (action === \"record_portal_payment\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1315,
+      "text": "    if (action === \"request_job_revision\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1390,
+      "text": "    if (action === \"request_reorder\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1459,
+      "text": "    if (action === \"list_thread\" && clean(body?.token)) {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1480,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1484,
+      "text": "    if (action === \"mark_all_read\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1502,
+      "text": "    if (action === \"create_link\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1566,
+      "text": "    if (action === \"revoke_link\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1584,
+      "text": "    if (action === \"list_links\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1613,
+      "text": "    if (action === \"list_thread\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1647,
+      "text": "    if (action === \"reply_message\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1676,
+      "text": "    if (action === \"email_link\") {"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1764,
+      "text": "    if (action === \"portal_inbox\") {"
+    },
+    {
+      "path": "base44/functions/continueAddressResearchDiscovery/entry.ts",
+      "line": 8,
+      "text": "Deno.serve(async req=>{\r"
+    },
+    {
+      "path": "base44/functions/jobCostingAction/entry.ts",
+      "line": 85,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/jobCostingAction/entry.ts",
+      "line": 89,
+      "text": "    await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/jobCostingAction/entry.ts",
+      "line": 102,
+      "text": "    if (action === \"list_job_costs\") {"
+    },
+    {
+      "path": "base44/functions/jobCostingAction/entry.ts",
+      "line": 141,
+      "text": "    if (action === \"get_job_cost\") {"
+    },
+    {
+      "path": "base44/functions/shiftSwapAction/entry.ts",
+      "line": 9,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/shiftSwapAction/entry.ts",
+      "line": 13,
+      "text": "    if (action === 'submit') {"
+    },
+    {
+      "path": "base44/functions/shiftSwapAction/entry.ts",
+      "line": 38,
+      "text": "    if (action === 'list') {"
+    },
+    {
+      "path": "base44/functions/shiftSwapAction/entry.ts",
+      "line": 43,
+      "text": "    if (action === 'approve' || action === 'reject') {"
+    },
+    {
+      "path": "base44/functions/shiftSwapAction/entry.ts",
+      "line": 49,
+      "text": "      if (action === 'approve') {"
+    },
+    {
+      "path": "base44/functions/shiftSwapAction/entry.ts",
+      "line": 65,
+      "text": "        status: action === 'approve' ? 'approved' : 'rejected',"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/main.ts",
+      "line": 254,
+      "text": "async function authenticateSignShopSession(base44, token) {"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/main.ts",
+      "line": 1024,
+      "text": "  const actor = await authenticateSignShopSession(base44, token);"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/main.ts",
+      "line": 1029,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/main.ts",
+      "line": 1034,
+      "text": "    diagnostic = body?.action === \"geocode_diagnostic\";"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/main.ts",
+      "line": 1035,
+      "text": "    const actor = diagnostic ? await base44.auth.me().catch(() => null) : await cachedSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/main.ts",
+      "line": 1037,
+      "text": "    if (body?.action === \"places_autocomplete\") {"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/entry.ts",
+      "line": 254,
+      "text": "async function authenticateSignShopSession(base44, token) {"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/entry.ts",
+      "line": 1003,
+      "text": "  const actor = await authenticateSignShopSession(base44, token);"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/entry.ts",
+      "line": 1008,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/entry.ts",
+      "line": 1013,
+      "text": "    diagnostic = body?.action === \"geocode_diagnostic\";"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/entry.ts",
+      "line": 1014,
+      "text": "    const actor = diagnostic ? await base44.auth.me().catch(() => null) : await cachedSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/entry.ts",
+      "line": 1016,
+      "text": "    if (body?.action === \"places_autocomplete\") {"
+    },
+    {
+      "path": "base44/functions/sourceMonitorSeed/entry.ts",
+      "line": 10,
+      "text": "Deno.serve(async (req: Request) => {"
+    },
+    {
+      "path": "base44/functions/sourceMonitorSeed/entry.ts",
+      "line": 13,
+      "text": "    const user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/placesAutocomplete/entry.ts",
+      "line": 13,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/placesAutocomplete/entry.ts",
+      "line": 18,
+      "text": "    let user = await authenticateSignShopSession(base44, body?.session_token).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/placesAutocomplete/entry.ts",
+      "line": 19,
+      "text": "    if (!user) user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/fleetCutoverControl/entry.ts",
+      "line": 246,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetCutoverControl/entry.ts",
+      "line": 249,
+      "text": "    const user = await base44.auth.me().catch(()=>null);"
+    },
+    {
+      "path": "base44/functions/fleetCutoverControl/entry.ts",
+      "line": 259,
+      "text": "    if (action === 'status') return Response.json(await evaluate(base44));"
+    },
+    {
+      "path": "base44/functions/fleetCutoverControl/entry.ts",
+      "line": 260,
+      "text": "    if (action === 'probe_bouncie') return Response.json(await evaluate(base44,{liveBouncieProbe:true}));"
+    },
+    {
+      "path": "base44/functions/fleetCutoverControl/entry.ts",
+      "line": 262,
+      "text": "    if (action === 'disable_all') {"
+    },
+    {
+      "path": "base44/functions/fleetCutoverControl/entry.ts",
+      "line": 276,
+      "text": "    if (action === 'confirm_source_freeze') {"
+    },
+    {
+      "path": "base44/functions/fleetCutoverControl/entry.ts",
+      "line": 294,
+      "text": "    if (action === 'clear_source_freeze') {"
+    },
+    {
+      "path": "base44/functions/fleetCutoverControl/entry.ts",
+      "line": 322,
+      "text": "    if (action === 'enable_scheduled_reminders' && !state.notifications_enabled) {"
+    },
+    {
+      "path": "base44/functions/fleetCutoverControl/entry.ts",
+      "line": 325,
+      "text": "    if (action === 'enable_maintenance_generation' && (!state.notifications_enabled || !state.scheduled_reminders_enabled)) {"
+    },
+    {
+      "path": "base44/functions/fleetCutoverControl/entry.ts",
+      "line": 328,
+      "text": "    if (action === 'enable_public_reporting' && (!state.notifications_enabled || !state.scheduled_reminders_enabled || !state.maintenance_generation_enabled)) {"
+    },
+    {
+      "path": "base44/functions/fleetCutoverControl/entry.ts",
+      "line": 337,
+      "text": "      ...(action === 'enable_public_reporting' ? { cutover_completed_at:stamp, cutover_completed_by:user.email || user.id || 'admin' } : {}),"
+    },
+    {
+      "path": "base44/functions/importSalesPipeline/entry.ts",
+      "line": 388,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/importSalesPipeline/entry.ts",
+      "line": 399,
+      "text": "      actor = await authenticateSignShopSession(base44, request.sessionToken);"
+    },
+    {
+      "path": "base44/functions/manageReconciliation/entry.ts",
+      "line": 170,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageReconciliation/entry.ts",
+      "line": 174,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageReconciliation/entry.ts",
+      "line": 214,
+      "text": "    if (action === 'bootstrap') {"
+    },
+    {
+      "path": "base44/functions/manageReconciliation/entry.ts",
+      "line": 240,
+      "text": "    if (action === 'get_batch') {"
+    },
+    {
+      "path": "base44/functions/manageReconciliation/entry.ts",
+      "line": 255,
+      "text": "    if (action === 'create_batch') {"
+    },
+    {
+      "path": "base44/functions/manageReconciliation/entry.ts",
+      "line": 348,
+      "text": "    if (action === 'list_candidates') {"
+    },
+    {
+      "path": "base44/functions/manageReconciliation/entry.ts",
+      "line": 370,
+      "text": "    if (action === 'list_batches') {"
+    },
+    {
+      "path": "base44/functions/manageReconciliation/entry.ts",
+      "line": 390,
+      "text": "    if (action === 'close_batch') {"
+    },
+    {
+      "path": "base44/functions/manageReconciliation/entry.ts",
+      "line": 611,
+      "text": "    if (action === 'reopen_batch') {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 132,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 136,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 149,
+      "text": "    if (action === \"list_mine\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 168,
+      "text": "    if (action === \"unread_count\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 175,
+      "text": "    if (action === \"history\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 209,
+      "text": "    if (action === \"mark_read\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 215,
+      "text": "    if (action === \"mark_all_read\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 228,
+      "text": "    if (action === \"snooze\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 239,
+      "text": "    if (action === \"unsnooze\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 245,
+      "text": "    if (action === \"mark_handled\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 253,
+      "text": "    if (action === \"unhandle\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 264,
+      "text": "    if (action === \"record\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 310,
+      "text": "    if (action === \"get_preferences\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 333,
+      "text": "    if (action === \"save_preferences\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 382,
+      "text": "    if (action === \"dismiss_feed_item\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 404,
+      "text": "    if (action === \"clear_feed_item\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 418,
+      "text": "    if (action === \"daily_digest\") {"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 462,
+      "text": "    if (action === \"evaluate_triggers\") {"
+    },
+    {
+      "path": "base44/functions/manageAccountDeletionRequest/entry.ts",
+      "line": 131,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageAccountDeletionRequest/entry.ts",
+      "line": 135,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageAccountDeletionRequest/entry.ts",
+      "line": 141,
+      "text": "    if (action === 'status') {"
+    },
+    {
+      "path": "base44/functions/manageAccountDeletionRequest/entry.ts",
+      "line": 148,
+      "text": "    if (action === 'request') {"
+    },
+    {
+      "path": "base44/functions/seedNotificationTemplates/entry.ts",
+      "line": 546,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/seedNotificationTemplates/entry.ts",
+      "line": 550,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/seedNotificationTemplates/entry.ts",
+      "line": 560,
+      "text": "    if (action === 'seed_notification_templates') {"
+    },
+    {
+      "path": "base44/functions/corebridgeApiAction/entry.ts",
+      "line": 33,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/corebridgeApiAction/entry.ts",
+      "line": 40,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/corebridgeApiAction/entry.ts",
+      "line": 80,
+      "text": "    if (body.action === 'audit_workorders') {"
+    },
+    {
+      "path": "base44/functions/corebridgeApiAction/entry.ts",
+      "line": 95,
+      "text": "    if (body.action === 'verify_sept22_backup') {"
+    },
+    {
+      "path": "base44/functions/workOrderTraveler/entry.ts",
+      "line": 46,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/permittingRuleInvalidate/entry.ts",
+      "line": 4,
+      "text": "Deno.serve(async req=>{\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleInvalidate/entry.ts",
+      "line": 6,
+      "text": "  const base44=withEntityRateLimitRetry(createClientFromRequest(req)),user=await base44.auth.me().catch(()=>null);\r"
+    },
+    {
+      "path": "base44/functions/recordEstimateAcceptance/entry.ts",
+      "line": 281,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/recordEstimateAcceptance/entry.ts",
+      "line": 285,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/recordEstimateAcceptance/entry.ts",
+      "line": 287,
+      "text": "    if (action === 'reject_quote') return await rejectEstimateQuote({ base44, user, body });"
+    },
+    {
+      "path": "base44/functions/recordEstimateAcceptance/entry.ts",
+      "line": 288,
+      "text": "    if (action === 'supersede_acceptance') return await supersedeEstimateAcceptance({ base44, user, body });"
+    },
+    {
+      "path": "base44/functions/setPassword/entry.ts",
+      "line": 10,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/setPassword/entry.ts",
+      "line": 59,
+      "text": "        admin = await authenticateSignShopSession(base44, session_token);\r"
+    },
+    {
+      "path": "base44/functions/continueJurisdictionArchives/entry.ts",
+      "line": 12,
+      "text": "Deno.serve(async req => {\r"
+    },
+    {
+      "path": "base44/functions/continueJurisdictionArchives/entry.ts",
+      "line": 16,
+      "text": "    const user = await base44.auth.me().catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/ensureEstimateLifecycleRevision/entry.ts",
+      "line": 95,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/ensureEstimateLifecycleRevision/entry.ts",
+      "line": 99,
+      "text": "    // Fall back to auth.me() when no sign-shop session token is supplied so"
+    },
+    {
+      "path": "base44/functions/ensureEstimateLifecycleRevision/entry.ts",
+      "line": 102,
+      "text": "    try { actor = await authenticateSignShopSession(base44, body?.session_token); }"
+    },
+    {
+      "path": "base44/functions/ensureEstimateLifecycleRevision/entry.ts",
+      "line": 103,
+      "text": "    catch { actor = await base44.auth.me().catch(() => null); }"
+    },
+    {
+      "path": "base44/functions/manageAnnouncements/entry.ts",
+      "line": 206,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/manageAnnouncements/entry.ts",
+      "line": 212,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token)\r"
+    },
+    {
+      "path": "base44/functions/manageAnnouncements/entry.ts",
+      "line": 223,
+      "text": "    if (action === 'active_feed') {\r"
+    },
+    {
+      "path": "base44/functions/manageAnnouncements/entry.ts",
+      "line": 229,
+      "text": "    if (action === 'acknowledge') {\r"
+    },
+    {
+      "path": "base44/functions/manageAnnouncements/entry.ts",
+      "line": 250,
+      "text": "    if (action === 'create') {\r"
+    },
+    {
+      "path": "base44/functions/manageAnnouncements/entry.ts",
+      "line": 256,
+      "text": "    if (action === 'update') {\r"
+    },
+    {
+      "path": "base44/functions/manageAnnouncements/entry.ts",
+      "line": 264,
+      "text": "    if (action === 'publish') {\r"
+    },
+    {
+      "path": "base44/functions/manageAnnouncements/entry.ts",
+      "line": 300,
+      "text": "    if (action === 'stop') {\r"
+    },
+    {
+      "path": "base44/functions/manageAnnouncements/entry.ts",
+      "line": 312,
+      "text": "    if (action === 'delete') {\r"
+    },
+    {
+      "path": "base44/functions/aiResearchOffice/entry.ts",
+      "line": 8,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/aiResearchOffice/entry.ts",
+      "line": 13,
+      "text": "    const actor=await authenticateSignShopSession(base44, body?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/fleetDataRead/entry.ts",
+      "line": 94,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetDataRead/entry.ts",
+      "line": 98,
+      "text": "    const user = await resolveFleetStaffUser(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetWarrantyAction/entry.ts",
+      "line": 24,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetWarrantyAction/entry.ts",
+      "line": 132,
+      "text": "Deno.serve(async req => {"
+    },
+    {
+      "path": "base44/functions/fleetWarrantyAction/entry.ts",
+      "line": 143,
+      "text": "    if (action === 'portfolio') {"
+    },
+    {
+      "path": "base44/functions/fleetWarrantyAction/entry.ts",
+      "line": 166,
+      "text": "    if (action === 'create') {"
+    },
+    {
+      "path": "base44/functions/fleetWarrantyAction/entry.ts",
+      "line": 196,
+      "text": "    if (action === 'update') {"
+    },
+    {
+      "path": "base44/functions/fleetWarrantyAction/entry.ts",
+      "line": 206,
+      "text": "    if (action === 'delete') {"
+    },
+    {
+      "path": "base44/functions/driveOAuthCallback/entry.ts",
+      "line": 4,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 75,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 668,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 683,
+      "text": "    if (action === 'create') {"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 829,
+      "text": "    if (action === 'update') {"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 897,
+      "text": "    if (action === 'reopen') {"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 976,
+      "text": "    if (action === 'complete') {"
+    },
+    {
+      "path": "base44/functions/fleetDashboardPreferenceAction/entry.ts",
+      "line": 20,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetDashboardPreferenceAction/entry.ts",
+      "line": 28,
+      "text": "Deno.serve(async req=>{"
+    },
+    {
+      "path": "base44/functions/googleDriveOperations/entry.ts",
+      "line": 15,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/googleDriveOperations/entry.ts",
+      "line": 21,
+      "text": "    const gdoActor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/continuePermittingSourceText/entry.ts",
+      "line": 7,
+      "text": "Deno.serve(async req => {\r"
+    },
+    {
+      "path": "base44/functions/continuePermittingSourceText/entry.ts",
+      "line": 10,
+      "text": "    const user = await base44.auth.me().catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/entry.ts",
+      "line": 254,
+      "text": "async function authenticateSignShopSession(base44, token) {"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/entry.ts",
+      "line": 1003,
+      "text": "  const actor = await authenticateSignShopSession(base44, token);"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/entry.ts",
+      "line": 1008,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/entry.ts",
+      "line": 1013,
+      "text": "    diagnostic = body?.action === \"geocode_diagnostic\";"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/entry.ts",
+      "line": 1014,
+      "text": "    const actor = diagnostic ? await base44.auth.me().catch(() => null) : await cachedSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/entry.ts",
+      "line": 1016,
+      "text": "    if (body?.action === \"places_autocomplete\") {"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/main.ts",
+      "line": 254,
+      "text": "async function authenticateSignShopSession(base44, token) {"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/main.ts",
+      "line": 1024,
+      "text": "  const actor = await authenticateSignShopSession(base44, token);"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/main.ts",
+      "line": 1029,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/main.ts",
+      "line": 1034,
+      "text": "    diagnostic = body?.action === \"geocode_diagnostic\";"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/main.ts",
+      "line": 1035,
+      "text": "    const actor = diagnostic ? await base44.auth.me().catch(() => null) : await cachedSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/main.ts",
+      "line": 1037,
+      "text": "    if (body?.action === \"places_autocomplete\") {"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/handler.ts",
+      "line": 115,
+      "text": " const actor=await authenticateSignShopSession(base44,token);\r"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/handler.ts",
+      "line": 120,
+      "text": "Deno.serve(async req=>{\r"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/handler.ts",
+      "line": 128,
+      "text": "  const actor=diagnostic?await base44.auth.me().catch(()=>null):await cachedSession(base44,body?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/fleetMeterMaintenanceAction/entry.ts",
+      "line": 16,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetMeterMaintenanceAction/entry.ts",
+      "line": 60,
+      "text": "Deno.serve(async req => {"
+    },
+    {
+      "path": "base44/functions/fleetMeterMaintenanceAction/entry.ts",
+      "line": 72,
+      "text": "    if (action === 'reading_preview') {"
+    },
+    {
+      "path": "base44/functions/fleetMeterMaintenanceAction/entry.ts",
+      "line": 86,
+      "text": "    if (action === 'status') {"
+    },
+    {
+      "path": "base44/functions/fleetMeterMaintenanceAction/entry.ts",
+      "line": 99,
+      "text": "    if (action === 'create') {"
+    },
+    {
+      "path": "base44/functions/fleetMeterMaintenanceAction/entry.ts",
+      "line": 128,
+      "text": "    if (action === 'update') {"
+    },
+    {
+      "path": "base44/functions/fleetMeterMaintenanceAction/entry.ts",
+      "line": 143,
+      "text": "    if (action === 'delete') {"
+    },
+    {
+      "path": "base44/functions/boardFeed/entry.ts",
+      "line": 144,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/boardFeed/entry.ts",
+      "line": 154,
+      "text": "    await authenticateSignShopSession(base44, body.session_token);"
+    },
+    {
+      "path": "base44/functions/deleteCreatedDuplicateWorkOrder/entry.ts",
+      "line": 21,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/deleteCreatedDuplicateWorkOrder/entry.ts",
+      "line": 25,
+      "text": "    // Fall back to auth.me() when no sign-shop session token is supplied so"
+    },
+    {
+      "path": "base44/functions/deleteCreatedDuplicateWorkOrder/entry.ts",
+      "line": 28,
+      "text": "    try { user = await authenticateSignShopSession(base44, body?.session_token); }"
+    },
+    {
+      "path": "base44/functions/deleteCreatedDuplicateWorkOrder/entry.ts",
+      "line": 29,
+      "text": "    catch { user = await base44.auth.me().catch(() => null); }"
+    },
+    {
+      "path": "base44/functions/verifySession/entry.ts",
+      "line": 12,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/verifySession/entry.ts",
+      "line": 22,
+      "text": "    // action === 'logout': revoke the server-side session (not just the"
+    },
+    {
+      "path": "base44/functions/verifySession/entry.ts",
+      "line": 27,
+      "text": "      user = await authenticateSignShopSession(base44, token);"
+    },
+    {
+      "path": "base44/functions/fleetMaintenanceAction/entry.ts",
+      "line": 26,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetMaintenanceAction/entry.ts",
+      "line": 69,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetMaintenanceAction/entry.ts",
+      "line": 83,
+      "text": "    if (action === 'create') {"
+    },
+    {
+      "path": "base44/functions/fleetMaintenanceAction/entry.ts",
+      "line": 123,
+      "text": "    if (action === 'generate_due') {"
+    },
+    {
+      "path": "base44/functions/fleetMaintenanceAction/entry.ts",
+      "line": 154,
+      "text": "        return Response.json({ success: true, dry_run: true, due_count: due.length, would_create: report.filter((r) => r.action === 'create').length, report });"
+    },
+    {
+      "path": "base44/functions/fleetMaintenanceAction/entry.ts",
+      "line": 185,
+      "text": "    if (action === 'update') {"
+    },
+    {
+      "path": "base44/functions/fleetMaintenanceAction/entry.ts",
+      "line": 210,
+      "text": "    if (action === 'delete') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeMaintenance/entry.ts",
+      "line": 21,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/bouncieStatus/entry.ts",
+      "line": 6,
+      "text": "export default async function(req) {"
+    },
+    {
+      "path": "base44/functions/bouncieStatus/entry.ts",
+      "line": 10,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetNotificationDispatcher/entry.ts",
+      "line": 5,
+      "text": "import { hasInternalFunctionCapability } from '../../shared/internalFunctionCapability.ts';"
+    },
+    {
+      "path": "base44/functions/fleetNotificationDispatcher/entry.ts",
+      "line": 20,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetNotificationDispatcher/entry.ts",
+      "line": 28,
+      "text": "    const internal = hasInternalFunctionCapability(body);"
+    },
+    {
+      "path": "base44/functions/fleetNotificationDispatcher/entry.ts",
+      "line": 29,
+      "text": "    const user = internal ? null : await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/processWorkflowTriggers/entry.ts",
+      "line": 90,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/processWorkflowTriggers/entry.ts",
+      "line": 94,
+      "text": "    const user = await authenticateSignShopSession(base44, payload?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/searchJurisdictions/entry.ts",
+      "line": 5,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/searchJurisdictions/entry.ts",
+      "line": 8,
+      "text": "    const user = await base44.auth.me();\r"
+    },
+    {
+      "path": "base44/functions/getPermittingSourceTextPages/entry.ts",
+      "line": 5,
+      "text": "Deno.serve(async req => {\r"
+    },
+    {
+      "path": "base44/functions/getPermittingSourceTextPages/entry.ts",
+      "line": 8,
+      "text": "    const user=await base44.auth.me().catch(()=>null);\r"
+    },
+    {
+      "path": "base44/functions/fixtureBusinessSearch/entry.ts",
+      "line": 7,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fixtureBusinessSearch/entry.ts",
+      "line": 11,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 10,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 14,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'checkDeadlineReminders');"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 17,
+      "text": "      const user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/auditJurisdictionAccuracy/entry.ts",
+      "line": 7,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/auditJurisdictionAccuracy/entry.ts",
+      "line": 11,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'auditJurisdictionAccuracy');\r"
+    },
+    {
+      "path": "base44/functions/auditJurisdictionAccuracy/entry.ts",
+      "line": 14,
+      "text": "      const user = await base44.auth.me().catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 109,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 112,
+      "text": "    const actor = await base44.auth.me().catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 157,
+      "text": "    if (action === \"prepare_pilot\" || action === \"prepare_authorized_pilot\") {\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 171,
+      "text": "      const authorizedPreparation = action === \"prepare_authorized_pilot\" &&\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 176,
+      "text": "        success:action === \"prepare_pilot\" || authorizedPreparation,\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 204,
+      "text": "        review_response_is_not_execution_authorization:action === \"prepare_pilot\",\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 212,
+      "text": "      }, { status:action === \"prepare_authorized_pilot\" && !authorizedPreparation ? 423 : 200 });\r"
+    },
+    {
+      "path": "base44/functions/fileBridgeSpike/entry.ts",
+      "line": 9,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 150,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 168,
+      "text": "  if (action === 'bootstrap_settings') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 193,
+      "text": "  if (action === 'handshake') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 224,
+      "text": "  if (action === 'heartbeat') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 234,
+      "text": "  if (action === 'command_poll') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 252,
+      "text": "  if (action === 'command_wait') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 288,
+      "text": "  if (action === 'command_complete') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 327,
+      "text": "  if (action === 'command_progress') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 336,
+      "text": "  if (action === 'index_batch') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 408,
+      "text": "  if (action === 'thumb_push' || action === 'preview_push') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 417,
+      "text": "    const file = new File([bytes], action === 'thumb_push' ? 'thumb.webp' : 'preview.pdf');"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 419,
+      "text": "    const patch: any = action === 'thumb_push'"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 427,
+      "text": "  if (action === 'deliver_complete') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 462,
+      "text": "  if (action === 'deliver_chunk') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 508,
+      "text": "  if (action === 'deliver_stitch') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 535,
+      "text": "  if (action === 'event') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 546,
+      "text": "  if (action === 'recent_batch') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 566,
+      "text": "  if (action === 'manifest_export') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 582,
+      "text": "  if (action === 'manifest_sync') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 601,
+      "text": "  if (action === 'inventory_report') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeIngest/entry.ts",
+      "line": 632,
+      "text": "  if (action === 'become_primary') {"
+    },
+    {
+      "path": "base44/functions/archiveAddressResearchFile/entry.ts",
+      "line": 7,
+      "text": "Deno.serve(async req=>{\r"
+    },
+    {
+      "path": "base44/functions/manageWorkflowSchedules/entry.ts",
+      "line": 3,
+      "text": "import { verifyAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';"
+    },
+    {
+      "path": "base44/functions/manageWorkflowSchedules/entry.ts",
+      "line": 8,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageWorkflowSchedules/entry.ts",
+      "line": 12,
+      "text": "    const actor = await verifyAdminSettingsCapability(base44, body?.admin_capability);"
+    },
+    {
+      "path": "base44/functions/manageWorkflowSchedules/entry.ts",
+      "line": 22,
+      "text": "    if (action === 'list') return Response.json({ success: true, rows: await manager.list() });"
+    },
+    {
+      "path": "base44/functions/manageWorkflowSchedules/entry.ts",
+      "line": 23,
+      "text": "    if (action === 'runs') return Response.json({ success: true, runs: await manager.runs(body) });"
+    },
+    {
+      "path": "base44/functions/manageWorkflowSchedules/entry.ts",
+      "line": 24,
+      "text": "    if (action === 'update_schedule') return Response.json({ success: true, ...(await manager.updateSchedule(body, actor)) });"
+    },
+    {
+      "path": "base44/functions/manageWorkflowSchedules/entry.ts",
+      "line": 25,
+      "text": "    if (action === 'set_status') return Response.json({ success: true, ...(await manager.setStatus(body, actor)) });"
+    },
+    {
+      "path": "base44/functions/manageWorkflowSchedules/entry.ts",
+      "line": 26,
+      "text": "    if (action === 'adopt_external') return Response.json({ success: true, ...(await manager.adoptExternal(body, actor)) });"
+    },
+    {
+      "path": "base44/functions/manageWorkflowSchedules/entry.ts",
+      "line": 27,
+      "text": "    if (action === 'history') return Response.json({ success: true, rows: await manager.history(body) });"
+    },
+    {
+      "path": "base44/functions/fleetSystemReportAction/entry.ts",
+      "line": 26,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetSystemReportAction/entry.ts",
+      "line": 34,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetSystemReportAction/entry.ts",
+      "line": 44,
+      "text": "    if (action === 'create') {"
+    },
+    {
+      "path": "base44/functions/permittingResearchBacklogDispatch/entry.ts",
+      "line": 128,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/permittingResearchBacklogDispatch/entry.ts",
+      "line": 131,
+      "text": "    const user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/refreshJurisdiction/entry.ts",
+      "line": 22,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/refreshJurisdiction/entry.ts",
+      "line": 29,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'refreshJurisdiction');"
+    },
+    {
+      "path": "base44/functions/refreshJurisdiction/entry.ts",
+      "line": 30,
+      "text": "    const isTargetedAutomation = await hasWorkflowInvocationCapability(body, 'refreshJurisdictionTargeted');"
+    },
+    {
+      "path": "base44/functions/refreshJurisdiction/entry.ts",
+      "line": 49,
+      "text": "      user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/refreshJurisdiction/entry.ts",
+      "line": 50,
+      "text": "      if(!user&&body.session_token)user=await authenticateSignShopSession(base44,body.session_token);"
+    },
+    {
+      "path": "base44/functions/gmailAuthCallback/entry.ts",
+      "line": 4,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/accessRequestAction/entry.ts",
+      "line": 4,
+      "text": "Deno.serve(async (request: Request) => {"
+    },
+    {
+      "path": "base44/functions/accessRequestAction/entry.ts",
+      "line": 8,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/accessRequestAction/entry.ts",
+      "line": 13,
+      "text": "    if (action === 'submit') {"
+    },
+    {
+      "path": "base44/functions/accessRequestAction/entry.ts",
+      "line": 45,
+      "text": "    if (action === 'list') {"
+    },
+    {
+      "path": "base44/functions/accessRequestAction/entry.ts",
+      "line": 50,
+      "text": "    if (action === 'approve' || action === 'reject') {"
+    },
+    {
+      "path": "base44/functions/accessRequestAction/entry.ts",
+      "line": 66,
+      "text": "      if (action === 'approve') {"
+    },
+    {
+      "path": "base44/functions/accessRequestAction/entry.ts",
+      "line": 87,
+      "text": "        status: action === 'approve' ? 'approved' : 'rejected',"
+    },
+    {
+      "path": "base44/functions/smartsheetMetadataAdminAction/entry.ts",
+      "line": 127,
+      "text": "      actor = await authenticateSignShopSession(base44, body.session_token);"
+    },
+    {
+      "path": "base44/functions/smartsheetMetadataAdminAction/entry.ts",
+      "line": 129,
+      "text": "      actor = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/smartsheetMetadataAdminAction/entry.ts",
+      "line": 158,
+      "text": "    if (action === 'preview_append_options' || plan.additions.length === 0) {"
+    },
+    {
+      "path": "base44/functions/smartsheetMetadataAdminAction/entry.ts",
+      "line": 228,
+      "text": "export default async function(req) {"
+    },
+    {
+      "path": "base44/functions/manageCustomerLifecycle/entry.ts",
+      "line": 102,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageCustomerLifecycle/entry.ts",
+      "line": 106,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageCustomerLifecycle/entry.ts",
+      "line": 117,
+      "text": "    if (action === 'sweep_auto_inactive') {"
+    },
+    {
+      "path": "base44/functions/manageCustomerLifecycle/entry.ts",
+      "line": 174,
+      "text": "    if (action === 'get_lifecycle') {"
+    },
+    {
+      "path": "base44/functions/manageCustomerLifecycle/entry.ts",
+      "line": 215,
+      "text": "    if (action === 'preview_customer_merge') {"
+    },
+    {
+      "path": "base44/functions/manageCustomerLifecycle/entry.ts",
+      "line": 293,
+      "text": "    if (action === 'merge_customers') {"
+    },
+    {
+      "path": "base44/functions/dailyAnomalyDigest/entry.ts",
+      "line": 14,
+      "text": "Deno.serve(async (request: Request) => {"
+    },
+    {
+      "path": "base44/functions/dailyAnomalyDigest/entry.ts",
+      "line": 31,
+      "text": "    const permChanges = audits.filter((r: any) => r.action === 'update_user').length;"
+    },
+    {
+      "path": "base44/functions/dailyAnomalyDigest/entry.ts",
+      "line": 32,
+      "text": "    const revokes = audits.filter((r: any) => r.action === 'revoke_session').length;"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentDocumentAction/entry.ts",
+      "line": 20,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentDocumentAction/entry.ts",
+      "line": 51,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentDocumentAction/entry.ts",
+      "line": 64,
+      "text": "    if (action === 'create') {"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentDocumentAction/entry.ts",
+      "line": 128,
+      "text": "    if (action === 'update') {"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentDocumentAction/entry.ts",
+      "line": 146,
+      "text": "    if (action === 'archive' || action === 'restore') {"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentDocumentAction/entry.ts",
+      "line": 147,
+      "text": "      const archived = action === 'archive';"
+    },
+    {
+      "path": "base44/functions/importWipSheet/entry.ts",
+      "line": 180,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/importWipSheet/entry.ts",
+      "line": 184,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/permittingProxy/entry.ts",
+      "line": 31,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/permittingProxy/entry.ts",
+      "line": 34,
+      "text": "    const user = await base44.auth.me().catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/permittingProxy/entry.ts",
+      "line": 58,
+      "text": "    if (action === 'poll') {\r"
+    },
+    {
+      "path": "base44/functions/permittingProxy/entry.ts",
+      "line": 67,
+      "text": "    if (action === 'create') {\r"
+    },
+    {
+      "path": "base44/functions/permittingProxy/entry.ts",
+      "line": 76,
+      "text": "      method: action === 'poll' ? 'GET' : 'POST',\r"
+    },
+    {
+      "path": "base44/functions/permittingProxy/entry.ts",
+      "line": 81,
+      "text": "      ...(action === 'create' ? { body: JSON.stringify(createPayload) } : {}),\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleExtraction/entry.ts",
+      "line": 6,
+      "text": "Deno.serve(async req => {\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleExtraction/entry.ts",
+      "line": 9,
+      "text": "    const user=await base44.auth.me().catch(()=>null);\r"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 284,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 288,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 314,
+      "text": "    if (action === \"full_backup\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 349,
+      "text": "    if (action === \"send_digest\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 390,
+      "text": "    if (action === \"set_watch\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 408,
+      "text": "    if (action === \"list_watches\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 413,
+      "text": "    if (action === \"clear_watch\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 424,
+      "text": "    if (action === \"check_watches\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 443,
+      "text": "    if (action === \"bulk_remarkup\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 472,
+      "text": "    if (action === \"export_estimate\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 488,
+      "text": "    if (action === \"import_estimate\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 517,
+      "text": "    if (action === \"copy_bom\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 547,
+      "text": "    if (action === \"copy_sections\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 603,
+      "text": "    if (action === \"estimate_from_module\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 635,
+      "text": "    if (action === \"status_timeline\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 646,
+      "text": "    if (action === \"attention_feed\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 901,
+      "text": "    if (action === \"search_customers\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 935,
+      "text": "    if (action === \"list_opportunities\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 1264,
+      "text": "    if (action === \"global_search\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 1392,
+      "text": "    if (action === \"get_opportunity\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 1488,
+      "text": "    if (action === \"list_estimating_requests\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 1542,
+      "text": "    if (action === \"list_follow_ups\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 1623,
+      "text": "    if (action === \"assign_estimator\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 1652,
+      "text": "    if (action === \"capture_intake\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 1777,
+      "text": "    if (action === \"update_opportunity\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 1889,
+      "text": "    if (action === \"resolve_intake\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 1898,
+      "text": "      if (resolutionAction === \"reject\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 1918,
+      "text": "    if (action === \"link_work_order\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 1998,
+      "text": "    if (action === \"sync_estimate_sales_stage\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 2025,
+      "text": "    if (action === \"request_estimate\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 2196,
+      "text": "    if (action === \"get_customer_360\") {"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 2325,
+      "text": "    if (action === \"customer_workspace\") {"
+    },
+    {
+      "path": "base44/functions/backupPermittingRepository/entry.ts",
+      "line": 41,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/backupPermittingRepository/entry.ts",
+      "line": 44,
+      "text": "    const user = await base44.auth.me().catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/updateEstimateRevisionAudit/entry.ts",
+      "line": 28,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/updateEstimateRevisionAudit/entry.ts",
+      "line": 32,
+      "text": "    // Fall back to auth.me() when no sign-shop session token is supplied so"
+    },
+    {
+      "path": "base44/functions/updateEstimateRevisionAudit/entry.ts",
+      "line": 35,
+      "text": "    try { actor = await authenticateSignShopSession(base44, body?.session_token); }"
+    },
+    {
+      "path": "base44/functions/updateEstimateRevisionAudit/entry.ts",
+      "line": 36,
+      "text": "    catch { actor = await base44.auth.me().catch(() => null); }"
+    },
+    {
+      "path": "base44/functions/updateEstimateRevisionAudit/entry.ts",
+      "line": 45,
+      "text": "    if (action === 'complete_manual_revision') {"
+    },
+    {
+      "path": "base44/functions/updateEstimateRevisionAudit/entry.ts",
+      "line": 111,
+      "text": "    if (action === 'attach_delivery_evidence') {"
+    },
+    {
+      "path": "base44/functions/fleetSettingsAction/entry.ts",
+      "line": 38,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetSettingsAction/entry.ts",
+      "line": 42,
+      "text": "    const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetSettingsAction/entry.ts",
+      "line": 50,
+      "text": "    if (action === 'get') return Response.json({ success: true, settings });"
+    },
+    {
+      "path": "base44/functions/fleetNotificationWorker/entry.ts",
+      "line": 101,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetNotificationWorker/entry.ts",
+      "line": 104,
+      "text": "    const user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/streetViewPreview/entry.ts",
+      "line": 15,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/streetViewPreview/entry.ts",
+      "line": 20,
+      "text": "    let user = await authenticateSignShopSession(base44, body?.session_token).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/streetViewPreview/entry.ts",
+      "line": 21,
+      "text": "    if (!user) user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 524,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 528,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 536,
+      "text": "    if (action === 'list') {\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 541,
+      "text": "    if (action === 'list_deletion_requests') {\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 551,
+      "text": "    if (action === 'deletion_impact') {\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 569,
+      "text": "    if (action === 'resolve_deletion_request') {\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 575,
+      "text": "    if (action === 'create') {\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 591,
+      "text": "    if (action === 'update') {\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 709,
+      "text": "    if (action === 'update_hr') {\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 731,
+      "text": "    if (action === 'delete') {\r"
+    },
+    {
+      "path": "base44/functions/bouncieAuthInitiate/entry.ts",
+      "line": 9,
+      "text": "export default async function(req) {"
+    },
+    {
+      "path": "base44/functions/bouncieAuthInitiate/entry.ts",
+      "line": 13,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 82,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 86,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 98,
+      "text": "    if (action === \"list_change_orders\") {"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 131,
+      "text": "    if (action === \"get_change_order\") {"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 153,
+      "text": "    if (action === \"create_change_order\") {"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 212,
+      "text": "    if (action === \"update_change_order\") {"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 245,
+      "text": "    if (action === \"approve_change_order\") {"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 258,
+      "text": "    if (action === \"reject_change_order\") {"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 276,
+      "text": "    if (action === \"apply_change_order\") {"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 293,
+      "text": "    if (action === \"cancel_change_order\") {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1818,
+      "text": "  if (dataset === 'sales' && status?.action === 'recover_verified_sales_create' && current?.status === 'running') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1827,
+      "text": "  if (dataset === 'sales' && current?.status === 'running' && current?.action === 'recover_verified_sales_create') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3758,
+      "text": "      await hasWorkflowInvocationCapability(body, 'smartsheetSyncAction');"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3761,
+      "text": "      const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3764,
+      "text": "      const allowedOrderManualPull = action === 'pull_dataset' && body?.dataset === 'orders' && Boolean(actor?.id);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3770,
+      "text": "      const platformActor = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3779,
+      "text": "    if (action === 'status') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3804,
+      "text": "    if (action === 'preview_order_customer_decision') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3876,
+      "text": "    if (action === 'commit_order_customer_decision') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3976,
+      "text": "    if (action === 'audit_sales_permanent_ownership') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4001,
+      "text": "    if (action === 'audit_sales_create_attempts' || action === 'review_sales_create_candidate') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4022,
+      "text": "      if (action === 'audit_sales_create_attempts') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4058,
+      "text": "    if (action === 'recover_verified_sales_create') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4146,
+      "text": "    if (action === 'audit_sales_recovery_history' || action === 'acknowledge_sales_recovery_history') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4164,
+      "text": "        if (action === 'audit_sales_recovery_history') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4188,
+      "text": "    if (action === 'recover_stale_sales_run') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4200,
+      "text": "    if (action === 'review_unresolved_order_pull_batch') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4275,
+      "text": "    if (action === 'review_unresolved_order_pull_row') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4367,
+      "text": "    if (action === 'resolve_unresolved_order_pull_evidence') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4451,
+      "text": "    if (action === 'relink_order_smartsheet_row') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4527,
+      "text": "    if (action === 'recreate_order_smartsheet_row') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4638,
+      "text": "    if (action === 'delete_order_record') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4686,
+      "text": "    if (action === 'recover_stale_order_run') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4739,
+      "text": "    if (action === 'config_get') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4750,
+      "text": "    if (action === 'assignee_labels_save') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4780,
+      "text": "    if (action === 'config_save') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4789,
+      "text": "    if (action === 'order_requestor_contact_sync') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4862,
+      "text": "    if (action === 'order_request_types_save') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4993,
+      "text": "    if (action === 'sync_alert_get') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4998,
+      "text": "    if (action === 'sync_alert_save') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5011,
+      "text": "    if (action === 'sync_alert_test') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5023,
+      "text": "    if (action === 'push_saved_orders') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5091,
+      "text": "    if (action === 'push_saved_sales') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5142,
+      "text": "    if (action === 'audit_order_backup_readiness') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5207,
+      "text": "    if (action === 'test_connection') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5218,
+      "text": "    if (action === 'list_sheets') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5230,
+      "text": "    if (action === 'sheet_columns') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5246,
+      "text": "    if (action === 'sheet_rows') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5279,
+      "text": "    if (action === 'preview_sales_est_inv_snapshot') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5387,
+      "text": "    if (action === 'audit_order_import_sync_evidence') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5469,
+      "text": "    if (action === 'audit_order_link_integrity') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5521,
+      "text": "    if (action === 'audit_order_create_attempts') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5571,
+      "text": "    if (action === 'audit_order_requestor_emails') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5612,
+      "text": "    if (action === 'audit_order_dates') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5681,
+      "text": "    if (action === 'debug_dates') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5700,
+      "text": "      const isSingleDataset = action === 'push_dataset' || action === 'pull_dataset';"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5704,
+      "text": "          : action === 'run_sales_sync'"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5706,
+      "text": "            : action === 'run_order_sync'"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5727,
+      "text": "        const wantPull = action === 'pull_dataset' || (isRunAction && profile.pull_enabled);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5728,
+      "text": "        const wantPush = action === 'push_dataset' || (isRunAction && profile.push_enabled);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5830,
+      "text": "              ...(action === 'pull_dataset' && dataset === 'sales' ? { recordIds: body.work_order_ids || [] } : {}),"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5960,
+      "text": "export default async function(req: Request): Promise<Response> {"
+    },
+    {
+      "path": "base44/functions/bouncieSyncNotifications/entry.ts",
+      "line": 197,
+      "text": "export default async function(req) {"
+    },
+    {
+      "path": "base44/functions/bouncieSyncNotifications/entry.ts",
+      "line": 201,
+      "text": "    const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, requestBody?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetScheduledMaintenanceGeneration/entry.ts",
+      "line": 163,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/fleetScheduledMaintenanceGeneration/entry.ts",
+      "line": 167,
+      "text": "    const user = (await base44.auth.me().catch(()=>null)) || await resolveFleetStaffUser(base44, requestBody?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/correctJurisdictionIdentityType/entry.ts",
+      "line": 4,
+      "text": "Deno.serve(req=>handleIdentityCorrection(req,withEntityRateLimitRetry(createClientFromRequest(req))));\r"
+    },
+    {
+      "path": "base44/functions/manageTraining/entry.ts",
+      "line": 133,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageTraining/entry.ts",
+      "line": 137,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageTraining/entry.ts",
+      "line": 158,
+      "text": "    if (action === 'bootstrap' || action === 'my_assignments') {"
+    },
+    {
+      "path": "base44/functions/manageTraining/entry.ts",
+      "line": 183,
+      "text": "    if (action === 'report') {"
+    },
+    {
+      "path": "base44/functions/manageTraining/entry.ts",
+      "line": 201,
+      "text": "    if (action === 'complete') {"
+    },
+    {
+      "path": "base44/functions/manageTraining/entry.ts",
+      "line": 221,
+      "text": "    if (action === 'item_create') {"
+    },
+    {
+      "path": "base44/functions/manageTraining/entry.ts",
+      "line": 231,
+      "text": "    if (action === 'item_update') {"
+    },
+    {
+      "path": "base44/functions/manageTraining/entry.ts",
+      "line": 237,
+      "text": "    if (action === 'item_delete') {"
+    },
+    {
+      "path": "base44/functions/manageTraining/entry.ts",
+      "line": 254,
+      "text": "    if (action === 'assign') {"
+    },
+    {
+      "path": "base44/functions/manageTraining/entry.ts",
+      "line": 325,
+      "text": "    if (action === 'cancel' || action === 'reopen') {"
+    },
+    {
+      "path": "base44/functions/manageTraining/entry.ts",
+      "line": 329,
+      "text": "      const nextStatus = action === 'cancel' ? 'cancelled' : 'pending';"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 43,
+      "text": "Deno.serve(async req => {\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 48,
+      "text": "      ? await authenticateSignShopSession(base44,body.session_token)\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 49,
+      "text": "      : await base44.auth.me().catch(()=>null);\r"
+    },
+    {
+      "path": "base44/functions/manageMigration/entry.ts",
+      "line": 156,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageMigration/entry.ts",
+      "line": 160,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageMigration/entry.ts",
+      "line": 171,
+      "text": "    if (action === \"list_mappers\") {"
+    },
+    {
+      "path": "base44/functions/manageMigration/entry.ts",
+      "line": 176,
+      "text": "    if (action === \"start_batch\") {"
+    },
+    {
+      "path": "base44/functions/manageMigration/entry.ts",
+      "line": 212,
+      "text": "    if (action === \"preview_mapping\") {"
+    },
+    {
+      "path": "base44/functions/manageMigration/entry.ts",
+      "line": 233,
+      "text": "    if (action === \"import_rows\") {"
+    },
+    {
+      "path": "base44/functions/manageMigration/entry.ts",
+      "line": 498,
+      "text": "    if (action === \"get_batch\") {"
+    },
+    {
+      "path": "base44/functions/manageMigration/entry.ts",
+      "line": 533,
+      "text": "    if (action === \"report\") {"
+    },
+    {
+      "path": "base44/functions/manageMigration/entry.ts",
+      "line": 575,
+      "text": "    if (action === \"unimport_batch\") {"
+    },
+    {
+      "path": "base44/functions/manageMigration/entry.ts",
+      "line": 629,
+      "text": "    if (action === \"list_batches\") {"
+    },
+    {
+      "path": "base44/functions/staffDataRead/entry.ts",
+      "line": 546,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/staffDataRead/entry.ts",
+      "line": 554,
+      "text": "    const user = await resolveFleetStaffUser(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/searchExternalClients/entry.ts",
+      "line": 7,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/searchExternalClients/entry.ts",
+      "line": 10,
+      "text": "    const user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/googleDriveAuth/entry.ts",
+      "line": 6,
+      "text": "Deno.serve(() => Response.json({\r"
+    },
+    {
+      "path": "base44/functions/driveBrowseFolder/entry.ts",
+      "line": 7,
+      "text": "Deno.serve(() => Response.json({"
+    },
+    {
+      "path": "base44/functions/validateDocumentUrl/entry.ts",
+      "line": 4,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/validateDocumentUrl/entry.ts",
+      "line": 7,
+      "text": "    const user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/fleetFuelAction/entry.ts",
+      "line": 19,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetFuelAction/entry.ts",
+      "line": 113,
+      "text": "Deno.serve(async req => {"
+    },
+    {
+      "path": "base44/functions/fleetFuelAction/entry.ts",
+      "line": 125,
+      "text": "    if (action === 'create') {"
+    },
+    {
+      "path": "base44/functions/fleetFuelAction/entry.ts",
+      "line": 151,
+      "text": "    if (action === 'import') {"
+    },
+    {
+      "path": "base44/functions/fleetFuelAction/entry.ts",
+      "line": 190,
+      "text": "    if (action === 'summary') {"
+    },
+    {
+      "path": "base44/functions/fleetFuelAction/entry.ts",
+      "line": 227,
+      "text": "    if (action === 'update') {"
+    },
+    {
+      "path": "base44/functions/fleetFuelAction/entry.ts",
+      "line": 236,
+      "text": "    if (action === 'delete') {"
+    },
+    {
+      "path": "base44/functions/getAddressResearchCollections/entry.ts",
+      "line": 5,
+      "text": "Deno.serve(async req=>{\r"
+    },
+    {
+      "path": "base44/functions/listAuthorizedUserDirectory/entry.ts",
+      "line": 25,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/listAuthorizedUserDirectory/entry.ts",
+      "line": 31,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 90,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 94,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 106,
+      "text": "    if (action === \"list_stock\") {"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 133,
+      "text": "    if (action === \"list_movements\") {"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 154,
+      "text": "    if (action === \"create_reorder_po\") {"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 235,
+      "text": "      if (action === \"receive_stock\" || action === \"return_stock\") {"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 238,
+      "text": "        reason = action === \"receive_stock\" ? \"receive\" : \"return\";"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 240,
+      "text": "      } else if (action === \"issue_to_job\") {"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 262,
+      "text": "    if (action === \"set_reorder_point\") {"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 282,
+      "text": "    if (action === \"set_archived\") {"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 302,
+      "text": "    if (action === \"reserve_for_estimate\") {"
+    },
+    {
+      "path": "base44/functions/staffPermittingDocWrite/entry.ts",
+      "line": 48,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/staffPermittingDocWrite/entry.ts",
+      "line": 52,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageBroadcasts/entry.ts",
+      "line": 40,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageBroadcasts/entry.ts",
+      "line": 45,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token).catch((e: any) => {"
+    },
+    {
+      "path": "base44/functions/manageBroadcasts/entry.ts",
+      "line": 58,
+      "text": "    if (action === 'feed') {"
+    },
+    {
+      "path": "base44/functions/manageBroadcasts/entry.ts",
+      "line": 69,
+      "text": "    if (action === 'ack' || action === 'dismiss') {"
+    },
+    {
+      "path": "base44/functions/manageBroadcasts/entry.ts",
+      "line": 72,
+      "text": "      const field = action === 'ack' ? 'acked_user_ids' : 'dismissed_user_ids';"
+    },
+    {
+      "path": "base44/functions/manageBroadcasts/entry.ts",
+      "line": 78,
+      "text": "    if (action === 'audience_preview') {"
+    },
+    {
+      "path": "base44/functions/manageBroadcasts/entry.ts",
+      "line": 99,
+      "text": "    if (action === 'send') {"
+    },
+    {
+      "path": "base44/functions/manageBroadcasts/entry.ts",
+      "line": 124,
+      "text": "    if (action === 'list') {"
+    },
+    {
+      "path": "base44/functions/manageBroadcasts/entry.ts",
+      "line": 133,
+      "text": "    if (action === 'cancel') {"
+    },
+    {
+      "path": "base44/functions/fleetScheduledReminders/entry.ts",
+      "line": 16,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetScheduledReminders/entry.ts",
+      "line": 20,
+      "text": "    const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, requestBody?.session_token);"
+    },
+    {
+      "path": "base44/functions/weeklyAdminDigest/entry.ts",
+      "line": 8,
+      "text": "Deno.serve(async (request: Request) => {"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 47,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 51,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 59,
+      "text": "    if (action === 'update_username') {"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 85,
+      "text": "    if (action === 'update_order_form_filter') {"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 101,
+      "text": "    if (action === 'update_hr') {"
+    },
+    {
+      "path": "base44/functions/fleetInventoryAction/entry.ts",
+      "line": 9,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetInventoryAction/entry.ts",
+      "line": 228,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetInventoryAction/entry.ts",
+      "line": 248,
+      "text": "    if (action === 'create') {"
+    },
+    {
+      "path": "base44/functions/fleetInventoryAction/entry.ts",
+      "line": 309,
+      "text": "    if (action === 'record_usage') {"
+    },
+    {
+      "path": "base44/functions/fleetInventoryAction/entry.ts",
+      "line": 471,
+      "text": "    if (action === 'update') {"
+    },
+    {
+      "path": "base44/functions/fleetInventoryAction/entry.ts",
+      "line": 521,
+      "text": "    if (action === 'delete') {"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 9,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 15,
+      "text": "    const isScheduledBackup = await hasWorkflowInvocationCapability(body, 'backupToGoogleDrive');"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 19,
+      "text": "      actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 39,
+      "text": "    if (action === 'listFolders') {"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 59,
+      "text": "    if (action === 'createFolder') {"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 87,
+      "text": "    if (action === 'saveSettings') {"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 108,
+      "text": "    if (action === 'getSettings') {"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 122,
+      "text": "    if (action === 'getHistory') {"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 26,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 143,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 180,
+      "text": "    if (action === 'create') {"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 273,
+      "text": "    if (action === 'update') {"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 309,
+      "text": "    if (action === 'cancel') {"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 326,
+      "text": "    if (action === 'order') {"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 348,
+      "text": "    if (action === 'receive') {"
+    },
+    {
+      "path": "base44/functions/bouncieRepairWebhook/entry.ts",
+      "line": 5,
+      "text": "export default async function(req) {"
+    },
+    {
+      "path": "base44/functions/bouncieRepairWebhook/entry.ts",
+      "line": 8,
+      "text": "    const user = await base44.auth.me();"
+    },
+    {
+      "path": "base44/functions/sessionAdminAction/entry.ts",
+      "line": 8,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/sessionAdminAction/entry.ts",
+      "line": 17,
+      "text": "    if (action === 'list') {"
+    },
+    {
+      "path": "base44/functions/sessionAdminAction/entry.ts",
+      "line": 25,
+      "text": "    if (action === 'revoke') {"
+    },
+    {
+      "path": "base44/functions/manageFeatureReports/entry.ts",
+      "line": 175,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageFeatureReports/entry.ts",
+      "line": 184,
+      "text": "    if (action === 'list') {"
+    },
+    {
+      "path": "base44/functions/manageFeatureReports/entry.ts",
+      "line": 185,
+      "text": "      actor = await authenticateSignShopSession(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/manageFeatureReports/entry.ts",
+      "line": 193,
+      "text": "    actor = await authenticateSignShopSession(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/manageFeatureReports/entry.ts",
+      "line": 195,
+      "text": "    if (action === 'create') {"
+    },
+    {
+      "path": "base44/functions/manageFeatureReports/entry.ts",
+      "line": 218,
+      "text": "    if (action === 'update') {"
+    },
+    {
+      "path": "base44/functions/manageFeatureReports/entry.ts",
+      "line": 232,
+      "text": "    if (action === 'delete') {"
+    },
+    {
+      "path": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 128,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 132,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/checkGmailConnection/entry.ts",
+      "line": 4,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/checkGmailConnection/entry.ts",
+      "line": 8,
+      "text": "        const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/checkGmailConnection/entry.ts",
+      "line": 15,
+      "text": "            user = await base44.auth.me();"
+    },
+    {
+      "path": "base44/functions/updateJurisdictionRewriteAuthority/entry.ts",
+      "line": 8,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/updateJurisdictionRewriteAuthority/entry.ts",
+      "line": 11,
+      "text": "    const user = await base44.auth.me().catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/googleDriveCustomAuth/entry.ts",
+      "line": 6,
+      "text": "Deno.serve(() => Response.json({"
+    },
+    {
+      "path": "base44/functions/checkPermitFollowupReminders/entry.ts",
+      "line": 11,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/checkPermitFollowupReminders/entry.ts",
+      "line": 15,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'checkPermitFollowupReminders');\r"
+    },
+    {
+      "path": "base44/functions/checkPermitFollowupReminders/entry.ts",
+      "line": 18,
+      "text": "      const user = await base44.auth.me().catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/zzCleanupAction/entry.ts",
+      "line": 55,
+      "text": "Deno.serve(async (request: Request) => {"
+    },
+    {
+      "path": "base44/functions/zzCleanupAction/entry.ts",
+      "line": 59,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/zzCleanupAction/entry.ts",
+      "line": 73,
+      "text": "    if (action === 'zz_scan' || action === 'zz_cleanup') {"
+    },
+    {
+      "path": "base44/functions/zzCleanupAction/entry.ts",
+      "line": 138,
+      "text": "    if (action === 'purge_dangling_ref') {"
+    },
+    {
+      "path": "base44/functions/zzCleanupAction/entry.ts",
+      "line": 166,
+      "text": "    if (action === 'repair_back_stamp') {"
+    },
+    {
+      "path": "base44/functions/zzCleanupAction/entry.ts",
+      "line": 193,
+      "text": "    if (action === 'get_row') {"
+    },
+    {
+      "path": "base44/functions/zzCleanupAction/entry.ts",
+      "line": 206,
+      "text": "    if (action === 'delete_orphan_by_id') {"
+    },
+    {
+      "path": "base44/functions/issuePasswordReset/entry.ts",
+      "line": 37,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/issuePasswordReset/entry.ts",
+      "line": 47,
+      "text": "      actor = await authenticateSignShopSession(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/issueAdminSettingsAccess/entry.ts",
+      "line": 4,
+      "text": "import { verifyBadgeCredential } from '../../shared/timeClockBadgeVerify.ts';"
+    },
+    {
+      "path": "base44/functions/issueAdminSettingsAccess/entry.ts",
+      "line": 48,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/issueAdminSettingsAccess/entry.ts",
+      "line": 62,
+      "text": "      const badgeAuth = await verifyBadgeCredential("
+    },
+    {
+      "path": "base44/functions/issueAdminSettingsAccess/entry.ts",
+      "line": 84,
+      "text": "      const user = await authenticateSignShopSession(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/sendGmail/entry.ts",
+      "line": 22,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/sendGmail/entry.ts",
+      "line": 36,
+      "text": "          const user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/permittingOfficeAuthorityReview/entry.ts",
+      "line": 5,
+      "text": "Deno.serve(async req=>{\r"
+    },
+    {
+      "path": "base44/functions/permittingOfficeAuthorityReview/entry.ts",
+      "line": 7,
+      "text": "  const base44=withEntityRateLimitRetry(createClientFromRequest(req)),user=await base44.auth.me().catch(()=>null);\r"
+    },
+    {
+      "path": "base44/functions/fleetLifecycleAction/entry.ts",
+      "line": 18,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetLifecycleAction/entry.ts",
+      "line": 118,
+      "text": "Deno.serve(async req => {"
+    },
+    {
+      "path": "base44/functions/quickbooksExport/entry.ts",
+      "line": 46,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/quickbooksExport/entry.ts",
+      "line": 50,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/quickbooksExport/entry.ts",
+      "line": 62,
+      "text": "    if (action === \"status\") {"
+    },
+    {
+      "path": "base44/functions/quickbooksExport/entry.ts",
+      "line": 104,
+      "text": "    if (action === \"dry_run\") {"
+    },
+    {
+      "path": "base44/functions/quickbooksExport/entry.ts",
+      "line": 114,
+      "text": "    if (action === \"connect\") {"
+    },
+    {
+      "path": "base44/functions/quickbooksExport/entry.ts",
+      "line": 122,
+      "text": "    if (action === \"disconnect\") {"
+    },
+    {
+      "path": "base44/functions/quickbooksExport/entry.ts",
+      "line": 141,
+      "text": "      const doc = spec.doc_type || (action === \"pull_accounts\" ? \"account\" : \"\");"
+    },
+    {
+      "path": "base44/functions/fleetRepairEstimateAction/entry.ts",
+      "line": 18,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetRepairEstimateAction/entry.ts",
+      "line": 26,
+      "text": "Deno.serve(async req => {"
+    },
+    {
+      "path": "base44/functions/fleetRepairEstimateAction/entry.ts",
+      "line": 41,
+      "text": "    if (action === 'policy_list') {"
+    },
+    {
+      "path": "base44/functions/fleetRepairEstimateAction/entry.ts",
+      "line": 45,
+      "text": "    if (action === 'policy_create') {"
+    },
+    {
+      "path": "base44/functions/fleetRepairEstimateAction/entry.ts",
+      "line": 62,
+      "text": "    if (action === 'policy_update') {"
+    },
+    {
+      "path": "base44/functions/fleetRepairEstimateAction/entry.ts",
+      "line": 77,
+      "text": "    if (action === 'policy_delete') {"
+    },
+    {
+      "path": "base44/functions/fleetRepairEstimateAction/entry.ts",
+      "line": 86,
+      "text": "    const workOrderId = norm(body?.work_order_id || (action === 'get' ? body?.id : '') || body?.estimate?.work_order_id);"
+    },
+    {
+      "path": "base44/functions/fleetRepairEstimateAction/entry.ts",
+      "line": 87,
+      "text": "    if (action === 'get') {"
+    },
+    {
+      "path": "base44/functions/fleetRepairEstimateAction/entry.ts",
+      "line": 100,
+      "text": "    if (action === 'save') {"
+    },
+    {
+      "path": "base44/functions/fleetRepairEstimateAction/entry.ts",
+      "line": 122,
+      "text": "    if (action === 'submit') {"
+    },
+    {
+      "path": "base44/functions/fleetRepairEstimateAction/entry.ts",
+      "line": 130,
+      "text": "    if (action === 'decide') {"
+    },
+    {
+      "path": "base44/functions/workspacePrefsAction/entry.ts",
+      "line": 17,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/workspacePrefsAction/entry.ts",
+      "line": 21,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/workspacePrefsAction/entry.ts",
+      "line": 37,
+      "text": "    if (action === 'prefs_get') {"
+    },
+    {
+      "path": "base44/functions/workspacePrefsAction/entry.ts",
+      "line": 49,
+      "text": "    if (action === 'prefs_update') {"
+    },
+    {
+      "path": "base44/functions/scanPermittingOffice/entry.ts",
+      "line": 8,
+      "text": "Deno.serve(async req=>{let reporter:any=silentScanReporter;try{\r"
+    },
+    {
+      "path": "base44/functions/scanPermittingOffice/entry.ts",
+      "line": 9,
+      "text": " const client=withEntityRateLimitRetry(createClientFromRequest(req)),body=await req.json();let user=await client.auth.me().catch(()=>null);if(!user&&body.session_token)user=await authenticateSignShopSession(client,body.session_token);if(user?.role!=='admin')return Response.json({error:'Admin access required'},{status:403});\r"
+    },
+    {
+      "path": "base44/functions/sendEmail/entry.ts",
+      "line": 6,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/sendEmail/entry.ts",
+      "line": 10,
+      "text": "    const actor = await authenticateSignShopSession(base44, payload?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetReservationAction/entry.ts",
+      "line": 20,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetReservationAction/entry.ts",
+      "line": 80,
+      "text": "Deno.serve(async req=>{"
+    },
+    {
+      "path": "base44/functions/fleetBulkMaintenancePlan/entry.ts",
+      "line": 15,
+      "text": "  const user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/fleetBulkMaintenancePlan/entry.ts",
+      "line": 124,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetBulkMaintenancePlan/entry.ts",
+      "line": 159,
+      "text": "    if (action === 'commit' && text(body?.preview_fingerprint) !== previewFingerprint) {"
+    },
+    {
+      "path": "base44/functions/fleetBulkMaintenancePlan/entry.ts",
+      "line": 201,
+      "text": "      would_create: plan.filter(row => row.action === 'create').length,"
+    },
+    {
+      "path": "base44/functions/fleetBulkMaintenancePlan/entry.ts",
+      "line": 202,
+      "text": "      already_applied: plan.filter(row => row.action === 'already_applied').length,"
+    },
+    {
+      "path": "base44/functions/fleetBulkMaintenancePlan/entry.ts",
+      "line": 203,
+      "text": "      equivalent_existing: plan.filter(row => row.action === 'skip_existing_equivalent').length,"
+    },
+    {
+      "path": "base44/functions/fleetBulkMaintenancePlan/entry.ts",
+      "line": 207,
+      "text": "    if (action === 'preview') return Response.json({ success: blockers === 0, preview: true, preview_fingerprint: previewFingerprint, plan, summary });"
+    },
+    {
+      "path": "base44/functions/fleetBulkMaintenancePlan/entry.ts",
+      "line": 215,
+      "text": "      if (entry.action === 'already_applied') {"
+    },
+    {
+      "path": "base44/functions/fleetBulkMaintenancePlan/entry.ts",
+      "line": 219,
+      "text": "      if (entry.action === 'skip_existing_equivalent') {"
+    },
+    {
+      "path": "base44/functions/driveOAuthInitiate/entry.ts",
+      "line": 6,
+      "text": "Deno.serve(() => Response.json({"
+    },
+    {
+      "path": "base44/functions/fleetIntegrityAudit/entry.ts",
+      "line": 20,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetIntegrityAudit/entry.ts",
+      "line": 23,
+      "text": "    const user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/ensureBuilderPriceRevision/entry.ts",
+      "line": 94,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/ensureBuilderPriceRevision/entry.ts",
+      "line": 98,
+      "text": "    // Fall back to auth.me() when no sign-shop session token is supplied so"
+    },
+    {
+      "path": "base44/functions/ensureBuilderPriceRevision/entry.ts",
+      "line": 101,
+      "text": "    try { actor = await authenticateSignShopSession(base44, body?.session_token); }"
+    },
+    {
+      "path": "base44/functions/ensureBuilderPriceRevision/entry.ts",
+      "line": 102,
+      "text": "    catch { actor = await base44.auth.me().catch(() => null); }"
+    },
+    {
+      "path": "base44/functions/permittingSourceOcrEvidence/entry.ts",
+      "line": 7,
+      "text": "Deno.serve(async req => {\r"
+    },
+    {
+      "path": "base44/functions/permittingSourceOcrEvidence/entry.ts",
+      "line": 10,
+      "text": "    const user=await base44.auth.me().catch(()=>null);\r"
+    },
+    {
+      "path": "base44/functions/translateSmartsheetNotes/entry.ts",
+      "line": 168,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/translateSmartsheetNotes/entry.ts",
+      "line": 172,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/ensureNewEstimate/entry.ts",
+      "line": 84,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/ensureNewEstimate/entry.ts",
+      "line": 88,
+      "text": "    await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/sourceMonitorScan/entry.ts",
+      "line": 19,
+      "text": "Deno.serve(async (req: Request) => {"
+    },
+    {
+      "path": "base44/functions/sourceMonitorScan/entry.ts",
+      "line": 23,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, \"sourceMonitorScan\");"
+    },
+    {
+      "path": "base44/functions/sourceMonitorScan/entry.ts",
+      "line": 26,
+      "text": "      const user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/dataIntegrityAction/entry.ts",
+      "line": 64,
+      "text": "Deno.serve(async (request: Request) => {"
+    },
+    {
+      "path": "base44/functions/dataIntegrityAction/entry.ts",
+      "line": 68,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/dataIntegrityAction/entry.ts",
+      "line": 85,
+      "text": "    if (action === 'list_orphans') {"
+    },
+    {
+      "path": "base44/functions/dataIntegrityAction/entry.ts",
+      "line": 91,
+      "text": "    if (action === 'relink') {"
+    },
+    {
+      "path": "base44/functions/dataIntegrityAction/entry.ts",
+      "line": 160,
+      "text": "    if (action === 'zz_scan' || action === 'zz_cleanup') {"
+    },
+    {
+      "path": "base44/functions/dataIntegrityAction/entry.ts",
+      "line": 190,
+      "text": "          actor_email: actor.email, action: action === 'zz_cleanup' ? 'zz_cleanup' : 'zz_scan',"
+    },
+    {
+      "path": "base44/functions/dataIntegrityAction/entry.ts",
+      "line": 203,
+      "text": "    if (action === 'repair_back_stamp') {"
+    },
+    {
+      "path": "base44/functions/restoreMasterInventory/entry.ts",
+      "line": 1,
+      "text": "Deno.serve(() => Response.json({ success: false, error: 'Migration endpoint retired' }, { status: 410 }));"
+    },
+    {
+      "path": "base44/functions/propertySearch/entry.ts",
+      "line": 3,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/propertySearch/entry.ts",
+      "line": 6,
+      "text": "    const user = await base44.auth.me();"
+    },
+    {
+      "path": "base44/functions/fleetPartLookupAction/entry.ts",
+      "line": 19,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetPartLookupAction/entry.ts",
+      "line": 118,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetPartLookupAction/entry.ts",
+      "line": 131,
+      "text": "    if (action === 'analyze_result') {"
+    },
+    {
+      "path": "base44/functions/fleetPartLookupAction/entry.ts",
+      "line": 173,
+      "text": "    if (action === 'update_review') {"
+    },
+    {
+      "path": "base44/functions/fleetPartLookupAction/entry.ts",
+      "line": 190,
+      "text": "    if (action === 'match_existing') {"
+    },
+    {
+      "path": "base44/functions/fleetPartLookupAction/entry.ts",
+      "line": 206,
+      "text": "    if (action === 'dismiss') {"
+    },
+    {
+      "path": "base44/functions/fleetPartLookupAction/entry.ts",
+      "line": 213,
+      "text": "    if (action === 'promote') {"
+    },
+    {
+      "path": "base44/functions/ensureEstimateCustomer/entry.ts",
+      "line": 160,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/ensureEstimateCustomer/entry.ts",
+      "line": 164,
+      "text": "    await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 111,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 117,
+      "text": "  const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 132,
+      "text": "  if (action === 'get_health') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 146,
+      "text": "  if (action === 'get_inventory') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 155,
+      "text": "  if (action === 'search_hot') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 173,
+      "text": "  if (action === 'list_folder') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 263,
+      "text": "  if (action === 'queue_upload') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 343,
+      "text": "  if (action === 'command_status') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 367,
+      "text": "  if (action === 'secure_download') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 397,
+      "text": "  if (action === 'get_customer_files') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 414,
+      "text": "  if (action === 'link_review') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 424,
+      "text": "  if (action === 'list_trash') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 440,
+      "text": "  if (action === 'link_decide') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 465,
+      "text": "  if (action === 'send_file_email') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 498,
+      "text": "  if (action === 'admin_settings') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 514,
+      "text": "  if (action === 'promote_agent' || action === 'demote_agent') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 521,
+      "text": "    if (action === 'promote_agent') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 554,
+      "text": "  if (action === 'save_root') {"
+    },
+    {
+      "path": "base44/functions/fileBridgeAction/entry.ts",
+      "line": 589,
+      "text": "  if (action === 'delete_root') {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncTraceRead/entry.ts",
+      "line": 4,
+      "text": "export default async function(req) {"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncTraceRead/entry.ts",
+      "line": 7,
+      "text": "    const actor = body.session_token ? await authenticateSignShopSession(client, body.session_token) : await client.auth.me();"
+    },
+    {
+      "path": "base44/functions/permittingOperationalAlerts/entry.ts",
+      "line": 18,
+      "text": "Deno.serve(async (req: Request) => {\r"
+    },
+    {
+      "path": "base44/functions/permittingOperationalAlerts/entry.ts",
+      "line": 22,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, \"permittingOperationalAlerts\");\r"
+    },
+    {
+      "path": "base44/functions/permittingOperationalAlerts/entry.ts",
+      "line": 25,
+      "text": "      const user = await base44.auth.me().catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 354,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 358,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 362,
+      "text": "    if (action === 'default_sort_get') {"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 368,
+      "text": "    if (action === 'default_sort_set') {"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 374,
+      "text": "    if (action === 'roster') {"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 378,
+      "text": "    if (action === 'preferences_get') {"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 381,
+      "text": "    if (action === 'preferences_set') {"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 385,
+      "text": "    if (action === 'create') return Response.json(await createIfAbsent(SalesFilter, actor, body?.data));"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 386,
+      "text": "    if (action === 'copy') return Response.json(await copyUnique(SalesFilter, actor, body?.source));"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 387,
+      "text": "    if (action === 'update') return Response.json({ record: await updateCollaborative(SalesFilter, body, actor) });"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 388,
+      "text": "    if (action === 'selection') return Response.json({ record: await setSelection(SalesFilter, body, actor) });"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 389,
+      "text": "    if (action === 'delete') return Response.json(await deleteOwned(SalesFilter, body, actor));"
+    },
+    {
+      "path": "base44/functions/fleetSearch/entry.ts",
+      "line": 33,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetSearch/entry.ts",
+      "line": 37,
+      "text": "    const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/permittingSourceAuthorityReview/entry.ts",
+      "line": 7,
+      "text": "Deno.serve(async req=>{\r"
+    },
+    {
+      "path": "base44/functions/permittingSourceAuthorityReview/entry.ts",
+      "line": 9,
+      "text": "  const base44=withEntityRateLimitRetry(createClientFromRequest(req)),user=await base44.auth.me().catch(()=>null);\r"
+    },
+    {
+      "path": "base44/functions/batchUpdateJurisdictions/entry.ts",
+      "line": 8,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/batchUpdateJurisdictions/entry.ts",
+      "line": 11,
+      "text": "    const user = await base44.auth.me();\r"
+    },
+    {
+      "path": "base44/functions/importOrders/entry.ts",
+      "line": 27,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/importOrders/entry.ts",
+      "line": 45,
+      "text": "    actor = await authenticateSignShopSession(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/permittingScanStatus/entry.ts",
+      "line": 5,
+      "text": "Deno.serve(async req=>{try{const client=withEntityRateLimitRetry(createClientFromRequest(req),{maxRetries:1}),body=await req.json();let user=await client.auth.me().catch(()=>null);if(!user && body.session_token)user=await authenticateSignShopSession(client,body.session_token);if(!user?.id||!user?.email)return Response.json({error:'Sign in required'},{status:403});if(!scanToken(body.action_token))return Response.json({error:'Invalid action token'},{status:400});const rows=await client.asServiceRole.entities.PermittingScanRun.filter({action_token:body.action_token,owner_email:String(user.email || '').toLowerCase()},'created_date',2);if(rows.length>1)return Response.json({error:'Duplicate activity identity requires review'},{status:409});if(user.role!=='admin'&&rows[0]&&(!['address','address_archive','address_discovery'].includes(rows[0].action_kind)||rows[0].owner_id!==user.id))return Response.json({error:'This activity requires admin access'},{status:403});return Response.json({run:rows[0] || null});}catch(e){const s=Number(e?.status||e?.response?.status||0);if(s===429||/rate limit|too many requests/i.test(String(e?.message||'')))return Response.json({error:'Scan activity is busy. Try again shortly.',retry_after_ms:3000},{status:429,headers:{'Retry-After':'3'}});return Response.json({error:'Scan activity could not be loaded'},{status:500});}});"
+    },
+    {
+      "path": "base44/functions/fleetAlertSettingsAction/entry.ts",
+      "line": 10,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetAlertSettingsAction/entry.ts",
+      "line": 40,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetAlertSettingsAction/entry.ts",
+      "line": 65,
+      "text": "    if (action === 'get') {"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 147,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 151,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 157,
+      "text": "    if (action === 'approve_quote') {"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 160,
+      "text": "    if (action === 'authorize_send') {"
+    },
+    {
+      "path": "base44/functions/verifyLogin/entry.ts",
+      "line": 34,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/jurisdiction_research/entry.ts",
+      "line": 9,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/jurisdiction_research/entry.ts",
+      "line": 12,
+      "text": "    const user = await base44.auth.me();"
+    },
+    {
+      "path": "base44/functions/manageQuoteApprovalSettings/entry.ts",
+      "line": 30,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageQuoteApprovalSettings/entry.ts",
+      "line": 34,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageQuoteApprovalSettings/entry.ts",
+      "line": 40,
+      "text": "    if (action === 'get') {"
+    },
+    {
+      "path": "base44/functions/manageQuoteApprovalSettings/entry.ts",
+      "line": 53,
+      "text": "    if (action === 'save_threshold') {"
+    },
+    {
+      "path": "base44/functions/fleetMeterMaintenanceGeneration/entry.ts",
+      "line": 44,
+      "text": "Deno.serve(async req => {"
+    },
+    {
+      "path": "base44/functions/fleetMeterMaintenanceGeneration/entry.ts",
+      "line": 47,
+      "text": "    const user = await base44.auth.me().catch(()=>null);"
+    },
+    {
+      "path": "base44/functions/adminBootstrapLogin/entry.ts",
+      "line": 1,
+      "text": "Deno.serve(() => Response.json("
+    },
+    {
+      "path": "base44/functions/permittingHtmlEvidence/entry.ts",
+      "line": 4,
+      "text": "Deno.serve(async req=>{\r"
+    },
+    {
+      "path": "base44/functions/permittingHtmlEvidence/entry.ts",
+      "line": 6,
+      "text": "  const base44=withEntityRateLimitRetry(createClientFromRequest(req)),user=await base44.auth.me().catch(()=>null);\r"
+    },
+    {
+      "path": "base44/functions/monitorJurisdictionChanges/entry.ts",
+      "line": 74,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/monitorJurisdictionChanges/entry.ts",
+      "line": 78,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'monitorJurisdictionChanges');"
+    },
+    {
+      "path": "base44/functions/hostedAssetManifest/entry.ts",
+      "line": 27,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/hostedAssetManifest/entry.ts",
+      "line": 39,
+      "text": "      const actor = await authenticateSignShopSession(base44, body?.session_token).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/managePTOConfig/entry.ts",
+      "line": 3,
+      "text": "import { verifyAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';"
+    },
+    {
+      "path": "base44/functions/managePTOConfig/entry.ts",
+      "line": 613,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/managePTOConfig/entry.ts",
+      "line": 617,
+      "text": "    const admin = await verifyAdminSettingsCapability(base44, body?.admin_capability);"
+    },
+    {
+      "path": "base44/functions/managePTOConfig/entry.ts",
+      "line": 625,
+      "text": "    if (action === 'create') return Response.json(await createPolicy(Policy, Audit, body, admin));"
+    },
+    {
+      "path": "base44/functions/managePTOConfig/entry.ts",
+      "line": 626,
+      "text": "    if (action === 'update') return Response.json(await updatePolicy(Policy, Audit, body, admin));"
+    },
+    {
+      "path": "base44/functions/managePTOConfig/entry.ts",
+      "line": 627,
+      "text": "    if (action === 'delete') return Response.json(await deletePolicy(Policy, Balance, Audit, body, admin));"
+    },
+    {
+      "path": "base44/functions/managePTOConfig/entry.ts",
+      "line": 628,
+      "text": "    if (action === 'assign_balance') return Response.json(await assignBalance(Balance, Policy, Authorized, Audit, body, admin));"
+    },
+    {
+      "path": "base44/functions/migrateEstimatorConfig/entry.ts",
+      "line": 1,
+      "text": "Deno.serve(() => Response.json("
+    },
+    {
+      "path": "base44/functions/googleDriveOAuth/entry.ts",
+      "line": 7,
+      "text": "Deno.serve(() => Response.json({"
+    },
+    {
+      "path": "base44/functions/cagisSearch/entry.ts",
+      "line": 4,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/cagisSearch/entry.ts",
+      "line": 7,
+      "text": "    const user = await base44.auth.me();\r"
+    },
+    {
+      "path": "base44/functions/ensureNewCustomer/entry.ts",
+      "line": 74,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/ensureNewCustomer/entry.ts",
+      "line": 78,
+      "text": "    await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/migrateCredentials/entry.ts",
+      "line": 6,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/migrateCredentials/entry.ts",
+      "line": 13,
+      "text": "      actor = await authenticateSignShopSession(base44, body?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/migrateCredentials/entry.ts",
+      "line": 23,
+      "text": "    const me = await base44.auth.me().catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/gmailAuthInitiate/entry.ts",
+      "line": 4,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/gmailAuthInitiate/entry.ts",
+      "line": 7,
+      "text": "        const user = await base44.auth.me();"
+    },
+    {
+      "path": "base44/functions/calculateTravelMiles/entry.ts",
+      "line": 45,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/calculateTravelMiles/entry.ts",
+      "line": 50,
+      "text": "    let user = await authenticateSignShopSession(base44, body?.session_token).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/calculateTravelMiles/entry.ts",
+      "line": 51,
+      "text": "    if (!user) user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/callJurisdictionAgent/entry.ts",
+      "line": 11,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/callJurisdictionAgent/entry.ts",
+      "line": 14,
+      "text": "    const user = await base44.auth.me();\r"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 63,
+      "text": "  if (action === 'start') return sha256(JSON.stringify({ action, note:clean(body?.note,1200) }));"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 89,
+      "text": "    summary.action === action &&"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 341,
+      "text": "    original.action === 'save' && attempt.action === 'save' &&"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 535,
+      "text": "  if (action === 'save' && ['started','failed'].includes(receipt.status) && (receipt?.result_summary?.retry_reserved_by_request_id ||"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 671,
+      "text": "  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 834,
+      "text": "  if (action === 'estimate_submit') {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1009,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1023,
+      "text": "      if (action === 'admin_list_links') {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1028,
+      "text": "      if (action === 'admin_create_link') {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1061,
+      "text": "      if (action === 'admin_update_estimate_permission') {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1074,
+      "text": "      if (action === 'admin_update_scope') {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1092,
+      "text": "      if (action === 'admin_reconcile_mechanic_mutation') {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1103,
+      "text": "      if (action === 'admin_revoke_link') {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1129,
+      "text": "    const statusMutationAction = action === 'mutation_status' ? String(body?.mutation_action || '').trim() : '';"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1130,
+      "text": "    if (action === 'mutation_status') {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1136,
+      "text": "    if (action === 'bootstrap') return json(await portalPayload(base44,grant,Access));"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1148,
+      "text": "    if (action === 'mutation_status') {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1153,
+      "text": "    if (action === 'mutation_status') {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1374,
+      "text": "    if (action === 'save' &&"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1387,
+      "text": "    if (action === 'estimate_save' || action === 'estimate_submit') {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1402,
+      "text": "      if (action === 'estimate_save') {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1440,
+      "text": "    if (action === 'start') {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1496,
+      "text": "    if (action === 'save') {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1510,
+      "text": "        row?.result_summary?.action === 'save' &&"
+    },
+    {
+      "path": "base44/functions/detectSalesDuplicates/entry.ts",
+      "line": 41,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/detectSalesDuplicates/entry.ts",
+      "line": 45,
+      "text": "  const isScheduled = await hasWorkflowInvocationCapability(body, 'detectSalesDuplicates');"
+    },
+    {
+      "path": "base44/functions/detectSalesDuplicates/entry.ts",
+      "line": 50,
+      "text": "      actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/detectSalesDuplicates/entry.ts",
+      "line": 63,
+      "text": "    const user = await base44.auth.me().catch(() => null);"
+    },
+    {
+      "path": "base44/functions/queueFeed/entry.ts",
+      "line": 380,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/queueFeed/entry.ts",
+      "line": 390,
+      "text": "    const sessionUser = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageAutomationConfig/entry.ts",
+      "line": 3,
+      "text": "import { verifyAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';"
+    },
+    {
+      "path": "base44/functions/manageAutomationConfig/entry.ts",
+      "line": 282,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageAutomationConfig/entry.ts",
+      "line": 286,
+      "text": "    await verifyAdminSettingsCapability(base44, body?.admin_capability);"
+    },
+    {
+      "path": "base44/functions/manageAutomationConfig/entry.ts",
+      "line": 293,
+      "text": "    if (action === 'automation_create') return Response.json(await createRule(Rule, body?.data, WorkOrder));"
+    },
+    {
+      "path": "base44/functions/manageAutomationConfig/entry.ts",
+      "line": 294,
+      "text": "    if (action === 'automation_update') return Response.json({ record: await updateRule(Rule, body, WorkOrder) });"
+    },
+    {
+      "path": "base44/functions/manageAutomationConfig/entry.ts",
+      "line": 295,
+      "text": "    if (action === 'automation_toggle') return Response.json({ record: await toggleRule(Rule, body, WorkOrder) });"
+    },
+    {
+      "path": "base44/functions/manageAutomationConfig/entry.ts",
+      "line": 296,
+      "text": "    if (action === 'automation_delete') return Response.json(await deleteRule(Rule, body));"
+    },
+    {
+      "path": "base44/functions/manageAutomationConfig/entry.ts",
+      "line": 297,
+      "text": "    if (action === 'email_group_create') return Response.json(await createGroup(Group, body?.data));"
+    },
+    {
+      "path": "base44/functions/manageAutomationConfig/entry.ts",
+      "line": 298,
+      "text": "    if (action === 'email_group_update') return Response.json({ record: await updateGroup(Group, body) });"
+    },
+    {
+      "path": "base44/functions/manageAutomationConfig/entry.ts",
+      "line": 299,
+      "text": "    if (action === 'email_group_delete') return Response.json(await deleteGroup(Group, Rule, body));"
+    },
+    {
+      "path": "base44/functions/ensureCustomerSummary/entry.ts",
+      "line": 231,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/ensureCustomerSummary/entry.ts",
+      "line": 235,
+      "text": "    // Fall back to auth.me() when no sign-shop session token is supplied so\r"
+    },
+    {
+      "path": "base44/functions/ensureCustomerSummary/entry.ts",
+      "line": 238,
+      "text": "    try { user = await authenticateSignShopSession(base44, body?.session_token); }\r"
+    },
+    {
+      "path": "base44/functions/ensureCustomerSummary/entry.ts",
+      "line": 239,
+      "text": "    catch { user = await base44.auth.me().catch(() => null); }\r"
+    },
+    {
+      "path": "base44/functions/downloadPermitPDF/entry.ts",
+      "line": 77,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/downloadPermitPDF/entry.ts",
+      "line": 82,
+      "text": "    const user = await base44.auth.me().catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/manageUserCalendarSettings/entry.ts",
+      "line": 54,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/manageUserCalendarSettings/entry.ts",
+      "line": 58,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageUserCalendarSettings/entry.ts",
+      "line": 65,
+      "text": "    if (action === 'load') {"
+    },
+    {
+      "path": "base44/functions/sendStaffEmail/entry.ts",
+      "line": 50,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/sendStaffEmail/entry.ts",
+      "line": 57,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/linkAddressResearchDocument/entry.ts",
+      "line": 7,
+      "text": "Deno.serve(async req=>{\r"
+    },
+    {
+      "path": "base44/functions/analyzeDocument/entry.ts",
+      "line": 3,
+      "text": "Deno.serve(async (req) => {"
+    },
+    {
+      "path": "base44/functions/analyzeDocument/entry.ts",
+      "line": 6,
+      "text": "    const user = await base44.auth.me();"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 72,
+      "text": "Deno.serve(async (req) => {\r"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 79,
+      "text": "    if (action === 'issue_invite') {\r"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 82,
+      "text": "        actor = await authenticateSignShopSession(base44, body?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 148,
+      "text": "    if (action === 'validate') {\r"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 152,
+      "text": "    if (action === 'save_credentials') {\r"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 186,
+      "text": "    if (action === 'save_hr') {\r"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 199,
+      "text": "    if (action === 'complete') {\r"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 1000
+}

@@ -1,7 +1,7 @@
 {
   "name": "Payment",
   "type": "object",
-  "description": "Canonical payment applied to an Invoice. Always written by invoicingAction so invoice balances stay consistent — never edited directly. Void/refund rather than delete to preserve the audit trail.",
+  "description": "Canonical payment applied to an Invoice. Always written by invoicingAction so invoice balances stay consistent \u2014 never edited directly. Void/refund rather than delete to preserve the audit trail.",
   "properties": {
     "schema_version": {
       "type": "number",
@@ -19,16 +19,30 @@
       "type": "string",
       "description": "Denormalized from the invoice for AR queries."
     },
-    "opportunity_id": { "type": "string" },
-    "estimate_id": { "type": "string" },
-    "work_order_id": { "type": "string" },
+    "opportunity_id": {
+      "type": "string"
+    },
+    "estimate_id": {
+      "type": "string"
+    },
+    "work_order_id": {
+      "type": "string"
+    },
     "amount": {
       "type": "number",
-      "description": "Positive amount applied to the invoice."
+      "description": "Signed amount applied to the invoice: positive for payments, negative for credit-memo and refund rows. Invoice amount_paid is the net sum of recorded + refunded rows."
     },
     "method": {
       "type": "string",
-      "enum": ["cash", "check", "card", "ach", "financing", "other"],
+      "enum": [
+        "cash",
+        "check",
+        "card",
+        "ach",
+        "financing",
+        "other",
+        "credit_memo"
+      ],
       "default": "other"
     },
     "reference_number": {
@@ -41,15 +55,76 @@
     },
     "status": {
       "type": "string",
-      "enum": ["recorded", "void", "refunded"],
-      "default": "recorded"
+      "enum": [
+        "recorded",
+        "void",
+        "refunded"
+      ],
+      "default": "recorded",
+      "description": "recorded = live row (payments positive, credit memos negative); refunded = a negative refund row or a fully-refunded original payment; void = reversed."
     },
-    "void_reason": { "type": "string" },
-    "voided_date": { "type": "string" },
-    "notes": { "type": "string" },
-    "created_by": { "type": "string" }
+    "void_reason": {
+      "type": "string"
+    },
+    "voided_date": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "refund_of_payment_id": {
+      "type": "string",
+      "description": "On refund rows: id of the original Payment this refund reverses."
+    },
+    "refunded_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "On original payments: cumulative refunded dollars so far (partial refunds allowed)."
+    },
+    "reconciliation_batch_id": {
+      "type": "string",
+      "description": "ReconciliationBatch this payment was swept into at cash close. Empty = still unreconciled. Set only by manageReconciliation."
+    },
+    "portal_source": {
+      "type": "string",
+      "description": "Event-class marker on portal-originated payment rows, e.g. \"added from Customer Portal\". Empty = staff-entered."
+    },
+    "portal_link_kind": {
+      "type": "string",
+      "description": "CustomerPortalLink.kind that originated a portal payment."
+    },
+    "portal_actor": {
+      "type": "string",
+      "description": "Link label / contact name recorded as the portal-side actor."
+    },
+    "recorded_via": {
+      "type": "string",
+      "description": "'portal' for portal-originated payments; empty for staff entry."
+    },
+    "portal_recorded_at": {
+      "type": "string",
+      "description": "ISO timestamp the portal payment was recorded."
+    },
+    "estimating_request_id": {
+      "type": "string",
+      "description": "Denormalized EstimatingRequest id for intake-chain reporting."
+    },
+    "deposit_applied_to_invoice_id": {
+      "type": "string",
+      "description": "On deposit rows: id of the Invoice this deposit was later applied to."
+    },
+    "gl_memo": {
+      "type": "string",
+      "description": "Free-text memo carried to GL/accounting exports."
+    },
+    "created_by": {
+      "type": "string"
+    }
   },
-  "required": ["invoice_id", "amount"],
+  "required": [
+    "invoice_id",
+    "amount"
+  ],
   "rls": {
     "create": {
       "user_condition": {

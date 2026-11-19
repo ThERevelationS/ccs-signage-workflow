@@ -1,0 +1,64 @@
+{
+ "jurisdiction_id": "6aea46f4e9a9897eec5d7757",
+ "jurisdiction_name": "Gilead Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR ZONING PERMIT 80 N. Walnut Street, Suite C Please see instructions on Page 2 Mt. Gilead, OH 43338 Zoning Office: 419-946-1911 www.morrowcountyohio.gov APPLICATION DATE Property Location Address Parcel # Township Property Existing Use As Applicant’s Name Owner/Leasee Contractor Applicant’s Address Type of Applicant: Owner’s Name (if different) Email Applicant STRUCTURE AREA Sq. Ft. SIGN AREA Sq. Ft. Structure Classification: Residential Agricultural Sign Dimensions Commercial Industrial Other Type of Sign Building Use: Structure Specifications: Living Space Sq. Ft. Non-Living Space Sq. Ft. # of Stories # of Bedrooms # of Bathrooms Building Classification Length of Structure Width of Structure Type of Frame Septic: Type of Sewage Disposal Septic Onsite Report (New Residence Only) Yes No PROPOSED SETBACKS (for your particular structure): Front Ft. Rear Ft. Right Side Ft. Lef",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "type",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "d2aa5baeea281083338133a2432101c4d47b388ff7d1ba9c14120b80b440d386",
+   "source_document_id": null,
+   "source_title": "d2aa5baeea281083338133a2432101c4d47b388ff7d1ba9c14120b80b440d386.pdf",
+   "official_url": "https://www.morrowcountyohio.gov/Zoning/Zoning%20Permit%20Application_2024.pdf?t=202412231014320"
+  },
+  {
+   "page": 1,
+   "snippet": "Application No.: __ ___ ____ __ ____ ____ APPLICATION FOR ZONING VARIANCE Board of Zoning Appeals ( Fees on back page) Name of Applicant: Mailing Address: Phone Number: Email: Location Description Address: Parcel Number: Property Zoned As: Township: Generally describe the nature of the variance: Information to include along with application: • Pl ans drawn to scale showing dimensions and shape of lot • Size and locations of existing buildings • Locations and dimensions of proposed buildings or alterations • Any natural or topographic peculiarities of the lot in question For a variance to be granted, the applicant must prove to the Board of Zoning Appeals that the following items are true : (please attach these comments on a separate piece of paper) . • Special conditions exist peculiar to the land or building in question. • That a literal interpretation of the ordinance (resolution) woul",
+   "tags": [
+    "process",
+    "authority"
+   ],
+   "weight": 4,
+   "source_sha256": "1d59276a3f0692738cc9eb67dd2853e9faefa457f335d4749090f53c67a5b39f",
+   "source_document_id": null,
+   "source_title": "1d59276a3f0692738cc9eb67dd2853e9faefa457f335d4749090f53c67a5b39f.pdf",
+   "official_url": "https://www.morrowcountyohio.gov/Zoning/Zoning%20Forms/BZA%20Variance%20Application.pdf?t=202512310822050"
+  },
+  {
+   "page": 1,
+   "snippet": "Application No.: ________ ________ ___ APPLICATION FOR CONDITIONAL USE Board of Zoning Appeals Fee: $ 150 Name of Applicant: Mailing Address: Phone Number: Email: Location Description Address: Parcel Number: Property Zoned As: Township: Permitted Conditional Use applying for: Information to include along with application: • Plat showing boundaries and divisions of the property, mark location where conditional use is to be permitted, and all abutting streets and properties. • If this is not your property, a signed copy of the property owner’s lease • Proof of public liability insurance • Location of existing and proposed water wells and septic tanks/sewer lines • Statement supporting evidence that the proposed use has complied with each of the general specific conditions listed in the Morrow County Zoning Regulations for this permitted use. The undersigned applies for a Conditional Use Zo",
+   "tags": [
+    "fee",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "cb418f6d1c75baec867d18a3069fdb5f37b9d79d4fcf97689069026a4620db0c",
+   "source_document_id": null,
+   "source_title": "cb418f6d1c75baec867d18a3069fdb5f37b9d79d4fcf97689069026a4620db0c.pdf",
+   "official_url": "https://www.morrowcountyohio.gov/Conditional%20Use%20Application.pdf?t=202603240940190"
+  },
+  {
+   "page": 2,
+   "snippet": "APPLICATION FOR ZONING PERMIT A Site Plan MUST be submitted with this Application. Page 2 of 2 Both Pages Required S ite Plan drawn to scale and includes dimensions Site Plan including location of well/septic Setbacks – Front, Right Side, Left Side, Rear If New Residential, copy of Morrow County Health Dept. Septic Onsite Report Completion of Application of Zoning Permit (Page 1) YOUR PERMIT APPLICATION will be reviewed for: Setbacks and actual land use. Example of a Typical Site Plan Garage PAGE 2 Access Bldg. House or Primary Bldg Edge Right-of-Way Road Centerline Stake Corners of Building Right Setback Left Setback Rear Setback Right Setback Stake Corners of Building Left Setback Front Setback Customer to Provide 80 N. Walnut Street, Suite C Mt. Gilead, OH 43338 Zoning Office: 419-946-1911 zoning @morrowcountyohio.gov",
+   "tags": [
+    "dimension",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "d2aa5baeea281083338133a2432101c4d47b388ff7d1ba9c14120b80b440d386",
+   "source_document_id": null,
+   "source_title": "d2aa5baeea281083338133a2432101c4d47b388ff7d1ba9c14120b80b440d386.pdf",
+   "official_url": "https://www.morrowcountyohio.gov/Zoning/Zoning%20Permit%20Application_2024.pdf?t=202412231014320"
+  }
+ ]
+}

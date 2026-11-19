@@ -1,0 +1,296 @@
+{
+  "at": "2026-11-18T15:07:01.370Z",
+  "keep": "6a958582ba45a19e934400bf",
+  "lose": "6a958582ba45a19e93440201",
+  "audit_key": "custmerge-audit:custmerge:6a958582ba45a19e934400bf:6a958582ba45a19e93440201",
+  "probe": {
+    "success": true,
+    "options_supported": false
+  },
+  "linked": {
+    "AllInOneEstimate": [],
+    "WorkOrder": []
+  },
+  "preview": {
+    "success": true,
+    "action": "preview_customer_merge",
+    "ok": true,
+    "run_key": "custmerge:6a958582ba45a19e934400bf:6a958582ba45a19e93440201",
+    "keep": {
+      "id": "6a958582ba45a19e934400bf",
+      "name": "Lyons & Lyons Co",
+      "master_account_id": "",
+      "master_account": ""
+    },
+    "lose": {
+      "id": "6a958582ba45a19e93440201",
+      "name": "Lyons & Lyons",
+      "master_account_id": "",
+      "master_account": ""
+    },
+    "master_account": {
+      "winner_master_account_id": "",
+      "winner_master_label": "",
+      "winner_descendant": false,
+      "reparent_children": true,
+      "loser_master_account_id": "",
+      "keep_master_account_id": "",
+      "note": "Winner keeps its own master account."
+    },
+    "child_accounts": [],
+    "prior_tombstones": 0,
+    "entities": [
+      {
+        "entity": "AllInOneEstimate",
+        "label": "All-in-one estimates",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "BrickStoneProject",
+        "label": "Brick & stone sections",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "CNCProject",
+        "label": "CNC sections",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "ChannelLetterInstallation",
+        "label": "Channel-letter sections",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "CustomItemsProject",
+        "label": "Custom-items sections",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "FoundationProject",
+        "label": "Foundation sections",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "LaserProject",
+        "label": "Laser sections",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "MaintenanceProject",
+        "label": "Maintenance sections",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "MetalProject",
+        "label": "Metal sections",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "Project",
+        "label": "Painting sections",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "VinylProject",
+        "label": "Vinyl sections",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "WorkOrder",
+        "label": "Work orders",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "Order",
+        "label": "Orders",
+        "kind": "id",
+        "linked": 0,
+        "optional": false,
+        "note": "customer_name is the Smartsheet mirror label (D2) — id only."
+      },
+      {
+        "entity": "Invoice",
+        "label": "Invoices",
+        "kind": "id",
+        "linked": 0,
+        "optional": false,
+        "note": "customer_display_name is a frozen issue-time audit label (D2) — id only."
+      },
+      {
+        "entity": "Payment",
+        "label": "Payments",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "ChangeOrder",
+        "label": "Change orders",
+        "kind": "id",
+        "linked": 0,
+        "optional": false,
+        "note": "customer_display_name frozen (D2) — id only."
+      },
+      {
+        "entity": "Opportunity",
+        "label": "Opportunities",
+        "kind": "id",
+        "linked": 0,
+        "optional": false,
+        "note": "customer_display_name is the captured pursuit label (D2) — id only."
+      },
+      {
+        "entity": "EstimatingRequest",
+        "label": "Estimating requests",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "CustomerContact",
+        "label": "Contacts",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "CustomerLocation",
+        "label": "Locations",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "CustomerNote",
+        "label": "Notes & flags",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "CustomerPortalLink",
+        "label": "Portal share links",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "PortalMessage",
+        "label": "Portal messages",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "CustomerFolderLink",
+        "label": "Folder links",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "CustomerSummary",
+        "label": "Customer summaries",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "CrmSuggestion",
+        "label": "CRM suggestions",
+        "kind": "id",
+        "linked": 0,
+        "optional": false,
+        "note": "Entity schema CrmSuggestion not found in app",
+        "status": "skipped_missing_entity"
+      },
+      {
+        "entity": "OpportunityActivity",
+        "label": "CRM activities",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "StoreCreditLedger",
+        "label": "Store-credit ledger",
+        "kind": "id",
+        "linked": 0,
+        "optional": false,
+        "note": "Append-only rows move with the account (D8); per-row balance_after stays the historical record."
+      },
+      {
+        "entity": "Announcement",
+        "label": "Announcements",
+        "kind": "ids",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "FileBridgeEvent",
+        "label": "File-bridge events",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "FileBridgeRecent",
+        "label": "File-bridge recent feed",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "FileBridgeUpload",
+        "label": "File-bridge uploads",
+        "kind": "id",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "FileIndex",
+        "label": "File index",
+        "kind": "ids",
+        "linked": 0,
+        "optional": false
+      },
+      {
+        "entity": "Customer",
+        "label": "Customer account links",
+        "kind": "customer_ref",
+        "linked": 0,
+        "optional": false,
+        "note": "Children of the loser re-parent to the winner; prior tombstones flatten to the final winner (D5)."
+      }
+    ],
+    "linked_total": 0,
+    "warnings": [
+      "Winner keeps its own master account.",
+      "Missing entity schemas skipped: CrmSuggestion."
+    ]
+  }
+}

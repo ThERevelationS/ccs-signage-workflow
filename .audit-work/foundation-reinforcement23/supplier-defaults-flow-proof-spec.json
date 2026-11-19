@@ -1,0 +1,184 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "004155bbf0f66614ca20e41e3ed6dcba5dd973d5",
+  "sourceArtifact": "supplier-defaults-baseline.json",
+  "dependencyArtifact": "supplier-defaults-dependency-source.json",
+  "fixtureArtifact": "supplier-defaults-fixture.json",
+  "sourceId": "synthetic-supplier-project",
+  "estimateId": "synthetic-supplier-estimate",
+  "sourceVersion": "synthetic-v1",
+  "savedVersion": "synthetic-v2",
+  "candidates": {
+    "legacyFoundationCalc.js": "supplier-defaults-candidate-legacyFoundationCalc.js",
+    "foundationCalc.js": "supplier-defaults-candidate-foundationCalc.js",
+    "ConcreteDeliveryPanel.jsx": "supplier-defaults-candidate-ConcreteDeliveryPanel.jsx"
+  },
+  "candidateHashes": {
+    "legacyFoundationCalc.js": "5fed3773159e2b1f0d547a35b931e0b2a2dd09e19413e7da162d1410c3947778",
+    "foundationCalc.js": "cf0f3f363ac2dda62106aeb82edbe3cec03b774d1ad0825215f5dd047342e5b9",
+    "ConcreteDeliveryPanel.jsx": "1f33ce28ef0ed5217fcfb5d01778bf0efbd6c9c404540c05c8632f51a954e0cb"
+  },
+  "acknowledgedSnapshot": {
+    "delivery": {
+      "concrete_total": 301.5,
+      "rounded_yards": 0.75,
+      "rate_per_yard": 219
+    },
+    "item": {
+      "item_total_cost": 111.11
+    },
+    "total_concrete_cost": 301.5
+  },
+  "validCurrentSnapshot": {
+    "delivery": {
+      "concrete_total": 344.25,
+      "rate_per_yard": 219,
+      "trucks": [
+        {
+          "rounded_yards": 0.75,
+          "cost": 344.25,
+          "small_order_fee": 145,
+          "fuel_fee": 35
+        }
+      ]
+    },
+    "item": {
+      "item_total_cost": 97.77777777777777
+    },
+    "total_concrete_cost": 344.25,
+    "grand_total": 442.02777777777777
+  },
+  "blockedSaveMessage": "Save paused: fix highlighted design inputs or catalog selections.",
+  "pageCaseCount": 7,
+  "browserCaseCount": 14,
+  "browserModes": [
+    {
+      "id": "valid",
+      "pricingUnavailable": false,
+      "panelTexts": [
+        "$344.25",
+        "0.75 CY · $219.00/CY",
+        "4000 AIR ENTRAINED",
+        "$210.00/CY",
+        "$9.00/CY",
+        "small load $145.00",
+        "fuel $35.00"
+      ],
+      "bomRow": [
+        "Ready-mix concrete (delivered)",
+        "0.75 CY",
+        "$344.25"
+      ]
+    },
+    {
+      "id": "held-missing-mix",
+      "pricingUnavailable": true,
+      "panelTexts": [
+        "Saved amounts (not current pricing)",
+        "$301.50",
+        "Catalog mix unavailable (4000_ae)",
+        "Truck 1 — 0.75 CY",
+        "$102.25"
+      ],
+      "catalogIssueCodes": [
+        "supplier_price_unavailable"
+      ],
+      "bomRow": [
+        "Concrete delivery/order (saved)",
+        "0.75 CY",
+        "$301.50"
+      ]
+    },
+    {
+      "id": "held-missing-fee",
+      "pricingUnavailable": true,
+      "panelTexts": [
+        "Saved amounts (not current pricing)",
+        "$301.50",
+        "Catalog mix unavailable (4000_ae)",
+        "$301.50"
+      ],
+      "catalogIssueCodes": [
+        "supplier_price_unavailable"
+      ],
+      "bomRow": [
+        "Concrete delivery/order (saved)",
+        "0.75 CY",
+        "$301.50"
+      ]
+    },
+    {
+      "id": "held-unsaved",
+      "pricingUnavailable": true,
+      "panelTexts": [
+        "Saved amounts (not current pricing)",
+        "Not saved",
+        "Catalog mix unavailable (4000_ae)"
+      ],
+      "catalogIssueCodes": [
+        "supplier_price_unavailable"
+      ],
+      "bomRow": [
+        "Concrete delivery/order (saved)",
+        "Not saved",
+        "Not saved"
+      ]
+    },
+    {
+      "id": "free-fuel-zero",
+      "pricingUnavailable": false,
+      "panelTexts": [
+        "$309.25",
+        "small load $145.00",
+        "$210.00/CY"
+      ],
+      "bomRow": [
+        "Ready-mix concrete (delivered)",
+        "0.75 CY",
+        "$309.25"
+      ]
+    },
+    {
+      "id": "no-supplier",
+      "pricingUnavailable": true,
+      "panelTexts": [
+        "Saved amounts (not current pricing)",
+        "Catalog mix unavailable (4000_ae)",
+        "$301.50"
+      ],
+      "catalogIssueCodes": [
+        "supplier_unavailable"
+      ],
+      "bomRow": [
+        "Concrete delivery/order (saved)",
+        "0.75 CY",
+        "$301.50"
+      ]
+    },
+    {
+      "id": "partial-catalog",
+      "pricingUnavailable": false,
+      "panelTexts": [
+        "$344.25",
+        "price unavailable",
+        "$210.00/CY"
+      ],
+      "bomRow": [
+        "Ready-mix concrete (delivered)",
+        "0.75 CY",
+        "$344.25"
+      ]
+    }
+  ],
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 900
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ]
+}

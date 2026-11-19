@@ -95,7 +95,7 @@ function ColorTagPicker({ value, onChange }) {
             </div>
             <div className="grid grid-cols-4 gap-1.5">
               {COLOR_SWATCHES.map(c => (
-                <button
+                <button type="button"
                   key={c}
                   onClick={() => { onChange(c); setOpen(false); }}
                   className={`w-6 h-6 rounded-full transition-all ${value === c ? "ring-2 ring-slate-900 ring-offset-1" : "hover:scale-110"}`}
@@ -123,7 +123,7 @@ export default function VinylWorkflowCardHeader({
     <CardHeader className="pb-2.5 pt-3">
       {/* Row 1 — title + total */}
       <div className="flex items-center gap-2 min-w-0">
-        <button
+        <button type="button"
           onClick={onToggleOpen}
           className="flex items-center justify-center w-6 h-6 rounded hover:bg-slate-100 flex-shrink-0 text-slate-500"
           title={open ? "Collapse" : "Expand"}

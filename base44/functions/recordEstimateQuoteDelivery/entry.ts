@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { estimateQuoteIssueKey } from '../../shared/estimateRevisionAudit.ts';
 import { createFoundationRecordWithRecovery } from '../../shared/opportunityFoundationPersistence.mjs';
@@ -40,9 +41,15 @@ function sameDelivery(row: any, data: any) {
     String(row?.attachment_sha256 || '').toLowerCase() === String(data?.attachment_sha256 || '').toLowerCase();
 }
 
+// Delivery telemetry boundary (#246/#296): this audit records send-time
+// outcome only (accepted by transport vs send attempt failed). Neither the
+// Gmail API transport nor the SMTP transport exposes a webhook/bounce channel
+// to this app, so post-send delivery/bounce data is genuinely unavailable.
+const DELIVERY_TELEMETRY_NOTE = 'Send-time outcome only — provider webhook/bounce telemetry is unavailable on this transport.';
+
 const QUOTE_APPROVAL_THRESHOLD_KEY = 'quote_approval_threshold';
 const DEFAULT_QUOTE_APPROVAL_THRESHOLD = 5000;
-const QUOTE_APPROVAL_REQUIRED_MESSAGE = 'This quote exceeds the internal approval threshold â€” a manager must approve it before sending.';
+const QUOTE_APPROVAL_REQUIRED_MESSAGE = 'This quote exceeds the internal approval threshold — a manager must approve it before sending.';
 
 const money = (value: unknown, fallback = 0) => {
   const parsed = Number(value);
@@ -139,7 +146,7 @@ async function approveEstimateQuote({ Estimate, Settings, user, body }: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const user = await authenticateSignShopSession(base44, body?.session_token);
 
@@ -171,8 +178,14 @@ Deno.serve(async (req) => {
     const gmailMessageId = cleanText(input.gmail_message_id, 512);
     const attachmentSha256 = cleanText(input.attachment_sha256, 128).toLowerCase();
     const sentAt = cleanText(input.sent_at, 64);
+    const deliveryOutcome = cleanText(input.delivery_status, 32) === 'failed' ? 'failed' : 'sent';
+    const failureReason = cleanText(input.failure_reason, 500);
+    const transport = cleanText(input.transport, 40) || 'gmail_api';
 
-    if (!estimateId || !recipientEmail || !gmailMessageId || !sentAt) {
+    if (!estimateId || !recipientEmail || !sentAt) {
+      return Response.json({ error: 'Estimate, recipient, and sent timestamp are required.' }, { status: 400 });
+    }
+    if (deliveryOutcome === 'sent' && !gmailMessageId) {
       return Response.json({ error: 'Estimate, recipient, Gmail message id, and sent timestamp are required.' }, { status: 400 });
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
@@ -191,7 +204,7 @@ Deno.serve(async (req) => {
     if (!estimate?.id) {
       return Response.json({ error: 'Estimate could not be verified for quote delivery history.' }, { status: 404 });
     }
-    // The recorded delivery must describe the estimate's current issued quote â€”
+    // The recorded delivery must describe the estimate's current issued quote —
     // an arbitrary version or foreign work order would let a session forge the
     // immutable delivery/audit trail.
     const issuedVersion = Math.max(0, whole(estimate.quote_version));
@@ -201,6 +214,55 @@ Deno.serve(async (req) => {
     const claimedWo = cleanText(input.work_order_id, 128);
     if (claimedWo && String(estimate.work_order_id || '') !== claimedWo) {
       return Response.json({ error: 'Quote delivery work order does not match the estimate.' }, { status: 409 });
+    }
+
+    // Failed send attempts are immutable audit rows too (#246/#296): no
+    // Gmail message id exists, so attempts dedupe on attempt_key/sent_at and
+    // skip the send-authorization backstop (the send already failed — this
+    // write only records that outcome; it never marks anything sent).
+    if (deliveryOutcome === 'failed') {
+      const attemptKey = `quote_delivery_attempt:${estimateId}:${quoteVersion}:${cleanText(input.attempt_key, 120) || `${recipientEmail}:${sentAt}`}`;
+      const existingAttempts = await Delivery.filter({ idempotency_key: attemptKey }).catch(() => []);
+      if (Array.isArray(existingAttempts) && existingAttempts.length) {
+        return Response.json({ delivery: existingAttempts[0], reused: true });
+      }
+      const priorAttempts = await Delivery.filter({ quote_issue_key: estimateQuoteIssueKey(estimateId, quoteVersion) }).catch(() => []);
+      const attemptRow = {
+        estimate_id: estimateId,
+        idempotency_key: attemptKey,
+        work_order_id: cleanText(estimate.work_order_id || input.work_order_id, 128),
+        quote_issue_key: estimateQuoteIssueKey(estimateId, quoteVersion),
+        quote_version: quoteVersion,
+        quote_issue_date: cleanText(input.quote_issue_date, 32),
+        quote_valid_days: Math.max(0, whole(input.quote_valid_days, 30)),
+        quote_expiration_date: cleanText(input.quote_expiration_date, 32),
+        quote_total: Number.isFinite(Number(input.quote_total)) ? Number(input.quote_total) : 0,
+        recipient_email: recipientEmail,
+        cc_emails: cleanText(input.cc_emails, 998),
+        bcc_emails: cleanText(input.bcc_emails, 998),
+        subject: cleanText(input.subject, 998),
+        delivery_method: 'email',
+        delivery_status: 'failed',
+        sent_at: new Date(sentAt).toISOString(),
+        gmail_message_id: '',
+        attachment_filename: cleanText(input.attachment_filename, 255),
+        is_resend: input.is_resend === true,
+        delivery_n: (Array.isArray(priorAttempts) ? priorAttempts.filter((r: any) => r?.deleted !== true).length : 0) + 1,
+        source_status: cleanText(input.source_status, 64),
+        transport,
+        failure_reason: failureReason || 'send failed',
+        delivery_events: [{ at: new Date(sentAt).toISOString(), outcome: 'failed', transport, detail: failureReason || 'send failed' }],
+        telemetry_note: DELIVERY_TELEMETRY_NOTE,
+      };
+      let createAttemptError = "";
+      const createdAttempt = await Delivery.create(attemptRow).catch((e: any) => { createAttemptError = String(e?.message || e); return null; });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const verifyAttempts = await Delivery.filter({ idempotency_key: attemptKey }).catch(() => []);
+      const attempt = createdAttempt?.id ? createdAttempt : (Array.isArray(verifyAttempts) ? verifyAttempts[0] : null);
+      if (!attempt?.id) {
+        throw new Error(`Quote delivery attempt audit could not be created or verified.${createAttemptError ? ` ${createAttemptError}` : ""}`);
+      }
+      return Response.json({ delivery: attempt, attempted: true, reused: !createdAttempt?.id });
     }
 
     const idempotencyKey = `quote_delivery:gmail:${gmailMessageId}`;
@@ -228,9 +290,13 @@ Deno.serve(async (req) => {
       attachment_size_bytes: Math.max(0, whole(input.attachment_size_bytes)),
       is_resend: input.is_resend === true,
       source_status: cleanText(input.source_status, 64),
+      transport,
+      failure_reason: '',
+      delivery_events: [{ at: new Date(sentAt).toISOString(), outcome: 'sent', transport, detail: `accepted by ${transport}` }],
+      telemetry_note: DELIVERY_TELEMETRY_NOTE,
     };
 
-    // Per-version delivery counter â€” 1 for the first send of this quote issue,
+    // Per-version delivery counter — 1 for the first send of this quote issue,
     // then 2, 3... on resends so the audit reads 'sent 3 times' not just 'resent'.
     const prior = await Delivery.filter({ quote_issue_key: estimateQuoteIssueKey(estimateId, quoteVersion) }).catch(() => []);
     normalized.delivery_n = (Array.isArray(prior) ? prior.filter((r: any) => r?.deleted !== true).length : 0) + 1;
@@ -249,12 +315,15 @@ Deno.serve(async (req) => {
         payload.contact_warning = "Quote delivery is recorded, but the recipient could not be added to Customer Contacts.";
       }
       // last_contacted_at tracks real customer contact (quote sent) for reporting.
-      const customerId = clean(estimate?.customer_id);
+      const customerId = cleanText(estimate?.customer_id);
       if (customerId) {
         await base44.asServiceRole.entities.Customer.updateMany(
           { id: customerId },
           { last_contacted_at: new Date().toISOString() }
-        ).catch(() => null);
+        ).catch((e: any) => {
+          payload.contact_warning = [payload.contact_warning, `last_contacted_at update failed: ${String(e?.message || e)}`].filter(Boolean).join(" ");
+          return null;
+        });
       }
       return Response.json(payload);
     };
@@ -276,7 +345,7 @@ Deno.serve(async (req) => {
     }
 
     // Internal approval gate: a quote above the configured threshold cannot be
-    // recorded as sent until a manager approves it â€” either live (the session
+    // recorded as sent until a manager approves it — either live (the session
     // user carries can_approve_quotes) or through a recorded internal_approval.
     // The pre-send authorize_send action runs the same check before Gmail is
     // invoked, so this write is the enforcement backstop.
@@ -338,7 +407,7 @@ Deno.serve(async (req) => {
     return await respondWithDelivery({ delivery: canonical, reused: false });
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('recordEstimateQuoteDelivery error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Quote delivery audit could not be recorded safely.' : error?.message,

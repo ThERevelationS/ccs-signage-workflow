@@ -1,0 +1,4 @@
+{
+  "name": "appBootstrap",
+  "entry": "entry.ts"
+}

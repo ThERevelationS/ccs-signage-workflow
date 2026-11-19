@@ -1,0 +1,90 @@
+{
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "8878a353d67523a061078aa85672717735be4420",
+ "baselineFile": "laser-pricing-baseline-v2.json",
+ "proofSpec": "laser-pricing-proof-spec.json",
+ "candidateManifest": "laser-pricing-candidates.json",
+ "targetOrder": [
+  "src/components/estimator/laser/laserPricingAvailability.js",
+  "src/pages/LaserEstimator.jsx"
+ ],
+ "candidatePrefix": "laser-pricing-candidate-",
+ "newRemoteFiles": [
+  "src/components/estimator/laser/laserPricingAvailability.js"
+ ],
+ "atomicEditPerFile": true,
+ "editsPerFile": 1,
+ "candidateLineEndings": "LF",
+ "candidateTerminalLF": {
+  "src/components/estimator/laser/laserPricingAvailability.js": true,
+  "src/pages/LaserEstimator.jsx": true
+ },
+ "protectedFiles": [
+  "src/pages/LaserSettings.jsx",
+  "src/components/estimator/laser/laserCalc.js",
+  "src/components/estimator/laser/laserSellPricing.js",
+  "src/components/estimator/cnc/",
+  "src/components/cnc/",
+  "src/components/channelLetterInstall/",
+  "src/components/vinylEstimator/",
+  "src/components/estimator/paint/",
+  "src/components/signMaintenance/",
+  "src/components/estimator/customerPricing.js",
+  "src/components/markup/CustomerPricingTab.jsx",
+  "src/components/markup/projectCategorizer.jsx",
+  "src/components/estimator/builder/builderService.js",
+  "src/components/estimator/builder/sourceProjectPersistence.js",
+  "src/components/estimator/builder/itemIdentity.js",
+  "src/components/estimator/moduleShared/moduleProjectActions.js",
+  "src/components/estimator/settings/moduleSettingDefaults.js",
+  "src/components/estimator/foundation/",
+  "src/components/estimator/loadAllEntityRows.js",
+  "src/components/estimator/idempotentEntityCreate.js"
+ ],
+ "liveDeadDetermination": {
+  "liveCalc": "inline in src/pages/LaserEstimator.jsx (updateItem + calculateTotals) — ported verbatim to the module's computeLaserTotals",
+  "deadCalc": "src/components/estimator/laser/laserCalc.js — divergent (ipm-vs-mm/s units, letter_height*4 perimeter, different rate fallbacks), zero importers; deliberately unchanged",
+  "livePage": "src/pages/LaserEstimator.jsx",
+  "liveSettingsSurface": "src/pages/LaserSettings.jsx (unchanged)",
+  "sellPricingWire": "src/components/estimator/laser/laserSellPricing.js (pricing-engine wire — unchanged)",
+  "newModule": "src/components/estimator/laser/laserPricingAvailability.js (new — strict scanners + ported live totals)"
+ },
+ "forbiddenRemoteOperations": [
+  "sandbox edit",
+  "sandbox write",
+  "checkpoint",
+  "entity ops",
+  "schema ops",
+  "deploy",
+  "publish"
+ ],
+ "applyRequiresLeadApproval": true,
+ "remoteWriteAuthorized": false,
+ "deleteOrRestoreAuthorization": false,
+ "businessRecordOperationsAuthorized": false,
+ "schemaOrMetadataActivationAuthorized": false,
+ "publishOrDeployAuthorized": false,
+ "candidateHashes": {
+  "src/components/estimator/laser/laserPricingAvailability.js": "82275a855f3cc2d2058a8416a62ccf40a52a0c8cebacac573232bf22e55cd380",
+  "src/pages/LaserEstimator.jsx": "0f996fd442ad9361a38820f63078966e5ba85016171e965d890be8f0fcac54cc"
+ },
+ "buildEntries": [
+  "src/components/estimator/laser/laserPricingAvailability.js",
+  "src/pages/LaserEstimator.jsx"
+ ],
+ "buildAlias": {
+  "@": "/app/src"
+ },
+ "forbiddenExternalImportPrefix": "@/",
+ "candidateLineEndingsByFile": {
+  "src/components/estimator/laser/laserPricingAvailability.js": "LF",
+  "src/pages/LaserEstimator.jsx": "LF"
+ },
+ "editInput": "stdin",
+ "stageBase64ChunkLength": 3000,
+ "remoteTempPrefix": "/tmp/ccs-laser-pricing-",
+ "restoreCheckpointName": "Before Laser Pricing Availability Hardening",
+ "finalCheckpointName": "Laser Pricing Availability Hardening Verified",
+ "checkpointAuthority": "lead"
+}

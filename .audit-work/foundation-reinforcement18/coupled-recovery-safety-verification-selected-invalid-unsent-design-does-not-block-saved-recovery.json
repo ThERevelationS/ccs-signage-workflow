@@ -1,0 +1,15 @@
+{
+  "results": [
+    {
+      "name": "invalid-unsent-design-does-not-block-saved-recovery",
+      "ok": true,
+      "error": null
+    }
+  ],
+  "selectedScenarios": [
+    "invalid-unsent-design-does-not-block-saved-recovery"
+  ],
+  "acceptedInitialPricesReused": true,
+  "realStorageVerified": false,
+  "backendAuthorizationVerified": false
+}

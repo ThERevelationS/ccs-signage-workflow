@@ -1,0 +1,98 @@
+{
+  "totalChecks": 17,
+  "passed": 17,
+  "failed": 0,
+  "unexpectedNetwork": 0,
+  "preExistingRemoteWarnings": [
+    {
+      "file": "frozen:/app/src/components/channelLetterInstall/CuttingMethodSlider.jsx",
+      "text": "Duplicate \"type\" attribute in JSX element",
+      "line": 23
+    },
+    {
+      "file": "frozen:/app/src/components/channelLetterInstall/InstallTypePicker.jsx",
+      "text": "Duplicate \"type\" attribute in JSX element",
+      "line": 64
+    },
+    {
+      "file": "frozen:/app/src/components/channelLetterInstall/LetterSizePicker.jsx",
+      "text": "Duplicate \"type\" attribute in JSX element",
+      "line": 77
+    },
+    {
+      "file": "frozen:/app/src/components/channelLetterInstall/WallMaterialPicker.jsx",
+      "text": "Duplicate \"type\" attribute in JSX element",
+      "line": 12
+    }
+  ],
+  "results": [
+    {
+      "id": "valid-existing-saves",
+      "ok": true
+    },
+    {
+      "id": "held-blank-qty-blocks",
+      "ok": true
+    },
+    {
+      "id": "held-missing-letter-rate-blocks",
+      "ok": true
+    },
+    {
+      "id": "held-missing-install-minutes-blocks",
+      "ok": true
+    },
+    {
+      "id": "held-material-price-blocks",
+      "ok": true
+    },
+    {
+      "id": "held-equipment-cost-blocks",
+      "ok": true
+    },
+    {
+      "id": "held-personnel-rate-blocks",
+      "ok": true
+    },
+    {
+      "id": "held-travel-setting-blocks",
+      "ok": true
+    },
+    {
+      "id": "held-bad-markup-blocks",
+      "ok": true
+    },
+    {
+      "id": "held-dimensional-fab-blocks",
+      "ok": true
+    },
+    {
+      "id": "copy-blocked-when-held",
+      "ok": true
+    },
+    {
+      "id": "held-saved-snapshot-visible",
+      "ok": true
+    },
+    {
+      "id": "explicit-zero-saves",
+      "ok": true
+    },
+    {
+      "id": "numeric-string-saves",
+      "ok": true
+    },
+    {
+      "id": "held-diagnostics-render",
+      "ok": true
+    },
+    {
+      "id": "catalog-diagnostics-render",
+      "ok": true
+    },
+    {
+      "id": "letters-only-scope-saves",
+      "ok": true
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "suite": "verify-o040-remote-parity",
+  "steps": [
+    "initial",
+    "drag-rotated",
+    "keyboard",
+    "wiggle",
+    "reorder-commit",
+    "fingerprint-cancel",
+    "index-cancel",
+    "zoomed-drag",
+    "negative-drag"
+  ],
+  "diffs": 0,
+  "status": "PASS"
+}

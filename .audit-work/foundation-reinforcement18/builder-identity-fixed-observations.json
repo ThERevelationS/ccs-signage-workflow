@@ -1,0 +1,46 @@
+{
+  "synthetic": true,
+  "dispatchOnly": true,
+  "authorizationGateMocked": true,
+  "stopsBeforeAnyBuilderMutation": true,
+  "realBase44StorageVerified": false,
+  "limitations": "Actual recordBuilderSave and ensureBuilderProductForLine code; dependency boundaries are synthetic. This tests dispatch identity, not complete pricing, persistence, authorization or handoff.",
+  "observations": [
+    {
+      "name": "Foundation page sparse hint and unrelated missing Builder ID",
+      "intendedModule": "foundation",
+      "observedModule": "foundation",
+      "dispatchCorrect": true
+    },
+    {
+      "name": "Explicit null Builder IDs must not match each other",
+      "intendedModule": "foundation",
+      "observedModule": "foundation",
+      "dispatchCorrect": true
+    },
+    {
+      "name": "Empty Builder IDs must not match each other",
+      "intendedModule": "foundation",
+      "observedModule": "foundation",
+      "dispatchCorrect": true
+    },
+    {
+      "name": "Ordinary different existing Builder IDs preserve the correct source match",
+      "intendedModule": "foundation",
+      "observedModule": "foundation",
+      "dispatchCorrect": true
+    },
+    {
+      "name": "Explicit target Builder identity remains supported without a source hint",
+      "intendedModule": "foundation",
+      "observedModule": "foundation",
+      "dispatchCorrect": true
+    },
+    {
+      "name": "Equal project IDs in different modules are not interchangeable",
+      "intendedModule": "foundation",
+      "observedModule": "foundation",
+      "dispatchCorrect": true
+    }
+  ]
+}

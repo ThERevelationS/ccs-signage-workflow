@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "base44/shared/fleetStaffSession.ts",
+      "content": "import { authenticateSignShopSession } from './signShopSession.ts';\n\n// Fleet functions predate the EmailGate session model and authorize through\n// base44.auth.me(), which only resolves for Base44-authenticated sessions\n// (builder preview, service-to-service invokes). Staff browsers hold an\n// EmailGate session (sss_session_token) backed by AuthorizedEmail — the app's\n// real role system. This resolves the same {id,email,full_name,role} shape so\n// each function's existing downstream authorization checks work unchanged.\n// Returns null when no valid staff session is presented; callers keep their\n// existing unauthenticated handling.\nexport async function resolveFleetStaffUser(base44: any, sessionToken: unknown) {\n  const token = String(sessionToken || '').trim();\n  if (!token) return null;\n  try {\n    const actor = await authenticateSignShopSession(base44, token);\n    const role = String(actor?.role || '');\n    if (!['admin', 'user'].includes(role)) return null;\n    return {\n      id: actor.id,\n      email: actor.email,\n      full_name: actor.full_name,\n      role,\n      is_full_admin: actor.is_full_admin === true,\n      is_owner: actor.is_owner === true,\n    };\n  } catch (error: any) {\n    // Only a rejected identity means \"not signed in\". A verification that could\n    // not be completed (rate-limited or transient entity read, missing signing\n    // secret) must not be reported as an expired session, because callers turn\n    // null into 401 \"Authentication required\" and the client then demands a new\n    // sign-in for what is really a retryable service failure.\n    const status = Number(error?.status || 0);\n    if (status === 401 || status === 409) return null;\n    throw error;\n  }\n}",
+      "startLine": 1,
+      "endLine": 36,
+      "totalLines": 36,
+      "truncated": false
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/estimator/foundation/foundationReinforcementProjection.js",
+      "content": "import { calculateFoundationReinforcementModel } from \"./foundationReinforcementModel\";\nimport { resolveFoundationReinforcementBasis } from \"./foundationReinforcementBasis\";\nimport { priceFoundationReinforcementModel } from \"./foundationReinforcementCost\";\n\n// Always calculate from current raw inputs, never a stored geometry/cost result.\n// Readiness here is internal steel pricing only, not source/quote authorization.\nexport function calculateFoundationReinforcementProjection({\n  item, design, material, inventory = [], settings = {},\n  quantityOverride = null, rateOverride = null, geometryLimit = 0,\n} = {}) {\n  const record = item && typeof item === \"object\" && !Array.isArray(item) ? item : {};\n  const model = calculateFoundationReinforcementModel(record, design, { geometryLimit });\n  const resolution = model.status === \"off\" ? null : resolveFoundationReinforcementBasis({\n    material, inventory, settings, quantityOverride, rateOverride,\n  });\n  const steel = priceFoundationReinforcementModel(model, resolution?.basis);\n  const issues = [\n    ...model.issues.map(issue => ({ ...issue, scope: \"geometry\" })),\n    ...(resolution?.issues || []).map(issue => ({ ...issue, scope: \"basis\" })),\n    ...steel.issues.map(issue => ({ ...issue, scope: \"pricing\" })),\n  ];\n  return {\n    calculationVersion: 2, projectionVersion: 1, engineeringApproved: false,\n    model, steel, issues, basis: resolution?.basis ?? null,\n    materialSnapshot: resolution?.materialSnapshot ?? null,\n    rateSources: resolution?.rateSources ?? [],\n    canApplyToEstimate: steel.canApplyToEstimate && !issues.some(issue => issue.severity === \"error\"),\n  };\n}",
+      "startLine": 1,
+      "endLine": 29,
+      "totalLines": 29,
+      "truncated": false
+    }
+  ]
+}

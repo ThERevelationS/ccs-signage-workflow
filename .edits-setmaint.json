@@ -1,0 +1,18 @@
+[
+  {
+    "old_text": "import { ArrowLeft, Clock, DollarSign, Info, MapPin, Package, Save, Wrench } from \"lucide-react\";",
+    "new_text": "import { ArrowLeft, Clock, DollarSign, Info, MapPin, Package, RotateCcw, Save, Wrench } from \"lucide-react\";"
+  },
+  {
+    "old_text": "import SettingsTransferBar from \"@/components/estimator/settings/SettingsTransferBar\";",
+    "new_text": "import SettingsTransferBar from \"@/components/estimator/settings/SettingsTransferBar\";\nimport { MAINTENANCE_SETTINGS_DEFAULTS, resetValuesToDefaults } from \"@/components/estimator/settings/moduleSettingDefaults\";"
+  },
+  {
+    "old_text": "  const saveAll = async () => {\n    if (dirtyCount === 0 || settingsSaveRef.current) return;",
+    "new_text": "  // #83 — stage the managed keys that have documented calculator fallbacks\n  // back to their defaults (chained install_* overrides are left untouched).\n  const handleResetDefaults = () => {\n    setGlobalSettings((prev) => resetValuesToDefaults(prev, MAINTENANCE_SETTINGS_DEFAULTS, Object.keys(MAINTENANCE_SETTINGS_DEFAULTS)));\n    setMessage(\"Defaults staged — click Save to persist them.\");\n  };\n\n  const saveAll = async () => {\n    if (dirtyCount === 0 || settingsSaveRef.current) return;"
+  },
+  {
+    "old_text": "<Button onClick={saveAll} disabled={saving || dirtyCount === 0} className=\"h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50\">",
+    "new_text": "<Button variant=\"outline\" onClick={handleResetDefaults} disabled={saving} className=\"h-[32px] text-[12px] font-semibold\" title=\"Stage calculator fallback defaults — Save to persist\"><RotateCcw className=\"w-4 h-4 mr-1.5\" /> Reset to defaults</Button><Button onClick={saveAll} disabled={saving || dirtyCount === 0} className=\"h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50\">"
+  }
+]

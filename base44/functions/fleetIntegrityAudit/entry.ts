@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 const ACTIVE_WO = new Set(['open','assigned','in_progress']);
@@ -18,7 +19,7 @@ const groupBy = (rows:any[], keyFn:(row:any)=>string) => {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const user = await base44.auth.me().catch(() => null);
     if (!user || user.role !== 'admin') return Response.json({ error:'Forbidden' }, { status:403 });
 

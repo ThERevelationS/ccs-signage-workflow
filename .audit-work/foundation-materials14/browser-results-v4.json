@@ -1,0 +1,22 @@
+{
+ "synthetic": true,
+ "telemetry": {
+  "foreign": [],
+  "consoleErrors": [],
+  "pageErrors": []
+ },
+ "results": [
+  {
+   "case": "B1: missing bag legacy -> alert, saved total, unavailable option, zero write paths",
+   "ok": true
+  },
+  {
+   "case": "B2: catalog recovery -> CAS v1 body=frozen expected+snapshot; #99 uses ack cache",
+   "ok": true
+  },
+  {
+   "case": "B3: held source write + #99 mid-flight -> saved expected, superseded Builder, CAS v2",
+   "ok": true
+  }
+ ]
+}

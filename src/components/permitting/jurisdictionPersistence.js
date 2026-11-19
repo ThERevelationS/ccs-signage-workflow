@@ -3,7 +3,7 @@ import {
   expectedEntityFields,
   replaceEntityFieldsIfUnchanged,
 } from "@/components/estimator/builder/builderEntityPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { triggerNotification } from "@/components/workflow/NotificationService";
 
 const EDITABLE_FIELDS = [

@@ -10,9 +10,45 @@
       "type": "string",
       "description": "User's full name"
     },
+    "access_expires_on": {
+      "type": "string",
+      "format": "date",
+      "description": "Temporary-access expiry date \u2014 admins review and revoke at or before this date"
+    },
+    "reports_to": {
+      "type": "string",
+      "description": "Manager / supervisor this user reports to (name or email)"
+    },
     "username": {
       "type": "string",
       "description": "Unique username for time clock login"
+    },
+    "admin_grant_expires": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Time-boxed admin grant (break-glass) \u2014 backend auth strips admin fields once this timestamp passes."
+    },
+    "notification_prefs": {
+      "type": "object",
+      "description": "Per-user notification opt-outs \u2014 e.g. { automation_emails: false } skips automation send_email actions for this user."
+    },
+    "is_deactivated": {
+      "type": "boolean",
+      "description": "When true, sign-in is refused but the account record and history are kept"
+    },
+    "force_password_reset": {
+      "type": "boolean",
+      "description": "When true, sign-in is refused until an admin sets a new password"
+    },
+    "last_login_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Most recent successful staff sign-in \u2014 drives last-active display and inactive-user flags"
+    },
+    "password_changed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the password was last set or rehashed \u2014 drives password-age expiry warnings"
     },
     "password_hash": {
       "type": "string",
@@ -168,6 +204,21 @@
       "type": "boolean",
       "default": false,
       "description": "Admin-assigned permission to pause counted work time without clocking out"
+    },
+    "can_self_approve_shifts": {
+      "type": "boolean",
+      "default": false,
+      "description": "Admin-only grant to approve the user's own Time Clock shifts. OFF by default - without it, another administrator must approve."
+    },
+    "is_full_admin": {
+      "type": "boolean",
+      "default": false,
+      "description": "Full administrator - can manage roles and admin privileges (granted only via approved access request)."
+    },
+    "is_owner": {
+      "type": "boolean",
+      "default": false,
+      "description": "Owner - the top privilege tier above full admin. Only an existing owner can grant or revoke it; email-anchored owners (APP_OWNER_EMAILS) cannot be revoked through the app."
     },
     "face_descriptors": {
       "type": "array",

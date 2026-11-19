@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "PASS customer quote rows (4 cases)\nPASS pipeline status + quote rows (18 cases)\nPASS quote lifecycle (17 cases)\nPASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)\nPASS unified-alerts\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 1448
+}

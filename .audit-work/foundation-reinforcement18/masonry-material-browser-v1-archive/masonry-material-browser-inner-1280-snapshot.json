@@ -1,0 +1,69 @@
+{
+  "mode": "inner",
+  "width": 1280,
+  "before": {
+    "walls": [
+      {
+        "component_id": "synthetic-wall",
+        "calculatedCosts": {
+          "totalBricks": 6,
+          "materialCost": 321,
+          "mortarCost": 17,
+          "laborCost": 70,
+          "totalCost": 408
+        }
+      }
+    ],
+    "totals": {
+      "total_concrete_cost": 0,
+      "concrete_delivery_cost": 0,
+      "concrete_delivered_yards": 0,
+      "concrete_rate_per_yard": 201,
+      "concrete_trucks": [],
+      "additional_stops_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_labor_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 321,
+      "total_fill_cost": null,
+      "total_equipment_cost": 0,
+      "total_wall_cost": 408,
+      "total_wall_cap_cost": 0,
+      "wall_caps_by_material": [],
+      "total_concrete_volume_cy": 0,
+      "total_excavation_volume_cy": 0,
+      "total_labor_hours": 0,
+      "grand_total": 408
+    },
+    "pricingUnavailable": true,
+    "catalogIssues": [
+      {
+        "kind": "internal_wall",
+        "index": 0,
+        "componentId": "synthetic-wall",
+        "field": "internalMaterialId",
+        "inventoryId": "inner-mat",
+        "code": "wall_material_price_unavailable",
+        "message": "Internal wall 1: record a finite, nonnegative material unit price before repricing."
+      }
+    ]
+  },
+  "after": {
+    "walls": [
+      {
+        "component_id": "synthetic-wall",
+        "calculatedCosts": {
+          "totalBricks": 6,
+          "materialCost": 321,
+          "mortarCost": 17,
+          "laborCost": 70,
+          "totalCost": 408
+        }
+      }
+    ]
+  },
+  "writes": 0
+}

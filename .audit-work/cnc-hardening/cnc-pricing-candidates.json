@@ -1,0 +1,22 @@
+{
+ "src/components/estimator/cnc/cncPricingAvailability.js": {
+  "candidateFile": "candidates/src/components/estimator/cnc/cncPricingAvailability.js",
+  "sha256": "7ff2091c118b7d5a470e2f4288c0dfab001160fc32f8618d5c00b7a1c431f484",
+  "bytes": 19851,
+  "lines": 405,
+  "lineEndings": "LF",
+  "terminalLF": true,
+  "existsOnRemote": false,
+  "remoteSha256": null
+ },
+ "src/pages/CNCEstimator.jsx": {
+  "candidateFile": "candidates/src/pages/CNCEstimator.jsx",
+  "sha256": "cad8d0c80544d7aced15b91a050e24178b497ef327391ef2301f8742eeff9be7",
+  "bytes": 67545,
+  "lines": 1585,
+  "lineEndings": "LF",
+  "terminalLF": true,
+  "existsOnRemote": true,
+  "remoteSha256": "c5e8e6a13c06e5f9e07e59ac89917abab88ea81c7dfe22273163438c7ff1a571"
+ }
+}

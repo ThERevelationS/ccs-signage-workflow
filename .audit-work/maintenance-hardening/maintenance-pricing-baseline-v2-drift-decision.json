@@ -1,0 +1,24 @@
+{
+ "decision": "PROCEED — EOL-only drift accepted",
+ "assessedAt": "2026-11-07T20:2x:00Z",
+ "capturedHead": "5f25691b8966137d4c96cafee690a186a797ebb1",
+ "targetDrift": {
+  "src/pages/MaintenanceEstimator.jsx": {
+   "kind": "EOL-only (LF -> CRLF) by external agent",
+   "semanticMatchV1": true,
+   "byteMatchV1": false,
+   "v1Hash": "39759252c2ad3a0f09d133de0a1acdfc1a2c0e684ecc0a72c1e05aa6abbae843",
+   "currentHash": "9b17a2a26909ecda9359a87f1092be746fe720fe271b53b5465eb04844602e31",
+   "normalizedEquality": "current remote text with CRLF collapsed === implementer v1 api-view text, exact",
+   "postApplyNote": "candidate file is itself CRLF (spec candidateLineEndingsByFile=CRLF, verified on disk); whole-file replace makes the post-apply state the exact verified candidate bytes — external EOL convention preserved, not reverted"
+  }
+ },
+ "otherTargets": {
+  "src/components/signMaintenance/maintenancePricingAvailability.js": "absent (new-remote, expected)",
+  "src/components/signMaintenance/ServiceItemRow.jsx": "byte-identical to v1",
+  "src/components/signMaintenance/RepaintMonumentPanel.jsx": "byte-identical to v1",
+  "src/components/signMaintenance/DimLetterPaintSubPanel.jsx": "byte-identical to v1"
+ },
+ "externalCommitsSincePriorHead": "31 files across channelLetterInstall/layout/permitting/brick (prior brick transport) + staffEntityWrite + Layout — unrelated modules, preserved; none inside maintenance target scope except the EOL-only page change above",
+ "rationale": "The byte-identical gate exists to detect semantic divergence between implementer-verified source and live remote. The only divergence is line-ending normalization with provably identical logical content; the transport's post-state is the pinned candidate regardless. Stopping would block a verified unit on a cosmetic external change."
+}

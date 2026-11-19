@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6ad2f387ddd3c2c7c284239a",
+ "jurisdiction_name": "Elsmere",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "What is a reasonable accommodation related to zoning? A reasonable accommodation is an exception to a zoning regulation that gives a person with a disability an equal opportunity to use and enjoy their property. This may include waiving or modifying a regulation that would otherwise limit access to a home. For example, a resident who uses a wheelchair may need an exception to a setback requirement to install a ramp. What laws govern this? These rights are established by the federal Fair Housing Act, the Americans with Disabilities Act, and Kentucky’s Fair Housing Act. Who can request one? A person with a recognized disability, or someone acting on their behalf, may submit a request. A “disability” generally means a physical or mental impairment that substantially limits one or more major life activities. What is considered in reviewing a request? Planning and Development Services of Kent",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "c0678485644c56386f6c811ae9a64d6990bf9516fd9d6188de9e2ba8c2d3bb0b",
+   "source_document_id": null,
+   "source_title": "c0678485644c56386f6c811ae9a64d6990bf9516fd9d6188de9e2ba8c2d3bb0b.pdf",
+   "official_url": "https://www.pdskc.org/wp-content/uploads/2026/07/Zoning-Reasonable-Accommodations-Info-Piece-1.pdf"
+  }
+ ]
+}

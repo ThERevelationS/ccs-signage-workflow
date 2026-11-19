@@ -1,0 +1,504 @@
+{
+  "results": [
+    {
+      "name": "unchanged: concrete material, positive settings",
+      "ok": true
+    },
+    {
+      "name": "unchanged: genuine zero material price",
+      "ok": true
+    },
+    {
+      "name": "unchanged: brick, explicit dry joint",
+      "ok": true
+    },
+    {
+      "name": "unchanged: brick_stone type and mortar joint",
+      "ok": true
+    },
+    {
+      "name": "unchanged: stone units, two unequal segments",
+      "ok": true
+    },
+    {
+      "name": "unchanged: closed outline with internal brick",
+      "ok": true
+    },
+    {
+      "name": "unchanged: open outline with internal brick",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal concrete units",
+      "ok": true
+    },
+    {
+      "name": "unchanged: outer explicit price override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: outer explicit free override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal explicit price override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal explicit free override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: outer explicit quantity override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: outer explicit zero quantity",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal explicit quantity override",
+      "ok": true
+    },
+    {
+      "name": "unchanged: internal explicit zero quantity",
+      "ok": true
+    },
+    {
+      "name": "unchanged: fractional explicit material price",
+      "ok": true
+    },
+    {
+      "name": "unchanged: numeric-string material price",
+      "ok": true
+    },
+    {
+      "name": "unchanged: numeric-string free price",
+      "ok": true
+    },
+    {
+      "name": "unchanged: irrelevant catalog row cannot change wall calculation",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: absent",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: null",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: empty",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: whitespace",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: zero",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: zero string",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: negative",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: negative string",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: true",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: false",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: array",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: object",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: NaN",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: Infinity",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_length_inches: malformed",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: absent",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: null",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: empty",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: whitespace",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: zero",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: zero string",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: negative",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: negative string",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: true",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: false",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: array",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: object",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: NaN",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: Infinity",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_width_inches: malformed",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: absent",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: null",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: empty",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: whitespace",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: zero",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: zero string",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: negative",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: negative string",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: true",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: false",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: array",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: object",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: NaN",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: Infinity",
+      "ok": true
+    },
+    {
+      "name": "outer unknown wall_unit_height_inches: malformed",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: absent",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: null",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: empty",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: whitespace",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: zero",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: zero string",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: negative",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: negative string",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: true",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: false",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: array",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: object",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: NaN",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: Infinity",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_length_inches: malformed",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: absent",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: null",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: empty",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: whitespace",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: zero",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: zero string",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: negative",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: negative string",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: true",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: false",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: array",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: object",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: NaN",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: Infinity",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_width_inches: malformed",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: absent",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: null",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: empty",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: whitespace",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: zero",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: zero string",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: negative",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: negative string",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: true",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: false",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: array",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: object",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: NaN",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: Infinity",
+      "ok": true
+    },
+    {
+      "name": "internal unknown wall_unit_height_inches: malformed",
+      "ok": true
+    },
+    {
+      "name": "outer numeric-string unit dimensions: decimal",
+      "ok": true
+    },
+    {
+      "name": "outer numeric-string unit dimensions: fractional",
+      "ok": true
+    },
+    {
+      "name": "outer numeric-string unit dimensions: exponent",
+      "ok": true
+    },
+    {
+      "name": "internal numeric-string unit dimensions: decimal",
+      "ok": true
+    },
+    {
+      "name": "internal numeric-string unit dimensions: fractional",
+      "ok": true
+    },
+    {
+      "name": "internal numeric-string unit dimensions: exponent",
+      "ok": true
+    },
+    {
+      "name": "new invalid-dimension row cannot adopt rendered price history",
+      "ok": true
+    },
+    {
+      "name": "dimension diagnostics have distinct keys for three missing measures",
+      "ok": true
+    },
+    {
+      "name": "invalid dimensions mark BOM material as acknowledged rather than current",
+      "ok": true
+    },
+    {
+      "name": "an irrelevant catalog record cannot invalidate selected dimensions",
+      "ok": true
+    },
+    {
+      "name": "disabled internal material does not require unused dimensions",
+      "ok": true
+    },
+    {
+      "name": "valid dimensions with genuine zero unit price and zero shop rates remain free",
+      "ok": true
+    },
+    {
+      "name": "a zero price cannot validate missing physical dimensions",
+      "ok": true
+    },
+    {
+      "name": "existing invalid-height guard remains active: \"\"",
+      "ok": true
+    },
+    {
+      "name": "existing invalid-height guard remains active: 0",
+      "ok": true
+    }
+  ]
+}

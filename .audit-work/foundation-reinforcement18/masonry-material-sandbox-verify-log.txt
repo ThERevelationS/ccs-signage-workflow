@@ -1,0 +1,2 @@
+Exact readback, 5 targets, 16 protected files, actual build, clean scope and ready status verified.
+exit=0

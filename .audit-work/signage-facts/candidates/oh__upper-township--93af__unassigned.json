@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6aea5a843a9080d984e393af",
+ "jurisdiction_name": "Upper Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Heart of the Canal Corridor Lawrence Township, Stark County, Ohio Application for Zoning Permits The following require Zoning Certificates . New residential dwellings New commercial use buildings Addition to a residential dwelling Addition to a commercial use building Detached residential garages, storage sheds and other accessory buildings Above or below ground swimming pools Decks, patios, gazebos Commercial accessory buildings Permanent or temporary signs Applications can be obtained from the Lawrence Township Zonin g Department or at www.lawrencetwp - oh.gov . The applications are located under the Forms & Applications tab in the Zoning Department webpage. All applications must be submitted to the Zoning Department along with the following information: For new residential construction Copy of site plan Copy of official house numbering slip Copy of sewer/septic approval Copy of culver",
+   "tags": [
+    "sign",
+    "temporary",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "69f734901632e9dd857d20778d91310b64c2375daebd8c85a9e2f8356f7e62a1",
+   "source_document_id": null,
+   "source_title": "69f734901632e9dd857d20778d91310b64c2375daebd8c85a9e2f8356f7e62a1.pdf",
+   "official_url": "https://lawrencetwp-oh.org/wp-content/uploads/2022/06/LTPermit-Procedure.pdf"
+  }
+ ]
+}

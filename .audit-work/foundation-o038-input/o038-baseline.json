@@ -1,0 +1,54 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "2083c6dbbd1f8f89cc79f40b3212ab82aa563a0a",
+  "pulledAt": "2026-11-08T17:34:03.380Z",
+  "files": {
+    "src/components/estimator/foundation/FoundationLayoutCanvas.jsx": {
+      "exists": true,
+      "sha256": "fdd59450535983115cd61ef7cbfbf0b1efdb621e28e7f50551fa579b8780b059",
+      "bytes": 9882
+    },
+    "src/components/estimator/foundation/foundationLayoutModel.js": {
+      "exists": true,
+      "sha256": "45c7e58e9770a878afe57866dbbd5440896f841c369d9efc0352f57901ad4c21",
+      "bytes": 2838
+    },
+    "src/components/estimator/foundation/foundationAssemblyModel.js": {
+      "exists": true,
+      "sha256": "94e3bb9303c71439fbe5572798818a551b78e6879a67d203aee34a09d42f909c",
+      "bytes": 22454,
+      "note": "read-only — geometry contract reference"
+    },
+    "src/components/estimator/foundation/foundationGeometryInputs.js": {
+      "exists": true,
+      "sha256": "bf81a86a4a7a31f5255682f509a5a06eb4b945f178ac40534213044f7c681c6c",
+      "bytes": 2673,
+      "note": "read-only — numeric input contract reference"
+    },
+    "src/components/estimator/foundation/Foundation3DPreview.jsx": {
+      "exists": true,
+      "sha256": "2c646c5efa78519b9011f2be13902a912eb959f44fd78ebd16365ca3c4ec4315",
+      "bytes": 11055,
+      "note": "read-only — world-space contract reference"
+    },
+    "src/components/estimator/foundation/WallShapeEditor.jsx": {
+      "exists": true,
+      "sha256": "2d89bec2175c062db69fc8b585b52d5b5191396addcde402fd4266b40b4d57dd",
+      "bytes": 7475,
+      "note": "read-only — wall shape.points contract reference"
+    },
+    "src/components/estimator/foundation/foundationDuplicateMirror.js": {
+      "exists": true,
+      "sha256": "5a5dcb2b51fadf348952c238668f31432583f67bcb6328b8d6e8efe6b0ba9b82",
+      "bytes": 18556,
+      "note": "read-only — geometry contract documentation"
+    },
+    "src/components/estimator/foundation/foundationSceneTransforms.js": {
+      "exists": false
+    },
+    "src/components/estimator/foundation/foundationSceneInput.js": {
+      "exists": false
+    }
+  }
+}

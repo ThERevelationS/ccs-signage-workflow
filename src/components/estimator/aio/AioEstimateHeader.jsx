@@ -1,4 +1,4 @@
-import { Layers, Link2, Save, RefreshCw, Copy, GitMerge } from "lucide-react";
+import { Layers, Link2, Save, RefreshCw, Copy, GitMerge, PencilLine } from "lucide-react";
 
 export default function AioEstimateHeader({
   status = "draft",
@@ -9,6 +9,8 @@ export default function AioEstimateHeader({
   subtitle = "One page, one set of project info, every estimator.",
   metaRight,
   readOnly = false,
+  onEdit = null,
+  editStarting = false,
   onDuplicate,
   duplicating = false,
   onMerge,
@@ -16,14 +18,14 @@ export default function AioEstimateHeader({
   return (
     <div className="bg-white border border-gray-200 rounded-md m-3 px-4 py-3 flex items-center justify-between">
       <div className="flex items-start gap-2">
-        <Layers className="w-5 h-5 text-gray-700 mt-0.5" />
+        <Layers className="w-5 h-5 text-gray-700 mt-0.5" aria-hidden="true" />
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-[17px] font-bold text-gray-900">{title}</h1>
             <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200">
               {status}
             </span>
-            <span className="w-2 h-2 rounded-full bg-yellow-400" />
+            <span className="w-2 h-2 rounded-full bg-yellow-400" aria-hidden="true" />
           </div>
           <p className="text-[11px] text-gray-400">
             {subtitle}
@@ -59,28 +61,42 @@ export default function AioEstimateHeader({
             aria-label="Merge another estimate"
             className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50"
           >
-            <GitMerge className="w-4 h-4" />
+            <GitMerge className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
         {onDuplicate && (
-          <button
+          <button type="button"
             onClick={onDuplicate}
             disabled={duplicating}
             title="Duplicate this estimate as a new draft"
+            aria-label="Duplicate this estimate as a new draft"
             className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:opacity-50"
           >
-            <Copy className="w-4 h-4" />
+            <Copy className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
-        <button
-          onClick={onSave}
-          disabled={saving || readOnly}
-          aria-busy={saving}
-          aria-live="polite"
-          className="h-9 px-4 rounded bg-gray-800 text-white text-[13px] font-semibold flex items-center gap-2 hover:bg-gray-900 disabled:opacity-60"
-        >
-          <Save className="w-4 h-4" aria-hidden="true" /> {readOnly ? "Protected" : saving ? "Saving…" : "Save"}
-        </button>
+        {readOnly && onEdit ? (
+          <button type="button"
+            onClick={onEdit}
+            disabled={editStarting}
+            aria-busy={editStarting}
+            aria-live="polite"
+            title="Open a recorded revision and edit this estimate"
+            className="h-9 px-4 rounded bg-amber-500 text-white text-[13px] font-semibold flex items-center gap-2 hover:bg-amber-600 disabled:opacity-60"
+          >
+            <PencilLine className="w-4 h-4" aria-hidden="true" /> {editStarting ? "Opening…" : "Edit"}
+          </button>
+        ) : (
+          <button type="button"
+            onClick={onSave}
+            disabled={saving || readOnly}
+            aria-busy={saving}
+            aria-live="polite"
+            className="h-9 px-4 rounded bg-gray-800 text-white text-[13px] font-semibold flex items-center gap-2 hover:bg-gray-900 disabled:opacity-60"
+          >
+            <Save className="w-4 h-4" aria-hidden="true" /> {readOnly ? "Protected" : saving ? "Saving…" : "Save"}
+          </button>
+        )}
       </div>
     </div>
   );

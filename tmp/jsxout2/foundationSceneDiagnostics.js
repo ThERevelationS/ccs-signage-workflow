@@ -1,0 +1,305 @@
+import {
+  foundationLayoutFootprint,
+  layoutPositionInches,
+  layoutItemKey
+} from "./foundationLayoutModel";
+import {
+  sceneNodeId,
+  parseSceneNodeId,
+  resolveSceneNode
+} from "./foundationSceneSelection";
+import { reparentParentOf } from "./foundationReparentModel";
+import { visualObjectByKey } from "./landscapeMaterials.js";
+const PLAN_W = 480, PLAN_D = 320;
+const KIND_LABEL = {
+  item: "Foundation",
+  pole: "Pole",
+  wall: "Wall",
+  "wall-segment": "Wall segment",
+  "wall-cap": "Wall cap",
+  cabinet: "Cabinet"
+};
+const itemRowName = (item, index) => typeof item?.description === "string" && item.description.trim() || `Foundation ${index + 1}`;
+const rectOverlap = (a, b) => {
+  const verts = (r) => {
+    const c = Math.cos(r.rot * Math.PI / 180), s = Math.sin(r.rot * Math.PI / 180);
+    const hw = r.w / 2, hd = r.d / 2;
+    return [[-hw, -hd], [hw, -hd], [hw, hd], [-hw, hd]].map(([x, z]) => [r.cx + x * c - z * s, r.cz + x * s + z * c]);
+  };
+  const va = verts(a), vb = verts(b);
+  const axes = [
+    [Math.cos(a.rot * Math.PI / 180), Math.sin(a.rot * Math.PI / 180)],
+    [-Math.sin(a.rot * Math.PI / 180), Math.cos(a.rot * Math.PI / 180)],
+    [Math.cos(b.rot * Math.PI / 180), Math.sin(b.rot * Math.PI / 180)],
+    [-Math.sin(b.rot * Math.PI / 180), Math.cos(b.rot * Math.PI / 180)]
+  ];
+  for (const [ax, az] of axes) {
+    const pr = (vs) => vs.map(([x, z]) => x * ax + z * az);
+    const pa = pr(va), pb = pr(vb);
+    if (Math.max(...pa) <= Math.min(...pb) || Math.max(...pb) <= Math.min(...pa)) return false;
+  }
+  return true;
+};
+const itemRect = (item, index) => {
+  const fp = foundationLayoutFootprint(item);
+  const pos = layoutPositionInches(item);
+  if (!fp || !pos.valid) return null;
+  return {
+    cx: pos.x_inches + fp.width / 2,
+    cz: pos.z_inches + fp.depth / 2,
+    w: fp.width,
+    d: fp.depth,
+    rot: Number(item.rotation_degrees) || 0
+  };
+};
+const pointInRect = (px, pz, r) => {
+  const c = Math.cos(r.rot * Math.PI / 180), s = Math.sin(r.rot * Math.PI / 180);
+  const dx = px - r.cx, dz = pz - r.cz;
+  const lx = dx * c + dz * s, lz = -dx * s + dz * c;
+  return Math.abs(lx) <= r.w / 2 && Math.abs(lz) <= r.d / 2;
+};
+function foundationSceneDiagnostics(scene) {
+  const findings = [];
+  const push = (severity, kind, message, nodeIds) => findings.push({ severity, kind, message, nodeIds: nodeIds.filter(Boolean) });
+  const items = scene?.items || [], poles = scene?.poles || [];
+  const walls = scene?.walls || [], caps = scene?.wall_caps || [], cabinets = scene?.signage_cabinets || [];
+  const landscape = scene?.landscape || null;
+  const rects = items.map((item, i) => ({ item, index: i, rect: itemRect(item, i) }));
+  rects.forEach(({ item, index, rect }) => {
+    const id = sceneNodeId.item(layoutItemKey(item, index));
+    if (!rect) {
+      push("warning", "unplaced", `${itemRowName(item, index)} has no valid plan placement -- fix its dimensions or position.`, [id]);
+      return;
+    }
+    const out = rect.cx - rect.w / 2 < -0.5 || rect.cx + rect.w / 2 > PLAN_W + 0.5 || rect.cz - rect.d / 2 < -0.5 || rect.cz + rect.d / 2 > PLAN_D + 0.5;
+    if (out) push("warning", "out-of-bounds", `${itemRowName(item, index)} sits partly outside the plan area.`, [id]);
+  });
+  for (let i = 0; i < rects.length; i += 1) {
+    for (let j = i + 1; j < rects.length; j += 1) {
+      const a = rects[i], b = rects[j];
+      if (!a.rect || !b.rect) continue;
+      if (rectOverlap(a.rect, b.rect)) {
+        push(
+          "error",
+          "clash",
+          `${itemRowName(a.item, a.index)} and ${itemRowName(b.item, b.index)} footprints overlap.`,
+          [sceneNodeId.item(layoutItemKey(a.item, a.index)), sceneNodeId.item(layoutItemKey(b.item, b.index))]
+        );
+      }
+    }
+  }
+  poles.forEach((pole, i) => {
+    const poleId = sceneNodeId.pole(layoutItemKey(pole, i));
+    const parent = reparentParentOf(scene, "pole", pole);
+    if (parent?.kind === "dangling") {
+      push("error", "unresolvable-mount", `Pole ${i + 1} is mounted to a foundation that no longer exists -- remount or detach it.`, [poleId]);
+      return;
+    }
+    if (parent?.kind === "unresolved") {
+      push("warning", "legacy-mount", `Pole ${i + 1}'s mount is stored in legacy form -- save once to normalize it.`, [poleId]);
+    }
+    const px = Number(pole.x_inches), pz = Number(pole.z_inches);
+    if (!Number.isFinite(px) || !Number.isFinite(pz)) return;
+    const inside = rects.filter(({ rect }) => rect && pointInRect(px, pz, rect));
+    if (!parent?.componentId && inside.length > 0) {
+      push(
+        "info",
+        "mount-candidate",
+        `Pole ${i + 1} stands unmounted inside ${itemRowName(inside[0].item, inside[0].index)} -- select it and Mount to attach.`,
+        [poleId, sceneNodeId.item(layoutItemKey(inside[0].item, inside[0].index))]
+      );
+    }
+    if (inside.length > 1 && !parent?.componentId) {
+      push(
+        "warning",
+        "ambiguous-footprint",
+        `Pole ${i + 1} sits inside ${inside.length} overlapping foundations -- mount it to pick one.`,
+        [poleId, ...inside.map((r) => sceneNodeId.item(layoutItemKey(r.item, r.index)))]
+      );
+    }
+    if (parent?.componentId) {
+      const target = rects.find((r) => r.item?.component_id === parent.componentId);
+      if (target?.rect && !pointInRect(px, pz, target.rect)) {
+        push(
+          "warning",
+          "mounted-off-foundation",
+          `Pole ${i + 1} is mounted to ${itemRowName(target.item, target.index)} but its position lies outside that footing -- move it onto the footing or remount it.`,
+          [poleId, sceneNodeId.item(layoutItemKey(target.item, target.index))]
+        );
+      }
+    }
+    const poleTop = (Number(pole.base_offset_inches) || 0) + (Number(pole.height_inches) || 0);
+    if (poleTop > 0) {
+      (pole.signs || []).forEach((s, si) => {
+        const mh = Number(s?.mount_height_inches), sh = Number(s?.height_inches);
+        if (Number.isFinite(mh) && Number.isFinite(sh) && mh + sh > poleTop + 0.5) {
+          push(
+            "warning",
+            "impossible-fit",
+            `Pole ${i + 1} sign ${si + 1} rises to ${Math.round(mh + sh)}in but the pole tops out at ${Math.round(poleTop)}in -- lower the mount height or shorten the sign.`,
+            [poleId]
+          );
+        }
+      });
+    }
+  });
+  caps.forEach((cap, i) => {
+    const capId = sceneNodeId.wallCap(layoutItemKey(cap, i));
+    const parent = reparentParentOf(scene, "wall-cap", cap);
+    if (parent?.kind === "dangling") {
+      push("error", "unresolvable-mount", `Wall cap ${i + 1} is bound to a wall that no longer exists -- remount it.`, [capId]);
+    } else if (parent?.kind === "unresolved") {
+      push("warning", "legacy-mount", `Wall cap ${i + 1}'s mount is stored in legacy form -- save once to normalize it.`, [capId]);
+    } else if (!parent?.componentId) {
+      push("error", "unmounted-cap", `Wall cap ${i + 1} isn't bound to a wall or wall segment -- it won't be billed to any wall.`, [capId]);
+    }
+  });
+  cabinets.forEach((cab, i) => {
+    const cabId = sceneNodeId.cabinet(layoutItemKey(cab, i));
+    const parent = reparentParentOf(scene, "cabinet", cab);
+    if (parent?.kind === "dangling") {
+      push("error", "unresolvable-mount", `Cabinet ${i + 1} is mounted to an object that no longer exists -- remount it.`, [cabId]);
+    } else if (parent?.kind === "unresolved") {
+      push("warning", "legacy-mount", `Cabinet ${i + 1}'s mount is stored in legacy form -- save once to normalize it.`, [cabId]);
+    } else if (!parent?.componentId) {
+      push("error", "unmounted-cabinet", `Cabinet ${i + 1} isn't mounted to a pole or foundation -- remount it.`, [cabId]);
+    } else if (parent?.componentId && cab?.mount === "pole") {
+      const poleRow = (poles || []).find((p) => p?.component_id === cab?.pole_component_id);
+      const poleParent = poleRow ? reparentParentOf(scene, "pole", poleRow) : null;
+      if (!poleParent?.componentId) {
+        push("warning", "engineering-review", `Cabinet ${i + 1} hangs on a pole with no foundation mount -- the load path needs engineering review.`, [cabId]);
+      }
+    }
+  });
+  const cabSpan = (cab) => {
+    const mh = Number(cab?.mount_height_inches);
+    const h = Number(cab?.height_inches);
+    if (!Number.isFinite(mh) || !Number.isFinite(h) || h <= 0) return null;
+    return [mh, mh + h];
+  };
+  const byMount = /* @__PURE__ */ new Map();
+  cabinets.forEach((cab, i) => {
+    const parent = reparentParentOf(scene, "cabinet", cab);
+    if (!parent?.componentId) return;
+    const key = parent.componentId;
+    if (!byMount.has(key)) byMount.set(key, []);
+    byMount.get(key).push({ cab, i });
+  });
+  for (const [parentId, list] of byMount) {
+    for (let a = 0; a < list.length; a += 1) {
+      for (let b = a + 1; b < list.length; b += 1) {
+        const sa = cabSpan(list[a].cab), sb = cabSpan(list[b].cab);
+        if (!sa || !sb) continue;
+        if (sa[0] < sb[1] && sb[0] < sa[1]) {
+          push(
+            "warning",
+            "sign-collision",
+            `Cabinets ${list[a].i + 1} and ${list[b].i + 1} on the same mount overlap vertically (${Math.round(sa[0])}-${Math.round(sa[1])} vs ${Math.round(sb[0])}-${Math.round(sb[1])} in) -- raise one or resize.`,
+            [sceneNodeId.cabinet(layoutItemKey(list[a].cab, list[a].i)), sceneNodeId.cabinet(layoutItemKey(list[b].cab, list[b].i))]
+          );
+        }
+      }
+    }
+  }
+  poles.forEach((pole, i) => {
+    const poleId = pole?.component_id;
+    const occupants = [];
+    (pole.signs || []).forEach((s, si) => {
+      const mh = Number(s?.mount_height_inches), h = Number(s?.height_inches);
+      if (Number.isFinite(mh) && Number.isFinite(h) && h > 0) {
+        occupants.push({ label: `sign ${si + 1}`, span: [mh, mh + h], id: poleId ? sceneNodeId.pole(layoutItemKey(pole, i)) : null });
+      }
+    });
+    cabinets.forEach((cab, ci) => {
+      if (cab?.mount !== "pole" || cab?.pole_component_id !== poleId) return;
+      const mh = Number(cab?.mount_height_inches), h = Number(cab?.height_inches);
+      if (Number.isFinite(mh) && Number.isFinite(h) && h > 0) {
+        occupants.push({ label: `cabinet ${ci + 1}`, span: [mh, mh + h], id: poleId ? sceneNodeId.cabinet(layoutItemKey(cab, ci)) : null });
+      }
+    });
+    for (let a = 0; a < occupants.length; a += 1) {
+      for (let b = a + 1; b < occupants.length; b += 1) {
+        const [sa, sb] = [occupants[a].span, occupants[b].span];
+        if (sa[0] < sb[1] && sb[0] < sa[1]) {
+          push(
+            "warning",
+            "sign-collision",
+            `Pole ${i + 1}: ${occupants[a].label} and ${occupants[b].label} overlap vertically (${Math.round(sa[0])}-${Math.round(sa[1])} vs ${Math.round(sb[0])}-${Math.round(sb[1])} in) -- raise one or resize.`,
+            [occupants[a].id, occupants[b].id]
+          );
+        }
+      }
+    }
+  });
+  walls.forEach((wall, i) => {
+    const pts = wall?.shape?.points;
+    if (!Array.isArray(pts) || pts.length < 2) return;
+    const closed = wall.shape?.closed === true && pts.length >= 3;
+    const n = closed ? pts.length : pts.length - 1;
+    const wallId = sceneNodeId.wall(layoutItemKey(wall, i));
+    const wName = wall?.name || `Wall ${i + 1}`;
+    const fId = wall?.foundation_component_id;
+    const assigned = typeof fId === "string" && fId && !fId.startsWith("unresolved:") ? fId : null;
+    if (typeof fId === "string" && fId.startsWith("unresolved:")) {
+      push("warning", "unsupported-span", `${wName} keeps an unresolved foundation assignment -- reassign it to check support.`, [wallId]);
+      return;
+    }
+    const assignedRect = assigned ? rects.find(({ item }) => item?.component_id === assigned)?.rect : null;
+    let tested = 0, uncovered = 0;
+    for (let si = 0; si < n; si += 1) {
+      const a = pts[si], b = pts[(si + 1) % pts.length];
+      const mx = (Number(a?.x) + Number(b?.x)) / 2;
+      const mz = (Number(a?.z) + Number(b?.z)) / 2;
+      if (!Number.isFinite(mx) || !Number.isFinite(mz)) continue;
+      tested += 1;
+      const covered = assignedRect ? pointInRect(mx, mz, assignedRect) : rects.some(({ rect }) => rect && pointInRect(mx, mz, rect));
+      if (!covered) uncovered += 1;
+    }
+    if (tested === 0) return;
+    if (assigned && !assignedRect) {
+      push("warning", "unsupported-span", `${wName} is bound to a foundation whose placement can't be checked -- verify its footing.`, [wallId]);
+      return;
+    }
+    if (uncovered === tested) {
+      push(
+        assigned ? "warning" : "info",
+        "unsupported-span",
+        `${wName}: no segment has a footing beneath it${assigned ? " (its bound foundation does not cover it)" : " -- assign a foundation or confirm it is freestanding"}.`,
+        [wallId]
+      );
+    } else if (uncovered > 0) {
+      push("warning", "unsupported-span", `${wName}: ${uncovered} of ${tested} segments span beyond any footing.`, [wallId]);
+    }
+  });
+  const lcs = Number(landscape?.cell_size_inches) || 0;
+  if (landscape?.cells && lcs > 0) {
+    Object.entries(landscape.cells).forEach(([key, mat]) => {
+      const vobj = visualObjectByKey(mat);
+      if (!vobj) return;
+      const [gx, gy] = String(key).split(",").map(Number);
+      if (!Number.isFinite(gx) || !Number.isFinite(gy)) return;
+      const wx = (gx + 0.5) * lcs, wz = (gy + 0.5) * lcs;
+      const target = rects.find(({ rect }) => rect && pointInRect(wx, wz, rect));
+      if (target) {
+        push(
+          "warning",
+          "visual-object-on-foundation",
+          `${vobj.label || "Visual object"} at (${wx.toFixed(0)}, ${wz.toFixed(0)}) sits on ${itemRowName(target.item, target.index)} -- a footing can't carry plantings/decor.`,
+          [sceneNodeId.item(layoutItemKey(target.item, target.index))]
+        );
+      }
+    });
+  }
+  const order = { error: 0, warning: 1, info: 2 };
+  findings.sort((a, b) => order[a.severity] - order[b.severity]);
+  return findings;
+}
+function diagnosticTarget(scene, finding) {
+  const id = finding?.nodeIds?.[0];
+  if (!id || !parseSceneNodeId(id)) return null;
+  return resolveSceneNode(scene, id) ? id : null;
+}
+export {
+  diagnosticTarget,
+  foundationSceneDiagnostics
+};

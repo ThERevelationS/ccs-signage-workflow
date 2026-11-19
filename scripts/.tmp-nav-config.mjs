@@ -8,7 +8,8 @@ var ESTIMATOR_MODULES = [
   { key: "metal", label: "Metal Fabrication", entity: "MetalProject", page: "MetalEstimator" },
   { key: "brick_stone", label: "Brick & Stone", entity: "BrickStoneProject", page: "BrickStoneEstimator" },
   { key: "maintenance", label: "Sign Maintenance", entity: "MaintenanceProject", page: "MaintenanceEstimator" },
-  { key: "painting", label: "Painting", entity: "Project", page: "PaintingEstimator" }
+  { key: "painting", label: "Painting", entity: "Project", page: "PaintingEstimator" },
+  { key: "custom_items", label: "Custom line items", entity: "CustomItemsProject", page: "CustomItemsEstimator" }
 ];
 
 // src/components/estimator/navConfig.js
@@ -32,7 +33,15 @@ var ESTIMATOR_TABS = [
       { label: "Approved", to: "/EstimatorQueues?status=approved" },
       { label: "Archived", to: "/EstimatorQueues?status=archived" },
       { label: "Cancelled", to: "/EstimatorQueues?status=cancelled" },
-      { label: "Sync Issues", to: "/EstimatorQueues?status=sync_issues" }
+      { label: "Sync Issues", to: "/EstimatorQueues?status=sync_issues" },
+      { label: "Design Products", to: "/ProductQueues?queue=design" },
+      { label: "Production Products", to: "/ProductQueues?queue=production" },
+      { label: "Fulfillment Products", to: "/ProductQueues?queue=fulfillment" },
+      { label: "Job Workspace", to: "/JobWorkspace" },
+      { label: "Ops Reports", to: "/OpsReports" },
+      { label: "Reconciliation", to: "/Reconciliation" },
+      { label: "Imports", to: "/Imports" },
+      { label: "CB Migration", to: "/CbMigration" }
     ]
   },
   {
@@ -40,6 +49,9 @@ var ESTIMATOR_TABS = [
     to: "/EstimatorCustomers",
     items: [
       { label: "All Customers", to: "/EstimatorCustomers" },
+      { label: "CRM Events", to: "/CrmEvents" },
+      { label: "Statements", to: "/CustomerStatements" },
+      { label: "Follow-ups", to: "/CommsFollowups" },
       { label: "Active", to: "/EstimatorCustomers?status=active" },
       { label: "Prospects", to: "/EstimatorCustomers?status=prospect" },
       { label: "Inactive", to: "/EstimatorCustomers?status=inactive" }
@@ -101,6 +113,7 @@ var ESTIMATOR_RIGHT_TABS = [
       { label: "Maintenance Settings", to: "/MaintenanceSettings" },
       { label: "Installation Settings", to: "/InstallationSettings" },
       { label: "Quote Defaults", to: "/QuoteSettings" },
+      { label: "Pricing Admin", to: "/PricingAdmin" },
       { label: "Vinyl Inventory", to: "/VinylInventory" },
       { label: "Vinyl Settings", to: "/VinylSettings" },
       { label: "Admin Settings", to: "/AdminSettings" },
@@ -113,6 +126,7 @@ var ESTIMATOR_RIGHT_TABS = [
     items: [
       { label: "Tools Home", to: "/EstimatorTools" },
       { label: "Quick Price", to: "/QuickPrice" },
+      { label: "Walk-in Sale", to: "/WalkIn" },
       { label: "Main Workflow", to: "/MainWorkflow" },
       { label: "Sales Pipeline", to: "/SalesPipeline" },
       { label: "Reports", to: "/FeatureReports" }

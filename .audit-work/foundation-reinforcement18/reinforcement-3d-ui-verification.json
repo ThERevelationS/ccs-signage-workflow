@@ -1,0 +1,108 @@
+{
+  "synthetic": true,
+  "rendererMocked": true,
+  "webGLVerified": false,
+  "realBase44StorageVerified": false,
+  "results": [
+    {
+      "name": "actual overview mounts eight physical bars under their concrete and leaves all pricing/proposal inputs unchanged",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 8\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:117:10\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:116:1"
+    },
+    {
+      "name": "concrete and ground fade only around visible versioned steel with shared rotation/grade coordinates",
+      "ok": false,
+      "error": "TypeError: Cannot read properties of undefined (reading 'material')\n    at projectWith.grade_offset_inches (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:123:27)\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:122:1"
+    },
+    {
+      "name": "reinforcement visibility restores opaque concrete/ground and disposes each old renderer without writing a design",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Reinforcement\n    at Object.click (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:92:33)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:129:40\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:128:1"
+    },
+    {
+      "name": "hide/show releases and recreates canvas, listeners, observer and animation ownership",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Hide 3D View\n    at Object.click (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:92:33)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:136:11\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:135:1"
+    },
+    {
+      "name": "unsupported versions remain visibly rejected while ordinary legacy foundations acquire no invented steel",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(m.allText().includes(\"unsupported\"))\n\n    at projectWith.reinforcement_calculation_version (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:142:44)\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:141:1"
+    },
+    {
+      "name": "unavailable WebGL retains the mount and Retry actually creates a renderer without a false shown count",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(m.allText().includes(\"rendering unavailable\"))\n\n    at check.failRenderer (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:148:10)\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:147:1"
+    },
+    {
+      "name": "failure after listener registration is fully cleaned and can be retried without duplicate listeners",
+      "ok": false,
+      "error": "TypeError: Cannot read properties of undefined (reading 'disposed')\n    at check.failObserve (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:156:72)\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:154:1"
+    },
+    {
+      "name": "resize and existing camera/mode controls stay functional without altering the project",
+      "ok": false,
+      "error": "TypeError: Cannot read properties of undefined (reading 'target')\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:163:54\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:162:1"
+    },
+    {
+      "name": "invalid counts draw no replacement foundation; valid large quantities are explicitly preview-limited only",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(m.allText().includes(\"quantity\"))\n\n    at projectWith.quantity (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:173:10)\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:171:1"
+    },
+    {
+      "name": "unknown supports and fabrication omissions remain explicit instead of advertising zero supports or engineering approval",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 8\n\n    at projectWith.reinforcement_design (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:179:10)\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:178:1"
+    },
+    {
+      "name": "explicit Saved2DAnchors mode applies saved poses to actual meshes and keeps recorded pole markers aligned",
+      "ok": false,
+      "error": "TypeError: Cannot read properties of undefined (reading 'props')\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:196:38\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:195:1"
+    },
+    {
+      "name": "layout draws only one anchor for quantity2 and switching back restores inspection copies without edits",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 2\n\n    at projectWith.quantity (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:224:10)\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:223:1"
+    },
+    {
+      "name": "malformed independent poles are diagnosed without losing the valid concrete or rendering at zero",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Saved 2D Anchors\n    at Object.click (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:92:33)\n    at freeze (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:236:11)\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:235:1"
+    },
+    {
+      "name": "legacy default height is labeled unknown and explicit active zero cannot create an8ft pole",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Saved 2D Anchors\n    at Object.click (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:92:33)\n    at projectWith.selected_pole_id (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:246:11)\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:245:1"
+    },
+    {
+      "name": "independent pole quantity budgets cap render markers only and remain explicit",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 64\n\n    at freeze (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:256:10)\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:255:1"
+    },
+    {
+      "name": "broken saved Foundation coordinates do not become a zero anchor while inspection remains usable",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 1\n\n    at projectWith.x_inches (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:263:10)\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:262:1"
+    },
+    {
+      "name": "saved mode survives unavailable WebGL retry and hide-show without leaking resources",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Saved 2D Anchors\n    at Object.click (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:92:33)\n    at projectWith.x_inches (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:271:11)\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:270:1"
+    },
+    {
+      "name": "layout camera frames all recorded anchors and poles through views FitView resize and hideShow",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Saved 2D Anchors\n    at Object.click (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:92:33)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:296:11\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:294:1"
+    },
+    {
+      "name": "layout fits beyond the old200ft zoom limit without scaling mesh placement",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Saved 2D Anchors\n    at Object.click (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:92:33)\n    at freeze (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:311:11)\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:310:1"
+    },
+    {
+      "name": "losing all saved anchors clears the prior fit zoom basis and recovers to a clean default camera",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Saved 2D Anchors\n    at Object.click (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:92:33)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:322:11\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:105:15)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs:321:1"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+ "jurisdiction_id": "6adef2ca269dd1d781848316",
+ "jurisdiction_name": "Walbridge",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "WOOD COUNTY BUILDING INSPECTION One Courthouse Square, Bowling Green, Ohio 43402 Phone (419)354 - 9190 Fax (419)373 - 6786 Email: bui l dinginspection@co.wood.oh.us https:// wcbinspect.co.wood.oh.us SIGN PERMIT APPLICATION Name of Facility __________________ ____ ____________County__________ Zoning Permit No. _____ ____ _______ ___ Site Address________________________________________________City/Township____________________________ Located N S E W side, between______________________________and____________ _________________________ Owner______ _______________________ Address _________________________________Phone___________________ Contractor__________________________Address_________________________________Phone___________________ Description of Work _______ _______________________________ New ________ Replacement ________ Description Dimensions Sq. Ft. Illuminated _______________________",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "illumination",
+    "type",
+    "process"
+   ],
+   "weight": 12,
+   "source_sha256": "b07531f27c5be68c4de77178f199f5d2f598cd3bcdf5a87fec8dc1957a59d17e",
+   "source_document_id": null,
+   "source_title": "b07531f27c5be68c4de77178f199f5d2f598cd3bcdf5a87fec8dc1957a59d17e.pdf",
+   "official_url": "https://wcbinspect.co.wood.oh.us/Forms/Sign%20Permit%20Application%20-%202024.pdf"
+  }
+ ]
+}

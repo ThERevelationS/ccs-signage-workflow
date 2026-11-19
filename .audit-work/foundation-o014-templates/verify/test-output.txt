@@ -1,0 +1,16 @@
+ok service delete: 404 via status/response.status/statusCode/data.status/message -> already gone
+ok service delete: transient fetch failures propagate (500, TypeError, 403)
+ok service delete: unverifiable fetched records abort (null/array/wrong id) - fail closed
+ok service delete: verified record -> exactly one CAS delete with loaded record
+ok service delete: blank id rejected; save passes through idempotency key+data
+ok dialog save: service rejection surfaces inline error, stays open, busy resets
+ok dialog save: snapshot-prep failure surfaces inline error without service call
+ok dialog load: fetch failure shows "could not be loaded" + alert + retry; NOT fake empty list
+ok dialog delete: CAS delete rejection surfaces error and keeps row
+ok dialog delete: transient PRE-READ failure (get 500) does NOT remove row
+ok dialog delete: 404 pre-read -> row removed (genuinely gone), no error
+ok dialog delete: successful delete clears a prior error banner
+ok dialog gate: saveDisabled disables action, shows default note, zero service calls
+ok dialog gate: saveDisabledReason overrides note; falsy prop = backward compatible
+ok dialog happy: save success clears name + closes; apply success closes; delete removes row
+PASS o014-templates passed=15 failed=0

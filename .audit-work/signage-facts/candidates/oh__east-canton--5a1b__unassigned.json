@@ -1,0 +1,24 @@
+{
+ "jurisdiction_id": "6adeee28d06a19f0afc05a1b",
+ "jurisdiction_name": "East Canton",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "130 Cedar St S. www.villageeastcanton.net East Canton, Ohio 44730 Phone 330.488.0220 Zoning Fee Schedule Zoning Type Zoning Permit Cost R1 – District (Single Family) $100.00 R2 – District (Two Family) $150.00 R3 – District (Multi - Family) $200.00 ( plus $50.00 a unit over 3 - units ) Accessory Structures $50.00 Commercial Structures Dimensions $200.00 ( plus $ .05 per foot of outside ) Industrial Dimensions $3 00.00 ( plus $ .05 per foot of outside ) Recreational Buildings Dimensions $1 00.00 ( plus $.03 per foot of outside ) Parking Lots $ 65.00 plus $5.00 per space Signs and Billboards $ 50.00 - $300.00 Othe r Permitted Uses $ 50.00 Application to Board of Appeals $100.00 Application of Conditional Zoning Permit $65.00 Home Business $65.00 All Other Uses $130.00 Revised 03/01/2017",
+   "tags": [
+    "sign",
+    "fee",
+    "process",
+    "billboard"
+   ],
+   "weight": 7,
+   "source_sha256": "d39d9de64bafebe6348bd201137e3a7b73afbca5dabeed08073979af6067aeb0",
+   "source_document_id": null,
+   "source_title": "d39d9de64bafebe6348bd201137e3a7b73afbca5dabeed08073979af6067aeb0.pdf",
+   "official_url": "https://villageeastcanton.net/wp-content/uploads/2022/03/Zoning-Fee-Schedule-1.pdf"
+  }
+ ]
+}

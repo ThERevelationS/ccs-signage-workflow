@@ -1,0 +1,109 @@
+{
+ "aborted": null,
+ "results": [
+  {
+   "path": "src/components/estimator/foundation/foundationTemplateService.js",
+   "phase": "baseline",
+   "remoteHash": "f1cdea554626e234a47755bc3223d6bcf98097dfa88f9289669189257c5e0d55",
+   "localHash": "7a550f583694ca0396af63924a9d2d5c28d2be1a02b2ab14e1f2c60ad172c30e",
+   "willEdit": true
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+   "phase": "baseline",
+   "remoteHash": "f225e7370639e14b0173b767181d065654c9421b313169fd1867bbb3f4f7f8ea",
+   "localHash": "4880c98d434d71f4a2b9f9cda7ebfd3974cfa29b05590c60eff491be503eac3f",
+   "willEdit": true
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+   "phase": "baseline",
+   "remoteHash": "417b3e921a55f07564326ce97d851dccd3d45bb38cccf36f8314908317f16955",
+   "localHash": "9a6da710738c46edb8ee2987701f326f1096c092ba379872e984b62ce6a15c08",
+   "willEdit": true
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+   "phase": "baseline",
+   "remoteHash": "18aa57ce9de1a10d4aa2b5dc0bcedbff60c87f98c2203f2bfc7cfc3a87301920",
+   "localHash": "b1da0a3cc2b68260cadb320b110c5f6f89ddf43ee25ad93af2522c10bc819d4b",
+   "willEdit": true
+  },
+  {
+   "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+   "phase": "baseline",
+   "remoteHash": "aad6b03aeef75b89df5b9b5f9079359b828d354cdaeb5760f8f826c62eabf01e",
+   "localHash": "bf32ae5ab3c869d8de3fb01ceb67981c09a51773d4373ee1f4a0d78848d30406",
+   "willEdit": true
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+   "phase": "baseline",
+   "remoteHash": "06d9d99d98ddafbe5cfd7b921d8124c42eab2c7a75cc8510f1cc070e610ba464",
+   "localHash": "70233a10b07274571a9d27e693cad3a51c705bc561514fe5c688d5648085f152",
+   "willEdit": true
+  },
+  {
+   "path": "base44/entities/FoundationProject.jsonc",
+   "phase": "baseline",
+   "skipped": "already-applied"
+  },
+  {
+   "path": "src/pages/FoundationEstimator.jsx",
+   "phase": "baseline",
+   "remoteHash": "f7283a206f94c6995145862e167b067d392158a91393406ae7cc633e8de95209",
+   "localHash": "c10e0d372b4b039cba3805a95ea40d5a4e84befded19709cd2083d029af886b1",
+   "willEdit": true
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+   "phase": "write-new",
+   "skipped": "already-applied"
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+   "phase": "write-new",
+   "skipped": "already-applied"
+  },
+  {
+   "path": "base44/entities/FoundationProject.jsonc",
+   "phase": "edit",
+   "skipped": "already-equal"
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+   "phase": "edit",
+   "localHash": "4880c98d434d71f4a2b9f9cda7ebfd3974cfa29b05590c60eff491be503eac3f"
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+   "phase": "edit",
+   "localHash": "9a6da710738c46edb8ee2987701f326f1096c092ba379872e984b62ce6a15c08"
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+   "phase": "edit",
+   "localHash": "b1da0a3cc2b68260cadb320b110c5f6f89ddf43ee25ad93af2522c10bc819d4b"
+  },
+  {
+   "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+   "phase": "edit",
+   "localHash": "bf32ae5ab3c869d8de3fb01ceb67981c09a51773d4373ee1f4a0d78848d30406"
+  },
+  {
+   "path": "src/components/estimator/foundation/foundationTemplateService.js",
+   "phase": "edit",
+   "localHash": "7a550f583694ca0396af63924a9d2d5c28d2be1a02b2ab14e1f2c60ad172c30e"
+  },
+  {
+   "path": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+   "phase": "edit",
+   "localHash": "70233a10b07274571a9d27e693cad3a51c705bc561514fe5c688d5648085f152"
+  },
+  {
+   "path": "src/pages/FoundationEstimator.jsx",
+   "phase": "edit",
+   "localHash": "c10e0d372b4b039cba3805a95ea40d5a4e84befded19709cd2083d029af886b1"
+  }
+ ]
+}

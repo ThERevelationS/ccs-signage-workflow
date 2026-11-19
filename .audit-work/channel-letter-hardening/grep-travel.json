@@ -1,0 +1,54 @@
+Searching files
+Searching files
+Searched files
+{
+  "matches": [
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 25,
+      "text": "import TravelCostCard from \"@/components/channelLetterInstall/TravelCostCard\";"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 309,
+      "text": "  // TravelCostCard de-dupes by shop|site address pair, so a stable key per address"
+    },
+    {
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "line": 1033,
+      "text": "                  <TravelCostCard"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 32,
+      "text": "import TravelCostCard from \"@/components/channelLetterInstall/TravelCostCard\";"
+    },
+    {
+      "path": "src/pages/VinylEstimator.jsx",
+      "line": 801,
+      "text": "                <TravelCostCard"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 16,
+      "text": "import TravelCostCard from \"@/components/channelLetterInstall/TravelCostCard\";\r"
+    },
+    {
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "line": 540,
+      "text": "                <TravelCostCard\r"
+    },
+    {
+      "path": "src/components/vinylEstimator/vinylPricingAvailability.js",
+      "line": 632,
+      "text": "    // TravelCostCard consumes these settings when mileage is set.\r"
+    },
+    {
+      "path": "src/components/channelLetterInstall/TravelCostCard.jsx",
+      "line": 20,
+      "text": "export default function TravelCostCard({"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 9
+}

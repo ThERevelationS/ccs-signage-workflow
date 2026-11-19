@@ -1,0 +1,26 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "3d1aaf013cf0c845777f14ba594ee058b3f3fa70",
+  "jsonProofs": [
+    { "file": "masonry-rates-model-verification.json", "resultCount": 36 },
+    { "file": "masonry-rates-page-verification.json", "resultCount": 5 },
+    { "file": "masonry-rates-browser-verification.json", "resultCount": 10 }
+  ],
+  "allResultsMustHaveOkTrue": true,
+  "scopedLintLogs": [
+    { "file": "masonry-rates-lint.txt", "line": "exit=0" }
+  ],
+  "candidateHashes": {
+    "wallCalculator.js": "a2eb2806ba70ac52487e3f7e7d1be5e42d0005dc0e8c39952224957677d5fbc8"
+  },
+  "actualRemoteBundleCount": 3,
+  "allowedBuildWarningCount": 0,
+  "requiredAppStatus": "ready",
+  "testDataMustRemainEnabled": false,
+  "realStorageVerified": false,
+  "realBusinessAuthorizationVerified": false,
+  "schemaActivationAuthorized": false,
+  "reinforcementV2ActivationAuthorized": false,
+  "publishDeployAuthorized": false
+}

@@ -1,4 +1,5 @@
 import {createScanReporter,silentScanReporter} from '../../shared/permittingScanReporter.mjs';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
@@ -7,7 +8,7 @@ import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 Deno.serve(async (req) => {
   let reporter:any=silentScanReporter;
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json();
     const actor=await authenticateSignShopSession(base44, body?.session_token);
     const { query, state, existing_office_types } = body || {};
@@ -86,7 +87,7 @@ Return ONLY valid data. If you cannot find something, leave the field empty ("")
   } catch (error) {
     await reporter.finish('failed',String(error?.message || error));
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 409, 429, 503].includes(status) ? status : 500;
     console.error('aiResearchOffice error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Office research could not be completed safely' : error.message,

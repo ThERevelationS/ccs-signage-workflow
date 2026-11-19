@@ -1,0 +1,41 @@
+=== REAL BUNDLE COMPILE ===
+
+  .audit-work\foundation-template05\page-real-bundle-v3.js  871.7kb
+
+Done in 38ms
+bundle_exit=0
+=== TEMPLATE SUITE ===
+ok snapshot: full design roundtrip, excludes identity/receipt/pricing
+ok snapshot JSON roundtrip preserves structure
+ok patch: fresh IDs, remapped refs, external refs dangling, immutability
+ok patch: partial fields retain target arrays (no fabricated empties)
+ok future version / non-record rejected without mutation
+ok allowlist is shared and exact
+ok dialog: save builds full snapshot data + single flight
+ok dialog: lost-reply retry same key+data; name change => new key
+ok dialog: load failure visible + retry; failed delete keeps row
+ok dialog: apply rejection stays open; apply success closes
+ok dialog: genuinely deferred old load cannot overwrite reopened project context
+ok dialog: two pending retries resolve backwards; only latest rows survive
+ok dialog: delayed save after project-context switch does not close; stale handler zero calls
+ok dialog: stale same-context draft handlers do not save an older name or project
+ok dialog: source edit during save keeps newer draft open and retryable
+ok dialog: stale apply/delete callbacks after close or unmount have no effects
+ok service delete: 404 absent ok, 500 propagates, wrong-id throws, normal CAS delete
+PASS template passed=17 failed=0
+exit=0
+=== SAVE-HANDLER ===
+    at ensureIdempotentEntityCreate (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-save01/fe-patched.bundle.mjs:715:109)
+    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-save01/fe-patched.bundle.mjs:1262:28
+    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/scripts/test-foundation-save-handler.mjs:818:29
+PASS save-handler passed=55 failed=0
+=== BROWSER FIXTURE ===
+browser-fixture cases=6 failed=0
+ok orphan cabinet visible; reassign leaves orphan group, cost kept
+ok cap wall change clears segment to explicit unassigned
+ok pole parent: reorder retains canon+index, delete -> dangling+issue, reassign resolves
+ok template save snapshot then load+apply: full fields, fresh ids, close once
+ok bad-schema apply: alert, stays open, design unchanged
+ok external-requests-blocked
+=== ESLINT ===
+eslint_exit=0

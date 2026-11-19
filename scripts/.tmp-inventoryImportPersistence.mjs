@@ -18,7 +18,7 @@ async function deleteBuilderEntityIfUnchanged({
   if (!id || !updatedDate || typeof entity?.deleteMany !== "function" || typeof entity?.get !== "function") {
     throw new Error(`${label} could not initialize its concurrency-safe delete.`);
   }
-  const query = { id, updated_date: updatedDate, ...guardFields };
+  const query = { ...guardFields, id, updated_date: updatedDate };
   let result;
   try {
     result = await entity.deleteMany(query);
@@ -62,6 +62,7 @@ var deleteEntityIfUnchanged = deleteBuilderEntityIfUnchanged;
 
 // src/components/masterInventory/inventoryImportPersistence.js
 var cleanName = (value) => String(value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+var cleanString = (value) => String(value ?? "").trim().replace(/\s+/g, " ");
 function normalize(value) {
   if (Array.isArray(value)) return value.map(normalize);
   if (!value || typeof value !== "object") return value;
@@ -76,6 +77,9 @@ function sameImportedValue(a, b) {
   if (emptyA && emptyB) return true;
   if (!emptyA && !emptyB && Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
     return Math.abs(Number(a) - Number(b)) <= 1e-6;
+  }
+  if (typeof a === "string" && typeof b === "string") {
+    return cleanString(a) === cleanString(b);
   }
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 }

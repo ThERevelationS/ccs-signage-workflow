@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { format } from 'npm:date-fns@2.30.0';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
@@ -24,7 +25,7 @@ const retryOnRateLimit = async (fn, maxRetries = 3) => {
 };
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
+  const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
   try {
   const contentType = req.headers.get('content-type') || '';
   let formData = null;
@@ -44,7 +45,7 @@ Deno.serve(async (req) => {
     actor = await authenticateSignShopSession(base44, sessionToken);
   } catch (error) {
     const status = Number(error?.status || 401);
-    const safeStatus = [401, 409, 503].includes(status) ? status : 401;
+    const safeStatus = [401, 409, 429, 503].includes(status) ? status : 401;
     return Response.json({ error: safeStatus === 503 ? 'Session authentication is unavailable' : 'Unauthorized' }, { status: safeStatus });
   }
 
@@ -65,6 +66,11 @@ Deno.serve(async (req) => {
   } else {
     workOrderFilter = body?.workOrderFilter || '';
     if (!body?.fileData) return Response.json({ error: 'No file provided' }, { status: 400 });
+    // Upload cap: reject oversized base64 payloads before decoding — base64
+    // inflates ~4/3, so 20MB base64 ≈ 15MB of binary + parsed row memory.
+    if (String(body.fileData).length > 20 * 1024 * 1024) {
+      return Response.json({ error: 'Import file exceeds the 15 MB limit. Split the file and import in parts.' }, { status: 413 });
+    }
     const binaryStr = atob(body.fileData);
     const bytes = new Uint8Array(binaryStr.length);
     for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
@@ -283,7 +289,7 @@ Deno.serve(async (req) => {
   return Response.json({ created, updated, skipped, conflicts, errors, total: validRows.length, issues });
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 413].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 413, 429].includes(status) ? status : 500;
     console.error('importOrders error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Order import could not be completed safely' : error.message,

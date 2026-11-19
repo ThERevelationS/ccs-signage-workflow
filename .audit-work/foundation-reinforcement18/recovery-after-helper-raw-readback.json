@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "length": 67127,
+      "hash": "d4493957101e38cd0aa0b7ad3a9a8ec97fb0def5bee2d8f0f19ac68eacdd0b6a",
+      "finalLF": false
+    },
+    {
+      "path": "src/components/estimator/builder/builderService.js",
+      "length": 56358,
+      "hash": "c4ff8a65e632110a0e19ab6f8e76e4b0d9bc2a0d9b16d5212367af6735805daf",
+      "finalLF": false
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationBuilderRecovery.js",
+      "length": 2698,
+      "hash": "7e6fa754eac96e7d4b689cf028163a1a99f69617e151c0698ec3cf122e00629c",
+      "finalLF": true
+    }
+  ]
+}

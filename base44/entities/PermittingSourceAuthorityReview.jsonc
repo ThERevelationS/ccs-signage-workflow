@@ -50,17 +50,9 @@
     "next_fields"
   ],
   "rls": {
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "read": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "update": false,
-    "delete": false
+    "create": { "user_condition": { "role": "__permittingsourceauthorityreview_backend_only__" } },
+    "read": { "user_condition": { "role": "__permittingsourceauthorityreview_backend_only__" } },
+    "update": { "user_condition": { "role": "__permittingsourceauthorityreview_backend_only__" } },
+    "delete": { "user_condition": { "role": "__permittingsourceauthorityreview_backend_only__" } }
   }
 }

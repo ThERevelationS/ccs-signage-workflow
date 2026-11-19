@@ -1,0 +1,17 @@
+{
+  "localOnly": true,
+  "integrated": false,
+  "remoteWrites": false,
+  "cases": 50,
+  "leadChecked": true,
+  "lintExit": 0,
+  "syntaxExit": 0,
+  "standaloneBuild": true,
+  "basisSourceSha256": "3e95565c6138c42ec470181de1e53e00add6bdbfa9427bd5e90701fac7031f0a",
+  "geometrySourceSha256": "6fc01d657c28f786d82f554148276c29ff358a4d5498408e598473e687fe7cf0",
+  "frozenModelFixtureSha256": "12b06a21b2cd557a4a8634ea5368c517bbe472263fba76bbf72f9bad17aab15a",
+  "catalogMetadataSchemaAdded": false,
+  "paidAiCalls": 0,
+  "businessRecordsTested": false,
+  "checkedAt": "2026-11-06T10:33:41.490Z"
+}

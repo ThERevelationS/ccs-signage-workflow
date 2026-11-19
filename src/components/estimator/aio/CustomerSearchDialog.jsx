@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Search } from "lucide-react";
 
@@ -26,7 +26,7 @@ const rememberRecentId = (id) => {
     const next = [id, ...readRecentIds().filter((r) => r !== id)].slice(0, RECENT_LIMIT);
     localStorage.setItem(RECENT_KEY, JSON.stringify(next));
   } catch {
-    // localStorage unavailable (private mode, quota) â€” recents are best-effort.
+    // localStorage unavailable (private mode, quota) — recents are best-effort.
   }
 };
 
@@ -97,7 +97,7 @@ export default function CustomerSearchDialog({ open, onClose, customers = [], on
             c.billing_city,
           ]
             .filter(Boolean)
-            .join(" Â· ") || "No contact details"}
+            .join(" · ") || "No contact details"}
         </div>
       </button>
     );
@@ -111,12 +111,13 @@ export default function CustomerSearchDialog({ open, onClose, customers = [], on
         </DialogHeader>
 
         <div className="relative">
-          <Search className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" aria-hidden="true" />
           <input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by company, contact, email, phone or cityâ€¦"
+            aria-label="Search customers"
+            placeholder="Search by company, contact, email, phone or city…"
             className="w-full h-[32px] pl-8 pr-2 border border-gray-300 rounded-sm text-[13px] focus:outline-none focus:border-red-400"
           />
         </div>

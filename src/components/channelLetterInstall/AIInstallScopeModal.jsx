@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Loader2, Wand2, Image as ImageIcon, X, Upload } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { ESTIMATOR_AI_MODEL } from "../../../base44/shared/estimatorAiModelPolicy.js";
 
 const SCHEMA = {
   type: "object",
@@ -96,6 +97,7 @@ You've also been provided with ${mockups.length === 1 ? "a sign mockup image" : 
 ${hasText ? "Use the written notes below as the primary source of truth; the image fills in gaps." : "Generate items based on what you observe in the image(s)."}` : "";
 
       const res = await base44.integrations.Core.InvokeLLM({
+        model: ESTIMATOR_AI_MODEL,
         prompt: `You are a sign-installation estimator. Parse the input into structured installation line items.
 ${imageInstructions}
 

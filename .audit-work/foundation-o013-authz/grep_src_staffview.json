@@ -1,0 +1,41 @@
+{
+  "matches": [
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 921,
+      "text": "            {data.kind === \"staff_view\" && data.estimate && ("
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 955,
+      "text": "            {data.kind !== \"staff_view\" && data.invoice && ("
+    },
+    {
+      "path": "src/pages/CustomerPortal.jsx",
+      "line": 964,
+      "text": "            {data.kind !== \"staff_view\" && ("
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 998,
+      "text": "  // #88 — copy a read-only staff_view portal link for this estimate."
+    },
+    {
+      "path": "src/components/reports/opsReportModel.js",
+      "line": 1764,
+      "text": "    notes: \"Opens = open_count on the estimate's estimate/staff_view share links. Messages = customer-authored portal thread entries on the estimate; staff replies counted apart. First Reply = hours from first customer message to first staff reply on that thread. Reorder requests are work-order-scoped, not estimate-thread events, so they are not counted. Aggregated server-side in the estimate funnel payload (top 200 engaged estimates).\","
+    },
+    {
+      "path": "src/components/estimator/moduleShared/moduleProjectActions.js",
+      "line": 58,
+      "text": "// Create (or reuse) a read-only staff_view portal link for an estimate and"
+    },
+    {
+      "path": "src/components/estimator/moduleShared/moduleProjectActions.js",
+      "line": 68,
+      "text": "    kind: \"staff_view\","
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 7
+}

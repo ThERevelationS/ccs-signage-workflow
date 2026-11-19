@@ -1,0 +1,22 @@
+{
+ "suite": "maintenance-red",
+ "passed": 14,
+ "failed": 0,
+ "result": "PASS",
+ "defects": [
+  "missing MaintenanceActionRate row → 0 minutes → silent $0 labor",
+  "malformed minutes cell → parseFloat||0 → silent $0 labor",
+  "disabled rate row → 0 minutes silently",
+  "malformed maintenance_tech_rate → fabricated $65/hr",
+  "blank qty → 0 → $0 labor + $0 per-letter materials",
+  "missing material rule → stored snapshot repriced silently",
+  "repaint coverage recorded 0 → ||350 laundered",
+  "malformed repaint paint cost → fabricated $55/gal",
+  "repaint sqft/hr 0 → ||60 resurrected",
+  "dim-letter qty blank → whole feature silently dropped from estimate",
+  "absent paint-mask rates → $0 mask priced silently",
+  "malformed supplies% → 10% fabricated; malformed markup → 0%",
+  "personnel row without total_cost → $0 in rollup silently",
+  "no issues/pricingUnavailable channel existed at all"
+ ]
+}

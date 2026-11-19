@@ -1,0 +1,39 @@
+{
+  "results": [
+    {
+      "name": "normal-save",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "revision-unavailable",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "revision-reply-lost",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "reopened-pending-snapshot",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "newer-unsent-description",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "invalid-unsent-quantity",
+      "ok": true,
+      "error": null
+    }
+  ],
+  "actualRemoteBusinessSources": true,
+  "heldLocalBusinessSourcesAllowed": false,
+  "reinforcementV2Activated": false,
+  "realStorageVerified": false,
+  "backendAuthorizationVerified": false
+}

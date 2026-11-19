@@ -1,8 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(30_000),...init});
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const user = await base44.auth.me();
     
     if (!user) {
@@ -23,7 +25,7 @@ Deno.serve(async (req) => {
     const cagisUrl = `https://cagis.tax.ohio.gov/cagis/Common/QuickSearch.aspx`;
     
     try {
-      const response = await fetch(`${cagisUrl}?term=${encodeURIComponent(searchTerm)}`, {
+      const response = await boundedFetch(`${cagisUrl}?term=${encodeURIComponent(searchTerm)}`, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }

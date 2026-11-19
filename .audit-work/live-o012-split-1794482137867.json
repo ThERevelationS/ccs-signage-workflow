@@ -1,0 +1,70 @@
+{
+  "stamp": 1794482137867,
+  "probes": [
+    {
+      "name": "fixtures",
+      "pass": true
+    },
+    {
+      "name": "source armed 2 lines",
+      "pass": true
+    },
+    {
+      "name": "split created",
+      "pass": true,
+      "splitId": "6af59fde6263d60dbc624a5b"
+    },
+    {
+      "name": "split has 1 line",
+      "pass": true,
+      "count": 1
+    },
+    {
+      "name": "picked line B",
+      "pass": true,
+      "lid": "LB1794482137867"
+    },
+    {
+      "name": "line project remapped",
+      "pass": true,
+      "pid": "6af59fdff4a7c1603a1e6656"
+    },
+    {
+      "name": "line product remapped",
+      "pass": true,
+      "bid": "6af59fdff7282d3268f79986"
+    },
+    {
+      "name": "proj clone keyed",
+      "pass": true,
+      "key": "copy-proj:6af59fde6263d60dbc624a5b:6af59fdc8842143c20a65257"
+    },
+    {
+      "name": "prod owned by child",
+      "pass": true,
+      "est": "6af59fde6263d60dbc624a5b"
+    },
+    {
+      "name": "prod src proj remapped",
+      "pass": true,
+      "sp": "6af59fdff4a7c1603a1e6656"
+    },
+    {
+      "name": "parts cloned",
+      "pass": false,
+      "count": 1
+    },
+    {
+      "name": "no line-A transplant",
+      "pass": true,
+      "strayA": 0
+    },
+    {
+      "name": "split pricing flagged stale",
+      "pass": true,
+      "stale": true,
+      "qt": 0
+    }
+  ],
+  "ok": false
+}

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 import { claimRegulationAlertNotification, ensureConvergentRegulationAlertCreate } from '../../shared/regulationAlertPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
@@ -72,7 +73,7 @@ async function authenticateAdminSession(base44: any, token: unknown) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const isScheduledRun = await hasWorkflowInvocationCapability(body, 'monitorJurisdictionChanges');
     const user = isScheduledRun ? null : await authenticateAdminSession(base44, body?.session_token);
@@ -93,7 +94,7 @@ Deno.serve(async (req) => {
 
     // Get all jurisdictions
     const jurisdictions = await loadAllEntityRows({
-      entity: base44.entities.JurisdictionProfile,
+      entity: base44.asServiceRole.entities.JurisdictionProfile,
       sort: '-updated_date',
       label: 'Jurisdiction monitoring catalog',
     });
@@ -101,12 +102,24 @@ Deno.serve(async (req) => {
       return Response.json({ alerts: [], message: 'No jurisdictions found' });
     }
 
+    // Each jurisdiction costs two agent calls; the whole catalog cannot fit in
+    // one worker invocation. Process a bounded batch per run and rotate a
+    // persisted cursor so successive runs cover the full catalog.
+    const MAX_PER_RUN = 15;
+    let cursor = 0;
+    try {
+      const cursorRows = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'jurisdiction_monitor_cursor' });
+      cursor = Math.max(0, Number(cursorRows?.[0]?.setting_value?.offset) || 0);
+    } catch { /* start from the top */ }
+    if (cursor >= jurisdictions.length) cursor = 0;
+    const batch = jurisdictions.slice(cursor, cursor + MAX_PER_RUN);
+
     const alerts = [];
 
-    for (const jurisdiction of jurisdictions) {
+    for (const jurisdiction of batch) {
       try {
         // Use the research agent to get fresh data, then compare against stored data
-        const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+        const agentResult = await base44.asServiceRole.functions.invoke('jurisdiction_research', {
           jurisdictionName: jurisdiction.name,
           jurisdictionState: jurisdiction.state,
           jurisdictionType: jurisdiction.type,
@@ -246,18 +259,34 @@ Deno.serve(async (req) => {
         console.error(`Error monitoring jurisdiction ${jurisdiction.id}:`, jurisdictionError.message);
       }
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+
+    const nextOffset = (cursor + batch.length) % Math.max(1, jurisdictions.length);
+    try {
+      const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'jurisdiction_monitor_cursor' });
+      const value = { offset: nextOffset, updated_at: new Date().toISOString() };
+      if (existing?.length) {
+        await base44.asServiceRole.entities.GlobalSettings.update(existing[0].id, { setting_value: value });
+      } else {
+        await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: 'jurisdiction_monitor_cursor', setting_value: value });
+      }
+    } catch (cursorErr) {
+      console.warn('Could not persist monitor cursor:', cursorErr?.message || cursorErr);
     }
 
     return Response.json({
       success: true,
       alerts_created: alerts.length,
-      alerts: alerts
+      alerts: alerts,
+      jurisdictions_checked: batch.length,
+      jurisdictions_total: jurisdictions.length,
+      next_offset: nextOffset,
     });
   } catch (error) {
     console.error('monitorJurisdictionChanges error:', error?.message || error);
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 409, 429, 503].includes(status) ? status : 500;
     return Response.json({
       error: safeStatus === 500 ? 'Jurisdiction monitoring could not be completed safely' : error.message,
     }, { status: safeStatus });

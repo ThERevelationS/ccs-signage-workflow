@@ -1,0 +1,14 @@
+export const foundationItemSettingIssues = (item, settings = {}, index = 0) => {
+  const issues = [];
+  for (const [key, fallback, label, positive] of itemSettingConsumption(item)) {
+    const number = foundationSettingNumber(settings?.[key], fallback);
+    if (number === null || (positive && number <= 0)) {
+      issues.push({
+        kind: "foundation", index, componentId: item?.component_id ?? null,
+        field: key, inventoryId: null, code: "foundation_setting_unavailable",
+        message: `Foundation ${index + 1}: record a finite, ${positive ? "positive" : "nonnegative"} ${label.replace(/^positive /, "")} in Estimator Settings before repricing.`,
+      });
+    }
+  }
+  return issues;
+};

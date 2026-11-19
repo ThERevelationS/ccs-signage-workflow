@@ -155,6 +155,11 @@
       "description": "Optional saved customer sell-price snapshot from the shared Markup Tier engine. Painting internal cost remains unchanged until a tier is explicitly applied.",
       "additionalProperties": true
     },
+    "pricing_engine": {
+      "type": "object",
+      "description": "F-23g: optional pricing-engine context block — {customer_tier, tier_rules[], templates[], default_markup_pct, tax_percent, setup_fee, minimum_charge}. When present, paintPricingWire routes the sell side through the shared engine; absent = legacy pricing verbatim. (Project is painting-dedicated — only PaintingEstimator consumes it.)",
+      "additionalProperties": true
+    },
     "notes": {
       "type": "string",
       "description": "Project notes"
@@ -165,20 +170,9 @@
     "client_name"
   ],
   "rls": {
-    "create": {},
-    "read": {},
-    "update": {},
-    "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    }
+    "create": { "user_condition": { "role": "__project_backend_only__" } },
+    "read": { "user_condition": { "role": "__project_backend_only__" } },
+    "update": { "user_condition": { "role": "__project_backend_only__" } },
+    "delete": { "user_condition": { "role": "__project_backend_only__" } }
   }
 }

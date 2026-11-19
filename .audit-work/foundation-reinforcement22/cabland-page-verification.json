@@ -1,0 +1,38 @@
+{
+  "results": [
+    {
+      "id": "held-zero-cabinet-qty-blocks-save",
+      "ok": true
+    },
+    {
+      "id": "held-missing-cabinet-price-blocks-save",
+      "ok": true
+    },
+    {
+      "id": "held-missing-cell-size-blocks-save",
+      "ok": true
+    },
+    {
+      "id": "unsaved-invalid-cabinet-withholds-totals",
+      "ok": true
+    },
+    {
+      "id": "valid-cabinets-landscape-save",
+      "ok": true
+    },
+    {
+      "id": "free-zero-cabinet-saves",
+      "ok": true
+    },
+    {
+      "id": "held-cabinet-qty-repaired-through-panel",
+      "ok": true
+    },
+    {
+      "id": "held-cell-size-repaired-through-designer",
+      "ok": true
+    }
+  ],
+  "unexpectedNetwork": 0,
+  "unexpectedSdk": 0
+}

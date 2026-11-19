@@ -1,0 +1,7 @@
+6b0fbc301bd7fbcc127088a9633bb6b4 *src/components/proofs/proofModel.js
+cddd02155593885828609030400461ae *src/components/proofs/ProofPanel.jsx
+ee5bbf5c36bd2ac618a4077361638121 *src/components/estimator/workOrderConversion.js
+0069c43f18a53368f61212394920df23 *src/components/queues/ProductQueue.jsx
+ab8d82dc84ee6dc360c228c97c04d359 *base44/entities/WorkOrder.jsonc
+dc9ea096b66906dc064845f48408e11d *base44/entities/BuilderProduct.jsonc
+bde126b2de6f6a9ec1be2c459590971b *scripts/test-proof-workflow.mjs

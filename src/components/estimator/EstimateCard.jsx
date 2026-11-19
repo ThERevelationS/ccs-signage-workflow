@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FileText, User, Calendar } from "lucide-react";
 import { format } from "date-fns";
-import { estimateQuoteExpiration, localDateStamp, quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
+import { estimateQuoteExpiration, localDateStamp } from "@/components/estimator/quoteLifecycle";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const CUSTOMER_NOTE_CACHE_MS = 30_000;
@@ -18,6 +18,8 @@ function loadCustomerNote(customerId) {
     .then((customer) => String(customer?.notes || "").trim())
     .catch((error) => {
       customerNoteCache.delete(id);
+      // A deleted Customer record is a missing note, not a load failure.
+      if (Number(error?.status ?? error?.response?.status) === 404) return "";
       throw error;
     });
   customerNoteCache.set(id, { expiresAt: Date.now() + CUSTOMER_NOTE_CACHE_MS, promise });
@@ -78,22 +80,22 @@ export default function EstimateCard({ estimate }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-red-500 flex-shrink-0" />
+            <FileText className="w-4 h-4 text-red-500 flex-shrink-0" aria-hidden="true" />
             <h3 className="font-semibold text-gray-900 truncate hover:text-red-600">
               {estimate.project_name}
             </h3>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
             <span className="flex items-center gap-1">
-              <User className="w-3.5 h-3.5" />
-              {estimate.client_name || "â€”"}
+              <User className="w-3.5 h-3.5" aria-hidden="true" />
+              {estimate.client_name || "—"}
             </span>
             {estimate.estimate_number && (
               <span className="font-mono text-xs text-gray-400">{estimate.estimate_number}</span>
             )}
             {estimate.created_date && (
               <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
+                <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
                 {format(new Date(estimate.created_date), "MMM d, yyyy")}
               </span>
             )}

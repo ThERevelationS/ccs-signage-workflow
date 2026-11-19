@@ -1,0 +1,56 @@
+=== TEMPLATE SUITE ===
+ok snapshot: full design roundtrip, excludes identity/receipt/pricing
+ok patch: fresh IDs, remapped refs, external refs dangling, immutability
+ok patch: partial fields retain target arrays (no fabricated empties)
+ok future version / non-record rejected without mutation
+ok allowlist is shared and exact
+ok dialog: save builds full snapshot data + single flight
+ok dialog: lost-reply retry same key+data; name change => new key
+ok dialog: load failure visible + retry; failed delete keeps row
+ok dialog: apply rejection stays open; apply success closes
+ok service delete: 404 absent ok, 500 propagates, wrong-id throws, normal CAS delete
+PASS template passed=10 failed=0
+exit=0
+=== SAVE-HANDLER ===
+    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-save01/fe-patched.bundle.mjs:1262:28
+    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/scripts/test-foundation-save-handler.mjs:818:29
+PASS save-handler passed=55 failed=0
+=== ASSEMBLY ===
+ok issue classifications durable across JSON roundtrip (null refs, mounts)
+assembly passed=28 failed=0
+=== BROWSER FIXTURE ===
+browser-fixture cases=4 failed=0
+ok orphan cabinet visible + reassignment offered
+ok cap wall change clears segment
+ok template save dialog builds full snapshot via stub
+ok rejected apply keeps dialog open
+=== ESLINT ===
+
+C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\src\components\estimator\foundation\FoundationTemplateDialog.jsx
+  64:5  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+✖ 1 problem (0 errors, 1 warning)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+eslint_exit=0
+=== ESBUILD ===
+
+  NUL  8.8kb
+
+Done in 7ms
+ok src/components/estimator/foundation/FoundationTemplateDialog.jsx
+
+  NUL  2.2kb
+
+Done in 7ms
+ok src/components/estimator/foundation/foundationTemplateModel.js
+
+  NUL  1.2kb
+
+Done in 7ms
+ok src/components/estimator/foundation/foundationTemplateService.js
+
+  NUL  45.2kb
+
+Done in 8ms
+ok src/pages/FoundationEstimator.jsx

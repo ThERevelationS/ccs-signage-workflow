@@ -1,0 +1,9 @@
+{
+  "at": "2026-11-05T18:57:50.004Z",
+  "mathGate": "engine-verification.json 46PASS",
+  "files": {
+    "src/components/estimator/foundation/foundationEquipmentBindings.js": "df7c4479c79cbaa589e6d7f1db3639ad6c85b8488d9ddba0eb04ef206f03952b",
+    "src/components/estimator/foundation/foundationCalc.js": "f11837e37d57f3ce7ce9d70ad263a5cc03c20ff3d5b2d6476136c7135f714468",
+    "src/components/estimator/foundation/foundationCatalogIntegrity.js": "f9481fa01132908822a5b909fe21ec2bd61ae219f14ecf6937f753abeb209998"
+  }
+}

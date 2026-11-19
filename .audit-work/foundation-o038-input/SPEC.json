@@ -1,0 +1,124 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "2083c6dbbd1f8f89cc79f40b3212ab82aa563a0a",
+  "baselineFile": "o038-baseline.json",
+  "workItems": ["O-038 (CMP-C07)", "O-039 (CMP-C08)"],
+  "title": "Scene-input foundation — shared screen/plan/world transforms + pointer/hit-test/drag/snap input primitives, wired into the layout canvas seam (additive)",
+  "targetOrder": [
+    "src/components/estimator/foundation/foundationSceneTransforms.js",
+    "src/components/estimator/foundation/foundationSceneInput.js",
+    "src/components/estimator/foundation/foundationLayoutModel.js",
+    "src/components/estimator/foundation/FoundationLayoutCanvas.jsx"
+  ],
+  "candidatePrefix": "o038-candidate- / o039-candidate-",
+  "candidateHashes": {
+    "foundationSceneTransforms.js": "27397d68015a2e0f5f38fc0e38bce196a42b302850f04def6b4ac221babecacc",
+    "foundationSceneInput.js": "6d986c4b4aa478628f82376140e9d412c8afcf26d7fcfb403a0e36cb0eb8b31d",
+    "foundationLayoutModel.js": "972ad19712f2e6c5d23a208a443635515d13e9c1b5034169eb95bcb8f2d72e3d",
+    "FoundationLayoutCanvas.jsx": "33116498c442002f7f33158ec00eb4880c66740072718723a045373b08870d9c"
+  },
+  "atomicEditPerFile": true,
+  "apply": [
+    {
+      "path": "src/components/estimator/foundation/foundationSceneTransforms.js",
+      "mode": "write",
+      "candidate": "o038-candidate-foundationSceneTransforms.js",
+      "sha256": "27397d68015a2e0f5f38fc0e38bce196a42b302850f04def6b4ac221babecacc",
+      "note": "NEW file — remote exists:false at source head (o038-baseline.json). Whole-file write, LF, no terminal newline."
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationSceneInput.js",
+      "mode": "write",
+      "candidate": "o039-candidate-foundationSceneInput.js",
+      "sha256": "6d986c4b4aa478628f82376140e9d412c8afcf26d7fcfb403a0e36cb0eb8b31d",
+      "note": "NEW file — remote exists:false at source head. Imports ./foundationLayoutModel + ./foundationSceneTransforms (both land in this changeset). Whole-file write, LF, no terminal newline."
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationLayoutModel.js",
+      "mode": "write",
+      "candidate": "o039-candidate-foundationLayoutModel.js",
+      "sha256": "972ad19712f2e6c5d23a208a443635515d13e9c1b5034169eb95bcb8f2d72e3d",
+      "note": "1-import + 1-body diff vs remote (diff-model.patch): layoutPointInches delegates to the shared transform. All other exports untouched. Whole-file write is simplest; exact anchors below also work with sandbox edit.",
+      "edits": [
+        {
+          "old": "// Pure geometry model for the foundation layout canvas. No pricing.\n\nexport const FOUNDATION_LAYOUT_WIDTH_INCHES = 480;",
+          "new": "// Pure geometry model for the foundation layout canvas. No pricing.\n\nimport { planViewFromElementRect, screenToPlan } from \"./foundationSceneTransforms\";\n\nexport const FOUNDATION_LAYOUT_WIDTH_INCHES = 480;"
+        },
+        {
+          "old": "// rect is the already-zoomed element rect — never rescale by zoom again.\nexport function layoutPointInches(clientX, clientY, rect) {\n  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return null;\n  if (!rect || !Number.isFinite(rect.left) || !Number.isFinite(rect.top)\n    || !Number.isFinite(rect.width) || !Number.isFinite(rect.height)) return null;\n  if (rect.width <= 0 || rect.height <= 0) return null;\n  return {\n    x_inches: ((clientX - rect.left) * FOUNDATION_LAYOUT_WIDTH_INCHES) / rect.width,\n    z_inches: ((clientY - rect.top) * FOUNDATION_LAYOUT_DEPTH_INCHES) / rect.height,\n  };\n}",
+          "new": "// rect is the already-zoomed element rect — never rescale by zoom again.\n// Delegates to the shared scene transform (O-038): the element rect IS the\n// view (plan extent stretched onto it per axis), so every pointer path that\n// used to re-derive this math now goes through one implementation.\nexport function layoutPointInches(clientX, clientY, rect) {\n  const view = planViewFromElementRect(rect, {\n    width: FOUNDATION_LAYOUT_WIDTH_INCHES,\n    depth: FOUNDATION_LAYOUT_DEPTH_INCHES,\n  });\n  return screenToPlan(view, clientX, clientY);\n}"
+        }
+      ]
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "mode": "write",
+      "candidate": "o039-candidate-FoundationLayoutCanvas.jsx",
+      "sha256": "33116498c442002f7f33158ec00eb4880c66740072718723a045373b08870d9c",
+      "note": "Seam-only diff vs remote (diff-canvas.patch): drag record/commit/keyboard math routes through foundationSceneInput primitives; DOM structure, handlers, guards and render unchanged; findCurrentIndex folded into resolveSceneDragTarget. Whole-file write; edit anchors in diff-canvas.patch."
+    }
+  ],
+  "deployTogether": "All four files must land in the same change: foundationSceneInput imports foundationSceneTransforms + foundationLayoutModel, and the canvas imports foundationSceneInput — any subset breaks the estimator bundle (FoundationEstimator imports the canvas). Import DAG is acyclic: transforms <- model <- input <- canvas, transforms <- input.",
+  "wiring": {
+    "decision": "WIRED at the existing input seam — the canvas already routed every pointer/keyboard computation through identifiable seams (layoutPointInches for screen->plan, plus its drag descriptor + commit/keyboard math). The wiring substitutes primitives producing provably identical values; render, handlers, capture logic, guards and z-order unchanged.",
+    "layoutPointInchesDelegation": "foundationLayoutModel.layoutPointInches now delegates to planViewFromElementRect + screenToPlan. Numeric equivalence: <=1 ulp vs the previous (clientX-left)*W/width form (asserted over a 20k-point x 8-rect sweep, max |delta| <= 1e-9); identical after the commit path's whole-inch rounding.",
+    "primitivesWired": ["beginSceneDrag", "sceneDragCorner", "commitSceneDrag", "resolveSceneDragTarget", "keyboardNudge", "nudgePatch"],
+    "primitivesAwaitingConsumers": ["hitTestPlan/hitTestPlanAll (O-034 selection, O-042 click-nav)", "snapCandidatesForScene/snapToCandidates/snapPlanPoint (O-035 alignment)", "normalizeScenePointer/isPrimaryScenePress/scenePointerToPlan (touch/pen surfaces)", "positionPatch (O-035 typed coordinates)", "planViewForViewport/planViewForBounds/zoomPlanViewAt/panPlanView (O-035/O-037 fit+pan, O-041 renderer, O-043 export)", "hitLabel/sceneObjectLabel (selection/status surfaces)"],
+    "mountAnchorsDoc": "MOUNT-ANCHORS.md"
+  },
+  "protectedFiles": [
+    "src/pages/FoundationEstimator.jsx",
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/components/estimator/foundation/foundationReinforcementModel.js",
+    "src/components/estimator/foundation/foundationReinforcementBasis.js",
+    "src/components/estimator/foundation/foundationReinforcementBasisKey.js",
+    "src/components/estimator/foundation/foundationReinforcementProposal.js",
+    "src/components/estimator/foundation/foundationReinforcementCost.js",
+    "src/components/estimator/foundation/foundationReinforcementDraft.js",
+    "src/components/estimator/foundation/foundationReinforcementEditorSession.js",
+    "src/components/estimator/foundation/foundationReinforcementItemProjection.js",
+    "src/components/estimator/foundation/foundationReinforcementProjection.js",
+    "src/components/estimator/foundation/useFoundationReinforcementEditor.js",
+    "src/components/estimator/foundation/Foundation3DPreview.jsx",
+    "src/components/estimator/foundation/partSync.js",
+    "src/components/estimator/foundation/FoundationBOM.jsx",
+    "src/components/estimator/foundation/FoundationItemCard.jsx",
+    "src/components/estimator/foundation/foundationAssemblyModel.js",
+    "src/components/estimator/foundation/foundationDuplicateMirror.js",
+    "src/components/estimator/foundation/foundationAssemblyPresets.js",
+    "src/components/estimator/foundation/foundationGeometryInputs.js",
+    "src/components/estimator/foundation/WallShapeEditor.jsx",
+    "src/components/estimator/foundation/wallCalculator.js",
+    "src/components/estimator/foundation/poleCalculator.js",
+    "src/components/estimator/foundation/wallCapCalculator.js"
+  ],
+  "applyRequiresLeadApproval": true,
+  "businessRecordOperationsAuthorized": false,
+  "schemaOrMetadataActivationAuthorized": false,
+  "publishOrDeployAuthorized": false,
+  "remoteApplicationPerformed": false,
+  "checkpointsCreated": false,
+  "remoteWritesPerformed": false,
+  "businessRecordOperationsPerformed": false,
+  "publishDeployPerformed": false,
+  "transportPerformed": false,
+  "entityOperationsPerformed": false,
+  "note": "Candidate creation + local/staging verification only. No sandbox apply, checkpoint, entity operation, schema change, publish, or deploy occurred or is authorized. The staging tree assembled for verification contains only remote-pulled files plus these candidates — local src/ was never read or trusted.",
+  "verification": {
+    "model": "verify-o038-o039-model.mjs -> PASS: 34 assertion groups (o038-o039-model-verification.json) — 20k-point remote-parity sweep (|delta| <= 1e-9), null-verdict parity, screen<->plan round-trips across element-rect + viewport-fit + bounds views, zoom-at-anchor stability + clamp, frame local<->plan at 12 rotations, plan<->world round-trip x1000, percent seam round-trip, hit-test fixtures (face/edge x4/vertex/pillar-rim/rotated-90/miss/unplaceable/invalid-pos/pole z-order/wall vertex+segment+wrap+face/open+closed/zero-length-seg/single-point/bad-vertex/collinear-polygon), drag+keyboard equivalence vs frozen remote math (5k-commit + 2k-move corpus + full key x modifier matrix), snap/positionPatch/pointer-normalization.",
+    "browser": "verify-o039-browser.mjs -> PASS: 11 real-Chromium scenarios on the candidate component (o039-browser-verification.json): drag commit, keyboard nudges, sub-inch wiggle null, second-pointer guard, reorder identity, fingerprint cancel, invalid-item exclusion, zoomed rect mapping (no double-zoom), CDP pen input, read-only, in-browser module probe.",
+    "remoteParity": "verify-o039-remote-parity.mjs -> PASS: identical scripted gesture stream vs the REMOTE bundle — 9 steps (rotated-item drag, keyboard+modifier matrix, wiggle, reorder commit, fingerprint cancel, index-identity cancel after delete, zoomed drag, negative drag), 0 diffs in emitted patches + DOM rects (o039-parity-*.json).",
+    "bundle": "esbuild ESM bundle of the 3-module staging graph: 0 warnings, 30,484 bytes; browser inputs manifest confirms only staging-src + react + lucide stub (o039-browser-inputs.json).",
+    "syntax": "esbuild transform parse clean for all 4 candidates."
+  },
+  "candidateLineEndings": "LF",
+  "candidateTerminalLF": {
+    "foundationSceneTransforms.js": false,
+    "foundationSceneInput.js": false,
+    "foundationLayoutModel.js": false,
+    "FoundationLayoutCanvas.jsx": false
+  },
+  "remoteReadNormalization": "sandbox read strips the terminal LF — baseline hashes are sha256 of the read-returned content. Candidates are LF with no terminal LF, matching remote convention for these files.",
+  "status": "candidates-verified-local-only"
+}

@@ -1,0 +1,118 @@
+{
+  "stamp": 1794481517399,
+  "probes": [
+    {
+      "name": "fixture project",
+      "pass": true,
+      "projectId": "6af59d6f4688507a84727bdf"
+    },
+    {
+      "name": "fixture product",
+      "pass": true,
+      "productId": "6af59d6f0392911f29d8514e"
+    },
+    {
+      "name": "fixture parts",
+      "pass": true
+    },
+    {
+      "name": "source armed",
+      "pass": true
+    },
+    {
+      "name": "copy created",
+      "pass": true,
+      "dupId": "6af59d7321ac5316c1bdedca"
+    },
+    {
+      "name": "copy has line_items",
+      "pass": true,
+      "count": 1
+    },
+    {
+      "name": "line project remapped",
+      "pass": true,
+      "project_id": "6af59d73103c0b9253f60250"
+    },
+    {
+      "name": "line product remapped",
+      "pass": true,
+      "builder_product_id": "6af59d7478f5f95281437a9c"
+    },
+    {
+      "name": "project clone owned by copy",
+      "pass": false
+    },
+    {
+      "name": "project clone number",
+      "pass": false,
+      "num": null,
+      "want": ""
+    },
+    {
+      "name": "project clone key",
+      "pass": true,
+      "key": "copy-proj:6af59d7321ac5316c1bdedca:6af59d6f4688507a84727bdf"
+    },
+    {
+      "name": "no sync receipt transplanted",
+      "pass": true,
+      "bsa": null
+    },
+    {
+      "name": "product clone owned by copy",
+      "pass": true,
+      "est": "6af59d7321ac5316c1bdedca"
+    },
+    {
+      "name": "product clone line link",
+      "pass": true,
+      "eli": "L1794481517399"
+    },
+    {
+      "name": "product source_project remapped",
+      "pass": true,
+      "sp": "6af59d73103c0b9253f60250"
+    },
+    {
+      "name": "parts cloned",
+      "pass": true,
+      "count": 2,
+      "keys": [
+        "p1-1794481517399",
+        "p2-1794481517399"
+      ]
+    },
+    {
+      "name": "lifecycle reset",
+      "pass": true,
+      "fs": "none",
+      "os": "none",
+      "hdd": false
+    },
+    {
+      "name": "design preserved",
+      "pass": true,
+      "hash": "snap-1794481517399"
+    },
+    {
+      "name": "totals attached",
+      "pass": true,
+      "tc": 800,
+      "qt": 800
+    },
+    {
+      "name": "retry same id",
+      "pass": true,
+      "retryId": "6af59d7321ac5316c1bdedca"
+    },
+    {
+      "name": "no double-clone",
+      "pass": false,
+      "prodCount": 1,
+      "projCount": 0,
+      "partCount": 2
+    }
+  ],
+  "ok": false
+}

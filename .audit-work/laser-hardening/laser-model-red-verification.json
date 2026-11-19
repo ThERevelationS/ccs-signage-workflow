@@ -1,0 +1,23 @@
+{
+ "suite": "laser-red",
+ "passed": 26,
+ "failed": 0,
+ "result": "PASS",
+ "sections": {
+  "R1 render crash": 2,
+  "R2 NaN persisted": 4,
+  "R3 NaN machine persisted": 3,
+  "R4 silent seed 100": 8,
+  "R5 blank laundered": 2,
+  "R6 zero resurrected": 6,
+  "teardown": 1
+ },
+ "defects": [
+  "malformed stored cut length crashes the page render outright (unguarded .toFixed)",
+  "malformed stored labor rate → NaN total_labor_cost + total_cost persisted",
+  "malformed stored engrave area → NaN total_machine_cost persisted",
+  "malformed parameter_laser_machine_rate seed silently becomes 100 — no issue surface, no aria-invalid",
+  "cleared number input laundered to 0 mid-edit (parseFloat||0 destroys the raw value)",
+  "authored 0% handling resurrected to 15 — a legitimate explicit zero cannot round-trip"
+ ]
+}

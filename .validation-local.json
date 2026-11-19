@@ -1,0 +1,11 @@
+{
+  "finished_at": "2026-11-06T00:22:00.479Z",
+  "pool": 1293,
+  "counts": {
+    "located_no_locality": 1042,
+    "geocode": 243,
+    "invoke": 1,
+    "resolved_needs_office_check": 5,
+    "resolved_apply": 2
+  }
+}

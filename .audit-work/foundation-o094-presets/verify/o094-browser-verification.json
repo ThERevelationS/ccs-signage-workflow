@@ -1,0 +1,29 @@
+{
+ "results": [
+  {
+   "case": "dialog desktop: preset pick section renders all 6 presets + disclosure",
+   "ok": true
+  },
+  {
+   "case": "dialog mobile: preset pick section renders all 6 presets + disclosure",
+   "ok": true
+  },
+  {
+   "case": "dialog: preset Apply produces a page-gate-ready patch and closes",
+   "ok": true
+  },
+  {
+   "case": "model ops in-browser: duplicate/mirror/bulk/preset produce merge-ready patches",
+   "ok": true
+  },
+  {
+   "case": "zero foreign requests / console errors / page errors",
+   "ok": true
+  }
+ ],
+ "telemetry": {
+  "foreign": [],
+  "consoleErrors": [],
+  "pageErrors": []
+ }
+}

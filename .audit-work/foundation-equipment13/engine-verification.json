@@ -1,0 +1,220 @@
+{
+  "synthetic": true,
+  "passed": 46,
+  "failed": 0,
+  "results": [
+    {
+      "case": "existing-render-conflict",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "existing-normalized",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "existing-zero-overrides",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "daily",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "weekly-two",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "monthly",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "legacy-duration-zero-fallback",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "custom-quantity-zero",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "custom-quantity-two",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "custom-rate-zero",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "custom-rate-and-quantity",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "flat-delivery",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "delivery-override-zero",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "legacy-negative-rate-preserved-not-approved",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "counts-two",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "counts-zero",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "counts-numeric-string",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "legacy-id",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "legacy-id-duplicates",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "normalized-over-shadows",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "normalized-inventory-id",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "legacy-normalized-zero-is-one",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "normalized-default-one",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "normalized-duplicates",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "sub-without-parent-still-priced",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "attachment-plus-sub",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "null-duration-and-quantity",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "unknown-period-legacy-flat-delivery",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "empty-counts-win-over-ids",
+      "pass": true,
+      "group": "original_complete_catalog"
+    },
+    {
+      "case": "missing parent preserves 600",
+      "pass": true
+    },
+    {
+      "case": "missing parent preserves 0",
+      "pass": true
+    },
+    {
+      "case": "missing parent absent snapshot stays absent",
+      "pass": true
+    },
+    {
+      "case": "missing selected child preserves whole row, no fresh partial price",
+      "pass": true
+    },
+    {
+      "case": "missing sub preserves whole row",
+      "pass": true
+    },
+    {
+      "case": "zero map count is inactive, no missing-ref issue",
+      "pass": true
+    },
+    {
+      "case": "normalized numeric zero still rents one and requires a record",
+      "pass": true
+    },
+    {
+      "case": "empty map suppresses unavailable shadow IDs",
+      "pass": true
+    },
+    {
+      "case": "legacy type restriction is preserved",
+      "pass": true
+    },
+    {
+      "case": "project exposes equipment issues and coherent saved subtotal",
+      "pass": true
+    },
+    {
+      "case": "normalized edit preserves metadata and clears hidden shadows",
+      "pass": true
+    },
+    {
+      "case": "explicit map edit preserves untouched raw counts",
+      "pass": true
+    },
+    {
+      "case": "legacy duplicate IDs migrate only on explicit edit",
+      "pass": true
+    },
+    {
+      "case": "normalized duplicate metadata is not silently collapsed",
+      "pass": true
+    },
+    {
+      "case": "sub quantities update immutably without altering main selection",
+      "pass": true
+    },
+    {
+      "case": "safe map keys do not mutate prototypes",
+      "pass": true
+    },
+    {
+      "case": "invalid edits fail without mutating history",
+      "pass": true
+    }
+  ]
+}

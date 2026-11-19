@@ -1,0 +1,27 @@
+{
+  "results": [
+    {
+      "name": "known cube uses bounded sphere radius and narrower horizontal half-angle with10percent framing clearance",
+      "ok": true
+    },
+    {
+      "name": "every actual bounding corner stays in frame at desktop phone narrow aspect and all existing view angles",
+      "ok": true
+    },
+    {
+      "name": "invalid or empty bounds and invalid projection parameters return no fit rather than nonfinite state",
+      "ok": true
+    },
+    {
+      "name": "tiny and collapsed previews retain safe nonzero camera distance and near/far planes",
+      "ok": true
+    },
+    {
+      "name": "wide and very tall layouts can fit beyond old200ft wheel clamp without touching geometry",
+      "ok": true
+    }
+  ],
+  "syntheticOnly": true,
+  "pricingChanged": false,
+  "realRendererVerified": false
+}

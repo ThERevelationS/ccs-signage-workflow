@@ -1,0 +1,65 @@
+{
+  "results": [
+    {
+      "name": "flagship model and strict structured review use the shared policy without a provider SDK",
+      "ok": true
+    },
+    {
+      "name": "request carries unverified dimensions but never prices financial overrides or saved financials",
+      "ok": true
+    },
+    {
+      "name": "absent physical inputs remain null and unknown rather than invented defaults",
+      "ok": true
+    },
+    {
+      "name": "only active version2 geometry enters review and stale identity follows geometry rather than proposal prices",
+      "ok": true
+    },
+    {
+      "name": "different project scope revision or dimensions invalidates a pending review key",
+      "ok": true
+    },
+    {
+      "name": "saved AI metadata cannot make its own review key perpetually stale",
+      "ok": true
+    },
+    {
+      "name": "malformed record collections and nonfinite or object physical fields fail before any model request",
+      "ok": true
+    },
+    {
+      "name": "payload bounds fail explicitly rather than silently omitting requested design records",
+      "ok": true
+    },
+    {
+      "name": "malformed active reinforcement is rejected instead of interpreted as missing legacy data",
+      "ok": true
+    },
+    {
+      "name": "response can patch only existing advisory fields and always records preliminary no-approval provenance",
+      "ok": true
+    },
+    {
+      "name": "unexpected financial engineering or design authority fields fail closed even with otherwise valid markdown",
+      "ok": true
+    },
+    {
+      "name": "malformed empty oversized or non-text response data cannot be persisted as a review",
+      "ok": true
+    },
+    {
+      "name": "invalid source authority and timestamps do not mint an advisory receipt",
+      "ok": true
+    },
+    {
+      "name": "missing active mat tie and hoop lists stay unknown rather than invented empty zero lists",
+      "ok": true
+    }
+  ],
+  "syntheticOnly": true,
+  "actualModelCalled": false,
+  "UIWired": false,
+  "engineeringApproved": false,
+  "financialValuesApplied": false
+}

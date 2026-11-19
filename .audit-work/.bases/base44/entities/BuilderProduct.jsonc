@@ -1,0 +1,304 @@
+{
+  "name": "BuilderProduct",
+  "type": "object",
+  "description": "Persistent estimator Builder Product. A Builder Product is the internal/physical product record behind an All-In-One estimate line. It preserves the entire estimator/source-project snapshot, frozen pricing state, client-facing naming, and links to BuilderPart / BuilderPartGroup records. Quick Products remain a separate reusable product type.",
+  "properties": {
+    "estimate_id": {
+      "type": "string",
+      "description": "Owning AllInOneEstimate id when this product belongs to an estimate."
+    },
+    "estimate_line_id": {
+      "type": "string",
+      "description": "Stable id stored on the owning AllInOneEstimate line item."
+    },
+    "module_key": {
+      "type": "string",
+      "description": "Current estimator module key, e.g. foundation, channel_letters, vinyl, cnc."
+    },
+    "source_entity": {
+      "type": "string",
+      "description": "Entity that owns the detailed estimator record, e.g. FoundationProject."
+    },
+    "source_project_id": {
+      "type": "string",
+      "description": "Detailed estimator/source project id."
+    },
+    "builder_name": {
+      "type": "string",
+      "description": "Internal estimator-facing name/type. Visually distinct from client_product_name."
+    },
+    "client_product_name": {
+      "type": "string",
+      "description": "Editable client-facing product name shown on quotes."
+    },
+    "client_description": {
+      "type": "string"
+    },
+    "product_category": {
+      "type": "string",
+      "description": "User-defined Product Category used for estimate organization, filtering, quoting, Quick Products and clipboard metadata."
+    },
+    "production_product_type": {
+      "type": "string",
+      "description": "Optional production/SIP Product Type selected from GlobalSettings.productTypes. Blank means intentionally unclassified."
+    },
+    "product_notes": {
+      "type": "string",
+      "description": "Estimator-facing Product notes preserved by cloning, Quick Products and clipboard operations. Separate from the customer-facing description."
+    },
+    "quantity": {
+      "type": "number",
+      "default": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "in_progress",
+        "complete",
+        "archived"
+      ],
+      "default": "in_progress"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "builder_version": {
+      "type": "number",
+      "default": 1
+    },
+    "builder_snapshot": {
+      "type": "object",
+      "description": "Complete lossless snapshot of the detailed estimator/source project used to build this product.",
+      "additionalProperties": true
+    },
+    "builder_snapshot_at": {
+      "type": "string"
+    },
+    "builder_snapshot_source_updated_date": {
+      "type": "string"
+    },
+    "builder_snapshot_hash": {
+      "type": "string",
+      "description": "Stable hash/fingerprint of builder_snapshot when available."
+    },
+    "frozen_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Cost frozen when the builder product was last intentionally priced/updated."
+    },
+    "frozen_customer_price": {
+      "type": "number",
+      "default": 0,
+      "description": "Compatibility/audit snapshot of the accepted UNIT Product base price before estimate-line customer_quantity and adjustment_percent are applied. The live quote is calculated from AllInOneEstimate.line_items, not from this field."
+    },
+    "current_recalculated_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Most recently detected cost using current inventory. Does not replace frozen_cost until Update Price is accepted."
+    },
+    "price_state": {
+      "type": "string",
+      "enum": [
+        "unchecked",
+        "current",
+        "changed",
+        "detached_parts",
+        "legacy_frozen",
+        "manual"
+      ],
+      "default": "unchecked"
+    },
+    "price_delta": {
+      "type": "number",
+      "default": 0
+    },
+    "price_delta_percent": {
+      "type": "number",
+      "default": 0
+    },
+    "price_recalc_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when current Master Inventory pricing changed after the Builder was last calculated and this module cannot safely recompute the full Product total without reopening/saving the Builder. Update Price is blocked until recalculation."
+    },
+    "price_recalc_reason": {
+      "type": "string",
+      "description": "Human-readable reason Update Price is blocked pending Builder recalculation."
+    },
+    "last_price_check_at": {
+      "type": "string"
+    },
+    "last_price_update_at": {
+      "type": "string"
+    },
+    "last_price_update_note": {
+      "type": "string"
+    },
+    "part_count": {
+      "type": "number",
+      "default": 0
+    },
+    "group_count": {
+      "type": "number",
+      "default": 0
+    },
+    "detached_part_count": {
+      "type": "number",
+      "default": 0
+    },
+    "needs_reattach_review": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when one or more linked inventory parts were detached and the user must be offered reattach choices on edit."
+    },
+    "legacy_bom_reconciled": {
+      "type": "boolean",
+      "default": false,
+      "description": "True only for historical legacy_frozen Products whose active frozen BOM has been reconciled to the authoritative saved legacy Builder cost categories. While the Product remains legacy_frozen, normal estimate-open refresh preserves this historical BOM instead of re-extracting modern Builder detail from partially populated legacy fields."
+    },
+    "legacy_bom_reconcile_version": {
+      "type": "string",
+      "description": "Version/batch identifier of the historical BOM reconciliation logic."
+    },
+    "legacy_bom_reconciled_at": {
+      "type": "string"
+    },
+    "operational_status": {
+      "type": "string",
+      "enum": [
+        "order_review",
+        "site_survey",
+        "awaiting_customer_action",
+        "awaiting_proof_approval",
+        "permitting",
+        "proof_approved",
+        "design_review",
+        "in_design",
+        "in_production",
+        "quality_control",
+        "service_repair",
+        "install_or_removal_only",
+        "vended",
+        "none"
+      ],
+      "default": "none",
+      "description": "CoreBridge-style WIP operational state for this product, independent of the work-order stage."
+    },
+    "operational_substatus": {
+      "type": "string",
+      "description": "Free-text persistent quick-tag layered on operational_status (e.g. waiting-on reason)."
+    },
+    "customer_facing_status": {
+      "type": "string",
+      "description": "Customer-safe display label mapped from operational_status; portals show this instead of internal states."
+    },
+    "fulfillment_state": {
+      "type": "string",
+      "enum": [
+        "none",
+        "awaiting_pickup",
+        "awaiting_installation",
+        "awaiting_shipping",
+        "awaiting_delivery",
+        "picked_up",
+        "installed",
+        "shipped",
+        "delivered"
+      ],
+      "default": "none",
+      "description": "Built/completed fulfillment disposition for this product. Distinct from operational_status and from invoice payment state."
+    },
+    "design_due_date": {
+      "type": "string",
+      "description": "Design deadline for this product, computed from part lead times or manually set."
+    },
+    "product_due_date": {
+      "type": "string",
+      "description": "Production deadline for this product. The work-order due date derives from the latest product due date."
+    },
+    "hard_due_date": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, automated due-date recalculation (e.g. on proof approval) must not move this product past its current due date."
+    },
+    "designer": {
+      "type": "string",
+      "description": "Assigned designer for this product."
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Production/operations assignee for this product."
+    },
+    "responsibility": {
+      "type": "string",
+      "description": "Queue prioritization responsibility (department/person/group) used by production queues."
+    },
+    "queue_priority": {
+      "type": "number",
+      "description": "Numeric queue priority 1-99 within responsibility, mirroring CoreBridge queue prioritization."
+    },
+    "proof_status": {
+      "type": "string",
+      "enum": [
+        "none",
+        "draft",
+        "sent",
+        "awaiting_approval",
+        "approved",
+        "revision_requested"
+      ],
+      "default": "none",
+      "description": "Customer proof approval state for this product; approval can trigger due-date recalculation."
+    },
+    "proof_file_url": {
+      "type": "string",
+      "description": "URL of the current proof file version mirrored from the WorkOrder product."
+    },
+    "proof_file_name": {
+      "type": "string",
+      "description": "Display name of the current proof file."
+    },
+    "proof_version": {
+      "type": "number",
+      "description": "Current proof file version (1-based). 0 means no proof file."
+    },
+    "proof_approved_version": {
+      "type": "number",
+      "description": "Proof version the current approval applies to. 0 means no versioned approval."
+    },
+    "operational_status_changed_at": {
+      "type": "string",
+      "description": "ISO timestamp of the last operational_status change on this product."
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "builder_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__builderproduct_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__builderproduct_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__builderproduct_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__builderproduct_backend_only__"
+      }
+    }
+  }
+}

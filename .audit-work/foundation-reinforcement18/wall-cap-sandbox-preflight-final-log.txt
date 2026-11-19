@@ -1,0 +1,2 @@
+Preflight: HEAD clean, 4 targets match frozen baselines, 15 guards hashed, ready.
+exit=0

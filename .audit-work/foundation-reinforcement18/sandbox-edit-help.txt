@@ -1,0 +1,23 @@
+Usage: base44 sandbox edit [options] <path>
+
+Apply exact old→new string edits to a file in the sandbox
+
+Arguments:
+  path                 File path relative to the app root
+
+Options:
+  --edits-json <json>  JSON array of edits (if omitted, read from stdin)
+  --dry-run            Return the unified diff without writing
+  -h, --help           display help for command
+
+Each edit is { "old_text": "...", "new_text": "...", "replace_all"?: true }.
+
+Writes are committed but not checkpointed. Only checkpoints appear in the
+builder's version history, and a Restore or Revert there rolls the app back to
+the last checkpoint and discards everything written after it. Run
+`base44 sandbox checkpoint` when you finish a unit of work and before you stop.
+
+Examples:
+  $ echo '[{"old_text":"foo","new_text":"bar"}]' | base44 sandbox edit src/x.ts
+  $ base44 sandbox edit src/x.ts --dry-run --edits-json '[{"old_text":"a","new_text":"b","replace_all":true}]'
+exit=0

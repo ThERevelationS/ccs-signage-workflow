@@ -1,0 +1,716 @@
+[
+ {
+  "a": "5385 Ridge Road, Cincinnati, OH 45213",
+  "t": "Columbia township (township) + Hamilton County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county + township + state township boundaries → inside Columbia township + Hamilton County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "100 North Dixie Highway, Cridersville, OH 45806",
+  "t": "Duchouquet township (township) + Auglaize County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "google rooftop pin → checked county + state municipality + municipality + state township + township boundaries → inside Duchouquet township + Auglaize County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "6142 Wilmington Pike, Centerville, OH 45459",
+  "t": "",
+  "d": "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality + township + state township boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1970 Stringtown Road, Grove City, OH 43123",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1693 Stringtown Road, Grove City, OH 43123",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "2536 Columbus Street, Grove City, OH 43123",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "6283 Sunbury Road, Westerville, OH 43081",
+  "t": "Blendon township (township) + Franklin County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality + state township + township boundaries → inside Blendon township + Franklin County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1370 Hamilton Road, Columbus, OH 43230",
+  "t": "Gahanna (municipality) + Franklin County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Gahanna + Franklin County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1365 London – Delaware Road, London, OH 43140",
+  "t": "Jefferson township (township) + Madison County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked state municipality + municipality + county + township + state township boundaries → inside Jefferson township + Madison County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1420-42 London – Delaware Road, London, OH 43140",
+  "t": "Jefferson township (township) + Madison County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked state municipality + county + municipality + township + state township boundaries → inside Jefferson township + Madison County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "121 East Main Street, St. Henry, OH 45883",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "5321 Center Road, Brunswick, OH 44212",
+  "t": "",
+  "d": "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality + township + state township boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "4618 Royalton Road, Broadview Heights, OH 44147",
+  "t": "Broadview Heights (municipality) + Cuyahoga County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked state municipality + municipality + county boundaries → inside Broadview Heights + Cuyahoga County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "7966 Darrow Road, Hudson, OH 44236",
+  "t": "Twinsburg township (township) + Summit County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked state municipality + municipality + county + township + state township boundaries → inside Twinsburg township + Summit County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "156 W Main St, Plain City, OH 43064",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "601 S Dixie Hwy, Cave City, KY 42127",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "2827 Lexington Avenue, Mansfield, OH 44904",
+  "t": "Lexington (municipality) + Richland County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Lexington + Richland County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1300 Indiana Avenue, Saint Marys, OH 45885",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "585 Royal Oak Drive, Saint Marys, OH 45885",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1594 Celina Road, Saint Marys, OH 45885",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "4368 North Mayo Trail, Pikeville, KY 41501",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + state municipality + county boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "9198 North Main Street, Englewood, OH 45415",
+  "t": "Englewood (municipality) + Montgomery County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Englewood + Montgomery County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "4900 South County Road 25A, Tipp City, OH 45371",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked county + state municipality + municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "127 South Garber Drive, Tipp City, OH 45371",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1000 West Main Street, Tipp City, OH 45371",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1261 West Ohio Pike, Amelia, OH 45102",
+  "t": "Union township (township) + Clermont County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked state municipality + municipality + county + township + state township boundaries → inside Union township + Clermont County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "7010 Rowan Hill Drive, Mariemont, OH 45227",
+  "t": "Mariemont (municipality) + Hamilton County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Mariemont + Hamilton County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1 Warrior Way, Cincinnati, OH 45227",
+  "t": "Mariemont (municipality) + Hamilton County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Mariemont + Hamilton County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "4200 Vine Street, Saint Bernard, OH 45217",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "10630 Loveland Madeira Road, Loveland, OH 45140",
+  "t": "Symmes township (township) + Hamilton County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county + state township + township boundaries → inside Symmes township + Hamilton County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "2692 Madison Rd Ste 115, Cincinnati, OH 45208",
+  "t": "Norwood (municipality) + Hamilton County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Norwood + Hamilton County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "802 Mammoth Cave Rd, Cave City, KY 42127",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "8288 Cincinnati-Dayton Road, West Chester Township, OH 45069",
+  "t": "",
+  "d": "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality + township + state township boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "7700 University Drive, West Chester Township, OH 45069",
+  "t": "",
+  "d": "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked state municipality + municipality + county + township + state township boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "7855 Tylersville Road, West Chester Township, OH 45069",
+  "t": "",
+  "d": "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality + township + state township boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "9142 Cincinnati Columbus Road;Columbus-Cincinnati Road, West Chester Township, OH 45069",
+  "t": "",
+  "d": "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked state municipality + municipality + county + township + state township boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "10501 Preston Highway, Louisville, KY 40229",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "10006 Will Way, Louisville, KY 40291",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "126 Rojay Drive, Lexington, KY 40503",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "3851 Kenesaw Drive, Lexington, KY 40517",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked state municipality + municipality + county boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "3601 Walden Drive, Lexington, KY 40517",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked state municipality + municipality + county boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "801 Euclid Avenue, Lexington, KY 40502",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + state municipality + municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "9160 Taylorsville Road, Jeffersontown, KY 40299",
+  "t": "Jeffersontown (municipality) + Jefferson County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Jeffersontown + Jefferson County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "4444 Industrial Pkwy, Calvert City, KY 42029",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked county + state municipality + municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1121 Winchester Road, Lexington, KY 40509",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked state municipality + county + municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "80 E Sharon Rd, Cincinnati, OH 45246",
+  "t": "Sharonville (municipality) + Hamilton County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Sharonville + Hamilton County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "3940 North Mayo Trail, Coal Run Village, KY 41501",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "785 North Broadway, Lexington, KY 40542",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked state municipality + municipality + county boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "12609 Taylorsville Road, Louisville, KY 40299",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + state municipality + municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "9120 Taylorsville Road, Jeffersontown, KY 40299",
+  "t": "Jeffersontown (municipality) + Jefferson County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Jeffersontown + Jefferson County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1200 KY 313, Brandenburg, KY 40108",
+  "t": "Meade County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Meade County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "209 W Spring St, St Marys, OH 45885",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked state municipality + municipality + county boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "901 Mammoth Cave Street, Cave City, KY 42127",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "804 Mammoth Cave Street, Cave City, KY 42127",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "4299 Hilltop Rd, Uniontown, KY 42461",
+  "t": "Union County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "google rooftop pin → checked municipality + state municipality + county boundaries → inside Union County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "309 Broadway Street, Cave City, KY 42127",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "3660 Boston Road, Lexington, KY 40514",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked state municipality + municipality + county boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "150 North 20th Street, Middlesboro, KY 40864",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "3600 West Cumberland Avenue, Middlesboro, KY 40965",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "515 North 12th Street, Middlesboro, KY 40965",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "495 North 12th Street, Middlesboro, KY 40965",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "345 N Chillicothe St, Plain City, OH 43064",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "2284 Versailles Road, Lexington, KY 40504",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "2025 Harrodsburg Road, Lexington, KY 40503",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "211 S Jefferson Ave, Plain City, OH 43064",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked state municipality + municipality + county boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "108 East Broad Street, Central City, KY 42330",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + state municipality + county boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "5645 Main Street, Clay City, KY 40312",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "3050 Dixie Highway, Erlanger, KY 41018",
+  "t": "Erlanger (municipality) + Kenton County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Erlanger + Kenton County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "2445 Innovation Dr, Lexington, KY 40511",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "854 N Main St, Calvert City, KY 42029",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "7885 Camargo Rd, Madeira, OH 45243",
+  "t": "Madeira (municipality) + Hamilton County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Madeira + Hamilton County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1878 Pearl Rd, Brunswick, OH 44212",
+  "t": "",
+  "d": "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality + township + state township boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1400 OH-125, Amelia, OH 45102",
+  "t": "Batavia township (township) + Clermont County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked state municipality + municipality + county + township + state township boundaries → inside Batavia township + Clermont County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "371 S Limestone Ste 220, Lexington, KY 40508",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "9281 Le St Dr, Fairfield, OH 45014",
+  "t": "",
+  "d": "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked county + state municipality + municipality + township + state township boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "35 W Main St, Amelia, OH 45102",
+  "t": "Batavia township (township) + Clermont County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "google rooftop pin → checked municipality + state municipality + county + township + state township boundaries → inside Batavia township + Clermont County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "3985 Broadway, Grove City, OH 43123",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "260 Spartan Dr, Greenville, KY 42345",
+  "t": "",
+  "d": "Official boundary sources disagree about the municipality here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "6780 Lithopolis-Winchester Rd, Canal Winchester, OH 43110",
+  "t": "Violet township (township) + Fairfield County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality + township + state township boundaries → inside Violet township + Fairfield County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "4069 Broadway, Grove City, OH 43123",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "265 S Mill St, Lexington, OH 44904",
+  "t": "Lexington (municipality) + Richland County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Lexington + Richland County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "106 Brewer Dr, Central City, KY 42330",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + state municipality + county boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "506 E Mason-Morrow-Millgrove Rd, South Lebanon, OH 45065",
+  "t": "Union township (township) + Warren County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality + township + state township boundaries → inside Union township + Warren County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "2275 Leestown Rd, Lexington, KY 40511",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "27 E Main St, Tipp City, OH 45371",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked state municipality + county + municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "345 North Springboro Pike, Miamisburg, OH 45449",
+  "t": "Miamisburg (municipality) + Montgomery County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Miamisburg + Montgomery County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "6610 Plainfield Rd, Silverton, OH 45236",
+  "t": "Silverton (municipality) + Hamilton County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Silverton + Hamilton County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "31 Industry Park Ct, Tipp City, OH 45371",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (nominatim) → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "3970 E Galbraith Rd, Cincinnati, OH 45236",
+  "t": "Sycamore township (township) + Hamilton County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "google rooftop pin → checked municipality + state municipality + county + state township + township boundaries → inside Sycamore township + Hamilton County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "504 Wyoming Ave Second Floor, Wyoming, OH 45215",
+  "t": "Wyoming (municipality) + Hamilton County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Wyoming + Hamilton County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "351 W Bigelow Ave, Plain City, OH 43064",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "333 W Vine St #400, Lexington, KY 40507",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "4311270071, Franklin, OH 45005",
+  "t": "Franklin (municipality) + Warren County (county)",
+  "d": "The map found an approximate address. We cannot confirm its jurisdiction yet.",
+  "tr": "approx pin (service) → checked municipality + county + state municipality boundaries → inside Franklin + Warren County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "4120 Buckeye Pkwy, Grove City, OH 43123",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "203 E Spring St, St Marys, OH 45885",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "7219 Whipple Ave NW, North Canton, OH 44720",
+  "t": "Jackson township (township) + Stark County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality + state township + township boundaries → inside Jackson township + Stark County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "8061 Hamilton Ave, Cincinnati, OH 45231",
+  "t": "Mount Healthy (municipality) + Hamilton County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "google rooftop pin → checked municipality + state municipality + county boundaries → inside Mount Healthy + Hamilton County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "9675 Reading Rd, Cincinnati, OH 45215",
+  "t": "Reading (municipality) + Hamilton County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Reading + Hamilton County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "213 S Chillicothe St, Plain City, OH 43064",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "5767 Westerville Road, Columbus, OH 43081",
+  "t": "Columbus (municipality) + Franklin County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked county + municipality + state municipality boundaries → inside Columbus + Franklin County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "12001 OH-753, Greenfield, OH 45123",
+  "t": "Madison township (township) + Highland County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality + township + state township boundaries → inside Madison township + Highland County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1299 W Ohio Pike Ste E, Amelia, OH 45102",
+  "t": "Pierce township (township) + Clermont County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality + township + state township boundaries → inside Pierce township + Clermont County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "10835 US-27, Burnside, KY 42519",
+  "t": "Pulaski County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked county + municipality + state municipality boundaries → inside Pulaski County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "145 Old Hwy, U.S 60, Hardinsburg, KY 40143",
+  "t": "Breckinridge County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Breckinridge County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "8763 Union Centre Blvd Ste 400, West Chester Township, OH 45069",
+  "t": "",
+  "d": "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county + township + state township boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "227 broady court, Dixon, KY 42409",
+  "t": "Webster County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Webster County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "9578 Civic Centre Blvd, West Chester Township, OH 45069",
+  "t": "",
+  "d": "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality + state township + township boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "1912 E Ohio Pike, Amelia, OH 45102",
+  "t": "Batavia township (township) + Clermont County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "google rooftop pin → checked state municipality + county + municipality + state township + township boundaries → inside Batavia township + Clermont County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "10370 Akron Rd, Rittman, OH 44270",
+  "t": "Chippewa township (township) + Wayne County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality + state township + township boundaries → inside Chippewa township + Wayne County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "3360 Urbancrest Industrial Dr, Grove City, OH 43123",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "3900 Medina Rd, Akron, OH 44333",
+  "t": "Copley township (township) + Summit County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + county + state municipality + township + state township boundaries → inside Copley township + Summit County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "7249 Whipple Ave NW, North Canton, OH 44720",
+  "t": "Jackson township (township) + Stark County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked state municipality + municipality + county + township + state township boundaries → inside Jackson township + Stark County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "4385 Federal Rd, Cedarville, OH 45314",
+  "t": "",
+  "d": "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality + township + state township boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "700 Executive Park, Louisville, KY 40207",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "2153 Marion-Mt Gilead Road, Claridon Township, OH 43302",
+  "t": "Marion township (township) + Marion County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked county + municipality + state municipality + township + state township boundaries → inside Marion township + Marion County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "2905 Columbus St C, Grove City, OH 43123",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "approx pin (google_approx) → checked county + municipality + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "126 E Broad St, Central City, KY 42330",
+  "t": "",
+  "d": "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.",
+  "tr": "google rooftop pin → checked municipality + county + state municipality boundaries → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "3039 Morse Road, Columbus, OH 43231",
+  "t": "Mifflin township (township) + Franklin County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "google rooftop pin → checked county + municipality + state municipality + state township + township boundaries → inside Mifflin township + Franklin County → offices: 0 checked · 0 unchecked"
+ },
+ {
+  "a": "418 W Benson St, Reading, OH 45215",
+  "t": "Reading (municipality) + Hamilton County (county)",
+  "d": "This address is close to a boundary. An administrator must confirm the property before it is used.",
+  "tr": "approx pin (google_approx) → checked municipality + state municipality + county boundaries → inside Reading + Hamilton County → offices: 0 checked · 0 unchecked"
+ }
+]

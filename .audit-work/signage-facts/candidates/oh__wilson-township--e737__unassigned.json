@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6aea7cc5d76dea246d5fe737",
+ "jurisdiction_name": "Wilson Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "CLINTON COUNTY BUILDING & ZONING DEPARTMENT Date Printed: April 16, 2025 111 S N elson Ave, Suite 8, Wilmington OH 45177 937 - 382 - 3335 RESIDENTIAL PLAN REVIEW CHECKLIST Date Reviewed : __ ____________ __ First Reviewed By: _ _ ___ _________________________________ __________ Application No: _ __ ____ _______ __ Address: ___ ________ _ _____ _____ _________________________________ _ Applicable Code: Us e Group: Othe r Information: Residenti al Code of Ohio (RCO) R (SFR , RESALT, RESADD , TF R , THFR) IND Unit (Approved State Seal) U ( Res Acc Structure s, Detached Garage) ____ __# Family Units Ohio Building Code (OBC) S - 1 ( Pole Building /Garage w/o Residential SFR ) Construct ion T ype: V B Additional Required Permits : Additional Required Inspections: Occupant Load: N/A Pressure Piping Permit Masonry Fire p lace Inspection Flood Hazard Permit Crawlspace /Slab Inspection ___ R10 6.1",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "533ef967c3cb93b499cfc7074a440e198cd2d3a6ad7ac2b8d6fa1ddc5909ebc6",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\wilson-township--e737\\unassigned\\sources\\533ef967c3cb93b499cfc7074a440e198cd2d3a6ad7ac2b8d6fa1ddc5909ebc6.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Building%20In%20Clinton%20County/Residential%20Plan%20Review%20Checklist%202025.pdf"
+  }
+ ]
+}

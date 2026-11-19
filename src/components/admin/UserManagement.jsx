@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { setPassword as setPasswordFn } from "@/functions/setPassword";
 import { useAuth } from "@/components/auth/EmailGate";
+import { staffEntities } from "@/components/staff/staffEntities";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +53,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 import AdminAccessDialog from "@/components/admin/AdminAccessDialog";
+import { getAdminAccessSummary, getAccessibleAdminTab, getAccessibleAdminGroups, ADMIN_TAB_GROUPS } from "@/components/admin/adminTabNavigation";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import { createAdminAccountDraft, getChangedAdminAccountFields, hasUnsavedAdminAccountDraft } from "./adminAccountDraft.js";
 import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft, isSameVerifiedAccountSnapshot } from "./unverifiedAccountSave.js";
@@ -61,6 +64,7 @@ import {
   createAuthorizedUserAdmin,
   deleteAuthorizedUserAdmin,
   getAccountDeletionImpactAdmin,
+  getUserDeletionImpactAdmin,
   listAccountDeletionRequestsAdmin,
   listAuthorizedUsersAdmin,
   resolveAccountDeletionRequestAdmin,
@@ -69,9 +73,36 @@ import {
 } from "@/components/admin/authorizedUserAdminPersistence";
 import { getDeletionImpactRetryState } from "@/components/admin/deletionImpactRetryCoordinator";
 import { triggerNotification } from "@/components/workflow/NotificationService";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 export default function UserManagement() {
-  const { sessionToken } = useAuth();
+  const { sessionToken, currentUser } = useAuth();
+  const selfEmail = (currentUser?.email || "").toLowerCase();
+  const [accessReviewRow, setAccessReviewRow] = useState(null);
+  const [accessReviewBusy, setAccessReviewBusy] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "lastAccessReview", label: "Access review" })
+      .then((r) => { if (alive) setAccessReviewRow(r); }).catch(() => null);
+    return () => { alive = false; };
+  }, []);
+  const markAccessReviewed = async () => {
+    if (accessReviewBusy) return;
+    setAccessReviewBusy(true);
+    try {
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: staffEntities.GlobalSettings, loadedRecord: accessReviewRow,
+        settingKey: "lastAccessReview", nextValue: { reviewed_at: new Date().toISOString(), reviewed_by: selfEmail },
+        label: "Access review",
+      });
+      setAccessReviewRow(saved);
+    } catch { /* keep prior */ } finally { setAccessReviewBusy(false); }
+  };
+  const reviewAge = (() => {
+    const at = accessReviewRow?.setting_value?.reviewed_at;
+    if (!at) return null;
+    return Math.floor((Date.now() - new Date(at).getTime()) / 86400000);
+  })();
   // Track the identity on render, before effects run, to fence late responses.
   const activeSessionToken = useRef(sessionToken);
   activeSessionToken.current = sessionToken;
@@ -82,6 +113,14 @@ export default function UserManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleteImpact, setDeleteImpact] = useState(null);
+  const [deleteImpactError, setDeleteImpactError] = useState("");
+  const [importRows, setImportRows] = useState(null);
+  const [importBusy, setImportBusy] = useState(false);
+  const [importMsg, setImportMsg] = useState("");
+  const [lastDeletedUser, setLastDeletedUser] = useState(null);
+  const [restoreBusy, setRestoreBusy] = useState(false);
+  const [restoreError, setRestoreError] = useState("");
   const [deletionSaving, setDeletionSaving] = useState(false);
   const deletionInFlight = useRef(false);
   const deletionOwner = useRef(null);
@@ -89,6 +128,8 @@ export default function UserManagement() {
   const [inviteFirstName, setInviteFirstName] = useState("");
   const [inviteLastName, setInviteLastName] = useState("");
   const [inviteRole, setInviteRole] = useState("user");
+  const [inviteManager, setInviteManager] = useState("");
+  const [inviteExpiry, setInviteExpiry] = useState("");
   const [isInviting, setIsInviting] = useState(false);
   const inviteInFlight = useRef(false);
   const inviteOwner = useRef(null);
@@ -105,7 +146,9 @@ export default function UserManagement() {
     can_order_export: false,
     can_view_resources: false,
     employment_type: "hourly",
-    can_work_pause: false
+    can_work_pause: false,
+    can_self_approve_shifts: false,
+    is_owner: false
   });
   const activeAccountDraft = useRef(formData);
   activeAccountDraft.current = formData;
@@ -124,6 +167,31 @@ export default function UserManagement() {
   const onboardingResendOwner = useRef(null);
   const [faceEnrollUser, setFaceEnrollUser] = useState(null);
   const [accessUser, setAccessUser] = useState(null);
+  const [previewUserId, setPreviewUserId] = useState(null);
+  const [sessionsByUser, setSessionsByUser] = useState({});
+  const loadSessions = async (user) => {
+    if (!sessionToken) return;
+    setSessionsByUser((cur) => ({ ...cur, [user.id]: { loading: true, rows: [] } }));
+    try {
+      const r = await base44.functions.invoke("sessionAdminAction", { session_token: sessionToken, action: "list", target_email: user.email });
+      setSessionsByUser((cur) => ({ ...cur, [user.id]: { loading: false, rows: r?.data?.sessions || [] } }));
+    } catch {
+      setSessionsByUser((cur) => ({ ...cur, [user.id]: { loading: false, rows: [], error: true } }));
+    }
+  };
+  const revokeSession = async (user, sessionId) => {
+    if (!sessionToken) return;
+    try {
+      const r = await base44.functions.invoke("sessionAdminAction", { session_token: sessionToken, action: "revoke", session_id: sessionId });
+      if (r?.data?.success) loadSessions(user);
+    } catch { /* leave row retryable */ }
+  };
+  const [userSearch, setUserSearch] = useState("");
+  const [userFilter, setUserFilter] = useState("all"); // all | admin | user | full_admin | inactive
+  const [userSort, setUserSort] = useState("name"); // name | name_desc | email | role
+  const [selectedUserIds, setSelectedUserIds] = useState(() => new Set());
+  const [bulkRoleBusy, setBulkRoleBusy] = useState(false);
+  const [bulkRoleError, setBulkRoleError] = useState("");
   const [userMutationError, setUserMutationError] = useState("");
   const [userMutationSaving, setUserMutationSaving] = useState(false);
   const [accountSaveRecovery, setAccountSaveRecovery] = useState(null);
@@ -157,6 +225,22 @@ export default function UserManagement() {
     setHasUnsavedHrData(previous => previous === status.dirty ? previous : status.dirty === true);
   }, []);
   const [deletionRequests, setDeletionRequests] = useState([]);
+  const [accessRequests, setAccessRequests] = useState([]);
+  const loadAccessRequests = async () => {
+    if (!sessionToken) return;
+    try {
+      const r = await base44.functions.invoke("accessRequestAction", { session_token: sessionToken, action: "list" });
+      setAccessRequests(r?.data?.requests || []);
+    } catch { setAccessRequests([]); }
+  };
+  const decideAccessRequest = async (requestId, decision) => {
+    if (!sessionToken) return;
+    try {
+      const r = await base44.functions.invoke("accessRequestAction", { session_token: sessionToken, action: decision, request_id: requestId });
+      if (r?.data?.success) setAccessRequests((cur) => cur.filter((x) => x.id !== requestId));
+      else setUserMutationError(r?.data?.error || "Access request decision failed.");
+    } catch (e) { setUserMutationError(`Access request ${decision} failed: ${e?.message || e}`); }
+  };
   const [deletionRequestsLoading, setDeletionRequestsLoading] = useState(true);
   const [deletionRequestsError, setDeletionRequestsError] = useState(false);
   const deletionRequestLoadSequence = useRef(0);
@@ -218,6 +302,7 @@ export default function UserManagement() {
       sales_roles: ["Task Assigned"], can_import_export: false,
       can_order_export: false, can_view_resources: false,
       employment_type: "hourly", can_work_pause: false,
+      can_self_approve_shifts: false, is_owner: false,
     });
     // A prior session may still have an invitation in flight. Release only its
     // UI ownership; never let it resume onboarding or Smartsheet actions.
@@ -254,6 +339,7 @@ export default function UserManagement() {
     if (sessionToken) {
       void loadUsers();
       void loadDeletionRequests();
+      void loadAccessRequests();
     } else {
       ++userLoadSequence.current;
       ++deletionRequestLoadSequence.current;
@@ -285,6 +371,149 @@ export default function UserManagement() {
       ++deletionImpactSequence.current;
     };
   }, [sessionToken]);
+
+  const applyRoleToSelected = async (role) => {
+    const targets = visibleUsers.filter((u) => selectedUserIds.has(u.id) && u.role !== role);
+    if (!targets.length || !sessionToken) return;
+    setBulkRoleBusy(true); setBulkRoleError("");
+    const failed = [];
+    for (const record of targets) {
+      try {
+        const saved = await updateAuthorizedUserAdmin({ record, nextFields: { role }, sessionToken });
+        if (saved?.id) setUsers((current) => current.map((row) => (row.id === saved.id ? { ...row, ...saved } : row)));
+      } catch (err) {
+        failed.push(record.full_name || record.email || record.id);
+      }
+    }
+    if (failed.length) setBulkRoleError(`Could not update: ${failed.join(", ")}`);
+    else setSelectedUserIds(new Set());
+    setBulkRoleBusy(false);
+  };
+
+  const bulkRemove = async () => {
+    if (bulkRoleBusy || !sessionToken) return;
+    const targets = visibleUsers.filter((u) => selectedUserIds.has(u.id) && u.email?.toLowerCase() !== selfEmail);
+    if (!targets.length) { setBulkRoleError("Nothing to remove (your own account is skipped)."); return; }
+    if (!window.confirm(`Remove ${targets.length} selected user${targets.length === 1 ? "" : "s"}? They lose access immediately. Review ownership impacts first.`)) return;
+    setBulkRoleBusy(true); setBulkRoleError("");
+    const failed = [];
+    for (const u of targets) {
+      try { await deleteAuthorizedUserAdmin({ record: u, sessionToken }); }
+      catch (e) { failed.push(`${u.email}: ${e?.message || "failed"}`); }
+    }
+    setSelectedUserIds(new Set());
+    setBulkRoleError(failed.length ? `${targets.length - failed.length} removed; ${failed.length} failed (${failed.slice(0, 2).join("; ")}${failed.length > 2 ? "…" : ""})` : "");
+    setBulkRoleBusy(false);
+    await loadUsers();
+  };
+
+  const exportUsersCsv = () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const rows = [
+      ["Name", "Email", "Role", "Full Admin", "Sales Roles", "Pages Access"],
+      ...visibleUsers.map((u) => [
+        u.full_name || "", u.email || "", u.is_owner === true ? "owner" : (u.role || ""),
+        u.is_full_admin === true ? "yes" : "",
+        (Array.isArray(u.sales_roles) ? u.sales_roles : []).join("; "),
+        u.role === "admin" ? getAdminAccessSummary(u) : "",
+      ]),
+    ].map((r) => r.map(esc).join(",")).join("\n");
+    const blob = new Blob([rows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "users.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportAccessMatrixCsv = () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const tabs = ADMIN_TAB_GROUPS.flatMap((g) => g.tabs.map((t) => ({ label: `${g.label}: ${t.label}`, value: t.value })));
+    const rows = [
+      ["Name", "Email", "Role", "Full Admin", ...tabs.map(t => t.label)],
+      ...visibleUsers.map((u) => [
+        u.full_name || "", u.email || "", u.is_owner === true ? "owner" : (u.role || ""),
+        u.is_full_admin === true ? "yes" : "",
+        ...tabs.map((t) => {
+          if (u.is_full_admin === true) return "yes";
+          if (u.role !== "admin") return "";
+          return getAccessibleAdminTab(t.value, true, u) ? "yes" : "no";
+        }),
+      ]),
+    ].map((r) => r.map(esc).join(",")).join(String.fromCharCode(10));
+    const blob = new Blob([rows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "access-matrix.csv"; a.click(); URL.revokeObjectURL(url);
+  };
+
+  const exportAuditBundleCsv = () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const tabs = ADMIN_TAB_GROUPS.flatMap((g) => g.tabs.map((t) => ({ label: `${g.label}: ${t.label}`, value: t.value })));
+    const userRows = visibleUsers.map((u) => [
+      u.full_name || "", u.email || "", u.is_owner === true ? "owner" : (u.role || ""),
+      u.is_full_admin === true ? "yes" : "",
+      (Array.isArray(u.sales_roles) ? u.sales_roles : []).join("; "),
+      u.role === "admin" ? getAdminAccessSummary(u) : "",
+    ]);
+    const matrixRows = visibleUsers.map((u) => [
+      u.full_name || "", u.email || "",
+      ...tabs.map((t) => {
+        if (u.is_full_admin === true) return "yes";
+        if (u.role !== "admin") return "";
+        return getAccessibleAdminTab(t.value, true, u) ? "yes" : "no";
+      }),
+    ]);
+    const NL = String.fromCharCode(10);
+    const csv = [
+      "=== USERS ===",
+      ["Name", "Email", "Role", "Full Admin", "Sales Roles", "Pages Access"].map(esc).join(","),
+      ...userRows.map((r) => r.map(esc).join(",")),
+      "",
+      "=== ACCESS MATRIX ===",
+      ["Name", "Email", ...tabs.map((t) => t.label)].map(esc).join(","),
+      ...matrixRows.map((r) => r.map(esc).join(",")),
+      "",
+      `Exported ${new Date().toISOString()} · ${visibleUsers.length} users`,
+    ].join(NL);
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "admin-audit-bundle.csv"; a.click(); URL.revokeObjectURL(url);
+  };
+
+  const userSearchQ = userSearch.trim().toLowerCase();
+  const visibleUsers = users.filter((u) => {
+    if (userFilter === "admin" && u.role !== "admin") return false;
+    if (userFilter === "user" && u.role === "admin") return false;
+    if (userFilter === "full_admin" && u.is_full_admin !== true) return false;
+    if (userFilter === "inactive") {
+      const ref = u.last_login_at || u.created_date;
+      const days = ref ? Math.floor((Date.now() - new Date(ref).getTime()) / 86400000) : 999;
+      if (days < 60) return false;
+    }
+    if (!userSearchQ) return true;
+    const hr = u.hr_data && typeof u.hr_data === "object" ? u.hr_data : {};
+    const hay = [u.full_name, u.email, ...(Array.isArray(u.sales_roles) ? u.sales_roles : []),
+      ...(Array.isArray(hr.skills) ? hr.skills : []),
+      ...(Array.isArray(hr.certifications) ? hr.certifications : []),
+      ...(Array.isArray(hr.licenses) ? hr.licenses : [])]
+      .filter(Boolean).join(" ").toLowerCase();
+    return hay.includes(userSearchQ);
+  });
+  visibleUsers.sort((a, b) => {
+    const an = String(a.full_name || a.email || "").toLowerCase();
+    const bn = String(b.full_name || b.email || "").toLowerCase();
+    switch (userSort) {
+      case "name_desc": return bn.localeCompare(an);
+      case "email": return String(a.email || "").localeCompare(String(b.email || ""));
+      case "role": return String(a.role || "").localeCompare(String(b.role || "")) || an.localeCompare(bn);
+      default: return an.localeCompare(bn);
+    }
+  });
+
+  // The signed-in admin's own record — Owner-tier powers (granting Owner,
+  // demoting an owner) are gated on this flag, not merely on role: 'admin'.
+  const actorIsOwner = users.some((u) => u.email?.toLowerCase() === selfEmail && u.is_owner === true);
 
   const loadUsers = async () => {
     // A stale mutation must not even start a read with its previous token.
@@ -1262,9 +1491,12 @@ export default function UserManagement() {
           email,
           full_name: fullName || null,
           role: inviteRole,
+          reports_to: inviteManager.trim() || null,
+          access_expires_on: inviteExpiry || null,
           sales_roles: ["Task Assigned"],
           employment_type: "hourly",
           can_work_pause: false,
+          can_self_approve_shifts: false,
           onboarding_complete: false
         },
         sessionToken,
@@ -1333,6 +1565,70 @@ export default function UserManagement() {
     }
   };
 
+  // Pre-delete impact check (read-only): warn before removing users who
+  // still own live work or history. Failures never block the delete path.
+  useEffect(() => {
+    setDeleteImpact(null); setDeleteImpactError("");
+    const target = deleteConfirm;
+    if (!target?.id || !sessionToken) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const impact = await getUserDeletionImpactAdmin({ user: target, sessionToken });
+        if (!cancelled) setDeleteImpact(impact);
+      } catch (err) {
+        if (!cancelled) setDeleteImpactError(err?.message || "Impact check unavailable.");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [deleteConfirm, sessionToken]);
+
+  const handleImportFile = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const lines = String(reader.result || "").split(String.fromCharCode(10)).map(l => l.trim()).filter(Boolean);
+      const rows = [];
+      for (const line of lines.slice(0, 51)) {
+        const cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ""));
+        const email = (cols[0] || "").toLowerCase();
+        if (!email || !email.includes("@") || email === "email") continue;
+        rows.push({ email, full_name: cols[1] || "", role: cols[2] === "admin" ? "admin" : "user" });
+      }
+      if (!rows.length) { setImportMsg("No valid email rows found (expected: email,name,role)."); return; }
+      setImportRows(rows); setImportMsg("");
+    };
+    reader.readAsText(file);
+  };
+  const runImport = async () => {
+    if (!importRows?.length || importBusy || !sessionToken) return;
+    setImportBusy(true); setImportMsg("");
+    const failed = [];
+    for (const row of importRows) {
+      try { await createAuthorizedUserAdmin({ data: row, sessionToken }); }
+      catch (err) { failed.push(`${row.email}: ${err?.message || "failed"}`); }
+    }
+    setImportMsg(failed.length ? `${importRows.length - failed.length} imported; ${failed.length} failed (${failed.slice(0, 2).join("; ")}${failed.length > 2 ? "…" : ""})` : `${importRows.length} users imported.`);
+    setImportRows(null); setImportBusy(false);
+    await loadUsers();
+  };
+
+  const restoreDeletedUser = async () => {
+    if (!lastDeletedUser || restoreBusy || !sessionToken) return;
+    setRestoreBusy(true); setRestoreError("");
+    try {
+      await createAuthorizedUserAdmin({ data: lastDeletedUser, sessionToken });
+      setLastDeletedUser(null);
+      await loadUsers();
+    } catch (err) {
+      setRestoreError(err?.message || "The user could not be restored.");
+    } finally {
+      setRestoreBusy(false);
+    }
+  };
+
   const handleDelete = async (user) => {
     // The confirmed row must still be present in the verified directory at
     // the exact version shown to this administrator.
@@ -1362,6 +1658,16 @@ export default function UserManagement() {
       });
       if (!ownsDeletion()) return;
       setDeleteConfirm(null);
+      setLastDeletedUser({
+        email: verifiedUser.email,
+        full_name: verifiedUser.full_name || "",
+        role: verifiedUser.role || "user",
+        sales_roles: Array.isArray(verifiedUser.sales_roles) ? verifiedUser.sales_roles : [],
+        is_full_admin: verifiedUser.is_full_admin === true,
+        is_owner: verifiedUser.is_owner === true,
+        can_self_approve_shifts: verifiedUser.can_self_approve_shifts === true,
+        admin_permissions: verifiedUser.admin_permissions && typeof verifiedUser.admin_permissions === "object" ? verifiedUser.admin_permissions : {},
+      });
       await loadUsers();
     } catch (error) {
       if (!ownsDeletion()) return;
@@ -1378,8 +1684,16 @@ export default function UserManagement() {
     }
   };
 
-  const getRoleBadge = (role) => {
-    if (role === "admin") {
+  const getRoleBadge = (user) => {
+    if (user?.is_owner === true) {
+      return (
+        <Badge className="bg-amber-100 text-amber-800 flex items-center gap-1">
+          <Crown className="w-3 h-3" />
+          Owner
+        </Badge>
+      );
+    }
+    if (user?.role === "admin") {
       return (
         <Badge className="bg-purple-100 text-purple-700 flex items-center gap-1">
           <Crown className="w-3 h-3" />
@@ -1571,6 +1885,16 @@ export default function UserManagement() {
               }}
               className="mt-1"
             />
+          </div>
+          <div className="w-40">
+            <Label className="text-xs text-gray-500">Reports to</Label>
+            <Input value={inviteManager} onChange={(e) => setInviteManager(e.target.value)}
+              placeholder="Manager name or email" className="mt-1" />
+          </div>
+          <div className="w-40">
+            <Label className="text-xs text-gray-500">Access expires</Label>
+            <CcsDateField value={inviteExpiry} onChange={(e) => setInviteExpiry(e.target.value)}
+              className="mt-1" aria-label="Access expiry date" />
           </div>
           <div className="w-32">
             <Label className="text-xs text-gray-500">Role</Label>
@@ -1777,16 +2101,177 @@ export default function UserManagement() {
           </div>
         ) : (
           <div className="space-y-2">
-            {users.map((user) => (
+            {(() => {
+              const dupes = [];
+              const seen = {};
+              for (const u of visibleUsers) {
+                const key = String(u.full_name || "").trim().toLowerCase().replace(/\s+/g, " ");
+                if (!key) continue;
+                if (seen[key]) dupes.push(seen[key].full_name + " / " + u.full_name);
+                else seen[key] = u;
+              }
+              return dupes.length ? (
+                <div className="mb-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+                  Possible duplicate accounts: {dupes.slice(0, 3).join("; ")}{dupes.length > 3 ? ` (+${dupes.length - 3} more)` : ""} — same display name on multiple records.
+                </div>
+              ) : null;
+            })()}
+            {lastDeletedUser && (
+              <div className="flex flex-wrap items-center gap-2 mb-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2">
+                <span className="text-xs font-semibold text-amber-900">
+                  Removed {lastDeletedUser.full_name || lastDeletedUser.email}
+                </span>
+                <Button type="button" size="sm" variant="outline" disabled={restoreBusy || !sessionToken}
+                  onClick={restoreDeletedUser} className="h-7 text-xs bg-white/80">
+                  {restoreBusy ? "Restoring…" : "Undo remove"}
+                </Button>
+                <Button type="button" size="sm" variant="ghost" disabled={restoreBusy}
+                  onClick={() => { setLastDeletedUser(null); setRestoreError(""); }} className="h-7 text-xs">
+                  Dismiss
+                </Button>
+                {restoreError && <span className="text-xs text-red-600">{restoreError}</span>}
+              </div>
+            )}
+            {importRows && (
+              <div className="mb-1 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2">
+                <p className="text-xs font-semibold text-blue-900">Import preview — {importRows.length} users</p>
+                <div className="mt-1 max-h-24 overflow-y-auto text-xs text-blue-800">
+                  {importRows.map((r, i) => <p key={i}>{r.email} · {r.full_name || "no name"} · {r.role}</p>)}
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <Button type="button" size="sm" onClick={runImport} disabled={importBusy} className="h-7 text-xs">{importBusy ? "Importing…" : "Import all"}</Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setImportRows(null)} className="h-7 text-xs">Cancel</Button>
+                </div>
+              </div>
+            )}
+            {importMsg && <p className="mb-1 text-xs text-gray-600">{importMsg}</p>}
+            <div className="mb-1">
+              <label className="cursor-pointer rounded-md border border-input bg-white/70 px-3 py-1 text-xs font-medium hover:bg-gray-50">
+                Import CSV
+                <input type="file" accept=".csv,text/csv" className="hidden" onChange={handleImportFile} />
+              </label>
+            </div>
+            {selectedUserIds.size > 0 && (
+              <div className="flex flex-wrap items-center gap-2 mb-1 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2">
+                <span className="text-xs font-semibold text-indigo-900">{selectedUserIds.size} selected</span>
+                <Button type="button" size="sm" variant="outline" disabled={bulkRoleBusy}
+                  onClick={() => applyRoleToSelected("admin")} className="h-7 text-xs">
+                  {bulkRoleBusy ? "Working…" : "Grant admin"}
+                </Button>
+                <Button type="button" size="sm" variant="outline" disabled={bulkRoleBusy}
+                  onClick={() => applyRoleToSelected("user")} className="h-7 text-xs">
+                  {bulkRoleBusy ? "Working…" : "Revoke admin"}
+                </Button>
+                <Button type="button" size="sm" variant="outline" disabled={bulkRoleBusy}
+                  onClick={bulkRemove} className="h-7 text-xs border-red-300 text-red-700 hover:bg-red-50">
+                  Remove
+                </Button>
+                <Button type="button" size="sm" variant="ghost" disabled={bulkRoleBusy}
+                  onClick={() => { setSelectedUserIds(new Set()); setBulkRoleError(""); }} className="h-7 text-xs">
+                  Clear
+                </Button>
+                {bulkRoleError && <span className="text-xs text-red-600">{bulkRoleError}</span>}
+              </div>
+            )}
+            {accessRequests.length > 0 && (
+              <div className="mb-2 rounded-lg border border-indigo-200 bg-indigo-50/60 p-2" aria-label="Pending access requests">
+                <p className="text-xs font-semibold text-indigo-800">{accessRequests.length} pending access request{accessRequests.length === 1 ? "" : "s"}</p>
+                <ul className="mt-1 space-y-1">
+                  {accessRequests.map((req) => (
+                    <li key={req.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-indigo-100 bg-white/70 px-2 py-1 text-xs">
+                      <div className="min-w-0">
+                        <span className="font-medium">{req.requester_email}</span>
+                        {req.reason && <span className="ml-1.5 text-gray-500">"{req.reason}"</span>}
+                        {Array.isArray(req.requested_sections) && req.requested_sections.length > 0 && (
+                          <span className="ml-1.5 text-[10px] text-indigo-500">[{req.requested_sections.join(", ")}]</span>
+                        )}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button type="button" size="sm" variant="outline" onClick={() => decideAccessRequest(req.id, "approve")} className="h-6 px-2 text-[10px] text-emerald-700">Approve</Button>
+                        <Button type="button" size="sm" variant="outline" onClick={() => decideAccessRequest(req.id, "reject")} className="h-6 px-2 text-[10px] text-red-600">Reject</Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <Input
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                placeholder="Search name, email, or role…"
+                className="h-8 w-56 text-xs"
+                aria-label="Search users"
+              />
+              {(reviewAge === null || reviewAge > 30) && (
+                <button type="button" onClick={markAccessReviewed} disabled={accessReviewBusy}
+                  className="rounded-lg border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800"
+                  title="Confirm you've reviewed the user list">
+                  {reviewAge === null ? "Access never reviewed — mark reviewed" : `Access last reviewed ${reviewAge}d ago — mark reviewed`}
+                </button>
+              )}
+              <div className="flex gap-1">
+                {[["all", "All"], ["admin", "Admins"], ["user", "Users"], ["full_admin", "Full admins"], ["inactive", "Inactive 60d+"]].map(([v, label]) => (
+                  <Button key={v} type="button" size="sm"
+                    variant={userFilter === v ? "default" : "outline"}
+                    onClick={() => setUserFilter(v)}
+                    className="h-7 text-xs">
+                    {label}
+                  </Button>
+                ))}
+              </div>
+              <Select value={userSort} onValueChange={setUserSort}>
+                <SelectTrigger className="h-7 w-32 text-xs" aria-label="Sort users">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name A–Z</SelectItem>
+                  <SelectItem value="name_desc">Name Z–A</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="role">Role</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button type="button" size="sm" variant="outline" onClick={exportAuditBundleCsv}
+                className="h-7 text-xs" title="Download users + access matrix in one audit file">
+                Audit bundle
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={exportAccessMatrixCsv}
+                className="h-7 text-xs" title="Export every user's page access as a matrix">
+                Access matrix
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={exportUsersCsv}
+                className="h-7 text-xs" title="Export the filtered user list to CSV">
+                Export
+              </Button>
+              {(userSearch || userFilter !== "all") && (
+                <span className="text-xs text-gray-400 ml-auto">{visibleUsers.length} of {users.length}</span>
+              )}
+            </div>
+            {visibleUsers.length === 0 && (
+              <div className="text-center py-6 text-sm text-gray-500">No users match the current filter.</div>
+            )}
+            {visibleUsers.map((user) => (
               <div
                 key={user.id}
-                className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white/50 hover:bg-white/80 transition-colors"
+                className="rounded-lg bg-white/50 hover:bg-white/80 transition-colors"
               >
+              <div className="flex items-center justify-between gap-2 p-3">
                 <div className="flex items-center gap-3">
+                  <Checkbox
+                    checked={selectedUserIds.has(user.id)}
+                    onCheckedChange={(checked) => setSelectedUserIds((prev) => {
+                      const next = new Set(prev);
+                      if (checked === true) next.add(user.id); else next.delete(user.id);
+                      return next;
+                    })}
+                    aria-label={`Select ${user.full_name || user.email}`}
+                  />
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"
                     style={{
-                      background: user.role === 'admin'
+                      background: user.is_owner === true
+                        ? 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)'
+                        : user.role === 'admin'
                         ? 'linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)'
                         : 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)'
                     }}
@@ -1798,9 +2283,51 @@ export default function UserManagement() {
                       <span className="font-medium text-gray-800">
                         {user.full_name || "No name set"}
                       </span>
-                      {getRoleBadge(user.role)}
+                      {getRoleBadge(user)}
                     </div>
                     <span className="text-sm text-gray-500">{user.email}</span>
+                    {user.reports_to && <span className="text-[11px] text-gray-400">reports to {user.reports_to}</span>}
+                    {(() => {
+                      const missing = [];
+                      if (!user.full_name) missing.push("name");
+                      if (!user.username) missing.push("username");
+                      if (!user.password_changed_at) missing.push("password");
+                      if (user.role === "admin" && !(getAdminAccessSummary(user) || "").trim()) missing.push("admin tabs");
+                      const done = 4 - missing.length;
+                      if (!missing.length) return <span className="text-[11px] text-emerald-600" title="Account setup complete">setup 4/4</span>;
+                      return <span className={`text-[11px] font-medium ${done <= 1 ? "text-red-600" : "text-amber-600"}`} title={`Missing: ${missing.join(", ")}`}>setup {done}/4</span>;
+                    })()}
+                    {user.access_expires_on && (() => {
+                      const today = new Date().toISOString().slice(0, 10);
+                      const expired = user.access_expires_on < today;
+                      return <span className={`text-[11px] font-medium ${expired ? "text-red-600" : "text-gray-400"}`}>{expired ? "expired " : "expires "}{user.access_expires_on}</span>;
+                    })()}
+                    {(() => {
+                      const days = user.password_changed_at ? Math.floor((Date.now() - new Date(user.password_changed_at).getTime()) / 86400000) : null;
+                      if (days === null) return <span className="text-[11px] text-amber-600" title="No password-change date recorded">password age unknown</span>;
+                      const stale = days > 90;
+                      return <span className={`text-[11px] font-medium ${stale ? "text-amber-600" : "text-gray-400"}`} title={`Password last changed ${user.password_changed_at.slice(0, 10)}`}>password {days}d old{stale ? " — rotate" : ""}</span>;
+                    })()}
+                    {user.is_deactivated === true && <span className="text-[11px] font-semibold text-red-600">deactivated</span>}
+                    {(() => {
+                      const certs = (user.hr_data && typeof user.hr_data === "object" ? user.hr_data.certifications : null) || [];
+                      const expiring = certs.filter((c) => {
+                        const m = String(c).match(/exp\s+([\d-]{4,10})/i);
+                        if (!m) return false;
+                        const d = new Date(m[1]);
+                        return Number.isFinite(+d) && d < new Date(Date.now() + 60 * 86400000);
+                      });
+                      return expiring.length ? (
+                        <span className="text-[11px] font-semibold text-amber-700" title={expiring.join(", ")}>
+                          {expiring.length} cert{expiring.length === 1 ? "" : "s"} expiring
+                        </span>
+                      ) : null;
+                    })()}
+                    {(() => {
+                      if (!user.last_login_at) return <span className="text-[11px] text-gray-400">never signed in</span>;
+                      const days = Math.floor((Date.now() - new Date(user.last_login_at).getTime()) / 86400000);
+                      return <span className={`text-[11px] ${days > 60 ? "text-amber-600" : "text-gray-400"}`} title={`Last sign-in ${user.last_login_at.slice(0, 10)}`}>active {days === 0 ? "today" : `${days}d ago`}</span>;
+                    })()}
                     {user.username && (
                       <span className="text-xs text-purple-600">@{user.username}</span>
                     )}
@@ -1833,14 +2360,21 @@ export default function UserManagement() {
                     )}
                   </Button>
                   {user.role === 'admin' && (
+                    <span className="text-[10px] font-medium text-gray-400 whitespace-nowrap" title="Current admin page access">
+                      {getAdminAccessSummary(user)}
+                    </span>
+                  )}
+                  {user.role === 'admin' && (
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      variant="outline"
+                      size="sm"
                       onClick={() => setAccessUser(user)}
-                      className="h-8 w-8"
+                      aria-label={`Edit pages access for ${user.full_name || user.email}`}
+                      className="h-8 gap-1 border-indigo-300 px-2 text-xs font-medium text-indigo-700"
                       title="Admin page access"
                     >
-                      <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      Access
                     </Button>
                   )}
                   <Button
@@ -1874,6 +2408,20 @@ export default function UserManagement() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => {
+                      setPreviewUserId((cur) => (cur === user.id ? null : user.id));
+                      if (previewUserId !== user.id && !sessionsByUser[user.id]) loadSessions(user);
+                    }}
+                    aria-label={`Preview what ${user.full_name || user.email} sees`}
+                    aria-expanded={previewUserId === user.id}
+                    className="h-8 w-8"
+                    title="Preview their admin access"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-teal-600" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => openEditUser(user)}
                     aria-label={`Edit ${user.full_name || user.email}`}
                     className="h-8 w-8"
@@ -1890,6 +2438,43 @@ export default function UserManagement() {
                     <Trash2 className="w-4 h-4 text-red-600" />
                   </Button>
                 </div>
+              </div>
+              {previewUserId === user.id && (
+                <div className="border-t border-gray-100 px-3 pb-3 pt-2">
+                  <p className="text-[11px] font-semibold text-gray-500">What {user.full_name || user.email} sees in Admin:</p>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {user.role === "admin" ? (
+                      getAccessibleAdminGroups(true, user).flatMap((g) => g.tabs).map((t) => (
+                        <span key={t.value} className="rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-[10px] text-teal-800">{t.label}</span>
+                      ))
+                    ) : (
+                      <span className="text-[11px] text-gray-400">Not an admin — sees no admin tabs.</span>
+                    )}
+                  </div>
+                  <div className="mt-2 border-t border-gray-100 pt-2">
+                    <p className="text-[11px] font-semibold text-gray-500">Active sessions</p>
+                    {sessionsByUser[user.id]?.loading ? (
+                      <p className="mt-1 text-[11px] text-gray-400">Loading…</p>
+                    ) : (sessionsByUser[user.id]?.rows || []).length ? (
+                      <ul className="mt-1 space-y-1">
+                        {sessionsByUser[user.id].rows.map((ses) => (
+                          <li key={ses.id} className="flex items-center justify-between gap-2 text-[10px] text-gray-600">
+                            <span>Signed in {ses.created_at ? new Date(ses.created_at).toLocaleDateString() : "—"} · expires {ses.expires_at ? new Date(ses.expires_at).toLocaleDateString() : "—"}</span>
+                            {ses.revoked ? (
+                              <span className="text-red-500">revoked</span>
+                            ) : (
+                              <Button type="button" variant="ghost" size="sm" onClick={() => revokeSession(user, ses.id)}
+                                className="h-5 px-1.5 text-[10px] text-red-600">Revoke</Button>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-1 text-[11px] text-gray-400">{sessionsByUser[user.id]?.error ? "Could not load sessions." : "No active sessions recorded yet — rows appear after their next sign-in."}</p>
+                    )}
+                  </div>
+                </div>
+              )}
               </div>
             ))}
           </div>
@@ -1962,13 +2547,19 @@ export default function UserManagement() {
                   <div>
                     <Label>Role</Label>
                     <Select
-                      value={formData.role}
-                      onValueChange={(val) => changeAccountDraft({
-                        role: val,
-                        can_order_export: val === 'admin' ? activeAccountDraft.current.can_order_export : false,
-                        // Auto-enable resources for admins
-                        can_view_resources: val === 'admin' ? true : activeAccountDraft.current.can_view_resources
-                      })}
+                      value={formData.is_owner === true ? "owner" : formData.role}
+                      disabled={!actorIsOwner && formData.is_owner === true}
+                      onValueChange={(val) => {
+                        const owner = val === 'owner';
+                        const role = owner ? 'admin' : val;
+                        changeAccountDraft({
+                          role,
+                          is_owner: owner,
+                          can_order_export: role === 'admin' ? activeAccountDraft.current.can_order_export : false,
+                          // Auto-enable resources for admins
+                          can_view_resources: role === 'admin' ? true : activeAccountDraft.current.can_view_resources
+                        });
+                      }}
                     >
                       <SelectTrigger className="mt-1">
                         <SelectValue />
@@ -1986,8 +2577,19 @@ export default function UserManagement() {
                             Admin
                           </div>
                         </SelectItem>
+                        {(actorIsOwner || formData.is_owner === true) && (
+                          <SelectItem value="owner">
+                            <div className="flex items-center gap-2">
+                              <Crown className="w-4 h-4 text-amber-600" />
+                              Owner
+                            </div>
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
+                    {formData.is_owner === true && (
+                      <p className="text-xs text-amber-700 mt-1">Owner — the highest tier. Only an owner can change or remove this.</p>
+                    )}
                   </div>
 
                   <div>
@@ -2046,6 +2648,20 @@ export default function UserManagement() {
                           </div>
                         </div>
                       </div>
+                      {formData.role === "admin" && (
+                        <div className="rounded-lg border border-purple-200 bg-white p-3">
+                          <div className="flex items-start gap-2">
+                            <Checkbox
+                              checked={formData.can_self_approve_shifts === true}
+                              onCheckedChange={(checked) => changeAccountDraft({ can_self_approve_shifts: checked === true })}
+                            />
+                            <div>
+                              <label className="text-sm font-medium">Approve own shifts</label>
+                              <p className="text-xs text-gray-500 mt-1">Admin only. Lets this administrator approve their own Time Clock shifts without a second admin. OFF by default.</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -2060,6 +2676,33 @@ export default function UserManagement() {
                           }}
                         />
                         <label className="text-sm">Can Import/Export Data</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={formData.force_password_reset === true}
+                          onCheckedChange={(checked) => {
+                            changeAccountDraft({ force_password_reset: checked === true });
+                          }}
+                        />
+                        <label className="text-sm">Require password reset at next sign-in</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={formData.is_deactivated === true}
+                          onCheckedChange={(checked) => {
+                            changeAccountDraft({ is_deactivated: checked === true });
+                          }}
+                        />
+                        <label className="text-sm">Account deactivated — sign-in blocked, record kept</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={formData.notification_prefs?.automation_emails !== false}
+                          onCheckedChange={(checked) => {
+                            changeAccountDraft({ notification_prefs: { automation_emails: checked === true } });
+                          }}
+                        />
+                        <label className="text-sm">Receives automation emails</label>
                       </div>
                       {formData.role === "admin" && (
                         <div className="flex items-start gap-2 rounded-lg border border-purple-200 bg-purple-50/60 p-3">
@@ -2625,12 +3268,45 @@ export default function UserManagement() {
               Are you sure you want to remove "{deleteConfirm?.full_name || deleteConfirm?.email}"? 
               They will lose access to this application.
             </AlertDialogDescription>
+            {selfEmail && deleteConfirm?.email?.toLowerCase() === selfEmail && (
+              <p className="mt-2 rounded-lg border border-red-300 bg-red-50 p-2 text-xs font-semibold text-red-800">
+                This is your own account - removing it locks you out. Ask another admin to do this.
+              </p>
+            )}
+            {deleteConfirm && !deleteImpact && !deleteImpactError && (
+              <p className="mt-2 text-xs text-gray-400">Checking what this user still owns…</p>
+            )}
+            {deleteImpactError && (
+              <p className="mt-2 text-xs text-gray-400">Impact check unavailable — review their assignments manually.</p>
+            )}
+            {deleteImpact && (
+              <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900 space-y-1">
+                {(deleteImpact.blockers || []).length > 0 ? (
+                  deleteImpact.blockers.map((b, i) => <p key={i} className="font-medium">Warning: {b}</p>)
+                ) : (
+                  <p>No blocking records found for this user.</p>
+                )}
+                {(() => {
+                  const a = deleteImpact.assignments || {};
+                  const refs = (a.WorkOrder || 0) + (a.GeneralTask || 0) + (a.CalendarEvent || 0);
+                  const hist = (deleteImpact.history || []).reduce((sum, r) => sum + (r.count || 0), 0);
+                  if (!refs && !hist) return null;
+                  return (
+                    <p>
+                      {refs > 0 ? `${refs} live assignment${refs === 1 ? "" : "s"} (work orders, tasks, calendar)` : ""}
+                      {refs > 0 && hist > 0 ? " · " : ""}
+                      {hist > 0 ? `${hist} history record${hist === 1 ? "" : "s"} preserved` : ""}
+                    </p>
+                  );
+                })()}
+              </div>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deletionSaving} className="clay-button">Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => handleDelete(deleteConfirm)}
-              disabled={deletionSaving || userMutationSaving || hrMutationSaving || isLoading || userDirectoryError || !sessionToken}
+              onClick={() => { if (!(selfEmail && deleteConfirm?.email?.toLowerCase() === selfEmail)) handleDelete(deleteConfirm); }}
+              disabled={deletionSaving || userMutationSaving || hrMutationSaving || isLoading || userDirectoryError || !sessionToken || (selfEmail && deleteConfirm?.email?.toLowerCase() === selfEmail)}
               className="bg-red-600 text-white"
             >
               {deletionSaving ? "Removing..." : "Remove User"}
@@ -2642,9 +3318,11 @@ export default function UserManagement() {
       {/* Admin Access Dialog */}
       <AdminAccessDialog
         user={accessUser}
+        actorIsOwner={actorIsOwner}
         open={!!accessUser}
         onOpenChange={(open) => { if (!open) setAccessUser(null); }}
         sessionToken={sessionToken}
+        admins={users.filter((u) => u.role === 'admin' && u.id !== accessUser?.id)}
         onSaved={(saved) => {
           if (saved?.id) setUsers((current) => current.map((row) => (row.id === saved.id ? { ...row, ...saved } : row)));
         }}

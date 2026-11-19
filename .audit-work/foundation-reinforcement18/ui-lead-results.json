@@ -1,0 +1,132 @@
+{
+  "synthetic": true,
+  "results": [
+    {
+      "name": "browser-deep-frozen mount, unchanged refs, four Unknown metadata fields",
+      "ok": true
+    },
+    {
+      "name": "raw invalid edit changes only side, browser original remains frozen/unchanged",
+      "ok": true
+    },
+    {
+      "name": "two real UUID adds, all mat numerics blank, delete and controlled restore",
+      "ok": true
+    },
+    {
+      "name": "material round-trip preserves every raw field and unavailable ID",
+      "ok": true
+    },
+    {
+      "name": "both overrides preserve string0 then clear to null; actual item untouched",
+      "ok": true
+    },
+    {
+      "name": "acceptance blocks stale/false/missing/invalid IDs and every disable flag",
+      "ok": true
+    },
+    {
+      "name": "strict versions disable unsupported controls, including proto-like strings",
+      "ok": true
+    },
+    {
+      "name": "parent deletion preserves exact ties and displays newly orphaned reference",
+      "ok": true
+    },
+    {
+      "name": "hoops start entirely blank, authored allowance0 survives type round-trip",
+      "ok": true
+    },
+    {
+      "name": "21-row pagination changes exactly one row, no pagination callbacks",
+      "ok": true
+    },
+    {
+      "name": "page7 shrink to21 rows then Prev once reaches page1 without edits",
+      "ok": true
+    },
+    {
+      "name": "malformed mats + valid ties require explicit repair, not data loss",
+      "ok": true
+    },
+    {
+      "name": "malformed defined hoops require repair; null row deletes without touching valid row",
+      "ok": true
+    },
+    {
+      "name": "257ties still allow Add;4096ties and256mats cap without truncation",
+      "ok": true
+    },
+    {
+      "name": "absent secure UUID disables Add without callbacks",
+      "ok": true
+    },
+    {
+      "name": "object/array JSON reference values render repairable errors without crashing",
+      "ok": true
+    },
+    {
+      "name": "failed catalog read is visible without substituting metadata or changing the draft",
+      "ok": true
+    },
+    {
+      "name": "duplicate row and catalog IDs stay visible without duplicate React keys",
+      "ok": true
+    },
+    {
+      "name": "malformed cover and active design subtrees require explicit replacement",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Only supports is replaced in the committed seed\n+ actual - expected\n... Skipped lines\n\n  {\n    design: {\n      bar_diameter_inches: '',\n      cover_inches: {\n        bottom: '',\n...\n      supports: {\n+       catalog_id: '',\n+       mats: [],\n        mode: 'unconfigured',\n+       placements: [],\n        reason: '',\n+       spacing_inches: ''\n      },\n      version: 2\n    },\n    material: {\n      bar_diameter_inches: '',\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-ui-lead.mjs:247:14\n    at async check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-ui-lead.mjs:46:5)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-ui-lead.mjs:229:3"
+    },
+    {
+      "name": "malformed material/overrides are repaired only by their explicit actions",
+      "ok": true
+    },
+    {
+      "name": "accepted numeric fields display as numbers, malformed object inputs remain visibly invalid",
+      "ok": true
+    },
+    {
+      "name": "mobile text fields request a text keyboard; dimensions retain decimal keyboard",
+      "ok": true
+    },
+    {
+      "name": "switching to manual cannot silently reinterpret an authored each unit as feet",
+      "ok": true
+    },
+    {
+      "name": "actual styled populated long-UUID layout at375px",
+      "ok": true
+    },
+    {
+      "name": "actual styled populated long-UUID layout at1280px",
+      "ok": true
+    },
+    {
+      "name": "explicit acknowledgments start unchecked and block acceptance without any automatic callbacks",
+      "ok": true
+    },
+    {
+      "name": "preliminary acknowledgment is an immutable controlled event, not a design or price edit",
+      "ok": true
+    },
+    {
+      "name": "all explicit warnings still require fresh preview before one exact-ID acceptance",
+      "ok": true
+    },
+    {
+      "name": "unchecking a required warning retains frozen prior acknowledgment and blocks stale acceptance",
+      "ok": true
+    },
+    {
+      "name": "malformed warning lists and array-shaped acknowledgments fail closed; duplicate warnings render once",
+      "ok": true
+    },
+    {
+      "name": "acknowledgment controls respect busy, disabled, unsupported and stale states on a styled phone layout",
+      "ok": true
+    }
+  ],
+  "requests": [],
+  "errors": []
+}

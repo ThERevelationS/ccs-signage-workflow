@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Zap } from "lucide-react";
+import { Search, Zap } from "lucide-react";
 import { ESTIMATOR_MODULES } from "@/components/estimator/moduleRegistry";
 import { createQuickPriceProjectWithRecovery } from "@/components/estimator/quickPricePersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -50,6 +50,34 @@ export default function QuickPrice() {
   const [error, setError] = useState("");
   const [history, setHistory] = useState(readHistory);
   const createRef = useRef(false);
+  // #321 — history search over name/client/module, seeded from ?q= and
+  // written back via replaceState (satisfies the documented prerequisite:
+  // the history list previously had no search input at all).
+  const [historyQuery, setHistoryQuery] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
+  });
+  // (#415) Debounce the ?q= write-back: history.replaceState used to run on
+  // every keystroke; now it settles 300ms after typing stops.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        const next = new URLSearchParams(window.location.search);
+        const v = historyQuery.trim();
+        if (v) next.set("q", v); else next.delete("q");
+        window.history.replaceState(null, "", `${window.location.pathname}?${next}`);
+      } catch {}
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [historyQuery]);
+  const filteredHistory = useMemo(() => {
+    const q = historyQuery.trim().toLowerCase();
+    if (!q) return history;
+    return history.filter((entry) =>
+      [entry.project_name, entry.client_name, entry.module_label, entry.module_key]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q))
+    );
+  }, [history, historyQuery]);
 
   const recordHistory = (entry) => {
     const next = [entry, ...history.filter((row) => row.id !== entry.id)].slice(0, HISTORY_LIMIT);
@@ -116,7 +144,7 @@ export default function QuickPrice() {
     <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
       <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-3">
         <div className="bg-white px-4 py-3 flex items-center gap-2">
-          <Zap className="w-4 h-4 text-red-500" />
+          <Zap className="w-4 h-4 text-red-500" aria-hidden="true" />
           <h1 className="text-xs font-bold tracking-wide text-gray-600">QUICK PRICE</h1>
         </div>
 
@@ -136,7 +164,7 @@ export default function QuickPrice() {
           </div>
 
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
               <div className="font-semibold">Quick Price creation blocked</div>
               <div className="mt-1">{error}</div>
             </div>
@@ -144,9 +172,10 @@ export default function QuickPrice() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {ESTIMATOR_MODULES.map((m) => (
-              <button
+              <button type="button"
                 key={m.key}
                 onClick={() => pickModule(m.key)}
+                aria-pressed={moduleKey === m.key}
                 className={`px-3 py-2 rounded-lg text-sm font-medium text-left border ${
                   moduleKey === m.key
                     ? "border-red-400 bg-red-50 text-red-700"
@@ -169,17 +198,30 @@ export default function QuickPrice() {
 
         {history.length > 0 && (
           <div className="bg-white p-4 space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="text-xs font-bold tracking-wide text-gray-600">RECENT QUICK PRICES</h2>
-              <button
+              <button type="button"
                 onClick={clearHistory}
                 className="text-xs font-medium text-red-600 hover:text-red-700"
               >
                 Clear history
               </button>
             </div>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+              <Input
+                value={historyQuery}
+                onChange={(e) => setHistoryQuery(e.target.value)}
+                aria-label="Filter recent quick prices"
+                placeholder="Filter by name, client or module..."
+                className="h-8 pl-8 text-xs bg-white/80"
+              />
+            </div>
             <ul className="divide-y divide-gray-100">
-              {history.map((entry) => {
+              {filteredHistory.length === 0 && (
+                <li className="py-3 text-center text-xs text-gray-400">No recent quick prices match.</li>
+              )}
+              {filteredHistory.map((entry) => {
                 const mod = ESTIMATOR_MODULES.find((m) => m.key === entry.module_key);
                 return (
                   <li key={entry.id} className="py-2 flex items-center gap-2">
@@ -190,14 +232,14 @@ export default function QuickPrice() {
                         {entry.created ? ` · ${new Date(entry.created).toLocaleDateString()}` : ""}
                       </div>
                     </div>
-                    <button
+                    <button type="button"
                       onClick={() => reuseEntry(entry)}
                       className="px-2 py-1 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:border-red-300 hover:text-red-700"
                     >
                       Reuse
                     </button>
                     {mod && (
-                      <button
+                      <button type="button"
                         onClick={() => openEntry(entry)}
                         className="px-2 py-1 rounded-lg text-xs font-bold border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
                       >

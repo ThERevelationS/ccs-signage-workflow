@@ -1,0 +1,55 @@
+FAIL material replacement keeps the authored cut and all raw snapshot fields Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
+    cap_inventory_id: 'b',
+    cap_name: 'Saved cap',
+    component_id: 'piece',
+    cost: 21,
+    id: 'piece',
++   length_inches: 96,
+-   length_inches: 18,
+    stock_length_inches: 48
+  }
+
+FAIL shorter stock does not silently shorten a requested cut Expected values to be strictly equal:
+
+12 !== 18
+
+FAIL clearing a cut stays blank and cannot revert to an explicit legacy hint Expected values to be strictly equal:
+
+1 !== ''
+
+FAIL a negative cut is not changed into a one-inch cut Expected values to be strictly equal:
+
+1 !== -1
+
+ok valid decimal input keeps numeric storage and source identity
+FAIL adding with unrecorded stock dimensions does not invent a 48-inch cut Expected values to be strictly equal:
+
+48 !== ''
+
+ok explicit Add may initialize a full cut from a genuinely recorded stock length
+FAIL a recorded legacy-only cut is displayed without auto-migration or a change on mount Expected values to be strictly equal:
+
+48 !== 18
+
+FAIL an unrecorded saved cut stays blank rather than displaying a fabricated full-stock cut Expected values to be strictly equal:
+
+48 !== ''
+
+FAIL a malformed stored cut is not passed as an object into a number control Expected values to be strictly equal:
+
+{} !== ''
+
+FAIL oversized input remains visible with an accessible stock-fit diagnostic Expected values to be strictly equal:
++ actual - expected
+
++ undefined
+- true
+
+FAIL unknown live stock is clearly distinct from a saved 48-inch snapshot The expression evaluated to a falsy value:
+
+  assert.ok(text(f.root).includes("Saved stock length:"))
+
+exit=1

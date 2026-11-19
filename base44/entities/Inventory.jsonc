@@ -104,7 +104,15 @@
     "deleted": {
       "type": "boolean",
       "default": false,
-      "description": "Soft-delete flag — archived items are hidden from stock lists, pickers, and reorder suggestions."
+      "description": "Soft-delete flag \u2014 archived items are hidden from stock lists, pickers, and reorder suggestions."
+    },
+    "income_account": {
+      "type": "string",
+      "description": "GL income account code this item's sales post to on accounting export (CoreBridge-style Manage Accounts mapping)."
+    },
+    "cogs_account": {
+      "type": "string",
+      "description": "GL cost-of-goods-sold account code this item's consumption posts to on accounting export."
     }
   },
   "required": [
@@ -119,7 +127,20 @@
         "role": "admin"
       }
     },
-    "read": {},
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
     "update": {
       "user_condition": {
         "role": "admin"

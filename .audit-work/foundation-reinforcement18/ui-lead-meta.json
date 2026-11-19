@@ -1,0 +1,267 @@
+{
+  "inputs": {
+    "node_modules/react/cjs/react.development.js": {
+      "bytes": 87593,
+      "imports": [],
+      "format": "cjs"
+    },
+    "node_modules/react/index.js": {
+      "bytes": 190,
+      "imports": [
+        {
+          "path": "node_modules/react/cjs/react.development.js",
+          "kind": "require-call",
+          "original": "./cjs/react.development.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/scheduler/cjs/scheduler.development.js": {
+      "bytes": 17497,
+      "imports": [],
+      "format": "cjs"
+    },
+    "node_modules/scheduler/index.js": {
+      "bytes": 198,
+      "imports": [
+        {
+          "path": "node_modules/scheduler/cjs/scheduler.development.js",
+          "kind": "require-call",
+          "original": "./cjs/scheduler.development.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react-dom/cjs/react-dom.development.js": {
+      "bytes": 1029622,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        },
+        {
+          "path": "node_modules/scheduler/index.js",
+          "kind": "require-call",
+          "original": "scheduler"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react-dom/index.js": {
+      "bytes": 1363,
+      "imports": [
+        {
+          "path": "node_modules/react-dom/cjs/react-dom.development.js",
+          "kind": "require-call",
+          "original": "./cjs/react-dom.development.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react-dom/client.js": {
+      "bytes": 619,
+      "imports": [
+        {
+          "path": "node_modules/react-dom/index.js",
+          "kind": "require-call",
+          "original": "react-dom"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react/cjs/react-jsx-runtime.development.js": {
+      "bytes": 42700,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react/jsx-runtime.js": {
+      "bytes": 214,
+      "imports": [
+        {
+          "path": "node_modules/react/cjs/react-jsx-runtime.development.js",
+          "kind": "require-call",
+          "original": "./cjs/react-jsx-runtime.development.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "src/components/estimator/foundation/ReinforcementDraftField.jsx": {
+      "bytes": 1216,
+      "imports": [
+        {
+          "path": "node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/ReinforcementDraftList.jsx": {
+      "bytes": 5858,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "src/components/estimator/foundation/ReinforcementDraftField.jsx",
+          "kind": "import-statement",
+          "original": "./ReinforcementDraftField"
+        },
+        {
+          "path": "node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/ReinforcementDraftGeometry.jsx": {
+      "bytes": 14204,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/ReinforcementDraftField.jsx",
+          "kind": "import-statement",
+          "original": "./ReinforcementDraftField"
+        },
+        {
+          "path": "src/components/estimator/foundation/ReinforcementDraftList.jsx",
+          "kind": "import-statement",
+          "original": "./ReinforcementDraftList"
+        },
+        {
+          "path": "node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/ReinforcementDraftMaterial.jsx": {
+      "bytes": 5789,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/ReinforcementDraftField.jsx",
+          "kind": "import-statement",
+          "original": "./ReinforcementDraftField"
+        },
+        {
+          "path": "node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/FoundationReinforcementProposalPanel.jsx": {
+      "bytes": 8174,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/ReinforcementDraftGeometry.jsx",
+          "kind": "import-statement",
+          "original": "./ReinforcementDraftGeometry"
+        },
+        {
+          "path": "src/components/estimator/foundation/ReinforcementDraftMaterial.jsx",
+          "kind": "import-statement",
+          "original": "./ReinforcementDraftMaterial"
+        },
+        {
+          "path": "node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    ".audit-work/foundation-reinforcement18/ui-lead-fixture.jsx": {
+      "bytes": 3010,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "node_modules/react-dom/client.js",
+          "kind": "import-statement",
+          "original": "react-dom/client"
+        },
+        {
+          "path": "src/components/estimator/foundation/FoundationReinforcementProposalPanel.jsx",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/FoundationReinforcementProposalPanel"
+        },
+        {
+          "path": "node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "out/ui-lead-fixture.js": {
+      "imports": [],
+      "exports": [],
+      "entryPoint": ".audit-work/foundation-reinforcement18/ui-lead-fixture.jsx",
+      "inputs": {
+        "node_modules/react/cjs/react.development.js": {
+          "bytesInOutput": 77054
+        },
+        "node_modules/react/index.js": {
+          "bytesInOutput": 227
+        },
+        "node_modules/scheduler/cjs/scheduler.development.js": {
+          "bytesInOutput": 16890
+        },
+        "node_modules/scheduler/index.js": {
+          "bytesInOutput": 239
+        },
+        "node_modules/react-dom/cjs/react-dom.development.js": {
+          "bytesInOutput": 913068
+        },
+        "node_modules/react-dom/index.js": {
+          "bytesInOutput": 257
+        },
+        "node_modules/react-dom/client.js": {
+          "bytesInOutput": 778
+        },
+        "node_modules/react/cjs/react-jsx-runtime.development.js": {
+          "bytesInOutput": 36443
+        },
+        "node_modules/react/jsx-runtime.js": {
+          "bytesInOutput": 251
+        },
+        ".audit-work/foundation-reinforcement18/ui-lead-fixture.jsx": {
+          "bytesInOutput": 3410
+        },
+        "src/components/estimator/foundation/ReinforcementDraftField.jsx": {
+          "bytesInOutput": 1445
+        },
+        "src/components/estimator/foundation/ReinforcementDraftList.jsx": {
+          "bytesInOutput": 7086
+        },
+        "src/components/estimator/foundation/ReinforcementDraftGeometry.jsx": {
+          "bytesInOutput": 15960
+        },
+        "src/components/estimator/foundation/ReinforcementDraftMaterial.jsx": {
+          "bytesInOutput": 7111
+        },
+        "src/components/estimator/foundation/FoundationReinforcementProposalPanel.jsx": {
+          "bytesInOutput": 9920
+        }
+      },
+      "bytes": 1094010
+    }
+  }
+}

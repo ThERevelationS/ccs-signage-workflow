@@ -1,0 +1,37 @@
+{
+ "jurisdiction_id": "6aea0e49f9abd342bc9a74f1",
+ "jurisdiction_name": "Parkman",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "AP P LICATION NO . __________________ APPLICATION FOR ZONING C ERTIF I CA T E Parkman T o wnsh i p, G e auga County 16295 Main Market Road, Ohio 44080 Phone (440) 548 - 2480 The unders i gned hereby appl i es for a zoning certificate for the following described use, said certi f icate t o be i ssued by the township zoning inspector on the basis of the i nfor m ation contained with i n this applicatio n . THIS APPLICATION SHALL BE COMPLETED BY THE APPLICANT . A. N a me o f A pp lica nt: ________________________________ ________________________________ ________________ _ A ddres s o f A ppli c a nt: ________________________________ ________________________________ ___________ _ T ele ph o n e Num b e r o f A pp l i ca nt : ________________________________ ________________________________ __ _ B. Name of Own er of R e c o rd ________________________________ ________________________________ ",
+   "tags": [
+    "fee",
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "ec982fb92bcbbe2eeba4546f35ea63d5798e03849b7ef54aa184251613b32ed7",
+   "source_document_id": null,
+   "source_title": "ec982fb92bcbbe2eeba4546f35ea63d5798e03849b7ef54aa184251613b32ed7.pdf",
+   "official_url": "https://parkman.geauga.oh.gov/wp-content/uploads/sites/38/2026/02/Parkman-Zoning-Application-Form.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "ZONING CERTIF I CATE I hereby consent to the inspection of the subject property a nd o f a ny buildings o r st r uc t ures to be co nstructed thereon by the Parkman Township Zoning Ins p ec t o r du r in g co n st ru ctio n a n d wi t h in t h i rty ( 30) days from the completion o f an y bui l dings o r s tr uc tur es . I h e r eby acknowledge t ha t I understand tha t if t he c o n s tru c tion o r us e d esc ribed in th e zo ning c e rt if i cate ha s n o t b e gun w i th i n s ix (6) m o nth s f rom the dat e of i s suan ce or if c o n s truction h a s begun wit h i n si x (6) mo nt hs a nd said c o n str u ct i o n h as n o t b ee n c ompleted within t w o (2) years from the date of iss u a n c e, sa i d zo nin g certif icate s h al l be r e v o ked b y th e Parkman Town s h i p Z o ning Inspector. Us e of thi s s tru c tur e for o th er th a n st a t e d use vo i ds this p e rmit .",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "ec982fb92bcbbe2eeba4546f35ea63d5798e03849b7ef54aa184251613b32ed7",
+   "source_document_id": null,
+   "source_title": "ec982fb92bcbbe2eeba4546f35ea63d5798e03849b7ef54aa184251613b32ed7.pdf",
+   "official_url": "https://parkman.geauga.oh.gov/wp-content/uploads/sites/38/2026/02/Parkman-Zoning-Application-Form.pdf"
+  }
+ ]
+}

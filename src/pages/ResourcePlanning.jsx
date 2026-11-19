@@ -28,12 +28,13 @@ import {
   Settings,
   Save
 } from "lucide-react";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { loadSingleUserCapacity, saveUserCapacityIfUnchanged } from "@/components/resourcePlanning/userCapacityPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
-const UserCapacity = base44.entities.UserCapacity;
 
 export default function ResourcePlanning() {
   const { currentUser, sessionToken, isRegistered } = useAuth();
@@ -44,7 +45,7 @@ export default function ResourcePlanning() {
   const [selectedWeek, setSelectedWeek] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [isLoading, setIsLoading] = useState(true);
   const [editingCapacity, setEditingCapacity] = useState(null);
-  const [capacityForm, setCapacityForm] = useState({ weekly_hours_capacity: 40, daily_hours_capacity: 8 });
+  const [capacityForm, setCapacityForm] = useState({ weekly_hours_capacity: 40, daily_hours_capacity: 8, hourly_cost_rate: 0 });
   const [capacityRecord, setCapacityRecord] = useState(null);
   const [capacityError, setCapacityError] = useState("");
   const [capacitySaving, setCapacitySaving] = useState(false);
@@ -85,13 +86,10 @@ export default function ResourcePlanning() {
     setIsLoading(true);
     try {
       const [capacitiesData, ordersData] = await Promise.all([
-        loadAllEntityRows({ entity: UserCapacity, sort: null, label: "Resource Planning user capacities" }),
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Resource Planning Work Orders",
-        })
+        loadAllEntityRows({ entity: staffEntities.UserCapacity, sort: null, label: "Resource Planning user capacities" }),
+        fetchAllWorkOrders().then((rows) =>
+          (rows || []).filter((wo) => wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => String(a.created_date || "").localeCompare(String(b.created_date || ""))))
       ]);
       setUserCapacities(capacitiesData);
       setWorkOrders(ordersData);
@@ -218,12 +216,13 @@ export default function ResourcePlanning() {
     } catch (error) {
       console.error("Capacity save blocked:", error);
       setCapacityError(error?.message || "This employee capacity changed in another session. Reload before saving.");
-      const latest = await loadSingleUserCapacity({ entity: UserCapacity, userEmail: editingCapacity.email, label: "Employee capacity" }).catch(() => null);
+      const latest = await loadSingleUserCapacity({ entity: staffEntities.UserCapacity, userEmail: editingCapacity.email, label: "Employee capacity" }).catch(() => null);
       setCapacityRecord(latest);
       if (latest) {
         setCapacityForm({
           weekly_hours_capacity: latest.weekly_hours_capacity || 40,
           daily_hours_capacity: latest.daily_hours_capacity || 8,
+          hourly_cost_rate: latest.hourly_cost_rate || 0,
         });
       }
     } finally {
@@ -394,7 +393,8 @@ export default function ResourcePlanning() {
                         setCapacityError("");
                         setCapacityForm({
                           weekly_hours_capacity: cap?.weekly_hours_capacity || 40,
-                          daily_hours_capacity: cap?.daily_hours_capacity || 8
+                          daily_hours_capacity: cap?.daily_hours_capacity || 8,
+                          hourly_cost_rate: cap?.hourly_cost_rate || 0
                         });
                         setEditingCapacity(allocation.user);
                       }}
@@ -467,6 +467,17 @@ export default function ResourcePlanning() {
                 onChange={(e) => setCapacityForm({ ...capacityForm, daily_hours_capacity: parseInt(e.target.value) || 8 })}
                 className="mt-1"
               />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium">Hourly Cost Rate ($)</label>
+              <Input
+                type="number" min="0" step="0.01"
+                value={capacityForm.hourly_cost_rate ?? 0}
+                onChange={(e) => setCapacityForm({ ...capacityForm, hourly_cost_rate: Math.max(0, parseFloat(e.target.value) || 0) })}
+                className="mt-1"
+              />
+              <p className="mt-0.5 text-xs text-gray-400">Internal cost rate — admins only, used for capacity costing.</p>
             </div>
             
             <Button onClick={handleSaveCapacity} className="w-full" disabled={capacitySaving}>

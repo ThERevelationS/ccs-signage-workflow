@@ -1,0 +1,90 @@
+{
+  "synthetic": true,
+  "localOnly": true,
+  "results": [
+    {
+      "name": "new draft has no invented engineering dimensions, rates, weight or supports",
+      "ok": true
+    },
+    {
+      "name": "new draft preserves explicit existing0 overrides",
+      "ok": true
+    },
+    {
+      "name": "typed preview is20ft/material40/labor72/steel112 without changing raw text",
+      "ok": true
+    },
+    {
+      "name": "three instances scale fresh quantities and cost to60ft/336",
+      "ok": true
+    },
+    {
+      "name": "draft0 aggregate override means0 pricedft but48connectionlabor",
+      "ok": true
+    },
+    {
+      "name": "draft0 perft override retains labor72",
+      "ok": true
+    },
+    {
+      "name": "blank numeric field is missing/null, not guessed0/default",
+      "ok": true
+    },
+    {
+      "name": "invalid raw numeric text remains visible; no partial parsing",
+      "ok": true
+    },
+    {
+      "name": "negative dimensions do not price or overwrite raw inputs",
+      "ok": true
+    },
+    {
+      "name": "cached fake model/price cannot bypass fresh invalid quantity",
+      "ok": true
+    },
+    {
+      "name": "unconfigured supports keep known steel112 preliminary, never apply",
+      "ok": true
+    },
+    {
+      "name": "manual provenance error blocks even when price-helper readiness istrue",
+      "ok": true
+    },
+    {
+      "name": "catalog0 ambiguity blocks combined projection despite known steel72",
+      "ok": true
+    },
+    {
+      "name": "rebaroff is0 without design/material/rates, not an engineering approval",
+      "ok": true
+    },
+    {
+      "name": "malformed/missing raw item fails closed",
+      "ok": true
+    },
+    {
+      "name": "unsupported draft schema is not silently migrated",
+      "ok": true
+    },
+    {
+      "name": "unsupported design version and raw IDs are not silently fixed",
+      "ok": true
+    },
+    {
+      "name": "oversize lists reject before mapping/rendering any partial quantities",
+      "ok": true
+    },
+    {
+      "name": "malformed list/row is visible as an invalid draft, not priced0",
+      "ok": true
+    },
+    {
+      "name": "accepted design and material are copied without aliasing; inactive data retained",
+      "ok": true
+    },
+    {
+      "name": "frozen raw inputs survive repeated fresh projection and typed preparation",
+      "ok": true
+    }
+  ]
+}

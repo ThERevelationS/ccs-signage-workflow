@@ -1,0 +1,24 @@
+{
+ "jurisdiction_id": "6adefbe3c6893e5e34e42653",
+ "jurisdiction_name": "Lewisburg",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "EMPLOYEE/EMPLOYER QUARTERLY RETURN OF LICENSE FEE WITHHELD 1. Total earnings paid all employees(•) 2. Less earnings for outside services rendered 3. Taxable earnings (Line 1 minus Line 2) 4. Actual tax withheld in quarter at 1.5% 5. Penalty(0.5 of Line 4) 6. Total(include penalty due) $___________ Min. Penalty $25.00 Int. Rater 12% per annum •1f no wages were paid this quarter, mark \"NONE\", sign and return with explanation. Remit To: City of Lewisburg (Month If Paid Monthly_____ Payment due within one month from the above 549 S Ma i n S treet Lewisburg, KY 42256 date(If receipt desired, enclose self-addressed, Acct.#____ stamped envelope.) Name & Address: Date: ______ Signature Title-Owner, Partner, President, Etc. EMPLOYEE/EMPLOYER QUARTERLY RETURN OF LICENSE FEE WITHHELD 1. Total earnings paid all employees(•) 2. Less earnings for outside services rendered 3. Taxable earnings(Line 1 mi",
+   "tags": [
+    "sign",
+    "fee",
+    "dimension",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "f9b989e1c2423a90389341b1adb39a91e5901104dbc5903ee3cd1439da3812ee",
+   "source_document_id": null,
+   "source_title": "f9b989e1c2423a90389341b1adb39a91e5901104dbc5903ee3cd1439da3812ee.pdf",
+   "official_url": "https://cityoflewisburgky.com/media/1091/employee-employer-quartery-return.pdf"
+  }
+ ]
+}

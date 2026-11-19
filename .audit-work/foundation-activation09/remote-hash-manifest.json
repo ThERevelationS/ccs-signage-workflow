@@ -1,0 +1,62 @@
+[
+ {
+  "path": "src/components/estimator/foundation/foundationTemplateService.js",
+  "remoteSha256": "7a550f583694ca0396af63924a9d2d5c28d2be1a02b2ab14e1f2c60ad172c30e",
+  "expectedSha256": "7a550f583694ca0396af63924a9d2d5c28d2be1a02b2ab14e1f2c60ad172c30e",
+  "match": true
+ },
+ {
+  "path": "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+  "remoteSha256": "4880c98d434d71f4a2b9f9cda7ebfd3974cfa29b05590c60eff491be503eac3f",
+  "expectedSha256": "4880c98d434d71f4a2b9f9cda7ebfd3974cfa29b05590c60eff491be503eac3f",
+  "match": true
+ },
+ {
+  "path": "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+  "remoteSha256": "9a6da710738c46edb8ee2987701f326f1096c092ba379872e984b62ce6a15c08",
+  "expectedSha256": "9a6da710738c46edb8ee2987701f326f1096c092ba379872e984b62ce6a15c08",
+  "match": true
+ },
+ {
+  "path": "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+  "remoteSha256": "b1da0a3cc2b68260cadb320b110c5f6f89ddf43ee25ad93af2522c10bc819d4b",
+  "expectedSha256": "b1da0a3cc2b68260cadb320b110c5f6f89ddf43ee25ad93af2522c10bc819d4b",
+  "match": true
+ },
+ {
+  "path": "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+  "remoteSha256": "bf32ae5ab3c869d8de3fb01ceb67981c09a51773d4373ee1f4a0d78848d30406",
+  "expectedSha256": "bf32ae5ab3c869d8de3fb01ceb67981c09a51773d4373ee1f4a0d78848d30406",
+  "match": true
+ },
+ {
+  "path": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+  "remoteSha256": "10768f02abe71853e86e8cd7fc410d2b13f85007262a8f0bc1474106b6bfe634",
+  "expectedSha256": "70233a10b07274571a9d27e693cad3a51c705bc561514fe5c688d5648085f152",
+  "match": true
+ },
+ {
+  "path": "base44/entities/FoundationProject.jsonc",
+  "remoteSha256": "861ad63edc390cfa51fbcd44835a6bd2df9c81eb9a3f80716aa775bc7d0ff000",
+  "expectedSha256": "f49d03e439cdb576408b8ef11facfa9c4335fa0819f4ee0de749276692cca4f1",
+  "match": true
+ },
+ {
+  "path": "src/pages/FoundationEstimator.jsx",
+  "remoteSha256": "c10e0d372b4b039cba3805a95ea40d5a4e84befded19709cd2083d029af886b1",
+  "expectedSha256": "c10e0d372b4b039cba3805a95ea40d5a4e84befded19709cd2083d029af886b1",
+  "match": true
+ },
+ {
+  "path": "src/components/estimator/foundation/foundationAssemblyModel.js",
+  "remoteSha256": "bab98c6df32c10b4580928c9f73f4bc82847f29670f8b080da367fd08a34e45a",
+  "expectedSha256": "0ee3319accf578669a01209b182ef45e7e494bf3df51bede0c6171f429bc65c1",
+  "match": true
+ },
+ {
+  "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+  "remoteSha256": "3c7e383db4538ba9e519726e1bb22affb6e760fc565e48954ec27c6b28e959f5",
+  "expectedSha256": "a475bfd50def02443331df581a90b5ebfc0a2292788afad070bb52003e92fdcb",
+  "match": true
+ }
+]

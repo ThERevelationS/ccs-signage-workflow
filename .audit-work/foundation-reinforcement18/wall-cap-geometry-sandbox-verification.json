@@ -1,0 +1,34 @@
+{
+  "ok": true,
+  "targets": [
+    "src/components/estimator/foundation/wallCapCalculator.js",
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/components/estimator/foundation/FoundationWallCapsPanel.jsx"
+  ],
+  "sourceHead": "e1fbae8e8bc2162a5bd184b0cc4ccc2dfbe78f3b",
+  "verifiedHead": "892c701aedae039ae03ad8b160ae42175ad99e40",
+  "clean": true,
+  "protectedSourcesUnchanged": [
+    "base44/shared/estimatorAiModelPolicy.js",
+    "base44/entities/FoundationProject.jsonc",
+    "base44/entities/FoundationInventory.jsonc",
+    "base44/entities/WorkOrder.jsonc",
+    "src/components/estimator/foundation/legacyFoundationCalc.js",
+    "src/pages/FoundationEstimator.jsx",
+    "src/components/estimator/workOrderConversion.js",
+    "base44/functions/staffEntityWrite/entry.ts",
+    "base44/functions/staffDataRead/entry.ts",
+    "src/components/estimator/builder/builderEntityPersistence.js",
+    "src/components/estimator/foundation/Foundation3DPreview.jsx",
+    "src/components/estimator/foundation/foundationAiReview.js",
+    "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+    "src/components/estimator/foundation/FoundationTotals.jsx",
+    "src/components/estimator/foundation/FoundationBOM.jsx",
+    "src/components/estimator/foundation/foundationCatalogIntegrity.js"
+  ],
+  "actualDependencyBuild": 3,
+  "schemaChanged": false,
+  "reinforcementV2Activated": false,
+  "realStorageVerified": false,
+  "realAuthenticationVerified": false
+}

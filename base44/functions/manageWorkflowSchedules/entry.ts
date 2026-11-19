@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     return Response.json({ success: false, error: 'Invalid workflow schedule action.' }, { status: 400 });
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 502, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 502, 429, 503].includes(status) ? status : 500;
     console.error('manageWorkflowSchedules error:', error?.code || '', error?.message || error);
     return Response.json({
       success: false,

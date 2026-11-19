@@ -1,0 +1,90 @@
+{
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "71b65186f4df1159193acceb91db50ea50946a7a",
+ "baselineFile": "painting-pricing-baseline-v2.json",
+ "proofSpec": "painting-pricing-proof-spec.json",
+ "candidateManifest": "painting-pricing-candidates.json",
+ "targetOrder": [
+  "src/components/estimator/paint/paintCalc.js",
+  "src/components/estimator/paint/paintPricingAvailability.js",
+  "src/pages/PaintingEstimator.jsx"
+ ],
+ "candidatePrefix": "painting-pricing-candidate-",
+ "newRemoteFiles": [
+  "src/components/estimator/paint/paintPricingAvailability.js"
+ ],
+ "atomicEditPerFile": true,
+ "editsPerFile": 1,
+ "candidateLineEndings": "LF",
+ "candidateTerminalLF": {
+  "src/components/estimator/paint/paintCalc.js": true,
+  "src/components/estimator/paint/paintPricingAvailability.js": true,
+  "src/pages/PaintingEstimator.jsx": true
+ },
+ "protectedFiles": [
+  "src/pages/VinylEstimator.jsx",
+  "src/pages/PaintingSettings.jsx",
+  "src/components/channelLetterInstall/",
+  "src/components/channelLetterInstall/TravelCostCard.jsx",
+  "src/components/vinylEstimator/",
+  "src/components/estimator/customerPricing.js",
+  "src/components/estimator/paint/paintSellPricing.js",
+  "src/components/markup/CustomerPricingTab.jsx",
+  "src/components/markup/projectCategorizer.jsx",
+  "src/components/estimator/builder/builderService.js",
+  "src/components/estimator/builder/sourceProjectPersistence.js",
+  "src/components/estimator/builder/itemIdentity.js",
+  "src/components/estimator/moduleShared/moduleProjectActions.js",
+  "src/components/estimator/settings/moduleSettingDefaults.js",
+  "src/components/signMaintenance/",
+  "src/components/estimator/foundation/"
+ ],
+ "liveDeadDetermination": {
+  "liveCore": "src/components/estimator/paint/paintCalc.js",
+  "livePage": "src/pages/PaintingEstimator.jsx",
+  "liveSettingsSurface": "src/pages/PaintingSettings.jsx (imports liquidPaintRatePerSqft — unchanged)",
+  "sellPricingConsumer": "src/components/estimator/customerPricing.js → paint/paintSellPricing.js (unchanged)",
+  "settingsDefaults": "src/components/estimator/settings/moduleSettingDefaults.js (unchanged — absent rows fall back by design)"
+ },
+ "forbiddenRemoteOperations": [
+  "sandbox edit",
+  "sandbox write",
+  "checkpoint",
+  "entity ops",
+  "schema ops",
+  "deploy",
+  "publish"
+ ],
+ "applyRequiresLeadApproval": true,
+ "remoteWriteAuthorized": false,
+ "deleteOrRestoreAuthorization": false,
+ "businessRecordOperationsAuthorized": false,
+ "schemaOrMetadataActivationAuthorized": false,
+ "publishOrDeployAuthorized": false,
+ "candidateHashes": {
+  "src/components/estimator/paint/paintCalc.js": "49fc1502d9072e6adf96bad1360bc448e7e50928d96fd7a6bc249a43a1178dde",
+  "src/components/estimator/paint/paintPricingAvailability.js": "da5a648bfe4bbda3e7ee1f3de798afe1bf6dc4f2b024314167083e46b6e384fc",
+  "src/pages/PaintingEstimator.jsx": "96e45eb0954746cbbaadf0af67085b0997131b15dfb4252053f72b055e34ffcc"
+ },
+ "buildEntries": [
+  "src/components/estimator/paint/paintCalc.js",
+  "src/components/estimator/paint/paintPricingAvailability.js",
+  "src/pages/PaintingEstimator.jsx"
+ ],
+ "buildAlias": {
+  "@": "/app/src"
+ },
+ "forbiddenExternalImportPrefix": "@/",
+ "candidateLineEndingsByFile": {
+  "src/components/estimator/paint/paintCalc.js": "LF",
+  "src/components/estimator/paint/paintPricingAvailability.js": "LF",
+  "src/pages/PaintingEstimator.jsx": "LF"
+ },
+ "editInput": "stdin",
+ "stageBase64ChunkLength": 3000,
+ "remoteTempPrefix": "/tmp/ccs-painting-pricing-",
+ "restoreCheckpointName": "Before Painting Pricing Availability Hardening",
+ "finalCheckpointName": "Painting Pricing Availability Hardening Verified",
+ "checkpointAuthority": "lead"
+}

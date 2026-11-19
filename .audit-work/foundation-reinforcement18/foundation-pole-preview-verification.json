@@ -1,0 +1,60 @@
+{
+  "results": [
+    {
+      "name": "attached marker follows resolved foundation X/Z and grade top rather than fixedZzero",
+      "ok": true
+    },
+    {
+      "name": "independent center coordinates offset and height convert inches exactly once",
+      "ok": true
+    },
+    {
+      "name": "legacy missing heights remain explicit schematic placeholders and never enter source data",
+      "ok": true
+    },
+    {
+      "name": "explicit zero and malformed active heights never become the legacy8ft default",
+      "ok": true
+    },
+    {
+      "name": "broken independent coordinates and offsets are omitted rather than silently relocated",
+      "ok": true
+    },
+    {
+      "name": "malformed collections and row records produce recoverable diagnostics instead of renderer exceptions",
+      "ok": true
+    },
+    {
+      "name": "only resolved foundation instances create attached markers, never raw quantity copies",
+      "ok": true
+    },
+    {
+      "name": "render-only64marker budget never changes source quantities financials or gates",
+      "ok": true
+    },
+    {
+      "name": "malformed resolved poses cannot invent attached coordinates",
+      "ok": true
+    },
+    {
+      "name": "numeric string heights and negative offsets retain recorded provenance",
+      "ok": true
+    },
+    {
+      "name": "blank and whitespace-only legacy heights are labeled placeholders rather than malformed or zero",
+      "ok": true
+    },
+    {
+      "name": "pole diagnostics identify their true source once rather than naming an unrelated Foundation",
+      "ok": true
+    },
+    {
+      "name": "malformed source indices and instance collections cannot attach a pole to an unverified source",
+      "ok": true
+    }
+  ],
+  "syntheticOnly": true,
+  "UIWired": false,
+  "realRendererVerified": false,
+  "engineeringApproved": false
+}

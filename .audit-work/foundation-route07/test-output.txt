@@ -1,0 +1,15 @@
+=== ROUTE FIXTURE ===
+route-fixture cases=10 failed=0
+ok 1 stale deferred first read does not clobber latest A
+ok 2 in-flight A save after reroute: no stale close/nav, no B writes
+ok 3 copy success: one create, remapped ids, no receipt, nav to copy
+ok 4:console
+ok 4:console
+ok 4:dialog
+ok 4 copy fail: alert, no record, URL same, retry same key+data
+ok 4b:console
+ok 4b lost reply with persisted row: reconcile, no duplicate
+ok 5 old copy completes after route B: no stale nav, B untouched
+exit=0
+=== ESLINT ===
+eslint_exit=0

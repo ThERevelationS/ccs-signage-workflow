@@ -24,6 +24,7 @@ import {
   ChevronDown, Search, Loader2, Layers, MapPin, FileText, Activity,
 } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 
 const readQueuePage = (query, options) => staffEntities.SourceCollectionQueue.filter(query, options);
 
@@ -87,6 +88,30 @@ export default function PermittingCompletenessDashboard() {
     staleDays: 90,
   });
   const [metrics, setMetrics] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [followUps, setFollowUps] = useState([]);
+  const [taskBusy, setTaskBusy] = useState("");
+  const [taskDone, setTaskDone] = useState(new Set());
+  const createFollowupTask = async (f) => {
+    if (taskBusy === f.id || taskDone.has(f.id)) return;
+    setTaskBusy(f.id);
+    try {
+      await staffEntities.GeneralTask.create({
+        text: `Permit follow-up: ${f.row_name || f.work_order_title || "Permit"} — ${f.locality_name || "office"} due ${f.next_followup_date}`,
+        assigned_to: [], completed: false,
+      });
+      setTaskDone((cur) => new Set([...cur, f.id]));
+    } catch { /* leave button retryable */ }
+    finally { setTaskBusy(""); }
+  };
+  useEffect(() => {
+    let alive = true;
+    loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "completenessHistory", label: "Completeness history" })
+      .then((r) => { if (alive && Array.isArray(r?.setting_value?.entries)) setHistory(r.setting_value.entries); })
+      .catch(() => null);
+    return () => { alive = false; };
+  }, []);
+  const [officeContacts, setOfficeContacts] = useState([]);
   const [queueSearch, setQueueSearch] = useState("");
   const { queuePage, loadingQueue, queueError, loadQueue } = usePermittingQueueBrowse(readQueuePage, filters, queueSearch);
 
@@ -149,6 +174,22 @@ export default function PermittingCompletenessDashboard() {
       const totalProfiles = Object.values(profilesByStateMap).reduce((a, b) => a + b, 0);
 
       if (!current()) return;
+      const approvalPct = rulesTotal ? Math.round((rulesApproved / rulesTotal) * 100) : 0;
+      const today = new Date().toISOString().slice(0, 10);
+      setHistory((cur) => {
+        if (cur.some((h) => h.at === today)) return cur;
+        const next = [...cur, { at: today, pct: approvalPct }].slice(-30);
+        (async () => {
+          try {
+            const row = await loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "completenessHistory", label: "Completeness history" });
+            await saveGlobalSettingValueIfUnchanged({
+              entity: staffEntities.GlobalSettings, loadedRecord: row, settingKey: "completenessHistory",
+              nextValue: { entries: next }, label: "Completeness history",
+            });
+          } catch { /* snapshot is best-effort */ }
+        })();
+        return next;
+      });
       setMetrics({
         staleDays: days,
         queueByState: queueByStateMap,
@@ -196,6 +237,32 @@ export default function PermittingCompletenessDashboard() {
     return () => { active = false; };
   }, [countyAttempt]);
 
+  useEffect(() => {
+    let alive = true;
+    staffEntities.PermitLineItem.filter({}, { limit: 300 })
+      .then((rows) => {
+        if (!alive) return;
+        setFollowUps((Array.isArray(rows) ? rows : [])
+          .filter((r) => r.next_followup_date)
+          .sort((a, b) => String(a.next_followup_date).localeCompare(String(b.next_followup_date))));
+      })
+      .catch(() => null);
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    base44.entities.JurisdictionProfile.filter({}, { limit: 300 })
+      .then((rows) => {
+        if (!alive) return;
+        setOfficeContacts((Array.isArray(rows) ? rows : [])
+          .filter((r) => r.contact_info?.phone || r.contact_info?.email || r.website_url || r.permit_requirements?.fee_range || r.permit_requirements?.processing_time)
+          .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""))));
+      })
+      .catch(() => null);
+    return () => { alive = false; };
+  }, []);
+
   if ((loading && !metrics) || (metrics && metrics.staleDays !== filters.staleDays)) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -221,6 +288,64 @@ export default function PermittingCompletenessDashboard() {
 
   return (
     <div className="space-y-4">
+      {followUps.length > 0 && (
+        <div className="clay-card p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+            <Layers className="w-4 h-4" /> Permit follow-ups
+            <span className="text-xs font-normal text-gray-400">
+              {followUps.filter((f) => f.next_followup_date < new Date().toISOString().slice(0, 10)).length} overdue
+            </span>
+          </div>
+          <ul className="mt-2 space-y-1">
+            {followUps.slice(0, 10).map((f) => {
+              const overdue = f.next_followup_date < new Date().toISOString().slice(0, 10);
+              return (
+                <li key={f.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white/70 px-3 py-1.5 text-xs">
+                  <span className="font-medium text-gray-800">{f.work_order_id
+                    ? <a href={`/MainWorkflow?wo=${f.work_order_id}`} className="underline hover:text-indigo-800" title="Open this work order">{f.row_name || f.work_order_title || "Permit"}</a>
+                    : (f.row_name || f.work_order_title || "Permit")}</span>
+                  <span className="text-gray-500">{f.locality_name || ""}</span>
+                  <span className={`font-medium ${overdue ? "text-red-600" : "text-gray-600"}`}>{overdue ? "overdue " : "due "}{f.next_followup_date}</span>
+                  <Button type="button" size="sm" variant="ghost" disabled={taskBusy === f.id || taskDone.has(f.id)}
+                    onClick={() => createFollowupTask(f)} className="h-6 px-1.5 text-[10px] text-indigo-600">
+                    {taskDone.has(f.id) ? "Task created" : taskBusy === f.id ? "Creating…" : "Create task"}
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+          {followUps.length > 10 && <p className="mt-1 text-xs text-gray-400">...and {followUps.length - 10} more</p>}
+        </div>
+      )}
+
+      {officeContacts.length > 0 && (
+        <div className="clay-card p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+            <Layers className="w-4 h-4" /> Office contacts
+            <span className="text-xs font-normal text-gray-400">{officeContacts.length} jurisdiction{officeContacts.length === 1 ? "" : "s"} with contact info</span>
+          </div>
+          <ul className="mt-2 grid grid-cols-1 gap-1 md:grid-cols-2">
+            {officeContacts.map((r) => (
+              <li key={r.id} className="rounded-lg border border-gray-200 bg-white/70 px-3 py-1.5 text-xs">
+                <span className="font-medium text-gray-800">{r.name || r.jurisdiction_name || "Office"}</span>
+                {r.contact_info?.department && <span className="text-gray-500"> · {r.contact_info.department}</span>}
+                <div className="mt-0.5 flex flex-wrap gap-x-3 text-gray-500">
+                  {r.contact_info?.phone && <span>{r.contact_info.phone}</span>}
+                  {r.contact_info?.email && <span className="truncate">{r.contact_info.email}</span>}
+                  {r.website_url && <span className="truncate text-sky-600">{r.website_url}</span>}
+                </div>
+                {(r.permit_requirements?.fee_range || r.permit_requirements?.processing_time) && (
+                  <div className="mt-0.5 flex flex-wrap gap-x-3 text-[11px] text-gray-400">
+                    {r.permit_requirements?.fee_range && <span>fees {r.permit_requirements.fee_range}</span>}
+                    {r.permit_requirements?.processing_time && <span>~{r.permit_requirements.processing_time} processing</span>}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Filter bar */}
       <div className="clay-card p-4">
         <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
@@ -382,6 +507,20 @@ export default function PermittingCompletenessDashboard() {
       </Section>
 
       {/* Rules extracted & approved */}
+      {history.length > 1 && (
+        <div className="rounded-xl border border-gray-200 bg-white/70 p-3" aria-label="Approval trend">
+          <p className="text-xs font-semibold text-gray-700">Rule-approval trend</p>
+          <div className="mt-1 flex items-end gap-0.5" style={{ height: 28 }}>
+            {history.map((h) => (
+              <div key={h.at} title={`${h.at}: ${h.pct}% approved`}
+                className={`w-2 rounded-sm ${h.pct >= 80 ? "bg-emerald-400" : h.pct >= 50 ? "bg-amber-400" : "bg-red-300"}`}
+                style={{ height: `${Math.max(8, h.pct)}%` }} />
+            ))}
+          </div>
+          <p className="mt-0.5 text-[10px] text-gray-400">Approved-rule share, one point per day · {history[0].at} → {history[history.length - 1].at}</p>
+        </div>
+      )}
+
       <Section title="Permitting rules extracted" icon={FileCheck2} badge={m.rulesTotal}>
         <div className="space-y-1 pt-3">
           <Row label="Total rules extracted" value={m.rulesTotal} />

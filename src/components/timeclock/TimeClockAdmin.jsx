@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
   Download, 
   Pencil, 
   Archive, 
+  Flag,
   User, 
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -41,14 +42,14 @@ import {
   ChevronDown,
   ChevronUp
 } from "lucide-react";
-import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
-import * as XLSX from "xlsx";
+import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths, startOfDay, endOfDay, addDays, subDays } from "date-fns";
+// xlsx (~1MB) loads on demand inside the export handler ??? not at page load.
 import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionRequestAdminPanel";
 import TimeOffApprovalPanel from "@/components/timeclock/TimeOffApprovalPanel";
 import TimeClockExceptionCenter from "@/components/timeclock/TimeClockExceptionCenter";
+import TimeClockCalendar from "@/components/timeclock/TimeClockCalendar";
 import CorrectionCoordinatorDiagnostics from "@/components/timeclock/CorrectionCoordinatorDiagnostics";
 import TimeClockManagementDashboard from "@/components/timeclock/TimeClockManagementDashboard";
-import TimeClockPunchExceptionReport from "@/components/timeclock/TimeClockPunchExceptionReport";
 import PayPeriodManager from "@/components/timeclock/PayPeriodManager";
 import TimeClockAuditTrail from "@/components/timeclock/TimeClockAuditTrail";
 import TimeClockShiftDetail from "@/components/timeclock/TimeClockShiftDetail";
@@ -59,6 +60,9 @@ import {
   shiftDurationSummary,
   formatCompanyDateTime,
 } from "@/components/timeclock/timeClockCompanyTime";
+import { CcsDateField, CcsTimeField, CcsDateTimeField } from "@/components/ui/ccs-date-field";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -70,10 +74,10 @@ function functionData(response) {
 }
 
 function safeFormat(value, pattern) {
-  if (!value) return '—';
+  if (!value) return '-';
   const date = value instanceof Date ? value : parseISO(String(value));
-  if (!date || Number.isNaN(date.getTime())) return '—';
-  try { return format(date, pattern); } catch { return '—'; }
+  if (!date || Number.isNaN(date.getTime())) return '-';
+  try { return format(date, pattern); } catch { return '-'; }
 }
 
 function adminRequestStorageKey(action, entryId) {
@@ -146,7 +150,7 @@ function shouldRetainAdminRequest(err) {
   if (err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true) return true;
   if (err?.confirmedServerResponse === true) return false;
   const status = Number(err?.response?.status || 0);
-  return !err?.response || status >= 500;
+  return !err?.response || status >= 500 || status === 429;
 }
 
 function AdminSection({ title, subtitle, icon: Icon, tone = "gray", defaultOpen = false, count = 0, children }) {
@@ -184,15 +188,55 @@ function AdminSection({ title, subtitle, icon: Icon, tone = "gray", defaultOpen 
   );
 }
 
-export default function TimeClockAdmin() {
+export default function TimeClockAdmin({ view = "entries" }) {
   const { sessionToken } = useAuth();
   const [timeEntries, setTimeEntries] = useState([]);
+  const [bulkCloseOpen, setBulkCloseOpen] = useState(false);
+  const [bulkCloseTime, setBulkCloseTime] = useState("17:00");
+  const [bulkCloseReason, setBulkCloseReason] = useState("");
+  const [bulkCloseBusy, setBulkCloseBusy] = useState(false);
+  const [bulkCloseResults, setBulkCloseResults] = useState(null);
+  const [roundMin, setRoundMin] = useState(() => { try { return Number(localStorage.getItem("tc_round_min") || 0); } catch { return 0; } });
+  const setRounding = (v) => { const n = Number(v) || 0; setRoundMin(n); try { localStorage.setItem("tc_round_min", String(n)); } catch {} };
+  const roundH = (h) => { const m = Number(roundMin) || 0; return m > 0 ? Math.round((h * 60) / m) * m / 60 : h; };
   const [employeeStates, setEmployeeStates] = useState([]);
   const [activeBreaks, setActiveBreaks] = useState([]);
   const [activeWorkPauses, setActiveWorkPauses] = useState([]);
   const [activeLaborSegments, setActiveLaborSegments] = useState([]);
   const [correctionRequests, setCorrectionRequests] = useState([]);
+  const [swapRequests, setSwapRequests] = useState([]);
+  const loadSwapRequests = async () => {
+    if (!sessionToken) return;
+    try {
+      const r = await base44.functions.invoke("shiftSwapAction", { session_token: sessionToken, action: "list" });
+      setSwapRequests(r?.data?.swaps || []);
+    } catch { setSwapRequests([]); }
+  };
+  const decideSwap = async (requestId, decision) => {
+    if (!sessionToken) return;
+    try {
+      const r = await base44.functions.invoke("shiftSwapAction", { session_token: sessionToken, action: decision, request_id: requestId });
+      if (r?.data?.success) { setSwapRequests((cur) => cur.filter((x) => x.id !== requestId)); }
+    } catch { /* leave row retryable */ }
+  };
+  const ackAdminNote = async (note) => {
+    if (!sessionToken || !note?.id || !note?.updated_date) return;
+    try {
+      const r = await base44.functions.invoke("timeClockAction", {
+        action: "acknowledge_admin_note",
+        session_token: sessionToken,
+        note_id: note.id,
+        expected_updated_date: note.updated_date,
+        request_id: newRequestId(),
+      });
+      if (r?.data?.success) setAdminNotes((cur) => cur.filter((x) => x.id !== note.id));
+    } catch { /* leave row retryable */ }
+  };
   const [punchExceptions, setPunchExceptions] = useState([]);
+  const [adminNotes, setAdminNotes] = useState([]);
+  const [timeOffRequests, setTimeOffRequests] = useState([]);
+  const [timeOffReviewRequestId, setTimeOffReviewRequestId] = useState("");
+  const [devices, setDevices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dataLoadError, setDataLoadError] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
@@ -208,6 +252,10 @@ export default function TimeClockAdmin() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [repairConfirm, setRepairConfirm] = useState(null);
+  const [repairBusy, setRepairBusy] = useState(false);
+  const [repairError, setRepairError] = useState("");
+  const [repairRequestId, setRepairRequestId] = useState("");
   const [saveBusy, setSaveBusy] = useState(false);
   const [correctionReason, setCorrectionReason] = useState("");
   const [correctionRequestId, setCorrectionRequestId] = useState("");
@@ -216,72 +264,107 @@ export default function TimeClockAdmin() {
   const [timeEntryError, setTimeEntryError] = useState("");
   const [approvalEntry, setApprovalEntry] = useState(null);
   const [approvalDecision, setApprovalDecision] = useState("approve");
+  const [bulkApproveBusy, setBulkApproveBusy] = useState(false);
+  const [bulkApproveResult, setBulkApproveResult] = useState("");
+  const [retentionYears, setRetentionYears] = useState("2");
+  const [retentionBusy, setRetentionBusy] = useState(false);
+  const [retentionMsg, setRetentionMsg] = useState("");
   const [approvalNote, setApprovalNote] = useState("");
   const [approvalBusy, setApprovalBusy] = useState(false);
   const [approvalRequestId, setApprovalRequestId] = useState("");
   const [approvalRetryPayload, setApprovalRetryPayload] = useState(null);
+  const [approvalRetryMode, setApprovalRetryMode] = useState(false);
   const [pendingApprovalRecovery, setPendingApprovalRecovery] = useState(null);
   const [approvalError, setApprovalError] = useState("");
   const [detailEntry, setDetailEntry] = useState(null);
+  const [expandedEmail, setExpandedEmail] = useState(null);
   const [correctionReviewRequestId, setCorrectionReviewRequestId] = useState("");
   const [auditInvestigation, setAuditInvestigation] = useState(null);
+  const autoReviewRan = useRef(false);
+  const [autoReviewResult, setAutoReviewResult] = useState(null);
+  const [otRules, setOtRules] = useState(null);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const loadData = async () => {
-    setIsLoading(true);
-    setDataLoadError("");
+  useEffect(() => {
+    let alive = true;
+    loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "overtimeRules", label: "Overtime rules" })
+      .then((record) => { if (alive) setOtRules(record?.setting_value || {}); })
+      .catch(() => { if (alive) setOtRules({}); });
+    return () => { alive = false; };
+  }, []);
+
+  // Clean shifts (no conflicts, errors, or corrections) approve automatically —
+  // one advisory sweep per page mount; flagged shifts always stay for a human.
+  useEffect(() => {
+    if (view !== "entries" || !sessionToken || autoReviewRan.current) return;
+    autoReviewRan.current = true;
+    (async () => {
+      try {
+        const res = await base44.functions.invoke("timeClockAction", {
+          action: "admin_auto_review", session_token: sessionToken, request_id: newRequestId(),
+        });
+        const d = functionData(res);
+        if (d?.success && Number(d.approved_count || 0) > 0) {
+          setAutoReviewResult(d);
+          await loadData({ silent: true });
+        }
+      } catch { /* advisory sweep — never blocks the page */ }
+    })();
+  }, [sessionToken]);
+
+  const loadData = async (opts) => {
+    // Silent refreshes keep the review view mounted and preserve the last good data on failure.
+    const silent = opts?.silent === true;
+    if (!silent) { setIsLoading(true); setDataLoadError(""); }
     try {
       if (!sessionToken) throw new Error("A signed-in administrator session is required.");
-      const loadAdminCollection = async (collection) => {
-        const rows = [];
-        let skip = 0;
-        while (skip < 50000) {
-          const response = await base44.functions.invoke("timeClockAction", {
-            action: "admin_load_data",
-            session_token: sessionToken,
-            collection,
-            skip,
-          });
-          const data = functionData(response);
-          if (!data?.success || !Array.isArray(data.rows) || !Number.isInteger(data.next_skip) ||
-              typeof data.has_more !== "boolean") {
-            throw adminActionError(data, "Time Clock admin data could not be verified.");
-          }
-          rows.push(...data.rows);
-          if (!data.has_more) return rows;
-          if (data.next_skip !== skip + data.rows.length || data.rows.length === 0) {
-            throw new Error("Time Clock admin data paging could not be verified.");
-          }
-          skip = data.next_skip;
+      // One invoke for the whole panel — the backend pages each collection
+      // internally, so a single rate-limit retry covers the entire load
+      // instead of eight independent calls each burning one.
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "admin_load_all",
+        session_token: sessionToken,
+      });
+      const data = functionData(response);
+      if (!data?.success || !data.collections || typeof data.collections !== "object") {
+        throw adminActionError(data, "Time Clock admin data could not be verified.");
+      }
+      const collections = data.collections;
+      for (const key of ["entries", "states", "breaks", "work_pauses", "labor_segments", "correction_requests", "punch_exceptions", "devices"]) {
+        if (!Array.isArray(collections[key])) {
+          throw new Error("Time Clock admin data could not be verified.");
         }
-        throw new Error("Time Clock admin data exceeds the 50,000-record safety limit.");
-      };
-      const [entries, states, breaks, workPauses, laborSegments, corrections, punchExceptionRows] = await Promise.all([
-        loadAdminCollection("entries"),
-        loadAdminCollection("states"),
-        loadAdminCollection("breaks"),
-        loadAdminCollection("work_pauses"),
-        loadAdminCollection("labor_segments"),
-        loadAdminCollection("correction_requests"),
-        loadAdminCollection("punch_exceptions"),
-      ]);
+      }
+      const entries = collections.entries;
+      const states = collections.states;
+      const breaks = collections.breaks;
+      const workPauses = collections.work_pauses;
+      const laborSegments = collections.labor_segments;
+      const corrections = collections.correction_requests;
+      const punchExceptionRows = collections.punch_exceptions;
+      const deviceRows = collections.devices;
+      const adminNoteRows = collections.admin_notes || [];
       setTimeEntries(entries);
       setEmployeeStates(states);
       setActiveBreaks(breaks);
       setActiveWorkPauses(workPauses);
       setActiveLaborSegments(laborSegments);
       setCorrectionRequests(corrections);
+      loadSwapRequests();
       setPunchExceptions(punchExceptionRows);
+      setDevices(deviceRows || []);
+      setAdminNotes(adminNoteRows || []);
       const recovery = entries.flatMap((entry) => ["approve", "reopen"].map((decision) => storedApprovalRetry(decision, entry.id))).find(Boolean) || null;
       setPendingApprovalRecovery(recovery);
+      setDataLoadError("");
     } catch (err) {
       console.error("Error loading data:", err);
-      setDataLoadError("Time Clock data could not be loaded. Shift review is unavailable until the data reloads successfully.");
+      if (!silent) setDataLoadError("Time Clock data could not be loaded. Shift review is unavailable until the data reloads successfully.");
     }
-    setIsLoading(false);
+    if (!silent) setIsLoading(false);
   };
 
   // Calculate date range
@@ -296,6 +379,8 @@ export default function TimeClockAdmin() {
         start: startOfWeek(currentDate, { weekStartsOn: 0 }),
         end: endOfWeek(currentDate, { weekStartsOn: 0 })
       };
+    } else if (dateRange === "today") {
+      return { start: startOfDay(currentDate), end: endOfDay(currentDate) };
     } else {
       return {
         start: startOfMonth(currentDate),
@@ -330,6 +415,10 @@ export default function TimeClockAdmin() {
   const completedEntries = filteredEntries.filter(entry => entry.status === "clocked_out" && entry.clock_out);
   const approvedEntries = completedEntries.filter(entry => (entry.approval_status || "unreviewed") === "approved");
   const needsReviewEntries = completedEntries.filter(entry => (entry.approval_status || "unreviewed") === "needs_review");
+  const openPunchEntryIds = new Set(punchExceptions.filter(row => ["open", "pending_manager_review"].includes(row.status)).map(row => row.time_entry_id));
+  const pendingCorrectionEntryIds = new Set(correctionRequests.filter(row => ["pending", "reviewing"].includes(row.status)).map(row => row.time_entry_id));
+  const cleanReviewEntries = needsReviewEntries.filter(entry =>
+    !entry.pay_period_id && !openPunchEntryIds.has(entry.id) && !pendingCorrectionEntryIds.has(entry.id));
   const unreviewedEntries = completedEntries.filter(entry => (entry.approval_status || "unreviewed") === "unreviewed");
 
   const isTransitionalState = (state) => ["clocking_in", "clocking_out"].includes(state.status)
@@ -382,20 +471,70 @@ export default function TimeClockAdmin() {
     return Number.isFinite(clockIn.getTime()) && (Date.now() - clockIn.getTime()) > 24 * 60 * 60 * 1000;
   });
 
+  // Employees holding two or more simultaneously open shifts ??? a data
+  // integrity problem, since only one active entry should exist per person.
+  const activeEntryCounts = timeEntries.reduce((acc, entry) => {
+    if (entry.status === "clocked_in" && !entry.archived_admin && !entry.archived_test_data && entry.user_email) {
+      acc[entry.user_email] = (acc[entry.user_email] || 0) + 1;
+    }
+    return acc;
+  }, {});
+  const duplicateActiveEmails = Object.keys(activeEntryCounts).filter(email => activeEntryCounts[email] > 1);
+  const duplicateActiveEntries = timeEntries.filter(entry => entry.status === "clocked_in" && duplicateActiveEmails.includes(entry.user_email));
+  const missingBreakEntries = completedEntries.filter(entry => (entry.total_hours || 0) >= 5 && !entry.lunch_minutes && !entry.pay_period_id);
+
+  // Overtime pacing — total hours this calendar week per employee; flag
+  // anyone approaching or over the configured weekly flag threshold.
+  const otFlagHours = otRules?.flag_enabled === false ? null
+    : Math.max(1, Number(otRules?.flag_weekly_hours ?? otRules?.weekly_threshold ?? 40) || 40);
+  const weekStart = new Date(); weekStart.setHours(0, 0, 0, 0);
+  weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+  const otByEmail = {};
+  for (const e of timeEntries) {
+    if (!e.clock_in || new Date(e.clock_in) < weekStart || e.archived_admin || e.archived_test_data) continue;
+    const k = e.user_email; if (!k) continue;
+    const row = otByEmail[k] = otByEmail[k] || { name: e.user_name || k, hours: 0 };
+    row.hours += e.total_hours || 0;
+  }
+  const otWatch = otFlagHours === null ? [] : Object.values(otByEmail)
+    .filter(r => r.hours >= Math.max(1, otFlagHours - 4))
+    .sort((a, b) => b.hours - a.hours);
+  // Projected week-end hours: current hours + (avg per worked weekday ??
+  // remaining weekdays) ??? rough payroll forecast for the open week.
+  const workday = (weekStart.getDay() + 6) % 7; // Mon=0
+  const workedDays = {};
+  for (const e of timeEntries) {
+    if (!e.clock_in || new Date(e.clock_in) < weekStart || e.archived_admin || e.archived_test_data || !e.user_email) continue;
+    const d = safeFormat(e.clock_in, "yyyy-MM-dd");
+    const key = `${e.user_email}|${d}`;
+    if (!workedDays[key]) workedDays[key] = true;
+  }
+  const otProjected = otWatch.map(r => {
+    const email = Object.keys(otByEmail).find(k => otByEmail[k] === r);
+    const daysWorked = Object.keys(workedDays).filter(k => k.startsWith(`${email}|`)).length || 1;
+    const remaining = Math.max(0, 5 - workday - 1);
+    const avg = r.hours / daysWorked;
+    return { ...r, projected: r.hours + avg * remaining };
+  });
+
   // Group by user for summary
   const userSummary = filteredEntries.reduce((acc, entry) => {
     const key = entry.user_email;
     if (!acc[key]) {
-      acc[key] = { name: entry.user_name, email: key, hours: 0, entries: 0 };
+      acc[key] = { name: entry.user_name, email: key, hours: 0, entries: 0, daily: {} };
     }
     acc[key].hours += entry.total_hours || 0;
     acc[key].entries += 1;
+    const dayKey = String(entry.work_day_anchor_date || "").trim() || safeFormat(entry.clock_in, "yyyy-MM-dd");
+    if (dayKey !== "-") acc[key].daily[dayKey] = (acc[key].daily[dayKey] || 0) + (entry.total_hours || 0);
     return acc;
   }, {});
 
   const navigateDate = (direction) => {
     if (dateRange === "week") {
       setCurrentDate(direction > 0 ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1));
+    } else if (dateRange === "today") {
+      setCurrentDate(direction > 0 ? addDays(currentDate, 1) : subDays(currentDate, 1));
     } else {
       setCurrentDate(direction > 0 ? addMonths(currentDate, 1) : subMonths(currentDate, 1));
     }
@@ -488,7 +627,7 @@ export default function TimeClockAdmin() {
       setEditingClockInInput("");
       setEditingClockOutInput("");
       setCorrectionReason("");
-      await loadData();
+      await loadData({ silent: true });
     } catch (err) {
       console.error("Error saving entry:", err);
       const message = err?.response?.data?.error || err?.message || "This time entry changed in another session. The correction was not applied.";
@@ -498,13 +637,13 @@ export default function TimeClockAdmin() {
         clearAdminRequestId("admin_correct_entry", editingEntryBaseline.id, requestId);
         setCorrectionRequestId("");
       }
-      await loadData();
+      await loadData({ silent: true });
     } finally {
       setSaveBusy(false);
     }
   };
 
-  const openApprovalDialog = (entry, decision) => {
+  const openApprovalDialog = async (entry, decision) => {
     if (pendingApprovalRecovery &&
         (pendingApprovalRecovery.entry_id !== entry?.id || pendingApprovalRecovery.decision !== decision)) {
       setTimeEntryError("An interrupted manager shift review is still pending in this session. Resume that exact review before starting another approval or reopen action.");
@@ -520,20 +659,42 @@ export default function TimeClockAdmin() {
       setApprovalError("This is an interrupted approval action. Retry uses the exact original shift version, decision, note, and request ID.");
       setApprovalRequestId(recoveredPayload.request_id);
       setApprovalRetryPayload(recoveredPayload);
+      setApprovalRetryMode(true);
       return;
     }
     if (recoveredRequestId && !recoveredPayload) {
       clearAdminRequestId(requestAction, entry?.id, recoveredRequestId);
       clearApprovalRetry(decision, entry?.id);
     }
+    let latest = entry;
+    let loadNotice = "";
+    if (entry?.id && sessionToken) {
+      try {
+        const res = await base44.functions.invoke("timeClockAction", {
+          action: "admin_get_entry", session_token: sessionToken,
+          target_email: entry.user_email, entry_id: entry.id, request_id: newRequestId(),
+        });
+        const d = functionData(res);
+        if (d?.success && d.entry?.id) latest = d.entry;
+      } catch { /* keep the already-loaded row */ }
+    }
+    if (latest !== entry) {
+      setTimeEntries((cur) => cur.map((e) => (e.id === latest.id ? { ...e, ...latest } : e)));
+      const changed = latest.status !== entry.status ||
+        (latest.approval_status || "unreviewed") !== (entry.approval_status || "unreviewed") ||
+        latest.clock_in !== entry.clock_in || latest.clock_out !== entry.clock_out ||
+        (latest.pay_period_id || null) !== (entry.pay_period_id || null);
+      if (changed) loadNotice = "This shift changed since it was loaded — the latest version is shown.";
+    }
     const requestId = newRequestId();
-    if (entry?.id) persistAdminRequestId(requestAction, entry.id, requestId);
-    setApprovalEntry(entry);
+    if (latest?.id) persistAdminRequestId(requestAction, latest.id, requestId);
+    setApprovalEntry(latest);
     setApprovalDecision(decision);
     setApprovalNote("");
-    setApprovalError("");
+    setApprovalError(loadNotice);
     setApprovalRequestId(requestId);
     setApprovalRetryPayload(null);
+    setApprovalRetryMode(false);
   };
 
   const resumeApprovalRecovery = (payload) => {
@@ -547,7 +708,63 @@ export default function TimeClockAdmin() {
     setApprovalNote(payload.note || "");
     setApprovalRequestId(payload.request_id);
     setApprovalRetryPayload(payload);
+    setApprovalRetryMode(true);
     setApprovalError("Retrying the exact interrupted manager approval payload. Values are frozen until the server confirms or rejects this request.");
+  };
+
+  const approveAllClean = async () => {
+    if (bulkApproveBusy || !sessionToken || !cleanReviewEntries.length) return;
+    setBulkApproveBusy(true); setBulkApproveResult("");
+    const failed = [];
+    for (const entry of cleanReviewEntries) {
+      try {
+        const response = await base44.functions.invoke("timeClockAction", {
+          action: "admin_set_entry_approval",
+          session_token: sessionToken,
+          target_email: entry.user_email,
+          request_id: newRequestId(),
+          entry_id: entry.id,
+          expected_updated_date: entry.updated_date,
+          decision: "approve",
+          note: "Bulk approved ??? no exceptions on this shift.",
+        });
+        if (!functionData(response)?.success) failed.push(entry.user_name || entry.user_email);
+      } catch {
+        failed.push(entry.user_name || entry.user_email);
+      }
+    }
+    setBulkApproveResult(failed.length ? `${cleanReviewEntries.length - failed.length} approved, ${failed.length} failed` : `${cleanReviewEntries.length} shifts approved`);
+    setBulkApproveBusy(false);
+    await loadData({ silent: true });
+  };
+
+  const archiveOldEntries = async () => {
+    if (retentionBusy || !sessionToken) return;
+    const years = Number(retentionYears) || 2;
+    const cutoff = new Date(); cutoff.setFullYear(cutoff.getFullYear() - years);
+    const old = completedEntries.filter(e => e.clock_in && new Date(e.clock_in) < cutoff && !e.archived_admin && !e.archived_test_data);
+    if (!old.length) { setRetentionMsg(`No completed entries older than ${years} years.`); return; }
+    if (!window.confirm(`Archive ${old.length} completed entr${old.length === 1 ? "y" : "ies"} older than ${years} years? They will be hidden from the list but kept in history.`)) return;
+    setRetentionBusy(true); setRetentionMsg("");
+    const reason = `Retention archive ??? entries older than ${years} years`;
+    let failed = 0;
+    for (const entry of old) {
+      try {
+        const response = await base44.functions.invoke("timeClockAction", {
+          action: "admin_archive_entry",
+          session_token: sessionToken,
+          target_email: entry.user_email,
+          request_id: newRequestId(),
+          entry_id: entry.id,
+          expected_updated_date: entry.updated_date,
+          reason,
+        });
+        if (!functionData(response)?.success) failed++;
+      } catch { failed++; }
+    }
+    setRetentionMsg(failed ? `${old.length - failed} archived, ${failed} failed` : `${old.length} old entries archived`);
+    setRetentionBusy(false);
+    await loadData({ silent: true });
   };
 
   const handleApproval = async () => {
@@ -611,12 +828,14 @@ export default function TimeClockAdmin() {
       if (oppositeStoredRequestId) clearAdminRequestId(oppositeAction, approvalEntry.id, oppositeStoredRequestId);
       clearApprovalRetry(approvalDecision, approvalEntry.id, frozenPayload.request_id);
       if (oppositeRetryRequestId) clearApprovalRetry(oppositeDecision, approvalEntry.id, oppositeRetryRequestId);
+      if (data?.entry?.id) setTimeEntries((cur) => cur.map((e) => (e.id === data.entry.id ? { ...e, ...data.entry } : e)));
       setApprovalEntry(null);
       setApprovalNote("");
       setApprovalRequestId("");
       setApprovalRetryPayload(null);
+      setApprovalRetryMode(false);
       setPendingApprovalRecovery(null);
-      await loadData();
+      await loadData({ silent: true });
     } catch (err) {
       const data = err?.response?.data || {};
       const retainRequest = shouldRetainAdminRequest(err);
@@ -626,17 +845,39 @@ export default function TimeClockAdmin() {
         clearAdminRequestId(requestAction, approvalEntry.id, frozenPayload.request_id);
         clearApprovalRetry(approvalDecision, approvalEntry.id, frozenPayload.request_id);
         setApprovalRetryPayload(null);
+        setApprovalRetryMode(false);
         setPendingApprovalRecovery(null);
-        await loadData();
+        await loadData({ silent: true });
         setApprovalEntry(null);
         setApprovalNote("");
         setApprovalRequestId("");
         setTimeEntryError(message);
       } else {
         setPendingApprovalRecovery(frozenPayload);
+        setApprovalRetryMode(true);
       }
     } finally {
       setApprovalBusy(false);
+    }
+  };
+
+  const togglePayrollHold = async (entry) => {
+    if (!sessionToken || !entry?.id) return;
+    const releasing = entry.payroll_hold === true;
+    const reason = releasing ? "" : (window.prompt("Payroll hold reason", "Under review") || "").slice(0, 300);
+    if (!releasing && !reason) return;
+    try {
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "toggle_payroll_hold", session_token: sessionToken,
+        request_id: newRequestId(), entry_id: entry.id,
+        expected_updated_date: entry.updated_date,
+        hold: !releasing, reason,
+      });
+      const data = functionData(response);
+      if (data?.success !== true) throw new Error(data?.error || "Hold was not updated.");
+      await loadData({ silent: true });
+    } catch (err) {
+      setTimeEntryError(err?.message || "Payroll hold could not be updated.");
     }
   };
 
@@ -684,7 +925,7 @@ export default function TimeClockAdmin() {
       setArchiveRequestId("");
       setDeleteConfirm(null);
       setArchiveReason("");
-      await loadData();
+      await loadData({ silent: true });
     } catch (err) {
       console.error("Error archiving entry:", err);
       const message = err?.response?.data?.error || err?.message || "This time entry changed in another session and was not archived.";
@@ -696,13 +937,67 @@ export default function TimeClockAdmin() {
         setDeleteConfirm(null);
         setArchiveReason("");
       }
-      await loadData();
+      await loadData({ silent: true });
     } finally {
       setDeleteBusy(false);
     }
   };
 
-  const exportToExcel = () => {
+  const openRepairState = (state) => {
+    setRepairError("");
+    const recoveredRequestId = storedAdminRequestId("admin_repair_state", state?.id);
+    const requestId = recoveredRequestId || newRequestId();
+    if (!recoveredRequestId && state?.id) persistAdminRequestId("admin_repair_state", state.id, requestId);
+    setRepairRequestId(requestId);
+    setRepairConfirm(state);
+  };
+
+  const handleRepairState = async () => {
+    const state = repairConfirm;
+    if (!state?.id || repairBusy) return;
+    if (!sessionToken) {
+      setRepairError("Your administrator session is not available. Sign in again before repairing clock state.");
+      return;
+    }
+    const requestId = repairRequestId || storedAdminRequestId("admin_repair_state", state.id) || newRequestId();
+    setRepairBusy(true);
+    try {
+      if (!repairRequestId) {
+        setRepairRequestId(requestId);
+        persistAdminRequestId("admin_repair_state", state.id, requestId);
+      }
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "admin_repair_state",
+        session_token: sessionToken,
+        request_id: requestId,
+        state_id: state.id,
+        expected_updated_date: state.updated_date,
+        reason: "Admin panel repair: stored clock state did not match its active records.",
+      });
+      const data = functionData(response);
+      if (!data?.success) throw adminActionError(data, "The clock state repair was not confirmed by the server.");
+      clearAdminRequestId("admin_repair_state", state.id, requestId);
+      setRepairRequestId("");
+      setRepairConfirm(null);
+      setRepairError("");
+      await loadData({ silent: true });
+    } catch (err) {
+      console.error("Error repairing clock state:", err);
+      const message = err?.response?.data?.error || err?.message || "This clock state changed in another session and was not repaired.";
+      const retainRequest = shouldRetainAdminRequest(err);
+      setRepairError(message);
+      if (!retainRequest) {
+        clearAdminRequestId("admin_repair_state", state.id, requestId);
+        setRepairRequestId("");
+        setRepairConfirm(null);
+      }
+      await loadData({ silent: true });
+    } finally {
+      setRepairBusy(false);
+    }
+  };
+
+  const exportToExcel = async () => {
     const exportData = filteredEntries.map(entry => ({
       "Employee": entry.user_name,
       "Email": entry.user_email,
@@ -730,18 +1025,182 @@ export default function TimeClockAdmin() {
       ).join("; ") || ""
     }));
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
+    // Per-employee summary sheet ??? totals at a glance before the detail rows.
+    const byEmployee = new Map();
+    for (const entry of filteredEntries) {
+      const key = entry.user_email || "unknown";
+      const row = byEmployee.get(key) || {
+        "Employee": entry.user_name || key,
+        "Email": key,
+        "Shifts": 0,
+        "Total Hours": 0,
+        "Lunch (min)": 0,
+        "Approved": 0,
+        "Needs Review": 0,
+        "Unreviewed": 0,
+      };
+      row["Shifts"] += 1;
+      row["Total Hours"] += Number(entry.total_hours || 0);
+      row["Lunch (min)"] += Number(entry.lunch_minutes || 0);
+      const status = entry.approval_status || "unreviewed";
+      if (status === "approved") row["Approved"] += 1;
+      else if (status === "needs_review") row["Needs Review"] += 1;
+      else row["Unreviewed"] += 1;
+      byEmployee.set(key, row);
+    }
+    const summaryData = [...byEmployee.values()].map(r => ({ ...r, "Total Hours": r["Total Hours"].toFixed(2) }));
+
+    const XLSX = await import("xlsx");
     const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), "Summary");
+    const ws = XLSX.utils.json_to_sheet(exportData);
     XLSX.utils.book_append_sheet(wb, ws, "Time Entries");
     
     const fileName = `time_entries_${format(start, "yyyy-MM-dd")}_to_${format(end, "yyyy-MM-dd")}.xlsx`;
     XLSX.writeFile(wb, fileName);
   };
 
+  // Payroll-shaped CSV: one row per employee per worked day with a
+  // 40h/week regular-vs-OT split, matching common payroll import formats.
+  const exportPayrollCsv = async () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    // Prefer the backend export - it carries cost codes, union locals,
+    // certified flags, and excludes payroll_hold entries authoritatively.
+    try {
+      const res = await base44.functions.invoke("timeClockAction", { action: "payroll_export", from: format(start, "yyyy-MM-dd"), to: format(end, "yyyy-MM-dd"), session_token: sessionToken, scope: "admin", request_id: newRequestId() });
+      const data = res?.data || res;
+      if (data?.success === true && Array.isArray(data.rows)) {
+        const rows = ["Employee,Email,Date,Regular Hours,OT Hours,Total Hours,Cost Code,Union Local,Certified,Jobs"];
+        for (const r of data.rows) rows.push([r.user_name, r.user_email, r.date, r.regular_hours, r.overtime_hours, r.total_hours, r.cost_code, r.union_local, r.certified_payroll ? "Y" : "", r.jobs].map(esc).join(","));
+        const url = URL.createObjectURL(new Blob([rows.join("\r\n")], { type: "text/csv" }));
+        const a = document.createElement("a");
+        a.href = url; a.download = `payroll_${format(start, "yyyy-MM-dd")}_to_${format(end, "yyyy-MM-dd")}.csv`; a.click();
+        URL.revokeObjectURL(url);
+        if (data.on_hold > 0) alert(`${data.on_hold} entries on payroll hold were excluded.`);
+        return;
+      }
+    } catch {}
+    const byEmp = new Map();
+    for (const e of filteredEntries) {
+      const k = e.user_email || "unknown";
+      if (!byEmp.has(k)) byEmp.set(k, []);
+      byEmp.get(k).push(e);
+    }
+    const rows = ["Employee,Email,Week Start,Date,Regular Hours,OT Hours,Total Hours"];
+    for (const [email, entries] of byEmp) {
+      entries.sort((a, b) => new Date(a.clock_in) - new Date(b.clock_in));
+      const weeklyUsed = {}; // weekStartKey -> hours used toward 40
+      for (const e of entries) {
+        const ci = new Date(e.clock_in);
+        const ws = new Date(ci); ws.setDate(ws.getDate() - ws.getDay()); ws.setHours(0, 0, 0, 0);
+        const wsKey = ws.toISOString().slice(0, 10);
+        const used = weeklyUsed[wsKey] || 0;
+        const hrs = Number(e.total_hours || 0);
+        const reg = Math.min(hrs, Math.max(0, 40 - used));
+        const ot = Math.max(0, hrs - reg);
+        weeklyUsed[wsKey] = used + hrs;
+        rows.push([e.user_name || email, email, wsKey, safeFormat(e.clock_in, "yyyy-MM-dd"), reg.toFixed(2), ot.toFixed(2), hrs.toFixed(2)].map(esc).join(","));
+      }
+    }
+    const url = URL.createObjectURL(new Blob([rows.join("\r\n")], { type: "text/csv" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = `payroll_${format(start, "yyyy-MM-dd")}_to_${format(end, "yyyy-MM-dd")}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Printable punch card for one employee across the filtered range - used
+  // for disputes and payroll verification.
+  const printPunchCard = (user) => {
+    const rows = filteredEntries
+      .filter((e) => e.user_email === user.email)
+      .sort((a, b) => new Date(a.clock_in) - new Date(b.clock_in))
+      .map((e) => `<tr><td style="padding:8px;border-bottom:1px solid #ddd">${safeFormat(e.clock_in, "yyyy-MM-dd")}</td><td style="padding:8px;border-bottom:1px solid #ddd">${safeFormat(e.clock_in, "h:mm a")}</td><td style="padding:8px;border-bottom:1px solid #ddd">${e.clock_out ? safeFormat(e.clock_out, "h:mm a") : "Active"}</td><td style="padding:8px;border-bottom:1px solid #ddd;text-align:right">${Number(e.total_hours || 0).toFixed(2)}</td><td style="padding:8px;border-bottom:1px solid #ddd">${e.approval_status || "unreviewed"}</td></tr>`)
+      .join("");
+    const total = filteredEntries.filter((e) => e.user_email === user.email).reduce((s, e) => s + Number(e.total_hours || 0), 0);
+    const w = window.open("", "_blank");
+    if (!w) return;
+    w.document.write(`<html><head><title>Punch Card - ${user.name}</title></head><body style="padding:24px;font-family:sans-serif"><h2>Punch Card - ${user.name}</h2><p style="color:#666;font-size:12px">${format(start, "yyyy-MM-dd")} to ${format(end, "yyyy-MM-dd")} ?? generated ${new Date().toLocaleString()}</p><table style="border-collapse:collapse;width:100%;font-size:13px"><tr><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Date</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">In</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Out</th><th style="text-align:right;padding:8px;border-bottom:2px solid #333">Hours</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Status</th></tr>${rows}</table><p style="margin-top:12px;font-weight:bold">Total: ${total.toFixed(2)} hours</p><script>window.print()</script></body></html>`);
+    w.document.close();
+  };
+
+  const jobSummary = filteredEntries.reduce((acc, entry) => {
+    for (const j of entry.job_allocations || []) {
+      const key = j.is_inhouse ? `In-house: ${j.inhouse_task || "task"}` : (j.client_name || "Unknown client");
+      const hrs = Number(j.hours) || (Number(j.minutes) ? Number(j.minutes) / 60 : 0);
+      acc[key] = (acc[key] || 0) + hrs;
+    }
+    return acc;
+  }, {});
+  const jobRows = Object.entries(jobSummary).sort((a, b) => b[1] - a[1]);
+
+  // Punch-channel stats: how punches arrived (kiosk face, QR, manual, correction).
+  const channelSummary = filteredEntries.reduce((acc, e) => {
+    const key = e.clock_source || "unknown";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const channelRows = Object.entries(channelSummary).sort((a, b) => b[1] - a[1]);
+  const channelTotal = filteredEntries.length || 1;
+
+  // Headcount by clock-in hour - coverage planning at a glance.
+  const hourBuckets = new Array(12).fill(0); // 6am-5pm display range
+  for (const e of filteredEntries) {
+    if (!e.clock_in) continue;
+    const h = new Date(e.clock_in).getHours();
+    if (h >= 6 && h < 18) hourBuckets[h - 6] += 1;
+  }
+  const maxHour = Math.max(1, ...hourBuckets);
+
+  // Early-clock-in pattern (before 7am) and late pattern (after 9am).
+  const earlyClockIns = filteredEntries.filter((e) => e.clock_in && new Date(e.clock_in).getHours() < 7).length;
+  const lateClockIns = filteredEntries.filter((e) => e.clock_in && new Date(e.clock_in).getHours() >= 9 && new Date(e.clock_in).getHours() < 12).length;
+
+  // Per-employee late-arrival leaderboard (clock-ins at/after 9am).
+  const lateByEmp = {};
+  for (const e of filteredEntries) {
+    if (!e.clock_in || new Date(e.clock_in).getHours() < 9 || new Date(e.clock_in).getHours() >= 12) continue;
+    const k = e.user_name || e.user_email;
+    lateByEmp[k] = (lateByEmp[k] || 0) + 1;
+  }
+  const lateLeaders = Object.entries(lateByEmp).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  // Absence leaderboard - fewest worked days in the filtered range.
+  const daysByEmp = {};
+  for (const e of filteredEntries) {
+    if (!e.user_email || !e.clock_in) continue;
+    const k = `${e.user_email}|${safeFormat(e.clock_in, "yyyy-MM-dd")}`;
+    if (!daysByEmp[k]) daysByEmp[k] = e.user_name || e.user_email;
+  }
+  const workedDaysByEmp = {};
+  for (const k of Object.keys(daysByEmp)) {
+    const email = k.split("|")[0];
+    if (!workedDaysByEmp[email]) workedDaysByEmp[email] = { name: daysByEmp[k], days: 0 };
+    workedDaysByEmp[email].days += 1;
+  }
+  const fewestDays = Object.values(workedDaysByEmp).sort((a, b) => a.days - b.days).slice(0, 4);
+
   const uniqueUsers = [...new Set(timeEntries.map(e => e.user_email).filter(Boolean))].map(email => {
     const entry = timeEntries.find(e => e.user_email === email);
     return { email, name: entry?.user_name || email };
   });
+
+  // Missing punch today - rostered employees with no entry today.
+  const todayKey = format(new Date(), "yyyy-MM-dd");
+  const punchedToday = new Set(filteredEntries.filter((e) => e.clock_in && safeFormat(e.clock_in, "yyyy-MM-dd") === todayKey).map((e) => e.user_email));
+  const missingPunch = uniqueUsers.filter((u) => !punchedToday.has(u.email));
+
+  // Buddy-punch heuristic: same-day punch pairs under 90s apart by different
+  // employees sharing a clock source. Not proof - a review flag.
+  const punchPairs = [];
+  const sorted = [...filteredEntries].filter((e) => e.clock_in).sort((a, b) => new Date(a.clock_in) - new Date(b.clock_in));
+  for (let i = 1; i < sorted.length; i++) {
+    const a = sorted[i - 1], b = sorted[i];
+    if (a.user_email === b.user_email) continue;
+    const gap = Math.abs(new Date(b.clock_in) - new Date(a.clock_in)) / 1000;
+    if (gap <= 90 && (a.clock_source || "") === (b.clock_source || "") && a.clock_source) {
+      punchPairs.push({ a, b, gap: Math.round(gap) });
+    }
+  }
 
   if (isLoading) {
     return (
@@ -776,7 +1235,7 @@ export default function TimeClockAdmin() {
             <div className="font-medium">Time entry update blocked</div>
             <div className="mt-1 text-xs">{timeEntryError}</div>
           </div>
-          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { await loadData(); setTimeEntryError(""); }}>Reload latest</Button>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { await loadData({ silent: true }); setTimeEntryError(""); }}>Reload latest</Button>
         </div>
       )}
 
@@ -793,6 +1252,7 @@ export default function TimeClockAdmin() {
           </Button>
         </div>
       )}
+      {view === "entries" && (<Fragment>
       <div className="clay-card p-3 sm:p-4 space-y-4">
       {/* Filters Row */}
       <div className="flex flex-wrap items-center gap-4">
@@ -831,6 +1291,7 @@ export default function TimeClockAdmin() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
               <SelectItem value="week">Weekly</SelectItem>
               <SelectItem value="month">Monthly</SelectItem>
               <SelectItem value="custom">Custom Range</SelectItem>
@@ -841,19 +1302,11 @@ export default function TimeClockAdmin() {
         {dateRange === "custom" ? (
           <div className="flex items-center gap-2 p-2 bg-purple-50 rounded-lg border border-purple-200">
             <Label className="text-sm text-purple-700 font-medium">From:</Label>
-            <Input
-              type="date"
-              value={customStartDate}
-              onChange={(e) => setCustomStartDate(e.target.value)}
-              className="w-40 h-9 bg-white"
-            />
+            <CcsDateField value={customStartDate} onChange={(e) => setCustomStartDate(e.target.value)}
+              id="range-from" />
             <Label className="text-sm text-purple-700 font-medium">To:</Label>
-            <Input
-              type="date"
-              value={customEndDate}
-              onChange={(e) => setCustomEndDate(e.target.value)}
-              className="w-40 h-9 bg-white"
-            />
+            <CcsDateField value={customEndDate} onChange={(e) => setCustomEndDate(e.target.value)}
+              id="range-to" />
           </div>
         ) : (
           <div className="flex items-center gap-1">
@@ -861,9 +1314,11 @@ export default function TimeClockAdmin() {
               <ChevronLeft className="w-4 h-4" />
             </Button>
             <span className="text-sm font-medium min-w-[200px] text-center">
-              {dateRange === "week" 
+              {dateRange === "week"
                 ? `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`
-                : format(currentDate, "MMMM yyyy")
+                : dateRange === "today"
+                  ? format(currentDate, "EEEE, MMM d, yyyy")
+                  : format(currentDate, "MMMM yyyy")
               }
             </span>
             <Button variant="ghost" size="sm" onClick={() => navigateDate(1)}>
@@ -882,17 +1337,230 @@ export default function TimeClockAdmin() {
           />
         </div>
 
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setDateRange("week");
+            setCurrentDate(new Date());
+            setCustomStartDate("");
+            setCustomEndDate("");
+            setSelectedUser("all");
+            setSearchTerm("");
+          }}
+          title="Reset all filters"
+        >
+          Reset
+        </Button>
+
+        <div className="flex items-center gap-1">
+          <Select value={retentionYears} onValueChange={setRetentionYears}>
+            <SelectTrigger className="h-9 w-28 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Older than 1y</SelectItem>
+              <SelectItem value="2">Older than 2y</SelectItem>
+              <SelectItem value="3">Older than 3y</SelectItem>
+              <SelectItem value="5">Older than 5y</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button type="button" variant="outline" size="sm" disabled={retentionBusy || !sessionToken}
+            onClick={archiveOldEntries} className="h-9 text-xs"
+            title="Archive completed entries older than the selected period">
+            {retentionBusy ? "Archiving???" : "Archive old"}
+          </Button>
+        </div>
+        <Button onClick={exportPayrollCsv} variant="outline" className="gap-2" title="CSV shaped for payroll import - per employee per day with reg/OT split">
+          <Download className="w-4 h-4" />
+          Payroll CSV
+        </Button>
         <Button onClick={exportToExcel} className="gap-2">
           <Download className="w-4 h-4" />
           Export
         </Button>
       </div>
 
+      <TimeClockCalendar
+        timeEntries={timeEntries}
+        punchExceptions={punchExceptions}
+        correctionRequests={correctionRequests}
+        currentDate={currentDate}
+        onSelectDate={(day) => { setCurrentDate(day); setDateRange("today"); }}
+      />
+
+      <AdminSection title="Needs Attention" icon={AlertTriangle} tone="amber" defaultOpen
+        subtitle="Stale shifts, exceptions, reviews and requests that need a manager"
+        count={staleActiveEntries.length + duplicateActiveEmails.length + missingBreakEntries.length + needsReviewEntries.length + unreviewedEntries.length + swapRequests.length + adminNotes.length + timeOffRequests.filter((r) => r.status === "pending").length + punchExceptions.filter((row) => ["open", "pending_manager_review", "rejected"].includes(row.status)).length}>
+        <div className="clay-card p-3 sm:p-4 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+              <p className="text-xs text-gray-600">Unreviewed</p>
+              <p className="text-2xl font-bold text-gray-800">{unreviewedEntries.length}</p>
+            </div>
+            <div className={`rounded-lg border p-3 ${needsReviewEntries.length ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-gray-50"}`}>
+              <p className={needsReviewEntries.length ? "text-xs text-amber-700" : "text-xs text-gray-600"}>Needs Review</p>
+              <p className={needsReviewEntries.length ? "text-2xl font-bold text-amber-800" : "text-2xl font-bold text-gray-800"}>{needsReviewEntries.length}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {cleanReviewEntries.length > 0 && (
+                  <Button type="button" size="sm" variant="outline" disabled={bulkApproveBusy || isLoading}
+                    onClick={approveAllClean} className="min-h-10 text-xs bg-white/80">
+                    {bulkApproveBusy ? "Approving…" : `Approve ${cleanReviewEntries.length} clean`}
+                  </Button>
+                )}
+                {staleActiveEntries.length > 0 && (
+                  <Button type="button" size="sm" variant="outline" onClick={() => setBulkCloseOpen(true)} className="min-h-10 text-xs bg-white/80 text-amber-700">
+                    Close {staleActiveEntries.length} stale
+                  </Button>
+                )}
+              </div>
+              {bulkApproveResult && <p className="text-[11px] text-green-700 mt-1">{bulkApproveResult}</p>}
+              {retentionMsg && <p className="text-[11px] text-gray-600 mt-1">{retentionMsg}</p>}
+            </div>
+            <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+              <p className="text-xs text-green-700">Approved</p>
+              <p className="text-2xl font-bold text-green-800">{approvedEntries.length}</p>
+            </div>
+          </div>
+        </div>
+        {autoReviewResult && (
+          <div className="mb-3 flex items-start justify-between gap-3 rounded-xl border border-green-300 bg-green-50 p-3 text-sm text-green-900">
+            <div>
+              <strong>{autoReviewResult.approved_count} clean shift{autoReviewResult.approved_count === 1 ? "" : "s"} auto-approved.</strong>
+              {" "}Only shifts with no conflicts, errors, or corrections were approved — everything flagged still waits in Needs Attention.
+              {autoReviewResult.conflict_count > 0 && ` ${autoReviewResult.conflict_count} shift${autoReviewResult.conflict_count === 1 ? "" : "s"} skipped for overlapping time.`}
+            </div>
+            <button type="button" onClick={() => setAutoReviewResult(null)} className="shrink-0 text-xs font-medium underline">Dismiss</button>
+          </div>
+        )}
+        <TimeClockExceptionCenter
+          timeEntries={timeEntries}
+          employeeStates={employeeStates}
+          activeBreaks={activeBreaks}
+          activeWorkPauses={activeWorkPauses}
+          activeLaborSegments={activeLaborSegments}
+          correctionRequests={correctionRequests}
+          punchExceptions={punchExceptions}
+          missingBreakEntries={missingBreakEntries}
+          unreviewedEntries={unreviewedEntries}
+          needsReviewEntries={needsReviewEntries}
+          otWatch={otWatch}
+          otProjected={otProjected}
+          otFlagHours={otFlagHours}
+          swapRequests={swapRequests}
+          adminNotes={adminNotes}
+          timeOffRequests={timeOffRequests.filter((r) => r.status === "pending")}
+          onDecideSwap={decideSwap}
+          onAcknowledgeNote={ackAdminNote}
+          onReviewTimeOff={(request) => setTimeOffReviewRequestId(request?.id || "")}
+          onReviewEntry={handleEditEntry}
+          onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
+          onApproveEntry={(entry) => openApprovalDialog(entry, "approve")}
+          onRefresh={() => loadData({ silent: true })}
+        />
+        <div className="hidden">
+      <CorrectionCoordinatorDiagnostics
+        sessionToken={sessionToken}
+        availableEntryIds={timeEntries.map((entry) => entry.id)}
+        onViewShift={(entryId) => {
+          const entry = timeEntries.find((item) => item.id === entryId);
+          if (entry) setDetailEntry(entry);
+        }}
+        onInspectAudits={(entryId) => {
+          if (!String(entryId || "").trim()) return;
+          setAuditInvestigation({
+            time_entry_id: entryId, evidence: [], mode: "integrity", nonce: Date.now(),
+          });
+          window.setTimeout(() => document.getElementById("time-clock-audit-trail")?.scrollIntoView({
+            behavior: "smooth", block: "start",
+          }), 0);
+        }}
+      />
+      <CorrectionRequestAdminPanel
+        sessionToken={sessionToken}
+        entries={timeEntries}
+        onEntriesChanged={() => loadData({ silent: true })}
+        reviewRequestId={correctionReviewRequestId}
+        onReviewRequestOpened={() => setCorrectionReviewRequestId("")}
+      />
+          <TimeOffApprovalPanel sessionToken={sessionToken} reviewRequestId={timeOffReviewRequestId} onReviewRequestOpened={() => setTimeOffReviewRequestId("")} onRequestsLoaded={setTimeOffRequests} />
+        </div>
+      <Dialog open={bulkCloseOpen} onOpenChange={setBulkCloseOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Close {staleActiveEntries.length} forgotten clock-out{staleActiveEntries.length === 1 ? "" : "s"}</DialogTitle></DialogHeader>
+          <div className="space-y-3 pt-1">
+            <p className="text-sm text-gray-600">Each entry will be closed at the chosen time <strong>on the day it started</strong>. Entries whose clock-in is after that time are skipped.</p>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs whitespace-nowrap">Close at</Label>
+              <CcsTimeField value={bulkCloseTime} onChange={(e) => setBulkCloseTime(e.target.value)} id="bulk-close-time" />
+            </div>
+            <div>
+              <Label className="text-xs">Reason (required)</Label>
+              <Textarea rows={2} value={bulkCloseReason} onChange={(e) => setBulkCloseReason(e.target.value)} placeholder="e.g. Employee forgot to clock out ??? closed by admin" className="mt-1" />
+            </div>
+            <ul className="max-h-40 space-y-1 overflow-y-auto text-xs text-gray-600">
+              {staleActiveEntries.map(e => <li key={e.id}>{e.user_name || e.user_email} ??? in {safeFormat(e.clock_in, "MMM d 'at' h:mm a")}</li>)}
+            </ul>
+            {bulkCloseResults && (
+              <p className={`text-xs ${bulkCloseResults.failed.length ? "text-amber-700" : "text-emerald-700"}`}>
+                Closed {bulkCloseResults.closed}, skipped {bulkCloseResults.skipped}
+                {bulkCloseResults.failed.length ? `, failed ${bulkCloseResults.failed.length}: ${bulkCloseResults.failed.join("; ")}` : ""}
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setBulkCloseOpen(false)}>Cancel</Button>
+              <Button type="button" size="sm" disabled={bulkCloseBusy || !bulkCloseReason.trim() || !sessionToken || !staleActiveEntries.length}
+                onClick={async () => {
+                  setBulkCloseBusy(true);
+                  const failed = []; let closed = 0, skipped = 0;
+                  for (const entry of staleActiveEntries) {
+                    const dayInput = `${companyDateTimeInputFromIso(entry.clock_in).slice(0, 10)}T${bulkCloseTime}`;
+                    const parsed = parseCompanyDateTimeInput(dayInput, entry.clock_in);
+                    if (!parsed?.ok || new Date(parsed.iso).getTime() <= new Date(entry.clock_in).getTime()) { skipped++; continue; }
+                    try {
+                      const rid = newRequestId();
+                      const res = await base44.functions.invoke("timeClockAction", {
+                        action: "admin_correct_entry", session_token: sessionToken,
+                        target_email: entry.user_email, request_id: rid, entry_id: entry.id,
+                        expected_updated_date: entry.updated_date, reason: bulkCloseReason.trim(),
+                        correction: {
+                          clock_in: entry.clock_in, clock_out: parsed.iso,
+                          lunch_minutes: entry.lunch_minutes ?? 0, notes: entry.notes || "",
+                          job_allocations: entry.job_allocations || [],
+                        },
+                      });
+                      const data = functionData(res);
+                      if (!data?.success) throw adminActionError(data, "not confirmed");
+                      closed++;
+                    } catch (err) { failed.push(`${entry.user_name || entry.user_email}: ${err?.message || err}`); }
+                  }
+                  setBulkCloseResults({ closed, skipped, failed });
+                  setBulkCloseBusy(false);
+                  await loadData({ silent: true });
+                }}>
+                {bulkCloseBusy ? "Closing???" : "Close entries"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      </AdminSection>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="clay-card p-4">
           <p className="text-sm text-gray-500">Total Hours</p>
-          <p className="text-2xl font-bold text-purple-600">{totalHours.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-purple-600">{roundH(totalHours).toFixed(2)}</p>
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-[10px] text-gray-400">round</span>
+            <Select value={String(roundMin)} onValueChange={setRounding}>
+              <SelectTrigger className="h-6 w-20 text-[10px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">exact</SelectItem>
+                <SelectItem value="5">5 min</SelectItem>
+                <SelectItem value="10">10 min</SelectItem>
+                <SelectItem value="15">15 min</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="clay-card p-4">
           <p className="text-sm text-gray-500">Total Entries</p>
@@ -920,11 +1588,125 @@ export default function TimeClockAdmin() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {Object.values(userSummary).map(user => (
               <div key={user.email} className="p-3 bg-gray-50 rounded-lg">
-                <p className="font-medium text-sm">{user.name}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-medium text-sm">{user.name}</p>
+                  <button type="button" onClick={() => printPunchCard(user)}
+                    className="rounded px-1.5 py-0.5 text-[10px] font-medium text-slate-400 hover:bg-white hover:text-indigo-600"
+                    title="Print punch card for this employee">Print</button>
+                </div>
                 <p className="text-lg font-bold text-purple-600">{user.hours.toFixed(2)} hrs</p>
                 <p className="text-xs text-gray-500">{user.entries} entries</p>
+                {(() => {
+                  const points = Object.keys(user.daily).sort().map(d => user.daily[d]);
+                  if (points.length < 2) return null;
+                  const max = Math.max(...points, 0.01);
+                  const w = 96, h = 24;
+                  const coords = points.map((v, i) => `${((i / (points.length - 1)) * w).toFixed(1)},${(h - (v / max) * (h - 3)).toFixed(1)}`);
+                  return (
+                    <svg width={w} height={h} className="mt-1" aria-hidden="true">
+                      <polyline points={coords.join(" ")} fill="none" stroke="#9333EA" strokeWidth="1.5" />
+                    </svg>
+                  );
+                })()}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {jobRows.length > 0 && (
+        <div className="clay-card p-4">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <Briefcase className="w-4 h-4" />
+            Hours by Job
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {jobRows.slice(0, 12).map(([name, hrs]) => (
+              <div key={name} className="p-3 bg-gray-50 rounded-lg">
+                <p className="font-medium text-sm truncate" title={name}>{name}</p>
+                <p className="text-lg font-bold text-indigo-600">{hrs.toFixed(2)} hrs</p>
+              </div>
+            ))}
+          </div>
+          {jobRows.length > 12 && <p className="mt-2 text-xs text-gray-400">Top 12 of {jobRows.length} jobs</p>}
+        </div>
+      )}
+
+      {channelRows.length > 0 && (
+        <div className="clay-card p-4">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">Punch Channels</h3>
+          <div className="flex flex-wrap gap-2">
+            {channelRows.map(([channel, count]) => (
+              <div key={channel} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                <span className="font-medium capitalize">{channel.replace(/_/g, " ")}</span>
+                <span className="ml-2 text-slate-500">{count} ({Math.round((count / channelTotal) * 100)}%)</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {filteredEntries.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="clay-card p-4">
+            <h3 className="font-semibold mb-3">Clock-ins by Hour</h3>
+            <div className="flex items-end gap-1 h-20">
+              {hourBuckets.map((count, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+                  <div className="w-full rounded-t bg-indigo-300" style={{ height: `${(count / maxHour) * 100}%`, minHeight: count ? 3 : 0 }} title={`${6 + i}:00 - ${count} clock-ins`} />
+                  <span className="text-[8px] text-slate-400">{6 + i}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="clay-card p-4">
+            <h3 className="font-semibold mb-3">Punch Timing</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between"><span className="text-slate-600">Before 7 AM</span><span className="font-bold text-amber-600">{earlyClockIns}</span></div>
+              <div className="flex items-center justify-between"><span className="text-slate-600">After 9 AM</span><span className="font-bold text-slate-700">{lateClockIns}</span></div>
+            </div>
+            {lateLeaders.length > 0 && (
+              <div className="mt-2 border-t border-slate-100 pt-2">
+                <p className="text-[10px] font-semibold text-slate-400 mb-1">Most after-9am starts</p>
+                {lateLeaders.map(([name, n]) => (
+                  <div key={name} className="flex items-center justify-between text-xs"><span className="truncate text-slate-600">{name}</span><span className="font-semibold text-slate-700">{n}</span></div>
+                ))}
+              </div>
+            )}
+            {fewestDays.length > 0 && (
+              <div className="mt-2 border-t border-slate-100 pt-2">
+                <p className="text-[10px] font-semibold text-slate-400 mb-1">Fewest days in range</p>
+                {fewestDays.map((r) => (
+                  <div key={r.name} className="flex items-center justify-between text-xs"><span className="truncate text-slate-600">{r.name}</span><span className="font-semibold text-slate-700">{r.days}d</span></div>
+                ))}
+              </div>
+            )}
+            <p className="mt-3 text-[10px] text-slate-400">Early-clock-in patterns drive unauthorized overtime; late patterns flag scheduling issues.</p>
+          </div>
+          <div className="clay-card p-4">
+            <h3 className="font-semibold mb-3">No Punch Today</h3>
+            {missingPunch.length === 0 ? (
+              <p className="text-sm text-emerald-600">Everyone in the loaded range has punched today.</p>
+            ) : (
+              <div className="max-h-20 overflow-y-auto space-y-1">
+                {missingPunch.slice(0, 8).map((u) => <p key={u.email} className="text-xs text-slate-600 truncate">{u.name}</p>)}
+                {missingPunch.length > 8 && <p className="text-[10px] text-slate-400">+{missingPunch.length - 8} more</p>}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {punchPairs.length > 0 && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
+          <div className="font-semibold text-amber-900 mb-2">Possible buddy punches - {punchPairs.length} near-simultaneous pair{punchPairs.length === 1 ? "" : "s"}</div>
+          <div className="max-h-32 overflow-y-auto space-y-1">
+            {punchPairs.slice(0, 10).map((p, i) => (
+              <p key={i} className="text-xs text-amber-800">
+                {(p.a.user_name || p.a.user_email)} &amp; {(p.b.user_name || p.b.user_email)} - {p.gap}s apart via {String(p.a.clock_source).replace(/_/g, " ")} on {safeFormat(p.a.clock_in, "MMM d")}
+              </p>
+            ))}
+            {punchPairs.length > 10 && <p className="text-[10px] text-amber-700">+{punchPairs.length - 10} more</p>}
           </div>
         </div>
       )}
@@ -957,11 +1739,17 @@ export default function TimeClockAdmin() {
                 </tr>
               ) : (
                 filteredEntries.map(entry => (
-                  <tr key={entry.id} className="hover:bg-gray-50">
+                  <Fragment key={entry.id}>
+                  <tr className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div>
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <p className="font-medium">{entry.user_name}</p>
+                          <button type="button"
+                            onClick={() => setExpandedEmail(e => e === entry.user_email ? null : entry.user_email)}
+                            className="font-medium text-left hover:text-purple-700 hover:underline"
+                            title="Show this employee's daily breakdown">
+                            {entry.user_name}
+                          </button>
                           {entry.pay_period_id && (
                             <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300 gap-1">
                               <LockKeyhole className="w-3 h-3" /> Finalized
@@ -991,7 +1779,8 @@ export default function TimeClockAdmin() {
                       )}
                     </td>
                     <td className="px-4 py-3 font-medium text-purple-600">
-                      {Number(entry.total_hours ?? 0).toFixed(2)} hrs
+                      {roundH(Number(entry.total_hours ?? 0)).toFixed(2)} hrs
+                      {roundMin > 0 && <span className="block text-[10px] text-gray-400" title={`Exact: ${Number(entry.total_hours ?? 0).toFixed(2)} hrs`}>rounded {roundMin}m</span>}
                     </td>
                     <td className="px-4 py-3">
                       {entry.status === "needs_resolution" ? (
@@ -1020,7 +1809,7 @@ export default function TimeClockAdmin() {
                               <RotateCcw className="w-3 h-3 mr-1" />Reopen
                             </Button>
                           ) : (
-                            <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs text-green-700" onClick={() => openApprovalDialog(entry, "approve")}>
+                            <Button type="button" variant="ghost" size="sm" className="min-h-10 px-3 text-xs text-green-700" onClick={() => openApprovalDialog(entry, "approve")}>
                               <CheckCircle2 className="w-3 h-3 mr-1" />Approve
                             </Button>
                           )}
@@ -1093,9 +1882,42 @@ export default function TimeClockAdmin() {
                         >
                           <Archive className={`w-3 h-3 ${entry.pay_period_id ? "text-slate-400" : "text-amber-600"}`} />
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => togglePayrollHold(entry)}
+                          className="h-7 w-7"
+                          title={entry.payroll_hold ? `On payroll hold${entry.payroll_hold_reason ? `: ${entry.payroll_hold_reason}` : ""} - click to release` : "Flag for payroll hold"}
+                        >
+                          <Flag className={`w-3 h-3 ${entry.payroll_hold ? "text-red-600 fill-red-200" : "text-slate-400"}`} />
+                        </Button>
                       </div>
                     </td>
                   </tr>
+                  {expandedEmail === entry.user_email && (
+                    <tr className="bg-purple-50/60">
+                      <td colSpan="11" className="px-6 py-3">
+                        <p className="text-xs font-semibold text-purple-900 mb-2">Daily breakdown for {entry.user_name || entry.user_email} in this period</p>
+                        <div className="flex flex-wrap gap-2">
+                          {(() => {
+                            const days = {};
+                            for (const e of filteredEntries) {
+                              if (e.user_email !== entry.user_email) continue;
+                              const d = safeFormat(e.clock_in, "MMM d");
+                              days[d] = (days[d] || 0) + (Number(e.total_hours) || 0);
+                            }
+                            return Object.entries(days).map(([d, h]) => (
+                              <span key={d} className="rounded border border-purple-200 bg-white px-2 py-1 text-xs">
+                                <span className="font-medium text-gray-700">{d}</span>
+                                <span className="ml-1 text-purple-700 font-semibold">{h.toFixed(2)}h</span>
+                              </span>
+                            ));
+                          })()}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 ))
               )}
             </tbody>
@@ -1104,111 +1926,30 @@ export default function TimeClockAdmin() {
       </div>
       </div>
 
-      <AdminSection title="Needs Attention" icon={AlertTriangle} tone="amber" defaultOpen
-        subtitle="Stale shifts, exceptions, reviews and requests that need a manager"
-        count={staleActiveEntries.length + needsReviewEntries.length + unreviewedEntries.length + punchExceptions.filter((row) => ["open", "pending_manager_review", "rejected"].includes(row.status)).length}>
-      {staleActiveEntries.length > 0 && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-700 mt-0.5 shrink-0" />
-            <div className="flex-1">
-              <div className="font-semibold text-amber-900">
-                {staleActiveEntries.length} forgotten clock-out{staleActiveEntries.length === 1 ? "" : "s"} need review
-              </div>
-              <p className="text-sm text-amber-800 mt-1">
-                These entries have remained clocked in for more than 24 hours. Nothing was changed automatically.
-              </p>
-              <div className="mt-3 space-y-2">
-                {staleActiveEntries.map(entry => (
-                  <div key={entry.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/80 border border-amber-200 px-3 py-2">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{entry.user_name || entry.user_email}</div>
-                      <div className="text-xs text-gray-600">
-                        Clocked in {safeFormat(entry.clock_in, "MMM d, yyyy 'at' h:mm a")}
-                      </div>
-                    </div>
-                    <Button size="sm" variant="outline" onClick={() => handleEditEntry(entry)}>
-                      Review Entry
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
+      {(() => {
+        const weekAgo = Date.now() - 7 * 86400000;
+        const twoWeeksAgo = Date.now() - 14 * 86400000;
+        let cur = 0, prev = 0;
+        for (const e of timeEntries || []) {
+          const t = new Date(e.clock_in || 0).getTime();
+          if (!t) continue;
+          if (t >= weekAgo) cur += Number(e.total_hours || 0);
+          else if (t >= twoWeeksAgo) prev += Number(e.total_hours || 0);
+        }
+        if (!cur && !prev) return null;
+        const delta = prev ? Math.round(((cur - prev) / prev) * 100) : 0;
+        return (
+          <div className="rounded-xl border border-gray-200 bg-white/70 px-3 py-2 text-xs text-gray-600" aria-label="Week-over-week hours">
+            This week: <b className="text-gray-900">{cur.toFixed(1)}h</b>
+            <span className="mx-1.5 text-gray-300">|</span>
+            Last week: <b>{prev.toFixed(1)}h</b>
+            {prev > 0 && <span className={`ml-1.5 font-medium ${delta > 0 ? "text-emerald-600" : delta < 0 ? "text-red-600" : "text-gray-500"}`}>{delta > 0 ? "+" : ""}{delta}%</span>}
           </div>
-        </div>
-      )}
-      <CorrectionCoordinatorDiagnostics
-        sessionToken={sessionToken}
-        availableEntryIds={timeEntries.map((entry) => entry.id)}
-        onViewShift={(entryId) => {
-          const entry = timeEntries.find((item) => item.id === entryId);
-          if (entry) setDetailEntry(entry);
-        }}
-        onInspectAudits={(entryId) => {
-          if (!String(entryId || "").trim()) return;
-          setAuditInvestigation({
-            time_entry_id: entryId, evidence: [], mode: "integrity", nonce: Date.now(),
-          });
-          window.setTimeout(() => document.getElementById("time-clock-audit-trail")?.scrollIntoView({
-            behavior: "smooth", block: "start",
-          }), 0);
-        }}
-      />
-      <TimeClockExceptionCenter
-        timeEntries={timeEntries}
-        employeeStates={employeeStates}
-        activeBreaks={activeBreaks}
-        activeWorkPauses={activeWorkPauses}
-        activeLaborSegments={activeLaborSegments}
-        correctionRequests={correctionRequests}
-        punchExceptions={punchExceptions}
-        onReviewEntry={handleEditEntry}
-        onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
-        onApproveEntry={(entry) => openApprovalDialog(entry, "approve")}
-        onRefresh={loadData}
-      />
-      <div className="clay-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <div>
-            <h3 className="font-semibold flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
-              Shift Review
-            </h3>
-            <p className="text-xs text-gray-500 mt-1">Manager review status for completed shifts in the selected period. Approval does not finalize payroll.</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-            <p className="text-xs text-gray-600">Unreviewed</p>
-            <p className="text-2xl font-bold text-gray-800">{unreviewedEntries.length}</p>
-          </div>
-          <div className={`rounded-lg border p-3 ${needsReviewEntries.length ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-gray-50"}`}>
-            <p className={needsReviewEntries.length ? "text-xs text-amber-700" : "text-xs text-gray-600"}>Needs Review</p>
-            <p className={needsReviewEntries.length ? "text-2xl font-bold text-amber-800" : "text-2xl font-bold text-gray-800"}>{needsReviewEntries.length}</p>
-          </div>
-          <div className="rounded-lg border border-green-200 bg-green-50 p-3">
-            <p className="text-xs text-green-700">Approved</p>
-            <p className="text-2xl font-bold text-green-800">{approvedEntries.length}</p>
-          </div>
-        </div>
-      </div>
-      <CorrectionRequestAdminPanel
-        sessionToken={sessionToken}
-        onEntriesChanged={loadData}
-        reviewRequestId={correctionReviewRequestId}
-        onReviewRequestOpened={() => setCorrectionReviewRequestId("")}
-      />
-      <TimeOffApprovalPanel sessionToken={sessionToken} />
-      <TimeClockPunchExceptionReport
-        punchExceptions={punchExceptions}
-        timeEntries={timeEntries}
-        correctionRequests={correctionRequests}
-        onReviewEntry={setDetailEntry}
-        onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
-        onApproveEntry={(entry) => openApprovalDialog(entry, "approve")}
-      />
-      </AdminSection>
+        );
+      })()}
+      </Fragment>)}
 
+      {view === "live_status" && (
       <AdminSection title="Live Status" icon={Clock3} tone="green" defaultOpen
         subtitle="Who is working right now">
       <TimeClockManagementDashboard
@@ -1268,6 +2009,10 @@ export default function TimeClockAdmin() {
               const validClockIn = clockIn && !Number.isNaN(clockIn.getTime());
               const validBreakStarted = breakStarted && !Number.isNaN(breakStarted.getTime());
               const validWorkPauseStarted = workPauseStarted && !Number.isNaN(workPauseStarted.getTime());
+              const missingEntryLink = state.status === "clocked_in" && (!state.active_entry_id || !entry);
+              const missingBreakLink = state.break_status === "on_break" && !breakRow;
+              const missingPauseLink = state.work_pause_status === "paused" && !workPauseRow;
+              const stateLinkIssue = missingEntryLink || missingBreakLink || missingPauseLink;
               return (
                 <div key={state.id} className="rounded-lg border bg-white p-3 flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -1281,7 +2026,7 @@ export default function TimeClockAdmin() {
                       </p>
                     )}
                     {state.break_status === "on_break" && !breakRow && (
-                      <p className="text-xs text-red-600 mt-1">Break state is missing its active break record â€” review required.</p>
+                      <p className="text-xs text-red-600 mt-1">Break state is missing its active break record -- review required.</p>
                     )}
                     {state.work_pause_status === "paused" && workPauseRow && (
                       <p className="text-xs text-purple-700 mt-1">
@@ -1289,13 +2034,25 @@ export default function TimeClockAdmin() {
                       </p>
                     )}
                     {state.work_pause_status === "paused" && !workPauseRow && (
-                      <p className="text-xs text-red-600 mt-1">Work Pause state is missing its active pause record â€” review required.</p>
+                      <p className="text-xs text-red-600 mt-1">Work Pause state is missing its active pause record -- review required.</p>
+                    )}
+                    {missingEntryLink && (
+                      <p className="text-xs text-red-600 mt-1">Clocked-in state is missing its active TimeEntry record -- review required.</p>
                     )}
                     {laborRow && state.break_status === "working" && state.work_pause_status === "working" && (
                       <p className="text-xs text-blue-700 mt-1 capitalize">
                         Current Work: {String(laborRow.activity_type || "work").replaceAll("_", " ")}
-                        {laborRow.work_order_id ? ` Â· ${laborRow.client_name || laborRow.work_order_title || "WorkOrder"}` : ""}
+                        {laborRow.work_order_id ? <>{" - "}<a href={`/MainWorkflow?wo=${laborRow.work_order_id}`} className="underline hover:text-blue-900" title="Open this work order">{laborRow.client_name || laborRow.work_order_title || "WorkOrder"}</a></> : ""}
                       </p>
+                    )}
+                    {stateLinkIssue && (
+                      <div className="mt-2">
+                        <Button type="button" size="sm" variant="outline"
+                          className="h-7 px-2 text-xs border-red-300 text-red-700 hover:bg-red-50"
+                          onClick={() => openRepairState(state)}>
+                          <RotateCcw className="w-3 h-3 mr-1" /> Repair clock state
+                        </Button>
+                      </div>
                     )}
                   </div>
                   <Badge variant="outline" className={`shrink-0 ${statusClass(state)}`}>
@@ -1330,14 +2087,16 @@ export default function TimeClockAdmin() {
         )}
       </div>
       </AdminSection>
+      )}
 
+      {view === "pay_periods" && (
       <AdminSection title="Pay Periods & History" icon={CalendarIcon} tone="purple"
         subtitle="Pay period finalization, audit trail and diagnostics">
       <PayPeriodManager
         sessionToken={sessionToken}
         timeEntries={timeEntries}
         correctionRequests={correctionRequests}
-        onEntriesChanged={loadData}
+        onEntriesChanged={() => loadData({ silent: true })}
         onInvestigateAudit={({ time_entry_id, evidence = [], mode = "conflict" }) => {
           const normalizedId = String(time_entry_id || "").trim();
           if (!normalizedId) return;
@@ -1357,6 +2116,91 @@ export default function TimeClockAdmin() {
         />
       </div>
       </AdminSection>
+      )}
+
+      {view === "entries" && (() => {
+        const byJob = {};
+        for (const e of timeEntries || []) {
+          const key = e.work_order_id ? (e.work_order_title || e.client_name || e.work_order_id) : null;
+          if (!key) continue;
+          byJob[key] = (byJob[key] || 0) + Number(e.total_hours || 0);
+        }
+        const jobs = Object.entries(byJob).map(([k, h]) => ({ name: k, hours: h })).sort((a, b) => b.hours - a.hours).slice(0, 10);
+        return jobs.length ? (
+          <AdminSection title="Hours by Job" icon={Clock3} count={jobs.length} key="hours-by-job">
+            <ul className="space-y-1">
+              {jobs.map((j) => (
+                <li key={j.name} className="flex items-center justify-between gap-2 text-xs">
+                  <span className="truncate text-gray-700">{j.name}</span>
+                  <span className="font-medium text-gray-900">{j.hours.toFixed(1)}h</span>
+                </li>
+              ))}
+            </ul>
+          </AdminSection>
+        ) : null;
+      })()}
+
+      {view === "punch_locations" && (() => {
+        const geoPunches = (timeEntries || []).filter((e) => e.clock_in_geo?.lat || e.clock_out_geo?.lat);
+        if (!geoPunches.length) return null;
+        const lats = geoPunches.map((e) => (e.clock_in_geo?.lat ?? e.clock_out_geo?.lat)).filter(Number.isFinite).sort((a, b) => a - b);
+        const lngs = geoPunches.map((e) => (e.clock_in_geo?.lng ?? e.clock_out_geo?.lng)).filter(Number.isFinite).sort((a, b) => a - b);
+        if (!lats.length) return null;
+        const midLat = lats[Math.floor(lats.length / 2)], midLng = lngs[Math.floor(lngs.length / 2)];
+        const dist = (a, b, c, d) => {
+          const dx = (a - c) * 111320, dy = (b - d) * 111320 * Math.cos((c * Math.PI) / 180);
+          return Math.sqrt(dx * dx + dy * dy);
+        };
+        const outliers = geoPunches.filter((e) => {
+          const g = e.clock_in_geo?.lat ? e.clock_in_geo : e.clock_out_geo;
+          return dist(g.lat, g.lng, midLat, midLng) > 500;
+        });
+        const noGeo = (timeEntries || []).length - geoPunches.length;
+        return (
+          <AdminSection title="Punch location review" icon={AlertTriangle} tone={outliers.length ? "amber" : "gray"} count={outliers.length}>
+            <p className="text-xs text-gray-500">
+              {geoPunches.length} punches carry location data{noGeo > 0 ? `; ${noGeo} have none` : ""}.
+              {outliers.length ? ` ${outliers.length} punched >500m from the usual cluster:` : " All punches sit near the usual cluster."}
+            </p>
+            {outliers.length > 0 && (
+              <ul className="mt-1 space-y-1">
+                {outliers.slice(0, 10).map((e) => (
+                  <li key={e.id} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-gray-700">{e.user_email || "???"} ?? {e.clock_in ? new Date(e.clock_in).toLocaleDateString() : ""}</span>
+                    <span className="font-medium text-amber-700">{Math.round(dist((e.clock_in_geo?.lat ? e.clock_in_geo : e.clock_out_geo).lat, (e.clock_in_geo?.lat ? e.clock_in_geo : e.clock_out_geo).lng, midLat, midLng))}m off-cluster</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </AdminSection>
+        );
+      })()}
+
+      {view === "devices" && (
+      <AdminSection title="Registered Devices" icon={Clock3} count={devices.length}
+        subtitle="Kiosks and tablets that have signed in to the time clock.">
+        {devices.length === 0 ? (
+          <p className="text-xs text-gray-500">No devices have registered yet.</p>
+        ) : (
+          <div className="grid gap-1.5 md:grid-cols-2">
+            {devices.map((d) => (
+              <div key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white/80 px-3 py-2 text-xs">
+                <div>
+                  <span className="font-medium text-gray-900">{d.device_name || d.device_key || "Device"}</span>
+                  <span className="ml-2 text-gray-500">{d.device_type || ""}{d.location ? ` ?? ${d.location}` : ""}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`rounded-full px-2 py-0.5 font-medium ${d.status === "active" && d.is_active !== false ? "bg-green-100 text-green-700" : d.status === "offline" ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-500"}`}>
+                    {d.is_active === false ? "retired" : d.status || "unknown"}
+                  </span>
+                  <span className="text-gray-400">{d.last_seen_at ? `seen ${String(d.last_seen_at).slice(0, 10)}` : "never seen"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </AdminSection>
+      )}
 
       <TimeClockShiftDetail
         entry={detailEntry}
@@ -1383,20 +2227,20 @@ export default function TimeClockAdmin() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Clock In â€” {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
-                  <Input
-                    type="datetime-local"
+                  <Label className="text-sm font-medium">Clock In -- {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
+                  <CcsDateTimeField
                     value={editingClockInInput}
                     onChange={(e) => { setEditingClockInInput(e.target.value); setTimeEntryError(""); }}
-                  />
+                    id="admin-edit-clock-in"
+                    />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Clock Out â€” {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
-                  <Input
-                    type="datetime-local"
+                  <Label className="text-sm font-medium">Clock Out -- {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
+                  <CcsDateTimeField
                     value={editingClockOutInput}
                     onChange={(e) => { setEditingClockOutInput(e.target.value); setTimeEntryError(""); }}
-                  />
+                    id="admin-edit-clock-out"
+                    />
                 </div>
               </div>
 
@@ -1476,6 +2320,16 @@ export default function TimeClockAdmin() {
                 <p className="mt-1 text-xs text-gray-500">Required. This reason is stored with the audit record.</p>
               </div>
 
+              {timeEntryError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                  <div className="font-medium">Correction not saved</div>
+                  <div className="mt-1 text-xs">{timeEntryError}</div>
+                </div>
+              )}
+              {saveBusy && (
+                <p className="text-xs text-gray-500">Still saving — the server is busy and your correction is being retried. This can take up to a minute.</p>
+              )}
+
               <div className="flex gap-3 pt-4">
                 <Button
                   variant="outline"
@@ -1504,6 +2358,7 @@ export default function TimeClockAdmin() {
             setApprovalNote("");
             setApprovalRequestId("");
             setApprovalRetryPayload(null);
+            setApprovalRetryMode(false);
             setApprovalError("");
           }
         }}
@@ -1521,7 +2376,7 @@ export default function TimeClockAdmin() {
                 <p className="font-medium">{approvalEntry.user_name || approvalEntry.user_email}</p>
                 <p className="text-gray-500 mt-1">
                   {approvalEntry.clock_in ? `${formatCompanyDateTime(approvalEntry.clock_in)} (${TIME_CLOCK_COMPANY_TIME_LABEL})` : "Unknown start"}
-                  {approvalEntry.clock_out ? ` â€“ ${formatCompanyDateTime(approvalEntry.clock_out)}` : ""}
+                  {approvalEntry.clock_out ? ` - ${formatCompanyDateTime(approvalEntry.clock_out)}` : ""}
                 </p>
                 <p className="text-gray-600 mt-1">{Number(approvalEntry.total_hours || 0).toFixed(2)} hours</p>
               </div>
@@ -1532,7 +2387,7 @@ export default function TimeClockAdmin() {
                   : "This removes the current approval and marks the shift Needs Review. The prior approval remains preserved in the audit history."}
               </div>
 
-              {approvalRetryPayload && (
+              {approvalRetryMode && approvalRetryPayload && (
                 <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
                   <strong>Exact retry mode.</strong> The original shift version, decision, note, and request ID are frozen. This prevents a reload or second manager change from silently changing an interrupted request.
                 </div>
@@ -1548,7 +2403,7 @@ export default function TimeClockAdmin() {
                   rows={3}
                   maxLength={500}
                   placeholder={approvalDecision === "approve" ? "Optional review note" : "Explain why this shift needs review again."}
-                  disabled={approvalBusy || Boolean(approvalRetryPayload)}
+                  disabled={approvalBusy || approvalRetryMode}
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   {approvalDecision === "approve" ? "Optional. Approval identity and server timestamp are always audited." : "Required when reopening an approved shift."}
@@ -1569,6 +2424,7 @@ export default function TimeClockAdmin() {
                     setApprovalNote("");
                     setApprovalRequestId("");
                     setApprovalRetryPayload(null);
+                    setApprovalRetryMode(false);
                     setApprovalError("");
                   }}
                 >
@@ -1617,6 +2473,29 @@ export default function TimeClockAdmin() {
               disabled={deleteBusy || archiveReason.trim().length < 3}
             >
               {deleteBusy ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Archiving...</> : "Archive Time Entry"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!repairConfirm} onOpenChange={(open) => { if (!open && !repairBusy) { setRepairConfirm(null); setRepairError(""); } }}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Repair Clock State?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Clear {repairConfirm?.user_name || repairConfirm?.user_email || "this employee"}'s stored clock state back to clocked out? Use this only when the state points at a missing or already-closed record and the employee cannot clock in or out. The time record itself is not changed, and the repair is written to the audit trail.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {repairError ? <p className="text-sm text-red-600">{repairError}</p> : null}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={repairBusy}>Cancel</AlertDialogCancel>
+            <Button
+              type="button"
+              onClick={handleRepairState}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={repairBusy}
+            >
+              {repairBusy ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Repairing...</> : "Repair Clock State"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

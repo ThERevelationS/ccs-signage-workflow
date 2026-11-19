@@ -1,0 +1,106 @@
+{
+  "matches": [
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 3,
+      "text": "// action mints a ProofShareLink row carrying an opaque token; anyone holding"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 10,
+      "text": "// ENTITY SPEC — `ProofShareLink` (orchestrator-owned jsonc; this model is the"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 13,
+      "text": "// Backend-only RLS (Sop.jsonc pattern — `__proofsharelink_backend_only__` role"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 23,
+      "text": "//   entity_type      string   default 'proof_share' — discriminator so the"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 37,
+      "text": "//                     proof_share_disclaimer overrides per-tenant)."
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 76,
+      "text": "//   SHARE_LINK_ENTITY_TYPE — 'proof_share' discriminator value."
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 102,
+      "text": "export const SHARE_LINK_ENTITY_TYPE = 'proof_share';"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 110,
+      "text": "// proof_share_disclaimer (A-21 settings object) or per-link disclaimer_text."
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 197,
+      "text": "// settings.proof_share_disclaimer / settings.proofShareDisclaimer (A-21) →"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 203,
+      "text": "    cleanStr(settings?.proof_share_disclaimer) || cleanStr(settings?.proofShareDisclaimer);"
+    },
+    {
+      "path": "base44/shared/proofShareLinkModel.ts",
+      "line": 207,
+      "text": "// Full new-row shape for one ProofShareLink. Pins proof_version from the"
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 2,
+      "text": "  \"name\": \"ProofShareLink\","
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 4,
+      "text": "  \"description\": \"External proof-share links (E-09): an opaque-token row per shared proof, created by staff, resolved by a backend function (asServiceRole) so unauthenticated third parties can view the pinned proof version + disclaimer. Backend-only RLS \\u2014 NEVER exposed through staffDataRead; the public proof-share page resolves tokens via a dedicated function. Revocation and 30-day-max expiry are enforced by proofShareLinkModel.canViewShareLink.\","
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 12,
+      "text": "      \"default\": \"proof_share\","
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 13,
+      "text": "      \"description\": \"Discriminator \\u2014 always 'proof_share'.\""
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 29,
+      "text": "      \"description\": \"Legal/review disclaimer rendered on the share page (settings.proof_share_disclaimer override).\""
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 76,
+      "text": "    \"create\": { \"user_condition\": { \"role\": \"__proofsharelink_backend_only__\" } },"
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 77,
+      "text": "    \"read\": { \"user_condition\": { \"role\": \"__proofsharelink_backend_only__\" } },"
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 78,
+      "text": "    \"update\": { \"user_condition\": { \"role\": \"__proofsharelink_backend_only__\" } },"
+    },
+    {
+      "path": "base44/entities/ProofShareLink.jsonc",
+      "line": 79,
+      "text": "    \"delete\": { \"user_condition\": { \"role\": \"__proofsharelink_backend_only__\" } }"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 20
+}

@@ -1,0 +1,82 @@
+{
+  "inputs": {
+    "src/components/estimator/foundation/foundationReinforcementPartDescriptors.js": {
+      "bytes": 7536,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementFrozenPricing.js": {
+      "bytes": 7123,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementWorkOrderPart.js": {
+      "bytes": 8899,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementPartDescriptors.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementPartDescriptors"
+        },
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementFrozenPricing.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementFrozenPricing"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementPrintMaterial.js": {
+      "bytes": 1710,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementWorkOrderPart.js",
+          "kind": "import-statement",
+          "original": "./foundationReinforcementWorkOrderPart"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/components/jobs/printTemplates/workOrderPrintModel.js": {
+      "bytes": 15770,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationReinforcementPrintMaterial.js",
+          "kind": "import-statement",
+          "original": "@/components/estimator/foundation/foundationReinforcementPrintMaterial"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    ".audit-work/foundation-reinforcement18/print-model-bundle.js": {
+      "imports": [],
+      "exports": [
+        "WO_PRINT_DEFAULT_COMPANY",
+        "WO_PRINT_PRODUCT_STATUS_LABELS",
+        "WO_PRINT_STAGE_LABELS",
+        "buildWorkOrderPrintModel"
+      ],
+      "entryPoint": "src/components/jobs/printTemplates/workOrderPrintModel.js",
+      "inputs": {
+        "src/components/estimator/foundation/foundationReinforcementPartDescriptors.js": {
+          "bytesInOutput": 7265
+        },
+        "src/components/estimator/foundation/foundationReinforcementFrozenPricing.js": {
+          "bytesInOutput": 5849
+        },
+        "src/components/estimator/foundation/foundationReinforcementWorkOrderPart.js": {
+          "bytesInOutput": 8191
+        },
+        "src/components/estimator/foundation/foundationReinforcementPrintMaterial.js": {
+          "bytesInOutput": 1541
+        },
+        "src/components/jobs/printTemplates/workOrderPrintModel.js": {
+          "bytesInOutput": 12861
+        }
+      },
+      "bytes": 36216
+    }
+  }
+}

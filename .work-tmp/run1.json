@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "=== test-mutation-guard\nPASS estimate mutation guard (16 cases)\n=== test-customer-persistence\nPASS customer persistence (13 cases)\n=== test-entity-persistence\nPASS entity persistence (23 cases)\n=== test-work-order-persistence\nPASS work order persistence (16 cases)\n=== test-preflight-source-mutation\nPASS preflight source mutation (26 cases)\n=== test-revision-service\nRevision completion skipped — no session token; audit write deferred for reconciliation.\nPASS revision service (38 cases)\n=== test-inventory-delete-guard\nPASS inventory delete guard (11 cases)\n=== test-estimator-dead-code\nPASS estimator dead-code sweep (175 files scanned, 0 no-op marker files, 0 dead — all documented)\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 39100
+}

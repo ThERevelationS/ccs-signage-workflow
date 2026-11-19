@@ -1,0 +1,9 @@
+[
+ "staging-src/components/estimator/foundation/foundationSceneTransforms.js",
+ "staging-src/components/estimator/foundation/foundationLayoutModel.js",
+ "staging-src/components/estimator/foundation/foundationSceneInput.js",
+ "staging-src/components/estimator/foundation/foundationSceneSelection.js",
+ "staging-src/components/estimator/foundation/foundationSceneEditOps.js",
+ "staging-src/components/estimator/foundation/foundationSceneHistory.js",
+ "staging-entry.js"
+]

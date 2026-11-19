@@ -1,0 +1,287 @@
+{
+  "results": [
+    {
+      "name": "changed",
+      "viewport": "1280",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "changed",
+      "viewport": "390",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "labor",
+      "viewport": "1280",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "labor",
+      "viewport": "390",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "legacy-labor",
+      "viewport": "1280",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "legacy-labor",
+      "viewport": "390",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "zero",
+      "viewport": "1280",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "zero",
+      "viewport": "390",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "stale",
+      "viewport": "1280",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "stale",
+      "viewport": "390",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "invalid",
+      "viewport": "1280",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "invalid",
+      "viewport": "390",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "removal",
+      "viewport": "1280",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "removal",
+      "viewport": "390",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "independent",
+      "viewport": "1280",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "independent",
+      "viewport": "390",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "large",
+      "viewport": "1280",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "large",
+      "viewport": "390",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "legacy-control",
+      "viewport": "1280",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    },
+    {
+      "name": "legacy-control",
+      "viewport": "390",
+      "ok": true,
+      "consoleErr": [],
+      "requestFailed": [],
+      "externalRequests": [],
+      "allRequests": [
+        "http://127.0.0.1:5190/",
+        "http://127.0.0.1:5190/app.css",
+        "http://127.0.0.1:5190/bundle.js"
+      ],
+      "unexpectedOps": []
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "shots": 4
+}

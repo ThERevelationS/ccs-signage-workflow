@@ -62,6 +62,7 @@ async function getColumns(sheetId: string, token: string) {
   const response = await safeExternalFetch(`${API_BASE}/sheets/${sheetId}/columns?includeAll=true`, {
     method: 'GET',
     headers: headers(token),
+    signal: AbortSignal.timeout(30_000),
   }, 0);
   if (!response.ok) {
     throw Object.assign(new Error(`Smartsheet column metadata read failed with HTTP ${response.status}.`), { status: 502 });
@@ -184,6 +185,7 @@ async function metadataHandler(req) {
         method: 'PUT',
         headers: headers(token),
         body: JSON.stringify({ type: before.type, options: plan.next_options }),
+        signal: AbortSignal.timeout(30_000),
       },
       0,
     );

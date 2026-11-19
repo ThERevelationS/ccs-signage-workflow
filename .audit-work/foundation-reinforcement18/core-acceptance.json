@@ -1,0 +1,12 @@
+{
+  "localOnly": true,
+  "integrated": false,
+  "remoteWrites": false,
+  "cases": 39,
+  "lintExit": 0,
+  "standaloneBuild": true,
+  "currentPageBuild": true,
+  "currentPageImportsModel": false,
+  "sha256": "439dd9dd3873bf632af505884547b86372b04334d0911059abb9ba714ef63041",
+  "checkedAt": "2026-11-06T08:31:51.152Z"
+}

@@ -1,0 +1,44 @@
+{
+  "results": [
+    {
+      "name": "saved-page",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Do not recompute settled conversion inputs; use frozen output\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-coupled-work-order.mjs:34:12\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-coupled-work-order.mjs:23:15)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-coupled-work-order.mjs:32:39\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    },
+    {
+      "name": "recovered-page",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Do not recompute settled conversion inputs; use frozen output\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-coupled-work-order.mjs:34:12\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-coupled-work-order.mjs:23:15)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-coupled-work-order.mjs:32:39\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    },
+    {
+      "name": "lost-work-order-create-reply",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Do not recompute settled conversion inputs; use frozen output\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-coupled-work-order.mjs:34:12\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-coupled-work-order.mjs:23:15)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-coupled-work-order.mjs:32:39\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    },
+    {
+      "name": "unapproved",
+      "ok": true
+    },
+    {
+      "name": "pending-builder",
+      "ok": true
+    },
+    {
+      "name": "corrupt-reinforcement",
+      "ok": true
+    },
+    {
+      "name": "material-read-failure",
+      "ok": true
+    },
+    {
+      "name": "stale-approved-estimate",
+      "ok": true
+    }
+  ],
+  "actualSourceHelpers": true,
+  "syntheticEntityAndFunctionBoundaries": true,
+  "realStorageVerified": false,
+  "backendAuthorizationVerified": false,
+  "reinforcementV2Activated": false
+}

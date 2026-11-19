@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from "react";
-import * as XLSX from "xlsx";
+// xlsx (~1MB) loads on demand when a file is picked — not at dialog open.
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ import {
   Plus,
   SkipForward,
 } from "lucide-react";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createImportedInventoryRowSafely, importedPayloadMatches } from "./inventoryImportPersistence";
 import {
@@ -51,6 +51,7 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [result, setResult] = useState(null); // { created, updated, skipped, errors }
   const [skippedRows, setSkippedRows] = useState(0); // spreadsheet rows dropped before preview (no routable name or merged duplicates)
+  const [skipDetails, setSkipDetails] = useState([]); // per-row reasons for the count above
   const [cappedRows, setCappedRows] = useState(0); // unique rows beyond IMPORT_ROW_LIMIT that were not loaded
 
   // ------------------------- Step 1: Pick + validate file -------------------------
@@ -60,6 +61,7 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
     setRows([]);
     setResult(null);
     setSkippedRows(0);
+    setSkipDetails([]);
 
     if (!f) return;
 
@@ -74,6 +76,7 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
     setParsing(true);
     try {
       const buf = await f.arrayBuffer();
+      const XLSX = await import("xlsx");
       const wb = XLSX.read(buf, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
@@ -113,13 +116,17 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
       );
 
       // Route every row + decide action (create / update / skip)
+      const drops = [];
       const routed = data
-        .map((row) => {
+        .map((row, idx) => {
+          // Spreadsheet row number for skip reporting (header row = 1).
+          const sourceRow = idx + 2;
           const r = routeRow(row);
-          if (!r.name) return null;
+          if (!r.name) { drops.push({ row: sourceRow, reason: "No routable item name" }); return null; }
           const existingItem = existing[r.target_key].get(nameKey(r.name));
           return {
             ...r,
+            sourceRow,
             action: existingItem ? "update" : "create",
             existingId: existingItem?.id || null,
             existingUpdatedDate: existingItem?.updated_date || null,
@@ -131,12 +138,15 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
       const seen = new Map();
       routed.forEach((r) => {
         const k = `${r.target_key}::${nameKey(r.name)}`;
+        const prior = seen.get(k);
+        if (prior) drops.push({ row: prior.sourceRow, reason: `Duplicate in file — kept the later "${r.name}" row ${r.sourceRow}` });
         seen.set(k, r);
       });
 
       const unique = Array.from(seen.values());
       const capped = unique.slice(0, IMPORT_ROW_LIMIT);
       setSkippedRows(data.length - unique.length);
+      setSkipDetails(drops);
       setCappedRows(unique.length - capped.length);
       setRows(capped);
     } catch (err) {
@@ -411,6 +421,12 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
                     {totalCreate} new item{totalCreate === 1 ? "" : "s"} to create
                     {totalUpdate > 0 && `, ${totalUpdate} existing item${totalUpdate === 1 ? "" : "s"} to update`}
                     {skippedRows > 0 && `, ${skippedRows} spreadsheet row${skippedRows === 1 ? "" : "s"} skipped`}.
+                    {skipDetails.length > 0 && (
+                      <span className="block mt-1 text-[10px] text-amber-700">
+                        {skipDetails.slice(0, 5).map((d, i) => <span key={i} className="block">Row {d.row}: {d.reason}</span>)}
+                        {skipDetails.length > 5 && <span className="block">…and {skipDetails.length - 5} more</span>}
+                      </span>
+                    )}
                     {cappedRows > 0 && ` First ${IMPORT_ROW_LIMIT} rows loaded — ${cappedRows} row${cappedRows === 1 ? "" : "s"} beyond the limit were not loaded. Split the file into smaller batches to import the rest.`}
                   </p>
                 </div>

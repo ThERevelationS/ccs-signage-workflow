@@ -1,0 +1,116 @@
+{
+  "matches": [
+    {
+      "path": "src/api/gatedEntities.js",
+      "line": 29,
+      "text": "export const FoundationProject = staffEntities.FoundationProject;"
+    },
+    {
+      "path": "src/components/markup/projectCategorizer.jsx",
+      "line": 122,
+      "text": "function _impl_categorizeFoundationProject(p) {"
+    },
+    {
+      "path": "src/components/markup/projectCategorizer.jsx",
+      "line": 252,
+      "text": "export const categorizeFoundationProject = (p) => _catMemo(p, _impl_categorizeFoundationProject);"
+    },
+    {
+      "path": "src/components/markup/projectCategorizer.jsx",
+      "line": 263,
+      "text": "  foundation: categorizeFoundationProject,"
+    },
+    {
+      "path": "src/components/estimator/moduleRegistry.js",
+      "line": 4,
+      "text": "  { key: \"foundation\", label: \"Concrete | Masonry | Poles\", entity: \"FoundationProject\", page: \"FoundationEstimator\" },"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationInputValidation.js",
+      "line": 180,
+      "text": "export function foundationProjectInputIssues(project) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationBuilderRecovery.js",
+      "line": 7,
+      "text": "  const saved = await staffEntities.FoundationProject.get(sourceId);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationSellPricing.js",
+      "line": 37,
+      "text": " * @param {object} record       FoundationProject-like record"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 20,
+      "text": "import { foundationItemInputIssues, foundationProjectInputIssues, signageCabinetInputIssues } from \"./foundationInputValidation\";"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "line": 466,
+      "text": "  const inputIssues = foundationProjectInputIssues(project);"
+    },
+    {
+      "path": "src/components/estimator/builder/builderService.js",
+      "line": 69,
+      "text": "    // FoundationProject row; grand_total is never persisted by the Builder, so"
+    },
+    {
+      "path": "src/components/estimator/builder/builderService.js",
+      "line": 84,
+      "text": "// on a saved FoundationProject record. total_brick_cost and total_fill_cost"
+    },
+    {
+      "path": "src/components/estimator/builder/builderService.js",
+      "line": 115,
+      "text": "// The acknowledged section total persisted on a FoundationProject record —"
+    },
+    {
+      "path": "src/components/admin/deletionImpactValidation.js",
+      "line": 16,
+      "text": "  \"CustomerSummary\", \"FoundationProject\", \"ChannelLetterInstallation\","
+    },
+    {
+      "path": "src/components/ClientSearchInput.jsx",
+      "line": 4,
+      "text": "import { User, FoundationProject } from '@/api/gatedEntities';"
+    },
+    {
+      "path": "src/components/ClientSearchInput.jsx",
+      "line": 31,
+      "text": "    FoundationProject.list('-created_date', 100)"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 37,
+      "text": "import { categorizeFoundationProject } from \"@/components/markup/projectCategorizer\";"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 206,
+      "text": "      staffEntities.FoundationProject.get(id),"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 763,
+      "text": "            categorize: categorizeFoundationProject,"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 796,
+      "text": "          entity: staffEntities.FoundationProject,"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 988,
+      "text": "          entity: staffEntities.FoundationProject,"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 1402,
+      "text": "                  categorize={categorizeFoundationProject}"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 22
+}

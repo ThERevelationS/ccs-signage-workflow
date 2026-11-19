@@ -1,0 +1,2734 @@
+{
+ "synthetic": true,
+ "note": "no SDK; fake entity/Builder boundary only",
+ "results": [
+  {
+   "case": "1 stale deferred first read does not clobber latest A",
+   "ok": true,
+   "visible": "Project A latest",
+   "counters": {
+    "projectGet": 3,
+    "estimateGet": 3,
+    "updateMany": 0,
+    "filter": 0,
+    "create": 0,
+    "builderSync": 0
+   },
+   "evidence": {
+    "projects": {
+     "pA": {
+      "id": "pA",
+      "updated_date": "v1",
+      "project_name": "Project A latest",
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A"
+       }
+      ],
+      "signage_cabinets": [],
+      "customer_pricing": {
+       "applied": false
+      }
+     },
+     "pB": {
+      "id": "pB",
+      "updated_date": "w1",
+      "project_name": "Project B",
+      "items": [
+       {
+        "id": "j0",
+        "description": "Fnd B"
+       }
+      ],
+      "signage_cabinets": [],
+      "customer_pricing": {
+       "applied": false
+      }
+     }
+    },
+    "estimates": {
+     "eA": {
+      "id": "eA",
+      "line_items": [
+       {
+        "module_key": "foundation",
+        "project_id": "pA",
+        "estimate_id": "eA",
+        "updated_date_snapshot": "v1"
+       }
+      ]
+     },
+     "eB": {
+      "id": "eB",
+      "line_items": [
+       {
+        "module_key": "foundation",
+        "project_id": "pB",
+        "estimate_id": "eB",
+        "updated_date_snapshot": "w1"
+       }
+      ]
+     }
+    },
+    "copies": {},
+    "counters": {
+     "projectGet": 3,
+     "estimateGet": 3,
+     "updateMany": 0,
+     "filter": 0,
+     "create": 0,
+     "builderSync": 0
+    },
+    "toggles": {
+     "deferGet": {
+      "pA": true
+     },
+     "deferSource": false,
+     "deferBuilder": false,
+     "deferCreate": false,
+     "createFail": false,
+     "createLostReply": false
+    },
+    "deferred": [],
+    "events": [],
+    "requests": [
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:39.994Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:39.995Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:39.996Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/pB",
+      "at": "2026-11-05T16:45:40.121Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:40.122Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eB",
+      "at": "2026-11-05T16:45:40.123Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/control",
+      "at": "2026-11-05T16:45:40.167Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:40.273Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:40.274Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:40.274Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/control",
+      "at": "2026-11-05T16:45:40.279Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/control",
+      "at": "2026-11-05T16:45:40.286Z"
+     }
+    ],
+    "createAttempts": [],
+    "builderAttempts": [],
+    "sourceAttempts": [],
+    "vSeq": 10
+   }
+  },
+  {
+   "case": "2 in-flight A save after reroute: no stale close/nav, no B writes",
+   "ok": true,
+   "savedSnapshot": "v10",
+   "counters": {
+    "projectGet": 6,
+    "estimateGet": 6,
+    "updateMany": 2,
+    "filter": 0,
+    "create": 0,
+    "builderSync": 1
+   },
+   "events": [
+    {
+     "type": "onSaved"
+    }
+   ],
+   "evidence": {
+    "projects": {
+     "pA": {
+      "id": "pA",
+      "updated_date": "v11",
+      "project_name": "Edited A",
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:aa27c670-3be6-4d44-8930-a3b20c09be78",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "signage_cabinets": [],
+      "customer_pricing": {
+       "applied": false
+      },
+      "status": "calculated",
+      "assembly_schema_version": 1,
+      "selected_equipment": [],
+      "walls": [],
+      "wall_caps": [],
+      "poles": [],
+      "landscape": {
+       "cell_size_inches": 12,
+       "cells": {}
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "builder_sync_attempt": {
+       "schema_version": 1,
+       "key": "foundation_sync:fcd7edae-f116-4a63-a3ed-a4ac89d0dff0",
+       "source_project_id": "pA",
+       "estimate_id": "eA",
+       "requested_at": "2026-11-05T16:45:41.864Z"
+      }
+     },
+     "pB": {
+      "id": "pB",
+      "updated_date": "w1",
+      "project_name": "Project B",
+      "items": [
+       {
+        "id": "j0",
+        "description": "Fnd B"
+       }
+      ],
+      "signage_cabinets": [],
+      "customer_pricing": {
+       "applied": false
+      }
+     }
+    },
+    "estimates": {
+     "eA": {
+      "id": "eA",
+      "line_items": [
+       {
+        "module_key": "foundation",
+        "project_id": "pA",
+        "estimate_id": "eA",
+        "updated_date_snapshot": "v11"
+       }
+      ]
+     },
+     "eB": {
+      "id": "eB",
+      "line_items": [
+       {
+        "module_key": "foundation",
+        "project_id": "pB",
+        "estimate_id": "eB",
+        "updated_date_snapshot": "w1"
+       }
+      ]
+     }
+    },
+    "copies": {},
+    "counters": {
+     "projectGet": 6,
+     "estimateGet": 6,
+     "updateMany": 2,
+     "filter": 0,
+     "create": 0,
+     "builderSync": 1
+    },
+    "toggles": {
+     "deferGet": {},
+     "deferSource": false,
+     "deferBuilder": false,
+     "deferCreate": false,
+     "createFail": false,
+     "createLostReply": false
+    },
+    "deferred": [],
+    "events": [
+     {
+      "type": "onSaved"
+     }
+    ],
+    "requests": [
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:41.243Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:41.244Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:41.245Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/control",
+      "at": "2026-11-05T16:45:41.295Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:41.340Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/update-many",
+      "at": "2026-11-05T16:45:41.351Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/pB",
+      "at": "2026-11-05T16:45:41.391Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:41.392Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eB",
+      "at": "2026-11-05T16:45:41.393Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:41.460Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:41.460Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:41.460Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/control",
+      "at": "2026-11-05T16:45:41.494Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:41.498Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:41.799Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:41.799Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:41.799Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:41.865Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/update-many",
+      "at": "2026-11-05T16:45:41.881Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:41.884Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/builder-sync",
+      "at": "2026-11-05T16:45:41.886Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/event",
+      "at": "2026-11-05T16:45:41.889Z"
+     }
+    ],
+    "createAttempts": [],
+    "builderAttempts": [
+     {
+      "estimateId": "eA",
+      "projectId": "pA",
+      "updated_date": "v11",
+      "liveTotal": 0
+     }
+    ],
+    "sourceAttempts": [
+     {
+      "query": {
+       "id": "pA",
+       "updated_date": "v1"
+      },
+      "update": {
+       "$set": {
+        "project_name": "Edited A",
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "items": [
+         {
+          "id": "i0",
+          "description": "Fnd A",
+          "component_id": "foundation_item:aa27c670-3be6-4d44-8930-a3b20c09be78",
+          "quantity": 1,
+          "concrete_volume_cy": 0,
+          "excavation_volume_cy": 0,
+          "concrete_bags": null,
+          "rebar_feet": 0,
+          "rebar_weight_lbs": 0,
+          "concrete_cost": 0,
+          "concrete_rate": 0,
+          "rebar_cost": 0,
+          "rebar_rate": 0,
+          "excavation_cost": 0,
+          "excavation_hours": 0,
+          "forming_cost": 0,
+          "forming_qty": 0,
+          "pouring_cost": 0,
+          "finishing_cost": 0,
+          "finishing_hours": 0,
+          "item_total_cost": 0
+         }
+        ],
+        "selected_equipment": [],
+        "walls": [],
+        "wall_caps": [],
+        "poles": [],
+        "signage_cabinets": [],
+        "landscape": {
+         "cell_size_inches": 12,
+         "cells": {}
+        },
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "customer_pricing": {
+         "applied": false
+        },
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "total_concrete_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_labor_cost": 0,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+         "schema_version": 1,
+         "key": "foundation_sync:adfc77eb-9f48-4723-8f71-60d2ea43f74d",
+         "source_project_id": "pA",
+         "estimate_id": "eA",
+         "requested_at": "2026-11-05T16:45:41.337Z"
+        }
+       }
+      }
+     },
+     {
+      "query": {
+       "id": "pA",
+       "updated_date": "v10"
+      },
+      "update": {
+       "$set": {
+        "project_name": "Edited A",
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "items": [
+         {
+          "id": "i0",
+          "description": "Fnd A",
+          "component_id": "foundation_item:aa27c670-3be6-4d44-8930-a3b20c09be78",
+          "quantity": 1,
+          "concrete_volume_cy": 0,
+          "excavation_volume_cy": 0,
+          "concrete_bags": null,
+          "rebar_feet": 0,
+          "rebar_weight_lbs": 0,
+          "concrete_cost": 0,
+          "concrete_rate": 0,
+          "rebar_cost": 0,
+          "rebar_rate": 0,
+          "excavation_cost": 0,
+          "excavation_hours": 0,
+          "forming_cost": 0,
+          "forming_qty": 0,
+          "pouring_cost": 0,
+          "finishing_cost": 0,
+          "finishing_hours": 0,
+          "item_total_cost": 0
+         }
+        ],
+        "selected_equipment": [],
+        "walls": [],
+        "wall_caps": [],
+        "poles": [],
+        "signage_cabinets": [],
+        "landscape": {
+         "cell_size_inches": 12,
+         "cells": {}
+        },
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "customer_pricing": {
+         "applied": false
+        },
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "total_concrete_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_labor_cost": 0,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+         "schema_version": 1,
+         "key": "foundation_sync:fcd7edae-f116-4a63-a3ed-a4ac89d0dff0",
+         "source_project_id": "pA",
+         "estimate_id": "eA",
+         "requested_at": "2026-11-05T16:45:41.864Z"
+        }
+       }
+      }
+     }
+    ],
+    "vSeq": 12,
+    "lastBuilderSync": {
+     "estimateId": "eA",
+     "projectId": "pA",
+     "updated_date": "v11",
+     "liveTotal": 0
+    }
+   }
+  },
+  {
+   "case": "2b old Builder acknowledgment does not clear returned draft recovery",
+   "ok": true,
+   "firstVersion": "v10",
+   "finalVersion": "v11",
+   "evidence": {
+    "projects": {
+     "pA": {
+      "id": "pA",
+      "updated_date": "v11",
+      "project_name": "Newer A draft",
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:b7d99df9-5a97-44e8-904e-8ae9fdab97cd",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "signage_cabinets": [],
+      "customer_pricing": {
+       "applied": false
+      },
+      "status": "calculated",
+      "assembly_schema_version": 1,
+      "selected_equipment": [],
+      "walls": [],
+      "wall_caps": [],
+      "poles": [],
+      "landscape": {
+       "cell_size_inches": 12,
+       "cells": {}
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "builder_sync_attempt": {
+       "schema_version": 1,
+       "key": "foundation_sync:ac90b1f1-7cfe-4640-a279-297325dcf04d",
+       "source_project_id": "pA",
+       "estimate_id": "eA",
+       "requested_at": "2026-11-05T16:45:42.557Z"
+      }
+     },
+     "pB": {
+      "id": "pB",
+      "updated_date": "w1",
+      "project_name": "Project B",
+      "items": [
+       {
+        "id": "j0",
+        "description": "Fnd B"
+       }
+      ],
+      "signage_cabinets": [],
+      "customer_pricing": {
+       "applied": false
+      }
+     }
+    },
+    "estimates": {
+     "eA": {
+      "id": "eA",
+      "line_items": [
+       {
+        "module_key": "foundation",
+        "project_id": "pA",
+        "estimate_id": "eA",
+        "updated_date_snapshot": "v11"
+       }
+      ]
+     },
+     "eB": {
+      "id": "eB",
+      "line_items": [
+       {
+        "module_key": "foundation",
+        "project_id": "pB",
+        "estimate_id": "eB",
+        "updated_date_snapshot": "w1"
+       }
+      ]
+     }
+    },
+    "copies": {},
+    "counters": {
+     "projectGet": 5,
+     "estimateGet": 5,
+     "updateMany": 2,
+     "filter": 0,
+     "create": 0,
+     "builderSync": 2
+    },
+    "toggles": {
+     "deferGet": {},
+     "deferSource": false,
+     "deferBuilder": false,
+     "deferCreate": false,
+     "createFail": false,
+     "createLostReply": false
+    },
+    "deferred": [],
+    "events": [
+     {
+      "type": "onSaved"
+     }
+    ],
+    "requests": [
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:42.238Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:42.239Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:42.240Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:42.332Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/update-many",
+      "at": "2026-11-05T16:45:42.344Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:42.346Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/builder-sync",
+      "at": "2026-11-05T16:45:42.348Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/pB",
+      "at": "2026-11-05T16:45:42.401Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:42.401Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eB",
+      "at": "2026-11-05T16:45:42.402Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:42.472Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:42.472Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:42.472Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/control",
+      "at": "2026-11-05T16:45:42.507Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:42.558Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/update-many",
+      "at": "2026-11-05T16:45:42.575Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:42.578Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/builder-sync",
+      "at": "2026-11-05T16:45:42.580Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/event",
+      "at": "2026-11-05T16:45:42.582Z"
+     }
+    ],
+    "createAttempts": [],
+    "builderAttempts": [
+     {
+      "estimateId": "eA",
+      "projectId": "pA",
+      "updated_date": "v10",
+      "liveTotal": 0
+     },
+     {
+      "estimateId": "eA",
+      "projectId": "pA",
+      "updated_date": "v11",
+      "liveTotal": 0
+     }
+    ],
+    "sourceAttempts": [
+     {
+      "query": {
+       "id": "pA",
+       "updated_date": "v1"
+      },
+      "update": {
+       "$set": {
+        "project_name": "Saved A",
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "items": [
+         {
+          "id": "i0",
+          "description": "Fnd A",
+          "component_id": "foundation_item:b7d99df9-5a97-44e8-904e-8ae9fdab97cd",
+          "quantity": 1,
+          "concrete_volume_cy": 0,
+          "excavation_volume_cy": 0,
+          "concrete_bags": null,
+          "rebar_feet": 0,
+          "rebar_weight_lbs": 0,
+          "concrete_cost": 0,
+          "concrete_rate": 0,
+          "rebar_cost": 0,
+          "rebar_rate": 0,
+          "excavation_cost": 0,
+          "excavation_hours": 0,
+          "forming_cost": 0,
+          "forming_qty": 0,
+          "pouring_cost": 0,
+          "finishing_cost": 0,
+          "finishing_hours": 0,
+          "item_total_cost": 0
+         }
+        ],
+        "selected_equipment": [],
+        "walls": [],
+        "wall_caps": [],
+        "poles": [],
+        "signage_cabinets": [],
+        "landscape": {
+         "cell_size_inches": 12,
+         "cells": {}
+        },
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "customer_pricing": {
+         "applied": false
+        },
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "total_concrete_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_labor_cost": 0,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+         "schema_version": 1,
+         "key": "foundation_sync:51b703b2-d057-428b-bc5a-490efa6314c4",
+         "source_project_id": "pA",
+         "estimate_id": "eA",
+         "requested_at": "2026-11-05T16:45:42.330Z"
+        }
+       }
+      }
+     },
+     {
+      "query": {
+       "id": "pA",
+       "updated_date": "v10"
+      },
+      "update": {
+       "$set": {
+        "project_name": "Newer A draft",
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "items": [
+         {
+          "id": "i0",
+          "description": "Fnd A",
+          "component_id": "foundation_item:b7d99df9-5a97-44e8-904e-8ae9fdab97cd",
+          "quantity": 1,
+          "concrete_volume_cy": 0,
+          "excavation_volume_cy": 0,
+          "concrete_bags": null,
+          "rebar_feet": 0,
+          "rebar_weight_lbs": 0,
+          "concrete_cost": 0,
+          "concrete_rate": 0,
+          "rebar_cost": 0,
+          "rebar_rate": 0,
+          "excavation_cost": 0,
+          "excavation_hours": 0,
+          "forming_cost": 0,
+          "forming_qty": 0,
+          "pouring_cost": 0,
+          "finishing_cost": 0,
+          "finishing_hours": 0,
+          "item_total_cost": 0
+         }
+        ],
+        "selected_equipment": [],
+        "walls": [],
+        "wall_caps": [],
+        "poles": [],
+        "signage_cabinets": [],
+        "landscape": {
+         "cell_size_inches": 12,
+         "cells": {}
+        },
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "customer_pricing": {
+         "applied": false
+        },
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "total_concrete_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 0,
+        "total_labor_cost": 0,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+         "schema_version": 1,
+         "key": "foundation_sync:ac90b1f1-7cfe-4640-a279-297325dcf04d",
+         "source_project_id": "pA",
+         "estimate_id": "eA",
+         "requested_at": "2026-11-05T16:45:42.557Z"
+        }
+       }
+      }
+     }
+    ],
+    "vSeq": 12,
+    "lastBuilderSync": {
+     "estimateId": "eA",
+     "projectId": "pA",
+     "updated_date": "v11",
+     "liveTotal": 0
+    }
+   }
+  },
+  {
+   "case": "3 copy success: one create, remapped ids, no receipt, nav to copy",
+   "ok": true,
+   "copyId": "copy1_mw3s1i9x",
+   "counters": {
+    "projectGet": 2,
+    "estimateGet": 1,
+    "updateMany": 0,
+    "filter": 2,
+    "create": 1,
+    "builderSync": 0
+   },
+   "evidence": {
+    "projects": {
+     "pA": {
+      "id": "pA",
+      "updated_date": "v1",
+      "project_name": "Project A",
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "ia"
+       }
+      ],
+      "signage_cabinets": [
+       {
+        "component_id": "cb",
+        "mount": "pole",
+        "pole_component_id": "pa"
+       }
+      ],
+      "customer_pricing": {
+       "applied": false
+      },
+      "walls": [
+       {
+        "id": "w0",
+        "component_id": "wa",
+        "shape": {
+         "points": [
+          {
+           "x": 0,
+           "z": 0
+          },
+          {
+           "x": 96,
+           "z": 0
+          }
+         ],
+         "closed": false,
+         "segments": [
+          {
+           "component_id": "sa",
+           "length": 96
+          }
+         ]
+        }
+       }
+      ],
+      "poles": [
+       {
+        "id": "po0",
+        "component_id": "pa",
+        "foundation_component_id": "ia",
+        "signs": [
+         {
+          "component_id": "sg"
+         }
+        ]
+       }
+      ],
+      "wall_caps": [
+       {
+        "component_id": "ca",
+        "wall_component_id": "wa",
+        "segment_component_id": "sa"
+       }
+      ],
+      "landscape": {
+       "beds": [
+        {
+         "plant": "x"
+        }
+       ]
+      },
+      "ai_engineering_data": {
+       "note": "a"
+      },
+      "builder_sync_attempt": {
+       "key": "receiptA",
+       "source_project_id": "pA"
+      }
+     },
+     "pB": {
+      "id": "pB",
+      "updated_date": "w1",
+      "project_name": "Project B",
+      "items": [
+       {
+        "id": "j0",
+        "description": "Fnd B"
+       }
+      ],
+      "signage_cabinets": [],
+      "customer_pricing": {
+       "applied": false
+      }
+     },
+     "copy1_mw3s1i9x": {
+      "project_name": "Project A (Copy)",
+      "status": "draft",
+      "assembly_schema_version": 1,
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:9dc585f5-83eb-413b-8090-fa2c1eff7ed0",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "selected_equipment": [],
+      "walls": [
+       {
+        "id": "w0",
+        "component_id": "foundation_wall:7c027ac8-f24d-4659-b865-45080cbdf2d9",
+        "shape": {
+         "points": [
+          {
+           "x": 0,
+           "z": 0
+          },
+          {
+           "x": 96,
+           "z": 0
+          }
+         ],
+         "closed": false,
+         "segments": [
+          {
+           "component_id": "foundation_wall_segment:5865d326-8505-4870-8413-df43cfa533a2",
+           "length": 96
+          }
+         ]
+        },
+        "calculatedCosts": {
+         "totalBricks": 0,
+         "materialCost": 0,
+         "mortarCost": 0,
+         "laborHours": 0,
+         "laborCost": 0,
+         "totalCost": 0,
+         "totalLinearInches": 0,
+         "numCourses": 0,
+         "internalTotalBricks": 0,
+         "internalMaterialCost": 0,
+         "internalMortarCost": 0,
+         "internalLaborCost": 0,
+         "internalLaborHours": 0
+        }
+       }
+      ],
+      "wall_caps": [
+       {
+        "component_id": "foundation_wall_cap:ab65c7d9-0aff-4e79-9b1f-038f284c1549",
+        "wall_component_id": "foundation_wall:7c027ac8-f24d-4659-b865-45080cbdf2d9",
+        "segment_component_id": "foundation_wall_segment:5865d326-8505-4870-8413-df43cfa533a2",
+        "wall_index": 0,
+        "segment_index": 0,
+        "cap_name": "",
+        "stock_length_inches": 0,
+        "cost": 0
+       }
+      ],
+      "poles": [
+       {
+        "id": "po0",
+        "component_id": "foundation_pole:e88b8667-5019-42a5-9ba3-9554e6e9e7f9",
+        "foundation_component_id": "foundation_item:9dc585f5-83eb-413b-8090-fa2c1eff7ed0",
+        "signs": [
+         {
+          "component_id": "foundation_pole_sign:fe602eb5-8db1-4e8f-a788-4ede15672a94"
+         }
+        ],
+        "foundation_idx": 0,
+        "pole_cost": 0,
+        "pole_painting_cost": 0,
+        "total_cost": 0,
+        "pole_name": ""
+       }
+      ],
+      "signage_cabinets": [
+       {
+        "component_id": "foundation_signage_cabinet:3166f272-e51f-43f9-bf02-38d8838ab7e3",
+        "mount": "pole",
+        "pole_component_id": "foundation_pole:e88b8667-5019-42a5-9ba3-9554e6e9e7f9",
+        "pole_index": 0,
+        "foundation_component_id": ""
+       }
+      ],
+      "landscape": {
+       "beds": [
+        {
+         "plant": "x"
+        }
+       ]
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "customer_pricing": {
+       "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "ai_engineering_data": {
+       "note": "a"
+      },
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "creation_request_key": "foundation_project_copy:8e63e97f-86a1-4214-8f4c-ef0891586d64",
+      "id": "copy1_mw3s1i9x",
+      "created_date": "2026-11-05T16:45:42.981Z",
+      "updated_date": "2026-11-05T16:45:42.981Z"
+     }
+    },
+    "estimates": {
+     "eA": {
+      "id": "eA",
+      "line_items": [
+       {
+        "module_key": "foundation",
+        "project_id": "pA",
+        "estimate_id": "eA",
+        "updated_date_snapshot": "v1"
+       }
+      ]
+     },
+     "eB": {
+      "id": "eB",
+      "line_items": [
+       {
+        "module_key": "foundation",
+        "project_id": "pB",
+        "estimate_id": "eB",
+        "updated_date_snapshot": "w1"
+       }
+      ]
+     }
+    },
+    "copies": {
+     "copy1_mw3s1i9x": {
+      "project_name": "Project A (Copy)",
+      "status": "draft",
+      "assembly_schema_version": 1,
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:9dc585f5-83eb-413b-8090-fa2c1eff7ed0",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "selected_equipment": [],
+      "walls": [
+       {
+        "id": "w0",
+        "component_id": "foundation_wall:7c027ac8-f24d-4659-b865-45080cbdf2d9",
+        "shape": {
+         "points": [
+          {
+           "x": 0,
+           "z": 0
+          },
+          {
+           "x": 96,
+           "z": 0
+          }
+         ],
+         "closed": false,
+         "segments": [
+          {
+           "component_id": "foundation_wall_segment:5865d326-8505-4870-8413-df43cfa533a2",
+           "length": 96
+          }
+         ]
+        },
+        "calculatedCosts": {
+         "totalBricks": 0,
+         "materialCost": 0,
+         "mortarCost": 0,
+         "laborHours": 0,
+         "laborCost": 0,
+         "totalCost": 0,
+         "totalLinearInches": 0,
+         "numCourses": 0,
+         "internalTotalBricks": 0,
+         "internalMaterialCost": 0,
+         "internalMortarCost": 0,
+         "internalLaborCost": 0,
+         "internalLaborHours": 0
+        }
+       }
+      ],
+      "wall_caps": [
+       {
+        "component_id": "foundation_wall_cap:ab65c7d9-0aff-4e79-9b1f-038f284c1549",
+        "wall_component_id": "foundation_wall:7c027ac8-f24d-4659-b865-45080cbdf2d9",
+        "segment_component_id": "foundation_wall_segment:5865d326-8505-4870-8413-df43cfa533a2",
+        "wall_index": 0,
+        "segment_index": 0,
+        "cap_name": "",
+        "stock_length_inches": 0,
+        "cost": 0
+       }
+      ],
+      "poles": [
+       {
+        "id": "po0",
+        "component_id": "foundation_pole:e88b8667-5019-42a5-9ba3-9554e6e9e7f9",
+        "foundation_component_id": "foundation_item:9dc585f5-83eb-413b-8090-fa2c1eff7ed0",
+        "signs": [
+         {
+          "component_id": "foundation_pole_sign:fe602eb5-8db1-4e8f-a788-4ede15672a94"
+         }
+        ],
+        "foundation_idx": 0,
+        "pole_cost": 0,
+        "pole_painting_cost": 0,
+        "total_cost": 0,
+        "pole_name": ""
+       }
+      ],
+      "signage_cabinets": [
+       {
+        "component_id": "foundation_signage_cabinet:3166f272-e51f-43f9-bf02-38d8838ab7e3",
+        "mount": "pole",
+        "pole_component_id": "foundation_pole:e88b8667-5019-42a5-9ba3-9554e6e9e7f9",
+        "pole_index": 0,
+        "foundation_component_id": ""
+       }
+      ],
+      "landscape": {
+       "beds": [
+        {
+         "plant": "x"
+        }
+       ]
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "customer_pricing": {
+       "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "ai_engineering_data": {
+       "note": "a"
+      },
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "creation_request_key": "foundation_project_copy:8e63e97f-86a1-4214-8f4c-ef0891586d64",
+      "id": "copy1_mw3s1i9x",
+      "created_date": "2026-11-05T16:45:42.981Z",
+      "updated_date": "2026-11-05T16:45:42.981Z"
+     }
+    },
+    "counters": {
+     "projectGet": 2,
+     "estimateGet": 1,
+     "updateMany": 0,
+     "filter": 2,
+     "create": 1,
+     "builderSync": 0
+    },
+    "toggles": {
+     "deferGet": {},
+     "deferSource": false,
+     "deferBuilder": false,
+     "deferCreate": false,
+     "createFail": false,
+     "createLostReply": false
+    },
+    "deferred": [],
+    "events": [],
+    "requests": [
+     {
+      "method": "POST",
+      "path": "/api/control",
+      "at": "2026-11-05T16:45:42.678Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:42.933Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:42.934Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:42.935Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/filter",
+      "at": "2026-11-05T16:45:42.977Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/create",
+      "at": "2026-11-05T16:45:42.981Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/filter",
+      "at": "2026-11-05T16:45:42.984Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/copy1_mw3s1i9x",
+      "at": "2026-11-05T16:45:42.991Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:42.992Z"
+     }
+    ],
+    "createAttempts": [
+     {
+      "project_name": "Project A (Copy)",
+      "status": "draft",
+      "assembly_schema_version": 1,
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:9dc585f5-83eb-413b-8090-fa2c1eff7ed0",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "selected_equipment": [],
+      "walls": [
+       {
+        "id": "w0",
+        "component_id": "foundation_wall:7c027ac8-f24d-4659-b865-45080cbdf2d9",
+        "shape": {
+         "points": [
+          {
+           "x": 0,
+           "z": 0
+          },
+          {
+           "x": 96,
+           "z": 0
+          }
+         ],
+         "closed": false,
+         "segments": [
+          {
+           "component_id": "foundation_wall_segment:5865d326-8505-4870-8413-df43cfa533a2",
+           "length": 96
+          }
+         ]
+        },
+        "calculatedCosts": {
+         "totalBricks": 0,
+         "materialCost": 0,
+         "mortarCost": 0,
+         "laborHours": 0,
+         "laborCost": 0,
+         "totalCost": 0,
+         "totalLinearInches": 0,
+         "numCourses": 0,
+         "internalTotalBricks": 0,
+         "internalMaterialCost": 0,
+         "internalMortarCost": 0,
+         "internalLaborCost": 0,
+         "internalLaborHours": 0
+        }
+       }
+      ],
+      "wall_caps": [
+       {
+        "component_id": "foundation_wall_cap:ab65c7d9-0aff-4e79-9b1f-038f284c1549",
+        "wall_component_id": "foundation_wall:7c027ac8-f24d-4659-b865-45080cbdf2d9",
+        "segment_component_id": "foundation_wall_segment:5865d326-8505-4870-8413-df43cfa533a2",
+        "wall_index": 0,
+        "segment_index": 0,
+        "cap_name": "",
+        "stock_length_inches": 0,
+        "cost": 0
+       }
+      ],
+      "poles": [
+       {
+        "id": "po0",
+        "component_id": "foundation_pole:e88b8667-5019-42a5-9ba3-9554e6e9e7f9",
+        "foundation_component_id": "foundation_item:9dc585f5-83eb-413b-8090-fa2c1eff7ed0",
+        "signs": [
+         {
+          "component_id": "foundation_pole_sign:fe602eb5-8db1-4e8f-a788-4ede15672a94"
+         }
+        ],
+        "foundation_idx": 0,
+        "pole_cost": 0,
+        "pole_painting_cost": 0,
+        "total_cost": 0,
+        "pole_name": ""
+       }
+      ],
+      "signage_cabinets": [
+       {
+        "component_id": "foundation_signage_cabinet:3166f272-e51f-43f9-bf02-38d8838ab7e3",
+        "mount": "pole",
+        "pole_component_id": "foundation_pole:e88b8667-5019-42a5-9ba3-9554e6e9e7f9",
+        "pole_index": 0,
+        "foundation_component_id": ""
+       }
+      ],
+      "landscape": {
+       "beds": [
+        {
+         "plant": "x"
+        }
+       ]
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "customer_pricing": {
+       "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "ai_engineering_data": {
+       "note": "a"
+      },
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "creation_request_key": "foundation_project_copy:8e63e97f-86a1-4214-8f4c-ef0891586d64"
+     }
+    ],
+    "builderAttempts": [],
+    "sourceAttempts": [],
+    "vSeq": 10
+   }
+  },
+  {
+   "case": "4 copy fail: alert, no record, URL same, retry same key+data",
+   "ok": true,
+   "retryKey": "foundation_project_copy:45aa9cf5-d039-439d-a188-a1da2cc9e9b9",
+   "evidence": {
+    "projects": {
+     "pA": {
+      "id": "pA",
+      "updated_date": "v1",
+      "project_name": "Project A",
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A"
+       }
+      ],
+      "signage_cabinets": [],
+      "customer_pricing": {
+       "applied": false
+      }
+     },
+     "pB": {
+      "id": "pB",
+      "updated_date": "w1",
+      "project_name": "Project B",
+      "items": [
+       {
+        "id": "j0",
+        "description": "Fnd B"
+       }
+      ],
+      "signage_cabinets": [],
+      "customer_pricing": {
+       "applied": false
+      }
+     },
+     "copy1_mw3s1j8z": {
+      "project_name": "Project A (Copy)",
+      "status": "draft",
+      "assembly_schema_version": 1,
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:6df7be73-b3ba-475e-b905-6c7a0784f1f5",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "selected_equipment": [],
+      "walls": [],
+      "wall_caps": [],
+      "poles": [],
+      "signage_cabinets": [],
+      "landscape": {
+       "cell_size_inches": 12,
+       "cells": {}
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "customer_pricing": {
+       "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "creation_request_key": "foundation_project_copy:45aa9cf5-d039-439d-a188-a1da2cc9e9b9",
+      "id": "copy1_mw3s1j8z",
+      "created_date": "2026-11-05T16:45:44.243Z",
+      "updated_date": "2026-11-05T16:45:44.243Z"
+     }
+    },
+    "estimates": {
+     "eA": {
+      "id": "eA",
+      "line_items": [
+       {
+        "module_key": "foundation",
+        "project_id": "pA",
+        "estimate_id": "eA",
+        "updated_date_snapshot": "v1"
+       }
+      ]
+     },
+     "eB": {
+      "id": "eB",
+      "line_items": [
+       {
+        "module_key": "foundation",
+        "project_id": "pB",
+        "estimate_id": "eB",
+        "updated_date_snapshot": "w1"
+       }
+      ]
+     }
+    },
+    "copies": {
+     "copy1_mw3s1j8z": {
+      "project_name": "Project A (Copy)",
+      "status": "draft",
+      "assembly_schema_version": 1,
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:6df7be73-b3ba-475e-b905-6c7a0784f1f5",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "selected_equipment": [],
+      "walls": [],
+      "wall_caps": [],
+      "poles": [],
+      "signage_cabinets": [],
+      "landscape": {
+       "cell_size_inches": 12,
+       "cells": {}
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "customer_pricing": {
+       "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "creation_request_key": "foundation_project_copy:45aa9cf5-d039-439d-a188-a1da2cc9e9b9",
+      "id": "copy1_mw3s1j8z",
+      "created_date": "2026-11-05T16:45:44.243Z",
+      "updated_date": "2026-11-05T16:45:44.243Z"
+     }
+    },
+    "counters": {
+     "projectGet": 2,
+     "estimateGet": 1,
+     "updateMany": 0,
+     "filter": 5,
+     "create": 2,
+     "builderSync": 0
+    },
+    "toggles": {
+     "deferGet": {},
+     "deferSource": false,
+     "deferBuilder": false,
+     "deferCreate": false,
+     "createFail": false,
+     "createLostReply": false
+    },
+    "deferred": [],
+    "events": [],
+    "requests": [
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:43.419Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:43.421Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:43.421Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/filter",
+      "at": "2026-11-05T16:45:43.497Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/create",
+      "at": "2026-11-05T16:45:43.509Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/filter",
+      "at": "2026-11-05T16:45:43.511Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/filter",
+      "at": "2026-11-05T16:45:44.215Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/control",
+      "at": "2026-11-05T16:45:44.236Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/filter",
+      "at": "2026-11-05T16:45:44.240Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/create",
+      "at": "2026-11-05T16:45:44.243Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/filter",
+      "at": "2026-11-05T16:45:44.245Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/copy1_mw3s1j8z",
+      "at": "2026-11-05T16:45:44.252Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:44.254Z"
+     }
+    ],
+    "createAttempts": [
+     {
+      "project_name": "Project A (Copy)",
+      "status": "draft",
+      "assembly_schema_version": 1,
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:6df7be73-b3ba-475e-b905-6c7a0784f1f5",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "selected_equipment": [],
+      "walls": [],
+      "wall_caps": [],
+      "poles": [],
+      "signage_cabinets": [],
+      "landscape": {
+       "cell_size_inches": 12,
+       "cells": {}
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "customer_pricing": {
+       "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "creation_request_key": "foundation_project_copy:45aa9cf5-d039-439d-a188-a1da2cc9e9b9"
+     },
+     {
+      "project_name": "Project A (Copy)",
+      "status": "draft",
+      "assembly_schema_version": 1,
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:6df7be73-b3ba-475e-b905-6c7a0784f1f5",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "selected_equipment": [],
+      "walls": [],
+      "wall_caps": [],
+      "poles": [],
+      "signage_cabinets": [],
+      "landscape": {
+       "cell_size_inches": 12,
+       "cells": {}
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "customer_pricing": {
+       "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "creation_request_key": "foundation_project_copy:45aa9cf5-d039-439d-a188-a1da2cc9e9b9"
+     }
+    ],
+    "builderAttempts": [],
+    "sourceAttempts": [],
+    "vSeq": 10
+   }
+  },
+  {
+   "case": "4b lost reply with persisted row: reconcile, no duplicate",
+   "ok": true,
+   "reconciled": "copy1_mw3s1kgu",
+   "creates": 1,
+   "filters": 2,
+   "evidence": {
+    "projects": {
+     "pA": {
+      "id": "pA",
+      "updated_date": "v1",
+      "project_name": "Project A",
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A"
+       }
+      ],
+      "signage_cabinets": [],
+      "customer_pricing": {
+       "applied": false
+      }
+     },
+     "pB": {
+      "id": "pB",
+      "updated_date": "w1",
+      "project_name": "Project B",
+      "items": [
+       {
+        "id": "j0",
+        "description": "Fnd B"
+       }
+      ],
+      "signage_cabinets": [],
+      "customer_pricing": {
+       "applied": false
+      }
+     },
+     "copy1_mw3s1kgu": {
+      "project_name": "Project A (Copy)",
+      "status": "draft",
+      "assembly_schema_version": 1,
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:fbb7daa7-e031-44b4-a4eb-868679a00c3b",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "selected_equipment": [],
+      "walls": [],
+      "wall_caps": [],
+      "poles": [],
+      "signage_cabinets": [],
+      "landscape": {
+       "cell_size_inches": 12,
+       "cells": {}
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "customer_pricing": {
+       "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "creation_request_key": "foundation_project_copy:ced7f6a5-dfdd-4908-92c5-3b647004fabe",
+      "id": "copy1_mw3s1kgu",
+      "created_date": "2026-11-05T16:45:45.822Z",
+      "updated_date": "2026-11-05T16:45:45.822Z"
+     }
+    },
+    "estimates": {
+     "eA": {
+      "id": "eA",
+      "line_items": [
+       {
+        "module_key": "foundation",
+        "project_id": "pA",
+        "estimate_id": "eA",
+        "updated_date_snapshot": "v1"
+       }
+      ]
+     },
+     "eB": {
+      "id": "eB",
+      "line_items": [
+       {
+        "module_key": "foundation",
+        "project_id": "pB",
+        "estimate_id": "eB",
+        "updated_date_snapshot": "w1"
+       }
+      ]
+     }
+    },
+    "copies": {
+     "copy1_mw3s1kgu": {
+      "project_name": "Project A (Copy)",
+      "status": "draft",
+      "assembly_schema_version": 1,
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:fbb7daa7-e031-44b4-a4eb-868679a00c3b",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "selected_equipment": [],
+      "walls": [],
+      "wall_caps": [],
+      "poles": [],
+      "signage_cabinets": [],
+      "landscape": {
+       "cell_size_inches": 12,
+       "cells": {}
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "customer_pricing": {
+       "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "creation_request_key": "foundation_project_copy:ced7f6a5-dfdd-4908-92c5-3b647004fabe",
+      "id": "copy1_mw3s1kgu",
+      "created_date": "2026-11-05T16:45:45.822Z",
+      "updated_date": "2026-11-05T16:45:45.822Z"
+     }
+    },
+    "counters": {
+     "projectGet": 2,
+     "estimateGet": 1,
+     "updateMany": 0,
+     "filter": 2,
+     "create": 1,
+     "builderSync": 0
+    },
+    "toggles": {
+     "deferGet": {},
+     "deferSource": false,
+     "deferBuilder": false,
+     "deferCreate": false,
+     "createFail": false,
+     "createLostReply": true
+    },
+    "deferred": [],
+    "events": [],
+    "requests": [
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:45.734Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:45.735Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:45.736Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/filter",
+      "at": "2026-11-05T16:45:45.812Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/create",
+      "at": "2026-11-05T16:45:45.822Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/filter",
+      "at": "2026-11-05T16:45:45.824Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/copy1_mw3s1kgu",
+      "at": "2026-11-05T16:45:45.831Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:45.831Z"
+     }
+    ],
+    "createAttempts": [
+     {
+      "project_name": "Project A (Copy)",
+      "status": "draft",
+      "assembly_schema_version": 1,
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:fbb7daa7-e031-44b4-a4eb-868679a00c3b",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "selected_equipment": [],
+      "walls": [],
+      "wall_caps": [],
+      "poles": [],
+      "signage_cabinets": [],
+      "landscape": {
+       "cell_size_inches": 12,
+       "cells": {}
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "customer_pricing": {
+       "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "creation_request_key": "foundation_project_copy:ced7f6a5-dfdd-4908-92c5-3b647004fabe"
+     }
+    ],
+    "builderAttempts": [],
+    "sourceAttempts": [],
+    "vSeq": 10
+   }
+  },
+  {
+   "case": "5 old copy completes after route B: no stale nav, B untouched",
+   "ok": true,
+   "orphanCopy": "copy1_mw3s1ksq",
+   "url": "http://127.0.0.1:5172/FoundationEstimator?id=pB&estimateId=eB",
+   "evidence": {
+    "projects": {
+     "pA": {
+      "id": "pA",
+      "updated_date": "v1",
+      "project_name": "Project A",
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A"
+       }
+      ],
+      "signage_cabinets": [],
+      "customer_pricing": {
+       "applied": false
+      }
+     },
+     "pB": {
+      "id": "pB",
+      "updated_date": "w1",
+      "project_name": "Project B",
+      "items": [
+       {
+        "id": "j0",
+        "description": "Fnd B"
+       }
+      ],
+      "signage_cabinets": [],
+      "customer_pricing": {
+       "applied": false
+      }
+     },
+     "copy1_mw3s1ksq": {
+      "project_name": "Project A (Copy)",
+      "status": "draft",
+      "assembly_schema_version": 1,
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:3c7ede55-cbab-472b-8229-673378b116b3",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "selected_equipment": [],
+      "walls": [],
+      "wall_caps": [],
+      "poles": [],
+      "signage_cabinets": [],
+      "landscape": {
+       "cell_size_inches": 12,
+       "cells": {}
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "customer_pricing": {
+       "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "creation_request_key": "foundation_project_copy:6b29df65-ba97-4127-9559-c4301be5949d",
+      "id": "copy1_mw3s1ksq",
+      "created_date": "2026-11-05T16:45:46.250Z",
+      "updated_date": "2026-11-05T16:45:46.250Z"
+     }
+    },
+    "estimates": {
+     "eA": {
+      "id": "eA",
+      "line_items": [
+       {
+        "module_key": "foundation",
+        "project_id": "pA",
+        "estimate_id": "eA",
+        "updated_date_snapshot": "v1"
+       }
+      ]
+     },
+     "eB": {
+      "id": "eB",
+      "line_items": [
+       {
+        "module_key": "foundation",
+        "project_id": "pB",
+        "estimate_id": "eB",
+        "updated_date_snapshot": "w1"
+       }
+      ]
+     }
+    },
+    "copies": {
+     "copy1_mw3s1ksq": {
+      "project_name": "Project A (Copy)",
+      "status": "draft",
+      "assembly_schema_version": 1,
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:3c7ede55-cbab-472b-8229-673378b116b3",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "selected_equipment": [],
+      "walls": [],
+      "wall_caps": [],
+      "poles": [],
+      "signage_cabinets": [],
+      "landscape": {
+       "cell_size_inches": 12,
+       "cells": {}
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "customer_pricing": {
+       "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "creation_request_key": "foundation_project_copy:6b29df65-ba97-4127-9559-c4301be5949d",
+      "id": "copy1_mw3s1ksq",
+      "created_date": "2026-11-05T16:45:46.250Z",
+      "updated_date": "2026-11-05T16:45:46.250Z"
+     }
+    },
+    "counters": {
+     "projectGet": 2,
+     "estimateGet": 2,
+     "updateMany": 0,
+     "filter": 2,
+     "create": 1,
+     "builderSync": 0
+    },
+    "toggles": {
+     "deferGet": {},
+     "deferSource": false,
+     "deferBuilder": false,
+     "deferCreate": true,
+     "createFail": false,
+     "createLostReply": false
+    },
+    "deferred": [],
+    "events": [],
+    "requests": [
+     {
+      "method": "GET",
+      "path": "/api/project/pA",
+      "at": "2026-11-05T16:45:46.096Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:46.097Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eA",
+      "at": "2026-11-05T16:45:46.098Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/filter",
+      "at": "2026-11-05T16:45:46.172Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/create",
+      "at": "2026-11-05T16:45:46.183Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/project/pB",
+      "at": "2026-11-05T16:45:46.222Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/inventory",
+      "at": "2026-11-05T16:45:46.222Z"
+     },
+     {
+      "method": "GET",
+      "path": "/api/estimate/eB",
+      "at": "2026-11-05T16:45:46.222Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/control",
+      "at": "2026-11-05T16:45:46.250Z"
+     },
+     {
+      "method": "POST",
+      "path": "/api/filter",
+      "at": "2026-11-05T16:45:46.252Z"
+     }
+    ],
+    "createAttempts": [
+     {
+      "project_name": "Project A (Copy)",
+      "status": "draft",
+      "assembly_schema_version": 1,
+      "items": [
+       {
+        "id": "i0",
+        "description": "Fnd A",
+        "component_id": "foundation_item:3c7ede55-cbab-472b-8229-673378b116b3",
+        "quantity": 1,
+        "concrete_volume_cy": 0,
+        "excavation_volume_cy": 0,
+        "concrete_bags": null,
+        "rebar_feet": 0,
+        "rebar_weight_lbs": 0,
+        "concrete_cost": 0,
+        "concrete_rate": 0,
+        "rebar_cost": 0,
+        "rebar_rate": 0,
+        "excavation_cost": 0,
+        "excavation_hours": 0,
+        "forming_cost": 0,
+        "forming_qty": 0,
+        "pouring_cost": 0,
+        "finishing_cost": 0,
+        "finishing_hours": 0,
+        "item_total_cost": 0
+       }
+      ],
+      "selected_equipment": [],
+      "walls": [],
+      "wall_caps": [],
+      "poles": [],
+      "signage_cabinets": [],
+      "landscape": {
+       "cell_size_inches": 12,
+       "cells": {}
+      },
+      "total_signage_cabinet_cost": 0,
+      "total_landscape_cost": 0,
+      "customer_markup_percent": 0,
+      "customer_pricing": {
+       "applied": false
+      },
+      "excavation_method": "hand_dig",
+      "project_concrete_type": "4000_ae",
+      "project_concrete_admixtures": [],
+      "total_concrete_cost": 0,
+      "total_rebar_cost": 0,
+      "total_excavation_cost": 0,
+      "total_labor_cost": 0,
+      "total_equipment_cost": 0,
+      "total_forming_materials_cost": 0,
+      "total_pole_cost": 0,
+      "total_pole_painting_cost": 0,
+      "total_brick_cost": 0,
+      "total_fill_cost": 0,
+      "total_wall_cost": 0,
+      "total_wall_cap_cost": 0,
+      "creation_request_key": "foundation_project_copy:6b29df65-ba97-4127-9559-c4301be5949d"
+     }
+    ],
+    "builderAttempts": [],
+    "sourceAttempts": [],
+    "vSeq": 10
+   }
+  }
+ ],
+ "telemetry": [
+  {
+   "case": "2",
+   "type": "confirm",
+   "message": "Reload the saved project and discard current unsaved changes?"
+  },
+  {
+   "case": "2",
+   "type": "confirm",
+   "message": "Reload the saved project and discard current unsaved changes?"
+  },
+  {
+   "case": "4",
+   "type": "console-error",
+   "message": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  },
+  {
+   "case": "4",
+   "type": "console-error",
+   "message": "Error: Foundation project copy create failed and no matching record was visible on recovery read. Do not retry blindly; reload first. synthetic create failure\n    at ensureIdempotentEntityCreate (http://127.0.0.1:5172/FoundationEstimator?id=pA&estimateId=eA:28344:13)\n    at async http://127.0.0.1:5172/FoundationEstimator?id=pA&estimateId=eA:28923:24"
+  },
+  {
+   "case": "4",
+   "type": "alert",
+   "message": "Save failed: Foundation project copy create failed and no matching record was visible on recovery read. Do not retry blindly; reload first. synthetic create failure"
+  },
+  {
+   "case": "4b",
+   "type": "console-error",
+   "message": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  }
+ ]
+}

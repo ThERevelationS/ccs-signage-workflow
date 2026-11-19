@@ -1,0 +1,12 @@
+{
+  "authorized": true,
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "12a41a3ac89f45e775886d33af4fbf7f4dca178a",
+  "restoreCheckpointId": "6aeeeb30f9aa8ee2e6ae7c26",
+  "candidateHashes": {
+    "foundationCalc.js": "845a45841f415a5eb9f7f7cd6553ad38044e713b534035a99358f83657a1abe1",
+    "FoundationEquipmentTab.jsx": "e621b4959702d1e6ad825a919bbf5a0afefe1d87682b9c2a21764dfc9ab7cfe9"
+  },
+  "reviewedProtocolHash": "8c3987012abbc4e4a8c8492d35b31baa53b13fcb0636ffb6840e4d27dba586e3"
+}

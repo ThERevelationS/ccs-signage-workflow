@@ -1,0 +1,80 @@
+{
+  "unit": "foundation-o007t-sourcekey",
+  "item": "O-007 (CMP-A07) remainder — ai_engineering_data.source_key provenance staleness on template apply",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remote_head_verified": "f2d2fe3e0b1c3fc852d3de7175643f8c896f2e37 (git log -1 via sandbox run, clean porcelain status; NOTE: moved past the o007-templates unit's cbee8813d — that unit's +17-field allowlist work has LANDED on remote and is in this baseline)",
+  "mode": "LOCAL candidates only - no remote write, no checkpoint, no deploy, no business-record or paid-AI calls. All baselines are fresh `sandbox read` pulls at the verified HEAD; local worktree src/ was never read for content.",
+  "issue": "ai_engineering_data.source_key = JSON.stringify({id, updated_date, input}) of the design the AI analyzed (written by foundationAiReviewPatch). A stored template carries that record verbatim into project_data; on apply to a DIFFERENT project the source_key still claims the SOURCE project's design — a stale provenance claim on the target record.",
+  "consumer_contract_verified": {
+    "files": [
+      "src/components/estimator/foundation/AiEngineeringAssistant.jsx (baseline sha 4e79a81ca87d — ONLY src/ reader of source_key besides the producer)",
+      "src/components/estimator/foundation/foundationAiReview.js (baseline sha 628acf4d7d84 — producer: prepareFoundationAiReview computes the live key; foundationAiReviewPatch writes the record)",
+      "base44/entities/FoundationProject.jsonc — ai_engineering_data is {\"type\":\"object\",\"additionalProperties\":true}: additive provenance keys persist, no inner-field schema constraint"
+    ],
+    "label_logic": "samePolicy = meta.policy_version === FOUNDATION_AI_REVIEW_POLICY && typeof meta.source_key === 'string' && !!meta.source_key; stale = samePolicy && (!prepared || meta.source_key !== prepared.key); label = stale ? 'Design changed since this note. Run a fresh review.' : (samePolicy && meta.source_key ? 'Preliminary review' : 'Historical / unverified AI note')",
+    "stamp_safety": "source_key is kept verbatim, so samePolicy stays true and stale is GUARANTEED on any apply target: the carried key embeds the source project's id, which can never equal the target's live key. The note can never render as 'Preliminary review' on a project it did not analyze. All stamp fields are additive — the consumer ignores unknown keys (verified by rendering the real baseline component)."
+  },
+  "targets": [
+    {
+      "path": "src/components/estimator/foundation/foundationTemplateModel.js",
+      "baseline": "baseline/foundationTemplateModel.js (fresh sandbox read at f2d2fe3e, sha256 b70eaa38883d...)",
+      "candidate": "candidates/src/components/estimator/foundation/foundationTemplateModel.js (sha256 80d947f016fe...)",
+      "diff": "verify/diff-foundationTemplateModel.patch (+42 lines, three hunks)",
+      "changes": [
+        "new stampTemplateAppliedAiData(v, {appliedAt}): undefined->undefined, null->null, non-record->throw (fail closed, same semantics as sanitizeTemplateCustomerPricing); record->clone + provenance stamp",
+        "stamp keeps source_key verbatim (it is the true reference to the analyzed design AND the value the review surface compares against the live design key — keeping it preserves the guaranteed stale-banner path) and adds origin_source_key (the analyzed-design key, kept only if not already set so chained template saves preserve the EARLIEST origin), template_applied:true, template_applied_at (injected appliedAt, else new Date().toISOString())",
+        "prepareFoundationTemplatePatch signature extended {createId, appliedAt} and applies the stamp after the customer_pricing gate — apply-time only so templates stored before this change or authored outside the snapshot path are also covered; the snapshot path deliberately stays verbatim (a stored template legitimately holds the source's own review; the stale claim only materializes on apply)",
+        "O-007 field-semantics comment extended with the ai_engineering_data provenance decision"
+      ]
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+      "baseline": "baseline/FoundationTemplateDialog.jsx (fresh sandbox read at f2d2fe3e, sha256 4fd2231d3787... — matches the O-014 landed version, unchanged)",
+      "candidate": "candidates/src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+      "diff": "verify/diff-FoundationTemplateDialog.patch (+6 lines, one hunk)",
+      "changes": [
+        "display-only: template rows carrying a non-empty ai_engineering_recommendation show 'Includes an AI review note — stale on this project' under the 'N foundations' subtitle — pre-apply warning that the carried note will not describe the applying project (worded to cover both consumer branches: keyed reviews render 'Design changed', keyless notes render 'Historical / unverified')"
+      ]
+    }
+  ],
+  "provenance_field_semantics": {
+    "source_key": "KEPT verbatim — the true key of the analyzed (source) design; its mismatch with any target's live key is what drives the review surface's existing stale banner",
+    "origin_source_key": "NEW — explicit record of the analyzed-design key; set from the carried source_key only when absent, so a chained template (project that received an apply, then saved as template, then applied again) preserves the FIRST origin rather than the immediate parent's",
+    "template_applied": "NEW — flags the note as template-carried, distinguishing it from a review that went stale on its own project (in-place staleness has no marker)",
+    "template_applied_at": "NEW — ISO time the note was carried onto this record; injectable via {appliedAt} for deterministic tests, defaults to apply time",
+    "rejected_alternative": "nulling source_key was rejected: it would degrade the label from the actionable 'Design changed since this note. Run a fresh review.' to 'Historical / unverified AI note' (weaker prompt, wrongly implies a legacy-format note), for zero functional gain — the key is opaque JSON, never dereferenced"
+  },
+  "protected_not_touched": [
+    "src/pages/FoundationEstimator.jsx (Phase B-2 owns; apply handler needs no change — it already routes stored project_data through prepareFoundationTemplatePatch, the single call site)",
+    "foundationCalc.js, foundationReinforcement* (Phase B-2 owns)",
+    "foundationAiReview.js, AiEngineeringAssistant.jsx (consumer contract satisfied by additive data — no code change needed; verified by rendering the real baseline component)",
+    "foundationAssemblyModel.js, foundationTemplateService.js, foundationDraftRecovery.js, base44/entities/*.jsonc (baselines pulled for bundling/schema verification only)",
+    "createFoundationTemplateSnapshot left verbatim by design — provenance stamp exists only on the apply path"
+  ],
+  "verification": {
+    "unit_harness": "verify/test-o007t-sourcekey.mjs — esbuild-bundles CANDIDATE model (assembly dep -> baseline), CANDIDATE dialog (model dep -> CANDIDATE, service -> baseline), and the REAL baseline foundationAiReview + AiEngineeringAssistant chain via react-test-renderer; 11/11 PASS (verify/test-output.txt)",
+    "cases": [
+      "apply stamps: source_key verbatim, origin_source_key = carried key, template_applied, template_applied_at = injected appliedAt; review fields (review_status/engineering_approved/information_gaps/policy_version/generated_at/model) travel verbatim — source data produced by the REAL prepareFoundationAiReview + foundationAiReviewPatch chain",
+      "default template_applied_at is a valid ISO timestamp when appliedAt not injected",
+      "absent ai_engineering_data stays absent (target keeps own); explicit null travels as null",
+      "malformed ai_engineering_data (string/array/number) fails closed at apply",
+      "record without source_key -> origin_source_key null + flag (no fabricated key)",
+      "chained templates preserve earliest origin_source_key; apply time updates",
+      "snapshot stores ai_engineering_data verbatim — no stamp at rest",
+      "control render: baseline assistant on the source project shows 'Preliminary review'",
+      "round-trip render: snapshot -> stored -> apply -> merge onto a different project id -> baseline assistant shows 'Design changed since this note. Run a fresh review.', never 'Preliminary review'; carried markdown still rendered under the banner",
+      "carried source_key asserted != the target's live design key (stamp fields can never flip the consumer to a non-stale label)",
+      "dialog: 'Includes an AI review note' indicator renders exactly once across one carrying + one bare template row"
+    ],
+    "syntax": "npx esbuild clean on both candidates (jsx loader for the dialog)"
+  },
+  "followups_noted": [
+    "the o007-templates unit's verify/test-o007-templates.mjs round-trip case deep-equals merged.ai_engineering_data against the source record — after this stamp lands, that expectation is stale by design (gains the three provenance keys); re-running that suite against post-landing code needs an allowlist exception for the provenance fields, same class of note as their scripts/test-foundation-template.mjs allowlist flag",
+    "scripts/test-foundation-template.mjs reviewed: unaffected — its patch-path assertions cover component-id remaps only (no ai_engineering_data shape assertion), input-immutability holds (stamp deep-clones the already-cloned provided value), and the exact 31-field FOUNDATION_TEMPLATE_FIELDS sort assertion is untouched",
+    "on landing, whoever applies the candidate should re-run scripts/test-foundation-template.mjs against the updated local src/",
+    "save-as-copy still carries ai_engineering_data verbatim (same-job copy — the copy's payload is saved under the same project lineage then assigned a new project; its source_key likewise references the pre-copy design; left unchanged as out of scope for this template-apply subunit, noted for the ledger)",
+    "ai_engineering_data is also in foundationDraftRecovery draft fields — drafts carry it verbatim; a draft restored on the SAME project keeps a meaningful source_key, correct as-is"
+  ],
+  "ledger_paragraph": "O-007 remainder subunit LOCAL-ONLY at remote HEAD f2d2fe3e (clean worktree; all baselines fresh sandbox reads; the o007-templates +17-field allowlist has landed and is in this baseline). Two surgical candidates: foundationTemplateModel gains stampTemplateAppliedAiData — an apply-time provenance stamp on carried ai_engineering_data that keeps source_key verbatim (its embedded source-project id guarantees the deployed review surface's key-mismatch stale banner: 'Design changed since this note. Run a fresh review.') and adds origin_source_key (earliest-origin preserved on chained templates), template_applied:true, template_applied_at (injectable). Non-record data fails closed like the customer_pricing gate; snapshot-at-rest stays verbatim — the stale claim only exists post-apply. FoundationTemplateDialog gains a display-only 'Includes an AI review note — stale on this project' row indicator. Nulling source_key was rejected (degrades the actionable stale label to 'Historical / unverified' for zero gain). Verified end-to-end: 11/11 esbuild + react-test-renderer cases bundling the REAL baseline foundationAiReview producer and AiEngineeringAssistant consumer — control project shows 'Preliminary review', applied target shows the stale banner and can never claim current. Consumer/schema contract confirmed: FoundationProject.ai_engineering_data is additionalProperties:true; additive keys persist; the only src/ source_key reader is the assistant. Not touched: FoundationEstimator.jsx / foundationCalc / foundationReinforcement* (Phase B-2), foundationAiReview, the assistant itself, entities. No remote write/checkpoint/deploy/business records/paid AI."
+}

@@ -1,0 +1,172 @@
+{
+ "src/components/channelLetterInstall/channelLetterPricingAvailability.js": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/channelLetterPricingAvailability.js",
+  "sha256": "559cd862b1562025ddf74277634727e466ccdd3a9bdaffd07d8bf9c8e0c5efe1",
+  "bytes": 67701,
+  "lines": 1174,
+  "lineEndings": "CRLF",
+  "terminalLF": true,
+  "existsOnRemote": false,
+  "remoteSha256": null
+ },
+ "src/components/channelLetterInstall/BackerFabPanel.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/BackerFabPanel.jsx",
+  "sha256": "fff6a050cef5509132bbe94d58679a6fa3f3a0e32b69cf67dc25c275cf0730ba",
+  "bytes": 17070,
+  "lines": 361,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "812860105527a9e435c2f878ab501f39a7d43ab6cab638c771eabac2c3674fc1"
+ },
+ "src/components/channelLetterInstall/BackerSection.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/BackerSection.jsx",
+  "sha256": "b460bd906258b66778bfee69aeb090ef83df6b98f527d958b80fd9f8ffa29b57",
+  "bytes": 5894,
+  "lines": 122,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "4a1eadd8f2a0939c9f9fea4195db09b4eed99b6855d7ecf0cb4b07901c2836a0"
+ },
+ "src/components/channelLetterInstall/DimensionalFabPanel.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/DimensionalFabPanel.jsx",
+  "sha256": "b5231c85193bc03806bca290a0d0eaa453044c7d72139d604667571cd6839a8c",
+  "bytes": 21708,
+  "lines": 474,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "27073eed73387475a014e605cfe875a283aef1371930814c1ab7d4488c80105a"
+ },
+ "src/components/channelLetterInstall/EquipmentSelector.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/EquipmentSelector.jsx",
+  "sha256": "d5d0e89dc95718536fa7695e342cde457f87eb8b7dc4c56ca4ad0950030c0e41",
+  "bytes": 15509,
+  "lines": 348,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "332a84a29f7af6b09b3664a79a1287d32551ba312dd716bc01fd00b41df4c4b5"
+ },
+ "src/components/channelLetterInstall/InstallLineItem.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/InstallLineItem.jsx",
+  "sha256": "78944fd207de673ffb5d3139b89ed57aaa3808b9aadc866cb4cca2bcd58cb073",
+  "bytes": 14368,
+  "lines": 290,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "eee40e4149461c060123f15f271df3dcd71ca68508466704924b2c60b8b798a3"
+ },
+ "src/components/channelLetterInstall/InstallSummaryCard.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/InstallSummaryCard.jsx",
+  "sha256": "ffa71e812cc8e0e217b466dacded2062e781a86b8e9d5aea8876f1ea16322a51",
+  "bytes": 7616,
+  "lines": 156,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "aa7ae1dc82edded5a842f68f5f72dac86a6b452d11031781e835515f0ab1b30d"
+ },
+ "src/components/channelLetterInstall/ItemsList.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/ItemsList.jsx",
+  "sha256": "9ad325e06b8f57a19b1099f6b87549ce80134b282a4f7d7c68072b2fbffb564b",
+  "bytes": 2295,
+  "lines": 56,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "a3b7c3463c11eb0ebb782aaaf948416650ddfe7e6047bfadc51ceef71bb155d8"
+ },
+ "src/components/channelLetterInstall/LadderSelector.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/LadderSelector.jsx",
+  "sha256": "bf8cc28d535d531c010c8389c57f9c831a1622d70a9f04b59434c2dbf999ee9b",
+  "bytes": 9855,
+  "lines": 222,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "35b0c8f79251d4ed1678265c0bbc47e3c0ea3ef360c6edef170358e6df50f3a2"
+ },
+ "src/components/channelLetterInstall/LetterPurchaseRow.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/LetterPurchaseRow.jsx",
+  "sha256": "8d6afb2049a2671f8f24c1a284477dcc0ac59796563597ce8614d404ec1750a9",
+  "bytes": 24266,
+  "lines": 546,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "bc1facf8a3346a444001d588b2ed090e92860fbefdefbb2418299401d3e4217a"
+ },
+ "src/components/channelLetterInstall/LettersPurchaseTab.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/LettersPurchaseTab.jsx",
+  "sha256": "e0260fb1a3cde97edaf48f888a50826b957c46499fbbf4e8df5fa2283a166bf8",
+  "bytes": 24160,
+  "lines": 517,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "9b66921eb99ae6f09321d4a6cf48885125303d98b1f0eb96b81e8d9de999ce4c"
+ },
+ "src/components/channelLetterInstall/MaterialsList.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/MaterialsList.jsx",
+  "sha256": "9b5c8ca5c68c951e310b1da2b431bafb820727bf0c845771d372ddb24f04aeee",
+  "bytes": 11532,
+  "lines": 261,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "6afdf4ca2e978a7f576c4ff7756cfd9d00717043219e7d5cef698a8e6bf3a466"
+ },
+ "src/components/channelLetterInstall/PersonnelSelector.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/PersonnelSelector.jsx",
+  "sha256": "86166997f8fed04635e5ec7852ffb3a89b1447d69526c7f280497dda9c08ad16",
+  "bytes": 9452,
+  "lines": 242,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "f691250568394b2bc18d04106a7f479348e2a8ff2ffe104ee49ae691a1ebd506"
+ },
+ "src/components/channelLetterInstall/SummaryDetailsCard.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/SummaryDetailsCard.jsx",
+  "sha256": "43b5153e6128bc22366afdea48adc6f25b85c43009c04128d9441d21d306011b",
+  "bytes": 17396,
+  "lines": 340,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "543c327b63c4ca1d15e65afd81620b4adbfe33ae8736906cd73f828523b22900"
+ },
+ "src/components/channelLetterInstall/ValidationWarnings.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/ValidationWarnings.jsx",
+  "sha256": "a9f4a0a5112ac968090253b7ca062fcc78c8f7e08f589d60bccbfd2d459343da",
+  "bytes": 6900,
+  "lines": 188,
+  "lineEndings": "LF",
+  "terminalLF": true,
+  "existsOnRemote": true,
+  "remoteSha256": "0a345d62a58554a9e043f67837d1ea737cd8c4da6cbf265d68831f06da1495be"
+ },
+ "src/components/channelLetterInstall/installExport.jsx": {
+  "candidateFile": "candidates/src/components/channelLetterInstall/installExport.jsx",
+  "sha256": "6d0e871431fb4f4fa179891a005dc00c88c2a979ca382dcecaccbc033a135590",
+  "bytes": 4421,
+  "lines": 94,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "79b489b02316291faa9f19cd18b24ddc6c4a5fa1df6f1e909d1fee8a501ea5e4"
+ },
+ "src/pages/ChannelLetterEstimator.jsx": {
+  "candidateFile": "candidates/src/pages/ChannelLetterEstimator.jsx",
+  "sha256": "49a7f9f5acd833476ef7c27109f5d47a0eae583910f1327d28e86ea8b41cd2e0",
+  "bytes": 62966,
+  "lines": 1280,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "4db2b14eb5803f8df5cc742976dc46cb6e07964b7c9c6b0d835dc1f03b098b78"
+ }
+}

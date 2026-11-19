@@ -1,0 +1,279 @@
+{
+ "jurisdiction_id": "6acb18821c4148742d490bd1",
+ "jurisdiction_name": "Sandusky",
+ "state": "OH",
+ "office_id": "scan-6acb18821c4148742d490bd1-office-0",
+ "office_name": "Sandusky permitting office",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Business Type Reason for Registration Corporation Non-Profit Courtesy withholding for an employee's resident municipality S-Corp Estate & Trust Doing business within the municipality this year (temporary) LLC Sole Proprietor / LLC Approx. # of days Start Date Partnership Business with a fixed location Company Information (List physical address of work performed within this municipality) Name: Federal ID #: Address: SSN : City/State/Zip: Mailing Address (for withholding tax forms / if different from above) Mailing Address (for net profit tax forms / if different from above) Filing Status: Calendar year Fiscal year / month ending Do you have any employees? Yes No Number of employees at RITA location My withholding is filed under a 3rd party account (PEO or common paymaster) Monthly gross payroll at RITA location $ I am a small employer ( under $500,000 in gross revenue during previous year",
+   "tags": [
+    "sign",
+    "fee",
+    "dimension",
+    "illumination",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "7a46f89024e3c123aa6ff280fab2e0d51e7a461ae22b8f79d8ac6216bbbd8dc6",
+   "source_document_id": null,
+   "source_title": "7a46f89024e3c123aa6ff280fab2e0d51e7a461ae22b8f79d8ac6216bbbd8dc6.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Building/RITA%20Business%20Registration%20Form%2048.pdf?t=202404101120430"
+  },
+  {
+   "page": 6,
+   "snippet": "Residential Tax Abatement Guidelines & Application – revised 2/13/2024 6 4. Project description: (Please briefly describe the type of work to be performed, including estimated square footage to be constructed or renovated. Attach additional sheets if necessary) 5. Estimated amount of investment (as applicable): New Construction: $ or Remodeling: $ _______________________ Submission of this application expressly authorizes the City of Sandusky to review applicable confidential records. The Applicant agrees to supply additional information upon request. The Applicant affirmatively covenants that the information contained in and submitted with this application is complete and correct and is aware of the ORC Sections 9.66(C) and 2921.13 penalties for falsification which could result in the forfeiture of all current and future development assistance benefits as well as a fine of not more than",
+   "tags": [
+    "fee",
+    "area",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "c3d389c4d48f69c1f0b39c1016929ba1b7fedf87162c50fe98b2467a1e79c825",
+   "source_document_id": null,
+   "source_title": "c3d389c4d48f69c1f0b39c1016929ba1b7fedf87162c50fe98b2467a1e79c825.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Community%20Development/Applications/Residential%20Tax%20Abatement%20Application.pdf?t=202404101120450"
+  },
+  {
+   "page": 1,
+   "snippet": "CODE COMPLIANCE This is to appeal a decision of the City of Sandusky Housing Manager/ Code Compliance Officer as permitted under Section 1341.07 of the Environmental Health Housing Code. Requests shall be accompanied by a non - refundable deposit of $15.00 for each Property Parcel Number. The subject of this appeal is located at: ___________ ___________ ___________ __________________ ______ __ Erie County Parcel No.: _ _____________________________________________ __________________ ________ I am hereby appealing the decision of the Housing Manager /Housing Code Compliance Officer rendered on: Whereby it was determined: This appeal is being filed for the following reasons: The following points are relevant: Name: Address: Phone: I certify that I have an interest in the property that is the subject of this appeal as an: Owner Heir Operator Occupant Mortgage Holder Lien Holder ____________",
+   "tags": [
+    "fee",
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "5ca3f653e2bac5328221962c3cac2c52a433d6e63c8adffd77c276acc83e2a85",
+   "source_document_id": null,
+   "source_title": "5ca3f653e2bac5328221962c3cac2c52a433d6e63c8adffd77c276acc83e2a85.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Code%20Compliance/Housing%20Appeals%20Board%20Request%20for%20Appeal.pdf?t=202404101120430"
+  },
+  {
+   "page": 1,
+   "snippet": "_______________ DIVISION OF BUILDING This kit is to assist you with your project submittal and to ensure it is a success. The examples shown are for illustration purposes only. They are to be used to better understand what is needed for submittal for a residential application for plan approval. Below is the code sections r elating to the submission of construction documents for residential projects. Residential Code of Ohio 106.1.3 Information on construction documents. Residential construction documents shall be dimensioned and drawn upon suitable material. Electronic media documents are permitted to be submitted and are approved by the residential building official. Construction documents shall be coordinated and of sufficient clarity to indicate the location, nature and extent of the work proposed and show in detail that i t will conform to the provisions of this code. Construction do",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "5fd42ea7216fdfa61f77c81429809dc768d02657de4e098a3780bf3c1a31ffc2",
+   "source_document_id": null,
+   "source_title": "5fd42ea7216fdfa61f77c81429809dc768d02657de4e098a3780bf3c1a31ffc2.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Building/Residential%20Kit%20for%20Plan%20Submittal.pdf?t=202404101120420"
+  },
+  {
+   "page": 5,
+   "snippet": "Page 5 of 5 b. Business's reasons for requesting tax incentives (be quantitatively specific as possible) Submission of this application expressly authorizes (name of the local jurisdiction) and/of(name of county) to contact the Ohio Environmental Protection Agency to confirm statements contained within this application including item #7 and to review applicable confidential records. As part of this application, the business may also be required to directly request from the Ohio Department of Taxation or complete a waiver form allowing the Ohio Department of Taxation to release specific tax records to the local jurisdictions considering the incentive request. Applicant agrees to supply additional information upon request. The applicant affirmatively covenants that the information contained in and submitted with this application is complete and correct and is aware of the ORC Sections 9.66",
+   "tags": [
+    "fee",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "5b921096213b348e5f8ee007e8a9cec5f5531aacff8e4bdd75830eb91db145b5",
+   "source_document_id": null,
+   "source_title": "5b921096213b348e5f8ee007e8a9cec5f5531aacff8e4bdd75830eb91db145b5.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Community%20Development/Applications/Enterprise%20Zone%20Tax%20Abatement.pdf?t=202404120918090"
+  },
+  {
+   "page": 2,
+   "snippet": "The City of Sandusky, Ohio 1 ED Program Guidelines & Application - 2024 INTRODUCTION The Sandusky Economic Development Assistance Program is intended to spur and support economic development activities within the City of Sandusky (“the City”). Financial assistance is available for new or expanding businesses and/or property owners that wi ll positively affect the economic and employment climates in the City of Sandusky . The City strongly believes that investments in economic development activities are vital to job creation and attracting and retaining a talented workforce to fill newly created or available positions. Increased economic development will also stimulate investments in underutilized or vacant buildings and sites – which will strengthen the real estate market, increase property values, create a more walkable community and im prove overall quality of life. SANDUSKY CITY ECONO",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "cf6cc6cc6ae347576abcd5a98e23dfaf9a1ff030e770cb70f7ddd3243c1efc37",
+   "source_document_id": null,
+   "source_title": "cf6cc6cc6ae347576abcd5a98e23dfaf9a1ff030e770cb70f7ddd3243c1efc37.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Community%20Development/Applications/ED%20Guidelines%20and%20Application.pdf?t=202404160902430"
+  },
+  {
+   "page": 1,
+   "snippet": "SANDUSKY SPECIFIC, OHIO CODES & DESIGN CRITERIA FOR PLAN APPROVAL ON COMMERCI A L & RESIDENTIAL STRUCTURES The City of Sandusky, Building Division is Certified by the Ohio Department of Commerce, Board of Building Standards to enforce the Ohio Building Code (OBC) and Residential Code of Ohio (RCO) within the limits of the incorporated area of the City of Sandusky. Free Access to Ohio Building Codes Link: https://codes.iccsafe.org/codes/ohio Commercial Work (Including residential structures with 4 units or more) The provisions of the “Ohio Building Code”, the “Ohio Mechanical Code”, and the “Ohio Plumbing Code” shall apply to the construction, alteration, movement, enlargement, replacement, repair, equipment, use and occupancy, location, maintenance, removal and demolition of every building or structure or any appurtenances connected or attached to such buildings or structures. As provide",
+   "tags": [
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "db1ab2c847b5133d23d0cee39a8144e44c449891053da4583adad38a14d80f8e",
+   "source_document_id": null,
+   "source_title": "db1ab2c847b5133d23d0cee39a8144e44c449891053da4583adad38a14d80f8e.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Building/Sandusky%20Design%20Criteria%202024.pdf?t=202408231422180"
+  },
+  {
+   "page": 1,
+   "snippet": "EXISTING BUILDING CERTIFICATE OF OCCUPANCY INSTRUCTION SHEET City of Sandusky, Division of Building 240 Columbus Avenue , Sandusky, Ohio – 419 .627. 5940 – building@ci tyof sandusky. com Submit one application for each building or structure. Please print or type. All sections must be completed. DES_BD 0012 , 2012, REV. 04/15, 08/16 , 06/20 , 05/21 (To be used with the Non - Reside nti al for Inspection Not Requiring Plans Application ) INSTRUCTIONS FOR OBTAINING A CERTIFICATE OF OCCUPANCY FOR AN EXISTING BUILDING According to the 2011 Ohio Building Code Chapter 1, Section 111, the owner of an existing building may request the issuance of a Certificate of Use and Occupancy. Upon writt en request from the owner, the building official shall issue a certificate of occupancy, provided there are not violations of law or orders of the building official pending, and it is established after inspe",
+   "tags": [
+    "fee",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "e051fe5ae45e0fa21cc7af879e8bdd60fef73ed40de6fde41ba044a203dc9709",
+   "source_document_id": null,
+   "source_title": "e051fe5ae45e0fa21cc7af879e8bdd60fef73ed40de6fde41ba044a203dc9709.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Building/Existing%20Building%20Certificate%20of%20Occupancy%20Instruction%20Sheet.pdf?t=202404101120430"
+  },
+  {
+   "page": 1,
+   "snippet": "240 Columbus Ave nue Sandusky, Ohio 4487 0 419.627.5913 ww w.cityofsandusky .com ___ __ CO DE COMPLIANCE REQUEST FOR APPEAL Boulevard Abatement This is a request to appeal the billing for boulevard Abatement . The property billed is located at: ______________ ___________ _________ . Erie County Parcel No.: _ __ _____ _ ______ ________ . I am hereby appealing the invoice mailed on _ __________ , invoice number __________________ , in the amount of $_ ____________ . This appeal is being filed for the reasons: Please attach any and all evidence to this appeal form. Print Name and Address: Telephone: _ _____________________________________ I certify that I am the owner, operator, or caretaker of the property that is the subject of this appeal. _ _____________________ _____ __ _________________________ Signature Date",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "6dd9ebaebe9f049a664f148e34ee78c24c77f6dd082eac4662f2a2dbeb01cbd4",
+   "source_document_id": null,
+   "source_title": "6dd9ebaebe9f049a664f148e34ee78c24c77f6dd082eac4662f2a2dbeb01cbd4.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Code%20Compliance/Request%20for%20Appeal%20Boulevard%20Clean%20Up.pdf?t=202404101120430"
+  },
+  {
+   "page": 1,
+   "snippet": "___ __________ DEPARTMENT OF COMMUNITY DEVELOPEMENT Division of Code Compliance REQUEST FOR APPEAL GRASS/WEED CUTTING This is a request to appeal the billing for grass/weed cutting. The property billed is located at: __ ______________________ ____________________ ____________ Erie County Parcel No.: _ _____________ ___________ I am hereby appealing the invoice mailed on ___________, invoice number __________________, in the amount of $_____________. This appeal is being filed for the reasons: Please attach any an d all evidence to this appeal form. Print Name and Address: Telephone: ________________________ ____________ I certify that I am the owner, operator, or caretaker of the property that is the subject of this appeal. ______________________ ___ ____ _____ ___________________________ Signature Date 240 Columbus Avenue Sandusky, Ohio 44870 419.627. 5913 www.c ityof sandusky. com",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "9294b1357512b0414a891f6194c218f1e8b4eeec8363de9d4d6676aaeb894cdf",
+   "source_document_id": null,
+   "source_title": "9294b1357512b0414a891f6194c218f1e8b4eeec8363de9d4d6676aaeb894cdf.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Code%20Compliance/Request%20for%20Appeal%20Grass%20and%20Weed%20Cutting.pdf?t=202404101120430"
+  },
+  {
+   "page": 3,
+   "snippet": "Residential Tax Abatement Guidelines & Application – revised 2/13/2024 3  Three unit properties must have a minimum investment of $5,000.00  Applicant must be the legally titled owner or an authorized representative of the owner  All projects must meet applicable zoning requirements  Applicants may be required to seek approval from other administrative bodies, including but not limited to the Landmarks Commission or the Planning Commission  Some projects will require necessary permits prior to commencing work. Further, certain work will require completion by licensed and registered contractors. Proof of permits must be included when submitting Post Construction form  Applications received within 12 months of the project completion date will receive the maximum number of years  Applications received after 12 months of the project completion date will receive the number of years rem",
+   "tags": [
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "c3d389c4d48f69c1f0b39c1016929ba1b7fedf87162c50fe98b2467a1e79c825",
+   "source_document_id": null,
+   "source_title": "c3d389c4d48f69c1f0b39c1016929ba1b7fedf87162c50fe98b2467a1e79c825.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Community%20Development/Applications/Residential%20Tax%20Abatement%20Application.pdf?t=202404101120450"
+  },
+  {
+   "page": 15,
+   "snippet": "The City of Sandusky, Ohio 14 ED Program Guidelines & Application - 2024 Submission Acknowledgment The undersigned certifies that he/she is authorized to complete, sign and submit this application on behalf of the applicant/owner . Further, the undersigned certifies that the information contained in this application has been reviewed by him/her and that all inf ormation, including exhibits, are , to the best of his/her knowledge, complete and accurate and presents fairly the condition of the applicant and p roject accurately. Intentionally falsifying information in this document constitutes a criminal offens e. The undersigned hereby authorizes the City of Sandusky to investigate the credit worthiness and of the undersigned, and/or applican t. The undersigned understands that information submitted to the City of Sandusky as part of this application may be cons idered a public record. The",
+   "tags": [
+    "sign",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "cf6cc6cc6ae347576abcd5a98e23dfaf9a1ff030e770cb70f7ddd3243c1efc37",
+   "source_document_id": null,
+   "source_title": "cf6cc6cc6ae347576abcd5a98e23dfaf9a1ff030e770cb70f7ddd3243c1efc37.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Community%20Development/Applications/ED%20Guidelines%20and%20Application.pdf?t=202404160902430"
+  },
+  {
+   "page": 8,
+   "snippet": "Revised 3/22/2022 kk Page 8 In the Municipal Court of Sandusky, Erie County, Ohio Civil Division Paul Plaintiff _______________________________ ) Case No. __________________ 100 Main Street ____________________________ ) COMPLAINT IN FORCIBLE ENTRY City, State Zip Code _________________________ ) AND DETAINER FOR PAST DUE Plaintiff (Landlord) RENT AND OTHER MONEY DAMAGES Vs. ) Dan and Donna Defendant (Tenants) ___________ ) 111 Rental Place, Apt. X ____________________ ) City, State Zip Code ________________________ Defendant (Tenant) ) First Claim for Relief (Eviction) 1. Plaintiff is the owner of the premises located at 111 Rental Place , City, , Erie County, Ohio. 2. Defendant is a tenant at the premises located at 111 Rental Place, Apt X . 3. Defendant is in default of his/her lease or rental agreement because non payment of rental, end of lease, criminal activity, etc. 4. On 00/00/2",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "fcbf5821be82ff44989f82b4c2c90298a961d87508b2051c0cfa80f88e9e642d",
+   "source_document_id": null,
+   "source_title": "fcbf5821be82ff44989f82b4c2c90298a961d87508b2051c0cfa80f88e9e642d.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Code%20Compliance/Eviction%20Packet.pdf?t=202404101120430"
+  },
+  {
+   "page": 2,
+   "snippet": "Revised 01/12/23 Page 2 of 3 Section 3 - PROPERTY INFORMATION: A d dress: Apartment numbers if multi - family unit: Type of Property: Si ngle - family Duplex Tri - plex Multi - family (4+ Units) Commercial Rooming H ouse If multi - family, list the number of units in the p roperty : If a rooming house, list the number of sleeping room s in the property: Is the property currently vacant or showing signs of vacancy: YES NO UNKNOWN Section 4 – MAINTENANCE A ND RE - OCCUPANCY PLAN: If the property listed in Section 3 of this form is vacant or is showing signs of vacancy, pl ease provide a statement detailing: (1) Anticipate d period of vacancy (2) A d etailed plan for the regular maintenance of the property durin g the period of vacancy (3) A timeline for the anticipated re - occupancy of the property (4) R ehabilitation plan for the property (if applicable) (5) D emolition plan fo r the pro",
+   "tags": [
+    "sign",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "24849f5f95ad94f40299cbf6c0205d719c97ff059d5d3bb829c6cd09275c9efa",
+   "source_document_id": null,
+   "source_title": "24849f5f95ad94f40299cbf6c0205d719c97ff059d5d3bb829c6cd09275c9efa.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Code%20Compliance/Residential%20Vacant%20&%20Foreclosed%20Property%20Registration%20Form.pdf?t=202404101120430"
+  },
+  {
+   "page": 1,
+   "snippet": "CO DE COMPLIANCE ___ REALTOR AUTHORIZATION FOR ENTERING A CONDEMNED DWELLING Name of Realtor: _________________________ Realty Company Name : __________________________ Realty Company Address: ___________________ Realty Company Phone No.: ___________________ Ohio Real Estate License #: ___________________ has been condemned by the City of Sandusky, Department of Community Development, Division of Code Compliance as unfit for human habitation, pursuant to Section 1341.18 of the Codified Ordinances of the City of Sandusky. The above listed realtor is executing their a bility to enter the condemned dwelling for the sole purpose of showing the property to potential buyers on the following date and time frame : The dwelling located at : ___________________________________ . and Date: Between the hours of _ ___ ____ This form must be carried w ith the realtor at all times while present at the ",
+   "tags": [
+    "illumination",
+    "authority"
+   ],
+   "weight": 3,
+   "source_sha256": "3c8a063744f0ef68673e8103b3055760e92fe85790090cfbc74688f8525b8c00",
+   "source_document_id": null,
+   "source_title": "3c8a063744f0ef68673e8103b3055760e92fe85790090cfbc74688f8525b8c00.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Code%20Compliance/Realtor%20Authorization%20to%20Enter%20Condemned%20Dwelling.pdf?t=202404101120430"
+  },
+  {
+   "page": 4,
+   "snippet": "Residential Tax Abatement Guidelines & Application – revised 2/13/2024 4 A property approved for residential tax abatement will not be eligible for an appeal to reduce the market value while the abatement is in force. 1. Plan your project and obtain required building permits (240 Columbus Ave) http://www.ci.sandusky.oh.us/residents/permits_and_applications/index.php 2. Submit Intent to Apply Form (pages 5 & 6) along with accompanying documents to the Community Development 3. Complete the project. Please be aware that if proper permits and timely inspections are not made, this could result in a delay, or denial of your residential tax abatement application. If you have questions regarding scheduling inspections through the Building Division, please call 419- 627-5940. 4. Submit Post Construction Form (page 7) along with accompanying documents to the Community Development Department 5. The",
+   "tags": [
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "c3d389c4d48f69c1f0b39c1016929ba1b7fedf87162c50fe98b2467a1e79c825",
+   "source_document_id": null,
+   "source_title": "c3d389c4d48f69c1f0b39c1016929ba1b7fedf87162c50fe98b2467a1e79c825.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Community%20Development/Applications/Residential%20Tax%20Abatement%20Application.pdf?t=202404101120450"
+  },
+  {
+   "page": 3,
+   "snippet": "The City of Sandusky, Ohio 2 ED Program Guidelines & Application - 2024 that are approved by the EDI C will require final approval by the Sandusky City Commission. In this case, applicants are required to attend the City Commission meeting at which the project is reviewed. DISBURMENT OF PROCEEDS : Proceeds are provided directly to third party contractors or on a reimbursable basis to the applicant at the completion of the project . The City may consider adjustments to the investment amount for substantive changes in the project scope. REQUIRED EQUITY: A minimum of 10 % owner equity is required even when other third - party sources have been secured . The Department of Community Development or the EDI C may, at its discret ion, adjust equity percentage requirement. ADDITIONAL TERMS: Applicants may be subject to personal background checks and credit reviews and must sign any waivers to all",
+   "tags": [
+    "sign",
+    "penalties",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "cf6cc6cc6ae347576abcd5a98e23dfaf9a1ff030e770cb70f7ddd3243c1efc37",
+   "source_document_id": null,
+   "source_title": "cf6cc6cc6ae347576abcd5a98e23dfaf9a1ff030e770cb70f7ddd3243c1efc37.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Community%20Development/Applications/ED%20Guidelines%20and%20Application.pdf?t=202404160902430"
+  },
+  {
+   "page": 5,
+   "snippet": "The City of Sandusky, Ohio 4 ED Program Guidelines & Application - 2024 3. City funding is a reimbursement grant disbursed upon completion of project after submission of evidence th at all expenses have been paid 4. Applicants may be required to seek approval of enhancements and signage (if applicable) by other administrative bodies, including but not limited to, the Landmarks Commission or the Planning Commission. 5. Contractors and journe ymen utilized must be registered with the City of Sandusky and permits may be required, where applicable. 6. The City reserves the right to require applicants to utilize entrepreneurial support services such as RISE 2. BUSINESS DEVELOPMENT FORGIVABLE LOAN PROGR AM – PROJECTS WITH TOTAL DEVELOPMENT COSTS RANGING $100,000 - $499,999: The intent is to aid new or existing business with access to capital that otherwise may not be available from traditional",
+   "tags": [
+    "fee",
+    "dimension",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "cf6cc6cc6ae347576abcd5a98e23dfaf9a1ff030e770cb70f7ddd3243c1efc37",
+   "source_document_id": null,
+   "source_title": "cf6cc6cc6ae347576abcd5a98e23dfaf9a1ff030e770cb70f7ddd3243c1efc37.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Community%20Development/Applications/ED%20Guidelines%20and%20Application.pdf?t=202404160902430"
+  },
+  {
+   "page": 6,
+   "snippet": "The City of Sandusky, Ohio 5 ED Program Guidelines & Application - 2024 3. SUBSTANTIAL DEVELOPMENT LOAN PROGRAM – PROJECTS WITH TOTAL DEVELOPMENT COSTS OVER $500,000: The intent of this program is to spur large scale develo pment and expansion efforts within the City. Mixed - use projects are eligible. i. ELIGIBLE USES: 1. Environmental remediation 2. Demolition 3. Physical construction costs (both new construction/expansion or rehabilitation) 4. Relocation expenses as part of retention ef forts 5. Purchase of equipment that allows for the expansion of business or efficiency in operation. ii. REQUIREMENTS AND TERMS: 1. Project must be catalytic involving anchor projects (i.e. standalone attractions); projects that involve large, vacant, troublesome properties; and/or projects that resolve vacant upper floors, subject to the discretion of City staff. 2. Projects must be mor e than $500,00",
+   "tags": [
+    "fee",
+    "dimension",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "cf6cc6cc6ae347576abcd5a98e23dfaf9a1ff030e770cb70f7ddd3243c1efc37",
+   "source_document_id": null,
+   "source_title": "cf6cc6cc6ae347576abcd5a98e23dfaf9a1ff030e770cb70f7ddd3243c1efc37.pdf",
+   "official_url": "https://www.cityofsandusky.com/Documents/Community%20Development/Applications/ED%20Guidelines%20and%20Application.pdf?t=202404160902430"
+  }
+ ]
+}

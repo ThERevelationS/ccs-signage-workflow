@@ -1,0 +1,74 @@
+{
+  "unit": "foundation-o014-templates",
+  "item": "O-014 (CMP-A14) - eliminate unsafe silent failures and stale success UI; Foundation template dialog + service residual subunit",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remote_head_verified": "3258e9b24 (git log -1, clean worktree, re-checked after pulls)",
+  "mode": "LOCAL candidates only - no remote write, no checkpoint, no deploy, no business-record or paid-AI calls",
+  "targets": [
+    {
+      "path": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+      "baseline": "baseline/FoundationTemplateDialog.jsx (fresh sandbox read, sha256 10768f02...)",
+      "candidate": "candidates/src/components/estimator/foundation/FoundationTemplateDialog.jsx (sha256 4fd2231d...)",
+      "diff": "verify/diff-FoundationTemplateDialog.patch (+11 lines)",
+      "changes": [
+        "new OPTIONAL props saveDisabled (boolean, default false) and saveDisabledReason (string, default '') - dialog-side gate interface for a later page-wiring unit",
+        "save(): early `return null` when saveDisabled so the guard cannot be bypassed by a stale handler invocation",
+        "render: amber explanatory note (saveDisabledReason || default copy) above the button row and `disabled={busy || saveDisabled}` on Save Template",
+        "remove(): setError(null) on confirmed delete so a prior failure banner cannot go stale beside a successful removal (same pattern as save/apply paths)"
+      ]
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationTemplateService.js",
+      "baseline": "baseline/foundationTemplateService.js (fresh sandbox read, sha256 7a550f58...)",
+      "candidate": "candidates/src/components/estimator/foundation/foundationTemplateService.js (sha256 9e238ed1...)",
+      "diff": "verify/diff-foundationTemplateService.patch (+16/-1 lines)",
+      "changes": [
+        "isNotFound widened from {status|response.status === 404} to the canonical isEntityNotFoundError shape (status, response.status, response.statusCode, data.status === 404, plus 'not found'/'does not exist' message match), and scans ALL message fields so a generic top-level message cannot hide a nested not-found detail",
+        "transient/non-404 fetch failures still rethrow; unverifiable resolved payloads (null/array/wrong-id) still abort with 'could not be verified' - fail-closed directions unchanged"
+      ]
+    }
+  ],
+  "audit_items_disposition": {
+    "1-delete-catch-null": "Partially pre-landed at HEAD (template05): catch already distinguishes not-found (return true) from transient (rethrow). Residual fixed here: narrow 404 detection widened to canonical shape.",
+    "2-save-no-catch": "Already landed at HEAD: save() inner try/catch -> setError inline; verified by unit + browser cases.",
+    "3-load-no-catch": "Already landed at HEAD: loadAllEntityRows .catch -> loadFailed + 'Templates could not be loaded.' + Retry; verified.",
+    "4-remove-swallowed-catch": "Already landed at HEAD: catch -> setError. Residual fixed here: success path now clears a stale prior error banner (setError(null)).",
+    "5-gate-readiness-prop": "NEW in this unit: optional saveDisabled/saveDisabledReason props; page wiring intentionally left to the later page unit."
+  },
+  "protected_not_touched": [
+    "src/pages/FoundationEstimator.jsx (sole dialog consumer; owns page-side gate wiring - another unit)",
+    "src/components/estimator/foundation/foundationTemplateModel.js, foundationAssemblyModel.js (pulled fresh as unchanged deps only)",
+    "src/components/estimator/builder/builderEntityPersistence.js, products/reusableSaveIdempotency.js, loadAllEntityRows.js, idempotentEntityCreate.js (reference deps only)",
+    "src/components/estimator/moduleShared/moduleTemplateService.js (mentions service in comment only, no runtime dep)",
+    "all other src/**, base44/**, scripts/** files"
+  ],
+  "verification": {
+    "unit_harness": "verify/test-o014-templates.mjs - esbuild-bundles CANDIDATE files with entity stubs + react-test-renderer; 15/15 PASS (verify/test-output.txt)",
+    "cases": [
+      "service: 404 via status/response.status/statusCode/data.status/nested+'not found'/'does not exist' messages -> true, zero deletes",
+      "service: 500/TypeError/403/429 fetch failures propagate (never swallowed into success)",
+      "service: resolved null/undefined/array/wrong-id -> 'could not be verified' abort (fail-closed, prior contract preserved)",
+      "service: verified record -> exactly one CAS deleteEntityIfUnchanged with the loaded record",
+      "service: blank id rejected; save passes idempotencyKey+data through",
+      "dialog: save rejection -> inline alert, open, busy cleared; snapshot-prep failure -> inline error, zero service calls",
+      "dialog: load failure -> 'Templates could not be loaded.' + alert + Retry (never fake 'No foundation templates saved yet.'); retry recovers + clears error",
+      "dialog: CAS delete rejection -> alert + row retained",
+      "dialog: transient PRE-READ get(500) -> row NOT removed + alert (core audit regression)",
+      "dialog: 404 pre-read -> row removed, no alert, no CAS delete",
+      "dialog: successful delete clears a prior error banner",
+      "dialog: saveDisabled -> disabled button + default note + zero service calls on forced handler invoke; custom reason rendered; absent prop -> fully backward compatible",
+      "dialog: happy paths unchanged (save closes+clears, apply closes, delete removes row; real template model snapshot ran)"
+    ],
+    "browser_fixture": "verify/browser-fixture.mjs - real bundled component in headless Chrome, stub entities, no SDK/network; 5/5 PASS incl real-DOM render of load-failure state, save-failure alert, delete-fetch-failure row retention, saveDisabled gate; zero external requests/pageerror/console.error (verify/browser-results.json, screenshots)",
+    "syntax": "npx esbuild on both candidates - clean (jsx loader for .jsx)",
+    "compat": "scripts/test-foundation-template.mjs contract preserved: 404->true, 500->reject, null/array/wrong-id->'verified' abort, single CAS delete; new props optional so the unmodified page call-site compiles unchanged"
+  },
+  "residual_limits": [
+    "save() Promise `run` is stored in saveFlightRef and returned to the click handler; the inner async body is fully try/catch so it cannot reject unhandled - unchanged from HEAD",
+    "deleteEntityIfUnchanged internals (CAS delete, post-error verification) are out of scope",
+    "page-side wiring of saveDisabled (e.g. pricing-unavailable gate) is a later unit; prop is inert until then",
+    "window.confirm blocking is pre-existing product behavior, unchanged"
+  ],
+  "ledger_paragraph": "O-014 template residuals LOCAL-ONLY: fresh remote baselines at HEAD 3258e9b24 (clean tree, sole consumer FoundationEstimator.jsx untouched - its gate wiring lands in the page unit). Two surgical candidates: service isNotFound widened to canonical multi-shape 404/not-found detection (transient get failures and unverifiable payloads still fail closed - the original 'UI removes a live row' direction is dead), dialog gains optional saveDisabled/saveDisabledReason gate interface (disabled action + amber note + save() guard; absent prop = byte-for-byte compatible behavior) and clears stale error banner on confirmed delete. Audit items 2-4 found already landed at HEAD by template05 - re-verified, not re-edited. Evidence: 15/15 esbuild+react-test-renderer cases incl. transient-get row retention, 5/5 real-DOM Chrome fixture with stub entities and zero external requests, esbuild syntax clean, existing test-foundation-template contract preserved. No remote write/checkpoint/deploy/business records/paid AI. O-014 remains OPEN for the catalog lint error and other module surfaces."
+}

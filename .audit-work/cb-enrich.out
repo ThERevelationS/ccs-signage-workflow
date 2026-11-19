@@ -1,0 +1,9 @@
+
+enriched 200 ok=185 retry=0 skip=0
+enriched 400 ok=372 retry=1 skip=0
+enriched 600 ok=559 retry=1 skip=0
+enriched 800 ok=750 retry=1 skip=0
+enriched 1000 ok=950 retry=1 skip=0
+enriched 1200 ok=1150 retry=1 skip=0
+enriched 1400 ok=1350 retry=3 skip=0
+DONE n=1456 ok=1406 retry=3 skipped(no pass2/3 yet)=0

@@ -1,0 +1,18 @@
+{
+  "kind": [
+    "edit",
+    "src/components/estimator/foundation/AiEngineeringAssistant.jsx"
+  ],
+  "exit": 1,
+  "data": {
+    "error": "Error editing file \"src/components/estimator/foundation/AiEngineeringAssistant.jsx\": old_text not found in file: 'import { useState } from \"react\";\\nimport { base44 } from \"@/api/base44Client\";\\ni'",
+    "code": "API_ERROR",
+    "hints": [
+      {
+        "message": "The server rejected the request. Check the error message above for details."
+      }
+    ],
+    "statusCode": 400,
+    "requestId": "dad8245e-162d-4574-b16d-9fbb3c21f7ab"
+  }
+}

@@ -1,0 +1,27 @@
+{
+ "jurisdiction_id": "6ac1a0d79d772762eb956d6e",
+ "jurisdiction_name": "Batavia",
+ "state": "OH",
+ "office_id": "scan-6ac1a0d79d772762eb956d6e-office-0",
+ "office_name": "Planning & Zoning Department",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Village of Batavia Zoning and Sign Permit Fee Schedule Zoning Permit Remodel /Change of Use $50.00 Single Family Dwelling – New or A ddition $75.00 Two - Family Dwelling – New o r Addition $50 .00 per Dwelling Unit Multi Family Dwelling – New or Addition $ 75 .00 + $ 5 0.00 per Dwelling Unit Commercial or Insti t utional – New od Addition $ .17 Sq Ft $225.00 min - $25,000.00 max Industrial – New or Addition $ .17 Sq Ft $225.00 min - $25,000.00 max Planned Unit Development – PUD Initial $300.00 Planned Unit Develop ment - PUD Final $75.00 Conditional Use $250.00 Variance o r Appeal $200.00 Change or Amendment Zoning District $300.00 Street / Sidewalk Opening / R ight of Way $400.00 or $20 .00 per sq ft min Swimming Pools $50.00 Fences $50.00 Decks $50.00 Signs Permanent $30.00 +$2.00 per sq ft $100.00 min Temporary Special Event – off site $30.00 +$2.00 per sq ft $100.00 min Banner $30.00",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "process",
+    "billboard",
+    "temporary"
+   ],
+   "weight": 13,
+   "source_sha256": "3fccf3bfa098b38748421a76573bd5b9e2687258d47c120e5d729533024fab9b",
+   "source_document_id": null,
+   "source_title": "3fccf3bfa098b38748421a76573bd5b9e2687258d47c120e5d729533024fab9b.pdf",
+   "official_url": "https://www.bataviaoh.gov/_files/ugd/4f30fe_1164e03f8e604adb85207cec69bb03c0.pdf"
+  }
+ ]
+}

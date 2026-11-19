@@ -1,0 +1,40 @@
+{
+ "jurisdiction_id": "6adefca6300c8c347c134cbf",
+ "jurisdiction_name": "London",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "City Of London Sign Requirements This is not a legal document, its purpose is to aid in the understanding of sign requirements in the City Of London. Number of Signs For the purpose of determining the number of signs, a sign shall be considered to be a display surface or display device containing elements organized, related and composed to form a unit. A two-sided or multi-sided sign shall be regarded as one sign. Property having more than one street frontage shall be allowed one freestanding sign per street frontage. A shopping center or other multiple business building shall be limited to one freestanding sign per street frontage. Each individual business will be allowed one wall sign per street frontage. Sign Dimensions In commercial and Industrial zones, each business or industry shall be permitted one wall sign per street frontage. The dimensions of the wall sign shall not exceed 1.",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "prohibited",
+    "type"
+   ],
+   "weight": 10,
+   "source_sha256": "48a818732ea434b6751e48b52b6a18f2f103039e8ec99615a7142a8c4012a38a",
+   "source_document_id": null,
+   "source_title": "48a818732ea434b6751e48b52b6a18f2f103039e8ec99615a7142a8c4012a38a.pdf",
+   "official_url": "https://www.londonky.gov/wp-content/uploads/2025/03/Sign-Application.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "At the intersection of major collector or arterial streets, the minimum setback for signs will be 20 feet from the right-of-way line. NO OFF-PREMISE SIGNS SHALL BE PERMITTED IN THE CITY OF LONDON, PER ORDINANCE NO. 961. FEES: All permit fees are based on estimated cost of signage. You will need to call for this amount. City Of London Application for Advertising Device Permit 1. Applicants Name:______________________________________________________ 2. Applicants Address:____________________________________________________ 3. Applicants Telephone Number:__________________________________________ 4. Proposed Location of Sign (Please Attach Site Plan also):_____________________ 5. Zone where sign is to be placed:___________________________________________ 6. Height of Proposed Sign:__________________________ 7. Total Area of Sign:_______________________________ 8. Distance from nearest exist",
+   "tags": [
+    "sign",
+    "dimension",
+    "billboard",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "48a818732ea434b6751e48b52b6a18f2f103039e8ec99615a7142a8c4012a38a",
+   "source_document_id": null,
+   "source_title": "48a818732ea434b6751e48b52b6a18f2f103039e8ec99615a7142a8c4012a38a.pdf",
+   "official_url": "https://www.londonky.gov/wp-content/uploads/2025/03/Sign-Application.pdf"
+  }
+ ]
+}

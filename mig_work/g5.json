@@ -1,0 +1,871 @@
+{
+  "matches": [
+    {
+      "path": "src/shared/orderExportAccess.mjs",
+      "line": 4,
+      "text": "  return user?.role === 'admin' && user?.can_order_export === true;"
+    },
+    {
+      "path": "src/lib/PageNotFound.jsx",
+      "line": 43,
+      "text": "                    {isFetched && authData.isAuthenticated && authData.user?.role === 'admin' && ("
+    },
+    {
+      "path": "src/pages/MasterInventory.jsx",
+      "line": 45,
+      "text": "  const isAdmin = user?.role === \"admin\";"
+    },
+    {
+      "path": "src/pages/EstimatorParts.jsx",
+      "line": 35,
+      "text": "  const canEdit = !!template && (user?.role === \"admin\" || !template.created_by_id || template.created_by_id === user?.id);"
+    },
+    {
+      "path": "src/pages/EstimatorParts.jsx",
+      "line": 64,
+      "text": "      const liveCanEdit = user?.role === \"admin\" || !live.created_by_id || live.created_by_id === user?.id;"
+    },
+    {
+      "path": "src/pages/EstimatorParts.jsx",
+      "line": 225,
+      "text": "    const canEdit = user?.role === \"admin\" || !template.created_by_id || template.created_by_id === user?.id;"
+    },
+    {
+      "path": "src/pages/EstimatorParts.jsx",
+      "line": 233,
+      "text": "      const liveCanEdit = user?.role === \"admin\" || !live.created_by_id || live.created_by_id === user?.id;"
+    },
+    {
+      "path": "src/pages/VinylSettings.jsx",
+      "line": 82,
+      "text": "  const isAdmin = user?.role === \"admin\";"
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 517,
+      "text": "          {me?.role === \"admin\" && ("
+    },
+    {
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "line": 529,
+      "text": "          {me?.role === \"admin\" && (<>"
+    },
+    {
+      "path": "src/pages/FleetWorkOrders.jsx",
+      "line": 483,
+      "text": "                    {currentUser?.role === \"admin\" && <button type=\"button\" data-fleet-estimate-open={w.id} onClick={() => setEstimateWorkOrder(w)} className=\"min-h-11 px-3 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500\"><DollarSign className=\"w-4 h-4\" />Estimate / Approval</button>}"
+    },
+    {
+      "path": "src/pages/SalesPipeline.jsx",
+      "line": 103,
+      "text": "  const canImportExport = currentUser?.role === \"admin\" || currentUser?.can_import_export === true;"
+    },
+    {
+      "path": "src/pages/SalesPipeline.jsx",
+      "line": 718,
+      "text": "                {currentUser?.role === \"admin\" && ("
+    },
+    {
+      "path": "src/pages/FleetOverview.jsx",
+      "line": 94,
+      "text": "        if (mounted) setIsAdmin(user?.role === \"admin\");\r"
+    },
+    {
+      "path": "src/pages/FleetOverview.jsx",
+      "line": 106,
+      "text": "          user?.role === \"admin\" ? invokeFleet(\"fleetLifecycleAction\", { action: \"portfolio\" }).catch(() => null) : Promise.resolve(null),\r"
+    },
+    {
+      "path": "src/pages/FleetOverview.jsx",
+      "line": 107,
+      "text": "          user?.role === \"admin\" ? listAllFleetRows(\"FleetRepairEstimate\", \"-updated_date\", { label: \"Fleet repair-estimate approvals\" }).catch(() => []) : Promise.resolve([]),\r"
+    },
+    {
+      "path": "src/pages/FleetOverview.jsx",
+      "line": 118,
+      "text": "        if (user?.role === \"admin\") {\r"
+    },
+    {
+      "path": "src/pages/EstimatorProducts.jsx",
+      "line": 58,
+      "text": "  const canEdit = !!product && (user?.role === \"admin\" || !product.created_by_id || product.created_by_id === user?.id);"
+    },
+    {
+      "path": "src/pages/EstimatorProducts.jsx",
+      "line": 219,
+      "text": "  const accessibleQuickProducts = quickProducts.filter((product) => user?.role === \"admin\" || product.product_group === \"global\" || !product.created_by_id || product.created_by_id === user?.id);"
+    },
+    {
+      "path": "src/pages/EstimatorProducts.jsx",
+      "line": 256,
+      "text": "    const canEdit = user?.role === \"admin\" || !product?.created_by_id || product.created_by_id === user?.id;"
+    },
+    {
+      "path": "src/pages/EstimatorProducts.jsx",
+      "line": 355,
+      "text": "                      const canEditProduct = user?.role === \"admin\" || !product.created_by_id || product.created_by_id === user?.id;"
+    },
+    {
+      "path": "src/pages/EstimatorQueues.jsx",
+      "line": 475,
+      "text": "          {me?.role === \"admin\" && <button type=\"button\" onClick={exportBackup} disabled={backupBusy} className=\"h-6 px-2 rounded border border-violet-300 bg-violet-50 text-[10px] font-bold text-violet-700 hover:bg-violet-100 disabled:opacity-50 inline-flex items-center gap-1\"><Download className=\"w-3 h-3\" />{backupBusy ? \" Exporting…\" : \" Backup (JSON)\"}</button>}"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 809,
+      "text": "              {currentUser?.role === \"admin\" && ("
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1895,
+      "text": "          isAdmin={currentUser?.role === 'admin'}"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 1904,
+      "text": "          isAdmin={currentUser?.role === \"admin\"}"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 1276,
+      "text": "              {isRegistered && currentUser?.role === 'admin' && ("
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 634,
+      "text": "  const isAdmin = currentUser?.role === \"admin\";"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 1107,
+      "text": "        if (loginData.user.role === 'admin' && loginData.token) {"
+    },
+    {
+      "path": "src/pages/FeatureReports.jsx",
+      "line": 239,
+      "text": "  const isAdmin = currentUser?.role === \"admin\";"
+    },
+    {
+      "path": "src/pages/TemplateBuilder.jsx",
+      "line": 7,
+      "text": "  const isAdmin = currentUser?.role === 'admin';"
+    },
+    {
+      "path": "src/pages/FleetInspections.jsx",
+      "line": 167,
+      "text": "  useEffect(() => { if (!loading && user?.role === \"admin\" && templates.length === 0) setShowPresets(true); }, [loading, user, templates.length]);\r"
+    },
+    {
+      "path": "src/pages/FleetInspections.jsx",
+      "line": 175,
+      "text": "  const isAdmin = user?.role === \"admin\";\r"
+    },
+    {
+      "path": "src/pages/FoundationInventory.jsx",
+      "line": 370,
+      "text": "      setIsAdmin(user?.role === 'admin');"
+    },
+    {
+      "path": "src/pages/FleetMaintenance.jsx",
+      "line": 92,
+      "text": "  const isAdmin = currentUser?.role === \"admin\";\r"
+    },
+    {
+      "path": "src/pages/Reconciliation.jsx",
+      "line": 253,
+      "text": "      <LocationsPanel locations={salesLocations} isAdmin={currentUser?.role === \"admin\"} onChanged={load} />"
+    },
+    {
+      "path": "src/pages/FleetRequests.jsx",
+      "line": 38,
+      "text": "      const admin = user?.role === \"admin\";"
+    },
+    {
+      "path": "src/pages/InstallationSettings.jsx",
+      "line": 89,
+      "text": "  const isAdmin = user?.role === \"admin\";"
+    },
+    {
+      "path": "src/pages/FleetNotifications.jsx",
+      "line": 67,
+      "text": "        const admin = user?.role === \"admin\";\r"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 362,
+      "text": "    const isAdmin = currentUser?.role === \"admin\";"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 406,
+      "text": "    const isAdmin = currentUser?.role === \"admin\";"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 468,
+      "text": "    canManageAlerts: currentUser?.role === \"admin\","
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 521,
+      "text": "              <button type=\"button\" onClick={() => { loadVehicles(); loadNotifications(); if (currentUser?.role === \"admin\") syncNotifications(); }} className=\"min-h-11 min-w-11 p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400\" title=\"Refresh Bouncie tracking\" aria-label=\"Refresh Bouncie tracking\"><RefreshCw className=\"w-4 h-4 mx-auto\" /></button>"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 522,
+      "text": "              {currentUser?.role === \"admin\" && <button type=\"button\" onClick={handleConnect} className=\"min-h-11 min-w-11 p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400\" title=\"Reconnect Bouncie\" aria-label=\"Reconnect Bouncie\"><LogOut className=\"w-4 h-4 mx-auto\" /></button>}"
+    },
+    {
+      "path": "src/pages/FleetTracking.jsx",
+      "line": 545,
+      "text": "          open={currentUser?.role === \"admin\" && alertSettingsOpen}"
+    },
+    {
+      "path": "src/pages/ResourcePlanning.jsx",
+      "line": 40,
+      "text": "  const canManageCapacity = currentUser?.role === 'admin';\r"
+    },
+    {
+      "path": "src/pages/FleetEquipmentDetail.jsx",
+      "line": 197,
+      "text": "  const isAdmin = currentUser?.role === \"admin\";\r"
+    },
+    {
+      "path": "src/pages/FleetEquipment.jsx",
+      "line": 113,
+      "text": "  const isAdmin = currentUser?.role === \"admin\";\r"
+    },
+    {
+      "path": "src/pages/EstimatorSettings.jsx",
+      "line": 64,
+      "text": "  const canManage = getSessionUser()?.role === \"admin\";"
+    },
+    {
+      "path": "src/pages/EstimatorSettings.jsx",
+      "line": 209,
+      "text": "                      {user.role === \"admin\" && <span className=\"ml-2 text-[9px] font-bold tracking-wide text-gray-400\">ADMIN</span>}"
+    },
+    {
+      "path": "src/pages/UserSettings.jsx",
+      "line": 193,
+      "text": "              background: userData?.role === 'admin'"
+    },
+    {
+      "path": "src/pages/UserSettings.jsx",
+      "line": 255,
+      "text": "                      <Badge className={userData?.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}>"
+    },
+    {
+      "path": "src/pages/UserSettings.jsx",
+      "line": 256,
+      "text": "                        {userData?.role === 'admin' ? 'Admin' : 'User'}"
+    },
+    {
+      "path": "src/pages/CompletedReports.jsx",
+      "line": 104,
+      "text": "  const isAdmin = currentUser?.role === \"admin\";"
+    },
+    {
+      "path": "src/pages/QuoteSettings.jsx",
+      "line": 60,
+      "text": "  const canEdit = me?.role === \"admin\";"
+    },
+    {
+      "path": "src/pages/FleetSettings.jsx",
+      "line": 79,
+      "text": "        if (u?.role === \"admin\") {"
+    },
+    {
+      "path": "src/Layout.jsx",
+      "line": 121,
+      "text": "  return user?.role === \"admin\";"
+    },
+    {
+      "path": "src/components/fleet/FleetModuleNav.jsx",
+      "line": 58,
+      "text": "      if (mounted) setIsAdmin(user?.role === \"admin\");\r"
+    },
+    {
+      "path": "src/components/permitting/JurisdictionDetailPanel.jsx",
+      "line": 913,
+      "text": "        <LocalityApprovedEvidence jurisdiction={jurisdiction} isAdmin={currentUser?.role === \"admin\"} />\r"
+    },
+    {
+      "path": "src/components/permitting/JurisdictionDetailPanel.jsx",
+      "line": 916,
+      "text": "          <OfficeResearchFindings key={jurisdiction.id} research={jurisdiction.office_research} canEdit={currentUser?.role === \"admin\"} actor={currentUser?.full_name || currentUser?.email || \"CCS Staff\"} onSave={updated => onSaveOfficeResearch?.(jurisdiction, updated)} onNavigate={navigateWorkspace} onPreviewWorkflow={() => { setElectricalPlanningHandoff(createElectricalPlanningHandoff(jurisdiction.office_research, jurisdiction)); setShowWorkflowDesigner(true); }}/>\r"
+    },
+    {
+      "path": "src/components/permitting/JurisdictionDetailPanel.jsx",
+      "line": 1043,
+      "text": "        {currentUser?.role === \"admin\" && <OfficialSourceRescans key={jurisdiction.id} jurisdiction={jurisdiction} onUpdate={onUpdate} />}\r"
+    },
+    {
+      "path": "src/components/permitting/JurisdictionDetailPanel.jsx",
+      "line": 1044,
+      "text": "        <ExternalPermittingReferrals key={jurisdiction.id} jurisdiction={jurisdiction} isAdmin={currentUser?.role === \"admin\"} onUpdate={onUpdate} disabled={isResearching || Boolean(downloadingDocId)} />\r"
+    },
+    {
+      "path": "src/components/permitting/JurisdictionsView.jsx",
+      "line": 30,
+      "text": "  const isAdmin = currentUser?.role === 'admin';"
+    },
+    {
+      "path": "src/components/permitting/JurisdictionsView.jsx",
+      "line": 387,
+      "text": "              <p className=\"text-xs text-gray-500\">The saved list of towns, townships, and counties we file permits with — {jurisdictions.length} saved{currentUser?.role === 'admin' ? ` · ${totalDocs} documents` : ''}</p>"
+    },
+    {
+      "path": "src/components/timeclock/PayPeriodManager.jsx",
+      "line": 39,
+      "text": "    const authorityComplete = Number(generation.snapshot_version || 0) < 5 || (shift?.approval_evidence?.approver_role === \"admin\" && [\"session\", \"admin_kiosk\"].includes(shift?.approval_evidence?.authentication_method));\r"
+    },
+    {
+      "path": "src/components/vinylInventory/VinylInventoryTab.jsx",
+      "line": 80,
+      "text": "  const isAdmin = user?.role === \"admin\";"
+    },
+    {
+      "path": "src/components/channelLetterInstall/MaterialsInventoryTab.jsx",
+      "line": 55,
+      "text": "  const isAdmin = currentUser?.role === \"admin\";"
+    },
+    {
+      "path": "src/components/admin/authorizedEmailPersistence.js",
+      "line": 133,
+      "text": "  if (record.role === \"admin\" && desired.role && desired.role !== \"admin\") {"
+    },
+    {
+      "path": "src/components/admin/authorizedEmailPersistence.js",
+      "line": 135,
+      "text": "    const otherAdmins = rows.filter(row => row.id !== record.id && row.role === \"admin\");"
+    },
+    {
+      "path": "src/components/admin/authorizedEmailPersistence.js",
+      "line": 152,
+      "text": "  if (record.role === \"admin\") {"
+    },
+    {
+      "path": "src/components/admin/authorizedEmailPersistence.js",
+      "line": 154,
+      "text": "    const otherAdmins = rows.filter(row => row.id !== record.id && row.role === \"admin\");"
+    },
+    {
+      "path": "src/components/admin/SmartsheetSyncWidget.jsx",
+      "line": 170,
+      "text": "    currentUser?.role === 'admin' && Boolean(sessionToken);"
+    },
+    {
+      "path": "src/components/admin/SmartsheetSyncWidget.jsx",
+      "line": 190,
+      "text": "  const orderBatchEvidence = compactOrderForm && currentUser?.role === 'admin' &&"
+    },
+    {
+      "path": "src/components/admin/adminAccountDraft.js",
+      "line": 22,
+      "text": "    can_order_export: record.role === \"admin\" && record.can_order_export === true,\r"
+    },
+    {
+      "path": "src/components/admin/adminAccountDraft.js",
+      "line": 23,
+      "text": "    can_view_resources: record.role === \"admin\" || record.can_view_resources || false,\r"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 414,
+      "text": "        u.role === \"admin\" ? getAdminAccessSummary(u) : \"\","
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 452,
+      "text": "      u.role === \"admin\" ? getAdminAccessSummary(u) : \"\","
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 483,
+      "text": "    if (userFilter === \"user\" && u.role === \"admin\") return false;"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 1677,
+      "text": "    if (role === \"admin\") {"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 2253,
+      "text": "                      background: user.role === 'admin'"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 2274,
+      "text": "                      if (user.role === \"admin\" && !(getAdminAccessSummary(user) || \"\").trim()) missing.push(\"admin tabs\");"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 2341,
+      "text": "                  {user.role === 'admin' && ("
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 2346,
+      "text": "                  {user.role === 'admin' && ("
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 2425,
+      "text": "                    {user.role === \"admin\" ? ("
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 2655,
+      "text": "                      {formData.role === \"admin\" && ("
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 2670,
+      "text": "                          checked={formData.role === 'admin' || formData.can_view_resources || false}"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 2671,
+      "text": "                          disabled={formData.role === 'admin'}"
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 2677,
+      "text": "                        {formData.role === 'admin' && ("
+    },
+    {
+      "path": "src/components/admin/UserManagement.jsx",
+      "line": 3272,
+      "text": "        admins={users.filter((u) => u.role === 'admin' && u.id !== accessUser?.id)}"
+    },
+    {
+      "path": "src/components/sop/SopEditor.jsx",
+      "line": 61,
+      "text": "  const isAdmin = me?.role === \"admin\";"
+    },
+    {
+      "path": "src/components/sop/SopBrowser.jsx",
+      "line": 152,
+      "text": "        {me?.role === \"admin\" && (\r"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineDialogs.jsx",
+      "line": 96,
+      "text": "          isAdmin={currentUser?.role === 'admin'}"
+    },
+    {
+      "path": "src/components/sales/CustomFilterDialog.jsx",
+      "line": 471,
+      "text": "    if (currentUser?.role === \"admin\") return true;"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 1470,
+      "text": "  const isAdmin = currentUser?.role === 'admin';"
+    },
+    {
+      "path": "src/components/orders/OrderIndependentPullEvidence.jsx",
+      "line": 15,
+      "text": "  const isAdmin = currentUser?.role === 'admin';"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 263,
+      "text": "        if (currentUser?.role === \"admin\") {"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 1470,
+      "text": "      return user?.can_import_export === true || currentUser?.role === \"admin\";"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 1752,
+      "text": "          isAdmin={currentUser?.role === 'admin'} sessionToken={sessionToken}"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 1805,
+      "text": "        isAdmin={currentUser?.role === 'admin'} sessionToken={sessionToken}"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 1935,
+      "text": "                {currentUser?.role === \"admin\" && ("
+    },
+    {
+      "path": "src/components/orders/WorkOrderOrders.jsx",
+      "line": 147,
+      "text": "        if (currentUser?.role === \"admin\") {\r"
+    },
+    {
+      "path": "src/components/orders/WorkOrderOrders.jsx",
+      "line": 549,
+      "text": "                {currentUser?.role === \"admin\" && (\r"
+    },
+    {
+      "path": "scripts/validate-order-toolbar-export-scroll.mjs",
+      "line": 24,
+      "text": "assert.match(adminUsers, /formData\\.role === \"admin\" && \\([\\s\\S]*?admin-order-form-export/);"
+    },
+    {
+      "path": "scripts/validate-order-toolbar-export-scroll.mjs",
+      "line": 26,
+      "text": "assert.match(userBackend, /can_order_export: row\\?\\.role === 'admin' && row\\?\\.can_order_export === true/);"
+    },
+    {
+      "path": "scripts/validate-order-toolbar-export-scroll.mjs",
+      "line": 27,
+      "text": "assert.match(userBackend, /can_order_export: role === 'admin' && input\\?\\.can_order_export === true/);"
+    },
+    {
+      "path": "scripts/validate-order-toolbar-export-scroll.mjs",
+      "line": 30,
+      "text": "for (const source of [login, session]) assert.match(source, /can_order_export: user\\.role === 'admin' && user\\.can_order_export === true/);"
+    },
+    {
+      "path": "scripts/validate-sales-import-export-permission.mjs",
+      "line": 13,
+      "text": "check(page.includes('const canImportExport = currentUser?.role === \"admin\" || currentUser?.can_import_export === true;'),"
+    },
+    {
+      "path": "scripts/validate-sales-import-export-permission.mjs",
+      "line": 39,
+      "text": "check(importer.includes(\"const canImport = actor?.role === 'admin' || actor?.can_import_export === true;\") &&"
+    },
+    {
+      "path": "scripts/validate-order-pull-batch-evidence.mjs",
+      "line": 77,
+      "text": "assert.match(widget, /currentUser\\?\\.role === 'admin'/);"
+    },
+    {
+      "path": "scripts/validate-order-customer-decision-readonly-preflight.mjs",
+      "line": 78,
+      "text": "assert.match(ui, /isAdmin=\\{currentUser\\?\\.role === 'admin'\\} sessionToken=\\{sessionToken\\}/);"
+    },
+    {
+      "path": "scripts/test-admin-account-changed-fields.mjs",
+      "line": 796,
+      "text": " assert.match(backend,/if \\(out\\.role === 'admin'\\) out\\.can_view_resources = true/);"
+    },
+    {
+      "path": "scripts/validate-order-request-types.mjs",
+      "line": 12,
+      "text": "assert.match(spreadsheet, /currentUser\\?\\.role === \"admin\"/);"
+    },
+    {
+      "path": "scripts/validate-order-request-types.mjs",
+      "line": 20,
+      "text": "assert.match(workOrderOrders, /currentUser\\?\\.role === \"admin\"/);"
+    },
+    {
+      "path": "scripts/check-timeclock-prepublish.mjs",
+      "line": 72,
+      "text": "assert.match(adminPage, /const isAdmin = currentUser\\?\\.role === \"admin\"/);"
+    },
+    {
+      "path": "scripts/validate-order-sync-stale-recovery.mjs",
+      "line": 148,
+      "text": "assert.match(widget, /currentUser\\?\\.role === 'admin'/);"
+    },
+    {
+      "path": "scripts/validate-order-independent-pull-evidence-ui.mjs",
+      "line": 61,
+      "text": "assert.match(component, /const isAdmin = currentUser\\?\\.role === 'admin'/);"
+    },
+    {
+      "path": "scripts/validate-sales-filter-row-mobile.mjs",
+      "line": 18,
+      "text": "check(row.includes('currentUser?.role === \"admin\"') && row.includes('value=\"manage_columns\"'), \"Manage Custom Column Filters remains admin-gated.\");"
+    },
+    {
+      "path": "docs/admin-automation-pre-dispatch-and-capability-freshness-2026-10-22.md",
+      "line": 90,
+      "text": "createClientFromRequest(req).auth.me() with a server-side role === 'admin'"
+    },
+    {
+      "path": "docs/corebridge/PHASE_0P_OPPORTUNITY_BRIDGE_SIMULATION_ENDPOINT.md",
+      "line": 23,
+      "text": "`actor.role === \"admin\"`"
+    },
+    {
+      "path": "base44/shared/orderExportAccess.mjs",
+      "line": 4,
+      "text": "  return user?.role === 'admin' && user?.can_order_export === true;"
+    },
+    {
+      "path": "base44/functions/bouncieStatus/entry.ts",
+      "line": 10,
+      "text": "    const isAdmin = user.role === 'admin';"
+    },
+    {
+      "path": "base44/functions/manageFeatureReports/entry.ts",
+      "line": 190,
+      "text": "      return Response.json({ records: rows.map((row: any) => reportForViewer(row, actor?.role === 'admin')) });"
+    },
+    {
+      "path": "base44/functions/fleetPartLookupAction/entry.ts",
+      "line": 20,
+      "text": "  if (user.role === 'admin') return { user, admin: true };"
+    },
+    {
+      "path": "base44/functions/fleetPartLookupAction/entry.ts",
+      "line": 25,
+      "text": "  return { user, admin: authorized.role === 'admin' };"
+    },
+    {
+      "path": "base44/functions/listAuthorizedUserDirectory/entry.ts",
+      "line": 48,
+      "text": "        role: actor?.role === 'admin' ? 'admin' : 'user',"
+    },
+    {
+      "path": "base44/functions/listAuthorizedUserDirectory/entry.ts",
+      "line": 49,
+      "text": "        can_view_resources: actor?.role === 'admin' || actor?.can_view_resources === true,"
+    },
+    {
+      "path": "base44/functions/verifyLogin/entry.ts",
+      "line": 192,
+      "text": "        can_order_export: user.role === 'admin' && user.can_order_export === true,\r"
+    },
+    {
+      "path": "base44/functions/fleetFuelAction/entry.ts",
+      "line": 20,
+      "text": "  if (user.role === 'admin') return {user,isAdmin:true};"
+    },
+    {
+      "path": "base44/functions/fleetSystemReportAction/entry.ts",
+      "line": 27,
+      "text": "  if (user.role === 'admin') return { user };"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 65,
+      "text": "    can_order_export: row?.role === 'admin' && row?.can_order_export === true,\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 136,
+      "text": "  if (out.role === 'admin') out.can_view_resources = true;\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 162,
+      "text": "  const others = admins.filter((row: any) => row?.id !== targetId && row?.role === 'admin');\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 481,
+      "text": "    can_order_export: role === 'admin' && input?.can_order_export === true,\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 482,
+      "text": "    can_view_resources: role === 'admin' ? true : input?.can_view_resources === true,\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 641,
+      "text": "      if (current.role === 'admin' && desired.role && desired.role !== 'admin') {\r"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 694,
+      "text": "      if (current.role === 'admin') await ensureAnotherAdminExists(AuthorizedEmail, id);\r"
+    },
+    {
+      "path": "base44/functions/fleetRepairEstimateAction/entry.ts",
+      "line": 19,
+      "text": "  if (user.role === 'admin') return { user };"
+    },
+    {
+      "path": "base44/functions/bouncieApi/entry.ts",
+      "line": 18,
+      "text": "    const isAdmin = user.role === 'admin';"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 164,
+      "text": "  if (user.role === 'admin') return true;"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 272,
+      "text": "    const isAdmin = user.role === 'admin';"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentDocumentAction/entry.ts",
+      "line": 21,
+      "text": "  if (user.role === 'admin') return { user };"
+    },
+    {
+      "path": "base44/functions/fleetAlertSettingsAction/entry.ts",
+      "line": 11,
+      "text": "  if (user.role === 'admin') return { user };"
+    },
+    {
+      "path": "base44/functions/staffDataRead/entry.ts",
+      "line": 392,
+      "text": "  }) + '|' + (user.role === 'admin' ? 'admin' : 'staff') + '|' + ownerScope + '|' + deniedFieldScope;"
+    },
+    {
+      "path": "base44/functions/staffDataRead/entry.ts",
+      "line": 431,
+      "text": "    const ownerEmail = user.role === 'admin' ? '' : String(user.email).trim().toLowerCase();"
+    },
+    {
+      "path": "base44/functions/fleetWarrantyAction/entry.ts",
+      "line": 25,
+      "text": "  if (user.role === 'admin') return {user,isAdmin:true};"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 27,
+      "text": "  if (user.role === 'admin') return { user, role: 'admin' };"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 149,
+      "text": "    const isAdmin = auth.role === 'admin' || user.role === 'admin';"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3760,
+      "text": "      const isManagerSession = actor.role === 'admin';\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 5727,
+      "text": "          row.approval_evidence?.approver_role === 'admin' &&\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7516,
+      "text": "      const adminScope = actor.role === 'admin' && String(body?.scope || '') === 'admin';\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 7733,
+      "text": "      const adminScope = actor.role === 'admin' && String(body?.scope || '') === 'admin';\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11537,
+      "text": "      const visible = actor.role === 'admin' ? today : today.filter((e: any) => {\r"
+    },
+    {
+      "path": "base44/functions/verifySession/entry.ts",
+      "line": 65,
+      "text": "        can_order_export: user.role === 'admin' && user.can_order_export === true,"
+    },
+    {
+      "path": "base44/functions/fleetLifecycleAction/entry.ts",
+      "line": 19,
+      "text": "  if (user.role === 'admin') return { user };"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 910,
+      "text": "            token: user?.role === 'admin' ? clean(l?.token) : (clean(l?.token) ? '••••' + clean(l?.token).slice(-6) : ''),"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 944,
+      "text": "          id: clean(l?.id), kind: clean(l?.kind), label: clean(l?.label), token: user?.role === 'admin' ? clean(l?.token) : (clean(l?.token) ? '••••' + clean(l?.token).slice(-6) : ''),"
+    },
+    {
+      "path": "base44/functions/fleetBulkMaintenancePlan/entry.ts",
+      "line": 16,
+      "text": "  if (user.role === 'admin') return { user };"
+    },
+    {
+      "path": "base44/functions/fleetDashboardPreferenceAction/entry.ts",
+      "line": 21,
+      "text": "  if(user.role === 'admin') return {user};"
+    },
+    {
+      "path": "base44/functions/fleetInspectionAction/entry.ts",
+      "line": 18,
+      "text": "  if (user.role === 'admin') return { user, admin: true };"
+    },
+    {
+      "path": "base44/functions/fleetInspectionAction/entry.ts",
+      "line": 23,
+      "text": "  return { user, admin: authorized.role === 'admin' };"
+    },
+    {
+      "path": "base44/functions/fleetReservationAction/entry.ts",
+      "line": 21,
+      "text": "  if (user.role === 'admin') return {user,isAdmin:true};"
+    },
+    {
+      "path": "base44/functions/fleetMaintenanceAction/entry.ts",
+      "line": 27,
+      "text": "  if (user.role === 'admin') return { user };"
+    },
+    {
+      "path": "base44/functions/accessRequestAction/entry.ts",
+      "line": 27,
+      "text": "      const requesterEmail = targetEmail && actor.role === 'admin' ? targetEmail : actor.email;\r"
+    },
+    {
+      "path": "base44/functions/fleetInventoryAction/entry.ts",
+      "line": 10,
+      "text": "  if (user.role === 'admin') return { user };"
+    },
+    {
+      "path": "base44/functions/importOrders/entry.ts",
+      "line": 51,
+      "text": "  const canImport = actor?.role === 'admin' || actor?.can_import_export === true;"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentAction/entry.ts",
+      "line": 14,
+      "text": "  if (user.role === 'admin') return { user };"
+    },
+    {
+      "path": "base44/functions/fleetMeterMaintenanceAction/entry.ts",
+      "line": 17,
+      "text": "  if (user.role === 'admin') return { user, admin:true };"
+    },
+    {
+      "path": "base44/functions/fleetMeterMaintenanceAction/entry.ts",
+      "line": 22,
+      "text": "  return { user, admin:authorized.role === 'admin' };"
+    },
+    {
+      "path": "base44/functions/importSalesPipeline/entry.ts",
+      "line": 404,
+      "text": "    const canImport = actor?.role === 'admin' || actor?.can_import_export === true;"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 672,
+      "text": "  if (user.role === 'admin') return { user };"
+    },
+    {
+      "path": "base44/functions/fleetSearch/entry.ts",
+      "line": 67,
+      "text": "    const isAdmin = user.role === 'admin';"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 76,
+      "text": "  if (user.role === 'admin') return { user, authorized: { role: 'admin', email: user.email } };"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 333,
+      "text": "  const allowed = actor?.role === 'admin' || (ownerEmail && ownerEmail === actorEmail) || (legacyCreatedBy && legacyCreatedBy !== 'anonymous' && legacyCreatedBy === actorEmail);"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 120,
+      "text": "          prompt: `Create a brief, professional HTML invitation email for Sign Shop Workflow. Recipient first name: ${firstName}. Role: ${target.role === 'admin' ? 'Admin' : 'Team Member'}. The registration link MUST be used exactly as provided: ${registrationLink}. Use a white background, dark text, a solid #7C3AED CTA button with white text, inline CSS, no emojis, and mention the link expires in 7 days. Return subject and body.`,\r"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 173
+}

@@ -1,0 +1,42 @@
+./src/components/estimator/aio/AddProductGrid.jsx:138:      .then((rows) => setQuickProducts(rows || []))
+./src/components/estimator/aio/AddProductGrid.jsx:142:      .then((rows) => setKits(rows || []))
+./src/components/estimator/aio/CreateQuickProductModal.jsx:30:    ]).then(([rows, me]) => setAvailableCategories((rows || [])
+./src/components/estimator/aio/EstimateProductsList.jsx:54:    loadProductionProductTypes().then((items) => active && setProductionProductTypes(items));
+./src/components/estimator/aio/NewCustomerDialog.jsx:45:      .then((rows) => {
+./src/components/estimator/aio/NewCustomerDialog.jsx:65:      .then((rows) => {
+./src/components/estimator/aio/ProductPriceHistoryModal.jsx:40:      .then((result) => {
+./src/components/estimator/aio/Step1EstimateDetails.jsx:82:    Promise.all([load(base44.entities?.CustomerLocation), load(base44.entities?.CustomerContact), load(staffEntities?.CustomerNote)]).then(
+./src/components/estimator/ConvertToWorkOrder.jsx:27:      .then((row) => {
+./src/components/estimator/CustomerMergeDialog.jsx:60:      }).then((r) => (r && typeof r === "object" && "data" in r ? r.data : r));
+./src/components/estimator/CustomerMergeDialog.jsx:84:      }).then((r) => (r && typeof r === "object" && "data" in r ? r.data : r));
+./src/components/estimator/CustomerQuotePanel.jsx:149:      .then((rows) => {
+./src/components/estimator/CustomerQuotePanel.jsx:168:    ]).then(([setting, marginSetting, minQuoteSetting, users]) => {
+./src/components/estimator/EstimateAcceptancePanel.jsx:101:      .then((setting) => { if (active) setQuoteApprovalThreshold(thresholdFromSetting(setting)); })
+./src/components/estimator/EstimateCard.jsx:18:    .then((customer) => String(customer?.notes || "").trim())
+./src/components/estimator/EstimateCard.jsx:49:    loadCustomerNote(customerId).then(
+./src/components/estimator/EstimateQuoteDeliveryPanel.jsx:43:      .then(([deliveries, revisions]) => {
+./src/components/estimator/EstimateRevisionPanel.jsx:108:      .then((result) => { if (!stale) setRows(result || []); })
+./src/components/estimator/foundation/foundationSaveSession.js:14:    const attempt = Promise.resolve().then(async () => {
+./src/components/estimator/foundation/foundationSyncRecovery.js:104:    .then(() => getEstimate(prior.estimate_id))
+./src/components/estimator/foundation/foundationSyncRecovery.js:105:    .then((row) => row || null)
+./src/components/estimator/foundation/FoundationTemplateDialog.jsx:66:      .then((rows) => {
+./src/components/estimator/foundation/FoundationTemplateDialog.jsx:120:      .then(async () => {
+./src/components/estimator/loadAllEntityRows.js:142:    if (existing) return existing.then((rows) => [...rows]);
+./src/components/estimator/moduleShared/ModuleTemplateDialog.jsx:31:    listModuleTemplates({ moduleKey }).then((rows) => setTemplates(rows || []));
+./src/components/estimator/NewEstimateDialog.jsx:25:    loadAllCustomers().then((res) => setCustomers(res || [])).catch((err) => setError(err?.message || "Customers could not be loaded."));
+./src/components/estimator/parts/MasterPartPickerModal.jsx:34:      .then((rows) => {
+./src/components/estimator/parts/PartLibraryPickerModal.jsx:27:      .then((rows) => active && setTemplates(rows || []))
+./src/components/masterInventory/InventoryFormModal.jsx:59:      .then((rows) => active && setCostHistory(rows))
+./src/components/masterInventory/InventoryTable.jsx:23:      .then((u) => { if (active && u?.estimates > 0) setUsage(u); })
+./src/pages/Estimator.jsx:83:          .then(async (result) => {
+./src/pages/EstimatorCustomers.jsx:80:    }).then((r) => {
+./src/pages/EstimatorCustomers.jsx:333:      .then((d) => setPortalInbox(d.customers || []))
+./src/pages/EstimatorCustomers.jsx:780:        <CustomerMergeDialog open={mergeOpen} customers={customers} onClose={() => setMergeOpen(false)} onMerged={() => { loadAllCustomers().then((rows) => setCustomers(rows || [])).catch(() => {}); }} />
+./src/pages/EstimatorParts.jsx:163:      .then(([rows, me]) => { if (!active) return; setTemplates(rows || []); setUser(me); })
+./src/pages/EstimatorProducts.jsx:185:    ]).then(([rows, me, productionTypes]) => {
+./src/pages/EstimatorQueues.jsx:161:  useEffect(() => { base44.auth.me().then(setMe).catch(() => {}); }, []);
+./src/pages/EstimatorQueues.jsx:177:      .then((rows) => applyQuoteDefaults(Array.isArray(rows) ? rows[0] : null))
+./src/pages/FoundationEstimator.jsx:212:      .then(([proj, inv, concreteServices, settingRows, est]) => {
+./src/pages/FoundationEstimator.jsx:817:          }).then(async (result) => {
+./src/pages/FoundationEstimator.jsx:827:    }).then((outcome) => {
+./src/pages/FoundationEstimator.jsx:984:    const run = Promise.resolve().then(async () => {

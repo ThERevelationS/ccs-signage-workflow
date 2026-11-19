@@ -1,0 +1,653 @@
+{
+  "entries": [
+    {
+      "name": "Customer360.jsx",
+      "path": "src/pages/Customer360.jsx",
+      "type": "file",
+      "size": 18766
+    },
+    {
+      "name": "PurchaseOrders.jsx",
+      "path": "src/pages/PurchaseOrders.jsx",
+      "type": "file",
+      "size": 29173
+    },
+    {
+      "name": "SIPs.jsx",
+      "path": "src/pages/SIPs.jsx",
+      "type": "file",
+      "size": 107426
+    },
+    {
+      "name": "VinylInventory.jsx",
+      "path": "src/pages/VinylInventory.jsx",
+      "type": "file",
+      "size": 1273
+    },
+    {
+      "name": "PaintingEstimator.jsx",
+      "path": "src/pages/PaintingEstimator.jsx",
+      "type": "file",
+      "size": 38056
+    },
+    {
+      "name": "MainWorkflow.jsx",
+      "path": "src/pages/MainWorkflow.jsx",
+      "type": "file",
+      "size": 6943
+    },
+    {
+      "name": "FleetEquipment.jsx",
+      "path": "src/pages/FleetEquipment.jsx",
+      "type": "file",
+      "size": 27070
+    },
+    {
+      "name": "ProductQueues.jsx",
+      "path": "src/pages/ProductQueues.jsx",
+      "type": "file",
+      "size": 4585
+    },
+    {
+      "name": "InstallRouteMap.jsx",
+      "path": "src/pages/InstallRouteMap.jsx",
+      "type": "file",
+      "size": 12518
+    },
+    {
+      "name": "FleetRequests.jsx",
+      "path": "src/pages/FleetRequests.jsx",
+      "type": "file",
+      "size": 16018
+    },
+    {
+      "name": "NewUserSetup.jsx",
+      "path": "src/pages/NewUserSetup.jsx",
+      "type": "file",
+      "size": 22279
+    },
+    {
+      "name": "OAuthConsent.jsx",
+      "path": "src/pages/OAuthConsent.jsx",
+      "type": "file",
+      "size": 9904
+    },
+    {
+      "name": "EstimatorSettings.jsx",
+      "path": "src/pages/EstimatorSettings.jsx",
+      "type": "file",
+      "size": 17585
+    },
+    {
+      "name": "NewAllInOneEstimate.jsx",
+      "path": "src/pages/NewAllInOneEstimate.jsx",
+      "type": "file",
+      "size": 16367
+    },
+    {
+      "name": "FleetOverview.jsx",
+      "path": "src/pages/FleetOverview.jsx",
+      "type": "file",
+      "size": 45946
+    },
+    {
+      "name": "TimeClock.jsx",
+      "path": "src/pages/TimeClock.jsx",
+      "type": "file",
+      "size": 59079
+    },
+    {
+      "name": "EstimatorProducts.jsx",
+      "path": "src/pages/EstimatorProducts.jsx",
+      "type": "file",
+      "size": 30577
+    },
+    {
+      "name": "OpsReports.jsx",
+      "path": "src/pages/OpsReports.jsx",
+      "type": "file",
+      "size": 874
+    },
+    {
+      "name": "WalkIn.jsx",
+      "path": "src/pages/WalkIn.jsx",
+      "type": "file",
+      "size": 3998
+    },
+    {
+      "name": "WorkOrderTraveler.jsx",
+      "path": "src/pages/WorkOrderTraveler.jsx",
+      "type": "file",
+      "size": 18098
+    },
+    {
+      "name": "Invoices.jsx",
+      "path": "src/pages/Invoices.jsx",
+      "type": "file",
+      "size": 61136
+    },
+    {
+      "name": "SalesPipeline.jsx",
+      "path": "src/pages/SalesPipeline.jsx",
+      "type": "file",
+      "size": 65445
+    },
+    {
+      "name": "Inventory.jsx",
+      "path": "src/pages/Inventory.jsx",
+      "type": "file",
+      "size": 18667
+    },
+    {
+      "name": "Opportunities.jsx",
+      "path": "src/pages/Opportunities.jsx",
+      "type": "file",
+      "size": 88630
+    },
+    {
+      "name": "QuickPrice.jsx",
+      "path": "src/pages/QuickPrice.jsx",
+      "type": "file",
+      "size": 10599
+    },
+    {
+      "name": "CbMigration.jsx",
+      "path": "src/pages/CbMigration.jsx",
+      "type": "file",
+      "size": 4175
+    },
+    {
+      "name": "CompletedReports.jsx",
+      "path": "src/pages/CompletedReports.jsx",
+      "type": "file",
+      "size": 9407
+    },
+    {
+      "name": "ServerFiles.jsx",
+      "path": "src/pages/ServerFiles.jsx",
+      "type": "file",
+      "size": 29731
+    },
+    {
+      "name": "Fabrication.jsx",
+      "path": "src/pages/Fabrication.jsx",
+      "type": "file",
+      "size": 15110
+    },
+    {
+      "name": "CustomerPortal.jsx",
+      "path": "src/pages/CustomerPortal.jsx",
+      "type": "file",
+      "size": 68691
+    },
+    {
+      "name": "EstimatorParts.jsx",
+      "path": "src/pages/EstimatorParts.jsx",
+      "type": "file",
+      "size": 26494
+    },
+    {
+      "name": "PermittingDocs.jsx",
+      "path": "src/pages/PermittingDocs.jsx",
+      "type": "file",
+      "size": 24512
+    },
+    {
+      "name": "ChangeOrders.jsx",
+      "path": "src/pages/ChangeOrders.jsx",
+      "type": "file",
+      "size": 30107
+    },
+    {
+      "name": "CustomItemsEstimator.jsx",
+      "path": "src/pages/CustomItemsEstimator.jsx",
+      "type": "file",
+      "size": 8996
+    },
+    {
+      "name": "Permitting.jsx",
+      "path": "src/pages/Permitting.jsx",
+      "type": "file",
+      "size": 81870
+    },
+    {
+      "name": "FleetMaintenance.jsx",
+      "path": "src/pages/FleetMaintenance.jsx",
+      "type": "file",
+      "size": 35980
+    },
+    {
+      "name": "Reconciliation.jsx",
+      "path": "src/pages/Reconciliation.jsx",
+      "type": "file",
+      "size": 8131
+    },
+    {
+      "name": "FleetWorkOrders.jsx",
+      "path": "src/pages/FleetWorkOrders.jsx",
+      "type": "file",
+      "size": 46358
+    },
+    {
+      "name": "Estimating.jsx",
+      "path": "src/pages/Estimating.jsx",
+      "type": "file",
+      "size": 20984
+    },
+    {
+      "name": "VinylSettings.jsx",
+      "path": "src/pages/VinylSettings.jsx",
+      "type": "file",
+      "size": 18246
+    },
+    {
+      "name": "OrderForm.jsx",
+      "path": "src/pages/OrderForm.jsx",
+      "type": "file",
+      "size": 11227
+    },
+    {
+      "name": "FleetSettings.jsx",
+      "path": "src/pages/FleetSettings.jsx",
+      "type": "file",
+      "size": 75337
+    },
+    {
+      "name": "FleetHistory.jsx",
+      "path": "src/pages/FleetHistory.jsx",
+      "type": "file",
+      "size": 23367
+    },
+    {
+      "name": "MetalEstimator.jsx",
+      "path": "src/pages/MetalEstimator.jsx",
+      "type": "file",
+      "size": 63542
+    },
+    {
+      "name": "GoogleDriveCallback.jsx",
+      "path": "src/pages/GoogleDriveCallback.jsx",
+      "type": "file",
+      "size": 0
+    },
+    {
+      "name": "FleetParts.jsx",
+      "path": "src/pages/FleetParts.jsx",
+      "type": "file",
+      "size": 31341
+    },
+    {
+      "name": "FleetFluids.jsx",
+      "path": "src/pages/FleetFluids.jsx",
+      "type": "file",
+      "size": 15824
+    },
+    {
+      "name": "FleetPublicReport.jsx",
+      "path": "src/pages/FleetPublicReport.jsx",
+      "type": "file",
+      "size": 14433
+    },
+    {
+      "name": "FoundationEstimator.jsx",
+      "path": "src/pages/FoundationEstimator.jsx",
+      "type": "file",
+      "size": 70402
+    },
+    {
+      "name": "AdminPermittingSettings.jsx",
+      "path": "src/pages/AdminPermittingSettings.jsx",
+      "type": "file",
+      "size": 18641
+    },
+    {
+      "name": "ReportingDashboard.jsx",
+      "path": "src/pages/ReportingDashboard.jsx",
+      "type": "file",
+      "size": 30353
+    },
+    {
+      "name": "EstimatorTools.jsx",
+      "path": "src/pages/EstimatorTools.jsx",
+      "type": "file",
+      "size": 3240
+    },
+    {
+      "name": "JobWorkspace.jsx",
+      "path": "src/pages/JobWorkspace.jsx",
+      "type": "file",
+      "size": 89
+    },
+    {
+      "name": "MetalSettings.jsx",
+      "path": "src/pages/MetalSettings.jsx",
+      "type": "file",
+      "size": 7015
+    },
+    {
+      "name": "QuoteSettings.jsx",
+      "path": "src/pages/QuoteSettings.jsx",
+      "type": "file",
+      "size": 27675
+    },
+    {
+      "name": "MondayMorningMeeting.jsx",
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "type": "file",
+      "size": 77132
+    },
+    {
+      "name": "InstallationSettings.jsx",
+      "path": "src/pages/InstallationSettings.jsx",
+      "type": "file",
+      "size": 22299
+    },
+    {
+      "name": "FleetTracking.jsx",
+      "path": "src/pages/FleetTracking.jsx",
+      "type": "file",
+      "size": 32944
+    },
+    {
+      "name": "PrivacyPolicy.jsx",
+      "path": "src/pages/PrivacyPolicy.jsx",
+      "type": "file",
+      "size": 5039
+    },
+    {
+      "name": "SalesHome.jsx",
+      "path": "src/pages/SalesHome.jsx",
+      "type": "file",
+      "size": 2685
+    },
+    {
+      "name": "FeatureReports.jsx",
+      "path": "src/pages/FeatureReports.jsx",
+      "type": "file",
+      "size": 23958
+    },
+    {
+      "name": "JobCosting.jsx",
+      "path": "src/pages/JobCosting.jsx",
+      "type": "file",
+      "size": 21718
+    },
+    {
+      "name": "ResourcePlanning.jsx",
+      "path": "src/pages/ResourcePlanning.jsx",
+      "type": "file",
+      "size": 20455
+    },
+    {
+      "name": "CommsFollowups.jsx",
+      "path": "src/pages/CommsFollowups.jsx",
+      "type": "file",
+      "size": 9811
+    },
+    {
+      "name": "FleetFuel.jsx",
+      "path": "src/pages/FleetFuel.jsx",
+      "type": "file",
+      "size": 32688
+    },
+    {
+      "name": "Design.jsx",
+      "path": "src/pages/Design.jsx",
+      "type": "file",
+      "size": 15053
+    },
+    {
+      "name": "FleetEquipmentDetail.jsx",
+      "path": "src/pages/FleetEquipmentDetail.jsx",
+      "type": "file",
+      "size": 67692
+    },
+    {
+      "name": "FleetAnalytics.jsx",
+      "path": "src/pages/FleetAnalytics.jsx",
+      "type": "file",
+      "size": 34707
+    },
+    {
+      "name": "BrickStoneEstimator.jsx",
+      "path": "src/pages/BrickStoneEstimator.jsx",
+      "type": "file",
+      "size": 19439
+    },
+    {
+      "name": "ChannelLetterEstimator.jsx",
+      "path": "src/pages/ChannelLetterEstimator.jsx",
+      "type": "file",
+      "size": 62966
+    },
+    {
+      "name": "MaintenanceSettings.jsx",
+      "path": "src/pages/MaintenanceSettings.jsx",
+      "type": "file",
+      "size": 20585
+    },
+    {
+      "name": "ProductionSchedule.jsx",
+      "path": "src/pages/ProductionSchedule.jsx",
+      "type": "file",
+      "size": 15270
+    },
+    {
+      "name": "SOP.jsx",
+      "path": "src/pages/SOP.jsx",
+      "type": "file",
+      "size": 13858
+    },
+    {
+      "name": "MyWorkflow.jsx",
+      "path": "src/pages/MyWorkflow.jsx",
+      "type": "file",
+      "size": 70281
+    },
+    {
+      "name": "AuditLog.jsx",
+      "path": "src/pages/AuditLog.jsx",
+      "type": "file",
+      "size": 5253
+    },
+    {
+      "name": "MasterInventory.jsx",
+      "path": "src/pages/MasterInventory.jsx",
+      "type": "file",
+      "size": 22817
+    },
+    {
+      "name": "UserSettings.jsx",
+      "path": "src/pages/UserSettings.jsx",
+      "type": "file",
+      "size": 16427
+    },
+    {
+      "name": "FleetReservations.jsx",
+      "path": "src/pages/FleetReservations.jsx",
+      "type": "file",
+      "size": 25454
+    },
+    {
+      "name": "Financials.jsx",
+      "path": "src/pages/Financials.jsx",
+      "type": "file",
+      "size": 34109
+    },
+    {
+      "name": "LaserSettings.jsx",
+      "path": "src/pages/LaserSettings.jsx",
+      "type": "file",
+      "size": 18933
+    },
+    {
+      "name": "MaintenanceEstimator.jsx",
+      "path": "src/pages/MaintenanceEstimator.jsx",
+      "type": "file",
+      "size": 40442
+    },
+    {
+      "name": "FoundationSettings.jsx",
+      "path": "src/pages/FoundationSettings.jsx",
+      "type": "file",
+      "size": 9207
+    },
+    {
+      "name": "EstimatorCustomers.jsx",
+      "path": "src/pages/EstimatorCustomers.jsx",
+      "type": "file",
+      "size": 45946
+    },
+    {
+      "name": "Estimator.jsx",
+      "path": "src/pages/Estimator.jsx",
+      "type": "file",
+      "size": 16174
+    },
+    {
+      "name": "FleetSearch.jsx",
+      "path": "src/pages/FleetSearch.jsx",
+      "type": "file",
+      "size": 10934
+    },
+    {
+      "name": "TemplateBuilder.jsx",
+      "path": "src/pages/TemplateBuilder.jsx",
+      "type": "file",
+      "size": 450
+    },
+    {
+      "name": "FleetMechanic.jsx",
+      "path": "src/pages/FleetMechanic.jsx",
+      "type": "file",
+      "size": 69283
+    },
+    {
+      "name": "FleetNotifications.jsx",
+      "path": "src/pages/FleetNotifications.jsx",
+      "type": "file",
+      "size": 31183
+    },
+    {
+      "name": "Production.jsx",
+      "path": "src/pages/Production.jsx",
+      "type": "file",
+      "size": 15001
+    },
+    {
+      "name": "CrmEvents.jsx",
+      "path": "src/pages/CrmEvents.jsx",
+      "type": "file",
+      "size": 648
+    },
+    {
+      "name": "LaserEstimator.jsx",
+      "path": "src/pages/LaserEstimator.jsx",
+      "type": "file",
+      "size": 88871
+    },
+    {
+      "name": "PaintingSettings.jsx",
+      "path": "src/pages/PaintingSettings.jsx",
+      "type": "file",
+      "size": 18568
+    },
+    {
+      "name": "FoundationInventory.jsx",
+      "path": "src/pages/FoundationInventory.jsx",
+      "type": "file",
+      "size": 42617
+    },
+    {
+      "name": "VinylEstimator.jsx",
+      "path": "src/pages/VinylEstimator.jsx",
+      "type": "file",
+      "size": 49917
+    },
+    {
+      "name": "FleetWarranties.jsx",
+      "path": "src/pages/FleetWarranties.jsx",
+      "type": "file",
+      "size": 22971
+    },
+    {
+      "name": "Imports.jsx",
+      "path": "src/pages/Imports.jsx",
+      "type": "file",
+      "size": 5737
+    },
+    {
+      "name": "FoundationCatalog.jsx",
+      "path": "src/pages/FoundationCatalog.jsx",
+      "type": "file",
+      "size": 10820
+    },
+    {
+      "name": "InstallationDeliver.jsx",
+      "path": "src/pages/InstallationDeliver.jsx",
+      "type": "file",
+      "size": 19476
+    },
+    {
+      "name": "CNCEstimator.jsx",
+      "path": "src/pages/CNCEstimator.jsx",
+      "type": "file",
+      "size": 67545
+    },
+    {
+      "name": "PricingAdmin.jsx",
+      "path": "src/pages/PricingAdmin.jsx",
+      "type": "file",
+      "size": 18235
+    },
+    {
+      "name": "PermittingSearch.jsx",
+      "path": "src/pages/PermittingSearch.jsx",
+      "type": "file",
+      "size": 8380
+    },
+    {
+      "name": "AdminSettings.jsx",
+      "path": "src/pages/AdminSettings.jsx",
+      "type": "file",
+      "size": 209050
+    },
+    {
+      "name": "Home.jsx",
+      "path": "src/pages/Home.jsx",
+      "type": "file",
+      "size": 200
+    },
+    {
+      "name": "EstimateDetail.jsx",
+      "path": "src/pages/EstimateDetail.jsx",
+      "type": "file",
+      "size": 108056
+    },
+    {
+      "name": "CustomerStatements.jsx",
+      "path": "src/pages/CustomerStatements.jsx",
+      "type": "file",
+      "size": 16040
+    },
+    {
+      "name": "EstimatorQueues.jsx",
+      "path": "src/pages/EstimatorQueues.jsx",
+      "type": "file",
+      "size": 51404
+    },
+    {
+      "name": "CNCSettings.jsx",
+      "path": "src/pages/CNCSettings.jsx",
+      "type": "file",
+      "size": 14492
+    },
+    {
+      "name": "FleetInspections.jsx",
+      "path": "src/pages/FleetInspections.jsx",
+      "type": "file",
+      "size": 51968
+    }
+  ],
+  "truncated": false
+}

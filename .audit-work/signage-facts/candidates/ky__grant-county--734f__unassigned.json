@@ -1,0 +1,40 @@
+{
+ "jurisdiction_id": "6ac19f066e03a36685d4734f",
+ "jurisdiction_name": "Grant County",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Project Address:__________________________________________ Project Cost: _______________________ Name Address Phone Email Applicant Property Owner Contractor 1 st Floor 2 nd Floor Basement Garage Total Livable Sq Footage Square Footage DECK/DOCK DIMENSIONS : Length _______ Width _______ Height _______ Sq Footage_____________ READ CAREFULLY : This application must be signed by the owner or the lessee who agrees to comply with the Building Code Zoning Ordinance and shall be accompanied by the plans in duplicate, drawn to scale, showing the actual shape and dimensions of the lot to be built upon, the exact size and location of the lot, of the buildings, and accessory buildings existing, and the lines within which the building or structure shall be erected or altered, the existing and intended use of each building or part of a building, the number of families or housekeeping units the buildi",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "3e3068e4f7e09690f71a5ebfb2ec1c2795af90b69a712b9eb175bcd00831edff",
+   "source_document_id": null,
+   "source_title": "3e3068e4f7e09690f71a5ebfb2ec1c2795af90b69a712b9eb175bcd00831edff.pdf",
+   "official_url": "https://grantcounty.ky.gov/wp-content/uploads/2026/04/Permit-Application-Form-Updated.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "1 .Total salaries, wages, and other compensation paid to all employees for services within Grant County. 2 . Tax Due at 2.0% 3 . Add late interest@ 12% per annum 4 . Add late penalty @ 5%/Month Employer GRANT COUNTY FISCAL COURT EMPLOYER'S RETURN OF GRANT COUNTY OCCUPATIONAL TAX *If no wages were paid this period, mark none and return this form. $____________ $____________ $ _____________ $____________ Account No. Phone No. Fed. ID No. 5. Balance due $_________________ Signed Title If adjustments from previous quarters need to be made, please contact our office. I hereby certify that the information, and statements filed herewith are true and correct. FOR QUARTER ENDING Month Day Year Make checks payable and mail to: Grant County Fiscal Court Return due on or before April 30, July 1 0 1 N. MAIN STREET STE 3 31, October 31, January 31st. WILLIAMSTOWN K Y 41097 Phone: (859) 823-7561 Indica",
+   "tags": [
+    "dimension",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "9999e37d4f8ebc2ea57558cf5150fbe5faff8e887a1ff3da33bc95cf236d9d07",
+   "source_document_id": null,
+   "source_title": "9999e37d4f8ebc2ea57558cf5150fbe5faff8e887a1ff3da33bc95cf236d9d07.pdf",
+   "official_url": "https://grantcounty.ky.gov/wp-content/uploads/2026/07/2026-Payroll-Tax-Form-2.0-Rate.pdf"
+  }
+ ]
+}

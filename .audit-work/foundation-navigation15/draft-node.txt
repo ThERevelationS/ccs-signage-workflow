@@ -1,0 +1,15 @@
+ok roundtrip: allowlist + whole-assembly IDs/refs preserved; frozen input unchanged
+ok isolation: owner/source/estimate keys distinct in the SAME storage
+ok identity invalid: empty/whitespace/non-string owner,source,estimate -> unavailable
+ok zero/null/false/empty preserved; undefined own props omitted
+ok write invalids: id mismatch, arrays, version, nonfinite, cycle, nonplain, symbols, undefined-array-entry, bad ids/tokens/dates
+ok storage: getter/get/set/remove failures + null provider + unstable provider -> unavailable
+ok size cap retains prior record
+ok read invalids on same key: malformed JSON, wrong version, context mismatch, array data, unsupported version, numeric savedAt, oversize
+ok read sanitizes tampered envelope fields: excluded data keys dropped
+ok CAS write conflict retains prior
+ok exact-revision clear: stale revision retained, exact removes
+ok '__proto__' own JSON key cloned as data (no pollution); sparse array rejected; inherited root prop dropped
+ok non-plain record rejected; non-allowlist own root prop dropped
+PASS draft-recovery passed=13 failed=0
+exit=0

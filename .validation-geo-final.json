@@ -1,0 +1,104 @@
+{
+  "summary": {
+    "total": 7,
+    "resolved": 5,
+    "rate": "71.4%",
+    "failure_stages": {
+      "geocode": 2
+    },
+    "geocode_misses": 2,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "200 Park Ave, WARRENSVL HTS, OH 44122",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: warrensvl -> warrensville heights",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "warrensville heights"
+      },
+      "county": "",
+      "ms": 1952,
+      "worker": 1
+    },
+    {
+      "address": "24086 OH-697, Delphos, OH 45833",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: delphos -> delphos",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "delphos"
+      },
+      "county": "",
+      "ms": 2669,
+      "worker": 2
+    },
+    {
+      "address": "10548 Harrison Ave Ste 1500, Harrison, OH 45030",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: harrison -> harrison",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "harrison"
+      },
+      "county": "",
+      "ms": 1569,
+      "worker": 1
+    },
+    {
+      "address": "216 Cedar Rapids Rd, Mt Vernon, KY 40456",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: mount vernon -> mount vernon",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "mount vernon"
+      },
+      "county": "",
+      "ms": 1705,
+      "worker": 2
+    },
+    {
+      "address": "1400 OH-125, Amelia, OH 45102",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1642,
+      "worker": 1
+    },
+    {
+      "address": "400 Geissel St, Wapakoneta, OH 45895",
+      "ok": false,
+      "stage": "geocode",
+      "detail": "no geocoder match",
+      "nominatim_error": "nominatim HTTP 429",
+      "ms": 1672,
+      "worker": 2
+    },
+    {
+      "address": "2221 US-68, Carlisle, KY 40311",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: carlisle -> carlisle",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "carlisle"
+      },
+      "county": "",
+      "ms": 1703,
+      "worker": 1
+    }
+  ]
+}

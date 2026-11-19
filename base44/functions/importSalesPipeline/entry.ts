@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { format } from 'npm:date-fns@2.30.0';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
@@ -262,7 +263,7 @@ async function getOwnedImportJob(ImportJob: any, importJobId: string, actorEmail
   return job;
 }
 
-async function ensureNoOtherActiveImport(ImportJob: any, currentJobId: string) {
+async function ensureNoOtherActiveImport(ImportJob: any, currentJobId: string, warnings?: string[]) {
   const active = await ImportJob.filter({
     import_type: 'sales_pipeline',
     status: { $in: ['running', 'paused'] },
@@ -277,7 +278,7 @@ async function ensureNoOtherActiveImport(ImportJob: any, currentJobId: string) {
         completed_at: new Date().toISOString(),
         phase: 'failed',
         error_message: 'Import job expired after 30 minutes without completion.',
-      }).catch(() => null);
+      }).catch((e: any) => { warnings?.push(`stale job ${job.id} expiry write failed: ${String(e?.message || e)}`); return null; });
       continue;
     }
     throw Object.assign(new Error('Another Sales Pipeline import is already running. Finish or stop it before starting another.'), { status: 409 });
@@ -385,10 +386,11 @@ async function runWithBackoff<T>(work: () => Promise<T>, attempts = 3) {
 }
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
+  const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
   const startedAt = Date.now();
   let actor: any = null;
   let importJob: any = null;
+  const importWarnings: string[] = [];
 
   try {
     const request = await parseRequest(req);
@@ -397,7 +399,7 @@ Deno.serve(async (req) => {
       actor = await authenticateSignShopSession(base44, request.sessionToken);
     } catch (error) {
       const status = Number(error?.status || 401);
-      const safeStatus = [401, 409, 503].includes(status) ? status : 401;
+      const safeStatus = [401, 409, 429, 503].includes(status) ? status : 401;
       return Response.json({ error: safeStatus === 503 ? 'Session authentication is unavailable' : 'Unauthorized' }, { status: safeStatus });
     }
 
@@ -410,7 +412,7 @@ Deno.serve(async (req) => {
 
     if (request.mode === 'apply') {
       importJob = await getOwnedImportJob(ImportJob, request.importJobId, actorEmail);
-      await ensureNoOtherActiveImport(ImportJob, importJob?.id || '');
+      await ensureNoOtherActiveImport(ImportJob, importJob?.id || '', importWarnings);
     }
 
     const parseStarted = Date.now();
@@ -444,6 +446,7 @@ Deno.serve(async (req) => {
         summary: { total: 0, create: 0, update: 0, unchanged: 0, conflict: 0, ambiguous: 0, invalid: 0 },
         issues: [],
         import_job_id: importJob?.id || '',
+        import_warning: importWarnings.length ? importWarnings.join("; ") : undefined,
         timings: { parse_ms: parseMs, match_ms: 0, apply_ms: 0, total_ms: durationMs },
       });
     }
@@ -475,7 +478,7 @@ Deno.serve(async (req) => {
         row: plan.rowNumber,
         customer: plan.clientName,
         action: plan.kind,
-        fields: plan.kind === 'update' ? Object.keys(plan.nextFields || {}).filter((field) => !field.startsWith('sales_import_')) : Object.keys(plan.nextFields || {}).filter((field) => !field.startsWith('sales_import_')),
+        fields: Object.keys(plan.nextFields || {}).filter((field) => !field.startsWith('sales_import_')),
       })),
       timings: { parse_ms: parseMs, match_ms: matchMs, apply_ms: 0, total_ms: Date.now() - startedAt },
     };
@@ -531,6 +534,7 @@ Deno.serve(async (req) => {
           invalid: 0,
           skipped: 0,
           import_job_id: importJob.id,
+          import_warning: importWarnings.length ? importWarnings.join("; ") : undefined,
           timings: { parse_ms: parseMs, match_ms: matchMs, apply_ms: 0, total_ms: durationMs },
         });
       }
@@ -651,7 +655,7 @@ Deno.serve(async (req) => {
             conflict_items: results.conflicts,
             ambiguous_items: results.ambiguous,
             invalid_items: results.invalid,
-          }).catch(() => null);
+          }).catch((e: any) => { importWarnings.push(`progress write failed: ${String(e?.message || e)}`); return null; });
         }
       }
     };
@@ -705,6 +709,7 @@ Deno.serve(async (req) => {
         invalid: results.invalid,
         skipped: results.conflicts + results.ambiguous + results.invalid + results.failed + summary.adoption,
         issues: runtimeIssues,
+        import_warning: importWarnings.length ? importWarnings.join("; ") : undefined,
         timings: { parse_ms: parseMs, match_ms: matchMs, apply_ms: applyMs, total_ms: durationMs },
       });
     }
@@ -747,13 +752,14 @@ Deno.serve(async (req) => {
       adoption: summary.adoption,
       skipped,
       issues: runtimeIssues,
+      import_warning: importWarnings.length ? importWarnings.join("; ") : undefined,
       changed_records: returnChangedRecords ? changedRecords : [],
       changed_records_complete: returnChangedRecords,
       timings: { parse_ms: parseMs, match_ms: matchMs, apply_ms: applyMs, total_ms: durationMs },
     });
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 409, 413].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 409, 413, 429].includes(status) ? status : 500;
     const safeMessage = safeStatus === 500 ? 'Sales Pipeline import could not be completed safely' : String(error?.message || 'Import failed');
 
     if (importJob?.id) {
@@ -764,10 +770,10 @@ Deno.serve(async (req) => {
         duration_ms: Date.now() - startedAt,
         error_message: safeMessage,
         current_item: safeMessage,
-      }).catch(() => null);
+      }).catch((e: any) => { importWarnings.push(`failed-status write failed: ${String(e?.message || e)}`); return null; });
     }
 
     console.error('importSalesPipeline error:', error?.message || error);
-    return Response.json({ error: safeMessage }, { status: safeStatus });
+    return Response.json({ error: safeMessage, import_warning: importWarnings.length ? importWarnings.join("; ") : undefined }, { status: safeStatus });
   }
 });

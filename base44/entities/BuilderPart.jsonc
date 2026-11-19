@@ -207,6 +207,176 @@
     },
     "notes": {
       "type": "string"
+    },
+    "income_account_code": {
+      "type": "string",
+      "description": "GL income account code this part's sales post to on accounting export."
+    },
+    "cogs_account_code": {
+      "type": "string",
+      "description": "GL cost-of-goods-sold account code this part's material cost posts to on accounting export."
+    },
+    "pricing_template_id": {
+      "type": "string",
+      "description": "PricingTemplate record applied to this part's pricing."
+    },
+    "design_lead_days": {
+      "type": "number",
+      "description": "Lead-time days attributed to design work for this part."
+    },
+    "product_lead_days": {
+      "type": "number",
+      "description": "Lead-time days attributed to production for this part."
+    },
+    "labor_level_id": {
+      "type": "string",
+      "description": "Labor level/skill tier used to price this part's labor."
+    },
+    "machine_ids": {
+      "type": "array",
+      "description": "Machine records this part routes through in production.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "taxable": {
+      "type": "boolean",
+      "description": "Whether this part's charges are taxable."
+    },
+    "separate_on_invoice": {
+      "type": "boolean",
+      "description": "Whether this part is broken out as its own invoice line."
+    },
+    "double_sided": {
+      "type": "boolean",
+      "description": "Whether this part is produced double-sided."
+    },
+    "min_charge": {
+      "type": "number",
+      "description": "Minimum charge floor applied to this part."
+    },
+    "parent_sizes": {
+      "type": "array",
+      "description": "Parent sheet/stock size labels this part can be cut from.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "vendor_id": {
+      "type": "string",
+      "description": "Vendor record supplying this part or its primary material."
+    },
+    "vendor_name": {
+      "type": "string",
+      "description": "Display name of the supplying vendor (denormalized; catalog import lane already stores it)."
+    },
+    "vendor_cost": {
+      "type": "number",
+      "description": "Vendor-quoted unit cost for this part \u2014 outranks vendor default_cost and generic cost in vendorCostModel retail resolution."
+    },
+    "vendor_markup_percent": {
+      "type": "number",
+      "description": "Retail markup percent applied to the resolved vendor cost for this part; outranks vendor defaults and generic markup_* fields."
+    },
+    "vendor_markup_flat": {
+      "type": "number",
+      "description": "Flat markup added after the percent markup for this part's vended retail."
+    },
+    "is_vended": {
+      "type": "boolean",
+      "description": "Explicit vended flag \u2014 one of the vendorCostModel vended-part signals (flag | vendor_id | vendor_name | vendor_cost)."
+    },
+    "mfg_part_number": {
+      "type": "string",
+      "description": "Manufacturer/vendor part number used for ordering."
+    },
+    "size_discounts": {
+      "type": "array",
+      "description": "F-14: Volume/size discount threshold rows applied post-tier. Each row grants discount_pct off the tier-priced base when the part's measure on threshold_basis (sqft|width_in|height_in|area_sqin|perimeter_in) reaches threshold_value; the largest qualifying threshold wins (ties \u2192 highest pct). Resolution lives in base44/shared/sizeDiscounts.ts.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "threshold_basis": {
+            "type": "string",
+            "enum": [
+              "sqft",
+              "width_in",
+              "height_in",
+              "area_sqin",
+              "perimeter_in"
+            ]
+          },
+          "threshold_value": {
+            "type": "number"
+          },
+          "discount_pct": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "labor_levels": {
+      "type": "array",
+      "description": "F-25: explicit LaborLevel assignments alongside labor_level_id \u2014 each entry may be a level id or {labor_level_id, rate_basis, hours, rate} row resolved by marginModel's labor cost chain.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "machine_id": {
+      "type": "string",
+      "description": "Primary machine this part routes through (singular companion to machine_ids; first-declared machine ref wins in marginModel)."
+    },
+    "machine_hours": {
+      "type": "object",
+      "description": "F-25: per-machine run hours keyed by machine id (or a flat number for the primary machine) feeding marginModel's machine-time cost.",
+      "additionalProperties": true
+    },
+    "modifiers": {
+      "type": "array",
+      "description": "F-25: PricingModifier attachment refs (ids or inline modifier rows) \u2014 canonical attachment field resolved before modifier_ids/pricing_modifier_ids aliases.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "modifier_answers": {
+      "type": "object",
+      "description": "F-25: collected modifier answers keyed by modifier id or name; drives option rate_overrides in modifier cost resolution.",
+      "additionalProperties": true
+    },
+    "area_sqft": {
+      "type": "number",
+      "description": "Area in square feet (canonical alias of sqft) used by per-unit modifier rates and waste scaling."
+    },
+    "waste_factor": {
+      "type": "number",
+      "description": "Material waste multiplier (e.g. 1.1 = 10% waste) applied to waste-affecting cost components."
+    },
+    "machine_cost": {
+      "type": "number",
+      "description": "F-25: explicit machine-cost override for this part; when set it outranks the machine-rate resolution chain."
+    },
+    "labor_cost": {
+      "type": "number",
+      "description": "F-25: explicit labor-cost override; outranks labor-level resolution when present."
+    },
+    "modifier_cost": {
+      "type": "number",
+      "description": "F-25: explicit modifier-cost override; outranks the modifier attachment resolution when present."
+    },
+    "material_cost": {
+      "type": "number",
+      "description": "F-25: explicit material-cost override; outranks frozen/current cost snapshots when present."
+    },
+    "cost_breakdown": {
+      "type": "object",
+      "description": "F-25: free-form cost component bag ({material, machine, labor, modifier, ...}) \u2014 marginModel reads explicit totals from it after dedicated fields.",
+      "additionalProperties": true
     }
   },
   "required": [
@@ -214,9 +384,25 @@
     "part_name"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__builderpart_backend_only__" } },
-    "read": { "user_condition": { "role": "__builderpart_backend_only__" } },
-    "update": { "user_condition": { "role": "__builderpart_backend_only__" } },
-    "delete": { "user_condition": { "role": "__builderpart_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__builderpart_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__builderpart_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__builderpart_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__builderpart_backend_only__"
+      }
+    }
   }
 }

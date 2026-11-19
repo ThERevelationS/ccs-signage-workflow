@@ -1,0 +1,394 @@
+{
+  "pass": 97,
+  "fail": 0,
+  "results": [
+    {
+      "name": "A1 derived item 1 matches remote updateItem math",
+      "ok": true
+    },
+    {
+      "name": "A2 derived item 2 matches remote updateItem math",
+      "ok": true
+    },
+    {
+      "name": "A3 derived item 3 matches remote updateItem math",
+      "ok": true
+    },
+    {
+      "name": "A4 totals identical to remote calculateTotals",
+      "ok": true
+    },
+    {
+      "name": "A5 clean calc issues empty",
+      "ok": true
+    },
+    {
+      "name": "A6 clean calc not held",
+      "ok": true
+    },
+    {
+      "name": "A7 calc items carry derived fields",
+      "ok": true
+    },
+    {
+      "name": "A8 calc totals identical to remote",
+      "ok": true
+    },
+    {
+      "name": "A9 calc preserves raw item fields",
+      "ok": true
+    },
+    {
+      "name": "B1 strict accepts number",
+      "ok": true
+    },
+    {
+      "name": "B2 strict accepts numeric string",
+      "ok": true
+    },
+    {
+      "name": "B3 strict accepts 0",
+      "ok": true
+    },
+    {
+      "name": "B4 strict rejects blank",
+      "ok": true
+    },
+    {
+      "name": "B5 strict rejects nullish",
+      "ok": true
+    },
+    {
+      "name": "B6 strict rejects malformed",
+      "ok": true
+    },
+    {
+      "name": "B7 strict rejects NaN/Infinity",
+      "ok": true
+    },
+    {
+      "name": "B8 nonneg rejects negative",
+      "ok": true
+    },
+    {
+      "name": "B9 positive rejects 0",
+      "ok": true
+    },
+    {
+      "name": "C1 clean settings → no issues",
+      "ok": true
+    },
+    {
+      "name": "C2 malformed cnc_letter_perimeter_factor → issue",
+      "ok": true
+    },
+    {
+      "name": "C2 malformed min_cnc_labor_hours → issue",
+      "ok": true
+    },
+    {
+      "name": "C2 malformed cnc_cut_speed_3_4 → issue",
+      "ok": true
+    },
+    {
+      "name": "C2 malformed wood_cnc_cut_multiplier → issue",
+      "ok": true
+    },
+    {
+      "name": "C2 malformed aluminum_cnc_cut_multiplier → issue",
+      "ok": true
+    },
+    {
+      "name": "C3 explicit-0 rejected: cnc_letter_perimeter_factor",
+      "ok": true
+    },
+    {
+      "name": "C3 explicit-0 rejected: cnc_cut_speed_3_4",
+      "ok": true
+    },
+    {
+      "name": "C3 explicit-0 rejected: wood_cnc_cut_multiplier",
+      "ok": true
+    },
+    {
+      "name": "C3 explicit-0 rejected: acrylic_cnc_cut_multiplier",
+      "ok": true
+    },
+    {
+      "name": "C4 explicit-0 valid: min_cnc_labor_hours",
+      "ok": true
+    },
+    {
+      "name": "C5 negative rejected: cnc_letter_perimeter_factor",
+      "ok": true
+    },
+    {
+      "name": "C5 negative rejected: min_cnc_labor_hours",
+      "ok": true
+    },
+    {
+      "name": "C5 negative rejected: cnc_cut_speed_3_4",
+      "ok": true
+    },
+    {
+      "name": "C5 negative rejected: wood_cnc_cut_multiplier",
+      "ok": true
+    },
+    {
+      "name": "C5 negative rejected: aluminum_cnc_cut_multiplier",
+      "ok": true
+    },
+    {
+      "name": "C6 absent settings → no issues (defaults apply)",
+      "ok": true
+    },
+    {
+      "name": "C7 copied keys not settings-scanned",
+      "ok": true
+    },
+    {
+      "name": "D1 clean items → no issues",
+      "ok": true
+    },
+    {
+      "name": "D2 unknown item_type flagged",
+      "ok": true
+    },
+    {
+      "name": "D3 absent item_type flagged",
+      "ok": true
+    },
+    {
+      "name": "D4 unknown material flagged",
+      "ok": true
+    },
+    {
+      "name": "D5 missing material flagged",
+      "ok": true
+    },
+    {
+      "name": "D6 lowercase material ok",
+      "ok": true
+    },
+    {
+      "name": "D7 material not consumed for 3d",
+      "ok": true
+    },
+    {
+      "name": "D8 quantity=0 flagged",
+      "ok": true
+    },
+    {
+      "name": "D8 quantity=\"\" flagged",
+      "ok": true
+    },
+    {
+      "name": "D8 quantity=\"x\" flagged",
+      "ok": true
+    },
+    {
+      "name": "D8 quantity=undefined flagged",
+      "ok": true
+    },
+    {
+      "name": "D9 lettering quantity skipped",
+      "ok": true
+    },
+    {
+      "name": "D10 panel length negative flagged",
+      "ok": true
+    },
+    {
+      "name": "D11 panel width malformed flagged",
+      "ok": true
+    },
+    {
+      "name": "D12 panel width blank flagged",
+      "ok": true
+    },
+    {
+      "name": "D13 panel 0x0 flagged",
+      "ok": true
+    },
+    {
+      "name": "D14 panel single-0 tolerated",
+      "ok": true
+    },
+    {
+      "name": "D15 lettering height 0 flagged",
+      "ok": true
+    },
+    {
+      "name": "D16 lettering count blank flagged",
+      "ok": true
+    },
+    {
+      "name": "D17 3d carve area 0 flagged",
+      "ok": true
+    },
+    {
+      "name": "D18 3d carve speed blank flagged",
+      "ok": true
+    },
+    {
+      "name": "D19 cut speed 0 flagged",
+      "ok": true
+    },
+    {
+      "name": "D20 cut speed malformed flagged",
+      "ok": true
+    },
+    {
+      "name": "D21 cut speed skipped for 3d",
+      "ok": true
+    },
+    {
+      "name": "D22 panel carve area + bad speed flagged",
+      "ok": true
+    },
+    {
+      "name": "D23 non-3d malformed carve area flagged",
+      "ok": true
+    },
+    {
+      "name": "D24 carve_depth unconsumed → never flagged",
+      "ok": true
+    },
+    {
+      "name": "E1 held=true",
+      "ok": true
+    },
+    {
+      "name": "E2 pricingUnavailable metadata",
+      "ok": true
+    },
+    {
+      "name": "E3 held item derived null",
+      "ok": true
+    },
+    {
+      "name": "E4 held item raw fields preserved",
+      "ok": true
+    },
+    {
+      "name": "E5 unheld items keep derived numbers",
+      "ok": true
+    },
+    {
+      "name": "E6 all totals null",
+      "ok": true
+    },
+    {
+      "name": "E7 settings hold → all totals null",
+      "ok": true
+    },
+    {
+      "name": "E8 settings hold → all item derived null",
+      "ok": true
+    },
+    {
+      "name": "E9 issue kind cnc_catalog",
+      "ok": true
+    },
+    {
+      "name": "E10 non-array items flagged",
+      "ok": true
+    },
+    {
+      "name": "E11 malformed machine_rate_per_hour flagged",
+      "ok": true
+    },
+    {
+      "name": "E11 malformed labor_rate flagged",
+      "ok": true
+    },
+    {
+      "name": "E11 malformed setup_time_percentage flagged",
+      "ok": true
+    },
+    {
+      "name": "E11 malformed fixed_setup_hours flagged",
+      "ok": true
+    },
+    {
+      "name": "E12 negative rate flagged",
+      "ok": true
+    },
+    {
+      "name": "E13 null-seeded rate flagged",
+      "ok": true
+    },
+    {
+      "name": "F1 honored-0 machine rate → no issue",
+      "ok": true
+    },
+    {
+      "name": "F2 honored-0 machine rate → $0 machine cost",
+      "ok": true
+    },
+    {
+      "name": "F3 remote seed resurrects 0 → 75 (bug being fixed)",
+      "ok": true
+    },
+    {
+      "name": "F4 recorded-0 cut multiplier flagged",
+      "ok": true
+    },
+    {
+      "name": "F5 recorded-0 letter factor flagged",
+      "ok": true
+    },
+    {
+      "name": "F6 min_labor 0 → no issue",
+      "ok": true
+    },
+    {
+      "name": "G1 remote totals stay stale after pct edit (defect confirmed)",
+      "ok": true
+    },
+    {
+      "name": "G2 candidate totals recompute on rate edit",
+      "ok": true
+    },
+    {
+      "name": "G3 candidate setup hours scale with pct",
+      "ok": true
+    },
+    {
+      "name": "G4 min-labor floor identical to remote",
+      "ok": true
+    },
+    {
+      "name": "H1 snapshot gate",
+      "ok": true
+    },
+    {
+      "name": "H2 draft preserves blank",
+      "ok": true
+    },
+    {
+      "name": "H3 draft parses number",
+      "ok": true
+    },
+    {
+      "name": "H4 draft keeps raw junk",
+      "ok": true
+    },
+    {
+      "name": "H5 issuesForField item-scoped",
+      "ok": true
+    },
+    {
+      "name": "H6 hasIssueFor",
+      "ok": true
+    },
+    {
+      "name": "H7 settingNumber strict read",
+      "ok": true
+    },
+    {
+      "name": "H8 settingRecorded",
+      "ok": true
+    }
+  ]
+}

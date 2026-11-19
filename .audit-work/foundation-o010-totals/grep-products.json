@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "src/components/estimator/aio/ProductRow.jsx:48:  const frozen = Number(line.total_snapshot || 0);\r\nsrc/components/estimator/aio/ProductRow.jsx:49:  const live = Number(line.live_total_snapshot ?? frozen);\r\nsrc/components/estimator/aio/ProductRow.jsx:54:  if (line.needs_reattach_review || line.price_state === \"detached_parts\") {\r\nsrc/components/estimator/aio/ProductRow.jsx:70:  if (line.price_state === \"legacy_frozen\") {\r\nsrc/components/estimator/aio/ProductRow.jsx:78:  if (line.price_state === \"manual\") {\r\nsrc/components/estimator/aio/ProductRow.jsx:86:  if (line.price_state === \"changed\" || differs) {\r\nsrc/components/estimator/aio/ProductRow.jsx:94:  if (line.price_state === \"unchecked\") {\r\nsrc/components/estimator/aio/ProductRow.jsx:140:  const frozen = Number(line.total_snapshot || 0);\r\nsrc/components/estimator/aio/ProductRow.jsx:141:  const live = Number(line.live_total_snapshot ?? frozen);\r\nsrc/components/estimator/aio/ProductRow.jsx:365:          ) : line.needs_reattach_review || line.price_state === \"detached_parts\" ? (\r\nsrc/components/estimator/aio/ProductRow.jsx:690:          refreshKey={`${line.last_price_check_at || \"\"}:${line.last_price_update_at || \"\"}:${line.price_state || \"\"}`}\r\nsrc/components/estimator/aio/BuilderPartsPanel.jsx:56:  if ([\"detached\", \"reattach_available\"].includes(part.inventory_link_state) || part.price_state === \"detached\") {\r\nsrc/components/estimator/aio/BuilderPartsPanel.jsx:59:  if (part.price_state === \"changed\") {\r\nsrc/components/estimator/aio/BuilderPartsPanel.jsx:62:  if (part.price_state === \"legacy_frozen\") {\r\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 480
+}

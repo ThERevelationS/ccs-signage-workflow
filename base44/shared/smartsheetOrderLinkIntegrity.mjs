@@ -1,3 +1,5 @@
+import { isFulfilledOrder } from './smartsheetOrderReceivedState.mjs';
+
 const clean = (value, max = 300) => String(value ?? '').trim().slice(0, max);
 const numericId = value => {
   const text = clean(value, 40);
@@ -52,6 +54,10 @@ export function classifyRemoteUnlinkedOrderRow(summary, activeLinkedOrders = [])
   // description to match exactly, and never use this evidence to establish a link.
   const duplicateCandidates = (Array.isArray(activeLinkedOrders) ? activeLinkedOrders : [])
     .filter(order => {
+      // A fulfilled Order (Date Received recorded) is a completed request — a
+      // new identical Smartsheet row is a restock/reorder, never proof of an
+      // in-flight create for it. Only still-open Orders can duplicate the row.
+      if (isFulfilledOrder(order)) return false;
       const candidate = normalizedOrderIdentity(order);
       if (!identity.customer_name || !identity.description ||
           candidate.customer_name !== identity.customer_name ||

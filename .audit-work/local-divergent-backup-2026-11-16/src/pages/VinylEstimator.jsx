@@ -1,0 +1,882 @@
+// Vinyl Estimator — tabbed estimator with multiple vinyl workflows + installation.
+// Tabs: Project Info → Vinyl Workflows → Installation → Travel & Crew → Summary
+// Each workflow has its own vinyl + machines + parts + roll layout, so different
+// materials never get nested onto the same physical roll.
+
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  VinylProject, VinylInventory, VinylMachine,
+  Settings, ChannelLetterInstallEquipment,
+} from "@/api/gatedEntities";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ArrowLeft, Droplets, Loader2, FileText, Layers, HardHat, Calculator, Plus, MapPin, Settings as SettingsIcon, ChevronsUpDown, ChevronsDownUp, BookmarkPlus, ClipboardPaste, UploadCloud, AlertTriangle, TrendingUp } from "lucide-react";
+import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
+import { categorizeVinylProject } from "@/components/markup/projectCategorizer";
+import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
+import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
+import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
+import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
+import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
+import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
+import EquipmentSelector from "@/components/channelLetterInstall/EquipmentSelector";
+import PersonnelSelector from "@/components/channelLetterInstall/PersonnelSelector";
+import TravelCostCard from "@/components/channelLetterInstall/TravelCostCard";
+
+import VinylWorkflowCard from "@/components/vinylEstimator/VinylWorkflowCard";
+import VinylProjectSummaryCard from "@/components/vinylEstimator/VinylProjectSummaryCard";
+import VinylBulkImportDialog from "@/components/vinylEstimator/VinylBulkImportDialog";
+import VinylPartsLibraryDialog from "@/components/vinylEstimator/VinylPartsLibraryDialog";
+import VinylArtworkUploadDialog from "@/components/vinylEstimator/VinylArtworkUploadDialog";
+import VinylMoveToWorkflowMenu from "@/components/vinylEstimator/VinylMoveToWorkflowMenu";
+import {
+  blankVinylProject, blankWorkflow, migrateProject, rollupVinylProject,
+} from "@/components/vinylEstimator/vinylProjectHelpers";
+import { staffEntities } from "@/components/staff/staffEntities";
+
+const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
+
+export default function VinylEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
+  const [search] = useSearchParams();
+  // Embedded All-In-One context wins over standalone query parameters.
+  const projectId = embeddedProjectId || search.get("id") || search.get("edit");
+  const estimateId = embeddedEstimateId || search.get("estimateId");
+  const navigate = useNavigate();
+
+  const [project, setProject] = useState(blankVinylProject());
+  const [vinyls, setVinyls] = useState([]);
+  const [machines, setMachines] = useState([]);
+  const [settings, setSettings] = useState({});
+  const [equipmentInventory, setEquipmentInventory] = useState([]);
+  const [estimateContext, setEstimateContext] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState("project");
+  const persistedProjectIdRef = useRef(projectId || "");
+  const createAttemptRef = useRef({ signature: "", key: "" });
+  const copyAttemptRef = useRef({ signature: "", key: "" });
+  const [templateMode, setTemplateMode] = useState(null);
+
+  useEffect(() => {
+    persistedProjectIdRef.current = projectId || "";
+    createAttemptRef.current = { signature: "", key: "" };
+    copyAttemptRef.current = { signature: "", key: "" };
+  }, [projectId]);
+
+  // Workflow tab UI state
+  const [allOpen, setAllOpen] = useState(true);
+  const [targetWorkflowIdx, setTargetWorkflowIdx] = useState(null); // index whose toolbar opened the dialog
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [artworkOpen, setArtworkOpen] = useState(false);
+  // Move-part-to-workflow dialog
+  const [moveContext, setMoveContext] = useState(null); // { workflowIdx, partIdx }
+
+  // Load everything in parallel
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setLoadError("");
+      try {
+        const [vList, mList, sList, eList, p, estimate] = await Promise.all([
+          loadAllEntityRows({ entity: VinylInventory, sort: "sort_order", label: "Vinyl inventory" }),
+          loadAllEntityRows({ entity: VinylMachine, sort: "sort_order", label: "Vinyl machines" }),
+          loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
+          loadAllEntityRows({ entity: ChannelLetterInstallEquipment, sort: "sort_order", label: "Installation equipment" }),
+          projectId ? VinylProject.get(projectId) : Promise.resolve(null),
+          estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
+        ]);
+        setVinyls(vList || []);
+        setMachines(mList || []);
+        setEquipmentInventory(eList || []);
+        setEstimateContext(estimate || null);
+        const settingsObj = {};
+        sList.forEach(s => { settingsObj[s.setting_name] = s.setting_value; });
+        setSettings(settingsObj);
+
+        if (p) {
+          const migrated = migrateProject(p);
+          const firstWorkflow = migrated.workflows?.[0] || blankWorkflow(0);
+          const isBlankEmbeddedWorkflow =
+            (migrated.workflows || []).length === 1 &&
+            !(firstWorkflow.items || []).length &&
+            !firstWorkflow.vinyl_id && !firstWorkflow.printer_id && !firstWorkflow.cutter_id && !firstWorkflow.laminator_id;
+          const defaultPrinter   = mList.find(m => m.is_default_for_type && (m.machine_type === "printer" || m.machine_type === "print_and_cut")) || mList.find(m => m.machine_type === "printer" || m.machine_type === "print_and_cut");
+          const defaultCutter    = mList.find(m => m.is_default_for_type && (m.machine_type === "cutter" || m.machine_type === "print_and_cut")) || mList.find(m => m.machine_type === "cutter" || m.machine_type === "print_and_cut");
+          const defaultLaminator = mList.find(m => m.is_default_for_type && m.machine_type === "laminator") || mList.find(m => m.machine_type === "laminator");
+          const defaultVinyl     = vList.find(v => v.is_active !== false && !v.is_laminate && v.show_in_vinyl_estimator !== false);
+          const workflows = isBlankEmbeddedWorkflow ? [{
+            ...firstWorkflow,
+            vinyl_id: defaultVinyl?.id || "",
+            laminate_id: defaultVinyl?.default_laminate_id || "",
+            apply_laminate: !!defaultVinyl?.requires_lamination,
+            printer_id: defaultPrinter?.id || "",
+            cutter_id: defaultCutter?.id || "",
+            laminator_id: defaultLaminator?.id || "",
+          }] : migrated.workflows;
+          setProject({
+            ...migrated,
+            workflows,
+            client_name: estimate?.client_name || migrated.client_name,
+            customer_id: estimate?.customer_id || migrated.customer_id,
+            estimate_number: estimate?.estimate_number || migrated.estimate_number,
+            site_address: migrated.site_address || estimate?.site_address || "",
+          });
+        } else {
+          // Seed first workflow with sensible defaults
+          const defaultPrinter   = mList.find(m => m.is_default_for_type && (m.machine_type === "printer" || m.machine_type === "print_and_cut")) || mList.find(m => m.machine_type === "printer" || m.machine_type === "print_and_cut");
+          const defaultCutter    = mList.find(m => m.is_default_for_type && (m.machine_type === "cutter"  || m.machine_type === "print_and_cut")) || mList.find(m => m.machine_type === "cutter" || m.machine_type === "print_and_cut");
+          const defaultLaminator = mList.find(m => m.is_default_for_type && m.machine_type === "laminator") || mList.find(m => m.machine_type === "laminator");
+          const defaultVinyl     = vList.find(v => v.is_active !== false && !v.is_laminate && v.show_in_vinyl_estimator !== false);
+
+          setProject(prev => ({
+            ...prev,
+            workflows: [{
+              ...prev.workflows[0],
+              vinyl_id: defaultVinyl?.id || "",
+              laminate_id: defaultVinyl?.default_laminate_id || "",
+              apply_laminate: !!defaultVinyl?.requires_lamination,
+              printer_id:   defaultPrinter?.id   || "",
+              cutter_id:    defaultCutter?.id    || "",
+              laminator_id: defaultLaminator?.id || "",
+            }],
+          }));
+        }
+      } catch (e) {
+        console.error(e);
+        setLoadError(e?.message || "Vinyl Builder prerequisites could not be verified.");
+      }
+      setLoading(false);
+    };
+    load();
+  }, [projectId, estimateId]);
+
+  const updateProject = useCallback((patch) => setProject(prev => ({ ...prev, ...patch })), []);
+
+  const updateWorkflow = (idx, next) => {
+    setProject(prev => {
+      const wfs = [...prev.workflows];
+      wfs[idx] = next;
+      return { ...prev, workflows: wfs };
+    });
+  };
+  const addWorkflow = () => {
+    setProject(prev => ({
+      ...prev,
+      workflows: [...prev.workflows, blankWorkflow(prev.workflows.length)],
+    }));
+  };
+  const removeWorkflow = (idx) => {
+    if (project.workflows.length === 1) {
+      alert("A project must have at least one vinyl workflow.");
+      return;
+    }
+    if (!confirm("Delete this workflow and all its parts?")) return;
+    setProject(prev => ({
+      ...prev,
+      workflows: prev.workflows.filter((_, i) => i !== idx),
+    }));
+  };
+  const duplicateWorkflow = (idx) => {
+    setProject(prev => {
+      const copy = JSON.parse(JSON.stringify(prev.workflows[idx]));
+      copy.id = `wf-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      copy.name = `${copy.name || `Workflow ${idx + 1}`} (copy)`;
+      copy._calc = undefined;
+      const next = [...prev.workflows];
+      next.splice(idx + 1, 0, copy);
+      return { ...prev, workflows: next };
+    });
+  };
+
+  // Project-wide rollup (re-derives when any workflow's _calc changes)
+  const rollup = useMemo(() => rollupVinylProject(project), [project]);
+  // Max install height for travel/equipment suggestion compatibility
+  const totalLaborHours = rollup.laborHours;
+
+  // Feature #33 — does any workflow have validation issues?
+  const workflowsHaveIssues = useMemo(
+    () => (project.workflows || []).some(wf => wf._hasIssues),
+    [project.workflows]
+  );
+
+  // Helper: add a single part to a specific workflow (used by library + artwork dialogs)
+  const addPartToWorkflow = (workflowIdx, part) => {
+    if (workflowIdx == null || workflowIdx < 0 || workflowIdx >= project.workflows.length) return;
+    const wf = project.workflows[workflowIdx];
+    updateWorkflow(workflowIdx, { ...wf, items: [...(wf.items || []), part] });
+  };
+  // Helper: bulk import to a specific workflow
+  const importPartsToWorkflow = (workflowIdx, parts) => {
+    if (workflowIdx == null) return;
+    const wf = project.workflows[workflowIdx];
+    updateWorkflow(workflowIdx, { ...wf, items: [...(wf.items || []), ...parts] });
+  };
+  // Helper: move a part between workflows
+  const movePart = (fromIdx, partIdx, toIdx) => {
+    if (fromIdx === toIdx) return;
+    const fromWf = project.workflows[fromIdx];
+    const toWf = project.workflows[toIdx];
+    const part = fromWf.items[partIdx];
+    if (!part) return;
+    setProject(prev => {
+      const wfs = [...prev.workflows];
+      wfs[fromIdx] = { ...fromWf, items: fromWf.items.filter((_, i) => i !== partIdx) };
+      wfs[toIdx]   = { ...toWf,   items: [...(toWf.items || []), part] };
+      return { ...prev, workflows: wfs };
+    });
+  };
+
+  // Ctrl+S / Cmd+S saves the project without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!saving) save();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saving]);
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!saving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saving]);
+  const save = async () => {
+    if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
+      alert("Please fill in Project Name and Client Name.");
+      setActiveTab("project");
+      return;
+    }
+    setSaving(true);
+    try {
+      // Strip transient _calc from each workflow before saving
+      const cleanWorkflows = project.workflows.map(({ _calc, ...rest }) => rest);
+      // Flatten parts for entity-level `items` (legacy/reporting), tagged with workflow id
+      const flatItems = cleanWorkflows.flatMap(wf =>
+        (wf.items || []).map(it => ({ ...it, workflow_id: wf.id, workflow_name: wf.name }))
+      );
+
+      const pricingProject = {
+        ...project,
+        client_name: estimateContext?.client_name || project.client_name,
+        customer_id: estimateContext?.customer_id || project.customer_id,
+        estimate_number: estimateContext?.estimate_number || project.estimate_number,
+        total_vinyl_cost: rollup.vinylCost,
+        total_laminate_cost: rollup.laminateCost,
+        total_ink_cost: rollup.inkCost,
+        total_blade_cost: rollup.bladeCost,
+        total_machine_cost: rollup.machineCost,
+        total_supplies_cost: rollup.supplies,
+        labor_cost: rollup.laborCost,
+        total_personnel_cost: rollup.personnelCost,
+        total_equipment_cost: rollup.equipmentCost,
+        total_travel_cost: rollup.travelCost,
+      };
+      const customerPricing = await calculateSavedCustomerPricing({
+        project: pricingProject,
+        categorize: categorizeVinylProject,
+        tierNumber: project.customer_pricing?.tier_number,
+      });
+
+      const payload = {
+        ...project,
+        client_name: estimateContext?.client_name || project.client_name,
+        customer_id: estimateContext?.customer_id || project.customer_id,
+        estimate_number: estimateContext?.estimate_number || project.estimate_number,
+        site_address: project.site_address || estimateContext?.site_address || "",
+        workflows: cleanWorkflows,
+        items: flatItems,
+        customer_pricing: customerPricing || project.customer_pricing,
+        status: "calculated",
+        // Snapshot first workflow's vinyl/machines into the top-level fields for backward compat
+        default_vinyl_id:    cleanWorkflows[0]?.vinyl_id   || "",
+        default_laminate_id: cleanWorkflows[0]?.laminate_id || "",
+        printer_id:    cleanWorkflows[0]?.printer_id   || "",
+        cutter_id:     cleanWorkflows[0]?.cutter_id    || "",
+        laminator_id:  cleanWorkflows[0]?.laminator_id || "",
+        // Roll up totals
+        total_print_sqft: rollup.usedSqFt,
+        total_vinyl_sqft: rollup.totalRollSqFt,
+        total_laminate_sqft: rollup.laminateSqFt,
+        total_vinyl_cost: rollup.vinylCost,
+        total_laminate_cost: rollup.laminateCost,
+        total_ink_cost: rollup.inkCost,
+        total_blade_cost: rollup.bladeCost,
+        total_machine_cost: rollup.machineCost,
+        total_personnel_cost: rollup.personnelCost,
+        total_supplies_cost: rollup.supplies,
+        total_equipment_cost: rollup.equipmentCost,
+        base_supplies_cost: rollup.baseSupplies,
+        labor_hours: rollup.laborHours,
+        labor_cost: rollup.laborCost,
+        subtotal: rollup.subtotal,
+        markup_amount: rollup.markupAmount,
+        total_cost: rollup.totalCost,
+      };
+
+      let saved;
+      const activeProjectId = persistedProjectIdRef.current || projectId || "";
+      if (activeProjectId) {
+        saved = await updateBuilderSourceProject({
+          entity: VinylProject,
+          sourceId: activeProjectId,
+          expectedUpdatedAt: project.updated_date,
+          data: payload,
+          estimateId,
+          label: "Vinyl project",
+        });
+      } else {
+        await preflightBuilderSourceMutation({ estimateId });
+        const signature = JSON.stringify(payload);
+        if (createAttemptRef.current.signature !== signature) {
+          createAttemptRef.current = {
+            signature,
+            key: newCreationRequestKey("vinyl_project"),
+          };
+        }
+        saved = await ensureIdempotentEntityCreate({
+          entity: VinylProject,
+          keyField: "creation_request_key",
+          key: createAttemptRef.current.key,
+          data: payload,
+          label: "Vinyl project",
+        });
+        if (!saved?.id) throw new Error("Vinyl project create could not be verified.");
+        persistedProjectIdRef.current = saved.id;
+        if (!embedded) navigate(`/VinylEstimator?id=${saved.id}`, { replace: true });
+      }
+
+      if (estimateId && saved?.id) {
+        const refreshed = await VinylProject.get(saved.id).catch(() => saved);
+        // SignEstimate Pro intentionally strips transient workflow `_calc` data
+        // from VinylProject records. The Builder snapshot keeps the exact calc
+        // used for this save so the initial frozen BOM never has to infer today’s
+        // accepted price from a later inventory state. The persisted VinylProject
+        // remains source-faithful and clean.
+        const builderWorkflows = (project.workflows || []).map(({ _hasIssues, ...workflow }) => workflow);
+        await recordBuilderSave({
+          estimateId,
+          line: { project_id: saved.id, module_key: "vinyl" },
+          sourceProject: { ...refreshed, workflows: builderWorkflows },
+          liveTotal: rollup.totalCost,
+        });
+      }
+
+      setProject(migrateProject(saved));
+      onSaved?.();
+      if (!embedded) alert("Estimate saved.");
+    } catch (e) {
+      console.error(e); alert("Save failed: " + e.message);
+    }
+    setSaving(false);
+  };
+
+  // #78 — clone the current save payload into a brand-new Vinyl project.
+  const handleSaveAsCopy = async () => {
+    setSaving(true);
+    try {
+      const cleanWorkflows = (project.workflows || []).map(({ _calc, ...rest }) => rest);
+      const flatItems = cleanWorkflows.flatMap(wf =>
+        (wf.items || []).map(it => ({ ...it, workflow_id: wf.id, workflow_name: wf.name }))
+      );
+      const copy = await saveModuleProjectCopy({
+        entity: VinylProject,
+        payload: {
+          ...project,
+          client_name: estimateContext?.client_name || project.client_name,
+          customer_id: estimateContext?.customer_id || project.customer_id,
+          estimate_number: estimateContext?.estimate_number || project.estimate_number,
+          site_address: project.site_address || estimateContext?.site_address || "",
+          workflows: cleanWorkflows,
+          items: flatItems,
+          customer_pricing: project.customer_pricing,
+          status: "calculated",
+          default_vinyl_id:    cleanWorkflows[0]?.vinyl_id   || "",
+          default_laminate_id: cleanWorkflows[0]?.laminate_id || "",
+          printer_id:    cleanWorkflows[0]?.printer_id   || "",
+          cutter_id:     cleanWorkflows[0]?.cutter_id    || "",
+          laminator_id:  cleanWorkflows[0]?.laminator_id || "",
+          total_print_sqft: rollup.usedSqFt,
+          total_vinyl_sqft: rollup.totalRollSqFt,
+          total_laminate_sqft: rollup.laminateSqFt,
+          total_vinyl_cost: rollup.vinylCost,
+          total_laminate_cost: rollup.laminateCost,
+          total_ink_cost: rollup.inkCost,
+          total_blade_cost: rollup.bladeCost,
+          total_machine_cost: rollup.machineCost,
+          total_personnel_cost: rollup.personnelCost,
+          total_supplies_cost: rollup.supplies,
+          base_supplies_cost: rollup.baseSupplies,
+          labor_hours: rollup.laborHours,
+          labor_cost: rollup.laborCost,
+          subtotal: rollup.subtotal,
+          markup_amount: rollup.markupAmount,
+          total_cost: rollup.totalCost,
+        },
+        attemptRef: copyAttemptRef,
+        keyPrefix: "vinyl_project_copy",
+        baseName: project.project_name || "Vinyl",
+        label: "Vinyl project copy",
+      });
+      if (embedded) onSaved?.();
+      else navigate(`/VinylEstimator?id=${copy.id}`);
+    } catch (e) {
+      console.error(e); alert("Save copy failed: " + e.message);
+    }
+    setSaving(false);
+  };
+
+  // #79 — template payload = the editable setup a user would reuse.
+  const buildVinylTemplateData = (p) => ({
+    workflows: (p.workflows || []).map(({ _calc, ...rest }) => rest),
+    markup_percent: p.markup_percent,
+    supplies_percent_of_materials: p.supplies_percent_of_materials,
+    extra_supplies_cost: p.extra_supplies_cost,
+    travel_miles_round_trip: p.travel_miles_round_trip,
+    notes: p.notes,
+  });
+
+  if (loading) {
+    return <div className="p-12 text-center text-slate-500"><Loader2 className="w-5 h-5 animate-spin inline mr-2" /> Loading…</div>;
+  }
+  if (loadError) {
+    return (
+      <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
+        <div className="max-w-2xl mx-auto rounded border border-red-200 bg-red-50 p-5 text-red-800">
+          <div className="font-bold">Vinyl Builder unavailable</div>
+          <div className="mt-1 text-sm">Required vinyl inventory, machine settings, installation equipment, project data, or estimate context could not be verified. Fallback configuration was not used.</div>
+          <div className="mt-2 text-xs break-words">{loadError}</div>
+          <Button variant="outline" className="mt-4" onClick={() => embedded ? onClose?.() : navigate(estimateId ? `/EstimateDetail?id=${estimateId}` : "/Estimator")}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const TabBtn = ({ value, icon: Icon, label, amount, warn }) => (
+    <TabsTrigger value={value} className="flex items-center gap-1.5 text-xs md:text-sm py-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white relative">
+      <Icon className="w-4 h-4" /> <span className="truncate">{label}</span>
+      {amount != null && (
+        <span className="ml-1 text-[10px] tabular-nums opacity-80">{fmt(amount)}</span>
+      )}
+      {warn && (
+        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" title="Workflow has issues" />
+      )}
+    </TabsTrigger>
+  );
+
+  return (
+    <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
+          <div>
+            {embedded ? (
+              <button type="button" onClick={onClose} className="text-sm text-slate-500 hover:text-slate-900 inline-flex items-center gap-1">
+                <ArrowLeft className="w-4 h-4" /> Back to products
+              </button>
+            ) : (
+              <Link to={estimateId ? `/EstimateDetail?id=${estimateId}` : "/Estimator"} className="text-sm text-slate-500 hover:text-slate-900 inline-flex items-center gap-1">
+                <ArrowLeft className="w-4 h-4" /> Back to estimator
+              </Link>
+            )}
+            <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3 mt-1">
+              <Droplets className="w-8 h-8 text-blue-600" />
+              {projectId ? "Edit" : "New"} Vinyl Estimate
+            </h1>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Link to="/VinylInventory">
+              <Button variant="outline"><SettingsIcon className="w-4 h-4 mr-1" /> Vinyl Inventory</Button>
+            </Link>
+            <Link to="/VinylSettings">
+              <Button variant="outline"><SettingsIcon className="w-4 h-4 mr-1" /> Machine Settings</Button>
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <div className="sticky top-[64px] z-30 -mx-2 px-2 py-2 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/60">
+                <TabsList className="grid w-full bg-white shadow-md border border-slate-200 h-auto p-1 gap-1" style={{ gridTemplateColumns: "repeat(6, minmax(0, 1fr))" }}>
+                  <TabBtn value="project"   icon={FileText}   label="Project" />
+                  <TabBtn value="workflows" icon={Layers}     label="Vinyl Workflows" amount={rollup.materialCost + rollup.machineCost + rollup.laborCost} warn={workflowsHaveIssues} />
+                  <TabBtn value="install"   icon={HardHat}    label="Installation"    amount={rollup.equipmentCost + rollup.personnelCost} />
+                  <TabBtn value="travel"    icon={MapPin}     label="Travel"          amount={rollup.travelCost} />
+                  <TabBtn value="summary"   icon={Calculator} label="Summary"         amount={rollup.totalCost} />
+                  <TabBtn value="pricing"   icon={TrendingUp} label="Customer Pricing" />
+                </TabsList>
+              </div>
+
+              {/* PROJECT TAB */}
+              <TabsContent value="project" className="mt-4 space-y-4">
+                <Card className="bg-white border-0 shadow-sm">
+                  <CardHeader className="pb-3"><CardTitle className="text-lg">Project Information</CardTitle></CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Client Name *</Label>
+                        <Input
+                          value={estimateContext?.client_name || project.client_name || ""}
+                          onChange={(e) => !embedded && updateProject({ client_name: e.target.value })}
+                          readOnly={embedded}
+                          className="mt-1"
+                          placeholder="Enter client name"
+                        />
+                        {embedded && <p className="text-[10px] text-slate-400 mt-1">Inherited from the All-In-One estimate.</p>}
+                      </div>
+                      <div>
+                        <Label>Project Name *</Label>
+                        <Input value={project.project_name} onChange={(e) => updateProject({ project_name: e.target.value })} className="mt-1" />
+                      </div>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Estimate Number</Label>
+                        <Input value={estimateContext?.estimate_number || project.estimate_number || ""} onChange={(e) => !embedded && updateProject({ estimate_number: e.target.value })} readOnly={embedded} placeholder="e.g., VIN-2024-001" className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>Project Link <span className="text-xs font-normal text-slate-400">(optional)</span></Label>
+                        <Input value={project.hyperlink} onChange={(e) => updateProject({ hyperlink: e.target.value })} placeholder="https://..." className="mt-1" />
+                      </div>
+                    </div>
+
+                    {/* Interior / Exterior */}
+                    <div>
+                      <Label className="text-sm font-semibold text-slate-900">Installation Environment</Label>
+                      <p className="text-xs text-slate-500 mt-1 mb-2">
+                        Where is this vinyl going to live? Drives default site conditions for the install tab.
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 max-w-md">
+                        {[
+                          { value: "exterior", label: "Exterior", desc: "Outdoor wall, vehicle, storefront", color: "blue" },
+                          { value: "interior", label: "Interior", desc: "Lobby, indoor wall, office", color: "amber" },
+                        ].map((opt) => {
+                          const active = (project.install_environment || "exterior") === opt.value;
+                          const ringClass = opt.color === "blue"
+                            ? (active ? "border-blue-500 bg-blue-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300")
+                            : (active ? "border-amber-500 bg-amber-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300");
+                          return (
+                            <button key={opt.value} type="button"
+                              onClick={() => updateProject({ install_environment: opt.value })}
+                              className={`text-left p-3 rounded-lg border-2 transition-all ${ringClass}`}>
+                              <div className="text-sm font-semibold text-slate-800">{opt.label}</div>
+                              <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">{opt.desc}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Site Address */}
+                    <div>
+                      <Label className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                        Site Address
+                        <span className="text-xs font-normal text-slate-500">(used for travel mileage)</span>
+                      </Label>
+                      <AddressAutocomplete
+                        value={project.site_address || ""}
+                        onChange={(val) => updateProject({ site_address: val })}
+                        placeholder="e.g., 123 Main St, Cincinnati, OH 45202"
+                        className="mt-1"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white border-0 shadow-sm">
+                  <CardHeader className="pb-3"><CardTitle className="text-lg">Notes</CardTitle></CardHeader>
+                  <CardContent>
+                    <Textarea value={project.notes || ""} onChange={(e) => updateProject({ notes: e.target.value })} className="h-32" />
+                  </CardContent>
+                </Card>
+
+                <div className="flex justify-end">
+                  <Button onClick={() => setActiveTab("workflows")} className="bg-blue-600 hover:bg-blue-700 text-white">
+                    Continue to Vinyl Workflows →
+                  </Button>
+                </div>
+              </TabsContent>
+
+              {/* WORKFLOWS TAB */}
+              <TabsContent value="workflows" className="mt-4 space-y-4">
+                <div className="flex items-center justify-between bg-white rounded-lg border border-slate-200 px-3 py-2 shadow-sm flex-wrap gap-2">
+                  <div className="text-sm text-slate-600">
+                    Add one workflow per vinyl type. Each workflow lays out on its own roll.
+                  </div>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {project.workflows.length > 1 && (
+                      <Button size="sm" variant="outline" onClick={() => setAllOpen(o => !o)} className="h-8">
+                        {allOpen
+                          ? <><ChevronsDownUp className="w-3.5 h-3.5 mr-1" /> Collapse All</>
+                          : <><ChevronsUpDown className="w-3.5 h-3.5 mr-1" /> Expand All</>}
+                      </Button>
+                    )}
+                    <Button size="sm" variant="outline" onClick={() => { setTargetWorkflowIdx(0); setLibraryOpen(true); }} className="h-8">
+                      <BookmarkPlus className="w-3.5 h-3.5 mr-1" /> Library
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setTargetWorkflowIdx(0); setBulkOpen(true); }} className="h-8">
+                      <ClipboardPaste className="w-3.5 h-3.5 mr-1" /> Bulk Paste
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setTargetWorkflowIdx(0); setArtworkOpen(true); }} className="h-8">
+                      <UploadCloud className="w-3.5 h-3.5 mr-1" /> Artwork
+                    </Button>
+                    <Button size="sm" onClick={addWorkflow} className="bg-blue-600 hover:bg-blue-700 text-white h-8">
+                      <Plus className="w-4 h-4 mr-1" /> Workflow
+                    </Button>
+                  </div>
+                </div>
+
+                {workflowsHaveIssues && (
+                  <div className="flex items-center gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    One or more workflows have unplaced parts or missing vinyl selections — see the red badges below.
+                  </div>
+                )}
+
+                {vinyls.length === 0 && (
+                  <Card className="bg-amber-50 border-amber-200">
+                    <CardContent className="p-3 text-xs text-amber-900">
+                      Your vinyl inventory is empty.{" "}
+                      <Link to="/VinylInventory" className="underline font-medium">
+                        Add vinyl in Vinyl Inventory
+                      </Link>{" "}
+                      to enable selection.
+                    </CardContent>
+                  </Card>
+                )}
+
+                {project.workflows.map((wf, idx) => (
+                  <VinylWorkflowCard
+                    key={wf.id}
+                    workflow={wf}
+                    index={idx}
+                    vinyls={vinyls}
+                    machines={machines}
+                    installEnvironment={project.install_environment}
+                    onChange={(next) => updateWorkflow(idx, next)}
+                    onRemove={() => removeWorkflow(idx)}
+                    onDuplicate={() => duplicateWorkflow(idx)}
+                    onMovePartToWorkflow={project.workflows.length > 1
+                      ? (partIdx) => setMoveContext({ workflowIdx: idx, partIdx })
+                      : null}
+                    defaultOpen={allOpen}
+                  />
+                ))}
+              </TabsContent>
+
+              {/* INSTALLATION TAB */}
+              <TabsContent value="install" className="mt-4 space-y-3">
+                <EquipmentSelector
+                  selectedEquipment={project.selected_equipment || []}
+                  onChange={(next) => updateProject({ selected_equipment: next })}
+                  equipmentInventory={equipmentInventory}
+                  items={[]}
+                  projectLaborHours={totalLaborHours}
+                />
+                <PersonnelSelector
+                  personnel={project.personnel || []}
+                  onChange={(next) => updateProject({ personnel: next })}
+                  projectLaborHours={totalLaborHours}
+                  roleRates={{
+                    "Crew Lead": parseFloat(settings.install_crew_lead_rate) || 75,
+                    "Installer": parseFloat(settings.install_installer_rate) || 65,
+                    "Helper": parseFloat(settings.install_helper_rate) || 35,
+                  }}
+                  items={[]}
+                />
+                {equipmentInventory.length === 0 && (
+                  <Card className="bg-amber-50 border-amber-200">
+                    <CardContent className="p-3 text-xs text-amber-900">
+                      Your equipment inventory is empty.{" "}
+                      <Link to="/MasterInventory" className="underline font-medium">
+                        Add equipment in Master Inventory
+                      </Link>{" "}
+                      to enable selection.
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              {/* TRAVEL TAB */}
+              <TabsContent value="travel" className="mt-4 space-y-3">
+                <TravelCostCard
+                  shopAddress={settings.install_shop_address || ""}
+                  siteAddress={project.site_address || ""}
+                  selectedEquipment={project.selected_equipment || []}
+                  equipmentInventory={equipmentInventory}
+                  personnel={project.personnel || []}
+                  settings={settings}
+                  travelMiles={project.travel_miles_round_trip || 0}
+                  onMilesChange={(miles) => updateProject({ travel_miles_round_trip: miles })}
+                  onTotalChange={(total) => {
+                    if ((project.total_travel_cost || 0) !== total) updateProject({ total_travel_cost: total });
+                  }}
+                  autoTriggerKey={activeTab === "travel" ? "travel" : null}
+                />
+                <Card className="bg-slate-50 border-slate-200">
+                  <CardContent className="p-3 text-xs text-slate-600">
+                    Travel rates (shop address, fuel prices, labor rate, overhead, minimum charge) are shared with the
+                    Channel Letter Install module —{" "}
+                    <Link to="/InstallationSettings" className="underline font-medium">
+                      review Installation Settings
+                    </Link>.
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* SUMMARY TAB */}
+              <TabsContent value="summary" className="mt-4 space-y-3">
+                <Card className="bg-white border-0 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Cost Breakdown</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm space-y-3">
+                    <BreakdownTable rollup={rollup} project={project} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* CUSTOMER PRICING TAB */}
+              <TabsContent value="pricing" className="mt-4 space-y-3">
+                <CustomerPricingTab
+                  project={{
+                    ...project,
+                    // Feed live rollup totals so categorizer sees current numbers
+                    total_vinyl_cost:    rollup.vinylCost,
+                    total_laminate_cost: rollup.laminateCost,
+                    total_ink_cost:      rollup.inkCost,
+                    total_blade_cost:    rollup.bladeCost,
+                    total_machine_cost:  rollup.machineCost,
+                    total_supplies_cost: rollup.supplies,
+                    labor_cost:          rollup.laborCost,
+                    total_personnel_cost: rollup.personnelCost,
+                    total_equipment_cost: rollup.equipmentCost,
+                    total_travel_cost:    rollup.travelCost,
+                  }}
+                  categorize={categorizeVinylProject}
+                  accentColor="blue"
+                  onTierChange={(tier) => setProject((prev) => ({
+                    ...prev,
+                    customer_pricing: { ...(prev.customer_pricing || {}), tier_number: tier },
+                  }))}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Sticky summary */}
+          <div className="space-y-3">
+            <VinylProjectSummaryCard
+              rollup={rollup}
+              project={project}
+              onUpdateProject={updateProject}
+              onSave={save}
+              isSaving={saving}
+            />
+            <div className="flex flex-wrap gap-2">
+              <ModuleActionBar
+                onTemplates={() => setTemplateMode("load")}
+                onSaveAsTemplate={() => setTemplateMode("save")}
+                onSaveAsCopy={handleSaveAsCopy}
+                estimateId={estimateId}
+                saving={saving}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Workflow-tab dialogs — Features #15, #17, #31, #34 */}
+      <VinylBulkImportDialog
+        open={bulkOpen}
+        onClose={() => setBulkOpen(false)}
+        onImport={(parts) => importPartsToWorkflow(targetWorkflowIdx, parts)}
+      />
+      <VinylPartsLibraryDialog
+        open={libraryOpen}
+        onClose={() => setLibraryOpen(false)}
+        onPick={(part) => addPartToWorkflow(targetWorkflowIdx, part)}
+      />
+      <VinylArtworkUploadDialog
+        open={artworkOpen}
+        onClose={() => setArtworkOpen(false)}
+        onAdd={(part) => addPartToWorkflow(targetWorkflowIdx, part)}
+      />
+      <VinylMoveToWorkflowMenu
+        open={!!moveContext}
+        onClose={() => setMoveContext(null)}
+        workflows={project.workflows}
+        currentWorkflowIdx={moveContext?.workflowIdx ?? -1}
+        onMove={(toIdx) => {
+          movePart(moveContext.workflowIdx, moveContext.partIdx, toIdx);
+          setMoveContext(null);
+        }}
+      />
+      <ModuleTemplateDialog
+        open={!!templateMode}
+        mode={templateMode}
+        onClose={() => setTemplateMode(null)}
+        project={project}
+        onApply={(data) => updateProject(data)}
+        moduleKey="vinyl"
+        title="Vinyl"
+        buildTemplateData={buildVinylTemplateData}
+        describeTemplate={(t) => `${(t.project_data?.workflows || []).length} workflows`}
+      />
+    </div>
+  );
+}
+
+function BreakdownTable({ rollup, project }) {
+  const rows = [
+    ["Vinyl", rollup.vinylCost],
+    ["Laminate", rollup.laminateCost],
+    ["Ink", rollup.inkCost],
+    ["Blade Wear", rollup.bladeCost],
+    ["Machine Time", rollup.machineCost],
+    ["Labor", rollup.laborCost],
+    ["Equipment", rollup.equipmentCost],
+    ["Personnel", rollup.personnelCost],
+    ["Travel", rollup.travelCost],
+    ["Supplies", rollup.supplies],
+  ];
+  return (
+    <table className="w-full">
+      <tbody>
+        {rows.map(([label, value]) => (
+          <tr key={label} className="border-t border-slate-100">
+            <td className="py-1.5 text-slate-600">{label}</td>
+            <td className="py-1.5 text-right tabular-nums">{fmt(value)}</td>
+          </tr>
+        ))}
+        <tr className="border-t border-slate-200">
+          <td className="py-1.5 font-semibold">Subtotal</td>
+          <td className="py-1.5 text-right tabular-nums font-semibold">{fmt(rollup.subtotal)}</td>
+        </tr>
+        <tr>
+          <td className="py-1.5 text-slate-600">Markup ({project.markup_percent || 0}%)</td>
+          <td className="py-1.5 text-right tabular-nums">{fmt(rollup.markupAmount)}</td>
+        </tr>
+        <tr className="border-t-2 border-slate-300">
+          <td className="py-2 font-bold text-base">Total</td>
+          <td className="py-2 text-right tabular-nums font-bold text-base">{fmt(rollup.totalCost)}</td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}

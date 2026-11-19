@@ -1,0 +1,18 @@
+[
+  {
+    "old_text": "import { listQuickProducts } from \"@/components/estimator/products/quickProductService\";",
+    "new_text": "import { listQuickProducts } from \"@/components/estimator/products/quickProductService\";\r\nimport { listInventoryKits, kitLabel } from \"@/components/estimator/products/kitService\";"
+  },
+  {
+    "old_text": "export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQuickProduct, className = \"\" }) {",
+    "new_text": "export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQuickProduct, onAddKit, className = \"\" }) {"
+  },
+  {
+    "old_text": "  const [quickProducts, setQuickProducts] = useState([]);\r\n  const [quickLoading, setQuickLoading] = useState(false);\r\n  const [quickError, setQuickError] = useState(\"\");",
+    "new_text": "  const [quickProducts, setQuickProducts] = useState([]);\r\n  const [quickLoading, setQuickLoading] = useState(false);\r\n  const [quickError, setQuickError] = useState(\"\");\r\n  const [kits, setKits] = useState([]);\r\n  const [kitsError, setKitsError] = useState(\"\");"
+  },
+  {
+    "old_text": "      .catch((error) => setQuickError(error?.message || \"Quick Product Library could not be verified.\"))\r\n      .finally(() => setQuickLoading(false));",
+    "new_text": "      .catch((error) => setQuickError(error?.message || \"Quick Product Library could not be verified.\"))\r\n      .finally(() => setQuickLoading(false));\r\n    listInventoryKits()\r\n      .then((rows) => setKits(rows || []))\r\n      .catch(() => setKitsError(\"Inventory kits could not be loaded.\"));"
+  }
+]

@@ -1,0 +1,54 @@
+{
+  "results": [
+    {
+      "id": "valid 1280",
+      "ok": true
+    },
+    {
+      "id": "valid 390",
+      "ok": true
+    },
+    {
+      "id": "held-malformed-setting 1280",
+      "ok": true
+    },
+    {
+      "id": "held-malformed-setting 390",
+      "ok": true
+    },
+    {
+      "id": "held-partial-setting 1280",
+      "ok": true
+    },
+    {
+      "id": "held-partial-setting 390",
+      "ok": true
+    },
+    {
+      "id": "held-import-nan-setting 1280",
+      "ok": true
+    },
+    {
+      "id": "held-import-nan-setting 390",
+      "ok": true
+    },
+    {
+      "id": "free-zero-setting 1280",
+      "ok": true
+    },
+    {
+      "id": "free-zero-setting 390",
+      "ok": true
+    },
+    {
+      "id": "invalid-item-method 1280",
+      "ok": true
+    },
+    {
+      "id": "invalid-item-method 390",
+      "ok": true
+    }
+  ],
+  "port": 56820,
+  "pid": 166356
+}

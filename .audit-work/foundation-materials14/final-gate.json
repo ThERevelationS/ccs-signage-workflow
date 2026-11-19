@@ -1,0 +1,31 @@
+{
+ "material_ui": {
+  "exit": 0,
+  "log": "g-material-ui.txt"
+ },
+ "save_handler": {
+  "exit": 0,
+  "log": "g-save-handler.txt"
+ },
+ "catalog_integrity": {
+  "exit": 0,
+  "log": "g-catalog.txt"
+ },
+ "equipment_ui": {
+  "exit": 0,
+  "log": "g-equipment.txt"
+ },
+ "material_browser": {
+  "exit": 0,
+  "log": "browser-v4.txt",
+  "results": "browser-results-v4.json"
+ },
+ "eslint": {
+  "exit": 0,
+  "log": "lint-v4.txt"
+ },
+ "page_bundle": {
+  "exit": 0,
+  "log": "g-build.txt"
+ }
+}

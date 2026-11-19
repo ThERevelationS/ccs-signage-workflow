@@ -1,0 +1,818 @@
+{
+  "partial": true,
+  "done": 40,
+  "results": [
+    {
+      "address": "4008 Tuscarawas Street West, Canton, OH 44708",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Canton — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Canton",
+        "targets": "Canton (municipality) + Stark County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Canton + Stark County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 172372,
+      "worker": 1
+    },
+    {
+      "address": "2304 Tuscarawas Street West, Canton, OH 44708",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Canton — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Canton",
+        "targets": "Canton (municipality) + Stark County (county)",
+        "trace": "google rooftop pin → checked municipality + state municipality + county boundaries → inside Canton + Stark County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 50103,
+      "worker": 1
+    },
+    {
+      "address": "4695 Marburg Avenue, Cincinnati, OH 45209",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Cincinnati — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Cincinnati",
+        "targets": "Cincinnati (municipality) + Hamilton County (county)",
+        "trace": "google rooftop pin → checked county + state municipality + municipality boundaries → inside Cincinnati + Hamilton County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 96991,
+      "worker": 1
+    },
+    {
+      "address": "365 North Lexington-Springmill Road, Ontario, OH 44906",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Ontario — no saved office matched",
+      "server_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Ontario",
+        "targets": "Ontario (municipality) + Richland County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Ontario + Richland County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 67010,
+      "worker": 1
+    },
+    {
+      "address": "504 Pike Street, Marietta, OH 45750",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Marietta — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Marietta",
+        "targets": "Marietta (municipality) + Washington County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Marietta + Washington County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 54922,
+      "worker": 1
+    },
+    {
+      "address": "323 South Front Street, Fremont, OH 43420",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Fremont",
+        "ai_name": "Fremont",
+        "targets": "Fremont (municipality) + Sandusky County (county)",
+        "trace": "google rooftop pin → checked state municipality + municipality + county boundaries → inside Fremont + Sandusky County → offices: 0 checked · 2 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 7559,
+      "worker": 1
+    },
+    {
+      "address": "1009 Lincoln Avenue, Wapakoneta, OH 45895",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "server_waits": 3,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Wapakoneta",
+        "ai_name": "Wapakoneta",
+        "targets": "Wapakoneta (municipality) + Auglaize County (county)",
+        "trace": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Wapakoneta + Auglaize County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 121623,
+      "worker": 1
+    },
+    {
+      "address": "203 East Market Street, Celina, OH 45822",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Celina — no saved office matched",
+      "server_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Celina",
+        "targets": "Celina (municipality) + Mercer County (county)",
+        "trace": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Celina + Mercer County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 93768,
+      "worker": 1
+    },
+    {
+      "address": "4101 Trueman Boulevard, Hilliard, OH 43026",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "server_waits": 2,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Hilliard",
+        "ai_name": "Hilliard",
+        "targets": "Hilliard (municipality) + Franklin County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Hilliard + Franklin County → offices: 0 checked · 4 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 80432,
+      "worker": 1
+    },
+    {
+      "address": "616 East 5th Street, Marysville, OH 43040",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Marysville — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Marysville",
+        "targets": "Marysville (municipality) + Union County (county)",
+        "trace": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Marysville + Union County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 55013,
+      "worker": 1
+    },
+    {
+      "address": "1400 Hill Road North, Pickerington, OH 43147",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "server_waits": 2,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Pickerington",
+        "ai_name": "Pickerington",
+        "targets": "Pickerington (municipality) + Fairfield County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Pickerington + Fairfield County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 84162,
+      "worker": 1
+    },
+    {
+      "address": "623 West Broad Street, Pataskala, OH 43062",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Pataskala — no saved office matched",
+      "server_waits": 4,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Pataskala",
+        "targets": "Pataskala (municipality) + Licking County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Pataskala + Licking County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 226509,
+      "worker": 1
+    },
+    {
+      "address": "1001 Cherry Valley Road Southeast, Newark, OH 43055",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "server_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Granville",
+        "ai_name": "Granville",
+        "targets": "Granville (municipality) + Licking County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Granville + Licking County → offices: 0 checked · 6 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 61175,
+      "worker": 1
+    },
+    {
+      "address": "50 Massillon Marketplace Drive Southeast, Massillon, OH 44646",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Massillon — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Massillon",
+        "targets": "Massillon (municipality) + Stark County (county)",
+        "trace": "google rooftop pin → checked state municipality + county + municipality boundaries → inside Massillon + Stark County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 74403,
+      "worker": 1
+    },
+    {
+      "address": "106 Elm St, Ludlow, KY 41016",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Ludlow",
+        "ai_name": "Ludlow",
+        "targets": "Ludlow (municipality) + Kenton County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Ludlow + Kenton County → offices: 0 checked · 3 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 12065,
+      "worker": 1
+    },
+    {
+      "address": "529 Capp Harlan Rd, Tompkinsville, KY 42167",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Tompkinsville",
+        "ai_name": "Tompkinsville",
+        "targets": "Tompkinsville (municipality) + Monroe County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Tompkinsville + Monroe County → offices: 0 checked · 4 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 20905,
+      "worker": 1
+    },
+    {
+      "address": "2150 West State Street, Alliance, OH 44601",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Alliance — no saved office matched",
+      "server_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Alliance",
+        "targets": "Alliance (municipality) + Stark County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Alliance + Stark County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 71233,
+      "worker": 1
+    },
+    {
+      "address": "2100 Parkway Boulevard, Alliance, OH 44601",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Alliance — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Alliance",
+        "targets": "Alliance (municipality) + Stark County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Alliance + Stark County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 95603,
+      "worker": 1
+    },
+    {
+      "address": "215 W 3rd St, Tompkinsville, KY 42167",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Tompkinsville",
+        "ai_name": "Tompkinsville",
+        "targets": "Tompkinsville (municipality) + Monroe County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Tompkinsville + Monroe County → offices: 0 checked · 4 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 15033,
+      "worker": 1
+    },
+    {
+      "address": "4111 South Cleveland Massillon Road, Norton, OH 44203",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Norton — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Norton",
+        "targets": "Norton (municipality) + Summit County (county)",
+        "trace": "approx pin (google_approx) → checked county + state municipality + municipality boundaries → inside Norton + Summit County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 32838,
+      "worker": 1
+    },
+    {
+      "address": "5 Orphanage Rd, Fort Mitchell, KY 41017",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Fort Mitchell",
+        "ai_name": "Fort Mitchell",
+        "targets": "Fort Mitchell (municipality) + Kenton County (county)",
+        "trace": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Fort Mitchell + Kenton County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 6325,
+      "worker": 1
+    },
+    {
+      "address": "285 Main St, Beattyville, KY 41311",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Beattyville",
+        "ai_name": "Beattyville",
+        "targets": "Beattyville (municipality) + Lee County (county)",
+        "trace": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Beattyville + Lee County → offices: 0 checked · 7 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 5001,
+      "worker": 1
+    },
+    {
+      "address": "1065 Williams Reserve Boulevard, Wadsworth, OH 44281",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Wadsworth",
+        "ai_name": "Wadsworth",
+        "targets": "Wadsworth (municipality) + Medina County (county)",
+        "trace": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Wadsworth + Medina County → offices: 0 checked · 5 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 64016,
+      "worker": 1
+    },
+    {
+      "address": "4221 Center Road, Brunswick, OH 44212",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Brunswick",
+        "ai_name": "Brunswick",
+        "targets": "Brunswick (municipality) + Medina County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Brunswick + Medina County → offices: 0 checked · 4 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 169359,
+      "worker": 1
+    },
+    {
+      "address": "14089 Pearl Road, Strongsville, OH 44136",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Strongsville",
+        "ai_name": "Strongsville",
+        "targets": "Strongsville (municipality) + Cuyahoga County (county)",
+        "trace": "google rooftop pin → checked state municipality + municipality + county boundaries → inside Strongsville + Cuyahoga County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 29101,
+      "worker": 1
+    },
+    {
+      "address": "20515 Southgate Park Boulevard, Maple Heights, OH 44137",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "server_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Maple Heights",
+        "ai_name": "Maple Heights",
+        "targets": "Maple Heights (municipality) + Cuyahoga County (county)",
+        "trace": "google rooftop pin → checked state municipality + county + municipality boundaries → inside Maple Heights + Cuyahoga County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 49175,
+      "worker": 1
+    },
+    {
+      "address": "123 E 9th St, Hopkinsville, KY 42240",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Hopkinsville",
+        "ai_name": "Hopkinsville",
+        "targets": "Hopkinsville (municipality) + Christian County (county)",
+        "trace": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Hopkinsville + Christian County → offices: 0 checked · 6 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 11458,
+      "worker": 1
+    },
+    {
+      "address": "8900 I 480;SR 14, Twinsburg, OH 44087",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Oakwood",
+        "ai_name": "Oakwood",
+        "targets": "Oakwood (municipality) + Cuyahoga County (county)",
+        "trace": "approx pin (google_approx) → checked state municipality + municipality + county boundaries → inside Oakwood + Cuyahoga County → offices: 0 checked · 1 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 24524,
+      "worker": 1
+    },
+    {
+      "address": "2533 East Aurora Road, Twinsburg, OH 44087",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Twinsburg — no saved office matched",
+      "server_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Twinsburg",
+        "targets": "Twinsburg (municipality) + Summit County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Twinsburg + Summit County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 82010,
+      "worker": 1
+    },
+    {
+      "address": "9223 Cleveland East Liverpool Road, Streetsboro, OH 44241",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Streetsboro — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Streetsboro",
+        "targets": "Streetsboro (municipality) + Portage County (county)",
+        "trace": "approx pin (google_approx) → checked county + municipality + state municipality boundaries → inside Streetsboro + Portage County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 47827,
+      "worker": 1
+    },
+    {
+      "address": "1210 Streetsboro Road, Streetsboro, OH 44241",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Streetsboro",
+        "ai_name": "Streetsboro",
+        "targets": "Streetsboro (municipality) + Portage County (county)",
+        "trace": "approx pin (google_approx) → checked state municipality + county + municipality boundaries → inside Streetsboro + Portage County → offices: 0 checked · 3 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 209553,
+      "worker": 1
+    },
+    {
+      "address": "515 East Main Street, Kent, OH 44240",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Kent — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Kent",
+        "targets": "Kent (municipality) + Portage County (county)",
+        "trace": "google rooftop pin → checked state municipality + municipality + county boundaries → inside Kent + Portage County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 52230,
+      "worker": 1
+    },
+    {
+      "address": "1801 Alexandria Pike, Highland Heights, KY 41076",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Highland Heights",
+        "ai_name": "Highland Heights",
+        "targets": "Highland Heights (municipality) + Campbell County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Highland Heights + Campbell County → offices: 0 checked · 1 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 26788,
+      "worker": 1
+    },
+    {
+      "address": "1350 East Main Street, Ravenna, OH 44266",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Ravenna",
+        "ai_name": "Ravenna",
+        "targets": "Ravenna (municipality) + Portage County (county)",
+        "trace": "google rooftop pin → checked municipality + state municipality + county boundaries → inside Ravenna + Portage County → offices: 0 checked · 4 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 43775,
+      "worker": 1
+    },
+    {
+      "address": "830 East National Road, Vandalia, OH 45377",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Vandalia — no saved office matched",
+      "server_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Vandalia",
+        "targets": "Vandalia (municipality) + Montgomery County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Vandalia + Montgomery County → offices: 0 checked · 0 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 75914,
+      "worker": 1
+    },
+    {
+      "address": "107 W 4th St, Tompkinsville, KY 42167",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Tompkinsville",
+        "ai_name": "Tompkinsville",
+        "targets": "Tompkinsville (municipality) + Monroe County (county)",
+        "trace": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Tompkinsville + Monroe County → offices: 0 checked · 4 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 22177,
+      "worker": 1
+    },
+    {
+      "address": "144 Main St, Corydon, KY 42406",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Corydon",
+        "ai_name": "Corydon",
+        "targets": "Corydon (municipality) + Henderson County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Corydon + Henderson County → offices: 0 checked · 6 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 15695,
+      "worker": 1
+    },
+    {
+      "address": "1910 Clermont Rd, Shepherdsville, KY 40165",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Bullitt County",
+        "ai_name": "Bullitt County",
+        "targets": "Bullitt County (county)",
+        "trace": "google rooftop pin → checked municipality + county + state municipality boundaries → inside Bullitt County → offices: 0 checked · 1 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 3623,
+      "worker": 1
+    },
+    {
+      "address": "482 Howe Avenue, Cuyahoga Falls, OH 44221",
+      "ok": false,
+      "stage": "located_no_locality",
+      "detail": "Cuyahoga Falls — no saved office matched",
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": null,
+        "ai_name": "Cuyahoga Falls",
+        "targets": "Cuyahoga Falls (municipality) + Summit County (county)",
+        "trace": "google rooftop pin → checked county + municipality + state municipality boundaries → inside Cuyahoga Falls + Summit County → offices: 0 checked · 0 unchecked",
+        "geocoder": "exact",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "none"
+      },
+      "ms": 47660,
+      "worker": 1
+    },
+    {
+      "address": "638 Beaumont Inn Dr, Harrodsburg, KY 40330",
+      "ok": true,
+      "stage": "resolved_needs_office_check",
+      "detail": "",
+      "server_waits": 1,
+      "result": {
+        "apply_allowed": false,
+        "status": "location_verified",
+        "suggested": "Harrodsburg",
+        "ai_name": "Harrodsburg",
+        "targets": "Harrodsburg (municipality) + Mercer County (county)",
+        "trace": "approx pin (google_approx) → checked municipality + county + state municipality boundaries → inside Harrodsburg + Mercer County → offices: 0 checked · 6 unchecked",
+        "geocoder": "google_approx",
+        "boundaries": 1,
+        "geo_issue": false,
+        "match": "government_boundary_intersection"
+      },
+      "ms": 55529,
+      "worker": 1
+    }
+  ]
+}

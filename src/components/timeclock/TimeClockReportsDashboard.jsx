@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,8 +22,9 @@ import {
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subMonths, parseISO, isWithinInterval, differenceInDays } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
-import * as XLSX from "xlsx";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+// xlsx (~1MB) loads on demand inside the export handler ??? not at page load.
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const TimeEntry = staffEntities.TimeEntry;
@@ -41,6 +43,27 @@ export default function TimeClockReportsDashboard() {
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
+  const [presets, setPresets] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("tc_report_presets") || "[]"); } catch { return []; }
+  });
+  const savePreset = () => {
+    const name = window.prompt("Preset name", "My report");
+    if (!name?.trim()) return;
+    const next = [...presets.filter((p) => p.name !== name.trim()), { name: name.trim(), dateRange, customStartDate, customEndDate, selectedUser }];
+    setPresets(next);
+    try { localStorage.setItem("tc_report_presets", JSON.stringify(next)); } catch {}
+  };
+  const applyPreset = (p) => {
+    setDateRange(p.dateRange || "month");
+    setCustomStartDate(p.customStartDate || "");
+    setCustomEndDate(p.customEndDate || "");
+    setSelectedUser(p.selectedUser || "all");
+  };
+  const removePreset = (name) => {
+    const next = presets.filter((p) => p.name !== name);
+    setPresets(next);
+    try { localStorage.setItem("tc_report_presets", JSON.stringify(next)); } catch {}
+  };
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -55,7 +78,10 @@ export default function TimeClockReportsDashboard() {
     try {
       const [entries, orders] = await Promise.all([
         loadAllEntityRows({ entity: TimeEntry, query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, sort: "-clock_in", label: "Time Clock entries" }),
-        loadAllEntityRows({ entity: WorkOrder, query: { deleted: false }, sort: "created_date", label: "Time Clock Work Orders" })
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || "")))
       ]);
       if (!mountedRef.current) return;
       setTimeEntries(entries);
@@ -179,7 +205,7 @@ export default function TimeClockReportsDashboard() {
     // Daily hours trend
     const dailyHours = {};
     filteredEntries.forEach(entry => {
-      const day = format(parseISO(entry.clock_in), "yyyy-MM-dd");
+      const day = String(entry.work_day_anchor_date || "").trim() || format(parseISO(entry.clock_in), "yyyy-MM-dd");
       if (!dailyHours[day]) dailyHours[day] = 0;
       dailyHours[day] += entry.total_hours || 0;
     });
@@ -201,8 +227,8 @@ export default function TimeClockReportsDashboard() {
   // Work order metrics
   const workOrderMetrics = useMemo(() => {
     const now = new Date();
-    const overdueTasks = workOrders.filter(wo => 
-      !wo.completed && wo.due_date && new Date(wo.due_date) < now
+    const overdueTasks = workOrders.filter(wo =>
+      !wo.completed && wo.due_date && parseISO(wo.due_date) < now
     );
     const completedInRange = workOrders.filter(wo => {
       if (!wo.completed) return false;
@@ -243,7 +269,7 @@ export default function TimeClockReportsDashboard() {
     };
   }, [workOrders, filteredEntries, start, end]);
 
-  const exportReport = () => {
+  const exportReport = async () => {
     const summaryData = metrics.hoursByEmployee.map(emp => ({
       "Employee": emp.name,
       "Total Hours": emp.hours.toFixed(2),
@@ -253,6 +279,7 @@ export default function TimeClockReportsDashboard() {
       "Avg Hours/Entry": emp.entries > 0 ? (emp.hours / emp.entries).toFixed(2) : "0.00"
     }));
 
+    const XLSX = await import("xlsx");
     const wb = XLSX.utils.book_new();
     
     // Summary sheet
@@ -312,6 +339,19 @@ export default function TimeClockReportsDashboard() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {presets.map((p) => (
+              <button type="button"
+                key={p.name} onClick={() => applyPreset(p)}
+                onContextMenu={(e) => { e.preventDefault(); if (window.confirm(`Delete preset "${p.name}"?`)) removePreset(p.name); }}
+                className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-indigo-300 hover:text-indigo-700"
+                title="Apply preset (right-click to delete)"
+              >{p.name}</button>
+            ))}
+            <button type="button" onClick={savePreset}
+              className="rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-[11px] font-medium text-slate-400 hover:border-indigo-300 hover:text-indigo-600"
+            >+ Save preset</button>
+          </div>
           <Select value={selectedUser} onValueChange={setSelectedUser}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="All Users" />
@@ -339,19 +379,17 @@ export default function TimeClockReportsDashboard() {
 
           {dateRange === "custom" && (
             <div className="flex items-center gap-2">
-              <Input
-                type="date"
+              <CcsDateField
                 value={customStartDate}
                 onChange={(e) => setCustomStartDate(e.target.value)}
-                className="w-36"
-              />
+                id="report-range-from"
+                />
               <span className="text-gray-400">to</span>
-              <Input
-                type="date"
+              <CcsDateField
                 value={customEndDate}
                 onChange={(e) => setCustomEndDate(e.target.value)}
-                className="w-36"
-              />
+                id="report-range-to"
+                />
             </div>
           )}
 

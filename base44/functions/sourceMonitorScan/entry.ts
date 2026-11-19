@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.52";
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import {
   cheapFetch,
   detectChange,
@@ -17,7 +18,7 @@ import { hasWorkflowInvocationCapability } from "../../shared/workflowInvocation
 
 Deno.serve(async (req: Request) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const isScheduledRun = await hasWorkflowInvocationCapability(body, "sourceMonitorScan");
 
@@ -39,6 +40,14 @@ Deno.serve(async (req: Request) => {
       next_check_due: { $lte: nowIso },
     };
     if (jurisdictionFilter) query.jurisdiction_name = jurisdictionFilter;
+
+    // Local-pipeline mode: the local source-monitor owns fetch+diff+assess.
+    // Scheduled runs no-op; manual admin invocations still run.
+    const modeRows = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'permittingPipelineMode' }, 'created_date', 1, 0).catch(() => ({ items: [] }));
+    const modeVal = String(modeRows?.items?.[0]?.setting_value?.mode || modeRows?.items?.[0]?.setting_value || '').toLowerCase();
+    if (isScheduledRun && modeVal === 'local') {
+      return Response.json({ success: true, skipped: 'local_pipeline_mode', scanned: 0 });
+    }
 
     const monitorPage = await base44.asServiceRole.entities.SourceMonitorState.filter(
       query,

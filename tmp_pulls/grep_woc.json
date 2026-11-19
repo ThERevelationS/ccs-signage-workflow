@@ -1,0 +1,121 @@
+{
+  "matches": [
+    {
+      "path": "src/pages/ProductQueues.jsx",
+      "line": 4,
+      "text": "import { useAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/pages/Production.jsx",
+      "line": 8,
+      "text": "import { useAllWorkOrders, fetchAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/pages/InstallationDeliver.jsx",
+      "line": 8,
+      "text": "import { useAllWorkOrders, fetchAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/pages/Financials.jsx",
+      "line": 14,
+      "text": "import { fetchAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/pages/MainWorkflow.jsx",
+      "line": 10,
+      "text": "import { useAllWorkOrders, refreshAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 22,
+      "text": "import { fetchAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/pages/Fabrication.jsx",
+      "line": 8,
+      "text": "import { useAllWorkOrders, fetchAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 21,
+      "text": "import { fetchAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 27,
+      "text": "import { fetchAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/pages/ReportingDashboard.jsx",
+      "line": 11,
+      "text": "import { fetchAllWorkOrders } from \"@/lib/workOrderCache\";\r"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 20,
+      "text": "import { fetchAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/pages/ProductionSchedule.jsx",
+      "line": 3,
+      "text": "import { useAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/pages/Estimating.jsx",
+      "line": 12,
+      "text": "import { useAllWorkOrders, fetchAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/pages/Design.jsx",
+      "line": 8,
+      "text": "import { useAllWorkOrders, fetchAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/components/reports/OpsReportView.jsx",
+      "line": 8,
+      "text": "import { useAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockReportsDashboard.jsx",
+      "line": 27,
+      "text": "import { fetchAllWorkOrders } from \"@/lib/workOrderCache\";\r"
+    },
+    {
+      "path": "src/components/workflow/AddTaskDialog.jsx",
+      "line": 13,
+      "text": "import { fetchAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/components/workflow/AttentionFeed.jsx",
+      "line": 35,
+      "text": "import { useAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/components/jobs/JobWorkspace.jsx",
+      "line": 6,
+      "text": "import { useAllWorkOrders, refreshAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/components/estimator/customerSync.js",
+      "line": 6,
+      "text": "import { fetchAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 70,
+      "text": "import { fetchAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 24,
+      "text": "import { fetchAllWorkOrders } from \"@/lib/workOrderCache\";"
+    },
+    {
+      "path": "src/components/queues/ProductQueue.jsx",
+      "line": 3,
+      "text": "import { useAllWorkOrders, refreshAllWorkOrders } from \"@/lib/workOrderCache\";"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 23
+}

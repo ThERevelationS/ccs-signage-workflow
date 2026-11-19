@@ -1,0 +1,680 @@
+{
+ "moves": [],
+ "steps": [
+  {
+   "tag": "initial",
+   "moves": [],
+   "rects": [
+    {
+     "label": "Move Foundation 1",
+     "x": 45.83,
+     "y": 147.27,
+     "w": 62,
+     "h": 61.98,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 2",
+     "x": 320.08,
+     "y": 313.63,
+     "w": 143.84,
+     "h": 121.91,
+     "t": "rotate(15deg)"
+    },
+    {
+     "label": "Move Foundation 3",
+     "x": 536.66,
+     "y": 638.09,
+     "w": 77.5,
+     "h": 77.48,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 4",
+     "x": 795,
+     "y": 276.42,
+     "w": 51.66,
+     "h": 51.66,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 5",
+     "x": 924.16,
+     "y": 508.92,
+     "w": 64.58,
+     "h": 38.73,
+     "t": "rotate(0deg)"
+    }
+   ],
+   "items": [
+    {
+     "x": 10,
+     "z": 10,
+     "id": "i0"
+    },
+    {
+     "x": 120,
+     "z": 80,
+     "id": "i1"
+    },
+    {
+     "x": 200,
+     "z": 200,
+     "id": "i2"
+    },
+    {
+     "x": 300,
+     "z": 60,
+     "id": 77
+    },
+    {
+     "x": 350,
+     "z": 150,
+     "id": null
+    }
+   ]
+  },
+  {
+   "tag": "drag-rotated",
+   "moves": [],
+   "rects": [
+    {
+     "label": "Move Foundation 1",
+     "x": 45.83,
+     "y": 147.27,
+     "w": 62,
+     "h": 61.98,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 2",
+     "x": 320.08,
+     "y": 313.63,
+     "w": 143.84,
+     "h": 121.91,
+     "t": "rotate(15deg)"
+    },
+    {
+     "label": "Move Foundation 3",
+     "x": 536.66,
+     "y": 638.09,
+     "w": 77.5,
+     "h": 77.48,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 4",
+     "x": 795,
+     "y": 276.42,
+     "w": 51.66,
+     "h": 51.66,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 5",
+     "x": 924.16,
+     "y": 508.92,
+     "w": 64.58,
+     "h": 38.73,
+     "t": "rotate(0deg)"
+    }
+   ],
+   "items": [
+    {
+     "x": 10,
+     "z": 10,
+     "id": "i0"
+    },
+    {
+     "x": 120,
+     "z": 80,
+     "id": "i1"
+    },
+    {
+     "x": 200,
+     "z": 200,
+     "id": "i2"
+    },
+    {
+     "x": 300,
+     "z": 60,
+     "id": 77
+    },
+    {
+     "x": 350,
+     "z": 150,
+     "id": null
+    }
+   ]
+  },
+  {
+   "tag": "keyboard",
+   "moves": [
+    {
+     "i": 0,
+     "p": {
+      "x_inches": 11,
+      "z_inches": 10
+     }
+    },
+    {
+     "i": 0,
+     "p": {
+      "x_inches": 11,
+      "z_inches": -2
+     }
+    }
+   ],
+   "rects": [
+    {
+     "label": "Move Foundation 1",
+     "x": 48.41,
+     "y": 48.28,
+     "w": 62,
+     "h": 61.98,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 2",
+     "x": 320.08,
+     "y": 245.63,
+     "w": 143.84,
+     "h": 121.91,
+     "t": "rotate(15deg)"
+    },
+    {
+     "label": "Move Foundation 3",
+     "x": 536.66,
+     "y": 570.09,
+     "w": 77.5,
+     "h": 77.48,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 4",
+     "x": 795,
+     "y": 208.42,
+     "w": 51.66,
+     "h": 51.66,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 5",
+     "x": 924.16,
+     "y": 440.92,
+     "w": 64.58,
+     "h": 38.73,
+     "t": "rotate(0deg)"
+    }
+   ],
+   "items": [
+    {
+     "x": 11,
+     "z": -2,
+     "id": "i0"
+    },
+    {
+     "x": 120,
+     "z": 80,
+     "id": "i1"
+    },
+    {
+     "x": 200,
+     "z": 200,
+     "id": "i2"
+    },
+    {
+     "x": 300,
+     "z": 60,
+     "id": 77
+    },
+    {
+     "x": 350,
+     "z": 150,
+     "id": null
+    }
+   ]
+  },
+  {
+   "tag": "wiggle",
+   "moves": [],
+   "rects": [
+    {
+     "label": "Move Foundation 1",
+     "x": 45.83,
+     "y": 79.27,
+     "w": 62,
+     "h": 61.98,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 2",
+     "x": 320.08,
+     "y": 245.63,
+     "w": 143.84,
+     "h": 121.91,
+     "t": "rotate(15deg)"
+    },
+    {
+     "label": "Move Foundation 3",
+     "x": 536.66,
+     "y": 570.09,
+     "w": 77.5,
+     "h": 77.48,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 4",
+     "x": 795,
+     "y": 208.42,
+     "w": 51.66,
+     "h": 51.66,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 5",
+     "x": 924.16,
+     "y": 440.92,
+     "w": 64.58,
+     "h": 38.73,
+     "t": "rotate(0deg)"
+    }
+   ],
+   "items": [
+    {
+     "x": 10,
+     "z": 10,
+     "id": "i0"
+    },
+    {
+     "x": 120,
+     "z": 80,
+     "id": "i1"
+    },
+    {
+     "x": 200,
+     "z": 200,
+     "id": "i2"
+    },
+    {
+     "x": 300,
+     "z": 60,
+     "id": 77
+    },
+    {
+     "x": 350,
+     "z": 150,
+     "id": null
+    }
+   ]
+  },
+  {
+   "tag": "reorder-commit",
+   "moves": [
+    {
+     "i": 3,
+     "p": {
+      "x_inches": 310,
+      "z_inches": 70
+     }
+    }
+   ],
+   "rects": [
+    {
+     "label": "Move Foundation 1",
+     "x": 320.08,
+     "y": 245.63,
+     "w": 143.84,
+     "h": 121.91,
+     "t": "rotate(15deg)"
+    },
+    {
+     "label": "Move Foundation 2",
+     "x": 45.83,
+     "y": 79.27,
+     "w": 62,
+     "h": 61.98,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 3",
+     "x": 536.66,
+     "y": 570.09,
+     "w": 77.5,
+     "h": 77.48,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 4",
+     "x": 820.83,
+     "y": 234.27,
+     "w": 51.66,
+     "h": 51.66,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 5",
+     "x": 924.16,
+     "y": 440.92,
+     "w": 64.58,
+     "h": 38.73,
+     "t": "rotate(0deg)"
+    }
+   ],
+   "items": [
+    {
+     "x": 120,
+     "z": 80,
+     "id": "i1"
+    },
+    {
+     "x": 10,
+     "z": 10,
+     "id": "i0"
+    },
+    {
+     "x": 200,
+     "z": 200,
+     "id": "i2"
+    },
+    {
+     "x": 310,
+     "z": 70,
+     "id": 77
+    },
+    {
+     "x": 350,
+     "z": 150,
+     "id": null
+    }
+   ]
+  },
+  {
+   "tag": "fingerprint-cancel",
+   "moves": [],
+   "rects": [
+    {
+     "label": "Move Foundation 1",
+     "x": 45.83,
+     "y": 79.27,
+     "w": 255.75,
+     "h": 61.98,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 2",
+     "x": 320.08,
+     "y": 245.63,
+     "w": 143.84,
+     "h": 121.91,
+     "t": "rotate(15deg)"
+    },
+    {
+     "label": "Move Foundation 3",
+     "x": 536.66,
+     "y": 570.09,
+     "w": 77.5,
+     "h": 77.48,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 4",
+     "x": 795,
+     "y": 208.42,
+     "w": 51.66,
+     "h": 51.66,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 5",
+     "x": 924.16,
+     "y": 440.92,
+     "w": 64.58,
+     "h": 38.73,
+     "t": "rotate(0deg)"
+    }
+   ],
+   "items": [
+    {
+     "x": 10,
+     "z": 10,
+     "id": "i0"
+    },
+    {
+     "x": 120,
+     "z": 80,
+     "id": "i1"
+    },
+    {
+     "x": 200,
+     "z": 200,
+     "id": "i2"
+    },
+    {
+     "x": 300,
+     "z": 60,
+     "id": 77
+    },
+    {
+     "x": 350,
+     "z": 150,
+     "id": null
+    }
+   ]
+  },
+  {
+   "tag": "index-cancel",
+   "moves": [],
+   "rects": [
+    {
+     "label": "Move Foundation 1",
+     "x": 320.08,
+     "y": 245.63,
+     "w": 143.84,
+     "h": 121.91,
+     "t": "rotate(15deg)"
+    },
+    {
+     "label": "Move Foundation 2",
+     "x": 536.66,
+     "y": 570.09,
+     "w": 77.5,
+     "h": 77.48,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 3",
+     "x": 795,
+     "y": 208.42,
+     "w": 51.66,
+     "h": 51.66,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 4",
+     "x": 924.16,
+     "y": 440.92,
+     "w": 64.58,
+     "h": 38.73,
+     "t": "rotate(0deg)"
+    }
+   ],
+   "items": [
+    {
+     "x": 120,
+     "z": 80,
+     "id": "i1"
+    },
+    {
+     "x": 200,
+     "z": 200,
+     "id": "i2"
+    },
+    {
+     "x": 300,
+     "z": 60,
+     "id": 77
+    },
+    {
+     "x": 350,
+     "z": 150,
+     "id": null
+    }
+   ]
+  },
+  {
+   "tag": "zoomed-drag",
+   "moves": [],
+   "rects": [
+    {
+     "label": "Move Foundation 1",
+     "x": 58.73,
+     "y": 105.19,
+     "w": 93,
+     "h": 93,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 2",
+     "x": 470.12,
+     "y": 354.74,
+     "w": 215.77,
+     "h": 182.89,
+     "t": "rotate(15deg)"
+    },
+    {
+     "label": "Move Foundation 3",
+     "x": 795,
+     "y": 841.44,
+     "w": 116.25,
+     "h": 116.25,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 4",
+     "x": 1182.5,
+     "y": 298.94,
+     "w": 77.48,
+     "h": 77.5,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 5",
+     "x": 1376.25,
+     "y": 647.69,
+     "w": 96.88,
+     "h": 58.13,
+     "t": "rotate(0deg)"
+    }
+   ],
+   "items": [
+    {
+     "x": 10,
+     "z": 10,
+     "id": "i0"
+    },
+    {
+     "x": 120,
+     "z": 80,
+     "id": "i1"
+    },
+    {
+     "x": 200,
+     "z": 200,
+     "id": "i2"
+    },
+    {
+     "x": 300,
+     "z": 60,
+     "id": 77
+    },
+    {
+     "x": 350,
+     "z": 150,
+     "id": null
+    }
+   ]
+  },
+  {
+   "tag": "negative-drag",
+   "moves": [
+    {
+     "i": 0,
+     "p": {
+      "x_inches": 8,
+      "z_inches": 7
+     }
+    }
+   ],
+   "rects": [
+    {
+     "label": "Move Foundation 1",
+     "x": 40.66,
+     "y": 84.52,
+     "w": 62,
+     "h": 61.98,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 2",
+     "x": 320.08,
+     "y": 258.63,
+     "w": 143.84,
+     "h": 121.91,
+     "t": "rotate(15deg)"
+    },
+    {
+     "label": "Move Foundation 3",
+     "x": 536.66,
+     "y": 583.09,
+     "w": 77.5,
+     "h": 77.48,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 4",
+     "x": 795,
+     "y": 221.42,
+     "w": 51.66,
+     "h": 51.66,
+     "t": "rotate(0deg)"
+    },
+    {
+     "label": "Move Foundation 5",
+     "x": 924.16,
+     "y": 453.92,
+     "w": 64.58,
+     "h": 38.73,
+     "t": "rotate(0deg)"
+    }
+   ],
+   "items": [
+    {
+     "x": 8,
+     "z": 7,
+     "id": "i0"
+    },
+    {
+     "x": 120,
+     "z": 80,
+     "id": "i1"
+    },
+    {
+     "x": 200,
+     "z": 200,
+     "id": "i2"
+    },
+    {
+     "x": 300,
+     "z": 60,
+     "id": 77
+    },
+    {
+     "x": 350,
+     "z": 150,
+     "id": null
+    }
+   ]
+  }
+ ]
+}

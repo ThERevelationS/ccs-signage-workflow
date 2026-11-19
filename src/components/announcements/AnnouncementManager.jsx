@@ -25,8 +25,9 @@ import {
   stopAnnouncementIfUnchanged,
   updateAnnouncementIfUnchanged,
 } from "./announcementPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { CcsDateTimeField } from "@/components/ui/ccs-date-field";
 
 const UploadFile = (params) => base44.integrations.Core.UploadFile(params);
 const Announcement = base44.entities.Announcement;
@@ -35,7 +36,7 @@ const AuthorizedEmail = staffEntities.AuthorizedEmail;
 const ALL_PAGES = [
   "MyWorkflow", "MainWorkflow", "SalesPipeline", "Estimating", "Permitting",
   "Design", "Production", "Fabrication", "InstallationDeliver", "OrderForm",
-  "SIPs", "MondayMorningMeeting", "Financials",
+  "SIPs", "SOP", "MondayMorningMeeting", "Financials",
   "WorkOrderCalendar", "TimeClock", "customerportal"
 ];
 
@@ -61,7 +62,7 @@ const PAGE_GROUPS = [
   { label: "Kiosk", pages: ["TimeClock", "customerportal"] },
   { label: "Workflow", pages: ["MyWorkflow", "MainWorkflow", "WorkOrderCalendar", "MondayMorningMeeting"] },
   { label: "Sales", pages: ["SalesPipeline", "Estimating", "OrderForm", "Permitting"] },
-  { label: "Admin", pages: ["Financials", "SIPs", "Design", "Production", "Fabrication", "InstallationDeliver"] },
+  { label: "Admin", pages: ["Financials", "SIPs", "SOP", "Design", "Production", "Fabrication", "InstallationDeliver"] },
 ];
 
 const ANNOUNCEMENT_TEMPLATES = [
@@ -172,7 +173,7 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
       const [anns, activeRows, users] = await Promise.all([
         loadAllEntityRows({ entity: Announcement, sort: "-updated_date", label: "Announcement history" }),
         loadAllEntityRows({ entity: Announcement, query: { is_active: true }, sort: null, label: "Active announcements" }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Announcement target users" })
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Announcement target users" })
       ]);
       setSavedAnnouncements(anns);
       setAllUsers(users);
@@ -511,7 +512,7 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
               <Sparkles className="w-3 h-3" />Templates
             </span>
             {ANNOUNCEMENT_TEMPLATES.map(tpl => (
-              <button
+              <button type="button"
                 key={tpl.label}
                 onClick={() => applyTemplate(tpl)}
                 className="px-2 py-1 text-xs rounded-lg border border-gray-200 bg-white text-gray-600 hover:border-red-300 hover:text-red-700 transition-colors"
@@ -698,8 +699,7 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-[11px] text-gray-500">Start showing</Label>
-                <Input
-                  type="datetime-local"
+                <CcsDateTimeField
                   value={form.scheduled_at}
                   onChange={e => handleField("scheduled_at", e.target.value)}
                   className="mt-1 h-8 text-sm"
@@ -724,8 +724,7 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
               </div>
             </div>
             {form.expires_choice === "custom" && (
-              <Input
-                type="datetime-local"
+              <CcsDateTimeField
                 value={form.expires_custom}
                 onChange={e => handleField("expires_custom", e.target.value)}
                 className="h-8 text-sm"
@@ -780,7 +779,7 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
             </Label>
             <div className="flex flex-wrap gap-1 mb-2">
               {PAGE_GROUPS.map(group => (
-                <button
+                <button type="button"
                   key={group.label}
                   onClick={() => applyPageGroup(group)}
                   className="px-2 py-1 text-[10px] rounded-md border border-dashed border-gray-300 text-gray-500 hover:border-red-300 hover:text-red-600 transition-colors"
@@ -791,7 +790,7 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
             </div>
             <div className="flex flex-wrap gap-1">
               {ALL_PAGES.map(page => (
-                <button
+                <button type="button"
                   key={page}
                   onClick={() => togglePage(page)}
                   className={`px-2 py-1 text-xs rounded-lg transition-all border ${

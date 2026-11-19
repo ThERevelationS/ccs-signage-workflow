@@ -10,6 +10,7 @@ import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdent
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
 import { classifySalesTaskStatusAudit } from "../../../base44/shared/salesTaskStatusAudit.mjs";
 import { salesStageDisplayLabel, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100 text-blue-700" },
@@ -160,8 +161,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                 <span className={`block text-[10px] font-bold uppercase tracking-wide ${expectedCloseOverdue ? "text-rose-800" : "text-cyan-800"}`}>
                   {expectedCloseOverdue ? "Expected close overdue — review timing" : "Expected close within 14 days"}
                 </span>
-                <input
-                  type="date"
+                <CcsDateField
                   value={wo.expected_close_date || ""}
                   onChange={(event) => onUpdateWorkOrder?.(wo.id, "expected_close_date", event.target.value)}
                   className={`mt-1 h-11 w-full rounded-md border bg-white px-2 text-sm text-gray-800 outline-none focus:ring-2 ${expectedCloseOverdue ? "border-rose-200 focus:border-rose-400 focus:ring-rose-100" : "border-cyan-200 focus:border-cyan-400 focus:ring-cyan-100"}`}
@@ -175,8 +175,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                 <label>
                   <span className="block text-[10px] font-bold uppercase tracking-wide text-amber-800">Actual quote sent date</span>
                   <div className="mt-1 flex items-center gap-2">
-                    <input
-                      type="date"
+                    <CcsDateField
                       max={futureDateStamp(0)}
                       value={wo.date_estimate_sent || ""}
                       onChange={(event) => {

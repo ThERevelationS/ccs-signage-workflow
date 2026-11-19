@@ -1,0 +1,30 @@
+# Vinyl reference (newest landed pattern)
+src/components/vinylEstimator/vinylPricingAvailability.js
+src/components/vinylEstimator/vinylProjectHelpers.jsx
+src/pages/VinylEstimator.jsx
+# Foundation reference
+src/components/estimator/foundation/foundationInputValidation.js
+src/components/estimator/foundation/FoundationWallsPanel.jsx
+# Channel letter surface
+src/pages/ChannelLetterEstimator.jsx
+src/components/channelLetterInstall/lettersCalculator.jsx
+src/components/channelLetterInstall/installCalculator.jsx
+src/components/channelLetterInstall/dimensionalFabCalculator.jsx
+src/components/channelLetterInstall/installSizeRates.jsx
+src/components/channelLetterInstall/wallMaterials.jsx
+src/components/channelLetterInstall/equipmentSuggester.jsx
+src/components/channelLetterInstall/TravelCostCard.jsx
+src/components/channelLetterInstall/ValidationWarnings.jsx
+src/components/channelLetterInstall/LetterPurchaseRow.jsx
+src/components/channelLetterInstall/LettersPurchaseTab.jsx
+src/components/channelLetterInstall/DimensionalFabPanel.jsx
+src/components/channelLetterInstall/InstallLineItem.jsx
+src/components/channelLetterInstall/InstallSummaryCard.jsx
+src/components/channelLetterInstall/SummaryDetailsCard.jsx
+src/components/channelLetterInstall/EquipmentSelector.jsx
+src/components/channelLetterInstall/LadderSelector.jsx
+src/components/channelLetterInstall/PersonnelSelector.jsx
+# Sell wire + shared helpers
+src/components/estimator/channel/channelSellPricing.js
+src/components/estimator/channel/channelCalc.js
+src/components/estimator/channel/channelConstants.js

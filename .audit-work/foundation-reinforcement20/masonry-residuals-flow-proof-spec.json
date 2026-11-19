@@ -1,0 +1,331 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "1e99963215ce57335366551cbbcaf700a9f8bcad",
+  "sourceArtifact": "masonry-residuals-baseline.json",
+  "dependencyArtifact": "masonry-residuals-dependency-source.json",
+  "fixtureArtifact": "masonry-residuals-fixture.json",
+  "sourceId": "synthetic-masonry-project",
+  "estimateId": "synthetic-masonry-estimate",
+  "sourceVersion": "synthetic-v1",
+  "savedVersion": "synthetic-v2",
+  "candidates": {
+    "wallCalculator.js": "masonry-residuals-candidate-wallCalculator.js",
+    "foundationCalc.js": "masonry-residuals-candidate-foundationCalc.js",
+    "foundationInputValidation.js": "masonry-residuals-candidate-foundationInputValidation.js",
+    "FoundationWallsPanel.jsx": "masonry-residuals-candidate-FoundationWallsPanel.jsx",
+    "FoundationItemCard.jsx": "masonry-residuals-candidate-FoundationItemCard.jsx",
+    "FoundationBOM.jsx": "masonry-residuals-candidate-FoundationBOM.jsx",
+    "FoundationEstimator.jsx": "masonry-residuals-candidate-FoundationEstimator.jsx"
+  },
+  "candidateHashes": {
+    "wallCalculator.js": "4bb6795851b678bd6f72dc7146bbdc6a5ab486528605d12a2058d5ed5b1e8f9d",
+    "foundationCalc.js": "c266a7e2289cb08438c33c8a179b9e6e07f427ce1432ddb9b713a0c5945341af",
+    "foundationInputValidation.js": "dfc23f2b07865d5ddb3f34a1824dfbc8cd0d40503878f9f11264d46903eed282",
+    "FoundationWallsPanel.jsx": "857456235bc823bbf535380c90c66490e7087ec057dbc539cb8c972e7eb42186",
+    "FoundationItemCard.jsx": "bbc699269f1e4d254a2d5c95ffe07a465ee1d5e929314478120e0a9fc76ac43e",
+    "FoundationBOM.jsx": "af99e00cb818eb0229a572e614615c5ec75a609644bc5989dd4791b07e2ed25f",
+    "FoundationEstimator.jsx": "be681eceb7c7770d65e84110e6018df3b27a3c77bc5a520bb00767efb3ba1d56"
+  },
+  "acknowledgedSnapshot": {
+    "wall": {
+      "totalBricks": 700,
+      "materialCost": 1400,
+      "mortarCost": 50,
+      "laborHours": 14,
+      "laborCost": 6300,
+      "totalCost": 7777,
+      "totalLinearInches": 1440,
+      "numCourses": 9,
+      "internalTotalBricks": 300,
+      "internalMaterialCost": 300,
+      "internalMortarCost": 27,
+      "internalLaborCost": 2700,
+      "internalLaborHours": 6
+    },
+    "item": {
+      "item_total_cost": 111.11,
+      "concrete_volume_cy": 0.5,
+      "concrete_cost": 11.11,
+      "excavation_cost": 22.22
+    },
+    "delivery": {
+      "concrete_total": 330.75
+    },
+    "total_wall_cost": 7777,
+    "total_brick_cost": 1400,
+    "total_fill_cost": 300
+  },
+  "validCurrentSnapshot": {
+    "wall": {
+      "totalBricks": 1740,
+      "materialCost": 3480,
+      "mortarCost": 160,
+      "laborHours": 34.8,
+      "laborCost": 10800,
+      "totalCost": 20650,
+      "totalLinearInches": 1440,
+      "numCourses": 9.142857142857142,
+      "internalTotalBricks": 850,
+      "internalMaterialCost": 850,
+      "internalMortarCost": 80,
+      "internalLaborCost": 5280,
+      "internalLaborHours": 17
+    },
+    "total_wall_cost": 20650
+  },
+  "blockedSaveMessage": "Save paused: fix highlighted design inputs or catalog selections.",
+  "pageCaseCount": 7,
+  "browserCaseCount": 12,
+  "browserModes": [
+    {
+      "id": "valid",
+      "pricingUnavailable": false,
+      "panelTexts": [
+        "$20,650.00",
+        "$3,480.00",
+        "$160.00",
+        "34.8"
+      ],
+      "bomRows": [
+        [
+          "Ready-mix concrete (delivered)",
+          "0.75 CY",
+          "$330.75"
+        ],
+        [
+          "Wall 1 — Modular brick",
+          "1,740 units",
+          "$3,480.00"
+        ],
+        [
+          "Wall 1 — mortar",
+          "—",
+          "$160.00"
+        ],
+        [
+          "Wall 1 — Fill block (internal)",
+          "850 units",
+          "$850.00"
+        ],
+        [
+          "Wall 1 — internal mortar",
+          "—",
+          "$80.00"
+        ]
+      ],
+      "mortarInteraction": true
+    },
+    {
+      "id": "held-bad-mortar",
+      "pricingUnavailable": true,
+      "panelTexts": [
+        "Saved amounts (not current pricing)",
+        "$7,777.00"
+      ],
+      "wallIssueCodes": [
+        "wall_mortar_gap_unavailable"
+      ],
+      "invalidField": {
+        "selector": "input[aria-label=\"Wall mortar gap (in)\"]",
+        "describedBy": "wall-0-pricing"
+      },
+      "bomRows": [
+        [
+          "Ready-mix concrete (delivered)",
+          "0.75 CY",
+          "$330.75"
+        ],
+        [
+          "Wall 1 — saved outer material",
+          "700 units",
+          "$1,400.00"
+        ],
+        [
+          "Wall 1 — saved mortar",
+          "—",
+          "$50.00"
+        ],
+        [
+          "Wall 1 — saved internal material",
+          "300 units",
+          "$300.00"
+        ],
+        [
+          "Wall 1 — saved internal mortar",
+          "—",
+          "$27.00"
+        ]
+      ]
+    },
+    {
+      "id": "held-bad-setting",
+      "pricingUnavailable": true,
+      "panelTexts": [
+        "Saved amounts (not current pricing)",
+        "$7,777.00"
+      ],
+      "wallIssueCodes": [
+        "wall_setting_unavailable"
+      ],
+      "bomRows": [
+        [
+          "Ready-mix concrete (delivered)",
+          "0.75 CY",
+          "$330.75"
+        ],
+        [
+          "Wall 1 — saved outer material",
+          "700 units",
+          "$1,400.00"
+        ],
+        [
+          "Wall 1 — saved mortar",
+          "—",
+          "$50.00"
+        ],
+        [
+          "Wall 1 — saved internal material",
+          "300 units",
+          "$300.00"
+        ],
+        [
+          "Wall 1 — saved internal mortar",
+          "—",
+          "$27.00"
+        ]
+      ]
+    },
+    {
+      "id": "held-bad-override",
+      "pricingUnavailable": true,
+      "panelTexts": [
+        "Saved amounts (not current pricing)",
+        "$7,777.00"
+      ],
+      "wallIssueCodes": [
+        "custom_outer_material_qty_unavailable"
+      ],
+      "bomRows": [
+        [
+          "Ready-mix concrete (delivered)",
+          "0.75 CY",
+          "$330.75"
+        ],
+        [
+          "Wall 1 — saved outer material",
+          "700 units",
+          "$1,400.00"
+        ],
+        [
+          "Wall 1 — saved mortar",
+          "—",
+          "$50.00"
+        ],
+        [
+          "Wall 1 — saved internal material",
+          "300 units",
+          "$300.00"
+        ],
+        [
+          "Wall 1 — saved internal mortar",
+          "—",
+          "$27.00"
+        ]
+      ]
+    },
+    {
+      "id": "free-mortar-zero",
+      "pricingUnavailable": false,
+      "panelTexts": [
+        "$21,336.00",
+        "$3,960.00",
+        "39.6"
+      ],
+      "bomRows": [
+        [
+          "Ready-mix concrete (delivered)",
+          "0.75 CY",
+          "$330.75"
+        ],
+        [
+          "Wall 1 — Modular brick",
+          "1,980 units",
+          "$3,960.00"
+        ],
+        [
+          "Wall 1 — mortar",
+          "—",
+          "$160.00"
+        ],
+        [
+          "Wall 1 — Fill block (internal)",
+          "1,056 units",
+          "$1,056.00"
+        ],
+        [
+          "Wall 1 — internal mortar",
+          "—",
+          "$80.00"
+        ]
+      ]
+    },
+    {
+      "id": "bad-item-override",
+      "pricingUnavailable": true,
+      "itemPanelTexts": [
+        "Saved amounts (not current pricing)",
+        "$111.11"
+      ],
+      "itemIssueCodes": [
+        "foundation_override_invalid"
+      ],
+      "invalidField": {
+        "selector": "input[aria-label=\"Concrete cost override (unknown unit)\"]",
+        "describedBy": "foundation-0-pricing"
+      },
+      "bomRows": [
+        [
+          "Concrete delivery/order (saved)",
+          "0.75 CY",
+          "$330.75"
+        ],
+        [
+          "Foundation synthetic-item-1 (saved) — concrete",
+          "Not saved",
+          "$11.11"
+        ],
+        [
+          "Wall 1 — Modular brick",
+          "1,740 units",
+          "$3,480.00"
+        ],
+        [
+          "Wall 1 — mortar",
+          "—",
+          "$160.00"
+        ],
+        [
+          "Wall 1 — Fill block (internal)",
+          "850 units",
+          "$850.00"
+        ],
+        [
+          "Wall 1 — internal mortar",
+          "—",
+          "$80.00"
+        ]
+      ]
+    }
+  ],
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 900
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ]
+}

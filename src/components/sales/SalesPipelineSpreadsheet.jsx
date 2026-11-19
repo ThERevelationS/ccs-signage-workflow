@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { usePolling } from "@/lib/usePolling";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { format, differenceInDays } from "date-fns";
-import * as XLSX from "xlsx";
+// xlsx (~1MB) loads on demand inside export handlers — not at page load.
 import { Plus, Trash2, Loader2, Download, Upload, Pencil, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import LoadErrorBanner from "@/components/LoadErrorBanner";
 
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {
@@ -38,7 +40,7 @@ import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitio
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
 import { readBackUncertainSalesFollowUpSave } from "@/components/sales/salesFollowUpSaveRecovery.mjs";
 import { recoverRequiredSalesArchiveRows } from "@/components/sales/salesArchiveRecovery.mjs";
-import { inspectUncertainSalesQuickEdit, uncertainSalesQuickEditWarning } from "@/components/sales/salesQuickEditUncertainRecovery.mjs";
+import { inspectUncertainSalesQuickEdit, uncertainSalesQuickEditWarning, classifySalesQuickEditSaveError, analyzeSalesQuickEditDrift } from "@/components/sales/salesQuickEditUncertainRecovery.mjs";
 import { captureSalesFollowUpCompletionGuards, isSalesFollowUpCompletionSnapshotCurrent } from "@/components/sales/salesFollowUpCompletionGuards.mjs";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import { getVisibleSalesColumnIds, getSalesColumnLayout } from "@/components/sales/salesColumnCatalog.mjs";
@@ -49,7 +51,7 @@ import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDia
 import SalesImportPreviewDialog from "@/components/sales/SalesImportPreviewDialog";
 import SalesImportHistoryDialog from "@/components/sales/SalesImportHistoryDialog";
 import { useImportProgress } from "@/components/shared/ImportProgressContext";
-import { loadAllEntityRows, withRateLimitRetry } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows, withRateLimitRetry } from "@/lib/loadAllEntityRows";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 import { loadSalesPersonRosterSafely } from "@/components/sales/salesFilterPersistence";
@@ -64,9 +66,11 @@ import { salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
 import { classifySalesTaskStatusAudit } from "../../../base44/shared/salesTaskStatusAudit.mjs";
 import { salesReviewQueueFilterKey, canKeepLocallyResolvedSalesReview, keepLocallyResolvedSalesReviewDetails, nextSalesReviewQueueIndex } from "@/components/sales/salesReviewQueueExit.mjs";
 import { canUpdateWonOperationalField, captureSalesTransitionGuards, untouchedSalesTransitionGuards, planSalesTaskChange, planExistingSalesTaskStatusReconciliation, isSalesTransitionSnapshotCurrent } from "@/components/sales/salesTaskStageMapping.mjs";
+import { staffEntities } from "@/components/staff/staffEntities";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 
-const WorkOrder = base44.entities.WorkOrder;
-const GlobalSettings = base44.entities.GlobalSettings;
+const WorkOrder = staffEntities.WorkOrder;
+const GlobalSettings = staffEntities.GlobalSettings;
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100" },
@@ -252,7 +256,9 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
   return true;
 };
 
-const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", attentionFilter = "all", outcomePeriod = "all", viewMode = "table", onSummaryChange, onColumnHeaderFilterChange, showButtonsInline = true, activeColumnPreset = null, customFilters = [], canImportExport = false }, ref) => {
+const EMPTY_CUSTOM_FILTERS = [];
+
+const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", attentionFilter = "all", outcomePeriod = "all", viewMode = "table", onSummaryChange, onColumnHeaderFilterChange, showButtonsInline = true, activeColumnPreset = null, customFilters = EMPTY_CUSTOM_FILTERS, canImportExport = false }, ref) => {
   const { currentUser, sessionToken, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
@@ -263,6 +269,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [archiveHasMore, setArchiveHasMore] = useState(false);
   const [archiveLoadingMore, setArchiveLoadingMore] = useState(false);
   const archiveSkipRef = useRef(0);
@@ -293,6 +300,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [reloadingSalesQuickEdits, setReloadingSalesQuickEdits] = useState(false);
   const pendingHistoryFieldsRef = useRef({});
   const pendingRecordScopesRef = useRef({});
+  // Ids whose last merged row object carries a local pending-edit overlay —
+  // such objects must never be reused as the "unchanged" identity, or a
+  // cleared-but-not-yet-confirmed edit would resurrect on screen.
+  const mergedOverlayIdsRef = useRef(new Set());
   const debounceTimers = useRef({});
   const liveEditPinsRef = useRef({});
   const [liveEditPinVersion, setLiveEditPinVersion] = useState(0);
@@ -324,7 +335,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     overdueColor: "#ef4444",
     gradientDays: 14
   });
-  const [globalSettingsLoaded, setGlobalSettingsLoaded] = useState(false);
+  const [_globalSettingsLoaded, setGlobalSettingsLoaded] = useState(false);
   const [globalSettingsError, setGlobalSettingsError] = useState("");
   const globalSettingsBaselinesRef = useRef({});
   const globalSettingsSaveQueuesRef = useRef({});
@@ -469,11 +480,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setArchiveHasMore(false);
     setArchiveLoadingMore(false);
     loadWorkOrders(true, recordScope);
-    const interval = ["current", "outcomes"].includes(recordScope)
-      ? setInterval(() => loadWorkOrders(false, recordScope), 60000)
-      : null;
-    return () => interval && clearInterval(interval);
   }, [recordScope, sessionToken, releaseLiveEditPins]);
+
+  usePolling(() => loadWorkOrders(false, recordScope), 60000, {
+    enabled: ["current", "outcomes"].includes(recordScope),
+    runOnMount: false,
+  });
 
   useEffect(() => {
     if (!sessionToken) return undefined;
@@ -567,7 +579,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         label: "Sales Pipeline task assignment rules",
       });
       setTaskAssignmentRules(setting?.setting_value?.rules || []);
-    } catch {}
+    } catch (error) {}
   };
 
   const normalizeTaskDescriptionItems = (items = []) => items.map(item => ({
@@ -695,12 +707,30 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       }
     }
 
-    return [...mergedById.values()]
-      .map((order) => ({
-        ...order,
-        ...(pendingRecordScopesRef.current[order.id] === scope && !pendingSameTaskRepairRef.current.has(order.id) ? (pendingChangesRef.current[order.id] || {}) : {}),
-      }))
+    const prevOverlayIds = mergedOverlayIdsRef.current;
+    const currentById = new Map((currentRows || []).map((row) => [row?.id, row]));
+    const nextOverlayIds = new Set();
+    const result = [...mergedById.values()]
+      .map((order) => {
+        const overlay = pendingRecordScopesRef.current[order.id] === scope && !pendingSameTaskRepairRef.current.has(order.id)
+          ? (pendingChangesRef.current[order.id] || {})
+          : {};
+        if (Object.keys(overlay).length) {
+          nextOverlayIds.add(order.id);
+          return { ...order, ...overlay };
+        }
+        const current = currentById.get(order.id);
+        // Preserve object identity for unchanged rows — the memoized row
+        // comparator keys on `wo` reference, so a fresh object per poll
+        // forces every visible row to re-render even when nothing changed.
+        // Rows that last merged WITH an overlay are excluded: their stored
+        // fields may hold cleared local edits the server row no longer has.
+        if (current && !prevOverlayIds.has(order.id) && current.updated_date === order.updated_date) return current;
+        return order;
+      })
       .sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
+    mergedOverlayIdsRef.current = nextOverlayIds;
+    return result;
   };
 
   const loadWorkOrders = async (showLoading = true, scope = recordScope, requiredIds = []) => {
@@ -714,19 +744,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       let hasMore = false;
 
       if (scope === "current") {
-        rows = await loadAllEntityRows({
-          entity: WorkOrder,
-          query: { is_rider: false, completed: false, in_pipeline: true, sales_status: { $nin: ["won", "lost"] }, deleted: { $ne: true } },
-          sort: "-created_date",
-          label: "Sales Pipeline current opportunities",
-        });
+        rows = (await fetchAllWorkOrders({ preferSnapshot: true })).filter((wo) =>
+          wo.is_rider !== true && wo.completed !== true && wo.in_pipeline === true &&
+          !["won", "lost"].includes(String(wo.sales_status || "")) && wo.deleted !== true
+        ).sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
       } else if (scope === "outcomes") {
-        rows = await loadAllEntityRows({
-          entity: WorkOrder,
-          query: { is_rider: false, in_pipeline: true, sales_status: { $in: ["won", "lost"] }, deleted: { $ne: true } },
-          sort: "-close_date",
-          label: "Sales Pipeline modern outcomes",
-        });
+        rows = (await fetchAllWorkOrders({ preferSnapshot: true })).filter((wo) =>
+          wo.is_rider !== true && wo.in_pipeline === true &&
+          ["won", "lost"].includes(String(wo.sales_status || "")) && wo.deleted !== true
+        ).sort((a, b) => (b.close_date || "").localeCompare(a.close_date || ""));
       } else if (scope === "history") {
         const page = await readArchivePage(LEGACY_CLOSED_QUERY, 0);
         rows = page;
@@ -735,12 +761,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       } else {
         const [activePage, modernOutcomes, completedLegacy, neutralClosed] = await Promise.all([
           readArchivePage(ALL_RECORDS_ACTIVE_QUERY, 0),
-          loadAllEntityRows({
-            entity: WorkOrder,
-            query: { is_rider: false, in_pipeline: true, sales_status: { $in: ["won", "lost"] }, deleted: { $ne: true } },
-            sort: "-close_date",
-            label: "Sales Pipeline modern outcomes",
-          }),
+          fetchAllWorkOrders({ preferSnapshot: true }).then((allRows) => allRows.filter((wo) =>
+            wo.is_rider !== true && wo.in_pipeline === true &&
+            ["won", "lost"].includes(String(wo.sales_status || "")) && wo.deleted !== true
+          ).sort((a, b) => (b.close_date || "").localeCompare(a.close_date || ""))),
           loadAllEntityRows({
             entity: WorkOrder,
             query: { ...LEGACY_CLOSED_QUERY, completed: true },
@@ -775,13 +799,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       setArchiveHasMore(hasMore);
       setWorkOrders((current) => mergeLoadedRows(rows, scopeAtStart, current));
       setUsers(usersData);
+      setLoadError("");
       // During explicit uncertain-save recovery a scoped page is only
       // sufficient if it actually includes each affected WorkOrder. A row
       // moved to another workspace must not be declared reviewed here.
       return requiredIds.every((id) => rows.some((row) => row?.id === id))
         ? true : "missing_required";
     } catch (error) {
-      if (requestId === loadRequestRef.current) console.error("Error loading work orders:", error);
+      if (requestId === loadRequestRef.current) {
+        console.error("Error loading work orders:", error);
+        setLoadError(error?.message || "Sales Pipeline could not be loaded.");
+      }
       return false;
     } finally {
       if (requestId === loadRequestRef.current) setIsLoading(false);
@@ -926,7 +954,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const updateWorkOrderFields = (orderId, nextChanges, skipHistory = false, confirmedTaskTransition = false, reconcileSameTask = false, followUpGuards = null) => {
-    const currentWo = workOrders.find(wo => wo.id === orderId);
+    const currentWo = workOrdersRef.current.find(wo => wo.id === orderId);
     if (!currentWo || !nextChanges || Object.keys(nextChanges).length === 0) return;
     if (reloadingSalesQuickEditsRef.current) {
       setQuickEditError("Reload latest is in progress. Review the refreshed WorkOrder before editing again.");
@@ -1158,20 +1186,132 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           out[changedField] = baselineSource[changedField];
           return out;
         }, {});
+        const conflictedFields = [];
+        const appliedFields = new Set();
+        let latestFenceRecord = null;
         let saved;
         let recoveredFollowUpSave = false;
         try {
-          saved = await replaceWorkOrderFieldsIfUnchanged({
-            workOrderId: orderId,
-            expectedFields,
-            nextFields: changes,
-            guardFields: {
+          for (let pass = 0; ; pass += 1) {
+            const guardFields = {
               ...untouchedSalesTransitionGuards(pendingSalesGuardsRef.current[orderId], changes),
               ...(pendingFollowUpGuardsRef.current[orderId] || {}),
-            },
-            label: "Sales Pipeline quick edit",
-          });
+            };
+            // Freshness fence: baselines come from a feed snapshot that can be
+            // minutes old while syncs and other sessions keep writing. One
+            // point read before the write converts post-write 409s into a
+            // determinate pre-write check — drift means nothing is sent.
+            let fenceRecord = null;
+            try {
+              fenceRecord = await WorkOrder.get(orderId);
+            } catch {
+              fenceRecord = null;
+            }
+            if (fenceRecord?.id && fenceRecord.deleted !== true) {
+              latestFenceRecord = fenceRecord;
+              const drift = analyzeSalesQuickEditDrift(fenceRecord, { expectedFields, guardFields, changes });
+              drift.applied.forEach((field) => appliedFields.add(field));
+              if (drift.supersededStamps.length) {
+                // The stored activity clock is already at/past what this edit
+                // would write — keep the newer stamp and drop ours, never
+                // surfacing it as a conflict.
+                drift.supersededStamps.forEach((field) => {
+                  delete changes[field];
+                  delete expectedFields[field];
+                  historyFieldsAtSave.delete(field);
+                  if (pendingChangesRef.current[orderId]) delete pendingChangesRef.current[orderId][field];
+                  if (pendingBaselinesRef.current[orderId]) delete pendingBaselinesRef.current[orderId][field];
+                  pendingHistoryFieldsRef.current[orderId]?.delete?.(field);
+                });
+              }
+              if (drift.conflicted.length) {
+                // A field this edit targets was changed by another writer, so
+                // that field's save is rejected before it can overwrite. Drop
+                // the conflicted fields and give the still-valid remainder
+                // one continuation pass instead of failing the whole batch.
+                conflictedFields.push(...drift.conflicted);
+                drift.conflicted.forEach((field) => {
+                  delete changes[field];
+                  delete expectedFields[field];
+                  historyFieldsAtSave.delete(field);
+                  if (pendingChangesRef.current[orderId]) delete pendingChangesRef.current[orderId][field];
+                  if (pendingBaselinesRef.current[orderId]) delete pendingBaselinesRef.current[orderId][field];
+                  pendingHistoryFieldsRef.current[orderId]?.delete?.(field);
+                });
+                setWorkOrders((current) => current.map((row) => row.id === orderId ? { ...row, ...fenceRecord } : row));
+                setSelectedWorkOrder((selected) => selected?.id === orderId ? { ...selected, ...fenceRecord } : selected);
+                if (pass === 0 && Object.keys(changes).length) continue;
+                throw Object.assign(
+                  new Error("This field changed in another session: " + conflictedFields.join(", ") + ". Reload before saving."),
+                  { status: 409 },
+                );
+              }
+              if (drift.guardDrift.length) {
+                // The record moved only on fields this edit does not touch.
+                // Rebase the guards to the fresh values; the server's own
+                // validators still decide whether the patch may apply.
+                drift.guardDrift.forEach((field) => { guardFields[field] = fenceRecord[field] ?? null; });
+              }
+              if (!Object.keys(changes).length || Object.keys(changes).every((field) => appliedFields.has(field))) {
+                // Nothing left to write (superseded stamps only), or identical
+                // values already reached the record — adopt it without writing
+                // or claiming the earlier write as ours.
+                saved = fenceRecord;
+                break;
+              }
+            }
+            saved = await replaceWorkOrderFieldsIfUnchanged({
+              workOrderId: orderId,
+              expectedFields,
+              nextFields: changes,
+              guardFields,
+              label: "Sales Pipeline quick edit",
+            });
+            break;
+          }
         } catch (saveError) {
+          if (classifySalesQuickEditSaveError(saveError) !== 'uncertain') {
+            // Determinate failure — nothing was written. Refresh this row from
+            // the authoritative record and prune only the fields that truly
+            // conflicted or already landed; still-valid edits stay queued.
+            const latest = await WorkOrder.get(orderId).catch(() => latestFenceRecord);
+            if (latest?.id && latest.deleted !== true) {
+              const queuedNow = { ...(pendingChangesRef.current[orderId] || {}) };
+              const queuedDrift = analyzeSalesQuickEditDrift(latest, {
+                expectedFields: Object.fromEntries(Object.keys(queuedNow).map((f) => [f, (pendingBaselinesRef.current[orderId] || {})[f]])),
+                guardFields: {},
+                changes: queuedNow,
+              });
+              [...queuedDrift.applied, ...queuedDrift.supersededStamps].forEach((f) => {
+                // Already holding the target value or a newer activity stamp —
+                // drop the queued edit silently; the desired state is on the record.
+                if (pendingChangesRef.current[orderId]) delete pendingChangesRef.current[orderId][f];
+                if (pendingBaselinesRef.current[orderId]) delete pendingBaselinesRef.current[orderId][f];
+                pendingHistoryFieldsRef.current[orderId]?.delete?.(f);
+              });
+              queuedDrift.conflicted.forEach((f) => {
+                if (pendingChangesRef.current[orderId]) delete pendingChangesRef.current[orderId][f];
+                if (pendingBaselinesRef.current[orderId]) delete pendingBaselinesRef.current[orderId][f];
+                pendingHistoryFieldsRef.current[orderId]?.delete?.(f);
+                if (!conflictedFields.includes(f)) conflictedFields.push(f);
+              });
+              if (pendingChangesRef.current[orderId] && !Object.keys(pendingChangesRef.current[orderId]).length) {
+                delete pendingChangesRef.current[orderId];
+                delete pendingBaselinesRef.current[orderId];
+                delete pendingSalesGuardsRef.current[orderId];
+                delete pendingHistoryFieldsRef.current[orderId];
+                delete pendingRecordScopesRef.current[orderId];
+              }
+              setWorkOrders((current) => current.map((row) => row.id === orderId ? { ...row, ...latest } : row));
+              setSelectedWorkOrder((selected) => selected?.id === orderId ? { ...selected, ...latest } : selected);
+            }
+            const named = conflictedFields.map((f) => f.replace(/_/g, " ")).join(", ");
+            throw new Error(named
+              ? `${named} changed in another session — the latest values are shown; that edit was not saved. Re-apply it against the current record.`
+              : classifySalesQuickEditSaveError(saveError) === 'busy'
+                ? "The app is busy right now — that edit was not saved and is still queued. Try again in a few seconds."
+                : (saveError?.message || "This record changed in another session. The latest values are shown; re-apply the edit."));
+          }
           if (!pendingFollowUpGuardsRef.current[orderId]) {
             // Non-completion Sales edits must not silently reuse a queued patch
             // after a lost response. Observe current values once, without
@@ -1197,7 +1337,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
         // History is written only after the conflict-safe business save succeeds.
         await Promise.all(Object.keys(changes)
-          .filter((changedField) => historyFieldsAtSave.has(changedField))
+          .filter((changedField) => historyFieldsAtSave.has(changedField) && !appliedFields.has(changedField))
           .map((changedField) => trackChange(orderId, changedField, baselineSource[changedField], saved[changedField])));
 
         const remaining = { ...(pendingChangesRef.current[orderId] || {}) };
@@ -1259,7 +1399,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           sales_quote_sent_verified_at: saved.sales_quote_sent_verified_at || "",
         } : selected);
         markWorkOrderNeedsSync(orderId);
-        setQuickEditError("");
+        setQuickEditError(conflictedFields.length
+          ? `${conflictedFields.map((f) => f.replace(/_/g, " ")).join(", ")} changed in another session — the latest values are shown; that edit was not saved. Re-apply it against the current record.`
+          : "");
       } catch (error) {
         if (!error.message?.includes('not found')) {
           console.error("Error updating work order:", error);
@@ -1284,7 +1426,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   const reconcileExistingSalesTaskStatus = (workOrder) => {
     if (!isRegistered || !workOrder?.id) return;
-    const current = workOrders.find(row => row.id === workOrder.id);
+    const current = workOrdersRef.current.find(row => row.id === workOrder.id);
     const plan = planExistingSalesTaskStatusReconciliation(current);
     if (!plan || String(workOrder.current_task_description || '').trim() !== plan.task ||
         workOrder.sales_status !== current.sales_status ||
@@ -1573,7 +1715,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }
   };
 
-  const moveToWorkflow = async (workOrder) => {
+  const _moveToWorkflow = async (workOrder) => {
     setQuickEditError("");
     try {
       const saved = await replaceWorkOrderFieldsIfUnchanged({
@@ -1798,7 +1940,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   // Helper to get display text from task description
-  const getTaskDescText = (item) => {
+  const _getTaskDescText = (item) => {
     if (typeof item === 'string') return item;
     return item?.text || '';
   };
@@ -1877,7 +2019,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }
   };
 
-  const getRowColor = (status) => {
+  const _getRowColor = (status) => {
     const statusObj = SALES_STATUSES.find(s => s.value === status);
     return statusObj?.color || "bg-white";
   };
@@ -1912,6 +2054,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }));
     await new Promise(resolve => setTimeout(resolve, 300));
     setExportProgress({ show: true, progress: 50 });
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sales Pipeline");
@@ -2010,7 +2153,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }
   };
 
-  const downloadImportIssues = () => {
+  const downloadImportIssues = async () => {
     const issues = importPreview?.appliedResult?.issues || importPreview?.issues || [];
     if (!issues.length) return;
     const rows = issues.map((issue) => ({
@@ -2022,6 +2165,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       "Fields": Array.isArray(issue.fields) ? issue.fields.join(", ") : "",
       "Matching WorkOrder IDs": Array.isArray(issue.match_ids) ? issue.match_ids.join(", ") : "",
     }));
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Import Issues");
@@ -2738,6 +2882,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     filteredWorkOrdersRef.current = filteredWorkOrders;
   }, [filteredWorkOrders]);
 
+  // Rows are memoized on `wo` identity, so callbacks they hold can go stale
+  // for minutes between polls. Read workOrders through a ref in any code path
+  // reachable from a row callback or a stale baseline poisons the save guards.
+  const workOrdersRef = useRef(workOrders);
+
+  useEffect(() => {
+    workOrdersRef.current = workOrders;
+  }, [workOrders]);
+
   useEffect(() => {
     if (!selectedWorkOrder?.id) {
       selectedQueueIndexRef.current = null;
@@ -2875,14 +3028,39 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }
   };
 
-  // Virtual scrolling setup
+  // Virtual scrolling setup. Rows render ~33px (28px h-7 content + td
+  // padding + border); a focused row inflates (~49px: larger td padding and
+  // font) and emits two 12px gap bands that live OUTSIDE the measured row —
+  // so the estimate covers row+gaps (~73px) and focused rows skip DOM
+  // measurement. An underestimate of even 5px/row leaves the scroll range
+  // thousands of px short on a long pipeline — the scrollbar grows while
+  // scrolling, which reads as jitter/lazy-loading.
   const parentRef = useRef(null);
+  // These options MUST be referentially stable: the virtualizer treats
+  // option identity changes as measurement invalidation and notifies a
+  // re-render — inline closures here produced a render-phase loop (#301).
+  const getVirtualItemKey = useCallback(
+    (index) => filteredWorkOrders[index]?.id ?? index,
+    [filteredWorkOrders],
+  );
+  const estimateVirtualItemSize = useCallback(
+    (index) => (filteredWorkOrders[index]?.id === focusedRowId ? 73 : 33),
+    [filteredWorkOrders, focusedRowId],
+  );
   const rowVirtualizer = useVirtualizer({
     count: filteredWorkOrders.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 28,
-    overscan: 5,
+    // Key measurements by row id, not position — a re-sort or scope change
+    // keeps each row's measured height instead of inheriting its neighbor's.
+    getItemKey: getVirtualItemKey,
+    estimateSize: estimateVirtualItemSize,
+    overscan: 8,
   });
+  // Focus changes row heights — drop cached measurements so estimates and
+  // measured rows re-evaluate against the new layout.
+  useEffect(() => {
+    rowVirtualizer.measure();
+  }, [focusedRowId, rowVirtualizer]);
 
   const visibleColumnIds = useMemo(
     () => getVisibleSalesColumnIds(activeColumnPreset),
@@ -3214,6 +3392,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       {destructiveActionWarning}
       {globalSettingsWarning}
       {archivePagingNotice}
+      <LoadErrorBanner message={loadError} onRetry={() => loadWorkOrders(true)} />
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
@@ -3299,7 +3478,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         </div>
       )}
 
-      <div ref={parentRef} className="overflow-auto" style={{ flex: 1, minHeight: 0, height: 0 }}>
+      <div ref={parentRef} className="overflow-auto ccs-scrollbar-hidden" style={{ flex: 1, minHeight: 0, height: 0 }}>
         <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '12px', tableLayout: 'auto' }}>
           <thead className="sticky top-0 z-10 bg-gray-100 text-[11px] leading-tight [&_th]:whitespace-nowrap [&_th]:py-1">
             <tr className="h-7 border-b bg-gray-100">
@@ -3485,7 +3664,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </tr>
           </thead>
 
-          <SalesPipelineTableBody virtualItems={rowVirtualizer.getVirtualItems()} filteredWorkOrders={filteredWorkOrders} visibleColumnIds={visibleColumnIds} focusedRowId={focusedRowId} setFocusedRowId={setFocusedRowId} setFocusedRowIndex={setFocusedRowIndex} getTaskDescStyle={getTaskDescStyle} getDeadlineCellColor={getDeadlineCellColor} calculateDays={calculateDays} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} isAdmin={isAdmin} selectedRows={selectedRows} toggleRowSelection={toggleRowSelection} handleContextMenu={handleContextMenu} setSelectedWorkOrder={openOpportunityDetails} onCompleteFollowUp={requestFollowUpCompletion} openCorbridgeDialog={openCorbridgeDialog} handleDuplicateClient={handleDuplicateClient} deleteWorkOrder={deleteWorkOrder} leadSources={leadSources} users={users} taskDescriptions={taskDescriptions} projectTypes={projectTypes} rowVirtualizer={rowVirtualizer} />
+          <SalesPipelineTableBody virtualItems={rowVirtualizer.getVirtualItems()} filteredWorkOrders={filteredWorkOrders} visibleColumnIds={visibleColumnIds} focusedRowId={focusedRowId} setFocusedRowId={setFocusedRowId} setFocusedRowIndex={setFocusedRowIndex} getTaskDescStyle={getTaskDescStyle} getDeadlineCellColor={getDeadlineCellColor} calculateDays={calculateDays} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} isAdmin={isAdmin} selectedRows={selectedRows} toggleRowSelection={toggleRowSelection} handleContextMenu={handleContextMenu} setSelectedWorkOrder={openOpportunityDetails} onCompleteFollowUp={requestFollowUpCompletion} openCorbridgeDialog={openCorbridgeDialog} handleDuplicateClient={handleDuplicateClient} deleteWorkOrder={deleteWorkOrder} leadSources={leadSources} users={users} taskDescriptions={taskDescriptions} projectTypes={projectTypes} rowVirtualizer={rowVirtualizer} measureElement={rowVirtualizer.measureElement} />
           </table>
           </div>
 

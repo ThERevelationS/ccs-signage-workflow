@@ -1,0 +1,38 @@
+{
+  "inputs": [
+    "node_modules/react/cjs/react.development.js",
+    "node_modules/react/index.js",
+    "node_modules/scheduler/cjs/scheduler.development.js",
+    "node_modules/scheduler/index.js",
+    "node_modules/react-dom/cjs/react-dom.development.js",
+    "node_modules/react-dom/index.js",
+    "node_modules/react-dom/client.js",
+    "frozen:/app/src/components/estimator/foundation/legacyFoundationCalc.js",
+    "frozen:/app/src/components/estimator/foundation/wallCalculator.js",
+    "frozen:/app/src/components/estimator/foundation/poleCalculator.js",
+    "frozen:/app/src/components/estimator/foundation/wallCapCalculator.js",
+    "frozen:/app/src/components/estimator/foundation/foundationEquipmentBindings.js",
+    "frozen:/app/src/components/estimator/foundation/foundationCatalogIntegrity.js",
+    "frozen:/app/src/components/estimator/foundation/foundationInputValidation.js",
+    "frozen:/app/src/components/estimator/foundation/foundationCalc.js",
+    "node_modules/react/cjs/react-jsx-runtime.development.js",
+    "node_modules/react/jsx-runtime.js",
+    "frozen:/app/src/components/estimator/foundation/ConcreteDeliveryPanel.jsx",
+    "frozen:/app/src/components/estimator/foundation/FoundationBOM.jsx",
+    "frozen:/app/supplier-browser-entry.jsx"
+  ],
+  "loaded": {
+    "/app/supplier-browser-entry.jsx": "358f78ab868b521314ea032cf961b1758375a8845d83865faf4c4ccc6f0447b1",
+    "/app/src/components/estimator/foundation/ConcreteDeliveryPanel.jsx": "1f33ce28ef0ed5217fcfb5d01778bf0efbd6c9c404540c05c8632f51a954e0cb",
+    "/app/src/components/estimator/foundation/FoundationBOM.jsx": "af99e00cb818eb0229a572e614615c5ec75a609644bc5989dd4791b07e2ed25f",
+    "/app/src/components/estimator/foundation/foundationCalc.js": "cf0f3f363ac2dda62106aeb82edbe3cec03b774d1ad0825215f5dd047342e5b9",
+    "/app/src/components/estimator/foundation/foundationCatalogIntegrity.js": "702f1405b1cae1256da4eda2e7ed4d50085a5be1b4cd3324cf232a84938eca4e",
+    "/app/src/components/estimator/foundation/wallCalculator.js": "4bb6795851b678bd6f72dc7146bbdc6a5ab486528605d12a2058d5ed5b1e8f9d",
+    "/app/src/components/estimator/foundation/wallCapCalculator.js": "90e64ee49d8fe815ea63506ab21c25e9fd449c55581afe0a21f19371c87695eb",
+    "/app/src/components/estimator/foundation/foundationEquipmentBindings.js": "df7c4479c79cbaa589e6d7f1db3639ad6c85b8488d9ddba0eb04ef206f03952b",
+    "/app/src/components/estimator/foundation/legacyFoundationCalc.js": "5fed3773159e2b1f0d547a35b931e0b2a2dd09e19413e7da162d1410c3947778",
+    "/app/src/components/estimator/foundation/poleCalculator.js": "8cdfbb75492817b8628eda4d10f133b7d05c9b50c46f1dd745ae1a50e201596e",
+    "/app/src/components/estimator/foundation/foundationInputValidation.js": "dfc23f2b07865d5ddb3f34a1824dfbc8cd0d40503878f9f11264d46903eed282"
+  },
+  "importEdges": []
+}

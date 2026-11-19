@@ -8,6 +8,48 @@
           "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .devin/stop-backlog.ps1"
         }
       ]
+    },
+    {
+      "matcher": "",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .devin/stop-masterplan.ps1"
+        }
+      ]
+    }
+  ],
+  "PreToolUse": [
+    {
+      "matcher": "exec",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .devin/estimator-run-control.ps1 -Mode Capture"
+        }
+      ]
+    }
+  ],
+  "SessionStart": [
+    {
+      "matcher": "",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .devin/estimator-run-control.ps1 -Mode Hydrate"
+        }
+      ]
+    }
+  ],
+  "PostCompaction": [
+    {
+      "matcher": "",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .devin/estimator-run-control.ps1 -Mode Hydrate"
+        }
+      ]
     }
   ]
 }

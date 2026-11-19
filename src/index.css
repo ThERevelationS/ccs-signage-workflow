@@ -157,7 +157,7 @@ button:focus-visible {
   background: #1a1a2e !important;
 }
 
-/* Estimator tab: flat SignEstimate Pro styling — plain white panels with thin
+/* Estimator tab: flat SignEstimate Pro styling ??? plain white panels with thin
    gray borders, no claymorphic shadows or pastel gradients. */
 .clay-scope,
 .clay-scope [class*="bg-gradient-to"] {
@@ -231,7 +231,7 @@ tr.sips-focus-row > td :where(*) {
   .sips-focus-gap-inner { animation: none; }
 }
 
-/* ── Sales Pipeline row focus zoom ─────────────────────────────────── */
+/* ?????? Sales Pipeline row focus zoom ????????????????????????????????????????????????????????????????????????????????????????????????????????? */
 @keyframes salesGapGrow {
   from { height: 0; opacity: 0; }
   to { height: 12px; opacity: 1; }
@@ -274,7 +274,7 @@ tr.sales-focus-row > td :where(*) {
   .sales-focus-gap-inner { animation: none; }
 }
 
-/* ── Monday Morning Meeting row focus zoom (orange accent) ───────────── */
+/* ?????? Monday Morning Meeting row focus zoom (orange accent) ??????????????????????????????????????? */
 @keyframes mmmGapGrow {
   from { height: 0; opacity: 0; }
   to { height: 10px; opacity: 1; }
@@ -317,7 +317,7 @@ tr.mmm-focus-row > td :where(*) {
   .mmm-focus-gap-inner { animation: none; }
 }
 
-/* ── Ambient surfaces & status glows ─────────────────────────────────── */
+/* ?????? Ambient surfaces & status glows ????????????????????????????????????????????????????????????????????????????????????????????????????????? */
 @keyframes ambientDrift {
   0% { background-position: 0% 40%; }
   50% { background-position: 100% 60%; }
@@ -366,7 +366,7 @@ tr.mmm-focus-row > td :where(*) {
   .ambient-mesh { animation: none; }
 }
 
-/* ── Face-scan reticle (Time Clock kiosk) ────────────────────────────── */
+/* ?????? Face-scan reticle (Time Clock kiosk) ?????????????????????????????????????????????????????????????????????????????????????????? */
 @keyframes scanSweep {
   0%   { top: 6%;  opacity: 0; }
   10%  { opacity: 0.9; }
@@ -423,7 +423,7 @@ tr.mmm-focus-row > td :where(*) {
 @media (prefers-reduced-motion: reduce) {
   .scan-line, .scan-oval, .success-burst, .check-draw { animation: none !important; }
   .check-draw { stroke-dashoffset: 0; }
-  .tracker-pulse, .tracker-flip, .tracker-today-bar, .tracker-glow, .tracker-breathe, .tracker-sweep::after, .tracker-blink, .tracker-roll, .tracker-celebrate, .punch-sheen, .mci-time-pop { animation: none !important; }
+  .tracker-pulse, .tracker-flip, .tracker-today-bar, .tracker-glow, .tracker-breathe, .tracker-sweep::after, .tracker-blink, .tracker-roll, .tracker-celebrate, .punch-sheen, .crystal-sweep, .mci-time-pop { animation: none !important; }
 }
 
 /* Time Tracker pill animations */
@@ -451,6 +451,16 @@ tr.mmm-focus-row > td :where(*) {
 .punch-sheen {
   left: -10%;
   animation: punchSheen 3.4s ease-in-out infinite;
+}
+
+/* Crystal Shift ??? slower prismatic counter-sweep */
+@keyframes crystalSweep {
+  0%, 62% { transform: translateX(520%) skewX(-16deg); }
+  100% { transform: translateX(-260%) skewX(-16deg); }
+}
+.crystal-sweep {
+  left: -10%;
+  animation: crystalSweep 6.8s ease-in-out infinite;
 }
 
 /* Missed Clock In dialog */
@@ -699,4 +709,68 @@ tr.mmm-focus-row > td :where(*) {
 @media (prefers-reduced-motion: reduce) {
   .tracker-wave, .tracker-sparkle, .tracker-float, .tracker-flicker, .tracker-rainbow,
   .tracker-pop, .tracker-wobble, .tracker-ripple, .tracker-shake, .tracker-gradient { animation: none !important; }
+}
+
+@media (forced-colors: active) {
+  button, a, input, select, textarea, [role="button"], [role="tab"], [role="option"] {
+    border: 1px solid ButtonText !important;
+  }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+  [role="button"]:focus-visible, [role="tab"]:focus-visible, [role="option"]:focus-visible {
+    outline: 3px solid Highlight !important;
+    outline-offset: 1px !important;
+  }
+  [data-state="active"], [aria-selected="true"] { border: 2px solid Highlight !important; }
+}
+
+@media (prefers-contrast: more) {
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+  [role="button"]:focus-visible, [role="tab"]:focus-visible, [role="option"]:focus-visible {
+    outline: 3px solid currentColor !important;
+    outline-offset: 1px !important;
+  }
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Personal Workspace preferences (src/components/layout/workspacePrefs) */
+/* Density: targeted padding/gap tweaks — never touches layout geometry */
+html[data-density='compact'] .ccs-densify { padding-top: .375rem; padding-bottom: .375rem; }
+html[data-density='compact'] .ccs-densify-x { padding-left: .5rem; padding-right: .5rem; }
+html[data-density='spacious'] .ccs-densify { padding-top: .75rem; padding-bottom: .75rem; }
+html[data-density='spacious'] .ccs-densify-x { padding-left: 1.25rem; padding-right: 1.25rem; }
+
+/* Reduced motion: kill animations/transitions app-wide (user setting) */
+html[data-reduced-motion] *, html[data-reduced-motion] *::before, html[data-reduced-motion] *::after {
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* High contrast: stronger borders + text emphasis on interactive surfaces */
+html[data-high-contrast] button, html[data-high-contrast] [role='button'],
+html[data-high-contrast] input, html[data-high-contrast] select, html[data-high-contrast] textarea {
+  border-width: 1.5px !important;
+}
+html[data-high-contrast] { --tw-ring-opacity: 0.9; }
+html[data-high-contrast] .text-slate-500, html[data-high-contrast] .text-gray-500 { color: #475569 !important; }
+html[data-high-contrast].dark .text-slate-400, html[data-high-contrast].dark .text-gray-400 { color: #cbd5e1 !important; }
+
+/* Native form controls (checkbox/radio/range/progress) pick up the accent */
+html { accent-color: var(--ccs-accent, #6366F1); }
+
+/* Accent: elements that opt in via .ccs-accented pick up the user's accent */
+.ccs-accented { accent-color: var(--ccs-accent, #6366F1); }
+.ccs-accent-ring:focus-visible { outline: 2px solid var(--ccs-accent, #6366F1); outline-offset: 1px; }
+/* Mantine renders pickers/menus/modals in body-level portals. Radix modal
+   dialogs set body{pointer-events:none}, which leaves those overlays painted
+   but unclickable — re-enable interaction on the portal subtrees. */
+.mantine-Popover-dropdown,
+.mantine-Menu-dropdown,
+.mantine-Tooltip-tooltip,
+.mantine-Modal-root,
+.mantine-HoverCard-dropdown,
+.mantine-Notification-root {
+  pointer-events: auto;
 }

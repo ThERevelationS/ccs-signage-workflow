@@ -1,0 +1,184 @@
+{
+  "synthetic": true,
+  "remote_head": "97d37964a8554d7561995975deb0d6096f63e3e3",
+  "results": [
+    {
+      "name": "remote-identical whole-model output: bag spread",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: bag spread all options single layer",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: bag spread multilayer",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: bag pillar default size",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: bag pillar size5 hoops and quantity",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: ready spread",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: ready pillar",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: ready mix and admixtures",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: three delivery trucks",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: quarter yard order",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: multiple service foundations",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: mixed bag and ready foundations",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: legacy two supplier grouping unchanged",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: manual zero rebar and quantity",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: all explicit zero overrides",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: free bag catalog rate",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: free ready supplier explicit zero fields",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: inactive dangling selections",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: manual rebar without matching catalog",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: manual zero rebar without matching catalog",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: bag manual quantity legacy units unchanged",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: unassigned project delivery assumptions unchanged",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: new sign stops",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: project equipment excavation",
+      "ok": true
+    },
+    {
+      "name": "remote-identical whole-model output: custom settings",
+      "ok": true
+    },
+    {
+      "name": "remote-identical snapshot-mode: bag spread",
+      "ok": true
+    },
+    {
+      "name": "remote-identical snapshot-mode: bag spread all options single layer",
+      "ok": true
+    },
+    {
+      "name": "remote-identical snapshot-mode: bag spread multilayer",
+      "ok": true
+    },
+    {
+      "name": "remote-identical snapshot-mode: bag pillar default size",
+      "ok": true
+    },
+    {
+      "name": "remote-identical snapshot-mode: bag pillar size5 hoops and quantity",
+      "ok": true
+    },
+    {
+      "name": "accepted version2 dispatch retains 20ft/112 steel and 288.25 item instead of legacy steel math",
+      "ok": true
+    },
+    {
+      "name": "explicit manual version2 selection does not require an unrelated legacy rebar size",
+      "ok": true
+    },
+    {
+      "name": "unknown active calculation versions are unavailable rather than silently calculated as legacy",
+      "ok": true
+    },
+    {
+      "name": "unconfigured supports keep acknowledged amounts and block active pricing and saving",
+      "ok": true
+    },
+    {
+      "name": "valid active recalculation returns a new reconciled snapshot instead of reusing an old result",
+      "ok": true
+    },
+    {
+      "name": "disabled version2 steel clears live steel snapshots without requiring a material or design",
+      "ok": true
+    },
+    {
+      "name": "zero priced footage keeps physical 20ft and 48 connection labor",
+      "ok": true
+    },
+    {
+      "name": "missing selected catalog ID cannot be replaced by legacy size even with a rate override",
+      "ok": true
+    },
+    {
+      "name": "a current selected ID controls active rate rather than a different legacy size match",
+      "ok": true
+    },
+    {
+      "name": "inactive legacy reinforcement fields do not block or influence version2",
+      "ok": true
+    },
+    {
+      "name": "unknown material weight cannot become a ready zero-weight active estimate",
+      "ok": true
+    },
+    {
+      "name": "unavailable version2 with no acknowledged snapshot never adopts raw999 or fabricates zero",
+      "ok": true
+    },
+    {
+      "name": "duplicate live component IDs cannot borrow another component's acknowledged amounts",
+      "ok": true
+    },
+    {
+      "name": "same inputs: v1 legacy steel exceeds explicit v2 single-mat steel (single-mat honesty by design)",
+      "ok": true
+    }
+  ],
+  "passed": 44,
+  "failed": 0
+}

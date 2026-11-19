@@ -1,0 +1,7 @@
+{
+  "stdout": "{\"ok\":true,\"inputs\":[\"src/components/estimator/foundation/legacyFoundationCalc.js\",\"src/components/estimator/foundation/wallCalculator.js\",\"src/components/estimator/foundation/poleCalculator.js\",\"src/components/estimator/foundation/wallCapCalculator.js\",\"src/components/estimator/foundation/foundationEquipmentBindings.js\",\"src/components/estimator/foundation/foundationCatalogIntegrity.js\",\"src/components/estimator/foundation/foundationInputValidation.js\",\"src/components/estimator/foundation/foundationCalc.js\",\"src/components/estimator/foundation/ConcreteDeliveryPanel.jsx\"],\"outputs\":3,\"overridesLoaded\":{\"/app/src/components/estimator/foundation/legacyFoundationCalc.js\":{\"name\":\"legacyFoundationCalc.js\",\"sha256\":\"5fed3773159e2b1f0d547a35b931e0b2a2dd09e19413e7da162d1410c3947778\"},\"/app/src/components/estimator/foundation/foundationCalc.js\":{\"name\":\"foundationCalc.js\",\"sha256\":\"cf0f3f363ac2dda62106aeb82edbe3cec03b774d1ad0825215f5dd047342e5b9\"},\"/app/src/components/estimator/foundation/ConcreteDeliveryPanel.jsx\":{\"name\":\"ConcreteDeliveryPanel.jsx\",\"sha256\":\"1f33ce28ef0ed5217fcfb5d01778bf0efbd6c9c404540c05c8632f51a954e0cb\"}},\"pageOutputs\":[],\"pageInputs\":[],\"externalAt\":[],\"warnings\":[]}\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 2831
+}

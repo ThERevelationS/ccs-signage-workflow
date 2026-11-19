@@ -32,7 +32,7 @@ export default function ActionPicker({ signType, selected, onToggle, enabledActi
             {g.actions.map(a => {
               const on = selected.includes(a.id);
               return (
-                <button
+                <button type="button"
                   key={a.id}
                   type="button"
                   onClick={() => onToggle(a.id)}

@@ -1,0 +1,16 @@
+{
+  "matches": [
+    {
+      "path": "src/components/estimator/foundation/WallShapeEditor.jsx",
+      "line": 11,
+      "text": "export function buildSegments(points, closed) {\r"
+    },
+    {
+      "path": "src/components/estimator/foundation/WallShapeEditor.jsx",
+      "line": 19,
+      "text": "const makeShape = (points, closed) => ({ points, closed, segments: buildSegments(points, closed) });\r"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 2
+}

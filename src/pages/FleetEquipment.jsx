@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { HostedImg } from "@/shared/hostedAssetUrl";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
@@ -130,6 +131,29 @@ export default function FleetEquipment() {
     });
   }, [equipment, query, viewFilter, runtimeConflicts]);
 
+  // Per-card lookups — cards used to re-filter the full work order and task
+  // tables inside render (O(cards x rows)); index them once instead.
+  const ordersByEquipment = useMemo(() => {
+    const map = new Map();
+    for (const order of workOrders) {
+      if (!order?.equipment_id) continue;
+      const list = map.get(order.equipment_id) || [];
+      list.push(order);
+      map.set(order.equipment_id, list);
+    }
+    return map;
+  }, [workOrders]);
+  const tasksByEquipment = useMemo(() => {
+    const map = new Map();
+    for (const task of tasks) {
+      if (!task?.equipment_id) continue;
+      const list = map.get(task.equipment_id) || [];
+      list.push(task);
+      map.set(task.equipment_id, list);
+    }
+    return map;
+  }, [tasks]);
+
   const reactivateEquipment = async () => {
     if (!reactivateTarget) return;
     setReactivating(true);
@@ -185,8 +209,8 @@ export default function FleetEquipment() {
         {loading ? <ListSkeleton rows={6} /> : (
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map(eq => {
-              const activeOrders = workOrders.filter(order => order.equipment_id === eq.id && !["completed", "cancelled"].includes(order.status));
-              const eqTasks = tasks.filter(task => task.equipment_id === eq.id);
+              const activeOrders = (ordersByEquipment.get(eq.id) || []).filter(order => !["completed", "cancelled"].includes(order.status));
+              const eqTasks = tasksByEquipment.get(eq.id) || [];
               const activeTasks = eqTasks.filter(task => task.status !== "completed");
               const today = todayText();
               const horizon = new Date(`${today}T12:00:00`); horizon.setDate(horizon.getDate() + 14);
@@ -229,7 +253,7 @@ function EquipmentCard({ eq, activeOrders, activeTasks, nextMaintenance, overdue
   const trackingLabel = identityConflict || eq.bouncie_link_status === "ambiguous" ? "Identity conflict" : trackedVehicle ? (driving ? (speed != null ? `Driving · ${speed} mph` : "Driving") : "Parked") : eq.bouncie_link_status === "not_applicable" ? "Not applicable" : ["matched", "manual"].includes(eq.bouncie_link_status) ? "No current state" : "Unlinked";
 
   return <article className={`rounded-xl border bg-white dark:bg-slate-900 shadow-sm overflow-hidden ${retired ? "border-gray-300 dark:border-slate-700" : identityConflict || eq.bouncie_link_status === "ambiguous" ? "border-amber-300 dark:border-amber-900" : overdue.length ? "border-red-200 dark:border-red-900" : "border-gray-200 dark:border-slate-800"}`}>
-    <Link to={detailUrl} className="block h-36 bg-gray-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">{eq.photo_url ? <img src={eq.photo_url} alt={eq.name} className="w-full h-full object-cover" /> : <Truck className="w-12 h-12 text-gray-300" />}</Link>
+    <Link to={detailUrl} className="block h-36 bg-gray-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">{eq.photo_url ? <HostedImg src={eq.photo_url} alt={eq.name} className="w-full h-full object-cover" /> : <Truck className="w-12 h-12 text-gray-300" />}</Link>
     <div className="p-4 space-y-3">
       <div className="flex items-start justify-between gap-3"><div className="min-w-0"><Link to={detailUrl} className="font-semibold text-gray-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-300 line-clamp-1">{eq.name}</Link><p className="text-xs text-gray-500 dark:text-slate-400 mt-1 truncate">{[eq.year, eq.make, eq.model].filter(Boolean).join(" ") || eq.type}</p><div className="mt-2"><StatusBadge status={eq.status} /></div></div><HealthRing health={health} /></div>
 

@@ -1,0 +1,142 @@
+{
+ "src/components/vinylEstimator/vinylPricingAvailability.js": {
+  "candidateFile": "vinyl-pricing-candidate-vinylPricingAvailability.js",
+  "sha256": "0bb8c5813dbccf63b5b6a39dee437993ddd1baaaa8f45142a4c437d8fc9a5f8a",
+  "bytes": 38667,
+  "lines": 690,
+  "lineEndings": "CRLF",
+  "terminalLF": true,
+  "existsOnRemote": false,
+  "remoteSha256": null
+ },
+ "src/components/vinylEstimator/vinylProjectHelpers.jsx": {
+  "candidateFile": "vinyl-pricing-candidate-vinylProjectHelpers.jsx",
+  "sha256": "ed2ceb7acef7942c0e1a68e441a1460c741389852ee0d42b7f35a57886d41512",
+  "bytes": 8065,
+  "lines": 188,
+  "lineEndings": "CRLF",
+  "terminalLF": true,
+  "existsOnRemote": true,
+  "remoteSha256": "25dfee524c8122574188e2645acafaa172f3ddec7d177cc3a5443455ac9c6252"
+ },
+ "src/components/vinylEstimator/vinylCostHelpers.jsx": {
+  "candidateFile": "vinyl-pricing-candidate-vinylCostHelpers.jsx",
+  "sha256": "0a5c6b9d9ebdeb32724db2785acafd43a69b4ce3201d75637cc87f8b88bfdde5",
+  "bytes": 5749,
+  "lines": 124,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "4573f59b5af4ee4177202021ff0571ff6882a67e594001785b28941dca1126b1"
+ },
+ "src/components/vinylEstimator/VinylWorkflowCard.jsx": {
+  "candidateFile": "vinyl-pricing-candidate-VinylWorkflowCard.jsx",
+  "sha256": "4dc9bd8fc215cdd39c7860369e2862dea8527e7f547c8461831a33c6f480a8d1",
+  "bytes": 20535,
+  "lines": 438,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "f0805d0793a38994f5ee012ff3427a19c39fcb44617030e13d70c6fc1bddcf49"
+ },
+ "src/components/vinylEstimator/VinylWorkflowCardHeader.jsx": {
+  "candidateFile": "vinyl-pricing-candidate-VinylWorkflowCardHeader.jsx",
+  "sha256": "b6d4d27fecbd341b52442435e89fe24cb73b7aff3d247729d0e1a548a03a5fbe",
+  "bytes": 8563,
+  "lines": 215,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "90e9b2dd31993ffd07aa4096551fc4b729cdf9794af5005af10962c6e5163ba0"
+ },
+ "src/components/vinylEstimator/VinylWorkflowMetricsBadge.jsx": {
+  "candidateFile": "vinyl-pricing-candidate-VinylWorkflowMetricsBadge.jsx",
+  "sha256": "54d100d43fd3c33d744712fb3d41162c0a5f28355b82b1c259c619ce127b4271",
+  "bytes": 1318,
+  "lines": 29,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "c06fa7b5ebab1ddf70b204d8f34723ed4851508de449b4a314f18170ae3b6ba4"
+ },
+ "src/components/vinylEstimator/VinylPartsTable.jsx": {
+  "candidateFile": "vinyl-pricing-candidate-VinylPartsTable.jsx",
+  "sha256": "03b900f0634b09806810bb8410b2c42a256c567801d9341302bd01b9c91eed2a",
+  "bytes": 11159,
+  "lines": 218,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "dd10a0fb74674a828f0b91b22bea00122fa8bea5a261c507d98161c73cc3ab55"
+ },
+ "src/components/vinylEstimator/VinylCuttingExtrasCard.jsx": {
+  "candidateFile": "vinyl-pricing-candidate-VinylCuttingExtrasCard.jsx",
+  "sha256": "7602b55138e3b5c29784196a8712b3cb3cfdd3fe0b2b26dfb23c1fc4972e9da4",
+  "bytes": 6819,
+  "lines": 154,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "2b28bd9c20b71b4aa7ff58846b47dbaf4ec21763af5f77d7f1db35cd867f480e"
+ },
+ "src/components/vinylEstimator/VinylWorkflowPersonnel.jsx": {
+  "candidateFile": "vinyl-pricing-candidate-VinylWorkflowPersonnel.jsx",
+  "sha256": "6c00c3bf54a27a5b8ea28f5db184a8f447d69911b55c41770f438162afcaf0f4",
+  "bytes": 7321,
+  "lines": 145,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "0e08d46e8a16b0cc7f38f3625801050902e19b6ed8f0998960f4f222a780fb20"
+ },
+ "src/components/vinylEstimator/VinylMaterialPicker.jsx": {
+  "candidateFile": "vinyl-pricing-candidate-VinylMaterialPicker.jsx",
+  "sha256": "b7f2b2182b0d1e3d37bebf66f676d793594c61533b29d105c7b5d4e2ace0e30c",
+  "bytes": 8101,
+  "lines": 155,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "69428d7761b69a7b2c58d4109ac30850857593009c561558b24a9ace055b297b"
+ },
+ "src/components/vinylEstimator/VinylMachinePicker.jsx": {
+  "candidateFile": "vinyl-pricing-candidate-VinylMachinePicker.jsx",
+  "sha256": "3a10f3ea188e53f45e00c3a7a29d72c3f495862d785a309ec15a7470723ce371",
+  "bytes": 5185,
+  "lines": 111,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "b7a1e7d2b95393dea77c7c25e97a85f4e441c9051b1d54fd96dc5a5101d003be"
+ },
+ "src/components/vinylEstimator/VinylRollWidthRecommender.jsx": {
+  "candidateFile": "vinyl-pricing-candidate-VinylRollWidthRecommender.jsx",
+  "sha256": "d6b779c92e3cb9f1396e202a8e4ed32d9f90f536f95dea0a0abc3ad9faf7dd78",
+  "bytes": 6012,
+  "lines": 129,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "6f757a6ce387242790fa5410f12077dfd9e00d58b8cc6be37f1e575f9df00e07"
+ },
+ "src/components/vinylEstimator/VinylProjectSummaryCard.jsx": {
+  "candidateFile": "vinyl-pricing-candidate-VinylProjectSummaryCard.jsx",
+  "sha256": "fb78a1c4a258c16a1128aee6e8083520a86870cb5394e16ab7f8c2e75921da5d",
+  "bytes": 6867,
+  "lines": 132,
+  "lineEndings": "LF",
+  "terminalLF": true,
+  "existsOnRemote": true,
+  "remoteSha256": "706ea0e5f95c600b897c8cc8452ed5a850247eb88b1f9fdd552b78a0c4268f83"
+ },
+ "src/pages/VinylEstimator.jsx": {
+  "candidateFile": "vinyl-pricing-candidate-VinylEstimator.jsx",
+  "sha256": "a31428b6b864128902ac89a998c870cf0ccd9b5bcd403461c4f24ec84a944eb3",
+  "bytes": 49917,
+  "lines": 983,
+  "lineEndings": "LF",
+  "terminalLF": false,
+  "existsOnRemote": true,
+  "remoteSha256": "5d8ec998dba9204b51110227bc89afc4073531fbe8ea61f0efd4e28e333738de"
+ }
+}

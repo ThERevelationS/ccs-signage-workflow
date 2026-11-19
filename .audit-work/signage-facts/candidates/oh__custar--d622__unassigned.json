@@ -1,0 +1,37 @@
+{
+ "jurisdiction_id": "6adef34677ab6933068ed622",
+ "jurisdiction_name": "Custar",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Application for Zoning Permit Village of Custar Custar, Wood County, Ohio 43511 OWNER: LOCATION: Name Address: Address Lot Type Phone Contractor Signed: Multiple Family Address: Commercial Industrial Date: Institutional Accessory Building Fence Swimming Pool Sign Other (Specify) OFFICIAL USE ONLY STARTING DATE Variance Required Yes No Date Filed: APPROXIMATE Date Approved: VALUE Fee: Permit No. SITE PLANS Please attach three (3) copies of proposed This zoning permit is valid for one year from the construction including: date of filing unless extended by the zoning inspector. Lot lines, dimension and area. Location of proposed construction with exterior dimensions, distance to lot lines, streets, parking areas, water or septic, Timothy Schroeder-Zoning Inspector Date drainage and existing construction. 419-308-6213 (Commercial or Industrial) Location, dimension and Mail form: Tim Schroede",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "fa224a83f1ae53612b7c92c849cbcf78d54ba07fd559862a6848b7b35cece131",
+   "source_document_id": null,
+   "source_title": "fa224a83f1ae53612b7c92c849cbcf78d54ba07fd559862a6848b7b35cece131.pdf",
+   "official_url": "https://www.custarvillage.org/uploads/1/2/3/3/123309797/custar_zoning_permit.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Description Fee Amount a) (1) Permit to erect single family structure [includes accessory structures] (2) Each additional residential unit on the same lot, to a maximum of 8 total units, $10.00 each [maximum fee of $100.00][includes accessory structures] b) Permit to erect principal structures in all districts other than R and A 75.00 $ c) Permit to move or relocate a structure 30.00 $ d) Permit to erect accessory structures in R and A districts 25.00 $ e) Permit to erect accessory structures in districts other than R and A 50.00 $ f) Permit for an addition or structural alteration in an R or A district including (but not limited to) porches, decks, patios, sun porches, or screened rooms or porches 25.00 $ g) Permit for an addition or structural alteration in districts other than R and A 50.00 $ h) Swimming pools (above ground or in-ground) 25.00 $ i) Fences 15.00 $ j) Any other structur",
+   "tags": [
+    "fee",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "a9ef12f4dda10d3e94ecf6fee3f5c276567382596b9a5479194ed84f4a7866f8",
+   "source_document_id": null,
+   "source_title": "a9ef12f4dda10d3e94ecf6fee3f5c276567382596b9a5479194ed84f4a7866f8.pdf",
+   "official_url": "https://www.custarvillage.org/uploads/1/2/3/3/123309797/zoning_fee_schedule.pdf"
+  }
+ ]
+}

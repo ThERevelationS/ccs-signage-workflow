@@ -1,0 +1,22 @@
+{
+ "jurisdiction_id": "6aded17101d76f07240653c3",
+ "jurisdiction_name": "Anna",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "The Village of Anna 209 West Main St. PO Box 140 Anna OH 45302 Telephone (937) 394 - 3751 FAX (937) 394 - 4704 Utility Bill Authorization ACH Debit – Automatic P ayment & Email Billing Form **PLEASE PRINT CLEARLY** Name: _____________________________________ Utility Account Number: ____________________ Address: ___________________________________ Phone#: _________________________________ Email address: __________________________________________ By filling out this form: - I authorize the Village of Anna to make electronic entries to my account below. Should the account be declared non - sufficient funds, a $25 charge will be assessed. - I understand that I receive my Village of Anna utility bill by email and will no longer receive a hard copy. - It is my responsibility to provide a current email address and notify the village of any changes. - This arrangement shall remain in effect unti",
+   "tags": [
+    "fee",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "50daa7ca56508e86d51aad907265037c9655d3eb7910be6ea5853fd66669683e",
+   "source_document_id": null,
+   "source_title": "50daa7ca56508e86d51aad907265037c9655d3eb7910be6ea5853fd66669683e.pdf",
+   "official_url": "https://villageofannaoh.com/s/UtilBill-Authorizations-ACH2.pdf"
+  }
+ ]
+}

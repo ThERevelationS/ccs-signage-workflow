@@ -1,0 +1,1 @@
+export const staffEntities = new Proxy({}, { get: () => ({ get: async () => null, filter: async () => [], update: async () => ({}), updateMany: async () => ({ updated: 0 }), create: async () => ({}) }) });

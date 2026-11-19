@@ -23,7 +23,9 @@ import BuilderPartEditWarningModal from "./BuilderPartEditWarningModal";
 import DetachedPartOverrideModal from "./DetachedPartOverrideModal";
 import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPickerModal";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { detachBuilderPartOverride, updateDetachedPartOverride } from "@/components/estimator/builder/partSync";
+import { CopyBomButton } from "@/components/importer/ImportExportButtons";
 import { addCatalogPartToProduct, removeManualProductPart, switchManualProductPart, updateManualProductPart } from "@/components/estimator/parts/customProductService";
 import { typeDetails } from "@/components/estimator/parts/partCatalog";
 import { money } from "@/components/estimator/aioPricing";
@@ -33,10 +35,17 @@ import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } fr
 import MovePartGroupModal from "./MovePartGroupModal";
 import SavePartTemplateModal from "@/components/estimator/parts/SavePartTemplateModal";
 import PartLibraryPickerModal from "@/components/estimator/parts/PartLibraryPickerModal";
+import VendorCostBadge from "@/components/estimator/VendorCostBadge";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
+
+// (#407) Large part lists render in chunks of PART_ROW_PAGE so a 300-part
+// product doesn't mount hundreds of PartRow trees at once. A "Show more"
+// control reveals the next chunk; searching bypasses the window so every
+// match stays reachable.
+const PART_ROW_PAGE = 100;
 
 const typeLabel = (part) =>
   String(part?.part_type || "part")
@@ -91,15 +100,16 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
           className="flex-1 min-w-0 flex items-center gap-2 text-left"
         >
-        {open ? <ChevronDown className="w-3.5 h-3.5 text-gray-500" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-500" />}
-        <Box className="w-3.5 h-3.5 text-gray-400" />
+        {open ? <ChevronDown className="w-3.5 h-3.5 text-gray-500" aria-hidden="true" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-500" aria-hidden="true" />}
+        <Box className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
         <span className="text-[9px] font-bold tracking-wider text-gray-400 w-[52px] flex-shrink-0">PART {String(index + 1).padStart(2, "0")}</span>
         <span className="text-[12px] font-semibold text-gray-900 truncate flex-1">{part.client_label || part.part_name || "Part"}</span>
         <span className="hidden md:inline text-[10px] text-gray-500 px-2 py-0.5 rounded bg-gray-100">{typeLabel(part)}</span>
         <span className={`hidden sm:inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full border ${meta.className}`}>
-          <StatusIcon className="w-3 h-3" /> {meta.label}
+          <StatusIcon className="w-3 h-3" aria-hidden="true" /> {meta.label}
         </span>
           <div className="text-right w-[92px] flex-shrink-0">
             <div className="text-[11px] font-bold text-gray-800">{money(frozen)}</div>
@@ -107,6 +117,13 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
           </div>
         </button>
       </div>
+
+      {/* F-21: vended-part vendor cost/markup strip — renders only when the
+          part resolves as vended; Edit reuses the row's own edit path. */}
+      <VendorCostBadge
+        part={part}
+        onEdit={readOnly ? null : () => (isIndependent ? setOverrideOpen(true) : setWarningOpen(true))}
+      />
 
       {open && (
         <div className="border-t border-gray-200 bg-gray-50 px-3 py-3">
@@ -138,11 +155,12 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
                   }}
                   className="h-[28px] px-2.5 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1 disabled:opacity-50"
                   title="Copy Part to 30-day Clipboard"
-                ><ClipboardCopy className="w-3 h-3" /> {copied ? "Copied" : "Copy"}</button>
+                  aria-label={`Copy ${part.part_name || "Part"} to 30-day clipboard`}
+                ><ClipboardCopy className="w-3 h-3" aria-hidden="true" /> {copied ? "Copied" : "Copy"}</button>
               )}
-              <button type="button" onClick={() => setSaveLibraryOpen(true)} className="h-[28px] px-2.5 rounded border border-violet-200 bg-white text-[11px] font-semibold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1" title="Save Part permanently to Part Library"><BookmarkPlus className="w-3 h-3" /> Save</button>
+              <button type="button" onClick={() => setSaveLibraryOpen(true)} className="h-[28px] px-2.5 rounded border border-violet-200 bg-white text-[11px] font-semibold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1" title="Save Part permanently to Part Library" aria-label={`Save ${part.part_name || "Part"} permanently to Part Library`}><BookmarkPlus className="w-3 h-3" aria-hidden="true" /> Save</button>
               {!readOnly && isDirectlyEditable && (
-                <button type="button" onClick={() => setSwitchOpen(true)} className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Switch Part</button>
+                <button type="button" onClick={() => setSwitchOpen(true)} className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1"><RefreshCw className="w-3 h-3" aria-hidden="true" /> Switch Part</button>
               )}
               {!readOnly && (
                 <button
@@ -154,7 +172,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
                 </button>
               )}
               {!readOnly && isDirectlyEditable && (
-                <button type="button" onClick={async () => { if (!window.confirm(`Remove “${part.part_name || "Part"}” from this Product?`)) return; await removeManualProductPart(part.id, { builderProductId: part.builder_product_id, expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" }); await onChanged?.(); }} className="h-[28px] px-2.5 rounded border border-red-200 bg-white text-[11px] font-semibold text-red-600 hover:bg-red-50" title="Remove Part"><Trash2 className="w-3 h-3" /></button>
+                <button type="button" onClick={async () => { if (!window.confirm(`Remove "${part.part_name || "Part"}" from this Product?`)) return; await removeManualProductPart(part.id, { builderProductId: part.builder_product_id, expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" }); await onChanged?.(); }} className="h-[28px] px-2.5 rounded border border-red-200 bg-white text-[11px] font-semibold text-red-600 hover:bg-red-50" title="Remove Part" aria-label={`Remove ${part.part_name || "Part"} from this Product`}><Trash2 className="w-3 h-3" aria-hidden="true" /></button>
               )}
             </div>
           </div>
@@ -265,6 +283,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
 
 function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, onEditBuilder, estimateId, expectedEstimateUpdatedAt = "", availableProducts = [], readOnly = false }) {
   const [open, setOpen] = useState(!group.is_collapsed);
+  const [visibleParts, setVisibleParts] = useState(PART_ROW_PAGE);
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(group.group_name || "Part Group");
   const [copying, setCopying] = useState(false);
@@ -285,18 +304,36 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
     const next = !open;
     setOpen(next);
     if (!readOnly) {
-      const current = await base44.entities.BuilderPartGroup.get(group.id).catch(() => null);
+      let current;
+      try {
+        current = await base44.entities.BuilderPartGroup.get(group.id);
+      } catch (error) {
+        // Transient pre-read failure — the optimistic toggle would diverge
+        // from persisted is_collapsed, so revert it and surface the error.
+        setOpen(!next);
+        window.alert(`Part Group collapsed state could not be saved.${error?.message ? `\n\n${error.message}` : ""}`);
+        return;
+      }
       if (!current?.id || current.builder_product_id !== builderProductId) return;
       const collapsePatch = { is_collapsed: !next };
-      const updated = await replaceBuilderEntityFieldsIfUnchanged({
-        entity: base44.entities.BuilderPartGroup,
-        id: group.id,
-        expectedUpdatedAt: current.updated_date || "",
-        expectedFields: expectedBuilderEntityFields(current, collapsePatch),
-        nextFields: collapsePatch,
-        guardFields: { builder_product_id: builderProductId },
-        label: "Part Group collapsed state",
-      }).catch(() => null);
+      let updated;
+      try {
+        updated = await replaceBuilderEntityFieldsIfUnchanged({
+          entity: base44.entities.BuilderPartGroup,
+          id: group.id,
+          expectedUpdatedAt: current.updated_date || "",
+          expectedFields: expectedBuilderEntityFields(current, collapsePatch),
+          nextFields: collapsePatch,
+          guardFields: { builder_product_id: builderProductId },
+          label: "Part Group collapsed state",
+        });
+      } catch (error) {
+        // Same rule as the pre-read — a swallowed write failure leaves the UI
+        // showing a collapsed state the record does not hold until reload.
+        setOpen(!next);
+        window.alert(`Part Group collapsed state could not be saved.${error?.message ? `\n\n${error.message}` : ""}`);
+        return;
+      }
       if (updated?.updated_date) groupVersionRef.current = updated.updated_date;
       else if (current?.updated_date) groupVersionRef.current = current.updated_date;
     }
@@ -326,7 +363,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
 
   const dissolve = async () => {
     if (structuralActionRef.current) return;
-    if (!window.confirm(`Dissolve “${group.group_name || "Part Group"}”? The Parts will stay in this Product and keep all frozen pricing.`)) return;
+    if (!window.confirm(`Dissolve "${group.group_name || "Part Group"}"? The Parts will stay in this Product and keep all frozen pricing.`)) return;
     structuralActionRef.current = true;
     try {
       await dissolvePartGroup({
@@ -348,9 +385,9 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
   return (
     <div className="border border-gray-300 rounded-sm overflow-hidden bg-gray-50">
       <div className="w-full px-3 py-2 flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-left">
-        <button type="button" onClick={toggleOpen} className="flex items-center gap-2 min-w-0 flex-1 text-left">
-        {open ? <ChevronDown className="w-3.5 h-3.5 text-gray-600" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-600" />}
-        <Layers3 className="w-4 h-4 text-gray-600" />
+        <button type="button" onClick={toggleOpen} aria-expanded={open} className="flex items-center gap-2 min-w-0 flex-1 text-left">
+        {open ? <ChevronDown className="w-3.5 h-3.5 text-gray-600" aria-hidden="true" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-600" aria-hidden="true" />}
+        <Layers3 className="w-4 h-4 text-gray-600" aria-hidden="true" />
           <span className="text-[9px] font-extrabold tracking-widest text-gray-500">PART GROUP</span>
           {renaming ? (
             <input
@@ -358,6 +395,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
               value={name}
               onChange={(event) => setName(event.target.value)}
               onClick={(event) => event.stopPropagation()}
+              aria-label="Part Group name"
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();
@@ -397,20 +435,22 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
                 }}
                 className="h-[26px] px-2 rounded border border-gray-300 bg-white flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                 title="Copy Part Group to 30-day Clipboard"
-              ><ClipboardCopy className="w-3 h-3" /> {copied ? "Copied" : "Copy"}</button>
+                aria-label={`Copy ${group.group_name || "Part Group"} to 30-day clipboard`}
+              ><ClipboardCopy className="w-3 h-3" aria-hidden="true" /> {copied ? "Copied" : "Copy"}</button>
             )}
             <button
               type="button"
               onClick={() => setSaveLibraryOpen(true)}
               className="h-[26px] px-2 rounded border border-violet-200 bg-white flex items-center gap-1 text-[10px] font-semibold text-violet-700 hover:bg-violet-50"
               title="Save Part Group permanently to Part Library"
-            ><BookmarkPlus className="w-3 h-3" /> Save</button>
+              aria-label={`Save ${group.group_name || "Part Group"} permanently to Part Library`}
+            ><BookmarkPlus className="w-3 h-3" aria-hidden="true" /> Save</button>
             {!readOnly && <>
               <button
                 type="button"
                 disabled={cloning}
                 onClick={async () => {
-                  if (!window.confirm(`Clone “${group.group_name || "Part Group"}” and all ${parts.length} Part${parts.length === 1 ? "" : "s"}?`)) return;
+                  if (!window.confirm(`Clone "${group.group_name || "Part Group"}" and all ${parts.length} Part${parts.length === 1 ? "" : "s"}?`)) return;
                   if (structuralActionRef.current) return;
                   structuralActionRef.current = true;
                   setCloning(true);
@@ -433,29 +473,33 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
                 }}
                 className="h-[26px] px-2 rounded border border-gray-300 bg-white flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                 title="Clone Part Group in this Product"
-              ><CopyPlus className="w-3 h-3" /> {cloning ? "Cloning…" : "Clone"}</button>
+                aria-label={`Clone ${group.group_name || "Part Group"} in this Product`}
+              ><CopyPlus className="w-3 h-3" aria-hidden="true" /> {cloning ? "Cloning…" : "Clone"}</button>
               <button
                 type="button"
                 disabled={!canMove || moveTargets.length === 0}
                 onClick={() => setMoveOpen(true)}
                 className="h-[26px] px-2 rounded border border-gray-300 bg-white flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40"
                 title={canMove ? "Move Part Group to another Product" : "Builder-owned Parts cannot move directly. Use Clone or Copy instead."}
-              ><ArrowRightLeft className="w-3 h-3" /> Move</button>
+                aria-label={canMove ? `Move ${group.group_name || "Part Group"} to another Product` : "Builder-owned Parts cannot move directly. Use Clone or Copy instead."}
+              ><ArrowRightLeft className="w-3 h-3" aria-hidden="true" /> Move</button>
               <button
                 type="button"
                 onClick={() => setRenaming(true)}
                 className="w-[26px] h-[26px] rounded border border-gray-300 bg-white flex items-center justify-center text-gray-600 hover:bg-gray-50"
                 title="Rename Part Group"
+                aria-label={`Rename ${group.group_name || "Part Group"}`}
               >
-                <Pencil className="w-3 h-3" />
+                <Pencil className="w-3 h-3" aria-hidden="true" />
               </button>
               <button
                 type="button"
                 onClick={dissolve}
                 className="w-[26px] h-[26px] rounded border border-gray-300 bg-white flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-red-50"
                 title="Dissolve Part Group"
+                aria-label={`Dissolve ${group.group_name || "Part Group"}`}
               >
-                <Unlink className="w-3 h-3" />
+                <Unlink className="w-3 h-3" aria-hidden="true" />
               </button>
             </>}
           </div>
@@ -463,7 +507,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
       </div>
       {open && (
         <div className="p-2 space-y-2 border-t border-gray-200">
-          {parts.map((part, index) => (
+          {parts.slice(0, visibleParts).map((part, index) => (
             <PartRow
               key={part.id}
               part={part}
@@ -478,6 +522,15 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
               readOnly={readOnly}
             />
           ))}
+          {parts.length > visibleParts && (
+            <button
+              type="button"
+              onClick={() => setVisibleParts((value) => value + PART_ROW_PAGE)}
+              className="w-full h-[28px] rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50"
+            >
+              Show {Math.min(PART_ROW_PAGE, parts.length - visibleParts)} more parts ({parts.length - visibleParts} remaining)
+            </button>
+          )}
         </div>
       )}
       <MovePartGroupModal
@@ -534,6 +587,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   const [partLibraryOpen, setPartLibraryOpen] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [partSearch, setPartSearch] = useState("");
+  const [ungroupedVisible, setUngroupedVisible] = useState(PART_ROW_PAGE);
   const [bulkRemoving, setBulkRemoving] = useState(false);
   const [bulkDetaching, setBulkDetaching] = useState(false);
   const groupCreateRef = useRef(false);
@@ -698,7 +752,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
     return <div className="px-4 py-4 text-[11px] text-gray-400">This legacy Product does not have Builder Parts yet.</div>;
   }
   if (loading) {
-    return <div className="px-4 py-4 text-[11px] text-gray-400">Loading Parts…</div>;
+    return <div role="status" className="px-4 py-4 text-[11px] text-gray-400">Loading Parts…</div>;
   }
   if (!parts.length) {
     return (
@@ -707,8 +761,9 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
         <div className="text-[10px] text-gray-400 mt-1">Add a Part from Master Inventory now. Builder-generated BOM Parts will also appear here after the Builder is saved; manually added Parts remain independent add-ons.</div>
         {allowAddParts && !readOnly && (
           <div className="mt-3 flex items-center justify-center gap-2">
-            <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[30px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Part</button>
-            <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[30px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" /> Add Saved Part</button>
+            <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[30px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" aria-hidden="true" /> Add Part</button>
+            <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[30px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" aria-hidden="true" /> Add Saved Part</button>
+            <CopyBomButton estimateId={estimateId} targetBuilderProductId={builderProductId} expectedEstimateUpdatedAt={expectedEstimateUpdatedAt} />
           </div>
         )}
         <MasterPartPickerModal
@@ -737,13 +792,39 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
 
   let offset = 0;
   const partsFrozenTotal = parts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
-  const persistGroupOrder = async (nextGroups) => {
+  const persistGroupOrder = async (nextGroups, previousGroups) => {
+    const failures = [];
     for (let i = 0; i < nextGroups.length; i++) {
       const g = nextGroups[i];
       if (Number(g.sort_order) !== i) {
-        await base44.entities.BuilderPartGroup.update(g.id, { sort_order: i }).catch(() => null);
+        try {
+          // Anchored on the loaded updated_date when it is known — a group
+          // that changed in another session reports updated:0 and is counted
+          // below instead of silently writing a stale order. The result count
+          // is verified; a swallowed .catch(() => null) here used to make the
+          // drag order LOOK applied while it silently reverted on reload.
+          const result = await staffEntities.BuilderPartGroup.updateMany(
+            g.updated_date ? { id: g.id, updated_date: g.updated_date } : { id: g.id },
+            { sort_order: i },
+          );
+          if (!result || result.updated !== 1) {
+            failures.push(g.group_name || "Part Group");
+          }
+        } catch {
+          failures.push(g.group_name || "Part Group");
+        }
       }
     }
+    if (failures.length) {
+      // The order must never LOOK persisted when it is not — restore the
+      // pre-drag order and re-read the groups so the next attempt starts
+      // from server truth.
+      if (previousGroups) setGroups(previousGroups);
+      setRefreshNonce((value) => value + 1);
+      window.alert(`${failures.length} Part Group${failures.length === 1 ? "" : "s"} could not be reordered (${failures.join(", ")}). The saved order was restored — try again.`);
+      return false;
+    }
+    return true;
   };
 
 
@@ -754,7 +835,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           <div className="text-[10px] font-bold tracking-widest text-gray-500 whitespace-nowrap">PRODUCT PARTS · {partQuery ? `${visibleParts.length}/${parts.length}` : parts.length}</div>
           {parts.length > 10 && (
             <div className="relative">
-              <Search className="w-3 h-3 text-gray-400 absolute left-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-3 h-3 text-gray-400 absolute left-1.5 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
               <input
                 value={partSearch}
                 onChange={(event) => setPartSearch(event.target.value)}
@@ -790,7 +871,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
               title={detachableSelected.length === 0 ? "Only Builder-linked Parts can be detached" : "Detach the selected Builder-linked Parts for independent override"}
               className="h-[28px] px-3 rounded border border-amber-300 bg-white text-[11px] font-bold text-amber-700 hover:bg-amber-50 disabled:opacity-40 inline-flex items-center gap-1"
             >
-              <Unlink className="w-3.5 h-3.5" /> {bulkDetaching ? "Detaching…" : `Detach Selected (${detachableSelected.length})`}
+              <Unlink className="w-3.5 h-3.5" aria-hidden="true" /> {bulkDetaching ? "Detaching…" : `Detach Selected (${detachableSelected.length})`}
             </button>
             <button
               type="button"
@@ -799,15 +880,16 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
               title={removableSelected.length === 0 ? "Only independent (non-Builder) Parts can be removed here" : "Remove the selected independent Parts"}
               className="h-[28px] px-3 rounded border border-red-300 bg-white text-[11px] font-bold text-red-600 hover:bg-red-50 disabled:opacity-40 inline-flex items-center gap-1"
             >
-              <Trash2 className="w-3.5 h-3.5" /> {bulkRemoving ? "Removing…" : `Delete Selected (${removableSelected.length})`}
+              <Trash2 className="w-3.5 h-3.5" aria-hidden="true" /> {bulkRemoving ? "Removing…" : `Delete Selected (${removableSelected.length})`}
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-2">
             {allowAddParts && !readOnly && (
               <>
-                <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[28px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Part</button>
-                <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[28px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" /> Add Saved Part</button>
+                <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[28px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" aria-hidden="true" /> Add Part</button>
+                <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[28px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" aria-hidden="true" /> Add Saved Part</button>
+                <CopyBomButton estimateId={estimateId} targetBuilderProductId={builderProductId} expectedEstimateUpdatedAt={expectedEstimateUpdatedAt} />
               </>
             )}
             {!readOnly && <button
@@ -815,7 +897,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
               onClick={() => setSelectionMode(true)}
               className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1.5"
             >
-              <Layers3 className="w-3.5 h-3.5" /> Group Parts
+              <Layers3 className="w-3.5 h-3.5" aria-hidden="true" /> Group Parts
             </button>}
           </div>
         )}
@@ -863,8 +945,10 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
               setGroups(next);
               setDragGroupIdx(null);
               setDragOverIdx(null);
-              await persistGroupOrder(next);
-              setRefreshNonce((v) => v + 1);
+              const persisted = await persistGroupOrder(next, groups);
+              // persistGroupOrder re-reads + reverts on failure itself; on
+              // success re-read so the rendered order reflects stored truth.
+              if (persisted) setRefreshNonce((v) => v + 1);
             }}
             onDragEnd={() => { setDragGroupIdx(null); setDragOverIdx(null); }}
             className={`${dragOverIdx === groups.indexOf(group) ? "ring-2 ring-emerald-400 rounded" : ""}`}
@@ -873,7 +957,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           </div>
         );
       })}
-      {grouped.ungrouped.map((part, index) => (
+      {grouped.ungrouped.slice(0, partQuery ? grouped.ungrouped.length : ungroupedVisible).map((part, index) => (
         <PartRow
           key={part.id}
           part={part}
@@ -891,6 +975,15 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           readOnly={readOnly}
         />
       ))}
+      {!partQuery && grouped.ungrouped.length > ungroupedVisible && (
+        <button
+          type="button"
+          onClick={() => setUngroupedVisible((value) => value + PART_ROW_PAGE)}
+          className="w-full h-[28px] rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50"
+        >
+          Show {Math.min(PART_ROW_PAGE, grouped.ungrouped.length - ungroupedVisible)} more parts ({grouped.ungrouped.length - ungroupedVisible} remaining)
+        </button>
+      )}
       {partQuery && !visibleParts.length && (
         <div className="py-4 text-center text-[11px] text-gray-400">No Parts match "{partSearch}".</div>
       )}

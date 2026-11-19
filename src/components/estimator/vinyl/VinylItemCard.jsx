@@ -1,4 +1,3 @@
-import React from "react";
 import { Input } from "@/components/ui/input";
 import { Trash2 } from "lucide-react";
 
@@ -27,13 +26,13 @@ export default function VinylItemCard({ item, index, vinyls, laminates, onChange
           placeholder="Graphic description"
           onChange={(e) => set({ description: e.target.value })}
         />
-        <button
+        <button type="button"
           onClick={() => {
             if (window.confirm("Remove this vinyl item?")) onRemove(index);
           }}
           className="text-gray-400 hover:text-red-600 p-2"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
 

@@ -1,0 +1,22 @@
+[
+ {
+  "name": "whoami",
+  "ok": false,
+  "error": "base44@latest whoami --app-id 68dfcc5e57bbbc35387da97c --json failed exit=1: node:internal/modules/cjs/loader:1607\r\n  throw err;\r\n  ^\r\n\r\nError: Cannot find module 'C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\npm\\bin\\npm-prefix.js'\r\n    at Module._resolveFil"
+ },
+ {
+  "name": "git-status",
+  "ok": false,
+  "error": "base44@latest sandbox run git status --porcelain --timeout-ms 120000 --app-id 68dfcc5e57bbbc35387da97c --branch main --json failed exit=1: node:internal/modules/cjs/loader:1607\r\n  throw err;\r\n  ^\r\n\r\nError: Cannot find module 'C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\"
+ },
+ {
+  "name": "bindings-read",
+  "ok": false,
+  "error": "base44@latest sandbox read src/components/estimator/foundation/foundationEquipmentBindings.js --app-id 68dfcc5e57bbbc35387da97c --branch main --json failed exit=1: node:internal/modules/cjs/loader:1607\r\n  throw err;\r\n  ^\r\n\r\nError: Cannot find module 'C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\cc"
+ },
+ {
+  "name": "page-read",
+  "ok": false,
+  "error": "base44@latest sandbox read src/pages/FoundationEstimator.jsx --app-id 68dfcc5e57bbbc35387da97c --branch main --json failed exit=1: node:internal/modules/cjs/loader:1607\r\n  throw err;\r\n  ^\r\n\r\nError: Cannot find module 'C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\node_mod"
+ }
+]

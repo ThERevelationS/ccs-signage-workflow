@@ -1,0 +1,13 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "observedAt": "2026-11-05T17:33:33.746Z",
+  "status": {
+    "state": "ready",
+    "details": null,
+    "request_id": "8277ae9e-2c02-4e84-86e1-737d539d58f0",
+    "turn_id": null,
+    "last_updated_date": "2026-11-05T14:45:55.175000",
+    "error_source": null,
+    "paywall_context": null
+  }
+}

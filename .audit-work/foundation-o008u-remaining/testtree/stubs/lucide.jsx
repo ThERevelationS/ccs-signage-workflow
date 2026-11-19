@@ -1,0 +1,26 @@
+// lucide-react stub — every icon the candidates import renders a <svg> marker.
+import React from "react";
+const icon = (name) => () => React.createElement("svg", { "data-icon": name });
+export const ArrowDown = icon("ArrowDown");
+export const ArrowUp = icon("ArrowUp");
+export const ArrowUpDown = icon("ArrowUpDown");
+export const ArrowUpFromLine = icon("ArrowUpFromLine");
+export const ArrowLeft = icon("ArrowLeft");
+export const Edit = icon("Edit");
+export const Pencil = icon("Pencil");
+export const Trash2 = icon("Trash2");
+export const Package = icon("Package");
+export const Plus = icon("Plus");
+export const Wrench = icon("Wrench");
+export const Link2 = icon("Link2");
+export const Settings2 = icon("Settings2");
+export const Truck = icon("Truck");
+export const Star = icon("Star");
+export const Search = icon("Search");
+export const Boxes = icon("Boxes");
+export const Upload = icon("Upload");
+export const ShieldAlert = icon("ShieldAlert");
+export const Download = icon("Download");
+export const Building2 = icon("Building2");
+export const Layers = icon("Layers");
+export const GripVertical = icon("GripVertical");

@@ -1,0 +1,111 @@
+{
+  "results": [
+    {
+      "name": "saved-page",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "baselineWidth": 1280,
+      "actualWidth": 1280,
+      "screenshot": ".audit-work/foundation-reinforcement18/coupled-work-order-saved-page-1280.png",
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "name": "saved-page",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "baselineWidth": 580,
+      "actualWidth": 580,
+      "screenshot": ".audit-work/foundation-reinforcement18/coupled-work-order-saved-page-390.png",
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "name": "recovered-page",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "baselineWidth": 1280,
+      "actualWidth": 1280,
+      "screenshot": ".audit-work/foundation-reinforcement18/coupled-work-order-recovered-page-1280.png",
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "name": "recovered-page",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "baselineWidth": 580,
+      "actualWidth": 580,
+      "screenshot": ".audit-work/foundation-reinforcement18/coupled-work-order-recovered-page-390.png",
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "name": "lost-work-order-create-reply",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "baselineWidth": 1280,
+      "actualWidth": 1280,
+      "screenshot": ".audit-work/foundation-reinforcement18/coupled-work-order-lost-work-order-create-reply-1280.png",
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "name": "lost-work-order-create-reply",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "baselineWidth": 580,
+      "actualWidth": 580,
+      "screenshot": ".audit-work/foundation-reinforcement18/coupled-work-order-lost-work-order-create-reply-390.png",
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": []
+      }
+    }
+  ],
+  "syntheticFrozenHtml": true,
+  "financialInputsUnchanged": true,
+  "realBrowserPrintDialogVerified": false,
+  "realStorageVerified": false,
+  "backendAuthorizationVerified": false
+}

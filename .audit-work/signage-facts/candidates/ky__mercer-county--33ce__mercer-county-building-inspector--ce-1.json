@@ -1,0 +1,27 @@
+{
+ "jurisdiction_id": "6ae85efb4dcdda44596c33ce",
+ "jurisdiction_name": "Mercer County",
+ "state": "KY",
+ "office_id": "scan-6ae85efb4dcdda44596c33ce-office-1",
+ "office_name": "Mercer County Building Inspector",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Adopted 1/17/25 The Greater Harrodsburg/Mercer County Planning and Zoning Commission 109 Short St. Harrodsburg, KY 40330 SIGN PERMIT Permit #:_____ ______ ________ Applicant : _ ____________________________ Property Owner : _______ ________________________ _____________________________ (if Different) _______________ _ ________________ Telephone : _____________________________ Telephone : ________________ _ _______________ Required Documentation for all signs: 1. Graphic representation of proposed signage 2. Dimensional Information – Size of sign, Letter Height 3. Location of proposed signage 4. For Wall Mounted signage, include dimensions of wall surface where sign is to mounted Signs Permitted in Commercial & Industrial Districts: Refer to Article 14 of the City of Harrodsburg Zoning Ordinance for sign requirements. I have read and understand the provisions of this permit: _____________",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "type",
+    "authority",
+    "process"
+   ],
+   "weight": 12,
+   "source_sha256": "59110d1aa7cbacf667ed81a8d72aa2e33dea2d83167a57e916e11455513370a4",
+   "source_document_id": null,
+   "source_title": "59110d1aa7cbacf667ed81a8d72aa2e33dea2d83167a57e916e11455513370a4.pdf",
+   "official_url": "https://media-mercercounty.ky.gov/uploads/Sign-Permit-City-2025.pdf"
+  }
+ ]
+}

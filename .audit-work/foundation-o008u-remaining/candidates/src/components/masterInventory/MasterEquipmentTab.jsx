@@ -1,0 +1,1141 @@
+// Master Inventory — Equipment tab.
+//
+// Top-level: Rental | Owned sub-tabs (ownership state).
+// Within each ownership tab: Equipment | Attachments | Sub-Attachments.
+//
+// Merges equipment from two underlying entities:
+//   - FoundationInventory rows with material_type in (excavation_equipment, attachment, sub_attachment)
+//   - ChannelLetterInstallEquipment rows
+//
+// Only TOP-LEVEL Equipment items get cross-estimator visibility toggles
+// (Channel & Dimensional / Concrete-Masonry-Poles / Sign Maintenance).
+// Attachments and Sub-Attachments inherit visibility from the Equipment they
+// are linked to — they are not surfaced independently to estimators.
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trash2, Edit, Plus, Wrench, Link2, Settings2, Truck, ArrowUpFromLine, Star } from "lucide-react";
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { replaceRelationshipIdsIfUnchanged, setExclusiveBooleanSafely } from "./equipmentPersistence";
+import { createInventoryRecordWithRecovery, findInventoryPartReferences } from "./inventoryPersistence";
+import { inventoryNumberInput } from "./inventoryNormalization";
+
+const FoundationInventoryEntity = base44.entities.FoundationInventory;
+const ChannelLetterInstallEquipmentEntity = staffEntities.ChannelLetterInstallEquipment;
+
+// ── small helpers ──────────────────────────────────────────────────────────
+const FOUNDATION_EQUIPMENT_TYPES = ["excavation_equipment", "attachment", "sub_attachment"];
+// Equipment types that belong to the dedicated "Boom Lifts" tab.
+const BOOM_EQUIPMENT_TYPES = ["boom_lift", "boom_truck"];
+
+function MultiSelectDropdown({ label, options, selectedIds, onChange }) {
+  const toggle = (id) =>
+    onChange(selectedIds.includes(id) ? selectedIds.filter((i) => i !== id) : [...selectedIds, id]);
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs">{label}</Label>
+      <div className="border rounded-md p-2 space-y-1 max-h-40 overflow-y-auto bg-slate-50">
+        {options.length === 0 && <p className="text-xs text-slate-400 italic">No items available</p>}
+        {options.map((opt) => (
+          <div key={opt.id} className="flex items-center gap-2">
+            <Checkbox id={`ms-${opt.id}`} checked={selectedIds.includes(opt.id)} onCheckedChange={() => toggle(opt.id)} />
+            <Label htmlFor={`ms-${opt.id}`} className="text-xs cursor-pointer">{opt.material_name}</Label>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Convert a row (regardless of source entity) into a normalized shape for the list view.
+function normalizeRow(row, source) {
+  if (source === "channel_letter_equipment") {
+    return {
+      _source: source,
+      id: row.id,
+      name: row.equipment_name,
+      kind: "equipment",              // top-level equipment (no attachment tree on this entity)
+      equipment_type: row.equipment_type || "",
+      ownership: row.ownership || "rented",
+      is_primary_owned: row.is_primary_owned ?? false,
+      // CMP-A08 tail: rental costs pass through ?? null — an authored explicit
+      // 0 stays 0 (a real free rate), an unrecorded cost stays null ("not
+      // cataloged") rather than minting a display/stored zero.
+      cost_per_day: row.cost_per_day ?? null,
+      cost_per_week: row.cost_per_week ?? null,
+      cost_per_month: row.cost_per_month ?? null,
+      show_in_channel_letters: row.show_in_channel_letters ?? true,
+      show_in_foundation: row.show_in_foundation ?? false,
+      show_in_sign_maintenance: row.show_in_sign_maintenance ?? false,
+      raw: row,
+    };
+  }
+  // FoundationInventory equipment row
+  const kind =
+    row.material_type === "attachment" ? "attachment" :
+    row.material_type === "sub_attachment" ? "sub_attachment" : "equipment";
+  return {
+    _source: "foundation_equipment",
+    id: row.id,
+    name: row.material_name,
+    kind,
+    equipment_type: row.equipment_type || "",
+    ownership: row.ownership || "rented",
+    cost_per_day: row.cost_per_day ?? null,
+    cost_per_week: row.cost_per_week ?? null,
+    cost_per_month: row.cost_per_month ?? null,
+    show_in_channel_letters: row.show_in_channel_letters ?? false,
+    show_in_foundation: row.show_in_foundation ?? true,
+    show_in_sign_maintenance: row.show_in_sign_maintenance ?? false,
+    raw: row,
+  };
+}
+
+export default function MasterEquipmentTab({ isAdmin }) {
+  const [foundationRows, setFoundationRows] = useState([]);
+  const [channelRows, setChannelRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [ownership, setOwnership] = useState("rented"); // "rented" | "owned"
+  const [activeKind, setActiveKind] = useState("equipment");
+  const [search, setSearch] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [editItem, setEditItem] = useState(null);          // normalized row or { kind, _source, raw: {} } for new
+  const [loadError, setLoadError] = useState("");
+  const actionRef = useRef(new Set());
+
+  const load = async () => {
+    setLoading(true);
+    setLoadError("");
+    try {
+      const [fnd, chn] = await Promise.all([
+        loadAllEntityRows({ entity: FoundationInventoryEntity, sort: "material_name", label: "Foundation equipment inventory" }),
+        loadAllEntityRows({ entity: ChannelLetterInstallEquipmentEntity, sort: "sort_order", label: "Channel Letter equipment inventory" }),
+      ]);
+      setFoundationRows(fnd.filter((r) => FOUNDATION_EQUIPMENT_TYPES.includes(r.material_type)));
+      setChannelRows(chn);
+    } catch (e) {
+      console.error(e);
+      setLoadError(e?.message || "Equipment inventory could not be verified.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => { load(); }, []);
+
+  // Normalized + filtered list
+  const allNormalized = useMemo(() => {
+    const a = foundationRows.map((r) => normalizeRow(r, "foundation_equipment"));
+    const b = channelRows.map((r) => normalizeRow(r, "channel_letter_equipment"));
+    const list = [...a, ...b].filter((r) => (r.ownership || "rented") === ownership);
+    if (!search.trim()) return list;
+    const q = search.toLowerCase();
+    return list.filter((r) =>
+      [r.name, r.equipment_type].some((v) => v && String(v).toLowerCase().includes(q))
+    );
+  }, [foundationRows, channelRows, ownership, search]);
+
+  const isBoom = (r) => BOOM_EQUIPMENT_TYPES.includes(r.equipment_type);
+  // "Construction Equipment" = top-level equipment that is NOT a boom lift/truck.
+  const equipmentRows  = allNormalized.filter((r) => r.kind === "equipment" && !isBoom(r));
+  const boomRows       = allNormalized.filter((r) => r.kind === "equipment" && isBoom(r));
+  const attachmentRows = allNormalized.filter((r) => r.kind === "attachment");
+  const subAttachRows  = allNormalized.filter((r) => r.kind === "sub_attachment");
+
+  // We need ALL foundation attachments/sub-attachments regardless of ownership for the linking pickers,
+  // because compatibility is a global tree.
+  const allFoundationAttachments    = foundationRows.filter((r) => r.material_type === "attachment");
+  const allFoundationSubAttachments = foundationRows.filter((r) => r.material_type === "sub_attachment");
+  const allFoundationEquipment      = foundationRows.filter((r) => r.material_type === "excavation_equipment");
+
+  // ── CRUD ──────────────────────────────────────────────────────────────────
+  const deleteItem = async (row) => {
+    const lockKey = `delete:${row._source}:${row.id}`;
+    if (actionRef.current.has(lockKey)) return;
+    actionRef.current.add(lockKey);
+    if (!window.confirm(`Delete "${row.name}"? This cannot be undone.`)) {
+      actionRef.current.delete(lockKey);
+      return;
+    }
+    const entity = row._source === "channel_letter_equipment" ? ChannelLetterInstallEquipmentEntity : FoundationInventoryEntity;
+    try {
+      const live = await entity.get(row.id);
+      if (row.raw?.updated_date && live?.updated_date && row.raw.updated_date !== live.updated_date) {
+        alert("This equipment item changed in another session and was not deleted. The latest equipment inventory will be reloaded first.");
+        await load();
+        return;
+      }
+      const refs = await findInventoryPartReferences(row.id);
+      if (refs.count > 0) {
+        alert(`"${row.name}" is used by ${refs.count} estimate Part${refs.count === 1 ? "" : "s"} (${refs.names.join(", ")}${refs.count > 5 ? ", …" : ""}). Detach or remove those Parts before deleting this item.`);
+        return;
+      }
+      await deleteEntityIfUnchanged({
+        entity,
+        record: live,
+        label: `Equipment item “${row.name || "Item"}”`,
+      });
+      await load();
+    } catch (error) {
+      console.error("Equipment delete failed:", error);
+      alert(error?.message || "Equipment could not be deleted.");
+      await load();
+    } finally {
+      actionRef.current.delete(lockKey);
+    }
+  };
+
+  const toggleVisibility = async (row, field, next) => {
+    const lockKey = `toggle:${row._source}:${row.id}:${field}`;
+    if (actionRef.current.has(lockKey)) return;
+    actionRef.current.add(lockKey);
+    const entity = row._source === "channel_letter_equipment" ? ChannelLetterInstallEquipmentEntity : FoundationInventoryEntity;
+    try {
+      const live = await entity.get(row.id);
+      if (live?.[field] !== row.raw?.[field]) {
+        alert("This equipment visibility setting changed in another session. The latest equipment inventory will be reloaded first.");
+        await load();
+        return;
+      }
+      const togglePatch = { [field]: next };
+      await replaceEntityFieldsIfUnchanged({
+        entity,
+        id: row.id,
+        expectedFields: expectedEntityFields(live, togglePatch),
+        nextFields: togglePatch,
+        label: "Equipment visibility",
+      });
+      if (row._source === "channel_letter_equipment") {
+        setChannelRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, [field]: next } : r)));
+      } else {
+        setFoundationRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, [field]: next } : r)));
+      }
+    } catch (error) {
+      console.error("Equipment toggle failed:", error);
+      alert(error?.message || "Equipment visibility could not be updated.");
+      await load();
+    } finally {
+      actionRef.current.delete(lockKey);
+    }
+  };
+
+  // Mark a boom lift as the "Primary owned lift" — the suggester's go-to pick.
+  // The target is saved first, previous primaries are cleared conditionally,
+  // and the complete equipment cohort is verified afterward. A conflict stops
+  // the operation and is surfaced instead of silently skipping any row.
+  const setPrimaryOwned = async (row, next) => {
+    const lockKey = `primary:${row.id}`;
+    if (row._source !== "channel_letter_equipment" || actionRef.current.has(lockKey)) return;
+    actionRef.current.add(lockKey);
+    try {
+      await setExclusiveBooleanSafely({
+        entity: ChannelLetterInstallEquipmentEntity,
+        targetId: row.id,
+        field: "is_primary_owned",
+        next,
+        expectedTargetUpdatedAt: row.raw?.updated_date || "",
+        readRows: () => loadAllEntityRows({ entity: ChannelLetterInstallEquipmentEntity, sort: "sort_order", label: "Channel Letter equipment inventory" }),
+        label: "Primary owned lift selection",
+      });
+      await load();
+    } catch (error) {
+      console.error("Primary owned equipment update failed:", error);
+      alert(error?.message || "Primary owned equipment could not be updated.");
+      await load();
+    } finally {
+      actionRef.current.delete(lockKey);
+    }
+  };
+
+  const openAdd = () => {
+    // Boom Lifts tab → create a ChannelLetterInstallEquipment boom_lift (no attachment tree).
+    if (activeKind === "boom_lift") {
+      setEditItem({
+        _new: true,
+        kind: "equipment",
+        _source: "channel_letter_equipment",
+        equipment_type: "boom_lift",
+        raw: {
+          equipment_name: "",
+          equipment_type: "boom_lift",
+          pricing_mode: "per_day",
+          ownership,
+          // CMP-A08 tail: cost fields open null ("not cataloged") rather than
+          // minted 0s that would persist a fabricated free rental rate the
+          // admin never typed; an explicit 0 typed into the form still saves
+          // as a real authored zero.
+          cost_per_day: null, cost_per_week: null, cost_per_month: null, delivery_pickup_cost: null,
+          show_in_channel_letters: true, show_in_foundation: false, show_in_sign_maintenance: false,
+        },
+      });
+      setShowForm(true);
+      return;
+    }
+    // New rows default to FoundationInventory so attachment-tree linking is available.
+    // The form lets the user pick the entity for top-level Equipment.
+    setEditItem({
+      _new: true,
+      kind: activeKind,
+      _source: "foundation_equipment",
+      raw: {
+        material_type:
+          activeKind === "attachment" ? "attachment" :
+          activeKind === "sub_attachment" ? "sub_attachment" : "excavation_equipment",
+        material_name: "",
+        cost_per_day: null, cost_per_week: null, cost_per_month: null, pickup_delivery_cost: null,
+        ownership,
+        compatible_attachment_ids: [], compatible_sub_attachment_ids: [],
+        show_in_channel_letters: false, show_in_foundation: true, show_in_sign_maintenance: false,
+        sort_order: null,
+      },
+    });
+    setShowForm(true);
+  };
+
+  const openEdit = (row) => {
+    setEditItem({ ...row });
+    setShowForm(true);
+  };
+
+  return (
+    <Card className="bg-white border-0 shadow-sm">
+      <CardHeader className="border-b flex flex-row items-center justify-between gap-3 flex-wrap">
+        <CardTitle className="flex items-center gap-2">
+          <Truck className="w-5 h-5 text-cyan-600" />
+          Equipment
+          <Badge variant="outline" className="ml-2 font-normal">{allNormalized.length} items</Badge>
+        </CardTitle>
+        <div className="flex items-center gap-3">
+          <Input placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 w-56" />
+          <Tabs value={ownership} onValueChange={setOwnership}>
+            <TabsList>
+              <TabsTrigger value="rented">Rental</TabsTrigger>
+              <TabsTrigger value="owned">Owned</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {isAdmin && (
+            <Button size="sm" onClick={openAdd} disabled={!!loadError} className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
+              <Plus className="w-4 h-4 mr-1" /> Add {activeKind === "equipment" ? "Construction Equipment" : activeKind === "boom_lift" ? "Boom Lift" : activeKind === "attachment" ? "Attachment" : "Sub-Attachment"}
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+
+      <CardContent className="pt-4">
+        <Tabs value={activeKind} onValueChange={setActiveKind}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="equipment"><Wrench className="w-3.5 h-3.5 mr-1" /> Construction Equipment ({equipmentRows.length})</TabsTrigger>
+            <TabsTrigger value="boom_lift"><ArrowUpFromLine className="w-3.5 h-3.5 mr-1" /> Boom Lifts ({boomRows.length})</TabsTrigger>
+            <TabsTrigger value="attachment"><Link2 className="w-3.5 h-3.5 mr-1" /> Attachments ({attachmentRows.length})</TabsTrigger>
+            <TabsTrigger value="sub_attachment"><Settings2 className="w-3.5 h-3.5 mr-1" /> Sub-Attachments ({subAttachRows.length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="equipment">
+            <EquipmentList
+              rows={equipmentRows}
+              attachments={allFoundationAttachments}
+              equipment={allFoundationEquipment}
+              loading={loading}
+              loadError={loadError}
+              isAdmin={isAdmin}
+              onEdit={openEdit}
+              onDelete={deleteItem}
+              onToggle={toggleVisibility}
+            />
+          </TabsContent>
+          <TabsContent value="boom_lift">
+            <EquipmentList
+              rows={boomRows}
+              attachments={allFoundationAttachments}
+              equipment={allFoundationEquipment}
+              loading={loading}
+              loadError={loadError}
+              isAdmin={isAdmin}
+              isBoomList
+              onEdit={openEdit}
+              onDelete={deleteItem}
+              onToggle={toggleVisibility}
+              onSetPrimary={setPrimaryOwned}
+            />
+          </TabsContent>
+          <TabsContent value="attachment">
+            <EquipmentList
+              rows={attachmentRows}
+              attachments={allFoundationAttachments}
+              subAttachments={allFoundationSubAttachments}
+              equipment={allFoundationEquipment}
+              isAttachment
+              loading={loading}
+              loadError={loadError}
+              isAdmin={isAdmin}
+              onEdit={openEdit}
+              onDelete={deleteItem}
+              onToggle={toggleVisibility}
+            />
+          </TabsContent>
+          <TabsContent value="sub_attachment">
+            <EquipmentList
+              rows={subAttachRows}
+              attachments={allFoundationAttachments}
+              isSubAttachment
+              loading={loading}
+              loadError={loadError}
+              isAdmin={isAdmin}
+              onEdit={openEdit}
+              onDelete={deleteItem}
+              onToggle={toggleVisibility}
+            />
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editItem?._new ? "Add" : "Edit"} {activeKind === "equipment" ? "Construction Equipment" : activeKind === "boom_lift" ? "Boom Lift" : activeKind === "attachment" ? "Attachment" : "Sub-Attachment"}</DialogTitle></DialogHeader>
+          {editItem && (
+            <EquipmentForm
+              normalized={editItem}
+              ownership={ownership}
+              allFoundationEquipment={allFoundationEquipment}
+              allFoundationAttachments={allFoundationAttachments}
+              allFoundationSubAttachments={allFoundationSubAttachments}
+              allChannelEquipment={channelRows}
+              onCancel={() => { setShowForm(false); setEditItem(null); }}
+              onSaved={() => { setShowForm(false); setEditItem(null); load(); }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+}
+
+// ── List ──────────────────────────────────────────────────────────────────
+function EquipmentList({ rows, attachments = [], subAttachments = [], equipment = [], isAttachment, isSubAttachment, isBoomList, loading, loadError, isAdmin, onEdit, onDelete, onToggle, onSetPrimary }) {
+  if (loading) return <div className="text-center text-slate-400 py-8">Loading…</div>;
+  if (loadError) return <div className="text-center text-red-700 py-8 bg-red-50 border border-red-200 rounded"><div className="font-semibold">Equipment inventory could not be verified.</div><div className="text-xs mt-1">{loadError}</div></div>;
+  if (rows.length === 0) return <div className="text-center py-8 text-slate-400 text-sm italic border rounded bg-slate-50">No items in this category.</div>;
+
+  return (
+    <div className="space-y-3">
+      {rows.map((row) => (
+        <Card key={`${row._source}-${row.id}`} className="hover:shadow-sm">
+          <CardHeader className="py-3 px-4 flex flex-row items-start justify-between">
+            <div>
+              <CardTitle className="text-sm flex items-center gap-2">
+                {row.name}
+                <Badge variant="outline" className="text-[10px] font-normal">
+                  {row._source === "channel_letter_equipment" ? "Channel Letter Equip." : "Foundation"}
+                </Badge>
+                {isBoomList && row.ownership === "owned" && row.is_primary_owned && (
+                  <Badge className="text-[10px] font-medium bg-amber-100 text-amber-800 border-amber-200 gap-1">
+                    <Star className="w-3 h-3 fill-amber-500 text-amber-500" /> Primary
+                  </Badge>
+                )}
+              </CardTitle>
+              <div className="flex gap-4 text-xs text-slate-600 mt-1">
+                {row.ownership === "owned" ? (
+                  <span className="text-emerald-700 font-medium">Owned — no rental cost</span>
+                ) : (
+                  <>
+                    {/* Authored prices render as dollars — including an
+                        explicit $0; unpriced stays "Not priced" (never a
+                        minted display zero). */}
+                    <span>Day: <strong>{Number.isFinite(parseFloat(row.cost_per_day)) ? `$${row.cost_per_day}` : (row.cost_per_day ?? "Not priced")}</strong></span>
+                    <span>Wk: <strong>{Number.isFinite(parseFloat(row.cost_per_week)) ? `$${row.cost_per_week}` : (row.cost_per_week ?? "Not priced")}</strong></span>
+                    <span>Mo: <strong>{Number.isFinite(parseFloat(row.cost_per_month)) ? `$${row.cost_per_month}` : (row.cost_per_month ?? "Not priced")}</strong></span>
+                  </>
+                )}
+              </div>
+            </div>
+            {isAdmin && (
+              <div className="flex gap-1">
+                {isBoomList && row.ownership === "owned" && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => onSetPrimary?.(row, !row.is_primary_owned)}
+                    className={`h-7 w-7 ${row.is_primary_owned ? "text-amber-500" : "text-slate-300 hover:text-amber-400"}`}
+                    title={row.is_primary_owned ? "Primary owned lift — the suggester's go-to pick. Click to unset." : "Set as Primary owned lift (suggester's go-to pick)"}
+                  >
+                    <Star className={`w-4 h-4 ${row.is_primary_owned ? "fill-amber-500" : ""}`} />
+                  </Button>
+                )}
+                <Button size="icon" variant="ghost" onClick={() => onEdit(row)} className="h-7 w-7"><Edit className="w-3.5 h-3.5" /></Button>
+                <Button size="icon" variant="ghost" onClick={() => onDelete(row)} className="h-7 w-7 text-red-500"><Trash2 className="w-3.5 h-3.5" /></Button>
+              </div>
+            )}
+          </CardHeader>
+          <CardContent className="px-4 pb-3 pt-0 space-y-2">
+            {/* Visibility toggles — only on top-level Equipment.
+                Attachments and Sub-Attachments inherit visibility from their parent Equipment. */}
+            {!isAttachment && !isSubAttachment && (
+              <div className="flex flex-wrap gap-4 pt-1 border-t mt-1">
+                <ToggleRow label="Channel & Dimensional" checked={row.show_in_channel_letters} onChange={(v) => onToggle(row, "show_in_channel_letters", v)} disabled={!isAdmin} />
+                <ToggleRow label="Concrete | Masonry"   checked={row.show_in_foundation}      onChange={(v) => onToggle(row, "show_in_foundation",      v)} disabled={!isAdmin} />
+                <ToggleRow label="Sign Maintenance"     checked={row.show_in_sign_maintenance} onChange={(v) => onToggle(row, "show_in_sign_maintenance", v)} disabled={!isAdmin} />
+              </div>
+            )}
+
+            {/* Dependency display */}
+            {!isAttachment && !isSubAttachment && row._source === "foundation_equipment" && (
+              <div className="text-xs text-slate-500 pt-1">
+                <strong>Linked Attachments:</strong>{" "}
+                {row.raw.compatible_attachment_ids?.length
+                  ? attachments.filter((a) => row.raw.compatible_attachment_ids.includes(a.id)).map((a) => a.material_name).join(", ")
+                  : "None"}
+              </div>
+            )}
+            {isAttachment && (
+              <div className="text-xs text-slate-500 space-y-1 pt-1">
+                <div><strong>Compatible Equipment:</strong> {equipment.filter((e) => e.compatible_attachment_ids?.includes(row.id)).map((e) => e.material_name).join(", ") || "None"}</div>
+                <div><strong>Linked Sub-Attachments:</strong> {row.raw.compatible_sub_attachment_ids?.length ? subAttachments.filter((s) => row.raw.compatible_sub_attachment_ids.includes(s.id)).map((s) => s.material_name).join(", ") : "None"}</div>
+              </div>
+            )}
+            {isSubAttachment && (
+              <div className="text-xs text-slate-500 pt-1">
+                <strong>Compatible Attachments:</strong>{" "}
+                {attachments.filter((a) => a.compatible_sub_attachment_ids?.includes(row.id)).map((a) => a.material_name).join(", ") || "None"}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function ToggleRow({ label, checked, onChange, disabled }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Switch checked={!!checked} onCheckedChange={onChange} disabled={disabled} />
+      <Label className="text-xs">{label}</Label>
+    </div>
+  );
+}
+
+// ── Form ──────────────────────────────────────────────────────────────────
+function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFoundationAttachments, allFoundationSubAttachments, allChannelEquipment, onCancel, onSaved }) {
+  const isNew = !!normalized._new;
+  const source = normalized._source;
+  const kind   = normalized.kind;
+
+  // Build initial form from underlying row + visibility flags.
+  // CMP-A08 tail: every numeric catalog field opens null when the row carries
+  // no recorded value — an absent price/dimension is "not cataloged", never a
+  // minted 0 that would persist a fabricated free rate on save. An authored
+  // explicit 0 still initializes to 0 and round-trips as a real authored zero.
+  const initial = useMemo(() => {
+    if (source === "channel_letter_equipment") {
+      const r = normalized.raw || {};
+      return {
+        // channel letter equipment fields
+        equipment_name: r.equipment_name || "",
+        equipment_type: r.equipment_type || "boom_lift",
+        pricing_mode: r.pricing_mode || "per_day",
+        ownership: r.ownership || ownership,
+        cost_per_day: r.cost_per_day ?? null,
+        cost_per_week: r.cost_per_week ?? null,
+        cost_per_month: r.cost_per_month ?? null,
+        cost_flat: r.cost_flat ?? null,
+        delivery_pickup_cost: r.delivery_pickup_cost ?? null,
+        max_height_feet: r.max_height_feet ?? null,
+        vertical_reach_safety_margin_feet: r.vertical_reach_safety_margin_feet ?? 2,
+        is_default_for_height: !!r.is_default_for_height,
+        default_height_min_feet: r.default_height_min_feet ?? null,
+        default_height_max_feet: r.default_height_max_feet ?? null,
+        is_primary_owned: !!r.is_primary_owned,
+        mpg: r.mpg ?? null,
+        fuel_type: r.fuel_type || "na",
+        idle_running_cost_per_hour: r.idle_running_cost_per_hour ?? null,
+        rental_company: r.rental_company || "",
+        notes: r.notes || "",
+        show_in_channel_letters: r.show_in_channel_letters ?? true,
+        show_in_foundation: r.show_in_foundation ?? false,
+        show_in_sign_maintenance: r.show_in_sign_maintenance ?? false,
+      };
+    }
+    // foundation
+    const r = normalized.raw || {};
+    return {
+      material_name: r.material_name || "",
+      material_type: r.material_type || (kind === "attachment" ? "attachment" : kind === "sub_attachment" ? "sub_attachment" : "excavation_equipment"),
+      equipment_type: r.equipment_type || "",
+      supports_attachments: r.supports_attachments ?? true,
+      ownership: r.ownership || ownership,
+      cost_per_day: r.cost_per_day ?? null,
+      cost_per_week: r.cost_per_week ?? null,
+      cost_per_month: r.cost_per_month ?? null,
+      pickup_delivery_cost: r.pickup_delivery_cost ?? null,
+      rental_company: r.rental_company || "",
+      mpg: r.mpg ?? null,
+      fuel_type: r.fuel_type || "na",
+      idle_running_cost_per_hour: r.idle_running_cost_per_hour ?? null,
+      compatible_attachment_ids: r.compatible_attachment_ids || [],
+      compatible_sub_attachment_ids: r.compatible_sub_attachment_ids || [],
+      allow_multiple: !!r.allow_multiple,
+      is_pillar_excavation: !!r.is_pillar_excavation,
+      is_spread_foot_excavation: !!r.is_spread_foot_excavation,
+      is_non_excavation_equipment: !!r.is_non_excavation_equipment,
+      is_miscellaneous_attachment: !!r.is_miscellaneous_attachment,
+      notes: r.notes || "",
+      show_in_channel_letters: r.show_in_channel_letters ?? false,
+      show_in_foundation: r.show_in_foundation ?? true,
+      show_in_sign_maintenance: r.show_in_sign_maintenance ?? false,
+    };
+  }, [normalized, source, kind, ownership]);
+
+  const [form, setForm] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const saveRef = useRef(false);
+  // For attachments, allow reverse-linking to top-level equipment.
+  const [linkedEquipmentIds, setLinkedEquipmentIds] = useState(
+    kind === "attachment" ? allFoundationEquipment.filter((e) => e.compatible_attachment_ids?.includes(normalized.id)).map((e) => e.id) : []
+  );
+  const [linkedAttachmentIdsForSub, setLinkedAttachmentIdsForSub] = useState(
+    kind === "sub_attachment" ? allFoundationAttachments.filter((a) => a.compatible_sub_attachment_ids?.includes(normalized.id)).map((a) => a.id) : []
+  );
+
+  const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+  const nameField = source === "channel_letter_equipment" ? "equipment_name" : "material_name";
+  const isValid = !!form[nameField];
+
+  const handleSave = async () => {
+    if (saveRef.current) return;
+    saveRef.current = true;
+    setSaving(true);
+    let wroteAnything = false;
+    try {
+      let savedId = normalized.id;
+      // When Owned, blank out rental-only fields so we don't carry stale values.
+      const cleanForOwnership = (p) => {
+        if ((p.ownership || ownership) === "owned") {
+          p.rental_company = "";
+          if ("pricing_mode" in p) p.pricing_mode = "owned_flat";
+        } else if ("pricing_mode" in p) {
+          if (!/^per_(day|week|month)$/.test(p.pricing_mode || "")) p.pricing_mode = "per_day";
+        }
+        return p;
+      };
+      const sameIds = (a = [], b = []) => {
+        const left = [...a].map(String).sort();
+        const right = [...b].map(String).sort();
+        return left.length === right.length && left.every((value, index) => value === right[index]);
+      };
+      const assertFreshRow = (loaded, live, label) => {
+        if (!live) throw new Error(`${label} no longer exists. Reload Equipment before saving.`);
+        if (loaded?.updated_date && live.updated_date && loaded.updated_date !== live.updated_date) {
+          throw new Error(`${label} changed in another session. Reload Equipment, review the latest record, and apply your changes again.`);
+        }
+      };
+
+      const payload = cleanForOwnership({ ...form });
+      const targetEntity = source === "channel_letter_equipment"
+        ? ChannelLetterInstallEquipmentEntity
+        : FoundationInventoryEntity;
+
+      // Preflight the edited target before any write and retain the exact
+      // verified version for the later conditional save.
+      let verifiedTarget = null;
+      if (!isNew) {
+        verifiedTarget = await targetEntity.get(normalized.id);
+        assertFreshRow(normalized.raw, verifiedTarget, normalized.name || "This equipment item");
+      }
+
+      let liveChannelRows = [];
+      let primaryExpectedVersions = null;
+      let equipmentRelationshipRows = [];
+      let attachmentRelationshipRows = [];
+
+      // Primary-owned updates may clear other channel-equipment rows. Verify the
+      // primary flags we intend to rely on before the target write happens.
+      if (source === "channel_letter_equipment" && payload.is_primary_owned) {
+        liveChannelRows = await loadAllEntityRows({ entity: ChannelLetterInstallEquipmentEntity, sort: "sort_order", label: "Channel Letter equipment inventory" });
+        primaryExpectedVersions = Object.fromEntries(liveChannelRows.map((row) => [row.id, row.updated_date || ""]));
+        const loadedById = new Map((allChannelEquipment || []).map((row) => [row.id, row]));
+        const primaryConflicts = liveChannelRows.filter((live) => {
+          if (live.id === normalized.id) return false;
+          const loaded = loadedById.get(live.id);
+          if (!loaded) return !!live.is_primary_owned;
+          return !!live.is_primary_owned !== !!loaded.is_primary_owned;
+        });
+        if (primaryConflicts.length) {
+          throw new Error("The Primary owned lift selection changed in another session. Reload Equipment before saving this boom lift.");
+        }
+      }
+
+      // Preflight every compatibility row this save may modify. For a new
+      // attachment/sub-attachment, selected parents are the rows that will gain
+      // the new id. For an existing row, only parents whose selection changed are
+      // included. All checks finish before create/update begins.
+      if (source === "foundation_equipment" && payload.material_type === "attachment") {
+        const rowsToChange = (allFoundationEquipment || []).filter((eq) => {
+          const selected = linkedEquipmentIds.includes(eq.id);
+          const has = !isNew && (eq.compatible_attachment_ids || []).includes(normalized.id);
+          return isNew ? selected : selected !== has;
+        });
+        equipmentRelationshipRows = await Promise.all(rowsToChange.map(async (loaded) => {
+          const live = await FoundationInventoryEntity.get(loaded.id);
+          if (!live || !sameIds(loaded.compatible_attachment_ids || [], live.compatible_attachment_ids || [])) {
+            throw new Error(`Compatibility links for ${loaded.material_name || "equipment"} changed in another session. Reload Equipment before saving.`);
+          }
+          return { loaded, live };
+        }));
+      } else if (source === "foundation_equipment" && payload.material_type === "sub_attachment") {
+        const rowsToChange = (allFoundationAttachments || []).filter((att) => {
+          const selected = linkedAttachmentIdsForSub.includes(att.id);
+          const has = !isNew && (att.compatible_sub_attachment_ids || []).includes(normalized.id);
+          return isNew ? selected : selected !== has;
+        });
+        attachmentRelationshipRows = await Promise.all(rowsToChange.map(async (loaded) => {
+          const live = await FoundationInventoryEntity.get(loaded.id);
+          if (!live || !sameIds(loaded.compatible_sub_attachment_ids || [], live.compatible_sub_attachment_ids || [])) {
+            throw new Error(`Sub-attachment links for ${loaded.material_name || "attachment"} changed in another session. Reload Equipment before saving.`);
+          }
+          return { loaded, live };
+        }));
+      }
+
+      if (source === "channel_letter_equipment") {
+        let savedTarget;
+        if (isNew) {
+          const createResult = await createInventoryRecordWithRecovery({
+            entity: ChannelLetterInstallEquipmentEntity,
+            data: payload,
+            nameField: "equipment_name",
+            label: "Channel Letter equipment",
+          });
+          savedTarget = createResult.record;
+          wroteAnything = true;
+          savedId = savedTarget.id;
+        } else {
+          savedTarget = await replaceEntityFieldsIfUnchanged({
+            entity: ChannelLetterInstallEquipmentEntity,
+            id: normalized.id,
+            expectedUpdatedAt: verifiedTarget?.updated_date || "",
+            expectedFields: expectedEntityFields(verifiedTarget || normalized.raw || {}, payload),
+            nextFields: payload,
+            label: "Channel Letter equipment save",
+          });
+          wroteAnything = true;
+        }
+        if (payload.is_primary_owned) {
+          await setExclusiveBooleanSafely({
+            entity: ChannelLetterInstallEquipmentEntity,
+            targetId: savedId,
+            field: "is_primary_owned",
+            next: true,
+            expectedTargetUpdatedAt: savedTarget?.updated_date || "",
+            expectedRowVersions: primaryExpectedVersions,
+            readRows: () => loadAllEntityRows({ entity: ChannelLetterInstallEquipmentEntity, sort: "sort_order", label: "Channel Letter equipment inventory" }),
+            label: "Primary owned lift selection",
+          });
+          wroteAnything = true;
+        }
+      } else {
+        if (isNew) {
+          const createResult = await createInventoryRecordWithRecovery({
+            entity: FoundationInventoryEntity,
+            data: payload,
+            nameField: "material_name",
+            label: "Foundation equipment",
+          });
+          wroteAnything = true;
+          savedId = createResult.record.id;
+        } else {
+          await replaceEntityFieldsIfUnchanged({
+            entity: FoundationInventoryEntity,
+            id: normalized.id,
+            expectedUpdatedAt: verifiedTarget?.updated_date || "",
+            expectedFields: expectedEntityFields(verifiedTarget || normalized.raw || {}, payload),
+            nextFields: payload,
+            label: "Foundation equipment save",
+          });
+          wroteAnything = true;
+        }
+
+        const relationshipTotal = equipmentRelationshipRows.length + attachmentRelationshipRows.length;
+        let relationshipConfirmed = 0;
+        for (const { live } of equipmentRelationshipRows) {
+          const selected = linkedEquipmentIds.includes(live.id);
+          const arr = live.compatible_attachment_ids || [];
+          const next = selected ? [...arr.filter((id) => id !== savedId), savedId] : arr.filter((id) => id !== savedId);
+          try {
+            await replaceRelationshipIdsIfUnchanged({
+              entity: FoundationInventoryEntity,
+              row: live,
+              field: "compatible_attachment_ids",
+              nextIds: next,
+              label: `Equipment compatibility for ${live.material_name || "equipment"}`,
+            });
+            relationshipConfirmed += 1;
+            wroteAnything = true;
+          } catch (error) {
+            throw new Error(`Equipment compatibility updates stopped after ${relationshipConfirmed} of ${relationshipTotal} relationship changes were confirmed. Reload before retrying; remaining links were not skipped automatically. ${error?.message || ""}`.trim());
+          }
+        }
+        for (const { live } of attachmentRelationshipRows) {
+          const selected = linkedAttachmentIdsForSub.includes(live.id);
+          const arr = live.compatible_sub_attachment_ids || [];
+          const next = selected ? [...arr.filter((id) => id !== savedId), savedId] : arr.filter((id) => id !== savedId);
+          try {
+            await replaceRelationshipIdsIfUnchanged({
+              entity: FoundationInventoryEntity,
+              row: live,
+              field: "compatible_sub_attachment_ids",
+              nextIds: next,
+              label: `Sub-attachment compatibility for ${live.material_name || "attachment"}`,
+            });
+            relationshipConfirmed += 1;
+            wroteAnything = true;
+          } catch (error) {
+            throw new Error(`Equipment compatibility updates stopped after ${relationshipConfirmed} of ${relationshipTotal} relationship changes were confirmed. Reload before retrying; remaining links were not skipped automatically. ${error?.message || ""}`.trim());
+          }
+        }
+
+        for (const { live } of equipmentRelationshipRows) {
+          const current = await FoundationInventoryEntity.get(live.id);
+          const shouldContain = linkedEquipmentIds.includes(live.id);
+          const contains = !!current?.compatible_attachment_ids?.includes(savedId);
+          if (!current || contains !== shouldContain) {
+            throw new Error(`Final verification failed for compatibility links on ${live.material_name || "equipment"}. Reload Equipment before retrying.`);
+          }
+        }
+        for (const { live } of attachmentRelationshipRows) {
+          const current = await FoundationInventoryEntity.get(live.id);
+          const shouldContain = linkedAttachmentIdsForSub.includes(live.id);
+          const contains = !!current?.compatible_sub_attachment_ids?.includes(savedId);
+          if (!current || contains !== shouldContain) {
+            throw new Error(`Final verification failed for sub-attachment links on ${live.material_name || "attachment"}. Reload Equipment before retrying.`);
+          }
+        }
+      }
+      onSaved?.();
+    } catch (error) {
+      console.error("Equipment save failed:", error);
+      alert(error?.message || "Equipment could not be saved.");
+      // If any write occurred before a later network failure, close/reload so a
+      // retry cannot continue from a partially stale relationship snapshot.
+      if (wroteAnything) onSaved?.();
+    } finally {
+      saveRef.current = false;
+      setSaving(false);
+    }
+  };
+
+  // === Derived state =========================================================
+  const currentOwnership = form.ownership || ownership;
+  const isRented = currentOwnership === "rented";
+  const isOwned  = currentOwnership === "owned";
+
+  // Equipment type list — uniform across both storage entities. Labels are
+  // shown in Title Case but the stored value remains snake_case.
+  const EQUIPMENT_TYPES = [
+    "ladder", "scissor_lift", "boom_lift", "boom_truck", "scaffold",
+    "truck", "car", "van", "flatbed",
+    "hand_tool", "power_tool", "safety", "other",
+  ];
+  const titleCase = (s) =>
+    String(s || "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+  // Equipment types that consume fuel — these get MPG + idle-running-cost fields
+  // regardless of ownership. Boom lifts/trucks and vehicles burn fuel while
+  // driving AND while idling on-site.
+  const FUEL_TYPES = new Set([
+    "scissor_lift", "boom_lift", "boom_truck",
+    "truck", "car", "van", "flatbed",
+  ]);
+  const equipmentType =
+    source === "channel_letter_equipment" ? form.equipment_type : form.equipment_type;
+  const hasFuel = FUEL_TYPES.has(equipmentType);
+
+  // "Supports Attachments?" toggle — replaces the old Storage dropdown.
+  // YES → foundation_equipment (so the attachment tree is available).
+  // NO  → channel_letter_equipment (lighter row, no attachment tree).
+  // Only meaningful for NEW top-level equipment.
+  const supportsAttachments = source === "foundation_equipment";
+  const switchSupportsAttachments = (yes) => {
+    const next = yes ? "foundation_equipment" : "channel_letter_equipment";
+    if (next === source) return;
+    normalized._source = next;
+    // Preserve common values across the swap — ?? null keeps an authored 0
+    // verbatim while an unrecorded draft stays "not cataloged" (never minted).
+    const carry = {
+      ownership: form.ownership || ownership,
+      cost_per_day: form.cost_per_day ?? null,
+      cost_per_week: form.cost_per_week ?? null,
+      cost_per_month: form.cost_per_month ?? null,
+      notes: form.notes || "",
+      mpg: form.mpg ?? null,
+      fuel_type: form.fuel_type || "na",
+      idle_running_cost_per_hour: form.idle_running_cost_per_hour ?? null,
+      show_in_channel_letters: form.show_in_channel_letters,
+      show_in_foundation: form.show_in_foundation,
+      show_in_sign_maintenance: form.show_in_sign_maintenance,
+    };
+    const name = form[nameField] || "";
+    setForm(
+      next === "channel_letter_equipment"
+        ? {
+            equipment_name: name,
+            equipment_type: equipmentType || "boom_lift",
+            pricing_mode: "per_day",
+            cost_flat: null,
+            delivery_pickup_cost: form.pickup_delivery_cost ?? null,
+            max_height_feet: null,
+            rental_company: "",
+            ...carry,
+          }
+        : {
+            material_name: name,
+            material_type: "excavation_equipment",
+            equipment_type: equipmentType || "boom_lift",
+            supports_attachments: true,
+            pickup_delivery_cost: form.delivery_pickup_cost ?? null,
+            compatible_attachment_ids: [],
+            compatible_sub_attachment_ids: [],
+            allow_multiple: false,
+            is_pillar_excavation: false,
+            is_spread_foot_excavation: false,
+            is_non_excavation_equipment: false,
+            is_miscellaneous_attachment: false,
+            ...carry,
+          }
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* 1. Name */}
+      <div>
+        <Label className="text-xs">Name *</Label>
+        <Input className="h-8" value={form[nameField] || ""} onChange={(e) => set(nameField, e.target.value)} />
+      </div>
+
+      {/* 2. Ownership — right below Name */}
+      <div>
+        <Label className="text-xs">Ownership</Label>
+        <Select value={currentOwnership} onValueChange={(v) => set("ownership", v)}>
+          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="rented">Rented</SelectItem>
+            <SelectItem value="owned">Owned</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* 3. "Supports Attachments?" — replaces the old Storage dropdown.
+              Only shown for NEW top-level equipment; existing items can't switch storage. */}
+      {isNew && kind === "equipment" && (
+        <div className="flex items-center justify-between rounded-md border p-2.5 bg-slate-50">
+          <div>
+            <Label className="text-xs font-semibold">Supports Attachments?</Label>
+            <p className="text-[11px] text-slate-500">Turn on for equipment that uses attachments / sub-attachments (e.g. excavators, augers).</p>
+          </div>
+          <Switch checked={supportsAttachments} onCheckedChange={switchSupportsAttachments} />
+        </div>
+      )}
+
+      {/* 4. Equipment Type (uniform list, Title-Case labels) */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label className="text-xs">Equipment Type</Label>
+          <Select
+            value={equipmentType || ""}
+            onValueChange={(v) => set("equipment_type", v)}
+          >
+            <SelectTrigger className="h-8"><SelectValue placeholder="Select type" /></SelectTrigger>
+            <SelectContent>
+              {EQUIPMENT_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>{titleCase(t)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {source === "channel_letter_equipment" && (
+          <div>
+            <Label className="text-xs">Max Height (ft)</Label>
+            <Input type="number" className="h-8" value={form.max_height_feet ?? ""} onChange={(e) => set("max_height_feet", inventoryNumberInput(e.target.value))} />
+          </div>
+        )}
+      </div>
+
+      {/* Boom reach / default-range config — drives the equipment suggester. */}
+      {source === "channel_letter_equipment" && ["boom_lift", "boom_truck"].includes(equipmentType) && (
+        <div className="rounded-lg border bg-sky-50/60 border-sky-200 p-3 space-y-3">
+          <p className="text-xs font-semibold text-sky-900">Boom Reach & Auto-Select</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Safety Margin (ft)</Label>
+              <Input type="number" className="h-8" value={form.vertical_reach_safety_margin_feet ?? 2} onChange={(e) => set("vertical_reach_safety_margin_feet", inventoryNumberInput(e.target.value))} />
+            </div>
+          </div>
+          {isOwned && (
+            <Toggle
+              label="Primary owned lift (suggester's go-to pick)"
+              checked={form.is_primary_owned}
+              onChange={(v) => set("is_primary_owned", v)}
+            />
+          )}
+          <Toggle
+            label="Default for a height range"
+            checked={form.is_default_for_height}
+            onChange={(v) => set("is_default_for_height", v)}
+          />
+          {form.is_default_for_height && (
+            <div className="grid grid-cols-2 gap-3 pl-1">
+              <div>
+                <Label className="text-xs">Min Height (ft)</Label>
+                <Input type="number" className="h-8" value={form.default_height_min_feet ?? ""} onChange={(e) => set("default_height_min_feet", inventoryNumberInput(e.target.value))} />
+              </div>
+              <div>
+                <Label className="text-xs">Max Height (ft)</Label>
+                <Input type="number" className="h-8" value={form.default_height_max_feet ?? ""} onChange={(e) => set("default_height_max_feet", inventoryNumberInput(e.target.value))} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 5. Pricing Mode — only for RENTED. Always Per Day / Week / Month. */}
+      {isRented && (
+        <div className="rounded-lg border bg-slate-50 p-3 space-y-3">
+          <p className="text-xs font-semibold text-slate-700">Rental Pricing (per day / week / month)</p>
+          <div className="grid grid-cols-3 gap-3">
+            <div><Label className="text-xs">Cost/Day</Label><Input type="number" className="h-8" value={form.cost_per_day ?? ""} onChange={(e) => set("cost_per_day", inventoryNumberInput(e.target.value))} /></div>
+            <div><Label className="text-xs">Cost/Week</Label><Input type="number" className="h-8" value={form.cost_per_week ?? ""} onChange={(e) => set("cost_per_week", inventoryNumberInput(e.target.value))} /></div>
+            <div><Label className="text-xs">Cost/Month</Label><Input type="number" className="h-8" value={form.cost_per_month ?? ""} onChange={(e) => set("cost_per_month", inventoryNumberInput(e.target.value))} /></div>
+          </div>
+          <div>
+            <Label className="text-xs">Rental Company</Label>
+            <Input
+              className="h-8"
+              value={source === "channel_letter_equipment" ? (form.rental_company || "") : (form.rental_company || "")}
+              onChange={(e) => set("rental_company", e.target.value)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Delivery / Pickup applies to both — keep visible always */}
+      <div>
+        <Label className="text-xs">Delivery / Pickup ($)</Label>
+        <Input
+          type="number"
+          className="h-8"
+          value={source === "channel_letter_equipment" ? (form.delivery_pickup_cost ?? "") : (form.pickup_delivery_cost ?? "")}
+          onChange={(e) => {
+            const v = inventoryNumberInput(e.target.value);
+            if (source === "channel_letter_equipment") set("delivery_pickup_cost", v);
+            else set("pickup_delivery_cost", v);
+          }}
+        />
+      </div>
+
+      {/* 6. Fuel costs — for boom lifts / trucks / vehicles, regardless of ownership. */}
+      {hasFuel && (
+        <div className="rounded-lg border bg-amber-50/60 border-amber-200 p-3 space-y-3">
+          <p className="text-xs font-semibold text-amber-900">Fuel Costs</p>
+          <p className="text-[11px] text-amber-800">
+            Driving fuel cost uses MPG × route miles × $/gal. Idle cost charges per hour the
+            unit is running on-site (e.g. boom holding position).
+          </p>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label className="text-xs">MPG (driving)</Label>
+              <Input type="number" className="h-8" value={form.mpg ?? ""} onChange={(e) => set("mpg", inventoryNumberInput(e.target.value))} />
+            </div>
+            <div>
+              <Label className="text-xs">Fuel Type</Label>
+              <Select value={form.fuel_type || "na"} onValueChange={(v) => set("fuel_type", v)}>
+                <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="na">N/A</SelectItem>
+                  <SelectItem value="gasoline">Gasoline</SelectItem>
+                  <SelectItem value="diesel">Diesel</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Idle Cost ($/hr)</Label>
+              <Input type="number" className="h-8" value={form.idle_running_cost_per_hour ?? ""} onChange={(e) => set("idle_running_cost_per_hour", inventoryNumberInput(e.target.value))} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Foundation-specific attachment-tree controls (only when supports_attachments) */}
+      {source === "foundation_equipment" && (
+        <>
+          {kind === "equipment" && (
+            <>
+              <div className="space-y-2 pt-1">
+                <Toggle label="Used for Pillar Excavation" checked={form.is_pillar_excavation} onChange={(v) => set("is_pillar_excavation", v)} />
+                <Toggle label="Used for Spread Foot Excavation" checked={form.is_spread_foot_excavation} onChange={(v) => set("is_spread_foot_excavation", v)} />
+                <Toggle label="Is Non-Excavation Equipment" checked={form.is_non_excavation_equipment} onChange={(v) => set("is_non_excavation_equipment", v)} />
+              </div>
+              <MultiSelectDropdown label="Compatible Attachments" options={allFoundationAttachments} selectedIds={form.compatible_attachment_ids || []} onChange={(v) => set("compatible_attachment_ids", v)} />
+            </>
+          )}
+          {kind === "attachment" && (
+            <>
+              <div className="space-y-2 pt-1">
+                <Toggle label="Is Miscellaneous Attachment" checked={form.is_miscellaneous_attachment} onChange={(v) => set("is_miscellaneous_attachment", v)} />
+                <Toggle label="Allow user to select multiple instances" checked={form.allow_multiple} onChange={(v) => set("allow_multiple", v)} />
+              </div>
+              <MultiSelectDropdown label="Belongs to Equipment (reverse link)" options={allFoundationEquipment} selectedIds={linkedEquipmentIds} onChange={setLinkedEquipmentIds} />
+              <MultiSelectDropdown label="Compatible Sub-Attachments" options={allFoundationSubAttachments} selectedIds={form.compatible_sub_attachment_ids || []} onChange={(v) => set("compatible_sub_attachment_ids", v)} />
+            </>
+          )}
+          {kind === "sub_attachment" && (
+            <>
+              <Toggle label="Allow user to select multiple instances" checked={form.allow_multiple} onChange={(v) => set("allow_multiple", v)} />
+              <MultiSelectDropdown label="Belongs to Attachments (reverse link)" options={allFoundationAttachments} selectedIds={linkedAttachmentIdsForSub} onChange={setLinkedAttachmentIdsForSub} />
+            </>
+          )}
+        </>
+      )}
+
+      {/* Visibility toggles — only on top-level Equipment.
+          Attachments/Sub-Attachments inherit from their parent Equipment. */}
+      {kind === "equipment" && (
+        <div className="rounded-lg border bg-slate-50 p-3 space-y-2">
+          <p className="text-xs font-semibold text-slate-700">Show in which estimator(s)?</p>
+          <Toggle label="Channel & Dimensional Letters" checked={form.show_in_channel_letters}  onChange={(v) => set("show_in_channel_letters", v)} />
+          <Toggle label="Concrete | Masonry | Poles"    checked={form.show_in_foundation}        onChange={(v) => set("show_in_foundation", v)} />
+          <Toggle label="Sign Maintenance"               checked={form.show_in_sign_maintenance} onChange={(v) => set("show_in_sign_maintenance", v)} />
+        </div>
+      )}
+
+      <div>
+        <Label className="text-xs">Notes</Label>
+        <Input className="h-8" value={form.notes || ""} onChange={(e) => set("notes", e.target.value)} />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-2">
+        <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
+        <Button size="sm" onClick={handleSave} disabled={!isValid || saving}>{saving ? "Saving…" : "Save"}</Button>
+      </div>
+    </div>
+  );
+}
+
+function Toggle({ label, checked, onChange }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Switch checked={!!checked} onCheckedChange={onChange} />
+      <Label className="text-xs">{label}</Label>
+    </div>
+  );
+}

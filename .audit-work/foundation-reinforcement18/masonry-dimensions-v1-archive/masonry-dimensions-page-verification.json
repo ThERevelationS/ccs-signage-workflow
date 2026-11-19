@@ -1,0 +1,26 @@
+{
+  "results": [
+    {
+      "id": "missing-outer-unit-length-holds-acknowledged-not-guessed",
+      "ok": true
+    },
+    {
+      "id": "zero-outer-unit-height-is-not-a-default",
+      "ok": true
+    },
+    {
+      "id": "unknown-internal-unit-width-holds-entire-wall-vector",
+      "ok": true
+    },
+    {
+      "id": "new-invalid-unit-dimensions-cannot-adopt-rendered-history",
+      "ok": true
+    },
+    {
+      "id": "numeric-string-unit-dimensions-save-and-establish-new-acknowledged-basis",
+      "ok": true
+    }
+  ],
+  "unexpectedNetwork": 0,
+  "unexpectedSdk": 0
+}

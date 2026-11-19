@@ -1,0 +1,1766 @@
+{
+  "scenario": "linked-revision-failure-and-retry",
+  "ok": false,
+  "error": {
+    "message": "Expected values to be strictly equal:\n\nfalse !== true\n",
+    "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-coupled-page.mjs:82:14"
+  },
+  "actualPageAndBusinessHelpers": true,
+  "presentationAndSdkEntityBoundariesMocked": true,
+  "realStorageVerified": false,
+  "backendAuthorizationVerified": false,
+  "first": {
+    "sourceId": "page-source",
+    "sourceVersion": "2026-11-07T12:00:00.001Z",
+    "savedEditRevision": 5,
+    "sourceSaved": true,
+    "builderSync": "pending",
+    "error": {
+      "message": "reinforcement_cost_snapshot.supports must be a resolved support resolution when support data is present.",
+      "stack": "Error: reinforcement_cost_snapshot.supports must be a resolved support resolution when support data is present.\n    at fail (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-page-bundle.mjs:27275:17)\n    at foundationReinforcementPartDescriptors (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-page-bundle.mjs:27376:7)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-page-bundle.mjs:29503:23\n    at Array.forEach (<anonymous>)\n    at extractFoundation (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-page-bundle.mjs:29476:25)\n    at _extractBuilderPartsComputed (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-page-bundle.mjs:30403:14)\n    at extractBuilderParts (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-page-bundle.mjs:30392:15)\n    at syncBuilderParts (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-page-bundle.mjs:30489:23)\n    at recordBuilderSave (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-page-bundle.mjs:31649:25)\n    at async file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/coupled-page-bundle.mjs:33640:11"
+    },
+    "warnings": [
+      "builder_sync_failed"
+    ],
+    "status": "partial"
+  },
+  "second": null,
+  "afterFirst": {
+    "FoundationProject": [
+      {
+        "id": "page-source",
+        "updated_date": "2026-11-07T12:00:00.001Z",
+        "project_name": "Synthetic page only",
+        "client_name": "Synthetic",
+        "items": [
+          {
+            "component_id": "one",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "include_rebar": true,
+            "include_finishing": true,
+            "rebar_size": "#4",
+            "rebar_cost": 112.00000000000001,
+            "item_total_cost": 288.25,
+            "concrete_volume_cy": 1,
+            "excavation_volume_cy": 1.25,
+            "concrete_bags": null,
+            "concrete_cost": 0,
+            "concrete_rate": 0,
+            "rebar_feet": 20,
+            "rebar_weight_lbs": 13.360000000000001,
+            "rebar_rate": 2,
+            "rebar_material_cost": 40,
+            "rebar_labor_cost": 72.00000000000001,
+            "rebar_labor_hours": 1.2000000000000002,
+            "rebar_geometry_feet": 20,
+            "rebar_geometry_weight_lbs": 13.360000000000001,
+            "rebar_connection_count": 16,
+            "support_count": 0,
+            "support_purchased_units": 0,
+            "support_packs": 0,
+            "support_material_cost": 0,
+            "support_labor_cost": 0,
+            "support_labor_hours": 0,
+            "support_cost": 0,
+            "excavation_cost": 150,
+            "excavation_hours": 2.5,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "pouring_cost": 15,
+            "finishing_cost": 11.25,
+            "finishing_hours": 0.1875,
+            "reinforcement_calculation_version": 2,
+            "reinforcement_design": {
+              "version": 2,
+              "bar_diameter_inches": 0.5,
+              "cover_inches": {
+                "side": 3,
+                "top": 3,
+                "bottom": 3
+              },
+              "supports": {
+                "mode": "off",
+                "reason": "Synthetic explicit exclusion, not structural advice."
+              },
+              "spread": {
+                "mats": [
+                  {
+                    "id": "top",
+                    "bearing_elevation_inches": 32,
+                    "max_spacing_x_inches": 12,
+                    "max_spacing_z_inches": 12
+                  }
+                ],
+                "inter_mat_ties": []
+              },
+              "pillar": {
+                "longitudinal": {}
+              }
+            },
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Synthetic",
+              "reason": "Synthetic explicit per-foot basis",
+              "unit": "ft",
+              "bar_diameter_inches": 0.5,
+              "weight_lb_per_ft": 0.668,
+              "cost_per_ft": 2
+            },
+            "custom_rebar_qty": null,
+            "custom_rebar_cost_per_ft": 2,
+            "reinforcement_cost_snapshot": {
+              "version": 1,
+              "calculation_version": 2,
+              "engineering_approved": false,
+              "amounts": {
+                "geometry_feet": 20,
+                "priced_feet": 20,
+                "connection_count": 16,
+                "material_cost": 40,
+                "labor_hours": 1.2000000000000002,
+                "labor_cost": 72.00000000000001,
+                "steel_cost": 112.00000000000001,
+                "priced_weight_lbs": 13.360000000000001,
+                "geometry_weight_lbs": 13.360000000000001
+              },
+              "material": {
+                "kind": "manual",
+                "inventory_id": null,
+                "inventory_updated_date": null,
+                "name": "Synthetic",
+                "reason": "Synthetic explicit per-foot basis",
+                "pricing_unit": "ft",
+                "original_unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "rate_source": "custom_rebar_cost_per_ft"
+              },
+              "basis": {
+                "unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "quantity_override_ft": null,
+                "labor_rate_per_hour": 60,
+                "labor_hours_per_ft": 0.02,
+                "labor_hours_per_connection": 0.05,
+                "labor_hours_per_support": 0.05
+              },
+              "rate_sources": [
+                {
+                  "key": "foundation_main_labor_rate",
+                  "source": "legacy_default",
+                  "value": 60
+                },
+                {
+                  "key": "foundation_rebar_time_linear_ft",
+                  "source": "legacy_default",
+                  "value": 0.02
+                },
+                {
+                  "key": "foundation_rebar_time_cross_section",
+                  "source": "legacy_default",
+                  "value": 0.05
+                },
+                {
+                  "key": "foundation_rebar_support_time_each",
+                  "source": "legacy_default",
+                  "value": 0.05
+                }
+              ],
+              "supports": {
+                "version": 1,
+                "status": "off_explained",
+                "mode": null,
+                "count": 0,
+                "per_instance_count": 0,
+                "selections": [],
+                "amounts": {
+                  "support_count": 0,
+                  "support_purchased_units": 0,
+                  "support_packs": 0,
+                  "support_material_cost": 0,
+                  "support_labor_hours": 0,
+                  "support_labor_cost": 0,
+                  "support_cost": 0
+                },
+                "issues": []
+              },
+              "cut_schedule": {
+                "version": 1,
+                "status": "unresolved",
+                "bar_size": null,
+                "bar_diameter_inches": 0.5,
+                "instance_count": 1,
+                "cut_lines": [
+                  {
+                    "source_run_id": "top/x",
+                    "role": "horizontal",
+                    "mat_id": "top",
+                    "bar_size": null,
+                    "bar_diameter_inches": 0.5,
+                    "cut_length_inches": 30,
+                    "shape": "straight",
+                    "bend_code": null,
+                    "quantity_per_instance": 4,
+                    "quantity_total": 4
+                  },
+                  {
+                    "source_run_id": "top/z",
+                    "role": "horizontal",
+                    "mat_id": "top",
+                    "bar_size": null,
+                    "bar_diameter_inches": 0.5,
+                    "cut_length_inches": 30,
+                    "shape": "straight",
+                    "bend_code": null,
+                    "quantity_per_instance": 4,
+                    "quantity_total": 4
+                  }
+                ],
+                "piece_count_total": 8,
+                "stock": null,
+                "elevation_summary": [
+                  {
+                    "kind": "mat",
+                    "index": 0,
+                    "tier": 0,
+                    "mat_id": "top",
+                    "bearing_elevation_inches": 32,
+                    "x_bars": {
+                      "count": 4,
+                      "cut_length_inches": 30,
+                      "elevation_inches": 32.25
+                    },
+                    "z_bars": {
+                      "count": 4,
+                      "cut_length_inches": 30,
+                      "elevation_inches": 32.75
+                    },
+                    "crossings": 16
+                  }
+                ],
+                "issues": [
+                  {
+                    "field": "stock_lengths",
+                    "code": "reinforcement_stock_length_unconfigured",
+                    "message": "A manual rebar basis carries no catalog stock lengths; the cut lines stand but the stock/waste plan is unresolved — record stock lengths or pin a catalog row.",
+                    "severity": "warning"
+                  }
+                ]
+              }
+            },
+            "reinforcement_acceptance": {
+              "version": 1,
+              "proposal_id": "foundation_reinforcement_proposal:f0ba885a-e991-45d6-9c22-9eae21c8f0cd",
+              "accepted_at": "2026-11-11T12:06:54.699Z",
+              "owner_id": "synthetic-owner",
+              "source_id": "page-source",
+              "component_id": "one",
+              "source_updated_at": "version-1",
+              "acknowledged_warning_codes": [
+                "reinforcement_geometry_truncated",
+                "reinforcement_stock_length_unconfigured",
+                "reinforcement_supports_off_explained"
+              ],
+              "engineering_approved": false
+            }
+          }
+        ],
+        "signage_cabinets": [
+          {
+            "unit_cost": 12,
+            "quantity": 2,
+            "component_id": "foundation_signage_cabinet:829d86ea-7d15-4cae-80d6-f62e3d6b8174",
+            "foundation_component_id": "",
+            "pole_component_id": ""
+          }
+        ],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {
+            "0,0": "grass"
+          }
+        },
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "selected_equipment": [],
+        "walls": [],
+        "wall_caps": [],
+        "poles": [],
+        "total_signage_cabinet_cost": 24,
+        "total_landscape_cost": 0.75,
+        "customer_markup_percent": 0,
+        "revision_history": [
+          {
+            "updated_date": "version-1",
+            "at": 1794398814701,
+            "revision_label": null,
+            "revision_approved_by": null,
+            "snapshot": {
+              "item_count": 1,
+              "wall_count": 0,
+              "pole_count": 0,
+              "cap_count": 0,
+              "cabinet_count": 1,
+              "total_cost": null
+            }
+          }
+        ],
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 381,
+          "rounded_yards": 1,
+          "rate_per_yard": 201,
+          "additional_stops_cost": 0,
+          "trucks": [
+            {
+              "yards": 1,
+              "rounded_yards": 1,
+              "cost": 381,
+              "small_order_fee": 150,
+              "fuel_fee": 30
+            }
+          ]
+        },
+        "total_concrete_cost": 381,
+        "total_rebar_cost": 112.00000000000001,
+        "total_excavation_cost": 150,
+        "total_labor_cost": 26.25,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "foundation_sync:048fdf17-2bf2-457f-b950-048b8c5a2281",
+          "source_project_id": "page-source",
+          "estimate_id": "coupled-estimate",
+          "requested_at": "2026-11-11T12:06:54.702Z"
+        }
+      }
+    ],
+    "FoundationInventory": [
+      {
+        "id": "catalog-rebar",
+        "material_name": "Synthetic #4",
+        "material_type": "rebar",
+        "rebar_size": "#4",
+        "show_in_foundation": true,
+        "cost_per_unit": 2,
+        "rebar_diameter_inches": 0.5,
+        "rebar_weight_lb_per_ft": 0.668,
+        "unit": "ft",
+        "updated_date": "version-1"
+      }
+    ],
+    "LaborServiceInventory": [],
+    "Settings": [],
+    "AllInOneEstimate": [
+      {
+        "id": "coupled-estimate",
+        "status": "draft",
+        "deleted": false,
+        "updated_date": "version-1",
+        "line_items": [
+          {
+            "line_id": "unrelated-line",
+            "module_key": "painting",
+            "project_id": "page-source",
+            "total_snapshot": 345,
+            "sentinel": [
+              "untouched"
+            ]
+          },
+          {
+            "line_id": "coupled-foundation-line",
+            "module_key": "foundation",
+            "project_id": "page-source",
+            "builder_product_id": "coupled-foundation-builder",
+            "total_snapshot": 0,
+            "customer_price_snapshot": 0
+          }
+        ]
+      }
+    ],
+    "BuilderProduct": [
+      {
+        "id": "unrelated-builder",
+        "estimate_id": "coupled-estimate",
+        "module_key": "painting",
+        "source_project_id": "page-source",
+        "updated_date": "version-1",
+        "frozen_cost": 345,
+        "builder_snapshot": {
+          "sentinel": "untouched"
+        }
+      },
+      {
+        "id": "coupled-foundation-builder",
+        "estimate_id": "coupled-estimate",
+        "estimate_line_id": "coupled-foundation-line",
+        "module_key": "foundation",
+        "source_project_id": "page-source",
+        "source_entity": "FoundationProject",
+        "updated_date": "2026-11-07T12:00:00.002Z",
+        "frozen_cost": 0,
+        "frozen_customer_price": 0,
+        "price_state": "unchecked",
+        "builder_version": 1,
+        "builder_name": "Concrete | Masonry | Poles",
+        "client_product_name": "Concrete | Masonry | Poles",
+        "client_description": "",
+        "product_category": "",
+        "production_product_type": "",
+        "product_notes": "",
+        "quantity": 1,
+        "status": "in_progress",
+        "current_recalculated_cost": 694,
+        "price_delta": 694,
+        "price_delta_percent": 0,
+        "price_recalc_required": false,
+        "price_recalc_reason": "",
+        "last_price_check_at": "2026-11-11T12:06:54.703Z"
+      }
+    ],
+    "BuilderPart": [
+      {
+        "id": "unrelated-part",
+        "builder_product_id": "unrelated-builder",
+        "frozen_extended_cost": 48,
+        "sentinel": "untouched"
+      }
+    ],
+    "BuilderPartGroup": [],
+    "BuilderPriceRevision": []
+  },
+  "finalState": {
+    "FoundationProject": [
+      {
+        "id": "page-source",
+        "updated_date": "2026-11-07T12:00:00.001Z",
+        "project_name": "Synthetic page only",
+        "client_name": "Synthetic",
+        "items": [
+          {
+            "component_id": "one",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "include_rebar": true,
+            "include_finishing": true,
+            "rebar_size": "#4",
+            "rebar_cost": 112.00000000000001,
+            "item_total_cost": 288.25,
+            "concrete_volume_cy": 1,
+            "excavation_volume_cy": 1.25,
+            "concrete_bags": null,
+            "concrete_cost": 0,
+            "concrete_rate": 0,
+            "rebar_feet": 20,
+            "rebar_weight_lbs": 13.360000000000001,
+            "rebar_rate": 2,
+            "rebar_material_cost": 40,
+            "rebar_labor_cost": 72.00000000000001,
+            "rebar_labor_hours": 1.2000000000000002,
+            "rebar_geometry_feet": 20,
+            "rebar_geometry_weight_lbs": 13.360000000000001,
+            "rebar_connection_count": 16,
+            "support_count": 0,
+            "support_purchased_units": 0,
+            "support_packs": 0,
+            "support_material_cost": 0,
+            "support_labor_cost": 0,
+            "support_labor_hours": 0,
+            "support_cost": 0,
+            "excavation_cost": 150,
+            "excavation_hours": 2.5,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "pouring_cost": 15,
+            "finishing_cost": 11.25,
+            "finishing_hours": 0.1875,
+            "reinforcement_calculation_version": 2,
+            "reinforcement_design": {
+              "version": 2,
+              "bar_diameter_inches": 0.5,
+              "cover_inches": {
+                "side": 3,
+                "top": 3,
+                "bottom": 3
+              },
+              "supports": {
+                "mode": "off",
+                "reason": "Synthetic explicit exclusion, not structural advice."
+              },
+              "spread": {
+                "mats": [
+                  {
+                    "id": "top",
+                    "bearing_elevation_inches": 32,
+                    "max_spacing_x_inches": 12,
+                    "max_spacing_z_inches": 12
+                  }
+                ],
+                "inter_mat_ties": []
+              },
+              "pillar": {
+                "longitudinal": {}
+              }
+            },
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Synthetic",
+              "reason": "Synthetic explicit per-foot basis",
+              "unit": "ft",
+              "bar_diameter_inches": 0.5,
+              "weight_lb_per_ft": 0.668,
+              "cost_per_ft": 2
+            },
+            "custom_rebar_qty": null,
+            "custom_rebar_cost_per_ft": 2,
+            "reinforcement_cost_snapshot": {
+              "version": 1,
+              "calculation_version": 2,
+              "engineering_approved": false,
+              "amounts": {
+                "geometry_feet": 20,
+                "priced_feet": 20,
+                "connection_count": 16,
+                "material_cost": 40,
+                "labor_hours": 1.2000000000000002,
+                "labor_cost": 72.00000000000001,
+                "steel_cost": 112.00000000000001,
+                "priced_weight_lbs": 13.360000000000001,
+                "geometry_weight_lbs": 13.360000000000001
+              },
+              "material": {
+                "kind": "manual",
+                "inventory_id": null,
+                "inventory_updated_date": null,
+                "name": "Synthetic",
+                "reason": "Synthetic explicit per-foot basis",
+                "pricing_unit": "ft",
+                "original_unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "rate_source": "custom_rebar_cost_per_ft"
+              },
+              "basis": {
+                "unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "quantity_override_ft": null,
+                "labor_rate_per_hour": 60,
+                "labor_hours_per_ft": 0.02,
+                "labor_hours_per_connection": 0.05,
+                "labor_hours_per_support": 0.05
+              },
+              "rate_sources": [
+                {
+                  "key": "foundation_main_labor_rate",
+                  "source": "legacy_default",
+                  "value": 60
+                },
+                {
+                  "key": "foundation_rebar_time_linear_ft",
+                  "source": "legacy_default",
+                  "value": 0.02
+                },
+                {
+                  "key": "foundation_rebar_time_cross_section",
+                  "source": "legacy_default",
+                  "value": 0.05
+                },
+                {
+                  "key": "foundation_rebar_support_time_each",
+                  "source": "legacy_default",
+                  "value": 0.05
+                }
+              ],
+              "supports": {
+                "version": 1,
+                "status": "off_explained",
+                "mode": null,
+                "count": 0,
+                "per_instance_count": 0,
+                "selections": [],
+                "amounts": {
+                  "support_count": 0,
+                  "support_purchased_units": 0,
+                  "support_packs": 0,
+                  "support_material_cost": 0,
+                  "support_labor_hours": 0,
+                  "support_labor_cost": 0,
+                  "support_cost": 0
+                },
+                "issues": []
+              },
+              "cut_schedule": {
+                "version": 1,
+                "status": "unresolved",
+                "bar_size": null,
+                "bar_diameter_inches": 0.5,
+                "instance_count": 1,
+                "cut_lines": [
+                  {
+                    "source_run_id": "top/x",
+                    "role": "horizontal",
+                    "mat_id": "top",
+                    "bar_size": null,
+                    "bar_diameter_inches": 0.5,
+                    "cut_length_inches": 30,
+                    "shape": "straight",
+                    "bend_code": null,
+                    "quantity_per_instance": 4,
+                    "quantity_total": 4
+                  },
+                  {
+                    "source_run_id": "top/z",
+                    "role": "horizontal",
+                    "mat_id": "top",
+                    "bar_size": null,
+                    "bar_diameter_inches": 0.5,
+                    "cut_length_inches": 30,
+                    "shape": "straight",
+                    "bend_code": null,
+                    "quantity_per_instance": 4,
+                    "quantity_total": 4
+                  }
+                ],
+                "piece_count_total": 8,
+                "stock": null,
+                "elevation_summary": [
+                  {
+                    "kind": "mat",
+                    "index": 0,
+                    "tier": 0,
+                    "mat_id": "top",
+                    "bearing_elevation_inches": 32,
+                    "x_bars": {
+                      "count": 4,
+                      "cut_length_inches": 30,
+                      "elevation_inches": 32.25
+                    },
+                    "z_bars": {
+                      "count": 4,
+                      "cut_length_inches": 30,
+                      "elevation_inches": 32.75
+                    },
+                    "crossings": 16
+                  }
+                ],
+                "issues": [
+                  {
+                    "field": "stock_lengths",
+                    "code": "reinforcement_stock_length_unconfigured",
+                    "message": "A manual rebar basis carries no catalog stock lengths; the cut lines stand but the stock/waste plan is unresolved — record stock lengths or pin a catalog row.",
+                    "severity": "warning"
+                  }
+                ]
+              }
+            },
+            "reinforcement_acceptance": {
+              "version": 1,
+              "proposal_id": "foundation_reinforcement_proposal:f0ba885a-e991-45d6-9c22-9eae21c8f0cd",
+              "accepted_at": "2026-11-11T12:06:54.699Z",
+              "owner_id": "synthetic-owner",
+              "source_id": "page-source",
+              "component_id": "one",
+              "source_updated_at": "version-1",
+              "acknowledged_warning_codes": [
+                "reinforcement_geometry_truncated",
+                "reinforcement_stock_length_unconfigured",
+                "reinforcement_supports_off_explained"
+              ],
+              "engineering_approved": false
+            }
+          }
+        ],
+        "signage_cabinets": [
+          {
+            "unit_cost": 12,
+            "quantity": 2,
+            "component_id": "foundation_signage_cabinet:829d86ea-7d15-4cae-80d6-f62e3d6b8174",
+            "foundation_component_id": "",
+            "pole_component_id": ""
+          }
+        ],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {
+            "0,0": "grass"
+          }
+        },
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "selected_equipment": [],
+        "walls": [],
+        "wall_caps": [],
+        "poles": [],
+        "total_signage_cabinet_cost": 24,
+        "total_landscape_cost": 0.75,
+        "customer_markup_percent": 0,
+        "revision_history": [
+          {
+            "updated_date": "version-1",
+            "at": 1794398814701,
+            "revision_label": null,
+            "revision_approved_by": null,
+            "snapshot": {
+              "item_count": 1,
+              "wall_count": 0,
+              "pole_count": 0,
+              "cap_count": 0,
+              "cabinet_count": 1,
+              "total_cost": null
+            }
+          }
+        ],
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 381,
+          "rounded_yards": 1,
+          "rate_per_yard": 201,
+          "additional_stops_cost": 0,
+          "trucks": [
+            {
+              "yards": 1,
+              "rounded_yards": 1,
+              "cost": 381,
+              "small_order_fee": 150,
+              "fuel_fee": 30
+            }
+          ]
+        },
+        "total_concrete_cost": 381,
+        "total_rebar_cost": 112.00000000000001,
+        "total_excavation_cost": 150,
+        "total_labor_cost": 26.25,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "foundation_sync:048fdf17-2bf2-457f-b950-048b8c5a2281",
+          "source_project_id": "page-source",
+          "estimate_id": "coupled-estimate",
+          "requested_at": "2026-11-11T12:06:54.702Z"
+        }
+      }
+    ],
+    "FoundationInventory": [
+      {
+        "id": "catalog-rebar",
+        "material_name": "Synthetic #4",
+        "material_type": "rebar",
+        "rebar_size": "#4",
+        "show_in_foundation": true,
+        "cost_per_unit": 2,
+        "rebar_diameter_inches": 0.5,
+        "rebar_weight_lb_per_ft": 0.668,
+        "unit": "ft",
+        "updated_date": "version-1"
+      }
+    ],
+    "LaborServiceInventory": [],
+    "Settings": [],
+    "AllInOneEstimate": [
+      {
+        "id": "coupled-estimate",
+        "status": "draft",
+        "deleted": false,
+        "updated_date": "version-1",
+        "line_items": [
+          {
+            "line_id": "unrelated-line",
+            "module_key": "painting",
+            "project_id": "page-source",
+            "total_snapshot": 345,
+            "sentinel": [
+              "untouched"
+            ]
+          },
+          {
+            "line_id": "coupled-foundation-line",
+            "module_key": "foundation",
+            "project_id": "page-source",
+            "builder_product_id": "coupled-foundation-builder",
+            "total_snapshot": 0,
+            "customer_price_snapshot": 0
+          }
+        ]
+      }
+    ],
+    "BuilderProduct": [
+      {
+        "id": "unrelated-builder",
+        "estimate_id": "coupled-estimate",
+        "module_key": "painting",
+        "source_project_id": "page-source",
+        "updated_date": "version-1",
+        "frozen_cost": 345,
+        "builder_snapshot": {
+          "sentinel": "untouched"
+        }
+      },
+      {
+        "id": "coupled-foundation-builder",
+        "estimate_id": "coupled-estimate",
+        "estimate_line_id": "coupled-foundation-line",
+        "module_key": "foundation",
+        "source_project_id": "page-source",
+        "source_entity": "FoundationProject",
+        "updated_date": "2026-11-07T12:00:00.002Z",
+        "frozen_cost": 0,
+        "frozen_customer_price": 0,
+        "price_state": "unchecked",
+        "builder_version": 1,
+        "builder_name": "Concrete | Masonry | Poles",
+        "client_product_name": "Concrete | Masonry | Poles",
+        "client_description": "",
+        "product_category": "",
+        "production_product_type": "",
+        "product_notes": "",
+        "quantity": 1,
+        "status": "in_progress",
+        "current_recalculated_cost": 694,
+        "price_delta": 694,
+        "price_delta_percent": 0,
+        "price_recalc_required": false,
+        "price_recalc_reason": "",
+        "last_price_check_at": "2026-11-11T12:06:54.703Z"
+      }
+    ],
+    "BuilderPart": [
+      {
+        "id": "unrelated-part",
+        "builder_product_id": "unrelated-builder",
+        "frozen_extended_cost": 48,
+        "sentinel": "untouched"
+      }
+    ],
+    "BuilderPartGroup": [],
+    "BuilderPriceRevision": []
+  },
+  "toolbar": {
+    "dirty": true,
+    "pricingUnavailable": false
+  },
+  "sourceWriteCount": 1,
+  "audit": [
+    {
+      "index": 0,
+      "entity": "FoundationProject",
+      "method": "get",
+      "id": "page-source",
+      "found": true
+    },
+    {
+      "index": 1,
+      "entity": "FoundationInventory",
+      "method": "readRows",
+      "query": {
+        "show_in_foundation": true
+      },
+      "sort": "material_name",
+      "limit": 500,
+      "skip": 0,
+      "returned": 1
+    },
+    {
+      "index": 2,
+      "entity": "LaborServiceInventory",
+      "method": "readRows",
+      "query": {
+        "service_category": "concrete_service",
+        "is_active": true
+      },
+      "sort": "service_name",
+      "limit": 500,
+      "skip": 0,
+      "returned": 0
+    },
+    {
+      "index": 3,
+      "entity": "Settings",
+      "method": "readRows",
+      "query": {},
+      "sort": "created_date",
+      "limit": 500,
+      "skip": 0,
+      "returned": 0
+    },
+    {
+      "index": 4,
+      "entity": "AllInOneEstimate",
+      "method": "get",
+      "id": "coupled-estimate",
+      "found": true
+    },
+    {
+      "index": 5,
+      "entity": "AllInOneEstimate",
+      "method": "get",
+      "id": "coupled-estimate",
+      "found": true
+    },
+    {
+      "index": 6,
+      "entity": "AllInOneEstimate",
+      "method": "get",
+      "id": "coupled-estimate",
+      "found": true
+    },
+    {
+      "index": 7,
+      "entity": "FoundationProject",
+      "method": "updateMany",
+      "id": "page-source",
+      "query": {
+        "id": "page-source",
+        "updated_date": "version-1"
+      },
+      "patch": {
+        "project_name": "Synthetic page only",
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "items": [
+          {
+            "component_id": "one",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "include_rebar": true,
+            "include_finishing": true,
+            "rebar_size": "#4",
+            "rebar_cost": 112.00000000000001,
+            "item_total_cost": 288.25,
+            "concrete_volume_cy": 1,
+            "excavation_volume_cy": 1.25,
+            "concrete_bags": null,
+            "concrete_cost": 0,
+            "concrete_rate": 0,
+            "rebar_feet": 20,
+            "rebar_weight_lbs": 13.360000000000001,
+            "rebar_rate": 2,
+            "rebar_material_cost": 40,
+            "rebar_labor_cost": 72.00000000000001,
+            "rebar_labor_hours": 1.2000000000000002,
+            "rebar_geometry_feet": 20,
+            "rebar_geometry_weight_lbs": 13.360000000000001,
+            "rebar_connection_count": 16,
+            "support_count": 0,
+            "support_purchased_units": 0,
+            "support_packs": 0,
+            "support_material_cost": 0,
+            "support_labor_cost": 0,
+            "support_labor_hours": 0,
+            "support_cost": 0,
+            "excavation_cost": 150,
+            "excavation_hours": 2.5,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "pouring_cost": 15,
+            "finishing_cost": 11.25,
+            "finishing_hours": 0.1875,
+            "reinforcement_calculation_version": 2,
+            "reinforcement_design": {
+              "version": 2,
+              "bar_diameter_inches": 0.5,
+              "cover_inches": {
+                "side": 3,
+                "top": 3,
+                "bottom": 3
+              },
+              "supports": {
+                "mode": "off",
+                "reason": "Synthetic explicit exclusion, not structural advice."
+              },
+              "spread": {
+                "mats": [
+                  {
+                    "id": "top",
+                    "bearing_elevation_inches": 32,
+                    "max_spacing_x_inches": 12,
+                    "max_spacing_z_inches": 12
+                  }
+                ],
+                "inter_mat_ties": []
+              },
+              "pillar": {
+                "longitudinal": {}
+              }
+            },
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Synthetic",
+              "reason": "Synthetic explicit per-foot basis",
+              "unit": "ft",
+              "bar_diameter_inches": 0.5,
+              "weight_lb_per_ft": 0.668,
+              "cost_per_ft": 2
+            },
+            "custom_rebar_qty": null,
+            "custom_rebar_cost_per_ft": 2,
+            "reinforcement_cost_snapshot": {
+              "version": 1,
+              "calculation_version": 2,
+              "engineering_approved": false,
+              "amounts": {
+                "geometry_feet": 20,
+                "priced_feet": 20,
+                "connection_count": 16,
+                "material_cost": 40,
+                "labor_hours": 1.2000000000000002,
+                "labor_cost": 72.00000000000001,
+                "steel_cost": 112.00000000000001,
+                "priced_weight_lbs": 13.360000000000001,
+                "geometry_weight_lbs": 13.360000000000001
+              },
+              "material": {
+                "kind": "manual",
+                "inventory_id": null,
+                "inventory_updated_date": null,
+                "name": "Synthetic",
+                "reason": "Synthetic explicit per-foot basis",
+                "pricing_unit": "ft",
+                "original_unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "rate_source": "custom_rebar_cost_per_ft"
+              },
+              "basis": {
+                "unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "quantity_override_ft": null,
+                "labor_rate_per_hour": 60,
+                "labor_hours_per_ft": 0.02,
+                "labor_hours_per_connection": 0.05,
+                "labor_hours_per_support": 0.05
+              },
+              "rate_sources": [
+                {
+                  "key": "foundation_main_labor_rate",
+                  "source": "legacy_default",
+                  "value": 60
+                },
+                {
+                  "key": "foundation_rebar_time_linear_ft",
+                  "source": "legacy_default",
+                  "value": 0.02
+                },
+                {
+                  "key": "foundation_rebar_time_cross_section",
+                  "source": "legacy_default",
+                  "value": 0.05
+                },
+                {
+                  "key": "foundation_rebar_support_time_each",
+                  "source": "legacy_default",
+                  "value": 0.05
+                }
+              ],
+              "supports": {
+                "version": 1,
+                "status": "off_explained",
+                "mode": null,
+                "count": 0,
+                "per_instance_count": 0,
+                "selections": [],
+                "amounts": {
+                  "support_count": 0,
+                  "support_purchased_units": 0,
+                  "support_packs": 0,
+                  "support_material_cost": 0,
+                  "support_labor_hours": 0,
+                  "support_labor_cost": 0,
+                  "support_cost": 0
+                },
+                "issues": []
+              },
+              "cut_schedule": {
+                "version": 1,
+                "status": "unresolved",
+                "bar_size": null,
+                "bar_diameter_inches": 0.5,
+                "instance_count": 1,
+                "cut_lines": [
+                  {
+                    "source_run_id": "top/x",
+                    "role": "horizontal",
+                    "mat_id": "top",
+                    "bar_size": null,
+                    "bar_diameter_inches": 0.5,
+                    "cut_length_inches": 30,
+                    "shape": "straight",
+                    "bend_code": null,
+                    "quantity_per_instance": 4,
+                    "quantity_total": 4
+                  },
+                  {
+                    "source_run_id": "top/z",
+                    "role": "horizontal",
+                    "mat_id": "top",
+                    "bar_size": null,
+                    "bar_diameter_inches": 0.5,
+                    "cut_length_inches": 30,
+                    "shape": "straight",
+                    "bend_code": null,
+                    "quantity_per_instance": 4,
+                    "quantity_total": 4
+                  }
+                ],
+                "piece_count_total": 8,
+                "stock": null,
+                "elevation_summary": [
+                  {
+                    "kind": "mat",
+                    "index": 0,
+                    "tier": 0,
+                    "mat_id": "top",
+                    "bearing_elevation_inches": 32,
+                    "x_bars": {
+                      "count": 4,
+                      "cut_length_inches": 30,
+                      "elevation_inches": 32.25
+                    },
+                    "z_bars": {
+                      "count": 4,
+                      "cut_length_inches": 30,
+                      "elevation_inches": 32.75
+                    },
+                    "crossings": 16
+                  }
+                ],
+                "issues": [
+                  {
+                    "field": "stock_lengths",
+                    "code": "reinforcement_stock_length_unconfigured",
+                    "message": "A manual rebar basis carries no catalog stock lengths; the cut lines stand but the stock/waste plan is unresolved — record stock lengths or pin a catalog row.",
+                    "severity": "warning"
+                  }
+                ]
+              }
+            },
+            "reinforcement_acceptance": {
+              "version": 1,
+              "proposal_id": "foundation_reinforcement_proposal:f0ba885a-e991-45d6-9c22-9eae21c8f0cd",
+              "accepted_at": "2026-11-11T12:06:54.699Z",
+              "owner_id": "synthetic-owner",
+              "source_id": "page-source",
+              "component_id": "one",
+              "source_updated_at": "version-1",
+              "acknowledged_warning_codes": [
+                "reinforcement_geometry_truncated",
+                "reinforcement_stock_length_unconfigured",
+                "reinforcement_supports_off_explained"
+              ],
+              "engineering_approved": false
+            }
+          }
+        ],
+        "selected_equipment": [],
+        "walls": [],
+        "wall_caps": [],
+        "poles": [],
+        "signage_cabinets": [
+          {
+            "unit_cost": 12,
+            "quantity": 2,
+            "component_id": "foundation_signage_cabinet:829d86ea-7d15-4cae-80d6-f62e3d6b8174",
+            "foundation_component_id": "",
+            "pole_component_id": ""
+          }
+        ],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {
+            "0,0": "grass"
+          }
+        },
+        "total_signage_cabinet_cost": 24,
+        "total_landscape_cost": 0.75,
+        "customer_markup_percent": 0,
+        "revision_history": [
+          {
+            "updated_date": "version-1",
+            "at": 1794398814701,
+            "revision_label": null,
+            "revision_approved_by": null,
+            "snapshot": {
+              "item_count": 1,
+              "wall_count": 0,
+              "pole_count": 0,
+              "cap_count": 0,
+              "cabinet_count": 1,
+              "total_cost": null
+            }
+          }
+        ],
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 381,
+          "rounded_yards": 1,
+          "rate_per_yard": 201,
+          "additional_stops_cost": 0,
+          "trucks": [
+            {
+              "yards": 1,
+              "rounded_yards": 1,
+              "cost": 381,
+              "small_order_fee": 150,
+              "fuel_fee": 30
+            }
+          ]
+        },
+        "total_concrete_cost": 381,
+        "total_rebar_cost": 112.00000000000001,
+        "total_excavation_cost": 150,
+        "total_labor_cost": 26.25,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "foundation_sync:048fdf17-2bf2-457f-b950-048b8c5a2281",
+          "source_project_id": "page-source",
+          "estimate_id": "coupled-estimate",
+          "requested_at": "2026-11-11T12:06:54.702Z"
+        }
+      },
+      "before": {
+        "id": "page-source",
+        "updated_date": "version-1",
+        "project_name": "Synthetic page only",
+        "client_name": "Synthetic",
+        "items": [
+          {
+            "component_id": "one",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "include_rebar": true,
+            "include_finishing": true,
+            "rebar_size": "#4",
+            "rebar_cost": 262.8,
+            "item_total_cost": 439.05
+          }
+        ],
+        "signage_cabinets": [
+          {
+            "unit_cost": 12,
+            "quantity": 2
+          }
+        ],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {
+            "0,0": "grass"
+          }
+        }
+      },
+      "after": {
+        "id": "page-source",
+        "updated_date": "2026-11-07T12:00:00.001Z",
+        "project_name": "Synthetic page only",
+        "client_name": "Synthetic",
+        "items": [
+          {
+            "component_id": "one",
+            "foundation_type": "spread_foot",
+            "quantity": 1,
+            "length_inches": 36,
+            "width_inches": 36,
+            "depth_inches": 36,
+            "include_rebar": true,
+            "include_finishing": true,
+            "rebar_size": "#4",
+            "rebar_cost": 112.00000000000001,
+            "item_total_cost": 288.25,
+            "concrete_volume_cy": 1,
+            "excavation_volume_cy": 1.25,
+            "concrete_bags": null,
+            "concrete_cost": 0,
+            "concrete_rate": 0,
+            "rebar_feet": 20,
+            "rebar_weight_lbs": 13.360000000000001,
+            "rebar_rate": 2,
+            "rebar_material_cost": 40,
+            "rebar_labor_cost": 72.00000000000001,
+            "rebar_labor_hours": 1.2000000000000002,
+            "rebar_geometry_feet": 20,
+            "rebar_geometry_weight_lbs": 13.360000000000001,
+            "rebar_connection_count": 16,
+            "support_count": 0,
+            "support_purchased_units": 0,
+            "support_packs": 0,
+            "support_material_cost": 0,
+            "support_labor_cost": 0,
+            "support_labor_hours": 0,
+            "support_cost": 0,
+            "excavation_cost": 150,
+            "excavation_hours": 2.5,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "pouring_cost": 15,
+            "finishing_cost": 11.25,
+            "finishing_hours": 0.1875,
+            "reinforcement_calculation_version": 2,
+            "reinforcement_design": {
+              "version": 2,
+              "bar_diameter_inches": 0.5,
+              "cover_inches": {
+                "side": 3,
+                "top": 3,
+                "bottom": 3
+              },
+              "supports": {
+                "mode": "off",
+                "reason": "Synthetic explicit exclusion, not structural advice."
+              },
+              "spread": {
+                "mats": [
+                  {
+                    "id": "top",
+                    "bearing_elevation_inches": 32,
+                    "max_spacing_x_inches": 12,
+                    "max_spacing_z_inches": 12
+                  }
+                ],
+                "inter_mat_ties": []
+              },
+              "pillar": {
+                "longitudinal": {}
+              }
+            },
+            "reinforcement_material": {
+              "kind": "manual",
+              "name": "Synthetic",
+              "reason": "Synthetic explicit per-foot basis",
+              "unit": "ft",
+              "bar_diameter_inches": 0.5,
+              "weight_lb_per_ft": 0.668,
+              "cost_per_ft": 2
+            },
+            "custom_rebar_qty": null,
+            "custom_rebar_cost_per_ft": 2,
+            "reinforcement_cost_snapshot": {
+              "version": 1,
+              "calculation_version": 2,
+              "engineering_approved": false,
+              "amounts": {
+                "geometry_feet": 20,
+                "priced_feet": 20,
+                "connection_count": 16,
+                "material_cost": 40,
+                "labor_hours": 1.2000000000000002,
+                "labor_cost": 72.00000000000001,
+                "steel_cost": 112.00000000000001,
+                "priced_weight_lbs": 13.360000000000001,
+                "geometry_weight_lbs": 13.360000000000001
+              },
+              "material": {
+                "kind": "manual",
+                "inventory_id": null,
+                "inventory_updated_date": null,
+                "name": "Synthetic",
+                "reason": "Synthetic explicit per-foot basis",
+                "pricing_unit": "ft",
+                "original_unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "rate_source": "custom_rebar_cost_per_ft"
+              },
+              "basis": {
+                "unit": "ft",
+                "bar_diameter_inches": 0.5,
+                "weight_lb_per_ft": 0.668,
+                "cost_per_ft": 2,
+                "quantity_override_ft": null,
+                "labor_rate_per_hour": 60,
+                "labor_hours_per_ft": 0.02,
+                "labor_hours_per_connection": 0.05,
+                "labor_hours_per_support": 0.05
+              },
+              "rate_sources": [
+                {
+                  "key": "foundation_main_labor_rate",
+                  "source": "legacy_default",
+                  "value": 60
+                },
+                {
+                  "key": "foundation_rebar_time_linear_ft",
+                  "source": "legacy_default",
+                  "value": 0.02
+                },
+                {
+                  "key": "foundation_rebar_time_cross_section",
+                  "source": "legacy_default",
+                  "value": 0.05
+                },
+                {
+                  "key": "foundation_rebar_support_time_each",
+                  "source": "legacy_default",
+                  "value": 0.05
+                }
+              ],
+              "supports": {
+                "version": 1,
+                "status": "off_explained",
+                "mode": null,
+                "count": 0,
+                "per_instance_count": 0,
+                "selections": [],
+                "amounts": {
+                  "support_count": 0,
+                  "support_purchased_units": 0,
+                  "support_packs": 0,
+                  "support_material_cost": 0,
+                  "support_labor_hours": 0,
+                  "support_labor_cost": 0,
+                  "support_cost": 0
+                },
+                "issues": []
+              },
+              "cut_schedule": {
+                "version": 1,
+                "status": "unresolved",
+                "bar_size": null,
+                "bar_diameter_inches": 0.5,
+                "instance_count": 1,
+                "cut_lines": [
+                  {
+                    "source_run_id": "top/x",
+                    "role": "horizontal",
+                    "mat_id": "top",
+                    "bar_size": null,
+                    "bar_diameter_inches": 0.5,
+                    "cut_length_inches": 30,
+                    "shape": "straight",
+                    "bend_code": null,
+                    "quantity_per_instance": 4,
+                    "quantity_total": 4
+                  },
+                  {
+                    "source_run_id": "top/z",
+                    "role": "horizontal",
+                    "mat_id": "top",
+                    "bar_size": null,
+                    "bar_diameter_inches": 0.5,
+                    "cut_length_inches": 30,
+                    "shape": "straight",
+                    "bend_code": null,
+                    "quantity_per_instance": 4,
+                    "quantity_total": 4
+                  }
+                ],
+                "piece_count_total": 8,
+                "stock": null,
+                "elevation_summary": [
+                  {
+                    "kind": "mat",
+                    "index": 0,
+                    "tier": 0,
+                    "mat_id": "top",
+                    "bearing_elevation_inches": 32,
+                    "x_bars": {
+                      "count": 4,
+                      "cut_length_inches": 30,
+                      "elevation_inches": 32.25
+                    },
+                    "z_bars": {
+                      "count": 4,
+                      "cut_length_inches": 30,
+                      "elevation_inches": 32.75
+                    },
+                    "crossings": 16
+                  }
+                ],
+                "issues": [
+                  {
+                    "field": "stock_lengths",
+                    "code": "reinforcement_stock_length_unconfigured",
+                    "message": "A manual rebar basis carries no catalog stock lengths; the cut lines stand but the stock/waste plan is unresolved — record stock lengths or pin a catalog row.",
+                    "severity": "warning"
+                  }
+                ]
+              }
+            },
+            "reinforcement_acceptance": {
+              "version": 1,
+              "proposal_id": "foundation_reinforcement_proposal:f0ba885a-e991-45d6-9c22-9eae21c8f0cd",
+              "accepted_at": "2026-11-11T12:06:54.699Z",
+              "owner_id": "synthetic-owner",
+              "source_id": "page-source",
+              "component_id": "one",
+              "source_updated_at": "version-1",
+              "acknowledged_warning_codes": [
+                "reinforcement_geometry_truncated",
+                "reinforcement_stock_length_unconfigured",
+                "reinforcement_supports_off_explained"
+              ],
+              "engineering_approved": false
+            }
+          }
+        ],
+        "signage_cabinets": [
+          {
+            "unit_cost": 12,
+            "quantity": 2,
+            "component_id": "foundation_signage_cabinet:829d86ea-7d15-4cae-80d6-f62e3d6b8174",
+            "foundation_component_id": "",
+            "pole_component_id": ""
+          }
+        ],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {
+            "0,0": "grass"
+          }
+        },
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "selected_equipment": [],
+        "walls": [],
+        "wall_caps": [],
+        "poles": [],
+        "total_signage_cabinet_cost": 24,
+        "total_landscape_cost": 0.75,
+        "customer_markup_percent": 0,
+        "revision_history": [
+          {
+            "updated_date": "version-1",
+            "at": 1794398814701,
+            "revision_label": null,
+            "revision_approved_by": null,
+            "snapshot": {
+              "item_count": 1,
+              "wall_count": 0,
+              "pole_count": 0,
+              "cap_count": 0,
+              "cabinet_count": 1,
+              "total_cost": null
+            }
+          }
+        ],
+        "excavation_method": "hand_dig",
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 381,
+          "rounded_yards": 1,
+          "rate_per_yard": 201,
+          "additional_stops_cost": 0,
+          "trucks": [
+            {
+              "yards": 1,
+              "rounded_yards": 1,
+              "cost": 381,
+              "small_order_fee": 150,
+              "fuel_fee": 30
+            }
+          ]
+        },
+        "total_concrete_cost": 381,
+        "total_rebar_cost": 112.00000000000001,
+        "total_excavation_cost": 150,
+        "total_labor_cost": 26.25,
+        "total_equipment_cost": 0,
+        "total_forming_materials_cost": 0,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "foundation_sync:048fdf17-2bf2-457f-b950-048b8c5a2281",
+          "source_project_id": "page-source",
+          "estimate_id": "coupled-estimate",
+          "requested_at": "2026-11-11T12:06:54.702Z"
+        }
+      }
+    },
+    {
+      "index": 8,
+      "entity": "FoundationProject",
+      "method": "get",
+      "id": "page-source",
+      "found": true
+    },
+    {
+      "index": 9,
+      "entity": "AllInOneEstimate",
+      "method": "get",
+      "id": "coupled-estimate",
+      "found": true
+    },
+    {
+      "index": 10,
+      "entity": "BuilderProduct",
+      "method": "get",
+      "id": "coupled-foundation-builder",
+      "found": true
+    },
+    {
+      "index": 11,
+      "entity": "FoundationInventory",
+      "method": "readRows",
+      "query": {},
+      "sort": "material_name",
+      "limit": 500,
+      "skip": 0,
+      "returned": 1
+    },
+    {
+      "index": 12,
+      "entity": "LaborServiceInventory",
+      "method": "readRows",
+      "query": {},
+      "sort": "service_name",
+      "limit": 500,
+      "skip": 0,
+      "returned": 0
+    },
+    {
+      "index": 13,
+      "entity": "BuilderPart",
+      "method": "readRows",
+      "query": {
+        "builder_product_id": "coupled-foundation-builder"
+      },
+      "sort": "sort_order",
+      "limit": 500,
+      "skip": 0,
+      "returned": 0
+    },
+    {
+      "index": 14,
+      "entity": "BuilderProduct",
+      "method": "get",
+      "id": "coupled-foundation-builder",
+      "found": true
+    },
+    {
+      "index": 15,
+      "entity": "BuilderProduct",
+      "method": "updateMany",
+      "id": "coupled-foundation-builder",
+      "query": {
+        "id": "coupled-foundation-builder",
+        "updated_date": "version-1"
+      },
+      "patch": {
+        "estimate_line_id": "coupled-foundation-line",
+        "module_key": "foundation",
+        "source_entity": "FoundationProject",
+        "source_project_id": "page-source",
+        "builder_name": "Concrete | Masonry | Poles",
+        "client_product_name": "Concrete | Masonry | Poles",
+        "client_description": "",
+        "product_category": "",
+        "production_product_type": "",
+        "product_notes": "",
+        "quantity": 1,
+        "status": "in_progress",
+        "current_recalculated_cost": 694,
+        "price_state": "unchecked",
+        "price_delta": 694,
+        "price_delta_percent": 0,
+        "price_recalc_required": false,
+        "price_recalc_reason": "",
+        "last_price_check_at": "2026-11-11T12:06:54.703Z"
+      },
+      "before": {
+        "id": "coupled-foundation-builder",
+        "estimate_id": "coupled-estimate",
+        "estimate_line_id": "coupled-foundation-line",
+        "module_key": "foundation",
+        "source_project_id": "page-source",
+        "source_entity": "FoundationProject",
+        "updated_date": "version-1",
+        "frozen_cost": 0,
+        "frozen_customer_price": 0,
+        "price_state": "unchecked",
+        "builder_version": 1
+      },
+      "after": {
+        "id": "coupled-foundation-builder",
+        "estimate_id": "coupled-estimate",
+        "estimate_line_id": "coupled-foundation-line",
+        "module_key": "foundation",
+        "source_project_id": "page-source",
+        "source_entity": "FoundationProject",
+        "updated_date": "2026-11-07T12:00:00.002Z",
+        "frozen_cost": 0,
+        "frozen_customer_price": 0,
+        "price_state": "unchecked",
+        "builder_version": 1,
+        "builder_name": "Concrete | Masonry | Poles",
+        "client_product_name": "Concrete | Masonry | Poles",
+        "client_description": "",
+        "product_category": "",
+        "production_product_type": "",
+        "product_notes": "",
+        "quantity": 1,
+        "status": "in_progress",
+        "current_recalculated_cost": 694,
+        "price_delta": 694,
+        "price_delta_percent": 0,
+        "price_recalc_required": false,
+        "price_recalc_reason": "",
+        "last_price_check_at": "2026-11-11T12:06:54.703Z"
+      }
+    },
+    {
+      "index": 16,
+      "entity": "BuilderProduct",
+      "method": "get",
+      "id": "coupled-foundation-builder",
+      "found": true
+    }
+  ]
+}

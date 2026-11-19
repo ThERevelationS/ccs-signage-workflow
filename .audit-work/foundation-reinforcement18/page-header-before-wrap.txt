@@ -1,0 +1,6 @@
+ok accept-undo-save-bom 1440
+ok invalid-draft-reload-restore 1440
+ok accept-undo-save-bom 390
+FAIL invalid-draft-reload-restore 390 No full-page horizontal overflow
+Foundation page browser: 3/4; failed=1
+exit=1

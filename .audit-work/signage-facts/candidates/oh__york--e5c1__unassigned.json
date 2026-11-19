@@ -1,0 +1,25 @@
+{
+ "jurisdiction_id": "6adf8d29b4edf48df955e5c1",
+ "jurisdiction_name": "York",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR ZONING PERMIT YORK TOWNSHIP Date: ________________ Applica�on No: _________________ The undersigned applies for a zoning permit for the following use, said permit to be issued on the basis of the informa�on contained within this applica�on. The applicant hereby cer�fies that all informa�on and atachments to this applica�on are true and correct. The applicant is required, in addi�on to the informa�on requested on this form to submit a separate plot plan drawn to scale, showing the actual dimensions and shape of the lot, exact sizes and loca�ons of exis�ng building on the lot, and the loca�on and dimensions of the proposed buildings or addi�ons. (Check appropriate spaces) RESIDENTIAL ___ _______ ____ COMMERCIAL _______________ INDUSTRIAL _______________ Name of owner: ____________________________ Builder: _____________________________ Mailing address: ______________________",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "ec11c908e1d92a4bb847335e4bb5cd537130eb65381ba67d6139ddf38721f4e3",
+   "source_document_id": null,
+   "source_title": "ec11c908e1d92a4bb847335e4bb5cd537130eb65381ba67d6139ddf38721f4e3.pdf",
+   "official_url": "https://www.yorktwp.org/_files/ugd/c8a414_94cd74c266204933977acc0e5e03b170.pdf"
+  }
+ ]
+}

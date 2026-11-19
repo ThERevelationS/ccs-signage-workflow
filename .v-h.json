@@ -1,0 +1,28 @@
+{
+  "summary": {
+    "total": 1,
+    "resolved": 1,
+    "rate": "100.0%",
+    "failure_stages": {},
+    "geocode_misses": 0,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "2481 Wright Blvd Ste 200, Hebron, KY 41048",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: hebron -> boone",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "county",
+        "name": "boone"
+      },
+      "county": "",
+      "ms": 2261,
+      "worker": 1
+    }
+  ]
+}

@@ -1,0 +1,199 @@
+{
+  "sourceHead": "892c701aedae039ae03ad8b160ae42175ad99e40",
+  "wallSourceSha": "55b6fc1ffcd9b7660d9c66b47e5000254de0e0e754719c1d25c3c0306f162614",
+  "syntheticOnly": true,
+  "sdkCalls": 0,
+  "pageSaveVerified": false,
+  "fixture": {
+    "project": {
+      "id": "synthetic-masonry-project",
+      "items": [],
+      "poles": [],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "walls": [
+        {
+          "component_id": "synthetic-wall",
+          "materialId": "synthetic-wall-material",
+          "heightInches": 9,
+          "mortarGapInches": 0,
+          "includeInternalWall": false,
+          "shape": {
+            "closed": false,
+            "segments": [
+              {
+                "component_id": "synthetic-segment",
+                "length": 16
+              }
+            ]
+          },
+          "calculatedCosts": {
+            "totalBricks": 6,
+            "materialCost": 321,
+            "mortarCost": 17,
+            "laborCost": 70,
+            "totalCost": 408
+          }
+        }
+      ]
+    },
+    "inventory": [
+      {
+        "id": "synthetic-wall-material",
+        "material_type": "wall_material",
+        "material_name": "Synthetic wall units",
+        "wall_material_subtype": "concrete",
+        "wall_unit_length_inches": 8,
+        "wall_unit_width_inches": 4,
+        "wall_unit_height_inches": 4,
+        "cost_per_unit": 2
+      }
+    ],
+    "settings": {
+      "wall_labor_rate": 45,
+      "wall_minimum_charge": 1,
+      "wall_mortar_cost_per_bag": 10
+    }
+  },
+  "catalogProbeScope": "Actual wall branch; empty other-assembly dependency stubs",
+  "results": [
+    {
+      "name": "valid legacy baseline",
+      "ok": true,
+      "actual": {
+        "totalBricks": 6,
+        "materialCost": 12,
+        "mortarCost": 0,
+        "laborHours": 0.12,
+        "laborCost": 45,
+        "totalCost": 57,
+        "totalLinearInches": 16,
+        "numCourses": 2.25,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      },
+      "issues": [],
+      "acknowledgedMaterialCost": 321,
+      "acknowledgedTotal": 408,
+      "sourceUnchanged": true
+    },
+    {
+      "name": "missing price",
+      "ok": true,
+      "actual": {
+        "totalBricks": 6,
+        "materialCost": 0,
+        "mortarCost": 0,
+        "laborHours": 0.12,
+        "laborCost": 45,
+        "totalCost": 45,
+        "totalLinearInches": 16,
+        "numCourses": 2.25,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      },
+      "issues": [],
+      "acknowledgedMaterialCost": 321,
+      "acknowledgedTotal": 408,
+      "sourceUnchanged": true
+    },
+    {
+      "name": "explicit zero price",
+      "ok": true,
+      "actual": {
+        "totalBricks": 6,
+        "materialCost": 0,
+        "mortarCost": 0,
+        "laborHours": 0.12,
+        "laborCost": 45,
+        "totalCost": 45,
+        "totalLinearInches": 16,
+        "numCourses": 2.25,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      },
+      "issues": [],
+      "acknowledgedMaterialCost": 321,
+      "acknowledgedTotal": 408,
+      "sourceUnchanged": true
+    },
+    {
+      "name": "explicit zero labor rate",
+      "ok": true,
+      "actual": {
+        "totalBricks": 6,
+        "materialCost": 12,
+        "mortarCost": 0,
+        "laborHours": 0.12,
+        "laborCost": 45,
+        "totalCost": 57,
+        "totalLinearInches": 16,
+        "numCourses": 2.25,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      },
+      "issues": [],
+      "acknowledgedMaterialCost": 321,
+      "acknowledgedTotal": 408,
+      "sourceUnchanged": true
+    },
+    {
+      "name": "explicit zero minimum",
+      "ok": true,
+      "actual": {
+        "totalBricks": 6,
+        "materialCost": 12,
+        "mortarCost": 0,
+        "laborHours": 0.12,
+        "laborCost": 150,
+        "totalCost": 162,
+        "totalLinearInches": 16,
+        "numCourses": 2.25,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      },
+      "issues": [],
+      "acknowledgedMaterialCost": 321,
+      "acknowledgedTotal": 408,
+      "sourceUnchanged": true
+    },
+    {
+      "name": "explicit zero mortar rate",
+      "ok": true,
+      "actual": {
+        "totalBricks": 6,
+        "materialCost": 12,
+        "mortarCost": 10,
+        "laborHours": 0.12,
+        "laborCost": 1,
+        "totalCost": 23,
+        "totalLinearInches": 16,
+        "numCourses": 2.25,
+        "internalTotalBricks": 0,
+        "internalMaterialCost": 0,
+        "internalMortarCost": 0,
+        "internalLaborCost": 0,
+        "internalLaborHours": 0
+      },
+      "issues": [],
+      "acknowledgedMaterialCost": 321,
+      "acknowledgedTotal": 408,
+      "sourceUnchanged": true
+    }
+  ]
+}

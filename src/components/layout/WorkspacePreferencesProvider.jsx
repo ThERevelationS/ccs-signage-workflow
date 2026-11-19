@@ -1,0 +1,247 @@
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { base44, primeReadResponse } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
+import {
+  defaultPrefs, migratePrefs, deepMerge, setPath, getPath, SECTION_PATHS,
+  localLoadPrefs, localSavePrefs, localOrderStamp, saveOrderStamp,
+  applyAppearance, newRequestId,
+} from "./workspacePrefs";
+import { saveNavOrder } from "./navPreferences";
+
+const WorkspacePrefsContext = createContext(null);
+const sessionToken = () => { try { return localStorage.getItem("sss_session_token") || ""; } catch { return ""; } };
+const WRITE_DEBOUNCE_MS = 900;
+
+export function WorkspacePreferencesProvider({ children }) {
+  const { currentUser } = useAuth();
+  const email = String(currentUser?.email || "").toLowerCase();
+  const [prefs, setPrefs] = useState(() => {
+    const local = email ? localLoadPrefs(email) : null;
+    return migratePrefs(local?.prefs);
+  });
+  const [profiles, setProfiles] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const prefsRef = useRef(prefs);
+  const profilesRef = useRef(profiles);
+  const pendingRef = useRef(false);
+  const timerRef = useRef(null);
+  const retryRef = useRef(0);
+  const loadedForRef = useRef("");
+  prefsRef.current = prefs;
+  profilesRef.current = profiles;
+
+  // Seed from localStorage instantly (no flicker), then hydrate from server.
+  useEffect(() => {
+    if (!currentUser || !email || loadedForRef.current === email) return;
+    loadedForRef.current = email;
+    const local = localLoadPrefs(email);
+    if (local?.prefs) { setPrefs(migratePrefs(local.prefs)); setProfiles(Array.isArray(local.profiles) ? local.profiles : []); }
+    // localStorage already seeded the UI — the server hydrate can afford to
+    // land a few seconds late, outside the mount-burst invoke window.
+    const hydrateTimer = setTimeout(() => (async () => {
+      let serverPrefs = null;
+      let serverProfiles = [];
+      try {
+        // One composed invoke carries prefs + profiles + the unread badge —
+        // priming the read lanes so the bell's first poll and any other prefs
+        // consumer resolve without a second POST this mount.
+        const res = await base44.functions.invoke("appBootstrap", { session_token: sessionToken() });
+        const payload = res?.data || res || {};
+        if (payload?.success === false) throw new Error(payload?.error || "bootstrap failed");
+        serverPrefs = payload.prefs ?? null;
+        serverProfiles = Array.isArray(payload.profiles) ? payload.profiles : [];
+        const token = sessionToken();
+        if (token) {
+          primeReadResponse("workspacePrefsAction", { action: "prefs_get", session_token: token },
+            { success: true, action: "prefs_get", prefs: serverPrefs, profiles: serverProfiles });
+          if (typeof payload.unread_count === "number") {
+            primeReadResponse("notificationAction", { session_token: token, action: "unread_count" },
+              { success: true, action: "unread_count", unread_count: payload.unread_count });
+          }
+          if (payload.notification_prefs && typeof payload.notification_prefs === "object") {
+            primeReadResponse("notificationAction", { session_token: token, action: "get_preferences" },
+              { success: true, action: "get_preferences", preferences: payload.notification_prefs, exists: true });
+          }
+        }
+      } catch {
+        // Composed read failed — fall back to the plain prefs read so a dead
+        // bootstrap can never take the preference layer down with it.
+        try {
+          const res = await base44.functions.invoke("workspacePrefsAction", { action: "prefs_get", session_token: sessionToken() });
+          serverPrefs = res?.data?.prefs ?? res?.prefs ?? null;
+          serverProfiles = res?.data?.profiles ?? res?.profiles ?? [];
+        } catch (e) {
+          setSaveError(String(e?.message || "Could not load workspace preferences."));
+          setLoaded(true);
+          return;
+        }
+      }
+      // No server blob (new user or a backend reset) must not flatten the
+      // local seed back to defaults — keep local until the first successful
+      // write makes the server authoritative again.
+      const serverMigrated = migratePrefs(serverPrefs || local?.prefs);
+      // Recency arbitration: local state wins while writes are pending (it
+      // is newer than anything the server could have stored yet), and the
+      // navigation section is local-won whenever this device wrote nav
+      // state after the server's last nav write — e.g. a drop whose flush
+      // never landed must not be reverted by the stale blob.
+      const serverAt = serverMigrated.navigation.orderUpdatedAt || "";
+      const localAt = localOrderStamp(email);
+      const pendingLocal = pendingRef.current;
+      const localNavNewer = !!localAt && (!serverAt || localAt > serverAt);
+      let merged = serverMigrated;
+      if (pendingLocal) {
+        merged = migratePrefs(deepMerge(serverMigrated, prefsRef.current));
+      } else if (localNavNewer) {
+        merged = migratePrefs({ ...serverMigrated, navigation: prefsRef.current.navigation });
+      }
+      // Server-authoritative nav order, but only when it is newer than the
+      // order this device last wrote (last-write-wins across devices).
+      if (serverAt && serverAt > localAt && merged.navigation.order.length) {
+        saveNavOrder(email, merged.navigation.order);
+        saveOrderStamp(email, serverAt);
+      } else if (!serverAt && merged.navigation.order.length) {
+        saveNavOrder(email, merged.navigation.order);
+      }
+      if (merged.navigation.order.length) window.dispatchEvent(new Event("ccs-nav-order-sync"));
+      const nextProfiles = pendingLocal ? profilesRef.current : (Array.isArray(serverProfiles) ? serverProfiles : []);
+      setPrefs(merged);
+      setProfiles(nextProfiles);
+      localSavePrefs(email, merged, nextProfiles);
+      setLoaded(true);
+    })(), 3000 + Math.floor(Math.random() * 2000));
+    return () => clearTimeout(hydrateTimer);
+  }, [currentUser, email]);
+
+  // Side effects: theme class, density attr, font scale, accent, motion.
+  useEffect(() => { applyAppearance(prefs); }, [prefs]);
+
+  const flush = useCallback(async () => {
+    if (!email || !sessionToken()) return;
+    const snapshot = prefsRef.current;
+    const snapshotProfiles = profilesRef.current;
+    pendingRef.current = false;
+    setSaving(true);
+    try {
+      // Keep the local copy current even when the server write fails — a
+      // failed flush used to lose the change entirely on reload.
+      localSavePrefs(email, snapshot, snapshotProfiles);
+      await base44.functions.invoke("workspacePrefsAction", {
+        action: "prefs_update",
+        session_token: sessionToken(),
+        request_id: newRequestId(),
+        prefs: snapshot,
+        profiles: snapshotProfiles,
+      });
+      retryRef.current = 0;
+      setSaveError("");
+    } catch (e) {
+      pendingRef.current = true; // retry on next flush
+      setSaveError(String(e?.message || "Save failed — will retry."));
+      // A failed write used to wait for the NEXT unrelated update before
+      // retrying — under the app's volume cap that could strand a change
+      // indefinitely. Bounded backoff covers transient 429s; persistent
+      // failure still defers to the next update.
+      if (retryRef.current < 4) {
+        retryRef.current += 1;
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(flush, WRITE_DEBOUNCE_MS * Math.pow(2, retryRef.current));
+      }
+    } finally {
+      setSaving(false);
+    }
+  }, [email]);
+
+  const scheduleWrite = useCallback(() => {
+    pendingRef.current = true;
+    retryRef.current = 0;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(flush, WRITE_DEBOUNCE_MS);
+  }, [flush]);
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  const updatePrefs = useCallback((path, value) => {
+    setPrefs((prev) => { const next = migratePrefs(setPath(prev, path, value)); return next; });
+    scheduleWrite();
+  }, [scheduleWrite]);
+
+  const patchPrefs = useCallback((patch) => {
+    setPrefs((prev) => migratePrefs(deepMerge(prev, patch)));
+    scheduleWrite();
+  }, [scheduleWrite]);
+
+  const resetSection = useCallback((section) => {
+    const paths = SECTION_PATHS[section];
+    if (!paths) return;
+    setPrefs((prev) => {
+      let next = { ...prev };
+      const d = defaultPrefs();
+      for (const p of paths) next = setPath(next, p, getPath(d, p));
+      return migratePrefs(next);
+    });
+    scheduleWrite();
+  }, [scheduleWrite]);
+
+  const resetAll = useCallback(() => {
+    setPrefs(defaultPrefs());
+    scheduleWrite();
+  }, [scheduleWrite]);
+
+  // Layout calls this after a successful drag reorder. The order is written
+  // both to localStorage (already done by the caller) and the server blob.
+  const reportNavOrder = useCallback((urls) => {
+    const iso = new Date().toISOString();
+    saveOrderStamp(email, iso);
+    setPrefs((prev) => {
+      const next = setPath(prev, "navigation.order", Array.isArray(urls) ? urls : []);
+      return migratePrefs(setPath(next, "navigation.orderUpdatedAt", iso));
+    });
+    scheduleWrite();
+  }, [email, scheduleWrite]);
+
+  const saveProfile = useCallback((name) => {
+    const clean = String(name || "").trim().slice(0, 40);
+    if (!clean) return;
+    setProfiles((prev) => {
+      const snapshot = { name: clean, prefs: prefsRef.current, saved_at: new Date().toISOString() };
+      const rest = prev.filter((p) => p?.name !== clean);
+      const next = [...rest, snapshot].slice(0, 10);
+      profilesRef.current = next;
+      return next;
+    });
+    scheduleWrite();
+  }, [scheduleWrite]);
+
+  const applyProfile = useCallback((name) => {
+    const hit = profilesRef.current.find((p) => p?.name === name);
+    if (hit?.prefs) { setPrefs(migratePrefs(hit.prefs)); scheduleWrite(); }
+  }, [scheduleWrite]);
+
+  const deleteProfile = useCallback((name) => {
+    setProfiles((prev) => {
+      const next = prev.filter((p) => p?.name !== name);
+      profilesRef.current = next;
+      return next;
+    });
+    scheduleWrite();
+  }, [scheduleWrite]);
+
+  const value = useMemo(() => ({
+    prefs, profiles, loaded, saving, saveError,
+    updatePrefs, patchPrefs, resetSection, resetAll,
+    reportNavOrder, saveProfile, applyProfile, deleteProfile,
+  }), [prefs, profiles, loaded, saving, saveError, updatePrefs, patchPrefs, resetSection, resetAll, reportNavOrder, saveProfile, applyProfile, deleteProfile]);
+
+  return <WorkspacePrefsContext.Provider value={value}>{children}</WorkspacePrefsContext.Provider>;
+}
+
+export function useWorkspacePreferences() {
+  const ctx = useContext(WorkspacePrefsContext);
+  // Soft fallback so non-wrapped subtrees (fixtures/tests) still render.
+  return ctx || { prefs: defaultPrefs(), profiles: [], loaded: false, saving: false, saveError: "",
+    updatePrefs: () => {}, patchPrefs: () => {}, resetSection: () => {}, resetAll: () => {},
+    reportNavOrder: () => {}, saveProfile: () => {}, applyProfile: () => {}, deleteProfile: () => {} };
+}

@@ -1,17 +1,35 @@
 import React, { useEffect, useState } from "react";
 import { Search, Plus, Sparkles } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import CustomerSearchDialog from "./CustomerSearchDialog";
 import NewCustomerDialog from "./NewCustomerDialog";
 
-const Row = ({ label, hint, children }) => (
-  <div className="flex items-center gap-2 mb-2">
-    <label className="w-36 text-right text-xs text-slate-700 flex-shrink-0">
-      {label}: {hint && <span className="text-blue-500">â“˜</span>}
-    </label>
-    <div className="flex-1 flex items-center gap-1">{children}</div>
-  </div>
-);
+const Row = ({ label, hint, children }) => {
+  const labelId = React.useId();
+  let labelled = false;
+  const controls = React.Children.map(children, (child) => {
+    if (
+      !labelled &&
+      React.isValidElement(child) &&
+      ["input", "select", "textarea"].includes(child.type) &&
+      !child.props["aria-label"] &&
+      !child.props["aria-labelledby"]
+    ) {
+      labelled = true;
+      return React.cloneElement(child, { "aria-labelledby": labelId });
+    }
+    return child;
+  });
+  return (
+    <div className="flex items-center gap-2 mb-2">
+      <span id={labelId} className="w-36 text-right text-xs text-slate-700 flex-shrink-0">
+        {label}: {hint && <span className="text-blue-500" aria-hidden="true">ⓘ</span>}
+      </span>
+      <div className="flex-1 flex items-center gap-1">{controls}</div>
+    </div>
+  );
+};
 
 const inputCls =
   "w-full h-8 px-2 border border-slate-300 bg-white rounded-sm text-sm focus:outline-none focus:border-lime-500";
@@ -47,6 +65,7 @@ export default function Step1EstimateDetails({
   const [entityLocations, setEntityLocations] = useState([]);
   const [entityContacts, setEntityContacts] = useState([]);
   const [entityFlags, setEntityFlags] = useState([]);
+  const [relatedFailed, setRelatedFailed] = useState(false);
 
   const linkedCustomer = customers.find((c) => c.id === form.customer_id) || null;
 
@@ -59,8 +78,9 @@ export default function Step1EstimateDetails({
     let active = true;
     const load = (entity) =>
       entity && typeof entity.filter === "function"
-        ? entity.filter({ customer_id: form.customer_id }).catch(() => [])
+        ? entity.filter({ customer_id: form.customer_id }).catch(() => { if (active) setRelatedFailed(true); return []; })
         : Promise.resolve([]);
+    setRelatedFailed(false);
     Promise.all([load(base44.entities?.CustomerLocation), load(base44.entities?.CustomerContact), load(staffEntities?.CustomerNote)]).then(
       ([locations, contacts, notes]) => {
         if (!active) return;
@@ -75,10 +95,18 @@ export default function Step1EstimateDetails({
   }, [form.customer_id]);
 
   const applyCustomer = (c) => {
-    const defaultTaxGroup = taxGroups.find((group) => group.name === c.default_tax_group);
+    // #486 tax-source chain: the customer's own default wins; otherwise the
+    // company default stamped from Quote Defaults (default_tax_group), then
+    // the TaxGroup flagged is_default as a last resort.
+    const taxGroupName = (g) => String(g?.group_name || g?.name || "").trim();
+    const wantedTaxGroup =
+      String(c?.default_tax_group || "").trim() ||
+      String(form?.default_tax_group || "").trim() ||
+      taxGroupName((taxGroups || []).find((g) => g?.is_default === true));
+    const defaultTaxGroup = (taxGroups || []).find((group) => taxGroupName(group) === wantedTaxGroup);
     const defaultTaxPercent = Number(defaultTaxGroup?.tax_percent);
     const taxDefaults = defaultTaxGroup && Number.isFinite(defaultTaxPercent) && defaultTaxPercent >= 0 && defaultTaxPercent <= 100
-      ? { tax_group: defaultTaxGroup.name, tax_percent: defaultTaxPercent }
+      ? { tax_group: taxGroupName(defaultTaxGroup), tax_percent: defaultTaxPercent }
       : {};
     const customerValidDays = Number(c.quote_valid_days);
     const validDaysDefault = Number.isFinite(customerValidDays) && customerValidDays > 0
@@ -212,12 +240,12 @@ export default function Step1EstimateDetails({
     <div className="flex-1 min-w-0">
       <div className="bg-white border border-gray-200 rounded-md px-4 py-2 flex items-center justify-between mb-1">
         <h2 className="text-[13px] font-bold text-gray-800">Step 1: Estimate Details</h2>
-        <button className="h-[26px] px-3 rounded bg-lime-200 border border-lime-300 text-[12px] font-semibold text-gray-800">
-          Next Step â†’
+        <button type="button" className="h-[26px] px-3 rounded bg-lime-200 border border-lime-300 text-[12px] font-semibold text-gray-800">
+          Next Step →
         </button>
       </div>
       <div className="text-right text-[11px] italic text-slate-500 mb-2">
-        Entered by: {enteredBy || "â€”"}
+        Entered by: {enteredBy || "—"}
       </div>
 
       <div className="bg-slate-100 border border-slate-300 rounded-sm p-4 mb-3 max-w-4xl">
@@ -237,22 +265,29 @@ export default function Step1EstimateDetails({
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
+            aria-label="Search customers"
             title="Search customers"
             className="flex-shrink-0 text-lime-600 hover:text-lime-700"
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-4 h-4" aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={() => setNewOpen(true)}
+            aria-label="New customer"
             title="New customer"
             className="flex-shrink-0 text-lime-600 hover:text-lime-700"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4" aria-hidden="true" />
           </button>
+          {relatedFailed && (
+            <span role="status" className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-200">
+              Some customer records could not be loaded — locations/contacts/flags may be incomplete. Re-pick the customer to retry.
+            </span>
+          )}
           {linkedCustomer?.credit_hold === true && (
             <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 border border-red-200">
-              CREDIT HOLD â€” new work needs a deposit or manager override
+              CREDIT HOLD — new work needs a deposit or manager override
             </span>
           )}
           {entityFlags.map((flag) => {
@@ -324,12 +359,12 @@ export default function Step1EstimateDetails({
             onChange={(e) => patch({ estimate_number: e.target.value })}
             className={inputCls}
           />
-          <button
+          <button type="button"
             onClick={onGenerateNumber}
             disabled={generating}
             className="h-[26px] px-2 border border-gray-300 rounded-sm text-[12px] flex items-center gap-1 whitespace-nowrap hover:bg-gray-50 disabled:opacity-60"
           >
-            <Sparkles className="w-3 h-3" /> Generate
+            <Sparkles className="w-3 h-3" aria-hidden="true" /> Generate
           </button>
         </Row>
       </div>
@@ -356,7 +391,7 @@ export default function Step1EstimateDetails({
                 title="Fill contact fields from a saved customer contact"
                 className={pickerCls}
               >
-                <option value="">Savedâ€¦</option>
+                <option value="">Saved…</option>
                 {contactOptions.map((c) => (
                   <option key={c.key} value={c.key}>
                     {c.label}
@@ -380,6 +415,7 @@ export default function Step1EstimateDetails({
             />
             <span className="text-[11px] text-gray-500">Ext.</span>
             <input
+              aria-label="Phone extension"
               value={form.office_phone_ext}
               onChange={(e) => patch({ office_phone_ext: e.target.value })}
               className="w-[52px] h-[26px] px-2 border border-gray-300 rounded-sm text-[12px]"
@@ -396,10 +432,11 @@ export default function Step1EstimateDetails({
               <select
                 value=""
                 onChange={(e) => applySavedLocation(e.target.value)}
+                aria-label="Fill site address from a saved customer location"
                 title="Fill site address from a saved customer location"
                 className={pickerCls}
               >
-                <option value="">Savedâ€¦</option>
+                <option value="">Saved…</option>
                 {locationOptions.map((l) => (
                   <option key={l.key} value={l.key}>
                     {l.label}
@@ -453,17 +490,20 @@ export default function Step1EstimateDetails({
             <select
               value={form.tax_group}
               onChange={(e) => {
-                const g = taxGroups.find((t) => t.name === e.target.value);
+                const g = taxGroups.find((t) => (t.group_name || t.name) === e.target.value);
                 patch({ tax_group: e.target.value, tax_percent: g?.tax_percent || 0 });
               }}
               className={inputCls}
             >
               <option value="">select</option>
-              {taxGroups.map((t, i) => (
-                <option key={t.id || `tax-group-${t.name}-${i}`} value={t.name}>
-                  {t.name} ({t.tax_percent}%)
-                </option>
-              ))}
+              {taxGroups.map((t, i) => {
+                const gname = t.group_name || t.name || "";
+                return (
+                  <option key={t.id || `tax-group-${gname}-${i}`} value={gname}>
+                    {gname} ({t.tax_percent}%)
+                  </option>
+                );
+              })}
             </select>
           </Row>
           <p className="text-[10px] text-gray-400 text-center mt-1">

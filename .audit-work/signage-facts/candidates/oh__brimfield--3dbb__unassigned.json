@@ -1,0 +1,36 @@
+{
+ "jurisdiction_id": "6ae048b29b7947eee50a3dbb",
+ "jurisdiction_name": "Brimfield",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "BRIMFIELD TOWNSHIP MISCELLANEOUS STRUCTURE & SIGN ZONING CERTIFICATE APPLICATION 1333 Tallmadge Road Kent , Ohio 44240 Telephone 330-678-0739 FAX 330-678-6626 Email: zoning@brimfieldohio.gov Date: _____________ Applicant’s Name: _______________________________________________________ Address: ________________________________________________________________ City/State/Zip: __________________________________________________________ Email : _________________________________________________________________ _ Telephone: _____________________________________________________________ Parcel Number :_________________________________________________________ Location: ______________________________________________________________ Zoning District: ________________________________________________________ I would like to request the following: _______________________________________ Deck Description, ",
+   "tags": [
+    "sign",
+    "dimension",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "65c0935b96d8695b094dcb83c7b1e9f207cc513960b9e15388c9d54cb984c211",
+   "source_document_id": null,
+   "source_title": "65c0935b96d8695b094dcb83c7b1e9f207cc513960b9e15388c9d54cb984c211.pdf",
+   "official_url": "https://brimfieldohio.gov/wp-content/uploads/2026/04/MISC-STRUCTURES-AND-SIGN-APPLICATION-Z100-Revised-4.2.2025_202504071227420528-1.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "This site plan shall become part of my application for a zoning certificate and all dimensions are accurate to the best of my knowledge. Signed ______________________________________________ Date _________________ Applicant Signature Signed ______________________________________________ Date _________________ Owner Signature Approved _______________________________________ ___Date __________________ Zoning Inspector Signature Denied __________________________________________ __Date__________ Zoning Inspector Signature Reason for Denial: _________________________________________________________ __________________________________________________________________________ __________________________________________________________________________ Office Use Only Certificate #___________________________________________________ Z100 Revised 4/2/2025",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "65c0935b96d8695b094dcb83c7b1e9f207cc513960b9e15388c9d54cb984c211",
+   "source_document_id": null,
+   "source_title": "65c0935b96d8695b094dcb83c7b1e9f207cc513960b9e15388c9d54cb984c211.pdf",
+   "official_url": "https://brimfieldohio.gov/wp-content/uploads/2026/04/MISC-STRUCTURES-AND-SIGN-APPLICATION-Z100-Revised-4.2.2025_202504071227420528-1.pdf"
+  }
+ ]
+}

@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Copy, Link2, GitBranch, Layers, CornerDownRight } from "lucide-react";
 import { LETTER_TYPE_LABELS, SIZE_UNITS, resolveUnitCost } from "./lettersCalculator";
+import { channelDraftValue, channelNumber, issuesForField } from "./channelLetterPricingAvailability";
 import DimensionalFabPanel from "./DimensionalFabPanel";
 import BackerSection from "./BackerSection";
 
@@ -18,7 +19,8 @@ const SET_CHILD_TYPES = [
   { value: "dimensional_letters", label: "Dimensional" },
 ];
 
-const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
+// Held/blank values render an em-dash instead of laundering into $0.00.
+const fmt = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 
 const SIZE_LABEL = {
   in: 'Letter Height (in)',
@@ -44,6 +46,16 @@ const TYPE_COLOR = {
   dimensional_letters: "bg-emerald-100 text-emerald-800 border-emerald-200",
 };
 
+// P-08: channel/capsule letter types choose purchased-vs-fabricated explicitly.
+// Raceway is hardware and dimensional_letters is inherently fabricated —
+// neither gets a mode selector.
+const FABRICATION_ELIGIBLE = new Set([
+  "channel_raceway_mounted",
+  "channel_flush_mounted",
+  "channel_halo_lit",
+  "capsule_logo_pillbox",
+]);
+
 export default function LetterPurchaseRow({
   purchase,
   settings,
@@ -56,6 +68,7 @@ export default function LetterPurchaseRow({
   setRole = "solo", // "solo" | "parent" | "child"
   setSize = 1,
   setIndex = 0,
+  issues = [],
 }) {
   const [addToSetOpen, setAddToSetOpen] = React.useState(false);
   // Tour anchors — only applied to the first row so the walkthrough has
@@ -64,7 +77,7 @@ export default function LetterPurchaseRow({
   const tourId = (suffix) => (isFirst ? `clp-letter-${suffix}` : undefined);
   const sizeUnit = SIZE_UNITS[purchase.letter_type];
   const autoUnitCost = resolveUnitCost({ ...purchase, unit_cost_override: false }, settings);
-  const effectiveUnit = purchase.unit_cost_override ? (parseFloat(purchase.unit_cost) || 0) : autoUnitCost;
+  const effectiveUnit = purchase.unit_cost_override ? (channelNumber(purchase.unit_cost) ?? 0) : autoUnitCost;
   const isDimensional = purchase.letter_type === "dimensional_letters";
   const isCombinedRaceway = purchase.letter_type === "channel_raceway_mounted";
   const backerEnabled = isDimensional && !!purchase.backer_enabled;
@@ -73,6 +86,22 @@ export default function LetterPurchaseRow({
 
   const isChild = setRole === "child";
   const isParent = setRole === "parent";
+
+  // Pricing diagnostics — per-field aria-invalid + inline message.
+  const fieldIssues = (field) => issuesForField(issues, field, null, index);
+  const invalidCls = (field) => (fieldIssues(field).length ? "border-red-500" : "");
+  const ariaFor = (field) => (fieldIssues(field).length
+    ? { "aria-invalid": true, "aria-describedby": `clp-${index}-${field}-issue` }
+    : {});
+  const FieldIssue = ({ field }) => {
+    const fi = fieldIssues(field);
+    if (!fi.length) return null;
+    return (
+      <p id={`clp-${index}-${field}-issue`} className="text-[10px] text-red-600 mt-0.5" role="alert">
+        {fi[0].message}
+      </p>
+    );
+  };
 
   // Outer styling — children are indented & have a left accent
   const containerClass = isChild
@@ -91,6 +120,11 @@ export default function LetterPurchaseRow({
         <Badge className={`${TYPE_COLOR[purchase.letter_type] || "bg-slate-100"} font-medium`}>
           #{index + 1} · {backerEnabled ? "Dimensional Letters w/ Backer" : LETTER_TYPE_LABELS[purchase.letter_type]}
         </Badge>
+        {purchase.__held && (
+          <Badge variant="outline" className="text-[10px] text-amber-700 border-amber-300 bg-amber-50">
+            Saved value — not repriced
+          </Badge>
+        )}
         {isParent && (
           <Badge className="bg-purple-600 text-white text-xs">
             <Layers className="w-3 h-3 mr-1" /> Set of {setSize}
@@ -105,6 +139,25 @@ export default function LetterPurchaseRow({
           <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
             <Link2 className="w-3 h-3 mr-1" /> Auto-creates install item
           </Badge>
+        )}
+        {FABRICATION_ELIGIBLE.has(purchase.letter_type) && (
+          <span className="inline-flex items-center gap-1 text-[11px]">
+            <span className="text-slate-400">Source:</span>
+            <select
+              value={purchase.fabrication || ""}
+              onChange={(e) => update({ fabrication: e.target.value || null })}
+              className={`h-6 rounded border px-1.5 text-[11px] ${
+                purchase.fabrication
+                  ? "border-slate-200 bg-slate-50 text-slate-700"
+                  : "border-amber-300 bg-amber-50 text-amber-800"
+              }`}
+              title="P-08: purchased vs fabricated — required for takeoff/export; left unset it flags the set"
+            >
+              <option value="">— unset —</option>
+              <option value="purchased">Purchased</option>
+              <option value="fabricated">Fabricated</option>
+            </select>
+          </span>
         )}
         <div className="ml-auto flex items-center gap-1">
           <span className="text-lg font-bold tabular-nums text-slate-900 mr-2">
@@ -128,9 +181,8 @@ export default function LetterPurchaseRow({
                     Add to set as…
                   </div>
                   {SET_CHILD_TYPES.map(t => (
-                    <button
+                    <button type="button"
                       key={t.value}
-                      type="button"
                       onClick={() => {
                         onAddToSet(purchase, t.value);
                         setAddToSetOpen(false);
@@ -181,9 +233,11 @@ export default function LetterPurchaseRow({
               type="number"
               min="0"
               value={purchase.qty}
-              onChange={(e) => update({ qty: parseFloat(e.target.value) || 0 })}
-              className="mt-1 h-9"
+              onChange={(e) => update({ qty: channelDraftValue(e.target.value) })}
+              className={`mt-1 h-9 ${invalidCls("qty")}`}
+              {...ariaFor("qty")}
             />
+            <FieldIssue field="qty" />
           </div>
           <div>
             <Label className="text-xs flex items-center justify-between">
@@ -212,10 +266,12 @@ export default function LetterPurchaseRow({
                     ? purchase.unit_cost
                     : (parseFloat(purchase.fab_config?.unit_total_cost) || 0).toFixed(2)
                 }
-                onChange={(e) => update({ unit_cost: parseFloat(e.target.value) || 0 })}
-                className={`h-9 pl-6 ${purchase.unit_cost_override ? "" : "bg-slate-50"}`}
+                onChange={(e) => update({ unit_cost: channelDraftValue(e.target.value) })}
+                className={`h-9 pl-6 ${purchase.unit_cost_override ? "" : "bg-slate-50"} ${invalidCls("unit_cost")}`}
+                {...ariaFor("unit_cost")}
               />
             </div>
+            <FieldIssue field="unit_cost" />
           </div>
           <div>
             <Label className="text-xs">Line Total</Label>
@@ -232,9 +288,11 @@ export default function LetterPurchaseRow({
               type="number"
               min="0"
               value={purchase.qty}
-              onChange={(e) => update({ qty: parseFloat(e.target.value) || 0 })}
-              className="mt-1 h-9"
+              onChange={(e) => update({ qty: channelDraftValue(e.target.value) })}
+              className={`mt-1 h-9 ${invalidCls("qty")}`}
+              {...ariaFor("qty")}
             />
+            <FieldIssue field="qty" />
           </div>
           <div id={tourId("size")}>
             <Label className="text-xs">{SIZE_LABEL[sizeUnit]}</Label>
@@ -243,9 +301,11 @@ export default function LetterPurchaseRow({
               min="0"
               step="0.01"
               value={purchase.size_value}
-              onChange={(e) => update({ size_value: parseFloat(e.target.value) || 0 })}
-              className="mt-1 h-9"
+              onChange={(e) => update({ size_value: channelDraftValue(e.target.value) })}
+              className={`mt-1 h-9 ${invalidCls("size_value")}`}
+              {...ariaFor("size_value")}
             />
+            <FieldIssue field="size_value" />
           </div>
           <div>
             <Label className="text-xs flex items-center justify-between">
@@ -273,8 +333,9 @@ export default function LetterPurchaseRow({
                 step="0.01"
                 disabled={!purchase.unit_cost_override || !!purchase.letters_total_override}
                 value={purchase.unit_cost_override ? purchase.unit_cost : (parseFloat(purchase.unit_cost) || autoUnitCost).toFixed(2)}
-                onChange={(e) => update({ unit_cost: parseFloat(e.target.value) || 0 })}
-                className="h-9 pl-6"
+                onChange={(e) => update({ unit_cost: channelDraftValue(e.target.value) })}
+                className={`h-9 pl-6 ${invalidCls("unit_cost")}`}
+                {...ariaFor("unit_cost")}
               />
             </div>
           </div>
@@ -307,8 +368,9 @@ export default function LetterPurchaseRow({
                   min="0"
                   step="0.01"
                   value={purchase.letters_total}
-                  onChange={(e) => update({ letters_total: parseFloat(e.target.value) || 0 })}
-                  className="h-9 pl-6"
+                  onChange={(e) => update({ letters_total: channelDraftValue(e.target.value) })}
+                  className={`h-9 pl-6 ${invalidCls("letters_total")}`}
+                  {...ariaFor("letters_total")}
                 />
               </div>
             ) : (
@@ -334,10 +396,12 @@ export default function LetterPurchaseRow({
                 type="number"
                 min="0"
                 value={purchase.raceway_qty ?? 1}
-                onChange={(e) => update({ raceway_qty: parseFloat(e.target.value) || 0 })}
-                className="mt-1 h-9"
+                onChange={(e) => update({ raceway_qty: channelDraftValue(e.target.value) })}
+                className={`mt-1 h-9 ${invalidCls("raceway_qty")}`}
+                {...ariaFor("raceway_qty")}
               />
               <p className="text-[10px] text-slate-400 mt-0.5">Tier auto: 1=1st, 2=2nd, 3=3rd, 4+=4th</p>
+              <FieldIssue field="raceway_qty" />
             </div>
             <div>
               <Label className="text-xs">Raceway Length (ft)</Label>
@@ -346,9 +410,11 @@ export default function LetterPurchaseRow({
                 min="0"
                 step="0.01"
                 value={purchase.raceway_length_feet ?? 0}
-                onChange={(e) => update({ raceway_length_feet: parseFloat(e.target.value) || 0 })}
-                className="mt-1 h-9"
+                onChange={(e) => update({ raceway_length_feet: channelDraftValue(e.target.value) })}
+                className={`mt-1 h-9 ${invalidCls("raceway_length_feet")}`}
+                {...ariaFor("raceway_length_feet")}
               />
+              <FieldIssue field="raceway_length_feet" />
             </div>
             <div>
               <Label className="text-xs flex items-center justify-between">
@@ -383,8 +449,9 @@ export default function LetterPurchaseRow({
                       ? purchase.raceway_unit_cost
                       : (purchase.raceway_unit_cost || 0).toFixed(2)
                   }
-                  onChange={(e) => update({ raceway_unit_cost: parseFloat(e.target.value) || 0 })}
-                  className={`h-9 pl-6 ${purchase.raceway_unit_cost_override ? "" : "bg-slate-50"}`}
+                  onChange={(e) => update({ raceway_unit_cost: channelDraftValue(e.target.value) })}
+                  className={`h-9 pl-6 ${purchase.raceway_unit_cost_override ? "" : "bg-slate-50"} ${invalidCls("raceway_unit_cost")}`}
+                  {...ariaFor("raceway_unit_cost")}
                 />
               </div>
             </div>
@@ -417,8 +484,9 @@ export default function LetterPurchaseRow({
                     min="0"
                     step="0.01"
                     value={purchase.raceway_total}
-                    onChange={(e) => update({ raceway_total: parseFloat(e.target.value) || 0 })}
-                    className="h-9 pl-6"
+                    onChange={(e) => update({ raceway_total: channelDraftValue(e.target.value) })}
+                    className={`h-9 pl-6 ${invalidCls("raceway_total")}`}
+                    {...ariaFor("raceway_total")}
                   />
                 </div>
               ) : (
@@ -489,8 +557,9 @@ export default function LetterPurchaseRow({
                 min="0"
                 step="0.5"
                 value={purchase.install_height_feet}
-                onChange={(e) => update({ install_height_feet: parseFloat(e.target.value) || 0 })}
-                className="h-8 w-20"
+                onChange={(e) => update({ install_height_feet: channelDraftValue(e.target.value) })}
+                className={`h-8 w-20 ${invalidCls("install_height_feet")}`}
+                {...ariaFor("install_height_feet")}
               />
             </div>
           )}

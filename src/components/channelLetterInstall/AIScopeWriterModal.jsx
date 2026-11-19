@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Loader2, Wand2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { ESTIMATOR_AI_MODEL } from "../../../base44/shared/estimatorAiModelPolicy.js";
 
 const SCHEMA = {
   type: "object",
@@ -45,6 +46,7 @@ export default function AIScopeWriterModal({ open, onClose, onApply }) {
     setResult(null);
     try {
       const res = await base44.integrations.Core.InvokeLLM({
+        model: ESTIMATOR_AI_MODEL,
         prompt: `You are a sign-shop estimator. Parse the following rough client request into structured channel letter purchase line items.
 
 Map letter types as follows:

@@ -1,0 +1,27 @@
+PASS meeting week starts Monday 00:00 local
+PASS discussed boundary: only timestamps inside this Mon-Sun week park a row
+PASS defer boundary: only future Mondays park a row
+PASS snooze presets land on the next three Mondays
+PASS checking a row writes discussed timestamp and clears defer in one CAS save
+PASS unchecking a parked row clears both markers and returns it active
+PASS duplicate discussed toggle while save in-flight is ignored
+PASS discussed toggle rejects another session changing markers
+PASS defer writes mmm_defer_until via the shared field CAS path
+PASS duplicate same-field quick edit while in-flight is ignored
+PASS competing same-field quick edit surfaces a wait message, not a silent race
+PASS addMmmTask appends a stamped item through array CAS
+PASS two employees adding tasks concurrently keep both items
+PASS duplicate task add while in-flight is ignored
+PASS toggleMmmTask locates the item by identity and flips completed
+PASS toggleMmmTask reports a changed item instead of corrupting the list
+PASS addWorkNote appends to shared work_notes with author and type
+PASS otherJobTaskCount counts only open shared job tasks
+PASS page uses the motion-foundation skeleton loading state
+PASS checklist code is fully removed from the page
+PASS no native alert/confirm dialogs remain on meeting surfaces
+PASS discussed semantics never touch sip_completed
+PASS row focus uses ids and job anchors, not positions
+PASS board membership and meeting columns are wired
+PASS schema carries the three new MMM fields
+
+MMM BOARD VALIDATOR: 25 checks PASS

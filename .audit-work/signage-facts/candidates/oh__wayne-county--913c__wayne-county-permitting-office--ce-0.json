@@ -1,0 +1,236 @@
+{
+ "jurisdiction_id": "6ac335eae87af4456b00913c",
+ "jurisdiction_name": "Wayne County",
+ "state": "OH",
+ "office_id": "scan-6ac335eae87af4456b00913c-office-0",
+ "office_name": "Wayne County permitting office",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "Variance Requested Items R equired for Variance R eview: Variance Justification Date Variance Granted/Number Date Variance Request Denied Date Renewal/Transfer/Amendment Granted Date Renewal/Transfer/Amendment Denied Stormwater Construction Permit # REVISION SUBMITTALS Revision Number Date Received Revision Number Date Received Revision Number Date Received Revision Number Date Received Application Received By |-------------PLEASE DO NOT COMPLETE BELOW THIS LINE------------| Wayne Soil & W a ter Conservation District Date WAIVER NUMBER DATE WAIVER REQUEST DENIED ⃝ WAIVER REQUESTED (Disturbed area < 1 acre and new impervious area < 20,000 square feet) Seed and Mulch Disturbed Soils. Must be done within 7 days after last disturbance, or within 2 days after last disturbance if within 50 ft. of a stream. This is used for temporary and permanent soil stabilization. Silt Fence. Installed withi",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "process",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 11,
+   "source_sha256": "deaa3eceae88f20166ba613ab9e908dbc236a062235c8b47b3e5985070147eaf",
+   "source_document_id": null,
+   "source_title": "deaa3eceae88f20166ba613ab9e908dbc236a062235c8b47b3e5985070147eaf.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/CAP-Forms/CAP-Form-July-8th-2026.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Commercial Fees ( Resolution No. 2018-613 , Adopted December 27, 2018) Commercial Building Plan review $80 per hour Initial plan submittal (phased approval only) $250 Initial plan submittal $60 1 st resubmittal $100 Additional resubmittals $200 New construction/addition –5,000+ sf $110 + .07 sf New construction/addition – under 4,999 sf $500 Alteration/structural change (minor) $110 New cell tower $250 Antenna add/remove/upgrade $150 Billboards/signs $250 Demolish structure $110 Commercial Electric New construction/addition – over 5,000 sf $110 + .05 sf New construction/addition – under 4,999 sf $400 Miscellaneous wiring/alteration $110 Fiber optic/alarms/etc. $110 Permanent service $70 Temporary service $70 Generator $70 Solar array $70 Electric for swimming pool equipment $150 Parking lot light poles $100 Electric for tower/antenna $110 Electric for billboards/signs $70 Commercial HVAC",
+   "tags": [
+    "sign",
+    "fee",
+    "dimension",
+    "illumination",
+    "billboard",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "fcff9b4ec02aad7e10b1079d4005eba45b2fbf35261ea59dbb1c94d136880901",
+   "source_document_id": null,
+   "source_title": "fcff9b4ec02aad7e10b1079d4005eba45b2fbf35261ea59dbb1c94d136880901.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/Commercial/other-commercial-forms/commercial_fees.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR ELECTRICAL PERMIT Wayne County Building Department 428 West Liberty Street • Wooster, Ohio 44691 330-287-5525 • 330-287-5649 fax PERMIT # ⃝ RESIDENTIAL PARCEL ⃝ COMMERCIAL TOWNSHIP SECTION PROJECT DESCRIPTION: LOT NO. JOB LOCATION ADDRESS: CITY: POWER COMPANY: ⃝ Ohio Edison WORK #_______________________________ ⃝ AEP ⃝ H/W ⃝ ORRVILLE ⃝ WADS ⃝ LMRE PROPERTY OWNER: PHONE: EMAIL: ADDRESS: CITY: STATE: ZIP : TENANT NAME: TENANT PHONE: CONTRACTOR NAME: OHIO LIC. # ADDRESS: CITY: STATE: ZIP: CELL PHONE: EMAIL (PLEASE PROVIDE) PHONE: EQUIPMENT INSTALLED: MARK ALL APPROPRIATE BOXES THAT APPLY. SERVICE: ________________________ AMP/SIZE ELECTRICAL EQUIPMENT or WIRING: ⃝ New Permanent Service ⃝ Temporary Service ⃝ Access Building SQ FT _______ ⃝ Swimming Pool ⃝ Service Upgrade ⃝ Ag Service ⃝ New/Attached SQ FT _______ ⃝ Sign ⃝ Service Repair ⃝ Overhead ⃝ Rewire SQ FT _______ ⃝ Gene",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "62bf408cc6777f6766fc1aa233839990500849dc4bb306e95db87828f315a59e",
+   "source_document_id": null,
+   "source_title": "62bf408cc6777f6766fc1aa233839990500849dc4bb306e95db87828f315a59e.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/Residential/Application-for-electrical-permit-v6-FILLABLE-1.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR HVAC/MECHANICAL PERMIT Wayne County Building Department PERMIT # 428 West Liberty Street • Wooster, Ohio 44691 330-287-5525 • 330-287-5649 fax ⃝ RESIDENTIAL PARCEL ⃝ COMMERCIAL TOWNSHIP SECTION PROJECT DESCRIPTION: LOT NO. JOB LOCATION ADDRESS: CITY: PROPERTY OWNER: PHONE: EMAIL: ADDRESS: CITY: STATE: ZIP : TENANT NAME: TENANT PHONE: CONTRACTOR NAME: OHIO LIC. # ADDRESS: CITY: STATE: ZIP: CELL PHONE: EMAIL (PLEASE PROVIDE) PHONE: EQUIPMENT INSTALLED: MARK ALL APPROPRIATE BOXES THAT APPLY FURNACE: ⃝ New or ⃝ Replacement ⃝ Exhaust Hood ⃝ In-Floor ⃝ Propane / Gas A/C: ⃝ New or ⃝ Replacement ⃝ Gas Stove ⃝ Wood Stove ⃝ Outdoor wood unit HEAT PUMP: ⃝ New or ⃝ Replacement ⃝ Wall/Ceiling Unit ⃝ Fireplace ⃝ Geo Thermal ROOFTOP ⃝ New or ⃝ Replacement # of Units __________ ⃝ Fuel Oil ⃝ Electric BOILER ⃝ New or ⃝ Replacement # of Units __________ PLEASE SIGN AND DATE PLEASE DO NOT WR",
+   "tags": [
+    "sign",
+    "area",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "411ba9cb102217ea8c16ffbc17ed33d785d2237a3396eeb383859561fdd6662e",
+   "source_document_id": null,
+   "source_title": "411ba9cb102217ea8c16ffbc17ed33d785d2237a3396eeb383859561fdd6662e.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/Residential/Application-HVAC-Only-Permit.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "WAYNE COUNTY BUILDING DEPARTMENT 428 West Liberty Street, Wooster, Ohio 44691 Telephone: 330.287.5525 Fax: 330.287.5649 ____________________________________________________________________________________________________________ INSPECTION MUST BE REQUESTED ONE DAY PRIOR TO THE DATE OF INSPECTION. PLEASE USE PERMIT # AND ADDRESS WHEN REQUESTING AN INSPECTION. THE FOLLOWING IS A LIST OF THE REQUIRED INSPECTIONS. ADDITIONAL INSPECTIONS MAY BE REQUIRED AS DEEMED NECESSARY BY THE BUILDING OFFICIAL TO ASSURE COMPLIANCE WITH THE RESIDENTIAL CODE OF OHIO FOR ONE, TWO, AND THREE FAMILY DWELLINGS, AND IS SUBJECT TO ADDITIONAL INSPECTION FEES. FOOTER INSPECTION: Excavations for footings complete, forms in place, any required reinforcing steel is in place, but before any concrete is placed. POURED WALL INSPECTION: Rebar in place and forms ready to be placed. FOUNDATION INSPECTION: After wall or fou",
+   "tags": [
+    "fee",
+    "illumination",
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "9398f42a87b9c4476629c251b432cc7a16d4963697fc71e0740843254cdc4701",
+   "source_document_id": null,
+   "source_title": "9398f42a87b9c4476629c251b432cc7a16d4963697fc71e0740843254cdc4701.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/Residential/Additional-forms/Residential_Required_Inspection_List.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Wayne County, Ohio Storm Water Management Regulations Review and Inspection Fee Schedule Description Fee Building Additions, Accessory Buildings, Manufactured Homes $20.00 or General Clearing/Grading/Linear Construction(< 1 Acre Disturbed) One, Two or Three Family Residential Dwelling (<1 Acre Disturbed) $75.00 One, Two or Three Family Residential Dwelling $200.00 (1 Acre or More Disturbed) Commercial, Industrial, Government Agency Project or Multi- $75.00 Family Residential (< 1 Acre Disturbed and is not defined as a Large Construction Site) Commercial, Industrial, Government Agency Project or $650.00 Residential Subdivision (1 Acre or More Disturbed and is defined as a Small Construction Site) Commercial, Industrial, Government Agency Project or $1,100.00 Residential Subdivision (defined as a Large Construction Site) Linear Construction or Construction Not Creating Impervious Area: 1 t",
+   "tags": [
+    "fee",
+    "area",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "de573f5af590cc6accc01ead2622eea7af810d609556da0e9fd69c12ab4baaa8",
+   "source_document_id": null,
+   "source_title": "de573f5af590cc6accc01ead2622eea7af810d609556da0e9fd69c12ab4baaa8.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/CAP-Forms/Fee-Schedule-Adopted-April-2015.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "* RESIDENTIAL * Application for Building/Electrical/HVAC Permits Wayne County Building Department 428 West Liberty Street Wooster, Ohio 44691 330-287-5525 BUILDING PERMIT # ELECTRICAL PERMIT # Property Owner ’ s Name : HVAC PERMIT # Property Owner’s Address: ELECTRIC: NEC 110.3 All electrical shall be installed and used in accordance with the listing requirements and manufacturer’s instruction. City: State: ZIP: Power Company ⃝ Ohio Edison OE Dr # ______________________________ Property Owner's E mail: ⃝ AEP ⃝ Holmes Wayne ⃝ Orrville Property Owner's Phone: ⃝ WADS ⃝ LMRE Job Site Address: (Assigned by Wayne County Map office) SERVICE: SIZE/AMPS _______ SOLAR: Occupant’s Name: ⃝ Temporary ⃝ Permanent ⃝ Underground ⃝ Overhead City: ZIP HVAC: 401.1 Heating and Cooling equipment and appliances shall be installed in accordance with the manufacturer’s installation instructions and the requirem",
+   "tags": [
+    "area",
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "22d408fdd3970355f0bb39bcc50096ee590cc5723456e3ab7d58db48572d44c7",
+   "source_document_id": null,
+   "source_title": "22d408fdd3970355f0bb39bcc50096ee590cc5723456e3ab7d58db48572d44c7.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/Residential/Residential-app-for-permit-v20.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Commercial Sprinkler Sprinkler system $110 + .02 sf Limited area system $200 Exhaust hood suppression $150 Commercial Fire Protection Fire alarm system $175 Commercial Special Inspections Certificate of Occupancy $100 After hours inspection $100 Inspection lasting more than 1 hour $100 Re-inspection $50 1. Any work being done without permits is subject to a 200% increased permit cost penalty. 2. All fees are subject to a 3% Ohio Board of Building Standards fee. 3. Copies are .10 per page after the first ten pages, plus any additional fees. 4. Requests for any report will be emailed at no charge. 5. Requests for any report by paper will be $25 for weekly reports and $100 for month end reports. 6. Any other fees not included will be determined by the Building Official per project.",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "fcff9b4ec02aad7e10b1079d4005eba45b2fbf35261ea59dbb1c94d136880901",
+   "source_document_id": null,
+   "source_title": "fcff9b4ec02aad7e10b1079d4005eba45b2fbf35261ea59dbb1c94d136880901.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/Commercial/other-commercial-forms/commercial_fees.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "WAYNE COUNTY BUILDING DEPARTMENT Phone (330) 287-5525 Fax (330) 287-5649 COMMERCIAL PLAN REVIEW REQUIREMENTS Construction documents shall bear the seal of a registered design professional . FOUR sets of plans (per submittal) need to be submitted. Please provide the scope of the project and the following information or they cannot be reviewed: 1. Application for permit completely filled out, along with the scope of the project. 2. Site plan, showing buildings or additions with dimensions to property lines and other buildings. 3. Foundation plans: showing size and depth of footers 4. Floor plans: showing all dimensions, doors, windows, stairs, etc. 5. Exterior building elevations: show grades at building, doors, windows, exterior material, wall and roof. 6. Wall section: exterior wall construction, ceiling height, depth and size of footers below grade. 7. Framing plans: floor and roof fram",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "2d45d15b38f41b57419b991668da88707c40ed43e325126e636bd3fff6bd049a",
+   "source_document_id": null,
+   "source_title": "2d45d15b38f41b57419b991668da88707c40ed43e325126e636bd3fff6bd049a.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/Commercial/Commercial-Plan-Review-Requirement_0.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "WAYNE COUNTY BUILDING DEPARTMENT 428 West Liberty Street • Wooster, Ohio 44691 Phone: (330) 287-5525 Fax: (330) 287-5649 Residential Plan Review Submittal Requirements Checklist for items that must be submitted: ☐ 1. ALL ZONING AND DEED RESTRICTIONS NEED TO BE FOLLOWED. If you are building in an area that has zoning, you need to bring your APPROVED zoning permit with you when you are submitting your plans for approval. ☐ 2. WAYNE COUNTY OFFICIAL ADDRESS SLIP: Wayne County Map Office (330) 287-5495. *REQUIRED FOR NEWLY ASSIGNED ADDRESSES. ☐ 3. APPLICATION (Residential) ☐ 4. PLOT PLAN: Show exact placement of all buildings (existing and proposed) with distances marked from lot lines, buildings, and set-back from the road. Show where septic and well are located with distances to existing and proposed buildings. Please show to scale. ☐ 5. ELEVATIONS: On your drawings, please show how the str",
+   "tags": [
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "6f3c866aa31c415e4992df0acae9b06756be088347270d964cec5f25d21535bd",
+   "source_document_id": null,
+   "source_title": "6f3c866aa31c415e4992df0acae9b06756be088347270d964cec5f25d21535bd.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/Residential/Residential-plan-review-requirements-v3.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "IMPORTANT REMINDER: Incomplete applications will be returned to the applicant when the following are not included to begin the examination process. □ Fire System Application (Complete in its Entirety). □ Four sets of properly sealed drawings, signed and dated. □ Designer Name and Certification number on plans. □ Installer(s) Name and Certification Number(s) on Plans. □ Four sets Specification/Calculation/Equipment Sheets. A $60 SUBMITTAL FEE AND ALL REVIEW FEES WILL BE ADDED ONTO THE TOTAL COST OF THE PERMIT. ALL FEES ARE PAYABLE TO THE WAYNE COUNTY BUILDING DEPARTMENT WITHIN 60 DAYS OF ISSUANCE OF THE PERMIT. I hereby certify that the proposed work is authorized by the building owner of record, and that I have been authorized by the owner to make this application as his or her authorized agent, and we agree to conform to all applicable laws of this jurisdiction . I hereby acknowledge th",
+   "tags": [
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "bdc62f711f775cd1a3a10788c78a54185de758c575fc005ec9f6c7756765b242",
+   "source_document_id": null,
+   "source_title": "bdc62f711f775cd1a3a10788c78a54185de758c575fc005ec9f6c7756765b242.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/Commercial/Fire-Systems-app-for-permit-v3-FILLABLE-combined.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "1. Service (A) Riser diagram showing size, number of services, number of disconnects, conductor size, wiring method and grounding. (B) On site plan showing service location relative to roads, streets, parking lots, buildings and whether service is overhead or underground. (C) Show on floor plan location of services. (D) Available fault current at supply terminals. 2. Equipment, Receptacles and Lighting (A) Show all receptacles, outlets, lighting outlets, appliances, motors, and any other electrical utilization equipment. (B) Show all conductor sizes and circuitry of all receptacle outlets, lighting outlets, appliances, motors and any other electrical utilization equipment. (C) Provide kilowatt, amperes, or horsepower of all appliances, motors, heating and/or air conditioning equipment. (D) Overcurrent sizing for service, branch circuits and feeders. (E) Wiring method-conduit, NM cable, e",
+   "tags": [
+    "sign",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "2d45d15b38f41b57419b991668da88707c40ed43e325126e636bd3fff6bd049a",
+   "source_document_id": null,
+   "source_title": "2d45d15b38f41b57419b991668da88707c40ed43e325126e636bd3fff6bd049a.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/Commercial/Commercial-Plan-Review-Requirement_0.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "* COMMERCIAL * Application for Electrical Inspection, Heating & Ventilating and Certificate of Plan Approval (Submit one application for each building or structure) Wayne County Building Department 428 West Liberty Street Wooster, Ohio 44691 330-287-5525 Permit No. _________________________ 1. Owner’s Name 4. Job Location Address Street Address: City: State: Zip Code: City: State: Zip Code: Township: Section: Phone: Parcel Number: Lot Number: Email: 5. Submitters Name Business/Tenant Name: Street Address: 2. Name of job and description of building – Store, Church, etc. City: State: Zip Code: Phone No.: Email: CONTRACTOR NAME(S): PHONE NUMBER(S): Fax No.: General: # 6. Plans Prepared By (Check one) Ohio Reg. No. ______________ Electric: # ⃝ Ohio Registered Architect Name: Heating: # ⃝ Ohio Professional Engineer Name: Other: # ⃝ Other Name: NATURE OF JOB 7. Name of Person Drawing Plans: Ch",
+   "tags": [
+    "area",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "82cc1b5f924e496aa4dae4f777ee4a82ab2100f38da5f4aa16748a9322e9fb96",
+   "source_document_id": null,
+   "source_title": "82cc1b5f924e496aa4dae4f777ee4a82ab2100f38da5f4aa16748a9322e9fb96.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/Commercial/Commercial-app-for-permit-v15-Fillable_0.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "* FIRE/HOOD SYSTEMS * Fire Alarm, Sprinkler, Hood, Hood Suppression - APPLICATION FOR PLAN APPROVAL - Wayne County Building Department 428 West Liberty Street Wooster, Ohio 44691 330-287-5525 PERMIT NO. DATE RECEIVED 1. Owner’s Name 4. Job Location Address Street Address: City: State: Zip Code: City: State: Zip Code: Township: Section: Phone: Parcel Number: Lot Number: Email: 5. Submitters Name Business/Tenant Name: Street Address: 2. Name of job and description of building City: State: Zip Code: Phone No.: Email: CONTRACTOR NAME(S): PHONE NUMBER(S): Fax No.: FIRE ALARM # 6. Plans Prepared By (Check one) Ohio Reg. No. ______________ SPRINKLER # ⃝ Ohio Registered Architect Name: HOOD # ⃝ Ohio Professional Engineer Name: HOOD SUPPRESSION # ⃝ Other Name: NATURE OF JOB 7. Name of Person Drawing Plans: New ⃝ Addition ⃝ Alteration ⃝ Street Address: 3. TYPE OF CONSTRUCTION City: State: Zip Code",
+   "tags": [
+    "area",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "bdc62f711f775cd1a3a10788c78a54185de758c575fc005ec9f6c7756765b242",
+   "source_document_id": null,
+   "source_title": "bdc62f711f775cd1a3a10788c78a54185de758c575fc005ec9f6c7756765b242.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/Commercial/Fire-Systems-app-for-permit-v3-FILLABLE-combined.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Commercial Resubmittal Application Wayne County Building Department 428 West Liberty Street Wooster, Ohio 44691 Phone: 330-287-5525 Email: buildingcode@wayneoh.org All resubmitted documents MUST be accompanied by a resubmittal application. APPLICANT INFORMATION PROJECT INFORMATION ☐ Owner Project Name /Description: ☐ Architect/Engineer ☐ Contractor Company Name/Tenant: ☐ Other Contact Person: Name: Project Address: Address: City, State Zip: City, State Zip: Phone: Phone: Email: Email: Adjudication #: Permit #: RESUBMITTAL ITEMS INCLUDED ☐ Complete Construction Documents ☐ Response Letter / Letter of Amendment ☐ Other ________________________________ SPECIFY DOCUMENT I certify that all information in this application is true, accurate and complete to the best of my knowledge. _______________________________________ __ Signature ________________________________________ Date _______________",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "c6be614dba6fc9b8fdd5fd0ef6a24c434b628d332c9fb15a4940f4bbe814cb75",
+   "source_document_id": null,
+   "source_title": "c6be614dba6fc9b8fdd5fd0ef6a24c434b628d332c9fb15a4940f4bbe814cb75.pdf",
+   "official_url": "https://www.wayneohio.org/wp-content/uploads/building-codes/Commercial/other-commercial-forms/Commercial-Application-Resubmittal.pdf"
+  }
+ ]
+}

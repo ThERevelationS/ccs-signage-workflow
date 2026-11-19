@@ -20,6 +20,8 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { fetchAllWorkOrders, fetchAllOrders } from "@/lib/workOrderCache";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {
@@ -75,7 +77,7 @@ import {
   PackageCheck,
   AlertTriangle
 } from "lucide-react";
-import * as XLSX from "xlsx";
+// xlsx (~1MB) loads on demand inside the export handler — not at page load.
 import {
   Tooltip,
   TooltipContent,
@@ -122,7 +124,7 @@ import { orderDueState } from "@/shared/orderDueState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
 
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import {
   createOrderWithRecovery,
   replaceOrderFieldsIfUnchanged,
@@ -130,10 +132,10 @@ import {
 } from "@/components/orders/orderPersistence";
 
 
-const Order = base44.entities.Order;
-const WorkOrder = base44.entities.WorkOrder;
+const Order = staffEntities.Order;
+const WorkOrder = staffEntities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
-const GlobalSettings = base44.entities.GlobalSettings;
+const GlobalSettings = staffEntities.GlobalSettings;
 
 const ORDER_REQUEST_TYPES_SETTING_KEY = "orderRequestTypes";
 const DEFAULT_REQUEST_TYPES = ["Substrate", "Vinyl", "Supplies", "Other"];
@@ -157,7 +159,7 @@ const DEFAULT_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
 const ORDER_AUX_RELOAD_MS = 5 * 60 * 1000;
 const ORDER_FOCUS_RELOAD_THROTTLE_MS = 15 * 1000;
 
-const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", focusOrderId = "", onSaveStatusChange = null, showButtonsInline = true, canOrderExport = false }, ref) => {
+const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", focusOrderId = "", onSaveStatusChange = null, canOrderExport = false }, ref) => {
   const { currentUser, sessionToken, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
@@ -170,7 +172,6 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [readError, setReadError] = useState("");
-  const [editingCell, setEditingCell] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -192,7 +193,6 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     handleSort: handleColumnSort, 
     handleCustomSort, 
     clearSort,
-    applySortAndFilter 
   } = useColumnSorting('orderForm', currentUser?.email);
 
   const [customerSearch, setCustomerSearch] = useState("");
@@ -241,13 +241,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     let active = true;
     const loadRequestTypes = async () => {
       try {
-        const rows = await GlobalSettings.filter({ setting_key: ORDER_REQUEST_TYPES_SETTING_KEY });
+        const setting = await loadSingleGlobalSetting({
+          entity: GlobalSettings,
+          settingKey: ORDER_REQUEST_TYPES_SETTING_KEY,
+          label: "Order item types",
+        });
         if (!active) return;
-        if (!Array.isArray(rows)) throw new Error("Order item-type settings did not return a record list.");
-        if (rows.length > 1) {
-          throw new Error(`Order item types have ${rows.length} shared settings records. Ask an admin to resolve the duplicate settings.`);
-        }
-        const setting = rows[0] || null;
         setRequestTypeSetting(setting);
         const sharedTypes = normalizeOrderRequestTypes(setting?.setting_value?.items);
         if (sharedTypes.length) {
@@ -282,7 +281,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [mobileDetailOrderId, setMobileDetailOrderId] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [validationError, setValidationError] = useState(null);
-  const [editingCustomerName, setEditingCustomerName] = useState(null);
+  const [_editingCustomerName, setEditingCustomerName] = useState(null);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
   const { startImport: startMultiImport, updateImport, finishImport } = useMultiImport();
@@ -425,24 +424,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     // succeeds. Starting a retry must not make the toolbar Sync actionable.
     try {
       const [ordersData, workOrdersData, usersData] = await Promise.all([
-        loadAllEntityRows({
-          entity: Order,
-          query: workOrderFilter
-            ? { work_order_id: workOrderFilter, deleted: { $ne: true } }
-            : { deleted: { $ne: true } },
-          sort: "row_number",
-          label: workOrderFilter ? "Work Order purchasing orders" : "Order Spreadsheet orders",
-        }),
+        fetchAllOrders().then((rows) =>
+          (rows || [])
+            .filter((o) => o.deleted !== true &&
+              (!workOrderFilter || String(o.work_order_id) === String(workOrderFilter)))
+            .sort((a, b) => (a?.row_number ?? 0) - (b?.row_number ?? 0))),
         reloadAux
-          ? loadAllEntityRows({
-            entity: WorkOrder,
-            query: { completed: { $ne: true }, deleted: { $ne: true } },
-            sort: "created_date",
-            label: "Order Spreadsheet Work Orders",
-          })
+          ? fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
+            (rows || []).filter((wo) => wo.completed !== true && wo.deleted !== true))
           : Promise.resolve(cachedWorkOrdersRef.current || []),
         reloadAux
-          ? loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Order Spreadsheet authorized users" })
+          ? loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Order Spreadsheet authorized users" })
           : Promise.resolve(cachedUsersRef.current || [])
       ]);
       // A manual Sync or a newer refresh can start while these reads are
@@ -585,12 +577,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           : order));
 
         try {
-          if (cleanedUpdates.date_ordered && !baseline.date_ordered) {
-            await NotificationTriggers.orderOrdered(saved, currentUser?.full_name || currentUser?.email);
-          }
-          if (cleanedUpdates.date_received && !baseline.date_received) {
-            await NotificationTriggers.orderReceived(saved, currentUser?.full_name || currentUser?.email);
-          }
+          await NotificationTriggers.orderSaveEvents({
+            baseline,
+            saved,
+            fields: Object.keys(cleanedUpdates),
+            changedBy: currentUser?.full_name || currentUser?.email,
+          });
         } catch (notificationError) {
           console.error("Order saved but its notification could not be sent:", notificationError);
         }
@@ -851,10 +843,6 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   // Existing internal/manual callers still save Base44 only. The page-level
   // user button calls saveAndSync so explicit Save has deterministic sync semantics.
-  const manualSave = () => {
-    saveAllChanges();
-  };
-
   const addNewRow = async () => {
     // A manual pull owns its ref before React renders the disabled Add button.
     if (!isRegistered || readError || addInFlightRef.current || manualPullInFlightRef.current || isPulling) return;
@@ -1313,15 +1301,6 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
 
 
-  const getFilteredUsers = (searchTerm) => {
-    if (!searchTerm) return users.slice(0, 10);
-    const lower = searchTerm.toLowerCase();
-    return users.filter(u => 
-      u.full_name?.toLowerCase().includes(lower) ||
-      u.email?.toLowerCase().includes(lower)
-    ).slice(0, 10);
-  };
-
   const getRowColor = (order) => {
     if (effectiveOrderStatus(order) === "received") return "bg-green-100";
     if (effectiveOrderStatus(order) === "ordered") return "bg-green-50";
@@ -1368,6 +1347,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     await new Promise(resolve => setTimeout(resolve, 300));
     setExportProgress({ show: true, progress: 50 });
 
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Orders");
@@ -1901,14 +1881,14 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       )}
 
       {/* Spreadsheet Table */}
-      <div ref={tableContainerRef} className="overflow-y-auto overflow-x-hidden" style={{ height: 'calc(100vh - 300px)' }}>
+      <div ref={tableContainerRef} className="overflow-y-auto overflow-x-hidden ccs-scrollbar-hidden" style={{ height: 'calc(100vh - 300px)' }}>
       <table className="w-full border-collapse border rounded-lg order-spreadsheet" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'fixed', width: '100%' }}>
         <colgroup>
           <col style={{ width: '32px' }} />
           <col style={{ width: '15%' }} />
-          <col style={{ width: '7%' }} />
-          <col style={{ width: '38%' }} />
-          <col style={{ width: '4%' }} />
+          <col style={{ width: '9%' }} />
+          <col style={{ width: '35%' }} />
+          <col style={{ width: '5%' }} />
           <col style={{ width: '8%' }} />
           <col style={{ width: '7%' }} />
           <col style={{ width: '7%' }} />
@@ -1935,7 +1915,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               <div className="flex items-center gap-1">
                 Request Type {getSortIcon('request_type')}
                 {currentUser?.role === "admin" && (
-                  <button
+                  <button type="button"
                     onClick={(e) => { e.stopPropagation(); setRequestTypesError(""); setEditingRequestTypes(true); }}
                     className="hover:bg-gray-300 rounded p-0.5"
                     aria-label="Manage Order item types"
@@ -1989,7 +1969,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               <div className="flex items-center gap-1">
                 Vendor {getSortIcon('vendor')}
                 {isRegistered && (
-                  <button onClick={(e) => { e.stopPropagation(); setEditingVendors(true); }} className="hover:bg-gray-300 rounded p-0.5">
+                  <button type="button" onClick={(e) => { e.stopPropagation(); setEditingVendors(true); }} className="hover:bg-gray-300 rounded p-0.5">
                     <Pencil className="w-3 h-3 text-gray-500" />
                   </button>
                 )}
@@ -2040,7 +2020,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               >
               {/* Row Number - Clickable Focus Button */}
               <td className="px-0 py-0 border-r">
-                <button
+                <button type="button"
                   onClick={() => {
                     if (isFocused) {
                       setFocusedRowId(null);
@@ -2153,7 +2133,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                   disabled={!isRegistered || isPulling}
                 />
                 {order.work_order_id && (
-                  <button
+                  <button type="button"
                     onClick={() => {
                       const wo = workOrders.find(w => w.id === order.work_order_id);
                       if (wo) setSelectedWorkOrder(wo);
@@ -2374,7 +2354,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               >
                 <Popover open={openDatePopover === `needed-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `needed-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered || isPulling}>
-                    <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
+                    <button type="button" className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                       <span className="truncate">{order.date_needed_option || safeFormatDate(order.date_needed, "MM/dd/yy")}</span>
                       {orderDueState(order, todayStr) === "overdue" && (
                         <span className="ml-auto inline-flex shrink-0 rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-950/60 dark:text-red-300">Overdue</span>
@@ -2448,7 +2428,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               >
                 <Popover open={openDatePopover === `ordered-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordered-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered || isPulling}>
-                    <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
+                    <button type="button" className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                       {order.date_ordered_option || safeFormatDate(order.date_ordered, "MM/dd/yy")}
                     </button>
                   </PopoverTrigger>
@@ -2547,7 +2527,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               >
                 <Popover open={openDatePopover === `received-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `received-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered || isPulling}>
-                    <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
+                    <button type="button" className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                       {order.receipt_option || safeFormatDate(order.date_received, "MM/dd/yy")}
                     </button>
                   </PopoverTrigger>
@@ -2728,7 +2708,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 >
                   <div className="flex items-center gap-2">
                     <div className="flex flex-col">
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === 0) return;
                           const items = [...requestTypes];
@@ -2740,7 +2720,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                       </button>
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === requestTypes.length - 1) return;
                           const items = [...requestTypes];
@@ -2755,7 +2735,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     </div>
                     <span className="text-sm">{type}</span>
                   </div>
-                  <button
+                  <button type="button"
                     onClick={() => removeRequestType(type)}
                     disabled={requestTypesSaving || requestTypes.length <= 1}
                     className="text-red-500 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-30"
@@ -3005,7 +2985,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 >
                   <div className="flex items-center gap-2">
                     <div className="flex flex-col">
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === 0) return;
                           const items = [...vendors];
@@ -3017,7 +2997,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                       </button>
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === vendors.length - 1) return;
                           const items = [...vendors];
@@ -3032,7 +3012,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     </div>
                     <span className="text-sm">{vendor}</span>
                   </div>
-                  <button onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
+                  <button type="button" onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
                     <X className="w-4 h-4" />
                   </button>
                 </div>

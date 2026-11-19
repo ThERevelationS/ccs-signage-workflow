@@ -27,6 +27,10 @@
       "format": "date-time",
       "description": "Trusted backend timestamp when submitted"
     },
+    "attachment_url": {
+      "type": "string",
+      "description": "Optional photo/document URL attached to the correction (paper slip scan)"
+    },
     "employee_reason": {
       "type": "string",
       "description": "Employee explanation for the requested correction"

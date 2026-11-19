@@ -1,0 +1,300 @@
+[
+ {
+  "a": "5385 Ridge Road, Cincinnati, OH 45213",
+  "r": "location_verified",
+  "target": "Columbia township"
+ },
+ {
+  "a": "100 North Dixie Highway, Cridersville, OH 45806",
+  "r": "location_verified",
+  "target": "Duchouquet township"
+ },
+ {
+  "a": "6142 Wilmington Pike, Centerville, OH 45459",
+  "r": "location_verified",
+  "target": "Sugarcreek township"
+ },
+ {
+  "a": "1970 Stringtown Road, Grove City, OH 43123",
+  "r": "location_verified",
+  "target": "Grove City"
+ },
+ {
+  "a": "1693 Stringtown Road, Grove City, OH 43123",
+  "r": "location_verified",
+  "target": "Grove City"
+ },
+ {
+  "a": "2536 Columbus Street, Grove City, OH 43123",
+  "r": "location_verified",
+  "target": "Grove City"
+ },
+ {
+  "a": "6283 Sunbury Road, Westerville, OH 43081",
+  "r": "location_verified",
+  "target": "Blendon township"
+ },
+ {
+  "a": "1370 Hamilton Road, Columbus, OH 43230",
+  "r": "location_verified",
+  "target": "Gahanna"
+ },
+ {
+  "a": "1365 London – Delaware Road, London, OH 43140",
+  "r": "location_verified",
+  "target": "Deer Creek township"
+ },
+ {
+  "a": "1420-42 London – Delaware Road, London, OH 43140",
+  "r": "location_verified",
+  "target": "Jefferson township"
+ },
+ {
+  "a": "121 East Main Street, St. Henry, OH 45883",
+  "r": "location_verified",
+  "target": "St. Henry"
+ },
+ {
+  "a": "5321 Center Road, Brunswick, OH 44212",
+  "r": "location_verified",
+  "target": "BRUNSWICK"
+ },
+ {
+  "a": "4618 Royalton Road, Broadview Heights, OH 44147",
+  "r": "location_verified",
+  "target": "Broadview Heights"
+ },
+ {
+  "a": "7966 Darrow Road, Hudson, OH 44236",
+  "r": "location_verified",
+  "target": "Twinsburg township"
+ },
+ {
+  "a": "156 W Main St, Plain City, OH 43064",
+  "r": "location_verified",
+  "target": "Plain City"
+ },
+ {
+  "a": "601 S Dixie Hwy, Cave City, KY 42127",
+  "r": "location_verified",
+  "target": "Cave City"
+ },
+ {
+  "a": "2827 Lexington Avenue, Mansfield, OH 44904",
+  "r": "location_verified",
+  "target": "Lexington"
+ },
+ {
+  "a": "1300 Indiana Avenue, Saint Marys, OH 45885",
+  "r": "location_verified",
+  "target": "St. Marys"
+ },
+ {
+  "a": "585 Royal Oak Drive, Saint Marys, OH 45885",
+  "r": "location_verified",
+  "target": "St. Marys"
+ },
+ {
+  "a": "1594 Celina Road, Saint Marys, OH 45885",
+  "r": "location_verified",
+  "target": "St. Marys"
+ },
+ {
+  "a": "4368 North Mayo Trail, Pikeville, KY 41501",
+  "r": "location_verified",
+  "target": "Coal Run Village"
+ },
+ {
+  "a": "9198 North Main Street, Englewood, OH 45415",
+  "r": "location_verified",
+  "target": "Englewood"
+ },
+ {
+  "a": "4900 South County Road 25A, Tipp City, OH 45371",
+  "r": "location_verified",
+  "target": "Tipp City"
+ },
+ {
+  "a": "127 South Garber Drive, Tipp City, OH 45371",
+  "r": "location_verified",
+  "target": "Tipp City"
+ },
+ {
+  "a": "1000 West Main Street, Tipp City, OH 45371",
+  "r": "location_verified",
+  "target": "Tipp City"
+ },
+ {
+  "a": "1261 West Ohio Pike, Amelia, OH 45102",
+  "r": "edge",
+  "target": "Pierce township"
+ },
+ {
+  "a": "7010 Rowan Hill Drive, Mariemont, OH 45227",
+  "r": "location_verified",
+  "target": "Mariemont"
+ },
+ {
+  "a": "1 Warrior Way, Cincinnati, OH 45227",
+  "r": "location_verified",
+  "target": "Mariemont"
+ },
+ {
+  "a": "4200 Vine Street, Saint Bernard, OH 45217",
+  "r": "location_verified",
+  "target": "St. Bernard"
+ },
+ {
+  "a": "10630 Loveland Madeira Road, Loveland, OH 45140",
+  "r": "location_verified",
+  "target": "Symmes township"
+ },
+ {
+  "a": "2692 Madison Rd Ste 115, Cincinnati, OH 45208",
+  "r": "geocode-miss"
+ },
+ {
+  "a": "802 Mammoth Cave Rd, Cave City, KY 42127",
+  "r": "location_verified",
+  "target": "Cave City"
+ },
+ {
+  "a": "8288 Cincinnati-Dayton Road, West Chester Township, OH 45069",
+  "r": "location_verified",
+  "target": "UNION"
+ },
+ {
+  "a": "7700 University Drive, West Chester Township, OH 45069",
+  "r": "location_verified",
+  "target": "UNION"
+ },
+ {
+  "a": "7855 Tylersville Road, West Chester Township, OH 45069",
+  "r": "location_verified",
+  "target": "UNION"
+ },
+ {
+  "a": "9142 Cincinnati Columbus Road;Columbus-Cincinnati Road, West Chester Township, OH 45069",
+  "r": "location_verified",
+  "target": "UNION"
+ },
+ {
+  "a": "10501 Preston Highway, Louisville, KY 40229",
+  "r": "location_verified",
+  "target": "LOUISVILLE"
+ },
+ {
+  "a": "10006 Will Way, Louisville, KY 40291",
+  "r": "location_verified",
+  "target": "LOUISVILLE"
+ },
+ {
+  "a": "126 Rojay Drive, Lexington, KY 40503",
+  "r": "location_verified",
+  "target": "LEXINGTON"
+ },
+ {
+  "a": "3851 Kenesaw Drive, Lexington, KY 40517",
+  "r": "location_verified",
+  "target": "LEXINGTON"
+ },
+ {
+  "a": "3601 Walden Drive, Lexington, KY 40517",
+  "r": "location_verified",
+  "target": "LEXINGTON"
+ },
+ {
+  "a": "801 Euclid Avenue, Lexington, KY 40502",
+  "r": "location_verified",
+  "target": "LEXINGTON"
+ },
+ {
+  "a": "9160 Taylorsville Road, Jeffersontown, KY 40299",
+  "r": "location_verified",
+  "target": "Jeffersontown"
+ },
+ {
+  "a": "4444 Industrial Pkwy, Calvert City, KY 42029",
+  "r": "location_verified",
+  "target": "Calvert City"
+ },
+ {
+  "a": "1121 Winchester Road, Lexington, KY 40509",
+  "r": "location_verified",
+  "target": "LEXINGTON"
+ },
+ {
+  "a": "80 E Sharon Rd, Cincinnati, OH 45246",
+  "r": "geocode-miss"
+ },
+ {
+  "a": "3940 North Mayo Trail, Coal Run Village, KY 41501",
+  "r": "location_verified",
+  "target": "Coal Run Village"
+ },
+ {
+  "a": "785 North Broadway, Lexington, KY 40542",
+  "r": "location_verified",
+  "target": "LEXINGTON"
+ },
+ {
+  "a": "12609 Taylorsville Road, Louisville, KY 40299",
+  "r": "location_verified",
+  "target": "LOUISVILLE"
+ },
+ {
+  "a": "9120 Taylorsville Road, Jeffersontown, KY 40299",
+  "r": "location_verified",
+  "target": "Jeffersontown"
+ },
+ {
+  "a": "1200 KY 313, Brandenburg, KY 40108",
+  "r": "location_verified",
+  "target": "Brandenburg"
+ },
+ {
+  "a": "209 W Spring St, St Marys, OH 45885",
+  "r": "location_verified",
+  "target": "St. Marys"
+ },
+ {
+  "a": "901 Mammoth Cave Street, Cave City, KY 42127",
+  "r": "location_verified",
+  "target": "Cave City"
+ },
+ {
+  "a": "804 Mammoth Cave Street, Cave City, KY 42127",
+  "r": "location_verified",
+  "target": "Cave City"
+ },
+ {
+  "a": "4299 Hilltop Rd, Uniontown, KY 42461",
+  "r": "location_verified",
+  "target": "Union County"
+ },
+ {
+  "a": "309 Broadway Street, Cave City, KY 42127",
+  "r": "location_verified",
+  "target": "Cave City"
+ },
+ {
+  "a": "3660 Boston Road, Lexington, KY 40514",
+  "r": "location_verified",
+  "target": "LEXINGTON"
+ },
+ {
+  "a": "150 North 20th Street, Middlesboro, KY 40864",
+  "r": "location_verified",
+  "target": "MIDDLESBORO"
+ },
+ {
+  "a": "3600 West Cumberland Avenue, Middlesboro, KY 40965",
+  "r": "location_verified",
+  "target": "MIDDLESBORO"
+ },
+ {
+  "a": "515 North 12th Street, Middlesboro, KY 40965",
+  "r": "location_verified",
+  "target": "MIDDLESBORO"
+ }
+]

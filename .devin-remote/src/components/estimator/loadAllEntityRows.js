@@ -1,0 +1,138 @@
+const DEFAULT_PAGE_SIZE = 500;
+const DEFAULT_MAX_ROWS = 50000;
+const RATE_LIMIT_MAX_RETRIES = 3;
+const RATE_LIMIT_BASE_DELAY_MS = 1200;
+
+function rowIdentity(row, index) {
+  const id = String(row?.id || "").trim();
+  return id || `__row_${index}`;
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export function isRateLimitError(error) {
+  const status = error?.status ?? error?.response?.status;
+  if (status === 429) return true;
+  const message = String(
+    error?.message ||
+    error?.response?.data?.error ||
+    error?.data?.error ||
+    ""
+  ).toLowerCase();
+  return message.includes("rate limit") || message.includes("too many requests");
+}
+
+/**
+ * Retries a single SDK call when the platform returns a transient rate-limit
+ * error. Uses exponential backoff so concurrent page-load calls (builder
+ * reconciliation, part catalogs, section snapshots) don't all retry at once.
+ */
+export async function withRateLimitRetry(fn) {
+  for (let attempt = 0; attempt <= RATE_LIMIT_MAX_RETRIES; attempt += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      // The request governor already retried this call with backoff; a second
+      // retry loop here would multiply the delay without helping.
+      if (typeof error?.ccsGovernorRetried === "number") throw error;
+      if (attempt < RATE_LIMIT_MAX_RETRIES && isRateLimitError(error)) {
+        await sleep(RATE_LIMIT_BASE_DELAY_MS * Math.pow(2, attempt));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+/**
+ * Load a complete estimator prerequisite catalog without relying on Base44's
+ * list/filter default limit (50 rows).
+ *
+ * This helper is intentionally read-only. It pages the existing entity client
+ * using the SDK's list/filter(sort, limit, skip) contract, fails closed on an
+ * unreadable page, and de-duplicates by entity id so callers never silently
+ * estimate from a partial catalog.
+ *
+ * Paging order defaults to ASCENDING "created_date" (not "-created_date").
+ * That is deliberate: new rows append to the end of the set, so earlier
+ * skip/limit pages stay stable while a full scan is in flight — a
+ * newest-first order would shift every page on each concurrent insert.
+ * Callers may pass any SDK sort string; it is forwarded to list/filter on
+ * every page (an empty/falsy sort falls back to the SDK's own default).
+ */
+/**
+ * @param {{
+ *   entity?: any,
+ *   query?: Record<string, any> | null,
+ *   sort?: string | null,
+ *   pageSize?: number,
+ *   maxRows?: number,
+ *   label?: string,
+ * }} [options]
+ */
+// Short-TTL in-memory cache for slow-changing catalogs (jurisdiction/locality
+// lists). Opt-in per call — repeated mounts of the same page stop re-reading
+// the whole catalog and burning the shared rate-limit budget.
+const readCache = new Map();
+const CACHE_MAX_AGE_MS = 30000;
+
+// Seed the short-TTL cache with rows fetched through a batch read so the
+// per-entity loaders skip their own network call on the next mount.
+export const primeEntityRowsCache = (label, query, sort, rows) => {
+  readCache.set(JSON.stringify([label, query ?? null, sort, DEFAULT_PAGE_SIZE, DEFAULT_MAX_ROWS]), { at: Date.now(), rows });
+};
+
+export async function loadAllEntityRows({
+  entity,
+  query = null,
+  sort = "created_date",
+  pageSize = DEFAULT_PAGE_SIZE,
+  maxRows = DEFAULT_MAX_ROWS,
+  label = "Estimator prerequisite catalog",
+  cacheTtlMs = 0,
+} = {}) {
+  const cacheKey = cacheTtlMs > 0 ? JSON.stringify([label, query, sort, pageSize, maxRows]) : null;
+  if (cacheKey) {
+    const hit = readCache.get(cacheKey);
+    if (hit && Date.now() - hit.at < Math.min(cacheTtlMs, CACHE_MAX_AGE_MS)) return hit.rows;
+  }
+  const hasFilter = query && typeof query === "object";
+  const reader = hasFilter ? entity?.filter : entity?.list;
+  if (typeof reader !== "function") {
+    throw new Error(`${label} could not initialize its paged read.`);
+  }
+
+  const safePageSize = Math.max(1, Math.min(500, Number(pageSize) || DEFAULT_PAGE_SIZE));
+  const safeMaxRows = Math.max(safePageSize, Number(maxRows) || DEFAULT_MAX_ROWS);
+  const collected = [];
+  const seen = new Set();
+  let skip = 0;
+
+  while (skip < safeMaxRows) {
+    const page = await withRateLimitRetry(() =>
+      hasFilter
+        ? entity.filter(query, sort || undefined, safePageSize, skip)
+        : entity.list(sort || undefined, safePageSize, skip)
+    );
+
+    if (!Array.isArray(page)) {
+      throw new Error(`${label} could not be verified completely. Estimating was blocked rather than using a partial catalog.`);
+    }
+
+    for (let index = 0; index < page.length; index += 1) {
+      const row = page[index];
+      const key = rowIdentity(row, skip + index);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      collected.push(row);
+    }
+
+    if (page.length < safePageSize) {
+      if (cacheKey) readCache.set(cacheKey, { at: Date.now(), rows: collected });
+      return collected;
+    }
+    skip += safePageSize;
+  }
+
+  throw new Error(`${label} exceeds the ${safeMaxRows.toLocaleString()}-record estimator safety limit.`);
+}

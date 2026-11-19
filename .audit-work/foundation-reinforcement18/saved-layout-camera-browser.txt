@@ -1,0 +1,11 @@
+ok recorded 1280
+ok recorded 390
+ok legacy-height 1280
+ok legacy-height 390
+ok invalid-poles 1280
+ok invalid-poles 390
+ok quantity 1280
+ok quantity 390
+ok wide-layout 1280
+ok wide-layout 390
+exit=0

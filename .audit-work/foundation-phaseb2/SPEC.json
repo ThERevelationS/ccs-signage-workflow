@@ -1,0 +1,156 @@
+{
+  "spec": "foundation-reinforcement-v2 phase-B step 3 (editor/proposal lifecycle) transport candidates",
+  "status": "CANDIDATE-ONLY — nothing here has been written to remote storage; no publish/deploy/entity-record ops performed",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remote_head_baseline": "97d37964a8554d7561995975deb0d6096f63e3e3 (phase-B1 landing); candidates diffed against remote files pulled 2026-11-10 into remote-src/",
+  "local_source_root": "src/components/estimator/foundation/ (v2 authored modules)",
+  "remote_source_snapshot": ".audit-work/foundation-phaseb2/remote-src/ (fresh pulls; mirror of remote paths under remote-src/src/)",
+  "candidate_tree": ".audit-work/foundation-phaseb2/candidate-tree-src/ (remote snapshot + candidate overlay; verification bundles build against this tree)",
+
+  "module_classification": {
+    "shipped_phase_b1_do_not_touch": [
+      "src/components/estimator/foundation/foundationGeometryInputs.js",
+      "src/components/estimator/foundation/foundationReinforcementModel.js",
+      "src/components/estimator/foundation/foundationReinforcementBasis.js",
+      "src/components/estimator/foundation/foundationReinforcementCost.js",
+      "src/components/estimator/foundation/foundationReinforcementProjection.js",
+      "src/components/estimator/foundation/foundationReinforcementItemProjection.js"
+    ],
+    "unneeded": [
+      "pole/camera preview helpers (preview3D/threePreview consumers are staged downstream grafts, not step-3 requirements)"
+    ]
+  },
+
+  "new_files_required": [
+    {
+      "remote_path": "src/components/estimator/foundation/useFoundationReinforcementEditor.js",
+      "candidate": "candidate-src/new-modules/useFoundationReinforcementEditor.js",
+      "provenance": "local, md5 a7696f1f4df5bcf9b4cd55ccfcf8c073 — byte-identical",
+      "notes": "React hook wrapper: owns session in useRef, rerenders on onChange revision. Contract {getCurrent, commit}."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/foundationReinforcementEditorSession.js",
+      "candidate": "candidate-src/new-modules/foundationReinforcementEditorSession.js",
+      "provenance": "local, adapted — md5 c7634d6b1fcdcb25e02e147bb04f3ce3",
+      "notes": "ADAPTED from local: section() now uses calcProject().totals.{grand_total,total_signage_cabinet_cost,total_landscape_cost} (held-aware O-010 totals identical to the page's sectionTotal) instead of recomputing raw cabinet sums + landscapeSummary — removes a guess-pricing path. landscapeSummary import dropped. Session owns disposable previews/acknowledgments; all mutations go through the single parent commit; blocked/stale/context gates enforced; acceptance is exactly one commit."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/foundationReinforcementProposal.js",
+      "candidate": "candidate-src/new-modules/foundationReinforcementProposal.js",
+      "provenance": "local, md5 be30220867269eff5f8d2b8e0e9d0c18 — byte-identical",
+      "notes": "Proposal create+accept: context/source/catalog anchors, basis-key stale check, fresh recalculation on accept, acknowledgment gate, single project commit writing reinforcement_calculation_version:2 + design + material + cost snapshot + acceptance provenance. engineering_approved always false."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/foundationReinforcementDraft.js",
+      "candidate": "candidate-src/new-modules/foundationReinforcementDraft.js",
+      "provenance": "local, md5 aaf803d8d9535ed8134e066fe047dc9e — byte-identical",
+      "notes": "Raw schema-version-1 draft: keeps text verbatim until prepare; explicit empty design/material/overrides shell."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/foundationReinforcementBasisKey.js",
+      "candidate": "candidate-src/new-modules/foundationReinforcementBasisKey.js",
+      "provenance": "local, md5 903de4a65faf110b383a4b50e5881b53 — byte-identical",
+      "notes": "Canonical basis-key encoding over project/savedProject/inventory/settings/context/draft/acks — stale-result protection fingerprint."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/FoundationReinforcementProposalPanel.jsx",
+      "candidate": "candidate-src/new-modules/FoundationReinforcementProposalPanel.jsx",
+      "provenance": "local, md5 0d3fd5768a6a9d2fc2d08caf9825d7b5 — byte-identical",
+      "notes": "Panel: version label (Legacy/Version 2/Unsupported), start/draft/preview/acknowledgment/accept/discard lifecycle; accept disabled until preview.canAccept && !stale && !blocked && ackEligible."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/ReinforcementDraftField.jsx",
+      "candidate": "candidate-src/new-modules/ReinforcementDraftField.jsx",
+      "provenance": "local, md5 936ea6b60f459b8e304911a504899712 — byte-identical",
+      "notes": "Controlled raw-text field with aria-label; preserves malformed input verbatim."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/ReinforcementDraftGeometry.jsx",
+      "candidate": "candidate-src/new-modules/ReinforcementDraftGeometry.jsx",
+      "provenance": "local, md5 1eea7d2285bfc03ee12ade8463700950 — byte-identical",
+      "notes": "Explicit design authoring: bar diameter, side/top/bottom cover, support mode+reason, spread mats (bearing elevation + max spacing X/Z), inter-mat ties, pillar hoops + longitudinal."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/ReinforcementDraftList.jsx",
+      "candidate": "candidate-src/new-modules/ReinforcementDraftList.jsx",
+      "provenance": "local, md5 0c39089ad5139111f499d02f8d0ce940 — byte-identical",
+      "notes": "Paginated row editor: stable ids, malformed-row repair notice, row caps, orphan-reference preservation."
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/ReinforcementDraftMaterial.jsx",
+      "candidate": "candidate-src/new-modules/ReinforcementDraftMaterial.jsx",
+      "provenance": "local, md5 70578b5786e266dcac6f7c0f4d5490d6 — byte-identical",
+      "notes": "Material basis authoring: catalog pick vs explicit manual basis (name/reason/diameter/weight/rate/unit), quantity + rate overrides."
+    }
+  ],
+
+  "new_files_staged_future_consumers": [
+    { "remote_path": "src/components/estimator/foundation/foundationReinforcementCatalogMetadata.js", "candidate": "candidate-src/new-modules/foundationReinforcementCatalogMetadata.js", "provenance": "local, md5 8fcdf748a4cc93d0e8099e7a57bcce22 — byte-identical", "consumer": "inventory catalog metadata fields (rebar diameter/weight authoring); no editor-path import" },
+    { "remote_path": "src/components/estimator/foundation/FoundationReinforcementCatalogMetadataFields.jsx", "candidate": "candidate-src/new-modules/FoundationReinforcementCatalogMetadataFields.jsx", "provenance": "local, md5 b4b63c49db0f5289ffbd69df6cf092ba — byte-identical", "consumer": "catalog row editor surface" },
+    { "remote_path": "src/components/estimator/foundation/FoundationReinforcementPricingInfo.jsx", "candidate": "candidate-src/new-modules/FoundationReinforcementPricingInfo.jsx", "provenance": "local, md5 278dec2b7afe31805ce9d91c250d2e59 — byte-identical", "consumer": "work-order/print pricing provenance display" },
+    { "remote_path": "src/components/estimator/foundation/foundationReinforcementFrozenPricing.js", "candidate": "candidate-src/new-modules/foundationReinforcementFrozenPricing.js", "provenance": "local, md5 eafd7d3fbbb0d9b04095f44553dee945 — byte-identical", "consumer": "work-order part derivation" },
+    { "remote_path": "src/components/estimator/foundation/foundationReinforcementPartDescriptors.js", "candidate": "candidate-src/new-modules/foundationReinforcementPartDescriptors.js", "provenance": "local, md5 e0832bf7c035efabe0ae39340837b084 — byte-identical", "consumer": "work-order part descriptors" },
+    { "remote_path": "src/components/estimator/foundation/foundationReinforcementWorkOrderPart.js", "candidate": "candidate-src/new-modules/foundationReinforcementWorkOrderPart.js", "provenance": "local, md5 a848a031289b123f081784d04bf2ca55 — byte-identical", "consumer": "estimate→work-order handoff" },
+    { "remote_path": "src/components/estimator/foundation/foundationReinforcementPrintMaterial.js", "candidate": "candidate-src/new-modules/foundationReinforcementPrintMaterial.js", "provenance": "local, md5 76321ea84d059bde7a77c2dc5bdf34f6 — byte-identical", "consumer": "print/layout material rows" },
+    { "remote_path": "src/components/estimator/foundation/foundationReinforcementBOMRows.js", "candidate": "candidate-src/new-modules/foundationReinforcementBOMRows.js", "provenance": "local, md5 560340406884e35ce6a682a582fa9e80 — byte-identical", "consumer": "FoundationBOM v2 rows" },
+    { "remote_path": "src/components/estimator/foundation/foundationReinforcementPreview3D.js", "candidate": "candidate-src/new-modules/foundationReinforcementPreview3D.js", "provenance": "local, md5 221b80c262b36a03ca9d865155d1fef2 — byte-identical", "consumer": "3D scene preview overlay" },
+    { "remote_path": "src/components/estimator/foundation/foundationReinforcementThreePreview.js", "candidate": "candidate-src/new-modules/foundationReinforcementThreePreview.js", "provenance": "local, md5 ad53a15c6ce9c5fcbb80256b4fe6ce37 — byte-identical", "consumer": "three.js renderer (three is already a remote dep via Foundation3DPreview)" }
+  ],
+
+  "edited_files": [
+    {
+      "remote_path": "src/pages/FoundationEstimator.jsx",
+      "candidate": "candidate-src/pages/FoundationEstimator.jsx",
+      "diff": "diff-FoundationEstimator.txt",
+      "summary": "+65/-12 graft on fresh remote: two imports (proposal panel + hook); a reinforcementEditor hook block before the loading early-return (getCurrent supplies project/savedProject/inventory/settings + full live context {loaded,ownerId,sourceId,sourceUpdatedAt,estimateId,estimateUpdatedAt,generation,editRevision}; blocked mirrors save/copy/catalog/draft/recovery/source-refresh/ack gates — pricingBlocked intentionally excluded so held items can still be drafted); the items.map render wraps each FoundationItemCard with the proposal panel wired to the session. All remote hardening untouched: commit/patch, undo history, browser-draft persistence, edit-revision bump, saveContext, CAS saveSession, pricingBlocked gates, wallPricing/polePricing/sectionTotal/savedSectionTotal/landscapePricing props, constructionWarnings, template gates, draft-recovery UI.",
+      "preserved_remote_hardening": ["commit/patch single-path", "undo/redo history", "O-004 browser-draft recovery", "O-007 template round-trip", "O-010 null-gated totals + held extras", "O-008 inventory normalization boundary", "O-011 parts/handoff", "O-012 estimate handoff", "O-030 constructionWarnings", "editRevision + saveContext + CAS", "catalogReloading + pricingBlocked save gates"]
+    },
+    {
+      "remote_path": "src/components/estimator/foundation/FoundationItemCard.jsx",
+      "candidate": "candidate-src/components/FoundationItemCard.jsx",
+      "diff": "diff-FoundationItemCard.txt",
+      "summary": "+15/-1 graft on fresh remote: legacyReinforcement flag (null/1 → legacy); legacy implicit rebar fields render only for legacy items; versioned items show the accepted-design note (v2 summary or unsupported hold). Remote CMP-A08 nullSet boundary, aria-describedby pricing issues, and all other hardening kept verbatim.",
+      "preserved_remote_hardening": ["inventoryNumberInput boundary", "aria-invalid/describedby on overrides", "step/min numeric attrs", "foundation-N-pricing anchor"]
+    }
+  ],
+
+  "design_authoring_coverage": {
+    "explicit_cover": "side/top/bottom fields ✓",
+    "elevations": "per-mat bearing_elevation_inches ✓",
+    "spacing": "per-mat max_spacing_x/z ✓",
+    "layers": "explicit mat rows (each authored mat is a layer at an elevation) — no implicit layers count ✓",
+    "clearances": "derived+validated by v2 model from cover + bar diameter ✓",
+    "single_mat_honesty": "a mat must be explicitly authored; no mat means no steel inferred ✓",
+    "top_mat_preset": "NOT PRESENT — no named top-mat preset helper found; mats are added manually (remaining O-019 scope)",
+    "supports": "mode select (unconfigured/off+reason/manual/auto); only off-explained is apply-ready — full support model is O-022+ scope",
+    "engineering_approval": "always false; preliminary-only posture enforced through cost snapshot + acceptance records"
+  },
+
+  "verification": {
+    "esbuild_bundle": "all 21 candidate module files + grafted page + grafted card bundle clean against candidate-tree-src (remote + overlay)",
+    "model_harness": "verify-phaseb2.mjs — 14/14 checks: lifecycle start→draft→preview→ack→accept single-commit v2; delta math consistent; held-aware section rows; discard byte-identical; blocked refuses all; stale + forged-id refuse; v1 upgrade; v7 unsupported held; malformed draft → issues",
+    "browser_real_page": "browser-fixture.mjs — 8/8 @1280px and 8/8 @390px: real page load → start → author geometry+material → preview → acknowledge → accept → Save & Exit → CAS update-many carries version-2 fields anchored on acknowledged updated_date",
+    "existing_ui_fixture": "scripts/foundation-reinforcement-ui-fixture.mjs — 15/15 still pass against the same module sources",
+    "remote_dependency_pulls": "builderMutationRecovery.js, estimatePersistence.js, builderEntityPersistence.js, builderPartGroupPersistence.js pulled fresh (browser-harness transitive deps of real foundationBuilderRecovery/sourceProjectPersistence)"
+  },
+
+  "invariants_proven": [
+    "acceptance is exactly one page commit (undo history, dirty flag, browser draft, edit-revision all participate)",
+    "discard leaves every legacy field byte-identical",
+    "blocked (save/copy/catalog/draft/recovery/source-refresh/ack mismatch) refuses start/draft/preview/accept and commits nothing",
+    "concurrent project change invalidates preview (stale) and refuses accept",
+    "forged/foreign proposal id refuses accept",
+    "version-1 items upgrade to v2 only through explicit accept; unsupported versions hold acknowledged snapshots",
+    "unpriceable extras: section rows report acknowledged totals, delta refused while issues exist — never a guessed $0",
+    "engineering_approved false everywhere: model, cost snapshot, acceptance record"
+  ],
+
+  "explicit_non_goals": [
+    "no remote writes — candidates only; no publish/deploy/entity ops performed",
+    "O-022+ support model (priced support items), scene/3D graft, schedule, procurement",
+    "staged consumer grafts: FoundationBOM v2 rows, print material rows, work-order part chain, 3D preview overlay, catalog metadata editor",
+    "named top-mat preset helper (O-019 remaining)",
+    "engineering approval of any kind"
+  ]
+}

@@ -3,6 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, PauseCircle, PlayCircle, XCircle } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 const ImportProgressContext = createContext(null);
 const STORAGE_KEY = "activeImportProgress";
@@ -71,14 +72,17 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     const restoreActiveImport = async () => {
       if (!currentUserEmail || importJobIdRef.current) return;
       try {
-        const activeJobs = await staffEntities.ImportJob.filter({
+        const recentJobs = await staffEntities.ImportJob.filter({
           user_email: currentUserEmail,
-          status: { $in: ["running", "paused"] },
-        }, "-started_at", 5);
-        if (!mounted || activeJobs.length === 0) return;
+        }, "-started_at", 10);
+        if (!mounted) return;
+        const activeJobs = recentJobs.filter((j) => j.status === "running" || j.status === "paused");
+        if (activeJobs.length === 0) return;
         syncJob(activeJobs[0]);
       } catch (err) {
-        console.error("Failed to restore import job:", err);
+        // Mount-burst 429s exhaust retries here; the row restores on next
+        // mount and an active poll self-heals, so this is cosmetic noise.
+        console.warn("Import job restore skipped this mount:", err?.message || err);
       }
     };
     restoreActiveImport();
@@ -91,7 +95,7 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     let polling = false;
 
     const poll = async () => {
-      if (polling) return;
+      if (polling || document.hidden || isFleetCoolingDown()) return;
       polling = true;
       try {
         const job = await staffEntities.ImportJob.get(importState.importJobId);
@@ -114,7 +118,9 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     };
 
     poll();
-    const timer = setInterval(poll, 1000);
+    // 3s keeps the bar live-feeling while an import runs; 1s was ~300 point
+    // reads over a typical 5-minute job for no perceptible gain.
+    const timer = setInterval(poll, 3000);
     return () => {
       mounted = false;
       clearInterval(timer);

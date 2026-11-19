@@ -1,4 +1,3 @@
-import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus } from "lucide-react";
@@ -26,6 +25,7 @@ export default function ChannelEquipmentPanel({ project, selections, catalog, on
               <select
                 value={sel.equipment_id || ""}
                 onChange={(e) => setRow(idx, { equipment_id: e.target.value })}
+                aria-label="Equipment"
                 className="flex h-9 flex-1 min-w-0 rounded-md border border-input bg-white px-2 text-sm"
               >
                 <option value="">— select equipment —</option>
@@ -35,14 +35,14 @@ export default function ChannelEquipmentPanel({ project, selections, catalog, on
                   </option>
                 ))}
               </select>
-              <button
+              <button type="button"
                 onClick={() => {
                   if (!window.confirm("Remove this equipment?")) return;
                   onChange({ selected_equipment: project.selected_equipment.filter((_, i) => i !== idx) });
                 }}
                 className="text-gray-400 hover:text-red-600 p-1"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
@@ -98,7 +98,7 @@ export default function ChannelEquipmentPanel({ project, selections, catalog, on
           })
         }
       >
-        <Plus className="w-4 h-4" /> Add Equipment
+        <Plus className="w-4 h-4" aria-hidden="true" /> Add Equipment
       </Button>
     </div>
   );

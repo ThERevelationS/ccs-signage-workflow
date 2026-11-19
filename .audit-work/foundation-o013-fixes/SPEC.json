@@ -1,0 +1,94 @@
+{
+  "spec_id": "O-013-estimator-authz-func-fixes",
+  "generated_by": ".audit-work/foundation-o013-fixes/apply-edits.mjs",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "head_at_pull": "1fe65f4445bd5963adfb87f8b92eb30d08ff6730",
+  "remote_pulled_utc": "2026-11-08T06:58:53.348Z",
+  "source_audit": ".audit-work/foundation-o013-authz/findings.md",
+  "line_endings": "LF (verified via cat -A on fresh pulls)",
+  "findings_addressed": [
+    "F-2",
+    "F-3",
+    "F-4"
+  ],
+  "findings_explicitly_out_of_scope": {
+    "F-1": "fileBridgeMaintenance anonymous writes — FileBridge module, not estimator scope",
+    "F-5..F-9": "design notes / REQUIRES-LIVE-PROBE items — no code change requested"
+  },
+  "apply": {
+    "method": "sandbox edit",
+    "note": "Each edit.old occurs exactly once in the remote file at head_at_pull (verified by this script). Re-pull and re-run this script if head moved. Full fixed files also staged under fixed/ for `sandbox write` fallback — prefer `sandbox edit` so unrelated remote drift cannot be clobbered."
+  },
+  "fixes": [
+    {
+      "id": "F-3/1 bind service-role estimate entity",
+      "file": "base44/functions/updateEstimateRevisionAudit/entry.ts",
+      "sandbox_edit": {
+        "old_string": "    const RevisionService = base44.asServiceRole.entities.EstimateRevision;\n    const EstimateUser = base44.entities.AllInOneEstimate;",
+        "new_string": "    const RevisionService = base44.asServiceRole.entities.EstimateRevision;\n    // AllInOneEstimate is backend-only RLS — the caller-scoped client can\n    // never read it, so this verification read must go through the service\n    // role like the sibling RevisionService handle (auth is checked above).\n    const EstimateService = base44.asServiceRole.entities.AllInOneEstimate;"
+      }
+    },
+    {
+      "id": "F-3/2 use service-role handle",
+      "file": "base44/functions/updateEstimateRevisionAudit/entry.ts",
+      "sandbox_edit": {
+        "old_string": "      const estimate = await EstimateUser.get(estimateId).catch(() => null);",
+        "new_string": "      const estimate = await EstimateService.get(estimateId).catch(() => null);"
+      }
+    },
+    {
+      "id": "F-4/1 import staffEntities",
+      "file": "src/components/estimator/EstimatorAuditPanel.jsx",
+      "sandbox_edit": {
+        "old_string": "import { base44 } from \"@/api/base44Client\";\nimport { ListSkeleton } from \"@/components/ui/list-skeleton\";",
+        "new_string": "import { base44 } from \"@/api/base44Client\";\nimport { staffEntities } from \"@/components/staff/staffEntities\";\nimport { ListSkeleton } from \"@/components/ui/list-skeleton\";"
+      }
+    },
+    {
+      "id": "F-4/2 route AdminAuditLog through the staff read gateway",
+      "file": "src/components/estimator/EstimatorAuditPanel.jsx",
+      "sandbox_edit": {
+        "old_string": "          type === \"revision\" || type === \"activity\" ? Promise.resolve([]) : base44.entities.AdminAuditLog.filter({}, \"-at\", 150).catch(() => []),",
+        "new_string": "          // AdminAuditLog is not in the base44Client read-proxy set — it must\n          // go through staffEntities (staffDataRead ADMIN_READABLE, admin role\n          // re-checked server-side; the panel itself mounts only for admins).\n          type === \"revision\" || type === \"activity\" ? Promise.resolve([]) : staffEntities.AdminAuditLog.filter({}, \"-at\", 150).catch(() => []),"
+      }
+    },
+    {
+      "id": "F-2a quote_expired sweep -> anchored updateMany",
+      "file": "src/pages/EstimatorQueues.jsx",
+      "sandbox_edit": {
+        "old_string": "    staffEntities.AllInOneEstimate.update(e.id, { quote_expired: expired }).catch(() => {});",
+        "new_string": "    // Best-effort sweep stays swallowed — a stale anchor just no-ops and\n    // the next load retries (update() is not an allowed op on estimates).\n    staffEntities.AllInOneEstimate.updateMany(\n      { id: e.id, updated_date: e.updated_date },\n      { $set: { quote_expired: expired } },\n    ).catch(() => {});"
+      }
+    },
+    {
+      "id": "F-2b bulk status -> anchored updateMany + result check",
+      "file": "src/pages/EstimatorQueues.jsx",
+      "sandbox_edit": {
+        "old_string": "      try {\n        await staffEntities.AllInOneEstimate.update(id, { status: bulkStatus });\n      } catch (error) {",
+        "new_string": "      try {\n        // update() is not an allowed op on estimates — anchor the write to\n        // the loaded row's updated_date; a zero-match means the row changed\n        // since the queue loaded and must surface as a failure, not a no-op.\n        const bulkResult = await staffEntities.AllInOneEstimate.updateMany(\n          { id, updated_date: row?.updated_date },\n          { $set: { status: bulkStatus } },\n        );\n        if (!bulkResult || bulkResult.updated !== 1) throw new Error(\"estimate changed in another session — reload and retry\");\n      } catch (error) {"
+      }
+    },
+    {
+      "id": "F-2c merge-archive via replaceEstimateFieldsIfUnchanged",
+      "file": "src/pages/EstimateDetail.jsx",
+      "sandbox_edit": {
+        "old_string": "      try {\n        await staffEntities.AllInOneEstimate.update(secondary.id, {\n          status: secondaryAfter.status,\n          archived_at: secondaryAfter.archived_at,\n          archived_reason: secondaryAfter.archived_reason,\n        });\n        await ensureEstimateLifecycleRevision({",
+        "new_string": "      try {\n        // update() is not an allowed op on estimates — archive through the\n        // same field-level CAS helper the queue archive path uses, anchored\n        // to the secondary's loaded version so a drifted/trashed row throws\n        // (and reaches the alert below) instead of silently skipping.\n        const mergeArchiveFields = {\n          status: secondaryAfter.status,\n          archived_at: secondaryAfter.archived_at,\n          archived_reason: secondaryAfter.archived_reason,\n        };\n        await replaceEstimateFieldsIfUnchanged({\n          entity: staffEntities.AllInOneEstimate,\n          estimateId: secondary.id,\n          expectedFields: expectedEstimateFields(secondary, mergeArchiveFields),\n          guardFields: { updated_date: secondary.updated_date },\n          nextFields: mergeArchiveFields,\n          label: \"Estimate merge archive\",\n        });\n        await ensureEstimateLifecycleRevision({"
+      }
+    }
+  ],
+  "verification": {
+    "harness": ".audit-work/foundation-o013-fixes/test-o013-fixes.mjs",
+    "result": "passed=20 failed=0 (see NOTES.md)",
+    "covers": [
+      "RED: op=update on AllInOneEstimate -> real staffEntityWrite bundle 403",
+      "GREEN: updateMany({id,updated_date},{$set}) -> 200 updated:1 for all three write payloads",
+      "RED: baseline updateEstimateRevisionAudit complete_manual_revision -> 404",
+      "GREEN: fixed bundle -> 200 revision completed; attach_delivery_evidence regression 200",
+      "GREEN: staffEntities.AdminAuditLog.filter -> real staffDataRead admin rows; staff -> denied[]; no session -> 401",
+      "e2e: replaceEstimateFieldsIfUnchanged merge-archive -> real gateway write lands; drifted row throws",
+      "static: no denied-op calls remain; esbuild transform of every fixed file"
+    ]
+  }
+}

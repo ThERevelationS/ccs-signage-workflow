@@ -1,0 +1,936 @@
+{
+ "jurisdiction_id": "6aea62b022cf1dc7a3c06a47",
+ "jurisdiction_name": "Defiance Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 85,
+   "snippet": "Page 85 of 144 SECTION 1205: Permit Required. 1. No person shall locate or maintain any sign, or cause a sign to be located or maintained, unless all provisions of this Article have been met. To assure compliance with these regulations, a sign permit i ssued pursuant to this Resolution shall be required for each sign unless specifically exempted in this Article. 2. A sign initially approved for which a permit has been issued shall not be modified, altered or replaced; nor shall design elements of any buil ding or lot upon which such sign is maintained be modified, altered or replaced if any such design element constituted a basis for approval of such sign unless a new or amended permit is obtained; 3. The repainting, changing of parts and preventive maintena nce of signs shall not be deemed alterations requiring a sign permit. SECTION 1210: Signs Permitted in All Districts Not Requiring ",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "prohibited",
+    "type",
+    "authority",
+    "process"
+   ],
+   "weight": 14,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 26,
+   "snippet": "Page 26 of 144 SECTION 300: General. This article stipulates the procedures t o be followed in obtaining permits, certificates, and other legal or administrative approvals under this Resolution. SECTION 301: Zoning Permits Required. No building or other structure shall be erected, moved, added to, or structurally altered so as to change the outside shape; nor shall any building, structure, or land be established or changed in use without a permit issued by the Zoning Inspector. Zoning permits shall be issued only in conformity with the provisions of this Resolution unless the Zonin g Inspector receives a written order from the Board of Zoning Appeals deciding an appeal, conditional use, or variance or from the Board of Township Trustees, approving a Planned Unit Development District, as provided by this Resolution. SECTION 302: Cont ents of Application for Zoning Permit. The application ",
+   "tags": [
+    "sign",
+    "permit_required",
+    "dimension",
+    "process",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 13,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 61,
+   "snippet": "Page 61 of 144 SECTION 935: Specific Criteria for Conditio nal Uses. Specific requirements for conditional uses for the zoning districts as outlined in Article 8 are contained in Sections 940 - 995, inclusive. SECTION 940: Adult Entertainment Facilities Permitted As Conditional Use. In General Business Districts no building shall be erected, constructed, remodeled, or developed; and no building or premises shall be reconstructed, remodeled, arranged for use or used for adult entertainment business unless authorized by the issuance of a conditional use permit in ac cordance with the provisions of Article 5 of this Resolution. In addition to said provisions, an adult entertainment facility shall comply with the following conditional use criteria: 1. Adult entertainment facilities shall comply with the district regulati ons applicable to all properties in any district in which they are loca",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority"
+   ],
+   "weight": 12,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 64,
+   "snippet": "Page 64 of 144 2. The desi gn, location, and surface of the parking area shall be subject to approval of the Board of Zoning Appeals so as to reduce the impact on the residential character of the neighborhood; 3. One sign, not exceeding four (4) square feet in area and mounted flush a gainst the building, shall be permitted. SECTION 965: Animal Clinics. (GB) 1. Outdoor pens and exercise runs shall be kept in a clean and sanitary condition and shall be screened from public view; 2. Sanitation practices shall be adequate to assure that objec tionable odors shall not be noticeable on or off the lot, considering various wind conditions; 3. The applicant shall submit a written statement showing the measures and practices he will use to reduce the noise level in the design of the building and the m anagement or rotation of animals in outdoor exercise runs; 4. No dead animals shall be buried on",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "prohibited",
+    "process",
+    "temporary"
+   ],
+   "weight": 12,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 65,
+   "snippet": "Page 65 of 144 Waste Treatment and Waste Disposal uses are permitted within the floodway fringe as conditional uses to the extent they are not prohibited by any other Sections of this Resolution and they meet the following applicable standards: 1. No new construction, addition, or modification to existing waste treatment fac ilities will be permitted within floodway fringe areas unless emergency plans and procedures for action to be taken in the event of flooding are prepared, filed with, and approved by the Ohio Environmental Protection Agency. The emergency plans and procedu res must provide for measures to prevent introduction of any pollutant or toxic material into the flood waters. 2. There shall be no disposal of garbage or solid waste materials within floodway fringe areas except upon issuance of a Conditional Use Permit a t sites approved by the Ohio Environmental Protection Agen",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "temporary",
+    "authority"
+   ],
+   "weight": 12,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 86,
+   "snippet": "Page 86 of 144 premises sign shall exceed one thousand two hundred (1200) square feet, nor shall off - premises signs visible to approaching traffic have a minimum s pacing of less than two hundred (200) feet . Off - premises signs shall conform to all applicable yard and height regulations for the appropriate zoning district, except that such signs intended to be viewed from an elevated highway shall be not more than twe nty (20) feet above the level of the roadway at its nearest point. Off - premises wall signs shall have all structural and supporting members concealed from view. SECTION 1220: Temporary Signs. Temporary signs not exceeding fifty (50) square feet in area, announcing special public or institutional events, the erection of a building, the architect, the builders, or contractors may be erected for a period of sixty (60) days plus the construction period. Such temporary sig",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "temporary",
+    "type",
+    "penalties"
+   ],
+   "weight": 12,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "Page 13 of 144 Dwelling, Mid - Rise: An apartment building containing from three to seven stories. Dwelling, Multi - Family: A dwelling consisting of three or more dwelling units including condominiums with varying arrangements of entrances and party walls. Multi - family housing may include public housing and industrialized units. Dwelling, Single Family: A building containing one dwelling unit designed for occupancy by one family for living purposes and including not more then two (2) lodgers or boarders. Dwelling, Townhouse: A one - family dwelling in a row of at least three such units in which each unit has its front and rear access to the outside, no unit is located over another unit, and each unit is separated from any other unit by one or more vertical common fire - resistant walls. Dwelling, Two - Family: A dwelling consisting of two dwelling units which may be either attached si",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority"
+   ],
+   "weight": 11,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 63,
+   "snippet": "Page 63 of 144 excavations not backfilled shall be sloped; they shall be sloped at a ratio of three (3) feet horizontal to one (1) foot vertical and said bank shall be seeded; 8. There shall be filed with the B oard of Township Trustees a bond, payable to the Township and conditioned on the faithful performance of all requirements contained in the approval restoration plan. The rate of the required bond shall be fixed by resolution of the Board of Township Truste es. The bond shall be released upon written certification of the Zoning Inspector that the restoration is complete and in compliance with the restoration plan. SECTION 961: Public Service Facility. (R - 1, GB, M - 1, M - 2, OS) 1. All permanent buildings shall b e constructed and designed so as to conform with the setback and building design of the existing uses in the district; 2. Screening and plantings to buffer any structure",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 69,
+   "snippet": "Page 69 of 144 SECTION 1007: Reduction of Area or Space. No lot, yard, parking area, or other space shall be reduced in area or dimension if such reduction has the effect of making the lot, yard, parking area, or other space less than the minimum required by this Resolution. Furthermore, any lot, yard, parking area, or other space which is already less than the required minimum shall not be reduced further. However, nothing in this section shall be interpreted to limit the power of the Board of Zoning Appeals in the granting of variances under this Resolution . SECTION 1008: Junk. The accumulation or storage of junk, jun k vehicles, disabled or inoperative machinery or equipment, vehicles or machinery parts, rags, or any other discarded objects or debris defined as junk in the Ohio Revised Code shall be prohibited, outside of an approved junk yard, in order to protect resi dents from con",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 83,
+   "snippet": "Page 83 of 144 SECTION 1200: Intent. The purpose of this Article is to promote and protect the public health, welfare, and safety by regulating existing and proposed outdoor advertising, outdoor advertising signs, and outdo or advertising signs of all types. It is intended to protect property values, create a more visually attractive economic and business climate, enhance and protect the physical appearance of the community, and preserve the scenic and natural beauty of desig nated areas. It is further intended to reduce sign or advertising clutter, distraction, and obstructions that may contribute to traffic accidents, reduce hazards that may be caused by signs overhanging or projecting over public rights - of - way, provide more open space, curb the deterioration of the natural environment, and enhance community development by permitting signs which are compatible with their surroundin",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "type",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 142,
+   "snippet": "Page 142 of 144 Individual manufactured housing units that retain wheels, axles, hitches or other conveyance mech anisms, and for which a zoning permit has been obtained for use outside a manufactured home park, shall have a minimum floor area of nine hundred and eighty (980) square feet. Any manufactured housing, including a mobile home or trailer, that contains no w heels, axles, hitches or other conveyance mechanisms, and which is permanently affixed to the land and classified as real estate for tax purposes, shall comply with all zoning requirements for site - built structures, including minimum square footage and yar d dimensions. SECTION 1450: Regulations Concerning Permanent Mobile Homes. On page 104 the following shall be added at the beginning of the section: A \"Permanent Manufactured or Mobile Home\" means a manufactured housing unit that has been permanently att ached to the la",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 40,
+   "snippet": "Page 40 of 1 44 is filed with him, that by reason of facts stated in the application, a stay would, in his opinion, cause imminent peril to life and property. In such case, proceedings shall not be stayed other than by restraining order which may be granted by the Board of Zoning Appeals or by a court of record on application, on notice to the Zoning Inspector from whom the appeal is taken on due cause shown. SECTION 563: Variances. The Boar d of Zoning Appeals may authorize upon appeal in specific cases such variance from the terms of this Resolution as will not be contrary to the public interest where, owing to special conditions, a literal enforcement of the provisions of this Resolution wo uld result in unnecessary hardship. No non - conforming use of neighboring lands, structures, or buildings in other districts shall be considered grounds for issuance of a variance. Variances shall",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 41,
+   "snippet": "Page 41 of 144 Under no circumstances shall the Board of Zoning Appeals grant an appeal or variance to allow a use not permissible under the terms of this Resolution in the district involved, or in any use expressly or by implication prohibited b y the terms of this Resolution in said district. In granting any appeal or variance, the Board of Zoning Appeals may prescribe appropriate conditions and safeguards, when made a part of the terms under which the appeal or variance is granted, which shall b e deemed a violation of this Resolution punishable under Section 370 of this Resolution. SECTION 566: Public Hearings by the Board of Zoning Appeals. The Board of Zoning Appeals shall hold a public hearing within twenty (20) days after the receipt of an application for an appeal or variance from the Zoning Inspector or an applicant. SECTION 567: Notice of Public Hearing In Newspaper. Before ho",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 62,
+   "snippet": "Page 62 of 144 1. The pool is intended solely for the enjoyment of the members and families and guests of m embers of the association or club under whose ownership or jurisdiction the pool is operated; 2. The pool and accessory structures thereto, including the areas used by the swimmers, shall not be closer than fifty (50) feet to any property line; 3. The swimmi ng pool and all of the area used by the bathers shall be walled or fenced to prevent uncontrolled access by children from the thoroughfare or adjacent properties. Said fence or wall shall not be less than six (6) feet in height and maintained in good condi tion with a gate and lock. SECTION 960: Drilling and Mineral Operations. (A, M - 2) Drilling and mineral operations shall require a conditional use permit subject to fees as established by Section 360 of this resolution. Such a permit will be issued only a fter the Zoning Ins",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 9,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 87,
+   "snippet": "Page 87 of 144 SECTION 1242: Setbacks for Off - Premises Signs. If a setback line is not established for the appropriate zoning district, off - street premises signs shall be set back a minimum of twenty (20) feet from the right - of - way line. SECTION 1243 : Setbacks for Public and Quasipublic Signs. Real estate signs and bulletin boards for a church, school or any other public, religious or educational institution may be erected not less than ten (10) feet from the established right - of - way line of any stre et or highway provided such sign or bulletin board does not obstruct traffic visibility at street or highway intersections. SECTION 1244: Special Yard Provisions. On - premises signs, where permitted, shall be erected or placed in conformity with the side and rear yard requirements of the district in which located, except that in any residential district, on - premises signs sha",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 138,
+   "snippet": "Page 138 of 144 purposes, and shall not allow the campsite to be used for permanent habitation. ARTICLE THREE, ENFORCEMENT SECTION 301: Zoning Permits Required. On page 23 the following shall be added to the end of the fir st section: No formal zoning permit shall be needed for decks or fences, provided a plan or map showing that the proposed item meets the requirements of this resolution shall be given to the zoning inspector before construction commences. ARTICLE FIVE , AD MINISTRATION SECTION 521: Proceedings of the Zoning Commission (Board). SECTION 531: Proceedings of the Board of Zoning Appeals. On pages 36 and 37 the following shall be added to the end of the sections: Notice of all public meetings shall be given in conformity with the rule adopted for giving notice of meetings. When a particular form or method of notice for a public hearing or meeting is required by this zoning r",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 9,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Defiance T ownship Trustees Richard Ankney • Robert H. Layne • Daniel Peck 419 - 393 - 2673 419 - 784 - 0839 419 - 782 - 7180 Timothy J. Houck, Clerk 419 - 782 - 3494 DEFIANCE TOWNSHIP, DEFIANCE COUNTY, OHIO BUILDING PERMIT/ZONING & COPYING FEE SCHEDULE Effective October 25, 2005 Typo corrected July 28 th , 2009 – see * These fees were adopted by the Trustees of Defiance Township in public session July 28 th , 2009 SI GNS $50.00 PONDS 50.00 SMALL BUILDING (less than 150sq feet – on foundation) 25.00 (greater than 150 sq feet on skids or runners) 25.00 REMODELING (additions to structures) 50.00 GARAGE AND OR ACCESSORY BUILDING (on permanent foundations) 75.00 NEW CONSTRUCTION FOR CHURCHES (or other non - profit organizations) 200.00 NEW HOMES – SINGLE FAMLY * 150.00 min. or .10 per square foot MOBILE HOMES * 125.00 min. or .08 per square foot SWIM MING POOLS below ground 50.00 above groun",
+   "tags": [
+    "fee",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "10ce14530492aea1fc33f936b9d64aed3285e72f33ac48b82a670b6749c54e41",
+   "source_document_id": null,
+   "source_title": "10ce14530492aea1fc33f936b9d64aed3285e72f33ac48b82a670b6749c54e41.pdf",
+   "official_url": "https://defiance-county.com/townships/zoning-fee-schedule.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "Page 15 of 144 Frontage Road: A service road, usually parallel to a highway, designed to reduce the number of driveways that intersect the highway. Garages, Private : A detached accessory building or portion of a principal building for the parking or temporary sto rage of automobiles, motorcycles, travel trailers and/or boats of the occupants of the premises and wherein: 1. Not more than one space is rented for parking to a non - resident on the premises; 2. No more than one commercial vehicle per dwelling unit is parked or stored; 3. The commercial vehicle permitted does not exceed two tons capacity. Garage, Public: A principal or accessory building other than a private garage, used for parking or temporary storage of passenger automobiles, and in which no service shall be provided for remuneration. Garage, Service Station: Any building, land area, or other premises, or portion thereof,",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 8,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 19,
+   "snippet": "Page 19 of 144 Mobile Home: ( See Factory Built Housing) Modular Home: ( See Factory Built Housing) Motor Vehicle: Means any vehicle, including manufactured home and recreational vehicles, prop elled or drawn by power other than muscular power and power collected from overhead electric trolley wires. Junk Motor Vehicles are also included within this definition, even if inoperable. For the purposes of this zoning Resolution a boat or trailer shall be considered a Motor Vehicle; however, when a boat is placed on a trailer it shall constitute one unit for the purpose of the application of this zoning resolution. Non - conformities : Lots, uses of land, structures, and uses of structures and land in com bination lawfully existing at the time of enactment of this Resolution or its amendments which do not conform to the regulations of the district or zone in which they are situated, and are, t",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 24,
+   "snippet": "Page 24 of 144 Variance: A modification of the strict terms of the relevant regulations where modification will not be contrary to the public interest and where owing to conditions peculiar to the property and not the result of the action of the applicant, a literal enforcement of the regulations would result in unnecessary and undue hardship. Veterinary Animal Hospital or Clinic: A place used for the care, grooming, diagnosis, and treatment of sick, ailing, infirm, or injured anima ls, and those who are in need of medical or surgical attention, and may include overnight accommodations on the premises for treatment, observation and/or recuperation. It may also include boarding that is incidental to the primary activity. Vicinity Map: A drawing on the plat which sets forth by dimensions or other means, the relationship of the proposed subdivision or use to other nearby developments or lan",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 27,
+   "snippet": "Page 27 of 144 SECTION 303: Approval of Zoning Permit. Within thirty (30 ) days after the receipt of an application, the Zoning Inspector shall either approve or disap prove the application in conformance with the provisions of this Resolution. All zoning permits shall, however, be conditional upon the commencement of work within one year. One copy of the plans shall be returned to the applicant by the Zoning Inspector, after the Zoning Inspector marked such copy either as approved or disapproved and attested to same by placing his signature on such copy. One copy of the plans, similarly marked, shall be retained by the Zoning Inspector. The Zoning Inspector shall issue a notice, to be posted in a conspicuous place on the property in question, attesting to the fact that the use or alteration is in conformance with the provisions of this Resolution. SECTION 304: Submission to Director of ",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 31,
+   "snippet": "Page 31 of 144 SECTION 400: Purpose. Within the districts established by this Resolution or amendm ents that may later be adopted there exists lots, uses of land, structures, and uses of structures and land in combination which were lawful before this Resolution was passed or amended, but which would be prohibited, regulated, or restricted under the ter ms of this Resolution or future amendments. The legitimate interest of those who lawfully established these non - conformities are herein recognized by providing for their continuance, subject to regulations limiting their completion, their restoration, reco nstruction, extension, and substitution. Nevertheless, while it is the intent of this Resolution to permit these non - conformities to continue until they are removed, they should not be encouraged to survive. It is further the intent of this Resolution that non - conformities shall n",
+   "tags": [
+    "sign",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 39,
+   "snippet": "Page 39 of 144 SECTION 540: Duties of Zoning Inspector, Board of Zoning Appeals, Legislative Authority and Courts on Matters of Appeal. It is the i ntent of this Resolution that all questions of interpretation and enforcement shall be first presented to the Zoning Inspector, and that such questions shall be presented to the Board only on appeal from the decision of the Zoning Inspector, and that recou rse from the decisions of the Board shall be to the courts as provided by law. It is further the intent of this Resolution that the duties of the Board of Township Trustees in connection with this Resolution shall not include hearing and deciding questions of interpretation and enforcement that may arise. The procedure for deciding such questions shall be as stated in this section and this Resolution. Under this Resolution the Board of Township Trustees shall only have the duties of conside",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 66,
+   "snippet": "Page 66 of 144 met as well as site approval by Defiance County So il & Water. (a) The following criteria must be met for the issuance of a Zoning Permit for temporary mobile homes. (i) Minimum floor area of one thousand (1000) square feet; (ii) All setback requirements as standard in the zoning district are met; (iii) All sanitary and sewe r standards as required by the Health Department and the EPA are met; (iv) Properly tied down and completed with mobile home skirting; (v) The structure shall be so oriented on the site that its long axis is parallel with the street, and it shall have an entrancewa y facing the street, except where diagonal placement and the addition of a garage, carport, or other accessory structure may be permitted by subdivision regulation and yard requirement; (vi) The sitting of the structure shall comply with all yard and setback re quirements in effect for the d",
+   "tags": [
+    "area",
+    "dimension",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 78,
+   "snippet": "Page 78 of 144 SECTION 111 9: Minimum Distance and Setbacks. No part of any parking area for more than ten (10) vehicles shall be closer than twenty (20) feet to any dwelling unit, school, hospital, or other institution for human care located on an adjoining lot, unless separated b y an acceptably designed screen. If on the same lot with a single family dwelling, the parking area shall not be located within the front yard required for such building. In no case shall any part of a parking area be closer than four (4) feet to any estab lished street or alley. SECTION 1120: Joint Use. Two or more nonresidential users may jointly provide and use parking spaces when their hours of operation do not normally overlap, provided that a written agreement approved by the Zoning Inspector shall b e filed with application for a zoning permit. SECTION 1121: Wheel Blocks. Whenever a parking lot extends ",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 103,
+   "snippet": "Page 103 of 144 APPLICATION FOR ZONING PERMIT Defiance Township – Defiance, Ohio Application Number: ___________ The undersigned applies fo r a zoning permit for the following use, said permit to be issued only on the basis of the information contained within this application. The applicant hereby certifies that all information and attachments to this application are true and correct. If there is not sufficient room to fully supply the following information, please attach additional pieces of paper. 1. Name of Owner : ____________________________________ Home Phone: __________________ Business Phone: _________________ Mailing Address: __________________________ _________________________________________ 2. Locational Description: Subdivision Name: _____________________________________________ Section: ______________________ Township: __________________ Range: _______________ Block: ______",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 135,
+   "snippet": "Page 135 of 144 Home Professional Office: 13 Hospital: 13 Hotel/ Motel: 13, 55 Incinerator: 13 Industrial Park: 13 Institution: 13 Intermediate Care Facility: 13 Junk: 13, 72 Junk Buildings, Junk Shops, Junk Yards: 13 Junk Motor Vehicle: 13, 72 Junk Motor Vehicle, Abandoned: 14 Kennel: 14 Landfill: 14 Landlocked 14: Loa ding Space, Off - street: 14 Location Map: See Vicinity Map Lot: 14 Lot Coverage: 14 Lot Frontage: 14 Lot, Minimum Area of: 14, 58 - 59, 79 - 83 Lot Measurements: 15, 58 - 59, 79 - 83 Lot of Record: 15 Lot Types: 15, 126 - 128, 131, 132 Major Thoroughfare Plan: 15, 5 4 Maintenance and Storage Facility: 15 Manufactured Home Park: 15, 54, 102 - 104 Manufacturing District: 83 - 84 Manufacturing, Extractive: 15, 56 Manufacturing, Heavy: 15, 83 Manufacturing, Light: 15, 55 - 56, 83 Manufactured Home: See Factory Built Housing Mob ile Home: See Factory - Built Housing Modular H",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "temporary"
+   ],
+   "weight": 8,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 137,
+   "snippet": "Page 137 of 144 Addendum to Township Z oning Resolution First adopted in 1996 & again in 2005 The following provisions amend or supplement the like numbered sections in the text of the township zoning resolution prepared by The Center for Governmental Research and Public Service at Bowling Gr een State University. Should any provision of this addendum conflict with a provision in such text, the addendum shall control. - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ARTICLE ONE, GENERAL PROVISIONS SE CTION 120: Interpretation. On page 3 the following shall be added at the end of the section: Should any provision of this resolution conflict with any statute in the Ohio Revised Code as it may be amended from time to time, the statute shall control. Whe neve",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Page 3 of 144 TABLE OF CONTENTS Page ARTICLE ONE General Provisions Definitions 2 ARTICLE TWO Definitions 4 ARTICLE THREE Enforcement 22 Contents of Application for Zoning Permit, Zoning Permit, Certificate of Occupancy, and Fees ARTICLE FOUR Non - C onformities 28 Purpose, Types of Non - Conforming Use, and Termination ARTICLE FIVE Administration 34 Zoning Inspector, Zoning Commission, Board of Zoning Appeals, Board of Township Trustees, Appeals, Variances, Conditional Use Permits, General Criteria for Conditional Uses, Expiration of Conditional Uses Permits ARTICLE SIX Amendment 44 Contents of Application and Procedure for Amendments ARTICLE SEVEN Provisions for Official Zoning Map 50 ARTICLE EIGHT Establishment and Purpose of Districts 52 Permitted Uses, Conditional Uses, and the Official Schedule of District Regulations ARTICLE NINE District Regul ations 60 Specific Criteria for Cond",
+   "tags": [
+    "sign",
+    "dimension",
+    "process",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "Page 6 of 144 SECTION 100: Title. This Resolution shall be known and may be cited to as the \"Zoning Resolution of the township of , Defiance ,” except as referred to herein, where it shall be known as \"this Resolution.\" SECTION 110: Purpose. This Resolution is enacted for the general purpose of promoting the public health , safety, comfort, and welfare of the residents of Defiance T ownship; to protect the property rights of all individuals by assuring the compatibility of uses and practices wi thin the districts; to facilitate the provision of public utilities and public services; to lessen congestion on public streets, roads, and highways; to provide for the administration and enforcement of this Resolution, including the provision of penalties for its violation; and for any other purpose provided in this Resolution, the Ohio Revised Code, or under common law rulings. SECTION 120: Inte",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 21,
+   "snippet": "Page 21 of 144 within entirely closed buildings, and no noise, smoke, glare, vibration, or odor shall be detect ed outside of said building. Retail Sales, Outdoor: The display and sale of products and services primarily outside of a building or structure, including vehicles, garden supplies, gas, tires and motor oil, food and beverages, boats and aircraft, farm equ ipment, motor homes, burial monuments, building and landscape materials, and lumber yards. Right - of - Way, Public: All land used for public roadway purpose owned or dedicated to state easement. In addition to the roadway, it normally incorporates the curbs, lawn strips, sidewalks, lighting, and drainage facilities, and may include special features (required by the topography or treatment) such as grade separation, landscaped areas, viaducts, and bridges. Roadside Stand: A temporary structure designed or use d for the display",
+   "tags": [
+    "dimension",
+    "illumination",
+    "temporary",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 22,
+   "snippet": "Page 22 of 144 sewage treatment facility for a single developm ent, community, or region. Sewers, On - Site: A septic tank or similar installation on an individual lot which utilizes an aerobic bacteriological process or equally satisfactory process for the proper and safe disposal of the effluent, subject to the approv al of health, sanitation and environmental officials having jurisdiction. Sidewalk : That portion of the road right - of - way outside the roadway, which is improved for the use of pedestrian traffic . Sign: Any visual communication display, object, device, grap hic, structure, or part, situated indoors or outdoors, or attached to, painted on, or displayed from a building or structure, in order to direct or attract attention to, or to announce or promote, an object, person, service, product, event, location, organ ization or the like, by means of letters, words, designs, ",
+   "tags": [
+    "sign",
+    "illumination",
+    "billboard",
+    "temporary"
+   ],
+   "weight": 7,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 32,
+   "snippet": "Page 32 of 144 has been changed to a less intensive use or becomes a conforming use, such use shall not thereafter be changed to a more intensive use. SECTION 440 : Single N on - Conforming Lots of Record. In any district in which single - family dwellings are permitted, a single - family dwelling and accessory buildings may be erected on any single lot of record at the effective date of adoption or amendment of this Resolution, no twithstanding limitations imposed by other provisions of this Resolution. Such lot must be in separate ownership and not of continuous frontage with other lots in the same ownership. This provision shall apply even though such lot fails to meet the require ments for area or width, or both, that are generally applicable in the district, provided that yard dimensions and requirements other than those applying to area or width, or both, of the lot shall conform t",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 37,
+   "snippet": "Page 37 of 144 6. Maintain in current status the Official Zoning District Map which shall b e kept on permanent display in the township office; 7. Maintain permanent and current records required by this Zoning Resolution, including, but not limited to, zoning permits, zoning certificates, inspection documents, and records of all variances, amendme nts and special uses; 8. Make such records available for the use of the Township Trustees, the Zoning Commission, the Board of Zoning Appeals, and the public; 9. Review and approve site plans pursuant to this Resolution; 10. Determine the existence of any viol ations of this Resolution, and cause such notifications, revocation notices, stop orders, or tickets to be issued, or initiate such other administrative or legal actions as needed, to address such violations; 11. Prepare and submit an annual report to the To wnship Trustees and Zoning Com",
+   "tags": [
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 68,
+   "snippet": "Page 68 of 144 SECTION 1000: General. The purpose of the supplementary district regulations is to set spec ific conditions for various uses, classification of uses, or areas where problems may occur, in order to alleviate or prevent such problems, and to promote the harmonious exercise of property rights without conflict . SECTION 1001: Supplementary Regulation s for Residential Districts. Sections 1002 - 1003 , inclusive, contain the supplementary district regulations for residential districts. SECTION 1002: Conversion of Dwellings to More Units. A residence may not be converted to accommodate an increased numbe r of dwelling units unless: 1. The yard dimensions still meet the yard dimensions and setbacks required by the regulations for new structures in that district; 2. The lot area per family equals the lot area requirements for new structures in that district; 3. Th e floor area per",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "temporary",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 100,
+   "snippet": "Page 100 of 144 The following requirements apply to permanent mobile homes: 1. The structure shall be installed upon and properly attached to a foundation system that provides adequate su pport of the structure's vertical and horizontal loads and transfers these and other imposed forces, without failure, from the structure to the undisturbed ground below the frost line; 2. All hitches, axles, wheels, and conveyance mechanisms shall be removed from the structure; the title shall then be surrendered to the County Auditor, said mobile home will then be considered a permanent fixture as part of the real estate; 3. The structure shall be so oriented on the site that its long axis is parallel with the street, and it shall have an entranceway facing the street, except where diagonal placement and the addition of a garage, carport, or other accessory structure may be permitted by subdivision reg",
+   "tags": [
+    "dimension",
+    "illumination",
+    "temporary",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 112,
+   "snippet": "Page 112 of 144 APPLICATION FOR CONDITIONAL USE PERMIT Board of Zoning Appeals Defiance Township, Defiance , Ohio The undersigned requests a conditional use permit for the use specified below. Should this applicatio n be approved, it is understood that it shall only authorize that particular use described in this application and any conditions or safeguards required by the Board. If this use is discontinued for a period of more than two (2) years , this permit shall au tomatically expire. 1. Name of Applicant: ______________________________________________________________ Mailing Address: _________________________________________________________________ Phone Number: Home: ______________________________ Business: __________________ 2. Locational Des cription: Subdivision Name: _________________________________________ Section: ___________________ Township: _______________________ Range: ",
+   "tags": [
+    "sign",
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 140,
+   "snippet": "Page 140 of 144 complying with all other provisions of this resolu tion, the applicant for the conditional use permit shall give evidence that the premises proposed for such use complies with the following conditions. 1. That the proposed parking area is not in or within fifty (50) feet of a residential district boundary . 2. That the proposed parking area will not prevent access to adjacent properties by fire safety equipment. 3. That the proposed parking area will be screened in such a manner that the vehicles thereon parked will not be visible from the ground level of any a djacent residential properties. 4. That fencing and lighting of the facility will be sufficient to provide for its reasonable security. 5. That no service work, maintenance work, repair work, painting work, or other vehicular work shall take place on the premi ses. No vehicle, including trailers and recreational ve",
+   "tags": [
+    "dimension",
+    "illumination",
+    "temporary",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 8,
+   "snippet": "Page 8 of 144 Interpretations of Terms or Words: For the purpose of this Resolution, certain terms or words used herein shall be interpreted as follows: 1. The word \"person\" includes a firm, association, organization, partnership, trust, company, or corporation as well as an individual. 2. The present tense includes the future tense, the singular number includes the plural, and the plural number includes the singular. 3. The word \"shall\" is a mandatory requirement, the word \"may\" is a permissi ve requirement, and the word \"should\" is a preferred requirement. 4. The words \"used \" or \"occupied\" include the words \"intended, designed, or arranged to be used or occupied.\" 5. The word \"lot\" includes the words \"plot, acreage\" or \"parcel.\" Accessory Use (o r Structure): Any use, object, or structure which a) is clearly incidental and subordinate to the principal use, object, or structure, b) is ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "billboard",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "Page 12 of 144 conditions of the permit are met. Conditional Use Permit: A permit issued by the Zoning Inspector upon approval by the Board of Zoning Appeals to allow a use other than a principally permitted use to be established within the district. Condominium: A building or group of buildings in which units are ind ividually owned or rented but the structure, common areas and facilities are owned on a proportional, undivided basis by all of the owners. Corner Lot: ( See Lot Types) Correctional Facility: An institution established by statute according to local, state , or federal regulations specializing in the internment or rehabilitation of those convicted in the criminal justice system. Cul - de - Sac: ( See Thoroughfare) Dead - end Street: ( See Thoroughfare) Deck: A structure constructed of either wood or masonry immed iately adjacent to a dwelling and overlooking a lawn or garden",
+   "tags": [
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "Page 16 of 144 Historic Area : A geographically defined area possessing a significant concentration or continuity of landmarks, improvements, or landscape features united by historic events or by physical development, and which area has been designated as an historic landmark district by statute; said district may have within its boundaries noncontributing buildings or other structures that, while not of such historic and/or architectural significance to be designated as landmarks, nevertheless contribute to the overall visual character of the district. Home Occupation: Home Occupation means an accessory use which is an activity, profession, occupation, service, craft, or revenue - enhancing hobby which is clearly incidental and subordinate to the use of the premises as a dwelling, and is co nducted entirely within the dwelling unit, or elsewhere on the premises by conditional use permit",
+   "tags": [
+    "illumination",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 33,
+   "snippet": "Page 33 of 144 non - conformity, but any structure or portion thereof may be altered to decrease its non - conformity; 2. Should such non - conforming structure or non - conforming portion of a structure be des troyed by any means, it shall not be reconstructed except in conformity with the provisions of this Resolution; 3. Should such structure be moved for any reason for any distance whatever, it shall thereafter conform to the regulations for the district in whi ch it is located after it is moved. SECTION 470: Non - Conforming Uses Of Structures and Land in Combination. If a lawful use involving individual structures, or of a structure and land in combination, exists at the effective date of adoption or amendment of this Resolution that would not be allowed in the district under the terms of this Resolution, the lawful use may be continued so long as it remains otherwise lawful, subje",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 38,
+   "snippet": "Page 38 of 144 3. Review all proposed amendments to this Resolution and make recommendations to the Board of Township Trustees as spec ified in Article 6; 4. Review all planned unit developments and make recommendations to the Board of Township Trustees as provided in Article 13. SECTION 530: Board of Zoning Appeals. A Board of Zoning Appeals is hereby created and shall consist of the sam e number of members and be appointed in the same manner for the same term sequence as outlined in Section 520 for the Zoning Commission . SECTION 531: Proceedings of the Board of Zoning Appeals. The Board shall adopt rules as necessary for the execution of its responsibilities in keeping with the provisions of this Resolution. Meetings shall be held at the call of the chairperson and at such other times as the Board may determine. The chairperson, or in his absence the acting chairperson, may administer",
+   "tags": [
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 47,
+   "snippet": "Page 47 of 144 SECTION 630 : Public Hearing By Zoning Commission. The Zoning Commissi on shall schedule a public hearing after the adoption of the motion, transmittal of a resolution from the Township Trustees, or the filing of an application for zoning amendment. Said hearing shall be not less than twenty (20) nor more than forty (40) days from the date of adoption of such motion, the transmittal of such resolution, or the filing of such application. S E C T I O N 6 3 5 : Notice of Public Hearing in Newspaper. Before holding the public hearing as required in Section 630, notice of such hearing sha ll be given by the Zoning Commission by at least one (1) publication in one (1) or more newspapers of general circulation of the Township at least ten (10) days before the date of said hearing. This notice shall set forth the time and place of the public h earing, the nature of the proposed am",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 70,
+   "snippet": "Page 70 of 144 Multi - family dwellings shall be considered as one (1) building fo r the purpose of determining front, side, and rear yard requirements. The entire group as a unit shall require one (1) front, one (1) rear, and two (2) side yards as specified for dwellings in the appropriate district. SECTION 1015: Side and Rear Yard Req uirements for Nonresidential Uses Abutting Residential Districts. Nonresidential buildings or uses shall not be located nor conducted closer than forty (40) feet to any lot line of a residential district, except that the minimum yard requirements may be r educed to fifty (50) percent of the normal requirement if acceptable landscaping or screening as approved by the Zoning Inspector is provided. Such screening shall be a masonry or solid fence between four (4) and eight (8 ) feet in height. It is to be maint ained in good condition and free of all adverti",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 72,
+   "snippet": "Page 72 of 144 Association, Inc., Washington D.C.; the United States Bureau of Mines, and the Ohio Environmental Prote ction Agency . SECTION 1031: Unlicensed Motor Vehicles. No property, other than a licensed junk yard, may be used for the storage or parking of, or may contain, currently unlicensed Motor Vehicles except as follows. 1. Two or fewer unlicensed Motor vehicle s may be stored in an area screened from the view of the public or adjacent properties by a privacy fence, other approved screening or in a completely enclosed building; and 2. Any number of unlicensed Motor Vehicles may be stored in a completely enclosed b uilding or buildings; SECTION 1032: Junk Motor Vehicles. (See p. 13 - 14) No property, other than a licensed junk yard may be used for the storage or parking of, or may contain, Junk Motor Vehicles for a period of 72 hours or more except as follows: 1. Two or fewer ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 93,
+   "snippet": "Page 93 of 144 5. Description of proposed use; 6. Zoning district (s); 7. Location and design of access drives; statement from County Engineer concerning type and size of drainage pipes; 8. A vicinity map at a scale approved by the Zoning Commission, showing property lines, streets, existing and proposed zoning, and other such items as the Zoning Commission may require to show the relationship of the planned unit development to the comprehensive plan and to existing schools a nd other community facilities and services; 9. A preliminary development plan at a scale approved by the Zoning Commission showing topography at two (2) foot intervals; location and type of residential, commercial, and industrial land uses; layout, dimensio ns, and names of existing and proposed streets, right - of - ways, utility easements, parks, and community spaces; layout and dimensions of lots and building set",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 94,
+   "snippet": "Page 94 of 144 Before holding the public hearing required in Section 1353 , written notice of such hearing shall be sent by the Chairman of the Zoning Commission by first class mail at least twenty (20) days before the date of said hearing to all owners of property within five - hundred (500) feet of the area proposed to be included within the pl anned unit development district. The notice shall contain the same information as required of notices published in the newspaper according to Section 1354. SECTION 1356: Approval in Principle by the Zoning Commission. Within sixty (60) days after the pub lic hearing required by Section 1353 , the Zoning Commission shall review the preliminary development plan to determine if it is consistent with the intent and purpose of this Resolution, whether the proposed development advances the general welfare of the community and neighborhood; and whether",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 106,
+   "snippet": "Page 106 of 144 APPLICATION FOR CERTIFICATE OF COMPLIANCE Defiance Township, Defiance, Ohio Before any building may be occupied or lan d utilized, it is necessary for the zoning inspector to certify that the construction is in accordance with the zoning Resolution and the previously approved Application for Zoning Permit. Before the completion of the foundation, mail this form to the zoni ng inspector. If the construction was completed in accordance with the approved zoning permit, he/she will approve the Certificate of Compliance and return it to you. A Temporary Certificate of Compliance may be issued for a period not to exceed six (6) mo nths. TO: Zoning Inspector ____________________ . Ohio The undersigned requests issuance of a Certificate of Compliance for the premises as described in Zoning Permit Application Number ___________________ , issued on __________________ , 20 . To the ",
+   "tags": [
+    "illumination",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 114,
+   "snippet": "Page 114 of 144 APPLICATION FOR ZONING AMENDMENT Defiance Township, Defiance , Ohio Application Number:__________ The undersigned, owner(s) of the following legal property hereby request the consideration of change in zo ning district classification as specified below: 1. Name of Applicant: __________________________________________________________ Mailing Address: ____________________________________________________________ Phone Number: Home: ________________________ Business: ________________ ________ 2. Locational Description: Subdivision Name: _____________________________________ Section: ______________________ Township: ___________________________ Range: __________ Block : _______________________ Lot Number: _________________________________ (If not in a platted subdivision, attach a legal description) 3. Existing Use: _____________________________________________________________ ",
+   "tags": [
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 134,
+   "snippet": "Page 134 of 144 Accessory Uses (or Structure): 5, 53 - 55 Adult Entertainment Facility: 5, 61 - 62 Agriculture: 5, 55 - 57 Airport: 6 Alley: See Thoroughfare Alterations, Structural: 6, 72 - 73 Amendments: 45 - 46 (Applic ation), 47 - 48, 112 - 113 Animals, Domestic: 6 Animals, Exotic: 6, 62 Animals, Farm: 6 Apartment Unit: 6 Appeals: 114 - 118 Aquaculture: 6 Automobile: 6 Automotive Repair: 6, 56 Automotive Sales: 6, 54 Automotive Wrecking: 6, 56 Bar/Tavern: 6, 55 Basement: 6 Bu ilding: 6, 57 - 59, 67 - 68, 71 Building, Accessory: 6 Building, Enclosed: 6 Building Height: 6, 58 - 59, 72 - 73, 137 Building Line: See Setback Line Building, Principal: 7, 58 - 59, 71 Building Temporary: 71 Business, Convenience: 7 Business, General: 7, 54 Busine ss, Highway: 7 Business, Office Type: 7, 54 Business, Services: 7, 55 Business, Wholesale: 7 Cemetery: 7, 52, 64 Certificate of Compliance: 7, 24 - ",
+   "tags": [
+    "dimension",
+    "process",
+    "temporary"
+   ],
+   "weight": 6,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 17,
+   "snippet": "Page 17 of 144 4. Having a fair market value of fifteen hundred dollars or less; 5. Left uncovered in the open on private property for more than seventy - two hours with the permission of the person having the right to the possession of the property, except if the person is operating a junk yard or scrap metal processing facility licensed under authority of sections 4737.05 to 4737.12 o f the Ohio Revised Code or regulated under the authority of a political subdivision. 6. Any vehicle should have a current registration and tags on the vehicle. Upon request, vehicles must be able to start and move under their own motor power. Junk Motor V ehicle, Abandoned: Any motor vehicle meeting all of the following requirements: 1. Left on private property for more than seventy - two hours without the permission of the person having the right to the possession of the property, on a public street or o",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 28,
+   "snippet": "Page 28 of 144 The Zoning Inspector shall maintain a record of all zoning permits and certificates of occupancy. Copies shall be furnished, upon request and payment o f any established fee, to any person. The Zoning Inspector shall also submit to the County Auditor yearly, evidence of all buildings for which permits have been issued. SECTION 320: Failure to Obtain a Zoning Permit or Certificate of Occupancy. Failure t o obtain a zoning permit or certification of occupancy shall be a violation of this Resolution and punishable under Section 350 of this Resolution. SECTION 330: Construction and Use to Be as Provided in Applications, Plans, Permits, and Certificates. Zon ing permits or certificates of occupancy issued on the basis of plans and applications approved by the Zoning Inspector authorize only the use and arrangement, set forth in such approved plans and applications or amendments",
+   "tags": [
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 29,
+   "snippet": "Page 29 of 144 SECTION 344: Notice of Violation. Whenever the Zoning inspector determines that there is a violation of any provision of this Resolution, a warning tag shall be issued and shall serve as a notice of violation. Such o rder shall: a. Be in writing; b. Identify the violation; c. Include a statement of the reason (s) why it is being issued and refer to the sections of this Resolution being violated; and d. State the time by which the violation shall be corrected. SECTION 345: Tic keting Procedure. If, upon re - inspection following the issuance of a notice of violation , the condition has not - been corrected, the person (s) responsible shall be issued a ticket. If the ticket cannot be served personally, the Zoning Inspector shall requ est that a summons be issued by the Court. Such ticket shall: 1. Be served personally; 2. Be in writing; 3. Identify the violation; 4. State th",
+   "tags": [
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 36,
+   "snippet": "Page 36 of 144 SECTION 500: Purpose. This article sets forth the powers and duties of the Zoning Commi ssion, the Board of Zoning Appeals, the Board of Township Trustees, and the Zoning Inspector with respect to the administration of the provisions of this Resolution . SECTION 501: General Provisions. The formulation, administration and enforcement of this Zoning Resolution is hereby vested in the following offices and bodies within the Township of Defiance; 1. Zoning Inspector 2. Zoning Commission 3. Board of Zoning Appeals 4. Township Trustees 5. Law Director (County Prosecutor) SECTION 510: Zoning Inspecto r. A Zoning Inspector designated by the Board of Township Trustees shall administer and enforce this Resolution. The Inspector may be provided with the assistance of other such persons as the Board of Township Trustees may direct . SECTION 511: Responsibi lities of the Zoning Inspec",
+   "tags": [
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 43,
+   "snippet": "Page 43 of 144 9. Will not result in the destruction, loss, or damage of a natural , scenic, or historic feature of major importance. SECTION 585: Supplementary Conditions and Safeguards. In granting any conditional use, the Board may prescribe appropriate conditions and safeguards in conformity with this Resolution. Violations of such conditions and safeguards, when made a part of the terms under which the conditional use is granted, shall be deemed a violation of this Resolution and punishable under Section 350 of this Resolution. SECTION 586: Procedure for Notice. Upon receipt of the application for a conditional use permit specified in Section 582, the Board of Zoning Appeals shall hold a public hearing, publish notice in a newspaper, and give written notice to all parties in interest according to the procedures specified in Secti on 566 through 568. SECTION 587: Action by Board of Z",
+   "tags": [
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 5,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 54,
+   "snippet": "Page 54 of 144 users and the customers using such facilities generally do not make frequent purchases. Shoppin g centers will be the predominant building approach. Strip development shall be prohibited. GB Districts shall be located on an arterial thoroughfare as specified in the Major Thoroughfare Plan. Permitted Uses Conditional Uses Retail Business Automotive Sales Business, Cottage Personal Services Social Activities Domestic Animal Clinics Garage, Service Station Garage, Repair Adult Entertainment Facility Professional Activities Motels Community Swimming Pools Business Services Essential Services Funeral Home Business Office Type Public Service Facility Cemetery Restaurants & Bars Garage, Body Shop Commercial Recreation Facility Accessory Uses Wholesale Business Farm Equipment Sales Sale/Storage of Building Materials SECTION 823: Accommodation Business District (AB). The purpose of",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 5,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 55,
+   "snippet": "Page 55 of 144 extensive open storage and service areas, and generate heavy traffic, but shall be prohibited if they create nuisances beyond the limitations established by the Zoning Commission. Permitted Uses Condition al Uses Light Manufacturing Manufacturing, Sale & Storage of Building Material Transport & Trucking Terminals Wholesale & Warehousing Activities Food Processing Grain Elevators & Feed Mills Essential Services Acc essory Uses Public Service Facility SECTION 833: Extractive Manufacturing District (M - 3). The purpose of the M - 3 District is to provide land for the mining, processing, and storage of mineral resources. This district is designed to assure that these reso urces be properly managed and all land be reclaimed so as not to create a hazard or nuisance which either immediately or in the future adversely affects the health, safety, or general welfare of the community",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 5,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 60,
+   "snippet": "Page 60 of 144 SECTION 900: Compliance with Regulations. The regu lations for each district set by this Resolution shall be the minimum regulations and shall apply uniformly to each class or kind of structure or land, with the following exceptions: 1. No building, structure, or land shall be used or occupied and no bui lding or structure or part thereof shall be erected, constructed, reconstructed, moved, or structurally altered except in conformity with all of the regulations herein specified for the district in which it is located; 2. No building or other structure s hall be erected or altered: a. to provide for greater height or bulk; b. to accommodate or house a greater number of families; c. to occupy a greater percentage of lot area; d. to have narrower or smaller rear yards, front yards, side yards, or other open spaces; than is required in this Resolution, or in any other manner ",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  },
+  {
+   "page": 74,
+   "snippet": "Page 74 of 144 SECTION 1045: Minimum Floor Area for Dwelling. Agricultural uses on lots of fewer than five acres are subject to the same minimum floor area r egulations for that district in which the structure is located as found in the Official Schedule of District Regulations. SECTION 1046: Permitted Minimum Lot Size. Agricultural uses on lots of fewer than five acres are subject to the same permitted minim um lot size regulations for that district in which the structure is located as found in the Official Schedule of District Regulations. SECTION 1050: Supplemental Regulations Applying to All Commercial, Industrial and Residential Districts. Section 1051 c ontains those supplementary district regulations which apply to all Commercial, Industrial and Multi - Family Districts. SECTION 1051: Required Trash Areas. All commercial, industrial, and multi - family residential uses that provid",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676",
+   "source_document_id": null,
+   "source_title": "bd6aac45c4aed9d646ec12e916d0e564cda37c51730076c4ea6f3951ee774676.pdf",
+   "official_url": "https://www.defiance-county.com/townships/zoning-plan-approved-72010.pdf"
+  }
+ ]
+}

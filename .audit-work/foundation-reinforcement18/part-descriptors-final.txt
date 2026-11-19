@@ -1,0 +1,27 @@
+ok selected stable ID and exact split, legacy key family, no guessed size
+ok explicit zero rate remains zero and labor remains labor
+ok zero priced aggregate never becomes one or erases physical geometry
+ok aggregate values are not scaled by foundation count again
+ok manual basis never attaches legacy inventory
+ok off ignores inactive malformed snapshot
+ok unsupported selector undefined cannot enter adapter
+ok unsupported selector 1 cannot enter adapter
+ok unsupported selector 2 cannot enter adapter
+ok unsupported selector 3 cannot enter adapter
+ok malformed amount null fails closed
+ok malformed amount -1 fails closed
+ok malformed amount Infinity fails closed
+ok malformed amount 40 fails closed
+ok inconsistent calculated/snapshot amounts cannot create plausible parts
+ok unknown geometric weight cannot become zero
+ok wrong selected material identity fails closed
+ok snapshot and configured material kinds cannot disagree
+ok record-shaped class instances cannot lose their fields during snapshot cloning
+ok non-numeric hourly rates fail before invoking any coercion
+ok matching saved totals still cannot contradict represented quantity times unit rate
+ok positive multiplication underflow cannot create a free material DTO
+ok unconfirmed zero catalog price cannot create free material
+ok bad indices and missing IDs fail closed
+ok frozen input safe and all snapshots isolated
+ok complete active item definition survives part snapshots, but unapplied draft does not
+Part descriptors: 26/26; failed=0

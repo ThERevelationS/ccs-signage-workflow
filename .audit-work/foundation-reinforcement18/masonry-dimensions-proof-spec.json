@@ -1,0 +1,26 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "1b672bf8ed786b5d79cab4cbdb003ecf814e91ff",
+  "jsonProofs": [
+    { "file": "masonry-dimensions-model-verification.json", "resultCount": 125 },
+    { "file": "masonry-dimensions-page-verification.json", "resultCount": 5 },
+    { "file": "masonry-dimensions-browser-verification.json", "resultCount": 10 }
+  ],
+  "allResultsMustHaveOkTrue": true,
+  "scopedLintLogs": [
+    { "file": "masonry-dimensions-lint.txt", "line": "exit=0" }
+  ],
+  "candidateHashes": {
+    "wallCalculator.js": "322027143feced74e235ec45c659452e555e34d5f8f7a6ec0b339483a0f579d9"
+  },
+  "actualRemoteBundleCount": 3,
+  "allowedBuildWarningCount": 0,
+  "requiredAppStatus": "ready",
+  "testDataMustRemainEnabled": false,
+  "realStorageVerified": false,
+  "realBusinessAuthorizationVerified": false,
+  "schemaActivationAuthorized": false,
+  "reinforcementV2ActivationAuthorized": false,
+  "publishDeployAuthorized": false
+}

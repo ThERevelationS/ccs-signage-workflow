@@ -1,0 +1,97 @@
+ok unchanged: concrete material, positive settings
+ok unchanged: genuine zero material price
+ok unchanged: brick, explicit dry joint
+ok unchanged: brick_stone type and mortar joint
+ok unchanged: stone units, two unequal segments
+ok unchanged: closed outline with internal brick
+ok unchanged: open outline with internal brick
+ok unchanged: internal concrete units
+ok unchanged: outer explicit price override
+ok unchanged: outer explicit free override
+ok unchanged: internal explicit price override
+ok unchanged: internal explicit free override
+ok unchanged: outer explicit quantity override
+ok unchanged: outer explicit zero quantity
+ok unchanged: internal explicit quantity override
+ok unchanged: internal explicit zero quantity
+ok unchanged: fractional explicit material price
+ok unchanged: numeric-string material price
+ok unchanged: numeric-string free price
+ok unchanged: irrelevant catalog row cannot change wall calculation
+FAIL numeric zero labor respects a genuine minimum of one: numeric zero labor respects a genuine minimum of one / laborRatePerSqFt
+
+undefined !== 0
+
+FAIL numeric zero minimum leaves the actual one-dollar labor charge: numeric zero minimum leaves the actual one-dollar labor charge / laborCost
+
+150 !== 1
+
+FAIL numeric zero mortar rate does not substitute ten dollars: numeric zero mortar rate does not substitute ten dollars / mortarCost
+
+10 !== 0
+
+FAIL numeric zero labor and minimum leave only concrete wall materials: numeric zero labor and minimum leave only concrete wall materials / laborCost
+
+150 !== 0
+
+FAIL all numeric zero shop rates retain the brick material charge: all numeric zero shop rates retain the brick material charge / laborCost
+
+150 !== 0
+
+FAIL free material and all zero shop rates produce a genuine zero total: free material and all zero shop rates produce a genuine zero total / laborCost
+
+150 !== 0
+
+FAIL internal wall uses the same explicit zero labor and mortar settings: internal wall uses the same explicit zero labor and mortar settings / laborCost
+
+180 !== 0
+
+FAIL internal zero mortar preserves positive actual labor quantities: internal zero mortar preserves positive actual labor quantities / laborCost
+
+150 !== 4
+
+ok numeric-string zero behavior remains unchanged
+FAIL missing shop settings retain the existing documented defaults: missing shop settings retain the existing documented defaults / laborRatePerSqFt
+
+undefined !== 45
+
+FAIL missing brick shop settings retain the existing defaults: missing brick shop settings retain the existing defaults / laborRatePerSqFt
+
+undefined !== 45
+
+FAIL outer labor override still wins over a zero shop labor rate: outer labor override still wins over a zero shop labor rate / laborRatePerSqFt
+
+undefined !== 7
+
+FAIL outer mortar override still wins over a zero shop mortar rate: outer mortar override still wins over a zero shop mortar rate / laborCost
+
+150 !== 1
+
+FAIL internal labor override retains its own basis with zero shop rates: internal labor override retains its own basis with zero shop rates / laborCost
+
+180 !== 0
+
+FAIL internal mortar override retains its own basis with zero shop rates: internal mortar override retains its own basis with zero shop rates / laborCost
+
+180 !== 0
+
+ok unavailable material still holds the acknowledged snapshot with zero shop rates
+masonry-zero-settings passed=22 failed=14
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(results.every(r => r.ok))
+
+    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-masonry-zero-settings.mjs:157:8 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.13.0

@@ -1,0 +1,41 @@
+{
+  "head": "a11be3a85db0cf0800f3015a4be6d55e7c43407a",
+  "pulledAt": "2026-11-08T18:21:33.104Z",
+  "files": {
+    "src__components__estimator__foundation__foundationAssemblyModel.js": {
+      "sha256": "94e3bb9303c71439fbe5572798818a551b78e6879a67d203aee34a09d42f909c",
+      "bytes": 22454
+    },
+    "src__components__estimator__foundation__foundationGeometryInputs.js": {
+      "sha256": "07374df22f0b0997b44e28677eb57eaef4111913f67f42f39fa6437d464758dc",
+      "bytes": 9851
+    },
+    "src__components__estimator__foundation__FoundationLayoutCanvas.jsx": {
+      "sha256": "e987944e2623c9a45020733791956145e7ef7c07283fcd5aff1c1e4a370fb635",
+      "bytes": 12112
+    },
+    "src__components__estimator__foundation__foundationLayoutModel.js": {
+      "sha256": "972ad19712f2e6c5d23a208a443635515d13e9c1b5034169eb95bcb8f2d72e3d",
+      "bytes": 2858
+    },
+    "src__components__estimator__foundation__foundationSceneHistory.js": {
+      "sha256": "b2ce1cf4279f63cd4311076d6e55e38ba9cd81f80dd5d822d237bba791ab05d6",
+      "bytes": 19795
+    },
+    "src__components__estimator__foundation__foundationSceneInput.js": {
+      "sha256": "3575d3152374afdfbceb6fd0889eb3c307027cf06b71ddc7efbf44680c24eac7",
+      "bytes": 27908
+    },
+    "src__components__estimator__foundation__foundationSceneTransforms.js": {
+      "sha256": "27397d68015a2e0f5f38fc0e38bce196a42b302850f04def6b4ac221babecacc",
+      "bytes": 16169
+    },
+    "src__pages__FoundationEstimator.jsx": {
+      "sha256": "7e97bd1cd5199bce110eea6302672f6467711e667499994a17d56eb4cedaea0b",
+      "bytes": 93232
+    },
+    "src__components__estimator__foundation__foundationSceneSelection.js": {
+      "missing": true
+    }
+  }
+}

@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,10 +16,10 @@ import {
   Check, X, Plus, Trash2, Pencil, Save, 
   ClipboardList, FileText, Copy, Star,
   ChevronDown, ChevronRight, ArrowRight,
-  Calendar as CalendarIcon, User, Loader2,
-  Link as LinkIcon, ExternalLink
+  Calendar as CalendarIcon, Loader2,
+  Link as LinkIcon
 } from "lucide-react";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import {
   createWorkOrderArrayItemLocator,
   findOptionalWorkOrderArrayItemIndex,
@@ -30,7 +29,7 @@ import {
 } from "@/components/workflow/workOrderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const SipChecklistTemplate = base44.entities.SipChecklistTemplate;
+const SipChecklistTemplate = staffEntities.SipChecklistTemplate;
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
@@ -306,7 +305,7 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
                   {subTasks.map((subTask) => (
                     <div key={subTask.id} className="p-2">
                       <div className="flex items-center gap-2">
-                        <button
+                        <button type="button"
                           onClick={() => setExpandedSubTasks(prev => ({ ...prev, [subTask.id]: !prev[subTask.id] }))}
                           className="p-0.5"
                         >
@@ -322,7 +321,7 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
                         {subTask.details.length > 0 && (
                           <span className="text-xs text-gray-400">{subTask.details.length} details</span>
                         )}
-                        <button onClick={() => removeSubTask(subTask.id)} className="p-1 hover:bg-red-100 rounded">
+                        <button type="button" onClick={() => removeSubTask(subTask.id)} className="p-1 hover:bg-red-100 rounded">
                           <X className="w-3 h-3 text-red-500" />
                         </button>
                       </div>
@@ -334,7 +333,7 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
                             <div key={idx} className="flex items-center gap-2 py-0.5">
                               <div className="w-1 h-1 rounded-full bg-gray-400" />
                               <span className="flex-1 text-xs text-gray-600">{detail.text}</span>
-                              <button onClick={() => removeDetail(subTask.id, idx)} className="p-0.5 hover:bg-red-100 rounded">
+                              <button type="button" onClick={() => removeDetail(subTask.id, idx)} className="p-0.5 hover:bg-red-100 rounded">
                                 <X className="w-2 h-2 text-red-400" />
                               </button>
                             </div>
@@ -359,7 +358,7 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
                               </Button>
                             </div>
                           ) : (
-                            <button
+                            <button type="button"
                               onClick={() => setAddingSubTaskFor(subTask.id)}
                               className="text-xs text-blue-500 hover:underline"
                             >
@@ -738,8 +737,7 @@ export default function EnhancedSipChecklist({
   const [showTaskCreation, setShowTaskCreation] = useState(false);
   const [showMoveTask, setShowMoveTask] = useState(null);
   const [expandedTasks, setExpandedTasks] = useState({});
-  const [expandedRiders, setExpandedRiders] = useState({});
-
+  
   // Checklist editing states
   const [newItemText, setNewItemText] = useState("");
   const [editingItemId, setEditingItemId] = useState(null);
@@ -1013,7 +1011,7 @@ export default function EnhancedSipChecklist({
   };
 
   // Get ALL tasks (not filtered by context) - show all tasks under each checklist section
-  const getAllTasks = () => {
+  const _getAllTasks = () => {
     const allTasks = [];
     
     // Check main tasks
@@ -1166,7 +1164,7 @@ export default function EnhancedSipChecklist({
   };
   const colors = colorClasses[accentColor] || colorClasses.blue;
 
-  const renderTaskItem = (task, index, sourceType, sourceId) => {
+  const _renderTaskItem = (task, index, sourceType, sourceId) => {
     const taskKey = `${sourceType}-${sourceId || 'main'}-${index}`;
     const isExpanded = expandedTasks[taskKey];
 
@@ -1178,7 +1176,7 @@ export default function EnhancedSipChecklist({
             onCheckedChange={() => toggleTaskComplete(index, sourceType, sourceId)}
             disabled={!isRegistered}
           />
-          <button
+          <button type="button"
             onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !prev[taskKey] }))}
             className="p-0.5"
           >
@@ -1305,8 +1303,8 @@ export default function EnhancedSipChecklist({
                       {/* Reorder */}
                       {isRegistered && (
                         <div className="flex flex-col text-[10px] text-gray-400">
-                          <button onClick={() => moveItem(index, 'up')} disabled={index === 0} className="hover:text-gray-600 disabled:opacity-30">▲</button>
-                          <button onClick={() => moveItem(index, 'down')} disabled={index === checklist.length - 1} className="hover:text-gray-600 disabled:opacity-30">▼</button>
+                          <button type="button" onClick={() => moveItem(index, 'up')} disabled={index === 0} className="hover:text-gray-600 disabled:opacity-30">▲</button>
+                          <button type="button" onClick={() => moveItem(index, 'down')} disabled={index === checklist.length - 1} className="hover:text-gray-600 disabled:opacity-30">▼</button>
                         </div>
                       )}
 
@@ -1331,8 +1329,8 @@ export default function EnhancedSipChecklist({
                           {(item.details?.length > 0) && <span className="text-xs text-gray-400">{item.details.length}</span>}
                           {isRegistered && (
                             <div className="flex gap-0.5">
-                              <button onClick={() => startEditItem(item)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
-                              <button onClick={() => deleteChecklistItem(item.id)} className="p-1 hover:bg-red-100 rounded"><Trash2 className="w-3 h-3 text-red-400" /></button>
+                              <button type="button" onClick={() => startEditItem(item)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
+                              <button type="button" onClick={() => deleteChecklistItem(item.id)} className="p-1 hover:bg-red-100 rounded"><Trash2 className="w-3 h-3 text-red-400" /></button>
                             </div>
                           )}
                         </>
@@ -1346,7 +1344,7 @@ export default function EnhancedSipChecklist({
                           <Checkbox checked={detail.checked} onCheckedChange={() => isRegistered && toggleDetail(item.id, detailIdx)} disabled={!isRegistered} className="h-3 w-3" />
                           <span className={`flex-1 text-xs ${detail.checked ? 'text-green-600 line-through' : 'text-gray-700'}`}>{detail.text}</span>
                           {isRegistered && (
-                            <button onClick={() => deleteDetail(item.id, detailIdx)} className="p-0.5 hover:bg-red-100 rounded"><X className="w-2.5 h-2.5 text-red-400" /></button>
+                            <button type="button" onClick={() => deleteDetail(item.id, detailIdx)} className="p-0.5 hover:bg-red-100 rounded"><X className="w-2.5 h-2.5 text-red-400" /></button>
                           )}
                         </div>
                         
@@ -1376,7 +1374,7 @@ export default function EnhancedSipChecklist({
                         {/* Add Tasks for Detail - hover reveal */}
                         {isRegistered && (
                           <div className="hover-btn-detail ml-4 mt-0.5">
-                            <button onClick={() => openTaskCreationForItem(item.id, detail.text, detailIdx)} className="text-[10px] text-purple-500 hover:underline">+ Tasks</button>
+                            <button type="button" onClick={() => openTaskCreationForItem(item.id, detail.text, detailIdx)} className="text-[10px] text-purple-500 hover:underline">+ Tasks</button>
                           </div>
                         )}
                       </div>
@@ -1415,8 +1413,8 @@ export default function EnhancedSipChecklist({
                         </div>
                       ) : (
                         <div className="hover-btn ml-6 mt-1 flex gap-2">
-                          <button onClick={() => setAddingDetailFor(item.id)} className="text-xs text-blue-500 hover:underline">+ Checklist Details</button>
-                          <button onClick={() => openTaskCreationForItem(item.id, item.text)} className="text-xs text-purple-500 hover:underline">+ Tasks</button>
+                          <button type="button" onClick={() => setAddingDetailFor(item.id)} className="text-xs text-blue-500 hover:underline">+ Checklist Details</button>
+                          <button type="button" onClick={() => openTaskCreationForItem(item.id, item.text)} className="text-xs text-purple-500 hover:underline">+ Tasks</button>
                         </div>
                       )
                     )}
@@ -1650,6 +1648,7 @@ export default function EnhancedSipChecklist({
 }
 
 // Tasks Popup Component
+// eslint-disable-next-line unused-imports/no-unused-vars
 function TasksPopup({ isOpen, onClose, workOrder, mainTasks, setMainTasks, riders, setRiders, users, isRegistered, onUpdate, colors, taskTargetContext }) {
   const [showTaskCreation, setShowTaskCreation] = useState(false);
   const [showMoveTask, setShowMoveTask] = useState(null);
@@ -1759,7 +1758,7 @@ function TasksPopup({ isOpen, onClose, workOrder, mainTasks, setMainTasks, rider
     }
   };
 
-  const renderTaskItem = (task, index, sourceType, sourceId) => {
+  const _renderTaskItem = (task, index, sourceType, sourceId) => {
     const taskKey = `${sourceType}-${sourceId || 'main'}-${index}`;
     const isExpanded = expandedTasks[taskKey];
 
@@ -1771,7 +1770,7 @@ function TasksPopup({ isOpen, onClose, workOrder, mainTasks, setMainTasks, rider
             onCheckedChange={() => toggleTaskComplete(index, sourceType, sourceId)}
             disabled={!isRegistered}
           />
-          <button
+          <button type="button"
             onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !prev[taskKey] }))}
             className="p-0.5"
           >

@@ -1,0 +1,14 @@
+Reading file
+Reading file
+Read file
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import json,sys; d=json.load(open('src_components_estimator_builder_partSync.js.json')); open('src_components_estimator_builder_partSync.js','w',newline='').write(d.get('content',''))
+                       ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\json\__init__.py", line 298, in load
+    return loads(fp.read(),
+                 ~~~~~~~^^
+  File "C:\Python314\Lib\encodings\cp1252.py", line 23, in decode
+    return codecs.charmap_decode(input,self.errors,decoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 12095: character maps to <undefined>

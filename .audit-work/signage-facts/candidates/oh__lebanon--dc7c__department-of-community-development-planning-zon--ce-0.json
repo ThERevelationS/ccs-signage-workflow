@@ -1,0 +1,24 @@
+{
+ "jurisdiction_id": "6ac19f133bc556d9ca89dc7c",
+ "jurisdiction_name": "Lebanon",
+ "state": "OH",
+ "office_id": "scan-6ac19f133bc556d9ca89dc7c-office-0",
+ "office_name": "Department of Community Development / Planning & Zoning",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Rev. 6/09 Contact Information: Event Sponsor: ___________________________________ Phone: ____________________________ Address: ________________________________________ Email: _____________________________ Address of Event: _____________________________________________________________________ (Attach a map of indicating where the streets will be closed. Intersections cannot be closed). Date of Event: ____________ # of Guests: ______ Party Hours From: _____ am/pm - _____ am/pm Road Closure Requirements: a. Applicants are responsible for contacting affected neighbors to share the details of the street closure, event and clean up. b. Driveway access must be maintained at all times for all affected addresses. c. Assign monitors at each street closure to allow access for resident and emergency vehicles. d. Applicants are responsible for maintaining temporary barricades and posting street closu",
+   "tags": [
+    "sign",
+    "fee",
+    "temporary",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "4cb7ebd1e46448a6706c5ef962e19402c0acaef08943bdf06453a071da96764a",
+   "source_document_id": null,
+   "source_title": "4cb7ebd1e46448a6706c5ef962e19402c0acaef08943bdf06453a071da96764a.pdf",
+   "official_url": "https://www.lebanonohio.gov/Applications/Block%20Party%20Permit%20Application.PDF?t=201912051358270"
+  }
+ ]
+}

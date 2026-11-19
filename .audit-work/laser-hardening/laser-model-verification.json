@@ -1,0 +1,16 @@
+{
+ "suite": "laser-model",
+ "passed": 248,
+ "failed": 0,
+ "result": "PASS",
+ "sections": {
+  "setup": 2,
+  "strict_parsers": 30,
+  "settings_scan": 17,
+  "project_scan": 15,
+  "item_scan": 27,
+  "held_calc_semantics": 23,
+  "parity_vs_remote": 122,
+  "ui_helpers": 12
+ }
+}

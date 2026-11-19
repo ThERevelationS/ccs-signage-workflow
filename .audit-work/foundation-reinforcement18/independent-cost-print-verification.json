@@ -1,0 +1,54 @@
+{
+  "results": [
+    {
+      "name": "exact remote candidate preserves all existing Product fields while adding frozen cost694 and345",
+      "ok": true
+    },
+    {
+      "name": "unknown historical Product costs remain unknown, matching existing sandbox behavior",
+      "ok": true
+    },
+    {
+      "name": "selling overrides and live hints never replace accepted costs or invent a unit basis",
+      "ok": true
+    },
+    {
+      "name": "explicit zero cost and zero quantity survive JSON without becoming unknown",
+      "ok": true
+    },
+    {
+      "name": "missing malformed and nonfinite accepted costs cannot become zero",
+      "ok": true
+    },
+    {
+      "name": "partial Product costs block full cost and margin instead of claiming140 profit",
+      "ok": true
+    },
+    {
+      "name": "known costs with partial selling amounts keep the cost but do not claim a margin",
+      "ok": true
+    },
+    {
+      "name": "stored extended costs including zero remain authoritative and are not inferred hourly rates",
+      "ok": true
+    },
+    {
+      "name": "strict monetary parsing rejects booleans blank arrays and objects without changing valid zero",
+      "ok": true
+    },
+    {
+      "name": "fully recorded ordinary financials customer notes company and status match the fresh baseline exactly",
+      "ok": true
+    },
+    {
+      "name": "frozen financial inputs remain exact and no SDK entity function or network operation executes",
+      "ok": true
+    }
+  ],
+  "syntheticOnly": true,
+  "actualFiveSandboxSourceSnapshots": true,
+  "otherLocalDependencies": true,
+  "realStorageVerified": false,
+  "backendAuthorizationVerified": false,
+  "reinforcementV2Activated": false
+}

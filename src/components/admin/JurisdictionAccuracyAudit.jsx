@@ -10,6 +10,7 @@ import { Loader2, AlertTriangle, CheckCircle, Bot, Clock, RefreshCw, Trash2, Eye
 import { format } from "date-fns";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/permitting/permitGlobalSettingsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const SEVERITY_COLORS = {
   critical: "bg-red-100 text-red-800 border-red-200",
@@ -44,7 +45,7 @@ export default function JurisdictionAccuracyAudit() {
     try {
       // Load saved settings with an exact record baseline for concurrency-safe saves.
       const stored = await loadSingleGlobalSetting({
-        entity: base44.entities.GlobalSettings,
+        entity: staffEntities.GlobalSettings,
         settingKey: 'jurisdiction_accuracy_audit',
         label: 'Jurisdiction Accuracy Audit settings',
       });
@@ -58,7 +59,7 @@ export default function JurisdictionAccuracyAudit() {
 
     try {
       // Alert loading remains independent so a settings conflict cannot hide existing flags.
-      const alerts = await base44.entities.RegulationAlert.list('-detected_at', 50);
+      const alerts = await staffEntities.RegulationAlert.list('-detected_at', 50);
       const auditOnly = Array.isArray(alerts) ? alerts.filter(a => a.title?.includes('[Accuracy Audit]')) : [];
       setAuditAlerts(auditOnly);
     } catch (e) {
@@ -73,7 +74,7 @@ export default function JurisdictionAccuracyAudit() {
     setSettingsSaveError("");
     try {
       const saved = await saveGlobalSettingValueIfUnchanged({
-        entity: base44.entities.GlobalSettings,
+        entity: staffEntities.GlobalSettings,
         loadedRecord: settingsRecord,
         settingKey: 'jurisdiction_accuracy_audit',
         nextValue: settings,
@@ -126,7 +127,7 @@ export default function JurisdictionAccuracyAudit() {
     setAlertActionError("");
     try {
       await replaceEntityFieldsIfUnchanged({
-        entity: base44.entities.RegulationAlert,
+        entity: staffEntities.RegulationAlert,
         id: loaded.id,
         expectedFields: expectedEntityFields(loaded, nextFields),
         nextFields,
@@ -151,7 +152,7 @@ export default function JurisdictionAccuracyAudit() {
     setAlertActionError("");
     try {
       await deleteEntityIfUnchanged({
-        entity: base44.entities.RegulationAlert,
+        entity: staffEntities.RegulationAlert,
         record: loaded,
         guardFields: { jurisdiction_id: loaded.jurisdiction_id },
         label: `Regulation Alert ${loaded.title || loaded.id} deletion`,

@@ -1,0 +1,62 @@
+{
+  "inputs": [
+    "frozen:/app/src/components/estimator/brick/brickCalc.js",
+    "frozen:/app/src/components/estimator/brick/brickPricingAvailability.js",
+    "frozen:/app/src/components/estimator/brick/brickSellPricing.js",
+    "frozen:/app/src/components/estimator/brick/BrickGeometryPanel.jsx",
+    "frozen:/app/src/components/estimator/brick/BrickTotals.jsx",
+    "frozen:/app/src/pages/BrickStoneEstimator.jsx",
+    "frozen:/app/src/components/estimator/builder/partSync.js",
+    "frozen:/app/consumer-entry.js"
+  ],
+  "loaded": {
+    "/app/consumer-entry.js": "9e404ba8b9cf43cab03d5a6fedc425f6040de9b2a111a438c084bbfd2cd8b21f",
+    "/app/src/components/estimator/brick/brickPricingAvailability.js": "0c3b68d549709d9b03ce54001de5f3128cf30e7d221df4e2888b90eb2de13d09",
+    "/app/src/components/estimator/builder/partSync.js": "fb77561aa50012b8ff70490f485b2a9775ab4cfdc70cc5904f189dbff8627549",
+    "/app/src/components/estimator/brick/brickCalc.js": "c54ed2c11a12e917dbc047c23d33afd9e0b1694f2b350bdb89e6808a661506a6",
+    "/app/src/components/estimator/brick/BrickGeometryPanel.jsx": "1f5c2cf5eddcc29020b0058476f50d0d831bae55b476d25c257fffacee7b206e",
+    "/app/src/components/estimator/brick/BrickTotals.jsx": "9d3e323eb7748ecffe2e86ba729652289385d9c5dbf5bfa0e9b63e64be62ed38",
+    "/app/src/pages/BrickStoneEstimator.jsx": "ad9701b43a195f535228d70a1dab2861b088a307dba384232ff247a2e970c7cf",
+    "/app/src/components/estimator/brick/brickSellPricing.js": "5109889d3bc98c86ca62023a8b5ac6f8997945fcc2bd38d62ca7ee79b7a7b0b7"
+  },
+  "candidateHashes": {
+    "brickPricingAvailability.js": "0c3b68d549709d9b03ce54001de5f3128cf30e7d221df4e2888b90eb2de13d09",
+    "BrickGeometryPanel.jsx": "1f5c2cf5eddcc29020b0058476f50d0d831bae55b476d25c257fffacee7b206e",
+    "BrickTotals.jsx": "9d3e323eb7748ecffe2e86ba729652289385d9c5dbf5bfa0e9b63e64be62ed38",
+    "BrickStoneEstimator.jsx": "ad9701b43a195f535228d70a1dab2861b088a307dba384232ff247a2e970c7cf"
+  },
+  "externals": [
+    "../../../../base44/shared/pricingEngine.ts",
+    "../../../../base44/shared/pricingTemplateModel.ts",
+    "../../../../base44/shared/brickPricingWire.ts",
+    "react",
+    "@/components/ui/input",
+    "react/jsx-runtime",
+    "react-router-dom",
+    "@/components/ui/button",
+    "lucide-react",
+    "@/components/estimator/brick/BrickGeometryPanel",
+    "@/components/estimator/brick/BrickTotals",
+    "@/components/estimator/brick/brickPricingAvailability",
+    "@/components/estimator/builder/builderService",
+    "@/components/estimator/loadAllEntityRows",
+    "@/components/estimator/builder/sourceProjectPersistence",
+    "@/components/estimator/moduleShared/ModuleActionBar",
+    "@/components/estimator/moduleShared/ModuleTemplateDialog",
+    "@/components/estimator/moduleShared/moduleProjectActions",
+    "@/components/markup/CustomerPricingTab",
+    "@/components/markup/projectCategorizer",
+    "@/components/markup/savedCustomerPricing",
+    "@/components/staff/staffEntities",
+    "@/api/base44Client",
+    "@/components/estimator/parts/partState",
+    "@/components/vinylEstimator/vinylNestingCalculator",
+    "@/components/estimator/brick/brickCalc",
+    "@/components/signMaintenance/maintenanceCalculator",
+    "@/components/estimator/customerPricing",
+    "@/components/estimator/estimateMutationGuard",
+    "./builderMutationRecovery",
+    "./builderEntityPersistence",
+    "./builderPartPersistence"
+  ]
+}

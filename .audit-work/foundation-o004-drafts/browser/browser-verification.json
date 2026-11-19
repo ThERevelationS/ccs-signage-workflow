@@ -1,0 +1,39 @@
+{
+  "results": [
+    {
+      "case": "O1 desktop: markup/override/tier drafted + restored exactly",
+      "ok": true
+    },
+    {
+      "case": "O1 mobile: markup/override/tier drafted + restored exactly",
+      "ok": true
+    },
+    {
+      "case": "O2: shell link click confirm — cancel stays, accept leaves, draft retained",
+      "ok": true
+    },
+    {
+      "case": "O3: Back guarded by sentinel — dismiss stays, accept exits, Forward offers draft",
+      "ok": true
+    },
+    {
+      "case": "O4: clean passthrough — save clears guard, Back exits without confirm",
+      "ok": true
+    },
+    {
+      "case": "O5: storage quota refusal -> tombstone -> reopen warns, discard clears",
+      "ok": true
+    },
+    {
+      "case": "O6: page boots clean — totals + real pricing panel render, no console errors",
+      "ok": true
+    }
+  ],
+  "telemetry": {
+    "foreign": [],
+    "consoleErrors": [],
+    "pageErrors": []
+  },
+  "okCount": 7,
+  "total": 7
+}

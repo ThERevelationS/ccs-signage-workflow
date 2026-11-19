@@ -1,0 +1,72 @@
+{
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "5f25691b8966137d4c96cafee690a186a797ebb1",
+ "jsonProofs": [
+  {
+   "file": "maintenance-model-verification.json",
+   "resultCount": 123
+  },
+  {
+   "file": "maintenance-model-red-verification.json",
+   "resultCount": 14
+  },
+  {
+   "file": "maintenance-page-verification.json",
+   "resultCount": 9
+  },
+  {
+   "file": "maintenance-browser-results.json",
+   "resultCount": 4
+  },
+  {
+   "file": "maintenance-consumer-build.json",
+   "resultCount": 12
+  },
+  {
+   "file": "maintenance-lint-results.json",
+   "resultCount": 5
+  },
+  {
+   "file": "maintenance-page-import-edges.json",
+   "resultCount": "see file"
+  },
+  {
+   "file": "maintenance-page-meta.json",
+   "resultCount": "see file"
+  }
+ ],
+ "allResultsMustHaveOkTrue": true,
+ "scopedLintLogs": [
+  {
+   "file": "maintenance-lint-results.json",
+   "line": "0 errors / 0 warnings over 5 candidate files"
+  }
+ ],
+ "candidateHashes": {
+  "src/components/signMaintenance/maintenancePricingAvailability.js": "b7768ccf480313487e243cafee780669169d07c79cef86e7765087cb3e949090",
+  "src/components/signMaintenance/ServiceItemRow.jsx": "18c647b73036491b02979c761027a16297d037dede6c89e4b1ae96817169d4e0",
+  "src/components/signMaintenance/RepaintMonumentPanel.jsx": "eac0586852059f39478a8c9da4b2628eab9238794c9179d3642bc8194f558b2a",
+  "src/components/signMaintenance/DimLetterPaintSubPanel.jsx": "6934ef7e2782ce97e0c1b70f066e0684e11bcf88291a7bf05021e3d1fbbf6e65",
+  "src/pages/MaintenanceEstimator.jsx": "9e38b7c47e35c470169782e294b607c0e1b748f6fb2cd01e589e02850c20efe8"
+ },
+ "remoteBaselineHashes": {
+  "src/components/signMaintenance/ServiceItemRow.jsx": "f72c33a2a558e6f99690506493954fbcb8df109e506410e14441ae86fa1c5ebe",
+  "src/components/signMaintenance/RepaintMonumentPanel.jsx": "4d9c3ba4809ecc84cb2d5d416c7f635059166e1dcedd2ff7442c1b6e10192b2b",
+  "src/components/signMaintenance/DimLetterPaintSubPanel.jsx": "cb1a9a1bb4d2752e8513cd30b83bb7242f27e1ee2eec6865ae238ce6469ce762",
+  "src/pages/MaintenanceEstimator.jsx": "39759252c2ad3a0f09d133de0a1acdfc1a2c0e684ecc0a72c1e05aa6abbae843"
+ },
+ "allowedBuildWarningCount": 0,
+ "remoteOperationsPermitted": [
+  "sandbox read",
+  "sandbox run (read-only shell)"
+ ],
+ "remoteMutationsPerformed": 0,
+ "applyRequiresLeadApproval": true,
+ "remoteWriteAuthorized": false,
+ "checkpointAuthorized": false,
+ "entityOperationsAuthorized": false,
+ "schemaOrMetadataAuthorized": false,
+ "publishOrDeployAuthorized": false,
+ "baselineFile": "maintenance-pricing-baseline-v2.json"
+}

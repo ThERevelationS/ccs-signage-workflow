@@ -1,0 +1,54 @@
+{
+  "results": [
+    {
+      "id": "valid 1280",
+      "ok": true
+    },
+    {
+      "id": "valid 390",
+      "ok": true
+    },
+    {
+      "id": "held-bad-duration 1280",
+      "ok": true
+    },
+    {
+      "id": "held-bad-duration 390",
+      "ok": true
+    },
+    {
+      "id": "held-missing-price 1280",
+      "ok": true
+    },
+    {
+      "id": "held-missing-price 390",
+      "ok": true
+    },
+    {
+      "id": "held-bad-custom-qty 1280",
+      "ok": true
+    },
+    {
+      "id": "held-bad-custom-qty 390",
+      "ok": true
+    },
+    {
+      "id": "held-unsaved-row 1280",
+      "ok": true
+    },
+    {
+      "id": "held-unsaved-row 390",
+      "ok": true
+    },
+    {
+      "id": "free-rate-zero 1280",
+      "ok": true
+    },
+    {
+      "id": "free-rate-zero 390",
+      "ok": true
+    }
+  ],
+  "port": 59710,
+  "pid": 43416
+}

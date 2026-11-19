@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "250 src/components/estimator/customerPricing.js\n0\n0 src/components/estimator/foundation/foundationSellPricing.js\n0\n0 base44/shared/foundationPricingWire.ts\n4379 src/components/estimator/builder/partSync.js\n105 src/components/markup/savedCustomerPricing.js\n228 src/components/markup/markupEngine.jsx\n0\n0 src/components/markup/projectCategorizer.jsx\n45 src/components/estimator/aioPricing.js\n0\n0 src/components/estimator/customerQuote.js\n312 src/components/markup/CustomerPricingTab.jsx\n502 src/components/workflow/workOrderPersistence.js\n0\n0 src/components/estimator/depositGate.js\n0\n0 base44/shared/dueDateEngine.ts\n0\n0 base44/shared/productStatusModel.ts\n0\n0 base44/shared/pricingEngine.ts\n0\n0 base44/shared/pricingTemplateModel.ts\n0\n0 src/components/estimator/foundation/foundationAssemblyModel.js\n0\n0 src/components/estimator/foundation/wallCalculator.js\n0\n0 src/components/estimator/foundation/poleCalculator.js\n0\n0 src/components/estimator/foundation/foundationCatalogIntegrity.js\n0\n0 src/components/estimator/foundation/landscapeMaterials.js\n0\n0 src/components/estimator/builder/builderService.js\n0\n0 src/components/estimator/foundation/FoundationTotals.jsx\n60 src/components/estimator/foundation/CustomerPricingPanel.jsx\n0\n0 src/pages/FoundationEstimator.jsx\n0\n0 src/components/estimator/foundation/foundationCalc.js\n0\n0 src/components/estimator/useSectionSync.js\n0\n0 src/components/estimator/workOrderConversion.js\n0\n0 src/components/estimator/moduleRegistry.js\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 855
+}

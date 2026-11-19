@@ -1,0 +1,34 @@
+PASS .audit-work/foundation-o004-drafts/verify-draft-browser.mjs  | foreign requests: 0 | consoleErrors: 0 | pageErrors: 0
+PASS .audit-work/foundation-o004t-conflicts/verify-o004t-browser.mjs  | foreign requests: 0 | consoleErrors: 0 | pageErrors: 0
+PASS .audit-work/foundation-o010-totals/verify-totals-browser.mjs  | PASS totals-browser o010 (14 cases, 0 page errors, 0 foreign requests)
+PASS .audit-work/foundation-o011-parts/verify-bom-browser.mjs  | PASS bom-browser o011 (6 cases, 0 page errors, 0 foreign requests)
+PASS .audit-work/foundation-o030-diagnostics/verify-o030-browser.mjs  | PASS o030-browser 8/8
+PASS .audit-work/foundation-o034-selection/verify-o034-browser.mjs  |  - K: O-039/O-040 seams intact (drag = one command)
+PASS .audit-work/foundation-o035-editops/verify-o035-browser.mjs  |  - M: multi-drag — one multi commit + undo
+PASS .audit-work/foundation-o038-input/verify-o039-browser.mjs  |  - K: in-browser module probe
+PASS .audit-work/foundation-o040-undo/verify-o040-browser.mjs  |  - J: in-browser module probe
+PASS .audit-work/foundation-o093-labels/verify-o093-browser.mjs  | PASS o093-browser
+FAIL .audit-work/foundation-o096-totals/verify-o096-browser.mjs  | X [ERROR] Could not resolve "./fixture-browser/src/components/estimator/foundation/FoundationTotals.jsx" || X [ERROR] Could not resolve "./f
+FAIL .audit-work/foundation-reinforcement18/verify-catalog-browser.mjs  | AssertionError [ERR_ASSERTION]: Actual module required: src/components/estimator/foundation/FoundationReinforcementCatalogMetadataFields.jsx
+PASS .audit-work/foundation-reinforcement18/verify-conversion-cost-print-browser.mjs  | ok new-accepted-costs 390
+PASS .audit-work/foundation-reinforcement18/verify-coupled-work-order-browser.mjs  | ok lost-work-order-create-reply 390
+PASS .audit-work/foundation-reinforcement18/verify-foundation-ai-review-browser.mjs  | ok invalid 390
+FAIL .audit-work/foundation-reinforcement18/verify-foundation-saved-layout-browser.mjs  | AssertionError [ERR_ASSERTION]: Actual source required: foundationPolePreview3D.js ||   code: 'ERR_ASSERTION',
+FAIL .audit-work/foundation-reinforcement18/verify-masonry-browser.mjs  | masonry-browser passed=12 failed=0
+FAIL .audit-work/foundation-reinforcement18/verify-masonry-dimensions-browser.mjs  | masonry-browser passed=10 failed=0
+FAIL .audit-work/foundation-reinforcement18/verify-masonry-height-browser.mjs  | masonry-browser passed=10 failed=0
+FAIL .audit-work/foundation-reinforcement18/verify-masonry-outline-browser.mjs  | masonry-browser passed=12 failed=0
+FAIL .audit-work/foundation-reinforcement18/verify-masonry-rates-browser.mjs  | masonry-browser passed=10 failed=0
+FAIL .audit-work/foundation-reinforcement18/verify-page-browser.mjs  | X [ERROR] No matching export in "offline:@/components/estimator/builder/builderService" for import "foundationRecordSavedTotal" ||   let err
+FAIL .audit-work/foundation-reinforcement18/verify-pricing-browser.mjs  | FAIL changed @1280 page.waitForFunction: Timeout 30000ms exceeded. || FAIL changed @390 page.waitForFunction: Timeout 30000ms exceeded.
+FAIL .audit-work/foundation-reinforcement18/verify-reinforcement-3d-browser.mjs  | Native WebGL browser: 0/10; failed=1 || FAIL spread 1440 page.waitForFunction: Timeout 30000ms exceeded.
+PASS .audit-work/foundation-reinforcement18/verify-reinforcement-bom-browser.mjs  | Reinforcement BOM browser: 12/12; failed=0
+FAIL .audit-work/foundation-reinforcement18/verify-wall-cap-geometry-browser.mjs  | X [ERROR] No matching export in "src/components/estimator/foundation/foundationCatalogIntegrity.js" for import "foundationCatalogRowAvailabi
+FAIL .audit-work/foundation-reinforcement18/verify-wall-cap-pricing-browser.mjs  | FAIL saved 1280 locator.waitFor: Timeout 30000ms exceeded. || FAIL saved 390 locator.waitFor: Timeout 30000ms exceeded.
+PASS .audit-work/foundation-reinforcement18/verify-work-order-print-browser.mjs  | Work Order print browser: 12/12; failed=0
+FAIL .audit-work/foundation-reinforcement19/verify-pole-pricing-browser.mjs  | pole-pricing-browser passed=12 failed=0
+PASS .audit-work/foundation-reinforcement20/verify-masonry-browser.mjs  | masonry-browser passed=12 failed=0
+PASS .audit-work/foundation-reinforcement21/verify-equipment-browser.mjs  | equipment-browser passed=12 failed=0
+PASS .audit-work/foundation-reinforcement22/verify-cabinets-browser.mjs  | cabland-browser passed=12 failed=0
+PASS .audit-work/foundation-reinforcement23/verify-supplier-browser.mjs  | supplier-browser passed=14 failed=0
+PASS .audit-work/foundation-reinforcement24/verify-settings-browser.mjs  | settings-browser passed=12 failed=0

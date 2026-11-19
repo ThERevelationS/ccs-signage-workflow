@@ -1,0 +1,25 @@
+{
+ "jurisdiction_id": "6ae9f597f14612505cedd770",
+ "jurisdiction_name": "Tiffin Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "CITY ZONING PERMIT APPLICATION 51 East Market Street, Tiffin, OH 44883 ● Office: (419) 448- 5425 ● Fax: (419) 448-542 4 ● Email: dbrickner @tiffinohio.gov COPY OF PERMIT REQUIRED BY ORDINANCE 1145.02 TO BE POSTED IN A CONSPICUOUS PLACE ON PROPERTY Permit # Project Description This section is to be filled out by Applicant Location/Address: Estimated Cost: Applicant Name : Applicant Address : Applicant P hone No : Applicant City, State, Zip : Applicant Email : Owner (If not Applicant) : Contractor Name : Contractor Phone No: Qty Permit Description ($) Fee___ ____ 101.000.4221 Const. / Zoning Permit * ________ ____ 101.000.4491 Sign Permit ________ ____ 101.000.4492 Appeals / Variance ________ ____ 101.000.4221 Conditional Use ________ Total Fee to Collect † $ _ _______ * Applicant must coordinate with City Engineer Office (419-448-5425 or tiffinengineers@tiffinohio.gov) for projects involv",
+   "tags": [
+    "sign",
+    "permit_required",
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 10,
+   "source_sha256": "44b4baa13786a7ef3a86f88d4b7497fe229c0868c7b7f2936a8320907bec864a",
+   "source_document_id": null,
+   "source_title": "44b4baa13786a7ef3a86f88d4b7497fe229c0868c7b7f2936a8320907bec864a.pdf",
+   "official_url": "https://www.tiffinohio.gov/sites/default/files/docs/Zoning%20Permit%20Application.pdf"
+  }
+ ]
+}

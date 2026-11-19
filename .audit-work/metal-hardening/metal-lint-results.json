@@ -1,0 +1,12 @@
+{
+ "src/components/estimator/metal/metalPricingAvailability.js": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ },
+ "src/pages/MetalEstimator.jsx": {
+  "errors": 0,
+  "warnings": 0,
+  "msgs": []
+ }
+}

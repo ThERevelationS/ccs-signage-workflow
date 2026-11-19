@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6ae045c2a4383ff0dd8a9dcf",
+ "jurisdiction_name": "Carlisle",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "ELECTRICAL - UPGRADE / RECONNECT (please print) NAME STREET ADDRESS CITY, STATE, ZIP PHONE NUMBER & EMAIL PROPERTY OWNER GENERAL CONTRACTOR HVAC / ELECTRIC CONTRACTOR (if applicable) PERMIT APPLICATION RESIDENTIAL COMMERCIAL CHECK PERMIT TYPE(S) REQUESTED : ( check all that apply ) NEW CONSTRUCTION ADDITION ALTERATION/REMODEL OCCUPANCY HVAC GAS FIRE SUPPRESSION SYSTEM FIRE ALARM SYSTEM FIRE DAMAGE KITCHEN EXHAUST HOOD WATER / DEMAND METERS SIGN - PERMANENT / TEMPORARY ACCESSORY STRUCTURE > 200 SF ACCESSORY STRUCTURE < 200 SF PORCH DECK DRIVEWAY FENCE - PRIVACY/CHAIN-LINK/DECORATIVE POOL - INGROUND / ABOVE-GROUND / PORTABLE OTHER:____________________________ SITE ADDRESS:______________________________________ LOT #:_____ ZONING DISTRICT:_____ PROJECT DESCRIPTION:_____________________________ EST. PROJECT COST:___________ APPLICANT’S NAME (PRINT):____________________________________ PHONE:",
+   "tags": [
+    "sign",
+    "temporary",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "6c15d944328da6f77d12a886865536e86e144d05517ac4adbd68a15352b4ba17",
+   "source_document_id": null,
+   "source_title": "6c15d944328da6f77d12a886865536e86e144d05517ac4adbd68a15352b4ba17.pdf",
+   "official_url": "https://carlisleoh.gov/Community%20Development/PERMIT%20APPLICATION%20(18).pdf?t=202603241345180"
+  }
+ ]
+}

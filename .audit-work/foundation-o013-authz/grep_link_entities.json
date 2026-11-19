@@ -1,0 +1,31 @@
+{
+  "matches": [
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 695,
+      "text": "      const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 800,
+      "text": "      const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;\r"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 405,
+      "text": "    const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 1141,
+      "text": "      // portal message thread. PortalMessage/CustomerPortalLink are"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 1145,
+      "text": "      const PortalLink = (base44.asServiceRole.entities as any).CustomerPortalLink;"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 5
+}

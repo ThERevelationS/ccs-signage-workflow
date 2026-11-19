@@ -16,7 +16,7 @@ import RevisitDatePopup from "./RevisitDatePopup";
 import ChecklistCompletedSection from "./ChecklistCompletedSection";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { isDefinitiveSipsSaveRejection, reconcileInterruptedSipsSave } from "./checklistSaveRecovery";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -265,7 +265,7 @@ export default function ProductChecklistDialog({
     try {
       const [freshWO, usersData, dropdownsSetting, productTypesSetting, taskDescriptionsSetting] = await Promise.all([
         WorkOrder.filter({ id: workOrder.id }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Product checklist authorized users" }),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Product checklist authorized users" }),
         loadSingleGlobalSetting({
           entity: base44.entities.GlobalSettings,
           settingKey: "dropdownConditions",
@@ -1941,7 +1941,7 @@ export default function ProductChecklistDialog({
                 <div className="text-[11px] text-gray-500">Checklist complete</div>
                 <div className="text-sm font-semibold text-gray-800">{completedPrimaryCount}/{primaryChecklistItems.length}</div>
               </div>
-              <button
+              <button type="button"
                 ref={needsInputSummaryRef}
                 type="button"
                 onClick={focusFirstNeedsInput}

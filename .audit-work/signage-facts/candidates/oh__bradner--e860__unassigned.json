@@ -1,0 +1,23 @@
+{
+ "jurisdiction_id": "6adef352e2b78aef0dcae860",
+ "jurisdiction_name": "Bradner",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "TAX OFFICE HOURS: By appointment Assistance is available at the Income Tax Department, 130 N. Main St. P.O. Box 599 Bradner, Ohio 43406 419-288-2890 IF NAME OR ADDRESS IS INCORRECT MAKE NECESSARY CHANGES (LIST BOTH NAMES & SOCIAL SECURITY NUMBERS IF FILING A JOINT RETURN) Taxpayer Social security No. _______________________________________ Spouse Social Security Number ____________________________________ If you moved: Into Bradner on ______________________________ From Bradner _______________________________ List any year that IRS changed your taxable income_____________________ Will you have taxable income for 2024? No c Yes c SCHEDULE A ENTER YOUR TOTAL WAGES, salaries, bonuses, incentive payments, commissions BEFORE ANY PAYROLL DEDUCTIONS, received between January 1st and December 31 from each employer or source. INCLUDE SICK PAY that is paid by employer and amounts deducted as Feder",
+   "tags": [
+    "fee",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "14b3d8a3da3c96eec71e411478a8c1a42053cbba0ff2fd341757cccce7ccddec",
+   "source_document_id": null,
+   "source_title": "14b3d8a3da3c96eec71e411478a8c1a42053cbba0ff2fd341757cccce7ccddec.pdf",
+   "official_url": "https://bradnerohio.org/wp-content/uploads/2025/01/Bradner-Income-tax-Form-24.pdf"
+  }
+ ]
+}

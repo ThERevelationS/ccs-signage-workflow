@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,13 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, ChevronDown, ChevronRight, Loader2, CheckCircle2, User, Briefcase, ClipboardList } from "lucide-react";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { useAuth } from "@/components/auth/EmailGate";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
 import { createGeneralTaskWithRecovery } from "@/components/workflow/generalTaskPersistence";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
-const GeneralTask = base44.entities.GeneralTask;
+const GeneralTask = staffEntities.GeneralTask;
 
 const STAGE_OPTIONS = [
   { value: "", label: "General / No stage" },
@@ -55,15 +54,22 @@ export default function AddTaskDialog({ isOpen, onClose, lockedWorkOrderId = nul
 
   const loadData = async () => {
     setIsLoading(true);
+    if (!sessionToken) {
+      // Guests can open the dialog but every data source here is
+      // session-authenticated — skip the calls instead of logging two
+      // guaranteed "sign-in required" failures per open.
+      setUsers([]);
+      setWorkOrders([]);
+      setIsLoading(false);
+      return;
+    }
     try {
       const [directory, workOrdersData] = await Promise.all([
         loadAuthorizedUserDirectory({ sessionToken }),
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Add Task Work Orders",
-        })
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || "")))
       ]);
       setUsers(directory.users);
       setWorkOrders(workOrdersData.sort((a, b) => (a.client_name || '').localeCompare(b.client_name || '')));

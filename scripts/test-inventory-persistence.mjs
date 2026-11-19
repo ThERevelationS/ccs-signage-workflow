@@ -2,11 +2,27 @@ import assert from 'node:assert/strict';
 import { buildSync } from 'esbuild';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { writeFileSync } from 'node:fs';
 
 const here = dirname(fileURLToPath(import.meta.url));
+
+// base44Client reads browser globals at module-eval time.
+globalThis.window = { location: { href: 'http://test.local' }, addEventListener() {}, removeEventListener() {}, history: { replaceState() {} }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} } };
+globalThis.document = { title: '', createElement: () => ({}), querySelector: () => null };
+globalThis.localStorage = globalThis.window.localStorage;
+
+const stub = resolve(here, '.tmp-inv-b44-stub.mjs');
+writeFileSync(stub, `
+export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => ({}) }) }), functions: { invoke: async () => ({}) }, auth: { me: async () => null } };
+export const staffEntities = base44.entities;
+export const isRetryableFunction = () => false;
+export const appParams = {};
+`);
+
 const bundle = (name, dir = 'masterInventory') => {
   const out = resolve(here, `.tmp-${name}.mjs`);
-  buildSync({ entryPoints: [resolve(here, `../src/components/${dir}/${name}.js`)], bundle: true, format: 'esm', outfile: out, logLevel: 'silent' });
+  buildSync({ entryPoints: [resolve(here, `../src/components/${dir}/${name}.js`)], bundle: true, format: 'esm', outfile: out, logLevel: 'silent',
+    alias: { '@/api/base44Client': stub, '@/lib/app-params': stub } });
   return pathToFileURL(out).href;
 };
 const { sameImportedValue, importedPayloadMatches, createImportedInventoryRowSafely } =

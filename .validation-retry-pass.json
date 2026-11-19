@@ -1,0 +1,27 @@
+{
+  "summary": {
+    "total": 1,
+    "resolved": 1,
+    "rate": "100.0%",
+    "failure_stages": {},
+    "geocode_misses": 0,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "6486 KY-1428, Allen City, KY 41601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: allen -> allen",
+      "target": {
+        "type": "municipality",
+        "name": "allen"
+      },
+      "county": "",
+      "ms": 690,
+      "worker": 1
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+ok S1: missing rental parent -> global alert, Saved 600, all save paths blocked
+ok S2: reload restores catalog, save CAS v1 writes real body; qty2->3 costs 145
+ok S3: mobile 390 unavailable card stays visible with Saved 600
+equipment-integrity-browser scenarios=3 failed=0
+browser_exit=0

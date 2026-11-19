@@ -22,6 +22,7 @@ import {
   updateCalendarEventIfUnchanged,
 } from "@/components/calendar/calendarEventPersistence";
 import { getStoredAdminSettingsCapability } from "@/components/auth/EmailGate";
+import { CcsDateField, CcsDateTimeField } from "@/components/ui/ccs-date-field";
 
 export default function AdminCalendarSettings() {
   const [events, setEvents] = useState([]);
@@ -32,6 +33,8 @@ export default function AdminCalendarSettings() {
   const [settingsError, setSettingsError] = useState("");
   const [eventError, setEventError] = useState("");
   const [stats, setStats] = useState({ total: 0, universal: 0, synced: 0 });
+  const [hiddenTypes, setHiddenTypes] = useState(new Set());
+  const [workOrders, setWorkOrders] = useState([]);
 
   // Connection status (future OAuth)
   const [outlookConnected, setOutlookConnected] = useState(false);
@@ -44,15 +47,17 @@ export default function AdminCalendarSettings() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [evs, savedSettings] = await Promise.all([
+      const [evs, savedSettings, wos] = await Promise.all([
         base44.entities.CalendarEvent.list("-start_datetime", 200),
         loadSingleGlobalSetting({
           entity: base44.entities.GlobalSettings,
           settingKey: "calendarSettings",
           label: "Calendar settings",
         }),
+        base44.entities.WorkOrder.list("-created_date", 150).catch(() => []),
       ]);
       setEvents(evs || []);
+      setWorkOrders((wos || []).filter((w) => !w.deleted));
       setGlobalSettings(savedSettings);
       const sv = savedSettings?.setting_value || {};
       setOutlookConnected(sv.outlook_connected || false);
@@ -117,13 +122,123 @@ export default function AdminCalendarSettings() {
 
   const upcomingEvents = events
     .filter(e => new Date(e.start_datetime) >= new Date())
+    .filter(e => !hiddenTypes.has(e.event_type || "other"))
     .sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime))
     .slice(0, 20);
 
   const pastEvents = events
     .filter(e => new Date(e.start_datetime) < new Date())
+    .filter(e => !hiddenTypes.has(e.event_type || "other"))
     .sort((a, b) => new Date(b.start_datetime) - new Date(a.start_datetime))
     .slice(0, 10);
+
+  const [scheduleDates, setScheduleDates] = useState({});
+  const [schedulingId, setSchedulingId] = useState(null);
+  const [scheduleMsg, setScheduleMsg] = useState(null);
+  const scheduleWorkOrder = async (w) => {
+    const date = scheduleDates[w.id];
+    if (!date || schedulingId) return;
+    const writeCapability = getStoredAdminSettingsCapability();
+    if (!writeCapability) { setScheduleMsg("Admin unlock required to schedule."); return; }
+    setSchedulingId(w.id); setScheduleMsg(null);
+    try {
+      await createCalendarEventWithRecovery({
+        data: { title: w.title || "Work order", start_datetime: `${date}T08:00:00`, work_order_id: w.id, event_type: "other", all_day: true },
+        adminCapability: writeCapability, label: `Schedule ${w.title || w.id}`,
+      });
+      setScheduleMsg(`Scheduled "${w.title || w.id}" for ${date}`);
+      setEvents((cur) => [...cur, { id: `temp-${w.id}`, work_order_id: w.id }]);
+    } catch (e) { setScheduleMsg(e?.message || "Could not schedule"); }
+    setSchedulingId(null);
+  };
+
+  const unscheduledWork = (() => {
+    const scheduledIds = new Set(events.map((e) => e.work_order_id).filter(Boolean));
+    return workOrders.filter((w) => w.id && !scheduledIds.has(w.id)).slice(0, 8);
+  })();
+
+  const [weatherByEvent, setWeatherByEvent] = useState({});
+  useEffect(() => {
+    // Open-Meteo (no key) — geocode each unique event location once, fetch the
+    // daily forecast, and pick the day matching the event date. Best-effort:
+    // failures simply leave the badge absent.
+    let cancelled = false;
+    const withinDays = upcomingEvents.filter((e) => e.location && (new Date(e.start_datetime) - new Date()) < 7 * 86400000);
+    const locations = [...new Map(withinDays.map((e) => [String(e.location).trim().toLowerCase(), e.location])).entries()].slice(0, 5);
+    if (!locations.length) return undefined;
+    const WMO = { 0: "Clear", 1: "Mostly clear", 2: "Partly cloudy", 3: "Cloudy", 45: "Fog", 51: "Drizzle", 61: "Rain", 66: "Freezing rain", 71: "Snow", 80: "Showers", 95: "Storm" };
+    (async () => {
+      for (const [key, location] of locations) {
+        try {
+          const geo = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`).then((r) => r.json());
+          const place = geo?.results?.[0];
+          if (!place) continue;
+          const fc = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&forecast_days=16&temperature_unit=fahrenheit`).then((r) => r.json());
+          if (cancelled) return;
+          for (const e of withinDays.filter((ev) => String(ev.location).trim().toLowerCase() === key)) {
+            const dayIdx = (fc.daily?.time || []).indexOf(format(new Date(e.start_datetime), "yyyy-MM-dd"));
+            if (dayIdx < 0) continue;
+            const hi = Math.round(fc.daily.temperature_2m_max[dayIdx]);
+            const lo = Math.round(fc.daily.temperature_2m_min[dayIdx]);
+            const rain = fc.daily.precipitation_probability_max[dayIdx];
+            const code = WMO[fc.daily.weathercode[dayIdx]] || "";
+            setWeatherByEvent((cur) => ({ ...cur, [e.id]: `${code} ${lo}-${hi}°${rain >= 40 ? `, ${rain}% rain` : ""}` }));
+          }
+        } catch { /* weather is best-effort */ }
+      }
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(upcomingEvents.map((e) => [e.id, e.location, e.start_datetime]))]);
+
+  const printWeekRows = (() => {
+    const end = new Date(Date.now() + 7 * 86400000);
+    return events
+      .filter((e) => { const d = new Date(e.start_datetime || 0); return d >= new Date() && d <= end; })
+      .sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime));
+  })();
+
+  const crewCapacity = (() => {
+    const weekEnd = new Date(Date.now() + 7 * 86400000);
+    const byPerson = {};
+    for (const e of events) {
+      const start = new Date(e.start_datetime || 0);
+      if (!(start >= new Date() && start <= weekEnd)) continue;
+      for (const email of Array.isArray(e.assigned_to) ? e.assigned_to : []) {
+        if (!email) continue;
+        byPerson[email] = (byPerson[email] || 0) + 1;
+      }
+    }
+    return Object.entries(byPerson).map(([email, count]) => ({ email, count })).sort((a, b) => b.count - a.count);
+  })();
+
+  const bookingConflicts = (() => {
+    const byPerson = {};
+    for (const e of events) {
+      for (const email of Array.isArray(e.assigned_to) ? e.assigned_to : []) {
+        if (!email) continue;
+        (byPerson[email] = byPerson[email] || []).push(e);
+      }
+    }
+    const pairs = [];
+    for (const [email, list] of Object.entries(byPerson)) {
+      const buf = (e) => Math.max(0, Number(e.travel_buffer_minutes) || 0) * 60000;
+      const sorted = list
+        .filter(e => e.start_datetime && e.end_datetime)
+        .map(e => ({ e, busyStart: new Date(e.start_datetime).getTime() - buf(e), busyEnd: new Date(e.end_datetime).getTime() + buf(e) }))
+        .sort((a, b) => a.busyStart - b.busyStart);
+      for (let i = 0; i < sorted.length && pairs.length < 20; i++) {
+        for (let j = i + 1; j < sorted.length; j++) {
+          const a = sorted[i], b = sorted[j];
+          if (b.busyStart >= a.busyEnd) break;
+          if (b.busyStart < a.busyEnd && b.busyEnd > a.busyStart) {
+            pairs.push({ email, a: a.e, b: b.e });
+          }
+        }
+      }
+    }
+    return pairs;
+  })();
 
   const EVENT_TYPE_COLORS = {
     company: "#7C3AED", install: "#059669", survey: "#D97706",
@@ -285,6 +400,100 @@ export default function AdminCalendarSettings() {
         </div>
       </div>
 
+      {bookingConflicts.length > 0 && (
+        <div className="clay-card border-amber-300 bg-amber-50 p-4">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-amber-900">
+            <Calendar className="w-4 h-4" /> Scheduling conflicts — {bookingConflicts.length} overlapping assignment{bookingConflicts.length === 1 ? "" : "s"}
+          </h3>
+          <ul className="mt-2 space-y-1">
+            {bookingConflicts.slice(0, 8).map((c, i) => (
+              <li key={i} className="text-xs text-amber-800">
+                {c.email}: “{c.a.title || "Event"}” and “{c.b.title || "Event"}” overlap ({String(c.a.start_datetime).slice(0, 10)})
+              </li>
+            ))}
+            {bookingConflicts.length > 8 && <li className="text-xs text-amber-700">…and {bookingConflicts.length - 8} more</li>}
+          </ul>
+        </div>
+      )}
+
+      {unscheduledWork.length > 0 && (
+        <div className="clay-card border-blue-200 bg-blue-50/60 p-4">
+          <h3 className="text-sm font-semibold text-blue-900">Unscheduled work — {unscheduledWork.length}{workOrders.length > 8 ? "+" : ""} with no calendar event</h3>
+          <ul className="mt-2 space-y-1">
+            {unscheduledWork.map((w) => (
+              <li key={w.id} className="flex items-center gap-2 text-xs text-blue-800">
+                <a href={`/MainWorkflow?wo=${w.id}`} className="font-medium truncate underline hover:text-blue-900" title="Open this work order">{w.title || w.id}</a>
+                {w.sales_status && <span className="text-blue-600/70">({w.sales_status})</span>}
+                <span className="ml-auto flex items-center gap-1">
+                  <CcsDateField value={scheduleDates[w.id] || ""} onChange={(e) => setScheduleDates((cur) => ({ ...cur, [w.id]: e.target.value }))}
+                    className="h-6 rounded border border-blue-200 bg-white px-1 text-[10px]" aria-label={`Schedule date for ${w.title || w.id}`} />
+                  <Button type="button" size="sm" variant="outline" disabled={!scheduleDates[w.id] || schedulingId === w.id}
+                    onClick={() => scheduleWorkOrder(w)} className="h-6 px-1.5 text-[10px]">
+                    {schedulingId === w.id ? "…" : "schedule"}
+                  </Button>
+                </span>
+              </li>
+            ))}
+          </ul>
+          {scheduleMsg && <p className="mt-1.5 text-[11px] text-blue-700">{scheduleMsg}</p>}
+        </div>
+      )}
+
+      <div className="clay-card p-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-gray-800">Print week view</h3>
+          <Button type="button" variant="outline" size="sm" onClick={() => window.print()} className="text-xs">Print</Button>
+        </div>
+        <div id="admin-calendar-print-week" className="mt-2 hidden print:block">
+          <table className="w-full text-xs">
+            <thead><tr className="border-b text-left"><th>When</th><th>Event</th><th>Type</th><th>Assigned</th><th>Location</th></tr></thead>
+            <tbody>
+              {printWeekRows.map((e) => (
+                <tr key={e.id} className="border-b border-gray-100">
+                  <td className="py-1">{String(e.start_datetime).slice(0, 16).replace("T", " ")}</td>
+                  <td className="py-1 font-medium">{e.title || "Event"}</td>
+                  <td className="py-1">{e.event_type || ""}</td>
+                  <td className="py-1">{(e.assigned_to || []).join(", ")}</td>
+                  <td className="py-1">{e.location || ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {printWeekRows.length === 0 && <p className="py-2 text-gray-500">No events in the next 7 days.</p>}
+        </div>
+        <p className="mt-1 text-xs text-gray-400 print:hidden">Prints the next 7 days as a plain table for the shop floor.</p>
+        <style>{`@media print { body * { visibility: hidden; } #admin-calendar-print-week, #admin-calendar-print-week * { visibility: visible; } #admin-calendar-print-week { position: absolute; left: 0; top: 0; width: 100%; display: block !important; } }`}</style>
+      </div>
+
+      {crewCapacity.length > 0 && (
+        <div className="clay-card p-4">
+          <h3 className="text-sm font-semibold text-gray-800">Crew capacity — next 7 days</h3>
+          <div className="mt-2 space-y-1">
+            {crewCapacity.slice(0, 10).map((c) => (
+              <div key={c.email} className="flex items-center gap-2 text-xs">
+                <span className="w-40 truncate text-gray-700">{c.email}</span>
+                <div className="h-2 rounded-full bg-purple-500" style={{ width: `${Math.min(160, c.count * 20)}px` }} />
+                <span className={`font-medium ${c.count > 6 ? "text-red-600" : "text-gray-500"}`}>{c.count} event{c.count === 1 ? "" : "s"}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[11px] font-medium uppercase text-gray-400">Layers:</span>
+        {Object.entries(EVENT_TYPE_COLORS).map(([type, color]) => {
+          const off = hiddenTypes.has(type);
+          return (
+            <button type="button" key={type}  aria-pressed={!off}
+              onClick={() => setHiddenTypes((cur) => { const next = new Set(cur); if (next.has(type)) next.delete(type); else next.add(type); return next; })}
+              className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${off ? "border-gray-200 bg-gray-50 text-gray-400 line-through" : "border-gray-200 bg-white text-gray-700"}`}>
+              <span className="h-2 w-2 rounded-full" style={{ background: color }} />{type}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Upcoming Events */}
       <div className="clay-card p-5">
         <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -308,15 +517,20 @@ export default function AdminCalendarSettings() {
                   <p className="text-xs text-gray-500">
                     {format(new Date(ev.start_datetime), ev.all_day ? "MMM d, yyyy" : "MMM d, yyyy h:mm a")}
                     {ev.location && ` · ${ev.location}`}
+                    {weatherByEvent[ev.id] && (
+                      <span className="ml-1.5 rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-700" title="Forecast for event day">
+                        {weatherByEvent[ev.id]}
+                      </span>
+                    )}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   {ev.is_universal && <Badge className="bg-purple-100 text-purple-700 text-xs"><Globe className="w-2.5 h-2.5 mr-0.5" />Universal</Badge>}
-                  <Button variant="ghost" size="icon" className="w-7 h-7"
+                  <Button variant="ghost" size="icon" className="w-7 h-7" aria-label={`Edit ${ev.title || "event"}`}
                     onClick={() => { setEditingEvent(ev); setShowEventForm(true); }}>
                     <Settings className="w-3.5 h-3.5 text-gray-500" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="w-7 h-7"
+                  <Button variant="ghost" size="icon" className="w-7 h-7" aria-label={`Delete ${ev.title || "event"}`}
                     onClick={() => handleDeleteEvent(ev)}>
                     <Trash2 className="w-3.5 h-3.5 text-red-500" />
                   </Button>
@@ -425,16 +639,22 @@ function AdminEventFormDialog({ event, isOpen, onClose, onSaved }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Start</Label>
-              <Input type="datetime-local" value={form.start_datetime} onChange={e => setForm(f => ({ ...f, start_datetime: e.target.value }))} className="mt-1" />
+              <CcsDateTimeField value={form.start_datetime} onChange={e => setForm(f => ({ ...f, start_datetime: e.target.value }))} className="mt-1" />
             </div>
             <div>
               <Label>End</Label>
-              <Input type="datetime-local" value={form.end_datetime} onChange={e => setForm(f => ({ ...f, end_datetime: e.target.value }))} className="mt-1" />
+              <CcsDateTimeField value={form.end_datetime} onChange={e => setForm(f => ({ ...f, end_datetime: e.target.value }))} className="mt-1" />
             </div>
           </div>
           <div>
             <Label>Location</Label>
             <Input value={form.location || ""} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} className="mt-1" />
+          </div>
+          <div>
+            <Label>Travel buffer (minutes)</Label>
+            <Input type="number" min="0" max="240" value={form.travel_buffer_minutes ?? 0}
+              onChange={e => setForm(f => ({ ...f, travel_buffer_minutes: Math.max(0, Number(e.target.value) || 0) }))} className="mt-1" />
+            <p className="text-xs text-gray-400 mt-0.5">Counted as busy time before and after the event for conflict checks.</p>
           </div>
           <div>
             <Label>Notes</Label>

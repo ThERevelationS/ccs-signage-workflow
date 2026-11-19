@@ -1,0 +1,35 @@
+ok missing estimate id performs no read
+ok explicit frozen inputs preserve exact zero, split, provenance and inactive filtering
+FAIL primary read errors remain errors, never an empty manifest Missing expected rejection.
+FAIL linked product read errors remain errors Missing expected rejection.
+FAIL mixed stamped and legacy parts on one product are both included Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
+-   'legacy',
+    'stamped'
+  ]
+
+FAIL legacy product loading is paged rather than silently capped at500 Expected values to be strictly equal:
+
+500 !== 505
+
+ok duplicate rows from both read paths count only once
+FAIL malformed explicit inputs do not fall through into live reads Missing expected rejection.
+FAIL failed material read blocks create before any Work Order write The validation function is expected to return "true". Received false
+
+Caught error:
+
+Error: Unexpected dependency expectedEstimateFields
+FAIL failed material read blocks update before any Work Order write The validation function is expected to return "true". Received false
+
+Caught error:
+
+Error: Unexpected dependency expectedEstimateFields
+FAIL a mapper validation error is not converted into an empty successful handoff The validation function is expected to return "true". Received false
+
+Caught error:
+
+Error: Unexpected dependency expectedEstimateFields
+Material read guards: 3/11; failed=8
+exit=1

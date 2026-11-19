@@ -1,0 +1,102 @@
+{
+  "synthetic": true,
+  "localOnly": true,
+  "sourceSha256": "10faee8585c67c6392629a74460c739af926368371847d293374f5792742dfc6",
+  "results": [
+    {
+      "name": "object key insertion order does not change equality",
+      "ok": true
+    },
+    {
+      "name": "nested object order is canonical; ordered arrays remain ordered",
+      "ok": true
+    },
+    {
+      "name": "primitive types, explicitundefined, null and omitted keys stay distinct",
+      "ok": true
+    },
+    {
+      "name": "numeric input text does not equal a typed number",
+      "ok": true
+    },
+    {
+      "name": "delimiter-like and escaped keys/strings cannot collide",
+      "ok": true
+    },
+    {
+      "name": "raw array order and component edits change the basis",
+      "ok": true
+    },
+    {
+      "name": "owner/project/sourceversion/estimate/generation/editrevision each invalidate",
+      "ok": true
+    },
+    {
+      "name": "catalog pricing/unit/diameter/weight/settings/proposedconfig invalidate",
+      "ok": true
+    },
+    {
+      "name": "nonfinite numbers never serialize as plausible null",
+      "ok": true
+    },
+    {
+      "name": "unsupported functions/symbols/bigint never disappear silently",
+      "ok": true
+    },
+    {
+      "name": "Date/Map/Set/typed arrays/class instances are rejected",
+      "ok": true
+    },
+    {
+      "name": "getter and toJSON are not executed",
+      "ok": true
+    },
+    {
+      "name": "hidden keys and symbol keys are rejected, not silently dropped",
+      "ok": true
+    },
+    {
+      "name": "cyclic object/array fail closed",
+      "ok": true
+    },
+    {
+      "name": "repeated shared child reference is legal, not a cycle",
+      "ok": true
+    },
+    {
+      "name": "sparse arrays/extra array fields cannot masquerade as same schedule",
+      "ok": true
+    },
+    {
+      "name": "depth32 allowed, depth33 rejected",
+      "ok": true
+    },
+    {
+      "name": "more than1000000 nodes is rejected, not truncated",
+      "ok": true
+    },
+    {
+      "name": "encoded character limit includes escaping and framing",
+      "ok": true
+    },
+    {
+      "name": "null-prototype JSON records canonicalize like ordinary records",
+      "ok": true
+    },
+    {
+      "name": "frozen source isn't changed; basis doesn't retain mutable input references",
+      "ok": true
+    },
+    {
+      "name": "bounded synthetic200-item/4096-row snapshot encodes completely",
+      "ok": true
+    }
+  ],
+  "sample": {
+    "syntheticItems": 200,
+    "syntheticTieRows": 4096,
+    "encodedCharacters": 678414,
+    "elapsedMs": 10.14930000000004
+  },
+  "notFullProposalIntegration": true
+}

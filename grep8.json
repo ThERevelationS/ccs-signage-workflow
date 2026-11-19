@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "5:    \"title\": {\n9:    \"client_name\": {\n135:          \"timestamp\": {\n155:          \"due_date\": {\n157:            \"format\": \"date\"\n159:          \"start_date\": {\n161:            \"format\": \"date\"\n230:          \"due_date\": {\n232:            \"format\": \"date\"\n238:          \"completed_date\": {\n240:            \"format\": \"date\"\n295:          \"timestamp\": {\n328:          \"timestamp\": {\n342:    \"due_date\": {\n344:      \"format\": \"date\"\n346:    \"start_date\": {\n348:      \"format\": \"date\"\n451:      \"format\": \"date\"\n462:    \"site_survey_date\": {\n464:      \"format\": \"date\"\n466:    \"site_survey_time\": {\n501:    \"date_initial_contact\": {\n503:      \"format\": \"date\"\n505:    \"date_estimate_sent\": {\n507:      \"format\": \"date\"\n514:    \"date_order_created\": {\n516:      \"format\": \"date\"\n518:    \"project_install_date\": {\n520:      \"format\": \"date\"\n522:    \"permit_submitted_date\": {\n524:      \"format\": \"date\"\n526:    \"permit_receipt_confirmed_date\": {\n528:      \"format\": \"date\"\n533:    \"permit_approved_date\": {\n535:      \"format\": \"date\"\n558:    \"follow_up_date\": {\n560:      \"format\": \"date\"\n571:    \"close_date\": {\n573:      \"format\": \"date\"\n575:    \"expected_close_date\": {\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 863
+}

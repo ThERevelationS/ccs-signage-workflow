@@ -1,0 +1,41 @@
+ok exact original whole-model parity: bag spread
+ok exact original whole-model parity: bag spread all options single layer
+ok exact original whole-model parity: bag spread multilayer
+ok exact original whole-model parity: bag pillar default size
+ok exact original whole-model parity: bag pillar size5 hoops and quantity
+ok exact original whole-model parity: ready spread
+ok exact original whole-model parity: ready pillar
+ok exact original whole-model parity: ready mix and admixtures
+ok exact original whole-model parity: three delivery trucks
+ok exact original whole-model parity: quarter yard order
+ok exact original whole-model parity: multiple service foundations
+ok exact original whole-model parity: mixed bag and ready foundations
+ok exact original whole-model parity: legacy two supplier grouping unchanged
+ok exact original whole-model parity: manual zero rebar and quantity
+ok exact original whole-model parity: all explicit zero overrides
+ok exact original whole-model parity: free bag catalog rate
+ok exact original whole-model parity: free ready supplier explicit zero fields
+ok exact original whole-model parity: inactive dangling selections
+ok exact original whole-model parity: manual rebar without matching catalog
+ok exact original whole-model parity: manual zero rebar without matching catalog
+ok exact original whole-model parity: bag manual quantity legacy units unchanged
+ok exact original whole-model parity: unassigned project delivery assumptions unchanged
+ok exact original whole-model parity: new sign stops
+ok exact original whole-model parity: project equipment excavation
+ok exact original whole-model parity: custom settings
+ok missing bag: whole saved item, coupled delivery, immutability
+ok missing bar: whole saved item, coupled delivery, immutability
+ok missing form: whole saved item, coupled delivery, immutability
+ok legacy missing delivery snapshot never fabricates a truck or aggregate
+ok all saved numeric zeros are retained rather than treated as absent
+ok never-saved item costs and quantities stay unknown, not zero
+ok wrong-role selected records cannot supply a price
+ok snapshot source-ID mismatch cannot borrow foreign cached amounts
+ok new copied component cannot inherit another component's saved cache
+ok stable identity selects saved values after reorder, never raw stale caches or array positions
+ok ambiguous current or saved component identity cannot borrow snapshots
+ok unsupported/malformed delivery snapshot does not manufacture defaults
+ok snapshot capture is versioned, copies trucks, and uses no default zero values
+ok schema preserves existing fields/RLS and adds only optional snapshot/legacy fields
+PASS foundation material financial cases=39 failed=0
+exit=0

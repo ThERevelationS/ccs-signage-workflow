@@ -1,0 +1,37 @@
+{
+ "jurisdiction_id": "6adefc23d4dd81bcd8aab1ba",
+ "jurisdiction_name": "Stanford",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "CITY OF STANFORD, KENTUCKY BUILDING PERMIT APPLICATION 403 East Main Street, Stanford, KY 40484 (606)365-4500 Jeff Knouse, Code Enforcement Officer (606)879-1002 Tim Scott, Building Inspector (859)339-0739 Owner’s Name: Date: Phone Number: Alternate: Present Address: City, ST: ZIP: Construction Site Information: Construction Site Address (if different): This permit is for the construction of (check one of the following): Attached Garage New Home Home Room Addition Deck/Porch Swimming Pool Commercial New Change of Use Total Square Footage (incl. porches and basement: Is Lot in Flood Plain Zone? Y___ N___ Please contact the following for inspections: ELECTRICAL: Michael Leger (859)893 - 4367 PLUMBING/SEWER: Mark Long (859)582 - 7273 SEPTIC HEALTH DEPT: (606)365 - 3106 HVAC: Ky Dept of H ousing, Building and Construction (502)573 - 0395 ADDRESSING: Bluegrass 911 Communications, Russ Clark (",
+   "tags": [
+    "area",
+    "penalties",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "65db34df8b35804ba3f66defe56de5b0fb0acb48edc3b3072bfd112de0ba6859",
+   "source_document_id": null,
+   "source_title": "65db34df8b35804ba3f66defe56de5b0fb0acb48edc3b3072bfd112de0ba6859.pdf",
+   "official_url": "https://stanford.ky.gov/Forms/Building%20Permit%20Application.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Contractor Information (Required, if a contractor is completing the work) Business Name: Address: City, ST, ZIP: Phone Number: Email Address: City of Stanford Business License Number (required): **Please complete the Subcontractor list below, if any jobs will be contracted out. All contractors are required to have a City of Stanford Business License. IT IS THE CONTRACTOR’S RESPONSIBILITY TO BE FAMILIAR WITH ANY/ALL REQUIRED INSPECTIONS, INCLUDING SPECIAL INSPECTIONS. SUBCONTRACTOR LIST Name: Phone Number: City of Stan ford Business License #: State License #: Excavation Concrete Carpentry Electrical (State License Required) Plumbing (State License Required) Mechanical (State License Required) Roofing Masonry Drywall Sprinkler (Plan Review Required if applicable) Fire Alarm (Plan Review Required) Paving Other:_____________ Applicant Signature I hereby apply for a Building Permit and ackno",
+   "tags": [
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "65db34df8b35804ba3f66defe56de5b0fb0acb48edc3b3072bfd112de0ba6859",
+   "source_document_id": null,
+   "source_title": "65db34df8b35804ba3f66defe56de5b0fb0acb48edc3b3072bfd112de0ba6859.pdf",
+   "official_url": "https://stanford.ky.gov/Forms/Building%20Permit%20Application.pdf"
+  }
+ ]
+}

@@ -1,0 +1,373 @@
+import { useEffect, useRef, useState } from "react";
+import * as THREE from "three";
+import { Maximize2, RotateCcw, Eye, EyeOff, Box } from "lucide-react";
+
+const IN = 1 / 12; // inches -> feet units
+// O-041 bounded complexity — quantity/pole loops cap mesh count; a pathological
+// quantity can never exhaust the GL budget (clipping never changes modeled data).
+const MAX_ITEM_MESHES = 128;
+const MAX_POLE_MESHES = 64;
+
+function buildScene(scene, project, solid, showGround, highlight) {
+  const group = new THREE.Group();
+
+  const concreteMat = solid
+    ? new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.9 })
+    : new THREE.MeshBasicMaterial({ color: 0x374151, wireframe: true });
+  const poleMat = solid
+    ? new THREE.MeshStandardMaterial({ color: 0x4b5563, metalness: 0.4, roughness: 0.5 })
+    : new THREE.MeshBasicMaterial({ color: 0x1f2937, wireframe: true });
+
+  // O-034 highlight sync — meshes carry their component_id; ids in the
+  // `highlight` set swap to the selection material. Shared per-build
+  // highlight mats keep this cheap and dispose with the build cycle.
+  const hlMat = highlight?.size
+    ? (solid
+      ? new THREE.MeshStandardMaterial({ color: 0x2563eb, emissive: 0x1d4ed8, emissiveIntensity: 0.35, roughness: 0.6 })
+      : new THREE.MeshBasicMaterial({ color: 0x2563eb, wireframe: true }))
+    : null;
+  const tag = (mesh, componentId, kind) => {
+    mesh.userData.componentId = componentId ?? null;
+    mesh.userData.kind = kind;
+    if (hlMat && componentId && highlight.has(componentId)) mesh.material = hlMat;
+    return mesh;
+  };
+
+  let cursorX = 0;
+  const items = project.items || [];
+  items.forEach((item) => {
+    const qty = Math.min(MAX_ITEM_MESHES, Math.max(1, Number(item.quantity) || 1));
+    const depth = (Number(item.depth_inches) || 0) * IN;
+    for (let i = 0; i < qty; i++) {
+      let mesh;
+      let footprint;
+      if (item.foundation_type === "pillar") {
+        const r = ((Number(item.diameter) || 0) / 2) * IN;
+        footprint = r * 2;
+        mesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r, depth, 24), concreteMat);
+      } else {
+        const l = (Number(item.length_inches) || 0) * IN;
+        const w = (Number(item.width_inches) || 0) * IN;
+        footprint = Math.max(l, w);
+        mesh = new THREE.Mesh(new THREE.BoxGeometry(l, depth, w), concreteMat);
+      }
+      const offset = (Number(item.grade_offset_inches) || 0) * IN;
+      mesh.position.set(cursorX + footprint / 2, -depth / 2 + offset, 0);
+      mesh.rotation.y = ((Number(item.rotation_degrees) || 0) * Math.PI) / 180;
+      tag(mesh, item.component_id, "item");
+      group.add(mesh);
+
+      if (item.selected_pole_id || item.pole_total_height_inches) {
+        const h = (Number(item.pole_total_height_inches) || 96) * IN;
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, h, 16), poleMat);
+        pole.position.set(mesh.position.x, offset + h / 2, 0);
+        tag(pole, item.selected_pole_id || null, "pole");
+        group.add(pole);
+      }
+
+      cursorX += footprint + 2;
+    }
+  });
+
+  (project.poles || []).slice(0, MAX_POLE_MESHES).forEach((p) => {
+    // CMP-E02: distinct quantities â€” the pole top sits at base offset plus
+    // height above grade; embedment extends BELOW grade (canonical
+    // embedment_inches; the legacy y_offset_inches spelling carries the same
+    // authored "depth in ground" quantity and is no longer read as an upward
+    // elevation â€” CMP-AUD07). Cross-section follows the authored/resolved
+    // pole_shape; unspecified stays the round default.
+    const height = (Number(p.height_inches) || 96) * IN;
+    const embed = (Number(p.embedment_inches ?? p.y_offset_inches) || 0) * IN;
+    const base = (Number(p.base_offset_inches) || 0) * IN;
+    const len = height + embed;
+    const shape = typeof p.pole_shape === "string" ? p.pole_shape.toLowerCase() : "round";
+    let pole;
+    if (shape === "square" || shape === "rectangular") {
+      pole = new THREE.Mesh(new THREE.BoxGeometry(0.7, len, shape === "rectangular" ? 0.45 : 0.7), poleMat);
+    } else {
+      pole = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, len, 16), poleMat);
+      if (shape === "elliptical") pole.scale.z = 0.55;
+    }
+    pole.position.set(
+      (Number(p.x_inches) || 0) * IN,
+      base + (height - embed) / 2,
+      (Number(p.z_inches) || 0) * IN
+    );
+    tag(pole, p.component_id, "pole");
+    group.add(pole);
+  });
+
+  if (showGround) {
+    const grid = new THREE.GridHelper(60, 60, 0xd1d5db, 0xe5e7eb);
+    grid.position.y = 0.01;
+    group.add(grid);
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(60, 60),
+      new THREE.MeshStandardMaterial({ color: 0xf3f4f6, roughness: 1 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    group.add(ground);
+  }
+
+  // center the model horizontally
+  const box = new THREE.Box3().setFromObject(group);
+  const center = box.getCenter(new THREE.Vector3());
+  group.position.x -= center.x;
+  group.position.z -= center.z;
+
+  scene.add(group);
+  return group;
+}
+
+export default function Foundation3DPreview({ project, highlightComponentIds = [] }) {
+  const mountRef = useRef(null);
+  const stateRef = useRef({});
+  const [solid, setSolid] = useState(true);
+  const [showGround, setShowGround] = useState(true);
+  const [visible, setVisible] = useState(true);
+  const [zoom, setZoom] = useState(100);
+  const [glFailed, setGlFailed] = useState(false);
+  const highlightKey = Array.isArray(highlightComponentIds) ? highlightComponentIds.join(",") : "";
+
+  const disposeObject = (root) => {
+    const geometries = new Set(), materials = new Set();
+    root.traverse?.((o) => {
+      if (o.geometry) geometries.add(o.geometry);
+      const m = o.material;
+      for (const mat of Array.isArray(m) ? m : m ? [m] : []) materials.add(mat);
+    });
+    geometries.forEach((g) => g.dispose());
+    materials.forEach((m) => m.dispose());
+  };
+
+  // O-041 — ONE renderer/camera/scene for the mount's whole lifetime. The
+  // old code rebuilt the WebGL context on every edit. Rendering is
+  // demand-driven (invalidate() coalesces a rAF — no continuous loop), the
+  // WebGL-creation failure surfaces honestly, and context loss is
+  // prevented/re-rendered on restore.
+  useEffect(() => {
+    if (!visible || !mountRef.current) return;
+    const mount = mountRef.current;
+    const st = stateRef.current;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf9fafb);
+    const width = mount.clientWidth || 1;
+    const height = mount.clientHeight || 1;
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+    } catch {
+      setGlFailed(true);
+      return;
+    }
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(width, height);
+    mount.appendChild(renderer.domElement);
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x9ca3af, 1.1));
+    const dir = new THREE.DirectionalLight(0xffffff, 0.7);
+    dir.position.set(20, 30, 20);
+    scene.add(dir);
+
+    st.theta = st.theta ?? Math.PI / 4;
+    st.phi = st.phi ?? Math.PI / 3.2;
+    st.radius = st.radius ?? 30;
+    st.target = st.target || new THREE.Vector3(0, 0, 0);
+    st.scene = scene;
+    st.camera = camera;
+    st.renderer = renderer;
+    st.modelGroup = null;
+
+    let frame = null;
+    const invalidate = () => {
+      if (frame !== null) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        renderer.render(scene, camera);
+      });
+    };
+    st.invalidate = invalidate;
+
+    const applyCamera = () => {
+      const r = st.radius;
+      camera.position.set(
+        st.target.x + r * Math.sin(st.phi) * Math.cos(st.theta),
+        st.target.y + r * Math.cos(st.phi),
+        st.target.z + r * Math.sin(st.phi) * Math.sin(st.theta)
+      );
+      camera.lookAt(st.target);
+    };
+    applyCamera();
+    invalidate();
+
+    // --- controls ---
+    let dragging = null;
+    let last = { x: 0, y: 0 };
+    const onDown = (e) => {
+      dragging = e.button === 2 ? "pan" : "orbit";
+      last = { x: e.clientX, y: e.clientY };
+      e.preventDefault();
+    };
+    const onMove = (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - last.x;
+      const dy = e.clientY - last.y;
+      last = { x: e.clientX, y: e.clientY };
+      if (dragging === "orbit") {
+        st.theta += dx * 0.008;
+        st.phi = Math.min(Math.PI / 2.02, Math.max(0.15, st.phi - dy * 0.006));
+      } else {
+        const panScale = st.radius * 0.0015;
+        st.target.x -= dx * panScale * Math.cos(st.theta + Math.PI / 2);
+        st.target.z -= dx * panScale * Math.sin(st.theta + Math.PI / 2);
+        st.target.y += dy * panScale;
+      }
+      applyCamera();
+      invalidate();
+    };
+    const onUp = () => (dragging = null);
+    const onWheel = (e) => {
+      e.preventDefault();
+      st.radius = Math.min(200, Math.max(3, st.radius * (1 + e.deltaY * 0.001)));
+      setZoom(Math.round((30 / st.radius) * 100));
+      applyCamera();
+      invalidate();
+    };
+    const onContext = (e) => e.preventDefault();
+    const onContextLost = (e) => e.preventDefault();
+    const onContextRestored = () => invalidate();
+
+    const el = renderer.domElement;
+    el.addEventListener("mousedown", onDown);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("contextmenu", onContext);
+    el.addEventListener("webglcontextlost", onContextLost);
+    el.addEventListener("webglcontextrestored", onContextRestored);
+
+    const onResize = () => {
+      const w = mount.clientWidth || 1;
+      const h = mount.clientHeight || 1;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+      invalidate();
+    };
+    window.addEventListener("resize", onResize);
+
+    stateRef.current.setView = (view) => {
+      if (view === "front") { st.theta = -Math.PI / 2; st.phi = Math.PI / 2.05; }
+      if (view === "side") { st.theta = 0; st.phi = Math.PI / 2.05; }
+      if (view === "top") { st.theta = -Math.PI / 2; st.phi = 0.16; }
+      if (view === "reset") {
+        st.theta = Math.PI / 4;
+        st.phi = Math.PI / 3.2;
+        st.radius = 30;
+        st.target.set(0, 0, 0);
+        setZoom(100);
+      }
+      applyCamera();
+      invalidate();
+    };
+
+    return () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+      el.removeEventListener("mousedown", onDown);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("contextmenu", onContext);
+      el.removeEventListener("webglcontextlost", onContextLost);
+      el.removeEventListener("webglcontextrestored", onContextRestored);
+      window.removeEventListener("resize", onResize);
+      disposeObject(scene);
+      renderer.dispose();
+      if (el.parentNode === mount) mount.removeChild(el);
+      st.scene = st.camera = st.renderer = st.modelGroup = null;
+    };
+  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Model rebuild — swaps only the model group inside the live scene and
+  // disposes the outgoing group's geometries/materials. Effect order keeps
+  // this after the init effect so st.scene exists on first mount.
+  useEffect(() => {
+    const st = stateRef.current;
+    if (!visible || !st.scene || !st.renderer) return;
+    if (st.modelGroup) {
+      st.scene.remove(st.modelGroup);
+      disposeObject(st.modelGroup);
+    }
+    st.modelGroup = buildScene(st.scene, project, solid, showGround, new Set(highlightComponentIds));
+    st.invalidate?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- highlightKey serializes the id set for the rebuild
+  }, [project, solid, showGround, visible, highlightKey]);
+
+  const setView = (v) => stateRef.current.setView?.(v);
+
+  const ToolBtn = ({ children, onClick, active }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`h-[24px] px-2 rounded-sm border text-[11px] font-medium flex items-center gap-1 ${
+        active ? "bg-blue-600 border-blue-600 text-white" : "bg-white border-gray-300 text-gray-700"
+      }`}
+    >
+      {children}
+    </button>
+  );
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-sm p-2">
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <span className="text-[12px] font-bold text-gray-800">3D Preview</span>
+          <span className="text-[11px] text-gray-400 ml-2">Updates live as you edit</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          className="text-[11px] font-medium text-gray-600 hover:text-red-600 flex items-center gap-1"
+        >
+          {visible ? <EyeOff className="w-3.5 h-3.5" aria-hidden="true" /> : <Eye className="w-3.5 h-3.5" aria-hidden="true" />}
+          {visible ? "Hide 3D View" : "Show 3D View"}
+        </button>
+      </div>
+
+      {visible && (
+        <>
+          <div className="flex items-center gap-1 flex-wrap mb-2">
+            <ToolBtn onClick={() => setView("front")}>Front</ToolBtn>
+            <ToolBtn onClick={() => setView("side")}>Side</ToolBtn>
+            <ToolBtn onClick={() => setView("top")}>Top</ToolBtn>
+            <ToolBtn onClick={() => setView("reset")}>
+              <RotateCcw className="w-3 h-3" aria-hidden="true" /> Reset
+            </ToolBtn>
+            <span className="text-[11px] text-gray-500 px-1">{zoom}%</span>
+            <ToolBtn onClick={() => setShowGround((v) => !v)} active={!showGround}>
+              {showGround ? "Hide Ground" : "Show Ground"}
+            </ToolBtn>
+            <ToolBtn onClick={() => setSolid((v) => !v)} active={solid}>
+              <Box className="w-3 h-3" aria-hidden="true" /> {solid ? "Solid Mode" : "Wireframe"}
+            </ToolBtn>
+            <ToolBtn onClick={() => mountRef.current?.requestFullscreen?.()}>
+              <Maximize2 className="w-3 h-3" aria-hidden="true" /> Full Screen
+            </ToolBtn>
+          </div>
+
+          {glFailed
+            ? <div data-gl-failed="true" className="w-full h-[420px] rounded-sm bg-amber-50 border border-amber-200 flex items-center justify-center text-[11px] text-amber-800">3D preview is unavailable in this browser — WebGL could not be initialized.</div>
+            : <div ref={mountRef} className="w-full h-[420px] rounded-sm overflow-hidden bg-gray-50" />}
+
+          <div className="flex items-center justify-between text-[10px] text-gray-500 mt-1 px-1">
+            <span>Left Click + Drag: Orbit/Rotate</span>
+            <span>Right Click + Drag: Pan/Move</span>
+            <span>Scroll Wheel: Zoom in/out</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

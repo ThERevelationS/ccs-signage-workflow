@@ -1,0 +1,27 @@
+{
+  "ok": true,
+  "targets": [
+    "src/components/jobs/printTemplates/workOrderPrintModel.js",
+    "src/components/jobs/printTemplates/templates/original.js"
+  ],
+  "sourceHead": "e99a089ff3b1e0bf7bfdcd7259bddd354ad767b6",
+  "verifiedHead": "ff1958c2ad823ce83caadb91797c8ec9f01e8d47",
+  "exactHashes": {
+    "src/components/jobs/printTemplates/workOrderPrintModel.js": "7811607925470a8a8a9a458dd725fe2bd3d92e66330c62afc405677f4d3825b4",
+    "src/components/jobs/printTemplates/templates/original.js": "92650a497822509f22fdd6d4f09298e8373d87b503bc350bcd0a7f543e5b038b"
+  },
+  "protectedSourcesUnchanged": [
+    "src/components/estimator/workOrderConversion.js",
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/components/estimator/builder/partSync.js",
+    "src/pages/FoundationEstimator.jsx",
+    "base44/entities/WorkOrder.jsonc"
+  ],
+  "clean": true,
+  "actualRemoteBundle": true,
+  "costCaptureHeld": true,
+  "schemaChanged": false,
+  "reinforcementV2Activated": false,
+  "realStorageVerified": false,
+  "backendAuthorizationVerified": false
+}

@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/estimator/products/reusableSaveIdempotency.js",
+      "content": "import { ensureIdempotentEntityCreate } from \"@/components/estimator/idempotentEntityCreate\";\n\nexport async function ensureReusableRecord({ entity, idempotencyKey, data, label = \"Reusable item\" }) {\n  return ensureIdempotentEntityCreate({\n    entity,\n    keyField: \"idempotency_key\",\n    key: idempotencyKey,\n    data,\n    label,\n  });\n}",
+      "startLine": 1,
+      "endLine": 11,
+      "totalLines": 11,
+      "truncated": false
+    }
+  ]
+}

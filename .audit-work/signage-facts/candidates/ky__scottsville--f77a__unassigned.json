@@ -1,0 +1,952 @@
+{
+ "jurisdiction_id": "6adefbe8881834722e04f77a",
+ "jurisdiction_name": "Scottsville",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 70,
+   "snippet": "65 Section 8. Prohibited Signs in All Districts The following signs and/or sign features shall be prohibited in all zones: A. Mobile signs; B. Roof signs that extend higher than the top of the roof; C. Rotating or moving signs; D. Abandoned signs; E. Streamers, pennants, and tag signs or similar signs or devices except when attached to a permitted temporary sign; F. Any sign which emits any noise or odor; G. Freestanding signs which overhang any part of a building; H. Flashing or blinking signs; I. Billboards with an electronic message display system; J. Signs in a public right - of - way; and K. Handbills. Section 9. Signs Requiring a Conditional Use Permit in All Districts A. Signs painted directly on a building. B. Only the Board of Zoning Adjustments shall have the authority to approve sign variances or conditional use permits for signs unless the request is made to the Planning Comm",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "billboard",
+    "temporary",
+    "type",
+    "authority"
+   ],
+   "weight": 23,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 73,
+   "snippet": "68 building. b. Monument signs shall not exceed 60 square feet in area, eight (8) feet in height, and shall have a minimum setback of 10 feet. ii. One wall sign, canopy sign or awning sign per street frontage with a maximum of two (2)signs per building. The maximum allowed area for all signage in this category is 32 square feet or 15 percent of the wall area to which the sign, canopy or awning is attached, whichever is greater. Awnings shall have at least seven (7) feet of clearance when fully extended. When a building contains two or more separate businesses, these requirements shall be applied separately to the wall area of the portion of the building occupied by the individual business. iii. One wall sign per tenant or lessee not exceeding two (2) square feet in area, iv. One attraction board either attached to the wall or attached to the permitted freestanding sign not to exceed 32 s",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "type"
+   ],
+   "weight": 17,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 77,
+   "snippet": "72 Handbill: Printed or written material, circular, leaflet, pamphlet, or booklet designed for distribution on vehicles or other property, excluding postal distribution, which advertises merchandise, commodities, or services. Illegal Sign: Does not meet the requirements of this zoning ordinance and has not been identified as a legal, nonconforming sign. Illuminated Sign: Emits or reflects artificial light from any source. a. Directly illuminated: Lighted by an unshielded light source (including neon tubing) which is visible as a part of the sign and where light travels directly from the source to the viewer's eye. b. Indirectly illuminated: Light source projects light onto the exterior of the sign surface or onto the building where the sign is located. c. Internally illuminated: Light source is within the sign, with a transparent or translucent background or cover which silhouettes lette",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "type",
+    "authority",
+    "penalties"
+   ],
+   "weight": 16,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 71,
+   "snippet": "66 iii. Buildings Used for Religious or Educational Activities a. One freestanding sign not exceeding 32 square feet in area and eight (8) feet in height. b. One bulletin board, not exceeding 12 square feet in area and eight (8) feet in height. c. One wall sign per building not exceeding 32 square feet in area. d. Incidental signs ,which shall not exceed two (2) square feet in area and do not require sign permits. iv. All Other Conditional Uses a. One freestanding sign for any other permitted or conditional use not noted herein; signage shall not exceed 32 square feet in area and eight (8) feet in height. b. One wall sign that shall not exceed 12 square feet in area, and eight (8) feet in height. B. Manufactured Home Residential (MH - 1) and Manufactured Home Park (MH - 2) Districts i. One freestanding sign per park entrance. Sign shall not exceed 32 square feet in area, eight (8) feet i",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "type"
+   ],
+   "weight": 15,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 75,
+   "snippet": "70 iii. Light Industrial, and Heavy Industrial Districts (I - 1, and 1 - 2) - In addition to the signage permitted in Subsection E of this Article, the following signs shall be permitted: a. One billboard shall be permitted subject to the following restrictions: 1. The sign shall not have an electronic message display system. 2. The property on which the billboard is located shall abut a federal or state highway. 3. The sign shall be the principal use; there shall be no other buildings, freestanding signs, etc., on the lot. 4. Signage face shall not exceed 720 square feet in area. 5. The sign shall be located no closer than 300 feet to any other structure. 6. The sign shall be at least 150 feet away from any residential zone or residential use. 7. There shall be a 40 - foot setback requirement from any right - of - way. 8. Maximum height shall be 35 feet. Section 11. Maintenance Standard",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 15,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 67,
+   "snippet": "62 ARTICLE XI I I SIGNS AND BILLBOARDS SECTION 1. INTENT This article provides content - neutral sign standards that allow legitimate signage for agricultural, residential, professional office, business, and industrial activities while promoting signs that: A. Reduce intrusions and protect property values; B. Minimize undue distractions to the motoring public; C. Protect the tourist industry by promoting a pleasing community image; and D. Enhance and strengthen economic stability. Section 2. Scope These provisions apply to the display, construction, erection, alteration, location, and maintenance of all new and existing signs within Scottsville. Section 3. Exempt Signs The following signs are exempt from the provisions of this Article and are, therefore, exempt from the requirement to obtain a sign permit: A. Signs not visible beyond the boundaries of the property upon which they are loc",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "prohibited",
+    "billboard",
+    "temporary",
+    "type"
+   ],
+   "weight": 14,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 74,
+   "snippet": "69 message display systems may be incorporated into one freestanding or wall sign for each property located within the B - 1, I - 1, and I - 2 zones. F. Additional Signage Permitted in Specific Commercial and Industrial Districts i. Downtown Business District (B - 1) - In addition to the signage permitted in Subsection E in this Article, the following signs shall be permitted: a. Permanent sidewalk sign - Where a building is located adjacent to the public right - of - way, one non - illuminated, freestanding sign may be permanently placed on the public sidewalk with the following restrictions: 1. Sign shall not exceed five and one - half(5.5) square feet in area. 2. The edge of the sign shall not extend beyond the curb line. 3. The maximum dimensions of the support frame shall not exceed eight (8) square feet in area (maximum 48 inches wide or 36 inches high). 4. The bottom of such suppo",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "type"
+   ],
+   "weight": 14,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 72,
+   "snippet": "67 c. One bulletin board that shall not exceed 12 square feet in area and eight (8) feet in height; and d. Incidental signs which shall not exceed two (2) square feet in area nor require sign permits. v. All other Conditional Uses: a. One freestanding sign that shall not exceed 32 square feet in area and eight (8) feet in height; b. One wall sign that shall not exceed 12 square feet in area; and c. Incidental signs which shall not exceed two (2) square feet in area nor require sign permits. D. Multi - Family and Group Family Residential Districts (MF and GF) i. Single Family Residence - All single - family homes within these zones shall comply with the signage regulations for low - density residential zones regulated under Subsection C. in this Article. ii. Multi - Family Residence - Multi - family residential buildings and conditional uses may have: a. One freestanding sign that shall n",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "prohibited",
+    "type"
+   ],
+   "weight": 13,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 76,
+   "snippet": "71 and/or sentences, provisions, or portions thereof shall not be affected and shall continue in full force and effect. Section15 . Sign Definitions The definitions contained in this section shall be applied in the interpretation of all sections within this Article , except where the context clearly indicates otherwise. Words used in the present tense shall include the future tense, singular number shall include the plural, and plural include the singular. Abandoned Sign: Signage that has been neglected and fallen into disrepair. Attraction Board: Copy is changed manually or electronically on a regular basis. Awning Sign: Applied directly to the surface of an awning; defined as a shelter supported entirely on a wall and made of non - rigid material supported by a frame. Banner Sign: Made of non - rigid material with no enclosing framework. Billboard: Signage intended for lease lo a varie",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "temporary",
+    "type",
+    "penalties"
+   ],
+   "weight": 12,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "iii SECTION 7. CONDITIONAL USES ................................ ................................ ................................ ...... 54 SECTION 8. PROVISIONS RELATING TO SHOPPING CENTERS ................................ ...................... 54 ARTICLE X ................................ ................................ ................................ ................................ ....................... 56 LIGHT INDUSTRIAL DISTRICTS (I - 1) ................................ ................................ ................................ ...... 56 SECTION 1. USES PERMITTED ................................ ................................ ................................ ........... 56 SECTION 2. REQUIRED LOT AREA AND YARD AREA ................................ ................................ ........ 56 SECTION 3. HEIGHT ................................ ........................",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "penalties",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 69,
+   "snippet": "64 Section 6. Illegal Signs All illegal signs shall be subject to immediate enforcement action as outlined in Article XVI I I. Section 2 of the Scottsville Zoning Ordinance. Section 7. General Requirements All signs in all zones shall meet the following requirements: A. Illuminated signs shall be located in a fashion which prevents all direct rays of light from shining beyond the property lines of the lot on which the sign is located. B. No light, sign, or other advertising device shall be designed or erected to imitate or resemble any official traffic sign, signal, or device or use any words, phrases, symbols, or characters implying the existence of danger, or the need to stop or maneuver the vehicle. C. No sign shall be attached to or painted on the surface of any tree, utility pole, or streetlight. D. Projecting signs shall have at least 7' of clearance above a road or sidewalk. E. Ne",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "type",
+    "authority",
+    "penalties"
+   ],
+   "weight": 11,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 18,
+   "snippet": "13 (3) The provisions of this section shall apply to the construction, erection, alteration, use, and location of transmission towers and accessory facilities in all zoning districts. Transmission towers and accessory facilities in legal existence on the effective date of this Zoning Ordinance that are not in conformity with this section may remain in place. Unless otherwise permitted by this Zoning Ordinance, no new transmission tower or accessory facility may be erected or constructed unless all provisions of this Section and the requirements of the Kentucky Public Service Commission are met. (4) Exceptions. An antenna and supporting structure for the following uses are permitted in any district if accessory to a permitted use and if they comply with applicable regulations of the district in which situated and are otherwise permitted by law. (a) Amateur radios. (b) Citizen band radios.",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 59,
+   "snippet": "54 SECTION 7. CONDITIONAL USES Childcare centers, nurseries, day care centers and kindergartens are uses declared to possess such characteristics of unique or special form, nature of operation, extent or limited application that each specific use shall be considered an individual case and shall be subject to written approval of the Board of Zoning Adjustments, or Planning Commission when filed concurrently with a zone change request, in accordance with the provisions of this ordinance: SECTION 8. PROVISIONS RELATING TO SHOPPING CENTERS A. The following provisions apply to shopping centers: i. A development plan as provided in this Ordinance shall be approved by the Planning Commission for all Shopping Centers. Each development plan shall include each of the items set forth in this Section for the Planning Commission’s review and approval. ii. The floor area ration (FAR) of all buildings ",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 34,
+   "snippet": "29 flags, banners, streamers, pennants, inscriptions, and patterns and shall include a Structure erected or used in connection with the display of any such device and all lighting or other attachments used in connection therewith. STREET: Any vehicular way that , (1) Is an existing state, county, or municipal street; (2) is shown upon a Plat approved pursuant to law; (3) is approved by other official action; or (4) is shown on a Plat duly filed and recorded in the office of the County Court Clerk’s Office from and after the effective date of these Subdivision Regulations. STREET, PRIVATE: A means of within a subdivision which gives to a public street and is owned and maintained by the property owners within the subdivision. STREET, PUBLIC: A street that has been accepted for maintenance by the City, County, or Commonwealth of Kentucky. STRUCTURE: Anything constructed, erected, or attache",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "billboard",
+    "temporary"
+   ],
+   "weight": 9,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 50,
+   "snippet": "45 SECTION 4. PROHIBITED USES AND STRUCTURES A. The following Uses and Structures shall be prohibited: i. Camping trailer, travel trailer, pickup coach or auto camper shall not be occupied as living quarters. ii. Manufactured Homes sales. iii. Professional offices, fraternity, sorority, or fraternal associations, lodging or rooming houses. iv. Motels, hotels, and tourist courts. v. A dvertising sign s or billboards, other than those specifically permitted under subsections of Article XIII . vi. Telecommunication Facilities. SECTION 5. DIMENSIONAL AND AREA REQUIREMENTS A. The following minimum land areas shall apply in this district: i. Each Manufactured Home Residential Subdivision shall contain a minimum of 5 contiguous acres of land and a minimum of 10 lots. Development of a smaller tract of land adjacent to an existing Manufactured Home Subdivision may be permitted if: a. The proposed",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited",
+    "billboard",
+    "authority"
+   ],
+   "weight": 9,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 57,
+   "snippet": "52 ARTICLE VIII DOWNTOWN BUSINESS DISTRICT (B - 1) SECTION 1. PERMITTED USES AND STRUCTURES A. The following uses shall be permitted in the Downtown Business District: i. Any use permitted in the Residential Districts with the exception of Manufactured Homes. ii. Any business use that is not otherwise prohibited by this Ordinance. iii. Churches and other places of worship. SECTION 2. PROHIBITED USES AND STRUCTURES A. The following uses shall be prohibited in the Downtown Business District: i. Any business which is primarily of wholesale, storage, or warehousing nature ii. Live animal or poultry sales, gasoline, oil, or alcohol storage above ground more than 1,100 gallons, light industrial uses as defined in this Ordinance and heavy industrial uses as defined in this Ordinance. iii. Manufactured Home Park or Manufactured Home Subdivision. iv. Any manufactured home. SECTION 3. REQUIRED LOT",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 68,
+   "snippet": "63 Section 4. Permit Requirements A. No sign regulated by this ordinance (except those specifically exempted in Subsection i. in this Section) shall be displayed, erected, relocated, or altered unless all necessary permits have been issued by the Scottsville - Allen County Planning Commission. Applicants shall submit a n application form to the department before any permit may be issued. B. Property owner shall obtain a Certificate of Appropriateness from the Historical Preservation Commission (HPC) for signage proposed within the Historic District Overlay (HDO ). C. Signs shall only be erected or constructed in compliance with the approved permit. D. Applicants shall obtain a building permit for the footer of freestanding and monument signs over 7’ in height above grade. Applicants shall also obtain an electrical permit for signs that require electrical service. Final inspections for bu",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited",
+    "type",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 78,
+   "snippet": "73 Sign: Any copy, including material used to differentiate the copy from the background, which is applied to a surface as a means of identifying, advertising, announcing, or illustrating products, services, and/or events. Sign Clearance: The vertical distance between the lowest point of any sign and the grade at the base of the sign. Sign Copy: Any word, figure, number, symbol, or emblem affixed to a sign. Sign Height: The vertical distance measured from the highest point of the sign, including the frame and any embellishments, to the bottom of the base of the sign. Sign Setback: The horizontal distance between any street right - of - way and a sign. The measurement shall be taken at the closest point between the right - of - way and any part of the sign. Sign Surface: That part of the sign on which the message is displayed. Square Foot: A unit of area equal to one foot by one foot squa",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "temporary",
+    "type"
+   ],
+   "weight": 9,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "i ARTICLE I ................................ ................................ ................................ ................................ .......................... 1 GENERAL PROVISIONS ................................ ................................ ................................ ........................... 1 SECTION 1. ZONING AFFECTS EVERY STRUCTURE OR USE ................................ ............................. 1 SECTION 2. NON - CONFORMITIES ................................ ................................ ................................ ...... 1 SECTION 3. STREET FRONTAGE REQUIRED ................................ ................................ ....................... 4 SECTION 4. MINIMUM LOT AREA ................................ ................................ ................................ ........ 5 SECTION 5. REAR DWELLINGS PROHIBITED ........................",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary"
+   ],
+   "weight": 8,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "8 v. An Accessory Building may not exceed the ground floor area of the Building. vi. No detached Accessory Building shall be located closer than 10 feet to any Building. vii. An Accessory Building may be connected to the Building by a breezeway or other similar Structure but shall not be considered as an attached Accessory Building, carport, or similar Structure. Said breezeway shall not project nearer the side lot line than the minimum side yard required for the main building. viii. An Accessory Building located on a through lot shall conform to the required front yard building setback line as provided for in this Zoning Ordinance. SECTION 12. BUILDING LINE SETBACK A. Building Line to establish a front yard for all buildings and structures shall be established at a distance from the right - of - way no less than 25 foot from the right - of - way of the street with the exception of the D",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "9 SECTION 13. SANITARY PROVISIONS A. All new urban Density development as defined by the adopted Comprehensive Plan shall be served by public sanitary sewer if available. B. New urban Density development does not include construction of one - and two - family dwellings on residential lots of record and residential lots which have received at least preliminary subdivision approval as of the date of this amendment which are not served by sanitary sewer. Such lots may use on - site disposal systems approved by the Health Department. SECTION 14. LOT WIDTH The width between side lot lines on any lot shall not be less than 20 feet at any point. SECTION 15. TEMPORARY CONSTRUCTION TRAILERS In all zones under this Zoning Ordinance, Manufactured Home Residential, Manufactured Home Park and temporary construction trailer(s) as defined by the Zoning Ordinance shall be permitted. Such temporary const",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 31,
+   "snippet": "26 MOBILE HOME: A Structure for residential use constructed prior to July 15, 1976, being the effective date of the Federal Manufactured Housing Construction and Safety Act Standards (Title 42 of the United States Code), and transportable which is built on its own chassis and designed with, or without, a permanent foundation for year - round living when connected to the required utilities. It can consist of one or more sections that can be telescoped when towed and expanded later for additional capacity or of 2 or more sections separately towable designed to be joined into one integral unit. As used herein, Mobile Home shall include a house trailer, but shall not include camping trailer, travel trailer, recreational vehicle, pickup coach, or auto camper. Non - buildable Lot: A lot that is created for utility accessibility, drainage purposes or protection of environmentally sensitive area",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "temporary",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 35,
+   "snippet": "30 USE: The purpose or activity for which a land or Building or Structure or combination thereof is designed, arranged, or intended, or for which it is occupied or maintained. VARIANCE: A departure from dimensional terms of the zoning regulation pertaining to the height, width, or location of structures, and the size of yards and open spaces where such departure meets the requirements of KRS Chapter 100. VEHICLE RECYCLERS: Any place where five (5) or more junked, wrecked or non - operative automobiles, vehicles, machines and other similar scrap or salvage materials, excluding inoperative farm equipment, are deposited, parked, placed or otherwise located; or any business or person engaged as an automobile dealer, body shop operator, wrecker service operator, service station operator, or other activity which may buy, sell or repair non - operative vehicles, automobiles or machinery as a se",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process",
+    "temporary"
+   ],
+   "weight": 8,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 40,
+   "snippet": "35 2. When the area ceases to be used as a landfarming site. 3. When the applicant’s land farming permit issued pursuant to KRS Chapter 224 and title 401 of the Kentucky Administrative Regulations by the Natural Resources and Environmental Protection Cabinet has been rescinded, suspended, or revoked. 4. If the information on which the application for Conditional Use permit was granted is proved to be false; or 5. Upon the occurrence of hydrological changes in the landfarming site which affect the site’s capacity for removal or control of contaminates. e. Quarries and gravel pits; provided that any building housing power or power producing machinery or equipment shall conform to the building setback requirements of the Zoning Ordinance/Resolution, and when adjacent to a residential or agricultural zone, shall be located to provide a minimum side and rear yard of 50 feet. SECTION 3. PROHIB",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 45,
+   "snippet": "40 SECTION 5. SIDE AND REAR YARDS A. All buildings (except unattached one - story buildings o f accessory uses) shall have the following yard space: REAR AND SIDE YARD REQUIREMENTS ----------------------------------------------------------------------------- Rear Yard Side Yard Min. Both Sides One Side SF District 25’ 20’ 10’ MF District 25’ 15’ 7 ½’ 1 GF District 25’ 50’ 25’ 1 All buildings in the MF and GF District having 3 or more units shall have a side yard equal to one - half of the height of the building. In the MF District, all buildings containing more than two dwelling units shall have a minimum side yard of 10 feet. Uses permitted by Conditional Use shall have a minimum side yard of 10 feet. B. Unattached one - story buildings of accessory use, unless there is a party wall, shall have the following space to the lot line. REAR YARD DEPTH: 6 Feet SIDE YARD DEPTH: 5 Feet SECTION ",
+   "tags": [
+    "sign",
+    "dimension",
+    "prohibited",
+    "billboard"
+   ],
+   "weight": 8,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 84,
+   "snippet": "79 1. All variance applications must be accompanied by a survey prepared by a surveyor licensed in Kentucky locating existing buildings and property boundary lines and new or intended new structures shall be shown by broken lines. Inspection of the location shall be made before the date of the public hearing by the Administrative Official. (i) The concurring vote of 3 members of the Board shall be required to grant a variance. A pass vote, which is cast on any matter before the Board of Adjustment, shall have no force or effect and shall not count as a vote with the majority of votes cast. c. The Board does not possess the power to permit a use p rohibited by this ordinance. iv. Notice Requirements a. When a Conditional Use hearing is scheduled before the Board of Adjustment, or Planning Commission as empowered by the Zoning Ordinance/Resolution under this Zoning Ordinance, the following",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 8,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Residential Permit Fee Schedule Per Square foot & Minimum Fees *New Residential/Single Family - Minimum Fee of $400.00 or 13 cents, whichever is larger. *Duplex/multi - family - Flat Fee - $300.00 per unit *Residential Remodel - Under 601 square feet $285.00 / 601 square feet and over will be calculated the same as a new residential permit *Residential Detached Accessory buildings (Garages with no Living Space) - Minimum Fee of $225.00 or 11 cents, whichever is larger. *Decks/Porches/Etc. over 30” in height - $285.00 *Miscellaneous/One - trip Inspections - $85.00 Flat Fee *Fences over 7Ft in height - $285.00 *In - Ground Pools - $125.00 (Barrier Requirement Inspection Only) To issue a permit, you must: • Submit plans that include foundation plan and floor plan, along with the building permit application and fees. Once this is done you will then need to contact the building inspector befo",
+   "tags": [
+    "fee",
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "5eb0226aad97f4060541e10803c4e085bfb558750b153df2d3690e012e443ef0",
+   "source_document_id": null,
+   "source_title": "5eb0226aad97f4060541e10803c4e085bfb558750b153df2d3690e012e443ef0.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/07/scottsville-residential-permit-application-2025.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "iv SECTION 1. CREATION AND APPOINTMENT ................................ ................................ .................. 74 4 SECTION 2. APPEALS: HOW TAKEN ................................ ................................ ............................... 74 4 SECTION 3. POWERS ................................ ................................ ................................ ....................... 74 4 ARTICLE XV ................................ ................................ ................................ ................................ .................. 82 2 AMENDMENT PROCEDURE ................................ ................................ ................................ ................. 82 2 SECTION 1. APPLICATION PROCESS ................................ ................................ ............................. 82 2 ARTICLE XVI ................................ ......",
+   "tags": [
+    "illumination",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "5 SECTION 4. MINIMUM LOT AREA No lot shall be created or developed which does not have at least ½ half of the minimum lot size for the zoning district w h ere located above the 100 - year frequency flood level. SECTION 5. REAR DWELLINGS PROHIBITED No building in the rear of a main building on the same lot may be used for residential purposes, except for domestic employees of the occupants of the main buildings. SECTION 6. PLANS FILED, BUILDING PERMITS In any case where plans and specifications have been approved to the extent required by law prior to the effective date of this Zoning Ordinance, which plans and specifications are for a building or Structure which would conform with the Zoning Regulations effective at the date of such filing, but not with the regulations of this Ordinance, a Building Permit for such building or Structure shall be issued; provided, however, that such permit",
+   "tags": [
+    "area",
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "6 for each dwelling unit, then said garage or carport shall count as one space. ii. Hotels, Motels and Tourist Accommodations – one space per bedroom. iii. Places of Public Assembly – one space for each 3 seats available at maximum capacity. iv. Industrial Plant – one space for each 5 persons employed or intended to be employed at said industrial plant for which the parking is provided. v. General Business District – one space for each 300 square feet of Gross Floor Area. vi. Day Care Center for Children – one space for each 420 square feet of Gross Floor Area exclusive of kitchen and bathrooms. vii. Hospitals – one space for each 4 authorized beds or beds in use, whichever is greater, plus 1 space for each 1,000 square feet of Gross Floor Area. viii. Medical Offices, Health Clinic and Apothecaries – one space for each 200 square feet of Gross Floor Area. ix. Light Industrial District – ",
+   "tags": [
+    "area",
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "7 intersection, any S tructure, fences, or shrubs shall conform with the limitations of the applicable Sight Distance triangle as follows: i. Street Intersections – No obstruction to vision will be permitted within the triangular area formed by a straight line connecting the points on the center lines of the street at ninety (90) feet from their intersections. ii. Alley or driveway intersecting with a street – No obstruction to vision will be permitted within the triangular area formed by a straight line connecting the points on the pavement edges of the street and alley/driveway at 20 feet on the street from the alley/driveway and 10 feet on the alley/driveway from the street. iii. Alley or Driveway intersecting with an Alley – No obstruction to vision will be permitted within the triangular area formed by a straight line connecting the points on the pavement edges of the alley/driveway",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 17,
+   "snippet": "12 D. If all requirements of this ordinance are met, then such permit shall be issued. E. If all requirements of this ordinance are not met, then the permit shall not be issued by this Commission. SECTION 18. WIRELESS TRANSMITTING STATIONS A. Characteristics. Wireless Transmitting Stations (Telecommunications facilities) includes all devices, equipment, machinery, structures or supporting elements necessary to produce non - ionizing electromagnetic radiation within the range of frequencies from 100 KHz to 300 GHz and operating as a discrete unit to produce a signal or message. Facilities may be self - supporting , guyed, or mounted on poles, other structures, light posts, power poles or buildings. Facilities shall also include intertie and interconnection translators, connections from over - the - air to cable, fiber optic or other landline transmission system. B. Accessory Uses. Accesso",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 22,
+   "snippet": "17 SECTION 4. SEVERABILITY A. Invalidation i. Should any Section, sentence, clause, phrase, or word of this Zoning Ordinance be held invalid or unconstitutional by a Court of competent jurisdiction of either the Commonwealth of Kentucky or the United States, such decision shall not affect, impair, or invalidate the validity of the remaining parts of this Zoning Ordinance which can be given effect without the invalid provision. B. Prejudicial Application i. If any Section, sentence, clause, phrase, or word of this Zoning Ordinance be held invalid or unconstitutional in its application to a particular case, such decision shall not affect or prejudice its application to other cases. SECTION 5. LAWFUL PRESUMPTION There shall be a conclusive presumption when an Enforcement Officer or the Planning Commission authorizes regulatory action, that such officer or board would not have authorized suc",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 27,
+   "snippet": "22 boarding or rooming house, motel, hotel, hospital, or other accommodations used for transient occupancy. DWELLING, SINGLE - FAMILY: A detached Building designed for, or occupied exclusively by, one family. DWELLING, GROUP FAMILY: A dwelling unit occupied as a single housekeeping unit by a small number of unrelated individuals. The primary purpose of the group home is to provide a family - like setting. This shall not be construed as a group home for the disabled as they are afforded protections by the Fair Housing Amendments Act of 1988. DWELLING, MULTI - FAMILY: A dwelling unit within a building containing 2 or more dwelling units. DWELLING UNIT: One or more rooms connected , constituting a separate, independent housekeeping establishment with separate toilets and containing independent cooking and sleeping facilities for Owner occupancy, rental or lease on a weekly, monthly or longe",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 32,
+   "snippet": "27 PREMISES: A general term meaning part or all of any lot or part or all of any Building or Structure or group of buildings or structures located thereon. PRINCIPAL STRUCTURE: A Structure in which is conducted the principal activity or use of the lot on which it is situated. In any district, which permits residential uses, the dwelling unit shall be deemed to be the Building on the lot. QUALIFIED MANUFACTURED HOME: a manufactured home that meets all of the following criteria: A. Is manufactured on a date not to exceed five (5) years prior to the date of installation and has all parts that operate only during transport removed; B. Is affixed to a permanent foundation and is connected to the appropriate facilities and is installed in compliance with KRS 227.570; C. Has a width of at least twenty (20) feet at its smallest width measurement or is two (2) stories in height and oriented on th",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 39,
+   "snippet": "34 any street or thoroughfare or within 25 feet of any adjoining public or private property. f. A 50 - foot setback with protective screening or fencing shall be required on property boundaries adjacent to a public right - of - way. These property boundaries adjoining private property shall require a setback of 25 feet and protective fencing. viii. Childcare centers; nurseries; day care centers and kindergartens. ix. Landfarming or land spreading of any solid waste or special wastes as defined in KRS Chapter 224, and all administrative regulations under authority of this chapter, may be established and maintained in an agricultural district as a Conditional Use in accordance with the following: a. Any Conditional Use permit granted shall be conditioned upon the granting and continuation of a solid waste permit pursuant to KRS Chapter 224 and shall become effective on the date the solid w",
+   "tags": [
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 44,
+   "snippet": "39 feet. Every kitchen shall have not less than 50 square feet of floor area. Staff quarters may be added. c. Habitable rooms except kitchens shall be not less than 7 feet in any horizontal dimension. d. Every dwelling unit shall be provided at least one water closet, lavatory, and a bathtub or shower for every six persons. e. Each dwelling unit shall be provided with a kitchen area and every kitchen area shall be provided with a sink of approved nonabsorbent material. Grease Traps shall be required for each kitchen unit. f. Every dwelling unit shall conform to all other applicable codes and ordinances. ii. Access: a. Vehicular access shall be provided to the property from an abutting street or Alley. b. Driveways shall be provided for convenient access to the living area. c. One parking space shall be provided for each individual group home resident and staff person. iii. Light and Vent",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 54,
+   "snippet": "49 SECTION 6. MINIMUM SPACE AREA AND WIDTH A. The minimum width at the Building Line for a single - family Manufactured Home shall be 50 feet. B. The minimum lot size shall be 5000 square feet. C. Manufactured Homes shall be separated from each other and from any building by at least 20 feet. D. Any Accessory Structure whether attached or detached, such as an awning, cabana, storage cabinet, carport, windbreak, and porch shall be separated from any other Manufactured Home or building by at least 20 feet. SECTION 7. MINIMUM OPEN SPACE AREAS A. In each Manufactured Home Park there shall be provided one or more areas, which shall be easily accessible to all park residents. The design criteria for the Open Space shall be as follows: i. The size of such Open Space area shall be equal to a minimum of 400 square feet for each Manufactured Home. ii. The Open Space area shall be so located as to ",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 61,
+   "snippet": "56 ARTICLE X LIGHT INDUSTRIAL DISTRICTS (I - 1) SECTION 1. USES PERMITTED A. The following uses shall be permitted in the Light Industrial District: i. Any use permitted in the General Business District. ii. Wholesale distribution or sales, storage or warehouse, building material yard, cabinet making, carpenter shop, ice plants, printing or engraving plants, trucking terminals, shops of general trade, machine shops, welding shops, automobile body shops, sales of feed, sales of grain and sales of agricultural machinery or supplies. iii. Sexually Explicit Entertainment Activity(ies) or Sexually Explicit Entertainment Establishment as defined in City of Scottsville Ordinance 685 - 01. SECTION 2. REQUIRED LOT AREA AND YARD AREA A. Minimum lot size ¼ of one acre or more if connected to a public sanitary sewage disposal system .7 of one acre or more if connected to an on - site sanitary sewage",
+   "tags": [
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 64,
+   "snippet": "59 SECTION 3. PROHIBITED USES AND STRUCTURES Any residential use, Manufactured Home Park or Manufactured Home shall not be permitted in this district. SECTION 4. LOT AREA AND YARD AREA A. Minimum lot size shall be 5,000 square feet. B. No side or rear setbacks, other than meeting building and fire codes, if located adjacent to business or industrial districts. On lots adjacent to a residential zone, all buildings shall be located to provide a minimum side yard of 50 feet on the side adjacent to the residential district. Streets or public rights - of - way 30 feet or more in width may be included as the side yard requirement of this subsection. SECTION 5. HEIGHT No building shall exceed 70 feet in height. SECTION 6. REQUIREMENT FOR SANITARY SEWER Either a public sanitary sewer or a private package sanitary sewage system approved by the Health Department shall be available for property in ",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 80,
+   "snippet": "75 other administrative official in carrying out or enforcement of any provision of this ordinance, and for interpretation of the Zoning Map. The concurring vote of 3 members of the Board shall be necessary to reverse or modify any order, decision, or determination of the Administrative Official. A pass vote, which is cast on any matter before the Board of Adjustment, shall have no force or effect and shall not count as a vote with the majority of votes cast. b. In reviewing an administrative appeal, the Board of Adjustment shall consider all technical evaluations, all relevant factors, all standards specified in other Sections of this Ordinance, and: 1. The danger to life and property due to flooding or erosion damage. 2. The danger that storage materials may be swept onto other lands to the injury of others. 3. The danger that storage materials may be swept into the underground stream ",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 91,
+   "snippet": "86 in conformance with these provisions shall constitute a breach of agreement enforceable by the Planning Commission or appropriate legislative body. B. The Binding Elements placed on the general development plan shall be strictly complied with and be enforceable in the same manner as any of the elements of this Zoning Ordinance/Resolution. SECTION 3. DEVELOPMENT PLAN REQUIREMENTS A. General Development Plan i. A general development plan shall be filed with the application for an amendment to the official Zoning Maps. ii. The general development plan filed with an application for an amendment to the official Zoning Maps shall be considered as a binding element of the zoning map amendment. iii. The above provision notwithstanding, where property is already in use for single family residence, a general development plan is not required to accompany an application for an amendment to the Zo",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 97,
+   "snippet": "92 SECTION 10. IMPLEMENTATION OF DEVELOPMENT PLAN AND ZONING DISTRICT REGULATIONS A. Building Permits: i. Construction or the issuance of building permits for improvement on lands shall occur only in conformance with the Binding Elements of the general development plan (including the development plan expiration date) which has been approved by the Planning Commission. ii. Construction or the issuance of building permits for improvements on lands shall occur only in conformance with the Binding Elements of that portion of a detailed development plan (including the development plan expiration date) which has been approved by the Planning Commission. iii. Building permits issued in conflict with the Binding Elements of the appropriate development plan approved by the Planning Commission or in conflict with other applicable requirements of this Ordinance/Resolution shall be void and of no ef",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 98,
+   "snippet": "93 B. The Planning Commission as a condition to the granting of any zoning map amendment, shall require that substantial construction be initiated within 5 years of the date of any final action upon the zoning map amendment as defined in this Zoning Ordinance. If such construction is not initiated within the said 5 - year period, the Planning Commission shall initiate an application to revert the zoning map designation to its previous designation. Any action to revert the Zoning Map amendment to its previous zoning classification which originates because of the provisions of this section of the Zoning Ordinance, shall be taken in the same manner as any other Zoning Map amendment. Failure of the Planning Commission to commence action to revert the Zoning Map classification immediately after 5 years shall not prevent the Commission from taking such action later . SECTION 14. TIME LIMIT FOR",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 102,
+   "snippet": "97 ARTICLE XI X NONCONFORMITIES SECTION 1. INTENT If, within the districts established by this Ordinance or amendments that may be later adopted, there exists lots, structures and uses of land and structures which were lawful before this Ordinance was passed or amended, but which would be prohibited, regulated, or restricted under the terms of this Ordinance or future amendment. It is the intent of this Ordinance to permit these nonconformities to continue until they are removed, but not to encourage their survival. It is further the intent of this ordinance that nonconformities shall not be enlarged upon or expanded, nor be used as grounds for adding other structures or uses prohibited elsewhere in the same district. SEC TION 2 . NONCONFORMING STRUCTURES Where a lawful structure exists at the effective date of adoption or amendment of this ordinance that could not be built under the ter",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 8,
+   "snippet": "3 D. Non - conforming Uses of Structures or of Structures and Premises in Combination Where at the time of passage of this Zoning Ordinance or amendments, lawful use involving individual structures, or of Structure and premises in combination, exists which would not be permitted in the district under the terms of this Zoning Ordinance, the lawful use may be continued so long as it remains otherwise lawful, subject to the following provisions: i. No Structure, or Structure and premises in combination, devoted to a non - conforming use shall be enlarged, extended, constructed, reconstructed, moved or structurally altered except in changing the use of the Structure to a use permitted in the district in which it is located. ii. Any Structure, or Structure and land in combination, in or on which a non - conforming use is superseded by a permitted use, shall thereafter conform to the regulatio",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 9,
+   "snippet": "4 If two or more lots or combination of lots and portions of lots with continuous Frontage in single ownership are of record at the time of passage or amendment of this Zoning Ordinance and if all or parts of the lots do not meet the requirements established for lot width and area, the lands involved shall be considered to be an undivided parcel for the purposes of this Zoning Ordinance and no portion of said parcel shall be used or sold in a manner which diminishes compliance with lot width and area requirements established by this Zoning Ordinance nor shall any division of any parcel be made which creates a lot with width or area below the requirements stated in this Zoning Ordinance. F. Repairs and Maintenance of Non - conforming Uses i. On any non - conforming Structure or portion of a Structure containing a non - conforming use, work may be done in any period of 12 consecutive month",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 29,
+   "snippet": "24 LOT LINE, SIDE: Any Lot Line other than a front or rear lot line. LOT OF RECORD: A Lot that (a) exists as shown or described in a plat of record, (b) is described in a deed fully executed, including the acknowledgement of all signatures, prior to the effective date of the Scottsville - Allen County Subdivision Regulations, or, (c) is described in a deed placed of record prior to the effective date of the Scottsville - Allen County Subdivision Regulations, or, (d) has been previously divided by public roadway that has not been re - described by a plat or by deed recorded in the office of the Allen County Clerk after the effective date of the Scottsville - Allen County Subdivision Regulations. (Amended 10/23/00) LOT WIDTH: The horizontal distance between the side lines of a Lot measured at right angle to its depth along a straight line parallel to the front lot line at the minimum requi",
+   "tags": [
+    "dimension",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 30,
+   "snippet": "25 F. A continuous, permanent masonry foundation system, not pierced except for required ventilation and is installed under the home. G. The tongue axles, transporting lights, and removable towing apparatus are removed after placement on the lot and before occupancy. H. The Structure is no more than 3 feet off the ground at its highest point. I. Structural additions or alterations, which have been made to the dwelling unit, were made in accordance with all local ordinances and regulations. MANUFACTURED HOME CLASS B: A single - family residential dwelling unit constructed in accordance with the Federal Manufactured Housing Construction and Safety Standards (Title 42 of the United States Code) after June 15, 1976, in an offsite manufacturing facility. The Manufactured Home is intended for installation or assembly at the building site as a permanent Structure with transport features removed",
+   "tags": [
+    "dimension",
+    "illumination",
+    "temporary",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 38,
+   "snippet": "33 i. Airports and landing fields, provided further that the location, size and plans for such airport or aircraft landing field and its operational features are approved by all state or federal agencies having jurisdiction. ii. Cemeteries, crematories, columbaria, mausoleums, and animal burial grounds; provided however, that such establishment conforms to the minimum distance requirements of Ordinance. iii. The industrial - scale raising and feeding of animals, including poultry, where the industrial - scale raising and feeding of animals is the primary purpose of the operation; provided however, that the Applicant meets all the Animal Feeding Operations Surface Water Standards enacted by the Planning Commission. iv. Disposal of garbage or refuse. v. Public and private sewage disposal plants. vi. Wireless transmitting stations. vii. Travel trailer parks and campgrounds subject to the fo",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 51,
+   "snippet": "46 G. PARKING REGULATIONS Two off - street parking spaces shall be provided for each Manufactured Home lot. H. SEWER REQUIREMENTS All Manufactured Homes shall be connected to the public sanitary sewage system or an on - site sanitary sewage disposal system approved by the Health Department. I. WATER REQUIREMENTS All Manufactured Homes shall be connected to the public water supply system. J. STREET ACCESS AND DESIGN STANDARDS i. General Requirements: The Manufactured Home Subdivision shall be located with direct to a public street and shall have a minimum of 50 feet of Frontage. Entrances and exits for the Manufactured Home subdivisions shall be designed for safe and convenient vehicular to and from abutting public streets. All traffic into and out of the Manufactured Home Subdivision shall only be through entrances and exits approved under the provisions of this article with a maximum of",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 79,
+   "snippet": "74 ARTICLE XI V BOARD OF ADJUSTMENTS SECTION 1. CREATION AND APPOINTMENT A. A board of adjustment is hereby created which shall be known as the Scottsville Board of Adjustments, in accordance with KRS Chapter 100. The board shall have powers, duties and responsibilities set forth in KRS Chapter 100. B. The board of adjustment shall consist of 5 citizen members, all of whom must be citizen members and no more than 2 members of whom may be citizen members of the Planning Commission. 2 of the members shall be county members and the remaining 3 members shall be city members. The Mayor of the City of Scottsville shall appoint the city members subject to approval of the respective legislative bodies. C. Subject to the provisions of KRS 100.217, the terms of office shall be 4 years ending on June 30 of the designated year. The Board of Adjustment shall otherwise be organized and operated in acc",
+   "tags": [
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 82,
+   "snippet": "77 imposed in addition to those imposed in the zoning regulation. (ii) That the use will not contribute toward an overburdening of public services such as streets, fire protection, ambulance service or utilities. (iii) That the use will not result in increased traffic congestion, additional parking problems, substantial increase in population Density, environmental problems, or constitute a nuisance. (iv) That the use is a matter of public need or convenience. (v) That the use is otherwise in agreement with the Zoning Ordinance. 5. The concurring vote of 3 members of the Board of Adjustment shall be necessary to grant a Conditional Use. A pass vote, which is cast on any matter before the Board of Adjustment, shall have no force or effect and shall not count as a vote with the majority of votes cast. 6. A Conditional Use Permit will be required for any facility or operation providing chil",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 83,
+   "snippet": "78 Certificate of Occupancy. There shall be no construction or alteration of any facility to be used as a childcare center, nursery, day care center or kindergarten until approval of such facility has been granted by the Board of Adjustment under this section. (iv) Adequate and safe on - site parking, loading, and unloading areas and driveways providing for safe ingress and egress with backing into the street specifically prohibited. (v) Outdoor play area, which lies within or adjoins any Residential zone, shall be buffered by landscaping or a solid privacy fence. The Board of Adjustment may set hours or otherwise limit outdoor play times for any facility located within a Residential zone or adjacent to a residential Structure. iii. Variance a. The Board shall have the power to hear and decide on applications for variances. The Board may impose any reasonable conditions or restrictions o",
+   "tags": [
+    "prohibited",
+    "process",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 89,
+   "snippet": "84 B. Applications for Variances or Conditional Uses and may be filed concurrently with the application for zoning map amendment on the same property to be considered by the Planning Commission for a zoning map amendment. i. In the event the Applicant elects to file for a Variance or Conditional Use under this Zoning Ordinance, the Planning Commission shall hold the public hearing concurrently with the zoning map amendment. In the event the Applicant fails to file for a Variance or Conditional Use concurrently with the zoning map amendment application, then they shall file an application with the Board of Adjustment for the Variance or Conditional Use. ii. Each requested Variance or Conditional Use filed under this section shall be considered as separate applications and shall otherwise be administered, advertised and handled in accordance with the requirements of this Zoning Ordinance a",
+   "tags": [
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 92,
+   "snippet": "87 ii. When a detailed development plan is required in the Binding Elements of the general development plan may be conceptual in nature with more specific aspects of these elements designated on the detailed development plan when submitted. C. General Development Plan Alternative i. The Planning Commission may accept a preliminary subdivision plan in lieu of a general development plan for proposed Zoning Map amendments. SECTION 4. PUBLIC NOTICE A general development plan concerning this amendment to the official Zoning Map may be filed by the Applicant up to 12 days prior to the date of the public hearing before the Planning Commission. SECTION 5. ELEMENTS OF DETAILED DEVELOPMENT PLAN A. When a detailed development plan is required by this Zoning Ordinance the Development Plan shall contain the following information: i. Name of development, name and addresses of owners, developers, engin",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 93,
+   "snippet": "88 ix. Copy of proposed property owner’s association covenant or master deed or restrictions if applicable. x. Lot size and location. xi. Height, floor area and arrangement of proposed buildings or structures; and number of dwelling units. xii. Location of all existing buildings, structures, and parking. xiii. Boundary survey including area and bearings and dimensions of all exterior property lines. xiv. When mixed uses are proposed, show location of these uses by general type, i.e., commercial, industrial, office and residential. xv. Existing tree masses, significant rock outcroppings, streams, flood plains, and other natural features. xvi. Provisions for landscaping if applicable. xvii. Recreational and Open Space area if applicable. xviii. Proposed stages of development if applicable, and the anticipated time required to develop each stage. xix. Marketing or traffic study if applicabl",
+   "tags": [
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Scottsville - Allen County Residential Building Permit Application Scottsville - Allen Co. Planning Commission 201 West Main St. Suite 202 Scottsville, KY 42164 270 - 237 - 4180 Email : CLERKSACPC@GMAIL.COM RESIDENTIAL PLAN REVIEW & INSPECTION FEE WORKSHEET PERMIT INF OR MATION Applicant _ ___________________________________________ Company ___________________________________________ Address ____________________________________ City ________________________ _ State _________ _ Zip ____________ Phone _____________________________________ _ Email ________________________________________________________ Applicant (check ALL that apply) Owner Contractor Other * NOTE: The Applicant is the point of contact and responsible for coordinating inspections with the Building Inspector. PROJECT INFORMATION Project Address _______________________________________________________________ Zip Code _______",
+   "tags": [
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "5eb0226aad97f4060541e10803c4e085bfb558750b153df2d3690e012e443ef0",
+   "source_document_id": null,
+   "source_title": "5eb0226aad97f4060541e10803c4e085bfb558750b153df2d3690e012e443ef0.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/07/scottsville-residential-permit-application-2025.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "ii ARTICLE V ................................ ................................ ................................ ................................ ....................... 37 RESIDENTIAL DISTRICTS (SF, MF, and GF) ................................ ................................ .......................... 37 SECTION 1. USES PERMITTE D ................................ ................................ ................................ ........... 37 SECTION 2. CONDITIONAL USES ................................ ................................ ................................ ...... 37 SECTION 3. ACCESSORY BUILDINGS ................................ ................................ .............................. 37 SECTION 4. MULTI FAMILY BUILDING REQUIREMENTS ................................ ................................ .. 38 SECTION 5. SIDE AND REAR YARDS ................................ ..",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "1 ARTICLE I GENERAL PROVISIONS SECTION 1. ZONING AFFECTS EVERY STRUCTURE OR USE No Structure or land shall hereafter be used, and no Structure or part thereof shall be erected, moved or altered, unless for a use expressly permitted by and in conformity with the regulations herein specified for the district in which it is located, except that any Structure damaged or destroyed may be restored if such Structure does not involve a non - conforming use. SECTION 2. NON - CONFORMITIES A. Intent Within the districts established by this Zoning Ordinance or amendments that may later be adopted there exist lots, structures and uses of land and structures which were lawful before this Zoning Ordinance was passed or amended, but which would be prohibited, regulated, or restricted under the terms of this Zoning Ordinance or future amendment. It is the intent of this Zoning Ordinance to permit these n",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45",
+   "source_document_id": null,
+   "source_title": "87d906ac7d353b99e923fd9380e65dd9619ef539ee318f85f24598a250a3cc45.pdf",
+   "official_url": "https://scottsvilleallencountyplanningandzoning.com/wp-content/uploads/2025/06/zoning-ordinance-06-2025updatetoc.pdf"
+  }
+ ]
+}

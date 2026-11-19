@@ -1,0 +1,77 @@
+{
+ "jurisdiction_id": "6add7febccc37e05c3556fb9",
+ "jurisdiction_name": "Oak Harbor",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "I also understand once a variance has been granted, it shall not be withdrawn or changed unless there is a change of circumstances, or if, after the expiration of six (6) months, no construction has taken placed in accordance with the terms and conditions for which the variance was granted, the Zoning Inspector shall give a notice in writing, and 30 days thereafter the variance shall be deemed null and void and all regulations governing the premises in questions shall revert to those in effect before the variance was granted. ________________ _____________________________ Date Applicant Signature ------------------------------------------------------------------------------------------------------------ (For Official Use) Date Application Filed___________________________ Fee Paid $_______________ Received By: ____________________ Date: __________ Check/Cash Amt. ________ Fiscal Officer D",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "aa5c55f56da205046416d84a43eca2575142e6a1c4ec0ca26d1853048567a4ef",
+   "source_document_id": null,
+   "source_title": "aa5c55f56da205046416d84a43eca2575142e6a1c4ec0ca26d1853048567a4ef.pdf",
+   "official_url": "https://www.oakharbor.oh.us/Document_Center/Department/Zoning/Variance_Application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Permit No. ----- APPLICATION FOR ZONING PERMIT Village of Oak Harbor, Ottawa County, Ohio 146 N. Church St., P.O. Box 232 (419) 898-5561 www.oakharbor.oh.us The applicant hereby acknowledges the permit shall expire and may be revoked if work has not begun within (1) year or substantially completed within (2-1/2) years per §153.521 Village Code of Ordinances. The Zoning Administrator/Inspector shall either approve or disapprove the application within 30 days after the receipt of the application §153.522 (A). All fees shall be paid at the time of application. The undersigned hereby applies for a zoning permit for the following use, to be issued on the basis of the representations contained herein, all of which applicant says are true: 1. 2. 3. Property Owner Contact No. ------------ ---------- Email Applicant (Occupant) Email Address ---------------- Contact No. ----------- ---------- Addr",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "cf58f987d23afc676b09a07ea998b316628f756de48492deeff70649d7bc6cdf",
+   "source_document_id": null,
+   "source_title": "cf58f987d23afc676b09a07ea998b316628f756de48492deeff70649d7bc6cdf.pdf",
+   "official_url": "https://www.oakharbor.oh.us/Application%20for%20Zoning%20Permit%20FILLABLE.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CONDITIONAL USE APPLICATION Village of Oak Harbor, Ottawa County, Ohio Application No. _________________ Name__________________________________ Phone Number__________________ Address_________________________________________________________________ Cell_________________ Email _____________________________________________ Legal Description of Property: Subdivision ____________________________________ Section __________ Block __________ Lot __________ Zoning District ____________ Description of Existing Use_________________________________________________ Description of Proposed Use________________________________________________ ________________________________________________________________________ ________________________________________________________________________ ________________________________________________________________________ 1. Attach a narrative statement evaluating the",
+   "tags": [
+    "sign",
+    "process",
+    "authority"
+   ],
+   "weight": 5,
+   "source_sha256": "200371252c045161ae573b4165cfee63fb1577a0f406fdd3e8ca5d08adbb8b77",
+   "source_document_id": null,
+   "source_title": "200371252c045161ae573b4165cfee63fb1577a0f406fdd3e8ca5d08adbb8b77.pdf",
+   "official_url": "https://www.oakharbor.oh.us/Document_Center/Department/Zoning/Conditional_Use_Application.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "------------------------------------------------------------------------------------------------------------ (For Official Use Only) Date Application Filed_________________________ Permit Fee: $_______________ Received By: _____________________________ Date: ________ Amount: ________ Fiscal Officer Date of Notices: Newspaper ____________ Adjacent Property Owners ______________ Date of Public Hearing _______________________ Decision: _______________________________________________________________ ________________________________________________________________________ ________________________________________________________________________ Conditions imposed by the Board of Zoning Appeals: ____________________________ ________________________________________________________________________ ________________________________________________________________________ If Denied, reason/reasons f",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "200371252c045161ae573b4165cfee63fb1577a0f406fdd3e8ca5d08adbb8b77",
+   "source_document_id": null,
+   "source_title": "200371252c045161ae573b4165cfee63fb1577a0f406fdd3e8ca5d08adbb8b77.pdf",
+   "official_url": "https://www.oakharbor.oh.us/Document_Center/Department/Zoning/Conditional_Use_Application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "VARIANCE APPLICATION Village of Oak Harbor, Ottawa County, Ohio Application No. _________________ Applicant ______________________________ Contact Number__________________ Address_________________________________________________________________ Legal Description of Property: Subdivision ____________________________________ Section __________ Block ___________ Lot ___________Zoning District ___________ Description of Nature of Variance Requested: __________________________________ _______________________________________________________________________ _______________________________________________________________________ _______________________________________________________________________ _______________________________________________________________________ Plans drawn to scale must accompany this application showing dimensions and shape of the lot, the size and locations of existin",
+   "tags": [
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "aa5c55f56da205046416d84a43eca2575142e6a1c4ec0ca26d1853048567a4ef",
+   "source_document_id": null,
+   "source_title": "aa5c55f56da205046416d84a43eca2575142e6a1c4ec0ca26d1853048567a4ef.pdf",
+   "official_url": "https://www.oakharbor.oh.us/Document_Center/Department/Zoning/Variance_Application.pdf"
+  }
+ ]
+}

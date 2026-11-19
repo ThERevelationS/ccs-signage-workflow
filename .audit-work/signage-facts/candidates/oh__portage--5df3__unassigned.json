@@ -1,0 +1,22 @@
+{
+ "jurisdiction_id": "6adef2e3bd5f54ec1aaf5df3",
+ "jurisdiction_name": "Portage",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "RESERVATION REQUEST FORM I, ( YOUR NAME ) ____ _____________ ______________ __________ ________, residing at ( YOUR STREET ADDRESS ) _____________________________________. I wish to reserve the (circle one only) Portage Village Hall Enright Park Shelter ($ 50 each event) (donations to Park Fund, tax deductible) date(s), time(s) ____________ ____________ ____________ f or either area ____________ ____________ ____________ ____________ ____________ ____________  Return this completed form to a current Portage Village Official or email a copy to VillageofPortage@gmail.com  By signing this form the person(s) above acknowledges understand ing and agree ing to all terms and conditions related to the reserved facility  Areas are to be left in the same condition as you first found them  A minimum of $50 will be assessed to the person(s) responsible for use of the reserved facility for cleani",
+   "tags": [
+    "fee",
+    "illumination"
+   ],
+   "weight": 3,
+   "source_sha256": "1e8f5ac2fa2af1e6209505a9bdfefd82287ab0b57067d3651b8e8f63e84d9006",
+   "source_document_id": null,
+   "source_title": "1e8f5ac2fa2af1e6209505a9bdfefd82287ab0b57067d3651b8e8f63e84d9006.pdf",
+   "official_url": "https://www.voportage.org/images/docs/ReservationForm.pdf"
+  }
+ ]
+}

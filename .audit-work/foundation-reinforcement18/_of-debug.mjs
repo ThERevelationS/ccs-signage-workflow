@@ -1,0 +1,11 @@
+import { chromium } from "playwright-core";
+const browser = await chromium.launch({ executablePath: "C:/Users/BrettHeinlein/AppData/Local/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-win64/chrome-headless-shell.exe", args: ["--disable-gpu","--no-sandbox"] });
+const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+const port = 62111;
+await page.goto(`http://127.0.0.1:${port}/?case=legacy-lengths-only`, { waitUntil: "networkidle" });
+await page.waitForSelector('[data-testid="walls-panel"]');
+await page.locator("button", { hasText: /outline/i }).first().click();
+await page.waitForTimeout(400);
+const els = await page.evaluate(() => [...document.querySelectorAll("*")].map((el) => ({ tag: el.tagName, cls: String(el.className).slice(0,60), right: Math.round(el.getBoundingClientRect().right), sw: el.scrollWidth })).filter((x) => x.right > 392 || x.sw > 392).slice(0,12));
+console.log(JSON.stringify(els, null, 1));
+await browser.close();

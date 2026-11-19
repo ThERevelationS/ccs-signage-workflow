@@ -1,0 +1,46 @@
+{
+  "matches": [
+    {
+      "path": "docs/permitting-continuation-handoff-2026-10-17.md",
+      "line": 169,
+      "text": "- jurisdictionResearchAgent validates sanitized LLM output before return; explicit wrong-state summaries return HTTP 409 SOURCE_IDENTITY_REVIEW_REQUIRED with frontier_review_required."
+    },
+    {
+      "path": "docs/permitting-continuation-handoff-2026-10-17.md",
+      "line": 703,
+      "text": "refreshJurisdiction accepts authenticated-admin discovery_only=true, defer_archive=true, selected_saved_document with exact profile ID/version/name/state/type/document ID/URL. It routes to discoverSelectedSavedDocument, not jurisdictionResearchAgent. That path fetches one selected official page, preserves original frontier/history and guarded document merging, and returns research_attempts=0 / llm_calls=0. No manual research-cap bypass, automatic approval or archive is needed."
+    },
+    {
+      "path": "docs/permitting-continuation-handoff-2026-10-17.md",
+      "line": 769,
+      "text": "Perform bounded current-source discovery for Sharonville's commercial-sign electrical permit issuer and inspection provider through existing refreshJurisdiction/jurisdictionResearchAgent pathways if normal authenticated invocation is available. Inspect fresh source and live dispatch/settings gates first; no admin/manual bypasses or login loops. Preserve separate roles, retain direct official evidence/delegation/effective-date and scope gaps, and advance no coverage count without qualifying evidence. Missing evidence must remain unresolved; do not infer Community Development intake is the issuer or that residential NIC guidance confirms current commercial work. If invocation is unavailable, record the exact access blocker and verified state. Verify, update handoff, checkpoint and stop."
+    },
+    {
+      "path": "docs/permitting-continuation-handoff-2026-10-17.md",
+      "line": 931,
+      "text": "Next one chunk: inspect fresh HEAD/status and current evidence, then collect/reconcile current Sharonville commercial-sign electrical issuer/inspection service-area/delegation evidence using the existing jurisdictionResearchAgent/refreshJurisdiction pathways only where needed. Verify fresh queue/credit controls; no manual bypass, no more than five canonical jurisdictions. Prefer Sharonville as the single bounded locality. Retain official URLs and exact evidence, preserve unknowns and all manual/archived documents. Do not equate the intake department with the issuer or assign legacy NIC identity without exact evidence. No authority approvals, job/client/shared-data writes or frontend publication. If current evidence is unavailable, expose the unresolved gap and advance another necessary prototype function rather than repeating historical proof refinements."
+    },
+    {
+      "path": "docs/permitting-continuation-handoff-2026-10-17.md",
+      "line": 1028,
+      "text": "Inspect fresh HEAD/status, current Phase 10 office-reconciliation source/notes and retained permitting-only office/source evidence. Select a bounded Ohio batch (no more than five canonical jurisdictions if research is needed) and complete one meaningful issuer/inspection reconciliation improvement or evidence batch. Keep electrical permit issuer and inspection provider responsibilities separate; require exact location/service-area/delegation evidence and official sources, retain unknown roles explicitly, and preserve manual/archived documents. Use jurisdictionResearchAgent/refreshJurisdiction only where genuinely needed, first verify live queue/credit controls and obey existing gates without manual bypass. No authority approvals, job/client/shared-data writes or frontend publication. Verify the actual changed roles/evidence and report any count changes only if established from fresh evidence; checkpoint and stop."
+    },
+    {
+      "path": "docs/permitting-phase5-reusable-scanner-2026-10-05.md",
+      "line": 17,
+      "text": "| Locality/office identity → official source | Existing canonical profiles, office/coverage review, jurisdictionResearchAgent | Comprehensive OH/KY identity inventory; reviewed external referrals |"
+    },
+    {
+      "path": "docs/permitting-office-research-prototype-2026-10-14.md",
+      "line": 5,
+      "text": "Connected the existing office checklist to the real jurisdictionResearchAgent prompt/response, refreshJurisdiction persistence and selector display. One existing research AI call now requests all seven roles: sign permit, zoning, building, electrical permit issuer, electrical inspection provider, right-of-way and historic/design review. Electrical fields include applications/portals, fees, contractor/submittal requirements, circuit/illuminated-sign applicability, inspection stages/scheduling/lead times/prerequisites, reinspection and utility release."
+    },
+    {
+      "path": "docs/permitting-office-research-prototype-2026-10-14.md",
+      "line": 9,
+      "text": "Checks: 17/17 focused research/refresh tests passed, focused lint, diff check and one build passed. Actual UI smoke rendered all seven roles and inspection details. Deployed jurisdictionResearchAgent invalid-input smoke returned expected 400 after authenticating Brett/admin, without invoking AI or accessing clients. Live entity schema includes office_research. The schema readback verifies the new field, and the invalid-input smoke verifies that the deployed researcher is reachable. That response does not independently prove the new prompt/shared module is the deployed version. Updated live research/refresh execution and a real paid AI research run remain untested."
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 8
+}

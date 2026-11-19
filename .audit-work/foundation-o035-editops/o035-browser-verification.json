@@ -1,0 +1,22 @@
+{
+  "suite": "verify-o035-browser",
+  "scenarios": [
+    "A: selection chrome — handles, toolbar, typed bar, dims",
+    "B: handle resize = one command + undo/redo",
+    "C: rotate handle = snapped 15° step + undo",
+    "D: keyboard rotate burst = one command",
+    "E: object snap guides + snapped commit",
+    "F: typed coordinates — in / ft / invalid rejection",
+    "G: align — multi channel, one command, honest refusal + real undo",
+    "H: distribute — equal gaps, one command, undo",
+    "I: delete — hook plan via button + Delete key",
+    "J: duplicate — plan via button + Ctrl+D",
+    "K: read-only gating — selection lives, edit chrome gone",
+    "L: uniform grid snap",
+    "M: multi-drag — one multi commit + undo"
+  ],
+  "count": 13,
+  "status": "PASS",
+  "viewport": "1280x900",
+  "engine": "chromium (system chrome channel)"
+}

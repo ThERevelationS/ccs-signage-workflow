@@ -10,13 +10,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Edit, Plus, Wrench, Link2, Settings2, GripVertical } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { loadAllEntityRows } from '@/components/estimator/loadAllEntityRows';
+import { loadAllEntityRows } from '@/lib/loadAllEntityRows';
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from '@/components/estimator/builder/builderEntityPersistence';
 import { replaceRelationshipIdsIfUnchanged } from '@/components/masterInventory/equipmentPersistence';
 import { reorderFoundationItemsSafely } from './foundationInventoryPersistence';
 import { createInventoryRecordWithRecovery } from '@/components/masterInventory/inventoryPersistence';
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const FoundationInventoryEntity = base44.entities.FoundationInventory;
+const FoundationInventoryEntity = staffEntities.FoundationInventory;
 
 // MultiSelect dropdown component for linking items
 function MultiSelectDropdown({ label, options, selectedIds, onChange }) {

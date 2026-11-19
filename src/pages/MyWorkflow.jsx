@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { useState, useEffect, useRef } from "react";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
+import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
+import { fetchMyWorkflowBundle, fetchMyWorkflowTasks } from "@/components/queues/queueFeedClient";
 import {
   createWorkOrderArrayItemLocator,
   findWorkOrderArrayItemIndex,
@@ -30,13 +32,11 @@ import {
 } from "@/components/workflow/workOrderPersistence";
 import { updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
 import AddTaskDialog from "@/components/workflow/AddTaskDialog";
-import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
-import { staffEntities } from "@/components/staff/staffEntities";
+import LoadErrorBanner from "@/components/LoadErrorBanner";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
+import TrainingSection from "@/components/training/TrainingSection";
 
-const AuthorizedEmail = staffEntities.AuthorizedEmail;
-
-const WorkOrder = base44.entities.WorkOrder;
-const GeneralTask = base44.entities.GeneralTask;
+const GeneralTask = staffEntities.GeneralTask;
 
 const stageColors = {
   estimating: { bg: "#FEF3C7", text: "#92400E" },
@@ -74,7 +74,7 @@ function JobAssignmentInlineRow({ wo, users, descOptions = [], onSaveField, onAs
     <div className="inline-flex items-center gap-0.5 rounded bg-purple-50 px-1" onClick={(e) => e.stopPropagation()}>
       <User className="w-3 h-3 flex-shrink-0 text-purple-500" />
       <Select value={descValue} onValueChange={(next) => { if (next !== descValue) onSaveField(wo, { current_task_description: next }); }}>
-        <SelectTrigger className="h-7 w-40 text-xs border-0 bg-transparent px-1 truncate" title="Task description">
+        <SelectTrigger className="h-7 w-64 text-xs border-0 bg-transparent px-1 truncate" title={descValue || "Task description"}>
           <SelectValue placeholder="Task" />
         </SelectTrigger>
         <SelectContent>
@@ -122,6 +122,7 @@ export default function MyWorkflow() {
   const { currentUser, isRegistered } = useAuth();
   const [workOrders, setWorkOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [allUsers, setAllUsers] = useState([]);
   const [expandedTasks, setExpandedTasks] = useState({});
@@ -138,70 +139,46 @@ export default function MyWorkflow() {
   const [addTaskForWo, setAddTaskForWo] = useState(null);
   const [assigneeConfirm, setAssigneeConfirm] = useState(null);
   const [taskDescriptions, setTaskDescriptions] = useState([]);
-
-  useEffect(() => {
-    loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: 'salesTaskDescriptions', label: 'Sales task descriptions' })
-      .then((s) => setTaskDescriptions((s?.setting_value?.items || []).map((i) => i.text || i)))
-      .catch(() => {});
-  }, []);
   const [editingSipTask, setEditingSipTask] = useState(null);
   const [dropdownConditions, setDropdownConditions] = useState([]);
-  const [stageFilter, setStageFilter] = useState("all");
+  // Stage filter persists per-employee via the workspace blob — local seed
+  // applies instantly, the server value lands once preferences hydrate.
+  const { prefs: workspacePrefs, updatePrefs: updateWorkspacePrefs, loaded: workspacePrefsLoaded } = useWorkspacePreferences();
+  const [stageFilter, setStageFilter] = useState(() => workspacePrefs.workflow?.stageFilter || "all");
+  const stageHydratedRef = useRef(false);
+  useEffect(() => {
+    if (stageHydratedRef.current || !workspacePrefsLoaded) return;
+    stageHydratedRef.current = true;
+    const serverStage = workspacePrefs.workflow?.stageFilter;
+    if (serverStage && serverStage !== stageFilter) setStageFilter(serverStage);
+  }, [workspacePrefsLoaded, workspacePrefs.workflow?.stageFilter, stageFilter]);
 
   useEffect(() => {
     document.title = "My Workflow - Workflow Manager";
   }, []);
 
+  // Mount the first rows immediately and append the rest in idle batches so a
+  // long work list does not block first paint. Appending at the end is safe.
+  const [visibleRows, setVisibleRows] = useState(60);
   useEffect(() => {
-    if (currentUser) {
-      loadMyWorkOrders();
-      loadUsers();
-    }
+    if (visibleRows >= workOrders.length) return;
+    const schedule = window.requestIdleCallback || ((fn) => window.setTimeout(fn, 50));
+    const cancel = window.cancelIdleCallback || window.clearTimeout;
+    const id = schedule(() => setVisibleRows((c) => Math.min(c + 80, workOrders.length)));
+    return () => cancel(id);
+  }, [visibleRows, workOrders.length]);
+
+  useEffect(() => {
+    if (currentUser) loadMyWorkflow();
   }, [currentUser]);
 
-  const loadUsers = async () => {
-    try {
-      const [users, dropdownsSetting] = await Promise.all([
-        loadAllEntityRows({
-          entity: AuthorizedEmail,
-          sort: null,
-          label: "My Workflow authorized users",
-        }),
-        loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
-          settingKey: "dropdownConditions",
-          label: "My Workflow dropdown conditions",
-        }),
-      ]);
-      setAllUsers(users);
-      setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
-    } catch (error) {
-      // Assignee lists are a convenience for the pickers below; a refused
-      // identity read must not take the page down. A rejected session is
-      // reported through the session layer, which reverifies it and reopens
-      // sign-in when it is truly gone.
-      console.error("Error loading authorized users:", error);
-    }
-  };
-
-  const loadMyWorkOrders = async () => {
-    setIsLoading(true);
-    try {
-      const [allOrders, allGeneralTasks] = await Promise.all([
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "My Workflow Work Orders",
-        }),
-        loadAllEntityRows({
-          entity: GeneralTask,
-          query: { completed: false },
-          sort: "created_date",
-          label: "My Workflow general tasks",
-        })
-      ]);
-
+  // My Workflow's mount data arrives as ONE composed queueFeed invoke
+  // (my_workflow feed): the open GeneralTask rows, the AuthorizedEmail
+  // assignee roster, and the two GlobalSettings records this page reads.
+  // The work-order half stays on the shared board snapshot — its heavy task
+  // trees are exactly what queue projections strip. Every feed slice fails
+  // open to the same gateway reads this page ran before.
+  const applyOrderRows = (allOrders, allGeneralTasks) => {
       const userName = currentUser?.full_name || currentUser?.email;
       // Any spelling of "me": full email, full name, first name, email local part.
       const userKeys = new Set([
@@ -294,8 +271,54 @@ export default function MyWorkflow() {
         }));
 
       setWorkOrders([...myOrders, ...myGeneralTasks]);
+  };
+
+  // Mount path: one composed invoke carries the task rows AND the page's
+  // extras — assignee roster and both settings records land in the same
+  // response. Slice failures degrade inside fetchMyWorkflowBundle instead of
+  // reaching this catch, so a failure here is the task/board read only.
+  const loadMyWorkflow = async () => {
+    setIsLoading(true);
+    try {
+      const [allOrders, bundle] = await Promise.all([
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
+          (rows || []).filter((wo) => wo.completed !== true && wo.deleted !== true)
+        ),
+        fetchMyWorkflowBundle(),
+      ]);
+      // Extras land independently of the task rows — the old loadUsers never
+      // depended on the work-order pull, so a failed task read still leaves
+      // the pickers populated.
+      setAllUsers(bundle.users || []);
+      setDropdownConditions(bundle.dropdownConditions?.setting_value?.items || []);
+      setTaskDescriptions((bundle.taskDescriptions?.setting_value?.items || []).map((i) => i.text || i));
+      if (bundle.tasksError) throw bundle.tasksError;
+      applyOrderRows(allOrders, bundle.generalTasks);
+      setLoadError("");
     } catch (error) {
       console.error("Error loading work orders:", error);
+      setLoadError(error?.message || "Your work list could not be loaded.");
+    }
+    setIsLoading(false);
+  };
+
+  // Reload path (mutation conflicts, dialog closes, banner retry): the task
+  // rows and board snapshot refresh; the roster/settings extras mount once
+  // with the bundle and are not re-pulled, same as before.
+  const loadMyWorkOrders = async () => {
+    setIsLoading(true);
+    try {
+      const [allOrders, taskRows] = await Promise.all([
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
+          (rows || []).filter((wo) => wo.completed !== true && wo.deleted !== true)
+        ),
+        fetchMyWorkflowTasks().then((r) => r.generalTasks),
+      ]);
+      applyOrderRows(allOrders, taskRows);
+      setLoadError("");
+    } catch (error) {
+      console.error("Error loading work orders:", error);
+      setLoadError(error?.message || "Your work list could not be loaded.");
     }
     setIsLoading(false);
   };
@@ -329,18 +352,25 @@ export default function MyWorkflow() {
       }
     }
 
-    const saved = await mutateLocatedWorkOrderArrayItem({
-      workOrderId: wo.id,
-      field: "notes",
-      item: task,
-      label: "My Workflow task",
-      mutateItem,
-    });
-    const savedNotes = saved.notes || [];
-    setWorkOrders(prev => prev.map(w => w.id === wo.id
-      ? { ...w, notes: savedNotes, updated_date: saved.updated_date }
-      : w));
-    return savedNotes;
+    try {
+      const saved = await mutateLocatedWorkOrderArrayItem({
+        workOrderId: wo.id,
+        field: "notes",
+        item: task,
+        label: "My Workflow task",
+        mutateItem,
+      });
+      const savedNotes = saved.notes || [];
+      setWorkOrders(prev => prev.map(w => w.id === wo.id
+        ? { ...w, notes: savedNotes, updated_date: saved.updated_date }
+        : w));
+      return savedNotes;
+    } catch (error) {
+      console.error("Work order task update blocked:", error);
+      await loadMyWorkOrders();
+      alert(error?.message || "This task changed in another session. The latest work orders were reloaded.");
+      return null;
+    }
   };
 
   const toggleTaskComplete = async (workOrderId, taskIndex) => {
@@ -691,20 +721,21 @@ export default function MyWorkflow() {
   return (
     <div className="min-h-screen p-6">
       <div className="w-full">
+        <LoadErrorBanner message={loadError} onRetry={loadMyWorkOrders} />
         {/* Header */}
         <div className="clay-card p-3 mb-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
               <User className="w-4 h-4 text-purple-700" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800">My Workflow</h1>
+              <h1 className="text-xl font-bold text-gray-800 whitespace-nowrap">My Workflow</h1>
               <p className="text-gray-500 text-xs">{userName} - {visibleWorkOrders.length} items</p>
             </div>
             <div className="ml-auto flex items-center gap-2">
               <Label className="text-xs text-gray-500">Stage:</Label>
-              <Select value={stageFilter} onValueChange={setStageFilter}>
-                <SelectTrigger className="h-8 w-40 text-xs">
+              <Select value={stageFilter} onValueChange={(v) => { setStageFilter(v); updateWorkspacePrefs("workflow.stageFilter", v); }}>
+                <SelectTrigger className="h-8 w-32 sm:w-40 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -723,9 +754,12 @@ export default function MyWorkflow() {
           </div>
         </div>
 
+        {/* Assigned training — self-fetching section, hidden when empty */}
+        <div className="mb-4 empty:hidden"><TrainingSection /></div>
+
         {/* Spreadsheet Table */}
-        <div className="clay-card p-2 w-full">
-          <table className="w-full border-collapse" style={{ fontSize: '13px' }}>
+        <div className="clay-card p-2 w-full overflow-x-auto">
+          <table className="w-full border-collapse" style={{ fontSize: '13px', minWidth: '760px' }}>
             <thead className="bg-gray-100">
               <tr className="border-b">
                 <th className="px-2 py-2 border-r text-center font-bold text-gray-700" style={{ width: '35px' }}>#</th>
@@ -736,7 +770,7 @@ export default function MyWorkflow() {
               </tr>
             </thead>
             <tbody>
-              {visibleWorkOrders.map((wo, index) => {
+              {visibleWorkOrders.slice(0, visibleRows).map((wo, index) => {
                 const myTasks = getMyTasksForWorkOrder(wo);
                 
                 return (
@@ -757,7 +791,7 @@ export default function MyWorkflow() {
                           <span className="truncate">General Office Task</span>
                         </span>
                       ) : (
-                        <button
+                        <button type="button"
                           onClick={() => setSelectedWorkOrder(wo)}
                           className="text-xs text-left hover:text-blue-600 flex items-center gap-1 font-medium"
                         >
@@ -817,7 +851,7 @@ export default function MyWorkflow() {
                               {item.type === 'task_with_my_items' && (
                                 <div className="p-1 rounded border bg-gray-50 border-gray-200">
                                   <div className="flex items-center gap-1 mb-1">
-                                    <button onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
+                                    <button type="button" onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
                                       {isExpanded ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />}
                                     </button>
                                     <p className="text-xs text-gray-500 italic">↳ {item.task.text}</p>
@@ -851,7 +885,7 @@ export default function MyWorkflow() {
                               {item.type === 'task' && (
                                 <div className={`p-1 rounded border ${item.task.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
                                   <div className="flex items-center gap-1">
-                                    <button onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
+                                    <button type="button" onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
                                       {isExpanded ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />}
                                     </button>
                                     <Checkbox
@@ -872,7 +906,7 @@ export default function MyWorkflow() {
                                             onKeyDown={(e) => { if (e.key === 'Escape') clearEditTask(); }}
                                           />
                                           <div className="flex items-center gap-1">
-                                            <Input type="date" value={editTaskDue} onChange={(e) => setEditTaskDue(e.target.value)} className="h-6 w-32 text-xs" title="Deadline" />
+                                            <CcsDateField value={editTaskDue} onChange={(e) => setEditTaskDue(e.target.value)} className="h-6 w-32 text-xs" title="Deadline" />
                                             <div className="flex-1 min-w-0">
                                               <MultiUserSelectInline users={allUsers} selectedUsers={editTaskAssignees} onSelectionChange={setEditTaskAssignees} placeholder="Assign..." className="h-6 w-full" />
                                             </div>
@@ -955,7 +989,7 @@ export default function MyWorkflow() {
                                             <div key={dIdx} className="flex items-center gap-1 ml-4 text-[10px] group/detail">
                                               <Checkbox checked={d.completed} onCheckedChange={() => toggleDetailComplete(wo.id, item.taskIndex, stIdx, dIdx)} className="h-2 w-2" />
                                               <span className={d.completed ? "line-through text-gray-400" : "text-gray-500"}>{d.text}</span>
-                                              {d.assigned_to && (Array.isArray(d.assigned_to) ? d.assigned_to : [d.assigned_to]).length > 0 && <Badge variant="outline" className="text-[8px] text-blue-600 px-0.5 py-0">→ {(Array.isArray(d.assigned_to) ? d.assigned_to : [d.assigned_to]).map(u => u.split(' ')[0]).join(', ')}</Badge>}
+                                              {d.assigned_to && (Array.isArray(d.assigned_to) ? d.assigned_to : [d.assigned_to]).length > 0 && <Badge variant="outline" className="text-[9px] text-blue-600 px-0.5 py-0">→ {(Array.isArray(d.assigned_to) ? d.assigned_to : [d.assigned_to]).map(u => u.split(' ')[0]).join(', ')}</Badge>}
                                               <Button variant="ghost" size="icon" onClick={() => handleDeleteDetail(wo.id, item.taskIndex, stIdx, dIdx)} className="h-2.5 w-2.5 ml-auto opacity-0 group-hover/detail:opacity-100">
                                                 <X className="w-1.5 h-1.5 text-red-500" />
                                               </Button>
@@ -972,7 +1006,7 @@ export default function MyWorkflow() {
                                              </div>
                                             </div>
                                           ) : (
-                                            <Button variant="ghost" size="sm" onClick={() => setAddingDetailFor({ woId: wo.id, taskIndex: item.taskIndex, subTaskIndex: stIdx })} className="ml-4 h-3 px-0.5 text-[9px] opacity-0 group-hover/subtask:opacity-100"><Plus className="w-1.5 h-1.5" />Detail</Button>
+                                            <Button variant="ghost" size="sm" onClick={() => setAddingDetailFor({ woId: wo.id, taskIndex: item.taskIndex, subTaskIndex: stIdx })} className="ml-4 h-3 px-0.5 text-[9px] hidden group-hover/subtask:inline-flex"><Plus className="w-1.5 h-1.5" />Detail</Button>
                                           )}
                                         </div>
                                       )})}
@@ -987,7 +1021,7 @@ export default function MyWorkflow() {
                                          </div>
                                         </div>
                                       ) : (
-                                        <Button variant="ghost" size="sm" onClick={() => setAddingSubTaskFor({ woId: wo.id, taskIndex: item.taskIndex })} className="h-4 px-1 text-[9px] opacity-0 group-hover:opacity-100"><Plus className="w-2 h-2" />Sub-task</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => setAddingSubTaskFor({ woId: wo.id, taskIndex: item.taskIndex })} className="h-4 px-1 text-[9px] hidden group-hover:inline-flex"><Plus className="w-2 h-2" />Sub-task</Button>
                                       )}
                                     </div>
                                   )}
@@ -997,7 +1031,7 @@ export default function MyWorkflow() {
                               {item.type === 'sip_task' && (
                                 <div className={`p-1 rounded border ${item.item.approved_by ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
                                   <div className="flex items-center gap-1">
-                                    <button onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
+                                    <button type="button" onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
                                       {item.parentItem && (isExpanded ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />)}
                                     </button>
                                     <Checkbox

@@ -1,0 +1,77 @@
+{
+ "results": [
+  {
+   "case": "trio manual: cost/sell/margin cells show markup-derived sell + margin",
+   "ok": true
+  },
+  {
+   "case": "trio tier: sell = snapshot total + acknowledged margin footnote",
+   "ok": true
+  },
+  {
+   "case": "trio tier-equal: no acknowledged footnote when snapshot cost matches",
+   "ok": true
+  },
+  {
+   "case": "trio override: sell = authored override",
+   "ok": true
+  },
+  {
+   "case": "trio engine: engine-resolved sell wins",
+   "ok": true
+  },
+  {
+   "case": "blocked: acknowledged cost shown (saved), sell —, margin —, checklist open w/ blocking",
+   "ok": true
+  },
+  {
+   "case": "held tier: acknowledged sell shows on blocked project; margin vs saved",
+   "ok": true
+  },
+  {
+   "case": "takeoff: itemized per-component rows with quantities",
+   "ok": true
+  },
+  {
+   "case": "takeoff: held item row flags (saved) + Not saved amount",
+   "ok": true
+  },
+  {
+   "case": "checklist: held amounts enumerate non-finite partition buckets",
+   "ok": true
+  },
+  {
+   "case": "checklist: wall-cap-only hold caught by held channel (zero upstream issues)",
+   "ok": true
+  },
+  {
+   "case": "unwired: cost column live, sell —, checklist shows only totals-derived channel",
+   "ok": true
+  },
+  {
+   "case": "unwired + held totals: held channel still enumerates without issues props",
+   "ok": true
+  },
+  {
+   "case": "clean wired project: \"All inputs recorded\" status fires",
+   "ok": true
+  },
+  {
+   "case": "panel: tier-snapshot margin footnote from customer_pricing fields",
+   "ok": true
+  },
+  {
+   "case": "mobile 390px: trio + checklist wrap inside viewport",
+   "ok": true
+  },
+  {
+   "case": "mobile 390px: tier trio + footnote wrap",
+   "ok": true
+  }
+ ],
+ "telemetry": {
+  "foreign": [],
+  "consoleErrors": [],
+  "pageErrors": []
+ }
+}

@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "id": "missing-price-blocks-actions",
+      "ok": true
+    },
+    {
+      "id": "new-unpriced-wall-remains-unknown",
+      "ok": true
+    },
+    {
+      "id": "genuine-zero-rate-saves",
+      "ok": true
+    },
+    {
+      "id": "valid-preview-cannot-relabel-as-acknowledged",
+      "ok": true
+    },
+    {
+      "id": "explicit-save-updates-acknowledged-basis",
+      "ok": true
+    },
+    {
+      "id": "unpriced-inner-wall-blocks-complete-wall",
+      "ok": true
+    },
+    {
+      "id": "invalid-override-cannot-fall-back-to-base",
+      "ok": true
+    }
+  ],
+  "unexpectedNetwork": 0,
+  "unexpectedSdk": 0
+}

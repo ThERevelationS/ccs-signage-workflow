@@ -1,0 +1,12 @@
+FAIL accept-undo-save-bom 1440 Foundation one - Synthetic (material)
+
+0 !== 1
+
+ok invalid-draft-reload-restore 1440
+FAIL accept-undo-save-bom 390 Foundation one - Synthetic (material)
+
+0 !== 1
+
+FAIL invalid-draft-reload-restore 390 No full-page horizontal overflow
+Foundation page browser: 1/4; failed=3
+exit=1

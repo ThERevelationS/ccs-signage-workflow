@@ -9,7 +9,10 @@ import JurisdictionAccuracyAudit from "@/components/admin/JurisdictionAccuracyAu
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
 import JurisdictionRewriteAuthorityAdmin from "@/components/admin/JurisdictionRewriteAuthorityAdmin";
 import PermittingResearchDispatchSettings from "@/components/admin/PermittingResearchDispatchSettings";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import PermittingRulesList from "@/components/admin/PermittingRulesList";
+import CoverageMap from "@/components/permitting/CoverageMap";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function AdminPermittingSettings() {
   const [activeTab, setActiveTab] = useState("batch");
@@ -33,7 +36,7 @@ export default function AdminPermittingSettings() {
     const load = async () => {
       try {
         const res = await loadAllEntityRows({
-          entity: base44.entities.JurisdictionProfile,
+          entity: staffEntities.JurisdictionProfile,
           sort: null,
           label: "Permitting admin jurisdiction catalog",
         });
@@ -63,7 +66,7 @@ export default function AdminPermittingSettings() {
   };
 
   const researchOne = async (jurisdiction) => {
-    const request = await base44.functions.invoke('permittingproxy',
+    const request = await base44.functions.invoke('permittingProxy',
  {
       action: 'create',
       payload: {
@@ -81,10 +84,10 @@ export default function AdminPermittingSettings() {
     const start = Date.now();
     while (Date.now() - start < maxWait) {
       await new Promise(r => setTimeout(r, 5000));
-      const record = await base44.functions.invoke('permittingproxy',
+      const record = await base44.functions.invoke('permittingProxy',
  {
         action: 'poll',
-        payload: { id: request.id }
+        payload: { id: request?.data?.id || request?.id }
       });
       const data = record.data || record;
       if (data.status === 'completed') return true;
@@ -120,12 +123,18 @@ export default function AdminPermittingSettings() {
       setBatchProgress(p => ({ ...p, done: p.done + 1 }));
     }
 
+    try {
     const refreshed = await loadAllEntityRows({
-      entity: base44.entities.JurisdictionProfile,
+      entity: staffEntities.JurisdictionProfile,
       sort: null,
       label: "Permitting admin jurisdiction refresh",
     });
     setJurisdictions(Array.isArray(refreshed) ? refreshed : []);
+    } catch (refreshError) {
+      console.error("Permitting jurisdiction refresh failed:", refreshError);
+    } finally {
+      setBatchUpdating(false);
+    }
     setSelectedJurisdictions(new Set());
     setBatchProgress({ done: 0, total: 0, current: "" });
 
@@ -180,7 +189,7 @@ export default function AdminPermittingSettings() {
             { key: "authority", label: "Rewrite Authority" },
             { key: "audit", label: "AI Accuracy Auditor" }
           ].map(tab => (
-            <button
+            <button type="button"
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors -mb-px border-b-2 ${
@@ -399,6 +408,10 @@ export default function AdminPermittingSettings() {
                 </CardContent>
               </Card>
             </div>
+
+            <PermittingRulesList />
+
+            <CoverageMap jurisdictions={jurisdictions} />
 
             <Card className="bg-blue-50 border-blue-200">
               <CardHeader>

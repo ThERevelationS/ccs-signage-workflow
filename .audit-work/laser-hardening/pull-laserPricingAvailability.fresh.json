@@ -1,0 +1,14 @@
+Reading file
+Reading file
+Read file
+{
+  "files": [
+    {
+      "path": "src/components/estimator/laser/laserPricingAvailability.js",
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "File not found."
+      }
+    }
+  ]
+}

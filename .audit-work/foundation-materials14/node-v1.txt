@@ -1,0 +1,11 @@
+ok missing concrete: unavailable option + saved cash + zero callbacks
+ok cached 0 -> $0.00; absent -> Not saved
+ok missing rebar blocked; manual0 bypass; inactive forming visible + reassign preserves
+ok override 0 -> $0.00 shown; empty clears to null; Clear button
+ok pricingUnavailable delivery: saved mix visible, nulls Not saved, controls disabled
+ok saved trucks: 0-cost legit shows $0.00, unknown fields Not saved
+ok BOM: free 45-bag row stays at cost 0; blocked delivery row shown
+ok BOM mixed: blocked per-item saved rows, resolved grouped, no dup
+ok render purity: frozen inputs -> zero callbacks
+PASS material-ui passed=9 failed=0
+node_exit=0

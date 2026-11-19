@@ -1,0 +1,119 @@
+{
+  "summary": {
+    "total": 7,
+    "resolved": 7,
+    "rate": "100.0%",
+    "failure_stages": {},
+    "geocode_misses": 0,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "2735 Columbus-Lancaster Road Northwest, Greenfield Township, OH 43130",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 39.746799703104,
+        "lng": -82.652504890032
+      },
+      "matched": "2735 COLUMBUS-LANCASTER RD NW, LANCASTER, OH, 43130",
+      "target": {
+        "type": "township",
+        "name": "Greenfield township",
+        "county": "Fairfield County"
+      },
+      "county": "Fairfield County",
+      "ms": 2638,
+      "worker": 1
+    },
+    {
+      "address": "8403 Market Pl Ln, Montgomery, OH 45242",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: montgomery -> montgomery",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "montgomery"
+      },
+      "county": "",
+      "ms": 1529,
+      "worker": 1
+    },
+    {
+      "address": "4075 Wilmington Pike, Kettering, OH 45440",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: kettering -> kettering",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "kettering"
+      },
+      "county": "",
+      "ms": 1695,
+      "worker": 1
+    },
+    {
+      "address": "139 Old 25 E, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 1683,
+      "worker": 1
+    },
+    {
+      "address": "33 Catalpa Ln, Mt Vernon, KY 40456",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: mount vernon -> mount vernon",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "mount vernon"
+      },
+      "county": "",
+      "ms": 1715,
+      "worker": 1
+    },
+    {
+      "address": "244 US-68, Benton, KY 42025",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: benton -> benton",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "benton"
+      },
+      "county": "",
+      "ms": 1664,
+      "worker": 1
+    },
+    {
+      "address": "1 Stratacache Wy, Dayton, OH 45426",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: dayton -> dayton",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "dayton"
+      },
+      "county": "",
+      "ms": 1702,
+      "worker": 1
+    }
+  ]
+}

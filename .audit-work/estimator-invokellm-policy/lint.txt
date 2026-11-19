@@ -1,0 +1,21 @@
+
+C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\src\components\channelLetterInstall\AIInstallScopeModal.jsx
+  1:8  error  'React' is defined but never used  unused-imports/no-unused-imports
+
+C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\src\components\channelLetterInstall\AIScopeWriterModal.jsx
+  1:8  error  'React' is defined but never used  unused-imports/no-unused-imports
+
+C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\src\components\channelLetterInstall\AddressAutocomplete.jsx
+   1:8   error    'React' is defined but never used  unused-imports/no-unused-imports
+  77:14  warning  'e' is defined but never used      unused-imports/no-unused-vars
+
+C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\src\components\channelLetterInstall\PhotoEstimateModal.jsx
+  1:8  error  'React' is defined but never used  unused-imports/no-unused-imports
+
+C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\src\components\vinylEstimator\VinylArtworkUploadDialog.jsx
+  5:8  error  'React' is defined but never used  unused-imports/no-unused-imports
+
+✖ 6 problems (5 errors, 1 warning)
+  5 errors and 0 warnings potentially fixable with the `--fix` option.
+
+lint=1

@@ -1,0 +1,9 @@
+ok R1 invalid spread steel: raw/cache/prices preserved, all writes blocked, correction saves
+ok R2 pillar counts and hoop bounds: no silent defaults/clamping, explicit repair saves
+FAIL R3 rebar disabled: inactive invalid steel fields do not block or change on save - locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: 'Save', exact: true })[22m
+[2m    - locator resolved to <button disabled type="button" class="h-[28px] px-3 rounded-sm border border-gray-300 text-[12px] font-medium text-gray-700 hover:bg-gray-50 di
+ok R4 legacy null defaults preserved, explicit empty spacing requires correction
+input-validation scenarios=4 failed=1
+exit=1

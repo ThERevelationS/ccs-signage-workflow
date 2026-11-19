@@ -1,0 +1,9 @@
+{
+  "sourceBaselineMatches": true,
+  "staffAuthAndLayoutMatch": true,
+  "unchangedFinancialSources": [
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+    "base44/entities/FoundationProject.jsonc"
+  ]
+}

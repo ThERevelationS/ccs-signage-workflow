@@ -1,0 +1,18 @@
+[
+  {
+    "old_text": "import { Calculator, Clock, Cog, Plus, Table2, Trash2 } from \"lucide-react\";",
+    "new_text": "import { Calculator, Clock, Cog, Layers, Plus, Table2, Trash2 } from \"lucide-react\";"
+  },
+  {
+    "old_text": "import PricingCrudTable from \"@/components/pricing/PricingCrudTable\";",
+    "new_text": "import PricingCrudTable from \"@/components/pricing/PricingCrudTable\";\nimport MarkupTierPanel from \"@/components/pricing/MarkupTierPanel\";"
+  },
+  {
+    "old_text": "          <TabsList className=\"grid grid-cols-4 h-auto bg-white border border-gray-200 p-1\">",
+    "new_text": "          <TabsList className=\"grid grid-cols-5 h-auto bg-white border border-gray-200 p-1\">\n            <TabsTrigger value=\"tiers\" className=\"text-[11px] py-2\"><Layers className=\"w-3.5 h-3.5 mr-1.5\" /> Markup Tiers</TabsTrigger>"
+  },
+  {
+    "old_text": "          <TabsContent value=\"matrices\" className=\"mt-0\">",
+    "new_text": "          <TabsContent value=\"tiers\" className=\"mt-0\">\n            <MarkupTierPanel tiers={catalog.tiers} categories={catalog.categories} onSaved={reload} />\n          </TabsContent>\n\n          <TabsContent value=\"matrices\" className=\"mt-0\">"
+  }
+]

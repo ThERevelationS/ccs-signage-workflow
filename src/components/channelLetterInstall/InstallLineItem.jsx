@@ -60,7 +60,7 @@ export default function InstallLineItem({ item, index, inventory, settings = {},
     <Card className="border border-slate-200 shadow-sm overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-b border-slate-100 flex-wrap">
-        <button onClick={() => setExpanded(e => !e)} className="text-slate-500 hover:text-slate-900">
+        <button type="button" onClick={() => setExpanded(e => !e)} className="text-slate-500 hover:text-slate-900">
           {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         </button>
         <span className="text-xs font-semibold text-slate-500 w-6">#{index + 1}</span>
@@ -122,7 +122,7 @@ export default function InstallLineItem({ item, index, inventory, settings = {},
               ].map(opt => {
                 const active = (item.install_environment || "") === opt.value;
                 return (
-                  <button
+                  <button type="button"
                     key={opt.value || "default"}
                     type="button"
                     onClick={() => update({ install_environment: opt.value || undefined })}

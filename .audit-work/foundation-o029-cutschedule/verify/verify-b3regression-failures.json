@@ -1,0 +1,7 @@
+[
+  {
+    "name": "component: page compiles with externals for missing modules",
+    "ok": false,
+    "error": "Error: The service was stopped\n    at C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\esbuild\\lib\\main.js:949:34\n    at responseCallbacks.<computed> (C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\esbuild\\lib\\main.js:603:9)\n    at Socket.afterClose (C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\node_modules\\esbuild\\lib\\main.js:594:28)\n    at Socket.emit (node:events:526:24)\n    at endReadableNT (node:internal/streams/readable:2147:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)"
+  }
+]

@@ -1,0 +1,52 @@
+{
+ "src/components/signMaintenance/maintenancePricingAvailability.js": {
+  "candidateFile": "maintenance-pricing-candidate-maintenancePricingAvailability.js",
+  "sha256": "b7768ccf480313487e243cafee780669169d07c79cef86e7765087cb3e949090",
+  "bytes": 38770,
+  "lines": 698,
+  "lineEndings": "CRLF",
+  "terminalLF": true,
+  "existsOnRemote": false,
+  "remoteSha256": null
+ },
+ "src/components/signMaintenance/ServiceItemRow.jsx": {
+  "candidateFile": "maintenance-pricing-candidate-ServiceItemRow.jsx",
+  "sha256": "18c647b73036491b02979c761027a16297d037dede6c89e4b1ae96817169d4e0",
+  "bytes": 14570,
+  "lines": 226,
+  "lineEndings": "CRLF",
+  "terminalLF": true,
+  "existsOnRemote": true,
+  "remoteSha256": "f72c33a2a558e6f99690506493954fbcb8df109e506410e14441ae86fa1c5ebe"
+ },
+ "src/components/signMaintenance/RepaintMonumentPanel.jsx": {
+  "candidateFile": "maintenance-pricing-candidate-RepaintMonumentPanel.jsx",
+  "sha256": "eac0586852059f39478a8c9da4b2628eab9238794c9179d3642bc8194f558b2a",
+  "bytes": 12406,
+  "lines": 254,
+  "lineEndings": "CRLF",
+  "terminalLF": true,
+  "existsOnRemote": true,
+  "remoteSha256": "4d9c3ba4809ecc84cb2d5d416c7f635059166e1dcedd2ff7442c1b6e10192b2b"
+ },
+ "src/components/signMaintenance/DimLetterPaintSubPanel.jsx": {
+  "candidateFile": "maintenance-pricing-candidate-DimLetterPaintSubPanel.jsx",
+  "sha256": "6934ef7e2782ce97e0c1b70f066e0684e11bcf88291a7bf05021e3d1fbbf6e65",
+  "bytes": 6873,
+  "lines": 137,
+  "lineEndings": "CRLF",
+  "terminalLF": true,
+  "existsOnRemote": true,
+  "remoteSha256": "cb1a9a1bb4d2752e8513cd30b83bb7242f27e1ee2eec6865ae238ce6469ce762"
+ },
+ "src/pages/MaintenanceEstimator.jsx": {
+  "candidateFile": "maintenance-pricing-candidate-MaintenanceEstimator.jsx",
+  "sha256": "9e38b7c47e35c470169782e294b607c0e1b748f6fb2cd01e589e02850c20efe8",
+  "bytes": 40442,
+  "lines": 755,
+  "lineEndings": "CRLF",
+  "terminalLF": true,
+  "existsOnRemote": true,
+  "remoteSha256": "39759252c2ad3a0f09d133de0a1acdfc1a2c0e684ecc0a72c1e05aa6abbae843"
+ }
+}

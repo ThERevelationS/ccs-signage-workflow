@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 
@@ -26,7 +27,7 @@ async function requireUser(base44:any, sessionToken){
 
 Deno.serve(async req=>{
   try{
-    const base44=createClientFromRequest(req);
+    const base44=withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(()=>({}));
     const auth = await requireUser(base44, body?.session_token);
     if(auth.error)return auth.error;
@@ -80,6 +81,7 @@ Deno.serve(async req=>{
     return Response.json({error:'Unsupported Fleet dashboard preference action.'},{status:400});
   }catch(error:any){
     console.error('fleetDashboardPreferenceAction error:',error);
+    if(Number(error?.status||error?.response?.status)===429||/rate limit|too many requests/i.test(String(error?.message||'')))return Response.json({error:'Fleet dashboard preference operation is busy. Try again shortly.',retry_after_ms:3000},{status:429,headers:{'Retry-After':'3'}});
     if(error?.code==='FLEET_RECORD_CONFLICT')return Response.json({error:error.message},{status:409});
     return Response.json({error:error?.message||'Fleet dashboard preference operation failed.'},{status:500});
   }

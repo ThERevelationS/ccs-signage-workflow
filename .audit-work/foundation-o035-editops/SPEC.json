@@ -1,0 +1,127 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "a58c61cd+ (work-item starting context; baseline pulls taken during this unit)",
+  "remoteHeadRechecked": "fe0e913da39e646de1394d077eb34effa0f259f0",
+  "workItems": [
+    "O-035 (CMP-C04)"
+  ],
+  "acceptanceText": "Add move/rotate/duplicate/delete, typed coordinates, snap/grid, alignment, and dimensions.",
+  "title": "Scene edit operations — pure op module + canvas wiring at the O-034/O-038/O-039/O-040 seams (candidate-only)",
+  "targetOrder": [
+    "src/components/estimator/foundation/foundationSceneEditOps.js",
+    "src/components/estimator/foundation/FoundationLayoutCanvas.jsx"
+  ],
+  "candidatePrefix": "o035-candidate-",
+  "candidateHashes": {
+    "foundationSceneEditOps.js": "ac1948f2e96bce8b76e72b89b5d780056bbf9668610000151c418420e78fad6b",
+    "FoundationLayoutCanvas.jsx": "8551a30c941804e00e21cb5a679c39ebaa8b79b6304038f2328f9cc01c5e6424"
+  },
+  "atomicEditPerFile": true,
+  "apply": [
+    {
+      "path": "src/components/estimator/foundation/foundationSceneEditOps.js",
+      "mode": "write",
+      "candidate": "o035-candidate-foundationSceneEditOps.js",
+      "sha256": "ac1948f2e96bce8b76e72b89b5d780056bbf9668610000151c418420e78fad6b",
+      "note": "NEW file — remote exists:false at recheck HEAD fe0e913da (remote-recheck.json). Imports only ./foundationLayoutModel, ./foundationSceneTransforms, ./foundationSceneInput, ./foundationSceneSelection — all remote and byte-identical to the pull baseline. Whole-file write, LF, terminal LF."
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "mode": "write",
+      "candidate": "o035-candidate-FoundationLayoutCanvas.jsx",
+      "sha256": "8551a30c941804e00e21cb5a679c39ebaa8b79b6304038f2328f9cc01c5e6424",
+      "note": "Superset of remote (508→1088 lines): preserves every O-034/O-038/O-039/O-040 seam byte-for-byte in behavior — same drag begin/move/commit flow, same nudge path, same selection/marquee/click rules, same recordEdit history recording — and adds the O-035 surface: selection handles, handle-resize/rotate gestures, ops toolbar, typed bar, snap guides, multi-drag, keyboard rotate/duplicate, delete/duplicate hook routing. New optional props (sceneSelection, onDeleteSelection, onDuplicateSelection, onPatchScene, objectSnap, snapToleranceInches, gridSnapInches) all default-safe; remote callers passing only items/poles/onMoveItem keep working unchanged. Whole-file write is simplest given the diff size."
+    }
+  ],
+  "deployTogether": "foundationSceneEditOps imports layoutModel + transforms + input + selection (all remote, unchanged); the canvas imports the edit-ops module + foundationFtInEntry (remote O-093). Both files must land together or the estimator bundle breaks (FoundationEstimator imports the canvas). Import DAG acyclic: layoutModel/transforms/selection <- input <- editOps <- canvas.",
+  "operations": {
+    "move": "moveSelectionPatch(scene, ids, delta, opts) — translates every resolved target (items corners, poles points, wall vertices — malformed authored wall vertices ride verbatim, never NaN'd, never repaired). opts.snap (object candidates, tolInches) adjusts the delta onto selection-bounds probes (edges+centers); opts.gridStepInches snaps unsnapped axes to a uniform grid (object snap always outranks grid). round:true at commit.",
+    "resize": "beginItemResize(item, handle, grabPoint) + resizeItemFromHandle(session, planPoint, opts) — 8-handle resize in the item's rotated local frame; the opposite edge/corner anchors so a handle flip grows the rect (drag past anchor) instead of collapsing; minInches clamp keeps the anchor edge fixed; pillars resize as diameter about the fixed center; corner drags preserve aspect when opts.lockAspect. itemResizePatch = one-shot wrapper used by keyboard paths.",
+    "rotate": "beginItemRotate(item, grabPoint) + rotateItemFromPointer(session, planPoint, {free}) — rotation about the footprint center, snapped to ROTATE_SNAP_DEGREES (15°) unless Shift frees it; rotateItemBy/rotateItemTo for keyboard ([/]) and toolbar steps; degrees normalize to [0,360).",
+    "align": "alignSelectionPatch(scene, ids, edge, opts) — ALIGN_EDGES = left/centerX/right/top/centerZ/bottom; to='primary' (default for 2+ targets — primary anchors, others translate) or to='plan' (single target or explicit — plan edge/center lines). Rows already on the line produce no patch (noop, not a fake patch).",
+    "distribute": "distributeSelectionPatch(scene, ids, axis, opts) — >=3 targets, equal edge gaps along x or z, outermost pair anchored, deterministic (center,id) sort.",
+    "typed": "typedItemPatch(item, fields) / typedPolePatch(pole, fields) — atomic: ANY unknown/inapplicable/non-finite/non-positive field rejects the WHOLE op (unknown-field, field-not-applicable, invalid-field, non-positive); pillar diameter vs rect length/width enforced; rotation normalizes; coordinates accept any finite value (off-plan is authored data, not a syntax error). The canvas parses ft/in text upstream via foundationFtInEntry (O-093 boundary) — this layer sees canonical inches.",
+    "delete": "deleteSelectionPlan(scene, idsOrEntries) — pure descriptor: whole-row removals + skipped (sub-objects like wall-segment/pole-sign, unresolved ids, locked rows). requiresConfirm:true — the canvas emits it to onDeleteSelection; business deletion stays page-owned.",
+    "duplicate": "duplicateSelectionPlan(scene, idsOrEntries) — pure descriptor: whole-row sources + suggested +12/+12 offset. Id minting/clone/remap stays with foundationDuplicateMirror (inspected, untouched) — the canvas emits it to onDuplicateSelection.",
+    "snap": "snapDraggedItem (single-drag bounds assist), snapBoundsDelta (shared probes/winner rule), snapCandidatesOutside (candidates for the scene minus moving rows). Guides ride every result for the canvas's guide lines.",
+    "dimensions": "itemPlanGeometry/wallPlanGeometry bounds + planBoundsOfItem/planBoundsOfPole/planBoundsOfWall + targetsBounds feed the selection-outline dims chip and typed fields; footprint dims ride the O-030 foundationLayoutFootprint validation (nonpositive/missing dims render as the existing invalid-note, never a phantom rect)."
+  },
+  "commitChannels": {
+    "router": "commitOpPatches(op, method, patches) — patchesFitSingleItemChannel → one items-row patch rides the existing onMoveItem/patchItem path (free single-row undo); anything else routes the optional onPatchScene multi channel; no channel → 'unavailable' so a partial application can never happen silently. commit-refused propagates the page's refusal — nothing records.",
+    "patchShape": "{ collection: 'items'|'poles'|'walls'|'wall_caps'|'signage_cabinets', index, key, before, patch } — before = the same fields pre-op (the undo inverse), patch = the merge the page applies.",
+    "singleItemUndo": "identical to O-040 — recordEdit with target {key,index}; the page's patchItem undo apply round-trips it today.",
+    "multiUndo": "editRecordForPatches emits kind 'scene-multi', target NULL, before/after each { multi: [{collection,index,fields}] }. target:null is the honesty guard — the current single-row apply reads rev.target.index, throws, and the store reports 'rejected' with stacks untouched (verified in model + browser). The mounted multi apply branches on entry.kind/rev.patch.multi and never touches target.",
+    "strokeRule": "every op = one undo command: recordEdit for single-row ops (same as O-040), beginStroke+commitStroke wrapping the multi payload for multi-row ops, coalesceKey for keyboard bursts (nudge + rotate]key)."
+  },
+  "validation": {
+    "finite": "fin() gates every numeric input — NaN/Infinity/non-number deltas, points, fields, steps all reject or null rather than emitting NaN geometry.",
+    "nonDegenerate": "foundationLayoutFootprint + itemPlanGeometry reject missing/nonpositive dims; resize clamps to minInches and keeps the anchor; typed rejects non-positive dims; degenerate drag sessions return null sessions.",
+    "lockedReadOnly": "resolveOpTargets honors opts.isLocked per row (skipped, reported) and opts.readOnly for the whole op; the canvas gates all edit chrome on editable (onMoveItem present) and honors item.locked === true via the default isLocked.",
+    "verbatimWallVertices": "malformed authored wall points (non-finite x/z) are preserved verbatim through translate ops — never NaN'd into the patch, never silently repaired."
+  },
+  "canvasSurface": {
+    "handles": "8 resize handles + 1 rotate handle render only on the primary selected item while editable; cursors map to the handle compass.",
+    "toolbar": "ops toolbar appears when editable && count>=1 — 6 align edges, distribute x/z (needs 3+), rotate ±15°, duplicate, delete — each button disabled+explained when its channel isn't mounted.",
+    "typedBar": "single-item selection shows x/z/length|width|diameter/rotation fields; Enter or blur commits through typedItemPatch atomically; ft/in text parses via the O-093 boundary; Escape restores the stored text; invalid text never lands a half-patch.",
+    "guides": "snap guides render as plan lines (data-snap-guide) during move/resize previews; a transient preview chip announces the pending commit.",
+    "keyboard": "arrows nudge (O-039 coalesced), [/] rotate ±15° (Shift ±45°), Ctrl+D duplicate, Delete/Backspace → delete hook, Tab/arrows cycle + Esc clears (O-034), Shift frees snap.",
+    "dimsChip": "selected items show live dims (⌀ diameter for pillars, W × D ft/in otherwise) that track preview resizes."
+  },
+  "protectedFiles": [
+    "src/pages/FoundationEstimator.jsx",
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/components/estimator/foundation/foundationReinforcement*",
+    "src/components/estimator/foundation/partSync.js",
+    "src/components/estimator/foundation/FoundationBOM.jsx",
+    "src/components/estimator/foundation/foundationSceneHistory.js",
+    "src/components/estimator/foundation/foundationDuplicateMirror.js",
+    "src/components/estimator/foundation/foundationLayoutModel.js",
+    "src/components/estimator/foundation/foundationAssemblyModel.js",
+    "src/components/estimator/foundation/foundationSceneTransforms.js",
+    "src/components/estimator/foundation/foundationSceneInput.js",
+    "src/components/estimator/foundation/foundationSceneSelection.js",
+    "src/components/estimator/foundation/foundationFtInEntry.js"
+  ],
+  "applyRequiresLeadApproval": true,
+  "businessRecordOperationsAuthorized": false,
+  "schemaOrMetadataActivationAuthorized": false,
+  "publishOrDeployAuthorized": false,
+  "remoteApplicationPerformed": false,
+  "checkpointsCreated": false,
+  "remoteWritesPerformed": false,
+  "businessRecordOperationsPerformed": false,
+  "publishDeployPerformed": false,
+  "transportPerformed": false,
+  "entityOperationsPerformed": false,
+  "note": "Candidate creation + local/staging verification only. No sandbox apply, checkpoint, entity operation, schema change, publish, or deploy occurred or is authorized. The staging tree assembled for verification contains only remote-pulled files plus these candidates — local src/ was never read or trusted.",
+  "verification": {
+    "model": "verify-o035-model.mjs -> PASS: 44 assertion groups (o035-model-verification.json) — target resolution incl. sub-object skip/locked/read-only, bounds, before-fields, translate (items/poles/walls verbatim vertices), sceneWithOpPatches, snap (bounds delta/pick-guide/grid fallback/object-outranks-grid), move (delta/multi/collections/noop/invalid/read-only/snap+grid deltas+guides), resize (all 8 handles, rotated frame, flip-grow, min clamp, pillar diameter, aspect lock, snap), rotate (pointer steps/free/by/to/normalize), align (edges/primary/plan/noop/skipped), distribute (3+ equal gaps, anchored outers, needs-three), typed (all fields atomic, ft-parse boundary inches-only, pillar/rect applicability, non-positive, unknown-field, normalize), delete/duplicate plans (whole-row, sub-object skip, locked skip, offset), editRecordForPatches (single vs scene-multi shapes, target-null honesty guard), and history round-trips — single-channel recordEdit undo/redo, multi-channel beginStroke/commitStroke undo under the documented mount, legacy-apply honest refusal ('rejected'), refused-commit and unanchored-integrity paths.",
+    "browser": "verify-o035-browser.mjs -> PASS: 13 real-Chromium scenarios on the candidate component with mounted history+selection stores and a real multi-channel page (o035-browser-verification.json): selection chrome (8 handles + rotate + toolbar + typed bar + dims chip), e-handle resize = one command + undo/redo, rotate handle = 15°-snapped step + undo, ]-key burst coalesced to one command, object snap guides + snapped commit (x=36 onto neighbor edge), typed fields (in / ft' / invalid rejection), 3-row align through the multi channel (one scene-multi entry; legacy apply 'rejected'; mounted apply applied+redo), distribute equal gaps + undo, delete via button + Delete key (hook plans; page removes rows), duplicate via button + Ctrl+D (plan +12/+12; page clones), read-only gating (selection lives, edit chrome gone), 12in uniform grid snap, multi-drag = one scene-multi commit + undo. Screenshot o035-browser-canvas.png.",
+    "bundle": "esbuild ESM bundle of the staging graph: 0 warnings, 7 inputs (scene-editops-bundle.mjs); browser metafile confirms only staging-src + react + lucide stub (o035-browser-inputs.json).",
+    "syntax": "esbuild transform parse clean for both candidates.",
+    "remoteRecheck": "remote-recheck.json at HEAD fe0e913da39e646de1394d077eb34effa0f259f0 — FoundationLayoutCanvas.jsx, foundationSceneInput.js, foundationSceneSelection.js, foundationSceneHistory.js byte-identical to the pull baseline; foundationSceneEditOps.js absent (new file)."
+  },
+  "deferredWiring": {
+    "neededForFullSurface": true,
+    "reason": "FoundationEstimator.jsx is ownership-protected — not modified in this unit; the canvas's new props are all optional so the remote mount keeps working without wiring.",
+    "anchors": [
+      "Stores + props: pass the page-owned sceneHistory + sceneSelection stores (O-040/O-034 anchors) plus onPatchScene, onDeleteSelection, onDuplicateSelection at the existing <FoundationLayoutCanvas> mount.",
+      "Multi channel: onPatchScene(patches) applies each {collection,index,patch} merge through the page's commit path; returns false to refuse.",
+      "Multi-aware undo: the page's undo apply branches on rev.patch.multi / entry.kind==='scene-multi' (applies {collection,index,fields} per row) BEFORE touching rev.target — target is null by design for multi entries.",
+      "Full-domain anchor: undo/redo/observe use sceneLayoutAnchor({items, poles, walls}) — the canvas observes in that domain now so single and multi entries chain together.",
+      "Delete: onDeleteSelection(entries) → confirm → remove the addressed rows via the page's existing delete path (plan.removals carry collection+index+componentId).",
+      "Duplicate: onDuplicateSelection(plan) → foundationDuplicateMirror.duplicateFoundationAssembly handles clone/remap/id-minting with plan.sources + plan.offset_inches.",
+      "Snap prefs: objectSnap / snapToleranceInches / gridSnapInches props map to user prefs; Shift frees snap per gesture."
+    ],
+    "effectUnwired": "without the new props the canvas still move/nudge/selects exactly as remote does (all O-035 ops remain available on the single-row channel where they fit — one selected item's resize/rotate/typed edits record and undo today); align/distribute/multi ops disable honestly with 'requires multi channel' hints."
+  },
+  "candidateLineEndings": "LF",
+  "candidateTerminalLF": {
+    "foundationSceneEditOps.js": true,
+    "FoundationLayoutCanvas.jsx": true
+  },
+  "remoteReadNormalization": "sandbox read returns LF content; candidates normalized to LF to match the remote convention for these files.",
+  "status": "candidates-verified-local-only",
+  "recheck": "Owned surfaces re-pulled at remoteHeadRechecked fe0e913da39e646de1394d077eb34effa0f259f0: all four byte-identical to the baseline pulls (sha match per file in remote-recheck.json); foundationSceneEditOps.js confirmed absent remotely. Tree clean; no remote writes performed."
+}

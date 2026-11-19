@@ -1,0 +1,396 @@
+{
+  "results": [
+    {
+      "name": "valid walls price identically to ported formulas; calcWalls returns {walls, wallPricing}",
+      "ok": true
+    },
+    {
+      "name": "calcProject totals match ported math for a valid wall + item",
+      "ok": true
+    },
+    {
+      "name": "explicit-zero mortar gaps are honored (stack bond), not overridden",
+      "ok": false,
+      "error": "0-gap outer + internal bricks differ from the 3/8in default\n+ actual - expected\n\n  {\n    internalLaborCost: 5280,\n+   internalLaborHours: 17,\n+   internalMaterialCost: 850,\n-   internalLaborHours: 21.12,\n-   internalMaterialCost: 1056,\n    internalMortarCost: 80,\n+   internalTotalBricks: 850,\n-   internalTotalBricks: 1056,\n    laborCost: 10800,\n    laborHours: 39.6,\n    materialCost: 3960,\n    mortarCost: 160,\n    numCourses: 10.666666666666666,\n    totalBricks: 1980,\n+   totalCost: 21130,\n+   totalLinearInches: 1440\n-   totalCost: 21336\n  }\n"
+    },
+    {
+      "name": "blank and absent mortar gaps keep the 3/8in default",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\n1980 !== 1740\n"
+    },
+    {
+      "name": "numeric-string mortar gaps normalize on the calculation copy",
+      "ok": true
+    },
+    {
+      "name": "invalid mortar gap holds acknowledged amounts (alpha)",
+      "ok": false,
+      "error": "v=abc\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid mortar gap holds acknowledged amounts (negative)",
+      "ok": false,
+      "error": "v=-3\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid mortar gap holds acknowledged amounts (NaN)",
+      "ok": false,
+      "error": "v=NaN\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid mortar gap holds acknowledged amounts (Infinity)",
+      "ok": false,
+      "error": "v=Infinity\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid mortar gap holds acknowledged amounts (unit-suffixed)",
+      "ok": false,
+      "error": "v=0.5 in\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid mortar gap holds acknowledged amounts (record)",
+      "ok": false,
+      "error": "v=[object Object]\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid mortar gap holds acknowledged amounts (array)",
+      "ok": false,
+      "error": "v=\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid mortar gap holds acknowledged amounts (whitespace)",
+      "ok": false,
+      "error": "v= \n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid internal mortar gap holds acknowledged amounts (alpha)",
+      "ok": false,
+      "error": "v=abc\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid internal mortar gap holds acknowledged amounts (negative)",
+      "ok": false,
+      "error": "v=-3\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid internal mortar gap holds acknowledged amounts (NaN)",
+      "ok": false,
+      "error": "v=NaN\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid internal mortar gap holds acknowledged amounts (Infinity)",
+      "ok": false,
+      "error": "v=Infinity\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid internal mortar gap holds acknowledged amounts (unit-suffixed)",
+      "ok": false,
+      "error": "v=0.5 in\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid internal mortar gap holds acknowledged amounts (record)",
+      "ok": false,
+      "error": "v=[object Object]\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid internal mortar gap holds acknowledged amounts (array)",
+      "ok": false,
+      "error": "v=\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid internal mortar gap holds acknowledged amounts (whitespace)",
+      "ok": false,
+      "error": "v= \n\ntrue !== false\n"
+    },
+    {
+      "name": "garbage mortar gap on a concrete wall is not consumed — no hold",
+      "ok": true
+    },
+    {
+      "name": "invalid wall_labor_bricks_per_hour holds — never Infinity labor (string zero)",
+      "ok": false,
+      "error": "v=0\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid wall_labor_bricks_per_hour holds — never Infinity labor (number zero)",
+      "ok": false,
+      "error": "v=0\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid wall_labor_bricks_per_hour holds — never Infinity labor (negative)",
+      "ok": false,
+      "error": "v=-5\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid wall_labor_bricks_per_hour holds — never Infinity labor (malformed)",
+      "ok": false,
+      "error": "v=abc\n\ntrue !== false\n"
+    },
+    {
+      "name": "NaN wall_labor_bricks_per_hour is falsy — falls back to default like the legacy pick",
+      "ok": true
+    },
+    {
+      "name": "missing wall settings fall back to module defaults",
+      "ok": true
+    },
+    {
+      "name": "explicit-zero wall rate settings are honored",
+      "ok": true
+    },
+    {
+      "name": "malformed labor rate setting holds",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "malformed minimum charge setting holds",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "malformed mortar bag setting holds",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "mortar bag setting on an all-concrete wall is not consumed — no hold",
+      "ok": true
+    },
+    {
+      "name": "invalid custom_outer_material_qty holds (malformed)",
+      "ok": false,
+      "error": "custom_outer_material_qty=abc\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_outer_material_qty holds (negative)",
+      "ok": false,
+      "error": "custom_outer_material_qty=-5\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_outer_material_qty holds (NaN)",
+      "ok": false,
+      "error": "custom_outer_material_qty=NaN\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_outer_labor_rate holds (malformed)",
+      "ok": false,
+      "error": "custom_outer_labor_rate=abc\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_outer_labor_rate holds (negative)",
+      "ok": false,
+      "error": "custom_outer_labor_rate=-5\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_outer_labor_rate holds (NaN)",
+      "ok": false,
+      "error": "custom_outer_labor_rate=NaN\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_outer_mortar_qty holds (malformed)",
+      "ok": false,
+      "error": "custom_outer_mortar_qty=abc\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_outer_mortar_qty holds (negative)",
+      "ok": false,
+      "error": "custom_outer_mortar_qty=-5\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_outer_mortar_qty holds (NaN)",
+      "ok": false,
+      "error": "custom_outer_mortar_qty=NaN\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_outer_mortar_rate holds (malformed)",
+      "ok": false,
+      "error": "custom_outer_mortar_rate=abc\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_outer_mortar_rate holds (negative)",
+      "ok": false,
+      "error": "custom_outer_mortar_rate=-5\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_outer_mortar_rate holds (NaN)",
+      "ok": false,
+      "error": "custom_outer_mortar_rate=NaN\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_internal_material_qty holds (malformed)",
+      "ok": false,
+      "error": "custom_internal_material_qty=abc\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_internal_material_qty holds (negative)",
+      "ok": false,
+      "error": "custom_internal_material_qty=-5\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_internal_material_qty holds (NaN)",
+      "ok": false,
+      "error": "custom_internal_material_qty=NaN\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_internal_labor_rate holds (malformed)",
+      "ok": false,
+      "error": "custom_internal_labor_rate=abc\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_internal_labor_rate holds (negative)",
+      "ok": false,
+      "error": "custom_internal_labor_rate=-5\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_internal_labor_rate holds (NaN)",
+      "ok": false,
+      "error": "custom_internal_labor_rate=NaN\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_internal_mortar_qty holds (malformed)",
+      "ok": false,
+      "error": "custom_internal_mortar_qty=abc\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_internal_mortar_qty holds (negative)",
+      "ok": false,
+      "error": "custom_internal_mortar_qty=-5\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_internal_mortar_qty holds (NaN)",
+      "ok": false,
+      "error": "custom_internal_mortar_qty=NaN\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_internal_mortar_rate holds (malformed)",
+      "ok": false,
+      "error": "custom_internal_mortar_rate=abc\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_internal_mortar_rate holds (negative)",
+      "ok": false,
+      "error": "custom_internal_mortar_rate=-5\n\ntrue !== false\n"
+    },
+    {
+      "name": "invalid custom_internal_mortar_rate holds (NaN)",
+      "ok": false,
+      "error": "custom_internal_mortar_rate=NaN\n\ntrue !== false\n"
+    },
+    {
+      "name": "string overrides normalize to numbers on calculatedCosts",
+      "ok": false,
+      "error": "number, not '500' string\n\n'500' !== 500\n"
+    },
+    {
+      "name": "explicit-zero overrides are honored",
+      "ok": true
+    },
+    {
+      "name": "outer mortar overrides on a concrete wall are not consumed — no hold",
+      "ok": true
+    },
+    {
+      "name": "calculatedCosts no longer launders NaN to $0 (defect is visible)",
+      "ok": false,
+      "error": "held, not $0\n\n0 !== 7777\n"
+    },
+    {
+      "name": "new held wall has no acknowledged amounts — empty snapshot",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    },
+    {
+      "name": "non-explicit snapshot keeps stored amounts on held walls",
+      "ok": false,
+      "error": "no snapshot arg → authored basis kept\n\n0 !== 7777\n"
+    },
+    {
+      "name": "calcProject exposes wallPricing + flags catalog issues + totals withheld",
+      "ok": false,
+      "error": "Cannot read properties of undefined (reading '0')"
+    },
+    {
+      "name": "new unsaved held wall withholds totals",
+      "ok": true
+    },
+    {
+      "name": "foundationWallBomRows marks held walls via provided wallPricing",
+      "ok": false,
+      "error": "all rows marked saved"
+    },
+    {
+      "name": "invalid item custom_concrete_cost_per_cy is an input issue + holds the item",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'foundation_override_invalid'\n"
+    },
+    {
+      "name": "invalid item custom_concrete_qty is an input issue + holds the item",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'foundation_override_invalid'\n"
+    },
+    {
+      "name": "invalid item custom_rebar_cost_per_ft is an input issue + holds the item",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'foundation_override_invalid'\n"
+    },
+    {
+      "name": "invalid item custom_rebar_qty is an input issue + holds the item",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'foundation_override_invalid'\n"
+    },
+    {
+      "name": "invalid item custom_forming_rate is an input issue + holds the item",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'foundation_override_invalid'\n"
+    },
+    {
+      "name": "invalid item custom_forming_qty is an input issue + holds the item",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'foundation_override_invalid'\n"
+    },
+    {
+      "name": "invalid item custom_finishing_rate is an input issue + holds the item",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'foundation_override_invalid'\n"
+    },
+    {
+      "name": "invalid item custom_finishing_hours is an input issue + holds the item",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'foundation_override_invalid'\n"
+    },
+    {
+      "name": "invalid item custom_excavation_hours is an input issue + holds the item",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'foundation_override_invalid'\n"
+    },
+    {
+      "name": "invalid item custom_excavation_rate is an input issue + holds the item",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'foundation_override_invalid'\n"
+    },
+    {
+      "name": "explicit-zero item overrides are honored",
+      "ok": true
+    },
+    {
+      "name": "valid + absent item overrides price identically to ported formulas",
+      "ok": true
+    },
+    {
+      "name": "foundationWallPricingIssues/CatalogIssues exports accept optional settings",
+      "ok": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(codes(withSettings).includes(\"wall_setting_unavailable\"))\n"
+    },
+    {
+      "name": "wall issues are not double-reported through the assembly scan",
+      "ok": false,
+      "error": "single source\n\n0 !== 1\n"
+    },
+    {
+      "name": "held wall leaves authored row untouched",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+    }
+  ]
+}

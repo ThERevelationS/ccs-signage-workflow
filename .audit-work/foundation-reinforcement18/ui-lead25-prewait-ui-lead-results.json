@@ -1,0 +1,109 @@
+{
+  "synthetic": true,
+  "results": [
+    {
+      "name": "browser-deep-frozen mount, unchanged refs, four Unknown metadata fields",
+      "ok": true
+    },
+    {
+      "name": "raw invalid edit changes only side, browser original remains frozen/unchanged",
+      "ok": true
+    },
+    {
+      "name": "two real UUID adds, all mat numerics blank, delete and controlled restore",
+      "ok": true
+    },
+    {
+      "name": "material round-trip preserves every raw field and unavailable ID",
+      "ok": true
+    },
+    {
+      "name": "both overrides preserve string0 then clear to null; actual item untouched",
+      "ok": true
+    },
+    {
+      "name": "acceptance blocks stale/false/missing/invalid IDs and every disable flag",
+      "ok": true
+    },
+    {
+      "name": "strict versions disable unsupported controls, including proto-like strings",
+      "ok": true
+    },
+    {
+      "name": "parent deletion preserves exact ties and displays newly orphaned reference",
+      "ok": true
+    },
+    {
+      "name": "hoops start entirely blank, authored allowance0 survives type round-trip",
+      "ok": true
+    },
+    {
+      "name": "21-row pagination changes exactly one row, no pagination callbacks",
+      "ok": true
+    },
+    {
+      "name": "page7 shrink to21 rows then Prev once reaches page1 without edits",
+      "ok": true
+    },
+    {
+      "name": "malformed mats + valid ties require explicit repair, not data loss",
+      "ok": true
+    },
+    {
+      "name": "malformed defined hoops require repair; null row deletes without touching valid row",
+      "ok": true
+    },
+    {
+      "name": "257ties still allow Add;4096ties and256mats cap without truncation",
+      "ok": true
+    },
+    {
+      "name": "absent secure UUID disables Add without callbacks",
+      "ok": true
+    },
+    {
+      "name": "object/array JSON reference values render repairable errors without crashing",
+      "ok": true
+    },
+    {
+      "name": "failed catalog read is visible without substituting metadata or changing the draft",
+      "ok": true
+    },
+    {
+      "name": "duplicate row and catalog IDs stay visible without duplicate React keys",
+      "ok": true
+    },
+    {
+      "name": "malformed cover and active design subtrees require explicit replacement",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /spread draft malformed/. Input:\n\n'Reinforcement proposal\\n' +\n  '\\n' +\n  'Version 2\\n' +\n  '\\n' +\n  'Preliminary geometry and internal cost only. Not a structural design or engineering approval.\\n' +\n  '\\n' +\n  'Proposal edits do not change current prices until explicit acceptance; unknown supports/weights/units remain unknown.\\n' +\n  '\\n' +\n  'Bar diameter (in)\\n' +\n  'Cover side (in)\\n' +\n  'Cover top (in)\\n' +\n  'Cover bottom (in)\\n' +\n  'Supports\\n' +\n  'Unconfigured\\n' +\n  'Off\\n' +\n  '\\n' +\n  'Spread mats\\n' +\n  '\\n' +\n  'Add\\n' +\n  '\\n' +\n  'None.\\n' +\n  '\\n' +\n  'Inter-mat ties\\n' +\n  '\\n' +\n  'Add\\n' +\n  '\\n' +\n  'None.\\n' +\n  '\\n' +\n  'Tie paths are preliminary and fabrication-review gated.\\n' +\n  '\\n' +\n  'Material basis\\n' +\n  'Manual\\n' +\n  'Catalog\\n' +\n  'Name\\n' +\n  'Reason\\n' +\n  'Nominal diameter (in)\\n' +\n  'Weight (lb/ft)\\n' +\n  'Cost /ft\\n' +\n  'Unit\\n' +\n  'Quantity override (ft)\\n' +\n  'Cost override ($/ft)\\n' +\n  'Refresh Preview\\n' +\n  'Accept Proposal\\n' +\n  'Discard'\n\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-ui-lead.mjs:205:14\n    at async check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-ui-lead.mjs:39:5)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-ui-lead.mjs:198:3"
+    },
+    {
+      "name": "malformed material/overrides are repaired only by their explicit actions",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /overrides draft malformed/. Input:\n\n'Reinforcement proposal\\n' +\n  '\\n' +\n  'Version 2\\n' +\n  '\\n' +\n  'Preliminary geometry and internal cost only. Not a structural design or engineering approval.\\n' +\n  '\\n' +\n  'Proposal edits do not change current prices until explicit acceptance; unknown supports/weights/units remain unknown.\\n' +\n  '\\n' +\n  'Bar diameter (in)\\n' +\n  'Cover side (in)\\n' +\n  'Cover top (in)\\n' +\n  'Cover bottom (in)\\n' +\n  'Supports\\n' +\n  'Unconfigured\\n' +\n  'Off\\n' +\n  '\\n' +\n  'Spread mats\\n' +\n  '\\n' +\n  'Add\\n' +\n  '\\n' +\n  'None.\\n' +\n  '\\n' +\n  'Inter-mat ties\\n' +\n  '\\n' +\n  'Add\\n' +\n  '\\n' +\n  'None.\\n' +\n  '\\n' +\n  'Tie paths are preliminary and fabrication-review gated.\\n' +\n  '\\n' +\n  'Material basis\\n' +\n  'Manual\\n' +\n  'Catalog\\n' +\n  'Quantity override (ft)\\n' +\n  'Cost override ($/ft)\\n' +\n  'Refresh Preview\\n' +\n  'Accept Proposal\\n' +\n  'Discard'\n\n    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-ui-lead.mjs:219:14\n    at async check (file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-ui-lead.mjs:39:5)\n    at async file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-ui-lead.mjs:215:3"
+    },
+    {
+      "name": "accepted numeric fields display as numbers, malformed object inputs remain visibly invalid",
+      "ok": true
+    },
+    {
+      "name": "mobile text fields request a text keyboard; dimensions retain decimal keyboard",
+      "ok": true
+    },
+    {
+      "name": "switching to manual cannot silently reinterpret an authored each unit as feet",
+      "ok": true
+    },
+    {
+      "name": "actual styled populated long-UUID layout at375px",
+      "ok": true
+    },
+    {
+      "name": "actual styled populated long-UUID layout at1280px",
+      "ok": true
+    }
+  ],
+  "requests": [],
+  "errors": []
+}

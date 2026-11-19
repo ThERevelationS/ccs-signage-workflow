@@ -1,0 +1,102 @@
+{
+  "stamp": 1794481173649,
+  "probes": [
+    {
+      "name": "fixture project",
+      "pass": false,
+      "resp": {
+        "error": "The record could not be saved. Try again."
+      }
+    },
+    {
+      "name": "fixture product",
+      "pass": true,
+      "productId": "6af59c18be69e3ea845db965"
+    },
+    {
+      "name": "fixture parts",
+      "pass": false
+    },
+    {
+      "name": "source armed",
+      "pass": true
+    },
+    {
+      "name": "copy created",
+      "pass": false,
+      "resp": {
+        "error": "Estimate could not be created safely."
+      }
+    },
+    {
+      "name": "copy has line_items",
+      "pass": false
+    },
+    {
+      "name": "line project remapped",
+      "pass": false
+    },
+    {
+      "name": "line product remapped",
+      "pass": false
+    },
+    {
+      "name": "project clone owned by copy",
+      "pass": true
+    },
+    {
+      "name": "project clone number",
+      "pass": true
+    },
+    {
+      "name": "project clone key",
+      "pass": false
+    },
+    {
+      "name": "no sync receipt transplanted",
+      "pass": true
+    },
+    {
+      "name": "product clone owned by copy",
+      "pass": true
+    },
+    {
+      "name": "product clone line link",
+      "pass": true
+    },
+    {
+      "name": "product source_project remapped",
+      "pass": true
+    },
+    {
+      "name": "parts cloned",
+      "pass": false,
+      "count": 0,
+      "keys": []
+    },
+    {
+      "name": "lifecycle reset",
+      "pass": true
+    },
+    {
+      "name": "design preserved",
+      "pass": false
+    },
+    {
+      "name": "totals attached",
+      "pass": false
+    },
+    {
+      "name": "retry same id",
+      "pass": true
+    },
+    {
+      "name": "no double-clone",
+      "pass": false,
+      "prodCount": 39,
+      "projCount": 44,
+      "partCount": 80
+    }
+  ],
+  "ok": false
+}

@@ -1,0 +1,370 @@
+{
+  "name": "PermitLocality",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Locality name"
+    },
+    "state": {
+      "type": "string",
+      "description": "State abbreviation"
+    },
+    "county_name": {
+      "type": "string",
+      "description": "County this jurisdiction sits in (multi-county municipalities: ' / '-joined, e.g. 'Boyle County / Lincoln County'). Identity field \u2014 same-name localities in different counties are different jurisdictions and must never merge."
+    },
+    "jurisdiction_type": {
+      "type": "string",
+      "enum": [
+        "county",
+        "city",
+        "village",
+        "township",
+        "municipality",
+        "unincorporated_community"
+      ],
+      "description": "Kind of jurisdiction, from the linked JurisdictionProfile.type. Township vs city/village never merge."
+    },
+    "zip": {
+      "type": "string",
+      "description": "ZIP / postal code"
+    },
+    "jurisdiction_profile_id": {
+      "type": "string",
+      "description": "Optional canonical JurisdictionProfile ID this tracker locality was explicitly created from. Existing legacy localities may remain unlinked until staff verifies the relationship."
+    },
+    "duplicate_of": {
+      "type": "string",
+      "description": "Tombstone: id of the canonical PermitLocality row this duplicate was merged into. Pickers and bridge filters exclude rows where this is set \u2014 the row's data (offices, links, notes) is preserved for forensics/recovery. Never set on the canonical row."
+    },
+    "office_change_log": {
+      "type": "array",
+      "description": "Append-only (cap 20) log of detected changes to this locality's offices[] \u2014 entries {at, summary, office_count, verified_count} written by the office-diff worker. Powers the offices-updated alerts.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "office_count": {
+            "type": "number"
+          },
+          "verified_count": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "observed_outcomes": {
+      "type": "object",
+      "description": "Observed-vs-claimed aggregation from real filed permits: permits_observed, avg_decision_days, fee_min/max/avg, denial_count. Stamped by the office-diff worker from the PermitLineItem mirror.",
+      "properties": {
+        "permits_observed": {
+          "type": "number"
+        },
+        "avg_decision_days": {
+          "type": "number"
+        },
+        "fee_min": {
+          "type": "number"
+        },
+        "fee_max": {
+          "type": "number"
+        },
+        "fee_avg": {
+          "type": "number"
+        },
+        "denial_count": {
+          "type": "number"
+        },
+        "computed_at": {
+          "type": "string"
+        },
+        "sample_window": {
+          "type": "string"
+        }
+      }
+    },
+    "governing_body": {
+      "type": "string",
+      "description": "LEGACY \u2014 Governing body name"
+    },
+    "office_type": {
+      "type": "string",
+      "description": "LEGACY \u2014 Default office type"
+    },
+    "contact_phone": {
+      "type": "string",
+      "description": "LEGACY"
+    },
+    "contact_email": {
+      "type": "string",
+      "description": "LEGACY"
+    },
+    "contact_website": {
+      "type": "string",
+      "description": "LEGACY"
+    },
+    "contact_address": {
+      "type": "string",
+      "description": "LEGACY"
+    },
+    "contact_department": {
+      "type": "string",
+      "description": "LEGACY"
+    },
+    "contact_notes": {
+      "type": "string",
+      "description": "LEGACY"
+    },
+    "offices": {
+      "type": "array",
+      "description": "Offices belonging to this locality. Each office has its own workflow steps and is applied as a separate line when the locality is selected.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "catalog_office_id": {
+            "type": "string",
+            "description": "Optional ID of the reusable office catalog entry copied into this locality. Provenance only; not verification of legal permitting authority."
+          },
+          "government_office_id": {
+            "type": "string",
+            "description": "Stable canonical identity of the government office represented by this locality-specific workflow copy. This identity does not itself prove that the office has authority for this locality."
+          },
+          "authority_roles": {
+            "type": "array",
+            "description": "Explicit staff-reviewed authority roles this office performs for this locality. Empty or absent means authority has not been established; office_type/office_types must not be treated as legal authority.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "sign_permit",
+                "zoning",
+                "building",
+                "electrical",
+                "electrical_permit",
+                "electrical_inspection",
+                "right_of_way",
+                "historic_review",
+                "planning",
+                "transportation",
+                "other"
+              ]
+            }
+          },
+          "authority_verification_status": {
+            "type": "string",
+            "enum": [
+              "needs_verification",
+              "staff_verified"
+            ],
+            "description": "Review state for this locality-to-office authority relationship. staff_verified means staff confirmed the listed authority_roles; it does not verify unrelated office contact or repository facts."
+          },
+          "authority_verified_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When staff last verified this locality-to-office authority relationship."
+          },
+          "authority_verified_by": {
+            "type": "string",
+            "description": "Employee who last verified this locality-to-office authority relationship."
+          },
+          "authority_verification_notes": {
+            "type": "string",
+            "description": "Optional staff notes or source context supporting this locality-to-office authority relationship."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name for this office (e.g. 'Hamilton County Zoning')"
+          },
+          "office_type": {
+            "type": "string",
+            "description": "LEGACY single office category. Use office_types (array) for multi-select."
+          },
+          "office_types": {
+            "type": "array",
+            "description": "Office categories this office covers (e.g. ['Zoning', 'Building']).",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contact_phone": {
+            "type": "string"
+          },
+          "contact_email": {
+            "type": "string"
+          },
+          "contact_website": {
+            "type": "string"
+          },
+          "contact_address": {
+            "type": "string"
+          },
+          "hours": {
+            "type": "string",
+            "description": "Office hours in plain text ('Mon-Fri 8a-4:30p') \u2014 'open now?' is a display concern."
+          },
+          "contact_notes": {
+            "type": "string"
+          },
+          "workflow_steps": {
+            "type": "array",
+            "description": "Workflow steps for this office",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "checkbox",
+                    "submitted_date",
+                    "followup_date",
+                    "permit_received_date",
+                    "text"
+                  ]
+                },
+                "followup_interval_days": {
+                  "type": "number",
+                  "default": 14
+                },
+                "order": {
+                  "type": "number"
+                },
+                "tied_to_step_id": {
+                  "type": "string",
+                  "description": "Optional \u2014 links a non-checkbox step to a checkbox step that marks completion."
+                }
+              }
+            }
+          },
+          "order": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    },
+    "workflow_steps": {
+      "type": "array",
+      "description": "LEGACY \u2014 kept for backwards compatibility. New data lives in offices[].workflow_steps.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "checkbox",
+              "submitted_date",
+              "followup_date",
+              "permit_received_date",
+              "text"
+            ]
+          },
+          "followup_interval_days": {
+            "type": "number",
+            "default": 14
+          },
+          "order": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "description": "LEGACY \u2014 kept for backwards compatibility.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "order": {
+      "type": "number",
+      "default": 0
+    },
+    "change_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "changed_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "Audit trail of edits to this jurisdiction \u2014 server-appended on each gateway update: {at, by, changed_fields}."
+    },
+    "pending_applies": {
+      "type": "array",
+      "description": "Deferred office applies \u2014 Apply-when-verified queues {work_order_id, requested_by, requested_at, exclude_electrical} here; the verification worker creates the permit lines the moment sign+zoning verify, then removes the entry.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "work_order_id": {
+            "type": "string"
+          },
+          "requested_by": {
+            "type": "string"
+          },
+          "requested_at": {
+            "type": "string"
+          },
+          "exclude_electrical": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__permitlocality_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__permitlocality_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__permitlocality_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__permitlocality_backend_only__"
+      }
+    }
+  }
+}

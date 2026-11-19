@@ -1,0 +1,41 @@
+{
+  "results": [
+    {
+      "name": "page loads foundation card and proposal panel",
+      "ok": true
+    },
+    {
+      "name": "start proposal commits a raw draft (legacy fields untouched)",
+      "ok": true
+    },
+    {
+      "name": "author explicit geometry: diameter, covers, supports-off+reason, single mat",
+      "ok": true
+    },
+    {
+      "name": "catalog material basis picks the rebar row",
+      "ok": true
+    },
+    {
+      "name": "refresh preview shows quantities + costs + required acknowledgments",
+      "ok": true
+    },
+    {
+      "name": "acknowledge preliminary + warnings, re-preview, accept becomes enabled",
+      "ok": true
+    },
+    {
+      "name": "accept marks item version-2 via the page commit path",
+      "ok": true
+    },
+    {
+      "name": "save writes version-2 fields through CAS update-many",
+      "ok": true
+    }
+  ],
+  "telemetry": {
+    "consoleErrors": [],
+    "pageErrors": [],
+    "foreign": []
+  }
+}

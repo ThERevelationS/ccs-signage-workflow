@@ -1,0 +1,14 @@
+{
+ "synthetic": true,
+ "telemetry": {
+  "foreign": [],
+  "consoleErrors": [],
+  "pageErrors": []
+ },
+ "results": [
+  {
+   "case": "B0 baseline: negative qty -2 -> displayed 1, raw -2, payload clamps, Builder/onSaved once",
+   "ok": true
+  }
+ ]
+}

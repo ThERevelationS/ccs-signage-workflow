@@ -88,7 +88,7 @@ export default function FleetModuleNav() {
   return (
     <>
       <nav aria-label="CCS Fleet navigation" className="border-b border-gray-200 bg-white/95 dark:bg-slate-900/95 dark:border-slate-700 backdrop-blur sticky top-0 z-30">
-        <div className="hidden lg:flex px-5 py-2 items-center gap-2 overflow-x-auto overscroll-x-contain">
+        <div className="hidden lg:flex px-5 py-2 items-center gap-2 flex-wrap">
           <div className="font-bold text-gray-900 dark:text-slate-100 pr-2 whitespace-nowrap">CCS Fleet</div>
           {visibleItems.map((item) => {
             const url = createPageUrl(item.page);

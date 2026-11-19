@@ -1,0 +1,485 @@
+import { useState, useRef } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Trash2, Edit, Plus, Wrench, Link2, Settings2, GripVertical } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { loadAllEntityRows } from '@/components/estimator/loadAllEntityRows';
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from '@/components/estimator/builder/builderEntityPersistence';
+import { replaceRelationshipIdsIfUnchanged } from '@/components/masterInventory/equipmentPersistence';
+import { reorderFoundationItemsSafely } from './foundationInventoryPersistence';
+import { createInventoryRecordWithRecovery } from '@/components/masterInventory/inventoryPersistence';
+import { staffEntities } from "@/components/staff/staffEntities";
+
+const FoundationInventoryEntity = staffEntities.FoundationInventory;
+
+// catalogNumberInput is the boundary's numeric catalog draft (CMP-A08): blank
+// clears to null ("not cataloged" — never a silent free price), a numeric
+// draft coerces to Number, anything else stays verbatim so availability
+// validation reports it instead of a NaN or minted 0 leaking into records.
+import { inventoryNumberInput as catalogNumberInput } from "@/components/masterInventory/inventoryNormalization";
+
+// MultiSelect dropdown component for linking items
+function MultiSelectDropdown({ label, options, selectedIds, onChange }) {
+  const toggle = (id) => {
+    if (selectedIds.includes(id)) onChange(selectedIds.filter(i => i !== id));
+    else onChange([...selectedIds, id]);
+  };
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs">{label}</Label>
+      <div className="border rounded-md p-2 space-y-1 max-h-40 overflow-y-auto bg-slate-50">
+        {options.length === 0 ? <p className="text-xs text-slate-400 italic">No items available</p> : null}
+        {options.map(opt => (
+          <div key={opt.id} className="flex items-center gap-2">
+            <Checkbox 
+                id={`ms-${opt.id}`} 
+                checked={selectedIds.includes(opt.id)} 
+                onCheckedChange={() => toggle(opt.id)} 
+            />
+            <Label htmlFor={`ms-${opt.id}`} className="text-xs cursor-pointer">{opt.material_name}</Label>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function EquipmentInventoryTab({ allItems, loadItems, isAdmin }) {
+  const [activeSubTab, setActiveSubTab] = useState('excavation_equipment');
+  const [showForm, setShowForm] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [isReordering, setIsReordering] = useState(false);
+
+  const equipment = allItems.filter(i => i.material_type === 'excavation_equipment');
+  const attachments = allItems.filter(i => i.material_type === 'attachment');
+  const subAttachments = allItems.filter(i => i.material_type === 'sub_attachment');
+
+  const handleDelete = async (item) => {
+    if (!item?.id || !window.confirm('Delete this item?')) return;
+    try {
+      const live = await FoundationInventoryEntity.get(item.id);
+      if (!live) {
+        await loadItems();
+        return;
+      }
+      if (item.updated_date && live.updated_date && item.updated_date !== live.updated_date) {
+        alert('This Foundation inventory item changed in another session and was not deleted. The latest inventory will be reloaded first.');
+        await loadItems();
+        return;
+      }
+      await deleteEntityIfUnchanged({
+        entity: FoundationInventoryEntity,
+        record: live,
+        label: `Foundation inventory item “${item.material_name || 'Item'}”`,
+      });
+      await loadItems();
+    } catch (error) {
+      console.error('Foundation inventory delete failed:', error);
+      alert(error?.message || 'Foundation inventory item could not be deleted.');
+      await loadItems();
+    }
+  };
+
+  const handleDragEnd = async (result, type) => {
+    if (!result.destination || isReordering) return;
+
+    const itemsList =
+      type === 'excavation_equipment' ? equipment :
+      type === 'attachment' ? attachments : subAttachments;
+    const loadedSorted = [...itemsList].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    const reordered = [...loadedSorted];
+    const [reorderedItem] = reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, reorderedItem);
+
+    setIsReordering(true);
+    try {
+      await reorderFoundationItemsSafely({
+        entity: FoundationInventoryEntity,
+        loadedItems: loadedSorted,
+        reorderedItems: reordered,
+        readCurrentItems: () => loadAllEntityRows({
+          entity: FoundationInventoryEntity,
+          query: { material_type: type },
+          sort: 'sort_order',
+          label: `Foundation ${type} inventory order`,
+        }),
+        label: `Foundation ${type} inventory order`,
+      });
+      await loadItems();
+    } catch (error) {
+      console.error('Foundation inventory reorder failed:', error);
+      alert(error?.message || 'Foundation inventory order could not be saved.');
+      await loadItems();
+    } finally {
+      setIsReordering(false);
+    }
+  };
+
+  const openAdd = (type) => {
+      setEditItem({ material_type: type, material_name: '', cost_per_day: 0, cost_per_week: 0, cost_per_month: 0, pickup_delivery_cost: 0, allow_multiple: false, compatible_attachment_ids: [], compatible_sub_attachment_ids: [], is_pillar_excavation: false, is_spread_foot_excavation: false, is_non_excavation_equipment: false, is_miscellaneous_attachment: false, sort_order: 0 });
+      setShowForm(true);
+  };
+
+  const openEdit = (item) => {
+    setEditItem({ ...item, compatible_attachment_ids: item.compatible_attachment_ids || [], compatible_sub_attachment_ids: item.compatible_sub_attachment_ids || [] });
+    setShowForm(true);
+  };
+
+  return (
+    <div className="space-y-4 mt-4 border rounded-lg p-4 bg-white">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm text-slate-600">Manage excavation equipment, attachments, and sub-attachments. Link them together to create a dependency tree.</p>
+        {isAdmin && (
+          <Button size="sm" onClick={() => openAdd(activeSubTab)}>
+              <Plus className="w-4 h-4 mr-1" /> Add New
+          </Button>
+        )}
+      </div>
+
+      <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="excavation_equipment"><Wrench className="w-3.5 h-3.5 mr-1" /> Equipment</TabsTrigger>
+          <TabsTrigger value="attachment"><Link2 className="w-3.5 h-3.5 mr-1" /> Attachments</TabsTrigger>
+          <TabsTrigger value="sub_attachment"><Settings2 className="w-3.5 h-3.5 mr-1" /> Sub-Attachments</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="excavation_equipment">
+            <EquipmentList items={equipment} attachments={attachments} onEdit={openEdit} onDelete={handleDelete} onDragEnd={(res) => handleDragEnd(res, 'excavation_equipment')} isAdmin={isAdmin} reorderDisabled={isReordering} />
+        </TabsContent>
+        <TabsContent value="attachment">
+            <EquipmentList items={attachments} subAttachments={subAttachments} equipment={equipment} onEdit={openEdit} onDelete={handleDelete} isAttachment onDragEnd={(res) => handleDragEnd(res, 'attachment')} isAdmin={isAdmin} reorderDisabled={isReordering} />
+        </TabsContent>
+        <TabsContent value="sub_attachment">
+            <EquipmentList items={subAttachments} attachments={attachments} onEdit={openEdit} onDelete={handleDelete} isSubAttachment onDragEnd={(res) => handleDragEnd(res, 'sub_attachment')} isAdmin={isAdmin} reorderDisabled={isReordering} />
+        </TabsContent>
+      </Tabs>
+
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>{editItem?.id ? 'Edit' : 'Add'} Item</DialogTitle></DialogHeader>
+            {editItem && (
+                <EquipmentForm 
+                    item={editItem} 
+                    equipment={equipment} 
+                    attachments={attachments} 
+                    subAttachments={subAttachments} 
+                    onSave={async () => {
+                        setShowForm(false);
+                        await loadItems();
+                    }}
+                    onCancel={() => setShowForm(false)}
+                />
+            )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function EquipmentList({ items, equipment = [], attachments = [], subAttachments = [], onEdit, onDelete, isAttachment, isSubAttachment, onDragEnd, isAdmin, reorderDisabled = false }) {
+    if (items.length === 0) return <div className="text-center py-8 text-slate-400 text-sm italic border rounded bg-slate-50">No items found in this category.</div>;
+    
+    const sortedItems = [...items].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+    return (
+        <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="equipment-list">
+                {(provided) => (
+                    <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
+                        {sortedItems.map((item, index) => (
+                            <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={reorderDisabled || !isAdmin}>
+                                {(provided, snapshot) => (
+                                    <div
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        className={snapshot.isDragging ? "opacity-90 z-50" : ""}
+                                    >
+                                        <Card className="hover:shadow-sm">
+                                            <CardHeader className="py-3 px-4 flex flex-row items-start justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    {isAdmin && (
+                                                      <div {...provided.dragHandleProps} className="cursor-grab hover:text-indigo-600 text-slate-400">
+                                                          <GripVertical className="w-5 h-5" />
+                                                      </div>
+                                                    )}
+                                                    <div>
+                                                        <CardTitle className="text-sm">{item.material_name}</CardTitle>
+                                                        {item.allow_multiple && <Badge variant="outline" className="text-[10px] mt-1 bg-blue-50 text-blue-700">Allows Multiple</Badge>}
+                                                    </div>
+                                                </div>
+                                                {isAdmin && (
+                                                  <div className="flex gap-1">
+                                                      <Button size="icon" variant="ghost" onClick={() => onEdit(item)} className="h-6 w-6"><Edit className="w-3 h-3" /></Button>
+                                                      <Button size="icon" variant="ghost" onClick={() => onDelete(item)} className="h-6 w-6 text-red-500"><Trash2 className="w-3 h-3" /></Button>
+                                                  </div>
+                                                )}
+                                            </CardHeader>
+                                            <CardContent className="px-4 pb-3 space-y-2 pl-12">
+                                                <div className="flex gap-4 text-xs text-slate-600">
+                                                    <div>Day: <span className="font-semibold">{Number.isFinite(parseFloat(item.cost_per_day)) ? `$${item.cost_per_day}` : (item.cost_per_day ?? 'Not priced')}</span></div>
+                                                    <div>Wk: <span className="font-semibold">{Number.isFinite(parseFloat(item.cost_per_week)) ? `$${item.cost_per_week}` : (item.cost_per_week ?? 'Not priced')}</span></div>
+                                                    <div>Mo: <span className="font-semibold">{Number.isFinite(parseFloat(item.cost_per_month)) ? `$${item.cost_per_month}` : (item.cost_per_month ?? 'Not priced')}</span></div>
+                                                </div>
+                                                
+                                                {/* Show dependencies */}
+                                                {!isAttachment && !isSubAttachment && (
+                                                    <div className="text-xs text-slate-500">
+                                                        <strong>Linked Attachments:</strong> {item.compatible_attachment_ids?.length ? attachments.filter(a => item.compatible_attachment_ids.includes(a.id)).map(a => a.material_name).join(', ') : 'None'}
+                                                    </div>
+                                                )}
+                                                {isAttachment && (
+                                                    <div className="text-xs text-slate-500 space-y-1">
+                                                        <div><strong>Compatible Equipment:</strong> {equipment.filter(e => e.compatible_attachment_ids?.includes(item.id)).map(e => e.material_name).join(', ') || 'None'}</div>
+                                                        <div><strong>Linked Sub-Attachments:</strong> {item.compatible_sub_attachment_ids?.length ? subAttachments.filter(s => item.compatible_sub_attachment_ids.includes(s.id)).map(s => s.material_name).join(', ') : 'None'}</div>
+                                                    </div>
+                                                )}
+                                                {isSubAttachment && (
+                                                    <div className="text-xs text-slate-500">
+                                                        <strong>Compatible Attachments:</strong> {attachments.filter(a => a.compatible_sub_attachment_ids?.includes(item.id)).map(a => a.material_name).join(', ') || 'None'}
+                                                    </div>
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                )}
+                            </Draggable>
+                        ))}
+                        {provided.placeholder}
+                    </div>
+                )}
+            </Droppable>
+        </DragDropContext>
+    );
+}
+
+function EquipmentForm({ item, equipment, attachments, subAttachments, onSave, onCancel }) {
+    const [form, setForm] = useState(item);
+    const [saving, setSaving] = useState(false);
+    const saveRef = useRef(false);
+    
+    // For bidirectional links. If this is an attachment, we can select which equipment it belongs to.
+    const [linkedEquipmentIds, setLinkedEquipmentIds] = useState(
+        item.material_type === 'attachment' ? equipment.filter(e => e.compatible_attachment_ids?.includes(item.id)).map(e => e.id) : []
+    );
+
+    const [linkedAttachmentIdsForSub, setLinkedAttachmentIdsForSub] = useState(
+        item.material_type === 'sub_attachment' ? attachments.filter(a => a.compatible_sub_attachment_ids?.includes(item.id)).map(a => a.id) : []
+    );
+
+    const update = (f, v) => setForm(prev => ({ ...prev, [f]: v }));
+
+    const handleSave = async () => {
+        if (saveRef.current) return;
+        saveRef.current = true;
+        setSaving(true);
+        let wroteAnything = false;
+        try {
+            let savedItem;
+            if (form.id) {
+                const live = await FoundationInventoryEntity.get(form.id);
+                if (!live) throw new Error('This Foundation inventory item no longer exists. Reload before saving.');
+                if (item.updated_date && live.updated_date && item.updated_date !== live.updated_date) {
+                    throw new Error('This Foundation inventory item changed in another session. Your changes were not saved; reload and review the latest record before trying again.');
+                }
+                savedItem = await replaceEntityFieldsIfUnchanged({
+                    entity: FoundationInventoryEntity,
+                    id: form.id,
+                    expectedUpdatedAt: live.updated_date || '',
+                    expectedFields: expectedEntityFields(live, form),
+                    nextFields: form,
+                    label: `Foundation equipment item “${form.material_name || 'Item'}”`,
+                });
+            } else {
+                const createResult = await createInventoryRecordWithRecovery({
+                    entity: FoundationInventoryEntity,
+                    data: form,
+                    nameField: 'material_name',
+                    label: `Foundation equipment item “${form.material_name || 'Item'}”`,
+                });
+                savedItem = createResult.record;
+            }
+            wroteAnything = true;
+
+            const relationshipChanges = [];
+            if (form.material_type === 'attachment') {
+                for (const eq of equipment) {
+                    const selected = linkedEquipmentIds.includes(eq.id);
+                    const currentArr = eq.compatible_attachment_ids || [];
+                    const alreadyHas = currentArr.includes(savedItem.id);
+                    if (selected !== alreadyHas) {
+                        relationshipChanges.push({
+                            row: eq,
+                            field: 'compatible_attachment_ids',
+                            nextIds: selected ? [...currentArr.filter(id => id !== savedItem.id), savedItem.id] : currentArr.filter(id => id !== savedItem.id),
+                            shouldContain: selected,
+                            label: `Equipment compatibility for ${eq.material_name || 'equipment'}`,
+                        });
+                    }
+                }
+            } else if (form.material_type === 'sub_attachment') {
+                for (const att of attachments) {
+                    const selected = linkedAttachmentIdsForSub.includes(att.id);
+                    const currentArr = att.compatible_sub_attachment_ids || [];
+                    const alreadyHas = currentArr.includes(savedItem.id);
+                    if (selected !== alreadyHas) {
+                        relationshipChanges.push({
+                            row: att,
+                            field: 'compatible_sub_attachment_ids',
+                            nextIds: selected ? [...currentArr.filter(id => id !== savedItem.id), savedItem.id] : currentArr.filter(id => id !== savedItem.id),
+                            shouldContain: selected,
+                            label: `Sub-attachment compatibility for ${att.material_name || 'attachment'}`,
+                        });
+                    }
+                }
+            }
+
+            let confirmed = 0;
+            for (const change of relationshipChanges) {
+                try {
+                    await replaceRelationshipIdsIfUnchanged({
+                        entity: FoundationInventoryEntity,
+                        row: change.row,
+                        field: change.field,
+                        nextIds: change.nextIds,
+                        label: change.label,
+                    });
+                    confirmed += 1;
+                } catch (error) {
+                    throw new Error(`Foundation equipment relationship updates stopped after ${confirmed} of ${relationshipChanges.length} required changes were confirmed. Reload before retrying; remaining links were not skipped automatically. ${error?.message || ''}`.trim());
+                }
+            }
+
+            for (const change of relationshipChanges) {
+                const current = await FoundationInventoryEntity.get(change.row.id);
+                const contains = !!current?.[change.field]?.includes(savedItem.id);
+                if (!current || contains !== change.shouldContain) {
+                    throw new Error(`Final verification failed for ${change.label}. Reload Foundation Inventory before retrying.`);
+                }
+            }
+
+            await onSave(savedItem);
+        } catch (error) {
+            console.error('Foundation equipment save failed:', error);
+            alert(error?.message || 'Foundation equipment item could not be saved.');
+            if (wroteAnything) await onSave();
+        } finally {
+            saveRef.current = false;
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            <div>
+                <Label className="text-xs">Name *</Label>
+                <Input className="h-8" value={form.material_name} onChange={e => update('material_name', e.target.value)} />
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+                <div>
+                    <Label className="text-xs">Cost/Day</Label>
+                    <Input type="number" className="h-8" value={form.cost_per_day ?? ""} onChange={e => update('cost_per_day', catalogNumberInput(e.target.value))} />
+                </div>
+                <div>
+                    <Label className="text-xs">Cost/Week</Label>
+                    <Input type="number" className="h-8" value={form.cost_per_week ?? ""} onChange={e => update('cost_per_week', catalogNumberInput(e.target.value))} />
+                </div>
+                <div>
+                    <Label className="text-xs">Cost/Month</Label>
+                    <Input type="number" className="h-8" value={form.cost_per_month ?? ""} onChange={e => update('cost_per_month', catalogNumberInput(e.target.value))} />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+                {form.material_type === 'excavation_equipment' && (
+                    <div>
+                        <Label className="text-xs">Delivery/Pickup Cost</Label>
+                        <Input type="number" className="h-8" value={form.pickup_delivery_cost ?? ""} onChange={e => update('pickup_delivery_cost', catalogNumberInput(e.target.value))} />
+                    </div>
+                )}
+            </div>
+
+            <div className="space-y-2 pt-2">
+                {form.material_type === 'excavation_equipment' && (
+                    <>
+                        <div className="flex items-center gap-2">
+                            <Checkbox id="is_pillar_excavation" checked={form.is_pillar_excavation} onCheckedChange={v => update('is_pillar_excavation', v)} />
+                            <Label htmlFor="is_pillar_excavation" className="text-sm cursor-pointer">Used for Pillar Excavation</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Checkbox id="is_spread_foot_excavation" checked={form.is_spread_foot_excavation} onCheckedChange={v => update('is_spread_foot_excavation', v)} />
+                            <Label htmlFor="is_spread_foot_excavation" className="text-sm cursor-pointer">Used for Spread Foot Excavation</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Checkbox id="is_non_excavation_equipment" checked={form.is_non_excavation_equipment} onCheckedChange={v => update('is_non_excavation_equipment', v)} />
+                            <Label htmlFor="is_non_excavation_equipment" className="text-sm cursor-pointer">Is Non-Excavation Equipment</Label>
+                        </div>
+                    </>
+                )}
+
+                {form.material_type === 'attachment' && (
+                    <div className="flex items-center gap-2">
+                        <Checkbox id="is_miscellaneous_attachment" checked={form.is_miscellaneous_attachment} onCheckedChange={v => update('is_miscellaneous_attachment', v)} />
+                        <Label htmlFor="is_miscellaneous_attachment" className="text-sm cursor-pointer">Is Miscellaneous Attachment</Label>
+                    </div>
+                )}
+
+                {(form.material_type === 'attachment' || form.material_type === 'sub_attachment') && (
+                    <div className="flex items-center gap-2">
+                        <Checkbox id="allow_multiple" checked={form.allow_multiple} onCheckedChange={v => update('allow_multiple', v)} />
+                        <Label htmlFor="allow_multiple" className="text-sm cursor-pointer">Allow user to select multiple instances of this item</Label>
+                    </div>
+                )}
+            </div>
+
+            <hr />
+
+            {/* Dependency Linking */}
+            {form.material_type === 'excavation_equipment' && (
+                <MultiSelectDropdown 
+                    label="Select Compatible Attachments" 
+                    options={attachments} 
+                    selectedIds={form.compatible_attachment_ids || []} 
+                    onChange={v => update('compatible_attachment_ids', v)} 
+                />
+            )}
+            
+            {form.material_type === 'attachment' && (
+                <div className="space-y-4">
+                    <MultiSelectDropdown 
+                        label="Belongs to Equipment (Reverse Link)" 
+                        options={equipment} 
+                        selectedIds={linkedEquipmentIds} 
+                        onChange={setLinkedEquipmentIds} 
+                    />
+                    <MultiSelectDropdown 
+                        label="Select Compatible Sub-Attachments" 
+                        options={subAttachments} 
+                        selectedIds={form.compatible_sub_attachment_ids || []} 
+                        onChange={v => update('compatible_sub_attachment_ids', v)} 
+                    />
+                </div>
+            )}
+
+            {form.material_type === 'sub_attachment' && (
+                <MultiSelectDropdown 
+                    label="Belongs to Attachments (Reverse Link)" 
+                    options={attachments} 
+                    selectedIds={linkedAttachmentIdsForSub} 
+                    onChange={setLinkedAttachmentIdsForSub} 
+                />
+            )}
+
+            <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
+                <Button size="sm" onClick={handleSave} disabled={!form.material_name || saving}>{saving ? 'Saving…' : 'Save Item'}</Button>
+            </div>
+        </div>
+    );
+}

@@ -1,0 +1,36 @@
+{
+ "jurisdiction_id": "6adf62d4aeecccee37c043cd",
+ "jurisdiction_name": "Grand Rivers",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "122 West Cumberland Avenue – PO Box 265 – Grand Rivers, Kentucky 42045 (270) 362-8272 – Fax (270) 362-2572 FOOD & BEVERAGE TAX RETURN KY Sales Tax No._________________ Tax Month ___ _________ 1. File Return even if no tax is due 2. Return is due 30 days following the which report is made 3. Report changes of address or Name_____________________________ Mailing Address____________________ _________________________________ Location (if different than mailing address) __________________________________ ownership immediately 4. Prepare this return & retain a copy There shall be imposed a penalty of ten percent (10%) on any unpaid taxes on the thirty-first (31 st ) day following the close of the tax month. There shall begin to accrue and be added on said date interest of six percent (6%) per annum until all taxes are remitted. $ 1. Gross Receipts 2. Tax 3% of Line 1 $ 3. Penalty and/or intere",
+   "tags": [
+    "fee",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "c8a00ca3b84af18f7b2018ad61e14686444ef59771a2ed8f71725e1d94498403",
+   "source_document_id": null,
+   "source_title": "c8a00ca3b84af18f7b2018ad61e14686444ef59771a2ed8f71725e1d94498403.pdf",
+   "official_url": "https://grandrivers.org/wp-content/uploads/2026/04/TAX-RETURN-FORM-REST-REV4.26.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "122 West Cumberland Avenue – PO Box 265 – Grand Rivers, Kentucky 42045 (270) 362-8272 – Fax (270) 362-2572 HOTEL/ROOM TAX RETURN Name_____________________________ KY Sales Tax No._________________ Mailing Address____________________ Tax Month_______________________ _________________________________ 1. File Return even if no tax is due 2. Return is due 30 days following the Location (if different than mailing address) which report is made 3. Report changes of address or _________________________________ ownership immediately 4. Prepare this return & retain a copy There shall be imposed a penalty of ten percent (10%) on any unpaid taxes on the thirty-first (31 st ) day following the close of the tax month. There shall begin to accrue and be added on said date interest of six percent (6%) per annum until all taxes are remitted. 1. Gross Receipts $ 2. Tax 3% of Line 1 $ 3. Penalty and/or int",
+   "tags": [
+    "illumination",
+    "penalties"
+   ],
+   "weight": 3,
+   "source_sha256": "9577073fae156b1c1732a885959e4f96c276274d9d222b9163a9f1bf7fc57272",
+   "source_document_id": null,
+   "source_title": "9577073fae156b1c1732a885959e4f96c276274d9d222b9163a9f1bf7fc57272.pdf",
+   "official_url": "https://grandrivers.org/wp-content/uploads/2023/04/TAX-RETURN-FORM-ROOM.pdf"
+  }
+ ]
+}

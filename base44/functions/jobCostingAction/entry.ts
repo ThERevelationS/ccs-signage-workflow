@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
 
@@ -83,7 +84,7 @@ function rollup(workOrder: any, inputs: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     await authenticateSignShopSession(base44, body?.session_token);
     const action = clean(body?.action);
@@ -99,28 +100,42 @@ Deno.serve(async (req) => {
     const deps = { Invoice, Payment, PurchaseOrder, ChangeOrder, LaborSegment, Movement };
 
     if (action === "list_job_costs") {
-      const rows = await WorkOrder.filter({}, "-created_date", 400);
+      const rows = await loadAllEntityRows({
+        entity: WorkOrder,
+        sort: "-created_date",
+        label: "Work order cost rows",
+      });
       if (!Array.isArray(rows)) throw bad("Work order lookup failed.", 500);
       const inputs = await loadCostInputs(deps);
       const search = clean(body?.query).toLowerCase();
-      const jobs = rows
+      const matched = rows
         .filter((w: any) => w?.deleted !== true)
         .map((w: any) => rollup(w, inputs))
         .filter((j: any) => !search
           || j.title.toLowerCase().includes(search)
-          || j.client_name.toLowerCase().includes(search))
-        .slice(0, 300);
+          || j.client_name.toLowerCase().includes(search));
+      const jobs = matched.slice(0, 300);
+      // Totals roll up every matching job, not just the displayed window — a
+      // capped read used to make the whole summary under-report.
       const totals = {
-        jobs: jobs.length,
-        contract_value: money(jobs.reduce((s: number, j: any) => s + j.contract_value, 0)),
-        po_committed: money(jobs.reduce((s: number, j: any) => s + j.po_committed, 0)),
-        stock_issued: money(jobs.reduce((s: number, j: any) => s + j.stock_issued, 0)),
-        labor_hours: money(jobs.reduce((s: number, j: any) => s + j.labor_hours, 0)),
-        invoiced: money(jobs.reduce((s: number, j: any) => s + j.invoiced, 0)),
-        collected: money(jobs.reduce((s: number, j: any) => s + j.collected, 0)),
-        open_ar: money(jobs.reduce((s: number, j: any) => s + j.open_ar, 0)),
+        jobs: matched.length,
+        contract_value: money(matched.reduce((s: number, j: any) => s + j.contract_value, 0)),
+        po_committed: money(matched.reduce((s: number, j: any) => s + j.po_committed, 0)),
+        stock_issued: money(matched.reduce((s: number, j: any) => s + j.stock_issued, 0)),
+        labor_hours: money(matched.reduce((s: number, j: any) => s + j.labor_hours, 0)),
+        invoiced: money(matched.reduce((s: number, j: any) => s + j.invoiced, 0)),
+        collected: money(matched.reduce((s: number, j: any) => s + j.collected, 0)),
+        open_ar: money(matched.reduce((s: number, j: any) => s + j.open_ar, 0)),
       };
-      return Response.json({ success: true, action, jobs, totals });
+      return Response.json({
+        success: true,
+        action,
+        jobs,
+        totals,
+        total_count: matched.length,
+        returned: jobs.length,
+        truncated: jobs.length < matched.length,
+      });
     }
 
     if (action === "get_job_cost") {
@@ -129,11 +144,11 @@ Deno.serve(async (req) => {
       if (!workOrder?.id) throw bad("Work order not found.", 404);
       const inputs = await loadCostInputs(deps);
       const [invoices, purchaseOrders, changeOrders, segments, movements] = await Promise.all([
-        Invoice.filter({ work_order_id: workOrderId }),
-        PurchaseOrder.filter({ work_order_id: workOrderId }),
-        ChangeOrder.filter({ work_order_id: workOrderId }),
-        LaborSegment.filter({ work_order_id: workOrderId }),
-        Movement.filter({ work_order_id: workOrderId }),
+        loadAllEntityRows({ entity: Invoice, query: { work_order_id: workOrderId }, label: "Job cost invoices" }),
+        loadAllEntityRows({ entity: PurchaseOrder, query: { work_order_id: workOrderId }, label: "Job cost purchase orders" }),
+        loadAllEntityRows({ entity: ChangeOrder, query: { work_order_id: workOrderId }, label: "Job cost change orders" }),
+        loadAllEntityRows({ entity: LaborSegment, query: { work_order_id: workOrderId }, label: "Job cost labor segments" }),
+        loadAllEntityRows({ entity: Movement, query: { work_order_id: workOrderId }, label: "Job cost stock movements" }),
       ]);
       const laborByUser = new Map<string, number>();
       for (const s of (Array.isArray(segments) ? segments : [])) {

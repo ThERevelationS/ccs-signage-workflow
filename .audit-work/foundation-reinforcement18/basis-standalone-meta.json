@@ -1,0 +1,38 @@
+{
+  "inputs": {
+    "src/components/estimator/foundation/foundationGeometryInputs.js": {
+      "bytes": 2674,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/components/estimator/foundation/foundationReinforcementBasis.js": {
+      "bytes": 6986,
+      "imports": [
+        {
+          "path": "src/components/estimator/foundation/foundationGeometryInputs.js",
+          "kind": "import-statement",
+          "original": "./foundationGeometryInputs"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    ".audit-work/foundation-reinforcement18/basis-standalone-bundle.js": {
+      "imports": [],
+      "exports": [
+        "resolveFoundationReinforcementBasis"
+      ],
+      "entryPoint": "src/components/estimator/foundation/foundationReinforcementBasis.js",
+      "inputs": {
+        "src/components/estimator/foundation/foundationGeometryInputs.js": {
+          "bytesInOutput": 307
+        },
+        "src/components/estimator/foundation/foundationReinforcementBasis.js": {
+          "bytesInOutput": 7019
+        }
+      },
+      "bytes": 7515
+    }
+  }
+}

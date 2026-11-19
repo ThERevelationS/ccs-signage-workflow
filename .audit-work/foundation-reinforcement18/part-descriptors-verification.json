@@ -1,0 +1,109 @@
+{
+  "synthetic": true,
+  "results": [
+    {
+      "name": "selected stable ID and exact split, legacy key family, no guessed size",
+      "ok": true
+    },
+    {
+      "name": "explicit zero rate remains zero and labor remains labor",
+      "ok": true
+    },
+    {
+      "name": "zero priced aggregate never becomes one or erases physical geometry",
+      "ok": true
+    },
+    {
+      "name": "aggregate values are not scaled by foundation count again",
+      "ok": true
+    },
+    {
+      "name": "manual basis never attaches legacy inventory",
+      "ok": true
+    },
+    {
+      "name": "off ignores inactive malformed snapshot",
+      "ok": true
+    },
+    {
+      "name": "unsupported selector undefined cannot enter adapter",
+      "ok": true
+    },
+    {
+      "name": "unsupported selector 1 cannot enter adapter",
+      "ok": true
+    },
+    {
+      "name": "unsupported selector 2 cannot enter adapter",
+      "ok": true
+    },
+    {
+      "name": "unsupported selector 3 cannot enter adapter",
+      "ok": true
+    },
+    {
+      "name": "malformed amount null fails closed",
+      "ok": true
+    },
+    {
+      "name": "malformed amount -1 fails closed",
+      "ok": true
+    },
+    {
+      "name": "malformed amount Infinity fails closed",
+      "ok": true
+    },
+    {
+      "name": "malformed amount 40 fails closed",
+      "ok": true
+    },
+    {
+      "name": "inconsistent calculated/snapshot amounts cannot create plausible parts",
+      "ok": true
+    },
+    {
+      "name": "unknown geometric weight cannot become zero",
+      "ok": true
+    },
+    {
+      "name": "wrong selected material identity fails closed",
+      "ok": true
+    },
+    {
+      "name": "snapshot and configured material kinds cannot disagree",
+      "ok": true
+    },
+    {
+      "name": "record-shaped class instances cannot lose their fields during snapshot cloning",
+      "ok": true
+    },
+    {
+      "name": "non-numeric hourly rates fail before invoking any coercion",
+      "ok": true
+    },
+    {
+      "name": "matching saved totals still cannot contradict represented quantity times unit rate",
+      "ok": true
+    },
+    {
+      "name": "positive multiplication underflow cannot create a free material DTO",
+      "ok": true
+    },
+    {
+      "name": "unconfirmed zero catalog price cannot create free material",
+      "ok": true
+    },
+    {
+      "name": "bad indices and missing IDs fail closed",
+      "ok": true
+    },
+    {
+      "name": "frozen input safe and all snapshots isolated",
+      "ok": true
+    },
+    {
+      "name": "complete active item definition survives part snapshots, but unapplied draft does not",
+      "ok": true
+    }
+  ]
+}

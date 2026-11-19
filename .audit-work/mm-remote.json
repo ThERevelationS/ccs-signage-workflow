@@ -1,0 +1,3 @@
+Reading file
+Error: Failed
+{"error":"Error reading file: This app's workspace is out of integration credits, so sandbox-bridge tools are paused until the credits renew or more are added.","code":"API_ERROR","statusCode":402,"requestId":"a5e782b9-bdd4-4cef-bcd4-44804b1910dc"}

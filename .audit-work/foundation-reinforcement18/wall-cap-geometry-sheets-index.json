@@ -1,0 +1,86 @@
+[
+ {
+  "sheet": "wall-cap-geometry-sheet-saved-initial.png",
+  "mode": "saved",
+  "stage": "initial",
+  "width": 1671,
+  "height": 1374
+ },
+ {
+  "sheet": "wall-cap-geometry-sheet-unknown-initial.png",
+  "mode": "unknown",
+  "stage": "initial",
+  "width": 1671,
+  "height": 1374
+ },
+ {
+  "sheet": "wall-cap-geometry-sheet-zero-initial.png",
+  "mode": "zero",
+  "stage": "initial",
+  "width": 1671,
+  "height": 1227
+ },
+ {
+  "sheet": "wall-cap-geometry-sheet-current-initial.png",
+  "mode": "current",
+  "stage": "initial",
+  "width": 1671,
+  "height": 1227
+ },
+ {
+  "sheet": "wall-cap-geometry-sheet-oversize-initial.png",
+  "mode": "oversize",
+  "stage": "initial",
+  "width": 1671,
+  "height": 1444
+ },
+ {
+  "sheet": "wall-cap-geometry-sheet-stock_unknown-initial.png",
+  "mode": "stock_unknown",
+  "stage": "initial",
+  "width": 1671,
+  "height": 1444
+ },
+ {
+  "sheet": "wall-cap-geometry-sheet-cut_unknown-initial.png",
+  "mode": "cut_unknown",
+  "stage": "initial",
+  "width": 1671,
+  "height": 1411
+ },
+ {
+  "sheet": "wall-cap-geometry-sheet-legacy-initial.png",
+  "mode": "legacy",
+  "stage": "initial",
+  "width": 1671,
+  "height": 1227
+ },
+ {
+  "sheet": "wall-cap-geometry-sheet-current-shorter-stock.png",
+  "mode": "current",
+  "stage": "shorter-stock",
+  "width": 1671,
+  "height": 1444
+ },
+ {
+  "sheet": "wall-cap-geometry-sheet-current-cleared.png",
+  "mode": "current",
+  "stage": "cleared",
+  "width": 1671,
+  "height": 1411
+ },
+ {
+  "sheet": "wall-cap-geometry-sheet-current-new-acknowledgment.png",
+  "mode": "current",
+  "stage": "new-acknowledgment",
+  "width": 1671,
+  "height": 1444
+ },
+ {
+  "sheet": "wall-cap-geometry-sheet-legacy-edited.png",
+  "mode": "legacy",
+  "stage": "edited",
+  "width": 1671,
+  "height": 1227
+ }
+]

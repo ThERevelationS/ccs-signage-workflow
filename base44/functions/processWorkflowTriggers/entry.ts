@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
@@ -50,6 +51,7 @@ const WORK_ORDER_EVENTS = new Set([
   'image_uploaded',
   'asap_toggled_on', 'asap_toggled_off',
   'assigned_to_changed',
+  'proof_sent', 'proof_approved', 'product_transition',
 ]);
 // Time Clock / PTO events emitted by timeClockAction after verified writes.
 const TIME_CLOCK_EVENTS = new Set([
@@ -71,6 +73,9 @@ const RECORD_EVENTS = new Set([
   'user_role_changed',
   'jurisdiction_profile_created', 'jurisdiction_profile_updated',
   'regulation_alert_created',
+  'crm_event_completed',
+  'po_received', 'po_backordered', 'recon_variance',
+  'invoice_overdue',
 ]);
 const ALLOWED_EVENTS = new Set([...PERMIT_EVENTS, ...ORDER_EVENTS, ...WORK_ORDER_EVENTS, ...TIME_CLOCK_EVENTS, ...RECORD_EVENTS]);
 
@@ -84,7 +89,7 @@ const SERVER_RECORD_EVENTS = new Set([
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const payload = await req.json().catch(() => ({}));
     const user = await authenticateSignShopSession(base44, payload?.session_token);
     const changedBy = user.full_name || user.email || 'Authenticated User';
@@ -187,7 +192,7 @@ Deno.serve(async (req) => {
     return Response.json(result);
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('Error processing workflow triggers:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Workflow automation could not be processed safely' : error.message,

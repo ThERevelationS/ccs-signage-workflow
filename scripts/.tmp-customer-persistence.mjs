@@ -16,9 +16,13 @@ function sameValue(a, b) {
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 }
 function expectedCustomerFields(record = {}, nextFields = {}) {
-  return Object.fromEntries(
+  const expected = Object.fromEntries(
     Object.keys(nextFields || {}).map((field) => [field, record?.[field]])
   );
+  if (!Object.prototype.hasOwnProperty.call(expected, "company_name") && Object.prototype.hasOwnProperty.call(record || {}, "company_name")) {
+    expected.company_name = record?.company_name;
+  }
+  return expected;
 }
 async function replaceCustomerFieldsIfUnchanged({
   entity,
@@ -44,6 +48,9 @@ async function replaceCustomerFieldsIfUnchanged({
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const current = await entity.get(id);
     if (!current?.id) throw new Error(`${label} could not verify its Customer before saving.`);
+    if (Object.prototype.hasOwnProperty.call(expected, "company_name") && !sameValue(current.company_name, expected.company_name) && !sameValue(current.company_name, desired.company_name)) {
+      throw new Error(`${label} changed in another session (company_name). Reload before saving. No Customer fields were overwritten.`);
+    }
     const alreadyDesired = fieldNames.every((fieldName) => sameValue(current[fieldName], desired[fieldName]));
     if (alreadyDesired) return current;
     for (const fieldName of fieldNames) {

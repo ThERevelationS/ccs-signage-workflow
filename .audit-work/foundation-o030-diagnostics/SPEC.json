@@ -1,0 +1,145 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "3258e9b244991711e965b65f566d420b204f3144",
+  "baselineFile": "o030-baseline.json",
+  "proofSpec": "o030-proof-spec.json",
+  "flowSpec": "o030-flow-proof-spec.json",
+  "fixtureArtifact": "o030-fixture.json",
+  "workItem": "O-030 (CMP-B16)",
+  "title": "Advisory construction checks — excavation/spoil, forming/finishing, delivery/admixture warnings (non-blocking)",
+  "targetOrder": [
+    "src/components/estimator/foundation/foundationConstructionChecks.js",
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/pages/FoundationEstimator.jsx"
+  ],
+  "candidatePrefix": "o030-candidate-",
+  "candidateHashes": {
+    "foundationConstructionChecks.js": "148cec3163665cd6ea24941560263ebda8fedc6d40c3aa0e6ddfc28272cf9c80",
+    "foundationCalc.js": "de9e1990aeaed3c0aff3d0a47780e6af649a455c2b21846e79496279928fa1ed",
+    "FoundationEstimator.jsx": "916ade2203f927b694b24b59d58fabdbbfac16fe6fcdeb3ec0056b42f0e8db79"
+  },
+  "atomicEditPerFile": true,
+  "apply": [
+    {
+      "path": "src/components/estimator/foundation/foundationConstructionChecks.js",
+      "mode": "write",
+      "candidate": "o030-candidate-foundationConstructionChecks.js",
+      "sha256": "148cec3163665cd6ea24941560263ebda8fedc6d40c3aa0e6ddfc28272cf9c80",
+      "note": "NEW file — remote `exists:false` at source head (o030-baseline.json). Write whole file, LF, no terminal newline."
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationCalc.js",
+      "mode": "write",
+      "candidate": "o030-candidate-foundationCalc.js",
+      "sha256": "de9e1990aeaed3c0aff3d0a47780e6af649a455c2b21846e79496279928fa1ed",
+      "note": "Whole-file write is simplest (3-line logical diff). Exact anchors below also work with sandbox edit — do both-or-neither; the file MUST land with the new module since half its panels import it.",
+      "edits": [
+        {
+          "old": "import { foundationItemInputIssues, foundationProjectInputIssues, signageCabinetInputIssues } from \"./foundationInputValidation\";\nimport { landscapeSummary } from \"./landscapeMaterials\";",
+          "new": "import { foundationItemInputIssues, foundationProjectInputIssues, signageCabinetInputIssues } from \"./foundationInputValidation\";\nimport { foundationConstructionWarnings } from \"./foundationConstructionChecks\";\nimport { landscapeSummary } from \"./landscapeMaterials\";"
+        },
+        {
+          "old": "  if (deliveryCheck?.issues?.length) catalogIssues.push(...deliveryCheck.issues);\n  const walls = wallCalc.walls;",
+          "new": "  if (deliveryCheck?.issues?.length) catalogIssues.push(...deliveryCheck.issues);\n  // Advisory construction checks (CMP-B16) — verify-style warnings about\n  // authored assumptions and incompatible choices. They live on their own\n  // channel and never feed itemPricing/inputBlocked/pricingBlocked, so an\n  // advisory warning can never pause save or estimate handoff.\n  const constructionWarnings = foundationConstructionWarnings(project, inventory,\n    { items, deliveryCheck });\n  const walls = wallCalc.walls;"
+        },
+        {
+          "old": "    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, polePricing: poleCalc.polePricing, wallPricing: wallCalc.wallPricing, equipmentPricing, signageCabinetPricing, landscapePricing, catalogIssues, inputIssues,",
+          "new": "    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, polePricing: poleCalc.polePricing, wallPricing: wallCalc.wallPricing, equipmentPricing, signageCabinetPricing, landscapePricing, catalogIssues, inputIssues, constructionWarnings,"
+        }
+      ]
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "mode": "write",
+      "candidate": "o030-candidate-FoundationEstimator.jsx",
+      "sha256": "916ade2203f927b694b24b59d58fabdbbfac16fe6fcdeb3ec0056b42f0e8db79",
+      "note": "Whole-file write (2-hunk diff). Exact anchors below also work with sandbox edit.",
+      "edits": [
+        {
+          "old": "  const pricingBlocked = catalogBlocked || inputBlocked;\n  const [catalogReloading, setCatalogReloading] = useState(false);",
+          "new": "  const pricingBlocked = catalogBlocked || inputBlocked;\n  // Advisory construction checks (CMP-B16) — verify-style warnings only;\n  // they render on the diagnostics surface but never block save or handoff.\n  const constructionWarnings = calc?.constructionWarnings || [];\n  const [catalogReloading, setCatalogReloading] = useState(false);"
+        },
+        {
+          "old": "              ))}\n            </ul>\n          </div>\n        )}\n\n        {draftVisible?.backedUp && !draftVisible?.warning && (",
+          "new": "              ))}\n            </ul>\n          </div>\n        )}\n\n        {constructionWarnings.length > 0 && (\n          <div role=\"status\" className=\"mb-3 rounded border border-blue-300 bg-blue-50 px-3 py-2 text-[12px] text-blue-900\">\n            <span className=\"font-semibold\">Construction checks — verify before build</span>\n            <ul className=\"list-disc pl-5 mt-1 space-y-0.5\">\n              {constructionWarnings.map((warning, i) => (\n                <li key={`${warning.code}-${warning.kind}-${warning.index ?? \"\"}-${i}`}>{warning.message}</li>\n              ))}\n            </ul>\n          </div>\n        )}\n\n        {draftVisible?.backedUp && !draftVisible?.warning && ("
+        }
+      ]
+    }
+  ],
+  "deployTogether": "All three files must land in the same change — every foundation panel and page imports foundationCalc (mostly for `money`), so foundationCalc without foundationConstructionChecks.js breaks the whole estimator bundle.",
+  "protectedFiles": [
+    "src/components/estimator/foundation/legacyFoundationCalc.js",
+    "src/components/estimator/foundation/foundationInputValidation.js",
+    "src/components/estimator/foundation/foundationEquipmentBindings.js",
+    "src/components/estimator/foundation/foundationCatalogIntegrity.js",
+    "src/components/estimator/foundation/wallCalculator.js",
+    "src/components/estimator/foundation/poleCalculator.js",
+    "src/components/estimator/foundation/wallCapCalculator.js",
+    "src/components/estimator/foundation/landscapeMaterials.js",
+    "src/components/estimator/foundation/foundationAssemblyModel.js",
+    "src/components/estimator/foundation/foundationBuilderRecovery.js",
+    "src/components/estimator/foundation/foundationSaveSession.js",
+    "src/components/estimator/foundation/foundationDraftRecovery.js",
+    "src/components/estimator/foundation/foundationSyncRecovery.js",
+    "src/components/estimator/foundation/foundationTemplateModel.js",
+    "src/components/estimator/foundation/foundationLayoutModel.js",
+    "src/components/estimator/foundation/convertToBrickStone.js",
+    "src/components/estimator/foundation/FoundationItemCard.jsx",
+    "src/components/estimator/foundation/FoundationRatesPanel.jsx",
+    "src/components/estimator/foundation/FoundationEquipmentTab.jsx",
+    "src/components/estimator/foundation/FoundationTotals.jsx",
+    "src/components/estimator/foundation/ConcreteDeliveryPanel.jsx",
+    "src/components/estimator/foundation/FoundationBOM.jsx",
+    "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+    "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+    "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+    "src/components/estimator/foundation/WallShapeEditor.jsx",
+    "src/components/estimator/foundation/FoundationToolbar.jsx",
+    "src/components/estimator/foundation/FoundationSectionBanner.jsx",
+    "src/components/estimator/foundation/Foundation3DPreview.jsx",
+    "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+    "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+    "src/components/estimator/foundation/SignageCabinetsPanel.jsx",
+    "src/components/estimator/foundation/LandscapeDesigner.jsx",
+    "src/components/estimator/foundation/CustomerPricingPanel.jsx",
+    "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+    "src/components/estimator/builder/sourceProjectPersistence.js",
+    "src/components/estimator/builder/builderMutationRecovery.js",
+    "src/components/estimator/builder/builderEntityPersistence.js",
+    "src/components/estimator/settings/moduleSettingDefaults.js",
+    "src/components/masterInventory/foundationFieldSchema.js",
+    "base44/entities/FoundationProject.jsonc",
+    "base44/entities/FoundationInventory.jsonc",
+    "base44/entities/LaborServiceInventory.jsonc",
+    "base44/shared/foundationPricingWire.ts"
+  ],
+  "applyRequiresLeadApproval": true,
+  "businessRecordOperationsAuthorized": false,
+  "schemaOrMetadataActivationAuthorized": false,
+  "publishOrDeployAuthorized": false,
+  "remoteApplicationPerformed": false,
+  "checkpointsCreated": false,
+  "remoteWritesPerformed": false,
+  "businessRecordOperationsPerformed": false,
+  "publishDeployPerformed": false,
+  "transportPerformed": false,
+  "entityOperationsPerformed": false,
+  "note": "Candidate creation + local verification only. No sandbox apply, checkpoint, entity operation, schema change, publish, or deploy occurred or is authorized. Advisory warnings are additive output — no entity schema fields were added or required.",
+  "buildEntries": [
+    "src/components/estimator/foundation/foundationConstructionChecks.js",
+    "src/components/estimator/foundation/foundationCalc.js",
+    "src/pages/FoundationEstimator.jsx"
+  ],
+  "buildAlias": {
+    "@": "/app/src"
+  },
+  "candidateLineEndings": "LF",
+  "candidateTerminalLF": {
+    "foundationConstructionChecks.js": false,
+    "foundationCalc.js": false,
+    "FoundationEstimator.jsx": false
+  },
+  "remoteReadNormalization": "sandbox read strips the terminal LF — baseline hashes are sha256 of the read-returned content (the exact text the frozen bundles consume). A whole-file write of the candidate reproduces remote bytes except possibly the terminal newline; remote convention is no-terminal-LF for these files.",
+  "status": "candidates-verified-local-only"
+}

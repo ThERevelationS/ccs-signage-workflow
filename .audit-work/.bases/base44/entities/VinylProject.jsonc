@@ -1,0 +1,199 @@
+{
+  "name": "VinylProject",
+  "type": "object",
+  "description": "A Vinyl Estimator project. Holds vinyl graphics items (size, qty, vinyl/laminate selection, print flag, labor), the project rates, and the rolled-up totals.",
+  "properties": {
+    "project_name": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "estimate_number": {
+      "type": "string"
+    },
+    "hyperlink": {
+      "type": "string"
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Internal retry receipt used only to make the first create of this Builder source project idempotent."
+    },
+    "site_address": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "install_environment": {
+      "type": "string",
+      "enum": [
+        "interior",
+        "exterior"
+      ],
+      "default": "exterior"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "workflows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "printer_id": {
+      "type": "string"
+    },
+    "cutter_id": {
+      "type": "string"
+    },
+    "laminator_id": {
+      "type": "string"
+    },
+    "default_vinyl_id": {
+      "type": "string"
+    },
+    "default_laminate_id": {
+      "type": "string"
+    },
+    "personnel": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "selected_equipment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "labor_rate_per_hour": {
+      "type": "number",
+      "default": 65
+    },
+    "print_cost_per_sqft": {
+      "type": "number",
+      "default": 1.5
+    },
+    "travel_miles_round_trip": {
+      "type": "number",
+      "default": 0
+    },
+    "total_travel_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "supplies_percent_of_materials": {
+      "type": "number",
+      "default": 5
+    },
+    "extra_supplies_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "base_supplies_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "setup_fee_floor": {
+      "type": "number",
+      "default": 0
+    },
+    "spoilage_buffer_percent": {
+      "type": "number",
+      "default": 0
+    },
+    "markup_percent": {
+      "type": "number",
+      "default": 0
+    },
+    "customer_pricing_tier": {
+      "type": "number"
+    },
+    "total_print_sqft": {
+      "type": "number"
+    },
+    "total_vinyl_sqft": {
+      "type": "number"
+    },
+    "total_laminate_sqft": {
+      "type": "number"
+    },
+    "total_vinyl_cost": {
+      "type": "number"
+    },
+    "total_laminate_cost": {
+      "type": "number"
+    },
+    "total_ink_cost": {
+      "type": "number"
+    },
+    "total_machine_cost": {
+      "type": "number"
+    },
+    "total_blade_cost": {
+      "type": "number"
+    },
+    "total_supplies_cost": {
+      "type": "number"
+    },
+    "total_personnel_cost": {
+      "type": "number"
+    },
+    "total_equipment_cost": {
+      "type": "number"
+    },
+    "labor_hours": {
+      "type": "number"
+    },
+    "labor_cost": {
+      "type": "number"
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "markup_amount": {
+      "type": "number"
+    },
+    "total_cost": {
+      "type": "number"
+    },
+    "customer_pricing": {
+      "type": "object",
+      "description": "Saved customer sell-price snapshot from the shared Markup Tier engine. Preserves selected tier, category breakdown, volume discount and final customer price without changing internal Builder cost.",
+      "additionalProperties": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name"
+  ],
+  "rls": {
+    "create": { "user_condition": { "role": "__vinylproject_backend_only__" } },
+    "read": { "user_condition": { "role": "__vinylproject_backend_only__" } },
+    "update": { "user_condition": { "role": "__vinylproject_backend_only__" } },
+    "delete": { "user_condition": { "role": "__vinylproject_backend_only__" } }
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "name": "ReconciliationBatch",
+  "type": "object",
+  "description": "CoreBridge-style batched cash close. One batch groups the recorded (non-void) Payments collected since the prior close into a numbered, dated, per-location deposit group with counted totals, a cash adjustment, and a computed variance. Always written by manageReconciliation so Payment.reconciliation_batch_id stays consistent \u2014 never edited directly.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one batch close."
+    },
+    "batch_number": {
+      "type": "string",
+      "description": "Human-facing batch/group number (e.g. REC-0042). Generated server-side from the DocNumberCounter 'reconciliation' sequence."
+    },
+    "name": {
+      "type": "string",
+      "description": "Optional human label for the close (e.g. 'Main drawer — Friday'). Defaults to the batch_number when not supplied."
+    },
+    "location": {
+      "type": "string",
+      "description": "Store/drawer location this close covers (display name). Free text \u2014 the SalesLocation registry supplies names for new closes."
+    },
+    "location_id": {
+      "type": "string",
+      "description": "SalesLocation id/code (or free-text key) identifying the till this close covers. I-03 close_batch writes it; location keeps the display name."
+    },
+    "closed_at": {
+      "type": "string",
+      "description": "ISO timestamp of when the batch was closed."
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Staff email of the closer."
+    },
+    "closed_by": {
+      "type": "string",
+      "description": "Staff email that performed the close (mirrors created_by; kept distinct so a reopened-then-reclosed batch can track each actor separately)."
+    },
+    "expected_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of the recorded Payments included in this batch."
+    },
+    "collected_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Total actually counted/collected across all tenders."
+    },
+    "cash_adjustment": {
+      "type": "number",
+      "default": 0,
+      "description": "Signed over/short cash adjustment applied to the counted total (e.g. starting-till correction)."
+    },
+    "adjustment_note": {
+      "type": "string",
+      "description": "Required explanation whenever cash_adjustment is non-zero."
+    },
+    "variance": {
+      "type": "number",
+      "default": 0,
+      "description": "collected_total + cash_adjustment - expected_total. Positive = over, negative = short."
+    },
+    "expected_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "I-03 cent-safe mirror of expected_total (dollars, 2dp). Written by close_batch from integer-cent model output; keep in sync with expected_total."
+    },
+    "collected_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "I-03 cent-safe mirror of collected_total (dollars, 2dp)."
+    },
+    "adjustments_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "I-03 signed sum of the adjustments[] rows (dollars, 2dp). Mirrors cash_adjustment when the close supplied a single legacy adjustment."
+    },
+    "variance_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "I-03 cent-safe mirror of variance (dollars, 2dp): collected_amount + adjustments_amount - expected_amount."
+    },
+    "payment_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of payments swept into this close (payment_ids.length at write time)."
+    },
+    "adjustments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "description": "Itemized cash adjustments [{amount, reason, note?}] applied to the counted total. A legacy single cash_adjustment is folded in as one row with reason=adjustment_note."
+    },
+    "reopened_by": {
+      "type": "string",
+      "description": "Admin email that reopened the batch (reopen_batch is admin-only)."
+    },
+    "reopened_at": {
+      "type": "string",
+      "description": "ISO timestamp of the reopen."
+    },
+    "reopen_reason": {
+      "type": "string",
+      "description": "Required explanation recorded at reopen; also appended to notes as an audit line."
+    },
+    "payment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Payment ids swept into this close; each carries reconciliation_batch_id back to this batch."
+    },
+    "method_totals": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Expected vs counted totals per tender bucket (cash/check/card/other) for the close audit trail."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "closed",
+        "reopened"
+      ],
+      "default": "closed",
+      "description": "closed = locked (payments carry this batch's reconciliation_batch_id; the batch rejects new payments). reopened = an admin reversed the close with a reason \u2014 an immutable audit stub; its payments re-sweep into NEW batches. 'open' remains reserved for a future draft-then-close flow."
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "batch_number",
+    "closed_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__reconciliationbatch_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__reconciliationbatch_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__reconciliationbatch_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__reconciliationbatch_backend_only__"
+      }
+    }
+  }
+}

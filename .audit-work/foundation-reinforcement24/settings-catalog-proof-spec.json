@@ -1,0 +1,120 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "f33518b327fb282abc16fd134cac233911ccae09",
+  "baselineFile": "settings-catalog-baseline-v2.json",
+  "baselineStatusFile": "settings-catalog-baseline-status.json",
+  "dependencyArtifact": "settings-catalog-dependency-source.json",
+  "fixtureArtifact": "settings-catalog-fixture.json",
+  "flowSpec": "settings-catalog-flow-proof-spec.json",
+  "jsonProofs": [
+    {
+      "file": "settings-model-verification.json",
+      "resultCount": 27,
+      "mustBeAllOk": true
+    },
+    {
+      "file": "settings-model-red-verification.json",
+      "resultCount": 27,
+      "expectedFailuresAgainstPreHardeningSource": 17,
+      "expectedCompatibilityPasses": 10,
+      "mustNotBeAllOk": true
+    },
+    {
+      "file": "settings-page-verification.json",
+      "resultCount": 10,
+      "mustBeAllOk": true,
+      "unexpectedNetwork": 0,
+      "unexpectedSdk": 0
+    },
+    {
+      "file": "settings-catalog-browser-verification.json",
+      "resultCount": 12,
+      "mustBeAllOk": true
+    },
+    {
+      "file": "settings-consumer-build.json",
+      "warnings": 0,
+      "inputs": 77
+    },
+    {
+      "file": "settings-page-import-edges.json",
+      "externalOnly": true
+    },
+    {
+      "file": "settings-browser-meta.json",
+      "importEdgesEmpty": true
+    }
+  ],
+  "allResultsMustHaveOkTrue": true,
+  "scopedLintLogs": [
+    {
+      "file": "settings-catalog-lint-legacyFoundationCalc.js.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "settings-catalog-lint-foundationInputValidation.js.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "settings-catalog-lint-foundationCalc.js.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "settings-catalog-lint-foundationEquipmentBindings.js.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "settings-catalog-lint-FoundationInventory.jsx.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "settings-catalog-lint-EquipmentInventoryTab.jsx.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "settings-catalog-lint-WallCapsInventoryTab.jsx.txt",
+      "line": "exit=0"
+    },
+    {
+      "file": "settings-catalog-lint-FoundationMaterialDialog.jsx.txt",
+      "line": "exit=0"
+    }
+  ],
+  "lintNotes": "EquipmentInventoryTab.jsx: pre-existing unused base44 import at remote L11 (identical error on frozen remote source) removed in candidate — candidate diff introduces zero new lint findings and the staged tree now lints clean.",
+  "esbuildParseChecks": {
+    "file": "settings-catalog-esbuild-parse.json",
+    "count": 8,
+    "allPassed": true
+  },
+  "candidateHashes": {
+    "EquipmentInventoryTab.jsx": "d0503e650c548a1e40a42fd6b8e34726830dc62bfcc25d29722464070a571865",
+    "FoundationInventory.jsx": "0e9d351cfce62d4d6d18d2c4efe24a43c084b8224e6700f2e2df4382385149c6",
+    "FoundationMaterialDialog.jsx": "5fbfd26600a281b7fd768974c5aa8cc78a82f31f8d2bad64392d304dc47bdf5b",
+    "WallCapsInventoryTab.jsx": "735ddb052b673b9834ea94b9bf159919bab8d71a00eefade7f5457f6299be2ca",
+    "foundationCalc.js": "ac9c53eb4c08a023ac7c2268c07de09b6591528976cf38a322e8b82d7769557a",
+    "foundationEquipmentBindings.js": "9770051bb7cce5424d5075b6fff2910288f2eba6b5724dc3194d2a59928b543f",
+    "foundationInputValidation.js": "cd2cd349650134af3137be7a7a200c11fb52bd5d7a2429b9faf436abbb657f63",
+    "legacyFoundationCalc.js": "b799f3d33a794f6249beadb0b527a710f7df42d9aad0d0e062edb846dee4d1e4"
+  },
+  "candidateFiles": {
+    "legacyFoundationCalc.js": "settings-catalog-candidate-legacyFoundationCalc.js",
+    "foundationInputValidation.js": "settings-catalog-candidate-foundationInputValidation.js",
+    "foundationCalc.js": "settings-catalog-candidate-foundationCalc.js",
+    "foundationEquipmentBindings.js": "settings-catalog-candidate-foundationEquipmentBindings.js",
+    "FoundationInventory.jsx": "settings-catalog-candidate-FoundationInventory.jsx",
+    "EquipmentInventoryTab.jsx": "settings-catalog-candidate-EquipmentInventoryTab.jsx",
+    "WallCapsInventoryTab.jsx": "settings-catalog-candidate-WallCapsInventoryTab.jsx",
+    "FoundationMaterialDialog.jsx": "settings-catalog-candidate-FoundationMaterialDialog.jsx"
+  },
+  "candidateLineEndings": "LF",
+  "screenshotDirectory": ".audit-work/foundation-reinforcement24",
+  "screenshotCount": 12,
+  "allowedBuildWarningCount": 0,
+  "remoteWritesPerformed": false,
+  "checkpointsCreated": false,
+  "businessRecordOperationsPerformed": false,
+  "publishDeployPerformed": false,
+  "candidatesApplied": false,
+  "status": "candidates-verified-local-only"
+}

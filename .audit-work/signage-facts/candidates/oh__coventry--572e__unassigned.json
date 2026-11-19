@@ -1,0 +1,25 @@
+{
+ "jurisdiction_id": "6ae04735b66253e9ed95572e",
+ "jurisdiction_name": "Coventry",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "BUILDING PERMIT APPLICA TION Page 1 of 1 REV. 4/24 PERMIT # JOB ADDRESS VILLAGE/TWP/CITY DATE INIT. PARCEL # SQ. FT.  RESIDENTIAL  NEW CONSTRUCTION  ADDITION  RETRIEVE PERMIT BY WEB (DEFAULT)  SEND PERMIT BY FAX  COMMERCIAL  EXISTING  ALTERATION  SEND PERMIT BY EMAIL RESIDENTIAL NEW CONSTRUCTION/ADDITION $145 APPLICATION FEE PLUS $6/100 SQ. FT) ALTERATIONS OR ACCESSORY BLDG $60 APPLICATION FEE PLUS $6/100 SQ. FT. MINIMUM OF $25 COMMERCIAL NEW CONSTRUCTION/ADDITION $1 67 APPLICATION FEE PLUS $6/100 SQ. FT. ALTERATIONS $ 102 APPLICATION FEE PLUS $6/100 SQ. FT. FOUNDATION DAMP PROOFING ....... $30 + APP FEE A RE-INSPECTION FEE will be charged for each failed inspection, Residential and Commercial COMMERCIAL: APPLICATION FEE ............................. $ 87 RE-ROOF ..................................................... $ 77 + APP FEE SIDING .........................................",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "4999c9699e405b3da2d10d2103e563197b0101192ce4c2a9548dc595e564745e",
+   "source_document_id": null,
+   "source_title": "4999c9699e405b3da2d10d2103e563197b0101192ce4c2a9548dc595e564745e.pdf",
+   "official_url": "https://co.summitoh.net/files-generic/15231/file/buildingpermit-updated-2024.pdf"
+  }
+ ]
+}

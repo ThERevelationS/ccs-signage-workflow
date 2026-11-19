@@ -1,0 +1,41 @@
+{
+  "total": 4,
+  "failed": 0,
+  "remoteWarnings": [
+    {
+      "file": "frozen:/app/src/components/channelLetterInstall/CuttingMethodSlider.jsx",
+      "text": "Duplicate \"type\" attribute in JSX element"
+    },
+    {
+      "file": "frozen:/app/src/components/channelLetterInstall/InstallTypePicker.jsx",
+      "text": "Duplicate \"type\" attribute in JSX element"
+    },
+    {
+      "file": "frozen:/app/src/components/channelLetterInstall/LetterSizePicker.jsx",
+      "text": "Duplicate \"type\" attribute in JSX element"
+    },
+    {
+      "file": "frozen:/app/src/components/channelLetterInstall/WallMaterialPicker.jsx",
+      "text": "Duplicate \"type\" attribute in JSX element"
+    }
+  ],
+  "results": [
+    {
+      "id": "desktop-held-mount",
+      "ok": true
+    },
+    {
+      "id": "desktop-save-blocked-zero-writes",
+      "ok": true
+    },
+    {
+      "id": "mobile-held-mount",
+      "ok": true
+    },
+    {
+      "id": "mobile-save-blocked-zero-writes",
+      "ok": true
+    }
+  ],
+  "consoleErrors": []
+}

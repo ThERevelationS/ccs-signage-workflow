@@ -3,19 +3,33 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import SavedViews from "@/components/workflow/SavedViews";
+import ReceivePanel from "@/components/procurement/ReceivePanel";
+import VendorStatement from "@/components/procurement/VendorStatement";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
+import {
+  DataTableShell,
+  FilterBar,
+  FilterSearchInput,
+  PageHeader,
+  RecordLink,
+  StatusChip,
+  Td,
+  Tr,
+  filterInputCls,
+} from "@/components/kit";
 import {
   CheckCircle2,
   ChevronRight,
+  FileText,
   Loader2,
   Package,
   Plus,
   Receipt,
   RefreshCw,
-  Search,
   Send,
-  Truck,
   X,
 } from "lucide-react";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const clean = (v) => String(v ?? "").trim();
 const uuid = () => crypto.randomUUID();
@@ -28,15 +42,8 @@ const STATUS_LABELS = {
   received: "Received",
   cancelled: "Cancelled",
 };
-const STATUS_STYLES = {
-  draft: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  sent: "bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300",
-  partially_received: "bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300",
-  received: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300",
-  cancelled: "bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300",
-};
-
-const inputCls = "min-h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-violet-400 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100";
+// Shared kit input vocabulary (adds placeholder styling over the old copy).
+const inputCls = filterInputCls;
 const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400";
 
 const invokeAction = async (sessionToken, body) => {
@@ -48,11 +55,7 @@ const invokeAction = async (sessionToken, body) => {
 
 function StatusBadge({ status }) {
   const s = clean(status) || "draft";
-  return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLES[s] || STATUS_STYLES.draft}`}>
-      {STATUS_LABELS[s] || s}
-    </span>
-  );
+  return <StatusChip status={s} label={STATUS_LABELS[s] || s} />;
 }
 
 function PoItemsEditor({ items, onChange, stockItems = [] }) {
@@ -163,7 +166,7 @@ function PoForm({ sessionToken, purchaseOrder, onClose, onSaved }) {
       <div className="my-8 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">{editing ? `Edit ${purchaseOrder.po_number}` : "New Purchase Order"}</h2>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
         </div>
         <div className="grid gap-3 md:grid-cols-4">
           <div><label className={labelCls}>Vendor *</label><input className={inputCls} value={form.vendor_name} onChange={set("vendor_name")} /></div>
@@ -174,8 +177,8 @@ function PoForm({ sessionToken, purchaseOrder, onClose, onSaved }) {
         <div className="mt-3 grid gap-3 md:grid-cols-4">
           <div><label className={labelCls}>PO #</label><input className={inputCls} value={form.po_number} onChange={set("po_number")} placeholder="Auto" /></div>
           <div><label className={labelCls}>Vendor ref #</label><input className={inputCls} value={form.vendor_reference} onChange={set("vendor_reference")} /></div>
-          <div><label className={labelCls}>Order date</label><input className={inputCls} type="date" value={form.order_date} onChange={set("order_date")} /></div>
-          <div><label className={labelCls}>Expected</label><input className={inputCls} type="date" value={form.expected_date} onChange={set("expected_date")} /></div>
+          <div><label className={labelCls}>Order date</label><CcsDateField className={inputCls} value={form.order_date} onChange={set("order_date")} /></div>
+          <div><label className={labelCls}>Expected</label><CcsDateField className={inputCls} value={form.expected_date} onChange={set("expected_date")} /></div>
         </div>
         <div className="mt-4"><label className={labelCls}>Line items</label><PoItemsEditor items={items} onChange={setItems} stockItems={stockItems} /></div>
         <div className="mt-3 grid gap-3 md:grid-cols-4">
@@ -197,8 +200,8 @@ function PoForm({ sessionToken, purchaseOrder, onClose, onSaved }) {
         </div>
         {error && <div className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
         <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onClose} className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Cancel</button>
-          <button onClick={save} disabled={saving} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60">
+          <button type="button" onClick={onClose} className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Cancel</button>
+          <button type="button" onClick={save} disabled={saving} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60">
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}{editing ? "Save changes" : "Create PO"}
           </button>
         </div>
@@ -214,7 +217,7 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [editing, setEditing] = useState(false);
-  const [receiveQtys, setReceiveQtys] = useState({});
+  const [showVendorStatement, setShowVendorStatement] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -239,10 +242,19 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
     setNotice("");
     try {
       const data = await invokeAction(sessionToken, body);
+      // Unified alerts: po_received / po_backordered fire on the verified
+      // receive result — a full receive notifies "received", a receipt that
+      // leaves open quantity notifies "backordered". Fire-and-forget.
+      if (body?.action === "receive_items" && data?.purchase_order?.id) {
+        try {
+          const nextStatus = clean(data.purchase_order.status);
+          if (nextStatus === "received") void NotificationTriggers.purchaseOrderReceived(data.purchase_order);
+          else if (nextStatus === "partially_received") void NotificationTriggers.purchaseOrderBackordered(data.purchase_order);
+        } catch { /* notify is best-effort */ }
+      }
       if (Array.isArray(data?.stock_warnings) && data.stock_warnings.length > 0) {
         setNotice(`Received, but ${data.stock_warnings.length} stock update(s) need attention: ${data.stock_warnings.join(" ")}`);
       }
-      setReceiveQtys({});
       await load();
       onChanged?.();
     } catch (err) {
@@ -250,14 +262,6 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
     } finally {
       setBusy("");
     }
-  };
-
-  const receive = () => {
-    const lines = Object.entries(receiveQtys)
-      .map(([index, quantity]) => ({ index: Number(index), quantity: Number(quantity) }))
-      .filter((r) => r.quantity > 0);
-    if (lines.length === 0) { setError("Enter a quantity to receive on at least one line."); return; }
-    run("receive", { action: "receive_items", purchase_order_id: po.id, lines });
   };
 
   return (
@@ -274,61 +278,25 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{po.po_number}</h2>
                   <StatusBadge status={po.status} />
-                  {po.payment_status === "paid" && (
-                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300">Paid</span>
-                  )}
-                  {po.payment_status === "invoiced" && (
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/60 dark:text-amber-300">Vendor bill received</span>
-                  )}
+                  {po.payment_status === "paid" && <StatusChip status="paid" />}
+                  {po.payment_status === "invoiced" && <StatusChip tone="amber" label="Vendor bill received" />}
                 </div>
                 <div className="mt-0.5 text-sm font-medium text-slate-700 dark:text-slate-200">{po.vendor_name}</div>
                 <div className="mt-0.5 text-xs text-slate-500">
                   {po.order_date ? `Ordered ${po.order_date}` : "Not ordered"}{po.expected_date ? ` · Expected ${po.expected_date}` : ""}{po.vendor_reference ? ` · Ref ${po.vendor_reference}` : ""}
                 </div>
               </div>
-              <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+              <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
             </div>
 
-            <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                  <tr>
-                    <th className="px-3 py-2">Item</th><th className="px-3 py-2 text-right">Ordered</th>
-                    <th className="px-3 py-2 text-right">Received</th><th className="px-3 py-2 text-right">Cost</th>
-                    <th className="px-3 py-2 text-right">Total</th>
-                    {canReceive && <th className="px-3 py-2 text-right">Receive qty
-                      <button type="button" title="Fill every line with its full open quantity"
-                        onClick={() => setReceiveQtys(Object.fromEntries((po.line_items || []).map((r, i) => [i, Math.max(0, (Number(r.quantity) || 0) - (Number(r.quantity_received) || 0))])))}
-                        className="ml-1.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold normal-case text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/60 dark:text-emerald-300">ALL</button>
-                    </th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(po.line_items || []).map((r, i) => {
-                    const open = Math.max(0, (Number(r.quantity) || 0) - (Number(r.quantity_received) || 0));
-                    return (
-                      <tr key={i} className="border-t border-slate-100 dark:border-slate-800">
-                        <td className="px-3 py-2 text-slate-800 dark:text-slate-100">{r.description}</td>
-                        <td className="px-3 py-2 text-right">{r.quantity}</td>
-                        <td className="px-3 py-2 text-right">{r.quantity_received || 0}</td>
-                        <td className="px-3 py-2 text-right">{usd(r.unit_cost)}</td>
-                        <td className="px-3 py-2 text-right font-medium">{usd((Number(r.quantity) || 0) * (Number(r.unit_cost) || 0))}</td>
-                        {canReceive && (
-                          <td className="px-3 py-2 text-right">
-                            {open > 0 ? (
-                              <input className="w-20 rounded-lg border border-slate-300 px-2 py-1 text-right text-sm dark:border-slate-600 dark:bg-slate-800"
-                                type="number" min="0" max={open} step="any" placeholder={String(open)}
-                                value={receiveQtys[i] ?? ""}
-                                onChange={(e) => setReceiveQtys((s) => ({ ...s, [i]: e.target.value }))} />
-                            ) : <CheckCircle2 className="ml-auto h-4 w-4 text-emerald-500" />}
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  })}
-                  {(po.line_items || []).length === 0 && <tr><td colSpan={6} className="px-3 py-4 text-center text-slate-400">No line items.</td></tr>}
-                </tbody>
-              </table>
+            <div className="mt-4">
+              <ReceivePanel
+                po={po}
+                sessionToken={sessionToken}
+                canReceive={canReceive}
+                busy={busy}
+                onReceive={(lines) => run("receive", { action: "receive_items", purchase_order_id: po.id, lines })}
+              />
             </div>
             <div className="mt-2 text-right text-sm">
               <span className="mr-4">Subtotal: <span className="font-medium">{usd(po.subtotal)}</span></span>
@@ -338,13 +306,18 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
 
             <div className="mt-3 text-xs text-slate-500">
               {po.ship_to && <div>Ship to: {po.ship_to}</div>}
-              {po.work_order_id && <div>WorkOrder: {po.work_order_id}</div>}
-              {po.estimate_id && <div>Estimate: <a className="text-violet-600 hover:underline dark:text-violet-300" href={`/EstimateDetail?id=${po.estimate_id}`}>{po.estimate_id}</a></div>}
-              {po.opportunity_id && <div>Opportunity: {po.opportunity_id}</div>}
+              {po.work_order_id && <div>WorkOrder: <RecordLink kind="workorder" id={po.work_order_id} /></div>}
+              {po.estimate_id && <div>Estimate: <RecordLink kind="estimate" id={po.estimate_id} /></div>}
+              {po.opportunity_id && <div>Opportunity: <RecordLink kind="opportunity" id={po.opportunity_id} /></div>}
               {po.notes && <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{po.notes}</div>}
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-2">
+              <button type="button" onClick={() => setShowVendorStatement(true)} disabled={Boolean(busy)}
+                title="Printable per-vendor statement — all POs, expected vs received, status rollup"
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800">
+                <FileText className="h-4 w-4" />Vendor statement
+              </button>
               {po.status === "draft" && (
                 <>
                   <button type="button" onClick={() => run("send", { action: "mark_sent", purchase_order_id: po.id })} disabled={Boolean(busy)}
@@ -354,12 +327,6 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
                   <button type="button" onClick={() => setEditing(true)}
                     className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Edit</button>
                 </>
-              )}
-              {canReceive && (
-                <button type="button" onClick={receive} disabled={Boolean(busy)}
-                  className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
-                  {busy === "receive" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />}Record receipt
-                </button>
               )}
               {po.payment_status !== "paid" && po.payment_status !== "invoiced" && ["sent", "partially_received", "received"].includes(po.status) && (
                 <button type="button" onClick={() => {
@@ -398,6 +365,9 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
         <PoForm sessionToken={sessionToken} purchaseOrder={po} onClose={() => setEditing(false)}
           onSaved={async () => { setEditing(false); await load(); onChanged?.(); }} />
       )}
+      {showVendorStatement && po && (
+        <VendorStatement sessionToken={sessionToken} vendorName={po.vendor_name} onClose={() => setShowVendorStatement(false)} />
+      )}
     </div>
   );
 }
@@ -410,7 +380,13 @@ export default function PurchaseOrders() {
   const [viewName, setViewName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showCreate, setShowCreate] = useState(false);
+  const [showCreate, setShowCreate] = useState(() => {
+    // ?draft_item=<inventory_item_id> opens a new PO prefilled with the
+    // low-stock item (linked from the attention feed's low-stock section).
+    const id = new URLSearchParams(window.location.search).get("draft_item");
+    return Boolean(id && String(id).trim());
+  });
+  const draftItemId = new URLSearchParams(window.location.search).get("draft_item") || "";
   const [openId, setOpenId] = useState(() => new URLSearchParams(window.location.search).get("po") || "");
 
   const load = useCallback(async () => {
@@ -438,89 +414,87 @@ export default function PurchaseOrders() {
   const todayStr = new Date().toISOString().slice(0, 10);
   const isOverdue = (p) => ["sent", "partially_received"].includes(p.status) && p.expected_date && p.expected_date < todayStr;
   const overdueCount = purchaseOrders.filter(isOverdue).length;
+  const woParam = new URLSearchParams(window.location.search).get("wo") || "";
+  const visibleOrders = woParam ? purchaseOrders.filter((p) => p.work_order_id === woParam) : purchaseOrders;
 
   return (
     <div className="mx-auto max-w-6xl p-4 md:p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-violet-600" />
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Purchase Orders</h1>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Vendor POs and receiving.{openValue > 0 ? ` Open PO value: ${usd(openValue)}.` : ""}{overdueCount > 0 ? ` ${overdueCount} overdue.` : ""}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={load} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh
-          </button>
-          <button onClick={() => setShowCreate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700">
-            <Plus className="h-4 w-4" />New PO
-          </button>
-        </div>
-      </div>
-
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-52 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input className={`${inputCls} pl-9`} value={query} onChange={(e) => { setViewName(""); setQuery(e.target.value); }} placeholder="Search PO # or vendor…" />
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {["", "draft", "sent", "partially_received", "received", "cancelled"].map((s) => (
-            <button key={s || "all"} onClick={() => { setViewName(""); setStatus(s); }}
-              className={`min-h-9 rounded-full px-3 text-xs font-semibold ${status === s ? "bg-violet-600 text-white" : "border border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300"}`}>
-              {s ? STATUS_LABELS[s] : "All"}
+      <PageHeader
+        breadcrumbs={[{ label: "Financials", to: "/Financials" }, { label: "Purchase Orders" }]}
+        icon={Package}
+        title="Purchase Orders"
+        subtitle={`Vendor POs and receiving.${openValue > 0 ? ` Open PO value: ${usd(openValue)}.` : ""}${overdueCount > 0 ? ` ${overdueCount} overdue.` : ""}`}
+        actions={(
+          <>
+            <button type="button" onClick={load} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh
             </button>
-          ))}
-        </div>
-        <SavedViews
-          storageKey="views.purchase_orders"
-          getState={() => ({ status, query })}
-          activeName={viewName}
-          onApply={(s, name) => { setStatus(s.status || ""); setQuery(s.query || ""); setViewName(name || ""); }}
-        />
-      </div>
+            <button type="button" onClick={() => setShowCreate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700">
+              <Plus className="h-4 w-4" />New PO
+            </button>
+          </>
+        )}
+      />
 
+      <FilterBar
+        search={(
+          <FilterSearchInput value={query} onChange={(e) => { setViewName(""); setQuery(e.target.value); }} placeholder="Search PO # or vendor…" />
+        )}
+        presets={(
+          <div className="flex flex-wrap gap-1.5">
+            {["", "draft", "sent", "partially_received", "received", "cancelled"].map((s) => (
+              <button type="button" key={s || "all"} onClick={() => { setViewName(""); setStatus(s); }}
+                className={`min-h-9 rounded-full px-3 text-xs font-semibold ${status === s ? "bg-violet-600 text-white" : "border border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300"}`}>
+                {s ? STATUS_LABELS[s] : "All"}
+              </button>
+            ))}
+          </div>
+        )}
+        views={(
+          <SavedViews
+            storageKey="views.purchase_orders"
+            getState={() => ({ status, query })}
+            activeName={viewName}
+            onApply={(s, name) => { setStatus(s.status || ""); setQuery(s.query || ""); setViewName(name || ""); }}
+          />
+        )}
+      />
+
+      {woParam && (
+        <div className="mb-3 flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-2 text-sm font-medium text-sky-800 dark:bg-sky-950/40 dark:text-sky-300">
+          Filtered to this job's purchase orders.
+          <a href="/PurchaseOrders" className="ml-auto text-xs font-semibold text-sky-600 hover:underline">Show all</a>
+        </div>
+      )}
       {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-        {loading && purchaseOrders.length === 0 ? (
-          <TableSkeleton columns={6} />
-        ) : purchaseOrders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-slate-500">
-            <Package className="mb-2 h-8 w-8 text-slate-300 dark:text-slate-600" />
-            No purchase orders yet.
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-              <tr>
-                <th className="px-4 py-2.5">PO #</th><th className="px-4 py-2.5">Vendor</th>
-                <th className="px-4 py-2.5">Expected</th><th className="px-4 py-2.5 text-right">Total</th>
-                <th className="px-4 py-2.5">Status</th><th className="px-2 py-2.5" />
-              </tr>
-            </thead>
-            <tbody>
-              {purchaseOrders.map((po) => (
-                <tr key={po.id} onClick={() => setOpenId(po.id)} className="cursor-pointer border-t border-slate-100 hover:bg-violet-50/50 dark:border-slate-800 dark:hover:bg-slate-800/50">
-                  <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{po.po_number}</td>
-                  <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{po.vendor_name}</td>
-                  <td className="px-4 py-2.5 text-slate-500">
-                    {po.expected_date || "—"}
-                    {isOverdue(po) && <span className="ml-1.5 inline-flex rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-950/60 dark:text-red-300">Overdue</span>}
-                  </td>
-                  <td className="px-4 py-2.5 text-right font-medium">{usd(po.total)}</td>
-                  <td className="px-4 py-2.5"><StatusBadge status={po.status} /></td>
-                  <td className="px-2 py-2.5 text-slate-400"><ChevronRight className="h-4 w-4" /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {loading && purchaseOrders.length === 0 ? (
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"><TableSkeleton columns={6} /></div>
+      ) : (
+        <DataTableShell
+          head={["PO #", "Vendor", "Expected", { label: "Total", className: "text-right" }, "Status", { label: "", className: "px-2" }]}
+          isEmpty={visibleOrders.length === 0}
+          emptyState={woParam
+            ? { icon: Package, title: "No purchase orders for this job.", message: "POs created with a linked work order appear here." }
+            : { icon: Package, title: "No purchase orders yet.", message: "Create the first PO to start vendor ordering and receiving.", actionLabel: "New PO", onAction: () => setShowCreate(true) }}
+        >
+          {visibleOrders.map((po) => (
+            <Tr key={po.id} onClick={() => setOpenId(po.id)} className="cursor-pointer">
+              <Td className="font-semibold text-slate-900 dark:text-slate-100">{po.po_number}</Td>
+              <Td className="text-slate-700 dark:text-slate-300">{po.vendor_name}</Td>
+              <Td className="text-slate-500">
+                {po.expected_date || "—"}
+                {isOverdue(po) && <StatusChip status="overdue" size="sm" className="ml-1.5" />}
+              </Td>
+              <Td className="text-right font-medium">{usd(po.total)}</Td>
+              <Td><StatusBadge status={po.status} /></Td>
+              <Td className="px-2 text-slate-400"><ChevronRight className="h-4 w-4" /></Td>
+            </Tr>
+          ))}
+        </DataTableShell>
+      )}
 
-      {showCreate && <PoForm sessionToken={sessionToken} onClose={() => setShowCreate(false)} onSaved={() => { setShowCreate(false); load(); }} />}
+      {showCreate && <PoForm sessionToken={sessionToken} purchaseOrder={draftItemId ? { line_items: [{ inventory_item_id: draftItemId, quantity: 1 }] } : undefined} onClose={() => setShowCreate(false)} onSaved={() => { setShowCreate(false); load(); }} />}
       {openId && <PoDetail sessionToken={sessionToken} purchaseOrderId={openId} onClose={() => setOpenId("")} onChanged={load} />}
     </div>
   );

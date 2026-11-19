@@ -1,0 +1,14 @@
+=== LAYOUT UNIT ===
+ok sub-inch wiggle rounding to same corner: zero callbacks
+ok stale keyboard handler after unmount: zero callbacks
+PASS layout passed=26 failed=0
+=== BROWSER ===
+layout-browser scenarios=3 failed=0
+ok mouse drag zoom 1/2/0.5 -> corner 216,142, one commit each
+ok touch drag: pointer-capture path commits once; touch cancel -> none
+ok keyboard arrows + reorder mid-drag resolves index + delete cancels
+=== ESLINT max-warnings=0 ===
+eslint_exit=0
+=== PAGE BUNDLE ===
+
+Done in 37ms

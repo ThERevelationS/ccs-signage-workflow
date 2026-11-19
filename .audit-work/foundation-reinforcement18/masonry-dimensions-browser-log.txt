@@ -1,0 +1,11 @@
+ok valid-strings 1280
+ok valid-strings 390
+ok missing-length 1280
+ok missing-length 390
+ok invalid-three 1280
+ok invalid-three 390
+ok inner-width 1280
+ok inner-width 390
+ok new 1280
+ok new 390
+masonry-browser passed=10 failed=0

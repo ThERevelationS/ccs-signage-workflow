@@ -1,0 +1,91 @@
+{
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "d4e979d30b9885f7506c1e11d083eed38b6a0ddc",
+ "baselineFile": "cnc-pricing-baseline-v2.json",
+ "proofSpec": "cnc-pricing-proof-spec.json",
+ "candidateManifest": "cnc-pricing-candidates.json",
+ "targetOrder": [
+  "src/components/estimator/cnc/cncPricingAvailability.js",
+  "src/pages/CNCEstimator.jsx"
+ ],
+ "candidatePrefix": "candidates/src/",
+ "newRemoteFiles": [
+  "src/components/estimator/cnc/cncPricingAvailability.js"
+ ],
+ "atomicEditPerFile": true,
+ "editsPerFile": 1,
+ "candidateLineEndings": "LF",
+ "candidateTerminalLF": {
+  "src/components/estimator/cnc/cncPricingAvailability.js": true,
+  "src/pages/CNCEstimator.jsx": true
+ },
+ "protectedFiles": [
+  "src/pages/CNCSettings.jsx",
+  "src/components/estimator/cnc/cncCalc.js",
+  "src/components/estimator/cnc/cncSellPricing.js",
+  "src/components/cnc/HoldDownAdvisor.jsx",
+  "src/components/cnc/holdDownCalculator.jsx",
+  "src/components/signMaintenance/",
+  "src/components/channelLetterInstall/",
+  "src/components/vinylEstimator/",
+  "src/components/estimator/paint/",
+  "src/components/estimator/laser/",
+  "src/components/estimator/customerPricing.js",
+  "src/components/markup/CustomerPricingTab.jsx",
+  "src/components/markup/projectCategorizer.jsx",
+  "src/components/estimator/builder/builderService.js",
+  "src/components/estimator/builder/sourceProjectPersistence.js",
+  "src/components/estimator/builder/itemIdentity.js",
+  "src/components/estimator/moduleShared/moduleProjectActions.js",
+  "src/components/estimator/settings/moduleSettingDefaults.js",
+  "src/components/estimator/foundation/",
+  "src/components/estimator/loadAllEntityRows.js",
+  "src/components/estimator/idempotentEntityCreate.js"
+ ],
+ "liveDeadDetermination": {
+  "liveCalc": "inline in src/pages/CNCEstimator.jsx (updateItem + calculateTotals)",
+  "deadCalc": "src/components/estimator/cnc/cncCalc.js — divergent, not imported by the page; deliberately unchanged",
+  "livePage": "src/pages/CNCEstimator.jsx",
+  "liveSettingsSurface": "src/pages/CNCSettings.jsx (CAS-hardened — unchanged)",
+  "sellPricingWire": "src/components/estimator/cnc/cncSellPricing.js (pricing-engine wire — unchanged)",
+  "newModule": "src/components/estimator/cnc/cncPricingAvailability.js (new — strict scanners + derived pass)"
+ },
+ "forbiddenRemoteOperations": [
+  "sandbox edit",
+  "sandbox write",
+  "checkpoint",
+  "entity ops",
+  "schema ops",
+  "deploy",
+  "publish"
+ ],
+ "applyRequiresLeadApproval": true,
+ "remoteWriteAuthorized": false,
+ "deleteOrRestoreAuthorization": false,
+ "businessRecordOperationsAuthorized": false,
+ "schemaOrMetadataActivationAuthorized": false,
+ "publishOrDeployAuthorized": false,
+ "candidateHashes": {
+  "src/components/estimator/cnc/cncPricingAvailability.js": "7ff2091c118b7d5a470e2f4288c0dfab001160fc32f8618d5c00b7a1c431f484",
+  "src/pages/CNCEstimator.jsx": "cad8d0c80544d7aced15b91a050e24178b497ef327391ef2301f8742eeff9be7"
+ },
+ "buildEntries": [
+  "src/components/estimator/cnc/cncPricingAvailability.js",
+  "src/pages/CNCEstimator.jsx"
+ ],
+ "buildAlias": {
+  "@": "/app/src"
+ },
+ "forbiddenExternalImportPrefix": "@/",
+ "candidateLineEndingsByFile": {
+  "src/components/estimator/cnc/cncPricingAvailability.js": "LF",
+  "src/pages/CNCEstimator.jsx": "LF"
+ },
+ "editInput": "stdin",
+ "stageBase64ChunkLength": 3000,
+ "remoteTempPrefix": "/tmp/ccs-cnc-pricing-",
+ "restoreCheckpointName": "Before CNC Pricing Availability Hardening",
+ "finalCheckpointName": "CNC Pricing Availability Hardening Verified",
+ "checkpointAuthority": "lead"
+}

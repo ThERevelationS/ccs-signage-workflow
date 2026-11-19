@@ -39,7 +39,9 @@
     "customer_ids": {
       "type": "array",
       "description": "Restrict this announcement to these customer IDs on the customer portal (empty = all customers).",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "default": []
     },
     "display_pages": {
@@ -137,7 +139,20 @@
         "role": "__announcement_backend_only__"
       }
     },
-    "read": {},
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
     "update": {
       "user_condition": {
         "role": "__announcement_backend_only__"

@@ -7,7 +7,17 @@ import {
 } from "recharts";
 import { BarChart3, CheckCircle2, Clock, Users, TrendingUp, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
+
+// due_date is stored date-only ("YYYY-MM-DD"); a bare new Date(str) parses it
+// as UTC midnight and shifts it one day back in local time. Parse as local
+// midnight the same way MyWorkflow/SIPs do.
+const parseLocalDate = (dateString) => {
+  if (!dateString) return undefined;
+  const [year, month, day] = String(dateString).split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 import AttentionFeed from "@/components/workflow/AttentionFeed";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -44,13 +54,11 @@ export default function ReportingDashboard() {
     setReadError("");
     try {
       const [wos, us] = await Promise.all([
-        loadAllEntityRows({
-          entity: staffEntities.WorkOrder,
-          query: { deleted: false },
-          sort: "created_date",
-          label: "Reporting Dashboard Work Orders",
-        }),
-        loadAllEntityRows({ entity: staffEntities.AuthorizedEmail, sort: null, label: "Reporting Dashboard authorized users" })
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
+        loadAllEntityRows({ entity: staffEntities.AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Reporting Dashboard authorized users" })
       ]);
       setWorkOrders(wos || []);
       setUsers(us || []);
@@ -95,6 +103,7 @@ export default function ReportingDashboard() {
 
   // Due dates in next 30 days
   const today = new Date();
+  const startOfToday = new Date(today); startOfToday.setHours(0, 0, 0, 0);
   const next30 = Array.from({ length: 30 }, (_, i) => {
     const d = new Date(today);
     d.setDate(d.getDate() + i);
@@ -104,7 +113,7 @@ export default function ReportingDashboard() {
     date: label,
     count: active.filter(wo => {
       if (!wo.due_date) return false;
-      return format(new Date(wo.due_date), "MMM d") === label;
+      return format(parseLocalDate(wo.due_date), "MMM d") === label;
     }).length
   })).filter(d => d.count > 0);
 
@@ -138,13 +147,34 @@ export default function ReportingDashboard() {
     return months;
   })();
 
+  // Weekly estimate throughput — submissions per ISO week over the last 8w (#279)
+  const weeklyThroughput = (() => {
+    const weeks = [];
+    const now = new Date();
+    for (let i = 7; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 7 * 86400000);
+      const monday = new Date(d); monday.setDate(d.getDate() - d.getDay() + 1);
+      const key = monday.toISOString().slice(0, 10);
+      if (!weeks.find((w) => w.key === key)) weeks.push({ key, label: format(monday, "MMM d"), count: 0 });
+    }
+    const idx = Object.fromEntries(weeks.map((w, i) => [w.key, i]));
+    for (const o of oppRows) {
+      const when = String(o?.created_date || o?.submitted_date || "").slice(0, 10);
+      if (!when) continue;
+      const d = new Date(when); const monday = new Date(d); monday.setDate(d.getDate() - d.getDay() + 1);
+      const i = idx[monday.toISOString().slice(0, 10)];
+      if (i != null) weeks[i].count += 1;
+    }
+    return weeks;
+  })();
+
   // ASAP count
   const asapCount = active.filter(wo => wo.asap).length;
 
   // Overdue
   const overdueCount = active.filter(wo => {
     if (!wo.due_date) return false;
-    return new Date(wo.due_date) < today;
+    return parseLocalDate(wo.due_date) < startOfToday;
   }).length;
 
   if (loading) {
@@ -310,6 +340,32 @@ export default function ReportingDashboard() {
                     ))}
                   </div>
                 </div>
+                {Array.isArray(pipeline.estimate_funnel.by_module) && pipeline.estimate_funnel.by_module.length > 0 && (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">By module</div>
+                    <div className="space-y-1">
+                      {pipeline.estimate_funnel.by_module.slice(0, 8).map((m) => (
+                        <div key={m.module} className="flex items-center justify-between text-[11px] rounded border border-gray-100 px-2 py-1">
+                          <span className="truncate text-gray-700 capitalize">{String(m.module).replace(/_/g, " ")}</span>
+                          <span className="text-gray-500">{m.count} items · <b>${Number(m.value || 0).toLocaleString()}</b></span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {weeklyThroughput.some((w) => w.count > 0) && (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Estimates per week</div>
+                    <div className="flex items-end gap-1">
+                      {weeklyThroughput.map((w) => (
+                        <div key={w.key} className="flex-1" title={`${w.label}: ${w.count}`}>
+                          <div className="rounded-t bg-indigo-300/70" style={{ height: `${Math.max(4, Math.min(40, w.count * 8))}px` }} />
+                          <div className="mt-0.5 text-center text-[9px] text-gray-400">{w.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {pipeline.estimate_funnel.aging_buckets && (
                   <div className="mt-3 border-t border-gray-100 pt-3">
                     <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Quote aging</div>

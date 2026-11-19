@@ -15,6 +15,7 @@ import {
 } from "./laborServiceCategorySchema";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createInventoryRecordWithRecovery, recordInventoryCostChanges, loadInventoryCostHistory } from "./inventoryPersistence";
+import { inventoryNumberInput } from "./inventoryNormalization";
 
 /**
  * Generic inventory add/edit modal driven by a `source` config object.
@@ -83,10 +84,14 @@ export default function InventoryFormModal({ source, editingItem, onCancel, onSa
     // category-specific fields for the SELECTED category only. Fields owned by
     // other categories are left untouched so switching categories doesn't wipe
     // historical data, but we don't write empty values for them either.
+    // Number coercion is the boundary's catalog draft (CMP-A08): blank → null
+    // ("not cataloged"), numeric → Number, anything else stays VERBATIM so the
+    // availability checks report it — the old parseFloat partial-parsed
+    // "12abc" into 12 and minted NaN for "abc".
     const payload = {};
     const coerce = (f, v) => {
       if (f.type === "number") {
-        return v === "" || v === null || v === undefined ? null : parseFloat(v);
+        return v === "" || v === null || v === undefined ? null : inventoryNumberInput(v);
       }
       if (f.type === "boolean") return !!v;
       return v ?? "";

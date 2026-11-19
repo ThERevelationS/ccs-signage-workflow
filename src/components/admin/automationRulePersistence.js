@@ -57,12 +57,28 @@ export async function updateAutomationRuleIfUnchanged({ record, nextFields, exac
     return result.record;
   }
 
+  // Keep a bounded in-record history so admins can see what changed and
+  // restore a previous configuration from the rule card.
+  const historyEntry = {
+    at: new Date().toISOString(),
+    snapshot: {
+      name: record.name,
+      triggers: record.triggers,
+      actions: record.actions,
+      enabled: record.enabled,
+      priority: record.priority,
+    },
+  };
+  const fieldsWithHistory = {
+    ...(nextFields && typeof nextFields === "object" ? nextFields : {}),
+    history: [...(Array.isArray(record.history) ? record.history : []), historyEntry].slice(-10),
+  };
   const result = await invokeMutation({
     action: "automation_update",
     admin_capability: capability,
     id: record.id,
     expected_updated_date: String(record.updated_date || ""),
-    next_fields: nextFields,
+    next_fields: fieldsWithHistory,
   }, label);
   if (!result?.record?.id) throw new Error(`${label} update could not be verified.`);
   return result.record;

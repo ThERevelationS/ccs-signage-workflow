@@ -1,0 +1,11 @@
+{
+  "files": [
+    {
+      "path": "src/components/estimator/foundation/FoundationSyncConflictDialog.jsx",
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "File not found."
+      }
+    }
+  ]
+}

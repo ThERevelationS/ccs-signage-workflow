@@ -1,0 +1,187 @@
+{
+  "red": false,
+  "results": [
+    {
+      "name": "valid cabinets price identically to ported formulas; no authored mutation",
+      "ok": true
+    },
+    {
+      "name": "calcProject totals match ported math for valid cabinets + landscape",
+      "ok": true
+    },
+    {
+      "name": "landscapeSummary prices the recorded grid identically to the ported rollup",
+      "ok": true
+    },
+    {
+      "name": "absent/blank quantity keeps the ported single-cabinet default",
+      "ok": true
+    },
+    {
+      "name": "invalid cabinet quantity holds the row (zero)",
+      "ok": true
+    },
+    {
+      "name": "invalid cabinet quantity holds the row (negative)",
+      "ok": true
+    },
+    {
+      "name": "invalid cabinet quantity holds the row (malformed)",
+      "ok": true
+    },
+    {
+      "name": "invalid cabinet quantity holds the row (NaN)",
+      "ok": true
+    },
+    {
+      "name": "invalid cabinet quantity holds the row (Infinity)",
+      "ok": true
+    },
+    {
+      "name": "invalid cabinet quantity holds the row (record)",
+      "ok": true
+    },
+    {
+      "name": "fractional positive quantity stays valid — it already billed at face value",
+      "ok": true
+    },
+    {
+      "name": "numeric-string quantity normalizes on the calculation copy only",
+      "ok": true
+    },
+    {
+      "name": "explicit-zero unit cost is a legitimate free cabinet",
+      "ok": true
+    },
+    {
+      "name": "invalid unit cost holds the row (missing)",
+      "ok": true
+    },
+    {
+      "name": "invalid unit cost holds the row (null)",
+      "ok": true
+    },
+    {
+      "name": "invalid unit cost holds the row (blank)",
+      "ok": true
+    },
+    {
+      "name": "invalid unit cost holds the row (negative)",
+      "ok": true
+    },
+    {
+      "name": "invalid unit cost holds the row (malformed)",
+      "ok": true
+    },
+    {
+      "name": "invalid unit cost holds the row (NaN)",
+      "ok": true
+    },
+    {
+      "name": "invalid unit cost holds the row (record)",
+      "ok": true
+    },
+    {
+      "name": "cabinet dimensions are not price-consuming — malformed dims do not hold",
+      "ok": true
+    },
+    {
+      "name": "one bad row withholds the cabinet subtotal — acknowledged total held",
+      "ok": true
+    },
+    {
+      "name": "bad row with no acknowledged total reports null, not $0",
+      "ok": true
+    },
+    {
+      "name": "non-explicit snapshot keeps the authored basis for totals",
+      "ok": true
+    },
+    {
+      "name": "cabinet issues do not leak into item pricing or catalog gate",
+      "ok": true
+    },
+    {
+      "name": "landscape missing cell size is unavailable, not guessed-12",
+      "ok": true
+    },
+    {
+      "name": "invalid cell_size_inches unavailable (zero)",
+      "ok": true
+    },
+    {
+      "name": "invalid cell_size_inches unavailable (negative)",
+      "ok": true
+    },
+    {
+      "name": "invalid cell_size_inches unavailable (malformed)",
+      "ok": true
+    },
+    {
+      "name": "invalid cell_size_inches unavailable (NaN)",
+      "ok": true
+    },
+    {
+      "name": "invalid cell_size_inches unavailable (record)",
+      "ok": true
+    },
+    {
+      "name": "missing cell size with nothing painted is not an issue — nothing bills",
+      "ok": true
+    },
+    {
+      "name": "numeric-string cell size normalizes like the ported coercion",
+      "ok": true
+    },
+    {
+      "name": "unknown material key is unavailable, never a silent $0",
+      "ok": true
+    },
+    {
+      "name": "malformed cells record is unavailable, not silently empty",
+      "ok": true
+    },
+    {
+      "name": "landscape issues hold the acknowledged project total",
+      "ok": true
+    },
+    {
+      "name": "dirt cells and eraser rows never price or flag",
+      "ok": true
+    },
+    {
+      "name": "clone preserves a malformed segments row raw — no crash, source untouched",
+      "ok": true
+    },
+    {
+      "name": "clone tolerates nonarray segments (record)",
+      "ok": true
+    },
+    {
+      "name": "clone tolerates nonarray segments (number)",
+      "ok": true
+    },
+    {
+      "name": "clone tolerates nonarray segments (boolean)",
+      "ok": true
+    },
+    {
+      "name": "wall cap segment index resolves to undefined on a malformed parent wall",
+      "ok": true
+    },
+    {
+      "name": "normalize still rejects malformed segments on the load path",
+      "ok": true
+    },
+    {
+      "name": "clone with no walls or clean walls is byte-identical to pre-guard output",
+      "ok": true
+    },
+    {
+      "name": "project input issues still reject nonarray items",
+      "ok": true
+    }
+  ],
+  "okCount": 45,
+  "failCount": 0
+}

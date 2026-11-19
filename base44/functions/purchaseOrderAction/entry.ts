@@ -1,10 +1,13 @@
+import { allocateDocNumber } from '../../shared/docNumberAllocation.ts';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import {
   createFoundationRecordWithRecovery,
   expectedFoundationFields,
   replaceFoundationFieldsIfUnchanged,
 } from "../../shared/opportunityFoundationPersistence.mjs";
+import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
 
 const clean = (value: any) => String(value ?? "").trim();
 const num = (value: any, fallback = 0) => {
@@ -17,7 +20,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const PO_STATUSES = ["draft", "sent", "partially_received", "received", "cancelled"];
 
 const EDITABLE_FIELDS = [
-  "po_number", "vendor_name", "vendor_contact", "vendor_email", "vendor_phone",
+  "vendor_name", "vendor_contact", "vendor_email", "vendor_phone",
   "work_order_id", "estimate_id", "opportunity_id",
   "line_items", "shipping_fee", "order_date", "expected_date",
   "ship_to", "vendor_reference", "notes", "internal_notes",
@@ -60,13 +63,8 @@ function computeTotals(fields: any) {
   return { subtotal, shipping_fee: shipping, total: money(subtotal + shipping) };
 }
 
-async function nextPoNumber(PurchaseOrder: any) {
-  const rows = await PurchaseOrder.filter({});
-  if (!Array.isArray(rows)) throw bad("PO numbering lookup failed.", 500);
-  let seq = rows.length + 1001;
-  const existing = new Set(rows.map((r: any) => clean(r?.po_number)));
-  while (existing.has(`PO-${seq}`)) seq += 1;
-  return `PO-${seq}`;
+async function nextPoNumber(PurchaseOrder: any, svc: any) {
+  return allocateDocNumber({ svc, configName: 'purchase_order', prefix: 'PO-', seedEntity: PurchaseOrder, seedField: 'po_number' });
 }
 
 function poSnapshot(row: any) {
@@ -80,6 +78,8 @@ function poSnapshot(row: any) {
     estimate_id: clean(row?.estimate_id),
     order_date: clean(row?.order_date),
     expected_date: clean(row?.expected_date),
+    sent_date: clean(row?.sent_date),
+    received_date: clean(row?.received_date),
     subtotal: num(row?.subtotal),
     shipping_fee: num(row?.shipping_fee),
     total: num(row?.total),
@@ -113,7 +113,7 @@ async function applyStockReceipt({ Inventory, Movement, itemId, qty, poNumber, a
     data: {
       creation_request_key: key,
       item_id: clean(item.id),
-      item_label: [clean(item.material_type), clean(item.product_type), clean(item.size)].filter(Boolean).join(" · ") || "Item",
+      item_label: [clean(item.material_type), clean(item.product_type), clean(item.size)].filter(Boolean).join(" Â· ") || "Item",
       reason: "receive",
       delta: qty,
       unit_cost: num(item?.cost_per_unit),
@@ -130,7 +130,7 @@ async function applyStockReceipt({ Inventory, Movement, itemId, qty, poNumber, a
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const user = await authenticateSignShopSession(base44, body?.session_token);
     const actor = clean(user?.email) || clean(user?.id) || "unknown";
@@ -152,17 +152,28 @@ Deno.serve(async (req) => {
         const v = clean(body?.[key]);
         if (v) query[key] = v;
       }
-      const rows = await PurchaseOrder.filter(query);
+      const rows = await loadAllEntityRows({
+        entity: PurchaseOrder,
+        query,
+        sort: "-created_date",
+        label: "Purchase order rows",
+      });
       if (!Array.isArray(rows)) throw bad("Purchase order lookup failed.", 500);
       const search = clean(body?.query).toLowerCase();
-      const purchaseOrders = rows
+      const matched = rows
         .filter((r: any) => !search
           || clean(r?.po_number).toLowerCase().includes(search)
           || clean(r?.vendor_name).toLowerCase().includes(search))
-        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)))
-        .slice(0, 250)
-        .map(poSnapshot);
-      return Response.json({ success: true, action, purchase_orders: purchaseOrders });
+        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
+      const purchaseOrders = matched.slice(0, 250).map(poSnapshot);
+      return Response.json({
+        success: true,
+        action,
+        purchase_orders: purchaseOrders,
+        total_count: matched.length,
+        returned: purchaseOrders.length,
+        truncated: purchaseOrders.length < matched.length,
+      });
     }
 
     if (action === "get_purchase_order") {
@@ -206,7 +217,7 @@ Deno.serve(async (req) => {
         entity: PurchaseOrder,
         data: {
           creation_request_key: key,
-          po_number: clean(fields.po_number) || await nextPoNumber(PurchaseOrder),
+          po_number: clean(fields.po_number) || await nextPoNumber(PurchaseOrder, base44.asServiceRole),
           status: "draft",
           vendor_name: vendorName,
           vendor_contact: clean(fields.vendor_contact),

@@ -1,0 +1,14 @@
+{
+ "suite": "painting-page",
+ "scenarios": 7,
+ "result": "PASS",
+ "checks": [
+  "S1 clean project: no banner, finite totals persisted, one saveSource write, no estimate handoff",
+  "S2 malformed thickness: banner + aria-invalid + saved-fallback shown; Save and Save-As-Copy each zero writes",
+  "S3 held without acknowledged totals: 'Not saved' shown, no fabricated $0, zero writes",
+  "S4 malformed settings row: project-level hold, 'Painting Settings' save message, zero writes",
+  "S5 explicit-zero settings honored: no banner, save proceeds",
+  "S6 coverage=0 (positive-required) flagged and blocked",
+  "S7 blank supplies-rate input preserved mid-edit, field flagged, zero writes"
+ ]
+}

@@ -1,0 +1,3171 @@
+{
+  "proof": [
+    {
+      "caseId": "held-bad-duration-blocks-save",
+      "saveOutcome": {
+        "status": "failed",
+        "error": "Save paused: fix highlighted design inputs or catalog selections."
+      },
+      "acknowledged": {
+        "id": "synthetic-equipment-project",
+        "updated_date": "synthetic-v1",
+        "project_name": "P",
+        "items": [
+          {
+            "component_id": "synthetic-item-1",
+            "foundation_type": "spread_foot",
+            "quantity": 2,
+            "length_inches": 48,
+            "width_inches": 24,
+            "depth_inches": 12,
+            "include_rebar": false,
+            "include_forming": false,
+            "include_finishing": false,
+            "item_total_cost": 111.11,
+            "concrete_volume_cy": 0.5,
+            "concrete_cost": 11.11,
+            "excavation_cost": 22.22
+          }
+        ],
+        "poles": [],
+        "wall_caps": [],
+        "walls": [],
+        "selected_equipment": [
+          {
+            "component_id": "synthetic-eq-1",
+            "equipment_id": "synthetic-excavator",
+            "rental_period": "day",
+            "rental_duration": "abc",
+            "include_delivery": false,
+            "attachment_counts": {
+              "synthetic-bucket": 2
+            },
+            "sub_attachment_counts": {
+              "synthetic-tooth": 1
+            },
+            "equipment_cost": 680
+          }
+        ],
+        "signage_cabinets": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "excavation_method": "hand_dig",
+        "total_equipment_cost": 680,
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 330.75,
+          "rounded_yards": 0.75,
+          "rate_per_yard": 441,
+          "additional_stops_cost": 0,
+          "trucks": [
+            {
+              "yards": 0.5925925925925926,
+              "rounded_yards": 0.75,
+              "cost": 330.75,
+              "small_order_fee": 0,
+              "fuel_fee": 0
+            }
+          ]
+        }
+      },
+      "renderedEquipment": [
+        {
+          "component_id": "synthetic-eq-1",
+          "equipment_id": "synthetic-excavator",
+          "rental_period": "day",
+          "rental_duration": "abc",
+          "include_delivery": false,
+          "attachment_counts": {
+            "synthetic-bucket": 2
+          },
+          "sub_attachment_counts": {
+            "synthetic-tooth": 1
+          },
+          "equipment_cost": 680
+        }
+      ],
+      "inventory": [
+        {
+          "id": "synthetic-excavator",
+          "material_type": "excavation_equipment",
+          "material_name": "Mini excavator",
+          "equipment_type": "excavator",
+          "rental_company": "RentCo",
+          "cost_per_day": 250,
+          "cost_per_week": 900,
+          "cost_per_month": 2500,
+          "pickup_delivery_cost": 75,
+          "compatible_attachment_ids": [
+            "synthetic-bucket",
+            "synthetic-misc-att"
+          ]
+        },
+        {
+          "id": "synthetic-bucket",
+          "material_type": "attachment",
+          "material_name": "24in digging bucket",
+          "cost_per_day": 40,
+          "cost_per_week": 150,
+          "cost_per_month": 400,
+          "compatible_sub_attachment_ids": [
+            "synthetic-tooth"
+          ]
+        },
+        {
+          "id": "synthetic-tooth",
+          "material_type": "sub_attachment",
+          "material_name": "Ripper tooth",
+          "cost_per_day": 10,
+          "cost_per_week": 35,
+          "cost_per_month": 90
+        },
+        {
+          "id": "synthetic-compactor",
+          "material_type": "excavation_equipment",
+          "material_name": "Plate compactor",
+          "is_non_excavation_equipment": true,
+          "cost_per_day": 60,
+          "cost_per_week": 200,
+          "cost_per_month": 500,
+          "pickup_delivery_cost": 0,
+          "compatible_attachment_ids": []
+        },
+        {
+          "id": "synthetic-misc-att",
+          "material_type": "attachment",
+          "material_name": "Misc grapple",
+          "is_miscellaneous_attachment": true,
+          "cost_per_day": 25,
+          "cost_per_week": 80,
+          "cost_per_month": 200
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 330.75,
+        "concrete_delivery_cost": 330.75,
+        "concrete_delivered_yards": 0.75,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [
+          {
+            "yards": 0.75,
+            "roundedYards": 0.75,
+            "cost": 330.75,
+            "smallOrderFee": 150,
+            "fuelFee": 30
+          }
+        ],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 88.88888888888889,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 8.88888888888889,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 680,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0.5925925925925926,
+        "total_excavation_volume_cy": 0.7407407407407407,
+        "total_labor_hours": 1.4814814814814814,
+        "grand_total": 1108.5277777777778
+      },
+      "pricingUnavailable": true,
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-equipment-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ]
+      ]
+    },
+    {
+      "caseId": "missing-catalog-price-blocks-save",
+      "saveOutcome": {
+        "status": "failed",
+        "error": "Save paused: fix highlighted design inputs or catalog selections."
+      },
+      "acknowledged": {
+        "id": "synthetic-equipment-project",
+        "updated_date": "synthetic-v1",
+        "project_name": "P",
+        "items": [
+          {
+            "component_id": "synthetic-item-1",
+            "foundation_type": "spread_foot",
+            "quantity": 2,
+            "length_inches": 48,
+            "width_inches": 24,
+            "depth_inches": 12,
+            "include_rebar": false,
+            "include_forming": false,
+            "include_finishing": false,
+            "item_total_cost": 111.11,
+            "concrete_volume_cy": 0.5,
+            "concrete_cost": 11.11,
+            "excavation_cost": 22.22
+          }
+        ],
+        "poles": [],
+        "wall_caps": [],
+        "walls": [],
+        "selected_equipment": [
+          {
+            "component_id": "synthetic-eq-1",
+            "equipment_id": "synthetic-excavator",
+            "rental_period": "day",
+            "rental_duration": 2,
+            "include_delivery": false,
+            "attachment_counts": {
+              "synthetic-bucket": 2
+            },
+            "sub_attachment_counts": {
+              "synthetic-tooth": 1
+            },
+            "equipment_cost": 680
+          }
+        ],
+        "signage_cabinets": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "excavation_method": "hand_dig",
+        "total_equipment_cost": 680,
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 330.75,
+          "rounded_yards": 0.75,
+          "rate_per_yard": 441,
+          "additional_stops_cost": 0,
+          "trucks": [
+            {
+              "yards": 0.5925925925925926,
+              "rounded_yards": 0.75,
+              "cost": 330.75,
+              "small_order_fee": 0,
+              "fuel_fee": 0
+            }
+          ]
+        }
+      },
+      "renderedEquipment": [
+        {
+          "component_id": "synthetic-eq-1",
+          "equipment_id": "synthetic-excavator",
+          "rental_period": "day",
+          "rental_duration": 2,
+          "include_delivery": false,
+          "attachment_counts": {
+            "synthetic-bucket": 2
+          },
+          "sub_attachment_counts": {
+            "synthetic-tooth": 1
+          },
+          "equipment_cost": 680
+        }
+      ],
+      "inventory": [
+        {
+          "id": "synthetic-excavator",
+          "material_type": "excavation_equipment",
+          "material_name": "Mini excavator",
+          "equipment_type": "excavator",
+          "rental_company": "RentCo",
+          "cost_per_week": 900,
+          "cost_per_month": 2500,
+          "pickup_delivery_cost": 75,
+          "compatible_attachment_ids": [
+            "synthetic-bucket",
+            "synthetic-misc-att"
+          ]
+        },
+        {
+          "id": "synthetic-bucket",
+          "material_type": "attachment",
+          "material_name": "24in digging bucket",
+          "cost_per_day": 40,
+          "cost_per_week": 150,
+          "cost_per_month": 400,
+          "compatible_sub_attachment_ids": [
+            "synthetic-tooth"
+          ]
+        },
+        {
+          "id": "synthetic-tooth",
+          "material_type": "sub_attachment",
+          "material_name": "Ripper tooth",
+          "cost_per_day": 10,
+          "cost_per_week": 35,
+          "cost_per_month": 90
+        },
+        {
+          "id": "synthetic-compactor",
+          "material_type": "excavation_equipment",
+          "material_name": "Plate compactor",
+          "is_non_excavation_equipment": true,
+          "cost_per_day": 60,
+          "cost_per_week": 200,
+          "cost_per_month": 500,
+          "pickup_delivery_cost": 0,
+          "compatible_attachment_ids": []
+        },
+        {
+          "id": "synthetic-misc-att",
+          "material_type": "attachment",
+          "material_name": "Misc grapple",
+          "is_miscellaneous_attachment": true,
+          "cost_per_day": 25,
+          "cost_per_week": 80,
+          "cost_per_month": 200
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 330.75,
+        "concrete_delivery_cost": 330.75,
+        "concrete_delivered_yards": 0.75,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [
+          {
+            "yards": 0.75,
+            "roundedYards": 0.75,
+            "cost": 330.75,
+            "smallOrderFee": 150,
+            "fuelFee": 30
+          }
+        ],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 88.88888888888889,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 8.88888888888889,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 680,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0.5925925925925926,
+        "total_excavation_volume_cy": 0.7407407407407407,
+        "total_labor_hours": 1.4814814814814814,
+        "grand_total": 1108.5277777777778
+      },
+      "pricingUnavailable": true,
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-equipment-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ]
+      ]
+    },
+    {
+      "caseId": "new-unsaved-equipment-withholds-totals",
+      "saveOutcome": {
+        "status": "failed",
+        "error": "Save paused: fix highlighted design inputs or catalog selections."
+      },
+      "acknowledged": {
+        "id": "synthetic-equipment-project",
+        "updated_date": "synthetic-v1",
+        "project_name": "P",
+        "items": [
+          {
+            "component_id": "synthetic-item-1",
+            "foundation_type": "spread_foot",
+            "quantity": 2,
+            "length_inches": 48,
+            "width_inches": 24,
+            "depth_inches": 12,
+            "include_rebar": false,
+            "include_forming": false,
+            "include_finishing": false,
+            "item_total_cost": 111.11,
+            "concrete_volume_cy": 0.5,
+            "concrete_cost": 11.11,
+            "excavation_cost": 22.22
+          }
+        ],
+        "poles": [],
+        "wall_caps": [],
+        "walls": [],
+        "selected_equipment": [
+          {
+            "component_id": "synthetic-eq-1",
+            "equipment_id": "synthetic-excavator",
+            "rental_period": "day",
+            "rental_duration": 2,
+            "include_delivery": false,
+            "attachment_counts": {
+              "synthetic-bucket": 2
+            },
+            "sub_attachment_counts": {
+              "synthetic-tooth": 1
+            },
+            "equipment_cost": 680
+          }
+        ],
+        "signage_cabinets": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "excavation_method": "hand_dig",
+        "total_equipment_cost": 680,
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 330.75,
+          "rounded_yards": 0.75,
+          "rate_per_yard": 441,
+          "additional_stops_cost": 0,
+          "trucks": [
+            {
+              "yards": 0.5925925925925926,
+              "rounded_yards": 0.75,
+              "cost": 330.75,
+              "small_order_fee": 0,
+              "fuel_fee": 0
+            }
+          ]
+        }
+      },
+      "renderedEquipment": [
+        {
+          "component_id": "synthetic-eq-1",
+          "equipment_id": "synthetic-excavator",
+          "rental_period": "day",
+          "rental_duration": 2,
+          "include_delivery": false,
+          "attachment_counts": {
+            "synthetic-bucket": 2
+          },
+          "sub_attachment_counts": {
+            "synthetic-tooth": 1
+          },
+          "equipment_cost": 680
+        },
+        {
+          "_id": "eq-draft-1",
+          "equipment_id": "synthetic-excavator",
+          "rental_period": "day",
+          "rental_duration": "abc",
+          "attachment_counts": {},
+          "sub_attachment_counts": {}
+        }
+      ],
+      "inventory": [
+        {
+          "id": "synthetic-excavator",
+          "material_type": "excavation_equipment",
+          "material_name": "Mini excavator",
+          "equipment_type": "excavator",
+          "rental_company": "RentCo",
+          "cost_per_day": 250,
+          "cost_per_week": 900,
+          "cost_per_month": 2500,
+          "pickup_delivery_cost": 75,
+          "compatible_attachment_ids": [
+            "synthetic-bucket",
+            "synthetic-misc-att"
+          ]
+        },
+        {
+          "id": "synthetic-bucket",
+          "material_type": "attachment",
+          "material_name": "24in digging bucket",
+          "cost_per_day": 40,
+          "cost_per_week": 150,
+          "cost_per_month": 400,
+          "compatible_sub_attachment_ids": [
+            "synthetic-tooth"
+          ]
+        },
+        {
+          "id": "synthetic-tooth",
+          "material_type": "sub_attachment",
+          "material_name": "Ripper tooth",
+          "cost_per_day": 10,
+          "cost_per_week": 35,
+          "cost_per_month": 90
+        },
+        {
+          "id": "synthetic-compactor",
+          "material_type": "excavation_equipment",
+          "material_name": "Plate compactor",
+          "is_non_excavation_equipment": true,
+          "cost_per_day": 60,
+          "cost_per_week": 200,
+          "cost_per_month": 500,
+          "pickup_delivery_cost": 0,
+          "compatible_attachment_ids": []
+        },
+        {
+          "id": "synthetic-misc-att",
+          "material_type": "attachment",
+          "material_name": "Misc grapple",
+          "is_miscellaneous_attachment": true,
+          "cost_per_day": 25,
+          "cost_per_week": 80,
+          "cost_per_month": 200
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 330.75,
+        "concrete_delivery_cost": 330.75,
+        "concrete_delivered_yards": 0.75,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [
+          {
+            "yards": 0.75,
+            "roundedYards": 0.75,
+            "cost": 330.75,
+            "smallOrderFee": 150,
+            "fuelFee": 30
+          }
+        ],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 88.88888888888889,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 8.88888888888889,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 680,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0.5925925925925926,
+        "total_excavation_volume_cy": 0.7407407407407407,
+        "total_labor_hours": 1.4814814814814814,
+        "grand_total": null
+      },
+      "pricingUnavailable": true,
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-equipment-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ]
+      ]
+    },
+    {
+      "caseId": "valid-equipment-saves-then-new-acknowledged-holds",
+      "phase": "afterValidSave",
+      "saveOutcome": {
+        "status": "saved"
+      },
+      "acknowledged": {
+        "id": "synthetic-equipment-project",
+        "updated_date": "synthetic-v2",
+        "project_name": "Edited",
+        "items": [
+          {
+            "component_id": "synthetic-item-1",
+            "foundation_type": "spread_foot",
+            "quantity": 2,
+            "length_inches": 48,
+            "width_inches": 24,
+            "depth_inches": 12,
+            "include_rebar": false,
+            "include_forming": false,
+            "include_finishing": false,
+            "item_total_cost": 97.77777777777777,
+            "concrete_volume_cy": 0.5925925925925926,
+            "concrete_cost": 0,
+            "excavation_cost": 88.88888888888889,
+            "excavation_volume_cy": 0.7407407407407407,
+            "concrete_bags": null,
+            "rebar_feet": 0,
+            "rebar_weight_lbs": 0,
+            "concrete_rate": 0,
+            "rebar_cost": 0,
+            "rebar_rate": 0,
+            "excavation_hours": 1.4814814814814814,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "pouring_cost": 8.88888888888889,
+            "finishing_cost": 0,
+            "finishing_hours": 0
+          }
+        ],
+        "poles": [],
+        "wall_caps": [],
+        "walls": [],
+        "selected_equipment": [
+          {
+            "component_id": "synthetic-eq-1",
+            "equipment_id": "synthetic-excavator",
+            "rental_period": "day",
+            "rental_duration": 2,
+            "include_delivery": false,
+            "attachment_counts": {
+              "synthetic-bucket": 2
+            },
+            "sub_attachment_counts": {
+              "synthetic-tooth": 1
+            },
+            "equipment_cost": 680
+          }
+        ],
+        "signage_cabinets": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "excavation_method": "hand_dig",
+        "total_equipment_cost": 680,
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 330.75,
+          "rounded_yards": 0.75,
+          "rate_per_yard": 201,
+          "additional_stops_cost": 0,
+          "trucks": [
+            {
+              "yards": 0.75,
+              "rounded_yards": 0.75,
+              "cost": 330.75,
+              "small_order_fee": 150,
+              "fuel_fee": 30
+            }
+          ]
+        },
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "total_concrete_cost": 330.75,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 88.88888888888889,
+        "total_labor_cost": 8.88888888888889,
+        "total_forming_materials_cost": 0,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "key-foundation_sync-3",
+          "source_project_id": "synthetic-equipment-project",
+          "estimate_id": "synthetic-equipment-estimate",
+          "requested_at": "2026-11-11T09:27:02.284Z"
+        }
+      },
+      "renderedEquipment": [
+        {
+          "component_id": "synthetic-eq-1",
+          "equipment_id": "synthetic-excavator",
+          "rental_period": "day",
+          "rental_duration": 2,
+          "include_delivery": false,
+          "attachment_counts": {
+            "synthetic-bucket": 2
+          },
+          "sub_attachment_counts": {
+            "synthetic-tooth": 1
+          },
+          "equipment_cost": 680
+        }
+      ],
+      "inventory": [
+        {
+          "id": "synthetic-excavator",
+          "material_type": "excavation_equipment",
+          "material_name": "Mini excavator",
+          "equipment_type": "excavator",
+          "rental_company": "RentCo",
+          "cost_per_day": 250,
+          "cost_per_week": 900,
+          "cost_per_month": 2500,
+          "pickup_delivery_cost": 75,
+          "compatible_attachment_ids": [
+            "synthetic-bucket",
+            "synthetic-misc-att"
+          ]
+        },
+        {
+          "id": "synthetic-bucket",
+          "material_type": "attachment",
+          "material_name": "24in digging bucket",
+          "cost_per_day": 40,
+          "cost_per_week": 150,
+          "cost_per_month": 400,
+          "compatible_sub_attachment_ids": [
+            "synthetic-tooth"
+          ]
+        },
+        {
+          "id": "synthetic-tooth",
+          "material_type": "sub_attachment",
+          "material_name": "Ripper tooth",
+          "cost_per_day": 10,
+          "cost_per_week": 35,
+          "cost_per_month": 90
+        },
+        {
+          "id": "synthetic-compactor",
+          "material_type": "excavation_equipment",
+          "material_name": "Plate compactor",
+          "is_non_excavation_equipment": true,
+          "cost_per_day": 60,
+          "cost_per_week": 200,
+          "cost_per_month": 500,
+          "pickup_delivery_cost": 0,
+          "compatible_attachment_ids": []
+        },
+        {
+          "id": "synthetic-misc-att",
+          "material_type": "attachment",
+          "material_name": "Misc grapple",
+          "is_miscellaneous_attachment": true,
+          "cost_per_day": 25,
+          "cost_per_week": 80,
+          "cost_per_month": 200
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 330.75,
+        "concrete_delivery_cost": 330.75,
+        "concrete_delivered_yards": 0.75,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [
+          {
+            "yards": 0.75,
+            "roundedYards": 0.75,
+            "cost": 330.75,
+            "smallOrderFee": 150,
+            "fuelFee": 30
+          }
+        ],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 88.88888888888889,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 8.88888888888889,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 680,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0.5925925925925926,
+        "total_excavation_volume_cy": 0.7407407407407407,
+        "total_labor_hours": 1.4814814814814814,
+        "grand_total": 1108.5277777777778
+      },
+      "pricingUnavailable": false,
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-equipment-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "saveSource",
+          {
+            "query": {
+              "id": "synthetic-equipment-project",
+              "updated_date": "synthetic-v1"
+            },
+            "patch": {
+              "$set": {
+                "project_name": "Edited",
+                "status": "calculated",
+                "assembly_schema_version": 1,
+                "items": [
+                  {
+                    "component_id": "synthetic-item-1",
+                    "foundation_type": "spread_foot",
+                    "quantity": 2,
+                    "length_inches": 48,
+                    "width_inches": 24,
+                    "depth_inches": 12,
+                    "include_rebar": false,
+                    "include_forming": false,
+                    "include_finishing": false,
+                    "item_total_cost": 97.77777777777777,
+                    "concrete_volume_cy": 0.5925925925925926,
+                    "concrete_cost": 0,
+                    "excavation_cost": 88.88888888888889,
+                    "excavation_volume_cy": 0.7407407407407407,
+                    "concrete_bags": null,
+                    "rebar_feet": 0,
+                    "rebar_weight_lbs": 0,
+                    "concrete_rate": 0,
+                    "rebar_cost": 0,
+                    "rebar_rate": 0,
+                    "excavation_hours": 1.4814814814814814,
+                    "forming_cost": 0,
+                    "forming_qty": 0,
+                    "pouring_cost": 8.88888888888889,
+                    "finishing_cost": 0,
+                    "finishing_hours": 0
+                  }
+                ],
+                "selected_equipment": [
+                  {
+                    "component_id": "synthetic-eq-1",
+                    "equipment_id": "synthetic-excavator",
+                    "rental_period": "day",
+                    "rental_duration": 2,
+                    "include_delivery": false,
+                    "attachment_counts": {
+                      "synthetic-bucket": 2
+                    },
+                    "sub_attachment_counts": {
+                      "synthetic-tooth": 1
+                    },
+                    "equipment_cost": 680
+                  }
+                ],
+                "walls": [],
+                "wall_caps": [],
+                "poles": [],
+                "signage_cabinets": [],
+                "landscape": {
+                  "cell_size_inches": 12,
+                  "cells": {}
+                },
+                "total_signage_cabinet_cost": 0,
+                "total_landscape_cost": 0,
+                "customer_markup_percent": 0,
+                "customer_pricing": {
+                  "applied": false
+                },
+                "excavation_method": "hand_dig",
+                "project_concrete_type": "4000_ae",
+                "project_concrete_admixtures": [],
+                "concrete_delivery_snapshot": {
+                  "version": 1,
+                  "concrete_total": 330.75,
+                  "rounded_yards": 0.75,
+                  "rate_per_yard": 201,
+                  "additional_stops_cost": 0,
+                  "trucks": [
+                    {
+                      "yards": 0.75,
+                      "rounded_yards": 0.75,
+                      "cost": 330.75,
+                      "small_order_fee": 150,
+                      "fuel_fee": 30
+                    }
+                  ]
+                },
+                "total_concrete_cost": 330.75,
+                "total_rebar_cost": 0,
+                "total_excavation_cost": 88.88888888888889,
+                "total_labor_cost": 8.88888888888889,
+                "total_equipment_cost": 680,
+                "total_forming_materials_cost": 0,
+                "total_pole_cost": 0,
+                "total_pole_painting_cost": 0,
+                "total_brick_cost": 0,
+                "total_fill_cost": 0,
+                "total_wall_cost": 0,
+                "total_wall_cap_cost": 0,
+                "builder_sync_attempt": {
+                  "schema_version": 1,
+                  "key": "key-foundation_sync-3",
+                  "source_project_id": "synthetic-equipment-project",
+                  "estimate_id": "synthetic-equipment-estimate",
+                  "requested_at": "2026-11-11T09:27:02.284Z"
+                }
+              }
+            }
+          }
+        ],
+        [
+          "projectGet",
+          "synthetic-equipment-project"
+        ],
+        [
+          "recordBuilderSave",
+          {
+            "estimateId": "synthetic-equipment-estimate",
+            "line": {
+              "project_id": "synthetic-equipment-project",
+              "module_key": "foundation"
+            },
+            "sourceProject": {
+              "id": "synthetic-equipment-project",
+              "updated_date": "synthetic-v2",
+              "project_name": "Edited",
+              "items": [
+                {
+                  "component_id": "synthetic-item-1",
+                  "foundation_type": "spread_foot",
+                  "quantity": 2,
+                  "length_inches": 48,
+                  "width_inches": 24,
+                  "depth_inches": 12,
+                  "include_rebar": false,
+                  "include_forming": false,
+                  "include_finishing": false,
+                  "item_total_cost": 97.77777777777777,
+                  "concrete_volume_cy": 0.5925925925925926,
+                  "concrete_cost": 0,
+                  "excavation_cost": 88.88888888888889,
+                  "excavation_volume_cy": 0.7407407407407407,
+                  "concrete_bags": null,
+                  "rebar_feet": 0,
+                  "rebar_weight_lbs": 0,
+                  "concrete_rate": 0,
+                  "rebar_cost": 0,
+                  "rebar_rate": 0,
+                  "excavation_hours": 1.4814814814814814,
+                  "forming_cost": 0,
+                  "forming_qty": 0,
+                  "pouring_cost": 8.88888888888889,
+                  "finishing_cost": 0,
+                  "finishing_hours": 0
+                }
+              ],
+              "poles": [],
+              "wall_caps": [],
+              "walls": [],
+              "selected_equipment": [
+                {
+                  "component_id": "synthetic-eq-1",
+                  "equipment_id": "synthetic-excavator",
+                  "rental_period": "day",
+                  "rental_duration": 2,
+                  "include_delivery": false,
+                  "attachment_counts": {
+                    "synthetic-bucket": 2
+                  },
+                  "sub_attachment_counts": {
+                    "synthetic-tooth": 1
+                  },
+                  "equipment_cost": 680
+                }
+              ],
+              "signage_cabinets": [],
+              "landscape": {
+                "cell_size_inches": 12,
+                "cells": {}
+              },
+              "customer_pricing": {
+                "applied": false
+              },
+              "excavation_method": "hand_dig",
+              "total_equipment_cost": 680,
+              "concrete_delivery_snapshot": {
+                "version": 1,
+                "concrete_total": 330.75,
+                "rounded_yards": 0.75,
+                "rate_per_yard": 201,
+                "additional_stops_cost": 0,
+                "trucks": [
+                  {
+                    "yards": 0.75,
+                    "rounded_yards": 0.75,
+                    "cost": 330.75,
+                    "small_order_fee": 150,
+                    "fuel_fee": 30
+                  }
+                ]
+              },
+              "status": "calculated",
+              "assembly_schema_version": 1,
+              "total_signage_cabinet_cost": 0,
+              "total_landscape_cost": 0,
+              "customer_markup_percent": 0,
+              "project_concrete_type": "4000_ae",
+              "project_concrete_admixtures": [],
+              "total_concrete_cost": 330.75,
+              "total_rebar_cost": 0,
+              "total_excavation_cost": 88.88888888888889,
+              "total_labor_cost": 8.88888888888889,
+              "total_forming_materials_cost": 0,
+              "total_pole_cost": 0,
+              "total_pole_painting_cost": 0,
+              "total_brick_cost": 0,
+              "total_fill_cost": 0,
+              "total_wall_cost": 0,
+              "total_wall_cap_cost": 0,
+              "builder_sync_attempt": {
+                "schema_version": 1,
+                "key": "key-foundation_sync-3",
+                "source_project_id": "synthetic-equipment-project",
+                "estimate_id": "synthetic-equipment-estimate",
+                "requested_at": "2026-11-11T09:27:02.284Z"
+              },
+              "builder_calculation": {
+                "totals": {
+                  "total_concrete_cost": 330.75,
+                  "concrete_delivery_cost": 330.75,
+                  "concrete_delivered_yards": 0.75,
+                  "concrete_rate_per_yard": 201,
+                  "concrete_trucks": [
+                    {
+                      "yards": 0.75,
+                      "roundedYards": 0.75,
+                      "cost": 330.75,
+                      "smallOrderFee": 150,
+                      "fuelFee": 30
+                    }
+                  ],
+                  "additional_stops_cost": 0,
+                  "total_rebar_cost": 0,
+                  "total_excavation_cost": 88.88888888888889,
+                  "total_forming_materials_cost": 0,
+                  "total_labor_cost": 8.88888888888889,
+                  "total_pole_cost": 0,
+                  "total_pole_painting_cost": 0,
+                  "total_brick_cost": 0,
+                  "total_fill_cost": 0,
+                  "total_equipment_cost": 680,
+                  "total_wall_cost": 0,
+                  "total_wall_cap_cost": 0,
+                  "wall_caps_by_material": [],
+                  "total_concrete_volume_cy": 0.5925925925925926,
+                  "total_excavation_volume_cy": 0.7407407407407407,
+                  "total_labor_hours": 1.4814814814814814,
+                  "grand_total": 1108.5277777777778
+                },
+                "delivery": {
+                  "concreteTotal": 330.75,
+                  "roundedYards": 0.75,
+                  "ratePerYard": 201,
+                  "trucksList": [
+                    {
+                      "yards": 0.75,
+                      "roundedYards": 0.75,
+                      "cost": 330.75,
+                      "smallOrderFee": 150,
+                      "fuelFee": 30
+                    }
+                  ],
+                  "additionalStopsCost": 0,
+                  "availableMixes": [
+                    {
+                      "id": "3500_ae",
+                      "name": "3500 AIR ENTRAINED (AE)",
+                      "price": 195.4,
+                      "desc": "Often used for driveways, slabs, and moderate-load footings."
+                    },
+                    {
+                      "id": "4000_ae",
+                      "name": "4000 AIR ENTRAINED (AE)",
+                      "price": 201,
+                      "desc": "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability."
+                    },
+                    {
+                      "id": "4500_ae",
+                      "name": "4500 AIR ENTRAINED (AE)",
+                      "price": 208.7,
+                      "desc": "Used for heavy-duty commercial slabs and heavy traffic areas."
+                    },
+                    {
+                      "id": "5000_ae",
+                      "name": "5000 AIR ENTRAINED (AE)",
+                      "price": 214.6,
+                      "desc": "High-strength mix for heavy structural columns, pillars, and extreme load conditions."
+                    },
+                    {
+                      "id": "fast_set",
+                      "name": "FAST SET",
+                      "price": 248,
+                      "desc": "Quick-curing concrete used when rapid strength gain is needed to minimize downtime."
+                    }
+                  ],
+                  "availableAdmixes": [
+                    {
+                      "id": "calcium_chloride",
+                      "name": "Calcium Chloride",
+                      "price": 8.5,
+                      "desc": "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!"
+                    },
+                    {
+                      "id": "set_retarding",
+                      "name": "Set-Retarding Admix (Type D)",
+                      "price": 4.5,
+                      "desc": "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site."
+                    },
+                    {
+                      "id": "water_reducing",
+                      "name": "Water-Reducing Admix (Type A)",
+                      "price": 4.25,
+                      "desc": "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar."
+                    },
+                    {
+                      "id": "fibers",
+                      "name": "Fibers",
+                      "price": 12.5,
+                      "desc": "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse."
+                    },
+                    {
+                      "id": "winter_service",
+                      "name": "Winter Service",
+                      "price": 5.5,
+                      "desc": "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing."
+                    }
+                  ]
+                },
+                "cabinet_cost": 0,
+                "landscape_cost": 0,
+                "section_total": 1108.5277777777778
+              }
+            },
+            "liveTotal": 1108.5277777777778
+          }
+        ]
+      ]
+    },
+    {
+      "caseId": "valid-equipment-saves-then-new-acknowledged-holds",
+      "phase": "heldOnNewBasis",
+      "saveOutcome": {
+        "status": "failed",
+        "error": "Save paused: fix highlighted design inputs or catalog selections."
+      },
+      "acknowledged": {
+        "id": "synthetic-equipment-project",
+        "updated_date": "synthetic-v2",
+        "project_name": "Edited",
+        "items": [
+          {
+            "component_id": "synthetic-item-1",
+            "foundation_type": "spread_foot",
+            "quantity": 2,
+            "length_inches": 48,
+            "width_inches": 24,
+            "depth_inches": 12,
+            "include_rebar": false,
+            "include_forming": false,
+            "include_finishing": false,
+            "item_total_cost": 97.77777777777777,
+            "concrete_volume_cy": 0.5925925925925926,
+            "concrete_cost": 0,
+            "excavation_cost": 88.88888888888889,
+            "excavation_volume_cy": 0.7407407407407407,
+            "concrete_bags": null,
+            "rebar_feet": 0,
+            "rebar_weight_lbs": 0,
+            "concrete_rate": 0,
+            "rebar_cost": 0,
+            "rebar_rate": 0,
+            "excavation_hours": 1.4814814814814814,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "pouring_cost": 8.88888888888889,
+            "finishing_cost": 0,
+            "finishing_hours": 0
+          }
+        ],
+        "poles": [],
+        "wall_caps": [],
+        "walls": [],
+        "selected_equipment": [
+          {
+            "component_id": "synthetic-eq-1",
+            "equipment_id": "synthetic-excavator",
+            "rental_period": "day",
+            "rental_duration": "abc",
+            "include_delivery": false,
+            "attachment_counts": {
+              "synthetic-bucket": 2
+            },
+            "sub_attachment_counts": {
+              "synthetic-tooth": 1
+            },
+            "equipment_cost": 680
+          }
+        ],
+        "signage_cabinets": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "excavation_method": "hand_dig",
+        "total_equipment_cost": 680,
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 330.75,
+          "rounded_yards": 0.75,
+          "rate_per_yard": 201,
+          "additional_stops_cost": 0,
+          "trucks": [
+            {
+              "yards": 0.75,
+              "rounded_yards": 0.75,
+              "cost": 330.75,
+              "small_order_fee": 150,
+              "fuel_fee": 30
+            }
+          ]
+        },
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "total_concrete_cost": 330.75,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 88.88888888888889,
+        "total_labor_cost": 8.88888888888889,
+        "total_forming_materials_cost": 0,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "key-foundation_sync-3",
+          "source_project_id": "synthetic-equipment-project",
+          "estimate_id": "synthetic-equipment-estimate",
+          "requested_at": "2026-11-11T09:27:02.284Z"
+        }
+      },
+      "renderedEquipment": [
+        {
+          "component_id": "synthetic-eq-1",
+          "equipment_id": "synthetic-excavator",
+          "rental_period": "day",
+          "rental_duration": "abc",
+          "include_delivery": false,
+          "attachment_counts": {
+            "synthetic-bucket": 2
+          },
+          "sub_attachment_counts": {
+            "synthetic-tooth": 1
+          },
+          "equipment_cost": 680
+        }
+      ],
+      "inventory": [
+        {
+          "id": "synthetic-excavator",
+          "material_type": "excavation_equipment",
+          "material_name": "Mini excavator",
+          "equipment_type": "excavator",
+          "rental_company": "RentCo",
+          "cost_per_day": 250,
+          "cost_per_week": 900,
+          "cost_per_month": 2500,
+          "pickup_delivery_cost": 75,
+          "compatible_attachment_ids": [
+            "synthetic-bucket",
+            "synthetic-misc-att"
+          ]
+        },
+        {
+          "id": "synthetic-bucket",
+          "material_type": "attachment",
+          "material_name": "24in digging bucket",
+          "cost_per_day": 40,
+          "cost_per_week": 150,
+          "cost_per_month": 400,
+          "compatible_sub_attachment_ids": [
+            "synthetic-tooth"
+          ]
+        },
+        {
+          "id": "synthetic-tooth",
+          "material_type": "sub_attachment",
+          "material_name": "Ripper tooth",
+          "cost_per_day": 10,
+          "cost_per_week": 35,
+          "cost_per_month": 90
+        },
+        {
+          "id": "synthetic-compactor",
+          "material_type": "excavation_equipment",
+          "material_name": "Plate compactor",
+          "is_non_excavation_equipment": true,
+          "cost_per_day": 60,
+          "cost_per_week": 200,
+          "cost_per_month": 500,
+          "pickup_delivery_cost": 0,
+          "compatible_attachment_ids": []
+        },
+        {
+          "id": "synthetic-misc-att",
+          "material_type": "attachment",
+          "material_name": "Misc grapple",
+          "is_miscellaneous_attachment": true,
+          "cost_per_day": 25,
+          "cost_per_week": 80,
+          "cost_per_month": 200
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 330.75,
+        "concrete_delivery_cost": 330.75,
+        "concrete_delivered_yards": 0.75,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [
+          {
+            "yards": 0.75,
+            "roundedYards": 0.75,
+            "cost": 330.75,
+            "smallOrderFee": 150,
+            "fuelFee": 30
+          }
+        ],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 88.88888888888889,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 8.88888888888889,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 680,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0.5925925925925926,
+        "total_excavation_volume_cy": 0.7407407407407407,
+        "total_labor_hours": 1.4814814814814814,
+        "grand_total": 1108.5277777777778
+      },
+      "pricingUnavailable": true,
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-equipment-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ]
+      ]
+    },
+    {
+      "caseId": "free-zero-custom-rate-saves",
+      "saveOutcome": {
+        "status": "saved"
+      },
+      "acknowledged": {
+        "id": "synthetic-equipment-project",
+        "updated_date": "synthetic-v2",
+        "project_name": "Edited",
+        "items": [
+          {
+            "component_id": "synthetic-item-1",
+            "foundation_type": "spread_foot",
+            "quantity": 2,
+            "length_inches": 48,
+            "width_inches": 24,
+            "depth_inches": 12,
+            "include_rebar": false,
+            "include_forming": false,
+            "include_finishing": false,
+            "item_total_cost": 97.77777777777777,
+            "concrete_volume_cy": 0.5925925925925926,
+            "concrete_cost": 0,
+            "excavation_cost": 88.88888888888889,
+            "excavation_volume_cy": 0.7407407407407407,
+            "concrete_bags": null,
+            "rebar_feet": 0,
+            "rebar_weight_lbs": 0,
+            "concrete_rate": 0,
+            "rebar_cost": 0,
+            "rebar_rate": 0,
+            "excavation_hours": 1.4814814814814814,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "pouring_cost": 8.88888888888889,
+            "finishing_cost": 0,
+            "finishing_hours": 0
+          }
+        ],
+        "poles": [],
+        "wall_caps": [],
+        "walls": [],
+        "selected_equipment": [
+          {
+            "component_id": "synthetic-eq-1",
+            "equipment_id": "synthetic-excavator",
+            "rental_period": "day",
+            "rental_duration": 2,
+            "include_delivery": false,
+            "attachment_counts": {
+              "synthetic-bucket": 2
+            },
+            "sub_attachment_counts": {
+              "synthetic-tooth": 1
+            },
+            "equipment_cost": 180,
+            "custom_rate": 0
+          }
+        ],
+        "signage_cabinets": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "excavation_method": "hand_dig",
+        "total_equipment_cost": 180,
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 330.75,
+          "rounded_yards": 0.75,
+          "rate_per_yard": 201,
+          "additional_stops_cost": 0,
+          "trucks": [
+            {
+              "yards": 0.75,
+              "rounded_yards": 0.75,
+              "cost": 330.75,
+              "small_order_fee": 150,
+              "fuel_fee": 30
+            }
+          ]
+        },
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "total_concrete_cost": 330.75,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 88.88888888888889,
+        "total_labor_cost": 8.88888888888889,
+        "total_forming_materials_cost": 0,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "key-foundation_sync-5",
+          "source_project_id": "synthetic-equipment-project",
+          "estimate_id": "synthetic-equipment-estimate",
+          "requested_at": "2026-11-11T09:27:02.312Z"
+        }
+      },
+      "renderedEquipment": [
+        {
+          "component_id": "synthetic-eq-1",
+          "equipment_id": "synthetic-excavator",
+          "rental_period": "day",
+          "rental_duration": 2,
+          "include_delivery": false,
+          "attachment_counts": {
+            "synthetic-bucket": 2
+          },
+          "sub_attachment_counts": {
+            "synthetic-tooth": 1
+          },
+          "equipment_cost": 680,
+          "custom_rate": 0
+        }
+      ],
+      "inventory": [
+        {
+          "id": "synthetic-excavator",
+          "material_type": "excavation_equipment",
+          "material_name": "Mini excavator",
+          "equipment_type": "excavator",
+          "rental_company": "RentCo",
+          "cost_per_day": 250,
+          "cost_per_week": 900,
+          "cost_per_month": 2500,
+          "pickup_delivery_cost": 75,
+          "compatible_attachment_ids": [
+            "synthetic-bucket",
+            "synthetic-misc-att"
+          ]
+        },
+        {
+          "id": "synthetic-bucket",
+          "material_type": "attachment",
+          "material_name": "24in digging bucket",
+          "cost_per_day": 40,
+          "cost_per_week": 150,
+          "cost_per_month": 400,
+          "compatible_sub_attachment_ids": [
+            "synthetic-tooth"
+          ]
+        },
+        {
+          "id": "synthetic-tooth",
+          "material_type": "sub_attachment",
+          "material_name": "Ripper tooth",
+          "cost_per_day": 10,
+          "cost_per_week": 35,
+          "cost_per_month": 90
+        },
+        {
+          "id": "synthetic-compactor",
+          "material_type": "excavation_equipment",
+          "material_name": "Plate compactor",
+          "is_non_excavation_equipment": true,
+          "cost_per_day": 60,
+          "cost_per_week": 200,
+          "cost_per_month": 500,
+          "pickup_delivery_cost": 0,
+          "compatible_attachment_ids": []
+        },
+        {
+          "id": "synthetic-misc-att",
+          "material_type": "attachment",
+          "material_name": "Misc grapple",
+          "is_miscellaneous_attachment": true,
+          "cost_per_day": 25,
+          "cost_per_week": 80,
+          "cost_per_month": 200
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 330.75,
+        "concrete_delivery_cost": 330.75,
+        "concrete_delivered_yards": 0.75,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [
+          {
+            "yards": 0.75,
+            "roundedYards": 0.75,
+            "cost": 330.75,
+            "smallOrderFee": 150,
+            "fuelFee": 30
+          }
+        ],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 88.88888888888889,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 8.88888888888889,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 180,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0.5925925925925926,
+        "total_excavation_volume_cy": 0.7407407407407407,
+        "total_labor_hours": 1.4814814814814814,
+        "grand_total": 608.5277777777778
+      },
+      "pricingUnavailable": false,
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-equipment-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "saveSource",
+          {
+            "query": {
+              "id": "synthetic-equipment-project",
+              "updated_date": "synthetic-v1"
+            },
+            "patch": {
+              "$set": {
+                "project_name": "Edited",
+                "status": "calculated",
+                "assembly_schema_version": 1,
+                "items": [
+                  {
+                    "component_id": "synthetic-item-1",
+                    "foundation_type": "spread_foot",
+                    "quantity": 2,
+                    "length_inches": 48,
+                    "width_inches": 24,
+                    "depth_inches": 12,
+                    "include_rebar": false,
+                    "include_forming": false,
+                    "include_finishing": false,
+                    "item_total_cost": 97.77777777777777,
+                    "concrete_volume_cy": 0.5925925925925926,
+                    "concrete_cost": 0,
+                    "excavation_cost": 88.88888888888889,
+                    "excavation_volume_cy": 0.7407407407407407,
+                    "concrete_bags": null,
+                    "rebar_feet": 0,
+                    "rebar_weight_lbs": 0,
+                    "concrete_rate": 0,
+                    "rebar_cost": 0,
+                    "rebar_rate": 0,
+                    "excavation_hours": 1.4814814814814814,
+                    "forming_cost": 0,
+                    "forming_qty": 0,
+                    "pouring_cost": 8.88888888888889,
+                    "finishing_cost": 0,
+                    "finishing_hours": 0
+                  }
+                ],
+                "selected_equipment": [
+                  {
+                    "component_id": "synthetic-eq-1",
+                    "equipment_id": "synthetic-excavator",
+                    "rental_period": "day",
+                    "rental_duration": 2,
+                    "include_delivery": false,
+                    "attachment_counts": {
+                      "synthetic-bucket": 2
+                    },
+                    "sub_attachment_counts": {
+                      "synthetic-tooth": 1
+                    },
+                    "equipment_cost": 180,
+                    "custom_rate": 0
+                  }
+                ],
+                "walls": [],
+                "wall_caps": [],
+                "poles": [],
+                "signage_cabinets": [],
+                "landscape": {
+                  "cell_size_inches": 12,
+                  "cells": {}
+                },
+                "total_signage_cabinet_cost": 0,
+                "total_landscape_cost": 0,
+                "customer_markup_percent": 0,
+                "customer_pricing": {
+                  "applied": false
+                },
+                "excavation_method": "hand_dig",
+                "project_concrete_type": "4000_ae",
+                "project_concrete_admixtures": [],
+                "concrete_delivery_snapshot": {
+                  "version": 1,
+                  "concrete_total": 330.75,
+                  "rounded_yards": 0.75,
+                  "rate_per_yard": 201,
+                  "additional_stops_cost": 0,
+                  "trucks": [
+                    {
+                      "yards": 0.75,
+                      "rounded_yards": 0.75,
+                      "cost": 330.75,
+                      "small_order_fee": 150,
+                      "fuel_fee": 30
+                    }
+                  ]
+                },
+                "total_concrete_cost": 330.75,
+                "total_rebar_cost": 0,
+                "total_excavation_cost": 88.88888888888889,
+                "total_labor_cost": 8.88888888888889,
+                "total_equipment_cost": 180,
+                "total_forming_materials_cost": 0,
+                "total_pole_cost": 0,
+                "total_pole_painting_cost": 0,
+                "total_brick_cost": 0,
+                "total_fill_cost": 0,
+                "total_wall_cost": 0,
+                "total_wall_cap_cost": 0,
+                "builder_sync_attempt": {
+                  "schema_version": 1,
+                  "key": "key-foundation_sync-5",
+                  "source_project_id": "synthetic-equipment-project",
+                  "estimate_id": "synthetic-equipment-estimate",
+                  "requested_at": "2026-11-11T09:27:02.312Z"
+                }
+              }
+            }
+          }
+        ],
+        [
+          "projectGet",
+          "synthetic-equipment-project"
+        ],
+        [
+          "recordBuilderSave",
+          {
+            "estimateId": "synthetic-equipment-estimate",
+            "line": {
+              "project_id": "synthetic-equipment-project",
+              "module_key": "foundation"
+            },
+            "sourceProject": {
+              "id": "synthetic-equipment-project",
+              "updated_date": "synthetic-v2",
+              "project_name": "Edited",
+              "items": [
+                {
+                  "component_id": "synthetic-item-1",
+                  "foundation_type": "spread_foot",
+                  "quantity": 2,
+                  "length_inches": 48,
+                  "width_inches": 24,
+                  "depth_inches": 12,
+                  "include_rebar": false,
+                  "include_forming": false,
+                  "include_finishing": false,
+                  "item_total_cost": 97.77777777777777,
+                  "concrete_volume_cy": 0.5925925925925926,
+                  "concrete_cost": 0,
+                  "excavation_cost": 88.88888888888889,
+                  "excavation_volume_cy": 0.7407407407407407,
+                  "concrete_bags": null,
+                  "rebar_feet": 0,
+                  "rebar_weight_lbs": 0,
+                  "concrete_rate": 0,
+                  "rebar_cost": 0,
+                  "rebar_rate": 0,
+                  "excavation_hours": 1.4814814814814814,
+                  "forming_cost": 0,
+                  "forming_qty": 0,
+                  "pouring_cost": 8.88888888888889,
+                  "finishing_cost": 0,
+                  "finishing_hours": 0
+                }
+              ],
+              "poles": [],
+              "wall_caps": [],
+              "walls": [],
+              "selected_equipment": [
+                {
+                  "component_id": "synthetic-eq-1",
+                  "equipment_id": "synthetic-excavator",
+                  "rental_period": "day",
+                  "rental_duration": 2,
+                  "include_delivery": false,
+                  "attachment_counts": {
+                    "synthetic-bucket": 2
+                  },
+                  "sub_attachment_counts": {
+                    "synthetic-tooth": 1
+                  },
+                  "equipment_cost": 180,
+                  "custom_rate": 0
+                }
+              ],
+              "signage_cabinets": [],
+              "landscape": {
+                "cell_size_inches": 12,
+                "cells": {}
+              },
+              "customer_pricing": {
+                "applied": false
+              },
+              "excavation_method": "hand_dig",
+              "total_equipment_cost": 180,
+              "concrete_delivery_snapshot": {
+                "version": 1,
+                "concrete_total": 330.75,
+                "rounded_yards": 0.75,
+                "rate_per_yard": 201,
+                "additional_stops_cost": 0,
+                "trucks": [
+                  {
+                    "yards": 0.75,
+                    "rounded_yards": 0.75,
+                    "cost": 330.75,
+                    "small_order_fee": 150,
+                    "fuel_fee": 30
+                  }
+                ]
+              },
+              "status": "calculated",
+              "assembly_schema_version": 1,
+              "total_signage_cabinet_cost": 0,
+              "total_landscape_cost": 0,
+              "customer_markup_percent": 0,
+              "project_concrete_type": "4000_ae",
+              "project_concrete_admixtures": [],
+              "total_concrete_cost": 330.75,
+              "total_rebar_cost": 0,
+              "total_excavation_cost": 88.88888888888889,
+              "total_labor_cost": 8.88888888888889,
+              "total_forming_materials_cost": 0,
+              "total_pole_cost": 0,
+              "total_pole_painting_cost": 0,
+              "total_brick_cost": 0,
+              "total_fill_cost": 0,
+              "total_wall_cost": 0,
+              "total_wall_cap_cost": 0,
+              "builder_sync_attempt": {
+                "schema_version": 1,
+                "key": "key-foundation_sync-5",
+                "source_project_id": "synthetic-equipment-project",
+                "estimate_id": "synthetic-equipment-estimate",
+                "requested_at": "2026-11-11T09:27:02.312Z"
+              },
+              "builder_calculation": {
+                "totals": {
+                  "total_concrete_cost": 330.75,
+                  "concrete_delivery_cost": 330.75,
+                  "concrete_delivered_yards": 0.75,
+                  "concrete_rate_per_yard": 201,
+                  "concrete_trucks": [
+                    {
+                      "yards": 0.75,
+                      "roundedYards": 0.75,
+                      "cost": 330.75,
+                      "smallOrderFee": 150,
+                      "fuelFee": 30
+                    }
+                  ],
+                  "additional_stops_cost": 0,
+                  "total_rebar_cost": 0,
+                  "total_excavation_cost": 88.88888888888889,
+                  "total_forming_materials_cost": 0,
+                  "total_labor_cost": 8.88888888888889,
+                  "total_pole_cost": 0,
+                  "total_pole_painting_cost": 0,
+                  "total_brick_cost": 0,
+                  "total_fill_cost": 0,
+                  "total_equipment_cost": 180,
+                  "total_wall_cost": 0,
+                  "total_wall_cap_cost": 0,
+                  "wall_caps_by_material": [],
+                  "total_concrete_volume_cy": 0.5925925925925926,
+                  "total_excavation_volume_cy": 0.7407407407407407,
+                  "total_labor_hours": 1.4814814814814814,
+                  "grand_total": 608.5277777777778
+                },
+                "delivery": {
+                  "concreteTotal": 330.75,
+                  "roundedYards": 0.75,
+                  "ratePerYard": 201,
+                  "trucksList": [
+                    {
+                      "yards": 0.75,
+                      "roundedYards": 0.75,
+                      "cost": 330.75,
+                      "smallOrderFee": 150,
+                      "fuelFee": 30
+                    }
+                  ],
+                  "additionalStopsCost": 0,
+                  "availableMixes": [
+                    {
+                      "id": "3500_ae",
+                      "name": "3500 AIR ENTRAINED (AE)",
+                      "price": 195.4,
+                      "desc": "Often used for driveways, slabs, and moderate-load footings."
+                    },
+                    {
+                      "id": "4000_ae",
+                      "name": "4000 AIR ENTRAINED (AE)",
+                      "price": 201,
+                      "desc": "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability."
+                    },
+                    {
+                      "id": "4500_ae",
+                      "name": "4500 AIR ENTRAINED (AE)",
+                      "price": 208.7,
+                      "desc": "Used for heavy-duty commercial slabs and heavy traffic areas."
+                    },
+                    {
+                      "id": "5000_ae",
+                      "name": "5000 AIR ENTRAINED (AE)",
+                      "price": 214.6,
+                      "desc": "High-strength mix for heavy structural columns, pillars, and extreme load conditions."
+                    },
+                    {
+                      "id": "fast_set",
+                      "name": "FAST SET",
+                      "price": 248,
+                      "desc": "Quick-curing concrete used when rapid strength gain is needed to minimize downtime."
+                    }
+                  ],
+                  "availableAdmixes": [
+                    {
+                      "id": "calcium_chloride",
+                      "name": "Calcium Chloride",
+                      "price": 8.5,
+                      "desc": "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!"
+                    },
+                    {
+                      "id": "set_retarding",
+                      "name": "Set-Retarding Admix (Type D)",
+                      "price": 4.5,
+                      "desc": "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site."
+                    },
+                    {
+                      "id": "water_reducing",
+                      "name": "Water-Reducing Admix (Type A)",
+                      "price": 4.25,
+                      "desc": "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar."
+                    },
+                    {
+                      "id": "fibers",
+                      "name": "Fibers",
+                      "price": 12.5,
+                      "desc": "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse."
+                    },
+                    {
+                      "id": "winter_service",
+                      "name": "Winter Service",
+                      "price": 5.5,
+                      "desc": "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing."
+                    }
+                  ]
+                },
+                "cabinet_cost": 0,
+                "landscape_cost": 0,
+                "section_total": 608.5277777777778
+              }
+            },
+            "liveTotal": 608.5277777777778
+          }
+        ]
+      ]
+    },
+    {
+      "caseId": "held-bad-custom-qty-repaired-through-tab",
+      "saveOutcome": {
+        "status": "saved"
+      },
+      "acknowledged": {
+        "id": "synthetic-equipment-project",
+        "updated_date": "synthetic-v2",
+        "project_name": "Edited",
+        "items": [
+          {
+            "component_id": "synthetic-item-1",
+            "foundation_type": "spread_foot",
+            "quantity": 2,
+            "length_inches": 48,
+            "width_inches": 24,
+            "depth_inches": 12,
+            "include_rebar": false,
+            "include_forming": false,
+            "include_finishing": false,
+            "item_total_cost": 97.77777777777777,
+            "concrete_volume_cy": 0.5925925925925926,
+            "concrete_cost": 0,
+            "excavation_cost": 88.88888888888889,
+            "excavation_volume_cy": 0.7407407407407407,
+            "concrete_bags": null,
+            "rebar_feet": 0,
+            "rebar_weight_lbs": 0,
+            "concrete_rate": 0,
+            "rebar_cost": 0,
+            "rebar_rate": 0,
+            "excavation_hours": 1.4814814814814814,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "pouring_cost": 8.88888888888889,
+            "finishing_cost": 0,
+            "finishing_hours": 0
+          }
+        ],
+        "poles": [],
+        "wall_caps": [],
+        "walls": [],
+        "selected_equipment": [
+          {
+            "component_id": "synthetic-eq-1",
+            "equipment_id": "synthetic-excavator",
+            "rental_period": "day",
+            "rental_duration": 2,
+            "include_delivery": false,
+            "attachment_counts": {
+              "synthetic-bucket": 2
+            },
+            "sub_attachment_counts": {
+              "synthetic-tooth": 1
+            },
+            "equipment_cost": 680,
+            "custom_qty": null
+          }
+        ],
+        "signage_cabinets": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "excavation_method": "hand_dig",
+        "total_equipment_cost": 680,
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 330.75,
+          "rounded_yards": 0.75,
+          "rate_per_yard": 201,
+          "additional_stops_cost": 0,
+          "trucks": [
+            {
+              "yards": 0.75,
+              "rounded_yards": 0.75,
+              "cost": 330.75,
+              "small_order_fee": 150,
+              "fuel_fee": 30
+            }
+          ]
+        },
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "total_concrete_cost": 330.75,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 88.88888888888889,
+        "total_labor_cost": 8.88888888888889,
+        "total_forming_materials_cost": 0,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "key-foundation_sync-8",
+          "source_project_id": "synthetic-equipment-project",
+          "estimate_id": "synthetic-equipment-estimate",
+          "requested_at": "2026-11-11T09:27:02.335Z"
+        }
+      },
+      "renderedEquipment": [
+        {
+          "component_id": "synthetic-eq-1",
+          "equipment_id": "synthetic-excavator",
+          "rental_period": "day",
+          "rental_duration": 2,
+          "include_delivery": false,
+          "attachment_counts": {
+            "synthetic-bucket": 2
+          },
+          "sub_attachment_counts": {
+            "synthetic-tooth": 1
+          },
+          "equipment_cost": 680,
+          "custom_qty": null
+        }
+      ],
+      "inventory": [
+        {
+          "id": "synthetic-excavator",
+          "material_type": "excavation_equipment",
+          "material_name": "Mini excavator",
+          "equipment_type": "excavator",
+          "rental_company": "RentCo",
+          "cost_per_day": 250,
+          "cost_per_week": 900,
+          "cost_per_month": 2500,
+          "pickup_delivery_cost": 75,
+          "compatible_attachment_ids": [
+            "synthetic-bucket",
+            "synthetic-misc-att"
+          ]
+        },
+        {
+          "id": "synthetic-bucket",
+          "material_type": "attachment",
+          "material_name": "24in digging bucket",
+          "cost_per_day": 40,
+          "cost_per_week": 150,
+          "cost_per_month": 400,
+          "compatible_sub_attachment_ids": [
+            "synthetic-tooth"
+          ]
+        },
+        {
+          "id": "synthetic-tooth",
+          "material_type": "sub_attachment",
+          "material_name": "Ripper tooth",
+          "cost_per_day": 10,
+          "cost_per_week": 35,
+          "cost_per_month": 90
+        },
+        {
+          "id": "synthetic-compactor",
+          "material_type": "excavation_equipment",
+          "material_name": "Plate compactor",
+          "is_non_excavation_equipment": true,
+          "cost_per_day": 60,
+          "cost_per_week": 200,
+          "cost_per_month": 500,
+          "pickup_delivery_cost": 0,
+          "compatible_attachment_ids": []
+        },
+        {
+          "id": "synthetic-misc-att",
+          "material_type": "attachment",
+          "material_name": "Misc grapple",
+          "is_miscellaneous_attachment": true,
+          "cost_per_day": 25,
+          "cost_per_week": 80,
+          "cost_per_month": 200
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 330.75,
+        "concrete_delivery_cost": 330.75,
+        "concrete_delivered_yards": 0.75,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [
+          {
+            "yards": 0.75,
+            "roundedYards": 0.75,
+            "cost": 330.75,
+            "smallOrderFee": 150,
+            "fuelFee": 30
+          }
+        ],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 88.88888888888889,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 8.88888888888889,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 680,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0.5925925925925926,
+        "total_excavation_volume_cy": 0.7407407407407407,
+        "total_labor_hours": 1.4814814814814814,
+        "grand_total": 1108.5277777777778
+      },
+      "pricingUnavailable": false,
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-equipment-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "saveSource",
+          {
+            "query": {
+              "id": "synthetic-equipment-project",
+              "updated_date": "synthetic-v1"
+            },
+            "patch": {
+              "$set": {
+                "project_name": "Edited",
+                "status": "calculated",
+                "assembly_schema_version": 1,
+                "items": [
+                  {
+                    "component_id": "synthetic-item-1",
+                    "foundation_type": "spread_foot",
+                    "quantity": 2,
+                    "length_inches": 48,
+                    "width_inches": 24,
+                    "depth_inches": 12,
+                    "include_rebar": false,
+                    "include_forming": false,
+                    "include_finishing": false,
+                    "item_total_cost": 97.77777777777777,
+                    "concrete_volume_cy": 0.5925925925925926,
+                    "concrete_cost": 0,
+                    "excavation_cost": 88.88888888888889,
+                    "excavation_volume_cy": 0.7407407407407407,
+                    "concrete_bags": null,
+                    "rebar_feet": 0,
+                    "rebar_weight_lbs": 0,
+                    "concrete_rate": 0,
+                    "rebar_cost": 0,
+                    "rebar_rate": 0,
+                    "excavation_hours": 1.4814814814814814,
+                    "forming_cost": 0,
+                    "forming_qty": 0,
+                    "pouring_cost": 8.88888888888889,
+                    "finishing_cost": 0,
+                    "finishing_hours": 0
+                  }
+                ],
+                "selected_equipment": [
+                  {
+                    "component_id": "synthetic-eq-1",
+                    "equipment_id": "synthetic-excavator",
+                    "rental_period": "day",
+                    "rental_duration": 2,
+                    "include_delivery": false,
+                    "attachment_counts": {
+                      "synthetic-bucket": 2
+                    },
+                    "sub_attachment_counts": {
+                      "synthetic-tooth": 1
+                    },
+                    "equipment_cost": 680,
+                    "custom_qty": null
+                  }
+                ],
+                "walls": [],
+                "wall_caps": [],
+                "poles": [],
+                "signage_cabinets": [],
+                "landscape": {
+                  "cell_size_inches": 12,
+                  "cells": {}
+                },
+                "total_signage_cabinet_cost": 0,
+                "total_landscape_cost": 0,
+                "customer_markup_percent": 0,
+                "customer_pricing": {
+                  "applied": false
+                },
+                "excavation_method": "hand_dig",
+                "project_concrete_type": "4000_ae",
+                "project_concrete_admixtures": [],
+                "concrete_delivery_snapshot": {
+                  "version": 1,
+                  "concrete_total": 330.75,
+                  "rounded_yards": 0.75,
+                  "rate_per_yard": 201,
+                  "additional_stops_cost": 0,
+                  "trucks": [
+                    {
+                      "yards": 0.75,
+                      "rounded_yards": 0.75,
+                      "cost": 330.75,
+                      "small_order_fee": 150,
+                      "fuel_fee": 30
+                    }
+                  ]
+                },
+                "total_concrete_cost": 330.75,
+                "total_rebar_cost": 0,
+                "total_excavation_cost": 88.88888888888889,
+                "total_labor_cost": 8.88888888888889,
+                "total_equipment_cost": 680,
+                "total_forming_materials_cost": 0,
+                "total_pole_cost": 0,
+                "total_pole_painting_cost": 0,
+                "total_brick_cost": 0,
+                "total_fill_cost": 0,
+                "total_wall_cost": 0,
+                "total_wall_cap_cost": 0,
+                "builder_sync_attempt": {
+                  "schema_version": 1,
+                  "key": "key-foundation_sync-8",
+                  "source_project_id": "synthetic-equipment-project",
+                  "estimate_id": "synthetic-equipment-estimate",
+                  "requested_at": "2026-11-11T09:27:02.335Z"
+                }
+              }
+            }
+          }
+        ],
+        [
+          "projectGet",
+          "synthetic-equipment-project"
+        ],
+        [
+          "recordBuilderSave",
+          {
+            "estimateId": "synthetic-equipment-estimate",
+            "line": {
+              "project_id": "synthetic-equipment-project",
+              "module_key": "foundation"
+            },
+            "sourceProject": {
+              "id": "synthetic-equipment-project",
+              "updated_date": "synthetic-v2",
+              "project_name": "Edited",
+              "items": [
+                {
+                  "component_id": "synthetic-item-1",
+                  "foundation_type": "spread_foot",
+                  "quantity": 2,
+                  "length_inches": 48,
+                  "width_inches": 24,
+                  "depth_inches": 12,
+                  "include_rebar": false,
+                  "include_forming": false,
+                  "include_finishing": false,
+                  "item_total_cost": 97.77777777777777,
+                  "concrete_volume_cy": 0.5925925925925926,
+                  "concrete_cost": 0,
+                  "excavation_cost": 88.88888888888889,
+                  "excavation_volume_cy": 0.7407407407407407,
+                  "concrete_bags": null,
+                  "rebar_feet": 0,
+                  "rebar_weight_lbs": 0,
+                  "concrete_rate": 0,
+                  "rebar_cost": 0,
+                  "rebar_rate": 0,
+                  "excavation_hours": 1.4814814814814814,
+                  "forming_cost": 0,
+                  "forming_qty": 0,
+                  "pouring_cost": 8.88888888888889,
+                  "finishing_cost": 0,
+                  "finishing_hours": 0
+                }
+              ],
+              "poles": [],
+              "wall_caps": [],
+              "walls": [],
+              "selected_equipment": [
+                {
+                  "component_id": "synthetic-eq-1",
+                  "equipment_id": "synthetic-excavator",
+                  "rental_period": "day",
+                  "rental_duration": 2,
+                  "include_delivery": false,
+                  "attachment_counts": {
+                    "synthetic-bucket": 2
+                  },
+                  "sub_attachment_counts": {
+                    "synthetic-tooth": 1
+                  },
+                  "equipment_cost": 680,
+                  "custom_qty": null
+                }
+              ],
+              "signage_cabinets": [],
+              "landscape": {
+                "cell_size_inches": 12,
+                "cells": {}
+              },
+              "customer_pricing": {
+                "applied": false
+              },
+              "excavation_method": "hand_dig",
+              "total_equipment_cost": 680,
+              "concrete_delivery_snapshot": {
+                "version": 1,
+                "concrete_total": 330.75,
+                "rounded_yards": 0.75,
+                "rate_per_yard": 201,
+                "additional_stops_cost": 0,
+                "trucks": [
+                  {
+                    "yards": 0.75,
+                    "rounded_yards": 0.75,
+                    "cost": 330.75,
+                    "small_order_fee": 150,
+                    "fuel_fee": 30
+                  }
+                ]
+              },
+              "status": "calculated",
+              "assembly_schema_version": 1,
+              "total_signage_cabinet_cost": 0,
+              "total_landscape_cost": 0,
+              "customer_markup_percent": 0,
+              "project_concrete_type": "4000_ae",
+              "project_concrete_admixtures": [],
+              "total_concrete_cost": 330.75,
+              "total_rebar_cost": 0,
+              "total_excavation_cost": 88.88888888888889,
+              "total_labor_cost": 8.88888888888889,
+              "total_forming_materials_cost": 0,
+              "total_pole_cost": 0,
+              "total_pole_painting_cost": 0,
+              "total_brick_cost": 0,
+              "total_fill_cost": 0,
+              "total_wall_cost": 0,
+              "total_wall_cap_cost": 0,
+              "builder_sync_attempt": {
+                "schema_version": 1,
+                "key": "key-foundation_sync-8",
+                "source_project_id": "synthetic-equipment-project",
+                "estimate_id": "synthetic-equipment-estimate",
+                "requested_at": "2026-11-11T09:27:02.335Z"
+              },
+              "builder_calculation": {
+                "totals": {
+                  "total_concrete_cost": 330.75,
+                  "concrete_delivery_cost": 330.75,
+                  "concrete_delivered_yards": 0.75,
+                  "concrete_rate_per_yard": 201,
+                  "concrete_trucks": [
+                    {
+                      "yards": 0.75,
+                      "roundedYards": 0.75,
+                      "cost": 330.75,
+                      "smallOrderFee": 150,
+                      "fuelFee": 30
+                    }
+                  ],
+                  "additional_stops_cost": 0,
+                  "total_rebar_cost": 0,
+                  "total_excavation_cost": 88.88888888888889,
+                  "total_forming_materials_cost": 0,
+                  "total_labor_cost": 8.88888888888889,
+                  "total_pole_cost": 0,
+                  "total_pole_painting_cost": 0,
+                  "total_brick_cost": 0,
+                  "total_fill_cost": 0,
+                  "total_equipment_cost": 680,
+                  "total_wall_cost": 0,
+                  "total_wall_cap_cost": 0,
+                  "wall_caps_by_material": [],
+                  "total_concrete_volume_cy": 0.5925925925925926,
+                  "total_excavation_volume_cy": 0.7407407407407407,
+                  "total_labor_hours": 1.4814814814814814,
+                  "grand_total": 1108.5277777777778
+                },
+                "delivery": {
+                  "concreteTotal": 330.75,
+                  "roundedYards": 0.75,
+                  "ratePerYard": 201,
+                  "trucksList": [
+                    {
+                      "yards": 0.75,
+                      "roundedYards": 0.75,
+                      "cost": 330.75,
+                      "smallOrderFee": 150,
+                      "fuelFee": 30
+                    }
+                  ],
+                  "additionalStopsCost": 0,
+                  "availableMixes": [
+                    {
+                      "id": "3500_ae",
+                      "name": "3500 AIR ENTRAINED (AE)",
+                      "price": 195.4,
+                      "desc": "Often used for driveways, slabs, and moderate-load footings."
+                    },
+                    {
+                      "id": "4000_ae",
+                      "name": "4000 AIR ENTRAINED (AE)",
+                      "price": 201,
+                      "desc": "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability."
+                    },
+                    {
+                      "id": "4500_ae",
+                      "name": "4500 AIR ENTRAINED (AE)",
+                      "price": 208.7,
+                      "desc": "Used for heavy-duty commercial slabs and heavy traffic areas."
+                    },
+                    {
+                      "id": "5000_ae",
+                      "name": "5000 AIR ENTRAINED (AE)",
+                      "price": 214.6,
+                      "desc": "High-strength mix for heavy structural columns, pillars, and extreme load conditions."
+                    },
+                    {
+                      "id": "fast_set",
+                      "name": "FAST SET",
+                      "price": 248,
+                      "desc": "Quick-curing concrete used when rapid strength gain is needed to minimize downtime."
+                    }
+                  ],
+                  "availableAdmixes": [
+                    {
+                      "id": "calcium_chloride",
+                      "name": "Calcium Chloride",
+                      "price": 8.5,
+                      "desc": "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!"
+                    },
+                    {
+                      "id": "set_retarding",
+                      "name": "Set-Retarding Admix (Type D)",
+                      "price": 4.5,
+                      "desc": "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site."
+                    },
+                    {
+                      "id": "water_reducing",
+                      "name": "Water-Reducing Admix (Type A)",
+                      "price": 4.25,
+                      "desc": "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar."
+                    },
+                    {
+                      "id": "fibers",
+                      "name": "Fibers",
+                      "price": 12.5,
+                      "desc": "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse."
+                    },
+                    {
+                      "id": "winter_service",
+                      "name": "Winter Service",
+                      "price": 5.5,
+                      "desc": "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing."
+                    }
+                  ]
+                },
+                "cabinet_cost": 0,
+                "landscape_cost": 0,
+                "section_total": 1108.5277777777778
+              }
+            },
+            "liveTotal": 1108.5277777777778
+          }
+        ]
+      ]
+    },
+    {
+      "caseId": "string-duration-normalizes-and-persists",
+      "saveOutcome": {
+        "status": "saved"
+      },
+      "acknowledged": {
+        "id": "synthetic-equipment-project",
+        "updated_date": "synthetic-v2",
+        "project_name": "Edited",
+        "items": [
+          {
+            "component_id": "synthetic-item-1",
+            "foundation_type": "spread_foot",
+            "quantity": 2,
+            "length_inches": 48,
+            "width_inches": 24,
+            "depth_inches": 12,
+            "include_rebar": false,
+            "include_forming": false,
+            "include_finishing": false,
+            "item_total_cost": 97.77777777777777,
+            "concrete_volume_cy": 0.5925925925925926,
+            "concrete_cost": 0,
+            "excavation_cost": 88.88888888888889,
+            "excavation_volume_cy": 0.7407407407407407,
+            "concrete_bags": null,
+            "rebar_feet": 0,
+            "rebar_weight_lbs": 0,
+            "concrete_rate": 0,
+            "rebar_cost": 0,
+            "rebar_rate": 0,
+            "excavation_hours": 1.4814814814814814,
+            "forming_cost": 0,
+            "forming_qty": 0,
+            "pouring_cost": 8.88888888888889,
+            "finishing_cost": 0,
+            "finishing_hours": 0
+          }
+        ],
+        "poles": [],
+        "wall_caps": [],
+        "walls": [],
+        "selected_equipment": [
+          {
+            "component_id": "synthetic-eq-1",
+            "equipment_id": "synthetic-excavator",
+            "rental_period": "day",
+            "rental_duration": "3",
+            "include_delivery": false,
+            "attachment_counts": {
+              "synthetic-bucket": 2
+            },
+            "sub_attachment_counts": {
+              "synthetic-tooth": 1
+            },
+            "equipment_cost": 1020
+          }
+        ],
+        "signage_cabinets": [],
+        "landscape": {
+          "cell_size_inches": 12,
+          "cells": {}
+        },
+        "customer_pricing": {
+          "applied": false
+        },
+        "excavation_method": "hand_dig",
+        "total_equipment_cost": 1020,
+        "concrete_delivery_snapshot": {
+          "version": 1,
+          "concrete_total": 330.75,
+          "rounded_yards": 0.75,
+          "rate_per_yard": 201,
+          "additional_stops_cost": 0,
+          "trucks": [
+            {
+              "yards": 0.75,
+              "rounded_yards": 0.75,
+              "cost": 330.75,
+              "small_order_fee": 150,
+              "fuel_fee": 30
+            }
+          ]
+        },
+        "status": "calculated",
+        "assembly_schema_version": 1,
+        "total_signage_cabinet_cost": 0,
+        "total_landscape_cost": 0,
+        "customer_markup_percent": 0,
+        "project_concrete_type": "4000_ae",
+        "project_concrete_admixtures": [],
+        "total_concrete_cost": 330.75,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 88.88888888888889,
+        "total_labor_cost": 8.88888888888889,
+        "total_forming_materials_cost": 0,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "builder_sync_attempt": {
+          "schema_version": 1,
+          "key": "key-foundation_sync-10",
+          "source_project_id": "synthetic-equipment-project",
+          "estimate_id": "synthetic-equipment-estimate",
+          "requested_at": "2026-11-11T09:27:02.349Z"
+        }
+      },
+      "renderedEquipment": [
+        {
+          "component_id": "synthetic-eq-1",
+          "equipment_id": "synthetic-excavator",
+          "rental_period": "day",
+          "rental_duration": "3",
+          "include_delivery": false,
+          "attachment_counts": {
+            "synthetic-bucket": 2
+          },
+          "sub_attachment_counts": {
+            "synthetic-tooth": 1
+          },
+          "equipment_cost": 680
+        }
+      ],
+      "inventory": [
+        {
+          "id": "synthetic-excavator",
+          "material_type": "excavation_equipment",
+          "material_name": "Mini excavator",
+          "equipment_type": "excavator",
+          "rental_company": "RentCo",
+          "cost_per_day": 250,
+          "cost_per_week": 900,
+          "cost_per_month": 2500,
+          "pickup_delivery_cost": 75,
+          "compatible_attachment_ids": [
+            "synthetic-bucket",
+            "synthetic-misc-att"
+          ]
+        },
+        {
+          "id": "synthetic-bucket",
+          "material_type": "attachment",
+          "material_name": "24in digging bucket",
+          "cost_per_day": 40,
+          "cost_per_week": 150,
+          "cost_per_month": 400,
+          "compatible_sub_attachment_ids": [
+            "synthetic-tooth"
+          ]
+        },
+        {
+          "id": "synthetic-tooth",
+          "material_type": "sub_attachment",
+          "material_name": "Ripper tooth",
+          "cost_per_day": 10,
+          "cost_per_week": 35,
+          "cost_per_month": 90
+        },
+        {
+          "id": "synthetic-compactor",
+          "material_type": "excavation_equipment",
+          "material_name": "Plate compactor",
+          "is_non_excavation_equipment": true,
+          "cost_per_day": 60,
+          "cost_per_week": 200,
+          "cost_per_month": 500,
+          "pickup_delivery_cost": 0,
+          "compatible_attachment_ids": []
+        },
+        {
+          "id": "synthetic-misc-att",
+          "material_type": "attachment",
+          "material_name": "Misc grapple",
+          "is_miscellaneous_attachment": true,
+          "cost_per_day": 25,
+          "cost_per_week": 80,
+          "cost_per_month": 200
+        }
+      ],
+      "totals": {
+        "total_concrete_cost": 330.75,
+        "concrete_delivery_cost": 330.75,
+        "concrete_delivered_yards": 0.75,
+        "concrete_rate_per_yard": 201,
+        "concrete_trucks": [
+          {
+            "yards": 0.75,
+            "roundedYards": 0.75,
+            "cost": 330.75,
+            "smallOrderFee": 150,
+            "fuelFee": 30
+          }
+        ],
+        "additional_stops_cost": 0,
+        "total_rebar_cost": 0,
+        "total_excavation_cost": 88.88888888888889,
+        "total_forming_materials_cost": 0,
+        "total_labor_cost": 8.88888888888889,
+        "total_pole_cost": 0,
+        "total_pole_painting_cost": 0,
+        "total_brick_cost": 0,
+        "total_fill_cost": 0,
+        "total_equipment_cost": 1020,
+        "total_wall_cost": 0,
+        "total_wall_cap_cost": 0,
+        "wall_caps_by_material": [],
+        "total_concrete_volume_cy": 0.5925925925925926,
+        "total_excavation_volume_cy": 0.7407407407407407,
+        "total_labor_hours": 1.4814814814814814,
+        "grand_total": 1448.5277777777778
+      },
+      "pricingUnavailable": false,
+      "spies": [
+        [
+          "projectGet",
+          "synthetic-equipment-project"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "estimateGet",
+          "synthetic-equipment-estimate"
+        ],
+        [
+          "saveSource",
+          {
+            "query": {
+              "id": "synthetic-equipment-project",
+              "updated_date": "synthetic-v1"
+            },
+            "patch": {
+              "$set": {
+                "project_name": "Edited",
+                "status": "calculated",
+                "assembly_schema_version": 1,
+                "items": [
+                  {
+                    "component_id": "synthetic-item-1",
+                    "foundation_type": "spread_foot",
+                    "quantity": 2,
+                    "length_inches": 48,
+                    "width_inches": 24,
+                    "depth_inches": 12,
+                    "include_rebar": false,
+                    "include_forming": false,
+                    "include_finishing": false,
+                    "item_total_cost": 97.77777777777777,
+                    "concrete_volume_cy": 0.5925925925925926,
+                    "concrete_cost": 0,
+                    "excavation_cost": 88.88888888888889,
+                    "excavation_volume_cy": 0.7407407407407407,
+                    "concrete_bags": null,
+                    "rebar_feet": 0,
+                    "rebar_weight_lbs": 0,
+                    "concrete_rate": 0,
+                    "rebar_cost": 0,
+                    "rebar_rate": 0,
+                    "excavation_hours": 1.4814814814814814,
+                    "forming_cost": 0,
+                    "forming_qty": 0,
+                    "pouring_cost": 8.88888888888889,
+                    "finishing_cost": 0,
+                    "finishing_hours": 0
+                  }
+                ],
+                "selected_equipment": [
+                  {
+                    "component_id": "synthetic-eq-1",
+                    "equipment_id": "synthetic-excavator",
+                    "rental_period": "day",
+                    "rental_duration": "3",
+                    "include_delivery": false,
+                    "attachment_counts": {
+                      "synthetic-bucket": 2
+                    },
+                    "sub_attachment_counts": {
+                      "synthetic-tooth": 1
+                    },
+                    "equipment_cost": 1020
+                  }
+                ],
+                "walls": [],
+                "wall_caps": [],
+                "poles": [],
+                "signage_cabinets": [],
+                "landscape": {
+                  "cell_size_inches": 12,
+                  "cells": {}
+                },
+                "total_signage_cabinet_cost": 0,
+                "total_landscape_cost": 0,
+                "customer_markup_percent": 0,
+                "customer_pricing": {
+                  "applied": false
+                },
+                "excavation_method": "hand_dig",
+                "project_concrete_type": "4000_ae",
+                "project_concrete_admixtures": [],
+                "concrete_delivery_snapshot": {
+                  "version": 1,
+                  "concrete_total": 330.75,
+                  "rounded_yards": 0.75,
+                  "rate_per_yard": 201,
+                  "additional_stops_cost": 0,
+                  "trucks": [
+                    {
+                      "yards": 0.75,
+                      "rounded_yards": 0.75,
+                      "cost": 330.75,
+                      "small_order_fee": 150,
+                      "fuel_fee": 30
+                    }
+                  ]
+                },
+                "total_concrete_cost": 330.75,
+                "total_rebar_cost": 0,
+                "total_excavation_cost": 88.88888888888889,
+                "total_labor_cost": 8.88888888888889,
+                "total_equipment_cost": 1020,
+                "total_forming_materials_cost": 0,
+                "total_pole_cost": 0,
+                "total_pole_painting_cost": 0,
+                "total_brick_cost": 0,
+                "total_fill_cost": 0,
+                "total_wall_cost": 0,
+                "total_wall_cap_cost": 0,
+                "builder_sync_attempt": {
+                  "schema_version": 1,
+                  "key": "key-foundation_sync-10",
+                  "source_project_id": "synthetic-equipment-project",
+                  "estimate_id": "synthetic-equipment-estimate",
+                  "requested_at": "2026-11-11T09:27:02.349Z"
+                }
+              }
+            }
+          }
+        ],
+        [
+          "projectGet",
+          "synthetic-equipment-project"
+        ],
+        [
+          "recordBuilderSave",
+          {
+            "estimateId": "synthetic-equipment-estimate",
+            "line": {
+              "project_id": "synthetic-equipment-project",
+              "module_key": "foundation"
+            },
+            "sourceProject": {
+              "id": "synthetic-equipment-project",
+              "updated_date": "synthetic-v2",
+              "project_name": "Edited",
+              "items": [
+                {
+                  "component_id": "synthetic-item-1",
+                  "foundation_type": "spread_foot",
+                  "quantity": 2,
+                  "length_inches": 48,
+                  "width_inches": 24,
+                  "depth_inches": 12,
+                  "include_rebar": false,
+                  "include_forming": false,
+                  "include_finishing": false,
+                  "item_total_cost": 97.77777777777777,
+                  "concrete_volume_cy": 0.5925925925925926,
+                  "concrete_cost": 0,
+                  "excavation_cost": 88.88888888888889,
+                  "excavation_volume_cy": 0.7407407407407407,
+                  "concrete_bags": null,
+                  "rebar_feet": 0,
+                  "rebar_weight_lbs": 0,
+                  "concrete_rate": 0,
+                  "rebar_cost": 0,
+                  "rebar_rate": 0,
+                  "excavation_hours": 1.4814814814814814,
+                  "forming_cost": 0,
+                  "forming_qty": 0,
+                  "pouring_cost": 8.88888888888889,
+                  "finishing_cost": 0,
+                  "finishing_hours": 0
+                }
+              ],
+              "poles": [],
+              "wall_caps": [],
+              "walls": [],
+              "selected_equipment": [
+                {
+                  "component_id": "synthetic-eq-1",
+                  "equipment_id": "synthetic-excavator",
+                  "rental_period": "day",
+                  "rental_duration": "3",
+                  "include_delivery": false,
+                  "attachment_counts": {
+                    "synthetic-bucket": 2
+                  },
+                  "sub_attachment_counts": {
+                    "synthetic-tooth": 1
+                  },
+                  "equipment_cost": 1020
+                }
+              ],
+              "signage_cabinets": [],
+              "landscape": {
+                "cell_size_inches": 12,
+                "cells": {}
+              },
+              "customer_pricing": {
+                "applied": false
+              },
+              "excavation_method": "hand_dig",
+              "total_equipment_cost": 1020,
+              "concrete_delivery_snapshot": {
+                "version": 1,
+                "concrete_total": 330.75,
+                "rounded_yards": 0.75,
+                "rate_per_yard": 201,
+                "additional_stops_cost": 0,
+                "trucks": [
+                  {
+                    "yards": 0.75,
+                    "rounded_yards": 0.75,
+                    "cost": 330.75,
+                    "small_order_fee": 150,
+                    "fuel_fee": 30
+                  }
+                ]
+              },
+              "status": "calculated",
+              "assembly_schema_version": 1,
+              "total_signage_cabinet_cost": 0,
+              "total_landscape_cost": 0,
+              "customer_markup_percent": 0,
+              "project_concrete_type": "4000_ae",
+              "project_concrete_admixtures": [],
+              "total_concrete_cost": 330.75,
+              "total_rebar_cost": 0,
+              "total_excavation_cost": 88.88888888888889,
+              "total_labor_cost": 8.88888888888889,
+              "total_forming_materials_cost": 0,
+              "total_pole_cost": 0,
+              "total_pole_painting_cost": 0,
+              "total_brick_cost": 0,
+              "total_fill_cost": 0,
+              "total_wall_cost": 0,
+              "total_wall_cap_cost": 0,
+              "builder_sync_attempt": {
+                "schema_version": 1,
+                "key": "key-foundation_sync-10",
+                "source_project_id": "synthetic-equipment-project",
+                "estimate_id": "synthetic-equipment-estimate",
+                "requested_at": "2026-11-11T09:27:02.349Z"
+              },
+              "builder_calculation": {
+                "totals": {
+                  "total_concrete_cost": 330.75,
+                  "concrete_delivery_cost": 330.75,
+                  "concrete_delivered_yards": 0.75,
+                  "concrete_rate_per_yard": 201,
+                  "concrete_trucks": [
+                    {
+                      "yards": 0.75,
+                      "roundedYards": 0.75,
+                      "cost": 330.75,
+                      "smallOrderFee": 150,
+                      "fuelFee": 30
+                    }
+                  ],
+                  "additional_stops_cost": 0,
+                  "total_rebar_cost": 0,
+                  "total_excavation_cost": 88.88888888888889,
+                  "total_forming_materials_cost": 0,
+                  "total_labor_cost": 8.88888888888889,
+                  "total_pole_cost": 0,
+                  "total_pole_painting_cost": 0,
+                  "total_brick_cost": 0,
+                  "total_fill_cost": 0,
+                  "total_equipment_cost": 1020,
+                  "total_wall_cost": 0,
+                  "total_wall_cap_cost": 0,
+                  "wall_caps_by_material": [],
+                  "total_concrete_volume_cy": 0.5925925925925926,
+                  "total_excavation_volume_cy": 0.7407407407407407,
+                  "total_labor_hours": 1.4814814814814814,
+                  "grand_total": 1448.5277777777778
+                },
+                "delivery": {
+                  "concreteTotal": 330.75,
+                  "roundedYards": 0.75,
+                  "ratePerYard": 201,
+                  "trucksList": [
+                    {
+                      "yards": 0.75,
+                      "roundedYards": 0.75,
+                      "cost": 330.75,
+                      "smallOrderFee": 150,
+                      "fuelFee": 30
+                    }
+                  ],
+                  "additionalStopsCost": 0,
+                  "availableMixes": [
+                    {
+                      "id": "3500_ae",
+                      "name": "3500 AIR ENTRAINED (AE)",
+                      "price": 195.4,
+                      "desc": "Often used for driveways, slabs, and moderate-load footings."
+                    },
+                    {
+                      "id": "4000_ae",
+                      "name": "4000 AIR ENTRAINED (AE)",
+                      "price": 201,
+                      "desc": "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability."
+                    },
+                    {
+                      "id": "4500_ae",
+                      "name": "4500 AIR ENTRAINED (AE)",
+                      "price": 208.7,
+                      "desc": "Used for heavy-duty commercial slabs and heavy traffic areas."
+                    },
+                    {
+                      "id": "5000_ae",
+                      "name": "5000 AIR ENTRAINED (AE)",
+                      "price": 214.6,
+                      "desc": "High-strength mix for heavy structural columns, pillars, and extreme load conditions."
+                    },
+                    {
+                      "id": "fast_set",
+                      "name": "FAST SET",
+                      "price": 248,
+                      "desc": "Quick-curing concrete used when rapid strength gain is needed to minimize downtime."
+                    }
+                  ],
+                  "availableAdmixes": [
+                    {
+                      "id": "calcium_chloride",
+                      "name": "Calcium Chloride",
+                      "price": 8.5,
+                      "desc": "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!"
+                    },
+                    {
+                      "id": "set_retarding",
+                      "name": "Set-Retarding Admix (Type D)",
+                      "price": 4.5,
+                      "desc": "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site."
+                    },
+                    {
+                      "id": "water_reducing",
+                      "name": "Water-Reducing Admix (Type A)",
+                      "price": 4.25,
+                      "desc": "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar."
+                    },
+                    {
+                      "id": "fibers",
+                      "name": "Fibers",
+                      "price": 12.5,
+                      "desc": "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse."
+                    },
+                    {
+                      "id": "winter_service",
+                      "name": "Winter Service",
+                      "price": 5.5,
+                      "desc": "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing."
+                    }
+                  ]
+                },
+                "cabinet_cost": 0,
+                "landscape_cost": 0,
+                "section_total": 1448.5277777777778
+              }
+            },
+            "liveTotal": 1448.5277777777778
+          }
+        ]
+      ]
+    }
+  ]
+}

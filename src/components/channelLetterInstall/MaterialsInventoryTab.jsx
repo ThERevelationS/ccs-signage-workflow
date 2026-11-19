@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { ChannelLetterInstallInventory, ChannelLetterInstallation } from "@/entities/all";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { ChannelLetterInstallInventory, ChannelLetterInstallation } from "@/api/gatedEntities";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { ensureIdempotentEntityCreate } from "@/components/estimator/idempotentEntityCreate";
 import { User } from "@/api/entities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ export default function MaterialsInventoryTab() {
   const [items, setItems] = useState([]);
   const [savedSnapshots, setSavedSnapshots] = useState({}); // id -> last saved price snapshot
   const [usageCounts, setUsageCounts] = useState({});
+  const [projectsFailed, setProjectsFailed] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -62,7 +64,7 @@ export default function MaterialsInventoryTab() {
     const [data, user, projects] = await Promise.all([
       loadAllEntityRows({ entity: ChannelLetterInstallInventory, sort: "sort_order", label: "Channel Letter installation inventory" }),
       User.me().catch(() => null),
-      loadAllEntityRows({ entity: ChannelLetterInstallation, sort: "created_date", label: "Channel Letter projects" }).catch(() => []),
+      loadAllEntityRows({ entity: ChannelLetterInstallation, sort: "created_date", label: "Channel Letter projects" }).catch(() => { setProjectsFailed(true); return []; }),
     ]);
     setItems(data);
     setCurrentUser(user);
@@ -161,7 +163,9 @@ export default function MaterialsInventoryTab() {
 
       let saved;
       if (id) saved = await ChannelLetterInstallInventory.update(id, payload);
-      else saved = await ChannelLetterInstallInventory.create(payload);
+      else saved = payload.item_name
+        ? await ensureIdempotentEntityCreate({ entity: ChannelLetterInstallInventory, keyField: "item_name", key: payload.item_name, data: payload, label: `Inventory item "${payload.item_name}"` })
+        : await ChannelLetterInstallInventory.create(payload);
 
       // Update local row with returned id and clear dirty flag
       setItems(prev => {
@@ -491,7 +495,7 @@ export default function MaterialsInventoryTab() {
                     defaultExpanded={!!it._new}
                     selected={selectedKeys.has(keyFor(it))}
                     onSelectChange={(on) => toggleSelect(it, on)}
-                    usageCount={it.id ? (usageCounts[it.id] || 0) : 0}
+                    usageCount={projectsFailed ? null : (it.id ? (usageCounts[it.id] || 0) : 0)}
                     readOnly={readOnly}
                     onChange={(patch) => update(idx, patch)}
                     onRemove={() => removeItem(idx)}

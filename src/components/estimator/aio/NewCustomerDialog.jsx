@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ensureNewCustomer, newCustomerCreationKey } from "@/components/estimator/customerCreationService";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -136,13 +135,13 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
         </DialogHeader>
 
         {error && (
-          <div className="px-3 py-2 bg-red-50 border border-red-200 rounded text-[12px] text-red-700">
+          <div role="alert" className="px-3 py-2 bg-red-50 border border-red-200 rounded text-[12px] text-red-700">
             {error}
           </div>
         )}
 
         {duplicateName && (
-          <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded text-[12px] text-amber-700">
+          <div role="status" className="px-3 py-2 bg-amber-50 border border-amber-200 rounded text-[12px] text-amber-700">
             A customer with this name already exists
           </div>
         )}
@@ -166,12 +165,12 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
               onChange={(event) => setData((current) => ({ ...current, pricing_tier: Number(event.target.value) || 1 }))}
               className="w-full h-[30px] px-2 border border-gray-300 rounded-sm text-[12px] bg-white focus:outline-none focus:border-red-400 disabled:bg-gray-100 disabled:text-gray-500"
             >
-              {tierLoading && <option value="1">Loading pricing tiersâ€¦</option>}
+              {tierLoading && <option value="1">Loading pricing tiers…</option>}
               {!tierLoading && tierLoadError && <option value="1">Pricing tiers unavailable</option>}
-              {!tierLoading && !tierLoadError && tiers.length === 0 && <option value="1">Tier 1 â€” General Public</option>}
+              {!tierLoading && !tierLoadError && tiers.length === 0 && <option value="1">Tier 1 — General Public</option>}
               {!tierLoading && !tierLoadError && tiers.map((tier) => (
                 <option key={tier.id} value={String(tier.tier_number)}>
-                  Tier {tier.tier_number} â€” {tier.tier_name}
+                  Tier {tier.tier_number} — {tier.tier_name}
                 </option>
               ))}
             </select>
@@ -194,7 +193,7 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
             disabled={saving || tierLoading || !!tierLoadError || !data.company_name.trim()}
             className="h-[30px] px-4 rounded bg-lime-200 border border-lime-300 text-[12px] font-semibold text-gray-800 disabled:opacity-60"
           >
-            {saving ? "Savingâ€¦" : "Create Customer"}
+            {saving ? "Saving…" : "Create Customer"}
           </button>
         </div>
       </DialogContent>

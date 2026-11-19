@@ -1,0 +1,47 @@
+{
+  "ok": true,
+  "noWrites": true,
+  "audit": [
+    {
+      "index": 0,
+      "entity": "AllInOneEstimate",
+      "method": "get",
+      "id": "coupled-estimate",
+      "found": true
+    },
+    {
+      "index": 1,
+      "entity": "WorkOrder",
+      "method": "readRows",
+      "query": {
+        "estimate_id": "coupled-estimate"
+      },
+      "limit": 500,
+      "skip": 0,
+      "returned": 0
+    },
+    {
+      "index": 2,
+      "entity": "Customer",
+      "method": "readRows",
+      "query": {},
+      "sort": "created_date",
+      "limit": 500,
+      "skip": 0,
+      "returned": 1
+    },
+    {
+      "index": 3,
+      "entity": "BuilderPart",
+      "method": "readRows",
+      "query": {
+        "estimate_id": "coupled-estimate"
+      },
+      "sort": "created_date",
+      "limit": 500,
+      "skip": 0,
+      "returned": 0
+    }
+  ],
+  "expected": "Synthetic Part collection unavailable"
+}

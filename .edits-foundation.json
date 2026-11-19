@@ -1,0 +1,14 @@
+[
+  {
+    "old_text": "import {\n  ArrowLeft,\n  HelpCircle,\n  Undo2,\n  Redo2,\n  LayoutTemplate,\n  BookmarkPlus,\n  Copy,\n  Save,\n} from \"lucide-react\";",
+    "new_text": "import {\n  ArrowLeft,\n  HelpCircle,\n  Undo2,\n  Redo2,\n  LayoutTemplate,\n  BookmarkPlus,\n  Copy,\n  Save,\n  ArrowLeftRight,\n  Link2,\n} from \"lucide-react\";"
+  },
+  {
+    "old_text": "  onSaveAsCopy,\n  onSaveAsTemplate,\n  onTemplates,\n  onHelp,\n  onBack,\n}) {",
+    "new_text": "  onSaveAsCopy,\n  onSaveAsTemplate,\n  onTemplates,\n  onSwapToBrickStone,\n  onShareLink,\n  onHelp,\n  onBack,\n}) {"
+  },
+  {
+    "old_text": "        <Btn icon={Copy} label=\"Save As Copy\" onClick={onSaveAsCopy} />",
+    "new_text": "        <Btn icon={Copy} label=\"Save As Copy\" onClick={onSaveAsCopy} />\n        {onSwapToBrickStone ? <Btn icon={ArrowLeftRight} label=\"Swap to BrickStone\" onClick={onSwapToBrickStone} /> : null}\n        {onShareLink ? <Btn icon={Link2} label=\"Share Link\" onClick={onShareLink} /> : null}"
+  }
+]

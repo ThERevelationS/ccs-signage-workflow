@@ -1,0 +1,120 @@
+{
+  "item": "O-034",
+  "component": "CMP-C03",
+  "acceptance_text": "O-034 [OPEN] (CMP-C03) Synchronize object tree, selection, properties panel, highlights, and parent breadcrumb.",
+  "acceptance_source": "ESTIMATOR_MASTERPLAN.md (remote, grep 'O-034')",
+  "status": "candidate-only — not applied to remote",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remote": {
+    "baseline_head": "a11be3a85db0cf0800f3015a4be6d55e7c43407a",
+    "baseline_pulled_at": "2026-11-08T18:21:33.104Z",
+    "recheck_head": "eda27bec29a70d56a5f4b7388bf32589f0059047",
+    "recheck_result": "all owned files byte-identical to baseline (sha256); foundationSceneSelection.js absent on remote",
+    "owned_files_sha256": {
+      "src/components/estimator/foundation/FoundationLayoutCanvas.jsx": "e987944e2623c9a45020733791956145e7ef7c07283fcd5aff1c1e4a370fb635",
+      "src/components/estimator/foundation/foundationSceneInput.js": "3575d3152374afdfbceb6fd0889eb3c307027cf06b71ddc7efbf44680c24eac7",
+      "src/components/estimator/foundation/foundationSceneTransforms.js": "27397d68015a2e0f5f38fc0e38bce196a42b302850f04def6b4ac221babecacc",
+      "src/components/estimator/foundation/foundationSceneHistory.js": "b2ce1cf4279f63cd4311076d6e55e38ba9cd81f80dd5d822d237bba791ab05d6",
+      "src/components/estimator/foundation/foundationLayoutModel.js": "972ad19712f2e6c5d23a208a443635515d13e9c1b5034169eb95bcb8f2d72e3d",
+      "src/components/estimator/foundation/foundationAssemblyModel.js": "94e3bb9303c71439fbe5572798818a551b78e6879a67d203aee34a09d42f909c",
+      "src/components/estimator/foundation/foundationGeometryInputs.js": "07374df22f0b0997b44e28677eb57eaef4111913f67f42f39fa6437d464758dc",
+      "src/pages/FoundationEstimator.jsx": "7e97bd1cd5199bce110eea6302672f6467711e667499994a17d56eb4cedaea0b"
+    }
+  },
+  "candidates": [
+    {
+      "file": "o034-candidate-foundationSceneSelection.js",
+      "target_path": "src/components/estimator/foundation/foundationSceneSelection.js",
+      "sha256": "ff73a9505877252f022968b63fc1a211de57ccf49a4145d29c08df570b15decb",
+      "bytes": 49502,
+      "kind": "new pure module",
+      "provides": [
+        "stable node ids (collection:key) across items/walls/wall-segments/wall_caps/poles/signage_cabinets",
+        "buildSceneTree + describe + resolveAncestors (parent chains via foundationAssemblyModel refs, unresolved refs honest null)",
+        "hitTestPlanAll -> node selection with face/edge/vertex/segment parts and paint-order top-wins",
+        "ctrl/shift additive multi-select + toggle-off + primary tracking",
+        "marquee region select in plan coordinates + click-vs-drag threshold",
+        "Tab/arrow cycle, Escape clear, Delete/Backspace -> delete-request hook (no business-data mutation)",
+        "reconcile on scene change (component/legacy ids survive reorder; positional ids drop; minted ids upgrade)",
+        "createSceneSelection external store (subscribe + stateVersion for useSyncExternalStore)"
+      ]
+    },
+    {
+      "file": "o034-candidate-FoundationLayoutCanvas.jsx",
+      "target_path": "src/components/estimator/foundation/FoundationLayoutCanvas.jsx",
+      "sha256": "9613eb47de3df0f93110e284d940f6586b1a100ee7996e700b3a31857e03727d",
+      "bytes": 23069,
+      "kind": "modified component (superset of remote baseline)",
+      "preserves": [
+        "O-039 drag lifecycle: beginSceneDrag/sceneDragCorner/commitSceneDrag/resolveSceneDragTarget -> onMoveItem",
+        "O-040 history: recordEdit on drag + coalesced nudges, geometry-CAS observe detachment",
+        "existing props and behavior for items/poles/onMoveItem/sceneHistory (backwards compatible)",
+        "read-only safety: selection works, geometry writes remain gated by editable"
+      ],
+      "adds": [
+        "optional props: walls, wallCaps, signageCabinets, sceneSelection, onDeleteSelection",
+        "click-candidate + marquee seams at existing pointer capture points",
+        "selection visuals: data-selected/data-primary outlines, 4 primary handles, data-marquee rubber band, aria-pressed",
+        "plan container: tabIndex, role=group, onPlanPointerDown marquee, onPlanKeyDown selection keys",
+        "selection.reconcile(scene) effect on every scene array change"
+      ]
+    }
+  ],
+  "verification": {
+    "model": {
+      "script": "verify-o034-model.mjs",
+      "sha256": "61964b3e44da79f97985cb2324a8c87dc8f055e0c75fe4f0e6dcda8487f6b419",
+      "result": "PASS — 21 assertion groups",
+      "report": "o034-model-verification.json",
+      "coverage": "hit->select->resolve matrix (all 5 arrays + wall segments), part kinds, z-top-wins, additive/toggle/primary, marquee, Tab cycle, Escape, delete hook, drag threshold, reorder/delete reconcile, missing ids, malformed rows, unresolved refs, degenerate geometry"
+    },
+    "bundle": {
+      "script": "build-bundle.cjs",
+      "sha256": "58d52441a9a0752b253bf8e4e4d0ca7d2c2fd0a05d25e2295bb1718060487882",
+      "result": "clean — 6 module inputs, no warnings",
+      "artifacts": ["bundle-metafile.json", "o034-page-bundle.js", "o034-browser-inputs.json"],
+      "staging": "staging-src = pulled remote modules + the two candidates only (verified sha256-identical)"
+    },
+    "browser": {
+      "script": "verify-o034-browser.mjs",
+      "sha256": "ac7422cb66f4bb61d97a14bcc1b1373d24ccadaba28539a9a50e9c3a2848917a",
+      "result": "PASS — 11/11 scenarios",
+      "engine": "chromium (system chrome channel), real DOM geometry, 1280x900",
+      "report": "o034-browser-verification.json",
+      "screenshot": "o034-browser-canvas.png",
+      "scenarios": [
+        "A: click selects — id + part + highlight + handles",
+        "B: ctrl/shift additive + toggle + primary",
+        "C: empty click clears / additive keeps",
+        "D: marquee region select",
+        "E: additive marquee union",
+        "F: drag keeps selection / wiggle clicks",
+        "G: keyboard cycle/focus/delete-hook/Escape",
+        "H: z-top-wins pole-over-item",
+        "I: reconcile delete/reorder",
+        "J: read-only select + marquee",
+        "K: O-039/O-040 seams intact (drag = one command)"
+      ]
+    }
+  },
+  "deferred": {
+    "doc": "MOUNT-ANCHORS.md",
+    "items": [
+      "page-owned sceneSelection store + onDeleteSelection wiring in FoundationEstimator.jsx (ownership-protected this unit)",
+      "object tree panel mount + sync (consumes buildSceneTree + selState)",
+      "properties panel sync (consumes selection.entries()/primaryId -> describe)",
+      "highlight sync to elevation/3D overlays (same store, later units)",
+      "parent breadcrumb render (consumes describe/resolveAncestors parent chain)"
+    ]
+  },
+  "explicitly_not_done": [
+    "no sandbox write/edit/checkpoint",
+    "no publish/deploy/release",
+    "no entity operations",
+    "FoundationEstimator.jsx untouched",
+    "foundationSceneHistory.js untouched (no missing seam; exports consumed as-is)",
+    "no pricing/save/recovery/lifecycle changes",
+    "local src/ never trusted — remote sandbox reads only"
+  ]
+}

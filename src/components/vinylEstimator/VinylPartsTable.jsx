@@ -162,7 +162,7 @@ export default function VinylPartsTable({
             {/* Auto-bleed quick action — Feature #26 */}
             {(it.bleed_inches || 0) === 0 && defaultBleed > 0 && (
               <div className="text-[10px] text-slate-400 pl-1">
-                <button onClick={() => update(idx, { bleed_inches: defaultBleed })} className="underline hover:text-blue-600">
+                <button type="button" onClick={() => update(idx, { bleed_inches: defaultBleed })} className="underline hover:text-blue-600">
                   Auto-bleed ({defaultBleed}″)
                 </button>
               </div>

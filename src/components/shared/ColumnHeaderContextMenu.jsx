@@ -157,7 +157,7 @@ export function ColumnHeaderContextMenu({
       </div>
       
       {/* Quick Sort Ascending */}
-      <button
+      <button type="button"
         className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
         onMouseDown={(e) => {
           e.preventDefault();
@@ -175,7 +175,7 @@ export function ColumnHeaderContextMenu({
       </button>
 
       {/* Quick Sort Descending */}
-      <button
+      <button type="button"
         className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
         onMouseDown={(e) => {
           e.preventDefault();
@@ -195,7 +195,7 @@ export function ColumnHeaderContextMenu({
       <div className="border-t my-1" />
 
       {/* Custom Sort */}
-      <button
+      <button type="button"
         className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
         onMouseDown={(e) => {
           e.preventDefault();
@@ -211,7 +211,7 @@ export function ColumnHeaderContextMenu({
       {isSorted && (
         <>
           <div className="border-t my-1" />
-          <button
+          <button type="button"
             className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
             onMouseDown={(e) => {
               e.preventDefault();
@@ -233,7 +233,7 @@ export function ColumnHeaderContextMenu({
           )}
           
           {fieldName === 'lead_source' && (
-            <button
+            <button type="button"
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -247,7 +247,7 @@ export function ColumnHeaderContextMenu({
           )}
           
           {fieldName === 'current_task_description' && (
-            <button
+            <button type="button"
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -261,7 +261,7 @@ export function ColumnHeaderContextMenu({
           )}
           
           {fieldName === 'current_task_deadline' && (
-            <button
+            <button type="button"
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -429,7 +429,7 @@ function CustomSortDialog({ isOpen, onClose, fieldName, fieldLabel, columnType, 
                   {selectedValues.map(value => (
                     <div key={value} className="flex items-center justify-between p-1.5 bg-blue-50 rounded text-sm">
                       <span className="truncate">{value}</span>
-                      <button 
+                      <button type="button" 
                         onClick={() => setSelectedValues(prev => prev.filter(v => v !== value))}
                         className="text-red-500 hover:text-red-700 ml-2"
                       >

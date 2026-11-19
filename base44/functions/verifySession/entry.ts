@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
       return Response.json({ valid: false, error: 'No token provided' }, { status: 400 });
     }
 
-    const base44 = withEntityRateLimitRetry(withEmployeeAccessReads(createClientFromRequest(req)));
+    const base44 = withEntityRateLimitRetry(withEmployeeAccessReads(createClientFromRequest(req)), { maxRetries: 1 });
     // action === 'logout': revoke the server-side session (not just the
     // client token) by bumping session_not_before past this token's issue.
     const isLogout = String(body?.action || '') === 'logout';
@@ -28,9 +28,10 @@ Deno.serve(async (req) => {
     } catch (authError) {
       const status = Number(authError?.status || 500);
       if (status === 503) console.error('verifySession session authentication service is unavailable');
-      const safeStatus = [401, 409].includes(status) ? status : 500;
+      const safeStatus = [401, 409, 429, 503].includes(status) ? status : 500;
       return Response.json({
         valid: false,
+        ...([429, 503].includes(safeStatus) ? { retry_later: true } : {}),
         error: safeStatus === 409 ? 'User identity could not be verified uniquely' :
           safeStatus === 401 ? 'Session is invalid, expired, or revoked' :
           'Session verification service is unavailable',
@@ -47,10 +48,11 @@ Deno.serve(async (req) => {
     }
 
     if (isLogout) {
+      let logoutWarning = "";
       await base44.asServiceRole.entities.AuthorizedEmail.update(user.id, {
         session_not_before: new Date().toISOString(),
-      }).catch(() => null);
-      return Response.json({ valid: true, logged_out: true });
+      }).catch((e) => { logoutWarning = String(e?.message || e); return null; });
+      return Response.json({ valid: true, logged_out: true, logout_warning: logoutWarning || undefined });
     }
     return Response.json({
       valid: true,
@@ -71,6 +73,10 @@ Deno.serve(async (req) => {
       },
     });
   } catch (error) {
+    const status = Number(error?.status || error?.response?.status || 500);
+    if (status === 429 || status === 503) {
+      return Response.json({ valid: false, retry_later: true, error: 'Session verification is busy. Try again in a moment.' }, { status });
+    }
     console.error('verifySession error:', error);
     return Response.json({ valid: false, error: 'Session verification could not be completed safely' }, { status: 500 });
   }

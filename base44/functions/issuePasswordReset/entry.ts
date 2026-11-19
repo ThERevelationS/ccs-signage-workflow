@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       actor = await authenticateSignShopSession(base44, sessionToken);
     } catch (authError) {
       const status = Number(authError?.status || 401);
-      const safeStatus = [401, 409, 503].includes(status) ? status : 401;
+      const safeStatus = [401, 409, 429, 503].includes(status) ? status : 401;
       const error = safeStatus === 503
         ? 'Session authentication is unavailable'
         : safeStatus === 409
@@ -73,6 +73,13 @@ Deno.serve(async (req) => {
       }, { status: Array.isArray(targetRows) && targetRows.length === 0 ? 404 : 409 });
     }
     const target = targetRows[0];
+
+    // Cooldown: if an unexpired reset token was already issued, don't mint a
+    // new one (or resend email) — rapid repeated requests are email bombing.
+    const existingExpiry = Date.parse(String(target?.password_reset_expires || '')) || 0;
+    if (existingExpiry > Date.now()) {
+      return Response.json({ success: true, cooldown: true, message: 'A reset link was already issued recently — check your email or wait for it to expire before requesting another.' });
+    }
 
     const resetToken = secureToken();
     const resetTokenHash = await hashBearerToken(resetToken);
@@ -109,7 +116,7 @@ Deno.serve(async (req) => {
       to: target.email,
       subject: 'Reset Your Sign Shop Workflow Password',
       body: emailBody,
-      _workflow_capability: 'ccs-sendGmail-internal-svc-cap-9f3a7e2b1c4d',
+      _workflow_capability: 'ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc',
     });
     const sendResult = sendResponse?.data || sendResponse;
     if (sendResult?.error || sendResult?.success === false) {

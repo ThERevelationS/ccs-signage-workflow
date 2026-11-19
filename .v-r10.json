@@ -1,0 +1,694 @@
+{
+  "summary": {
+    "total": 43,
+    "resolved": 43,
+    "rate": "100.0%",
+    "failure_stages": {},
+    "geocode_misses": 0,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "65 east Cumberland Gap Pkwy, Corbin, KY 40701",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "nominatim",
+      "point": {
+        "lat": 36.951593,
+        "lng": -84.0610802
+      },
+      "matched": "Cumberland Gap Parkway, Siler, Corbin, Knox County, Kentucky, 40702, United States",
+      "target": {
+        "type": "municipality",
+        "name": "Corbin city"
+      },
+      "county": "Knox County",
+      "ms": 1025,
+      "worker": 1
+    },
+    {
+      "address": "633 E Main St, Deliver to, 401 Corporate Dr, Lebanon, KY 40033",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.578316076867,
+        "lng": -85.23696040766
+      },
+      "matched": "401 CORPORATE DR, LEBANON, KY, 40033",
+      "target": {
+        "type": "municipality",
+        "name": "Lebanon city"
+      },
+      "county": "Marion County",
+      "ms": 1404,
+      "worker": 2
+    },
+    {
+      "address": "5000 Arlington Centre Blvd Building One, Arlington Centre Blvd, Upper Arlington, OH 43220",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "census",
+      "point": {
+        "lat": 40.057187459227,
+        "lng": -83.079213815913
+      },
+      "matched": "5000 ARLINGTON CENTRE BLVD, UPPER ARLINGTON, OH, 43220",
+      "target": {
+        "type": "municipality",
+        "name": "Upper Arlington city"
+      },
+      "county": "Franklin County",
+      "ms": 2782,
+      "worker": 1
+    },
+    {
+      "address": "74 boat park ln, Monticello, KY 42633",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "census",
+      "point": {
+        "lat": 36.836148034791,
+        "lng": -84.841547337197
+      },
+      "matched": "74 PARK AVE, MONTICELLO, KY, 42633",
+      "target": {
+        "type": "municipality",
+        "name": "Monticello city"
+      },
+      "county": "Wayne County",
+      "ms": 847,
+      "worker": 2
+    },
+    {
+      "address": "100 Dogpatch Trading Center, London, KY 40741",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: london -> london",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "london"
+      },
+      "county": "",
+      "ms": 1580,
+      "worker": 2
+    },
+    {
+      "address": "609 Emily Drive, Fort Mitchell, KY 41017",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: fort mitchell -> fort mitchell",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "fort mitchell"
+      },
+      "county": "",
+      "ms": 2048,
+      "worker": 1
+    },
+    {
+      "address": "1492 W Steve Wariner Dr, Russell Springs, KY 42642",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: russell springs -> russell springs",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "russell springs"
+      },
+      "county": "",
+      "ms": 2700,
+      "worker": 2
+    },
+    {
+      "address": "2850 Town Center Blvd, Crestview Hills, KY 41017",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: crestview hills -> crestview hills",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "crestview hills"
+      },
+      "county": "",
+      "ms": 1750,
+      "worker": 1
+    },
+    {
+      "address": "5455 Kingfisher Ave, Burlington, KY 41005",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: burlington -> burlington",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "burlington"
+      },
+      "county": "",
+      "ms": 1703,
+      "worker": 2
+    },
+    {
+      "address": "1111 N Dixie Hwy, Elizabethtown, KY 42701",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: elizabethtown -> elizabethtown",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "elizabethtown"
+      },
+      "county": "",
+      "ms": 1650,
+      "worker": 1
+    },
+    {
+      "address": "4618 Royalton Road, Broadview Heights, OH 44147",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: broadview -> broadview heights",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "broadview heights"
+      },
+      "county": "",
+      "ms": 1686,
+      "worker": 2
+    },
+    {
+      "address": "1797 Lake Linville Rd, Mt Vernon, KY 40456",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: mount vernon -> mount vernon",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "mount vernon"
+      },
+      "county": "",
+      "ms": 1684,
+      "worker": 1
+    },
+    {
+      "address": "1300 Kings Daughters Drive, Frankfort, KY 40601",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: frankfort -> frankfort",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "frankfort"
+      },
+      "county": "",
+      "ms": 1695,
+      "worker": 2
+    },
+    {
+      "address": "6442 Old Mill Road, Mount Washington, KY 40047",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: mount washington -> mount washington",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "mount washington"
+      },
+      "county": "",
+      "ms": 1708,
+      "worker": 1
+    },
+    {
+      "address": "1550 W Main St, West Jefferson, OH 43162",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: west jefferson -> west jefferson",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "west jefferson"
+      },
+      "county": "",
+      "ms": 1712,
+      "worker": 2
+    },
+    {
+      "address": "1961 South Parkway Street, Henderson, KY 42420",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: henderson -> henderson",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "henderson"
+      },
+      "county": "",
+      "ms": 1676,
+      "worker": 1
+    },
+    {
+      "address": "19 Brendan St, Owingsville, KY 40360",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: owingsville -> owingsville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "owingsville"
+      },
+      "county": "",
+      "ms": 1674,
+      "worker": 2
+    },
+    {
+      "address": "2897 South Arlington Road, Springfield Township, OH 44312",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 40.991842551684,
+        "lng": -81.492231091968
+      },
+      "matched": "2897 S ARLINGTON RD, AKRON, OH, 44312",
+      "target": {
+        "type": "township",
+        "name": "Springfield township",
+        "county": "Summit County"
+      },
+      "county": "Summit County",
+      "ms": 2950,
+      "worker": 1
+    },
+    {
+      "address": "350 Park St, Sabina, OH 45169",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: sabina -> sabina",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "sabina"
+      },
+      "county": "",
+      "ms": 2709,
+      "worker": 2
+    },
+    {
+      "address": "200 Walmart Way, Morehead, KY 40351",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: morehead -> morehead",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "morehead"
+      },
+      "county": "",
+      "ms": 1406,
+      "worker": 1
+    },
+    {
+      "address": "3234 Washington Mill Rd, Bellbrook, OH 45305",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bellbrook -> bellbrook",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bellbrook"
+      },
+      "county": "",
+      "ms": 1692,
+      "worker": 2
+    },
+    {
+      "address": "25925 Commerce Dr, Defiance, OH 43512",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: defiance -> defiance",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "defiance"
+      },
+      "county": "",
+      "ms": 1699,
+      "worker": 1
+    },
+    {
+      "address": "3605 KY-69, Hartford, KY 42347",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: hartford -> hartford",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "hartford"
+      },
+      "county": "",
+      "ms": 1675,
+      "worker": 2
+    },
+    {
+      "address": "5860 I 675, Centerville, OH 45459",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: centerville -> centerville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "centerville"
+      },
+      "county": "",
+      "ms": 1677,
+      "worker": 1
+    },
+    {
+      "address": "1005 N Vine St, Hopkinsville, KY 42240",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: hopkinsville -> hopkinsville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "hopkinsville"
+      },
+      "county": "",
+      "ms": 2693,
+      "worker": 2
+    },
+    {
+      "address": "111 Dohoney Trace, Columbia, KY 42728",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: columbia -> columbia",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "columbia"
+      },
+      "county": "",
+      "ms": 2693,
+      "worker": 1
+    },
+    {
+      "address": "1245 Muddy Gap Road, Manchester, KY 40962",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: manchester -> manchester",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "manchester"
+      },
+      "county": "",
+      "ms": 1689,
+      "worker": 2
+    },
+    {
+      "address": "45 N Bypass Rd, Campbellsville, KY 42718",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: campbellsville -> campbellsville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "campbellsville"
+      },
+      "county": "",
+      "ms": 1699,
+      "worker": 1
+    },
+    {
+      "address": "757 KY 313, Brandenburg, KY 40108",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: brandenburg -> brandenburg",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "brandenburg"
+      },
+      "county": "",
+      "ms": 1688,
+      "worker": 2
+    },
+    {
+      "address": "4661 Broadview Road, Cleveland, OH 44109",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: cleveland -> cleveland",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "cleveland"
+      },
+      "county": "",
+      "ms": 1961,
+      "worker": 1
+    },
+    {
+      "address": "4950 Vine St, Cincinnati, OH 45217",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: cincinnati -> cincinnati",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "cincinnati"
+      },
+      "county": "",
+      "ms": 1704,
+      "worker": 2
+    },
+    {
+      "address": "2835 Old State Rt. 73, Bldg #4, Wilmington, OH 45177",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 39.429126141434,
+        "lng": -83.785691979535
+      },
+      "matched": "2835 OLD STATE RTE 73, WILMINGTON, OH, 45177",
+      "target": {
+        "type": "township",
+        "name": "Union township",
+        "county": "Clinton County"
+      },
+      "county": "Clinton County",
+      "ms": 1709,
+      "worker": 1
+    },
+    {
+      "address": "3700 L and North Turnpike Road, at Exit 58, I-65, Horse Cave, KY 42749",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.204718302358,
+        "lng": -85.934063541123
+      },
+      "matched": "3700 L AND N TURNPIKE RD, HORSE CAVE, KY, 42749",
+      "target": {
+        "type": "municipality",
+        "name": "Horse Cave city"
+      },
+      "county": "Hart County",
+      "ms": 1976,
+      "worker": 2
+    },
+    {
+      "address": "204 Courthouse Sq, Burkesville, KY 42717",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: burkesville -> burkesville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "burkesville"
+      },
+      "county": "",
+      "ms": 1408,
+      "worker": 1
+    },
+    {
+      "address": "1000, 1010 Cumberland Falls Hwy, Corbin, KY 40701",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 36.930074023364,
+        "lng": -84.102744631899
+      },
+      "matched": "1010 CUMBERLAND FALLS HWY, CORBIN, KY, 40701",
+      "target": {
+        "type": "municipality",
+        "name": "Corbin city"
+      },
+      "county": "Whitley County",
+      "ms": 1602,
+      "worker": 2
+    },
+    {
+      "address": "1000 Cumberland Gap Pkwy, Corbin, KY 40701",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: corbin -> corbin",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "corbin"
+      },
+      "county": "",
+      "ms": 1692,
+      "worker": 1
+    },
+    {
+      "address": "200 W 2nd St-Corner, S Lock St, Waverly, OH 45690",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 39.125308502525,
+        "lng": -82.985676438575
+      },
+      "matched": "200 W 2ND ST, WAVERLY, OH, 45690",
+      "target": {
+        "type": "municipality",
+        "name": "Waverly village"
+      },
+      "county": "Pike County",
+      "ms": 2628,
+      "worker": 2
+    },
+    {
+      "address": "11029 State Route 132 E, KY-132, Sebree, KY 42455",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.599430328198,
+        "lng": -87.548062048764
+      },
+      "matched": "11029 STATE HWY 132 E, SEBREE, KY, 42455",
+      "target": {
+        "type": "township",
+        "name": "Sebree CCD",
+        "county": "Webster County"
+      },
+      "county": "Webster County",
+      "ms": 2886,
+      "worker": 1
+    },
+    {
+      "address": "1561 Hwy 55, South Road, Columbia, KY 42728",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.082937805911,
+        "lng": -85.29942448049
+      },
+      "matched": "1561 KY 55 S, COLUMBIA, KY, 42728",
+      "target": {
+        "type": "township",
+        "name": "Columbia CCD",
+        "county": "Adair County"
+      },
+      "county": "Adair County",
+      "ms": 1816,
+      "worker": 2
+    },
+    {
+      "address": "1584 US-41 ALT, Dixon, KY 42409",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.503614982338,
+        "lng": -87.710452457766
+      },
+      "matched": "1584 US HWY 41 ALTERNATE RTE S, DIXON, KY, 42409",
+      "target": {
+        "type": "municipality",
+        "name": "Dixon city"
+      },
+      "county": "Webster County",
+      "ms": 1611,
+      "worker": 1
+    },
+    {
+      "address": "8139 Old Troy Pike, OH-202, Huber Heights, OH 45424",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 39.871204979008,
+        "lng": -84.137521437666
+      },
+      "matched": "8139 OLD TROY PIKE, HUBER HEIGHTS, OH, 45424",
+      "target": {
+        "type": "municipality",
+        "name": "Huber Heights city"
+      },
+      "county": "Montgomery County",
+      "ms": 1566,
+      "worker": 2
+    },
+    {
+      "address": "9470 OH-14, Streetsboro, OH 44241",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: streetsboro -> streetsboro",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "streetsboro"
+      },
+      "county": "",
+      "ms": 1581,
+      "worker": 1
+    },
+    {
+      "address": "9086 OH-14, Streetsboro, OH 44241",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: streetsboro -> streetsboro",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "streetsboro"
+      },
+      "county": "",
+      "ms": 1579,
+      "worker": 2
+    }
+  ]
+}

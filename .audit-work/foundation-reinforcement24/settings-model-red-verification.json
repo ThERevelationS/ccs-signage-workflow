@@ -1,0 +1,129 @@
+{
+  "results": [
+    {
+      "name": "valid settings produce byte-identical item math; no authored mutation",
+      "ok": true
+    },
+    {
+      "name": "numeric-string settings stay valid on the calculation copy only",
+      "ok": true
+    },
+    {
+      "name": "explicit-0 settings are honored — the ported `|| def` overrode them",
+      "ok": true
+    },
+    {
+      "name": "explicit-0 main labor is free labor when it only multiplies",
+      "ok": true
+    },
+    {
+      "name": "explicit-0 main labor as the finishing-hours divisor is unavailable, not free",
+      "ok": false,
+      "error": "0 divisor reported: []"
+    },
+    {
+      "name": "invalid consumed setting holds (malformed string)",
+      "ok": false,
+      "error": "issue present for \"abc\": []"
+    },
+    {
+      "name": "invalid consumed setting holds (partial numeric)",
+      "ok": false,
+      "error": "issue present for \"12abc\": []"
+    },
+    {
+      "name": "invalid consumed setting holds (negative)",
+      "ok": false,
+      "error": "issue present for \"-5\": []"
+    },
+    {
+      "name": "invalid consumed setting holds (record)",
+      "ok": false,
+      "error": "issue present for {}: []"
+    },
+    {
+      "name": "invalid consumed setting holds (negative number)",
+      "ok": false,
+      "error": "issue present for -5: []"
+    },
+    {
+      "name": "malformed settings flow through the input-issues scan as the same contract",
+      "ok": false,
+      "error": "[]"
+    },
+    {
+      "name": "a malformed setting the item does not consume is never checked",
+      "ok": true
+    },
+    {
+      "name": "pillar item consumes the pillar forming multiplier, not the spread-foot one",
+      "ok": false,
+      "error": "[]"
+    },
+    {
+      "name": "missing/blank Settings rows keep the ported module default",
+      "ok": true
+    },
+    {
+      "name": "custom overrides cover their settings — no false unavailable",
+      "ok": true
+    },
+    {
+      "name": "explicit-0 custom quantities and hours mean exactly zero",
+      "ok": true
+    },
+    {
+      "name": "explicit-0 custom rates mean free labor, not fallback",
+      "ok": true
+    },
+    {
+      "name": "item excavation_method outside the enum is an input issue, not equipment math",
+      "ok": false,
+      "error": "[]"
+    },
+    {
+      "name": "project excavation_method outside the enum holds every inheriting item",
+      "ok": false,
+      "error": "project-level issue: []"
+    },
+    {
+      "name": "non-record landscape holds (string)",
+      "ok": false,
+      "error": "landscape_unavailable for string: []"
+    },
+    {
+      "name": "non-record landscape holds (number)",
+      "ok": false,
+      "error": "landscape_unavailable for number: []"
+    },
+    {
+      "name": "non-record landscape holds (array)",
+      "ok": false,
+      "error": "landscape_unavailable for array: []"
+    },
+    {
+      "name": "non-record landscape holds (boolean)",
+      "ok": false,
+      "error": "landscape_unavailable for boolean: []"
+    },
+    {
+      "name": "valid landscape record behavior is unchanged",
+      "ok": true
+    },
+    {
+      "name": "a recorded 0 attachment quantity bills nothing and is ignored — `|| 1` repriced it",
+      "ok": false,
+      "error": "recorded 0 kept — the ported `|| 1` minted one billed attachment\n\n1 !== 0\n"
+    },
+    {
+      "name": "setting issues carry the catalog-issue shape and per-item index",
+      "ok": false,
+      "error": "api.foundationItemSettingIssues is not a function"
+    },
+    {
+      "name": "setting issues merge once into catalogIssues — delivery gated, not double-scanned",
+      "ok": false,
+      "error": "Expected values to be strictly equal:\n\n0 !== 1\n"
+    }
+  ]
+}

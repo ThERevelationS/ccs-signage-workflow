@@ -1,0 +1,34 @@
+[
+  {
+    "id": "advisory-spoil 1280",
+    "ok": true
+  },
+  {
+    "id": "advisory-spoil 390",
+    "ok": true
+  },
+  {
+    "id": "advisory-set 1280",
+    "ok": true
+  },
+  {
+    "id": "advisory-set 390",
+    "ok": true
+  },
+  {
+    "id": "advisory-bagged 1280",
+    "ok": true
+  },
+  {
+    "id": "advisory-bagged 390",
+    "ok": true
+  },
+  {
+    "id": "blocked-advisory 1280",
+    "ok": true
+  },
+  {
+    "id": "blocked-advisory 390",
+    "ok": true
+  }
+]

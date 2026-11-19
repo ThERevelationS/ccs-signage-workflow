@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "17:    \"opportunity_id\": {\n109:        \"installation\",\n287:              \"installation\",\n366:        \"installation\"\n482:    \"est_inv_at\": {\n518:    \"project_install_date\": {\n597:    \"install_location\": {\n715:    \"install_yes\": {\n719:    \"install_no\": {\n813:              \"install_or_removal_only\",\n830:              \"awaiting_installation\",\n834:              \"installed\",\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 593
+}

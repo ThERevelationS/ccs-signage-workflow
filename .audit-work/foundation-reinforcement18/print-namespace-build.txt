@@ -1,0 +1,15 @@
+
+  .audit-work\foundation-reinforcement18\print-model-bundle.js  35.4kb
+
+Done in 13ms
+model=0
+
+  .audit-work\foundation-reinforcement18\print-original-bundle.js  13.6kb
+
+Done in 8ms
+original=0
+
+  .audit-work\foundation-reinforcement18\print-candidate-bundle.js  31.9kb
+
+Done in 20ms
+candidate=0

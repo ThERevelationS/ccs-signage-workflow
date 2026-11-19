@@ -1,0 +1,10 @@
+import { permitCreds } from '../scripts/lib/permit-creds.mjs';
+const FN = 'https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions';
+const inv = async (fn, p) => fetch(`${FN}/${fn}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) }).then(async x => ({ status: x.status, body: await x.json().catch(() => null) }));
+const login = await inv('verifyLogin', { username: permitCreds().user, password: permitCreds().pass });
+const token = (login.body?.data || login.body)?.token;
+console.log('login ok, user keys:', Object.keys(login.body?.data || login.body || {}).join(','));
+const who = await inv('verifySession', { session_token: token });
+console.log('verifySession:', JSON.stringify(who.body).slice(0, 400));
+const list = await inv('sessionAdminAction', { action: 'list', session_token: token });
+console.log('list status', list.status, JSON.stringify(list.body).slice(0, 600));

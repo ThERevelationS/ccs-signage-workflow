@@ -1,0 +1,186 @@
+ok unchanged: concrete material, positive settings
+ok unchanged: genuine zero material price
+ok unchanged: brick, explicit dry joint
+ok unchanged: brick_stone type and mortar joint
+ok unchanged: stone units, two unequal segments
+ok unchanged: closed outline with internal brick
+ok unchanged: open outline with internal brick
+ok unchanged: internal concrete units
+ok unchanged: outer explicit price override
+ok unchanged: outer explicit free override
+ok unchanged: internal explicit price override
+ok unchanged: internal explicit free override
+ok unchanged: outer explicit quantity override
+ok unchanged: outer explicit zero quantity
+ok unchanged: internal explicit quantity override
+ok unchanged: internal explicit zero quantity
+ok unchanged: fractional explicit material price
+ok unchanged: numeric-string material price
+ok unchanged: numeric-string free price
+ok unchanged: irrelevant catalog row cannot change wall calculation
+FAIL outer unknown height: absent: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown height: null: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown height: empty: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown height: whitespace: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown height: zero: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown height: zero string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown height: negative: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown height: negative string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown height: true: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown height: false: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown height: array: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown height: object: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown height: NaN: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown height: Infinity: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL outer unknown height: malformed: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal authored-invalid height: empty: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal authored-invalid height: whitespace: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal authored-invalid height: zero: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal authored-invalid height: zero string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal authored-invalid height: negative: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal authored-invalid height: negative string: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal authored-invalid height: true: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal authored-invalid height: false: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal authored-invalid height: array: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal authored-invalid height: object: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal authored-invalid height: NaN: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal authored-invalid height: Infinity: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+FAIL internal authored-invalid height: malformed: The expression evaluated to a falsy value:
+
+  assert.ok(api.foundationWallCatalogIssues(f.project.walls, f.inventory)
+
+ok valid positive height retains exact numeric basis: 9
+ok valid positive height retains exact numeric basis: "9"
+ok valid positive height retains exact numeric basis: " 9 "
+ok valid positive height retains exact numeric basis: "9.0"
+ok valid positive height retains exact numeric basis: "+9"
+ok valid positive height retains exact numeric basis: "9e0"
+ok valid positive height retains exact numeric basis: ".9e1"
+ok missing internal height retains explicit outer-height inheritance: undefined
+ok missing internal height retains explicit outer-height inheritance: null
+FAIL new invalid-height row cannot borrow acknowledged costs: Expected values to be strictly deep-equal:
++ actual - expected
+
++ {
++   internalLaborCost: 0,
++   internalLaborHours: 0,
++   internalMaterialCost: 0,
++   internalMortarCost: 0,
++   internalTotalBricks: 0,
++   laborCost: 120,
++   laborHours: 0.24,
++   materialCost: 24,
++   mortarCost: 0,
++   numCourses: 6,
++   totalBricks: 12,
++   totalCost: 144,
++   totalLinearInches: 16
++ }
+- {}
+
+FAIL invalid height marks BOM rows as acknowledged, not current catalog pricing: Expected values to be strictly equal:
+
+false !== true
+
+ok zero shop rates remain genuine zeros with a valid height
+ok disabled internal wall ignores unused invalid internal height
+masonry-height-model passed=31 failed=30
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(results.every(r => r.ok))
+
+    at file:///C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-masonry-height-model.mjs:96:8 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.13.0

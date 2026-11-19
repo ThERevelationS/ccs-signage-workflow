@@ -1,0 +1,45 @@
+{
+  "results": [
+    {
+      "name": "current valid",
+      "ok": true
+    },
+    {
+      "name": "missing rate with acknowledged snapshot",
+      "ok": true
+    },
+    {
+      "name": "new row missing rate without acknowledgment",
+      "ok": true
+    },
+    {
+      "name": "genuine zero rate",
+      "ok": true
+    },
+    {
+      "name": "internal missing rate keeps acknowledged snapshot",
+      "ok": true
+    },
+    {
+      "name": "both outer and internal missing",
+      "ok": true
+    }
+  ],
+  "loaded": {
+    "/app/masonry-ui-entry.jsx": "e52f7076e889504b02997edc4eccceb3d5c2e54e0e09cd06616b5d91fa7ce630",
+    "/app/src/components/estimator/foundation/wallCalculator.js": "19f986b158ecd651b0dfd64b306e765dcedb42aa52b5e032f020288f7b080686",
+    "/app/src/components/estimator/foundation/FoundationBOM.jsx": "688323df8427d019f1b9da8371b4f6a30f65d24963fb913589ce84ae93fc5432",
+    "/app/src/components/estimator/foundation/FoundationWallsPanel.jsx": "e52d718d8f0c3c906bdce073ca83c65effca9fd96de7e93d5be0923a2b1c7f57",
+    "/app/src/components/ui/input.jsx": "cc1fa4bae8bc4f5d972f3f4ed1ebc5257418ce13e85a4c5f38c8010d79bb764e",
+    "/app/src/components/ui/button.jsx": "dc98210eb6b5d96ecf88e410c83d806168ea79a5f4cc2c36bc523d715e1fcf8c",
+    "/app/src/components/estimator/foundation/foundationCalc.js": "74d8b5a0ff5dd7d677c9e060879298f673530bfb7b15e83c7a16d45dc8fd9747",
+    "/app/src/components/estimator/foundation/foundationCatalogIntegrity.js": "702f1405b1cae1256da4eda2e7ed4d50085a5be1b4cd3324cf232a84938eca4e",
+    "/app/node_modules-stub/lucide-react.js": "8d6b2d90ab1d06a9765a05f991f21ab8f6efe1155e6201e018c53dd00e316102",
+    "/app/src/components/estimator/foundation/WallShapeEditor.jsx": "aa931673515b549a65e811f57af5fa0a7fb3409edebeccdfc04b4b3d9b336fa2",
+    "/app/src/components/estimator/foundation/wallCapCalculator.js": "90e64ee49d8fe815ea63506ab21c25e9fd449c55581afe0a21f19371c87695eb",
+    "/app/src/components/estimator/foundation/foundationEquipmentBindings.js": "6ffaeaedc3c348a2e6af19006cea963fc63078650394f4ecaf6dd6f6c93fa3d5",
+    "/app/src/components/estimator/foundation/poleCalculator.js": "094151890b486998e78315f5fe93b09f01453f169fb177ef77fd5a1e0b7befcc",
+    "/app/src/components/estimator/foundation/legacyFoundationCalc.js": "d7b60db418f41663bc74f24d04fd65937b08b1156e2c322a577fae38156a21ff",
+    "/app/src/components/estimator/foundation/foundationInputValidation.js": "5ba7d776581bffd7cee8df7b40e98fe146fd8ccd64a9b7fb722f4b8e78e24e57"
+  }
+}

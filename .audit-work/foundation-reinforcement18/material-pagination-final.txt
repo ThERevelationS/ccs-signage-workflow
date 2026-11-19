@@ -1,0 +1,6 @@
+ok real paged loader requests the second Product page and retains all505 frozen amounts
+ok real pagination includes mixed stamped and legacy rows without duplicate amounts
+ok a failed second page prevents a partial500-part Work Order write
+ok a malformed second page remains unavailable rather than an empty complete result
+Real material pagination: 4/4; failed=0
+exit=0

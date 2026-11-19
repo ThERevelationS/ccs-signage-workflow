@@ -1,0 +1,851 @@
+{
+  "matches": [
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 26,
+      "text": "  \"ship_to\", \"vendor_reference\", \"notes\", \"internal_notes\","
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 236,
+      "text": "          internal_notes: clean(fields.internal_notes),"
+    },
+    {
+      "path": "base44/functions/fleetPublicIssueReport/entry.ts",
+      "line": 5,
+      "text": "import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';"
+    },
+    {
+      "path": "base44/functions/fleetPublicIssueReport/entry.ts",
+      "line": 253,
+      "text": "      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetPublicIssueReport/entry.ts",
+      "line": 293,
+      "text": "      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetPublicIssueReport/entry.ts",
+      "line": 311,
+      "text": "    await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 3,
+      "text": "import { exchangeAuthorizationCode, saveConnection, fetchBouncieUser, upsertWebhook, APP_BASE } from '../../shared/bouncie.ts';"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 34,
+      "text": "      return html(renderPage('Authorization Cancelled',"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 38,
+      "text": "      return html(renderPage('Missing Authorization Code',"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 39,
+      "text": "        'Bouncie did not return an authorization code. Please start the connection again.', false), 400);"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 45,
+      "text": "        'The authorization response was missing its security token. Please start the connection again from Fleet Tracking.', false), 400);"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 50,
+      "text": "        'This authorization request could not be verified uniquely. Please start the connection again from Fleet Tracking.', false), 400);"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 54,
+      "text": "      return html(renderPage('Authorization Already Used',"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 55,
+      "text": "        'This authorization link has already been used. Please start a new connection from Fleet Tracking.', false), 400);"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 58,
+      "text": "      return html(renderPage('Authorization Expired',"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 59,
+      "text": "        'This authorization request expired. Please start the connection again from Fleet Tracking.', false), 400);"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 67,
+      "text": "      return html(renderPage('Authorization Already Used',"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 68,
+      "text": "        'This authorization link was already consumed or changed. Please start a new connection from Fleet Tracking.', false), 400);"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 72,
+      "text": "    const tokens = await exchangeAuthorizationCode(base44, code, redirectUri);"
+    },
+    {
+      "path": "base44/functions/bouncieAuthCallback/entry.ts",
+      "line": 117,
+      "text": "        ? 'Bouncie rejected the authorization. Please try connecting again.'"
+    },
+    {
+      "path": "base44/functions/followUpSweepAction/entry.ts",
+      "line": 4,
+      "text": "import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';"
+    },
+    {
+      "path": "base44/functions/followUpSweepAction/entry.ts",
+      "line": 256,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'followUpSweepAction');"
+    },
+    {
+      "path": "base44/functions/manageCalendarEvents/entry.ts",
+      "line": 2,
+      "text": "import { verifyAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';"
+    },
+    {
+      "path": "base44/functions/manageCalendarEvents/entry.ts",
+      "line": 144,
+      "text": "    await verifyAdminSettingsCapability(base44, body?.admin_capability);"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeSimulation/entry.ts",
+      "line": 135,
+      "text": "    const sourceAuthorizationMatchesFreshReview = Boolean("
+    },
+    {
+      "path": "base44/functions/opportunityBridgeSimulation/entry.ts",
+      "line": 160,
+      "text": "      source_authorization_matches_fresh_review:sourceAuthorizationMatchesFreshReview,"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeSimulation/entry.ts",
+      "line": 161,
+      "text": "      review_response_is_not_execution_authorization:true,"
+    },
+    {
+      "path": "base44/functions/fieldHistoryAction/entry.ts",
+      "line": 199,
+      "text": "            const r=await measuredSmartsheetFetch('https://api.smartsheet.com/2.0'+path,{headers:{Authorization:'Bearer '+secrets.get('SMARTSHEET_API_TOKEN')},signal:AbortSignal.timeout(15000)},0);"
+    },
+    {
+      "path": "base44/functions/googleDriveCustomCallback/entry.ts",
+      "line": 30,
+      "text": "        grant_type: 'authorization_code'"
+    },
+    {
+      "path": "base44/functions/bouncieWebhook/entry.ts",
+      "line": 59,
+      "text": "      req.headers.get('X-Bouncie-Authorization') ||"
+    },
+    {
+      "path": "base44/functions/bouncieWebhook/entry.ts",
+      "line": 60,
+      "text": "      req.headers.get('Authorization') ||"
+    },
+    {
+      "path": "base44/functions/bouncieWebhook/entry.ts",
+      "line": 85,
+      "text": "    // Bouncie sends its webhook key in Authorization, which is not a Base44 bearer"
+    },
+    {
+      "path": "base44/functions/bouncieWebhook/entry.ts",
+      "line": 88,
+      "text": "    cleanHeaders.delete('Authorization');"
+    },
+    {
+      "path": "base44/functions/bouncieWebhook/entry.ts",
+      "line": 89,
+      "text": "    cleanHeaders.delete('X-Bouncie-Authorization');"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 49,
+      "text": "  \"issue_date\", \"due_date\", \"terms\", \"notes\", \"internal_notes\",\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 525,
+      "text": "          internal_notes: clean(body?.internal_notes),\r"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 590,
+      "text": "          internal_notes: clean(fields.internal_notes),\r"
+    },
+    {
+      "path": "base44/functions/fleetInspectionAction/entry.ts",
+      "line": 5,
+      "text": "import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';"
+    },
+    {
+      "path": "base44/functions/fleetInspectionAction/entry.ts",
+      "line": 120,
+      "text": "  await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 443,
+      "text": "    // ---------- Public token actions (the bearer token IS the credential) ----------"
+    },
+    {
+      "path": "base44/functions/setPassword/entry.ts",
+      "line": 3,
+      "text": "import { hashBearerToken } from '../../shared/bearerTokenHash.ts';\r"
+    },
+    {
+      "path": "base44/functions/driveOAuthCallback/entry.ts",
+      "line": 13,
+      "text": "      return new Response('Authorization failed', { status: 400 });"
+    },
+    {
+      "path": "base44/functions/driveOAuthCallback/entry.ts",
+      "line": 29,
+      "text": "        grant_type: 'authorization_code'"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 9,
+      "text": "import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 758,
+      "text": "        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 818,
+      "text": "      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 997,
+      "text": "          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 1112,
+      "text": "        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 1252,
+      "text": "          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 1310,
+      "text": "        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 1322,
+      "text": "            await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/googleDriveOperations/entry.ts",
+      "line": 52,
+      "text": "            { headers: { 'Authorization': `Bearer ${accessToken}` } }"
+    },
+    {
+      "path": "base44/functions/googleDriveOperations/entry.ts",
+      "line": 64,
+      "text": "            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },"
+    },
+    {
+      "path": "base44/functions/googleDriveOperations/entry.ts",
+      "line": 141,
+      "text": "              'Authorization': `Bearer ${accessToken}`"
+    },
+    {
+      "path": "base44/functions/googleDriveOperations/entry.ts",
+      "line": 183,
+      "text": "              'Authorization': `Bearer ${accessToken}`,"
+    },
+    {
+      "path": "base44/functions/googleDriveOperations/entry.ts",
+      "line": 248,
+      "text": "              'Authorization': `Bearer ${accessToken}`,"
+    },
+    {
+      "path": "base44/functions/googleDriveOperations/entry.ts",
+      "line": 277,
+      "text": "              'Authorization': `Bearer ${accessToken}`"
+    },
+    {
+      "path": "base44/functions/googleDriveOperations/entry.ts",
+      "line": 307,
+      "text": "              'Authorization': `Bearer ${accessToken}`"
+    },
+    {
+      "path": "base44/functions/googleDriveOperations/entry.ts",
+      "line": 345,
+      "text": "            headers: { 'Authorization': `Bearer ${accessToken}` }"
+    },
+    {
+      "path": "base44/functions/googleDriveOperations/entry.ts",
+      "line": 384,
+      "text": "            headers: { 'Authorization': `Bearer ${accessToken}` }"
+    },
+    {
+      "path": "base44/functions/fleetNotificationDispatcher/entry.ts",
+      "line": 5,
+      "text": "import { hasInternalFunctionCapability } from '../../shared/internalFunctionCapability.ts';"
+    },
+    {
+      "path": "base44/functions/fleetNotificationDispatcher/entry.ts",
+      "line": 28,
+      "text": "    const internal = hasInternalFunctionCapability(body);"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 5,
+      "text": "import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 14,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'checkDeadlineReminders');"
+    },
+    {
+      "path": "base44/functions/auditJurisdictionAccuracy/entry.ts",
+      "line": 5,
+      "text": "import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';\r"
+    },
+    {
+      "path": "base44/functions/auditJurisdictionAccuracy/entry.ts",
+      "line": 11,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'auditJurisdictionAccuracy');\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 73,
+      "text": "        throw Object.assign(new Error(\"WorkOrder changed after pilot authorization.\"), { status:409 });\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 186,
+      "text": "        explicit_user_authorization_required:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.EXPLICIT_PILOT_AUTHORIZATION_REQUIRED,\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 188,
+      "text": "        source_authorization_matches_fresh_review:sourceAuthorized,\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 204,
+      "text": "        review_response_is_not_execution_authorization:action === \"prepare_pilot\",\r"
+    },
+    {
+      "path": "base44/functions/opportunityBridgeProductionApply/entry.ts",
+      "line": 245,
+      "text": "    }, { status:result?.authorization?.authorized ? 200 : 423 });\r"
+    },
+    {
+      "path": "base44/functions/manageWorkflowSchedules/entry.ts",
+      "line": 3,
+      "text": "import { verifyAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';"
+    },
+    {
+      "path": "base44/functions/manageWorkflowSchedules/entry.ts",
+      "line": 12,
+      "text": "    const actor = await verifyAdminSettingsCapability(base44, body?.admin_capability);"
+    },
+    {
+      "path": "base44/functions/fleetSystemReportAction/entry.ts",
+      "line": 5,
+      "text": "import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';"
+    },
+    {
+      "path": "base44/functions/fleetSystemReportAction/entry.ts",
+      "line": 76,
+      "text": "        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetSystemReportAction/entry.ts",
+      "line": 91,
+      "text": "          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetSystemReportAction/entry.ts",
+      "line": 98,
+      "text": "      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/refreshJurisdiction/entry.ts",
+      "line": 11,
+      "text": "import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';"
+    },
+    {
+      "path": "base44/functions/refreshJurisdiction/entry.ts",
+      "line": 29,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'refreshJurisdiction');"
+    },
+    {
+      "path": "base44/functions/refreshJurisdiction/entry.ts",
+      "line": 30,
+      "text": "    const isTargetedAutomation = await hasWorkflowInvocationCapability(body, 'refreshJurisdictionTargeted');"
+    },
+    {
+      "path": "base44/functions/gmailAuthCallback/entry.ts",
+      "line": 15,
+      "text": "                        <h1>Authorization Failed</h1>"
+    },
+    {
+      "path": "base44/functions/gmailAuthCallback/entry.ts",
+      "line": 27,
+      "text": "                        <h1>Authorization Failed</h1>"
+    },
+    {
+      "path": "base44/functions/gmailAuthCallback/entry.ts",
+      "line": 28,
+      "text": "                        <p>No authorization code received.</p>"
+    },
+    {
+      "path": "base44/functions/gmailAuthCallback/entry.ts",
+      "line": 39,
+      "text": "        // Exchange the authorization code for tokens"
+    },
+    {
+      "path": "base44/functions/gmailAuthCallback/entry.ts",
+      "line": 48,
+      "text": "                grant_type: 'authorization_code'"
+    },
+    {
+      "path": "base44/functions/smartsheetMetadataAdminAction/entry.ts",
+      "line": 55,
+      "text": "    Authorization: `Bearer ${token}`,"
+    },
+    {
+      "path": "base44/functions/dailyAnomalyDigest/entry.ts",
+      "line": 3,
+      "text": "import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';"
+    },
+    {
+      "path": "base44/functions/dailyAnomalyDigest/entry.ts",
+      "line": 17,
+      "text": "    if (!(await hasWorkflowInvocationCapability(reqBody, 'dailyAnomalyDigest'))) {"
+    },
+    {
+      "path": "base44/functions/backupPermittingRepository/entry.ts",
+      "line": 200,
+      "text": "      'Authorization': `Bearer ${accessToken}`,\r"
+    },
+    {
+      "path": "base44/functions/backupPermittingRepository/entry.ts",
+      "line": 217,
+      "text": "        headers: { 'Authorization': `Bearer ${accessToken}` }\r"
+    },
+    {
+      "path": "base44/functions/backupPermittingRepository/entry.ts",
+      "line": 240,
+      "text": "        'Authorization': `Bearer ${accessToken}`,\r"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 24,
+      "text": "  \"line_items\", \"schedule_impact_days\", \"notes\", \"internal_notes\","
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 203,
+      "text": "          internal_notes: clean(fields.internal_notes),"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 19,
+      "text": "import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2316,
+      "text": "            headers: { Authorization: `Bearer ${driveToken}`, ...(init?.headers || {}) } });"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 2976,
+      "text": "  // A remote edit after the initial planning read is not authorization to"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3758,
+      "text": "      await hasWorkflowInvocationCapability(body, 'smartsheetSyncAction');"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5160,
+      "text": "                headers: { Authorization: `Bearer ${driveToken}`, Accept: 'application/json' },"
+    },
+    {
+      "path": "base44/functions/fleetScheduledMaintenanceGeneration/entry.ts",
+      "line": 7,
+      "text": "import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';\r"
+    },
+    {
+      "path": "base44/functions/fleetScheduledMaintenanceGeneration/entry.ts",
+      "line": 323,
+      "text": "        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher',{ _internal_capability: INTERNAL_FUNCTION_CAPABILITY,event_type:'work_order_created',target_id:created.id,event_token:key}).catch(()=>null);\r"
+    },
+    {
+      "path": "base44/functions/staffDataRead/entry.ts",
+      "line": 163,
+      "text": "// credentials, bearer ******, biometric descriptors, and session-revocation"
+    },
+    {
+      "path": "base44/functions/staffDataRead/entry.ts",
+      "line": 446,
+      "text": "// a normal Response. Authorization, owner scoping and field projection are"
+    },
+    {
+      "path": "base44/functions/staffDataRead/entry.ts",
+      "line": 594,
+      "text": "            // A denied entity is an expected authorization outcome, not a batch"
+    },
+    {
+      "path": "base44/functions/weeklyAdminDigest/entry.ts",
+      "line": 3,
+      "text": "import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';"
+    },
+    {
+      "path": "base44/functions/weeklyAdminDigest/entry.ts",
+      "line": 11,
+      "text": "    if (!(await hasWorkflowInvocationCapability(reqBody, 'weeklyAdminDigest'))) {"
+    },
+    {
+      "path": "base44/functions/fleetInventoryAction/entry.ts",
+      "line": 6,
+      "text": "import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';"
+    },
+    {
+      "path": "base44/functions/fleetInventoryAction/entry.ts",
+      "line": 103,
+      "text": "    const result = await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetInventoryAction/entry.ts",
+      "line": 462,
+      "text": "        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 6,
+      "text": "import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 15,
+      "text": "    const isScheduledBackup = await hasWorkflowInvocationCapability(body, 'backupToGoogleDrive');"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 44,
+      "text": "          headers: { 'Authorization': `Bearer ${accessToken}` }"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 70,
+      "text": "          'Authorization': `Bearer ${accessToken}`,"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 172,
+      "text": "            headers: { 'Authorization': `Bearer ${accessToken}` }"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 196,
+      "text": "            { headers: { 'Authorization': `Bearer ${accessToken}` } }"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 226,
+      "text": "          'Authorization': `Bearer ${accessToken}`,"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 297,
+      "text": "          'Authorization': `Bearer ${accessToken}`,"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 325,
+      "text": "              'Authorization': `Bearer ${accessToken}`,"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 8,
+      "text": "import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 221,
+      "text": "        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 243,
+      "text": "          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 253,
+      "text": "      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 367,
+      "text": "          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 583,
+      "text": "          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 590,
+      "text": "          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 761,
+      "text": "      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,"
+    },
+    {
+      "path": "base44/functions/checkGmailConnection/entry.ts",
+      "line": 33,
+      "text": "                'Authorization': `Bearer ${accessToken}`"
+    },
+    {
+      "path": "base44/functions/checkPermitFollowupReminders/entry.ts",
+      "line": 6,
+      "text": "import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';\r"
+    },
+    {
+      "path": "base44/functions/checkPermitFollowupReminders/entry.ts",
+      "line": 15,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'checkPermitFollowupReminders');\r"
+    },
+    {
+      "path": "base44/functions/issuePasswordReset/entry.ts",
+      "line": 3,
+      "text": "import { hashBearerToken } from '../../shared/bearerTokenHash.ts';"
+    },
+    {
+      "path": "base44/functions/issueAdminSettingsAccess/entry.ts",
+      "line": 3,
+      "text": "import { issueAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';"
+    },
+    {
+      "path": "base44/functions/issueAdminSettingsAccess/entry.ts",
+      "line": 101,
+      "text": "    const issued = await issueAdminSettingsCapability(admin);"
+    },
+    {
+      "path": "base44/functions/issueAdminSettingsAccess/entry.ts",
+      "line": 119,
+      "text": "      error: safeStatus === 500 ? 'Admin Settings authorization could not be issued safely.' : error?.message,"
+    },
+    {
+      "path": "base44/functions/sendGmail/entry.ts",
+      "line": 2,
+      "text": "import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';"
+    },
+    {
+      "path": "base44/functions/sendGmail/entry.ts",
+      "line": 34,
+      "text": "        const isInternalService = await hasWorkflowInvocationCapability({ _workflow_capability: payload?._workflow_capability }, 'sendGmail');"
+    },
+    {
+      "path": "base44/functions/sendGmail/entry.ts",
+      "line": 106,
+      "text": "                'Authorization': `Bearer ${accessToken}`,"
+    },
+    {
+      "path": "base44/functions/driveOAuthInitiate/entry.ts",
+      "line": 5,
+      "text": "// signed callback remains intact for any authorization attempt already in flight."
+    },
+    {
+      "path": "base44/functions/sourceMonitorScan/entry.ts",
+      "line": 12,
+      "text": "import { hasWorkflowInvocationCapability } from \"../../shared/workflowInvocationCapability.ts\";"
+    },
+    {
+      "path": "base44/functions/sourceMonitorScan/entry.ts",
+      "line": 23,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, \"sourceMonitorScan\");"
+    },
+    {
+      "path": "base44/functions/permittingOperationalAlerts/entry.ts",
+      "line": 4,
+      "text": "import { hasWorkflowInvocationCapability } from \"../../shared/workflowInvocationCapability.ts\";\r"
+    },
+    {
+      "path": "base44/functions/permittingOperationalAlerts/entry.ts",
+      "line": 22,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, \"permittingOperationalAlerts\");\r"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 68,
+      "text": "  const approval = estimate?.internal_approval;"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 89,
+      "text": "    return { threshold, required: true, approval: estimate.internal_approval };"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 109,
+      "text": "    return Response.json({ success: true, estimate_id: estimate.id, internal_approval: estimate.internal_approval, reused: true });"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 125,
+      "text": "    { $set: { internal_approval: approval } },"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 136,
+      "text": "      return Response.json({ success: true, estimate_id: estimate.id, internal_approval: after.internal_approval, reused: true });"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 141,
+      "text": "  if (String(saved?.internal_approval?.approved_at || '') !== approval.approved_at) {"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 144,
+      "text": "  return Response.json({ success: true, estimate_id: estimate.id, internal_approval: approval });"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 163,
+      "text": "        return Response.json({ error: 'Estimate is required for send authorization.' }, { status: 400 });"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 171,
+      "text": "      return Response.json({ success: true, allowed: true, ...gate, internal_approval: recordedQuoteApproval(authorizeEstimate) });"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 221,
+      "text": "    // skip the send-authorization backstop (the send already failed — this"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 349,
+      "text": "    // user carries can_approve_quotes) or through a recorded internal_approval."
+    },
+    {
+      "path": "base44/functions/monitorJurisdictionChanges/entry.ts",
+      "line": 6,
+      "text": "import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';"
+    },
+    {
+      "path": "base44/functions/monitorJurisdictionChanges/entry.ts",
+      "line": 78,
+      "text": "    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'monitorJurisdictionChanges');"
+    },
+    {
+      "path": "base44/functions/managePTOConfig/entry.ts",
+      "line": 3,
+      "text": "import { verifyAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';"
+    },
+    {
+      "path": "base44/functions/managePTOConfig/entry.ts",
+      "line": 617,
+      "text": "    const admin = await verifyAdminSettingsCapability(base44, body?.admin_capability);"
+    },
+    {
+      "path": "base44/functions/googleDriveOAuth/entry.ts",
+      "line": 6,
+      "text": "// any authorization attempt that was already in flight when this was retired."
+    },
+    {
+      "path": "base44/functions/gmailAuthInitiate/entry.ts",
+      "line": 36,
+      "text": "        return Response.json({ error: 'Gmail authorization could not be started safely' }, { status: 500 });"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 570,
+      "text": "    const authorization = mechanicGrantAllowsMutation(grant,'save',String(current.equipment_id || ''),Date.now());"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 571,
+      "text": "    if (!authorization.allowed) {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 573,
+      "text": "        error_message:`Mechanic access is ${authorization.reason || 'no longer authorized'}. Both reserved photo receipts remain pending; no work was replayed.`};"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 602,
+      "text": "  const authorization = mechanicGrantAllowsMutation(grant,action,String(current.equipment_id || ''),Date.now());"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 603,
+      "text": "  if (!authorization.allowed) {"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 604,
+      "text": "    const message = `Mechanic access is ${authorization.reason || 'no longer authorized'}. Admin reconciliation did not replay the interrupted operation.`;"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1574,
+      "text": "        // A second authorization check covers a grant change during the evidence read."
+    },
+    {
+      "path": "base44/functions/detectSalesDuplicates/entry.ts",
+      "line": 4,
+      "text": "import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';"
+    },
+    {
+      "path": "base44/functions/detectSalesDuplicates/entry.ts",
+      "line": 45,
+      "text": "  const isScheduled = await hasWorkflowInvocationCapability(body, 'detectSalesDuplicates');"
+    },
+    {
+      "path": "base44/functions/manageAutomationConfig/entry.ts",
+      "line": 3,
+      "text": "import { verifyAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';"
+    },
+    {
+      "path": "base44/functions/manageAutomationConfig/entry.ts",
+      "line": 286,
+      "text": "    await verifyAdminSettingsCapability(base44, body?.admin_capability);"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 4,
+      "text": "import { hashBearerToken } from '../../shared/bearerTokenHash.ts';\r"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 169
+}

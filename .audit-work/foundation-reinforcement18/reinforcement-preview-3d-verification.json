@@ -1,0 +1,72 @@
+{
+  "synthetic": true,
+  "realBase44StorageVerified": false,
+  "webGLVerified": false,
+  "results": [
+    {
+      "name": "legacy or absent calculation versions never acquire invented steel or a new design",
+      "ok": true
+    },
+    {
+      "name": "one top mat renders exactly eight horizontal 30-inch paths, totaling 20 physical feet, with no invented vertical steel",
+      "ok": true
+    },
+    {
+      "name": "inches convert once into concrete-centered local feet with the nominal physical bar radius",
+      "ok": true
+    },
+    {
+      "name": "a grade offset and shared parent rotation preserve the concrete-to-steel registration",
+      "ok": true
+    },
+    {
+      "name": "multiple instances retain per-instance geometry instead of scaling a bar's dimensions",
+      "ok": true
+    },
+    {
+      "name": "pricing overrides, frozen totals and an unapplied draft cannot alter the active physical preview",
+      "ok": true
+    },
+    {
+      "name": "pillar longitudinal bars and hoop centerlines remain separate physical primitives",
+      "ok": true
+    },
+    {
+      "name": "inter-mat ties remain reference paths; authored hook/cut allowances are not invented as straight geometry",
+      "ok": true
+    },
+    {
+      "name": "unconfigured supports stay visibly unmodeled rather than being fabricated as zero support objects",
+      "ok": true
+    },
+    {
+      "name": "rebar explicitly off produces no steel and does not require a design",
+      "ok": true
+    },
+    {
+      "name": "unsupported versions and malformed active designs do not silently display legacy steel",
+      "ok": true
+    },
+    {
+      "name": "invalid counts never turn into one foundation or an unbounded render loop",
+      "ok": true
+    },
+    {
+      "name": "hiding reinforcement does not change foundation geometry or the saved design",
+      "ok": true
+    },
+    {
+      "name": "instance and steel budgets affect only the preview, not authored quantities",
+      "ok": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    instances: 64,\n    steelPrimitives: 2048,\n+   supportMarkers: 1024\n  }\n\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-preview-3d.mjs:129:10\n    at check (file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-preview-3d.mjs:30:9)\n    at file:///D:/DevinProjects/ccs-signage-workflow-clean/.audit-work/foundation-reinforcement18/verify-reinforcement-preview-3d.mjs:128:1\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    },
+    {
+      "name": "nonfinite or partial authored transforms fail visibly; large finite rotation is safely normalized",
+      "ok": true
+    },
+    {
+      "name": "unsupported 3D float ranges and malformed collections do not fabricate zero-sized geometry",
+      "ok": true
+    }
+  ]
+}

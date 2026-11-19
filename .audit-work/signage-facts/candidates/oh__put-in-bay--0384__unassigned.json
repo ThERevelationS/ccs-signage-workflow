@@ -1,0 +1,30 @@
+{
+ "jurisdiction_id": "6ae045de796645dae55a0384",
+ "jurisdiction_name": "Put-in-Bay",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "VILLAGE OF PUT-IN-BAY PLANNING COMMISSION APPLICATION FOR SIGN PERMIT Application # _________________________ Applicant/Owner Name _______________________________________________________________ Address of Property _________________________________________ Zoning District Classification ____________ Mailing Address/PO Box ______________________________________________________________________ Phone ________________________ Email __________________________ Type of Sign (circle): Wall Sign Flat Wall Sign Projecting Sign Free-Standing Sign Banners Awning/Canopy Billboard Other ___________ Dimensions (length x width) (feet): ________________________________________ New Sign Area (square feet): _______________________________ Total Sign Area for property (square foot): ____________________________ (all signs currently on property) Height Above Grade (measure to top of sign) (feet): ___________",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "billboard",
+    "temporary",
+    "type",
+    "process"
+   ],
+   "weight": 18,
+   "source_sha256": "c16dc9a546b6ced9aa9ad1bbf884a8f8c67a739fbd1fd343f13b165727bdac79",
+   "source_document_id": null,
+   "source_title": "c16dc9a546b6ced9aa9ad1bbf884a8f8c67a739fbd1fd343f13b165727bdac79.pdf",
+   "official_url": "https://gm8-villageofpib.b-cdn.net/wp-content/uploads/2024/01/Application-for-Sign-Permit.pdf"
+  }
+ ]
+}

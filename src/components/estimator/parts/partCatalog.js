@@ -146,7 +146,7 @@ export const TYPE_DETAIL_FIELDS = {
     ["equipment_type", "Type"], ["ownership", "Ownership"], ["pricing_mode", "Pricing"], ["max_height_feet", "Max Height"], ["horizontal_boom_reach_feet", "Horizontal Reach"], ["rental_company", "Rental Company"],
   ],
   FoundationInventory: [
-    ["material_type", "Type"], ["foundation_usage", "Usage"], ["lumber_size", "Lumber Size"], ["rebar_size", "Rebar Size"], ["pole_shape", "Pole Shape"], ["pole_stock_length_ft", "Stock Length"], ["wall_material_subtype", "Wall Material"], ["cap_profile", "Cap Profile"], ["supplier", "Supplier"],
+    ["material_type", "Type"], ["foundation_usage", "Usage"], ["lumber_size", "Lumber Size"], ["rebar_size", "Rebar Size"], ["rebar_support_kind", "Support"], ["rebar_support_height_inches", "Support Height"], ["pole_shape", "Pole Shape"], ["pole_stock_length_ft", "Stock Length"], ["wall_material_subtype", "Wall Material"], ["cap_profile", "Cap Profile"], ["supplier", "Supplier"],
   ],
   Inventory: [
     ["material_type", "Material"], ["product_type", "Product"], ["size", "Size"], ["thickness_gauge", "Thickness/Gauge"], ["standard_length", "Stock Length"], ["unit_type", "Pricing Unit"], ["supplier", "Supplier"],
@@ -161,7 +161,7 @@ const SOURCES = [
   { key: "substrates", label: "Substrates", entities: [{ entity: "DimensionalLetterMaterial", filter: (r) => r.is_active !== false }] },
   { key: "supplies", label: "Installation & Maintenance Supplies", entities: [
     { entity: "ChannelLetterInstallInventory" },
-    { entity: "FoundationInventory", filter: (r) => ["concrete_service", "bagged_concrete", "rebar", "forming_material", "pole", "brick_stone", "fill_material", "wall_material", "wall_cap"].includes(r.material_type) },
+    { entity: "FoundationInventory", filter: (r) => ["concrete_service", "bagged_concrete", "rebar", "rebar_support", "forming_material", "pole", "brick_stone", "fill_material", "wall_material", "wall_cap"].includes(r.material_type) },
   ]},
   { key: "vinyl", label: "Vinyl", entities: [{ entity: "VinylInventory", filter: (r) => r.is_active !== false && r.show_in_master_only !== true }] },
   { key: "sign_lighting", label: "Sign Lighting", entities: [{ entity: "SignLightingInventory", filter: (r) => r.is_active !== false }] },
@@ -173,7 +173,7 @@ const SOURCES = [
     { entity: "FoundationInventory", filter: (r) => r.material_type === "pole" },
   ]},
   { key: "concrete_stone", label: "Concrete & Stone", entities: [
-    { entity: "FoundationInventory", filter: (r) => ["concrete_service", "bagged_concrete", "rebar", "forming_material", "brick_stone", "fill_material", "wall_material", "wall_cap"].includes(r.material_type) },
+    { entity: "FoundationInventory", filter: (r) => ["concrete_service", "bagged_concrete", "rebar", "rebar_support", "forming_material", "brick_stone", "fill_material", "wall_material", "wall_cap"].includes(r.material_type) },
     { entity: "LaborServiceInventory", filter: (r) => r.service_category === "concrete_service" && r.is_active !== false },
   ]},
 ];

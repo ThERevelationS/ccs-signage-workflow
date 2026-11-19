@@ -28,6 +28,7 @@ import {
 import {
   describeCron, nextRuns, validateSchedule, firingMinutesOverlap, isValidTimeZone,
 } from "@/shared/cronSchedule.mjs";
+import { CcsTimeField } from "@/components/ui/ccs-date-field";
 
 const TIMEZONES = [
   "America/New_York",
@@ -538,7 +539,7 @@ function EditScheduleDialog({ row, prefill, allRows, onClose, onSaved }) {
           {(preset === "daily" || preset === "weekdays" || preset === "weekly") && (
             <div>
               <Label>At local time</Label>
-              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="mt-1 w-36" />
+              <CcsTimeField value={time} onChange={(e) => setTime(e.target.value)} className="mt-1 w-36" />
             </div>
           )}
 

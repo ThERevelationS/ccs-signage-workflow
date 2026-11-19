@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AUTOMATION_PRESETS, draftFromPreset, recordFilterFields, destinationWorkOrderId, draftProblems } from "@/components/admin/automationBuilderModel.mjs";
+import DataExportPanel from "@/components/admin/DataExportPanel";
+import AssetMigrationPanel from "@/components/admin/AssetMigrationPanel";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +55,7 @@ import {
   GitBranch,
   Sparkles,
   Loader2,
+  RotateCcw,
   SortAsc,
   Clock,
   Activity,
@@ -63,7 +66,8 @@ import {
   Scale,
   FlaskConical,
   BookOpen,
-  Truck
+  Truck,
+  Braces,
 } from "lucide-react";
 import FaceRecognition from "@/components/timeclock/FaceRecognition";
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
@@ -93,6 +97,7 @@ import PermittingTestSuite from "@/components/permitting/PermittingTestSuite";
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
 import WorkflowSchedulesPanel from "@/components/admin/WorkflowSchedulesPanel";
 import AdminCalendarSettings from "@/components/admin/AdminCalendarSettings";
+import IntegrationsPanel from "@/components/admin/IntegrationsPanel";
 import {
   getStoredAdminSettingsCapability,
   getStoredAdminSettingsCapabilityExpiry,
@@ -101,19 +106,24 @@ import {
   useAuth,
 } from "@/components/auth/EmailGate";
 import { verifyLogin } from "@/functions/verifyLogin";
+import { IDENTIFY_CAMERA_BLURB } from "@/components/timeclock/timeClockIdentifyCopy";
 import {
   createAutomationRuleIfAbsent,
   deleteAutomationRuleIfUnchanged,
   updateAutomationRuleIfUnchanged,
 } from "@/components/admin/automationRulePersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { getAccessibleAdminGroups, getAccessibleAdminSubtab, getAccessibleAdminTab, getAdminCategoryKeyboardTarget, getAdminGroupForTab } from "@/components/admin/adminTabNavigation";
 import AdminSettingsSearch from "@/components/admin/AdminSettingsSearch";
+import { createFeatureReportWithRecovery } from "@/components/reports/featureReportPersistence";
 import { classifyAutomationCreateReceipt, reviewUncertainAutomationSave, snapshotUncertainAutomationReview, reviewedAutomationSnapshotIsCurrent } from "@/components/admin/automationSaveReconciliation";
 import { AutomationReadTimeoutError, withAutomationReadDeadline } from "@/components/admin/automationReadDeadline";
 import { reviewAutomationOperation } from "@/components/admin/automationOperationReconciliation";
 import { getAdminNavigationStorageKey, readAdminNavigation, resolveAdminNavigation, storeAdminNavigation } from "@/components/admin/adminNavigationPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
+import { CcsTimeField } from "@/components/ui/ccs-date-field";
+import { sendStaffEmail } from "@/components/comms/sendStaffEmail";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -121,7 +131,7 @@ const EmailGroup = base44.entities.EmailGroup;
 
 
 const TRIGGER_TYPES = [
-  // ── Work Orders ──
+  // -- Work Orders --
   { value: "work_order_created", label: "Work Order Created", category: "Work Orders" },
   { value: "work_order_updated", label: "Work Order Updated (Any Field)", category: "Work Orders" },
   { value: "work_order_completed", label: "Work Order Completed", category: "Work Orders" },
@@ -144,15 +154,15 @@ const TRIGGER_TYPES = [
   { value: "work_order_production_type_changed", label: "Production Type Changed (In-house/Outsource)", category: "Work Orders" },
   { value: "work_order_file_uploaded", label: "File Uploaded to Work Order", category: "Work Orders" },
 
-  // ── Riders ──
+  // -- Riders --
   { value: "rider_created", label: "Rider Created", category: "Riders" },
   { value: "rider_completed", label: "Rider Completed", category: "Riders" },
   { value: "rider_deleted", label: "Rider Deleted", category: "Riders" },
-  { value: "rider_all_tasks_completed", label: "Rider — All Tasks Completed", category: "Riders" },
+  { value: "rider_all_tasks_completed", label: "Rider - All Tasks Completed", category: "Riders" },
   { value: "rider_stage_changed", label: "Rider Stage Changed", category: "Riders" },
   { value: "rider_assigned_to_changed", label: "Rider Assignment Changed", category: "Riders" },
 
-  // ── Stage Movement ──
+  // -- Stage Movement --
   { value: "stage_changed", label: "Stage Changed (Any)", category: "Stage Movement" },
   { value: "stage_entered", label: "Stage Entered (Specific)", category: "Stage Movement" },
   { value: "stage_exited", label: "Stage Exited (Specific)", category: "Stage Movement" },
@@ -165,7 +175,7 @@ const TRIGGER_TYPES = [
   { value: "stage_installation_entered", label: "Entered Installation Stage", category: "Stage Movement" },
   { value: "stage_completed_entered", label: "Entered Completed Stage", category: "Stage Movement" },
 
-  // ── Tasks ──
+  // -- Tasks --
   { value: "task_added", label: "Task Added", category: "Tasks" },
   { value: "task_completed", label: "Task Completed", category: "Tasks" },
   { value: "task_uncompleted", label: "Task Marked Incomplete", category: "Tasks" },
@@ -177,7 +187,7 @@ const TRIGGER_TYPES = [
   { value: "task_assigned", label: "Task Assigned to Person", category: "Tasks" },
   { value: "all_tasks_completed", label: "All Tasks Completed on Work Order", category: "Tasks" },
 
-  // ── Notes ──
+  // -- Notes --
   { value: "note_added", label: "Note Added", category: "Notes" },
   { value: "note_deleted", label: "Note Deleted", category: "Notes" },
   { value: "note_completed", label: "Note Marked Complete", category: "Notes" },
@@ -186,7 +196,7 @@ const TRIGGER_TYPES = [
   { value: "follow_up_added", label: "Follow-Up Item Added", category: "Notes" },
   { value: "follow_up_completed", label: "Follow-Up Item Completed", category: "Notes" },
 
-  // ── Sales Pipeline ──
+  // -- Sales Pipeline --
   { value: "sales_status_changed", label: "Sales Status Changed", category: "Sales Pipeline" },
   { value: "sales_lead_created", label: "New Lead Created in Pipeline", category: "Sales Pipeline" },
   { value: "sales_status_won", label: "Status Changed to WON", category: "Sales Pipeline" },
@@ -197,27 +207,27 @@ const TRIGGER_TYPES = [
   { value: "sales_close_date_approaching", label: "Close Date Approaching", category: "Sales Pipeline" },
   { value: "sales_rep_changed", label: "Sales Rep Changed", category: "Sales Pipeline" },
 
-  // ── Pending Imports ──
+  // -- Pending Imports --
   { value: "pending_import_created", label: "New Pending Import Arrived", category: "Pending Imports" },
   { value: "duplicate_detected", label: "Duplicate Record Detected", category: "Pending Imports" },
 
-  // ── Priority / ASAP ──
+  // -- Priority / ASAP --
   { value: "asap_toggled_on", label: "ASAP Toggled ON", category: "Priority" },
   { value: "asap_toggled_off", label: "ASAP Toggled OFF", category: "Priority" },
   { value: "priority_changed", label: "Row Priority Changed", category: "Priority" },
-  { value: "project_health_at_risk", label: "Project Health → At Risk", category: "Priority" },
-  { value: "project_health_delayed", label: "Project Health → Delayed", category: "Priority" },
-  { value: "project_health_blocked", label: "Project Health → Blocked", category: "Priority" },
-  { value: "project_health_on_track", label: "Project Health → On Track", category: "Priority" },
+  { value: "project_health_at_risk", label: "Project Health -> At Risk", category: "Priority" },
+  { value: "project_health_delayed", label: "Project Health -> Delayed", category: "Priority" },
+  { value: "project_health_blocked", label: "Project Health -> Blocked", category: "Priority" },
+  { value: "project_health_on_track", label: "Project Health -> On Track", category: "Priority" },
 
-  // ── Assignment ──
+  // -- Assignment --
   { value: "assigned_to_changed", label: "Work Order Assignment Changed", category: "Assignment" },
   { value: "designer_assigned", label: "Designer Assigned", category: "Assignment" },
   { value: "surveyor_assigned", label: "Surveyor Assigned", category: "Assignment" },
   { value: "project_manager_assigned", label: "Project Manager Assigned", category: "Assignment" },
   { value: "estimator_assigned", label: "Estimator Assigned", category: "Assignment" },
 
-  // ── Dates ──
+  // -- Dates --
   { value: "due_date_approaching", label: "Due Date Approaching", category: "Dates" },
   { value: "due_date_passed", label: "Due Date Passed", category: "Dates" },
   { value: "due_date_set", label: "Due Date Set / Changed", category: "Dates" },
@@ -226,12 +236,12 @@ const TRIGGER_TYPES = [
   { value: "site_survey_scheduled", label: "Site Survey Date Scheduled", category: "Dates" },
   { value: "site_survey_approaching", label: "Site Survey Date Approaching", category: "Dates" },
 
-  // ── Media ──
+  // -- Media --
   { value: "image_uploaded", label: "Image Uploaded to Work Order", category: "Media" },
   { value: "file_attached", label: "File Attached to Work Order", category: "Media" },
   { value: "google_drive_linked", label: "Google Drive Folder Linked", category: "Media" },
 
-  // ── Orders ──
+  // -- Orders --
   { value: "order_created", label: "Order Created", category: "Orders" },
   { value: "order_ordered", label: "Order Placed (Ordered)", category: "Orders" },
   { value: "order_received", label: "Order Received", category: "Orders" },
@@ -249,7 +259,7 @@ const TRIGGER_TYPES = [
   { value: "order_vendor_changed", label: "Order Vendor Updated", category: "Order Fields" },
   { value: "order_date_received_changed", label: "Order Date Received Updated", category: "Order Fields" },
 
-  // ── Time Clock ──
+  // -- Time Clock --
   { value: "time_clock_in", label: "Employee Clocked In", category: "Time Clock" },
   { value: "time_clock_out", label: "Employee Clocked Out", category: "Time Clock" },
   { value: "time_clock_in_late", label: "Employee Clocked In Late (after 8am)", category: "Time Clock" },
@@ -265,19 +275,19 @@ const TRIGGER_TYPES = [
   { value: "time_off_cancelled", label: "Time Off Request Cancelled", category: "Time Clock" },
   { value: "pto_balance_low", label: "PTO Balance Running Low", category: "Time Clock" },
 
-  // ── Users / HR ──
+  // -- Users / HR --
   { value: "user_registered", label: "New User Registered / Onboarded", category: "Users" },
   { value: "user_role_changed", label: "User Role Changed", category: "Users" },
   { value: "user_face_enrolled", label: "User Face ID Enrolled", category: "Users" },
   { value: "user_password_reset", label: "User Password Reset Requested", category: "Users" },
 
-  // ── SIPs / Monday Meeting ──
+  // -- SIPs / Monday Meeting --
   { value: "sip_item_completed", label: "SIP Item Marked Complete", category: "SIPs / Meetings" },
   { value: "sip_item_revisit_set", label: "SIP Revisit Date Set", category: "SIPs / Meetings" },
   { value: "sip_revisit_date_approaching", label: "SIP Revisit Date Approaching", category: "SIPs / Meetings" },
   { value: "mmm_item_completed", label: "Monday Meeting Item Completed", category: "SIPs / Meetings" },
 
-  // ── Permitting ──
+  // -- Permitting --
   { value: "jurisdiction_profile_created", label: "Jurisdiction Profile Created", category: "Permitting" },
   { value: "jurisdiction_profile_updated", label: "Jurisdiction Profile Updated", category: "Permitting" },
   { value: "regulation_alert_created", label: "Regulation Alert / Change Detected", category: "Permitting" },
@@ -288,11 +298,85 @@ const TRIGGER_TYPES = [
   { value: "permit_followup_due", label: "Permit Follow-up Date Reached", category: "Permitting" },
   { value: "permit_followup_overdue", label: "Permit Follow-up Overdue", category: "Permitting" },
 
-  // ── Financials / Reports ──
+  // -- Financials / Reports --
   { value: "feature_report_submitted", label: "Feature / Bug Report Submitted", category: "Reports" },
   { value: "feature_report_status_changed", label: "Feature Report Status Changed", category: "Reports" },
   { value: "feature_report_completed", label: "Feature Report Marked Complete", category: "Reports" },
+
+  // -- Proofs / Products (unified alerts) --
+  { value: "proof_sent", label: "Proof Sent for Approval", category: "Proofs" },
+  { value: "proof_approved", label: "Proof Approved", category: "Proofs" },
+  { value: "product_transition", label: "Product Status Changed", category: "Products" },
+
+  // -- CRM / Purchasing / Invoicing / Reconciliation (unified alerts) --
+  { value: "crm_event_completed", label: "CRM Event Completed", category: "CRM" },
+  { value: "po_received", label: "Purchase Order Fully Received", category: "Purchasing" },
+  { value: "po_backordered", label: "Purchase Order Partially Received (Backordered)", category: "Purchasing" },
+  { value: "invoice_overdue", label: "Invoice Overdue", category: "Invoices" },
+  { value: "recon_variance", label: "Reconciliation Closed with Variance", category: "Reconciliation" },
 ];
+// Plain-English explanations shown when a trigger is picked — written for
+// non-technical users so they know exactly when a rule will fire.
+const TRIGGER_ENTITY = {
+  work_order: "WorkOrder", stage: "WorkOrder", task: "WorkOrder", note: "WorkOrder",
+  sub_note: "WorkOrder", follow_up: "WorkOrder", rider: "Rider", order: "Order",
+  sales: "Opportunity", opportunity: "Opportunity", general_task: "GeneralTask",
+  time_entry: "TimeEntry", permit_line: "PermitLineItem", jurisdiction_profile: "JurisdictionProfile",
+  user: "AuthorizedEmail", estimate: "Estimate", quote: "Quote", email_group: "EmailGroup",
+  automation: "AutomationRule", pending_import: "PendingImport", monitor_scan: "MonitorScanRun",
+  proof: "WorkOrder", product: "WorkOrder", crm_event: "OpportunityActivity",
+  po: "PurchaseOrder", invoice: "Invoice", recon: "ReconciliationBatch",
+};
+const entityForTrigger = (triggerType) => {
+  const prefix = String(triggerType || "").split("_").slice(0, 2).join("_");
+  const first = String(triggerType || "").split("_")[0];
+  return TRIGGER_ENTITY[prefix] || TRIGGER_ENTITY[first] || null;
+};
+
+const TRIGGER_HELP = {
+  work_order_created: "Fires the moment a brand-new work order appears in the pipeline.",
+  work_order_completed: "Fires when a work order is marked complete.",
+  work_order_deleted: "Fires when a work order is moved to trash.",
+  work_order_client_changed: "Fires only when the client name on a work order changes.",
+  work_order_install_date_set: "Fires when an install date gets entered for the first time or changed.",
+  work_order_install_date_approaching: "Fires a few days before the install date - great reminder rules.",
+  work_order_install_date_passed: "Fires when an install date slips by without completion.",
+  work_order_permit_approved: "Fires the moment a permit gets its approved date.",
+  work_order_file_uploaded: "Fires when someone attaches a file to a work order.",
+  rider_created: "Fires when a new rider (change request) gets created.",
+  rider_completed: "Fires when a rider is finished.",
+  rider_all_tasks_completed: "Fires when every task on a rider is done - handy for notify-the-office rules.",
+  stage_entered: "Fires when a work order moves INTO the stage you pick.",
+  stage_exited: "Fires when a work order moves OUT of the stage you pick.",
+  stage_changed: "Fires on any stage move, forward or backward.",
+  asap_toggled_on: "Fires when the ASAP flag gets switched ON for a work order.",
+  asap_toggled_off: "Fires when the ASAP flag gets switched OFF.",
+  time_off_approved: "Fires when a time-off request gets approved.",
+  time_off_denied: "Fires when a time-off request gets denied.",
+  time_entry_missing_clockout: "Fires when an employee forgets to clock out.",
+  time_entry_long_shift: "Fires when a shift runs unusually long.",
+  punch_exception: "Fires when a punch problem needs admin attention.",
+  proof_sent: "Fires when a product proof is sent to the customer for approval.",
+  proof_approved: "Fires when a product proof version is approved.",
+  product_transition: "Fires when a work-order product's operational status changes.",
+  crm_event_completed: "Fires when a CRM event is closed with an outcome.",
+  po_received: "Fires when a purchase order is fully received.",
+  po_backordered: "Fires when a purchase order receipt leaves open quantity on backorder.",
+  invoice_overdue: "Fires each morning for any sent or partially-paid invoice whose due date has passed with an open balance - once per invoice per due date.",
+  recon_variance: "Fires when a reconciliation batch closes with a non-zero variance.",
+};
+
+// Plain-English descriptions for each admin group — shown as button tooltips
+// so new admins know where to look before they click.
+const GROUP_HELP = {
+  workflow: "Workflow: automation rules, task assignments, calendar, and the activity feed",
+  people: "People: users and permissions, time clock, and resource capacity",
+  integrations: "Integrations: service status, Smartsheet sync, CoreBridge history, and conflict review",
+  permitting: "Permitting: completeness dashboards, rule review, and test results",
+  system: "System: backend tools (backup, trash, imports, jobs, export) and fleet settings",
+};
+
+
 
 const ACTION_TYPES = [
   { value: "send_email", label: "Send Email", icon: Mail, color: "blue" },
@@ -309,7 +393,7 @@ const ACTION_TYPES = [
 
 // Which advertised triggers actually fire today, and which actions can run
 // for them. Three execution paths exist with different capabilities:
-//   - workflowTriggerEngine (server): fires the WORKFLOW_ENGINE set —
+//   - workflowTriggerEngine (server): fires the WORKFLOW_ENGINE set -
 //     client-emitted work-order events are routed there by
 //     NotificationService, and permit events arrive via processWorkflowTriggers
 //     and checkPermitFollowupReminders. Runs every advertised action.
@@ -317,7 +401,7 @@ const ACTION_TYPES = [
 //     only send_email can execute for them.
 //   - checkDeadlineReminders (daily job): fires the DEADLINE set and runs
 //     send_email, set_asap, add_task and add_note only.
-// Any trigger outside these sets cannot run yet — the editor marks it so
+// Any trigger outside these sets cannot run yet - the editor marks it so
 // nobody builds a rule that silently does nothing.
 const WORKFLOW_ENGINE_TRIGGER_SET = new Set([
   "work_order_created", "work_order_completed", "work_order_deleted",
@@ -357,6 +441,7 @@ const WORKFLOW_ENGINE_TRIGGER_SET = new Set([
   "assigned_to_changed",
   "permit_submitted", "permit_received",
   "permit_followup_due", "permit_followup_overdue",
+  "proof_sent", "proof_approved", "product_transition",
 ]);
 
 const ORDER_TRIGGER_SET = new Set([
@@ -376,7 +461,7 @@ const DEADLINE_TRIGGER_SET = new Set([
   "sip_revisit_date_approaching",
 ]);
 
-// Fired by checkDeadlineReminders against Orders awaiting delivery — order
+// Fired by checkDeadlineReminders against Orders awaiting delivery - order
 // context only, so send_email is the sole supported action.
 const ORDER_DEADLINE_TRIGGER_SET = new Set([
   "order_date_needed_approaching", "order_date_needed_passed", "order_overdue",
@@ -389,14 +474,14 @@ const SALES_TRIGGER_SET = new Set([
   "sales_status_lost", "sales_status_on_hold", "sales_rep_changed",
 ]);
 
-// Fired by checkDeadlineReminders against open Opportunities —
+// Fired by checkDeadlineReminders against open Opportunities -
 // send_email only.
 const SALES_DEADLINE_TRIGGER_SET = new Set([
   "sales_follow_up_date_approaching", "sales_follow_up_date_passed",
   "sales_close_date_approaching",
 ]);
 
-// Emitted server-side by timeClockAction after verified writes — carries a
+// Emitted server-side by timeClockAction after verified writes - carries a
 // TimeEntry/TimeOffRequest/labor-segment record (not a Work Order), so only
 // send_email can run.
 const TIME_CLOCK_TRIGGER_SET = new Set([
@@ -413,7 +498,7 @@ const PENDING_IMPORT_TRIGGER_SET = new Set([
   "pending_import_created", "duplicate_detected",
 ]);
 
-// Emitted by manageFeatureReports after verified writes — FeatureReport
+// Emitted by manageFeatureReports after verified writes - FeatureReport
 // record context, send_email only.
 const FEATURE_REPORT_TRIGGER_SET = new Set([
   "feature_report_submitted", "feature_report_status_changed",
@@ -421,7 +506,7 @@ const FEATURE_REPORT_TRIGGER_SET = new Set([
 ]);
 
 // Emitted by onboardingAccountAction, issuePasswordReset, the face-enroll
-// dialog, and the User Management account save — AuthorizedEmail record
+// dialog, and the User Management account save - AuthorizedEmail record
 // context, send_email only.
 const USER_TRIGGER_SET = new Set([
   "user_registered", "user_password_reset", "user_face_enrolled",
@@ -429,10 +514,20 @@ const USER_TRIGGER_SET = new Set([
 ]);
 
 // Emitted by monitorJurisdictionChanges and the jurisdiction persistence
-// funnels — JurisdictionProfile / RegulationAlert record context.
+// funnels - JurisdictionProfile / RegulationAlert record context.
 const JURISDICTION_TRIGGER_SET = new Set([
   "jurisdiction_profile_created", "jurisdiction_profile_updated",
   "regulation_alert_created",
+]);
+
+// Unified-alerts record events - emitted client-side after verified writes
+// (CRM close-out, PO receiving, batch close), plus invoice_overdue which is
+// emitted by checkDeadlineReminders when a due date passes with an open
+// balance. Record context, so send_email, add_task, and add_note are the
+// supported actions.
+const OPS_RECORD_TRIGGER_SET = new Set([
+  "crm_event_completed", "po_received", "po_backordered", "recon_variance",
+  "invoice_overdue",
 ]);
 
 const ORDER_SUPPORTED_ACTIONS = new Set(["send_email"]);
@@ -454,7 +549,8 @@ const getTriggerSupportedActions = (triggerType) => {
   if (ORDER_DEADLINE_TRIGGER_SET.has(triggerType) || SALES_DEADLINE_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
   if (TIME_CLOCK_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
   if (PENDING_IMPORT_TRIGGER_SET.has(triggerType) || FEATURE_REPORT_TRIGGER_SET.has(triggerType) ||
-      USER_TRIGGER_SET.has(triggerType) || JURISDICTION_TRIGGER_SET.has(triggerType)) return RECORD_SUPPORTED_ACTIONS;
+      USER_TRIGGER_SET.has(triggerType) || JURISDICTION_TRIGGER_SET.has(triggerType) ||
+      OPS_RECORD_TRIGGER_SET.has(triggerType)) return RECORD_SUPPORTED_ACTIONS;
   if (DEADLINE_TRIGGER_SET.has(triggerType)) return DEADLINE_SUPPORTED_ACTIONS;
   return null;
 };
@@ -525,6 +621,7 @@ const ADMIN_TAB_ICONS = {
   corebridge: Bot,
   opportunity_bridge: GitBranch,
   sync_conflicts: AlertTriangle,
+  integrations: Braces,
   smartsheet: GitBranch,
   resources: Users,
   permitting_completeness: ClipboardCheck,
@@ -536,11 +633,50 @@ const ADMIN_TAB_ICONS = {
   fleet: Truck,
 };
 
+const AUTOMATION_DRAFT_KEY = "admin-automation-editor-draft";
+
+// K-08 — page-local registration of the Integrations status tab. The shared
+// ADMIN_TAB_GROUPS registry lives in adminTabNavigation.js (outside this
+// change's scope), so the tab is appended to the Integrations group here.
+// It is admin-only like every sibling in that group; the resolver overrides
+// below keep deep links (?tab=integrations) and group selection working even
+// though the shared registry does not list the value.
+const ADMIN_INTEGRATIONS_TAB = { value: "integrations", label: "Integrations" };
+const withAdminIntegrationsTab = (groups, isAdminFlag) => {
+  if (!isAdminFlag || !Array.isArray(groups)) return groups;
+  return groups.map((group) => (
+    group.id === "integrations" && !group.tabs.some((t) => t.value === ADMIN_INTEGRATIONS_TAB.value)
+      ? { ...group, tabs: [ADMIN_INTEGRATIONS_TAB, ...group.tabs] }
+      : group
+  ));
+};
+
 export default function AdminSettings() {
   const { currentUser, sessionToken } = useAuth();
   const isAdmin = currentUser?.role === "admin";
   const [searchParams, setSearchParams] = useSearchParams();
   const [isUnlocked, setIsUnlocked] = useState(() => hasStoredAdminSettingsAuthorization());
+  const [accessRequestState, setAccessRequestState] = useState(""); // "", "busy", "sent", "error"
+  const [adminSidebar, setAdminSidebar] = useState(() => {
+    try { return localStorage.getItem("admin_nav_layout") === "sidebar"; } catch { return false; }
+  });
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const toggleSidebarNav = () => {
+    setAdminSidebar((cur) => {
+      const next = !cur;
+      try { localStorage.setItem("admin_nav_layout", next ? "sidebar" : "top"); } catch { /* ignore */ }
+      return next;
+    });
+  };
+  const submitAccessRequest = async () => {
+    if (!sessionToken || accessRequestState === "busy") return;
+    setAccessRequestState("busy");
+    try {
+      const r = await base44.functions.invoke("accessRequestAction", { session_token: sessionToken, action: "submit" });
+      const data = r?.data || r;
+      setAccessRequestState(data?.success ? "sent" : "error");
+    } catch { setAccessRequestState("error"); }
+  };
   const [capabilityExpiryLabel, setCapabilityExpiryLabel] = useState("");
   const navigationKey = getAdminNavigationStorageKey(currentUser);
   // Restore only after identity and Admin unlock are established; direct URLs win.
@@ -551,8 +687,16 @@ export default function AdminSettings() {
   const savedNavigation = !searchParams.has("tab") && isUnlocked
     ? readAdminNavigation(browserStorage, navigationKey, isAdmin, currentUser)
     : null;
-  const { tab: selectedAdminTab, subtab: selectedAdminSubtab } =
-    resolveAdminNavigation(searchParams, savedNavigation, isAdmin, currentUser);
+  const resolvedAdminNavigation = resolveAdminNavigation(searchParams, savedNavigation, isAdmin, currentUser);
+  // K-08: the Integrations tab value is unknown to the shared registry, so a
+  // direct ?tab=integrations deep link would sanitize to 'automations'. Admit
+  // it here for admins only; non-admins keep the fail-closed fallback.
+  const selectedAdminTab =
+    isAdmin && searchParams.get("tab") === ADMIN_INTEGRATIONS_TAB.value
+      ? ADMIN_INTEGRATIONS_TAB.value
+      : resolvedAdminNavigation.tab;
+  const selectedAdminSubtab = resolvedAdminNavigation.subtab;
+
   useEffect(() => {
     if (isUnlocked && navigationKey) {
       storeAdminNavigation(browserStorage, navigationKey, {
@@ -560,8 +704,29 @@ export default function AdminSettings() {
       }, isAdmin, currentUser);
     }
   }, [isUnlocked, navigationKey, selectedAdminTab, selectedAdminSubtab, isAdmin, browserStorage]);
-  const availableAdminGroups = getAccessibleAdminGroups(isAdmin, currentUser);
-  const activeAdminGroupId = getAdminGroupForTab(selectedAdminTab, isAdmin, currentUser);
+
+  const [emailGroups, setEmailGroups] = useState([]);
+  const [emailGroupsLoading, setEmailGroupsLoading] = useState(true);
+  const [emailGroupsLoadError, setEmailGroupsLoadError] = useState(false);
+  const emailGroupsLoadSequence = useRef(0);
+  const userTeamSections = useMemo(() => {
+    const email = String(currentUser?.email || '').toLowerCase();
+    if (!email || !Array.isArray(emailGroups)) return [];
+    return [...new Set(emailGroups
+      .filter((g) => Array.isArray(g?.emails) && g.emails.map((e) => String(e).toLowerCase()).includes(email))
+      .flatMap((g) => Array.isArray(g?.permission_sections) ? g.permission_sections : []))];
+  }, [currentUser?.email, emailGroups]);
+  const availableAdminGroups = withAdminIntegrationsTab(
+    getAccessibleAdminGroups(isAdmin, currentUser, userTeamSections), isAdmin);
+  const requestedDeepLinkTab = searchParams.get("tab");
+  const requestedDeepLinkSubtab = searchParams.get("subtab");
+  const deniedDeepLinkTab = isUnlocked && requestedDeepLinkTab && requestedDeepLinkTab !== selectedAdminTab;
+  const deniedDeepLinkSubtab = isUnlocked && !deniedDeepLinkTab && requestedDeepLinkSubtab && requestedDeepLinkSubtab !== selectedAdminSubtab;
+  const resolvedTabLabel = availableAdminGroups.flatMap((g) => g.tabs).find((t) => t.value === selectedAdminTab)?.label || selectedAdminTab;
+  // The page-local Integrations tab is absent from the shared registry, so
+  // resolve the active group against the augmented list first.
+  const activeAdminGroupId = availableAdminGroups.find((group) => group.tabs.some((t) => t.value === selectedAdminTab))?.id
+    || getAdminGroupForTab(selectedAdminTab, isAdmin, currentUser);
   const activeAdminGroup = availableAdminGroups.find((group) => group.id === activeAdminGroupId) || availableAdminGroups[0];
   const categoryScrollerRef = useRef(null);
   const adminScrollRef = useRef(null);
@@ -687,7 +852,9 @@ export default function AdminSettings() {
     };
   }, [isUnlocked, isAdmin, selectedAdminTab, selectedAdminSubtab]);
   const handleAdminTabChange = (nextTab, nextSubtab = null) => {
-    if (getAccessibleAdminTab(nextTab, isAdmin, currentUser) !== nextTab) return;
+    // Page-local Integrations tab is admin-only and unregistered upstream.
+    const pageLocalTab = nextTab === ADMIN_INTEGRATIONS_TAB.value && isAdmin;
+    if (!pageLocalTab && getAccessibleAdminTab(nextTab, isAdmin, currentUser) !== nextTab) return;
     const validSubtab = nextSubtab && getAccessibleAdminSubtab(nextTab, nextSubtab, currentUser) === nextSubtab
       ? nextSubtab
       : null;
@@ -702,10 +869,45 @@ export default function AdminSettings() {
   };
   
   const [automations, setAutomations] = useState([]);
-  const [emailGroups, setEmailGroups] = useState([]);
-  const [emailGroupsLoading, setEmailGroupsLoading] = useState(true);
-  const [emailGroupsLoadError, setEmailGroupsLoadError] = useState(false);
-  const emailGroupsLoadSequence = useRef(0);
+  const [automationsPaused, setAutomationsPaused] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportDraft, setReportDraft] = useState({ title: "", type: "bug", description: "" });
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportMsg, setReportMsg] = useState("");
+  const [quietSettingRow, setQuietSettingRow] = useState(null);
+  const [quietEnabled, setQuietEnabled] = useState(false);
+  const [quietStart, setQuietStart] = useState("20:00");
+  const [quietEnd, setQuietEnd] = useState("07:00");
+  const [quietBusy, setQuietBusy] = useState(false);
+  const [pauseSettingRow, setPauseSettingRow] = useState(null);
+  const [pauseBusy, setPauseBusy] = useState(false);
+  const [pauseError, setPauseError] = useState("");
+  const [openExceptionCount, setOpenExceptionCount] = useState(0);
+  const [openConflictCount, setOpenConflictCount] = useState(0);
+  const [offline, setOffline] = useState(typeof navigator !== "undefined" ? !navigator.onLine : false);
+  useEffect(() => {
+    const on = () => setOffline(false);
+    const off = () => setOffline(true);
+    window.addEventListener("online", on); window.addEventListener("offline", off);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
+  const [tourSeen, setTourSeen] = useState(() => {
+    try { return localStorage.getItem("admin_tour_seen") === "1"; } catch { return true; }
+  });
+  const [pinnedTabs, setPinnedTabs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("admin_pinned_tabs") || "[]"); } catch { return []; }
+  });
+  const togglePin = (tabValue) => {
+    setPinnedTabs((prev) => {
+      const next = prev.includes(tabValue) ? prev.filter((v) => v !== tabValue) : [...prev, tabValue];
+      try { localStorage.setItem("admin_pinned_tabs", JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
+  const [testEmailAddr, setTestEmailAddr] = useState("");
+  const [testEmailBusy, setTestEmailBusy] = useState(false);
+  const [testEmailMsg, setTestEmailMsg] = useState("");
+  const [draftRestored, setDraftRestored] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [automationLoadError, setAutomationLoadError] = useState(false);
   const automationLoadSequence = useRef(0);
@@ -725,6 +927,8 @@ export default function AdminSettings() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [sortBy, setSortBy] = useState("name"); // "name", "trigger", "action", "enabled"
   const [sortDirection, setSortDirection] = useState("asc");
+  const [ruleFilter, setRuleFilter] = useState("all"); // "all" | "enabled" | "disabled"
+  const [ruleSearch, setRuleSearch] = useState("");
   const [automationSaveError, setAutomationSaveError] = useState("");
   const [automationSaving, setAutomationSaving] = useState(false);
   const automationSaveInFlight = useRef(false);
@@ -762,6 +966,12 @@ export default function AdminSettings() {
   
   const [triggers, setTriggers] = useState([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
   const [actions, setActions] = useState([{ action_type: "", action_config: {} }]);
+  useEffect(() => {
+    if (!isDialogOpen || editingRule) return;
+    try {
+      localStorage.setItem(AUTOMATION_DRAFT_KEY, JSON.stringify({ formData, triggers, actions, saved_at: Date.now() }));
+    } catch {}
+  }, [formData, triggers, actions, isDialogOpen, editingRule]);
   const automationDraftFingerprintRef = useRef(null);
   automationDraftFingerprintRef.current = JSON.stringify({ formData, triggers, actions });
 
@@ -826,7 +1036,7 @@ export default function AdminSettings() {
     setAutomationDraftParked(false);
     setIsDialogOpen(false);
     setEditingRule(null);
-    setFormData({ name: "", enabled: true, priority: 0 });
+    setFormData({ name: "", enabled: true, priority: 0, group: "" });
     setTriggers([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions([{ action_type: "", action_config: {} }]);
     setAutomationSaveError("");
@@ -858,6 +1068,7 @@ export default function AdminSettings() {
       const groups = await loadAllEntityRows({
         entity: EmailGroup,
         sort: null,
+        cacheTtlMs: 30000,
         label: "Admin Settings email groups",
       });
       if (requestSequence === emailGroupsLoadSequence.current) {
@@ -874,10 +1085,33 @@ export default function AdminSettings() {
     }
   };
 
+  const sendTestEmail = async () => {
+    const to = testEmailAddr.trim();
+    if (!to || !to.includes("@") || testEmailBusy) return;
+    setTestEmailBusy(true); setTestEmailMsg("");
+    const body = "This is a test email sent from Admin Settings to verify notification delivery is working.";
+    const subject = "CCS Signage - test notification";
+    try {
+      // Staff (EmailGate) sessions cannot call sendGmail directly — it only
+      // trusts platform auth or the workflow capability. Route through the
+      // session-authed sendStaffEmail bridge when a staff session exists.
+      if (sessionToken) {
+        await sendStaffEmail({ sessionToken, to, subject, body, kind: "admin_test" });
+      } else {
+        const response = await base44.functions.invoke("sendGmail", { to, subject, body });
+        if (response?.data?.error) throw new Error(response.data.error);
+      }
+      setTestEmailMsg(`Test email sent to ${to}.`);
+    } catch (e) {
+      setTestEmailMsg(e?.response?.data?.error || e?.message || "Send failed - check the Gmail connection.");
+    } finally { setTestEmailBusy(false); }
+  };
+
   const loadAllUsers = async () => {
     const users = await loadAllEntityRows({
       entity: staffEntities.AuthorizedEmail,
       sort: null,
+      cacheTtlMs: 30000,
       label: "Admin Settings authorized users",
     });
     setAllUsers(users);
@@ -927,6 +1161,7 @@ export default function AdminSettings() {
       const rules = await withAutomationReadDeadline(() => loadAllEntityRows({
         entity: AutomationRule,
         sort: "-created_date",
+        cacheTtlMs: 30000,
         label: "Admin Settings automation rules",
       }));
       if (requestSequence !== automationLoadSequence.current ||
@@ -959,6 +1194,39 @@ export default function AdminSettings() {
     void loadAllUsers();
   }, []);
 
+  const copyRuleJson = async (rule) => {
+    const payload = JSON.stringify({
+      name: `${rule.name || ""} (imported)`, group: rule.group || "", enabled: rule.enabled !== false,
+      priority: rule.priority || 0, triggers: rule.triggers || [], actions: rule.actions || [],
+    }, null, 2);
+    try { await navigator.clipboard.writeText(payload); setRuleMessage?.("Rule JSON copied to clipboard."); }
+    catch { window.prompt("Copy this rule JSON:", payload); }
+  };
+
+  const [importJsonText, setImportJsonText] = useState(null);
+  const [importJsonError, setImportJsonError] = useState("");
+  const applyRuleJson = () => {
+    setImportJsonError("");
+    try {
+      const parsed = JSON.parse(importJsonText);
+      if (!parsed || (!parsed.name && !Array.isArray(parsed.triggers) && !Array.isArray(parsed.actions))) {
+        setImportJsonError("That doesn't look like a rule — expected { name, triggers, actions }.");
+        return;
+      }
+      setFormData({
+        name: parsed.name || "",
+        enabled: parsed.enabled !== false,
+        priority: parsed.priority || 0,
+        group: parsed.group || "",
+      });
+      if (Array.isArray(parsed.triggers) && parsed.triggers.length) setTriggers(parsed.triggers);
+      if (Array.isArray(parsed.actions) && parsed.actions.length) setActions(parsed.actions);
+      setImportJsonText("");
+    } catch {
+      setImportJsonError("Could not parse that JSON.");
+    }
+  };
+
   const openNewRule = async () => {
     if (automationSaveInFlight.current) return;
     if (automationUncertainRef.current) { setIsDialogOpen(true); setAutomationDraftParked(false); return; }
@@ -968,14 +1236,21 @@ export default function AdminSettings() {
     setAutomationSaveError("");
     if (!(await loadEmailGroups()) || ownerEpoch !== automationSessionEpoch.current) return;
     setEditingRule(null);
-    setTriggers([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
-    setActions([{ action_type: "", action_config: {} }]);
-    const nextForm = { name: "", enabled: true, priority: 0 };
+    let draft = null;
+    try {
+      const raw = localStorage.getItem(AUTOMATION_DRAFT_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed?.formData && Array.isArray(parsed.triggers) && Array.isArray(parsed.actions)) draft = parsed;
+    } catch {}
+    const nextForm = draft?.formData || { name: "", enabled: true, priority: 0, group: "" };
+    setTriggers(draft?.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
+    setActions(draft?.actions || [{ action_type: "", action_config: {} }]);
     setFormData(nextForm);
+    setDraftRestored(!!draft);
     automationEditorBaseline.current = JSON.stringify({
       formData: nextForm,
-      triggers: [{ trigger_type: "", trigger_condition: {}, logic: "or" }],
-      actions: [{ action_type: "", action_config: {} }]
+      triggers: draft?.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }],
+      actions: draft?.actions || [{ action_type: "", action_config: {} }]
     });
     setAutomationDraftParked(false);
     setIsDialogOpen(true);
@@ -995,13 +1270,41 @@ export default function AdminSettings() {
     const nextForm = {
       name: rule.name || "",
       enabled: rule.enabled !== false,
-      priority: rule.priority || 0
+      priority: rule.priority || 0,
+      group: rule.group || ""
     };
     setFormData(nextForm);
     automationEditorBaseline.current = JSON.stringify({
       formData: nextForm,
       triggers: rule.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }],
       actions: rule.actions || [{ action_type: "", action_config: {} }]
+    });
+    setAutomationDraftParked(false);
+    setIsDialogOpen(true);
+  };
+
+  const restoreRuleVersion = async (rule) => {
+    const history = Array.isArray(rule.history) ? rule.history : [];
+    const snapshot = history[history.length - 1]?.snapshot;
+    if (!snapshot) return;
+    if (automationSaveInFlight.current || emailGroupsLoading) return;
+    const ownerEpoch = automationSessionEpoch.current;
+    setAutomationSaveError("");
+    if (!(await loadEmailGroups()) || ownerEpoch !== automationSessionEpoch.current) return;
+    setEditingRule(rule);
+    setTriggers(snapshot.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
+    setActions(snapshot.actions || [{ action_type: "", action_config: {} }]);
+    const nextForm = {
+      name: snapshot.name || rule.name || "",
+      enabled: snapshot.enabled !== false,
+      priority: snapshot.priority || 0,
+      group: snapshot.group || rule.group || ""
+    };
+    setFormData(nextForm);
+    automationEditorBaseline.current = JSON.stringify({
+      formData: nextForm,
+      triggers: snapshot.triggers || [],
+      actions: snapshot.actions || []
     });
     setAutomationDraftParked(false);
     setIsDialogOpen(true);
@@ -1048,6 +1351,10 @@ export default function AdminSettings() {
     // snapshot, so an expired capability fails before dispatch instead of
     // sending a stale credential to the server. An expired authorization
     // re-locks Admin Settings so the message's instruction is actionable.
+    if (currentUser?.admin_permissions?.read_only === true) {
+      setAutomationSaveError("Read-only admin — saves are disabled for this account.");
+      return;
+    }
     const writeCapability = getStoredAdminSettingsCapability();
     if (!writeCapability) {
       setPasswordError("Your Admin Settings authorization expired. Sign in again to continue.");
@@ -1059,6 +1366,7 @@ export default function AdminSettings() {
     const saveData = {
       ...formData,
       name: String(formData.name || "").trim(),
+      group: String(formData.group || "").trim(),
       triggers,
       actions: actions.map(action => action.action_config?.target_work_order_id ? {
         ...action, action_config: { ...action.action_config, target_work_order_id: destinationWorkOrderId(action.action_config.target_work_order_id) },
@@ -1342,6 +1650,10 @@ export default function AdminSettings() {
     // Check stored authorization before acquiring the operation lock: an
     // expired capability must re-lock, never fence the panel behind an
     // unverifiable write that was never dispatched.
+    if (currentUser?.admin_permissions?.read_only === true) {
+      setAutomationSaveError("Read-only admin — saves are disabled for this account.");
+      return;
+    }
     const writeCapability = getStoredAdminSettingsCapability();
     if (!writeCapability) {
       setPasswordError("Your Admin Settings authorization expired. Sign in again to continue.");
@@ -1369,6 +1681,7 @@ export default function AdminSettings() {
       : updateAutomationRuleIfUnchanged({ record: rule,
           nextFields: { enabled: operation.enabled }, exactVersion: false, adminCapability: writeCapability,
           label: `Automation Rule ${operation.name} enabled state` }));
+
     // A timeout does not cancel a server write. Late receipts never release the
     // fence or overwrite a newer snapshot. They only permit a new review.
     const settled = write.then(result => {
@@ -1418,6 +1731,21 @@ export default function AdminSettings() {
   };
   const handleDelete = (rule) => runAutomationOperation("delete", rule);
   const toggleEnabled = (rule) => runAutomationOperation("toggle", rule);
+  const approveRule = async (rule) => {
+    if (currentUser?.admin_permissions?.read_only === true) {
+      setAutomationSaveError("Read-only admin — saves are disabled for this account.");
+      return;
+    }
+    const writeCapability = getStoredAdminSettingsCapability();
+    if (!writeCapability) return;
+    try {
+      const saved = await updateAutomationRuleIfUnchanged({
+        record: rule,
+        nextFields: { approval_status: 'approved' }, adminCapability: writeCapability,
+      });
+      if (saved?.id) setAutomations(prev => prev.map(r => r.id === saved.id ? saved : r));
+    } catch (err) { setPauseError(`Rule "${rule?.name || rule?.id}" could not be approved: ${err?.message || err}`); }
+  };
 
   const reconcileAutomationOperation = async (acknowledge = false) => {
     const operation = automationOperationRef.current;
@@ -1505,6 +1833,47 @@ export default function AdminSettings() {
 
   // Trigger helpers
   const addTrigger = () => setTriggers([...triggers, { trigger_type: "", trigger_condition: {}, logic: "or" }]);
+
+  const [condTest, setCondTest] = useState(null);
+  const [condTestBusy, setCondTestBusy] = useState(false);
+  const transferRuleOwner = async (rule, owner) => {
+    if (currentUser?.admin_permissions?.read_only === true) {
+      setAutomationSaveError("Read-only admin — saves are disabled for this account.");
+      return;
+    }
+    const writeCapability = getStoredAdminSettingsCapability();
+    if (!writeCapability || !rule?.id) return;
+    try {
+      const saved = await updateAutomationRuleIfUnchanged({
+        record: rule, nextFields: { owner }, exactVersion: true,
+        adminCapability: writeCapability, label: `Automation Rule ${rule.name || rule.id}`,
+      });
+      setAutomations(prev => prev.map(r => r.id === saved.id ? saved : r));
+    } catch { /* leave current value */ }
+  };
+
+  const runConditionTest = async () => {
+    if (condTestBusy) return;
+    const t = triggers.find((x) => x?.trigger_type);
+    if (!t) { setCondTest("Pick a trigger first."); return; }
+    const entity = entityForTrigger(t.trigger_type);
+    if (!entity || !staffEntities[entity]) { setCondTest("No record list to test against for this trigger."); return; }
+    setCondTestBusy(true); setCondTest(null);
+    try {
+      const rows = await staffEntities[entity].list("-created_date", 25).catch(() => []);
+      const conds = Object.entries(t.trigger_condition || {}).filter(([, v]) => v != null && v !== "");
+      const match = (row) => conds.every(([f, v]) => {
+        const rv = row?.[f];
+        if (rv == null) return false;
+        return String(rv) === String(v) || String(rv).toLowerCase().includes(String(v).toLowerCase());
+      });
+      const hits = rows.filter(match).length;
+      setCondTest(conds.length
+        ? `${hits} of ${rows.length} recent ${entity} records match these conditions (preview only — no actions ran).`
+        : `${rows.length} recent ${entity} records would fire this trigger (no conditions set — preview only).`);
+    } catch { setCondTest("Could not load records for the test."); }
+    finally { setCondTestBusy(false); }
+  };
   const removeTrigger = (index) => triggers.length > 1 && setTriggers(triggers.filter((_, i) => i !== index));
   const updateTrigger = (index, field, value) => {
     const updated = [...triggers];
@@ -1548,6 +1917,34 @@ export default function AdminSettings() {
     setActions(draft.actions);
     setAutomationSaveError("");
   };
+  const ruleOrphanedTargets = (rule) => {
+    const missing = [];
+    for (const a of rule.actions || []) {
+      const config = a.action_config || {};
+      if (a.action_type === "send_email") {
+        for (const r of config.recipients || []) {
+          if (r?.type === "email_group" && r.value && !emailGroups.some((g) => g.id === r.value)) missing.push("email group");
+        }
+      }
+      if (a.action_type === "assign_to" && config.assignee && !TEAM_MEMBERS.includes(config.assignee)) missing.push(`assignee "${config.assignee}"`);
+      if (a.action_type === "change_stage" && config.stage && !STAGES.some((st) => st.value === config.stage)) missing.push("target stage");
+      if (a.action_type === "create_rider" && config.rider_stage && !STAGES.some((st) => st.value === config.rider_stage)) missing.push("rider stage");
+    }
+    return [...new Set(missing)];
+  };
+
+  const describeAutomationRule = (rule) => {
+    const triggers = (rule.triggers || []).map((t) => {
+      const label = TRIGGER_TYPES.find((x) => x.value === t.trigger_type)?.label || t.trigger_type;
+      const filters = Object.values(t.trigger_condition || {}).filter((v) => v != null && v !== "").length;
+      return filters ? `${label} (filtered)` : label;
+    });
+    const actions = (rule.actions || []).map((a) => ACTION_TYPES.find((x) => x.value === a.action_type)?.label || a.action_type);
+    const when = triggers.length ? `When ${triggers.join(" or ")}` : "When triggered";
+    const then = actions.length ? `then ${actions.join(" and ")}` : "no action is set up yet";
+    return `${when}  -  ${then}${rule.enabled === false ? " (currently turned off)" : ""}.`;
+  };
+
   const groupedTriggers = TRIGGER_TYPES.filter(t => getTriggerSupportedActions(t.value)).reduce((acc, trigger) => {
     if (!acc[trigger.category]) acc[trigger.category] = [];
     acc[trigger.category].push(trigger);
@@ -1586,6 +1983,75 @@ export default function AdminSettings() {
     return sortDirection === "asc" ? comparison : -comparison;
   });
 
+  const loadAutomationPauseState = async () => {
+    try {
+      const row = await loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "automations_paused", label: "Automation pause state" });
+      loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "notificationQuietHours", label: "Notification quiet hours" })
+        .then((qh) => {
+          setQuietSettingRow(qh);
+          const v = qh?.setting_value;
+          if (v) {
+            setQuietEnabled(v.enabled === true);
+            if (v.start) setQuietStart(v.start);
+            if (v.end) setQuietEnd(v.end);
+          }
+        }).catch(() => null);
+      setPauseSettingRow(row || null);
+      setAutomationsPaused(row?.setting_value?.paused === true);
+    } catch { /* fail open: leave current state */ }
+  };
+  useEffect(() => {
+    if (!isUnlocked) return;
+    void loadAutomationPauseState();
+    // Open punch-exception count -> nav badge on the Time Clock tab.
+    staffEntities.TimeClockPunchException.filter({ status: "open" })
+      .then((rows) => setOpenExceptionCount(Array.isArray(rows) ? rows.length : 0))
+      .catch(() => setOpenExceptionCount(0));
+    staffEntities.SyncConflict.filter({ status: "open" })
+      .then((rows) => setOpenConflictCount(Array.isArray(rows) ? rows.length : 0))
+      .catch(() => setOpenConflictCount(0));
+  }, [isUnlocked]);
+
+  const toggleAutomationPause = async () => {
+    if (pauseBusy) return;
+    setPauseBusy(true); setPauseError("");
+    const next = !automationsPaused;
+    try {
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: staffEntities.GlobalSettings,
+        loadedRecord: pauseSettingRow,
+        settingKey: "automations_paused",
+        nextValue: { paused: next, paused_at: new Date().toISOString() },
+        label: "Automation pause state",
+      });
+      setPauseSettingRow(saved);
+      setAutomationsPaused(next);
+    } catch (err) {
+      setPauseError(err?.message || "Pause state could not be saved.");
+      await loadAutomationPauseState().catch(() => null);
+    } finally {
+      setPauseBusy(false);
+    }
+  };
+
+  const saveQuietHours = async (patch) => {
+    if (quietBusy) return;
+    setQuietBusy(true);
+    try {
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: staffEntities.GlobalSettings,
+        loadedRecord: quietSettingRow,
+        settingKey: "notificationQuietHours",
+        nextValue: { enabled: patch.enabled ?? quietEnabled, start: patch.start ?? quietStart, end: patch.end ?? quietEnd },
+        label: "Notification quiet hours",
+      });
+      setQuietSettingRow(saved);
+      if (patch.enabled !== undefined) setQuietEnabled(patch.enabled);
+      if (patch.start) setQuietStart(patch.start);
+      if (patch.end) setQuietEnd(patch.end);
+    } catch (err) { setPauseError(`Quiet hours not saved: ${err?.message || err}`); } finally { setQuietBusy(false); }
+  };
+
   const handleSort = (field) => {
     if (sortBy === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -1594,6 +2060,30 @@ export default function AdminSettings() {
       setSortDirection("asc");
     }
   };
+
+  const uncoveredTriggerTypes = TRIGGER_TYPES.filter((t) =>
+    getTriggerSupportedActions(t.value) &&
+    !automations.some((r) => r.enabled !== false && (r.triggers || []).some((tr) => tr.trigger_type === t.value))
+  );
+
+  const sig = (list, key) => [...new Set((list || []).map((x) => x?.[key]).filter(Boolean))].sort().join("|");
+  const currentRuleSig = `${sig(triggers, "trigger_type")}->${sig(actions, "action_type")}`;
+  const nearDuplicateRule = currentRuleSig !== "->" ? automations.find((rule) =>
+    rule.id !== editingRule?.id &&
+    `${sig(rule.triggers, "trigger_type")}->${sig(rule.actions, "action_type")}` === currentRuleSig
+  ) : null;
+
+  const visibleAutomations = sortedAutomations.filter((rule) => {
+    const isEnabled = rule.enabled !== false;
+    if (ruleFilter === "enabled" && !isEnabled) return false;
+    if (ruleFilter === "disabled" && isEnabled) return false;
+    const q = ruleSearch.trim().toLowerCase();
+    if (!q) return true;
+    const trigger = TRIGGER_TYPES.find(t => t.value === (rule.triggers?.[0]?.trigger_type || ""));
+    const action = ACTION_TYPES.find(t => t.value === (rule.actions?.[0]?.action_type || ""));
+    return [rule.name, trigger?.label, trigger?.category, action?.label]
+      .filter(Boolean).join(" ").toLowerCase().includes(q);
+  });
 
   const renderRecordDestination = (config, index) => needsRecordDestination && (
     <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
@@ -1626,6 +2116,7 @@ export default function AdminSettings() {
                 </div>
               </div>
               <Switch 
+                aria-label="Use AI for this action"
                 checked={config.use_ai === true} 
                 onCheckedChange={(val) => updateAction(index, "use_ai", val)} 
               />
@@ -1732,7 +2223,7 @@ export default function AdminSettings() {
       case "set_asap":
         return (
           <div className="flex items-center gap-2 mt-2">
-            <Switch checked={config.asap === true} onCheckedChange={(val) => updateAction(index, "asap", val)} />
+            <Switch aria-label="Toggle ASAP" checked={config.asap === true} onCheckedChange={(val) => updateAction(index, "asap", val)} />
             <Label className="text-sm">{config.asap ? "Turn ASAP ON" : "Turn ASAP OFF"}</Label>
           </div>
         );
@@ -1786,7 +2277,7 @@ export default function AdminSettings() {
       case "create_rider":
         return (
           <div className="space-y-2 mt-2">
-            <Input placeholder="Rider title (optional — defaults to 'Work order title - Rider')" value={config.title || ""} onChange={(e) => updateAction(index, "title", e.target.value)} />
+            <Input placeholder="Rider title (optional - defaults to 'Work order title - Rider')" value={config.title || ""} onChange={(e) => updateAction(index, "title", e.target.value)} />
             <Select value={config.rider_stage || ""} onValueChange={(val) => updateAction(index, "rider_stage", val)}>
               <SelectTrigger><SelectValue placeholder="Rider stage (defaults to current stage)" /></SelectTrigger>
               <SelectContent>
@@ -1802,7 +2293,7 @@ export default function AdminSettings() {
         return (
           <div className="flex items-center gap-2 mt-2">
             <Input type="number" placeholder="1" value={config.priority || ""} onChange={(e) => updateAction(index, "priority", e.target.value)} className="w-24" />
-            <Label className="text-sm text-gray-600">Position in list — lower numbers sit higher</Label>
+            <Label className="text-sm text-gray-600">Position in list - lower numbers sit higher</Label>
           </div>
         );
       
@@ -1821,11 +2312,19 @@ export default function AdminSettings() {
       setPasswordError("Admin face verification could not be completed safely. Please use your password.");
       return;
     }
+    if (!sessionToken) {
+      setPasswordError("Face ID needs an active Time Clock sign-in on this device. Sign in with your username and password to start one.");
+      return;
+    }
+    if (currentUser?.email && String(matched.email || "").toLowerCase() !== String(currentUser.email).toLowerCase()) {
+      setPasswordError("This face belongs to a different admin than the signed-in session. Sign in again as that user.");
+      return;
+    }
 
     setIsVerifying(true);
     setPasswordError("");
     try {
-      const accessRes = await base44.functions.invoke("issueAdminSettingsAccess", { face_descriptor: descriptor });
+      const accessRes = await base44.functions.invoke("issueAdminSettingsAccess", { session_token: sessionToken, face_descriptor: descriptor });
       const accessData = accessRes?.data || accessRes;
       if (!accessData?.success || !accessData?.capability || String(accessData?.user?.id || '') !== String(matched.id || '')) {
         throw new Error(accessData?.error || "Admin face could not be verified by the server.");
@@ -1833,6 +2332,30 @@ export default function AdminSettings() {
       applyAdminAccess(accessData);
     } catch (error) {
       setPasswordError(error?.response?.data?.error || error?.message || "Admin face verification failed.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  // QR badge arm - the same TIMECLOCK2 badge the kiosk accepts identifies an
+  // admin here too; the backend verifies it server-side before issuing.
+  const handleBadgeScanned = async (decodedText) => {
+    const code = String(decodedText || "").trim();
+    if (!code.startsWith("TIMECLOCK2:")) {
+      setPasswordError("This is an old or invalid Time Clock badge. Generate a new secure badge from Time Clock Settings.");
+      return;
+    }
+    setIsVerifying(true);
+    setPasswordError("");
+    try {
+      const accessRes = await base44.functions.invoke("issueAdminSettingsAccess", { badge_code: code });
+      const accessData = accessRes?.data || accessRes;
+      if (!accessData?.success || !accessData?.capability) {
+        throw new Error(accessData?.error || "Badge could not be verified by the server.");
+      }
+      applyAdminAccess(accessData);
+    } catch (error) {
+      setPasswordError(error?.response?.data?.error || error?.message || "Badge verification failed.");
     } finally {
       setIsVerifying(false);
     }
@@ -1848,7 +2371,7 @@ export default function AdminSettings() {
               <Settings className="w-8 h-8 text-purple-700" />
             </div>
             <h2 className="text-xl font-bold text-gray-800">Admin Settings</h2>
-            <p className="text-sm text-gray-500 mt-1">Use Face ID or enter your credentials</p>
+            <p className="text-sm text-gray-500 mt-1">{IDENTIFY_CAMERA_BLURB}</p>
           </div>
 
           <div className="space-y-4">
@@ -1856,6 +2379,7 @@ export default function AdminSettings() {
             <FaceRecognition
               allUsers={allUsers}
               onRecognized={handleFaceRecognized}
+              onQrScan={handleBadgeScanned}
             />
 
             {passwordError && <p className="text-red-500 text-sm text-center">{passwordError}</p>}
@@ -1904,6 +2428,19 @@ export default function AdminSettings() {
               {isVerifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Unlock Admin Settings
             </Button>
+            {currentUser && currentUser.role !== "admin" && (
+              <div className="border-t border-gray-100 pt-3 text-center">
+                <p className="text-xs text-gray-500">Signed in as {currentUser.email} — this account is not an admin.</p>
+                {accessRequestState === "sent" ? (
+                  <p className="mt-1 text-xs font-medium text-green-600">Access request sent — an admin will review it.</p>
+                ) : (
+                  <Button variant="link" size="sm" disabled={accessRequestState === "busy"} onClick={submitAccessRequest}
+                    className="text-xs text-indigo-600">
+                    {accessRequestState === "busy" ? "Sending…" : accessRequestState === "error" ? "Request failed — try again" : "Request admin access"}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1911,22 +2448,174 @@ export default function AdminSettings() {
   }
 
   return (
-    <div ref={adminScrollRef} data-admin-scroll-area className="min-h-full w-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto p-3 sm:p-6">
+    <div ref={adminScrollRef} data-admin-scroll-area id="admin-print-root" className="min-h-full w-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto p-3 sm:p-6">
       <div className="mx-auto w-full min-w-0 max-w-6xl pb-8">
-        <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="w-full min-w-0 max-w-full space-y-6">
-          <div className="clay-card w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2" style={{ background: '#FEE2E2' }}>
-            <AdminSettingsSearch isAdmin={isAdmin} currentUser={currentUser} onNavigate={handleAdminTabChange} />
+        {(deniedDeepLinkTab || deniedDeepLinkSubtab) && (
+          <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800" role="status">
+            {deniedDeepLinkTab
+              ? `The Admin page "${requestedDeepLinkTab}" isn't available for your account  -  showing ${resolvedTabLabel} instead.`
+              : `The Admin sub-page "${requestedDeepLinkSubtab}" isn't available for your account.`}
+          </div>
+        )}
+        {(() => {
+          const tabLabel = activeAdminGroup.tabs.find((t) => t.value === selectedAdminTab)?.label || "";
+          const SUBTAB_LABELS = { entries: "Time Entries", reports: "Reports", pto: "PTO Policies", overtime: "Overtime Rules",
+            backup: "Data Backup", client_trash: "Client Trash", order_trash: "Order Trash" };
+          const subLabel = SUBTAB_LABELS[selectedAdminSubtab] || "";
+          const crumbs = ["Admin", activeAdminGroup.label, tabLabel, subLabel].filter(Boolean);
+          return (
+            <nav aria-label="Breadcrumb" className="mb-2 text-xs text-gray-500">
+              {crumbs.map((c, i) => (
+                <span key={i}>
+                  {i > 0 && <span className="mx-1 text-gray-300">/</span>}
+                  <span className={i === crumbs.length - 1 ? "font-semibold text-gray-800" : ""}>{c}</span>
+                </span>
+              ))}
+            </nav>
+          );
+        })()}
+        <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Admin overview">
+          <div className="rounded-lg border border-gray-200 bg-white/70 px-3 py-2">
+            <p className="text-[11px] text-gray-500">Automation rules</p>
+            <p className="text-lg font-bold text-gray-800">{automations.length}
+              <span className="ml-1 text-xs font-medium text-green-700">{automations.filter(r => r.enabled !== false).length} on</span>
+            </p>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-white/70 px-3 py-2">
+            <p className="text-[11px] text-gray-500">Open punch exceptions</p>
+            <p className={`text-lg font-bold ${openExceptionCount ? "text-red-700" : "text-gray-800"}`}>{openExceptionCount}</p>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-white/70 px-3 py-2">
+            <p className="text-[11px] text-gray-500">Sync conflicts</p>
+            <p className={`text-lg font-bold ${openConflictCount ? "text-amber-700" : "text-gray-800"}`}>{openConflictCount}</p>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-white/70 px-3 py-2">
+            <p className="text-[11px] text-gray-500">Automations</p>
+            <p className={`text-lg font-bold ${automationsPaused ? "text-red-700" : "text-green-700"}`}>{automationsPaused ? "PAUSED" : "Live"}</p>
+          </div>
+        </div>
+        <style>{`@media print {
+          #admin-print-root button, #admin-print-root nav, #admin-print-root [role="tablist"],
+          #admin-print-root input, #admin-print-root select, #admin-print-root [role="dialog"],
+          #admin-print-root [role="alertdialog"] { display: none !important; }
+          #admin-print-root .clay-card { break-inside: avoid; }
+          #admin-print-root table { font-size: 11px; }
+        }`}</style>
+        {offline && (
+          <div className="mb-3 rounded-lg border border-red-400 bg-red-100 px-3 py-2 text-xs font-semibold text-red-900" role="alert">
+            You appear to be offline  -  admin changes will not save until your connection returns.
+          </div>
+        )}
+        {(() => {
+          const failingRules = automations.filter(r => Array.isArray(r.recent_runs) && r.recent_runs.slice(-3).length === 3 && r.recent_runs.slice(-3).every(x => x?.status === 'error'));
+          const checks = [
+            { ok: !automationsPaused, label: automationsPaused ? "Automations paused" : "Automations running" },
+            { ok: emailGroups.length > 0, label: emailGroups.length ? `${emailGroups.length} email group${emailGroups.length === 1 ? "" : "s"}` : "No email groups" },
+            { ok: uncoveredTriggerTypes.length === 0, label: uncoveredTriggerTypes.length ? `${uncoveredTriggerTypes.length} uncovered trigger type${uncoveredTriggerTypes.length === 1 ? "" : "s"}` : "All triggers covered" },
+            { ok: failingRules.length === 0, label: failingRules.length ? `${failingRules.length} rule${failingRules.length === 1 ? "" : "s"} failing` : "No failing rules" },
+          ];
+          return (
+            <div className="mb-3 flex flex-wrap gap-1.5" aria-label="Setup checks">
+              {checks.map((c) => (
+                <span key={c.label} className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${c.ok ? "border-green-300 bg-green-50 text-green-800" : "border-amber-300 bg-amber-50 text-amber-800"}`}>
+                  {c.ok ? "OK" : "!"} {c.label}
+                </span>
+              ))}
+            </div>
+          );
+        })()}
+        {!tourSeen && (
+          <div className="mb-3 rounded-xl border border-indigo-200 bg-indigo-50/70 p-3" role="note" aria-label="Admin quick tour">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-indigo-900">New to Admin? Three things to know:</p>
+                <ol className="mt-1 list-decimal pl-4 text-xs text-indigo-800 space-y-0.5">
+                  <li><b>Ctrl+K</b> or the search box jumps to any admin page or setting.</li>
+                  <li>Tabs are grouped by job — People, Work, Integrations, Permitting, System.</li>
+                  <li>Green setup-check chips above flag anything missing; fix amber ones first.</li>
+                </ol>
+              </div>
+              <Button type="button" size="sm" variant="ghost" className="h-7 text-xs text-indigo-700"
+                onClick={() => { setTourSeen(true); try { localStorage.setItem("admin_tour_seen", "1"); } catch { /* ignore */ } }}>
+                Got it
+              </Button>
+            </div>
+          </div>
+        )}
+        <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className={`w-full min-w-0 max-w-full space-y-6 ${adminSidebar ? "lg:flex lg:items-start lg:gap-4 lg:space-y-0" : ""}`}>
+          <div className={`clay-card sticky top-0 z-20 w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2 shadow-sm ${adminSidebar ? "lg:w-56 lg:shrink-0" : ""}`} style={{ background: '#FEE2E2' }}>
+            <div className="flex items-start gap-2">
+              <div className="min-w-0 flex-1"><AdminSettingsSearch isAdmin={isAdmin} currentUser={currentUser} onNavigate={handleAdminTabChange} /></div>
+              <Button type="button" variant="outline" size="sm" className="shrink-0 gap-1 text-xs"
+                onClick={() => { setReportMsg(""); setReportOpen(true); }}
+                aria-label="Report an issue or idea">
+                <Flag className="h-3.5 w-3.5" aria-hidden="true" /> Report
+              </Button>
+            </div>
             {capabilityExpiryLabel && (
               <p data-admin-capability-expiry className="px-2 pb-1 text-right text-[11px] font-medium text-red-900/60">
                 Admin authorization expires at {capabilityExpiryLabel}
               </p>
             )}
-            <div ref={categoryScrollerRef} role="group" aria-label="Admin navigation categories" className="flex w-full min-w-0 max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain border-b border-red-200/70 pb-2 [scrollbar-width:thin]">
+              <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Report an issue or idea</DialogTitle></DialogHeader>
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <Label className="text-xs">Short title</Label>
+                    <Input value={reportDraft.title} onChange={(e) => setReportDraft(d => ({ ...d, title: e.target.value }))} placeholder="What happened or what would help?" className="mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Kind</Label>
+                    <Select value={reportDraft.type} onValueChange={(v) => setReportDraft(d => ({ ...d, type: v }))}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="bug">Something is broken</SelectItem>
+                        <SelectItem value="improvement">Could be better</SelectItem>
+                        <SelectItem value="feature">New idea</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Details</Label>
+                    <Textarea rows={4} value={reportDraft.description} onChange={(e) => setReportDraft(d => ({ ...d, description: e.target.value }))} placeholder="Steps, what you expected, which page you were on…" className="mt-1" />
+                  </div>
+                  {reportMsg && <p className={`text-xs ${reportMsg.startsWith("Saved") ? "text-emerald-600" : "text-red-600"}`}>{reportMsg}</p>}
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => setReportOpen(false)}>Cancel</Button>
+                    <Button type="button" size="sm" disabled={reportBusy || !reportDraft.title.trim() || !sessionToken}
+                      onClick={async () => {
+                        setReportBusy(true); setReportMsg("");
+                        try {
+                          await createFeatureReportWithRecovery({
+                            data: { title: reportDraft.title.trim(), type: reportDraft.type, description: reportDraft.description.trim() },
+                            sessionToken,
+                            label: "Admin feedback",
+                          });
+                          setReportMsg("Saved — thank you.");
+                          setReportDraft({ title: "", type: "bug", description: "" });
+                        } catch (err) { setReportMsg(err?.message || "Report could not be saved."); }
+                        finally { setReportBusy(false); }
+                      }}>
+                      {reportBusy ? "Saving…" : "Send report"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          <div ref={categoryScrollerRef} role="group" aria-label="Admin navigation categories" className={`flex w-full min-w-0 max-w-full ${adminSidebar ? "flex-col items-stretch gap-1 border-b-0" : "flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain border-b border-red-200/70"} pb-2 [scrollbar-width:thin]`}>
+              <button type="button" onClick={toggleSidebarNav}
+                className="hidden lg:inline-flex min-h-8 items-center justify-center rounded-lg border border-transparent bg-white/30 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-white/70"
+                title="Switch navigation layout">{adminSidebar ? "⇱ Top nav" : "⇲ Sidebar"}</button>
+              <button type="button" onClick={() => setMobileNavOpen(true)}
+                className="lg:hidden inline-flex min-h-8 items-center justify-center rounded-lg border border-red-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700"
+                aria-label="Open all admin pages">☰ Pages</button>
               {availableAdminGroups.map((group) => (
                 <button
                   key={group.id}
                   type="button"
                   data-admin-category={group.id}
+                  title={GROUP_HELP[group.id] || group.label}
                   aria-pressed={activeAdminGroup.id === group.id}
                   onClick={() => {
                     if (activeAdminGroup.id !== group.id) handleAdminTabChange(group.tabs[0].value);
@@ -1944,8 +2633,8 @@ export default function AdminSettings() {
                 </button>
               ))}
             </div>
-            <TabsList aria-label={`Admin ${activeAdminGroup.label} pages`} className="mt-2 grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 bg-transparent p-1 sm:grid-cols-3 lg:grid-cols-4">
-              {activeAdminGroup.tabs.map((tab) => {
+            <TabsList aria-label={`Admin ${activeAdminGroup.label} pages`} className={`mt-2 grid h-auto min-h-10 w-full min-w-0 max-w-full items-stretch gap-1 bg-transparent p-1 ${adminSidebar ? "grid-cols-1" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}>
+              {[...activeAdminGroup.tabs].sort((a, b) => (pinnedTabs.includes(b.value) ? 1 : 0) - (pinnedTabs.includes(a.value) ? 1 : 0)).map((tab) => {
                 const TabIcon = ADMIN_TAB_ICONS[tab.value];
                 return (
                   <TabsTrigger
@@ -1955,12 +2644,55 @@ export default function AdminSettings() {
                   >
                     {TabIcon && <TabIcon className="h-4 w-4 shrink-0" aria-hidden="true" />}
                     <span>{tab.label}</span>
+                    <button type="button" aria-label={pinnedTabs.includes(tab.value) ? `Unpin ${tab.label}` : `Pin ${tab.label}`}
+                      onClick={(e) => { e.stopPropagation(); togglePin(tab.value); }}
+                      className={`ml-0.5 text-[10px] leading-none ${pinnedTabs.includes(tab.value) ? "text-amber-500" : "text-gray-300 hover:text-amber-500"}`}>
+                      {pinnedTabs.includes(tab.value) ? "*" : "-"}
+                    </button>
+                    {tab.value === "timeclock" && openExceptionCount > 0 && (
+                      <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
+                        title={`${openExceptionCount} open punch exception${openExceptionCount === 1 ? "" : "s"}`}>
+                        {openExceptionCount}
+                      </span>
+                    )}
+                    {tab.value === "sync_conflicts" && openConflictCount > 0 && (
+                      <span className="ml-1 rounded-full bg-amber-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
+                        title={`${openConflictCount} unresolved sync conflict${openConflictCount === 1 ? "" : "s"}`}>
+                        {openConflictCount}
+                      </span>
+                    )}
                   </TabsTrigger>
                 );
               })}
             </TabsList>
           </div>
 
+          {mobileNavOpen && (
+            <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Admin pages">
+              <div className="absolute inset-0 bg-black/40" onClick={() => setMobileNavOpen(false)} />
+              <div className="absolute inset-x-0 bottom-0 max-h-[70vh] overflow-y-auto rounded-t-2xl bg-white p-4 shadow-xl">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-gray-800">All admin pages</p>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setMobileNavOpen(false)} className="h-7 text-xs">Close</Button>
+                </div>
+                {availableAdminGroups.map((group) => (
+                  <div key={group.id} className="mb-2">
+                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">{group.label}</p>
+                    <div className="grid grid-cols-2 gap-1">
+                      {group.tabs.map((tab) => (
+                        <button key={tab.value} type="button"
+                          onClick={() => { setMobileNavOpen(false); handleAdminTabChange(tab.value); }}
+                          className={`rounded-lg border px-2 py-2 text-left text-sm ${tab.value === selectedAdminTab ? "border-red-300 bg-red-50 font-semibold" : "border-gray-200 bg-white"}`}>
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className={adminSidebar ? "min-w-0 flex-1 space-y-6" : "contents"}>
           <AdminPanelContent value="users">
             <UserManagement />
           </AdminPanelContent>
@@ -1969,14 +2701,30 @@ export default function AdminSettings() {
             <>
               <AdminPanelContent value="timeclock">
                 <Tabs value={selectedAdminTab === "timeclock" ? selectedAdminSubtab : "entries"} onValueChange={(nextSubtab) => handleAdminTabChange("timeclock", nextSubtab)} className="min-w-0 space-y-4">
-                  <TabsList ref={(node) => { nestedTabListsRef.current.timeclock = node; }} aria-label="Time Clock administration" className="grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 p-1 sm:grid-cols-4">
+                  <TabsList ref={(node) => { nestedTabListsRef.current.timeclock = node; }} aria-label="Time Clock administration" className="grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 p-1 sm:grid-cols-4 lg:grid-cols-8">
                     <TabsTrigger value="entries" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Time Entries</TabsTrigger>
+                    <TabsTrigger value="live_status" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Live Status</TabsTrigger>
+                    <TabsTrigger value="pay_periods" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Pay Periods</TabsTrigger>
+                    <TabsTrigger value="punch_locations" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Punch Locations</TabsTrigger>
+                    <TabsTrigger value="devices" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Devices</TabsTrigger>
                     <TabsTrigger value="reports" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Reports</TabsTrigger>
                     <TabsTrigger value="pto" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">PTO Policies</TabsTrigger>
                     <TabsTrigger value="overtime" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Overtime Rules</TabsTrigger>
                   </TabsList>
                   <AdminPanelContent value="entries">
                     <TimeClockAdmin />
+                  </AdminPanelContent>
+                  <AdminPanelContent value="live_status">
+                    <TimeClockAdmin view="live_status" />
+                  </AdminPanelContent>
+                  <AdminPanelContent value="pay_periods">
+                    <TimeClockAdmin view="pay_periods" />
+                  </AdminPanelContent>
+                  <AdminPanelContent value="punch_locations">
+                    <TimeClockAdmin view="punch_locations" />
+                  </AdminPanelContent>
+                  <AdminPanelContent value="devices">
+                    <TimeClockAdmin view="devices" />
                   </AdminPanelContent>
                   <AdminPanelContent value="reports">
                     <TimeClockReportsDashboard />
@@ -2004,6 +2752,8 @@ export default function AdminSettings() {
                   </TabsList>
                     <AdminPanelContent value="backup">
                     <BackupManager />
+                    <DataExportPanel />
+                    <AssetMigrationPanel />
                   </AdminPanelContent>
                   <AdminPanelContent value="client_trash">
                     <ProjectTrash />
@@ -2057,6 +2807,9 @@ export default function AdminSettings() {
                 <PermittingTestSuite />
               </AdminPanelContent>
 
+              <AdminPanelContent value="integrations">
+                <IntegrationsPanel sessionToken={sessionToken} />
+              </AdminPanelContent>
               <AdminPanelContent value="smartsheet">
                 <SmartsheetSyncSettings sessionToken={sessionToken} />
               </AdminPanelContent>
@@ -2113,6 +2866,16 @@ export default function AdminSettings() {
               <GmailConnector sessionToken={sessionToken} />
               <div className="mt-6">
                 <EmailGroupsManager />
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <Input value={testEmailAddr} onChange={(e) => setTestEmailAddr(e.target.value)}
+                    placeholder="Send test notification to email..." type="email"
+                    className="h-8 w-60 text-xs" aria-label="Test email address" />
+                  <Button type="button" size="sm" variant="outline" disabled={testEmailBusy || !testEmailAddr.trim()}
+                    onClick={sendTestEmail} className="h-8 text-xs">
+                    {testEmailBusy ? "Sending..." : "Send test email"}
+                  </Button>
+                  {testEmailMsg && <span className="text-xs text-gray-600">{testEmailMsg}</span>}
+                </div>
               </div>
             </div>
 
@@ -2136,6 +2899,62 @@ export default function AdminSettings() {
               </div>
             )}
 
+            {automationsPaused && (
+              <div className="mb-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-semibold text-red-800" role="alert">
+                All automations are PAUSED  -  no rules will run until resumed.
+              </div>
+            )}
+            {pauseError && <div className="mb-2 text-xs text-red-600">{pauseError}</div>}
+            {uncoveredTriggerTypes.length > 0 && (
+              <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <span className="font-semibold">No active rule uses:</span>{" "}
+                {uncoveredTriggerTypes.map((t) => t.label).join(", ")}
+              </div>
+            )}
+            {(() => {
+              const cutoff = Date.now() - 90 * 86400e3;
+              const stale = automations.filter(r =>
+                r.enabled === false && !r.last_run_at && r.created_date && new Date(r.created_date) < cutoff
+              );
+              if (!stale.length) return null;
+              return (
+                <div className="mb-3 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs">
+                  <span className="font-semibold text-gray-800">Cleanup suggestions:</span>{" "}
+                  <span className="text-gray-600">{stale.length} disabled rule{stale.length === 1 ? "" : "s"} created 90+ days ago that never ran:</span>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {stale.slice(0, 6).map(r => (
+                      <span key={r.id} className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-0.5">
+                        <span className="text-gray-700">{r.name}</span>
+                        <button type="button" className="text-red-600 font-semibold" aria-label={`Delete stale rule ${r.name}`}
+                          onClick={() => setDeleteConfirm(r)}>x</button>
+                      </span>
+                    ))}
+                    {stale.length > 6 && <span className="text-gray-500">+{stale.length - 6} more</span>}
+                  </div>
+                </div>
+              );
+            })()}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <Input
+                value={ruleSearch}
+                onChange={(e) => setRuleSearch(e.target.value)}
+                placeholder="Search rules..."
+                className="h-8 w-44 text-xs"
+                aria-label="Search automation rules"
+              />
+              <span className="text-sm text-gray-500">Show:</span>
+              <div className="flex gap-1">
+                {[["all", "All"], ["enabled", "Enabled"], ["disabled", "Disabled"]].map(([value, label]) => (
+                  <Button key={value} type="button" size="sm"
+                    variant={ruleFilter === value ? "default" : "outline"}
+                    onClick={() => setRuleFilter(value)}
+                    className="h-7 text-xs">
+                    {label}
+                  </Button>
+                ))}
+              </div>
+              <span className="text-xs text-gray-400 ml-auto">{visibleAutomations.length} of {automations.length} rules</span>
+            </div>
             <div className="flex justify-between items-center mb-4">
               {/* Sort Controls */}
               <div className="flex items-center gap-2">
@@ -2180,11 +2999,36 @@ export default function AdminSettings() {
                   disabled={isLoading} aria-label="Refresh Automation rules (read-only)">
                   Refresh rules
                 </Button>
+                <Button type="button" size="sm" variant={automationsPaused ? "default" : "outline"}
+                  onClick={toggleAutomationPause} disabled={pauseBusy || automationSaving}
+                  className={automationsPaused ? "bg-red-600 text-white" : ""}
+                  aria-label={automationsPaused ? "Resume all automations" : "Pause all automations"}>
+                  {pauseBusy ? "Working..." : automationsPaused ? "Resume all" : "Pause all"}
+                </Button>
+                <div className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white/70 px-2 py-1" title="During quiet hours, automation emails are skipped">
+                  <label className="flex items-center gap-1 text-xs text-gray-600">
+                    <input type="checkbox" checked={quietEnabled} disabled={quietBusy}
+                      onChange={(e) => saveQuietHours({ enabled: e.target.checked })} />
+                    Quiet hours
+                  </label>
+                  <CcsTimeField value={quietStart} disabled={quietBusy || !quietEnabled}
+                    onChange={(e) => saveQuietHours({ start: e.target.value })}
+                    className="h-6 rounded border border-input bg-transparent px-1 text-xs" aria-label="Quiet hours start" />
+                  <span className="text-xs text-gray-400">to</span>
+                  <CcsTimeField value={quietEnd} disabled={quietBusy || !quietEnabled}
+                    onChange={(e) => saveQuietHours({ end: e.target.value })}
+                    className="h-6 rounded border border-input bg-transparent px-1 text-xs" aria-label="Quiet hours end" />
+                </div>
               <Button onClick={openNewRule} disabled={isLoading || automationLoadError || emailGroupsLoading || emailGroupsLoadError} className="clay-button border-none text-gray-800"
                 style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
                 <Plus className="w-5 h-5 mr-2" /> New Automation
               </Button>
               </div>
+              <p className="mt-1 text-right text-[10px] text-gray-400">
+                Global settings keys: <code>automations_paused</code> and <code>notificationQuietHours</code> (controls above);{" "}
+                <code>productStatusDrivesStage</code> = <code>off | suggest | auto</code> (reserved: product-status to work-order stage coupling).
+                Per-notification-type toggles are each rule's own Enabled flag - the trigger registry has no per-type switch.
+              </p>
             </div>
 
             {/* Stats are authoritative only after a complete successful read. */}
@@ -2244,7 +3088,10 @@ export default function AdminSettings() {
               </div>
             ) : (
               <div className="space-y-3">
-                {sortedAutomations.map((rule) => (
+                {visibleAutomations.length === 0 && (
+                  <div className="text-center py-6 text-sm text-gray-500">No rules match the current filter.</div>
+                )}
+                {visibleAutomations.map((rule) => (
                   <div key={rule.id} className={`clay-card p-4 ${!rule.enabled ? 'opacity-60' : ''}`}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -2256,9 +3103,37 @@ export default function AdminSettings() {
                           <Badge className="text-xs" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #FFD6E8 100%)' }}>
                             {rule.actions?.length || 0} action{(rule.actions?.length || 0) !== 1 ? 's' : ''}
                           </Badge>
+                          {rule.approval_status === 'pending' && (
+                            <Badge className="text-xs bg-amber-500 text-white border border-amber-600" title="Proposed rule — never runs until approved">
+                              Pending approval
+                            </Badge>
+                          )}
                           {!ruleIsRunnable(rule) && (
                             <Badge className="text-xs bg-amber-100 text-amber-800 border border-amber-300">
                               Won't run — not wired yet
+                            </Badge>
+                          )}
+                          {(() => {
+                            const recent = Array.isArray(rule.recent_runs) ? rule.recent_runs.slice(-3) : [];
+                            return recent.length === 3 && recent.every((r) => r?.status === 'error') ? (
+                              <Badge className="text-xs bg-red-600 text-white border border-red-700">
+                                Failing  -  last 3 runs errored
+                              </Badge>
+                            ) : null;
+                          })()}
+                          {(() => {
+                            const recent = Array.isArray(rule.recent_runs) ? rule.recent_runs : [];
+                            const dayAgo = Date.now() - 86400e3;
+                            const firedToday = recent.filter((r) => Date.parse(r?.at || "") > dayAgo).length;
+                            return firedToday >= 10 ? (
+                              <Badge className="text-xs bg-purple-100 text-purple-800 border border-purple-300">
+                                High volume  -  {firedToday} runs in 24h
+                              </Badge>
+                            ) : null;
+                          })()}
+                          {ruleOrphanedTargets(rule).length > 0 && (
+                            <Badge className="text-xs bg-red-100 text-red-800 border border-red-300">
+                              Missing: {ruleOrphanedTargets(rule).join(", ")}
                             </Badge>
                           )}
                         </div>
@@ -2277,11 +3152,49 @@ export default function AdminSettings() {
                           ))}
                           {(rule.actions?.length || 0) > 2 && <span className="text-gray-400">+{rule.actions.length - 2} more</span>}
                         </div>
+                        <p className="mt-2 text-xs text-gray-500 italic">{describeAutomationRule(rule)}</p>
+                        <p className="mt-1 text-[11px] text-gray-400">
+                          {rule.last_run_at
+                            ? <>Last run {new Date(rule.last_run_at).toLocaleString()}  -  <span className={rule.last_run_status === 'error' ? 'text-red-600 font-medium' : rule.last_run_status === 'partial' ? 'text-amber-600 font-medium' : 'text-green-600 font-medium'}>{rule.last_run_status || 'success'}</span>{rule.last_run_detail ? ` (${rule.last_run_detail})` : ''}{rule.run_count ? `  -  ${rule.group && <Badge className="text-xs bg-indigo-100 text-indigo-700 border border-indigo-300 mr-1">{rule.group}</Badge>}
+                          {rule.run_count} runs` : ''}</>
+                            : 'Never run'}
+                        </p>
+                        <p className="text-[11px] text-gray-400">
+                          Added by {rule.created_by || 'unknown'}{rule.created_date ? `  -  ${new Date(rule.created_date).toLocaleDateString()}` : ''}
+                        </p>
+                        <label className="mt-0.5 flex items-center gap-1 text-[11px] text-gray-400">
+                          Owner:
+                          <select aria-label={`Transfer ownership of ${rule.name}`} value={rule.owner || ""}
+                            onChange={(e) => transferRuleOwner(rule, e.target.value)}
+                            className="rounded border border-gray-200 bg-white px-1 py-0 text-[11px] text-gray-700">
+                            <option value="">Unassigned</option>
+                            {TEAM_MEMBERS.map(m => <option key={m} value={m}>{m}</option>)}
+                          </select>
+                        </label>
                       </div>
                       <div className="flex items-center gap-2">
+                        {rule.approval_status === 'pending' && (
+                          <Button variant="outline" size="sm" disabled={!!automationOperation || automationSaving}
+                            onClick={() => approveRule(rule)} className="h-8 text-xs text-amber-700 border-amber-300">
+                            Approve
+                          </Button>
+                        )}
                         <Switch aria-label={`Toggle ${rule.name}`} disabled={!!automationOperation || automationSaving || !!automationUncertain} checked={rule.enabled} onCheckedChange={() => toggleEnabled(rule)} />
                         <Button variant="ghost" size="icon" aria-label={`Duplicate ${rule.name}`} disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => duplicateRule(rule)} className="h-8 w-8">
                           <Copy className="w-4 h-4 text-gray-500" />
+                        </Button>
+                        {(rule.history?.length || 0) > 0 && (
+                          <Button variant="ghost" size="icon" aria-label={`Restore previous version of ${rule.name}`}
+                            title={`Restore previous version (${rule.history.length} saved)`}
+                            disabled={emailGroupsLoading || emailGroupsLoadError}
+                            onClick={() => restoreRuleVersion(rule)} className="h-8 w-8">
+                            <RotateCcw className="w-4 h-4 text-purple-600" />
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon" aria-label={`Copy JSON for ${rule.name}`} title="Copy rule as JSON"
+                          disabled={emailGroupsLoading || emailGroupsLoadError}
+                          onClick={() => copyRuleJson(rule)} className="h-8 w-8">
+                          <Braces className="w-4 h-4 text-indigo-600" />
                         </Button>
                         <Button variant="ghost" size="icon" aria-label={`Edit ${rule.name}`} disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => openEditRule(rule)} className="h-8 w-8">
                           <Edit className="w-4 h-4 text-blue-600" />
@@ -2296,6 +3209,7 @@ export default function AdminSettings() {
               </div>
             )}
           </AdminPanelContent>
+          </div>
         </Tabs>
 
         {/* Create/Edit Dialog */}
@@ -2310,6 +3224,37 @@ export default function AdminSettings() {
             {ordinaryAutomationRecovery}
             {uncertainAutomationReview}
             <fieldset disabled={automationSaving} className="min-w-0 space-y-6 mt-4">
+              {draftRestored && !editingRule && (
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-xs text-blue-900">
+                  <span>Draft restored from your last unsaved rule.</span>
+                  <button type="button" className="font-semibold underline" onClick={() => {
+                    try { localStorage.removeItem(AUTOMATION_DRAFT_KEY); } catch {}
+                    setFormData({ name: "", enabled: true, priority: 0, group: "" });
+                    setTriggers([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
+                    setActions([{ action_type: "", action_config: {} }]);
+                    setDraftRestored(false);
+                  }}>Discard draft</button>
+                </div>
+              )}
+              {!editingRule && (
+                <div className="mb-2">
+                  <button type="button" className="text-xs text-indigo-700 underline"
+                    onClick={() => setImportJsonText(importJsonText === null ? "" : null)}>
+                    Import from JSON
+                  </button>
+                  {importJsonText !== null && (
+                    <div className="mt-1 space-y-1">
+                      <Textarea value={importJsonText} onChange={(e) => setImportJsonText(e.target.value)}
+                        placeholder='Paste rule JSON: {"name":"...", "triggers":[...], "actions":[...]}'
+                        className="min-h-20 text-xs font-mono" />
+                      {importJsonError && <p className="text-xs text-red-600">{importJsonError}</p>}
+                      <Button type="button" size="sm" variant="outline" onClick={applyRuleJson} className="h-7 text-xs">
+                        Apply JSON
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
               {!editingRule && !formData.name && !triggers[0]?.trigger_type && (
                 <section aria-label="Automation starters" className="rounded-xl border border-blue-200 bg-blue-50 p-4">
                   <h3 className="font-semibold text-blue-950">Start with an example</h3>
@@ -2333,7 +3278,12 @@ export default function AdminSettings() {
                   <Label>Priority (lower = first)</Label>
                   <Input type="number" value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })} className="mt-1" />
                 </div>
-              </div>
+              </div>                <div>
+                  <Label>Group (optional)</Label>
+                  <Input value={formData.group || ""} onChange={(e) => setFormData({ ...formData, group: e.target.value })}
+                    placeholder="e.g., Payroll, Sales" className="mt-1" />
+                </div>
+
 
               {/* IF - Triggers */}
               <div className="clay-card p-4 bg-gradient-to-r from-orange-50 to-yellow-50">
@@ -2342,10 +3292,16 @@ export default function AdminSettings() {
                           <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-lg text-sm">WHEN</div>
                           <span className="text-gray-600 text-sm">this happens...</span>
                         </div>
+                        <Button variant="ghost" size="sm" onClick={runConditionTest} disabled={condTestBusy} className="h-7 text-xs">
+                          {condTestBusy ? "Testing…" : "Test conditions"}
+                        </Button>
                         <Button variant="ghost" size="sm" onClick={addTrigger} className="h-7 text-xs">
                           <Plus className="w-3 h-3 mr-1" /> Add Trigger
                         </Button>
                       </div>
+                      {condTest && (
+                        <p className="mt-2 rounded-md bg-sky-50 px-2 py-1 text-xs text-sky-800" role="status">{condTest}</p>
+                      )}
                 
                 <div className="space-y-4">
                   {triggers.map((trigger, index) => (
@@ -2382,6 +3338,9 @@ export default function AdminSettings() {
                           ))}
                         </SelectContent>
                       </Select>
+                      {TRIGGER_HELP[trigger.trigger_type] && (
+                        <p className="mt-1 text-xs text-blue-700">{TRIGGER_HELP[trigger.trigger_type]}</p>
+                      )}
 
                       {getTriggerNeedsStage(trigger.trigger_type) && (
                         <Select value={trigger.trigger_condition.stage || ""} onValueChange={(val) => updateTrigger(index, "stage", val)}>
@@ -2406,7 +3365,7 @@ export default function AdminSettings() {
                       {(WORKFLOW_ENGINE_TRIGGER_SET.has(trigger.trigger_type) || DEADLINE_TRIGGER_SET.has(trigger.trigger_type)) && (
                         <div className="flex flex-wrap gap-4 mt-2 pt-2 border-t border-orange-100">
                           <div className="flex items-center gap-1">
-                            <Switch checked={trigger.trigger_condition.is_asap === true} onCheckedChange={(v) => updateTrigger(index, "is_asap", v || undefined)} />
+                            <Switch aria-label="ASAP only" checked={trigger.trigger_condition.is_asap === true} onCheckedChange={(v) => updateTrigger(index, "is_asap", v || undefined)} />
                             <Label className="text-xs">ASAP Only</Label>
                           </div>
                           <div className="flex items-center gap-2">
@@ -2557,10 +3516,27 @@ export default function AdminSettings() {
 
                           {triggerHasOrderFilters(trigger.trigger_condition) && (
                             <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md p-2">
-                              Filters set — this rule only runs for orders matching them.
+                              Filters set - this rule only runs for orders matching them.
                             </div>
                           )}
                         </div>
+                      )}
+
+                      {trigger.trigger_type && (
+                        <details className="mt-2 rounded-md border border-slate-200 bg-slate-50/60 p-2 text-xs">
+                          <summary className="cursor-pointer font-medium text-slate-600">Advanced — check another record too</summary>
+                          <div className="mt-2 grid grid-cols-2 gap-2">
+                            <Input aria-label="Related entity" placeholder="Entity (e.g. WorkOrder)" value={trigger.trigger_condition.related_entity || ""}
+                              onChange={(e) => updateTrigger(index, "related_entity", e.target.value || undefined)} />
+                            <Input aria-label="Match field" placeholder="Match field (e.g. id)" value={trigger.trigger_condition.related_match_field || ""}
+                              onChange={(e) => updateTrigger(index, "related_match_field", e.target.value || undefined)} />
+                            <Input aria-label="Field to check" placeholder="Field on it (e.g. current_stage)" value={trigger.trigger_condition.related_field || ""}
+                              onChange={(e) => updateTrigger(index, "related_field", e.target.value || undefined)} />
+                            <Input aria-label="Required value" placeholder="Must equal (e.g. Approved)" value={trigger.trigger_condition.related_value || ""}
+                              onChange={(e) => updateTrigger(index, "related_value", e.target.value || undefined)} />
+                          </div>
+                          <p className="mt-1.5 text-[10px] text-slate-500">The rule only runs when the matching record's field equals this value. If the lookup fails, the rule stays quiet.</p>
+                        </details>
                       )}
 
                       {trigger.trigger_type && !getTriggerSupportedActions(trigger.trigger_type) && (
@@ -2573,7 +3549,7 @@ export default function AdminSettings() {
 
                   {triggers.some(t => t.logic === "and") && new Set(triggers.map(t => t.trigger_type).filter(Boolean)).size > 1 && (
                     <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
-                      AND only works when the triggers can happen at the same moment — different events each happen one at a time, so this combination may never match. Use OR, or pick triggers that can match together.
+                      AND only works when the triggers can happen at the same moment - different events each happen one at a time, so this combination may never match. Use OR, or pick triggers that can match together.
                     </div>
                   )}
                 </div>
@@ -2624,7 +3600,7 @@ export default function AdminSettings() {
                         {renderActionConfig(action, index)}
                         {action.action_type && triggers.some(t => t.trigger_type) && !actionRunsForTriggers(action.action_type, triggers) && (
                           <div className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
-                            This action can't run for the selected trigger(s) yet — it will be skipped.
+                            This action can't run for the selected trigger(s) yet - it will be skipped.
                           </div>
                         )}
                       </div>
@@ -2650,6 +3626,15 @@ export default function AdminSettings() {
                 <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
                   <p className="font-medium">Before saving:</p>
                   {builderProblems.map(problem => <p key={problem} className="mt-1">{problem}</p>)}
+                </div>
+              )}
+
+              {nearDuplicateRule && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
+                  <div className="flex items-center gap-2 text-amber-700 text-sm font-medium">
+                    <AlertTriangle className="w-4 h-4" />
+                    "{nearDuplicateRule.name}" already uses this exact trigger and action combination  -  you may be creating a duplicate.
+                  </div>
                 </div>
               )}
 

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { buildJobRegisterCsv } from '../../shared/corebridgeOfflineCsv.mjs';
 import { buildWorkOrderReconciliation } from '../../shared/workOrderReconciliation.mjs';
@@ -34,7 +35,7 @@ Deno.serve(async (req) => {
     if (req.method !== 'POST') {
       return Response.json({ error: 'POST is required.' }, { status: 405 });
     }
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const actor = await authenticateSignShopSession(base44, body?.session_token);
     if (actor?.role !== 'admin') {
@@ -107,7 +108,7 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     const status = Number((error as any)?.status || 500);
-    const safeStatus = [400, 401, 403, 405, 409, 410, 502].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 405, 409, 410, 502, 429].includes(status) ? status : 500;
     console.error('CCS offline job register failed:', (error as any)?.message || error);
     return Response.json({
       error: safeStatus === 500

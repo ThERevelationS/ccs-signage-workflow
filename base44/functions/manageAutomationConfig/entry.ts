@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { verifyAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { assertAutomationStructure, recordDestinationIds } from '../../shared/automationRecordPolicy.mjs';
@@ -48,6 +49,11 @@ function cleanAutomationData(value: any) {
     triggers: data.triggers,
     actions: data.actions,
     priority: Number.isFinite(Number(data.priority)) ? Number(data.priority) : 0,
+    // Rule metadata — previously dropped by the field whitelist.
+    owner: typeof data.owner === 'string' ? data.owner.slice(0, 200) : undefined,
+    group: typeof data.group === 'string' ? data.group.slice(0, 120) : undefined,
+    approval_status: data.approval_status === 'pending' ? 'pending' : 'approved',
+    history: Array.isArray(data.history) ? data.history.slice(-10) : undefined,
   };
   if (JSON.stringify(cleaned).length > MAX_RULE_JSON) {
     throw Object.assign(new Error('Automation Rule is too large.'), { status: 400 });
@@ -57,7 +63,7 @@ function cleanAutomationData(value: any) {
 
 function cleanAutomationPatch(value: any, current: any) {
   const patch = value && typeof value === 'object' ? value : {};
-  const allowed = ['name', 'enabled', 'triggers', 'actions', 'priority'];
+  const allowed = ['name', 'enabled', 'triggers', 'actions', 'priority', 'owner', 'group', 'approval_status', 'history'];
   const proposed: any = {};
   for (const key of allowed) if (Object.prototype.hasOwnProperty.call(patch, key)) proposed[key] = patch[key];
   const merged = cleanAutomationData({ ...current, ...proposed });
@@ -80,7 +86,10 @@ function cleanEmailGroupData(value: any) {
   if (!emails.length || emails.some((email) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 320)) {
     throw Object.assign(new Error('Email group contains an invalid email address.'), { status: 400 });
   }
-  return { name, description: cleanDescription(data.description), emails };
+  const permission_sections = Array.isArray(data.permission_sections)
+    ? [...new Set(data.permission_sections.map((v: unknown) => String(v || '').trim().slice(0, 80)).filter(Boolean))].slice(0, 30)
+    : [];
+  return { name, description: cleanDescription(data.description), emails, permission_sections };
 }
 
 async function listRules(entity: any) {
@@ -245,7 +254,7 @@ async function updateGroup(Group: any, body: any) {
   const cleaned = cleanEmailGroupData({ ...current, ...(body?.next_fields || {}) });
   const duplicates = nameMatches(await listGroups(Group), cleaned.name, id);
   if (duplicates.length) throw Object.assign(new Error(`Another email group named “${cleaned.name}” already exists.`), { status: 409 });
-  const patch = { name: cleaned.name, description: cleaned.description, emails: cleaned.emails };
+  const patch = { name: cleaned.name, description: cleaned.description, emails: cleaned.emails, permission_sections: cleaned.permission_sections };
   const result = await Group.updateMany({ id, updated_date: expectedUpdatedDate }, { $set: patch });
   if (!result || result.updated !== 1) throw Object.assign(new Error('Email group changed in another session.'), { status: 409 });
   const saved = await Group.get(id).catch(() => null);
@@ -272,7 +281,7 @@ async function deleteGroup(Group: any, Rule: any, body: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     await verifyAdminSettingsCapability(base44, body?.admin_capability);
 
@@ -292,7 +301,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Invalid automation configuration action.' }, { status: 400 });
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('manageAutomationConfig error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Automation configuration could not be changed safely.' : error?.message,

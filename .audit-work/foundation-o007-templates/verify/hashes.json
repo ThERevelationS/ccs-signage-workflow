@@ -1,0 +1,17 @@
+{
+  "baseline": {
+    "foundationTemplateModel.js": "3c7e383db453",
+    "FoundationTemplateDialog.jsx": "4fd2231d3787",
+    "foundationTemplateService.js": "9e238ed1490b",
+    "foundationAssemblyModel.js": "94e3bb9303c7",
+    "FoundationEstimator.jsx": "3cdd69e3276f",
+    "foundationDraftRecovery.js": "84e739062efb",
+    "foundationAiReview.js": "628acf4d7d84",
+    "convertToBrickStone.js": "3979d2d368ce",
+    "FoundationProject.jsonc": "1afcc6b33c74"
+  },
+  "candidates": {
+    "foundationTemplateModel.js": "e64c886d6d11",
+    "FoundationEstimator.jsx": "8fc53be5fc3e"
+  }
+}

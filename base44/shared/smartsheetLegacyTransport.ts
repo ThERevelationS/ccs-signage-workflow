@@ -22,7 +22,7 @@ async function readJson(response) {
 async function once(method, path, token, jsonBody) {
   const safePath = String(path || '').trim();
   if (!safePath.startsWith('/') || safePath.includes('://')) throw Object.assign(new Error('Invalid Smartsheet API path.'), { status: 400 });
-  const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), method === 'GET' ? 15_000 : 30_000);
+  const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), method === 'GET' ? 30_000 : 30_000);
   try {
     const response = await measuredSmartsheetFetch(`${API_BASE}${safePath}`, {
       method, headers: { Accept: 'application/json', Authorization: `Bearer ${token}`,

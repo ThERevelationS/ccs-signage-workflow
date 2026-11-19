@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/estimator/foundation/convertToBrickStone.js",
+      "content": "import { staffEntities } from \"@/components/staff/staffEntities\";\nimport { ensureIdempotentEntityCreate, newCreationRequestKey } from \"@/components/estimator/idempotentEntityCreate\";\n\n// Convert a Foundation project into a Brick & Stone draft (#77). Carries the\n// shared identity fields; geometry/materials stay at module defaults for\n// recalc, and the Foundation source is never modified. The optional\n// attemptRef holds a signature-stable creation_request_key so a double-click\n// or a lost response reuses the same draft instead of creating duplicates.\nexport async function convertFoundationToBrickStone({ project, attemptRef } = {}) {\n  if (!project?.id) throw new Error(\"Save the Foundation project before converting.\");\n  const sourceName = String(project.project_name || \"Foundation\").trim();\n  const payload = {\n    project_name: `${sourceName} (Brick & Stone)`,\n    client_name: String(project.client_name || \"\").trim(),\n    customer_id: String(project.customer_id || \"\").trim() || undefined,\n    estimate_number: String(project.estimate_number || \"\").trim() || undefined,\n    hyperlink: String(project.hyperlink || \"\").trim() || undefined,\n    status: \"draft\",\n    notes: `Converted from Foundation project \"${sourceName}\" (${project.id}). Re-enter masonry dimensions to calculate.`,\n  };\n  const signature = JSON.stringify(payload);\n  if (attemptRef && attemptRef.current?.signature !== signature) {\n    attemptRef.current = { signature, key: newCreationRequestKey(\"foundation_to_brick_stone\") };\n  }\n  const key = attemptRef?.current?.key || newCreationRequestKey(\"foundation_to_brick_stone\");\n  const created = await ensureIdempotentEntityCreate({\n    entity: staffEntities.BrickStoneProject,\n    keyField: \"creation_request_key\",\n    key,\n    data: payload,\n    label: \"Brick & Stone draft\",\n  });\n  if (!created?.id) throw new Error(\"Brick & Stone draft could not be verified.\");\n  return created;\n}",
+      "startLine": 1,
+      "endLine": 35,
+      "totalLines": 35,
+      "truncated": false
+    }
+  ]
+}

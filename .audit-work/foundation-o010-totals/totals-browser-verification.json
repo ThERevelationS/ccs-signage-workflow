@@ -1,0 +1,65 @@
+{
+ "results": [
+  {
+   "case": "totals identical: no advisory strip (no spurious fire)",
+   "ok": true
+  },
+  {
+   "case": "totals delta: Saved $X — current $Y advisory strip",
+   "ok": true
+  },
+  {
+   "case": "totals delta downward: minus sign + absolute delta",
+   "ok": true
+  },
+  {
+   "case": "totals eps: |delta| == 0.005 does not fire; 0.006 fires",
+   "ok": true
+  },
+  {
+   "case": "totals unsaved: null saved -> no strip",
+   "ok": true
+  },
+  {
+   "case": "totals blocked: saved total persists while current unavailable",
+   "ok": true
+  },
+  {
+   "case": "panel manual: no precedence note when no tier/engine",
+   "ok": true
+  },
+  {
+   "case": "panel tier: precedence note when applied tier shadows manual price",
+   "ok": true
+  },
+  {
+   "case": "panel tier-equal: no note when tier total matches baseline (no spurious fire)",
+   "ok": true
+  },
+  {
+   "case": "panel tier-unsaved: no note while tier applied but no saved total yet",
+   "ok": true
+  },
+  {
+   "case": "panel tier+override: note still fires — tier shadows both manual fields",
+   "ok": true
+  },
+  {
+   "case": "panel engine: engine-config note names the precedence chain",
+   "ok": true
+  },
+  {
+   "case": "mobile: delta strip wraps cleanly at 390px",
+   "ok": true
+  },
+  {
+   "case": "mobile: tier precedence note at 390px",
+   "ok": true
+  }
+ ],
+ "telemetry": {
+  "foreign": [],
+  "consoleErrors": [],
+  "pageErrors": []
+ }
+}

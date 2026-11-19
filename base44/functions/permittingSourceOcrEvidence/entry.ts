@@ -1,11 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { retainSourceOcrEvidence, readSourceOcrEvidence } from '../../shared/permittingSourceOcrEvidence.mjs';
 import { retainVisualTranscription, readVisualTranscription } from '../../shared/permittingVisualTranscription.mjs';
 import { readAndExtractSourcePdf } from '../../shared/jurisdictionSourceTextRuntime.ts';
 
 Deno.serve(async req => {
   try {
-    const base44=createClientFromRequest(req);
+    const base44=withEntityRateLimitRetry(createClientFromRequest(req));
     const user=await base44.auth.me().catch(()=>null);
     if(!user || !['admin','user'].includes(user.role)) return Response.json({error:'Staff access required'},{status:403});
     const raw=await req.text();

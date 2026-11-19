@@ -1,0 +1,368 @@
+{
+  "name": "ChannelLetterInstallation",
+  "type": "object",
+  "description": "Channel Letter Installation estimator project \u2014 letters purchased/fabricated, install items, install equipment (with idle running), personnel, travel, supplies and markup.",
+  "properties": {
+    "project_name": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "estimate_number": {
+      "type": "string"
+    },
+    "hyperlink": {
+      "type": "string"
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Internal retry receipt used only to make the first create of this Builder source project idempotent."
+    },
+    "site_address": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "project_scope": {
+      "type": "string",
+      "enum": [
+        "full",
+        "install_only",
+        "letters_only"
+      ],
+      "default": "full"
+    },
+    "install_environment": {
+      "type": "string",
+      "enum": [
+        "interior",
+        "exterior"
+      ],
+      "default": "exterior"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "letter_purchases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "letters_delivery_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "letters_design_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "letters_install_supplies_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "letters_permitting_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "letters_other_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "letters_markup_percent": {
+      "type": "number",
+      "default": 0
+    },
+    "letters_subtotal": {
+      "type": "number"
+    },
+    "total_letters_cost": {
+      "type": "number"
+    },
+    "selected_equipment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "equipment_id": {
+            "type": "string"
+          },
+          "equipment_name": {
+            "type": "string"
+          },
+          "equipment_type": {
+            "type": "string"
+          },
+          "pricing_mode": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "number",
+            "default": 1
+          },
+          "include_delivery": {
+            "type": "boolean",
+            "default": false
+          },
+          "delivery_pickup_cost": {
+            "type": "number",
+            "default": 0
+          },
+          "unit_cost": {
+            "type": "number",
+            "default": 0
+          },
+          "total_cost": {
+            "type": "number",
+            "default": 0
+          },
+          "idle_hours": {
+            "type": "number",
+            "default": 0,
+            "description": "Hours this boom equipment will idle running on-site (added on top of the rental/flat rate)."
+          },
+          "idle_running_cost_per_hour": {
+            "type": "number",
+            "default": 0
+          },
+          "idle_cost": {
+            "type": "number",
+            "default": 0
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "personnel": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "hourly_rate": {
+            "type": "number",
+            "default": 0
+          },
+          "hours": {
+            "type": "number",
+            "default": 0
+          },
+          "total_cost": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    },
+    "labor_rate_per_hour": {
+      "type": "number",
+      "default": 85
+    },
+    "raceway_minutes_per_foot": {
+      "type": "number",
+      "default": 6
+    },
+    "travel_cost_per_mile": {
+      "type": "number",
+      "default": 1.25
+    },
+    "travel_miles_round_trip": {
+      "type": "number",
+      "default": 0
+    },
+    "total_travel_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "supplies_percent_of_materials": {
+      "type": "number",
+      "default": 10
+    },
+    "extra_supplies_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "base_supplies_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "markup_percent": {
+      "type": "number",
+      "default": 0
+    },
+    "labor_hours": {
+      "type": "number"
+    },
+    "labor_cost": {
+      "type": "number"
+    },
+    "total_materials_cost": {
+      "type": "number"
+    },
+    "total_supplies_cost": {
+      "type": "number"
+    },
+    "total_equipment_cost": {
+      "type": "number"
+    },
+    "total_personnel_cost": {
+      "type": "number"
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "markup_amount": {
+      "type": "number"
+    },
+    "total_cost": {
+      "type": "number"
+    },
+    "customer_pricing": {
+      "type": "object",
+      "description": "Saved customer sell-price snapshot from the shared Markup Tier engine. Preserves selected tier, category breakdown, volume discount and final customer price without changing internal Builder cost.",
+      "additionalProperties": true
+    },
+    "pricing_engine": {
+      "type": "object",
+      "description": "F-23a: optional pricing-engine context block \u2014 {customer_tier, tier_rules[], templates[], default_markup_pct, tax_percent, setup_fee, minimum_charge}. When present, channelPricingWire routes the sell side through the shared engine; absent = legacy pricing verbatim.",
+      "additionalProperties": true
+    },
+    "notes": {
+      "type": "string"
+    },
+    "installation_type": {
+      "type": "string",
+      "description": "Legacy"
+    },
+    "qty_letters": {
+      "type": "number",
+      "description": "Legacy"
+    },
+    "letter_size": {
+      "type": "string",
+      "description": "Legacy"
+    },
+    "letter_height_inches": {
+      "type": "number",
+      "description": "Legacy"
+    },
+    "installation_height_feet": {
+      "type": "number",
+      "description": "Legacy"
+    },
+    "raceway_length_feet": {
+      "type": "number",
+      "description": "Legacy"
+    },
+    "thick_hollow_walls": {
+      "type": "boolean",
+      "description": "Legacy"
+    },
+    "parapet": {
+      "type": "boolean",
+      "description": "Legacy"
+    },
+    "poor_electrical_access": {
+      "type": "boolean",
+      "description": "Legacy"
+    },
+    "interview_draft": {
+      "type": "object",
+      "description": "P-02: structured-intake answers {version, answers{}} as last applied — preserved verbatim for reopen/edit."
+    },
+    "unverified_assumptions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "P-02/P-03: field names whose values are unverified on-site assumptions — review before acceptance."
+    },
+    "proposal_accepted": {
+      "type": "boolean",
+      "description": "P-11/G1: proposal currently accepted — edits frozen until explicit reopen."
+    },
+    "proposal_accepted_by": {
+      "type": "string",
+      "description": "P-11/G1: actor who accepted the proposal."
+    },
+    "proposal_accepted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "P-11/G1: acceptance timestamp."
+    },
+    "pricing_basis_snapshot": {
+      "type": "object",
+      "description": "P-11/G1: frozen pricing basis at acceptance — {captured_at, mode, spec, optional_scopes, prices, totals, revision_n}."
+    },
+    "prior_acceptance": {
+      "type": "object",
+      "description": "P-11: previous acceptance preserved as history after a reasoned reopen."
+    },
+    "proposal_reopened_reason": {
+      "type": "string",
+      "description": "P-11: operator-supplied reason for reopening an accepted proposal."
+    },
+    "proposal_revision_n": {
+      "type": "integer",
+      "description": "P-11: current revision number of the proposal (0 = first draft)."
+    },
+    "proposal_revisions": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "P-11: revision snapshots [{revision_n, revised_at, edits_applied, snapshot}] — undo restores the last."
+    },
+    "proposal_locked_fields": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "P-11: field names manually locked against proposal revisions."
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__channelletterinstallation_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__channelletterinstallation_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__channelletterinstallation_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__channelletterinstallation_backend_only__"
+      }
+    }
+  }
+}

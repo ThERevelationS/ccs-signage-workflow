@@ -15,6 +15,7 @@ import {
   parseCompanyDateTimeInput,
   shiftDurationSummary,
 } from "@/components/timeclock/timeClockCompanyTime";
+import { CcsDateTimeField } from "@/components/ui/ccs-date-field";
 
 function reviewRetryStorageKey(correctionRequestId) {
   return `ccs_timeclock_review_retry:${String(correctionRequestId || "").trim().toLowerCase()}`;
@@ -52,7 +53,7 @@ function displayTime(iso) {
   return formatCompanyDateTime(iso);
 }
 
-export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesChanged, reviewRequestId = "", onReviewRequestOpened }) {
+export default function CorrectionRequestAdminPanel({ sessionToken, entries = [], onEntriesChanged, reviewRequestId = "", onReviewRequestOpened }) {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -64,6 +65,11 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
   const [reviewReason, setReviewReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [retryReview, setRetryReview] = useState(null);
+  const [checkedIds, setCheckedIds] = useState(() => new Set());
+  const [bulkReason, setBulkReason] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDecision, setBulkDecision] = useState("approve");
+  const [queueFilter, setQueueFilter] = useState("");
 
   const loadSeqRef = useRef(0);
   const loadRequests = useCallback(async () => {
@@ -208,6 +214,59 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
   };
 
   const retryingSelected = retryReview?.correctionRequestId === selected?.id;
+
+  const toggleChecked = (id) => setCheckedIds((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const allChecked = requests.length > 0 && checkedIds.size === requests.length;
+  const toggleAll = () => setCheckedIds(allChecked ? new Set() : new Set(requests.map((r) => r.id)));
+
+  // Oldest requests surface first and carry an age badge so stale items can't hide.
+  const ageDays = (iso) => {
+    const t = Date.parse(String(iso || ""));
+    return Number.isFinite(t) ? Math.max(0, Math.floor((Date.now() - t) / 86400000)) : null;
+  };
+  const visibleRequests = requests
+    .filter((r) => {
+      const q = queueFilter.trim().toLowerCase();
+      if (!q) return true;
+      return [r.user_name, r.user_email, r.request_kind, r.employee_reason].some((v) => String(v || "").toLowerCase().includes(q));
+    })
+    .sort((a, b) => Date.parse(a.requested_at || 0) - Date.parse(b.requested_at || 0));
+
+  const bulkReview = async () => {
+    if (bulkBusy || checkedIds.size === 0 || bulkReason.trim().length < 3) {
+      if (bulkReason.trim().length < 3) setError("Enter a shared manager review reason (3+ characters) for the bulk decision.");
+      return;
+    }
+    setBulkBusy(true);
+    setError("");
+    const failed = [];
+    for (const request of requests.filter((r) => checkedIds.has(r.id))) {
+      try {
+        const response = await base44.functions.invoke("timeClockAction", {
+          action: "review_correction_request",
+          session_token: sessionToken,
+          target_email: request.user_email,
+          request_id: newRequestId(),
+          correction_request_id: request.id,
+          expected_request_updated_date: request.updated_date,
+          decision: bulkDecision,
+          reason: bulkReason.trim(),
+        });
+        const data = response?.data || response;
+        if (!data?.success) failed.push(`${request.user_name || request.user_email}: ${data?.error || "not confirmed"}`);
+      } catch (err) {
+        failed.push(`${request.user_name || request.user_email}: ${err?.response?.data?.error || err?.message || "failed"}`);
+      }
+    }
+    setCheckedIds(new Set());
+    if (failed.length) setError(`Bulk ${bulkDecision} had ${failed.length} failure(s): ${failed.join("; ")}`);
+    await Promise.all([loadRequests(), onEntriesChanged?.()]);
+    setBulkBusy(false);
+  };
   const requestedDuration = useMemo(() => shiftDurationSummary(
     selected?.requested_changes?.clock_in,
     selected?.requested_changes?.clock_out,
@@ -236,6 +295,47 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
           </div>
           <Badge className={requests.length ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}>{requests.length} awaiting review</Badge>
         </div>
+        {requests.length > 0 && (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50/60 p-2">
+            <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+              <input type="checkbox" checked={allChecked} onChange={toggleAll} className="h-3.5 w-3.5" />
+              Select all
+            </label>
+            <Input
+              value={queueFilter}
+              onChange={(e) => setQueueFilter(e.target.value)}
+              placeholder="Filter by name, kind, or reason"
+              className="min-h-10 w-44 text-xs"
+              disabled={bulkBusy}
+            />
+            <select
+              value={bulkDecision}
+              onChange={(e) => setBulkDecision(e.target.value)}
+              className="min-h-10 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium"
+              disabled={bulkBusy}
+            >
+              <option value="approve">Approve</option>
+              <option value="reject">Reject</option>
+            </select>
+            <Input
+              value={bulkReason}
+              onChange={(e) => setBulkReason(e.target.value)}
+              placeholder="Shared review reason (required)"
+              className="min-h-10 min-w-40 flex-1 text-xs"
+              maxLength={500}
+              disabled={bulkBusy || checkedIds.size === 0}
+            />
+            <Button
+              size="sm"
+              onClick={bulkReview}
+              disabled={bulkBusy || checkedIds.size === 0 || bulkReason.trim().length < 3}
+              className={`gap-1.5 ${bulkDecision === "reject" ? "bg-red-600 hover:bg-red-700" : ""}`}
+            >
+              {bulkBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+              {bulkDecision === "reject" ? "Reject" : "Approve"} {checkedIds.size || ""} selected
+            </Button>
+          </div>
+        )}
         {loading ? (
           <div className="py-4 flex items-center justify-center text-gray-500"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading requests…</div>
         ) : error && !selected ? (
@@ -244,17 +344,33 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
           <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No pending correction requests.</div>
         ) : (
           <div className="space-y-2">
-            {requests.map((request) => (
+            {visibleRequests.length === 0 ? (
+              <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No requests match this filter.</div>
+            ) : visibleRequests.map((request) => (
               <div key={request.id} className="rounded-lg border bg-white p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={checkedIds.has(request.id)}
+                    onChange={() => toggleChecked(request.id)}
+                    className="mt-1 h-4 w-4 shrink-0"
+                    aria-label={`Select ${request.user_name || request.user_email}`}
+                  />
+                  <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="font-medium text-sm">{request.user_name || request.user_email}</div>
                     {request.request_kind === "missed_clock_out" && (
                       <Badge className="bg-amber-100 text-amber-800">Missed Clock Out</Badge>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500">Submitted {displayTime(request.requested_at)} · {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
+                  <div className="text-xs text-gray-500">
+                    Submitted {displayTime(request.requested_at)} · {TIME_CLOCK_COMPANY_TIME_LABEL}
+                    {(() => { const d = ageDays(request.requested_at); return d !== null && d >= 1 ? (
+                      <span className={`ml-1.5 rounded px-1 py-0.5 text-[10px] font-bold ${d >= 3 ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>{d}d old</span>
+                    ) : null; })()}
+                  </div>
                   <div className="text-sm text-gray-700 mt-1 line-clamp-2">{request.employee_reason}</div>
+                  </div>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => openReviewFromList(request)}>Review</Button>
               </div>
@@ -285,6 +401,19 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
                   <div className="mt-1 text-xs text-amber-800">Employee-attested time. It is not official until this correction is applied through the audited backend.</div>
                 </div>
               )}
+              {(() => {
+                // Reviewer context - this employee's recent pattern so a 14h
+                // claim is evaluated against their usual 8h day.
+                const recent = entries
+                  .filter((e) => e.user_email === selected.user_email && e.id !== selected.time_entry_id && e.clock_in)
+                  .sort((a, b) => new Date(b.clock_in) - new Date(a.clock_in))
+                  .slice(0, 3);
+                return recent.length ? (
+                  <div className="mb-3 rounded-lg bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
+                    Recent shifts: {recent.map((e) => `${Number(e.total_hours || 0).toFixed(1)}h (${e.clock_in ? new Date(e.clock_in).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "?"})`).join(" · ")}
+                  </div>
+                ) : null;
+              })()}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div className="rounded-lg bg-gray-50 p-3">
                   <div className="text-xs font-semibold text-gray-500 mb-2">ORIGINAL · {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
@@ -316,8 +445,8 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
                   <div className="text-xs text-gray-500 mt-1">These fields are used only by <strong>Apply Edited Time</strong>. <strong>Approve Reported Time</strong> uses the employee request above exactly.</div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div><Label>Clock In — {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><Input type="datetime-local" value={clockIn} onChange={(e) => setClockIn(e.target.value)} disabled={busy || retryingSelected} /></div>
-                  <div><Label>Clock Out — {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><Input type="datetime-local" value={clockOut} onChange={(e) => setClockOut(e.target.value)} disabled={busy || retryingSelected} /></div>
+                  <div><Label>Clock In — {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><CcsDateTimeField value={clockIn} onChange={(e) => setClockIn(e.target.value)} disabled={busy || retryingSelected} id="adj-clock-in" /></div>
+                  <div><Label>Clock Out — {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><CcsDateTimeField value={clockOut} onChange={(e) => setClockOut(e.target.value)} disabled={busy || retryingSelected} id="adj-clock-out" /></div>
                 </div>
                 <div><Label>Lunch (minutes)</Label><Input type="number" min="0" max="240" step="1" value={lunchMinutes} onChange={(e) => setLunchMinutes(e.target.value)} disabled={busy || retryingSelected} /></div>
                 <div><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} maxLength={4000} disabled={busy || retryingSelected} /></div>
@@ -335,7 +464,29 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
                   </div>
                 </div>
               </div>
-              <div><Label>Manager Review Reason <span className="text-red-600">*</span></Label><Textarea value={reviewReason} onChange={(e) => setReviewReason(e.target.value)} rows={3} maxLength={500} placeholder="Record what was verified and why this request is approved, modified, or rejected." disabled={busy || retryingSelected} /></div>
+              <div>
+                <Label>Manager Review Reason <span className="text-red-600">*</span></Label>
+                <div className="mb-1.5 flex flex-wrap gap-1.5">
+                  <button type="button"
+                    onClick={() => {
+                      const last = requests.find((r) => r.id !== selected?.id && r.user_email === selected?.user_email && r.manager_reason);
+                      if (last?.manager_reason) setReviewReason(last.manager_reason);
+                    }}
+                    disabled={busy || retryingSelected}
+                    className="rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100"
+                    title="Copy the reason used on this employee's last reviewed request"
+                  >Same as last review</button>
+                  {["Verified with schedule", "Matches posted shift", "Corrected per employee attestation", "Insufficient documentation", "Conflicts with recorded punches", "Policy exception approved"].map((chip) => (
+                    <button type="button"
+                      key={chip} type="button"
+                      onClick={() => setReviewReason((prev) => prev.trim() ? `${prev.trim()} - ${chip}` : chip)}
+                      disabled={busy || retryingSelected}
+                      className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600 hover:border-indigo-300 hover:text-indigo-700"
+                    >{chip}</button>
+                  ))}
+                </div>
+                <Textarea value={reviewReason} onChange={(e) => setReviewReason(e.target.value)} rows={3} maxLength={500} placeholder="Record what was verified and why this request is approved, modified, or rejected." disabled={busy || retryingSelected} />
+              </div>
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
                 <strong>Correction approval is not shift approval.</strong> Approving the reported or edited punch applies the audited correction and leaves the completed shift at <strong>Needs Review</strong>. A manager must separately approve the completed shift before pay-period finalization.
               </div>

@@ -1,0 +1,234 @@
+{
+  "synthetic": true,
+  "staticSSR": true,
+  "results": [
+    {
+      "name": "zero-mixed",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "width": 1280,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:54512/bom-frozen-zero-mixed.html",
+          "http://127.0.0.1:54512/fixture.css"
+        ]
+      }
+    },
+    {
+      "name": "zero-mixed",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "width": 390,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:54512/bom-frozen-zero-mixed.html",
+          "http://127.0.0.1:54512/fixture.css"
+        ]
+      }
+    },
+    {
+      "name": "blocked-unrecorded-split",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "width": 1280,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:54512/bom-frozen-blocked-unrecorded-split.html",
+          "http://127.0.0.1:54512/fixture.css"
+        ]
+      }
+    },
+    {
+      "name": "blocked-unrecorded-split",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "width": 390,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:54512/bom-frozen-blocked-unrecorded-split.html",
+          "http://127.0.0.1:54512/fixture.css"
+        ]
+      }
+    },
+    {
+      "name": "blocked-removal",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "width": 1280,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:54512/bom-frozen-blocked-removal.html",
+          "http://127.0.0.1:54512/fixture.css"
+        ]
+      }
+    },
+    {
+      "name": "blocked-removal",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "width": 390,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:54512/bom-frozen-blocked-removal.html",
+          "http://127.0.0.1:54512/fixture.css"
+        ]
+      }
+    },
+    {
+      "name": "unknown-basis",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "width": 1280,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:54512/bom-frozen-unknown-basis.html",
+          "http://127.0.0.1:54512/fixture.css"
+        ]
+      }
+    },
+    {
+      "name": "unknown-basis",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "width": 390,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:54512/bom-frozen-unknown-basis.html",
+          "http://127.0.0.1:54512/fixture.css"
+        ]
+      }
+    },
+    {
+      "name": "inconsistent-split",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "width": 1280,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:54512/bom-frozen-inconsistent-split.html",
+          "http://127.0.0.1:54512/fixture.css"
+        ]
+      }
+    },
+    {
+      "name": "inconsistent-split",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "width": 390,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:54512/bom-frozen-inconsistent-split.html",
+          "http://127.0.0.1:54512/fixture.css"
+        ]
+      }
+    },
+    {
+      "name": "ordinary",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "ok": true,
+      "width": 1280,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:54512/bom-frozen-ordinary.html",
+          "http://127.0.0.1:54512/fixture.css"
+        ]
+      }
+    },
+    {
+      "name": "ordinary",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "ok": true,
+      "width": 390,
+      "telemetry": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "externalRequests": [],
+        "requestFailures": [],
+        "requests": [
+          "http://127.0.0.1:54512/bom-frozen-ordinary.html",
+          "http://127.0.0.1:54512/fixture.css"
+        ]
+      }
+    }
+  ]
+}

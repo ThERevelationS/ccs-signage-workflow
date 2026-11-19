@@ -1,0 +1,14 @@
+{
+  "id": "68dfcc5e57bbbc35387da97c",
+  "status": {
+    "state": "ready",
+    "details": null,
+    "request_id": "940e4ed3-5b44-4ff4-9f67-e64595d53258",
+    "turn_id": null,
+    "last_updated_date": "2026-11-07T13:26:53.883000",
+    "error_source": null,
+    "paywall_context": null
+  },
+  "pending": null,
+  "testDataEnabled": false
+}

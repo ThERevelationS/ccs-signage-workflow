@@ -1,0 +1,123 @@
+{
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "1840b224140634135d546377b1878a283443463e",
+ "baselineFile": "brick-pricing-baseline-v3.json",
+ "proofSpec": "brick-pricing-proof-spec.json",
+ "candidateManifest": "brick-pricing-candidates.json",
+ "targetOrder": [
+  "src/components/estimator/brick/brickPricingAvailability.js",
+  "src/components/estimator/brick/BrickGeometryPanel.jsx",
+  "src/components/estimator/brick/BrickTotals.jsx",
+  "src/pages/BrickStoneEstimator.jsx"
+ ],
+ "candidatePrefix": "brick-pricing-candidate-",
+ "newRemoteFiles": [
+  "src/components/estimator/brick/brickPricingAvailability.js"
+ ],
+ "atomicEditPerFile": true,
+ "editsPerFile": 1,
+ "candidateLineEndings": "LF",
+ "candidateTerminalLF": {
+  "src/components/estimator/brick/brickPricingAvailability.js": true,
+  "src/components/estimator/brick/BrickGeometryPanel.jsx": true,
+  "src/components/estimator/brick/BrickTotals.jsx": true,
+  "src/pages/BrickStoneEstimator.jsx": true
+ },
+ "protectedFiles": [
+  "src/pages/VinylEstimator.jsx",
+  "src/pages/PaintingEstimator.jsx",
+  "src/pages/LaserEstimator.jsx",
+  "src/pages/CNCEstimator.jsx",
+  "src/pages/MetalEstimator.jsx",
+  "src/pages/MaintenanceEstimator.jsx",
+  "src/pages/LaserSettings.jsx",
+  "src/pages/CNCSettings.jsx",
+  "src/pages/MetalSettings.jsx",
+  "src/pages/MaintenanceSettings.jsx",
+  "src/pages/FoundationEstimator.jsx",
+  "src/pages/Fabrication.jsx",
+  "src/components/channelLetterInstall/",
+  "src/components/vinylEstimator/",
+  "src/components/vinylInventory/",
+  "src/components/signMaintenance/",
+  "src/components/estimator/paint/",
+  "src/components/estimator/laser/",
+  "src/components/estimator/cnc/",
+  "src/components/estimator/metal/",
+  "src/components/estimator/maintenance/",
+  "src/components/estimator/foundation/",
+  "src/components/estimator/customItems/",
+  "src/components/estimator/builder/partSync.js",
+  "src/components/estimator/builder/builderService.js",
+  "src/components/estimator/builder/sourceProjectPersistence.js",
+  "src/components/estimator/builder/itemIdentity.js",
+  "src/components/estimator/brick/brickCalc.js",
+  "src/components/estimator/brick/brickSellPricing.js",
+  "src/components/estimator/moduleShared/moduleProjectActions.js",
+  "src/components/estimator/moduleShared/ModuleActionBar.jsx",
+  "src/components/estimator/moduleShared/ModuleTemplateDialog.jsx",
+  "src/components/estimator/moduleRegistry.js",
+  "src/components/estimator/customerPricing.js",
+  "src/components/estimator/settings/moduleSettingDefaults.js",
+  "src/components/markup/CustomerPricingTab.jsx",
+  "src/components/markup/projectCategorizer.jsx",
+  "src/components/markup/savedCustomerPricing.js",
+  "base44/shared/brickPricingWire.ts",
+  "base44/shared/pricingEngine.ts",
+  "base44/shared/pricingTemplateModel.ts"
+ ],
+ "liveDeadDetermination": {
+  "liveCore": "src/components/estimator/brick/brickCalc.js (LIVE — imported by the page AND builder/partSync.js; deliberately unchanged so the builder consumer keeps the byte-identical calculator contract)",
+  "livePage": "src/pages/BrickStoneEstimator.jsx",
+  "livePanels": "src/components/estimator/brick/BrickGeometryPanel.jsx + BrickTotals.jsx (imported only by the page)",
+  "liveAvailability": "src/components/estimator/brick/brickPricingAvailability.js (NEW — imported by the page and both panels)",
+  "builderConsumer": "src/components/estimator/builder/partSync.js → calcBrickStoneProject (unchanged — verified by consumer bundle)",
+  "sellPricingConsumer": "src/components/estimator/customerPricing.js → brick/brickSellPricing.js (unchanged wire; resolveBrickEngineSell never throws and reads record.total_cost/subtotal the save guard now protects)",
+  "catalogSurface": "FoundationInventory + BrickStoneInventory material rows (entity unchanged; malformed fields flagged as brick_catalog issues, never mutated)",
+  "noSettingsEntity": "Brick & Stone prices entirely from project fields + the selected material row — there is no Settings surface to scan"
+ },
+ "forbiddenRemoteOperations": [
+  "sandbox edit",
+  "sandbox write",
+  "checkpoint",
+  "entity ops",
+  "schema ops",
+  "deploy",
+  "publish"
+ ],
+ "applyRequiresLeadApproval": true,
+ "remoteWriteAuthorized": false,
+ "deleteOrRestoreAuthorization": false,
+ "businessRecordOperationsAuthorized": false,
+ "schemaOrMetadataActivationAuthorized": false,
+ "publishOrDeployAuthorized": false,
+ "candidateHashes": {
+  "src/components/estimator/brick/brickPricingAvailability.js": "0c3b68d549709d9b03ce54001de5f3128cf30e7d221df4e2888b90eb2de13d09",
+  "src/components/estimator/brick/BrickGeometryPanel.jsx": "1f5c2cf5eddcc29020b0058476f50d0d831bae55b476d25c257fffacee7b206e",
+  "src/components/estimator/brick/BrickTotals.jsx": "9d3e323eb7748ecffe2e86ba729652289385d9c5dbf5bfa0e9b63e64be62ed38",
+  "src/pages/BrickStoneEstimator.jsx": "ad9701b43a195f535228d70a1dab2861b088a307dba384232ff247a2e970c7cf"
+ },
+ "buildEntries": [
+  "src/components/estimator/brick/brickPricingAvailability.js",
+  "src/components/estimator/brick/BrickGeometryPanel.jsx",
+  "src/components/estimator/brick/BrickTotals.jsx",
+  "src/pages/BrickStoneEstimator.jsx"
+ ],
+ "buildAlias": {
+  "@": "/app/src"
+ },
+ "forbiddenExternalImportPrefix": "@/",
+ "candidateLineEndingsByFile": {
+  "src/components/estimator/brick/brickPricingAvailability.js": "LF",
+  "src/components/estimator/brick/BrickGeometryPanel.jsx": "LF",
+  "src/components/estimator/brick/BrickTotals.jsx": "LF",
+  "src/pages/BrickStoneEstimator.jsx": "LF"
+ },
+ "editInput": "stdin",
+ "stageBase64ChunkLength": 3000,
+ "remoteTempPrefix": "/tmp/ccs-brick-stone-pricing-",
+ "restoreCheckpointName": "Before Brick-Stone Pricing Availability Hardening",
+ "finalCheckpointName": "Brick-Stone Pricing Availability Hardening Verified",
+ "checkpointAuthority": "lead"
+}

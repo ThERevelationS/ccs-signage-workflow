@@ -1,0 +1,306 @@
+{
+  "matches": [
+    {
+      "path": "src/shared/timeClockAuditPagination.mjs",
+      "line": 17,
+      "text": "  if (page.next_cursor !== null && page.next_cursor !== undefined && typeof page.next_cursor !== \"string\") {"
+    },
+    {
+      "path": "src/shared/timeClockAuditPagination.mjs",
+      "line": 84,
+      "text": "  const nextCursor = String(page.next_cursor || \"\").trim();"
+    },
+    {
+      "path": "src/api/base44Client.js",
+      "line": 123,
+      "text": "              ? { items: result, has_more: false, next_cursor: null }"
+    },
+    {
+      "path": "src/components/permitting/permittingElectricalSourceAudit.mjs",
+      "line": 78,
+      "text": "      if(!stable(page.next_cursor)||cursors.has(page.next_cursor))throw Error('Electrical source cursor did not advance');"
+    },
+    {
+      "path": "src/components/permitting/permittingElectricalSourceAudit.mjs",
+      "line": 79,
+      "text": "      cursors.add(page.next_cursor);cursor=page.next_cursor;"
+    },
+    {
+      "path": "src/components/permitting/PermittingDraftLibrary.jsx",
+      "line": 39,
+      "text": "          (typeof page.next_cursor !== 'string' || !page.next_cursor || page.next_cursor === request.cursor))) {"
+    },
+    {
+      "path": "src/components/permitting/PermittingDraftLibrary.jsx",
+      "line": 43,
+      "text": "      setHasMore(page.has_more); setNextCursor(page.has_more ? page.next_cursor : null);"
+    },
+    {
+      "path": "src/components/permitting/usePermittingQueueBrowse.js",
+      "line": 2,
+      "text": "const empty = () => ({ items: [], has_more: false, next_cursor: null });"
+    },
+    {
+      "path": "src/components/permitting/usePermittingQueueBrowse.js",
+      "line": 16,
+      "text": "    if (pending.current?.scope === scope || (!reset && (!visible.has_more || !visible.next_cursor))) return;"
+    },
+    {
+      "path": "src/components/permitting/usePermittingQueueBrowse.js",
+      "line": 21,
+      "text": "      const page = await readPage(query, { sort: 'jurisdiction_name', limit: 50, ...(reset ? {} : { cursor: visible.next_cursor }) });"
+    },
+    {
+      "path": "src/components/permitting/usePermittingQueueBrowse.js",
+      "line": 23,
+      "text": "      if (!Array.isArray(page?.items) || typeof page.has_more !== 'boolean' || page.items.some(row => !row?.id) || (page.has_more && (!page.next_cursor || (!reset && page.next_cursor === visible.next_cursor)))) throw Error('Invalid queue continuation. Refresh the queue.');"
+    },
+    {
+      "path": "src/components/permitting/permittingCountyChoices.mjs",
+      "line": 13,
+      "text": "    if (!page.next_cursor || cursors.has(page.next_cursor)) throw Error('County cursor did not advance');"
+    },
+    {
+      "path": "src/components/permitting/permittingCountyChoices.mjs",
+      "line": 14,
+      "text": "    cursors.add(page.next_cursor); cursor = page.next_cursor;"
+    },
+    {
+      "path": "src/components/permitting/permittingCoverageReader.mjs",
+      "line": 19,
+      "text": "    if (typeof page.next_cursor!=='string' || !page.next_cursor.trim()) throw Error('Invalid coverage continuation token. Refresh recorded coverage.');"
+    },
+    {
+      "path": "src/components/permitting/permittingCoverageReader.mjs",
+      "line": 20,
+      "text": "    if (cursors.has(page.next_cursor)) throw Error('Coverage cursor did not advance');"
+    },
+    {
+      "path": "src/components/permitting/permittingCoverageReader.mjs",
+      "line": 21,
+      "text": "    cursors.add(page.next_cursor); cursor = page.next_cursor;"
+    },
+    {
+      "path": "src/components/permitting/SavedAddressResearch.jsx",
+      "line": 17,
+      "text": " return <details className=\"border rounded p-3\"><summary className=\"min-h-11 cursor-pointer text-sm font-semibold\">{review?'Employee research to review':'My saved research'}</summary><p className=\"text-xs\">{review?'Inspect employee source findings and saved originals before approving jurisdiction information.':'Return to files from your earlier address searches. These findings still need administrator review.'}</p><button type=\"button\" className=\"min-h-11 border rounded px-3 text-sm\" disabled={busy} onClick={()=>load()}>{busy?'Loading saved research…':review?(page?'Reload research to review':'Show employee research'):page?'Reload my research':'Show my research'}</button>{error&&<p role=\"alert\" className=\"text-sm text-amber-800\">{error}</p>}{page&&<>{!page.collections.length?<p role=\"status\" className=\"text-sm\">No saved research found.</p>:<AutomaticAddressScanResults key={page.collections.map(row=>row.id).join(',')} scanResult={{started:true,scans:[]}} archives={page} savedOnly/>}{page.next_cursor&&<button type=\"button\" className=\"min-h-11 border rounded px-3 text-sm\" disabled={busy} onClick={()=>load(page.next_cursor)}>Show older research</button>}</>}</details>;"
+    },
+    {
+      "path": "src/components/permitting/LocalityOfficeEvidence.jsx",
+      "line": 25,
+      "text": "    if (inFlight.current || !jurisdictionId || (more && !visible?.next_cursor)) return;"
+    },
+    {
+      "path": "src/components/permitting/LocalityOfficeEvidence.jsx",
+      "line": 32,
+      "text": "        cursor: visible.next_cursor, expected_profile_updated_date: visible.profile_updated_date,"
+    },
+    {
+      "path": "src/components/admin/PermittingSourceAuthorityReview.jsx",
+      "line": 87,
+      "text": "          cursor: previous?.next_cursor || previous?.resume_after || \"\" });"
+    },
+    {
+      "path": "src/components/admin/PermittingHtmlEvidencePanel.jsx",
+      "line": 46,
+      "text": "    setItems(previous=>action===\"more\"?[...new Map([...previous,...d.items].map(p=>[p.id,p])).values()]:d.items);setCursor(d.next_cursor);return;"
+    },
+    {
+      "path": "src/components/admin/PermittingRuleEvidenceExtraction.jsx",
+      "line": 51,
+      "text": "        setSources(data.sources || []); setSourceCursor(data.next_cursor);"
+    },
+    {
+      "path": "src/components/admin/PermittingRuleEvidenceExtraction.jsx",
+      "line": 75,
+      "text": "        if (generation.current === current) { setSources(rows => [...rows, ...(data.sources || [])]); setSourceCursor(data.next_cursor); }"
+    },
+    {
+      "path": "src/components/admin/PermittingReviewBrowserFixture.jsx",
+      "line": 24,
+      "text": "    return { success: true, jurisdiction_id, profile_updated_date: \"fixture-version\", checked_at: new Date().toISOString(), has_more: !cursor, next_cursor: cursor ? null : \"fixture-office-next\", items: [{ id: cursor ? \"fixture-revoked\" : \"fixture-office\", action: cursor ? \"revoke\" : \"verify\", role: \"sign_permitting\", verified: !cursor, is_current_review: !cursor, state: cursor ? \"revoked\" : \"staff_verified\", coverage_area: \"Fixture county\", coverage_kind: \"unincorporated\", office_snapshot: { name: \"Fixture planning office\" }, role_proof: { excerpt: \"Fixture office reviews signs in the unincorporated county area.\", physical_page: 3 }, requested_by: \"Fixture reviewer\", requested_at: \"2026-10-06\" }] };"
+    },
+    {
+      "path": "src/components/admin/PermittingReviewBrowserFixture.jsx",
+      "line": 36,
+      "text": "      has_more: !cursor, next_cursor: cursor ? null : \"fixture-next\", checked_at: new Date().toISOString() };"
+    },
+    {
+      "path": "src/components/admin/PermittingOfficeAuthorityReview.jsx",
+      "line": 42,
+      "text": "          ...(action === \"more_targets\" ? { cursor: context?.next_cursor } : {}) });"
+    },
+    {
+      "path": "src/components/admin/PermittingOfficeAuthorityReview.jsx",
+      "line": 55,
+      "text": "        setCursor(data.next_cursor);"
+    },
+    {
+      "path": "src/components/admin/SyncConflictReview.jsx",
+      "line": 46,
+      "text": "    {page.has_more&&<Button disabled={busy||loading} variant=\"outline\" onClick={()=>load(page.next_cursor)}>Load more</Button>}\r"
+    },
+    {
+      "path": "src/components/admin/PermittingApprovedEvidenceSearch.jsx",
+      "line": 35,
+      "text": "      const data = await retrieveEvidence({ jurisdiction_id: scope, limit: 25, ...(more ? { cursor: result.next_cursor } : {}) });"
+    },
+    {
+      "path": "src/components/admin/SmartsheetSyncTraces.jsx",
+      "line": 16,
+      "text": "    try { const data = await invoke(nextCursor ? { cursor: nextCursor } : {}); setRows(old => nextCursor ? [...old, ...(data.items || [])] : data.items || []); setCursor(data.has_more ? data.next_cursor : null); }\r"
+    },
+    {
+      "path": "src/components/admin/PermittingRulesReview.jsx",
+      "line": 108,
+      "text": "      setCursor(data.next_cursor || null);\r"
+    },
+    {
+      "path": "src/components/shared/useFieldHistory.js",
+      "line": 13,
+      "text": "      setState(s=>({...s,loading:false,entries:more?[...s.entries,...entries.filter(e=>!s.entries.some(old=>old.id===e.id))]:entries,remote:more?[...s.remote,...remote.filter(e=>!s.remote.some(old=>old.id===e.id))]:remote,error:'',warning:data.remote_error||'',cursor:data.audit.next_cursor,legacyCursor:data.legacy.next_cursor,remotePage:data.remote?.pageNumber||1,hasMore:data.audit.has_more||data.legacy.has_more||(data.remote?.pageNumber<data.remote?.totalPages)}));"
+    },
+    {
+      "path": "src/components/staff/staffEntities.js",
+      "line": 86,
+      "text": "// ({items, has_more, next_cursor}) like the platform SDK, while a positional"
+    },
+    {
+      "path": "src/components/staff/staffEntities.js",
+      "line": 104,
+      "text": "const page = (rows) => ({ items: rows, has_more: false, next_cursor: null });"
+    },
+    {
+      "path": "scripts/test-permitting-workflow-source-evidence-browser.mjs",
+      "line": 14,
+      "text": " PermittingWorkflowDraft:{filter:async()=>({items:window.fixture.rows,has_more:false,next_cursor:null}),get:async id=>structuredClone(window.fixture.ancestors[id])},"
+    },
+    {
+      "path": "scripts/test-permitting-draft-library-browser.mjs",
+      "line": 13,
+      "text": " await writeFile(path.join(scratch,'api.js'),`export const base44={entities:{PermittingWorkflowDraft:{filter:async(query,options)=>{window.fixture.reads++;window.fixture.requests.push({query,options});if(window.fixture.fail)throw Error('Synthetic failure');const start=options.cursor?Number(options.cursor.replace('draft-page-','')):0;if(window.fixture.failOlder&&start)throw Error('Synthetic older-page failure');if(window.fixture.slowOlder&&start)await new Promise(resolve=>setTimeout(resolve,350));const items=window.fixture.rows.slice(start,start+options.limit),end=start+items.length,has_more=end<window.fixture.rows.length;return {items,has_more,next_cursor:has_more?'draft-page-'+end:null};}}}};`);"
+    },
+    {
+      "path": "scripts/test-permitting-office-response-handoff-browser.mjs",
+      "line": 14,
+      "text": " PermittingWorkflowDraft:{filter:async()=>{window.fixture.draftReads++;return {items:structuredClone(window.fixture.rows),has_more:false,next_cursor:null};}},"
+    },
+    {
+      "path": "scripts/validate-sales-opportunity-history-pagination.mjs",
+      "line": 52,
+      "text": "    next_cursor:more&&!unavailableCursors?kind+':'+(start+items.length):''});"
+    },
+    {
+      "path": "scripts/test-permitting-queue-browse.mjs",
+      "line": 17,
+      "text": "await act(async()=>pending[1].resolve({items:[{id:'KY'}],has_more:true,next_cursor:'next'}));assert.equal(value.queuePage.items[0].id,'KY');"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 41602,
+      "text": "    page = (rows) => ({ items: rows, has_more: false, next_cursor: null });"
+    },
+    {
+      "path": "scripts/.tmp-wo-persistence.mjs",
+      "line": 41713,
+      "text": "            return paged && Array.isArray(result) ? { items: result, has_more: false, next_cursor: null } : result;"
+    },
+    {
+      "path": "scripts/test-permitting-selector-scan-browser.mjs",
+      "line": 14,
+      "text": " await writeFile(path.join(scratch,'api.js'),`export const base44={entities:{JurisdictionProfile:{list:async()=>window.fixture.profiles,get:async id=>window.fixture.profiles.find(p=>p.id===id),create:async data=>{const row={id:'new-profile',...data};window.fixture.profiles.push(row);return row;}}},functions:{invoke:async(name,body)=>{const f=window.fixture;if(name==='getAddressResearchCollections'&&body.browse){f.browseCalls=(f.browseCalls || []).concat(body);return {data:body.cursor?{collections:[],actions:[],next_cursor:null}:f.savedPage || {collections:[],actions:[],next_cursor:null}};}if(name==='getAddressResearchCollections')return {data:{collections:f.addressArchives?.collections || [],actions:f.backgroundActions || []}};if(name==='linkAddressResearchDocument'&&body.dry_run){f.linkPreviews=(f.linkPreviews || []).concat(body);return {data:{success:true,dry_run:true,jurisdiction_id:'p1',jurisdiction_name:'Employee County',state:'OH',document_title:'Verified form',expected_evidence_digest:'digest',expected_updated_date:'v1'}};}if(name==='permittingScanStatus')return {data:{run:f.runs[body.action_token] || null}};f.calls.push({name,body});const row={action_token:body.action_token,status:'running',stage:'Scanning official pages',processed:1,total:3,indeterminate:false,target_id:body.collection_id,action_kind:name==='continueAddressResearchDiscovery'?'address_discovery':name==='archiveAddressResearchFile'?'address_archive':'address',current_url:name==='continueAddressResearchDiscovery'?(body.retry_page_url || f.pageCollection.discovery.pending_pages[0].url):'https://county.gov/forms',events:[{kind:'found',resources:[{url:'https://county.gov/sign.pdf',title:'Sign application'}]}]};f.runs[body.action_token]=row;return new Promise(resolve=>f.finish.push(()=>{row.status='complete';row.stage='Complete';row.processed=3;if(name==='continueAddressResearchDiscovery'){const collection=f.pageCollection,selected=body.retry_page_url?{url:body.retry_page_url}:collection.discovery.pending_pages.shift();if(body.retry_page_url){collection.discovery.gaps=collection.discovery.gaps.filter(gap=>gap.url!==body.retry_page_url);}collection.discovery.visited_count++;collection.discovery.last_pages=[{url:selected.url,status:'scanned'}];const resource={id:'page-file-'+collection.discovery.visited_count,title:'New sign form',url:selected.url+'.pdf',archive_state:{status:'pending'}};collection.documents.push(resource);collection.discovery.last_resources=[resource];resolve({data:{success:true,scan_run:row,attempted_pages:1,pages:collection.discovery.last_pages,collection:JSON.parse(JSON.stringify(collection))}});}else if(name==='linkAddressResearchDocument')resolve({data:{success:true,status:'linked',jurisdiction_id:'p1',scan_run:row}});else if(name==='archiveAddressResearchFile'&&f.batchCollection){const collection=f.batchCollection;const doc=body.referral_url?{id:'outside',url:body.referral_url,title:'Outside form',external_referral_provenance:{source_page_url:body.source_page_url}}:collection.documents.find(doc=>doc.id===body.document_id);Object.assign(doc,{file_url:'https://stored.example.gov/'+doc.id+'.pdf',source_sha256:'a'.repeat(64),stored_sha256:'a'.repeat(64),source_bytes:15,stored_bytes:15,archive_state:{status:'complete'}});if(body.referral_url)collection.documents.push(doc);resolve({data:{success:true,scan_run:row,collection:JSON.parse(JSON.stringify(collection))}});}else if(name==='archiveAddressResearchFile'&&body.referral_url)resolve({data:{success:true,scan_run:row,collection:{id:body.collection_id,documents:[{id:'external-saved',title:'Outside sign form',url:body.referral_url,file_url:'https://stored.example.gov/outside.pdf',source_sha256:'a'.repeat(64),stored_sha256:'a'.repeat(64),source_bytes:15,stored_bytes:15,archive_state:{status:'complete'},external_referral_provenance:{source_page_url:body.source_page_url}}]}}});else if(name==='archiveAddressResearchFile')resolve({data:{success:true,scan_run:row,collection:{id:'collection-one',documents:[{id:'pending',title:'Electrical original',url:'https://county.gov/electrical.pdf',file_url:'https://stored.example.gov/electrical.pdf',source_sha256:'a'.repeat(64),stored_sha256:'a'.repeat(64),source_bytes:15,stored_bytes:15,archive_state:{status:'complete'}}]}}});else if(name==='findLocalityByAddress')resolve({data:{success:true,scan_run:row,suggested_locality:f.localities[0],ai_locality_name:'County',ai_state:'OH',geocode:{display_name:body.address,lat:39,lon:-84},location_resolution:{status:f.mode==='unresolved'?'needs_review':'location_verified',boundaries:[]},apply_allowed:f.mode!=='unresolved',automatic_scan:f.mode==='unresolved'?{started:true,scans:[{target:{name:'County'},documents:[{title:'Sign form',url:'https://county.gov/sign.pdf'}],pages:[{url:'https://county.gov/broken',status:'failed',error:'HTTP 503'}],external_referrals:[{title:'Apply online',url:'https://portal.example.gov/apply',source_page_url:'https://county.gov/forms'},{title:'Unsafe destination',url:'javascript:alert(1)'}],pending_pages:[{url:'https://county.gov/electrical'}],gaps:[{url:'https://county.gov/broken',reason:'page_fetch_failed',detail:'HTTP 503'}]}]}:null,address_archives:f.mode==='unresolved'?(f.addressArchives ||={collections:[{id:'collection-one',target:{name:'County'},documents:[{id:'saved',title:'Saved sign form',url:'https://county.gov/saved.pdf',file_url:'https://stored.example.gov/sign.pdf',source_sha256:'a'.repeat(64),stored_sha256:'a'.repeat(64),source_bytes:15,stored_bytes:15,archive_state:{status:'complete'}},{id:'pending',title:'Electrical original',url:'https://county.gov/electrical.pdf',archive_state:{status:'pending'}},{id:'uncertain',title:'Uncertain upload',url:'https://county.gov/uncertain.pdf',archive_state:{status:'upload_uncertain'}}]}]}):null,authority_review:{verified_roles:[],roles_needing_review:[]},zoning:{},parcel:{}}});else resolve({data:{success:true,scan_run:row,jurisdiction:f.profiles.find(p=>p.id===body.jurisdiction_id)}});}));}}};`);"
+    },
+    {
+      "path": "scripts/test-permitting-selector-scan-browser.mjs",
+      "line": 34,
+      "text": " for(const width of [320,1280])await check('saved research returns earlier originals without another address scan',width,async page=>{await page.evaluate(()=>{window.fixture.savedPage={collections:[{id:'old',target:{name:'Earlier County'},documents:[{id:'saved',title:'Earlier sign form',url:'https://county.gov/old.pdf',file_url:'https://stored.example.gov/old.pdf',source_sha256:'a'.repeat(64),stored_sha256:'a'.repeat(64),source_bytes:15,stored_bytes:15,archive_state:{status:'complete'}}]}],actions:[],next_cursor:'old'};});await page.getByText('My saved research',{exact:true}).click();await page.getByRole('button',{name:'Show my research',exact:true}).click();await page.getByRole('heading',{name:'Saved research files'}).waitFor();await page.getByText('Original files (1)',{exact:true}).click();assert.equal(await page.getByRole('link',{name:'Open saved original',exact:true}).getAttribute('href'),'https://stored.example.gov/old.pdf');assert.equal(await page.evaluate(()=>window.fixture.calls.length),0);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.getByRole('button',{name:'Show older research',exact:true}).click();await page.getByText('No saved research found.',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>window.fixture.browseCalls[1].cursor),'old');assert.equal(await page.getByRole('button',{name:'Show older research',exact:true}).count(),0);},'reader');"
+    },
+    {
+      "path": "scripts/test-permitting-selector-scan-browser.mjs",
+      "line": 35,
+      "text": " for(const width of [320,1280])await check('administrator inspects employee originals with provenance and no approval or save controls',width,async page=>{await page.evaluate(()=>{window.fixture.savedPage={review_mode:true,collections:[{id:'employee-collection',owner_email:'employee@example.com',location_verified:true,source_url:'https://county.gov/forms',target:{name:'Employee County',state:'OH',county:'Example County'},documents:[{id:'pending',title:'Pending original',url:'https://county.gov/pending.pdf',archive_state:{status:'pending'}},{id:'saved',title:'Verified form',url:'https://county.gov/old.pdf',file_url:'https://stored.example.gov/old.pdf',source_sha256:'a'.repeat(64),stored_sha256:'a'.repeat(64),source_bytes:15,stored_bytes:15,archive_state:{status:'complete'}}]}],actions:[],next_cursor:null};});await page.getByText('Employee research to review',{exact:true}).click();await page.getByRole('button',{name:'Show employee research',exact:true}).click();await page.getByText('Original files (2)',{exact:true}).click();await page.getByText(/Collected by: employee@example.com/).waitFor();await page.getByText(/Location verified at collection time/).waitFor();assert.equal(await page.getByRole('link',{name:'Open saved original',exact:true}).getAttribute('href'),'https://stored.example.gov/old.pdf');assert.equal(await page.getByRole('button',{name:'Save original',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Use this jurisdiction',exact:true}).count(),0);assert.equal(await page.evaluate(()=>window.fixture.browseCalls[0].review),true);assert.equal(await page.evaluate(()=>window.fixture.calls.length),0);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.getByRole('button',{name:'Preview jurisdiction link',exact:true}).click();await page.getByText('Link Verified form to Employee County, OH?',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>window.fixture.calls.length),0);await page.getByRole('button',{name:'Cancel',exact:true}).click();assert.equal(await page.getByRole('button',{name:'I reviewed it — link original',exact:true}).count(),0);await page.getByRole('button',{name:'Preview jurisdiction link',exact:true}).click();await page.getByRole('button',{name:'I reviewed it — link original',exact:true}).click();const call=await page.evaluate(()=>window.fixture.calls.at(-1));assert.equal(call.name,'linkAddressResearchDocument');assert.equal(call.body.confirmed,true);assert.equal(call.body.expected_evidence_digest,'digest');assert.equal(call.body.collection_id,'employee-collection');await page.getByRole('region',{name:'Link reviewed original — Verified form',exact:true}).getByRole('progressbar').waitFor();await page.evaluate(()=>window.fixture.finish[0]());await page.getByText('Original linked to the jurisdiction repository. Rules and office authority still need their own review.',{exact:true}).waitFor();},'review');"
+    },
+    {
+      "path": "scripts/test-permitting-selector-scan-browser.mjs",
+      "line": 36,
+      "text": " for(const width of [320,1280])await check('retained outside original has individual save progress and referring-page provenance',width,async page=>{await page.evaluate(()=>{window.fixture.savedPage={collections:[{id:'outside-collection',target:{name:'County'},documents:[],external_referrals:[{title:'Outside sign form',url:'https://cdn.example.gov/sign.pdf',source_page_url:'https://county.gov/forms'}]}],actions:[],next_cursor:null};});await page.getByText('My saved research',{exact:true}).click();await page.getByRole('button',{name:'Show my research',exact:true}).click();await page.getByText('Original files (1)',{exact:true}).click();await page.getByRole('button',{name:'Save linked original',exact:true}).click();const call=await page.evaluate(()=>window.fixture.calls.at(-1));assert.equal(call.name,'archiveAddressResearchFile');assert.equal(call.body.collection_id,'outside-collection');assert.equal(call.body.referral_url,'https://cdn.example.gov/sign.pdf');assert.equal(call.body.source_page_url,'https://county.gov/forms');assert.equal(call.body.document_id,undefined);await page.getByRole('region',{name:'Save original — Outside sign form',exact:true}).getByRole('progressbar').waitFor();await page.evaluate(()=>window.fixture.finish[0]());assert.equal(await page.getByRole('link',{name:'Open saved original',exact:true}).getAttribute('href'),'https://stored.example.gov/outside.pdf');await page.getByText(/Direct file only; outside website not crawled/).waitFor();assert.equal(await page.getByRole('button',{name:'Save linked original',exact:true}).count(),0);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert.equal(await page.evaluate(()=>window.fixture.applies.length),0);},'reader');"
+    },
+    {
+      "path": "scripts/test-permitting-selector-scan-browser.mjs",
+      "line": 38,
+      "text": "  await page.evaluate(()=>{window.fixture.savedPage={collections:[{id:'collection-one',target:{name:'County'},documents:[{id:'pending',title:'Electrical original',url:'https://county.gov/electrical.pdf'},{id:'next',title:'Next form',url:'https://county.gov/next.pdf'},{id:'uncertain',title:'Uncertain original',url:'https://county.gov/uncertain.pdf',archive_state:{status:'upload_uncertain'}}]}],actions:[],next_cursor:null};});"
+    },
+    {
+      "path": "scripts/test-permitting-selector-scan-browser.mjs",
+      "line": 53,
+      "text": "  await page.evaluate(()=>{const collection={id:'batch',target:{name:'County'},documents:[{id:'pending',title:'First form',url:'https://county.gov/first.pdf'}],external_referrals:[{title:'Outside form',url:'https://cdn.example.gov/second.pdf',source_page_url:'https://county.gov/forms'}]};window.fixture.batchCollection=collection;window.fixture.savedPage={collections:[collection],actions:[],next_cursor:null};});"
+    },
+    {
+      "path": "scripts/test-permitting-selector-scan-browser.mjs",
+      "line": 70,
+      "text": "  await page.evaluate(()=>{window.fixture.savedPage={collections:[{id:'status',auto_refresh:false,target:{name:'County'},documents:[{id:'waiting',title:'Waiting form',url:'https://county.gov/wait.pdf',archive_state:{status:'failed',retry_after:'2099-01-01T00:00:00Z'}},{id:'verify',title:'Uploaded form',url:'https://county.gov/verify.pdf',archive_state:{status:'uploaded',file_url:'https://stored.gov/verify.pdf'}},{id:'uncertain',title:'Uncertain form',url:'https://county.gov/uncertain.pdf',archive_state:{status:'upload_uncertain'}},{id:'bad',title:'Incomplete receipt',url:'https://county.gov/bad.pdf',archive_state:{status:'complete'}},{id:'working',title:'Active upload',url:'https://county.gov/working.pdf',archive_state:{status:'uploading',lease_expires_at:'2099-01-01T00:00:00Z'}}]}],actions:[],next_cursor:null};});"
+    },
+    {
+      "path": "scripts/test-permitting-selector-scan-browser.mjs",
+      "line": 85,
+      "text": "  await page.evaluate(()=>{const collection={id:'pages',target:{name:'County'},documents:[],discovery:{pending_pages:[{url:'https://county.gov/sign'},{url:'https://county.gov/electrical'}],gaps:[],last_pages:[],last_resources:[],outside_links:[],visited_count:1}};window.fixture.pageCollection=collection;window.fixture.savedPage={collections:[collection],actions:[],next_cursor:null};});"
+    },
+    {
+      "path": "scripts/test-permitting-selector-scan-browser.mjs",
+      "line": 105,
+      "text": "  await page.evaluate(()=>{const collection={id:'pages',target:{name:'County'},documents:[],discovery:{pending_pages:[{url:'https://county.gov/sign'},{url:'https://county.gov/electrical'}],gaps:[],last_pages:[],last_resources:[],outside_links:[],visited_count:1}};window.fixture.pageCollection=collection;window.fixture.savedPage={collections:[collection],actions:[],next_cursor:null};});"
+    },
+    {
+      "path": "scripts/test-permitting-selector-scan-browser.mjs",
+      "line": 119,
+      "text": "  await page.evaluate(()=>{const collection={id:'retry',target:{name:'County'},documents:[],discovery:{pending_pages:[{url:'https://county.gov/waiting'}],gaps:[{url:'https://county.gov/broken',reason:'page_fetch_failed',detail:'HTTP 503'}],last_pages:[],last_resources:[],visited_count:1}};window.fixture.pageCollection=collection;window.fixture.savedPage={collections:[collection],actions:[],next_cursor:null};});"
+    },
+    {
+      "path": "scripts/test-permitting-selector-scan-browser.mjs",
+      "line": 126,
+      "text": "  await page.evaluate(()=>{const collection={id:'retry-batch',target:{name:'County'},documents:[],discovery:{pending_pages:[{url:'https://county.gov/waiting'}],gaps:[{url:'https://county.gov/first',reason:'page_fetch_failed'},{url:'https://county.gov/second',reason:'page_fetch_failed'}],last_pages:[],last_resources:[],visited_count:1}};window.fixture.pageCollection=collection;window.fixture.savedPage={collections:[collection],actions:[],next_cursor:null};});"
+    },
+    {
+      "path": "scripts/test-permitting-county-choices.mjs",
+      "line": 4,
+      "text": "const values=await readAllCountyChoices(async cursor=>{calls++;const n=Number(cursor||0);return {items:Array.from({length:500},(_,i)=>`County ${n*500+i}`),has_more:n<2,next_cursor:String(n+1)};});"
+    },
+    {
+      "path": "scripts/test-permitting-county-choices.mjs",
+      "line": 7,
+      "text": "await assert.rejects(readAllCountyChoices(async()=>({items:[],has_more:true,next_cursor:'same'})),/advance/);"
+    },
+    {
+      "path": "scripts/test-permitting-coverage-reader.mjs",
+      "line": 4,
+      "text": "const rows=await readAllCoveragePages(async cursor=>{calls++;const n=cursor?Number(cursor):0;return {items:Array.from({length:500},(_,i)=>({id:String(n*500+i)})),has_more:n<11,next_cursor:String(n+1)};});"
+    },
+    {
+      "path": "scripts/test-permitting-coverage-reader.mjs",
+      "line": 6,
+      "text": "await assert.rejects(readAllCoveragePages(async()=>({items:[],has_more:true,next_cursor:'same'})),/advance/);"
+    },
+    {
+      "path": "scripts/test-permitting-coverage-reader.mjs",
+      "line": 27,
+      "text": "  ? {items:[earlier],has_more:true,next_cursor:'second'}"
+    },
+    {
+      "path": "scripts/test-permitting-coverage-reader.mjs",
+      "line": 42,
+      "text": "for(const next_cursor of [undefined,null,0,1,true,{},[],['cursor'],'','   ']) {"
+    },
+    {
+      "path": "scripts/test-permitting-coverage-reader.mjs",
+      "line": 44,
+      "text": " await assert.rejects(readAllCoveragePages(async()=>{tokenCalls++;return {items:[],has_more:true,next_cursor};}),/Invalid coverage continuation token/);"
+    },
+    {
+      "path": "scripts/test-permitting-coverage-reader.mjs",
+      "line": 49,
+      "text": "assert.equal((await readAllCoveragePages(async cursor=>{opaqueCalls++;if(opaqueCalls===1)return {items:[{id:'first'}],has_more:true,next_cursor:opaqueToken};assert.equal(cursor,opaqueToken);return {items:[{id:'second'}],has_more:false};})).length,2);"
+    }
+  ],
+  "truncated": true,
+  "returnedMatches": 60
+}

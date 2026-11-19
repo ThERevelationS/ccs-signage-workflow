@@ -1,0 +1,6 @@
+=== BROWSER v5 (lead-fixed script) ===
+ok S1: missing catalog shell — alert, saved amounts, all write paths blocked
+ok S2: reload failure -> retry -> success -> explicit save CAS v1
+ok S3: old A reload settling (success) during NEW A flight cannot hijack it
+ok S4: old A reload failing during NEW A flight leaves new busy + draft intact
+catalog-integrity-browser scenarios=4 failed=0

@@ -1,0 +1,636 @@
+{
+  "matches": [
+    {
+      "path": "src/api/entities.js",
+      "line": 4,
+      "text": "export const Query = base44.entities.Query;"
+    },
+    {
+      "path": "src/api/gatedEntities.js",
+      "line": 2,
+      "text": "// direct base44.entities.<staff-tier> references now that those entities are"
+    },
+    {
+      "path": "src/pages/SalesPipeline.jsx",
+      "line": 175,
+      "text": "    const SalesFilter = base44.entities.SalesFilter;\r"
+    },
+    {
+      "path": "src/pages/SalesPipeline.jsx",
+      "line": 319,
+      "text": "    const SalesFilter = base44.entities.SalesFilter;\r"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 25,
+      "text": "const WorkOrder = base44.entities.WorkOrder;"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 348,
+      "text": "          entity: base44.entities.GlobalSettings,"
+    },
+    {
+      "path": "src/pages/ResourcePlanning.jsx",
+      "line": 37,
+      "text": "const WorkOrder = base44.entities.WorkOrder;\r"
+    },
+    {
+      "path": "src/pages/AuditLog.jsx",
+      "line": 32,
+      "text": "          type === \"activity\" ? Promise.resolve([]) : base44.entities.EstimateRevision.filter({}, \"-updated_date\", 150).catch(() => []),"
+    },
+    {
+      "path": "src/pages/AuditLog.jsx",
+      "line": 33,
+      "text": "          type === \"revision\" ? Promise.resolve([]) : base44.entities.OpportunityActivity.filter({}, \"-created_date\", 150).catch(() => []),"
+    },
+    {
+      "path": "src/pages/Financials.jsx",
+      "line": 291,
+      "text": "    const SalesFilter = base44.entities.SalesFilter;\r"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 128,
+      "text": "const AutomationRule = base44.entities.AutomationRule;"
+    },
+    {
+      "path": "src/pages/AdminSettings.jsx",
+      "line": 129,
+      "text": "const EmailGroup = base44.entities.EmailGroup;"
+    },
+    {
+      "path": "src/components/markup/savedCustomerPricing.js",
+      "line": 31,
+      "text": "      loadAllEntityRows({ entity: base44.entities.MarkupTier, sort: \"sort_order\", label: \"Customer pricing markup tiers\" }),\r"
+    },
+    {
+      "path": "src/components/markup/savedCustomerPricing.js",
+      "line": 34,
+      "text": "      loadAllEntityRows({ entity: base44.entities.MarkupCategory, sort: \"sort_order\", label: \"Customer pricing markup categories\" }).catch(() => []),\r"
+    },
+    {
+      "path": "src/components/markup/savedCustomerPricing.js",
+      "line": 35,
+      "text": "      loadAllEntityRows({ entity: base44.entities.Settings, query: { category: \"pricing\" }, sort: null, label: \"Customer pricing settings\" }),\r"
+    },
+    {
+      "path": "src/components/markup/savedCustomerPricing.js",
+      "line": 37,
+      "text": "        ? base44.entities.Customer.get(project.customer_id).catch((error) => {\r"
+    },
+    {
+      "path": "src/components/queues/queueFeedClient.js",
+      "line": 375,
+      "text": "  loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: \"dropdownConditions\", label: \"My Workflow dropdown conditions\" })"
+    },
+    {
+      "path": "src/components/queues/queueFeedClient.js",
+      "line": 378,
+      "text": "  loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: \"salesTaskDescriptions\", label: \"Sales task descriptions\" })"
+    },
+    {
+      "path": "src/components/timeclock/CurrentWorkCard.jsx",
+      "line": 11,
+      "text": "const WorkOrder = base44.entities.WorkOrder;\r"
+    },
+    {
+      "path": "src/components/timeclock/PTOBalanceView.jsx",
+      "line": 22,
+      "text": "const PTOPolicy = base44.entities.PTOPolicy;\r"
+    },
+    {
+      "path": "src/components/timeclock/ClockOutDialog.jsx",
+      "line": 14,
+      "text": "const WorkOrder = base44.entities.WorkOrder;\r"
+    },
+    {
+      "path": "src/components/timeclock/TimeClockReportsDashboard.jsx",
+      "line": 31,
+      "text": "const WorkOrder = base44.entities.WorkOrder;\r"
+    },
+    {
+      "path": "src/components/permitting/PermitSpreadsheetRow.jsx",
+      "line": 210,
+      "text": "        entity: base44.entities.JurisdictionProfile,\r"
+    },
+    {
+      "path": "src/components/permitting/OfficeChangeLog.jsx",
+      "line": 16,
+      "text": "      const locs = await base44.entities.PermitLocality.filter({ jurisdiction_profile_id: jurisdiction.id }).catch(() => []);"
+    },
+    {
+      "path": "src/components/permitting/JurisdictionDetailPanel.jsx",
+      "line": 253,
+      "text": "          const latest = await base44.entities.JurisdictionProfile.get(targetId);\r"
+    },
+    {
+      "path": "src/components/permitting/JurisdictionDetailPanel.jsx",
+      "line": 264,
+      "text": "            const saved = await base44.entities.JurisdictionProfile.get(targetId);\r"
+    },
+    {
+      "path": "src/components/permitting/JurisdictionDetailPanel.jsx",
+      "line": 272,
+      "text": "          const saved = await base44.entities.JurisdictionProfile.get(targetId).catch(() => null);\r"
+    },
+    {
+      "path": "src/components/permitting/JurisdictionDetailPanel.jsx",
+      "line": 517,
+      "text": "          entity: base44.entities.JurisdictionProfile,\r"
+    },
+    {
+      "path": "src/components/permitting/JurisdictionDetailPanel.jsx",
+      "line": 586,
+      "text": "        const latest = await base44.entities.JurisdictionProfile.get(jurisdiction.id).catch(() => null);\r"
+    },
+    {
+      "path": "src/components/permitting/JurisdictionDetailPanel.jsx",
+      "line": 687,
+      "text": "                  const locs = await base44.entities.PermitLocality.filter({ jurisdiction_profile_id: jurisdiction.id }).catch(() => []);\r"
+    },
+    {
+      "path": "src/components/permitting/PermittingCompletenessDashboard.jsx",
+      "line": 144,
+      "text": "        base44.entities.JurisdictionProfile.aggregate({ groupBy: \"state\", count: true }),\r"
+    },
+    {
+      "path": "src/components/permitting/PermittingCompletenessDashboard.jsx",
+      "line": 145,
+      "text": "        base44.entities.JurisdictionProfile.count({ \"rewrite_authority.adoptionStatus\": \"verified\", \"rewrite_authority.effectiveDateStatus\": \"verified\" }),\r"
+    },
+    {
+      "path": "src/components/permitting/PermittingCompletenessDashboard.jsx",
+      "line": 146,
+      "text": "        base44.entities.JurisdictionProfile.count({ \"rewrite_authority.adoptionStatus\": \"verified\" }),\r"
+    },
+    {
+      "path": "src/components/permitting/PermittingCompletenessDashboard.jsx",
+      "line": 147,
+      "text": "        base44.entities.JurisdictionProfile.count({ \"rewrite_authority.effectiveDateStatus\": \"verified\" }),\r"
+    },
+    {
+      "path": "src/components/permitting/PermittingCompletenessDashboard.jsx",
+      "line": 255,
+      "text": "    base44.entities.JurisdictionProfile.filter({}, { limit: 300 })\r"
+    },
+    {
+      "path": "src/components/permitting/PermitSettingsDialog.jsx",
+      "line": 29,
+      "text": "const PermitLocality = base44.entities.PermitLocality;\r"
+    },
+    {
+      "path": "src/components/permitting/PermitSettingsDialog.jsx",
+      "line": 30,
+      "text": "const GlobalSettings = base44.entities.GlobalSettings;\r"
+    },
+    {
+      "path": "src/components/sales/CustomFilterDialog.jsx",
+      "line": 141,
+      "text": "    const SalesFilter = base44.entities.SalesFilter;\r"
+    },
+    {
+      "path": "src/components/sales/BulkDuplicateCleanup.jsx",
+      "line": 12,
+      "text": "const WorkOrder = base44.entities.WorkOrder;\r"
+    },
+    {
+      "path": "src/components/sips/TemplateBuilder.jsx",
+      "line": 26,
+      "text": "const GlobalSettings = base44.entities.GlobalSettings;\r"
+    },
+    {
+      "path": "src/components/sips/ProductChecklistDialog.jsx",
+      "line": 23,
+      "text": "const WorkOrder = base44.entities.WorkOrder;\r"
+    },
+    {
+      "path": "src/components/sips/ProductChecklistDialog.jsx",
+      "line": 270,
+      "text": "          entity: base44.entities.GlobalSettings,\r"
+    },
+    {
+      "path": "src/components/sips/ProductChecklistDialog.jsx",
+      "line": 275,
+      "text": "          entity: base44.entities.GlobalSettings,\r"
+    },
+    {
+      "path": "src/components/sips/ProductChecklistDialog.jsx",
+      "line": 280,
+      "text": "          entity: base44.entities.GlobalSettings,\r"
+    },
+    {
+      "path": "src/components/admin/AdminCalendarSettings.jsx",
+      "line": 51,
+      "text": "        base44.entities.CalendarEvent.list(\"-start_datetime\", 200),"
+    },
+    {
+      "path": "src/components/admin/AdminCalendarSettings.jsx",
+      "line": 53,
+      "text": "          entity: base44.entities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/admin/AdminCalendarSettings.jsx",
+      "line": 57,
+      "text": "        base44.entities.WorkOrder.list(\"-created_date\", 150).catch(() => []),"
+    },
+    {
+      "path": "src/components/admin/AdminCalendarSettings.jsx",
+      "line": 84,
+      "text": "        entity: base44.entities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/admin/JurisdictionMonitoringSettings.jsx",
+      "line": 40,
+      "text": "      const allAutomations = await base44.entities.AutomationRule?.list?.() || [];"
+    },
+    {
+      "path": "src/components/admin/JurisdictionMonitoringSettings.jsx",
+      "line": 53,
+      "text": "        entity: base44.entities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/admin/JurisdictionMonitoringSettings.jsx",
+      "line": 68,
+      "text": "      const recentAlerts = await base44.entities.RegulationAlert?.list?.(\"-detected_at\", 5) || [];"
+    },
+    {
+      "path": "src/components/admin/JurisdictionMonitoringSettings.jsx",
+      "line": 81,
+      "text": "        entity: base44.entities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/admin/PTOManagement.jsx",
+      "line": 59,
+      "text": "const PTOPolicy = base44.entities.PTOPolicy;\r"
+    },
+    {
+      "path": "src/components/admin/SmartsheetSyncWidget.jsx",
+      "line": 43,
+      "text": "        loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: STATUS_KEYS.orders, label: \"Smartsheet order sync status\" }),\r"
+    },
+    {
+      "path": "src/components/admin/SmartsheetSyncWidget.jsx",
+      "line": 44,
+      "text": "        loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: STATUS_KEYS.sales, label: \"Smartsheet sales sync status\" }),\r"
+    },
+    {
+      "path": "src/components/admin/SmartsheetSyncWidget.jsx",
+      "line": 45,
+      "text": "        loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: STATUS_KEYS.legacy, label: \"Smartsheet legacy sync status\" }),\r"
+    },
+    {
+      "path": "src/components/admin/SmartsheetSyncWidget.jsx",
+      "line": 46,
+      "text": "        loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: CONFIG_KEY, label: \"Smartsheet sync config\" }),\r"
+    },
+    {
+      "path": "src/components/admin/EmailGroupsManager.jsx",
+      "line": 31,
+      "text": "const EmailGroup = base44.entities.EmailGroup;\r"
+    },
+    {
+      "path": "src/components/workflow/SipChecklistSection.jsx",
+      "line": 18,
+      "text": "const WorkOrder = base44.entities.WorkOrder;"
+    },
+    {
+      "path": "src/components/workflow/SipChecklistSection.jsx",
+      "line": 46,
+      "text": "          entity: base44.entities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/workflow/EnhancedSipChecklist.jsx",
+      "line": 33,
+      "text": "const WorkOrder = base44.entities.WorkOrder;"
+    },
+    {
+      "path": "src/components/workflow/NotificationService.jsx",
+      "line": 7,
+      "text": "const EmailNotificationSettings = base44.entities.EmailNotificationSettings;"
+    },
+    {
+      "path": "src/components/workflow/NotificationService.jsx",
+      "line": 8,
+      "text": "const User = base44.entities.User;"
+    },
+    {
+      "path": "src/components/shared/CellContextMenu.jsx",
+      "line": 9,
+      "text": "const CellHistory = base44.entities.CellHistory;\r"
+    },
+    {
+      "path": "src/components/importer/ImportExportButtons.jsx",
+      "line": 291,
+      "text": "      const rows = await loadAllEntityRows({ entity: base44.entities.ProjectTemplate, sort: \"-created_date\", label: \"Project templates\" });"
+    },
+    {
+      "path": "src/components/masterInventory/FoundationMaterialDialog.jsx",
+      "line": 42,
+      "text": "        const live = await base44.entities.FoundationInventory.get(id);"
+    },
+    {
+      "path": "src/components/masterInventory/FoundationMaterialDialog.jsx",
+      "line": 54,
+      "text": "          entity: base44.entities.FoundationInventory,"
+    },
+    {
+      "path": "src/components/masterInventory/FoundationMaterialDialog.jsx",
+      "line": 63,
+      "text": "          entity: base44.entities.FoundationInventory,"
+    },
+    {
+      "path": "src/components/masterInventory/InventoryTable.jsx",
+      "line": 29,
+      "text": "        const row = await base44.entities.AllInOneEstimate.get(id).catch(() => null);\r"
+    },
+    {
+      "path": "src/components/masterInventory/inventoryPersistence.js",
+      "line": 103,
+      "text": "  const rows = await base44.entities.BuilderPart.filter({ inventory_item_id: id });\r"
+    },
+    {
+      "path": "src/components/masterInventory/inventoryPersistence.js",
+      "line": 119,
+      "text": "  const rows = await base44.entities.BuilderPart.filter({ inventory_item_id: id });\r"
+    },
+    {
+      "path": "src/components/masterInventory/inventoryPersistence.js",
+      "line": 124,
+      "text": "    const product = await base44.entities.BuilderProduct.get(productId).catch(() => null);\r"
+    },
+    {
+      "path": "src/components/masterInventory/MasterEquipmentTab.jsx",
+      "line": 35,
+      "text": "const FoundationInventoryEntity = base44.entities.FoundationInventory;"
+    },
+    {
+      "path": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+      "line": 60,
+      "text": "      entity: base44.entities.ProjectTemplate,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationTemplateService.js",
+      "line": 7,
+      "text": "    entity: base44.entities.ProjectTemplate,"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationTemplateService.js",
+      "line": 38,
+      "text": "    current = await base44.entities.ProjectTemplate.get(id);"
+    },
+    {
+      "path": "src/components/estimator/foundation/foundationTemplateService.js",
+      "line": 47,
+      "text": "    entity: base44.entities.ProjectTemplate,"
+    },
+    {
+      "path": "src/components/estimator/estimateConversionService.js",
+      "line": 29,
+      "text": "  Estimate: base44.entities.AllInOneEstimate,"
+    },
+    {
+      "path": "src/components/estimator/estimateConversionService.js",
+      "line": 30,
+      "text": "  WorkOrder: base44.entities.WorkOrder,"
+    },
+    {
+      "path": "src/components/estimator/EstimateQuoteDeliveryPanel.jsx",
+      "line": 36,
+      "text": "        entity: base44.entities.EstimateQuoteDelivery,\r"
+    },
+    {
+      "path": "src/components/estimator/moduleShared/moduleTemplateService.js",
+      "line": 12,
+      "text": "    entity: base44.entities.ProjectTemplate,"
+    },
+    {
+      "path": "src/components/estimator/moduleShared/moduleTemplateService.js",
+      "line": 21,
+      "text": "    entity: base44.entities.ProjectTemplate,"
+    },
+    {
+      "path": "src/components/estimator/moduleShared/moduleTemplateService.js",
+      "line": 32,
+      "text": "  const current = await base44.entities.ProjectTemplate.get(id).catch(() => null);"
+    },
+    {
+      "path": "src/components/estimator/moduleShared/moduleTemplateService.js",
+      "line": 35,
+      "text": "    entity: base44.entities.ProjectTemplate,"
+    },
+    {
+      "path": "src/components/estimator/EstimatorAuditPanel.jsx",
+      "line": 47,
+      "text": "          type === \"activity\" || type === \"admin\" ? Promise.resolve([]) : base44.entities.EstimateRevision.filter({}, \"-updated_date\", 150).catch(() => []),"
+    },
+    {
+      "path": "src/components/estimator/EstimatorAuditPanel.jsx",
+      "line": 48,
+      "text": "          type === \"revision\" || type === \"admin\" ? Promise.resolve([]) : base44.entities.OpportunityActivity.filter({}, \"-created_date\", 150).catch(() => []),"
+    },
+    {
+      "path": "src/components/estimator/EstimatorAuditPanel.jsx",
+      "line": 49,
+      "text": "          type === \"revision\" || type === \"activity\" ? Promise.resolve([]) : base44.entities.AdminAuditLog.filter({}, \"-at\", 150).catch(() => []),"
+    },
+    {
+      "path": "src/components/estimator/builder/builderService.js",
+      "line": 972,
+      "text": "    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: \"revision_number\", label: \"Builder price revisions\" }),"
+    },
+    {
+      "path": "src/components/estimator/builder/builderService.js",
+      "line": 1001,
+      "text": "      entity: base44.entities.BuilderPriceRevision,"
+    },
+    {
+      "path": "src/components/estimator/ConvertToWorkOrder.jsx",
+      "line": 26,
+      "text": "    base44.entities.WorkOrder.get(linkedId)\r"
+    },
+    {
+      "path": "src/components/estimator/ConvertToWorkOrder.jsx",
+      "line": 84,
+      "text": "      const post = await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => null);\r"
+    },
+    {
+      "path": "src/components/estimator/aio/BuilderPartsPanel.jsx",
+      "line": 307,
+      "text": "      const current = await base44.entities.BuilderPartGroup.get(group.id).catch(() => null);\r"
+    },
+    {
+      "path": "src/components/estimator/aio/BuilderPartsPanel.jsx",
+      "line": 311,
+      "text": "        entity: base44.entities.BuilderPartGroup,\r"
+    },
+    {
+      "path": "src/components/estimator/aio/BuilderPartsPanel.jsx",
+      "line": 590,
+      "text": "          loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: \"sort_order\", label: \"Builder Parts panel Parts\" }),\r"
+    },
+    {
+      "path": "src/components/estimator/aio/BuilderPartsPanel.jsx",
+      "line": 591,
+      "text": "          loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: \"sort_order\", label: \"Builder Parts panel Groups\" }),\r"
+    },
+    {
+      "path": "src/components/estimator/aio/CreateQuickProductModal.jsx",
+      "line": 28,
+      "text": "      loadAllEntityRows({ entity: base44.entities.QuickProductCategory, sort: \"category_name\", label: \"Quick Product categories\" }).catch(() => []),\r"
+    },
+    {
+      "path": "src/components/estimator/aio/ProductPriceHistoryModal.jsx",
+      "line": 35,
+      "text": "      entity: base44.entities.BuilderPriceRevision,\r"
+    },
+    {
+      "path": "src/components/estimator/aio/ProductRow.jsx",
+      "line": 154,
+      "text": "      const rows = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: line.builder_product_id }, sort: \"revision_number\", label: \"Product cost trend\" });\r"
+    },
+    {
+      "path": "src/components/estimator/CustomerQuotePanel.jsx",
+      "line": 144,
+      "text": "      entity: base44.entities.EstimateQuoteDelivery,\r"
+    },
+    {
+      "path": "src/components/estimator/CustomerQuotePanel.jsx",
+      "line": 273,
+      "text": "        const customer = await base44.entities.Customer.get(estimate.customer_id).catch(() => null);\r"
+    },
+    {
+      "path": "src/components/estimator/CustomerQuotePanel.jsx",
+      "line": 327,
+      "text": "          entity: base44.entities.EstimateQuoteDelivery,\r"
+    },
+    {
+      "path": "src/components/estimator/EstimateAcceptancePanel.jsx",
+      "line": 113,
+      "text": "          entity: base44.entities.EstimateAcceptance,\r"
+    },
+    {
+      "path": "src/components/estimator/EstimateAcceptancePanel.jsx",
+      "line": 120,
+      "text": "          entity: base44.entities.EstimateQuoteDelivery,\r"
+    },
+    {
+      "path": "src/components/estimator/EstimateAcceptancePanel.jsx",
+      "line": 126,
+      "text": "          entity: base44.entities.EstimateSectionAcceptance,\r"
+    },
+    {
+      "path": "src/components/estimator/products/productRemovalService.js",
+      "line": 67,
+      "text": "      loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: \"revision_number\", label: \"Product removal price revisions\" }),"
+    },
+    {
+      "path": "src/components/estimator/products/productRemovalService.js",
+      "line": 111,
+      "text": "    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: \"revision_number\", label: \"Product removal price revisions\" }),"
+    },
+    {
+      "path": "src/components/estimator/products/productRemovalService.js",
+      "line": 168,
+      "text": "  for (const step of plan.revisions || []) await deleteVerified(base44.entities.BuilderPriceRevision, step, \"pricing revision\", builderProductId);"
+    },
+    {
+      "path": "src/components/estimator/products/productOperations.js",
+      "line": 173,
+      "text": "    const revisions = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builder.id }, sort: \"revision_number\", label: \"Product price revisions\" });"
+    },
+    {
+      "path": "src/components/estimator/parts/partPackageService.js",
+      "line": 110,
+      "text": "  const revisions = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builder.id }, sort: \"revision_number\", label: \"Saved Part insertion price revisions\" });"
+    },
+    {
+      "path": "src/components/estimator/parts/customProductService.js",
+      "line": 612,
+      "text": "    const revisions = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builder.id }, sort: \"revision_number\", label: \"Builder price revisions\" });"
+    },
+    {
+      "path": "src/components/estimator/parts/MasterPartPickerModal.jsx",
+      "line": 100,
+      "text": "        entity: base44.entities.Inventory,\r"
+    },
+    {
+      "path": "src/components/estimator/parts/partGroupService.js",
+      "line": 275,
+      "text": "    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: \"revision_number\", label: \"Builder price revisions\" }),"
+    },
+    {
+      "path": "src/components/estimator/parts/partGroupService.js",
+      "line": 671,
+      "text": "    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: sourceBuilder.id }, sort: \"revision_number\", label: \"Source Builder price revisions\" }),"
+    },
+    {
+      "path": "src/components/estimator/parts/partGroupService.js",
+      "line": 672,
+      "text": "    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: targetBuilder.id }, sort: \"revision_number\", label: \"Target Builder price revisions\" }),"
+    },
+    {
+      "path": "src/components/estimator/estimateRevisionService.js",
+      "line": 15,
+      "text": "    entity: base44.entities.EstimateRevision,\r"
+    },
+    {
+      "path": "src/components/estimator/estimateRevisionService.js",
+      "line": 27,
+      "text": "    const rows = await loadAllEntityRows({ entity: base44.entities.EstimateRevision, query: { estimate_id: estimateId }, sort: \"-revision_number\", label: \"Estimate revisions\" });\r"
+    },
+    {
+      "path": "src/components/estimator/estimateRevisionService.js",
+      "line": 144,
+      "text": "  entity = base44.entities.AllInOneEstimate,\r"
+    },
+    {
+      "path": "src/components/estimator/estimateRevisionService.js",
+      "line": 152,
+      "text": "    base44.entities.EstimateRevision.get(revId),\r"
+    },
+    {
+      "path": "src/components/estimator/EstimateActivityPanel.jsx",
+      "line": 21,
+      "text": "            ? base44.entities.OpportunityActivity.filter({ opportunity_id: estimate.opportunity_id }, \"-created_date\", 100).catch(() => [])\r"
+    },
+    {
+      "path": "src/components/estimator/EstimateActivityPanel.jsx",
+      "line": 23,
+      "text": "          base44.entities.PortalMessage.filter({ related_kind: \"estimate\", related_id: estimateId }, \"-created_date\", 100).catch(() => []),\r"
+    },
+    {
+      "path": "src/components/announcements/AnnouncementContext.jsx",
+      "line": 120,
+      "text": "          entity: base44.entities.Announcement,\r"
+    },
+    {
+      "path": "src/components/announcements/AnnouncementContext.jsx",
+      "line": 146,
+      "text": "      unsubscribe = base44.entities.Announcement.subscribe(() => {\r"
+    },
+    {
+      "path": "src/components/announcements/AnnouncementManager.jsx",
+      "line": 33,
+      "text": "const Announcement = base44.entities.Announcement;\r"
+    },
+    {
+      "path": "src/components/financials/FinancialsSpreadsheet.jsx",
+      "line": 18,
+      "text": "const WorkOrder = base44.entities.WorkOrder;\r"
+    },
+    {
+      "path": "src/components/orders/WorkOrderOrders.jsx",
+      "line": 63,
+      "text": "const Order = base44.entities.Order;\r"
+    },
+    {
+      "path": "src/components/orders/WorkOrderOrders.jsx",
+      "line": 65,
+      "text": "const GlobalSettings = base44.entities.GlobalSettings;\r"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 126
+}

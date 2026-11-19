@@ -1,0 +1,174 @@
+{
+ "total": 42,
+ "passed": 42,
+ "results": [
+  {
+   "case": "A1 in_sync: same base, no field diffs",
+   "ok": true
+  },
+  {
+   "case": "A2 edits_only: same base, field diverged — normal draft, NOT a merge conflict",
+   "ok": true
+  },
+  {
+   "case": "A3 base_moved_identical: stale anchor, content identical",
+   "ok": true
+  },
+  {
+   "case": "A4 conflict: stale anchor + diverged field",
+   "ok": true
+  },
+  {
+   "case": "A5 conflict via draft_only field (draft records what saved lacks)",
+   "ok": true
+  },
+  {
+   "case": "A6 saved_only never counts toward conflict (overlay restore leaves it)",
+   "ok": true
+  },
+  {
+   "case": "A7 unverifiable: draft side unreadable",
+   "ok": true
+  },
+  {
+   "case": "A8 unverifiable: saved side missing (record never re-read)",
+   "ok": true
+  },
+  {
+   "case": "A9 compare semantics: numeric tolerance, whitespace, key order",
+   "ok": true
+  },
+  {
+   "case": "A10 diff rows carry per-side summaries (rows/tier/absent)",
+   "ok": true
+  },
+  {
+   "case": "A11 rebase project: id + draft fields verbatim, isolated clone",
+   "ok": true
+  },
+  {
+   "case": "A12 rebase writes through the real store: draft re-anchored, old base preserved in envelope",
+   "ok": true
+  },
+  {
+   "case": "A13 rebase write honors CAS — a changed stored revision refuses",
+   "ok": true
+  },
+  {
+   "case": "B1 none_needed: no receipt, no pending",
+   "ok": true
+  },
+  {
+   "case": "B2 none_needed: receipt acknowledged by line snapshot",
+   "ok": true
+  },
+  {
+   "case": "B3 resync_unacknowledged: receipt pending, no line marker",
+   "ok": true
+  },
+  {
+   "case": "B4 resume_pending: durable line marker wins",
+   "ok": true
+  },
+  {
+   "case": "B5 blocked_mismatch: receipt names another estimate",
+   "ok": true
+  },
+  {
+   "case": "B6 blocked_unsupported: malformed receipt untouched",
+   "ok": true
+  },
+  {
+   "case": "B7 blocked_no_estimate: standalone project (no receipt, no estimate)",
+   "ok": true
+  },
+  {
+   "case": "B8 pending marker resumes even without a receipt on the project",
+   "ok": true
+  },
+  {
+   "case": "C1 classified CAS conflict carries conflictDetected",
+   "ok": true
+  },
+  {
+   "case": "C2 409-status error classifies as conflict + detected",
+   "ok": true
+  },
+  {
+   "case": "C3 generic failure: no conflictDetected (dialog must not open)",
+   "ok": true
+  },
+  {
+   "case": "C4 builder-sync failure → partial + pending, never conflictDetected",
+   "ok": true
+  },
+  {
+   "case": "C5 stale-context save → superseded, no conflictDetected",
+   "ok": true
+  },
+  {
+   "case": "D1 invalid: missing anchors → nothing read or written",
+   "ok": true
+  },
+  {
+   "case": "D2 conflict: source moved under the acknowledged revision — no writes",
+   "ok": true
+  },
+  {
+   "case": "D3 conflict: estimate unreadable → nothing written",
+   "ok": true
+  },
+  {
+   "case": "D4 blocked: receipt names another estimate → recordSave never called",
+   "ok": true
+  },
+  {
+   "case": "D5 already_synced: acknowledged receipt → recordSave never called",
+   "ok": true
+  },
+  {
+   "case": "D6 resync_unacknowledged → recordSave called with line hint + record source + warning",
+   "ok": true
+  },
+  {
+   "case": "D7 builderCalculation + savedProject overlay forwarded for descriptor parity",
+   "ok": true
+  },
+  {
+   "case": "D8 resume_pending: expectedPendingKey forwarded; ack asserts line",
+   "ok": true
+  },
+  {
+   "case": "D9 pending_key_changed → conflict, recordSave never called",
+   "ok": true
+  },
+  {
+   "case": "D10 recordSave throws → failed, markers retained, error surfaced",
+   "ok": true
+  },
+  {
+   "case": "D11 unacknowledged line after replay → pending (not claimed synced)",
+   "ok": true
+  },
+  {
+   "case": "E1 real end-to-end: first sync mints parts; retry creates ZERO new parts",
+   "ok": true
+  },
+  {
+   "case": "E2 forced re-sync while pending → converges on part_key, zero new creates on 2nd replay",
+   "ok": true
+  },
+  {
+   "case": "E3 partial death mid-sync → retry completes, still no dup keys",
+   "ok": true
+  },
+  {
+   "case": "E4 resume_pending replays the stored plan verbatim once, then already_synced",
+   "ok": true
+  },
+  {
+   "case": "E5 resume with a foreign pending key → conflict, plan not replayed",
+   "ok": true
+  }
+ ]
+}

@@ -1,0 +1,10 @@
+
+C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\.audit-work\foundation-reinforcement18\masonry-material-candidate-FoundationBOM.jsx
+  0:0  warning  File ignored because no matching configuration was supplied
+
+C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\.audit-work\foundation-reinforcement18\masonry-material-candidate-FoundationWallsPanel.jsx
+  0:0  warning  File ignored because no matching configuration was supplied
+
+✖ 2 problems (0 errors, 2 warnings)
+
+lint exit=0

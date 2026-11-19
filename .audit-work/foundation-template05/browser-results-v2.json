@@ -1,0 +1,42 @@
+{
+ "synthetic": true,
+ "note": "no Base44 SDK/services/records; stub entity fakes only",
+ "results": [
+  {
+   "case": "orphan cabinet visible; reassign leaves orphan group, cost kept",
+   "ok": true,
+   "reassigned": true,
+   "costKept": 50
+  },
+  {
+   "case": "cap wall change clears segment to explicit unassigned",
+   "ok": true,
+   "wall": "w_x",
+   "seg": ""
+  },
+  {
+   "case": "pole parent: reorder retains canon+index, delete -> dangling+issue, reassign resolves",
+   "ok": true,
+   "reorderOk": true,
+   "danglingAfterDelete": "mint_item_2",
+   "issue": true,
+   "reassigned": "mint_item_1"
+  },
+  {
+   "case": "template save snapshot then load+apply: full fields, fresh ids, close once",
+   "ok": true,
+   "saved": true,
+   "appliedFreshIds": 1,
+   "remapped": true
+  },
+  {
+   "case": "bad-schema apply: alert, stays open, design unchanged",
+   "ok": true,
+   "rejected": true
+  },
+  {
+   "case": "external-requests-blocked",
+   "ok": true
+  }
+ ]
+}

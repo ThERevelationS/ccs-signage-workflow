@@ -1,0 +1,54 @@
+{
+  "results": [
+    {
+      "id": "valid 1280",
+      "ok": true
+    },
+    {
+      "id": "valid 390",
+      "ok": true
+    },
+    {
+      "id": "held-bad-cabinet-qty 1280",
+      "ok": true
+    },
+    {
+      "id": "held-bad-cabinet-qty 390",
+      "ok": true
+    },
+    {
+      "id": "held-missing-cabinet-price 1280",
+      "ok": true
+    },
+    {
+      "id": "held-missing-cabinet-price 390",
+      "ok": true
+    },
+    {
+      "id": "held-missing-cell-size 1280",
+      "ok": true
+    },
+    {
+      "id": "held-missing-cell-size 390",
+      "ok": true
+    },
+    {
+      "id": "held-unsaved-project 1280",
+      "ok": true
+    },
+    {
+      "id": "held-unsaved-project 390",
+      "ok": true
+    },
+    {
+      "id": "free-cabinet-zero 1280",
+      "ok": true
+    },
+    {
+      "id": "free-cabinet-zero 390",
+      "ok": true
+    }
+  ],
+  "port": 59824,
+  "pid": 156576
+}

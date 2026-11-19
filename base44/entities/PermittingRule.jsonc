@@ -274,34 +274,9 @@
     "requirement"
   ],
   "rls": {
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "user"
-          }
-        }
-      ]
-    },
-    "update": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
+    "create": { "user_condition": { "role": "__permittingrule_backend_only__" } },
+    "read": { "user_condition": { "role": "__permittingrule_backend_only__" } },
+    "update": { "user_condition": { "role": "__permittingrule_backend_only__" } },
+    "delete": { "user_condition": { "role": "__permittingrule_backend_only__" } }
   }
 }

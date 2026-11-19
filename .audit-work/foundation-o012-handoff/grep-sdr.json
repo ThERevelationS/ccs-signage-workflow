@@ -1,0 +1,7 @@
+{
+  "stdout": "201:function projectItem(entityName: string, item: any, user?: any) {\n204:  if (!denied || !item || typeof item !== 'object') return item;\n205:  const clean = { ...item };\n412:    id: request?.id,\n460:    const id = String(body?.id || '').trim();\n462:      const item = await entity.get(id).catch((e: any) => (Number(e?.status) === 404 ? null : Promise.reject(e)));\n463:      if (!item) return { status: 404, body: { error: 'Record not found.' } };\n464:      if (OWNER_SCOPED.has(entityName) && ownerEmail && String(item?.user_email || '').trim().toLowerCase() !== ownerEmail) {\n465:        return { status: 404, body: { error: 'Record not found.' } };\n467:      return { status: 200, body: { success: true, item: projectItem(entityName, item, user) } };\n498:      const pageRows = Array.isArray(page) ? page : page?.items;\n504:      const items = effectiveQuery\n507:      rows = Array.isArray(items) ? items : [];\n517:      items: scopedRows.map((row) => projectItem(entityName, row, user)),\n531:    if ([400, 401, 403, 404, 429].includes(status)) {\n592:            entities[name] = result.body?.items ?? result.body?.item ?? result.body?.count;\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 771
+}

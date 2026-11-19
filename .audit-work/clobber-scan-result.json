@@ -1,0 +1,176 @@
+{
+ "scannedFiles": 1082,
+ "since": "2026-11-03",
+ "findings": [
+  {
+   "file": "base44/functions/opportunityWorkspaceAction/entry.ts",
+   "commit": "a0071ad37",
+   "date": "2026-11-16T11:58:09+00:00",
+   "parent": "66d886a43",
+   "removed": 15,
+   "revertedTo": "07c3e0ad2",
+   "revertedToDate": "2026-11-14T22:57:01+00:00",
+   "contained": 0.993
+  },
+  {
+   "file": "base44/functions/smartsheetSyncAction/entry.ts",
+   "commit": "838e5d2f3",
+   "date": "2026-11-11T05:44:20+00:00",
+   "parent": "375b08429",
+   "removed": 151,
+   "revertedTo": "4fbf01a86",
+   "revertedToDate": "2026-10-30T22:24:32+00:00",
+   "contained": 1
+  },
+  {
+   "file": "base44/functions/timeClockAction/entry.ts",
+   "commit": "a041b5fb4",
+   "date": "2026-11-05T14:16:22+00:00",
+   "parent": "cfa027aee",
+   "removed": 16,
+   "revertedTo": "6ab282d16",
+   "revertedToDate": "2026-11-02T15:39:07+00:00",
+   "contained": 0.975
+  },
+  {
+   "file": "src/components/estimator/foundation/CustomerPricingPanel.jsx",
+   "commit": "fbb13eb11",
+   "date": "2026-11-10T18:24:56+00:00",
+   "parent": "d9189f3cb",
+   "removed": 31,
+   "revertedTo": "cf461559f",
+   "revertedToDate": "2026-11-03T10:41:44+00:00",
+   "contained": 0.981
+  },
+  {
+   "file": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+   "commit": "0349e6da2",
+   "date": "2026-11-10T18:26:32+00:00",
+   "parent": "eab763d7e",
+   "removed": 46,
+   "revertedTo": "8467651b4",
+   "revertedToDate": "2026-11-08T02:38:24+00:00",
+   "contained": 0.986
+  },
+  {
+   "file": "src/components/estimator/foundation/FoundationTotals.jsx",
+   "commit": "062a2e130",
+   "date": "2026-11-10T18:27:00+00:00",
+   "parent": "075f97348",
+   "removed": 144,
+   "revertedTo": "60fb0d373",
+   "revertedToDate": "2026-11-06T06:41:20+00:00",
+   "contained": 0.978
+  },
+  {
+   "file": "src/components/estimator/foundation/ReinforcementDraftGeometry.jsx",
+   "commit": "d5ceab569",
+   "date": "2026-11-10T08:09:52+00:00",
+   "parent": "bc5223825",
+   "removed": 15,
+   "revertedTo": "ef60e1698",
+   "revertedToDate": "2026-11-09T08:03:10+00:00",
+   "contained": 1
+  },
+  {
+   "file": "src/components/estimator/foundation/foundationReinforcementCost.js",
+   "commit": "fbc790b81",
+   "date": "2026-11-10T08:12:04+00:00",
+   "parent": "04da433aa",
+   "removed": 14,
+   "revertedTo": "ad5ad067c",
+   "revertedToDate": "2026-11-09T08:01:21+00:00",
+   "contained": 1
+  },
+  {
+   "file": "src/components/estimator/foundation/legacyFoundationCalc.js",
+   "commit": "098a2e5a9",
+   "date": "2026-11-11T00:37:48+00:00",
+   "parent": "0513b98b1",
+   "removed": 162,
+   "revertedTo": "515ae8a27",
+   "revertedToDate": "2026-08-31T18:02:00+00:00",
+   "contained": 0.975
+  },
+  {
+   "file": "src/components/estimator/foundation/wallCalculator.js",
+   "commit": "cccf3ddac",
+   "date": "2026-11-10T08:04:23+00:00",
+   "parent": "b3dc62079",
+   "removed": 50,
+   "revertedTo": "58173af45",
+   "revertedToDate": "2026-11-08T11:45:50+00:00",
+   "contained": 1
+  },
+  {
+   "file": "src/pages/CNCEstimator.jsx",
+   "commit": "38f34d3a3",
+   "date": "2026-11-16T12:01:16+00:00",
+   "parent": "275503b84",
+   "removed": 62,
+   "revertedTo": "07980d80f",
+   "revertedToDate": "2026-11-10T00:04:04+00:00",
+   "contained": 0.991
+  },
+  {
+   "file": "src/pages/CNCEstimator.jsx",
+   "commit": "275503b84",
+   "date": "2026-11-15T16:58:05+00:00",
+   "parent": "07980d80f",
+   "removed": 144,
+   "revertedTo": "e249981f9",
+   "revertedToDate": "2026-11-03T11:39:47+00:00",
+   "contained": 0.992
+  },
+  {
+   "file": "src/pages/FoundationEstimator.jsx",
+   "commit": "c884be813",
+   "date": "2026-11-16T12:07:08+00:00",
+   "parent": "d0ddc5b53",
+   "removed": 49,
+   "revertedTo": "48f45ca44",
+   "revertedToDate": "2026-11-15T03:21:10+00:00",
+   "contained": 0.971
+  },
+  {
+   "file": "src/pages/MaintenanceEstimator.jsx",
+   "commit": "5adeee9a1",
+   "date": "2026-11-16T12:08:15+00:00",
+   "parent": "e651779c7",
+   "removed": 28,
+   "revertedTo": "07980d80f",
+   "revertedToDate": "2026-11-10T00:04:04+00:00",
+   "contained": 1
+  },
+  {
+   "file": "src/pages/MaintenanceEstimator.jsx",
+   "commit": "e651779c7",
+   "date": "2026-11-15T17:01:14+00:00",
+   "parent": "07980d80f",
+   "removed": 78,
+   "revertedTo": "08577e9aa",
+   "revertedToDate": "2026-11-03T11:43:05+00:00",
+   "contained": 0.986
+  },
+  {
+   "file": "src/pages/MetalEstimator.jsx",
+   "commit": "262b3d158",
+   "date": "2026-11-16T12:09:19+00:00",
+   "parent": "e189d0c40",
+   "removed": 98,
+   "revertedTo": "07980d80f",
+   "revertedToDate": "2026-11-10T00:04:04+00:00",
+   "contained": 0.995
+  },
+  {
+   "file": "src/pages/MetalEstimator.jsx",
+   "commit": "e189d0c40",
+   "date": "2026-11-15T17:02:18+00:00",
+   "parent": "07980d80f",
+   "removed": 109,
+   "revertedTo": "e2c6d7f86",
+   "revertedToDate": "2026-11-07T06:14:57+00:00",
+   "contained": 0.996
+  }
+ ]
+}

@@ -1,0 +1,200 @@
+{
+  "item": "O-004 tail (CMP-A04)",
+  "workstream": "WS-O — Concrete | Masonry | Pole",
+  "acceptance_text": "O-004 remainder: draft↔source merge-conflict experience + partial Builder-sync retry — honest recovery that never silently discards either side, retries only the unsynchronized estimate-side portion, and mints no duplicate Parts.",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remote_head_at_pull": "8b0fcf92171373ea3dec071399f10e203135c00f",
+  "remote_head_verified": "37d401b5aecbafc7ce1773af233efdde22c7ee75",
+  "remote_drift": "Re-verified read-only at 37d401b5 before packaging: FoundationEstimator.jsx MOVED to src/pages/FoundationEstimator.jsx (1448 lines) and gained design_basis/site_hazard save-payload fields (O-104/O-105); foundationDraftRecovery.js likewise gained those two FOUNDATION_DRAFT_FIELDS — candidate rebased onto current remote (pure append over verbatim remote prefix; unknown-field label fallback already built in). Other cluster files identical.",
+  "mode": "audit-candidate-only",
+  "remote_writes": false,
+  "checkpoint": false,
+  "deploy": false,
+  "publish": false,
+  "entity_ops": false,
+
+  "baseline": {
+    "source": "npx base44@latest sandbox read @ 8b0fcf921 (remote-only, local src/ never trusted)",
+    "recovery_cluster_pulled": {
+      "remote/foundationDraftRecovery.js": "194 lines — owner/source/estimate-scoped sessionStorage CAS store + write-refusal tombstone (incl. O-104/O-105 design_basis/site_hazard draft fields)",
+      "remote/foundationSaveSession.js": "58 lines — serialized save session, conflict classification",
+      "remote/foundationSyncRecovery.js": "114 lines — builder_sync_attempt receipt validation/state/404-probe gate",
+      "remote/foundationBuilderRecovery.js": "42 lines — pending-mutation recovery loader + source version verify",
+      "remote/FoundationEstimator.jsx": "src/pages/FoundationEstimator.jsx — 1448 lines, read-only wiring reference (ownership-protected, NOT modified; moved from src/components/estimator/foundation/ during this unit's span)"
+    },
+    "dependency_closure": "remote-src/ — 76 files pulled fresh via recursive import closure (builderService, partSync, builderMutationRecovery, builderEntityPersistence, builderPartPersistence, builderProductPersistence, estimatePersistence, estimateMutationGuard, estimateRevisionService, estimateLifecycle, customerPricing + all sell-pricing wires, foundationCalc + wall/pole/wallCap/landscape/reinforcement chain, loadAllEntityRows, staffEntities, base44Client, moduleRegistry, base44/shared pricing wires)"
+  },
+
+  "candidates": {
+    "candidates/foundationDraftRecovery.js": {
+      "status": "extended (pure model appended; existing store contract untouched — zero removed lines; candidate = verbatim current-remote prefix + appended conflict model)",
+      "lines": 419,
+      "new_exports": [
+        "sameFoundationDraftValue(a,b) — whitespace/1e-6-tolerant value equality matching sourcePatchMatches discipline",
+        "foundationDraftFieldLabel(field) — display labels for all 24 draft fields",
+        "summarizeFoundationDraftField(field,value) — one-line per-side summary (rows/record/value/absent)",
+        "diffFoundationDraftFields({draft,saved}) — per-field rows: same|diverged|draft_only|saved_only",
+        "summarizeFoundationDraftConflict({draft,saved,baseUpdatedAt,draftSavedAt}) — whole-summary: in_sync|edits_only|base_moved_identical|conflict|unverifiable + counts + timestamps",
+        "foundationDraftConflictNeedsReview(summary) — gate for the dialog vs ordinary offer",
+        "foundationDraftRebaseProject({draft,sourceId}) — keep-both payload: draft fields verbatim over store identity"
+      ],
+      "semantics": {
+        "anchor": "env.baseUpdatedAt is the only divergent-base signal a tab can see; stale anchor + content identical = base_moved_identical; stale anchor + >=1 diverged/draft_only field = conflict",
+        "saved_only_honesty": "draft restore OVERLAYS draft fields, so a saved-only value survives either restore choice — displayed, never counted toward conflict",
+        "no_three_way_merge": "envelope stores the base revision STRING not base content — resolution is honest whole-draft choice, never field-level authorship claims"
+      }
+    },
+    "candidates/foundationSyncRecovery.js": {
+      "status": "extended (pure classifier appended; zero removed lines)",
+      "lines": 170,
+      "new_exports": [
+        "classifyFoundationSyncRetry({project,estimateId,estimate}) — retry mode: resume_pending|resync_unacknowledged|none_needed|blocked_mismatch|blocked_unsupported|blocked_no_estimate + pendingKey + retryable flag"
+      ],
+      "modes": {
+        "resume_pending": "durable line.price_acceptance_pending marker — stored plan replays verbatim",
+        "resync_unacknowledged": "receipt pending, no line marker — detect-phase part writes may have landed; convergence by part_key identity",
+        "blocked_*": "receipt names another estimate / malformed receipt / standalone project — fail closed, nothing retried"
+      }
+    },
+    "candidates/foundationBuilderRecovery.js": {
+      "status": "extended (retryFoundationBuilderSync appended; one import widened — all prior exports unchanged)",
+      "lines": 179,
+      "new_exports": [
+        "retryFoundationBuilderSync({sourceId,estimateId,expectedSourceVersion,savedProject?,builderCalculation?,liveTotal?,expectedPendingKey?,deps?}) — orchestrator replaying ONLY the estimate-side leg via recordBuilderSave"
+      ],
+      "outcomes": ["synced", "already_synced", "pending", "blocked", "conflict", "invalid", "failed"],
+      "idempotency_contract": "recordBuilderSave chain is end-to-end convergent — BuilderProduct resolve-or-create by identity, BuilderPart by (product,part_key) create-with-recovery verify, stored pending plan verify-before-write per step, expectedPendingKey pins resumption"
+    },
+    "candidates/foundationSaveSession.js": {
+      "status": "extended (conflictDetected tag on the two classified-conflict return paths only)",
+      "lines": 63,
+      "change": "cls === 'conflict' → outcome.conflictDetected = true — distinguishes a real CAS concurrent-edit conflict from the page's synthesized 'conflict' outcomes (draft-pending gate, reload gate), so the merge dialog opens only for genuine source divergence"
+    },
+    "candidates/FoundationSyncConflictDialog.jsx": {
+      "status": "new file",
+      "lines": 431,
+      "exports": [
+        "default FoundationSyncConflictDialog — Radix dialog: per-side timestamps/revisions, diverged+draft_only field grid (draft vs saved), saved_only honesty footnote, 3 choices + Decide later",
+        "useFoundationSyncConflict() — conflict state; openDraftConflict/openSaveConflict fetch a FRESH saved record via getSavedProject (never diffs a stale snapshot); choose() closes only on handler success",
+        "useFoundationBuilderSyncRetry(getContext, impl?) — retry in-flight state, deduped concurrent calls, lastOutcome retained",
+        "FoundationSyncRetryAction — retry affordance rendering classifyFoundationSyncRetry's mode/reason + outcome line"
+      ],
+      "honesty_rules": [
+        "keep_draft = draft fields win on overlay (fields never recorded keep saved values) — stated verbatim",
+        "keep_saved = explicit discard through the store's CAS clear",
+        "keep_both = saved stays open AND draft re-anchored to current revision as a fresh offer — nothing dropped",
+        "saved side unreadable → 'could not be re-read' banner; the choice that would drop the unseen side is flagged, never hidden",
+        "no handler → button disabled; a false/throw keeps the dialog open — no silent half-apply"
+      ]
+    }
+  },
+
+  "verification": {
+    "model": {
+      "harness": "verify-o004t-model.mjs — pure candidates imported directly for A/B/C; esbuild bundle for D/E resolving the FROZEN remote-src mirror with ONLY boundary stubs (staffEntities in-memory CAS store, base44Client)",
+      "results": "verify-o004t-model-results.json — PASS 42/42",
+      "coverage": [
+        "A1-A13 conflict matrix: in_sync / edits_only / base_moved_identical / conflict / unverifiable (draft+saved unreadable), draft_only counting, saved_only non-escalation, value-semantics (numeric tolerance, whitespace, key order, array order, empty-vs-zero), per-side summaries (rows/tier/absent), rebase payload isolation, REAL store re-anchor write + CAS-refusal on stale expectedRevision",
+        "B1-B8 retry classifier: none_needed (clean + acknowledged), resync_unacknowledged, resume_pending (with+without receipt), blocked_mismatch, blocked_unsupported, blocked_no_estimate, malformed-receipt-is-unsupported",
+        "C1-C5 saveSession: conflictDetected on classified CAS + 409-status errors; absent on generic failure / builder-sync partial / superseded",
+        "D1-D11 orchestrator (injected recordSave): missing anchors → zero reads; source_moved / estimate_unreadable → conflict no-writes; blocked_mismatch → recordSave never called; already_synced → recordSave never called; resync passes line-hint + record basis + descriptor_basis warning; builderCalculation+savedProject overlay forwarded; expectedPendingKey pinned; pending_key_changed → conflict no-writes; recordSave throw → failed + markers retained; unacknowledged line → pending (never claimed synced)",
+        "E1-E5 REAL recordBuilderSave end-to-end over in-memory entity store: first sync mints >=3 parts then acknowledged retry = already_synced ZERO new creates; forced pending re-sync converges part_key set identically ZERO new creates; injected updateMany death mid-chain then retry completes with no dup keys; stored pending plan replays exactly its two create steps then marker clears and second retry is already_synced; foreign pending key → conflict, no plan step ran"
+      ]
+    },
+    "real_component_browser": {
+      "harness": "verify-o004t-browser.mjs — esbuild bundle over frozen remote map (real candidates + REAL remote Radix dialog.jsx + REAL builderService→partSync→persistence chain + real lucide-react), rendered in real Chromium; boundary stubs only (window.__db entity facade + base44 function invoke)",
+      "metafile": "browser/metafile.json",
+      "results": "browser/browser-verification.json — PASS 16/16, 0 console errors, 0 page errors, 0 foreign requests",
+      "cases": [
+        "C1 desktop+mobile: conflict dialog shows both sides' values per field, draft write timestamp + anchor revision + saved revision, moved-after-draft notice, 3 choices + Decide later",
+        "C2 keep_draft → draft object handed to caller, dialog closes, saved record untouched, zero entity writes",
+        "C3 keep_saved → real store CAS clear removes the stored envelope, saved record untouched",
+        "C4 keep_both → same draft re-anchored to v2 via real store write; content verbatim; saved record untouched",
+        "C5 refused resolution → dialog stays open, draft not half-cleared",
+        "C6 saved side unreadable → 'could not be re-read' honesty, no blind diff",
+        "C7 base_moved_identical → dedicated safe re-anchor copy",
+        "C8 save_conflict kind → unsent-edits framing + keep-both re-offer copy",
+        "C9 disabled choice → reason rendered + button disabled",
+        "R1 real resync retry in-browser: real recordBuilderSave mints >=3 unique-key parts, line acknowledges v2, source record untouched",
+        "R2 real resume_pending: stored plan's create step mints exactly one part, marker cleared, stored builder_patch applied",
+        "R3 stale pinned anchor + concurrent source move → conflict outcome rendered, zero writes",
+        "R4 blocked_mismatch receipt → action rendered disabled with reason",
+        "R5 acknowledged → no retry surface rendered",
+        "R6 mobile 390 → retry surface + conflict dialog usable"
+      ],
+      "screenshots": [
+        "browser/c1-desktop-conflict.png", "browser/c1-mobile-conflict.png",
+        "browser/c6-unverifiable.png", "browser/c7-identical.png",
+        "browser/r1-retry-synced.png", "browser/r2-resume.png",
+        "browser/r4-blocked.png", "browser/r6-mobile-conflict.png"
+      ]
+    },
+    "diff_review": "diffs/ regenerated against remote HEAD 37d401b5 — draftRecovery +227/-0 (pure append), syncRecovery +58/-0 (pure append), builderRecovery +140/-1 (one import line widened), saveSession +8/-2 (conflictDetected on both classified-conflict returns)"
+  },
+
+  "deferred_wiring": {
+    "needed_for_full_surface": true,
+    "reason": "FoundationEstimator.jsx is ownership-protected — not modified in this unit (same pattern as O-096 deferred wiring). NOTE: the page now lives at src/pages/FoundationEstimator.jsx (moved on remote during this unit's span; anchors below are current-remote).",
+    "mounts": [
+      {
+        "component": "FoundationSyncConflictDialog + useFoundationSyncConflict",
+        "anchor": "src/pages/FoundationEstimator.jsx:1426 — mount <FoundationSyncConflictDialog> immediately before <FoundationTemplateDialog (both the hook result and store are already in scope)",
+        "hook_setup": "const syncConflict = useFoundationSyncConflict(); — top-level with other hooks (~line 174 next to draftOffer state)",
+        "props": {
+          "conflict": "syncConflict.conflict",
+          "busy": "saving",
+          "disabled": "{ keep_saved: draft-clear unverifiable reason | keep_draft: reload-required reason } as needed",
+          "onKeepDraft": "() => syncConflict.choose(async () => { <apply draft overlay exactly like restoreBrowserDraft's path>; return true })",
+          "onKeepSaved": "() => syncConflict.choose(async () => draftStore.clear(draftVisible.revision).status === 'removed' ? (setDraftOffer({store:draftStore}), true) : false)",
+          "onKeepBoth": "() => syncConflict.choose(async () => { const w = draftStore.write({ project: foundationDraftRebaseProject({draft: syncConflict.conflict.draft, sourceId: id}), baseUpdatedAt: syncConflict.conflict.summary.savedUpdatedAt, token: newCreationRequestKey('draft'), savedAt: new Date().toISOString(), expectedRevision: draftVisible.revision }); return w.status === 'stored' })",
+          "onDismiss": "syncConflict.dismiss"
+        },
+        "openers": [
+          "draft offer (line 1141): the existing 'Saved project changed since these edits.' line gains a 'Review changes' button calling syncConflict.openDraftConflict({ draft: draftVisible.draft, draftSavedAt: draftVisible.savedAt, baseUpdatedAt: draftVisible.baseUpdatedAt, savedProject: acknowledgedVersionRef.current?.sourceSnapshot, getSavedProject: () => staffEntities.FoundationProject.get(id) }) — draftVisible.draft/baseUpdatedAt/savedAt are already populated at lines 259/505",
+          "CAS save conflict (line 892): inside the existing `sameContext && (outcome.status === 'conflict' || outcome.status === 'failed')` branch, a genuine conflict sub-branch `outcome.status === 'conflict' && outcome.conflictDetected` calls syncConflict.openSaveConflict({ draft: <pickDraft-equivalent of current editor edits OR last stored draft>, getSavedProject: () => staffEntities.FoundationProject.get(id), hasUnbackedEdits: !draftBackedUp }) before falling back to the generic error line — conflictDetected distinguishes real CAS divergence from page-synthesized conflict outcomes"
+        ]
+      },
+      {
+        "component": "FoundationSyncRetryAction + useFoundationBuilderSyncRetry",
+        "anchor": "inside the sync banner IIFE at src/pages/FoundationEstimator.jsx:1089-1102, next to the existing 'Review and retry Save' button at line 1100 (replaces or accompanies it — it replays only the estimate-side leg)",
+        "hook_setup": "const syncRetry = useFoundationBuilderSyncRetry(() => ({ sourceId: id, estimateId, expectedSourceVersion: acknowledgedVersionRef.current?.updated_date, savedProject: acknowledgedVersionRef.current?.sourceSnapshot, builderCalculation: lastSyncCaptureRef.current?.builderCalculation ?? null, liveTotal: lastSyncCaptureRef.current?.liveTotal, expectedPendingKey: classifyFoundationSyncRetry({project, estimateId, estimate: linkedEstimate}).pendingKey ?? undefined }));",
+        "capture_addition": "one line inside runSave after `captured` is built (line 728-737): lastSyncCaptureRef.current = { builderCalculation: { totals: captured.totals, delivery: captured.delivery, cabinet_cost: captured.cabinetCost, landscape_cost: captured.landscapeCost, section_total: captured.sectionTotal }, liveTotal: captured.sectionTotal };",
+        "props": {
+          "retryState": "classifyFoundationSyncRetry({ project, estimateId, estimate: linkedEstimate })",
+          "retrying": "syncRetry.retrying",
+          "lastOutcome": "syncRetry.lastOutcome",
+          "estimateHref": "estimateId ? `/EstimateDetail?id=${estimateId}` : null",
+          "onRetry": "async () => { const o = await syncRetry.retry(); if (o.status === 'synced' || o.status === 'already_synced') { setRecoveryRequired(false); if (o.line) setLinkedEstimate(prev => prev?.id === estimateId ? { ...prev, line_items: (prev.line_items||[]).map(it => it.module_key==='foundation' && it.project_id===id ? o.line : it) } : prev); } }"
+        }
+      }
+    ],
+    "effect_when_wired": "moved-base draft offer opens the side-by-side conflict dialog instead of a warning line; classified CAS save conflicts open the same dialog for unsent edits; a partial/pending Builder sync exposes a retry that replays only the estimate-side leg (stored pending plan verbatim, or convergent resync by part_key) without re-writing the already-saved source",
+    "effect_unwired": "existing warnings stay as-is — no regression; all cluster exports are additive"
+  },
+
+  "ownership_guard": {
+    "not_modified": [
+      "FoundationEstimator.jsx",
+      "foundationCalc.js",
+      "foundationReinforcement*",
+      "partSync.js",
+      "FoundationBOM.jsx"
+    ],
+    "candidate_surface_limited_to": [
+      "foundationDraftRecovery.js",
+      "foundationSyncRecovery.js",
+      "foundationBuilderRecovery.js",
+      "foundationSaveSession.js",
+      "FoundationSyncConflictDialog.jsx (new)"
+    ]
+  },
+
+  "claim_boundaries": [
+    "Evidence is model + bundled-real-component browser verification in this audit workspace — NOT live-app deploy evidence and NOT business-record evidence.",
+    "The merge-conflict model has no three-way merge: the draft envelope stores a base revision string, not base content. Resolutions are honest whole-draft choices; no per-field authorship is claimed.",
+    "Partial Builder-sync retry replays only the estimate-side leg through recordBuilderSave's existing convergent chain — the already-landed source CAS write is never re-issued.",
+    "No remote writes, checkpoints, deploys, publishes, or entity operations were performed; remote HEAD was pulled read-only.",
+    "Page wiring is documented not executed — the page owner's file was not modified."
+  ]
+}

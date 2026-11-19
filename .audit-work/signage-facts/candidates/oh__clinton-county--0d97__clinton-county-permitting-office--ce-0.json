@@ -1,0 +1,437 @@
+{
+ "jurisdiction_id": "6ac32802daee45c226fa0d97",
+ "jurisdiction_name": "Clinton County",
+ "state": "OH",
+ "office_id": "scan-6ac32802daee45c226fa0d97-office-0",
+ "office_name": "Clinton County permitting office",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Building & Zoning Department Sign Permit Application Clinton County, Ohio 937 - 382 - 3335 I buildingandzoning@clintoncountyohio.us Job/Site Address: _________________________________________________ Sign Location/Description: __________________________________________________ Applicant / Owner Name: ______________________________ Phone: ______________________________ Email: ______________________________ Address: ______________________________ ______________________________ Sign Contractor Information Name: ______________________________ Phone: ______________________________ Email: ______________________________ Address: ______________________________ ______________________________ Permit #: _______________________________ Sign 1 Area: _____________ sq.ft. Height: _____________ Setbacks: Right of way:________ Left Lot Line:________ Right Lot Line:________ Rear Lot Line:________ Illumina",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "billboard",
+    "temporary",
+    "process"
+   ],
+   "weight": 15,
+   "source_sha256": "1e3e01f94c482dd6a106b1fd9d1758861b1c7c2b0d5a74fa556319f4ee6e82d7",
+   "source_document_id": null,
+   "source_title": "1e3e01f94c482dd6a106b1fd9d1758861b1c7c2b0d5a74fa556319f4ee6e82d7.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Applications/Sign%20Permit%20Application.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "Clinton County Zoning Resolution 2024 Page 6 of 14 4. G eneral Requirements A. A Building permit shall be required for installation of all Renewable Energy and Battery Energy Storage Systems. B. L ocal land use boards are encouraged to condition their future approval of proposed developments on sites adjacent to Renewable Energy Systems so as to protect their access to sufficient sunlight and setbacks. C. I ssuance of permits and approvals by the Board of Zoning Appeals shall include a review of applicable Ohio environmental quality and protection laws. D. A ll Renewable Energy Systems, Battery Energy Storage systems, Dedicated Use Buildings, and other buildings or structures that (1) contain or are otherwise associated with a battery energy storage system and (2) subject to the Ohio Building Code and/or the Energy Code shall be designed, erecte d, and installed in accordance with all ap",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179",
+   "source_document_id": null,
+   "source_title": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Zoning/Appendix%20A%202024%20-%20Renewable%20Energy.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Clinton County Zoning Resolution 2024 Page 5 of 14 ROOF - MOUNTED SOLAR ENERGY SYSTE M : A Solar Energy System located on the roof of any legally permitted building or structure that produces electricity for onsite or offsite consumption. SOLAR ACCESS : Space open to the sun and clear of overhangs or shade so as to permit the use of active a nd/or passive Solar Energy Systems on individual properties . SOLAR ENERGY EQUIPMENT : Electrical material, hardware, inverters, conduit, storage devices, or other electrical and photovoltaic equipment associated with the production of electricity. SOLAR ENE RGY SYSTEM : The components and subsystems required to convert solar energy into electric energy suitable for use. The term includes, but is not limited to, Solar Panels and Solar Energy Equipment. The area of a Solar Energy System includes all the land inside the perimeter of the Solar Energy Sy",
+   "tags": [
+    "area",
+    "illumination",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179",
+   "source_document_id": null,
+   "source_title": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Zoning/Appendix%20A%202024%20-%20Renewable%20Energy.pdf"
+  },
+  {
+   "page": 9,
+   "snippet": "Clinton County Zoning Resolution 2024 Page 9 of 14 equipment, including without limitation any poles, with new easements and right - of - way. C. Signage. 1) The signage shall be in compliance with ANSI Z535 and shall include the type of technology associated with the battery energy storage systems, any special hazards associ ated, the type of suppression system installed in the area of battery energy storage systems, and 24 - hour emergency contact information, including reach - back phone number. Emergency contact signage shall be provided at all site access points. 2) As required b y the NEC, disconnect and other emergency shutoff information shall be clearly displayed on a light reflective surface. A clearly visible warning sign concerning voltage shall be placed at the base of all pad - mounted transformers and substations. D. Lighting. Lighting of the battery energy storage systems",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179",
+   "source_document_id": null,
+   "source_title": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Zoning/Appendix%20A%202024%20-%20Renewable%20Energy.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "7/2025 DEMOLITION REQUIREMENTS AN D INSPECTION STANDARDS 1. Permits shall be obtained when any portion of a structure is removed, except for porches whose removal will have no effect on the structural integrity of the main structure. Notwithstanding any provision in Ohio Building Code § 1 05.4, a demolition permit shall become invalid one hundred - eighty (180) days after its issuance, and special permits issued pursuant to local authority which become invalid upon the expiration of the time stated on such special permit. However, upon presen tation of substantial reasons for incompletion, the Chief Building Official or the Building & Zoning Manager may give extensions. 2. Permits for the demolition of commercial or residential buildings do not relieve the owner or contractor of the requiremen t to submit a \"Notification of Demolition and Renovation\" to the Regional Air Pollution Control",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "d4facffdf240d861c08996e928a93c3d848cab7761f1f27a5ae20abc71cac3ee",
+   "source_document_id": null,
+   "source_title": "d4facffdf240d861c08996e928a93c3d848cab7761f1f27a5ae20abc71cac3ee.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Applications/Demolition%20Permit%20Application.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "Clinton County Zoning Resolution 2024 Page 7 of 14 3) Height: All Roof - Mounted Solar Energy Sys tems shall be subject to the maximum height regulations specified for principal and accessory buildings within the underlying zoning district. B. Building - Integrated Solar Energy Systems shall be shown on the plans submitted for the building permit applicati on for the building containing the system. 6. Permitting Requirements for Tier 2 Solar Energy Systems All Tier 2 Solar Energy Systems shall be permitted in all zoning districts as accessory structures and shall be exempt from site plan review under the zoning resolution or other land use regulations, subject to the following conditions: A. Glare: All Solar P anels shall have anti - reflective coating(s). Ongoing maintenance is required as an element of continued compliance with these regulations. B. Setbacks: Tier 2 Solar Energy System",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179",
+   "source_document_id": null,
+   "source_title": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Zoning/Appendix%20A%202024%20-%20Renewable%20Energy.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "Clinton County Zoning Resolution 2024 Page 12 of 14 special us e permit and all other local approvals for the battery energy storage system would be void if a new owner or operator fails to provide written notification to the Zoning Official in the required timeframe. Reinstatement of a void conditional use permit wil l be subject to the same review and approval processes for new applications under this Appendix. 11. Battery Energy Storage System Safety A. System Certification. Battery energy storage systems and equipment shall be listed by a Nationally Recognized Testing Laboratory to UL 9540 (Standard for battery energy storage systems and Equipment) or approved equivalent, with subcomponents meeting each of the following standards as applicable. 1) UL 1973 (Standard for Batteries for Use in Stationary, Vehicle Auxiliary Power and Light Electric Rail Applications), 2) UL 1642 (Standard",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179",
+   "source_document_id": null,
+   "source_title": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Zoning/Appendix%20A%202024%20-%20Renewable%20Energy.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "Clinton County Zoning Resolution 2024 Page 14 of 14 compliance. 13. Permit Time Frame and Abandonment A. The Conditional Use Permit and site plan approval for a Renewable Energy and/or Battery Storage System shall be valid for a period of two [2] years, provided that a building permit is issued for construction or construction is commenced and ongoing. In the event construction is not completed in accordance with the final site plan, as may have been amended and approved, as required by the Board of Zoning Appeals, within eightee n [18] months after approval, the applicant or the County may extend the time to complete construction for [180] days. If the owner and/or operator fails to perform substantial construction after twenty - four [24] months, the approvals shall expire. B. Upon ce ssation of electricity generation of a Solar Energy and/or associated Battery Storage System on a cont",
+   "tags": [
+    "prohibited",
+    "process",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179",
+   "source_document_id": null,
+   "source_title": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Zoning/Appendix%20A%202024%20-%20Renewable%20Energy.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CLINTON COUNTY BUILDING & ZONING DEPARTMENT Date Printed: April 16, 2025 111 S N elson Ave, Suite 8, Wilmington OH 45177 937 - 382 - 3335 RESIDENTIAL PLAN REVIEW CHECKLIST Date Reviewed : __ ____________ __ First Reviewed By: _ _ ___ _________________________________ __________ Application No: _ __ ____ _______ __ Address: ___ ________ _ _____ _____ _________________________________ _ Applicable Code: Us e Group: Othe r Information: Residenti al Code of Ohio (RCO) R (SFR , RESALT, RESADD , TF R , THFR) IND Unit (Approved State Seal) U ( Res Acc Structure s, Detached Garage) ____ __# Family Units Ohio Building Code (OBC) S - 1 ( Pole Building /Garage w/o Residential SFR ) Construct ion T ype: V B Additional Required Permits : Additional Required Inspections: Occupant Load: N/A Pressure Piping Permit Masonry Fire p lace Inspection Flood Hazard Permit Crawlspace /Slab Inspection ___ R10 6.1",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "533ef967c3cb93b499cfc7074a440e198cd2d3a6ad7ac2b8d6fa1ddc5909ebc6",
+   "source_document_id": null,
+   "source_title": "533ef967c3cb93b499cfc7074a440e198cd2d3a6ad7ac2b8d6fa1ddc5909ebc6.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Building%20In%20Clinton%20County/Residential%20Plan%20Review%20Checklist%202025.pdf"
+  },
+  {
+   "page": 8,
+   "snippet": "Clinton County Zoning Resolution 2024 Page 8 of 14 C. If Storage Batteries are included as part of the Solar Energy System, they shall meet the requirements of any applicable fire prevention and building code when in use and, when no longer used, shall be disposed of in accordance with the laws and regulations of the Zoning Resolution and any applicable federal, state, or county laws or regulations. 8. Permitting Requirements for Type I Battery Energy Storage Systems Type I Battery Energy Storage Systems shall be permitted in all zoning districts and exempt from site plan review. Type I Battery Energy Storage systems must comply with applicable sections of the Ohio Building Code and complete the “Battery Energy Storage System Affidavit”. 9. Permitti ng Requirements for Type II Battery Energy Storage Systems Type II Battery Energy Storage Systems are permitted through the issuance of a co",
+   "tags": [
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179",
+   "source_document_id": null,
+   "source_title": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Zoning/Appendix%20A%202024%20-%20Renewable%20Energy.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "Clinton County Zoning Resolution 2024 Page 10 of 14 that are to be installed. A final equipment specification sheet shall be submitted prior to the issuance of building permit. 5) Name, address, and contact informa tion of proposed or potential system installer and the owner and/or operator of the battery energy storage system. Such information of the final system installer shall be submitted prior to the issuance of building permit. 6) Name, address, phone number, and signature of the project Applicant, as well as all the property owners, demonstrating their consent to the application and the use of the property for the battery energy storage system. 7) Zoning district designation for the parcel(s) of land comp rising the project site. Commissioning Plan. Such plan shall document and verify that the system and its associated controls and safety systems are in proper working condition pe",
+   "tags": [
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179",
+   "source_document_id": null,
+   "source_title": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Zoning/Appendix%20A%202024%20-%20Renewable%20Energy.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "Clinton County Zoning Resolution 2024 Page 11 of 14 controls. c) Procedures to be followed in response to notifications from the Battery Energy Storage Management System, when provided, that could signify potentially dangerous conditions, including shutting down equipment, summoning service and repair personnel, and providing agreed upon notification to fire d epartment personnel for potentially hazardous conditions in the event of a system failure. d) Emergency procedures to be followed in case of fire, explosion, release of liquids or vapors, damage to critical moving parts, or other potentially dangerous conditions. Procedures can include sounding the alarm, notifying the fire department, evacuating personnel, de - energizing equipment, and controlling and extinguishing the fire. e) Response considerations similar to a safety data sheet (SDS) that wil l address response safety concern",
+   "tags": [
+    "dimension",
+    "prohibited",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179",
+   "source_document_id": null,
+   "source_title": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Zoning/Appendix%20A%202024%20-%20Renewable%20Energy.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "Clinton County Zoning Resolution 2024 Page 13 of 14 3) The anticipated life of the solar energy system and components; 4) The anticipated life of the battery energy storage system; 5) The estimated decommissioning costs and how said estimate was determined; 6) The method of ensuring that funds will be available for decommissioning and restoration; 7) The method by which the decommissioning cost will be kept current; 8) The manner in which the site will be restored, including a description of h ow any changes to the surrounding areas and other systems adjacent to the battery energy storage system, such as, but not limited to, structural elements, building penetrations, means of egress, and required fire detection suppression systems, will be prot ected during decommissioning and confirmed as being acceptable after the system is removed; and 9) A listing of any contingencies for removing a",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179",
+   "source_document_id": null,
+   "source_title": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Zoning/Appendix%20A%202024%20-%20Renewable%20Energy.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Revised 5/5/2025 CLINTON COUNTY BOARD OF ZONING APPEALS APPLICATION FOR CONDITIONAL USE OFFICE USE ONLY Date Filed ______________________________________ Application No . _______________________________ Hearing Date ___________________________________ APPLICANT/OWNER INFORMATION Applicant Name _______________________________________________________________________________ Email ______________________________________________ Phone ___________________________________ Address ______________________________________________________________________________________ If the applicant is not the owner, please provide notarized permissi on to apply from owner to the applicant. P ROPERTY INFORMATION Address ___ ________________________________________ Twp. ______________________________________ Tax Parcel No. _________________________________________________________________________________ Current Z",
+   "tags": [
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "8379475303ce485fb0fc71542b69f567f1075df85da3a76d563d3620591ff21b",
+   "source_document_id": null,
+   "source_title": "8379475303ce485fb0fc71542b69f567f1075df85da3a76d563d3620591ff21b.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Applications/Conditional%20Use%20Application%20-BZA.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "7/2025 ✓ I understand that this Demolition Permit requires inspections to confirm compliance with the local and state demolition and construction standards provided herein. Failure to obtain the necessary permits may result in penalties. ✓ I understand that is it my responsibility to comply with all sta t e and federal rules regarding fugitive dust, asbestos - containing materials, and any material violation of these provisions will void this permit. ✓ I understand that the attached standards are applicable to all demolitions, unless expressly waived by the Building & Zoning Manager . ✓ I understand that if the permit is voided or revoked, then full compliance with all building and zoning regulations, including payment of fees, will be required. Print Name: Applicant Signature: Date: Permit Fee: $ 100 Clinton County Building & Zoning Department 111 S. Nelson Ave. Suite 8 | Wilmington, OH",
+   "tags": [
+    "fee",
+    "area",
+    "dimension",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "d4facffdf240d861c08996e928a93c3d848cab7761f1f27a5ae20abc71cac3ee",
+   "source_document_id": null,
+   "source_title": "d4facffdf240d861c08996e928a93c3d848cab7761f1f27a5ae20abc71cac3ee.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Applications/Demolition%20Permit%20Application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CLINTON COUNTY BUILDING AND ZONING FEE SCHEDULE EFFECTIVE 5/1/2025 STRUCTURE $ 60 $ 100 $ 150 $ 250 $ 350 BOARD OF ZONING APPEALS $ 250 Conditional / Variance / Appeal $ 450 ZONING COMMISSION $ 500 Re-Zone / Text Ammendment $ 1,000 MISC PERMIT $ 100 No Permit/Violation Fee $ 100 $ 100 CCZR 4.03, rehab/reconst, 6 mo $ 25 per acre w/ Cond Use Repeat Offender Penalty $ 500 Tent $ 60 temp / commercial 200 $ 3% of fees COMMERCIAL STRUCTURE 7.50 $ per 100 sf ELECTRICAL 4.50 $ per 100 sf FIRE ALARM 4.50 $ per 100 sf FIRE SPRINKLER 4.50 $ per 100 sf INDUSTRIALIZED UNIT 7.50 $ per 100 sf MECHANICAL / HVAC / SOLAR 4.50 $ per 100 sf PRESSURE PIPING 0.25 $ per Lineal ft MISC PERMIT $ 200 or Temp for 90-days $ 100 Kitchen Exhaust w/ Suppression $ 400 $ 200 $ 200 $ 100 $ 100 $ 200 Sign Face Change - non-structural $ 100 Sign - under 30 sf $ 125 Sign - over 30 sf $ 250 Tent $ 100 ZONING FEES 0 - 200 sf",
+   "tags": [
+    "sign",
+    "fee",
+    "process",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "f6ba1128eb55e1a06780409d2d5f4ccc40e49ae233334bd71f917e531ac8ec87",
+   "source_document_id": null,
+   "source_title": "f6ba1128eb55e1a06780409d2d5f4ccc40e49ae233334bd71f917e531ac8ec87.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Fee%20Schedule%20EFFECTIVE%20MAY%201%202025.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CLINTON COUNTY BOARD OF ZONING APPEALS APPLICATION FOR VARIANCE OFFICE USE ONLY Date Filed ______________________________________ Application No. _______________________________ Hearing Date ___________________________________ Accepted By __________________________________ PURPOSE AND GUIDELINES FOR VARIANCES A Variance a pproved by the Board of Zoning Appeals (BZA) must satisfy the following basic conditions: 1. Where the property in question will yield a reasonable return or whether there can be any beneficial use of the property without the variance; 2. Whether the variance is substantial; 3. Whether the essential character of the neighborhood would be substantially altered or whether adjo ining properties would suffer substantial detriment as a result of the variance; 4. Whether the variance would adversely affect the delivery of governmental services; 5. Whether the property owner’s",
+   "tags": [
+    "illumination",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "024d9859ee2533a12310f5794bce704504813364ead30919a5f5d2a08c81afa9",
+   "source_document_id": null,
+   "source_title": "024d9859ee2533a12310f5794bce704504813364ead30919a5f5d2a08c81afa9.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Applications/Variance%20Use%20Application%20-%20BZA.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CLINTON COUNTY RURAL ZONING COMMISSION ZONING RESOLUTION MAP CHANGE OFFICE USE ONLY Date Filed ______________________________________ Application No. _____________________________ Hearing Date ___________________________________ OWNER INFORMATION Owner Name ____________________________________ ____________ ________________________________ Email ____________________________ _______ ________ Phone ______________ _____ ______ _ ____________ Address __________________________________________________________________________ _____________ REQUEST FOR MAP CHANGE (RE - ZONE) Property Address _______________________________________________________________________________ Parcel ID ______________________________________________________________________________________ E xisting Zoning District _________________ _____________ ____________________________________ ________ Proposed Zoning District ___",
+   "tags": [
+    "fee",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "4f827040be2318bd6b04a30ec3b3f525ef294b1d12cb42559206aa56153effaa",
+   "source_document_id": null,
+   "source_title": "4f827040be2318bd6b04a30ec3b3f525ef294b1d12cb42559206aa56153effaa.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Applications/Zoning%20Rezone%20Application%20-%20RZC%20-%20Revised.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Clinton County Zoning Resolution 2024 Page 3 of 14 excluded from these requirements. BATTERY ENERGY STORAGE MANAGEMENT SYSTEM : An electronic system that protect s energy storage systems from operating outside their safe operating parameters and disconnects electrical power to the energy storage system or places it in a safe condition if potentially hazardous temperatures or other conditions are detected. BATTERY E NERGY STORAGE SYSTEM : One or more devices, assembled together, capable of storing energy in order to supply electrical energy at a future time, not to include a stand - alone 12 - volt car battery or an electric motor vehicle. A battery energy storage system i s classified as a Type I or Type II Battery Energy Storage System as follows: A. Type I Battery Energy Storage Systems have an aggregate energy capacity less than or equal to 600kWh and, if in a room or enclosed area, c",
+   "tags": [
+    "illumination",
+    "authority",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179",
+   "source_document_id": null,
+   "source_title": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Zoning/Appendix%20A%202024%20-%20Renewable%20Energy.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Clinton County Zoning Resolution 2024 Page 4 of 14 FARMLAND OF STATEWIDE IMPORTANCE : Land, designated as “Farmland of Statewide Importance” in the U.S. Department of Agriculture Natural Resources Conservation Service (NRCS)’s Soil Survey Geographic (SSURGO) Database on Web Soil Survey, that is of statewide importance for the production of food, feed, fiber, forage, and oilseed crops as determined by the appropriate state agency or agencie s. Farmland of Statewide Importance may include tracts of land that have been designated for agriculture by state law. FIRE CODE : The Ohio Fire Code as currently in effect and as hereafter amended from time to time. GLARE : The effect by reflections of ligh t with intensity sufficient as determined in a commercially reasonable manner to cause annoyance, discomfort, or loss in visual performance and visibility in any material respects. GROUND - MOUNTED",
+   "tags": [
+    "prohibited",
+    "authority",
+    "penalties"
+   ],
+   "weight": 4,
+   "source_sha256": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179",
+   "source_document_id": null,
+   "source_title": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Zoning/Appendix%20A%202024%20-%20Renewable%20Energy.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "* Spaced out one inch means that the wall protection should be spaced out from the original wall one inch on noncombustible spacers. An opening should be left at the top and bottom to permit air to circulate between the wall and wall protection. * Asbestos mill board is a soft insulation board -- not the same material as asbestos cement board. Stovepipe: Stovepipe is used to connect the firebox of the stove to the chimney. Since the stovepipe will become very hot the clearances between it and the wall listed in the table (above) must be maintained. In addition to clearances, a safe stovepipe installation will conform to these points:  It will not be less than 24 gage metal (the lower the number, the lower the gage).  It should be the same size as the opening on the stove.  It should be as short and straight as possible.  It should enter the chimney at a higher level than it leaves th",
+   "tags": [
+    "dimension",
+    "illumination"
+   ],
+   "weight": 4,
+   "source_sha256": "777b6300e3d343c2be36c6480266deb2dd6b02d6ca2d384b7d05c1f51c5ba932",
+   "source_document_id": null,
+   "source_title": "777b6300e3d343c2be36c6480266deb2dd6b02d6ca2d384b7d05c1f51c5ba932.pdf",
+   "official_url": "http://co.clinton.oh.us/media/Building%20and%20zoning/Building%20Sketches/Wood%20Burning%20Stove.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Revised 5/5/2025 APPLICANT AGREEMENT The applicant agrees to appear at the public hearing on the scheduled date and acknowledges that failing to appear may result in denial of the application. F ee s must be paid one week before the public hearing. Applicant acknowledges a Public Hearing N otice must be published in a newspaper and agrees to pay the cost of such publication in addition to the filing fee for this application prior to being heard before t he Board . An approved Conditional Use will be void if work is not started within 6 months or completed within 2 years, unless specifically addressed . Fee for Condition Use : Residential $2 5 0 , plus Legal Notice fee; Commercial $4 50 , plus Legal Notice fee. _______________________________________________________ ______________________ Applicant Signature Date",
+   "tags": [
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "8379475303ce485fb0fc71542b69f567f1075df85da3a76d563d3620591ff21b",
+   "source_document_id": null,
+   "source_title": "8379475303ce485fb0fc71542b69f567f1075df85da3a76d563d3620591ff21b.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Applications/Conditional%20Use%20Application%20-BZA.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Clinton County Building & Zoning Department 111 S. Nelson Ave. Suite 8 | Wilmington, OH 45177 937.382.3335 | FAX 937.383.3056 buildingandzoning@clintoncountyohio.us Permit # Agri tourism Declaration The purpose of the Clinton County Zoning Resolution and the Ohio Building Code are to promote, protect, and provide for the minimum safety standards of residential and non - residential structures and lands throughout Clinton County. Pursuant to Ohio Revised Code 303.21(A , 4 ) the use of land for Agritourism, the county may regulate such factors pertaining to agritourism, a s size of a structure used primarily for agritourism, size of parking areas that may be required, setback building lines for structures used primarily for agritourism, and egress or ingress where such regulation is neces sary to protect public health and safety. P roviders shall post s igns that contain the warning not ic",
+   "tags": [
+    "dimension",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "c0e381ccf7c0ed3b61aaa6557003e5618e6dbd7d7b51977b378150e84750097c",
+   "source_document_id": null,
+   "source_title": "c0e381ccf7c0ed3b61aaa6557003e5618e6dbd7d7b51977b378150e84750097c.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Applications/Agritourism%20Declaration.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "CLINTON COUNTY RURAL ZONING COMMISSION ZONING RESOLUTION TEXT CHANGE OFFICE USE ONLY Date Filed ______________________________________ Application No. _____________________________ Hearing Date ___________________________________ APPLICANT INFORMATION Applicant Name ____________________________________ ____________ ________________________________ Email ____________________________ _______ ________ Phone ______________ _____ ______ _ ____________ Address __________________________________________________________________________ _____________ REQUEST FOR LANGUAGE CHANGE E xisting text and section in CCZR _________________ _____________ ____________________________________ __________________________________________________________ _____________ _______________________ _______________________________________________________________________ _____________ __________ __________________________",
+   "tags": [
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "c1081e51c4f3264a886cb90ad158dce07679a0eb08e9b0f9f85668822eaa2143",
+   "source_document_id": null,
+   "source_title": "c1081e51c4f3264a886cb90ad158dce07679a0eb08e9b0f9f85668822eaa2143.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Applications/Zoning%20Code%20Change%20Application%20-%20RZC.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "APPLICANT AGREEMENT By submitting this application the applicant agrees to appear at the public hearing on the scheduled date and acknowledges that failing to appear may result in denial of the application. Fees must be paid one week before the public hearing. Applicant acknowledges a Public Hearing Notice must be published in a newspaper and agrees to pay the cost of such publication in addition to the filing fee for this application prior to being heard before the Board . Fee $ 500 f or residenti al and $1000 for commercial plus Legal Notice fee. _______________________________________________________ _________________________ Signature Dat e",
+   "tags": [
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "c1081e51c4f3264a886cb90ad158dce07679a0eb08e9b0f9f85668822eaa2143",
+   "source_document_id": null,
+   "source_title": "c1081e51c4f3264a886cb90ad158dce07679a0eb08e9b0f9f85668822eaa2143.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Applications/Zoning%20Code%20Change%20Application%20-%20RZC.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Clinton County Building Department Application Clinton County Sewer District Service Permit Application 111 S. Nelson Ave. Suite 8 | Wilmington, OH 45177 937.382.3335 | buildingandzoning@clintoncountyohio.us Property Address to Service/Utility Billing #: Name of Applicant/Property Owner(s): Name: Address: Phone : Email: Any violation of this process or working without a permit will result in a penalty of full cost of new service $ 6 2 5 0 + cost Permit #: ❒ NEW TAP - $62 5 0 + County cost to install to right - of - way ❒ EXISTING TAP - $2 5 0 ❒ ALTERATION OF TAP - $2 5 0 ❒ TERMINATE SERVICE - $ 7 50 o No structure or foundation on property *Permit is valid one year from date of issue . I hereby request the Clinton County Sewer District service the sanitary sewer at the above address . I authorize inspection s by County representatives . I have read the above application and agree to abid",
+   "tags": [
+    "fee",
+    "penalties",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "36ac028b20c4bd32b2581b7d2d59c171897da73b601bed2301362019d03c2350",
+   "source_document_id": null,
+   "source_title": "36ac028b20c4bd32b2581b7d2d59c171897da73b601bed2301362019d03c2350.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Applications/Sewer%20Tap%20Service%20Application.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Clinton County Zoning Resolution 2024 Page 2 of 14 APPENDIX A RENEWABLE ENERGY SYSTEMS This appendix provides guidance on best practices for installation and operation of solar energy systems and the decommissioning process related to facilities provided for under Section 3.1 0 (F) of the Clinton County Zoning Resolution 2025. 1. Statement of Purpose A. This Renewable Energy System development guidance document is provided to advance and prote ct the public health, safety, and welfare of Clinton County residents and to make provision for, so far as conditions may permit, the accommodation of renewable energy and battery storage systems and equipment and access to sunlight and natural resources n ecessary therefor by creating regulations for the installation and use of renewable energy generating systems and ancillary equipment, with the following objectives: 1. To take advantage of a saf",
+   "tags": [
+    "illumination",
+    "authority"
+   ],
+   "weight": 3,
+   "source_sha256": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179",
+   "source_document_id": null,
+   "source_title": "6a104784a0d3399ebdbc2865088e94914327499c2d9d52ce51a59916a5b7b179.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Zoning/Appendix%20A%202024%20-%20Renewable%20Energy.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Building & Zoning Department Application Clinton County, Ohio 937 - 382 - 3335 I buildingandzoning@clintoncountyohio.us Applicant Name ______________________________________________ Are you owner? □ YES □ NO If Not — Owner Name ___________________________ Owner Email _________________________ Property Address __________________________________________________________________ City ZIP __________________________________________________________________________ Phone ______________________________ Parcel ID_____________________________________ □ Residential □ Commercial Township ___________________ Zoning District _______________ Project Description__________________________________________________________________ Total Sq Ft ____________________________ Include: Basement, 1st, 2nd, etc., floors, garage, deck, porch Project Cost ___________________________ Contractor Name ___________________",
+   "tags": [
+    "area",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "93e5d25f6f273147c30059333272dde7cf2fe66528a1047ecf472ef3e1a237b5",
+   "source_document_id": null,
+   "source_title": "93e5d25f6f273147c30059333272dde7cf2fe66528a1047ecf472ef3e1a237b5.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Applications/Building%20Zoning%20Permit%20Application.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "I understand that this Agricultural Use Exemption from the Clinton County Zoning Resolution and Ohio Building Code applies only to buildings or structures used for agricultural purposes as described in O.R.C. § 303.21. I understand that any material use of the building or structure for non - agricultural purposes will void this exemption. I understand that changing to a non - qualified use in the future will void this ex emption. I understand that if the Agricultural Use Exemption is voided or lost, then full compliance with all building and zoning regulations including payment of fees will be required. Signature __ ___________________________________ ________________ ______ __ Date ______________________ Fee $0 - Does not include Building, Electrical, or HVAC Inspections Clinton County Building & Zoning Department 111 S. Nelson Ave. Suite 8 | Wilmington, OH 45177 937.382.3335 | FAX 937.",
+   "tags": [
+    "fee",
+    "authority",
+    "process"
+   ],
+   "weight": 3,
+   "source_sha256": "a0ac8a20e4891c5d36c21ea3a192c276df400c9d99aa5ac7984ebe511b6bfd6c",
+   "source_document_id": null,
+   "source_title": "a0ac8a20e4891c5d36c21ea3a192c276df400c9d99aa5ac7984ebe511b6bfd6c.pdf",
+   "official_url": "https://co.clinton.oh.us/media/Building%20and%20Zoning/Applications/Agricultural%20Use%20Exemption%20Declaration.pdf"
+  }
+ ]
+}

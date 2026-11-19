@@ -1,0 +1,3 @@
+580e166c509f0a6eb0a19cc07d748f8e072018aafd283560386a9ca04655d49e src/pages/FoundationEstimator.jsx
+c977c94360fa56eb1b2303116fb291cc4753b3383092efe1202c83f8c391889e scripts/test-foundation-save-handler.mjs
+9525274eac977c711e73d923d3d397c2815cff3cc7c6bda719ea4c21421e717e scripts/foundation-route-browser-fixture.mjs

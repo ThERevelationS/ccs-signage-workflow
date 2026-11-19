@@ -1,0 +1,35 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "head": "0a01139628455aa8a0a6dac3e155513bb2d35fab",
+  "files": [
+    {
+      "file": "base44/shared/estimatorAiModelPolicy.js",
+      "sha256": "abf4e147feac50bf7e76678ffbe70af95c44d9316a56eb43893c797e5d21df33"
+    },
+    {
+      "file": "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+      "sha256": "000c69da5f6d2a522063bfadc50e2c72d8fae648ef3b74c834fdb456727f4d2e"
+    },
+    {
+      "file": "src/components/vinylEstimator/VinylArtworkUploadDialog.jsx",
+      "sha256": "fd01fc654d5bf70b6f76077570fa776d9af5c3954c3dd7bd21fafb3ba0e697dc"
+    },
+    {
+      "file": "src/components/channelLetterInstall/AIScopeWriterModal.jsx",
+      "sha256": "121f7c70d0bff3df7cbc0a896db9a574098c6467e061099abc4d261700636be3"
+    },
+    {
+      "file": "src/components/channelLetterInstall/AIInstallScopeModal.jsx",
+      "sha256": "b1ea55f45ed7f427c5f69c46dee0788a6c8f4c67936e739f308c728f1c6b628e"
+    },
+    {
+      "file": "src/components/channelLetterInstall/AddressAutocomplete.jsx",
+      "sha256": "965cbf678a91da907da3c8df11a5b379a4f4d7c8b1c685da90380fcfd4939965"
+    },
+    {
+      "file": "src/components/channelLetterInstall/PhotoEstimateModal.jsx",
+      "sha256": "5eb14a7827292626cd1aaa961cbb9c08fe39c77abcb78506b8b9735214102979"
+    }
+  ]
+}

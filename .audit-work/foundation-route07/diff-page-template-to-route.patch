@@ -1,0 +1,128 @@
+--- .audit-work/foundation-template05/page.cur3.norm	2026-11-05 11:17:19.461672600 -0500
++++ .audit-work/foundation-route07/page.cur-v2.norm	2026-11-05 11:36:12.228903000 -0500
+@@ -118,10 +118,11 @@
+   const saveAttemptRef = useRef(null);
+   const exitGenerationRef = useRef(-1);
+   const [saveError, setSaveError] = useState("");
++  const [reloadRevision, setReloadRevision] = useState(0);
+   const [linkedEstimate, setLinkedEstimate] = useState(null);
+   const [recoveryRequired, setRecoveryRequired] = useState(false);
+ 
+-  const contextKey = `${id || ""}|${estimateId || ""}|${project?.id || ""}`;
++  const contextKey = `${id || ""}|${estimateId || ""}|${project?.id || ""}|${reloadRevision}`;
+   if (contextKeyRef.current !== contextKey) {
+     contextKeyRef.current = contextKey;
+     editRevisionRef.current += 1;
+@@ -144,6 +145,8 @@
+ 
+   const copyAttemptRef = useRef({ signature: "", key: "" });
+   const copyFlightRef = useRef(null);
++  const sourceRefreshRef = useRef(null);
++  const sourceWriteEpochRef = useRef(new Map()); // sourceId -> {epoch,lastSavedVersion}; own delayed writes only
+   const projectRef = useRef(null);
+   const swapAttemptRef = useRef({ signature: "", key: "" });
+   projectRef.current = contextLoaded ? project : null;
+@@ -170,6 +173,7 @@
+       return;
+     }
+     let active = true;
++    const epochAtStart = sourceWriteEpochRef.current.get(id)?.epoch || 0;
+     setLoading(true);
+     setLoadError("");
+     setSaveError("");
+@@ -189,6 +193,13 @@
+           if (estimateId && est?.id !== estimateId) setLoadError("Linked estimate could not be verified.");
+           return;
+         }
++        const epochNow = sourceWriteEpochRef.current.get(proj.id);
++        if (epochNow && epochNow.epoch > epochAtStart && proj.updated_date !== epochNow.lastSavedVersion) {
++          // Our own delayed write landed during this read; the snapshot is
++          // older than the known saved version — one bounded fresh read.
++          setReloadRevision((r) => r + 1);
++          return;
++        }
+         setLinkedEstimate(est || null);
+         const merged = {
+           ...proj,
+@@ -212,6 +223,8 @@
+           setLoadError(e?.message || "Foundation assembly could not be normalized.");
+           return;
+         }
++        if (sourceRefreshRef.current?.sourceId === proj.id) sourceRefreshRef.current = null;
++        acknowledgedVersionRef.current = { sourceId: proj.id, updated_date: proj.updated_date };
+         setProject(normalized);
+         projectRef.current = normalized;
+         const rec = foundationSyncRecoveryState({ project: merged, estimateId, estimate: est });
+@@ -233,7 +246,7 @@
+       })
+       .finally(() => active && setLoading(false));
+     return () => { active = false; };
+-  }, [id, estimateId]);
++  }, [id, estimateId, reloadRevision]);
+ 
+   const calc = useMemo(
+     () => (project ? calcProject(project, inventory, settings) : null),
+@@ -421,6 +434,12 @@
+       return Promise.resolve(staleOutcome);
+     }
+     if (copyFlightRef.current) return Promise.resolve(staleOutcome);
++    {
++      const marker = sourceRefreshRef.current;
++      if (marker && liveNow.loaded && liveNow.sourceId === marker.sourceId && liveNow.generation === marker.generation) {
++        return Promise.resolve({ ...staleOutcome, status: "conflict", error: new Error("The project must be reloaded after the earlier save finished.") });
++      }
++    }
+     const existing = saveAttemptRef.current;
+     if (existing) return existing.promise;
+     const captured = {
+@@ -503,6 +522,15 @@
+       const live = currentEditorRef.current;
+       const sameContext = live.generation === saveContext.generation && live.sourceId === saveContext.sourceId;
+       const fullyCurrent = sameContext && live.editRevision === saveContext.editRevision && live.loaded;
++      if (outcome.sourceSaved && live.generation !== saveContext.generation) {
++        const prevEpoch = sourceWriteEpochRef.current.get(outcome.sourceId) || { epoch: 0 };
++        sourceWriteEpochRef.current.set(outcome.sourceId, { epoch: prevEpoch.epoch + 1, lastSavedVersion: outcome.sourceVersion });
++      }
++      if (outcome.sourceSaved && live.loaded && live.sourceId === outcome.sourceId && live.generation !== saveContext.generation && projectRef.current?.updated_date !== outcome.sourceVersion) {
++        sourceRefreshRef.current = { sourceId: live.sourceId, generation: live.generation, sourceVersion: outcome.sourceVersion };
++        setDirty(true);
++        setSaveError("An earlier save finished after you navigated away. Reload the saved project before saving again.");
++      }
+       if (outcome.sourceSaved && outcome.sourceVersion && sameContext) {
+         acknowledgedVersionRef.current = { sourceId: outcome.sourceId, updated_date: outcome.sourceVersion };
+       }
+@@ -540,6 +568,15 @@
+   const handleSave = () => runSave("save");
+   saveRef.current = handleSave;
+ 
++  const handleReloadSaved = () => {
++    const marker = sourceRefreshRef.current;
++    const live = currentEditorRef.current;
++    if (!marker || !mountedRef.current || !live.loaded || live.sourceId !== marker.sourceId || live.generation !== marker.generation) return;
++    if (dirty && !window.confirm("Reload the saved project and discard current unsaved changes?")) return;
++    currentEditorRef.current = { ...currentEditorRef.current, loaded: false };
++    setReloadRevision((r) => r + 1);
++  };
++
+   const backTo = estimateId ? `/EstimateDetail?id=${estimateId}` : "/Estimator";
+ 
+   const handleSaveAndExit = async () => {
+@@ -655,6 +692,18 @@
+         {saveError && <div role="alert" className="mb-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-[13px] text-red-800">{saveError}</div>}
+ 
+         {(() => {
++          const marker = sourceRefreshRef.current;
++          const live = currentEditorRef.current;
++          if (!marker || !live.loaded || live.sourceId !== marker.sourceId || live.generation !== marker.generation) return null;
++          return (
++            <div role="alert" className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-800">
++              An earlier save finished after this view changed. Reload the saved project before saving again.
++              <button type="button" onClick={handleReloadSaved} className="ml-2 font-semibold underline">Reload saved project</button>
++            </div>
++          );
++        })()}
++
++        {(() => {
+           const recovery = foundationSyncRecoveryState({ project, estimateId, estimate: linkedEstimate });
+           if (!["pending", "unsupported", "mismatch"].includes(recovery.status) && !recoveryRequired) return null;
+           const detail = recovery.status === "mismatch" && recovery.attempt?.estimate_id

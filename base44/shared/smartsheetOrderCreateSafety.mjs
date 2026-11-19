@@ -117,6 +117,7 @@ async function performOrderSmartsheetCreate({
   verifyCreatedRow,
   attemptId,
   startedAt,
+  isMarkerRowAbsent,
 }) {
   const id = String(record?.id ?? '').trim();
   const targetSheet = String(sheetId ?? '').trim();
@@ -176,17 +177,41 @@ async function performOrderSmartsheetCreate({
   };
 
   // Check authoritative current state, not the paginated snapshot.
-  const current = await entity.get(id);
+  let current = await entity.get(id);
   if (!current || current.deleted) throw new Error('Order no longer exists or is deleted. Creation blocked.');
   const recoverable = recoverableOrderSmartsheetCreate(current, targetSheet);
   if (recoverable) {
-    return finalizePermanentLink({
-      latest: current,
-      marker: recoverable.marker,
-      rowId: recoverable.rowId,
-      snapshot: recoverable.snapshot,
-      recovered: true,
-    });
+    // The recorded permanent row may have been deleted remotely after the POST
+    // landed. A proven-absent read converts this never-recoverable hold into
+    // the honestly-unlinked state: release the marker and fall through to a
+    // fresh guarded create. An uncertain check keeps the hold (never POST again).
+    const markerGone = typeof isMarkerRowAbsent === 'function'
+      ? (await isMarkerRowAbsent(recoverable.rowId).catch(() => false)) === true
+      : false;
+    if (!markerGone) {
+      return finalizePermanentLink({
+        latest: current,
+        marker: recoverable.marker,
+        rowId: recoverable.rowId,
+        snapshot: recoverable.snapshot,
+        recovered: true,
+      });
+    }
+    const cleared = await entity.updateMany(
+      { id, updated_date: current.updated_date,
+        'smartsheet_create_attempt.attempt_id': recoverable.marker.attempt_id,
+        'smartsheet_create_attempt.status': 'created_unlinked' },
+      { $unset: { smartsheet_sheet_id: 1, smartsheet_create_attempt: 1 } },
+    );
+    if (!cleared || cleared.updated !== 1) {
+      throw new Error('The Order changed while releasing a deleted create-attempt marker. The Order remains held for review; never POST again.');
+    }
+    current = await entity.get(id);
+    if (!current || current.deleted || current.smartsheet_create_attempt ||
+        String(current.smartsheet_row_id ?? '').trim() ||
+        String(current.smartsheet_sheet_id ?? '').trim()) {
+      throw new Error('The deleted create-attempt marker could not be released. The Order remains held for review; never POST again.');
+    }
   }
   if (orderSmartsheetCreateNeedsReview(current)) {
     throw new Error('Order has an unresolved Smartsheet create attempt without a safely recoverable permanent row ID. Review its row before retrying.');

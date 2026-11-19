@@ -1,0 +1,65 @@
+{
+  "totalChecks": 14,
+  "passed": 14,
+  "failed": 0,
+  "unexpectedNetwork": 0,
+  "unexpectedSdk": 0,
+  "results": [
+    {
+      "id": "valid-existing-saves",
+      "ok": true
+    },
+    {
+      "id": "valid-new-creates",
+      "ok": true
+    },
+    {
+      "id": "held-missing-vinyl-price-blocks",
+      "ok": true
+    },
+    {
+      "id": "held-bad-machine-rate-blocks",
+      "ok": true
+    },
+    {
+      "id": "held-bad-part-dimension-blocks",
+      "ok": true
+    },
+    {
+      "id": "held-bad-markup-blocks",
+      "ok": true
+    },
+    {
+      "id": "held-equipment-cost-blocks",
+      "ok": true
+    },
+    {
+      "id": "held-unplaced-part-blocks",
+      "ok": true
+    },
+    {
+      "id": "held-saved-snapshot-visible",
+      "ok": true
+    },
+    {
+      "id": "explicit-zero-price-saves",
+      "ok": true
+    },
+    {
+      "id": "copy-blocked-when-held",
+      "ok": true
+    },
+    {
+      "id": "held-diagnostics-render",
+      "ok": true
+    },
+    {
+      "id": "empty-workflow-saves",
+      "ok": true
+    },
+    {
+      "id": "held-rows-stay-visible",
+      "ok": true
+    }
+  ]
+}

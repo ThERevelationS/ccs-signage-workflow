@@ -1,0 +1,347 @@
+{
+  "summary": {
+    "total": 21,
+    "resolved": 21,
+    "rate": "100.0%",
+    "failure_stages": {},
+    "geocode_misses": 0,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "65 east Cumberland Gap Pkwy, Corbin, KY 40701",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: corbin -> corbin",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "corbin"
+      },
+      "county": "",
+      "ms": 1392,
+      "worker": 1
+    },
+    {
+      "address": "1301 Miller Williams Rd, Eaton, OH 45320",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: eaton -> eaton",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "eaton"
+      },
+      "county": "",
+      "ms": 1615,
+      "worker": 1
+    },
+    {
+      "address": "97 Dragon Lair Drive, West Union, OH 45693",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: west union -> west union",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "west union"
+      },
+      "county": "",
+      "ms": 1672,
+      "worker": 1
+    },
+    {
+      "address": "9535 Cleveland East Liverpool Road, Streetsboro, OH 44241",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: streetsboro -> streetsboro",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "streetsboro"
+      },
+      "county": "",
+      "ms": 1717,
+      "worker": 1
+    },
+    {
+      "address": "2793 Meadowlark Lane South, Reynoldsburg, OH 43068",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: reynoldsburg -> reynoldsburg",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "reynoldsburg"
+      },
+      "county": "",
+      "ms": 1676,
+      "worker": 1
+    },
+    {
+      "address": "1400 Hill Road North, Pickerington, OH 43147",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: pickerington -> pickerington",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "pickerington"
+      },
+      "county": "",
+      "ms": 1986,
+      "worker": 1
+    },
+    {
+      "address": "1550 W Main St, West Jefferson, OH 43162",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: west jefferson -> west jefferson",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "west jefferson"
+      },
+      "county": "",
+      "ms": 1389,
+      "worker": 1
+    },
+    {
+      "address": "25925 Commerce Dr, Defiance, OH 43512",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: defiance -> defiance",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "defiance"
+      },
+      "county": "",
+      "ms": 1671,
+      "worker": 1
+    },
+    {
+      "address": "2835 Old State Rt. 73, Bldg #4, Wilmington, OH 45177",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 39.429126141434,
+        "lng": -83.785691979535
+      },
+      "matched": "2835 OLD STATE RTE 73, WILMINGTON, OH, 45177",
+      "target": {
+        "type": "township",
+        "name": "Union township",
+        "county": "Clinton County"
+      },
+      "county": "Clinton County",
+      "ms": 2088,
+      "worker": 1
+    },
+    {
+      "address": "625 West Central Avenue, Springboro, OH 45066",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: springboro -> springboro",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "springboro"
+      },
+      "county": "",
+      "ms": 1302,
+      "worker": 1
+    },
+    {
+      "address": "200 Aurora Industrial Pkwy, Aurora, OH 44202",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: aurora -> aurora",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "aurora"
+      },
+      "county": "",
+      "ms": 1677,
+      "worker": 1
+    },
+    {
+      "address": "3700 L and North Turnpike Road, at Exit 58, I-65, Horse Cave, KY 42749",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.204718302358,
+        "lng": -85.934063541123
+      },
+      "matched": "3700 L AND N TURNPIKE RD, HORSE CAVE, KY, 42749",
+      "target": {
+        "type": "municipality",
+        "name": "Horse Cave city"
+      },
+      "county": "Hart County",
+      "ms": 2024,
+      "worker": 1
+    },
+    {
+      "address": "1454 Main Street, Hamilton, OH 45013",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: hamilton -> hamilton",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "hamilton"
+      },
+      "county": "",
+      "ms": 1352,
+      "worker": 1
+    },
+    {
+      "address": "204 Courthouse Sq, Burkesville, KY 42717",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: burkesville -> burkesville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "burkesville"
+      },
+      "county": "",
+      "ms": 1699,
+      "worker": 1
+    },
+    {
+      "address": "1840 US Route 36, Urbana, OH 43078",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: urbana -> urbana",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "urbana"
+      },
+      "county": "",
+      "ms": 1696,
+      "worker": 1
+    },
+    {
+      "address": "1000, 1010 Cumberland Falls Hwy, Corbin, KY 40701",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 36.930074023364,
+        "lng": -84.102744631899
+      },
+      "matched": "1010 CUMBERLAND FALLS HWY, CORBIN, KY, 40701",
+      "target": {
+        "type": "municipality",
+        "name": "Corbin city"
+      },
+      "county": "Whitley County",
+      "ms": 2081,
+      "worker": 1
+    },
+    {
+      "address": "1000 Cumberland Gap Pkwy, Corbin, KY 40701",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: corbin -> corbin",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "corbin"
+      },
+      "county": "",
+      "ms": 1300,
+      "worker": 1
+    },
+    {
+      "address": "200 W 2nd St-Corner, S Lock St, Waverly, OH 45690",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 39.125308502525,
+        "lng": -82.985676438575
+      },
+      "matched": "200 W 2ND ST, WAVERLY, OH, 45690",
+      "target": {
+        "type": "municipality",
+        "name": "Waverly village"
+      },
+      "county": "Pike County",
+      "ms": 1850,
+      "worker": 1
+    },
+    {
+      "address": "11029 State Route 132 E, KY-132, Sebree, KY 42455",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.599430328198,
+        "lng": -87.548062048764
+      },
+      "matched": "11029 STATE HWY 132 E, SEBREE, KY, 42455",
+      "target": {
+        "type": "township",
+        "name": "Sebree CCD",
+        "county": "Webster County"
+      },
+      "county": "Webster County",
+      "ms": 2163,
+      "worker": 1
+    },
+    {
+      "address": "1561 Hwy 55, South Road, Columbia, KY 42728",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.082937805911,
+        "lng": -85.29942448049
+      },
+      "matched": "1561 KY 55 S, COLUMBIA, KY, 42728",
+      "target": {
+        "type": "township",
+        "name": "Columbia CCD",
+        "county": "Adair County"
+      },
+      "county": "Adair County",
+      "ms": 2415,
+      "worker": 1
+    },
+    {
+      "address": "775 West Central Avenue, Springboro, OH 45066",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: springboro -> springboro",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "springboro"
+      },
+      "county": "",
+      "ms": 1340,
+      "worker": 1
+    }
+  ]
+}

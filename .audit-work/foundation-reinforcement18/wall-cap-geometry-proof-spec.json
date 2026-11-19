@@ -1,0 +1,46 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "e1fbae8e8bc2162a5bd184b0cc4ccc2dfbe78f3b",
+  "jsonProofs": [
+    { "file": "wall-cap-acknowledged-verification.json", "resultCount": 22 },
+    { "file": "wall-cap-geometry-verification.json", "resultCount": 31 },
+    { "file": "wall-cap-geometry-pricing-regression.json", "resultCount": 24 },
+    { "file": "wall-cap-geometry-ui-verification.json", "resultCount": 12 },
+    { "file": "wall-cap-geometry-browser-verification.json", "resultCount": 16 },
+    { "file": "wall-cap-geometry-footer-browser-verification.json", "resultCount": 16 }
+  ],
+  "allResultsMustHaveOkTrue": true,
+  "pageProof": {
+    "file": "wall-cap-ack-page-verification.json",
+    "expected": {
+      "syntheticOnly": true,
+      "initialSavedCost": 21,
+      "initialDraftCopiedCost": 25,
+      "firstDisplayedHeldCost": 21,
+      "acceptedSavedCost": 25,
+      "nextDisplayedHeldCost": 25,
+      "sourceWrites": 1,
+      "builderWrites": 1,
+      "actualBusinessWrites": 0
+    }
+  },
+  "catalogLog": { "file": "geometry-catalog-regression-log.txt", "line": "PASS catalog-integrity passed=11 failed=0" },
+  "assemblyLog": { "file": "geometry-assembly-regression-log.txt", "line": "assembly passed=28 failed=0" },
+  "scopedLintLog": "geometry-ui-lint.txt",
+  "scopedLintLine": "exit=0",
+  "candidateHashes": {
+    "wallCapCalculator.js": "90e64ee49d8fe815ea63506ab21c25e9fd449c55581afe0a21f19371c87695eb",
+    "foundationCalc.js": "ec358d29484065ee1a8960a95394276bb4dc56b179a5cb733f020b375759f312",
+    "FoundationWallCapsPanel.jsx": "3d2c186e797001661798cf1cb787ea35ee7cb63d3f5e73e1d2aac5b25c4f974d"
+  },
+  "actualRemoteBundleCount": 3,
+  "allowedBuildWarningCount": 0,
+  "requiredAppStatus": "ready",
+  "testDataMustRemainEnabled": false,
+  "realStorageVerified": false,
+  "realBusinessAuthorizationVerified": false,
+  "schemaActivationAuthorized": false,
+  "reinforcementV2ActivationAuthorized": false,
+  "publishDeployAuthorized": false
+}

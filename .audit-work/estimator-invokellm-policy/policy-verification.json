@@ -1,0 +1,133 @@
+{
+  "synthetic": true,
+  "providerCalls": 0,
+  "foreignRequests": 0,
+  "observed": [
+    {
+      "file": "src/components/estimator/foundation/AiEngineeringAssistant.jsx",
+      "requestedModel": "gpt_6_sol",
+      "SDK": "synthetic",
+      "providerCalls": 0
+    },
+    {
+      "file": "src/components/vinylEstimator/VinylArtworkUploadDialog.jsx",
+      "requestedModel": "gpt_6_sol",
+      "SDK": "synthetic",
+      "providerCalls": 0
+    },
+    {
+      "file": "src/components/channelLetterInstall/AIScopeWriterModal.jsx",
+      "requestedModel": "gpt_6_sol",
+      "SDK": "synthetic",
+      "providerCalls": 0
+    },
+    {
+      "file": "src/components/channelLetterInstall/AIInstallScopeModal.jsx",
+      "requestedModel": "gpt_6_sol",
+      "SDK": "synthetic",
+      "providerCalls": 0
+    },
+    {
+      "file": "src/components/channelLetterInstall/AddressAutocomplete.jsx",
+      "requestedModel": "gpt_6_sol",
+      "SDK": "synthetic",
+      "providerCalls": 0
+    },
+    {
+      "file": "src/components/channelLetterInstall/PhotoEstimateModal.jsx",
+      "requestedModel": "gpt_6_sol",
+      "SDK": "synthetic",
+      "providerCalls": 0
+    }
+  ],
+  "results": [
+    {
+      "name": "module foundation: shared flagship via InvokeLLM",
+      "ok": true
+    },
+    {
+      "name": "module channel_letters: shared flagship via InvokeLLM",
+      "ok": true
+    },
+    {
+      "name": "module maintenance: shared flagship via InvokeLLM",
+      "ok": true
+    },
+    {
+      "name": "module painting: shared flagship via InvokeLLM",
+      "ok": true
+    },
+    {
+      "name": "module laser: shared flagship via InvokeLLM",
+      "ok": true
+    },
+    {
+      "name": "module cnc: shared flagship via InvokeLLM",
+      "ok": true
+    },
+    {
+      "name": "module metal: shared flagship via InvokeLLM",
+      "ok": true
+    },
+    {
+      "name": "module vinyl: shared flagship via InvokeLLM",
+      "ok": true
+    },
+    {
+      "name": "exact module set, immutable list and no unknown-module fallback",
+      "ok": true
+    },
+    {
+      "name": "src/components/estimator/foundation/AiEngineeringAssistant.jsx: one canonical model property, no behavior/schema/prompt drift",
+      "ok": true
+    },
+    {
+      "name": "src/components/estimator/foundation/AiEngineeringAssistant.jsx: synthetic SDK observes actual source request and unchanged payload",
+      "ok": true
+    },
+    {
+      "name": "src/components/vinylEstimator/VinylArtworkUploadDialog.jsx: one canonical model property, no behavior/schema/prompt drift",
+      "ok": true
+    },
+    {
+      "name": "src/components/vinylEstimator/VinylArtworkUploadDialog.jsx: synthetic SDK observes actual source request and unchanged payload",
+      "ok": true
+    },
+    {
+      "name": "src/components/channelLetterInstall/AIScopeWriterModal.jsx: one canonical model property, no behavior/schema/prompt drift",
+      "ok": true
+    },
+    {
+      "name": "src/components/channelLetterInstall/AIScopeWriterModal.jsx: synthetic SDK observes actual source request and unchanged payload",
+      "ok": true
+    },
+    {
+      "name": "src/components/channelLetterInstall/AIInstallScopeModal.jsx: one canonical model property, no behavior/schema/prompt drift",
+      "ok": true
+    },
+    {
+      "name": "src/components/channelLetterInstall/AIInstallScopeModal.jsx: synthetic SDK observes actual source request and unchanged payload",
+      "ok": true
+    },
+    {
+      "name": "src/components/channelLetterInstall/AddressAutocomplete.jsx: one canonical model property, no behavior/schema/prompt drift",
+      "ok": true
+    },
+    {
+      "name": "src/components/channelLetterInstall/AddressAutocomplete.jsx: synthetic SDK observes actual source request and unchanged payload",
+      "ok": true
+    },
+    {
+      "name": "src/components/channelLetterInstall/PhotoEstimateModal.jsx: one canonical model property, no behavior/schema/prompt drift",
+      "ok": true
+    },
+    {
+      "name": "src/components/channelLetterInstall/PhotoEstimateModal.jsx: synthetic SDK observes actual source request and unchanged payload",
+      "ok": true
+    },
+    {
+      "name": "no foreign requests or real provider invocations",
+      "ok": true
+    }
+  ]
+}

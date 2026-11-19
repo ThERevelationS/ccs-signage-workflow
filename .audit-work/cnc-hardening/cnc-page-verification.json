@@ -1,0 +1,17 @@
+{
+ "suite": "cnc-page",
+ "scenarios": 9,
+ "result": "PASS",
+ "checks": [
+  "S1 clean project: no banner, finite totals persisted, items save derived-fresh costs, no estimate handoff without estimateId",
+  "S2 malformed item field: banner + aria-invalid + saved-fallback shown; Save and Save-As-Copy each zero writes; 'Save paused'",
+  "S3 held without acknowledged totals: 'Not saved' shown, no fabricated $0, zero writes",
+  "S4 malformed live Settings row: project hold, 'CNC Settings' save message, zero writes",
+  "S5 explicit-zero min_cnc_labor_hours honored: no banner, save proceeds",
+  "S5b authored-0 machine rate honored: $0 machine cost persists legitimately",
+  "S6 multiplier=0 (positive-required) flagged and blocked",
+  "S7 blank setup-percentage input preserved mid-edit, field flagged, zero writes",
+  "S8 reprice-staleness: pct 20→50 reprices immediately; save persists fresh 2.16 not stale 0.864",
+  "S9 estimate context: recordBuilderSave receives finite liveTotal > 0"
+ ]
+}

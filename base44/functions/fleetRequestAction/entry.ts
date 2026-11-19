@@ -1,9 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { setFleetInventoryQuantityIfUnchanged } from '../../shared/fleetInventoryQuantity.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { validateOptionalFleetUnitCost } from './requestValidation.ts';
+import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';
 
 const nowIso = () => new Date().toISOString();
 const num = (value: unknown, fallback = 0) => {
@@ -140,7 +142,7 @@ async function finalizeReceive(Request: any, Receipt: any, request: any, receipt
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const auth = await authorize(base44, body?.session_token);
     if (auth.error) return auth.error;
@@ -216,7 +218,7 @@ Deno.serve(async (req) => {
         if (!matchesCreateIntent(reused)) {
           return Response.json({ error: 'This create identity already belongs to a different Fleet request. Reopen the New Request dialog before submitting another request.' }, { status: 409 });
         }
-        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
           event_type: 'request_created', target_id: reused.id, event_token: `request-created:${creationKey}`
         }).catch(() => null);
         return Response.json({ success: true, reused: true, request: reused });
@@ -238,7 +240,7 @@ Deno.serve(async (req) => {
           if (!matchesCreateIntent(winner)) {
             return Response.json({ error: 'Another Fleet request won this create identity with different details. The losing duplicate was discarded; reopen the New Request dialog.' }, { status: 409 });
           }
-          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
             event_type: 'request_created', target_id: winner.id, event_token: `request-created:${creationKey}`
           }).catch(() => null);
           return Response.json({ success: true, reused: true, request: winner });
@@ -248,7 +250,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
         event_type: 'request_created', target_id: created.id, event_token: `request-created:${creationKey}`
       }).catch(() => null);
       return Response.json({ success: true, request: created });
@@ -362,7 +364,7 @@ Deno.serve(async (req) => {
               },
             });
           }
-          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
             event_type: 'request_received', target_id: id, event_token: existing.receipt_key
           }).catch(() => null);
         }
@@ -578,14 +580,14 @@ Deno.serve(async (req) => {
             }).catch(() => null);
           }
           const finalized = await finalizeReceive(Request, Receipt, existing, await Receipt.get(claim.receipt.id), item.id, body);
-          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
             event_type: 'request_received', target_id: id, event_token: claim.receipt.operation_key
           }).catch(() => null);
           return Response.json({ success: true, reused: true, recovered: true, request: finalized, inventory_item: item });
         }
         if (item && summary.new_item === false && summary.inventory_applied === true) {
           const finalized = await finalizeReceive(Request, Receipt, existing, claim.receipt, item.id, body);
-          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
             event_type: 'request_received', target_id: id, event_token: claim.receipt.operation_key
           }).catch(() => null);
           return Response.json({ success: true, reused: true, recovered: true, request: finalized, inventory_item: item });
@@ -756,7 +758,7 @@ Deno.serve(async (req) => {
         unit: existing.item_type === 'part' ? 'units' : (body?.unit || body?.received_unit || inventoryItem.unit || ''),
         received_by: user.email,
       });
-      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
         event_type: 'request_received', target_id: id, event_token: key
       }).catch(() => null);
       return Response.json({

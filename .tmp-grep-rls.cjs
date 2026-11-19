@@ -1,0 +1,1 @@
+const fs=require("fs"); const pats=/signed_in|authenticated|\{\s*"user"\s*\}/; for(const f of fs.readdirSync("base44/entities")){ const s=fs.readFileSync("base44/entities/"+f,"utf8"); if(/"read"\s*:\s*\{[^{}]*user_condition[^{}]*\{\s*\}/s.test(s)||/signed_in/.test(s)) console.log(f); }

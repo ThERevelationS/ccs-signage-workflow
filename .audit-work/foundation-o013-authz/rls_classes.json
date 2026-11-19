@@ -1,0 +1,1427 @@
+{
+ "backend_only": [
+  "AccountDeletionRequest",
+  "ActivityLog",
+  "AllInOneEstimate",
+  "AuthorizedEmail",
+  "BouncieOAuthState",
+  "BouncieVehicleLiveState",
+  "BrickStoneInventory",
+  "BrickStoneProject",
+  "BroadcastMessage",
+  "BuilderPart",
+  "BuilderPartGroup",
+  "BuilderProduct",
+  "CNCProject",
+  "COGSAccount",
+  "CatalogPartGroup",
+  "CellHistory",
+  "ChangeOrder",
+  "ChannelLetterInstallEquipment",
+  "ChannelLetterInstallInventory",
+  "ChannelLetterInstallation",
+  "ChecklistSubItem",
+  "ChecklistTemplate",
+  "CostPlusConfig",
+  "CrmEventType",
+  "CrmSuggestion",
+  "CustomItemsProject",
+  "Customer",
+  "CustomerFolderLink",
+  "CustomerInfo",
+  "CustomerLocation",
+  "CustomerNote",
+  "CustomerPortalLink",
+  "DO_NOT_USE",
+  "DefaultModuleSettings",
+  "DocNumberCounter",
+  "EstimateOption",
+  "EstimateSectionAcceptance",
+  "EstimatingRequest",
+  "FeatureReport",
+  "FieldAudit",
+  "FileBridgeChunk",
+  "FileBridgeCommand",
+  "FileBridgeEvent",
+  "FileBridgeHealth",
+  "FileBridgeInventory",
+  "FileBridgeRecent",
+  "FileBridgeSpikeRow",
+  "FileBridgeUpload",
+  "FileIndex",
+  "FileShareRoot",
+  "FoundationProject",
+  "GeneralTask",
+  "GlobalPricingTier",
+  "GlobalSettings",
+  "ImportJob",
+  "IncomeAccount",
+  "InventoryMovement",
+  "Invoice",
+  "JurisdictionProfile",
+  "LaborLevel",
+  "LaborServiceInventory",
+  "LaserProject",
+  "Machine",
+  "MachineRate",
+  "MaintenanceActionRate",
+  "MaintenanceEquipment",
+  "MaintenanceInventory",
+  "MarkupTier",
+  "MetalProject",
+  "ModifierOption",
+  "ModuleStatus",
+  "Nope",
+  "Nope2",
+  "Notification",
+  "NotificationPreference",
+  "NotificationTemplate",
+  "OopsShouldNotCreate",
+  "Opportunity",
+  "OpportunityActivity",
+  "OpportunityIntake",
+  "Order",
+  "OriginationNode",
+  "Payment",
+  "PermitLineItem",
+  "PermitLocality",
+  "PermitLookupIndex",
+  "PermitResolutionRule",
+  "PermittingAddressArchive",
+  "PermittingHtmlEvidence",
+  "PermittingRule",
+  "PermittingRuleExtractionRun",
+  "PermittingScanRun",
+  "PermittingSourceAuthorityReview",
+  "PermittingSourceDocument",
+  "PermittingSourceTextSegment",
+  "PermittingWorkflowDraft",
+  "PortalMessage",
+  "PricingMode",
+  "PricingModifier",
+  "PricingTemplate",
+  "PricingTierMatrix",
+  "ProductActivity",
+  "ProductSubstatus",
+  "Project",
+  "ProofShareLink",
+  "PurchaseOrder",
+  "QuickProduct",
+  "QuoteDefaults",
+  "QuoteScopeLine",
+  "ReconciliationBatch",
+  "RegulationAlert",
+  "Report",
+  "ReportRun",
+  "Responsibility",
+  "SalesLocation",
+  "SavedQueueView",
+  "ScheduledReport",
+  "Settings",
+  "SignHardwareInventory",
+  "SignLightingInventory",
+  "SignPartsSuppliesInventory",
+  "SignageFact",
+  "SignageFactIndex",
+  "SipChecklistTemplate",
+  "SmartsheetSyncTrace",
+  "Sop",
+  "SourceMonitorState",
+  "StoreCreditLedger",
+  "SyncConflict",
+  "TaskTemplate",
+  "TaxAgency",
+  "TaxGroup",
+  "Temp3",
+  "Temp5",
+  "Temp6",
+  "TempIgnore",
+  "TimeClockAdminCorrectionGate",
+  "TimeClockAdminNote",
+  "TimeClockDevice",
+  "TimeClockEmployeePreference",
+  "TimeClockPayPeriodCreateGate",
+  "TimeClockShiftTemplate",
+  "TrainingAssignment",
+  "TrainingItem",
+  "UserCalendarSettings",
+  "UserCredential",
+  "UserWorkspacePreferences",
+  "Vendor",
+  "VinylInventory",
+  "VinylMachine",
+  "VinylPartTemplate",
+  "VinylProject",
+  "VinylWorkflowTemplate",
+  "WorkOrderTimeEntry",
+  "WorkflowScheduleChange",
+  "_CheckpointMistake",
+  "_Noop",
+  "__do_not_create__",
+  "__invalid_placeholder",
+  "__noop",
+  "__noop__",
+  "_never_use_checkpoint_probe",
+  "_noop",
+  "_noop_should_not_create"
+ ],
+ "non_backend_only": {
+  "AccessRequest": {
+   "create": [
+    "admin"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "AdminAuditLog": {
+   "create": [
+    "admin"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "Announcement": {
+   "create": [
+    "__announcement_backend_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__announcement_backend_only__"
+   ],
+   "delete": [
+    "__announcement_backend_only__"
+   ]
+  },
+  "AutomationRule": {
+   "create": [
+    "__admin_settings_backend_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__admin_settings_backend_only__"
+   ],
+   "delete": [
+    "__admin_settings_backend_only__"
+   ]
+  },
+  "BackupLog": {
+   "create": [
+    "__backup_log_backend_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__backup_log_backend_only__"
+   ],
+   "delete": [
+    "__backup_log_backend_only__"
+   ]
+  },
+  "BouncieConnection": {
+   "create": null,
+   "read": [
+    "__bouncie_connection_service_only__"
+   ],
+   "update": null,
+   "delete": null
+  },
+  "BouncieNotification": {
+   "create": [
+    "__bouncie_notification_service_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__bouncie_notification_service_only__"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "BuilderPriceRevision": {
+   "create": [
+    "__builder_price_revision_backend_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__builder_price_revision_backend_only__"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "CalendarEvent": {
+   "create": [
+    "__calendar_event_backend_only__"
+   ],
+   "read": "RAW:{}",
+   "update": [
+    "__calendar_event_backend_only__"
+   ],
+   "delete": [
+    "__calendar_event_backend_only__"
+   ]
+  },
+  "CorebridgeApiAudit": {
+   "create": [
+    "__corebridge_api_backend_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__corebridge_api_backend_only__"
+   ],
+   "delete": [
+    "__corebridge_api_backend_only__"
+   ]
+  },
+  "CorebridgeLog": {
+   "create": [
+    "__corebridge_log_backend_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__corebridge_log_backend_only__"
+   ],
+   "delete": [
+    "__corebridge_log_backend_only__"
+   ]
+  },
+  "CustomerContact": {
+   "create": [
+    "__admin_settings_backend_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__admin_settings_backend_only__"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "CustomerSummary": {
+   "create": [
+    "__admin_settings_backend_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "DimensionalLetterMaterial": {
+   "create": [
+    "admin"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "EmailGroup": {
+   "create": [
+    "__admin_settings_backend_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__admin_settings_backend_only__"
+   ],
+   "delete": [
+    "__admin_settings_backend_only__"
+   ]
+  },
+  "EmailNotificationSettings": {
+   "create": [
+    "__admin_settings_backend_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__admin_settings_backend_only__"
+   ],
+   "delete": [
+    "__admin_settings_backend_only__"
+   ]
+  },
+  "EstimateAcceptance": {
+   "create": [
+    "__estimate_audit_backend_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__estimate_audit_backend_only__"
+   ],
+   "delete": [
+    "__estimate_audit_backend_only__"
+   ]
+  },
+  "EstimateClipboardItem": {
+   "create": [
+    "__admin_settings_backend_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__admin_settings_backend_only__"
+   ],
+   "delete": [
+    "__admin_settings_backend_only__"
+   ]
+  },
+  "EstimateQuoteDelivery": {
+   "create": [
+    "__estimate_audit_backend_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__estimate_audit_backend_only__"
+   ],
+   "delete": [
+    "__estimate_audit_backend_only__"
+   ]
+  },
+  "EstimateRevision": {
+   "create": [
+    "__estimate_audit_backend_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__estimate_audit_backend_only__"
+   ],
+   "delete": [
+    "__estimate_audit_backend_only__"
+   ]
+  },
+  "FailedAdminAttempt": {
+   "create": [
+    "admin"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "FleetAlertRuntimeState": {
+   "create": [
+    "__fleet_alert_runtime_service_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_alert_runtime_service_only__"
+   ],
+   "delete": [
+    "__fleet_alert_runtime_service_only__"
+   ]
+  },
+  "FleetAlertSetting": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetCutoverState": {
+   "create": [
+    "__fleet_cutover_service_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_cutover_service_only__"
+   ],
+   "delete": [
+    "__fleet_cutover_service_only__"
+   ]
+  },
+  "FleetDashboardPreference": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetEquipment": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetEquipmentDocument": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetEquipmentLog": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetFluid": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetFuelEntry": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetInspection": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetInspectionTemplate": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetLifecycleProfile": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetMaintenanceMeterRule": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetMaintenanceTask": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetMaintenanceWorkOrder": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetMechanicAccess": {
+   "create": [
+    "__fleet_mechanic_service_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_mechanic_service_only__"
+   ],
+   "delete": [
+    "__fleet_mechanic_service_only__"
+   ]
+  },
+  "FleetMigrationAudit": {
+   "create": [
+    "__fleet_migration_service_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_migration_service_only__"
+   ],
+   "delete": [
+    "__fleet_migration_service_only__"
+   ]
+  },
+  "FleetMigrationMap": {
+   "create": [
+    "__fleet_migration_service_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_migration_service_only__"
+   ],
+   "delete": [
+    "__fleet_migration_service_only__"
+   ]
+  },
+  "FleetNotificationQueue": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetOperationReceipt": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetPart": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetPartFluidRequest": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetPartIdentification": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetPublicReportThrottle": {
+   "create": [
+    "__fleet_public_report_service_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_public_report_service_only__"
+   ],
+   "delete": [
+    "__fleet_public_report_service_only__"
+   ]
+  },
+  "FleetRepairApprovalPolicy": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetRepairApprovalPolicyCreateGate": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "__fleet_server_only__"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetRepairEstimate": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetRepairEstimateCreateGate": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "__fleet_server_only__"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetReservation": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetSettings": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetSystemLog": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetSystemReport": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetVehicleMetadata": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FleetWarranty": {
+   "create": [
+    "__fleet_server_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__fleet_server_only__"
+   ],
+   "delete": [
+    "__fleet_server_only__"
+   ]
+  },
+  "FoundationInventory": {
+   "create": [
+    "admin"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "Inventory": {
+   "create": [
+    "admin"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "InventoryCostHistory": {
+   "create": [
+    "admin"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "LegacyMigrationMap": {
+   "create": [
+    "admin"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "MaintenanceProject": {
+   "create": [
+    "admin",
+    "user"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "admin",
+    "user"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "MarkupCategory": {
+   "create": [
+    "admin"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "OpportunityBridgeOperationReceipt": {
+   "create": [
+    "__opportunity_bridge_server_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__opportunity_bridge_server_only__"
+   ],
+   "delete": [
+    "__opportunity_bridge_server_only__"
+   ]
+  },
+  "PTOPolicy": {
+   "create": [
+    "__pto_policy_backend_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__pto_policy_backend_only__"
+   ],
+   "delete": [
+    "__pto_policy_backend_only__"
+   ]
+  },
+  "PartTemplate": {
+   "create": [
+    "__admin_settings_backend_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "PendingImport": {
+   "create": [
+    "admin"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__admin_settings_backend_only__"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "PermittingOfficeAuthorityReview": {
+   "create": [
+    "admin"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": "RAW:\"update\": false,\n    \"delete\": false\n  }",
+   "delete": "RAW:\"delete\": false\n  }"
+  },
+  "ProjectTemplate": {
+   "create": [
+    "__admin_settings_backend_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__admin_settings_backend_only__"
+   ],
+   "delete": [
+    "__admin_settings_backend_only__"
+   ]
+  },
+  "QuickProductCategory": {
+   "create": [
+    "__quick_product_category_backend_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__quick_product_category_backend_only__"
+   ],
+   "delete": [
+    "__quick_product_category_backend_only__"
+   ]
+  },
+  "SalesFilter": {
+   "create": [
+    "__sales_filter_backend_only__"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "__sales_filter_backend_only__"
+   ],
+   "delete": [
+    "__sales_filter_backend_only__"
+   ]
+  },
+  "SaveColor": {
+   "create": [
+    "__admin_settings_backend_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "ShiftSwapRequest": {
+   "create": [
+    "admin"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "SourceCollectionQueue": {
+   "create": [
+    "admin"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "TimeClockAudit": {
+   "create": [
+    "timeclock_backend_only"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "timeclock_backend_only"
+   ],
+   "delete": [
+    "timeclock_backend_only"
+   ]
+  },
+  "TimeClockBadge": {
+   "create": [
+    "timeclock_backend_only"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "timeclock_backend_only"
+   ],
+   "delete": [
+    "timeclock_backend_only"
+   ]
+  },
+  "TimeClockBreak": {
+   "create": [
+    "timeclock_backend_only"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "timeclock_backend_only"
+   ],
+   "delete": [
+    "timeclock_backend_only"
+   ]
+  },
+  "TimeClockCorrectionRequest": {
+   "create": [
+    "timeclock_backend_only"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "timeclock_backend_only"
+   ],
+   "delete": [
+    "timeclock_backend_only"
+   ]
+  },
+  "TimeClockEmployeeState": {
+   "create": [
+    "timeclock_backend_only"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "timeclock_backend_only"
+   ],
+   "delete": [
+    "timeclock_backend_only"
+   ]
+  },
+  "TimeClockLaborSegment": {
+   "create": [
+    "timeclock_backend_only"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "timeclock_backend_only"
+   ],
+   "delete": [
+    "timeclock_backend_only"
+   ]
+  },
+  "TimeClockPayPeriod": {
+   "create": [
+    "timeclock_backend_only"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "timeclock_backend_only"
+   ],
+   "delete": [
+    "timeclock_backend_only"
+   ]
+  },
+  "TimeClockPunchException": {
+   "create": [
+    "timeclock_backend_only"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "timeclock_backend_only"
+   ],
+   "delete": [
+    "timeclock_backend_only"
+   ]
+  },
+  "TimeClockWorkPause": {
+   "create": [
+    "timeclock_backend_only"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "timeclock_backend_only"
+   ],
+   "delete": [
+    "timeclock_backend_only"
+   ]
+  },
+  "TimeEntry": {
+   "create": [
+    "timeclock_backend_only"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "timeclock_backend_only"
+   ],
+   "delete": [
+    "timeclock_backend_only"
+   ]
+  },
+  "TimeOffRequest": {
+   "create": [
+    "timeclock_backend_only"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "timeclock_backend_only"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "User": {
+   "create": null,
+   "read": [
+    "__google_oauth_service_only__"
+   ],
+   "update": null,
+   "delete": null
+  },
+  "UserCapacity": {
+   "create": [
+    "__resource_capacity_backend_only__"
+   ],
+   "read": "RAW:{}",
+   "update": [
+    "__resource_capacity_backend_only__"
+   ],
+   "delete": [
+    "__resource_capacity_backend_only__"
+   ]
+  },
+  "UserPTOBalance": {
+   "create": [
+    "__pto_balance_backend_only__"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "__pto_balance_backend_only__"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "UserSession": {
+   "create": [
+    "admin"
+   ],
+   "read": [
+    "admin"
+   ],
+   "update": [
+    "admin"
+   ],
+   "delete": [
+    "admin"
+   ]
+  },
+  "WorkOrder": {
+   "create": [
+    "admin",
+    "user"
+   ],
+   "read": [
+    "admin",
+    "user"
+   ],
+   "update": [
+    "admin",
+    "user"
+   ],
+   "delete": [
+    "admin"
+   ]
+  }
+ }
+}

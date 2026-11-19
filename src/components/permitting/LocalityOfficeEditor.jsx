@@ -1,5 +1,6 @@
 import OfficeRescanButton from "./OfficeRescanButton";
-import LocalityOfficeReviewEvidence from "./LocalityOfficeReviewEvidence";
+import OpenNowBadge from "./OpenNowBadge";
+import LocalityOfficeReviewEvidence from "./LocalityOfficeReviewEvidence.jsx";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,7 +72,7 @@ export default function LocalityOfficeEditor({ office, officeTypes, onChange, on
       {localityId && <OfficeRescanButton localityId={localityId} office={office} />}
       {/* Office header */}
       <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-50 to-white border-b">
-        <button onClick={() => setExpanded(!expanded)} className="p-0.5">
+        <button type="button" onClick={() => setExpanded(!expanded)} className="p-0.5">
           {expanded ? <ChevronDown className="w-4 h-4 text-purple-600" /> : <ChevronRight className="w-4 h-4 text-purple-600" />}
         </button>
         <Input
@@ -123,6 +124,13 @@ export default function LocalityOfficeEditor({ office, officeTypes, onChange, on
             <div>
               <Label className="text-[10px] text-gray-500">Address</Label>
               <Input value={office.contact_address || ""} onChange={e => update({ contact_address: e.target.value })} className="h-7 text-xs" />
+            </div>
+            <div className="col-span-2 flex items-center gap-2">
+              <div className="flex-1">
+                <Label className="text-[10px] text-gray-500">Hours</Label>
+                <Input value={office.hours || ""} onChange={e => update({ hours: e.target.value })} className="h-7 text-xs" placeholder="M-F 8:00 AM - 4:30 PM" />
+              </div>
+              <OpenNowBadge hours={office.hours} />
             </div>
             <div className="col-span-2">
               <Label className="text-[10px] text-gray-500">Notes</Label>
@@ -233,7 +241,7 @@ export default function LocalityOfficeEditor({ office, officeTypes, onChange, on
                                   <span className="text-[9px] text-gray-500">days</span>
                                 </div>
                               )}
-                              <button onClick={() => removeStep(step.id)} className="p-0.5 hover:bg-red-50 rounded">
+                              <button type="button" onClick={() => removeStep(step.id)} className="p-0.5 hover:bg-red-50 rounded">
                                 <Trash2 className="w-3 h-3 text-red-500" />
                               </button>
                             </div>

@@ -2,6 +2,7 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import { withEntityRateLimitRetry } from "../../shared/entityRateLimitRetry.ts";
 import { processWorkflowTriggerEvent } from "../../shared/workflowTriggerEngine.ts";
+import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
 import {
   createFoundationRecordWithRecovery,
   expectedFoundationFields,
@@ -9,7 +10,7 @@ import {
   replaceEstimatingRequestFieldsIfUnchanged,
 } from "../../shared/opportunityFoundationPersistence.mjs";
 
-// Emitting an automation event must never break the workspace action itself â€”
+// Emitting an automation event must never break the workspace action itself —
 // a failed rule evaluation is a missed notification, not a failed save.
 async function emitOpportunityAutomation(base44: any, eventType: string, opportunityId: string, actor: string) {
   try {
@@ -29,6 +30,54 @@ const num = (value: any, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 const money = (value: number) => Math.round(value * 100) / 100;
+
+// Row-array coercion shared by EVERY action block. It used to be declared
+// inside attention_feed only, so every earlier action that called list()
+// (send_digest, bulk_remarkup, export/import_estimate, copy_bom,
+// copy_sections) threw a ReferenceError the first time it ran.
+const list = (v: any) => (Array.isArray(v) ? v : []);
+
+// Server-side search pushdown (same shape as functions/fleetSearch): escape
+// the user term, then $or it across the searchable fields.
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const regexOr = (fields: string[], term: string) => ({
+  $or: fields.map((field) => ({ [field]: { $regex: escapeRegex(term), $options: "i" } })),
+});
+
+// Module-scope row cache for attention_feed — that action reads 12 tables
+// per call and every signed-in tab polls it on a timer, which was the
+// largest steady drain on the shared service-token entity_list budget.
+// Isolates persist across invocations under load, exactly when the extra
+// reads hurt most; data freshness stays within ~2 minutes.
+let attentionFeedRowsCache: { rows: any[]; expires: number } | null = null;
+const ATTENTION_FEED_CACHE_MS = 120_000;
+
+// M-03: per-key isolate cache for the two heaviest uncached aggregates —
+// get_customer_360 + customer_workspace each fan out 8-11 entity reads per
+// open with no shield. A 60s per-customer row cache turns workspace reopen
+// storms into one fan-out per minute (attention_feed rides the same 120s
+// contract). get_opportunity is deliberately NOT cached — its
+// reconcile-on-read write must run every open.
+const aggregateRowsCache = new Map<string, { rows: any[]; expires: number }>();
+const AGGREGATE_CACHE_MS = 60_000;
+const AGGREGATE_CACHE_MAX_KEYS = 64;
+const aggregateCacheGet = (key: string) => {
+  const hit = aggregateRowsCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.rows;
+  if (hit) aggregateRowsCache.delete(key);
+  return null;
+};
+const aggregateCacheSet = (key: string, rows: any[]) => {
+  if (aggregateRowsCache.size >= AGGREGATE_CACHE_MAX_KEYS) {
+    let oldestKey: string | null = null;
+    let oldestExp = Infinity;
+    for (const [k, v] of aggregateRowsCache) {
+      if (v.expires < oldestExp) { oldestExp = v.expires; oldestKey = k; }
+    }
+    if (oldestKey) aggregateRowsCache.delete(oldestKey);
+  }
+  aggregateRowsCache.set(key, { rows, expires: Date.now() + AGGREGATE_CACHE_MS });
+};
 
 const STAGES = ["new", "qualified", "estimating", "quoted", "follow_up", "on_hold", "won", "lost"];
 const CLOSED_STAGES = new Set(["won", "lost"]);
@@ -88,7 +137,7 @@ async function reconcileEstimatingRequest({ EstimatingRequest, Estimate, request
   const estimateId = clean(request?.estimate_id);
   if (!estimateId) return { request, completed: false };
   const estimate = await Estimate.get(estimateId).catch(() => null);
-  // A trashed estimate never closes an open estimating request â€” the request
+  // A trashed estimate never closes an open estimating request — the request
   // stays open until a live estimate actually goes to the customer.
   if (!estimate?.id || estimate?.deleted === true || !QUOTE_OUT_STATUSES.has(clean(estimate.status))) return { request, completed: false };
   const now = new Date().toISOString();
@@ -103,18 +152,57 @@ async function reconcileEstimatingRequest({ EstimatingRequest, Estimate, request
   return { request: saved, completed: true, estimate_status: clean(estimate.status) };
 }
 
-async function syncWorkOrderStage(WorkOrder: any, workOrderId: any, stage: any) {
+// (#170) Reverse-sync: after a Work Order's pipeline stage moves, stamp every
+// linked estimate's sales_stage so Estimator queues reflect the same stage.
+// Links resolve three ways — WO.estimate_id (single-link), WO.estimate_ids[]
+// (combined conversion), and the estimate.work_order_id back-link. Advisory
+// metadata: each estimate gets its own CAS write and a conflict is skipped,
+// never fatal to the stage change itself.
+async function syncEstimateSalesStageFromWorkOrder(Estimate: any, wo: any, stage: any) {
+  const next = clean(stage);
+  if (!Estimate || !next || !wo?.id) return;
+  const woId = clean(wo.id);
+  const linked = new Map<string, any>();
+  const push = (row: any) => {
+    if (row?.id && row.deleted !== true && !linked.has(clean(row.id))) linked.set(clean(row.id), row);
+  };
+  push(await Estimate.get(clean(wo.estimate_id)).catch(() => null));
+  for (const id of Array.isArray(wo.estimate_ids) ? wo.estimate_ids : []) {
+    push(await Estimate.get(clean(id)).catch(() => null));
+  }
+  for (const row of list(await Estimate.filter({ work_order_id: woId }).catch(() => []))) push(row);
+  const stamp = new Date().toISOString();
+  for (const [estId, est] of linked) {
+    if (clean(est.sales_stage) === next) continue;
+    const desired = { sales_stage: next, sales_stage_changed_at: stamp };
+    await replaceFoundationFieldsIfUnchanged({
+      entity: Estimate,
+      recordId: estId,
+      expectedFields: expectedFoundationFields(est, desired),
+      nextFields: desired,
+      label: "Estimate sales stage reverse-sync",
+    }).catch((error: any) => console.warn("Estimate sales_stage reverse-sync skipped:", error?.message || error));
+  }
+}
+
+async function syncWorkOrderStage(WorkOrder: any, workOrderId: any, stage: any, Estimate: any = null) {
   const next = OPP_TO_WO_STAGE[clean(stage)];
   const wo = await WorkOrder.get(clean(workOrderId)).catch(() => null);
-  if (!next || !wo?.id || clean(wo.sales_status) === next) return "";
+  if (!next || !wo?.id || clean(wo.sales_status) === next) {
+    // Already at target — still back-fill linked estimates whose sales_stage
+    // drifted (combined-conversion rows, or estimates linked after the fact).
+    if (next && wo?.id && Estimate) await syncEstimateSalesStageFromWorkOrder(Estimate, wo, next);
+    return "";
+  }
   const desired = { sales_status: next };
-  await replaceFoundationFieldsIfUnchanged({
+  const saved = await replaceFoundationFieldsIfUnchanged({
     entity: WorkOrder,
     recordId: clean(wo.id),
     expectedFields: expectedFoundationFields(wo, desired),
     nextFields: desired,
     label: "Work order sales status",
   });
+  if (Estimate) await syncEstimateSalesStageFromWorkOrder(Estimate, saved || wo, next);
   return next;
 }
 
@@ -195,7 +283,7 @@ function buildHandoffSnapshot({ opportunity, customer, primaryIntake }: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
     const body = await req.json().catch(() => ({}));
     const user = await authenticateSignShopSession(base44, body?.session_token);
     const actor = clean(user?.email) || clean(user?.id) || "unknown";
@@ -217,26 +305,394 @@ Deno.serve(async (req) => {
     const Payment = base44.asServiceRole.entities.Payment;
     const Inventory = base44.asServiceRole.entities.Inventory;
     const PermitLineItem = base44.asServiceRole.entities.PermitLineItem;
+    const BuilderPart = base44.asServiceRole.entities.BuilderPart;
     const Activity = base44.asServiceRole.entities.OpportunityActivity;
     const PortalMessage = base44.asServiceRole.entities.PortalMessage;
 
+    // Full-data backup (#484): every real entity dumped to a JSON bundle.
+    // Admin-only — this exposes customer/estimate/inventory/admin records.
+    if (action === "full_backup") {
+      if (clean(user?.role) !== "admin") throw bad("Only administrators can export a full backup.", 403);
+      const SKIP = /^(Nope|Temp|Oops|DO_NOT_USE|__|_noop|_never_use|_CheckpointMistake|_invalid|_do_not)/i;
+      const entities = base44.asServiceRole.entities as any;
+      const names: string[] = [];
+      // Enumerate the entity registry — filter the junk/test entities.
+      for (const name of Object.keys(entities)) {
+        if (!SKIP.test(name)) names.push(name);
+      }
+      const bundle: Record<string, any[]> = {};
+      const errors: Record<string, string> = {};
+      const rowCounts: Record<string, number> = {};
+      for (const name of names) {
+        try {
+          // Full-table paged read — a default filter({}) silently caps at 50
+          // rows, which made this "full" backup drop data without any error.
+          const rows = await loadAllEntityRows({
+            entity: entities[name],
+            sort: "created_date",
+            maxRows: 250000,
+            label: `Backup read for ${name}`,
+          });
+          bundle[name] = rows;
+          rowCounts[name] = rows.length;
+        } catch (e: any) {
+          errors[name] = e?.message || 'read failed';
+        }
+      }
+      const totalRows = Object.values(rowCounts).reduce((sum, count) => sum + count, 0);
+      return Response.json({ success: true, action, exported_at: new Date().toISOString(), entity_count: names.length, entities: bundle, errors, row_counts: rowCounts, total_rows: totalRows });
+    }
+
+    // Email digest (#333): compiles the attention-feed buckets for the
+    // requester and sends a summary via sendGmail. Opt-in is recorded
+    // client-side; a scheduler can invoke this per opted-in user.
+    if (action === "send_digest") {
+      const email = clean(user?.email);
+      if (!email) throw bad("A signed-in user is required for a digest.", 400);
+      const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
+      // Paged full reads — the digest counts every open/overdue row, so a
+      // capped read under-reports the very counts the email exists to send.
+      const [requests, invoices, sentEstimates, opps] = await Promise.all([
+        loadAllEntityRows({ entity: EstimatingRequest, sort: "-created_date", label: "Digest estimating requests" }).catch(() => []),
+        loadAllEntityRows({ entity: Invoice, sort: "-created_date", label: "Digest invoices" }).catch(() => []),
+        loadAllEntityRows({ entity: Estimate, query: { status: "sent" }, sort: "-updated_date", label: "Digest sent estimates" }).catch(() => []),
+        loadAllEntityRows({ entity: Opportunity, sort: "-created_date", label: "Digest opportunities" }).catch(() => []),
+      ]);
+      const openRequests = list(requests).filter((r) => OPEN_REQUEST_STATUSES.has(clean(r?.status))).length;
+      const overdueInv = list(invoices).filter((i) => num(i?.balance_due) > 0 && ["sent", "partially_paid"].includes(clean(i?.status)) && clean(i?.due_date) && clean(i?.due_date) < today).length;
+      const staleSent = list(sentEstimates).filter((e) => clean(e?.status) === "sent" && clean(e?.updated_date) && Math.floor((Date.parse(today) - Date.parse(clean(e?.updated_date))) / 86400000) >= 7).length;
+      const overdueFollowUps = list(opps).filter((o) => !CLOSED_STAGES.has(clean(o?.stage)) && clean(o?.next_action_due) && clean(o?.next_action_due) < today).length;
+      const unassigned = list(requests).filter((r) => OPEN_REQUEST_STATUSES.has(clean(r?.status)) && !clean(r?.assigned_estimator) && !clean(r?.estimator)).length;
+      const rows = [
+        ["Open estimating requests", openRequests],
+        ["Unassigned requests", unassigned],
+        ["Overdue invoices", overdueInv],
+        ["Stale sent quotes (7d+)", staleSent],
+        ["Overdue follow-ups", overdueFollowUps],
+      ];
+      const html = `<h2 style="font-family:sans-serif;color:#111">Your daily attention digest</h2><p style="font-family:sans-serif;color:#555">Open items needing attention as of ${today}:</p><ul style="font-family:sans-serif;color:#111">${rows.map(([l, c]) => `<li><strong>${l}:</strong> ${c}</li>`).join("")}</ul><p style="font-family:sans-serif;color:#999;font-size:12px">Open CCS Signage Workflow - attention feed for details.</p>`;
+      const sendRes = await base44.asServiceRole.functions.invoke("sendGmail", { to: email, subject: `CCS daily digest - ${today}`, body: html }).catch(() => null);
+      return Response.json({ success: true, action, to: email, sent: !!sendRes, counts: Object.fromEntries(rows) });
+    }
+
+    // User-defined watch rules (#349): "tell me when X reaches state Y".
+    // Rules persist on the GlobalSettings `watch_rules` config keyed by the
+    // caller's email; the dispatcher (`check_watches` — called on feed load)
+    // returns matching rules so the UI can surface "watch hit" notifications.
+    const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;
+    const loadWatchConfig = async () => {
+      const rows = await GlobalSettings.filter({ setting_key: "watch_rules" }).catch(() => []);
+      const row = Array.isArray(rows) && rows.length ? rows[0] : null;
+      let map: Record<string, any[]> = {};
+      try { map = JSON.parse(String(row?.setting_value?.watch_rules || "{}") || "{}"); } catch { map = {}; }
+      return { row, map };
+    };
+    if (action === "set_watch") {
+      const { row, map } = await loadWatchConfig();
+      const key = clean(user?.email) || actor;
+      if (!key) throw bad("A signed-in user is required to watch a record.", 400);
+      const rule = {
+        entity: clean(body?.entity),
+        record_id: clean(body?.record_id),
+        field: clean(body?.field),
+        equals: body?.value != null ? String(body.value) : null,
+        label: clean(body?.label),
+      };
+      if (!rule.entity || !rule.record_id || !rule.field) throw bad("entity, record_id and field are required to watch a record.", 400);
+      map[key] = (map[key] || []).filter((w: any) => !(w.entity === rule.entity && w.record_id === rule.record_id && w.field === rule.field));
+      map[key].push(rule);
+      if (row) await GlobalSettings.update(row.id, { setting_value: { watch_rules: JSON.stringify(map) } });
+      else await GlobalSettings.create({ setting_key: "watch_rules", setting_value: { watch_rules: JSON.stringify(map) } });
+      return Response.json({ success: true, action, rule, count: map[key].length });
+    }
+    if (action === "list_watches") {
+      const { map } = await loadWatchConfig();
+      const key = clean(user?.email) || actor;
+      return Response.json({ success: true, action, watches: map[key] || [] });
+    }
+    if (action === "clear_watch") {
+      const { row, map } = await loadWatchConfig();
+      const key = clean(user?.email) || actor;
+      const idx = Number(body?.index);
+      if (!Number.isInteger(idx)) throw bad("A watch index is required.", 400);
+      map[key] = (map[key] || []).filter((_: any, i: number) => i !== idx);
+      if (row) await GlobalSettings.update(row.id, { setting_value: { watch_rules: JSON.stringify(map) } });
+      return Response.json({ success: true, action, watches: map[key] });
+    }
+    // Evaluate the caller's watched records and surface any that match.
+    // Call on feed load — cheap because most users have 0 watches.
+    if (action === "check_watches") {
+      const { map } = await loadWatchConfig();
+      const key = clean(user?.email) || actor;
+      const hits: any[] = [];
+      for (const w of (map[key] || [])) {
+        try {
+          const rec = await (base44.asServiceRole.entities as any)[w.entity]?.filter({ id: w.record_id }).catch(() => []);
+          const row0 = Array.isArray(rec) ? rec[0] : rec;
+          const cur = row0 ? String(row0[w.field] ?? "") : null;
+          if (cur != null && (w.equals == null || cur === w.equals)) hits.push({ ...w, current: cur });
+        } catch { /* unreadable entity — skip */ }
+      }
+      return Response.json({ success: true, action, hits });
+    }
+
+    // Bulk re-markup flag (#145): when a pricing tier changes, flag all open
+    // estimates on that tier as pricing-stale so they recompute on next open.
+    // A true recompute is client-side (applyMarkups) — this propagates the
+    // "your tier changed" signal; saving the estimate clears it.
+    if (action === "bulk_remarkup") {
+      if (clean(user?.role) !== "admin") throw bad("Only administrators can re-markup estimates.", 403);
+      const tier = num(body?.tier_number);
+      if (!tier) throw bad("tier_number is required.", 400);
+      // Paged read of every estimate on the tier — the old 500-row cap
+      // silently skipped older estimates that still needed the flag.
+      const rows = await loadAllEntityRows({
+        entity: Estimate,
+        query: { pricing_tier: tier },
+        sort: "-updated_date",
+        label: "Bulk re-markup estimates",
+      }).catch(() => []);
+      const openStatuses = new Set(["draft", "calculated", "sent"]);
+      let flagged = 0;
+      let remarkupFailures = 0;
+      let remarkupWarning = "";
+      for (const e of list(rows)) {
+        if (!openStatuses.has(clean(e?.status))) continue;
+        await Estimate.update(clean(e?.id), { pricing_stale: true, pricing_stale_reason: `Pricing tier ${tier} changed — recompute before sending.` }).catch((err: any) => { remarkupFailures += 1; remarkupWarning = String(err?.message || err); });
+        flagged += 1;
+      }
+      return Response.json({
+        success: true, action, tier_number: tier, flagged,
+        remarkup_warning: remarkupFailures ? `${remarkupFailures} estimate update(s) failed${remarkupWarning ? `: ${remarkupWarning}` : ""}` : undefined,
+      });
+    }
+
+    // Export one estimate as re-importable JSON (#451): the estimate plus its
+    // builder tree (products + parts) and audit trail, for a portable bundle.
+    if (action === "export_estimate") {
+      const id = clean(body?.estimate_id);
+      if (!id) throw bad("estimate_id is required.", 400);
+      const estimate = await Estimate.get(id).catch(() => null);
+      if (!estimate?.id) throw bad("Estimate not found.", 404);
+      const [products, parts, revisions, acceptances, deliveries] = await Promise.all([
+        base44.asServiceRole.entities.BuilderProduct.filter({ estimate_id: id }, "-created_date", 500).catch(() => []),
+        base44.asServiceRole.entities.BuilderPart.filter({ estimate_id: id }, "-created_date", 500).catch(() => []),
+        base44.asServiceRole.entities.EstimateRevision.filter({ estimate_id: id }, "-created_date", 500).catch(() => []),
+        base44.asServiceRole.entities.EstimateAcceptance.filter({ estimate_id: id }, "-created_date", 500).catch(() => []),
+        base44.asServiceRole.entities.EstimateQuoteDelivery.filter({ estimate_id: id }, "-created_date", 500).catch(() => []),
+      ]);
+      return Response.json({ success: true, action, bundle: { exported_at: new Date().toISOString(), estimate, products: list(products), parts: list(parts), revisions: list(revisions), acceptances: list(acceptances), deliveries: list(deliveries) } });
+    }
+    // Re-import an exported estimate bundle as a NEW draft — new estimate id,
+    // linked to the same customer; products/parts re-pointed at the new id.
+    if (action === "import_estimate") {
+      if (clean(user?.role) !== "admin" && clean(user?.role) !== "staff") throw bad("Only staff can import an estimate.", 403);
+      const b = body?.bundle && typeof body.bundle === "object" ? body.bundle : null;
+      const src = b?.estimate;
+      if (!src?.project_name) throw bad("bundle.estimate is required.", 400);
+      const { id: _oid, created_date: _c, updated_date: _u, created_by_id: _cbi, created_by: _cb, ...fields } = src;
+      const created = await Estimate.create({ ...fields, status: "draft", estimate_number: "", pricing_stale: true, pricing_stale_reason: "Imported estimate — recompute + re-save before sending." });
+      let importedParts = 0;
+      let importFailures = 0;
+      let importWarning = "";
+      if (created?.id) {
+        for (const p of list(b?.products)) {
+          const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = p || {};
+          await base44.asServiceRole.entities.BuilderProduct.create({ ...pf, estimate_id: created.id }).catch((err: any) => { importFailures += 1; importWarning = String(err?.message || err); return null; });
+        }
+        for (const p of list(b?.parts)) {
+          const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = p || {};
+          const r = await base44.asServiceRole.entities.BuilderPart.create({ ...pf, estimate_id: created.id }).catch((err: any) => { importFailures += 1; importWarning = String(err?.message || err); return null; });
+          if (r?.id) importedParts += 1;
+        }
+      }
+      return Response.json({
+        success: true, action, estimate_id: created?.id, imported_parts: importedParts,
+        import_warning: importFailures ? `${importFailures} bundle row(s) failed to import${importWarning ? `: ${importWarning}` : ""}` : undefined,
+      });
+    }
+
+    // Copy BOM between estimates (#464): clone a source estimate's
+    // BuilderProducts + BuilderParts re-pointed at the target estimate.
+    if (action === "copy_bom") {
+      const fromId = clean(body?.from_estimate_id);
+      const toId = clean(body?.to_estimate_id);
+      if (!fromId || !toId || fromId === toId) throw bad("Different from/to estimate ids are required.", 400);
+      const [src, dst] = await Promise.all([Estimate.get(fromId).catch(() => null), Estimate.get(toId).catch(() => null)]);
+      if (!src?.id) throw bad("Source estimate not found.", 404);
+      if (!dst?.id) throw bad("Target estimate not found.", 404);
+      const [products, parts] = await Promise.all([
+        base44.asServiceRole.entities.BuilderProduct.filter({ estimate_id: fromId }, "-created_date", 500).catch(() => []),
+        base44.asServiceRole.entities.BuilderPart.filter({ estimate_id: fromId }, "-created_date", 500).catch(() => []),
+      ]);
+      let copiedProducts = 0, copiedParts = 0;
+      const copyWarnings: string[] = [];
+      for (const p of list(products)) {
+        const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = p || {};
+        const r = await base44.asServiceRole.entities.BuilderProduct.create({ ...pf, estimate_id: toId }).catch((err: any) => { copyWarnings.push(`product copy failed: ${String(err?.message || err)}`); return null; });
+        if (r?.id) copiedProducts += 1;
+      }
+      for (const p of list(parts)) {
+        const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = p || {};
+        const r = await base44.asServiceRole.entities.BuilderPart.create({ ...pf, estimate_id: toId }).catch((err: any) => { copyWarnings.push(`part copy failed: ${String(err?.message || err)}`); return null; });
+        if (r?.id) copiedParts += 1;
+      }
+      await Estimate.update(toId, { pricing_stale: true, pricing_stale_reason: "BOM copied — recompute + re-save before sending." }).catch((err: any) => { copyWarnings.push(`stale-flag update failed: ${String(err?.message || err)}`); return null; });
+      return Response.json({ success: true, action, copied_products: copiedProducts, copied_parts: copiedParts, copy_warning: copyWarnings.length ? copyWarnings.join("; ") : undefined });
+    }
+
+    // Copy sections between estimates (#467): clone each source line_items
+    // entry — its module project record + builder product — appended as new
+    // sections on the target estimate.
+    if (action === "copy_sections") {
+      const fromId = clean(body?.from_estimate_id);
+      const toId = clean(body?.to_estimate_id);
+      if (!fromId || !toId || fromId === toId) throw bad("Different from/to estimate ids are required.", 400);
+      const [src, dst] = await Promise.all([Estimate.get(fromId).catch(() => null), Estimate.get(toId).catch(() => null)]);
+      if (!src?.id) throw bad("Source estimate not found.", 404);
+      if (!dst?.id) throw bad("Target estimate not found.", 404);
+      const MODULE_ENTITIES: Record<string, string> = {
+        foundation: "FoundationProject", metal: "MetalProject",
+        channel_letters: "ChannelLetterInstallation", vinyl: "VinylProject",
+        cnc: "CNCProject", brick_stone: "BrickStoneProject",
+        maintenance: "MaintenanceProject", laser: "LaserProject",
+        sign_hardware: "SignHardwareProject", digital_print: "DigitalPrintProject",
+      };
+      const svcEntities = base44.asServiceRole.entities as any;
+      const newLines: any[] = [];
+      let copied = 0;
+      const copyWarnings: string[] = [];
+      for (const line of list(src?.line_items)) {
+        const moduleKey = clean(line?.module_key);
+        const entityName = MODULE_ENTITIES[moduleKey];
+        if (!entityName || !clean(line?.project_id)) continue;
+        let newProjectId = "";
+        try {
+          const proj = await svcEntities[entityName].get(clean(line.project_id)).catch(() => null);
+          if (proj?.id) {
+            const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = proj;
+            const newProj = await svcEntities[entityName].create({ ...pf }).catch((err: any) => { copyWarnings.push(`project clone failed: ${String(err?.message || err)}`); return null; });
+            if (newProj?.id) newProjectId = newProj.id;
+          }
+        } catch { /* project clone failed — still copy the line row */ }
+        let newProductId = "";
+        if (clean(line?.builder_product_id)) {
+          const bp = await base44.asServiceRole.entities.BuilderProduct.get(clean(line.builder_product_id)).catch(() => null);
+          if (bp?.id) {
+            const { id: _bi, created_date: _bc, updated_date: _bu, created_by_id: _bbi, created_by: _bb, ...bf } = bp;
+            const newBp = await base44.asServiceRole.entities.BuilderProduct.create({ ...bf, estimate_id: toId }).catch((err: any) => { copyWarnings.push(`builder product clone failed: ${String(err?.message || err)}`); return null; });
+            if (newBp?.id) newProductId = newBp.id;
+          }
+        }
+        newLines.push({
+          ...line,
+          line_id: `sec_${Date.now().toString(36)}_${newLines.length}`,
+          builder_product_id: newProductId || clean(line?.builder_product_id),
+          project_id: newProjectId || clean(line?.project_id),
+        });
+        copied += 1;
+      }
+      const merged = [...list(dst?.line_items), ...newLines];
+      await Estimate.update(toId, { line_items: merged, pricing_stale: true, pricing_stale_reason: "Sections copied — recompute + re-save before sending." }).catch((err: any) => { copyWarnings.push(`target estimate update failed: ${String(err?.message || err)}`); return null; });
+      return Response.json({ success: true, action, copied_sections: copied, copy_warning: copyWarnings.length ? copyWarnings.join("; ") : undefined });
+    }
+
+    // Wrap a standalone module project into an AIO estimate (#455): legacy
+    // BOM → new structure. {module_key, project_id} → a new AllInOneEstimate
+    // whose line_items point at that module project.
+    if (action === "estimate_from_module") {
+      const moduleKey = clean(body?.module_key);
+      const projectId = clean(body?.project_id);
+      const MODULE_ENTITIES: Record<string, string> = {
+        foundation: "FoundationProject", metal: "MetalProject",
+        channel_letters: "ChannelLetterInstallation", vinyl: "VinylProject",
+        cnc: "CNCProject", brick_stone: "BrickStoneProject",
+        maintenance: "MaintenanceProject", laser: "LaserProject",
+        sign_hardware: "SignHardwareProject", digital_print: "DigitalPrintProject",
+      };
+      const entityName = MODULE_ENTITIES[moduleKey];
+      if (!entityName || !projectId) throw bad("module_key + project_id are required.", 400);
+      const proj = await (base44.asServiceRole.entities as any)[entityName].get(projectId).catch(() => null);
+      if (!proj?.id) throw bad("Module project not found.", 404);
+      const created = await Estimate.create({
+        project_name: clean(proj?.project_name) || clean(proj?.name) || `${moduleKey} estimate`,
+        client_name: clean(proj?.client_name) || clean(proj?.customer_name) || "",
+        status: "draft",
+        line_items: [{
+          line_id: `sec_${Date.now().toString(36)}_0`,
+          module_key: moduleKey,
+          project_id: projectId,
+          project_name: clean(proj?.project_name) || clean(proj?.name) || "",
+          client_name: clean(proj?.client_name) || clean(proj?.customer_name) || "",
+          total_snapshot: num(proj?.estimated_total ?? proj?.total ?? 0),
+        }],
+        pricing_stale: true,
+        pricing_stale_reason: "Imported module estimate — recompute + re-save before sending.",
+      });
+      return Response.json({ success: true, action, estimate_id: created?.id });
+    }
+
+    if (action === "status_timeline") {
+      // Bounded per-opportunity activity feed — stage/status changes, links,
+      // and handoffs from the append-only OpportunityActivity log.
+      const opportunityId = clean(body?.opportunity_id);
+      if (!opportunityId) throw bad("opportunity_id is required.", 400);
+      const rows = await base44.asServiceRole.entities.OpportunityActivity
+        .filter({ opportunity_id: opportunityId }, "-created_date", 40)
+        .catch(() => []);
+      return Response.json({ success: true, timeline: rows || [] });
+    }
+
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
-      const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates] = await Promise.all([
-        PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(() => []),
-        Invoice.filter({}, "-updated_date", 200).catch(() => []),
-        PurchaseOrder.filter({}, "-updated_date", 200).catch(() => []),
-        ChangeOrder.filter({ status: "proposed" }, "-created_date", 100).catch(() => []),
-        Opportunity.filter({}, "-last_activity_at", 300).catch(() => []),
-        EstimatingRequest.filter({}, "-created_date", 200).catch(() => []),
-        Inventory.filter({}, "-updated_date", 300).catch(() => []),
-        WorkOrder.filter({}, "-updated_date", 300).catch(() => []),
-        PermitLineItem.filter({}, "-updated_date", 300).catch(() => []),
-        Estimate.filter({ status: "sent" }, "-updated_date", 300).catch(() => []),
+      const afCached = !!(attentionFeedRowsCache && attentionFeedRowsCache.expires > Date.now());
+      let afFailed = false;
+      const afFail = () => { afFailed = true; return []; };
+      // (#174/#295/#420) Recency-bounded first-page reads escalate to a paged
+      // full scan the moment a cap actually trips — sections, matched_totals
+      // and the truncated map then cover ALL rows, not the old bounded
+      // window. The 2-minute module cache still shields the shared
+      // entity_list budget between bell pollers.
+      const feedRead = async (entity: any, query: Record<string, any> | null, sort: string, cap: number, label: string) => {
+        const first = query && typeof query === "object"
+          ? await entity.filter(query, sort, cap, 0)
+          : await entity.list(sort, cap, 0);
+        if (!Array.isArray(first)) return null;
+        return first.length < cap ? first : loadAllEntityRows({ entity, query, sort, label });
+      };
+      const feedRows: any[] = afCached ? attentionFeedRowsCache!.rows : await Promise.all([
+        feedRead(PortalMessage, { author_side: "customer", read_by_staff: false }, "-created_date", 200, "Feed portal messages").catch(afFail),
+        feedRead(Invoice, null, "-updated_date", 200, "Feed invoices").catch(afFail),
+        feedRead(PurchaseOrder, null, "-updated_date", 200, "Feed purchase orders").catch(afFail),
+        feedRead(ChangeOrder, { status: "proposed" }, "-created_date", 100, "Feed change orders").catch(afFail),
+        feedRead(Opportunity, null, "-last_activity_at", 300, "Feed opportunities").catch(afFail),
+        feedRead(EstimatingRequest, null, "-created_date", 200, "Feed estimating requests").catch(afFail),
+        feedRead(Inventory, null, "-updated_date", 300, "Feed inventory").catch(afFail),
+        feedRead(WorkOrder, null, "-updated_date", 300, "Feed work orders").catch(afFail),
+        feedRead(PermitLineItem, null, "-updated_date", 300, "Feed permit lines").catch(afFail),
+        // (#401/#406) One Estimate scan feeds all three estimate-derived
+        // sections (sent, expiring/expired, sync-pending) — the fan-out used
+        // to issue a second Estimate query for sync-pending rows. The merged
+        // cap is the sum of the old caps so neither sub-window shrinks.
+        feedRead(Estimate, { $or: [{ status: "sent" }, { pipeline_sync_pending: true }] }, "-updated_date", 400, "Feed estimate rows").catch(afFail),
+        feedRead(BuilderPart, { needs_recalc: true }, "-updated_date", 150, "Feed needs-recalc parts").catch(afFail),
       ]);
-      const list = (v: any) => (Array.isArray(v) ? v : []);
+      if (!afCached && !afFailed) attentionFeedRowsCache = { rows: feedRows, expires: Date.now() + ATTENTION_FEED_CACHE_MS };
+      const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, estimateRows, needsRecalcRows] = feedRows;
+      const sentEstimates = list(estimateRows).filter((e: any) => clean(e?.status) === "sent");
+      const syncPendingRows = list(estimateRows).filter((e: any) => e?.pipeline_sync_pending === true);
+      // Response arrays stay display-capped at the historic per-section
+      // ceilings so the payload shape is unchanged; matched_totals and the
+      // truncated map now report the post-filter count across ALL rows.
+      const matchedTotals: Record<string, number> = {};
+      const feedTruncated: Record<string, boolean> = {};
+      const section = <T,>(key: string, matched: T[], displayCap: number): T[] => {
+        matchedTotals[key] = matched.length;
+        feedTruncated[key] = matched.length > displayCap;
+        return matched.slice(0, displayCap);
+      };
 
-      const unreadMessages = list(messages).map((m: any) => ({
+      const unreadMessages = section("unread_portal_messages", list(messages).map((m: any) => ({
         id: clean(m?.id),
         customer_id: clean(m?.customer_id),
         kind: clean(m?.kind) || "message",
@@ -244,9 +700,9 @@ Deno.serve(async (req) => {
         excerpt: clean(m?.body).slice(0, 120),
         author_name: clean(m?.author_name),
         created_date: clean(m?.created_date),
-      }));
+      })), 200);
 
-      const overdueInvoices = list(invoices)
+      const overdueInvoicesAll = list(invoices)
         .filter((i: any) => num(i?.balance_due) > 0 && ["sent", "partially_paid"].includes(clean(i?.status)) && clean(i?.due_date) && clean(i?.due_date) < today)
         .map((i: any) => ({
           id: clean(i?.id),
@@ -254,10 +710,14 @@ Deno.serve(async (req) => {
           customer_name: clean(i?.customer_display_name || i?.customer_name),
           due_date: clean(i?.due_date),
           balance_due: money(num(i?.balance_due)),
+          customer_id: clean(i?.customer_id),
+          salesperson_email: clean(i?.salesperson_email) || clean(i?.salesperson),
         }));
-      const overdueInvoiceTotal = money(overdueInvoices.reduce((s: number, i: any) => s + i.balance_due, 0));
+      const overdueInvoices = section("overdue_invoices", overdueInvoicesAll, 200);
+      // The exposure total runs over ALL matched rows, not the display slice.
+      const overdueInvoiceTotal = money(overdueInvoicesAll.reduce((s: number, i: any) => s + i.balance_due, 0));
 
-      const overduePos = list(pos)
+      const overduePos = section("overdue_pos", list(pos)
         .filter((p: any) => ["sent", "partially_received"].includes(clean(p?.status)) && clean(p?.expected_date) && clean(p?.expected_date) < today)
         .map((p: any) => ({
           id: clean(p?.id),
@@ -265,20 +725,20 @@ Deno.serve(async (req) => {
           vendor_name: clean(p?.vendor_name),
           expected_date: clean(p?.expected_date),
           status: clean(p?.status),
-        }));
+        })), 200);
 
-      const proposedCos = list(cos).map((c: any) => ({
+      const proposedCos = section("proposed_cos", list(cos).map((c: any) => ({
         id: clean(c?.id),
         change_order_number: clean(c?.change_order_number),
         customer_display_name: clean(c?.customer_display_name),
         amount_delta: money(num(c?.amount_delta)),
         proposed_by: clean(c?.proposed_by),
         created_date: clean(c?.created_date),
-      }));
+      })), 100);
 
-      // Sent estimates aging past 7 days without a response â€” surfaces quotes
+      // Sent estimates aging past 7 days without a response — surfaces quotes
       // that aren't opportunity-linked (which list_follow_ups already covers).
-      const staleSentEstimates = list(sentEstimates)
+      const staleSentEstimates = section("stale_sent_estimates", list(sentEstimates)
         .filter((e: any) => e?.deleted !== true && clean(e?.status) === "sent" && clean(e?.updated_date) && Math.floor((Date.parse(today) - Date.parse(clean(e?.updated_date))) / 86400000) >= 7)
         .map((e: any) => ({
           id: clean(e?.id),
@@ -288,9 +748,39 @@ Deno.serve(async (req) => {
           quote_total: num(e?.quote_total),
           days_sent: Math.floor((Date.parse(today) - Date.parse(clean(e?.updated_date))) / 86400000),
           updated_date: clean(e?.updated_date),
-        }));
+        })), 300);
 
-      const overdueFollowUps = list(opps)
+      // Forward-looking quote expiry (#346): quotes that hit their
+      // expiration date inside the next 7 days, still in 'sent' — notify the
+      // responsible salesperson before the quote lapses.
+      const sevenDaysOut = new Date(Date.parse(today) + 7 * 86400000).toISOString().slice(0, 10);
+      const quotesExpiringSoon = section("quotes_expiring_soon", list(sentEstimates)
+        .filter((e: any) => e?.deleted !== true && clean(e?.status) === "sent" && clean(e?.quote_expiration_date) && clean(e?.quote_expiration_date) >= today && clean(e?.quote_expiration_date) <= sevenDaysOut)
+        .map((e: any) => ({
+          id: clean(e?.id),
+          estimate_number: clean(e?.estimate_number),
+          project_name: clean(e?.project_name),
+          client_name: clean(e?.client_name),
+          quote_total: num(e?.quote_total),
+          quote_expiration_date: clean(e?.quote_expiration_date),
+          days_until_expiry: Math.floor((Date.parse(clean(e?.quote_expiration_date)) - Date.parse(today)) / 86400000),
+          salesperson_email: clean(e?.salesperson_email) || clean(e?.salesperson),
+        })), 300);
+      // Already past expiry but still 'sent' — the quote lapsed without a
+      // customer response or a staff expiry update.
+      const quotesExpired = section("quotes_expired", list(sentEstimates)
+        .filter((e: any) => e?.deleted !== true && clean(e?.status) === "sent" && (e?.quote_expired === true || (clean(e?.quote_expiration_date) && clean(e?.quote_expiration_date) < today)))
+        .map((e: any) => ({
+          id: clean(e?.id),
+          estimate_number: clean(e?.estimate_number),
+          project_name: clean(e?.project_name),
+          client_name: clean(e?.client_name),
+          quote_total: num(e?.quote_total),
+          quote_expiration_date: clean(e?.quote_expiration_date),
+          salesperson_email: clean(e?.salesperson_email) || clean(e?.salesperson),
+        })), 300);
+
+      const overdueFollowUps = section("overdue_follow_ups", list(opps)
         .filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage)) && clean(o?.next_action_due) && clean(o?.next_action_due) < today)
         .map((o: any) => ({
           id: clean(o?.id),
@@ -299,9 +789,9 @@ Deno.serve(async (req) => {
           next_action: clean(o?.next_action),
           next_action_due: clean(o?.next_action_due),
           salesperson: clean(o?.salesperson),
-        }));
+        })), 300);
 
-      const openRequests = list(requests)
+      const openRequestsAll = list(requests)
         .filter((r: any) => OPEN_REQUEST_STATUSES.has(clean(r?.status)))
         .map((r: any) => ({
           id: clean(r?.id),
@@ -312,19 +802,34 @@ Deno.serve(async (req) => {
           assigned_estimator: clean(r?.assigned_estimator) || clean(r?.estimator),
           created_date: clean(r?.created_date),
         }));
+      const openRequests = section("open_estimating_requests", openRequestsAll, 200);
 
-      const lowStock = list(stock)
+      // (#167) Assigned-to-me surfacing: the signed-in estimator's open
+      // requests as their own section so the bell/feed can show MY queue,
+      // not just the shop-wide list. assign_estimator already writes
+      // estimator_assigned activity + this field — no email is added.
+      const meEmail = clean(user?.email).toLowerCase();
+      const meName = clean(user?.name || user?.full_name).toLowerCase();
+      const assignedToMeRequests = section("estimate_requests", openRequestsAll.filter((r: any) => {
+        const assignee = clean(r.assigned_estimator).toLowerCase();
+        return Boolean(assignee) && (assignee === meEmail || (meName !== "" && assignee === meName));
+      }), 50);
+
+      const lowStock = section("low_stock", list(stock)
         .filter((it: any) => num(it?.reorder_point) > 0 && num(it?.quantity_on_hand) <= num(it?.reorder_point))
         .map((it: any) => ({
           id: clean(it?.id),
-          label: [clean(it?.material_type), clean(it?.product_type), clean(it?.size)].filter(Boolean).join(" Â· ") || "Item",
+          label: [clean(it?.material_type), clean(it?.product_type), clean(it?.size)].filter(Boolean).join(" · ") || "Item",
           quantity_on_hand: num(it?.quantity_on_hand),
           reorder_point: num(it?.reorder_point),
           supplier: clean(it?.vendor) || clean(it?.supplier),
-        }));
+        })), 300);
 
       return Response.json({
         success: true, action, today,
+        ...(afFailed ? { partial: true } : {}),
+        truncated: feedTruncated,
+        matched_totals: matchedTotals,
         unread_portal_messages: unreadMessages,
         overdue_invoices: overdueInvoices,
         overdue_invoice_total: overdueInvoiceTotal,
@@ -332,9 +837,31 @@ Deno.serve(async (req) => {
         proposed_cos: proposedCos,
         overdue_follow_ups: overdueFollowUps,
         stale_sent_estimates: staleSentEstimates,
+        quotes_expiring_soon: quotesExpiringSoon,
+        quotes_expired: quotesExpired,
         open_estimating_requests: openRequests,
+        estimate_requests: assignedToMeRequests,
+        // Escalation: still-unassigned after 2 days — flagged to managers.
+        unassigned_estimating_requests: section("unassigned_estimating_requests", openRequestsAll
+          .filter((r: any) => !r.assigned_estimator && Date.parse(r.created_date) < Date.now() - 2 * 86400000), 25),
         low_stock: lowStock,
-        overdue_jobs: list(workOrders)
+        needs_recalc_parts: section("needs_recalc_parts", list(needsRecalcRows)
+          .map((p: any) => ({
+            id: clean(p?.id),
+            part_name: clean(p?.part_name) || clean(p?.part_key),
+            builder_product_id: clean(p?.builder_product_id),
+            estimate_id: clean(p?.estimate_id),
+          })), 25),
+        sync_pending_estimates: section("sync_pending_estimates", list(syncPendingRows)
+          .filter((e: any) => Date.parse(clean(e?.updated_date)) < Date.now() - 86400000)
+          .map((e: any) => ({
+            id: clean(e?.id),
+            project_name: clean(e?.project_name),
+            estimate_number: clean(e?.estimate_number),
+            status: clean(e?.status),
+            updated_date: clean(e?.updated_date),
+          })), 25),
+        overdue_jobs: section("overdue_jobs", list(workOrders)
           .filter((w: any) => clean(w?.current_stage) !== "completed" && clean(w?.due_date) && clean(w?.due_date) < today)
           .map((w: any) => ({
             id: clean(w?.id),
@@ -342,13 +869,12 @@ Deno.serve(async (req) => {
             client_name: clean(w?.client_name),
             current_stage: clean(w?.current_stage),
             due_date: clean(w?.due_date),
-          })),
-        expiring_permits: (() => {
+          })), 300),
+        expiring_permits: section("expiring_permits", (() => {
           const soon = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
           return list(permits)
             .filter((p: any) => clean(p?.status) !== "completed" && clean(p?.expiration_date) && clean(p?.expiration_date) <= soon)
             .sort((a: any, b: any) => clean(a?.expiration_date).localeCompare(clean(b?.expiration_date)))
-            .slice(0, 50)
             .map((p: any) => ({
               id: clean(p?.id),
               row_name: clean(p?.row_name),
@@ -358,8 +884,8 @@ Deno.serve(async (req) => {
               expiration_date: clean(p?.expiration_date),
               expired: clean(p?.expiration_date) < today,
             }));
-        })(),
-        permit_fees_due: list(permits)
+        })(), 50),
+        permit_fees_due: section("permit_fees_due", list(permits)
           .filter((p: any) => clean(p?.status) !== "completed" && clean(p?.jurisdiction_fee_status) === "due")
           .map((p: any) => ({
             id: clean(p?.id),
@@ -368,16 +894,28 @@ Deno.serve(async (req) => {
             work_order_id: clean(p?.work_order_id),
             work_order_title: clean(p?.work_order_title),
             fee_amount: money(num(p?.jurisdiction_fee_amount)),
-          })),
+          })), 300),
       });
     }
 
     if (action === "search_customers") {
-      const query = clean(body?.query).toLowerCase();
-      const rows = await Customer.filter({});
+      const query = clean(body?.query);
+      const needle = query.toLowerCase();
+      const fields = ["company_name", "contact_first_name", "contact_last_name", "contact_email", "email", "company_phone"];
+      const matchesQuery = (row: any) => !needle || fields.some((f) => clean(row?.[f]).toLowerCase().includes(needle));
+      // Server-side $regex pushdown (fleetSearch pattern). If the entity
+      // rejects $or/$regex, fall back to a full paged scan + client match —
+      // the old filter({}) silently searched only the first 50 customers.
+      let rows: any = needle
+        ? await Customer.filter(regexOr(fields, query), "-updated_date", 500).catch(() => null)
+        : null;
+      const regexPushdown = Array.isArray(rows);
+      if (!regexPushdown) {
+        rows = await loadAllEntityRows({ entity: Customer, sort: "-updated_date", label: "Customer search" }).catch(() => null);
+      }
       if (!Array.isArray(rows)) throw bad("Customer lookup failed.", 500);
-      const matches = rows
-        .filter((row: any) => !query || clean(row?.company_name).toLowerCase().includes(query))
+      const matched = rows.filter(matchesQuery);
+      const matches = matched
         .slice(0, 25)
         .map((row: any) => ({
           id: clean(row?.id),
@@ -387,17 +925,24 @@ Deno.serve(async (req) => {
           contact_phone: clean(row?.company_phone),
           customer_status: clean(row?.customer_status),
         }));
-      return Response.json({ success: true, action, customers: matches });
+      return Response.json({
+        success: true, action, customers: matches,
+        total_matched: matched.length,
+        truncated: matched.length > matches.length || (regexPushdown && rows.length >= 500),
+      });
     }
 
     if (action === "list_opportunities") {
       const includeClosed = body?.include_closed === true;
       const limit = Math.max(1, Math.min(200, Number(body?.limit) || 200));
-      const rows = await Opportunity.filter({}, "-last_activity_at", 500);
+      const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
+      // Full paged read — funnel stats and stage counts must cover every
+      // opportunity, not just the first 500 by recency.
+      const rows = await loadAllEntityRows({ entity: Opportunity, sort: "-last_activity_at", label: "Opportunity list" }).catch(() => null);
       if (!Array.isArray(rows)) throw bad("Opportunity lookup failed.", 500);
-      const visible = rows
-        .filter((row: any) => includeClosed || !CLOSED_STAGES.has(clean(row?.stage)))
-        .slice(0, limit);
+      const matched = rows
+        .filter((row: any) => includeClosed || !CLOSED_STAGES.has(clean(row?.stage)));
+      const visible = matched.slice(0, limit);
       const stageCounts: any = {};
       let openPipelineValue = 0;
       let wonValue = 0;
@@ -442,11 +987,11 @@ Deno.serve(async (req) => {
         .map((r: any) => ({ ...r, lost_value: Math.round(r.lost_value * 100) / 100 }))
         .sort((a: any, b: any) => b.count - a.count || b.lost_value - a.lost_value)
         .slice(0, 12);
-      // Estimate-status funnel â€” the same shape as the opportunity funnel but
+      // Estimate-status funnel — the same shape as the opportunity funnel but
       // keyed on the estimate lifecycle (draft -> calculated -> sent -> approved)
       // so the dashboard can show quote-side conversion separately from pipeline.
-      const estimateRows = await Estimate.filter({}, "-created_date", 500).catch(() => []);
-      const requestRows = await EstimatingRequest.filter({}, "-created_date", 500).catch(() => []);
+      const estimateRows = await loadAllEntityRows({ entity: Estimate, sort: "-created_date", label: "Estimate funnel rows" }).catch(() => []);
+      const requestRows = await loadAllEntityRows({ entity: EstimatingRequest, sort: "-created_date", label: "Estimating request funnel rows" }).catch(() => []);
       const thirtyDaysAgo = Date.now() - 30 * 86400000;
       const staleRequests = (Array.isArray(requestRows) ? requestRows : []).filter((r: any) => {
         const ts = Date.parse(clean(r?.created_date));
@@ -476,6 +1021,18 @@ Deno.serve(async (req) => {
       const estimateBySalesperson: any = {};
       const estimateLostReasonMap: any = {};
       const markupUsage: any = { discount: 0, none: 0, "0-10%": 0, "10-25%": 0, "25-50%": 0, "50%+": 0 };
+      // (#281/#285) Module rollup: count = lines per module; estimates/
+      // decided/won count an estimate once per module it touches (not
+      // additive); value/won_value split each quote_total across modules by
+      // line-value share so they ARE additive.
+      const moduleBreakdown: Record<string, { module: string; count: number; estimates: number; decided: number; won: number; value: number; won_value: number }> = {};
+      // (#277) salesperson x created-month avg-quote buckets.
+      const monthlyBySalesperson: any = {};
+      // (#279) ISO-week (Mon-start, same bucketing as the dashboard chart)
+      // created / sent / approved throughput events.
+      const weeklyMap: any = {};
+      // (#280) per-customer decided / win-rate rollup.
+      const byCustomer: any = {};
       let partCostRatioSum = 0;
       let partCostRatioCount = 0;
       for (const row of Array.isArray(estimateRows) ? estimateRows : []) {
@@ -499,11 +1056,35 @@ Deno.serve(async (req) => {
           if (days != null && days <= 14) agingRows.push({ id: clean(row?.id), estimate_number: clean(row?.estimate_number), project_name: clean(row?.project_name), client_name: clean(row?.client_name), quote_total: total, quote_valid_until: until, days_to_expiry: days, expired: days < 0 });
         }
         let partCost = 0;
+        const estModules: Record<string, { lines: number; lv: number }> = {};
+        let lineValueSum = 0;
         for (const li of Array.isArray(row?.line_items) ? row.line_items : []) {
+          const mk = clean(li?.module_key) || "unassigned";
+          const lv = num(li?.total_snapshot) * (num(li?.customer_quantity) || 1);
+          lineValueSum += lv;
+          const em = estModules[mk] || (estModules[mk] = { lines: 0, lv: 0 });
+          em.lines += 1;
+          em.lv += lv;
           const adj = num(li?.adjustment_percent);
           const bucket = adj < 0 ? "discount" : adj === 0 ? "none" : adj <= 10 ? "0-10%" : adj <= 25 ? "10-25%" : adj <= 50 ? "25-50%" : "50%+";
           markupUsage[bucket] += 1;
-          partCost += num(li?.total_snapshot) * (num(li?.customer_quantity) || 1);
+          partCost += lv;
+        }
+        // Module attribution: each estimate counts once per module it
+        // touches; its quote_total splits across those modules by line-value
+        // share (equal shares when no line carries a price, "unassigned"
+        // when the estimate has no lines at all).
+        if (!Object.keys(estModules).length) estModules.unassigned = { lines: 0, lv: 0 };
+        const moduleKeys = Object.keys(estModules);
+        for (const mk of moduleKeys) {
+          const em = estModules[mk];
+          const share = lineValueSum > 0 ? em.lv / lineValueSum : 1 / moduleKeys.length;
+          const mSlot = moduleBreakdown[mk] || (moduleBreakdown[mk] = { module: mk, count: 0, estimates: 0, decided: 0, won: 0, value: 0, won_value: 0 });
+          mSlot.count += em.lines;
+          mSlot.estimates += 1;
+          if (status === "approved") { mSlot.decided += 1; mSlot.won += 1; mSlot.won_value += total * share; }
+          if (status === "archived" || status === "cancelled") mSlot.decided += 1;
+          mSlot.value += total * share;
         }
         if (total > 0 && partCost > 0) { partCostRatioSum += partCost / total; partCostRatioCount += 1; }
         const rep = clean(row?.salesperson) || "Unassigned";
@@ -512,6 +1093,42 @@ Deno.serve(async (req) => {
         slot.quote_value += total;
         if (status === "approved") { slot.won_count += 1; slot.decided_count += 1; }
         if (status === "archived" || status === "cancelled") slot.decided_count += 1;
+        // (#277) Per-month avg quote value per salesperson — created cohort.
+        const createdD = new Date(clean(row?.created_date));
+        const estMonth = Number.isFinite(createdD.getTime()) ? createdD.toISOString().slice(0, 7) : "";
+        if (estMonth) {
+          const mkey = `${rep}|${estMonth}`;
+          const ms = monthlyBySalesperson[mkey] || (monthlyBySalesperson[mkey] = { salesperson: rep, month: estMonth, created: 0, quote_value: 0, decided_count: 0, won_count: 0 });
+          ms.created += 1;
+          ms.quote_value += total;
+          if (status === "approved") { ms.decided_count += 1; ms.won_count += 1; }
+          if (status === "archived" || status === "cancelled") ms.decided_count += 1;
+        }
+        // (#279) Weekly throughput — each event buckets on its own stamp:
+        // created_date, quote_issue_date (sent), accepted_at (approved).
+        const weeklyEvents: Array<[string, string]> = [
+          [clean(row?.created_date), "created"],
+          [clean(row?.quote_issue_date), "sent"],
+          [clean(row?.accepted_at), "approved"],
+        ];
+        for (const [when, field] of weeklyEvents) {
+          if (!when) continue;
+          const d = new Date(when);
+          if (!Number.isFinite(d.getTime())) continue;
+          const monday = new Date(d);
+          monday.setDate(d.getDate() - d.getDay() + 1);
+          const wk = monday.toISOString().slice(0, 10);
+          const ws = weeklyMap[wk] || (weeklyMap[wk] = { created: 0, sent: 0, approved: 0 });
+          (ws as any)[field] += 1;
+        }
+        // (#280) Per-customer rollup — decided estimates -> won/lost/win rate.
+        const custKey = clean(row?.customer_id) || clean(row?.client_name).toLowerCase() || "unknown";
+        const cs = byCustomer[custKey] || (byCustomer[custKey] = { customer: clean(row?.client_name) || "Unknown Customer", customer_id: clean(row?.customer_id), estimates: 0, quote_value: 0, decided_count: 0, won_count: 0, lost_count: 0, won_value: 0 });
+        cs.estimates += 1;
+        cs.quote_value += total;
+        if (status === "approved") { cs.decided_count += 1; cs.won_count += 1; cs.won_value += total; }
+        if (status === "archived" || status === "cancelled") { cs.decided_count += 1; cs.lost_count += 1; }
+        if (clean(row?.client_name)) cs.customer = clean(row.client_name);
         const internal = num(row?.total_cost);
         if (total > 0 && internal > 0) {
           estimateMarginSum += (total - internal) / total;
@@ -519,6 +1136,72 @@ Deno.serve(async (req) => {
           estimateMarginCount += 1;
         }
       }
+      // (#298) Per-estimate portal engagement: share-link opens (estimate and
+      // staff_view links keyed by record_id = estimate id) plus the estimate
+      // portal message thread. PortalMessage/CustomerPortalLink are
+      // backend-only entities, so staff surfaces get this compact aggregate
+      // instead of row access. Reorder requests are work-order-scoped
+      // EstimatingRequests, not estimate-thread events — honestly excluded.
+      const PortalLink = (base44.asServiceRole.entities as any).CustomerPortalLink;
+      const [portalMsgRows, portalLinkRows] = await Promise.all([
+        loadAllEntityRows({ entity: PortalMessage, query: { related_kind: "estimate" }, sort: "-created_date", label: "Estimate portal messages" }).catch(() => []),
+        PortalLink ? loadAllEntityRows({ entity: PortalLink, sort: "-created_date", label: "Estimate portal links" }).catch(() => []) : Promise.resolve([]),
+      ]);
+      const estById = new Map<string, any>();
+      for (const e of estimateRows) { if (clean(e?.id) && e?.deleted !== true) estById.set(clean(e.id), e); }
+      const engageMap = new Map<string, any>();
+      const engageSlot = (estId: string) => {
+        const s = engageMap.get(estId) || { opens: 0, last_opened_at: "", customer_messages: 0, staff_replies: 0, approvals: 0, revision_requests: 0, first_customer_at: "", staff_times: [] as string[], last_msg_at: "" };
+        engageMap.set(estId, s);
+        return s;
+      };
+      for (const l of list(portalLinkRows)) {
+        if (!["estimate", "staff_view"].includes(clean(l?.kind))) continue;
+        const estId = clean(l?.record_id);
+        if (!estId || !estById.has(estId)) continue;
+        const s = engageSlot(estId);
+        s.opens += num(l?.open_count);
+        if (clean(l?.last_opened_at) > s.last_opened_at) s.last_opened_at = clean(l.last_opened_at);
+      }
+      for (const m of list(portalMsgRows)) {
+        const estId = clean(m?.related_id);
+        if (!estId || !estById.has(estId)) continue;
+        const s = engageSlot(estId);
+        const side = clean(m?.author_side);
+        const kind = clean(m?.kind) || "message";
+        const at = clean(m?.created_date);
+        if (kind === "estimate_approved") s.approvals += 1;
+        else if (kind === "estimate_revision_requested") s.revision_requests += 1;
+        else if (side === "customer") s.customer_messages += 1;
+        else if (side === "staff") s.staff_replies += 1;
+        if (side === "customer" && at && (!s.first_customer_at || at < s.first_customer_at)) s.first_customer_at = at;
+        if (side === "staff" && at) s.staff_times.push(at);
+        if (at > s.last_msg_at) s.last_msg_at = at;
+      }
+      const portalEngagementAll = [...engageMap.entries()].map(([estId, s]) => {
+        const est = estById.get(estId);
+        const firstReply = s.first_customer_at
+          ? s.staff_times.filter((t: string) => t > s.first_customer_at).sort()[0]
+          : "";
+        const respHrs = s.first_customer_at && firstReply
+          ? Math.round(((Date.parse(firstReply) - Date.parse(s.first_customer_at)) / 3600000) * 10) / 10
+          : null;
+        return {
+          estimate_id: estId,
+          estimate_number: clean(est?.estimate_number),
+          client_name: clean(est?.client_name),
+          status: clean(est?.status) || "draft",
+          opens: s.opens,
+          last_opened_at: s.last_opened_at || null,
+          customer_messages: s.customer_messages,
+          staff_replies: s.staff_replies,
+          approvals: s.approvals,
+          revision_requests: s.revision_requests,
+          first_response_hours: respHrs,
+          last_activity_at: [s.last_msg_at, s.last_opened_at].filter(Boolean).sort().pop() || null,
+        };
+      }).filter((e: any) => e.opens > 0 || e.customer_messages > 0 || e.staff_replies > 0 || e.approvals > 0 || e.revision_requests > 0)
+        .sort((a: any, b: any) => clean(b.last_activity_at).localeCompare(clean(a.last_activity_at)));
       const estimateFunnel = {
         status_counts: estimateStatusCounts,
         total: estimateStatusCounts.draft + estimateStatusCounts.calculated + estimateStatusCounts.sent + estimateStatusCounts.approved + estimateStatusCounts.archived + estimateStatusCounts.cancelled,
@@ -527,6 +1210,27 @@ Deno.serve(async (req) => {
         win_rate: estimateDecidedCount > 0 ? Math.round((estimateWonCount / estimateDecidedCount) * 1000) / 10 : null,
         won_value: Math.round(estimateWonValue * 100) / 100,
         decided_value: Math.round(estimateDecidedValue * 100) / 100,
+        by_module: Object.values(moduleBreakdown).map((m: any) => ({ ...m, value: Math.round(m.value * 100) / 100, won_value: Math.round(m.won_value * 100) / 100, win_rate: m.decided > 0 ? Math.round((m.won / m.decided) * 1000) / 10 : null })).sort((a: any, b: any) => b.value - a.value).slice(0, 12),
+        by_salesperson_monthly: Object.values(monthlyBySalesperson).map((s: any) => ({ ...s, quote_value: Math.round(s.quote_value * 100) / 100, avg_quote_value: s.created > 0 ? Math.round((s.quote_value / s.created) * 100) / 100 : 0 })).sort((a: any, b: any) => String(b.month).localeCompare(String(a.month)) || String(a.salesperson).localeCompare(String(b.salesperson))).slice(0, 120),
+        // Trailing 26 ISO weeks (Mon-start — the dashboard's convention),
+        // zero-filled so quiet weeks still render in a series.
+        weekly_throughput: (() => {
+          const weeks: any[] = [];
+          const todayD = new Date(Date.parse(today));
+          const monday = new Date(todayD);
+          monday.setDate(todayD.getDate() - todayD.getDay() + 1);
+          for (let i = 25; i >= 0; i -= 1) {
+            const d = new Date(monday.getTime() - i * 7 * 86400000);
+            const key = d.toISOString().slice(0, 10);
+            const slot = weeklyMap[key] || { created: 0, sent: 0, approved: 0 };
+            weeks.push({ week: key, ...slot });
+          }
+          return weeks;
+        })(),
+        by_customer: Object.values(byCustomer).map((c: any) => ({ ...c, quote_value: Math.round(c.quote_value * 100) / 100, won_value: Math.round(c.won_value * 100) / 100, win_rate: c.decided_count > 0 ? Math.round((c.won_count / c.decided_count) * 1000) / 10 : null })).sort((a: any, b: any) => b.decided_count - a.decided_count || b.quote_value - a.quote_value || String(a.customer).localeCompare(String(b.customer))).slice(0, 25),
+        portal_engagement: portalEngagementAll.slice(0, 200),
+        portal_engagement_matched: portalEngagementAll.length,
+        portal_engagement_truncated: portalEngagementAll.length > 200,
         avg_margin_pct: estimateMarginCount > 0 ? Math.round((estimateMarginSum / estimateMarginCount) * 1000) / 10 : null,
         total_margin: Math.round(estimateMarginTotal * 100) / 100,
         aging_buckets: agingBuckets,
@@ -549,53 +1253,138 @@ Deno.serve(async (req) => {
         by_salesperson: salespeople,
         lost_reasons: lostReasons,
       };
-      return Response.json({ success: true, action, opportunities: visible, total: visible.length, funnel });
+      return Response.json({
+        success: true, action, opportunities: visible, total: visible.length,
+        matched_total: matched.length, total_loaded: rows.length,
+        truncated: matched.length > visible.length,
+        funnel,
+      });
     }
 
     if (action === "global_search") {
-      const query = clean(body?.query).toLowerCase();
+      const rawQuery = clean(body?.query).slice(0, 100);
+      const query = rawQuery.toLowerCase();
       const empty = { opportunities: [], estimates: [], invoices: [], purchase_orders: [], change_orders: [], customers: [], work_orders: [], orders: [] };
       if (query.length < 2) return Response.json({ success: true, action, results: empty });
+      // Push the match down to the entity store ($or/$regex over the same
+      // fields the client matcher uses). If an entity rejects regex filters,
+      // fall back to a full paged scan + the client-side has() check — never
+      // back to a bare default-limited read.
+      const SEARCH_LIMIT = 500;
+      const searchRead = async (entity: any, fields: string[], sort: string, label: string, hardFail: boolean) => {
+        try {
+          const hit = await entity.filter(regexOr(fields, rawQuery), sort, SEARCH_LIMIT);
+          if (Array.isArray(hit)) return hit;
+        } catch { /* regex/$or unsupported on this entity — scan instead */ }
+        const scanned = await loadAllEntityRows({ entity, sort, label: `${label} search` }).catch(() => null);
+        if (Array.isArray(scanned)) return scanned;
+        const legacy = await entity.filter({}, sort, SEARCH_LIMIT).catch(() => null);
+        if (!Array.isArray(legacy) && hardFail) throw bad(`${label} search failed.`, 500);
+        return legacy || [];
+      };
       const [opps, estimates, invoices, pos, cos, customers, wos, orders] = await Promise.all([
-        Opportunity.filter({}, "-last_activity_at", 500),
-        Estimate.filter({}, "-created_date", 500),
-        Invoice.filter({}),
-        PurchaseOrder.filter({}),
-        ChangeOrder.filter({}),
-        Customer.filter({}, "-updated_date", 500).catch(() => []),
-        WorkOrder.filter({}, "-updated_date", 500).catch(() => []),
-        Order.filter({}, "-updated_date", 500).catch(() => []),
+        searchRead(Opportunity, ["title", "customer_display_name", "salesperson"], "-last_activity_at", "Opportunity", true),
+        searchRead(Estimate, ["project_name", "client_name", "estimate_number", "notes"], "-created_date", "Estimate", true),
+        searchRead(Invoice, ["invoice_number", "customer_display_name"], "-updated_date", "Invoice", true),
+        searchRead(PurchaseOrder, ["po_number", "vendor_name"], "-updated_date", "PurchaseOrder", true),
+        searchRead(ChangeOrder, ["change_order_number", "title", "customer_display_name"], "-created_date", "ChangeOrder", true),
+        searchRead(Customer, ["company_name", "contact_first_name", "contact_last_name", "contact_email", "email"], "-updated_date", "Customer", false),
+        searchRead(WorkOrder, ["title", "client_name", "current_task_description", "sales_import_source_id"], "-updated_date", "WorkOrder", false),
+        searchRead(Order, ["description", "vendor", "requestor_name", "request_type"], "-updated_date", "Order", false),
       ]);
-      for (const [label, rows] of [["Opportunity", opps], ["Estimate", estimates], ["Invoice", invoices], ["PurchaseOrder", pos], ["ChangeOrder", cos]] as const) {
-        if (!Array.isArray(rows)) throw bad(`${label} search failed.`, 500);
-      }
+      // Legacy-number resolution: migrated rows link back through
+      // LegacyMigrationMap (source_id = the old CoreBridge number). A hit
+      // resolves "the old CB invoice/order # typed into search" to the
+      // migrated record even though its own fields never stored that number.
+      const LEGACY_GROUP: Record<string, string> = {
+        AllInOneEstimate: "estimates", WorkOrder: "work_orders", Invoice: "invoices",
+        PurchaseOrder: "purchase_orders", ChangeOrder: "change_orders",
+        Customer: "customers", Opportunity: "opportunities", Order: "orders",
+      };
+      const legacyRows: Record<string, Map<string, { row: any; legacy: string }>> = {};
+      try {
+        const MapEntity = (base44.asServiceRole.entities as any).LegacyMigrationMap;
+        const entityFor: Record<string, any> = {
+          AllInOneEstimate: Estimate, WorkOrder, Invoice, PurchaseOrder, ChangeOrder, Customer, Opportunity, Order,
+        };
+        const mapRows = await MapEntity.filter(regexOr(["source_id"], rawQuery), "-updated_date", 500).catch(() => []);
+        const targets = new Map<string, { entity: string; sid: string }>();
+        for (const m of mapRows || []) {
+          const tEntity = clean(m?.target_entity);
+          const tId = clean(m?.target_id);
+          if (!tId || tId === "__error__" || !entityFor[tEntity] || !LEGACY_GROUP[tEntity]) continue;
+          if (!targets.has(tId)) targets.set(tId, { entity: tEntity, sid: clean(m?.source_id) });
+        }
+        await Promise.all([...targets.entries()].slice(0, 25).map(async ([tId, meta]) => {
+          const row = await entityFor[meta.entity].get(tId).catch(() => null);
+          if (row?.id) (legacyRows[LEGACY_GROUP[meta.entity]] ||= new Map()).set(tId, { row, legacy: meta.sid });
+        }));
+      } catch { /* legacy resolution is best-effort — never fail the search */ }
+      const mergeLegacy = (group: string, list: any[]) => {
+        const out = [...list];
+        const seen = new Set(out.map((r) => clean(r?.id)));
+        for (const [tId, meta] of legacyRows[group] || []) {
+          if (!seen.has(tId)) out.push({ ...meta.row, legacy_source_id: meta.legacy });
+        }
+        return out;
+      };
+      // (#301) Deep estimate search: line_items is a nested array that the
+      // regex filter can't reach — merge a bounded recent-estimates scan so a
+      // client-side match over line-item VALUES covers it. Honest bound: deep
+      // matching spans the SEARCH_LIMIT most-recent estimates; older rows still
+      // match by name/number/notes via the regex path.
+      let estimatesScanned = estimates;
+      try {
+        const scanRows = await Estimate.filter({}, "-created_date", SEARCH_LIMIT).catch(() => []);
+        if (Array.isArray(scanRows) && scanRows.length) {
+          const seenIds = new Set((estimates || []).map((r: any) => clean(r?.id)));
+          estimatesScanned = [...(estimates || []), ...scanRows.filter((r: any) => !seenIds.has(clean(r?.id)))];
+        }
+      } catch { /* deep scan is best-effort — never fail the search */ }
+      const lineItemText = (r: any) => (Array.isArray(r?.line_items) ? r.line_items : [])
+        .map((li: any) => Object.values(li || {}).map((v) => clean(v)).join(" ")).join(" ").toLowerCase();
       const has = (row: any, fields: string[]) => fields.some((f) => clean(row?.[f]).toLowerCase().includes(query));
+      const hasEstimate = (row: any) =>
+        has(row, ["project_name", "client_name", "estimate_number", "notes"]) ||
+        lineItemText(row).includes(query);
       return Response.json({
         success: true,
         action,
         results: {
-          opportunities: opps.filter((r: any) => has(r, ["title", "customer_display_name", "salesperson"])).slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), customer_display_name: clean(r?.customer_display_name), stage: clean(r?.stage) })),
-          estimates: estimates.filter((r: any) => !r?.deleted && has(r, ["project_name", "client_name", "estimate_number"])).slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), project_name: clean(r?.project_name), client_name: clean(r?.client_name), estimate_number: clean(r?.estimate_number), status: clean(r?.status) })),
-          invoices: invoices.filter((r: any) => has(r, ["invoice_number", "customer_display_name"])).slice(0, 10)
+          opportunities: mergeLegacy("opportunities", opps.filter((r: any) => has(r, ["title", "customer_display_name", "salesperson"]))).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), customer_display_name: clean(r?.customer_display_name), stage: clean(r?.stage), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
+          estimates: mergeLegacy("estimates", estimatesScanned.filter((r: any) => !r?.deleted && hasEstimate(r))).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), project_name: clean(r?.project_name), client_name: clean(r?.client_name), estimate_number: clean(r?.estimate_number), status: clean(r?.status), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
+          invoices: mergeLegacy("invoices", invoices.filter((r: any) => has(r, ["invoice_number", "customer_display_name"]))).slice(0, 10)
             .map((r: any) => ({ id: clean(r?.id), invoice_number: clean(r?.invoice_number), customer_display_name: clean(r?.customer_display_name), status: clean(r?.status), total: num(r?.total) })),
-          purchase_orders: pos.filter((r: any) => has(r, ["po_number", "vendor_name"])).slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), po_number: clean(r?.po_number), vendor_name: clean(r?.vendor_name), status: clean(r?.status), total: num(r?.total) })),
-          change_orders: cos.filter((r: any) => has(r, ["change_order_number", "title", "customer_display_name"])).slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), change_order_number: clean(r?.change_order_number), title: clean(r?.title), customer_display_name: clean(r?.customer_display_name), status: clean(r?.status) })),
-          customers: (Array.isArray(customers) ? customers : [])
-            .filter((r: any) => has(r, ["company_name", "contact_first_name", "contact_last_name", "contact_email", "email"]))
+          purchase_orders: mergeLegacy("purchase_orders", pos.filter((r: any) => has(r, ["po_number", "vendor_name"]))).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), po_number: clean(r?.po_number), vendor_name: clean(r?.vendor_name), status: clean(r?.status), total: num(r?.total), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
+          change_orders: mergeLegacy("change_orders", cos.filter((r: any) => has(r, ["change_order_number", "title", "customer_display_name"]))).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), change_order_number: clean(r?.change_order_number), title: clean(r?.title), customer_display_name: clean(r?.customer_display_name), status: clean(r?.status), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
+          customers: mergeLegacy("customers", (Array.isArray(customers) ? customers : [])
+            .filter((r: any) => has(r, ["company_name", "contact_first_name", "contact_last_name", "contact_email", "email"])))
             .slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), company_name: clean(r?.company_name), contact_name: [clean(r?.contact_first_name), clean(r?.contact_last_name)].filter(Boolean).join(" "), customer_status: clean(r?.customer_status) })),
-          work_orders: (Array.isArray(wos) ? wos : [])
-            .filter((r: any) => !r?.deleted && has(r, ["title", "client_name", "current_task_description"]))
+            .map((r: any) => ({ id: clean(r?.id), company_name: clean(r?.company_name), contact_name: [clean(r?.contact_first_name), clean(r?.contact_last_name)].filter(Boolean).join(" "), customer_status: clean(r?.customer_status), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
+          work_orders: mergeLegacy("work_orders", (Array.isArray(wos) ? wos : [])
+            .filter((r: any) => !r?.deleted && has(r, ["title", "client_name", "current_task_description", "sales_import_source_id"])))
             .slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), client_name: clean(r?.client_name), current_stage: clean(r?.current_stage), due_date: clean(r?.due_date) })),
-          orders: (Array.isArray(orders) ? orders : [])
-            .filter((r: any) => !r?.deleted && has(r, ["description", "vendor", "requestor_name", "request_type"]))
+            .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), client_name: clean(r?.client_name), current_stage: clean(r?.current_stage), due_date: clean(r?.due_date), legacy_source_id: clean(r?.legacy_source_id) || clean(r?.sales_import_source_id).replace(/^corebridge:/, "") || undefined })),
+          orders: mergeLegacy("orders", (Array.isArray(orders) ? orders : [])
+            .filter((r: any) => !r?.deleted && has(r, ["description", "vendor", "requestor_name", "request_type"])))
             .slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), customer_name: clean(r?.customer_name || r?.vendor_name), description: clean(r?.description), vendor: clean(r?.vendor || r?.vendor_name), status: clean(r?.status) })),
+            .map((r: any) => ({ id: clean(r?.id), customer_name: clean(r?.customer_name || r?.vendor_name), description: clean(r?.description), vendor: clean(r?.vendor || r?.vendor_name), status: clean(r?.status), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
+        },
+        // A group hitting the scan cap means more matches may exist than the
+        // 10 surfaced — honest signal for the UI's "see all" affordance.
+        truncated: {
+          opportunities: opps.length >= SEARCH_LIMIT,
+          estimates: estimates.length >= SEARCH_LIMIT,
+          invoices: invoices.length >= SEARCH_LIMIT,
+          purchase_orders: pos.length >= SEARCH_LIMIT,
+          change_orders: cos.length >= SEARCH_LIMIT,
+          customers: Array.isArray(customers) && customers.length >= SEARCH_LIMIT,
+          work_orders: Array.isArray(wos) && wos.length >= SEARCH_LIMIT,
+          orders: Array.isArray(orders) && orders.length >= SEARCH_LIMIT,
         },
       });
     }
@@ -606,20 +1395,27 @@ Deno.serve(async (req) => {
       const opportunity = await Opportunity.get(opportunityId).catch(() => null);
       if (!opportunity?.id) throw bad("Opportunity not found.", 404);
       const [intakes, requests, customer, contact, location, workOrder, estimates, invoices, purchaseOrders, changeOrders, activity] = await Promise.all([
-        Intake.filter({ opportunity_id: opportunityId }, "-captured_at", 100),
-        EstimatingRequest.filter({ opportunity_id: opportunityId }, "-created_date", 100),
+        Intake.filter({ opportunity_id: opportunityId }, "-captured_at", 100).catch(() => []),
+        EstimatingRequest.filter({ opportunity_id: opportunityId }, "-created_date", 100).catch(() => []),
         clean(opportunity?.customer_id) ? Customer.get(clean(opportunity.customer_id)).catch(() => null) : null,
         clean(opportunity?.contact_id) ? CustomerContact.get(clean(opportunity.contact_id)).catch(() => null) : null,
         clean(opportunity?.location_id) ? CustomerLocation.get(clean(opportunity.location_id)).catch(() => null) : null,
         clean(opportunity?.compatibility_work_order_id)
           ? WorkOrder.get(clean(opportunity.compatibility_work_order_id)).catch(() => null)
           : null,
-        Estimate.filter({ opportunity_id: opportunityId }, "-created_date", 50),
-        Invoice.filter({ opportunity_id: opportunityId }),
-        PurchaseOrder.filter({ opportunity_id: opportunityId }),
-        ChangeOrder.filter({ opportunity_id: opportunityId }),
+        Estimate.filter({ opportunity_id: opportunityId }, "-created_date", 500).catch(() => []),
+        Invoice.filter({ opportunity_id: opportunityId }, "-created_date", 500).catch(() => []),
+        PurchaseOrder.filter({ opportunity_id: opportunityId }, "-created_date", 500).catch(() => []),
+        ChangeOrder.filter({ opportunity_id: opportunityId }, "-created_date", 500).catch(() => []),
         Activity.filter({ opportunity_id: opportunityId }, "-created_date", 100).catch(() => []),
       ]);
+      // (#170) Reconcile-on-read: pipeline UIs can move a WO's stage without
+      // routing through this function — re-stamp linked estimates from the
+      // WO's current stage whenever the workspace is opened.
+      let stageSyncWarning = "";
+      if (workOrder?.id && clean(workOrder.sales_status)) {
+        await syncEstimateSalesStageFromWorkOrder(Estimate, workOrder, workOrder.sales_status).catch((e: any) => { stageSyncWarning = String(e?.message || e); });
+      }
       const liveInvoices = (Array.isArray(invoices) ? invoices : []).filter((i: any) => clean(i?.status) !== "void");
       const billedTotal = money(liveInvoices.filter((i: any) => clean(i?.status) !== "draft").reduce((s: number, i: any) => s + num(i?.total), 0));
       const collectedTotal = money(liveInvoices.reduce((s: number, i: any) => s + num(i?.amount_paid), 0));
@@ -649,14 +1445,14 @@ Deno.serve(async (req) => {
           expectedFields: expectedFor(opportunity, opportunity, desired),
           nextFields: desired,
           label: "Opportunity stage advance",
-        }).catch(() => opportunity);
+        }).catch((e: any) => { stageSyncWarning = [stageSyncWarning, String(e?.message || e)].filter(Boolean).join("; "); return opportunity; });
         try {
-          await syncWorkOrderStage(WorkOrder, clean(finalOpportunity?.compatibility_work_order_id), "quoted");
+          await syncWorkOrderStage(WorkOrder, clean(finalOpportunity?.compatibility_work_order_id), "quoted", Estimate);
         } catch {}
         await logActivity(Activity, {
           opportunity_id: opportunityId, actor,
           event_type: "reconciled",
-          summary: "Stage advanced to quoted â€” linked estimate sent/approved",
+          summary: "Stage advanced to quoted — linked estimate sent/approved",
           details: { from_stage: clean(opportunity.stage), to_stage: "quoted" },
         });
         if (clean(finalOpportunity?.stage) === "quoted" && clean(opportunity.stage) !== "quoted") {
@@ -685,12 +1481,15 @@ Deno.serve(async (req) => {
           po_committed: committedTotal,
           co_delta: coDelta,
         },
+        stage_sync_warning: stageSyncWarning || undefined,
       });
     }
 
     if (action === "list_estimating_requests") {
       const includeClosed = body?.include_closed === true;
-      let rows = await EstimatingRequest.filter({});
+      // Paged full read — the queue must reconcile and rank every request,
+      // not just the first 50.
+      let rows = await loadAllEntityRows({ entity: EstimatingRequest, sort: "-created_date", label: "Estimating request list" }).catch(() => null);
       if (!Array.isArray(rows)) throw bad("Estimating request lookup failed.", 500);
       // Close out open requests whose linked estimate has gone to the customer.
       let reconciles = 0;
@@ -733,11 +1532,17 @@ Deno.serve(async (req) => {
             updated_date: clean(r?.updated_date),
           };
         });
-      return Response.json({ success: true, action, estimating_requests: requests });
+      return Response.json({
+        success: true, action, estimating_requests: requests,
+        total: requests.length, matched_total: filtered.length,
+        truncated: filtered.length > requests.length,
+      });
     }
 
     if (action === "list_follow_ups") {
-      const rows = await Opportunity.filter({});
+      // Paged full read — every open opportunity with a next action belongs
+      // on the follow-up board, not just the first 50.
+      const rows = await loadAllEntityRows({ entity: Opportunity, sort: "-last_activity_at", label: "Follow-up opportunities" }).catch(() => null);
       if (!Array.isArray(rows)) throw bad("Opportunity lookup failed.", 500);
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
       const items = rows
@@ -764,7 +1569,7 @@ Deno.serve(async (req) => {
 
       // Stale sent quotes on quoted-stage opportunities become implicit follow-ups:
       // aging after 7 days without a response, "expired" past quote_valid_days.
-      const requests = await EstimatingRequest.filter({}).catch(() => []);
+      const requests = await loadAllEntityRows({ entity: EstimatingRequest, sort: "-created_date", label: "Follow-up estimating requests" }).catch(() => []);
       const estimateIdByOpp = new Map();
       for (const r of Array.isArray(requests) ? requests : []) {
         const oppId = clean(r?.opportunity_id);
@@ -782,7 +1587,10 @@ Deno.serve(async (req) => {
         const ageDays = Math.floor((Date.now() - issuedMs) / 86400000);
         if (ageDays < 7) continue;
         const validDays = num(est?.quote_valid_days, 30);
-        const expired = ageDays >= validDays;
+        // K-10 D2: a quote is valid THROUGH issue+validDays — ageDays ===
+        // validDays is the last valid day, not expired. Matches
+        // quoteDefaultsModel.quoteExpiryFrom + the portal/PDF consumers.
+        const expired = ageDays > validDays;
         items.push({
           id: clean(o?.id),
           title: clean(o?.title),
@@ -790,8 +1598,8 @@ Deno.serve(async (req) => {
           stage: "quoted",
           salesperson: clean(o?.salesperson),
           next_action: expired
-            ? `Quote ${clean(est?.estimate_number) || ""} expired (${validDays}d validity) â€” re-issue or follow up`
-            : `Quote ${clean(est?.estimate_number) || ""} sent ${ageDays}d ago â€” no response`,
+            ? `Quote ${clean(est?.estimate_number) || ""} expired (${validDays}d validity) — re-issue or follow up`
+            : `Quote ${clean(est?.estimate_number) || ""} sent ${ageDays}d ago — no response`,
           next_action_due: new Date(issuedMs + Math.min(validDays, ageDays + 3) * 86400000).toISOString().slice(0, 10),
           next_action_assignee: clean(o?.next_action_assignee),
           overdue: expired,
@@ -805,7 +1613,11 @@ Deno.serve(async (req) => {
       items.sort((a: any, b: any) =>
         Number(b.overdue) - Number(a.overdue)
         || (a.next_action_due || "9999").localeCompare(b.next_action_due || "9999"));
-      return Response.json({ success: true, action, follow_ups: items.slice(0, 200), today });
+      return Response.json({
+        success: true, action, follow_ups: items.slice(0, 200), today,
+        total: Math.min(items.length, 200), matched_total: items.length,
+        truncated: items.length > 200,
+      });
     }
 
     if (action === "assign_estimator") {
@@ -929,14 +1741,15 @@ Deno.serve(async (req) => {
       });
       const intake = intakeResult.record;
 
+      let intakeLinkWarning = "";
       if (!clean(opportunity.source_primary_intake_id)) {
         await replaceFoundationFieldsIfUnchanged({
           entity: Opportunity,
           recordId: clean(opportunity.id),
-          expectedFields: { source_primary_intake_id: opportunity.source_primary_intake_id ?? "" },
+          expectedFields: { source_primary_intake_id: opportunity.source_primary_intake_id ?? null },
           nextFields: { source_primary_intake_id: clean(intake.id) },
           label: "Opportunity primary intake link",
-        }).catch(() => null);
+        }).catch((e: any) => { intakeLinkWarning = String(e?.message || e); return null; });
       }
 
       const fresh = await Opportunity.get(clean(opportunity.id)).catch(() => opportunity);
@@ -957,6 +1770,7 @@ Deno.serve(async (req) => {
         opportunity: fresh || opportunity,
         intake,
         reused: oppResult.status !== "created",
+        intake_link_warning: intakeLinkWarning || undefined,
       });
     }
 
@@ -1039,7 +1853,7 @@ Deno.serve(async (req) => {
         const linkedWoId = clean(saved?.compatibility_work_order_id) || clean(current?.compatibility_work_order_id);
         if (linkedWoId) {
           try {
-            syncedStage = await syncWorkOrderStage(WorkOrder, linkedWoId, saved?.stage);
+            syncedStage = await syncWorkOrderStage(WorkOrder, linkedWoId, saved?.stage, Estimate);
           } catch (e: any) {
             stageSyncWarning = e?.message || "Work order stage sync failed.";
           }
@@ -1052,8 +1866,8 @@ Deno.serve(async (req) => {
           opportunity_id: opportunityId, actor,
           event_type: stageChanged ? "stage_changed" : "updated",
           summary: stageChanged
-            ? `Stage ${clean(current.stage) || "new"} â†’ ${desired.stage}`
-            : `${changed.length || 1} field${(changed.length || 1) === 1 ? "" : "s"} updated: ${changed.slice(0, 5).join(", ")}${changed.length > 5 ? "â€¦" : ""}`,
+            ? `Stage ${clean(current.stage) || "new"} → ${desired.stage}`
+            : `${changed.length || 1} field${(changed.length || 1) === 1 ? "" : "s"} updated: ${changed.slice(0, 5).join(", ")}${changed.length > 5 ? "…" : ""}`,
           details: { fields: changed, from_stage: clean(current.stage), to_stage: clean(saved?.stage) },
         });
         if (stageChanged) {
@@ -1154,7 +1968,7 @@ Deno.serve(async (req) => {
       let syncedStage = "";
       let stageSyncWarning = "";
       try {
-        syncedStage = await syncWorkOrderStage(WorkOrder, workOrderId, savedOpportunity?.stage);
+        syncedStage = await syncWorkOrderStage(WorkOrder, workOrderId, savedOpportunity?.stage, Estimate);
       } catch (e: any) {
         stageSyncWarning = e?.message || "Work order stage sync failed.";
       }
@@ -1175,6 +1989,37 @@ Deno.serve(async (req) => {
         stage_sync_warning: stageSyncWarning || undefined,
         reused: clean(opportunity.compatibility_work_order_id) === workOrderId && !Object.keys(woDesired).length,
       });
+    }
+
+    // (#170) Explicit reverse-sync endpoint: any client that moves a Work
+    // Order's pipeline stage directly (e.g. the Sales Pipeline spreadsheet's
+    // sales_status updates) can call this afterward to stamp the linked
+    // estimate(s). Also covers one-off repairs. Idempotent.
+    if (action === "sync_estimate_sales_stage") {
+      const workOrderId = clean(body?.work_order_id);
+      if (!workOrderId) throw bad("work_order_id is required.", 400);
+      const wo = await WorkOrder.get(workOrderId).catch(() => null);
+      if (!wo?.id) throw bad("WorkOrder not found.", 404);
+      const stage = clean(body?.stage) || clean(wo.sales_status);
+      if (stage && !["lead", "quoted", "follow_up", "on_hold", "won", "lost"].includes(stage)) {
+        throw bad("stage must be one of lead, quoted, follow_up, on_hold, won, lost.");
+      }
+      if (!stage) return Response.json({ success: true, action, work_order_id: workOrderId, synced: 0 });
+      // Optional explicit stage override also corrects the WO itself.
+      if (clean(body?.stage) && clean(wo.sales_status) !== clean(body.stage)) {
+        const desired = { sales_status: clean(body.stage) };
+        const saved = await replaceFoundationFieldsIfUnchanged({
+          entity: WorkOrder,
+          recordId: workOrderId,
+          expectedFields: expectedFoundationFields(wo, desired),
+          nextFields: desired,
+          label: "Work order sales status",
+        });
+        await syncEstimateSalesStageFromWorkOrder(Estimate, saved || wo, clean(body.stage));
+      } else {
+        await syncEstimateSalesStageFromWorkOrder(Estimate, wo, stage);
+      }
+      return Response.json({ success: true, action, work_order_id: workOrderId, sales_stage: stage });
     }
 
     if (action === "request_estimate") {
@@ -1251,7 +2096,7 @@ Deno.serve(async (req) => {
       let request = requestResult.record;
 
       const displayName = clean(customer?.company_name || opportunity.customer_display_name) || "Customer";
-      const projectName = clean(opportunity.title) || `${displayName} â€” New estimate`;
+      const projectName = clean(opportunity.title) || `${displayName} — New estimate`;
       const requirementSummary = [
         ["Survey", snapshot.survey_requirement],
         ["Permit", snapshot.permit_requirement],
@@ -1261,10 +2106,10 @@ Deno.serve(async (req) => {
       ]
         .filter(([, v]) => v && v !== "unknown" && v !== "na")
         .map(([k, v]) => `${k}: ${v}`)
-        .join(" Â· ");
+        .join(" · ");
       const notesText = [
         clean(snapshot.job_description),
-        requirementSummary ? `Requirements â€” ${requirementSummary}` : "",
+        requirementSummary ? `Requirements — ${requirementSummary}` : "",
         clean(snapshot.notes),
       ].filter(Boolean).join("\n");
       const estimateData: any = {
@@ -1298,7 +2143,7 @@ Deno.serve(async (req) => {
         request = await replaceEstimatingRequestFieldsIfUnchanged({
           entity: EstimatingRequest,
           recordId: clean(request.id),
-          expectedFields: { status: request.status, estimate_id: request.estimate_id ?? "" },
+          expectedFields: { status: request.status, estimate_id: request.estimate_id ?? null },
           nextFields: { status: "in_progress", estimate_id: clean(estimate.id) },
           label: "Estimating Request estimate link",
         });
@@ -1312,18 +2157,19 @@ Deno.serve(async (req) => {
         opportunityDesired.stage = "estimating";
         opportunityDesired.stage_changed_at = now;
       }
+      let opportunityUpdateWarning = "";
       const freshOpportunity = await replaceFoundationFieldsIfUnchanged({
         entity: Opportunity,
         recordId: opportunityId,
         expectedFields: expectedFoundationFields(opportunity, opportunityDesired),
         nextFields: opportunityDesired,
         label: "Opportunity estimating link",
-      }).catch(() => null);
+      }).catch((e: any) => { opportunityUpdateWarning = String(e?.message || e); return null; });
 
       await logActivity(Activity, {
         opportunity_id: opportunityId, actor,
         event_type: "estimate_requested",
-        summary: `Estimate requested â€” ${clean(estimate?.project_name) || clean(estimate?.estimate_number) || clean(estimate?.id)}`,
+        summary: `Estimate requested — ${clean(estimate?.project_name) || clean(estimate?.estimate_number) || clean(estimate?.id)}`,
         details: {
           estimating_request_id: clean(request?.id),
           estimate_id: clean(estimate?.id),
@@ -1343,6 +2189,7 @@ Deno.serve(async (req) => {
         estimate,
         opportunity: freshOpportunity || opportunity,
         reused: requestResult.status !== "created",
+        opportunity_update_warning: opportunityUpdateWarning || undefined,
       });
     }
 
@@ -1350,15 +2197,22 @@ Deno.serve(async (req) => {
       const customerId = clean(body?.customer_id);
       const customer = await Customer.get(customerId).catch(() => null);
       if (!customer?.id) throw bad("Customer not found.", 404);
-      const [contacts, locations, opportunities, invoices, workOrders, payments, estimates] = await Promise.all([
-        CustomerContact.filter({ customer_id: customerId }).catch(() => []),
-        CustomerLocation.filter({ customer_id: customerId }).catch(() => []),
-        Opportunity.filter({ customer_id: customerId }).catch(() => []),
-        Invoice.filter({ customer_id: customerId }).catch(() => []),
-        WorkOrder.filter({ customer_id: customerId }).catch(() => []),
-        Payment.filter({ customer_id: customerId }).catch(() => []),
-        Estimate.filter({ customer_id: customerId }).catch(() => []),
+      // Scoped paged reads — default-limited filters silently dropped rows
+      // past the first 50, which corrupted the summary totals and AR aging.
+      // M-03: 60s per-customer cache — a workspace reopen inside the window
+      // reuses these rows instead of re-issuing all 8 fan-out reads.
+      const c360Key = `c360:${customerId}`;
+      const c360Cached = aggregateCacheGet(c360Key);
+      const [contacts, locations, opportunities, invoices, workOrders, payments, estimates] = c360Cached ?? await Promise.all([
+        loadAllEntityRows({ entity: CustomerContact, query: { customer_id: customerId }, sort: "-created_date", label: "Customer contacts" }).catch(() => []),
+        loadAllEntityRows({ entity: CustomerLocation, query: { customer_id: customerId }, sort: "-created_date", label: "Customer locations" }).catch(() => []),
+        loadAllEntityRows({ entity: Opportunity, query: { customer_id: customerId }, sort: "-created_date", label: "Customer opportunities" }).catch(() => []),
+        loadAllEntityRows({ entity: Invoice, query: { customer_id: customerId }, sort: "-created_date", label: "Customer invoices" }).catch(() => []),
+        loadAllEntityRows({ entity: WorkOrder, query: { customer_id: customerId }, sort: "-created_date", label: "Customer work orders" }).catch(() => []),
+        loadAllEntityRows({ entity: Payment, query: { customer_id: customerId }, sort: "-created_date", label: "Customer payments" }).catch(() => []),
+        loadAllEntityRows({ entity: Estimate, query: { customer_id: customerId }, sort: "-created_date", label: "Customer estimates" }).catch(() => []),
       ]);
+      if (!c360Cached) aggregateCacheSet(c360Key, [contacts, locations, opportunities, invoices, workOrders, payments, estimates]);
       const custEstimates = (Array.isArray(estimates) ? estimates : []).filter((e: any) => e?.deleted !== true)
         .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
       const estimateStatusCounts: any = {};
@@ -1384,11 +2238,16 @@ Deno.serve(async (req) => {
         else aging.d90_plus += balance;
       }
       for (const key of Object.keys(aging)) (aging as any)[key] = money((aging as any)[key]);
+      const custPayments = (Array.isArray(payments) ? payments : [])
+        .filter((p: any) => clean(p?.status) !== "void")
+        .sort((a: any, b: any) => clean(b?.paid_date || b?.created_date).localeCompare(clean(a?.paid_date || a?.created_date)));
+      const custContacts = Array.isArray(contacts) ? contacts : [];
+      const custLocations = Array.isArray(locations) ? locations : [];
       return Response.json({
         success: true, action,
         customer,
-        contacts: Array.isArray(contacts) ? contacts : [],
-        locations: Array.isArray(locations) ? locations : [],
+        contacts: custContacts,
+        locations: custLocations,
         opportunities: opps.slice(0, 50).map((o: any) => ({
           id: clean(o?.id), title: clean(o?.title), stage: clean(o?.stage),
           budget_amount: num(o?.budget_amount), salesperson: clean(o?.salesperson),
@@ -1418,15 +2277,31 @@ Deno.serve(async (req) => {
               ? Math.max(0, Math.floor((Date.parse(asOf) - Date.parse(clean(i.due_date))) / 86400000))
               : 0,
           })),
-        payments: (Array.isArray(payments) ? payments : [])
-          .filter((p: any) => clean(p?.status) !== "void")
-          .sort((a: any, b: any) => clean(b?.paid_date || b?.created_date).localeCompare(clean(a?.paid_date || a?.created_date)))
+        payments: custPayments
           .slice(0, 100)
           .map((p: any) => ({
             id: clean(p?.id), invoice_id: clean(p?.invoice_id), status: clean(p?.status),
             paid_date: clean(p?.paid_date || p?.created_date).slice(0, 10),
             amount: num(p?.amount), method: clean(p?.method), reference_number: clean(p?.reference_number),
           })),
+        // Honest coverage: lists above stay display-capped; these report
+        // how much was actually loaded vs. returned.
+        totals: {
+          contacts: custContacts.length,
+          locations: custLocations.length,
+          opportunities: opps.length,
+          jobs: jobs.length,
+          estimates: custEstimates.length,
+          invoices: inv.length,
+          payments: custPayments.length,
+        },
+        truncated: {
+          opportunities: opps.length > 50,
+          jobs: jobs.length > 50,
+          estimates: custEstimates.length > 50,
+          invoices: inv.length > 50,
+          payments: custPayments.length > 100,
+        },
         summary: {
           open_opportunities: opps.filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage))).length,
           open_pipeline_value: money(opps.filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage))).reduce((s: number, o: any) => s + num(o?.budget_amount), 0)),
@@ -1439,10 +2314,141 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Customer workspace (360): the same aggregate idea as get_opportunity but
+    // keyed on customer_id, so the customer page renders pipeline, quotes, jobs,
+    // AR and document history from one call. Entities with a customer_id column
+    // filter on it directly; purchase orders and activity rows carry only
+    // document links, so they match on the customer's opportunity / estimate /
+    // work order ids instead. Each list is capped at LIST_CAP (activities at
+    // ACTIVITY_CAP) with per-list truncated flags; totals are computed over
+    // every loaded row, capped or not.
+    if (action === "customer_workspace") {
+      const customerId = clean(body?.customer_id || body?.id);
+      if (!customerId) throw bad("customer_id is required.");
+      const customer = await Customer.get(customerId).catch(() => null);
+      if (!customer?.id) throw bad("Customer not found.", 404);
+
+      const LIST_CAP = 500;
+      const ACTIVITY_CAP = 50;
+      // Fetch deeper than the display cap so totals reflect more than the
+      // first page and a length beyond LIST_CAP reliably marks truncation.
+      const FETCH_LIMIT = 1000;
+      const rows = (v: any) => (Array.isArray(v) ? v : []);
+      const descCreated = (a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date));
+
+      // M-03: same 60s per-customer cache as get_customer_360 — workspace
+      // reopens inside the window skip the whole 8-entity fan-out.
+      const cwsKey = `cws:${customerId}`;
+      const cwsCached = aggregateCacheGet(cwsKey);
+      const [contacts, locations, opportunities, estimates, workOrders, invoices, payments, changeOrders] = cwsCached ?? await Promise.all([
+        CustomerContact.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+        CustomerLocation.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+        Opportunity.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+        Estimate.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+        WorkOrder.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+        Invoice.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+        Payment.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+        ChangeOrder.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+      ]);
+      if (!cwsCached) aggregateCacheSet(cwsKey, [contacts, locations, opportunities, estimates, workOrders, invoices, payments, changeOrders]);
+
+      const customerOpportunities = rows(opportunities).sort(descCreated);
+      const customerEstimates = rows(estimates).filter((e: any) => e?.deleted !== true).sort(descCreated);
+      const customerWorkOrders = rows(workOrders).filter((w: any) => w?.deleted !== true).sort(descCreated);
+      const customerInvoices = rows(invoices).sort(descCreated);
+      const customerPayments = rows(payments).filter((p: any) => clean(p?.status) !== "void").sort(descCreated);
+      const customerChangeOrders = rows(changeOrders).sort(descCreated);
+
+      const opportunityIds = new Set(customerOpportunities.map((o: any) => clean(o?.id)).filter(Boolean));
+      const estimateIds = new Set(customerEstimates.map((e: any) => clean(e?.id)).filter(Boolean));
+      const workOrderIds = new Set(customerWorkOrders.map((w: any) => clean(w?.id)).filter(Boolean));
+
+      // M-03: the PurchaseOrder scan is customer-agnostic (whole table) — one
+      // global 60s entry shares it across EVERY workspace open, not just
+      // reopens of the same customer. The activity scan stays per-customer
+      // (its shape depends on this customer's opportunity count).
+      const poKey = "poscan:global";
+      const actKey = `actscan:${customerId}`;
+      const poCached = aggregateCacheGet(poKey);
+      const actCached = aggregateCacheGet(actKey);
+      const [poScan, activityScan] = await Promise.all([
+        // Purchase orders have no customer column — match the rows linked to
+        // any of the customer's documents (get_opportunity uses the same
+        // opportunity_id / estimate_id / work_order_id linkage for one opp).
+        poCached ?? PurchaseOrder.filter({}, "-created_date", 4000).catch(() => []),
+        // Activity rows link only by opportunity_id. A per-opp fan-out is
+        // exact for small accounts; past a dozen opportunities one scan of
+        // the recent activity tail is cheaper than N entity calls.
+        actCached ?? (opportunityIds.size <= 12
+          ? Promise.all([...opportunityIds].map((oppId) =>
+              Activity.filter({ opportunity_id: oppId }, "-created_date", ACTIVITY_CAP + 1).catch(() => [])))
+              .then((sets: any[]) => sets.flat())
+          : Activity.filter({}, "-created_date", 3000).catch(() => [])),
+      ]);
+      if (!poCached) aggregateCacheSet(poKey, poScan);
+      if (!actCached) aggregateCacheSet(actKey, activityScan);
+      const purchaseOrders = rows(poScan)
+        .filter((p: any) =>
+          opportunityIds.has(clean(p?.opportunity_id))
+          || estimateIds.has(clean(p?.estimate_id))
+          || workOrderIds.has(clean(p?.work_order_id)))
+        .sort(descCreated);
+      const activities = rows(activityScan)
+        .flat()
+        .filter((a: any) => opportunityIds.has(clean(a?.opportunity_id)))
+        .sort(descCreated);
+
+      // invoicingAction semantics: live = non-void; invoiced = sum(total),
+      // paid = sum(amount_paid), balance = sum(balance_due) over live rows.
+      const liveInvoices = customerInvoices.filter((i: any) => clean(i?.status) !== "void");
+      const totals = {
+        estimate_count: customerEstimates.length,
+        estimate_value: money(customerEstimates.reduce((s: number, e: any) => s + num(e?.quote_total), 0)),
+        // draft/calculated/sent = still in play (bulk_remarkup open set);
+        // approved/archived/cancelled are decided.
+        open_estimate_value: money(customerEstimates
+          .filter((e: any) => ["draft", "calculated", "sent"].includes(clean(e?.status)))
+          .reduce((s: number, e: any) => s + num(e?.quote_total), 0)),
+        work_order_count: customerWorkOrders.length,
+        invoiced: money(liveInvoices.reduce((s: number, i: any) => s + num(i?.total), 0)),
+        paid: money(liveInvoices.reduce((s: number, i: any) => s + num(i?.amount_paid), 0)),
+        balance: money(liveInvoices.reduce((s: number, i: any) => s + num(i?.balance_due), 0)),
+        // PO_STATUSES: draft/sent/partially_received are open; received and
+        // cancelled are done.
+        open_po_count: purchaseOrders.filter((p: any) => ["draft", "sent", "partially_received"].includes(clean(p?.status))).length,
+        // Pending follow-ups = open-stage opportunities with a next action,
+        // the same predicate list_follow_ups uses.
+        open_activity_count: customerOpportunities
+          .filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage)) && (clean(o?.next_action) || clean(o?.next_action_due)))
+          .length,
+      };
+
+      const lists: Record<string, any[]> = {
+        contacts: rows(contacts).sort(descCreated),
+        locations: rows(locations).sort(descCreated),
+        opportunities: customerOpportunities,
+        estimates: customerEstimates,
+        work_orders: customerWorkOrders,
+        invoices: customerInvoices,
+        payments: customerPayments,
+        purchase_orders: purchaseOrders,
+        change_orders: customerChangeOrders,
+        activities: activities,
+      };
+      const truncated: Record<string, boolean> = {};
+      const capped: Record<string, any[]> = {};
+      for (const [key, items] of Object.entries(lists)) {
+        const cap = key === "activities" ? ACTIVITY_CAP : LIST_CAP;
+        truncated[key] = items.length > cap;
+        capped[key] = items.slice(0, cap);
+      }
+      return Response.json({ success: true, action, customer, ...capped, totals, truncated });
+    }
+
     throw bad(`Unsupported opportunity workspace action: ${action}`);
   } catch (error: any) {
     const status = Number(error?.status || error?.statusCode || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 423, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 423, 429, 503].includes(status) ? status : 500;
     console.error("opportunityWorkspaceAction error:", error?.message || error);
     return Response.json({
       success: false,

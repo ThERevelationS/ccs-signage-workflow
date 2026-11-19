@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,12 +18,14 @@ import {
 import { ChevronDown, ChevronUp, Save, User, MapPin, FileText, Package, Wrench, Plus, Trash2, Loader2 } from "lucide-react";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
+import SiteStreetView from "@/components/shared/SiteStreetView";
 
 const TEAM_MEMBERS = [
   "Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"
 ];
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 
 export default function ClientInfoSection({ workOrder, onUpdate }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -78,7 +79,7 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
   const loadProductTypes = async () => {
     try {
       const setting = await loadSingleGlobalSetting({
-        entity: base44.entities.GlobalSettings,
+        entity: staffEntities.GlobalSettings,
         settingKey: "productTypes",
         label: "Client info product types",
       });
@@ -367,6 +368,7 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
                   onChange={(e) => handleChange("install_location", e.target.value)}
                   className="h-8 text-sm"
                 />
+                <SiteStreetView address={getValue("install_location")} />
               </div>
               <div>
                 <Label className="text-xs">Address Line 2</Label>

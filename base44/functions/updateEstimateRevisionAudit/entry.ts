@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { estimateAuditNumber, estimateAuditSnapshot, estimateQuoteIssueKey, summarizeEstimateAuditChanges } from '../../shared/estimateRevisionAudit.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
@@ -26,7 +27,7 @@ function safeDeliveryEvidence(input: any = {}) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     // Fall back to auth.me() when no sign-shop session token is supplied so
     // plain request-context auth can write audit rows too.
@@ -37,7 +38,10 @@ Deno.serve(async (req) => {
     const action = text(body?.action, 80);
     const estimateId = text(body?.estimate_id, 128);
     const RevisionService = base44.asServiceRole.entities.EstimateRevision;
-    const EstimateUser = base44.entities.AllInOneEstimate;
+    // AllInOneEstimate is backend-only RLS — the caller-scoped client can
+    // never read it, so this verification read must go through the service
+    // role like the sibling RevisionService handle (auth is checked above).
+    const EstimateService = base44.asServiceRole.entities.AllInOneEstimate;
 
     if (!estimateId) return Response.json({ error: 'Estimate id is required.' }, { status: 400 });
 
@@ -61,7 +65,7 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'This Estimate revision changed in another session. Reload before completing it.' }, { status: 409 });
       }
 
-      const estimate = await EstimateUser.get(estimateId).catch(() => null);
+      const estimate = await EstimateService.get(estimateId).catch(() => null);
       if (!estimate?.id) return Response.json({ error: 'Estimate could not be verified before completing its revision.' }, { status: 404 });
       if (expectedEstimateUpdatedDate && String(estimate.updated_date || '') !== expectedEstimateUpdatedDate) {
         return Response.json({ error: 'This estimate changed in another session. Reload before completing its revision.' }, { status: 409 });
@@ -171,7 +175,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Invalid Estimate revision audit action.' }, { status: 400 });
   } catch (error) {
     const status = Number(error?.status || error?.statusCode || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('updateEstimateRevisionAudit error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Estimate revision audit could not be updated safely.' : error.message,

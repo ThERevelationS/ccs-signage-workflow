@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -201,21 +202,19 @@ export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, ses
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Start Date</Label>
-              <Input
-                type="date"
+              <CcsDateField
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="mt-1"
-              />
+                id="pto-start"
+                />
             </div>
             <div>
               <Label>End Date</Label>
-              <Input
-                type="date"
+              <CcsDateField
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="mt-1"
-              />
+                id="pto-end"
+                />
             </div>
           </div>
 

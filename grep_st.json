@@ -1,0 +1,646 @@
+{
+  "matches": [
+    {
+      "path": "base44/functions/fleetMeterMaintenanceAction/entry.ts",
+      "line": 65,
+      "text": "    const auth = await authorize(base44, ['create','update','delete'].includes(action), body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageMigration/entry.ts",
+      "line": 160,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/ensureCustomerSummary/entry.ts",
+      "line": 237,
+      "text": "    try { user = await authenticateSignShopSession(base44, body?.session_token); }"
+    },
+    {
+      "path": "base44/functions/shiftSwapAction/entry.ts",
+      "line": 9,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/bouncieStatus/entry.ts",
+      "line": 10,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageAccountDeletionRequest/entry.ts",
+      "line": 135,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/importWipSheet/entry.ts",
+      "line": 184,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/refreshJurisdiction/entry.ts",
+      "line": 50,
+      "text": "      if(!user&&body.session_token)user=await authenticateSignShopSession(base44,body.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetBouncieNotificationAction/entry.ts",
+      "line": 25,
+      "text": "    const auth = await authorizeFleetUser(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 672,
+      "text": "    const auth = await authorize(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetWarrantyAction/entry.ts",
+      "line": 136,
+      "text": "    const auth = await authorize(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/opportunityWorkspaceAction/entry.ts",
+      "line": 261,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/jobCostingAction/entry.ts",
+      "line": 89,
+      "text": "    await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3711,
+      "text": "    const hasSessionToken = Boolean(String(body?.session_token || '').trim());"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 3716,
+      "text": "      const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/listAuthorizedUserDirectory/entry.ts",
+      "line": 31,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/purchaseOrderAction/entry.ts",
+      "line": 135,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/placesAutocomplete/entry.ts",
+      "line": 6,
+      "text": " * Auth: staff session_token OR platform auth (console/admin callers)."
+    },
+    {
+      "path": "base44/functions/placesAutocomplete/entry.ts",
+      "line": 7,
+      "text": " * Body: { session_token?, input: string }"
+    },
+    {
+      "path": "base44/functions/placesAutocomplete/entry.ts",
+      "line": 18,
+      "text": "    let user = await authenticateSignShopSession(base44, body?.session_token).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/detectSalesDuplicates/entry.ts",
+      "line": 50,
+      "text": "      actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetRepairEstimateAction/entry.ts",
+      "line": 30,
+      "text": "    const auth = await requireAdmin(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/aiResearchOffice/entry.ts",
+      "line": 13,
+      "text": "    const actor=await authenticateSignShopSession(base44, body?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/fleetDataRead/entry.ts",
+      "line": 8,
+      "text": "// read flows through here instead: a valid sss_session_token is required and"
+    },
+    {
+      "path": "base44/functions/fleetDataRead/entry.ts",
+      "line": 98,
+      "text": "    const user = await resolveFleetStaffUser(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/streetViewPreview/entry.ts",
+      "line": 6,
+      "text": " * Auth: staff session_token OR platform auth."
+    },
+    {
+      "path": "base44/functions/streetViewPreview/entry.ts",
+      "line": 7,
+      "text": " * Body: { session_token?, address: string }"
+    },
+    {
+      "path": "base44/functions/streetViewPreview/entry.ts",
+      "line": 20,
+      "text": "    let user = await authenticateSignShopSession(base44, body?.session_token).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/getAddressResearchCollections/entry.ts",
+      "line": 7,
+      "text": "  const client=withEntityRateLimitRetry(createClientFromRequest(req)),body=await req.json(),actor=await authenticateSignShopSession(client,body.session_token);\r"
+    },
+    {
+      "path": "base44/functions/checkGmailConnection/entry.ts",
+      "line": 8,
+      "text": "        const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/ensureEstimateLifecycleRevision/entry.ts",
+      "line": 102,
+      "text": "    try { actor = await authenticateSignShopSession(base44, body?.session_token); }"
+    },
+    {
+      "path": "base44/functions/linkAddressResearchDocument/entry.ts",
+      "line": 9,
+      "text": "  const client=createClientFromRequest(req),body=await req.json(),actor=await authenticateSignShopSession(client,body.session_token);"
+    },
+    {
+      "path": "base44/functions/smartsheetMetadataAdminAction/entry.ts",
+      "line": 126,
+      "text": "    if (body?.session_token) {"
+    },
+    {
+      "path": "base44/functions/smartsheetMetadataAdminAction/entry.ts",
+      "line": 127,
+      "text": "      actor = await authenticateSignShopSession(base44, body.session_token);"
+    },
+    {
+      "path": "base44/functions/calculateTravelMiles/entry.ts",
+      "line": 9,
+      "text": " * Auth: staff session_token OR platform auth."
+    },
+    {
+      "path": "base44/functions/calculateTravelMiles/entry.ts",
+      "line": 10,
+      "text": " * Body: { session_token?, shop_address: string, site_address: string }"
+    },
+    {
+      "path": "base44/functions/calculateTravelMiles/entry.ts",
+      "line": 50,
+      "text": "    let user = await authenticateSignShopSession(base44, body?.session_token).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/fleetSettingsAction/entry.ts",
+      "line": 42,
+      "text": "    const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetScheduledMaintenanceGeneration/entry.ts",
+      "line": 167,
+      "text": "    const user = (await base44.auth.me().catch(()=>null)) || await resolveFleetStaffUser(base44, requestBody?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 19,
+      "text": "      actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/corebridgeApiAction/entry.ts",
+      "line": 40,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 519,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentAction/entry.ts",
+      "line": 93,
+      "text": "    const auth = await requireAdmin(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/workspacePrefsAction/entry.ts",
+      "line": 21,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentDocumentAction/entry.ts",
+      "line": 55,
+      "text": "    const auth = await requireAdmin(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/sessionAdminAction/entry.ts",
+      "line": 8,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageFeatureReports/entry.ts",
+      "line": 181,
+      "text": "    const sessionToken = String(body?.session_token || '').trim();"
+    },
+    {
+      "path": "base44/functions/invoicingAction/entry.ts",
+      "line": 195,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/ensureOpenEstimateRevision/entry.ts",
+      "line": 107,
+      "text": "    try { actor = await authenticateSignShopSession(base44, body?.session_token); }"
+    },
+    {
+      "path": "base44/functions/processWorkflowTriggers/entry.ts",
+      "line": 94,
+      "text": "    const user = await authenticateSignShopSession(base44, payload?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/fleetPartLookupAction/entry.ts",
+      "line": 124,
+      "text": "    const auth = await authorize(base44, adminRequired, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageSops/entry.ts",
+      "line": 264,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 147,
+      "text": "    const auth = await authorize(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/accessRequestAction/entry.ts",
+      "line": 8,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/sendStaffEmail/entry.ts",
+      "line": 57,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/issueTimeClockBadge/entry.ts",
+      "line": 84,
+      "text": "    const sessionToken = String(body?.session_token || '').trim();"
+    },
+    {
+      "path": "base44/functions/issueAdminSettingsAccess/entry.ts",
+      "line": 54,
+      "text": "    const sessionToken = String(body?.session_token || '').trim();"
+    },
+    {
+      "path": "base44/functions/fleetLifecycleAction/entry.ts",
+      "line": 122,
+      "text": "    const auth = await requireAdmin(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageUserCapacity/entry.ts",
+      "line": 85,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 82,
+      "text": "        actor = await authenticateSignShopSession(base44, body?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/ensureEstimateCustomer/entry.ts",
+      "line": 164,
+      "text": "    await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/dataIntegrityAction/entry.ts",
+      "line": 42,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 47,
+      "text": "    const user=body.session_token\r"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 48,
+      "text": "      ? await authenticateSignShopSession(base44,body.session_token)\r"
+    },
+    {
+      "path": "base44/functions/fleetAlertSettingsAction/entry.ts",
+      "line": 44,
+      "text": "    const auth = await requireAdmin(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/hostedAssetManifest/entry.ts",
+      "line": 39,
+      "text": "      const actor = await authenticateSignShopSession(base44, body?.session_token).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/fleetSearch/entry.ts",
+      "line": 37,
+      "text": "    const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/bouncieSyncNotifications/entry.ts",
+      "line": 201,
+      "text": "    const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, requestBody?.session_token);"
+    },
+    {
+      "path": "base44/functions/changeOrderAction/entry.ts",
+      "line": 86,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetSystemReportAction/entry.ts",
+      "line": 38,
+      "text": "    const auth = await requireAdmin(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fieldHistoryAction/entry.ts",
+      "line": 51,
+      "text": "    const actor=body.session_token ? await authenticateSignShopSession(base44,body.session_token) : await base44.auth.me();"
+    },
+    {
+      "path": "base44/functions/continueAddressResearchDiscovery/entry.ts",
+      "line": 11,
+      "text": "  const client=withEntityRateLimitRetry(createClientFromRequest(req)),body=await req.json(),actor=await authenticateSignShopSession(client,body.session_token);\r"
+    },
+    {
+      "path": "base44/functions/continueAddressResearchDiscovery/entry.ts",
+      "line": 12,
+      "text": "  if(typeof body.collection_id!=='string'||!body.collection_id||body.collection_id.length>100||Object.keys(body).some(key=>!['collection_id','session_token','action_token','retry_page_url'].includes(key)))return Response.json({error:'Select your saved research collection.'},{status:400});\r"
+    },
+    {
+      "path": "base44/functions/setPassword/entry.ts",
+      "line": 13,
+      "text": "    const { username, new_password, user_email, reset_token, session_token } = body || {};\r"
+    },
+    {
+      "path": "base44/functions/setPassword/entry.ts",
+      "line": 59,
+      "text": "        admin = await authenticateSignShopSession(base44, session_token);\r"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/entry.ts",
+      "line": 520,
+      "text": "    const actor = diagnostic ? await base44.auth.me().catch(() => null) : await cachedSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/handler.ts",
+      "line": 86,
+      "text": "  const actor=diagnostic?await base44.auth.me().catch(()=>null):await cachedSession(base44,body?.session_token);"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/main.ts",
+      "line": 520,
+      "text": "    const actor = diagnostic ? await base44.auth.me().catch(() => null) : await cachedSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/boardFeed/entry.ts",
+      "line": 123,
+      "text": "    await authenticateSignShopSession(base44, body.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetFuelAction/entry.ts",
+      "line": 117,
+      "text": "    const auth = await authorize(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/migrateCredentials/entry.ts",
+      "line": 13,
+      "text": "      actor = await authenticateSignShopSession(base44, body?.session_token);\r"
+    },
+    {
+      "path": "base44/functions/updateEstimateRevisionAudit/entry.ts",
+      "line": 35,
+      "text": "    try { actor = await authenticateSignShopSession(base44, body?.session_token); }"
+    },
+    {
+      "path": "base44/functions/issuePasswordReset/entry.ts",
+      "line": 41,
+      "text": "    const sessionToken = String(body?.session_token || '').trim();"
+    },
+    {
+      "path": "base44/functions/manageReconciliation/entry.ts",
+      "line": 111,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/getGoogleMapsKey/entry.ts",
+      "line": 9,
+      "text": "    await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/sendEmail/entry.ts",
+      "line": 10,
+      "text": "    const actor = await authenticateSignShopSession(base44, payload?.session_token);"
+    },
+    {
+      "path": "base44/functions/staffDataRead/entry.ts",
+      "line": 8,
+      "text": "// entities flows through here instead: a valid sss_session_token is required"
+    },
+    {
+      "path": "base44/functions/staffDataRead/entry.ts",
+      "line": 524,
+      "text": "    const user = await resolveFleetStaffUser(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 358,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3305,
+      "text": "    const sessionToken = String(body?.session_token || '').trim();\r"
+    },
+    {
+      "path": "base44/functions/ensureNewCustomer/entry.ts",
+      "line": 78,
+      "text": "    await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/translateSmartsheetNotes/entry.ts",
+      "line": 172,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/archiveAddressResearchFile/entry.ts",
+      "line": 9,
+      "text": "  const client=createClientFromRequest(req),body=await req.json(),actor=await authenticateSignShopSession(client,body.session_token);"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/entry.ts",
+      "line": 520,
+      "text": "    const actor = diagnostic ? await base44.auth.me().catch(() => null) : await cachedSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/main.ts",
+      "line": 520,
+      "text": "    const actor = diagnostic ? await base44.auth.me().catch(() => null) : await cachedSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/ensureBuilderPriceRevision/entry.ts",
+      "line": 101,
+      "text": "    try { actor = await authenticateSignShopSession(base44, body?.session_token); }"
+    },
+    {
+      "path": "base44/functions/manageAnnouncements/entry.ts",
+      "line": 212,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token)\r"
+    },
+    {
+      "path": "base44/functions/permittingHealth/entry.ts",
+      "line": 10,
+      "text": "  if(!user && body.session_token)user=await authenticateSignShopSession(client,body.session_token);"
+    },
+    {
+      "path": "base44/functions/googleDriveOperations/entry.ts",
+      "line": 21,
+      "text": "    const gdoActor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/recordEstimateQuoteDelivery/entry.ts",
+      "line": 151,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/permittingScanStatus/entry.ts",
+      "line": 5,
+      "text": "Deno.serve(async req=>{try{const client=withEntityRateLimitRetry(createClientFromRequest(req),{maxRetries:1}),body=await req.json();let user=await client.auth.me().catch(()=>null);if(!user && body.session_token)user=await authenticateSignShopSession(client,body.session_token);if(!user?.id||!user?.email)return Response.json({error:'Sign in required'},{status:403});if(!scanToken(body.action_token))return Response.json({error:'Invalid action token'},{status:400});const rows=await client.asServiceRole.entities.PermittingScanRun.filter({action_token:body.action_token,owner_email:String(user.email || '').toLowerCase()},'created_date',2);if(rows.length>1)return Response.json({error:'Duplicate activity identity requires review'},{status:409});if(user.role!=='admin'&&rows[0]&&(!['address','address_archive','address_discovery'].includes(rows[0].action_kind)||rows[0].owner_id!==user.id))return Response.json({error:'This activity requires admin access'},{status:403});return Response.json({run:rows[0] || null});}catch(e){const s=Number(e?.status||e?.response?.status||0);if(s===429||/rate limit|too many requests/i.test(String(e?.message||'')))return Response.json({error:'Scan activity is busy. Try again shortly.',retry_after_ms:3000},{status:429,headers:{'Retry-After':'3'}});return Response.json({error:'Scan activity could not be loaded'},{status:500});}});"
+    },
+    {
+      "path": "base44/functions/manageUserCalendarSettings/entry.ts",
+      "line": 58,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/scanPermittingOffice/entry.ts",
+      "line": 9,
+      "text": " const client=withEntityRateLimitRetry(createClientFromRequest(req)),body=await req.json();let user=await client.auth.me().catch(()=>null);if(!user&&body.session_token)user=await authenticateSignShopSession(client,body.session_token);if(user?.role!=='admin')return Response.json({error:'Admin access required'},{status:403});\r"
+    },
+    {
+      "path": "base44/functions/fleetReservationAction/entry.ts",
+      "line": 84,
+      "text": "    const auth = await authorize(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetMaintenanceAction/entry.ts",
+      "line": 73,
+      "text": "    const auth = await requireAdmin(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "line": 1268,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/recordEstimateAcceptance/entry.ts",
+      "line": 285,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/generateDocNumber/entry.ts",
+      "line": 11,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/deleteCreatedDuplicateWorkOrder/entry.ts",
+      "line": 28,
+      "text": "    try { user = await authenticateSignShopSession(base44, body?.session_token); }"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncTraceRead/entry.ts",
+      "line": 7,
+      "text": "    const actor = body.session_token ? await authenticateSignShopSession(client, body.session_token) : await client.auth.me();"
+    },
+    {
+      "path": "base44/functions/importSalesPipeline/entry.ts",
+      "line": 101,
+      "text": "    sessionToken = asText(form.get('session_token'));"
+    },
+    {
+      "path": "base44/functions/importSalesPipeline/entry.ts",
+      "line": 114,
+      "text": "    sessionToken = asText(body?.session_token);"
+    },
+    {
+      "path": "base44/functions/inventoryAction/entry.ts",
+      "line": 94,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetScheduledReminders/entry.ts",
+      "line": 20,
+      "text": "    const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, requestBody?.session_token);"
+    },
+    {
+      "path": "base44/functions/bouncieApi/entry.ts",
+      "line": 10,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetInspectionAction/entry.ts",
+      "line": 140,
+      "text": "    const auth = await authorize(base44, adminRequired, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetDashboardPreferenceAction/entry.ts",
+      "line": 32,
+      "text": "    const auth = await requireUser(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/ensureNewEstimate/entry.ts",
+      "line": 88,
+      "text": "    await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetInventoryAction/entry.ts",
+      "line": 232,
+      "text": "    const auth = await requireAdmin(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 51,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/monitorJurisdictionChanges/entry.ts",
+      "line": 79,
+      "text": "    const user = isScheduledRun ? null : await authenticateAdminSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/staffEntityWrite/entry.ts",
+      "line": 62,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/importOrders/entry.ts",
+      "line": 37,
+      "text": "    sessionToken = String(formData.get('session_token') || '').trim();"
+    },
+    {
+      "path": "base44/functions/importOrders/entry.ts",
+      "line": 40,
+      "text": "    sessionToken = String(body?.session_token || '').trim();"
+    },
+    {
+      "path": "base44/functions/manageQuoteApprovalSettings/entry.ts",
+      "line": 34,
+      "text": "    const actor = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/bouncieAuthInitiate/entry.ts",
+      "line": 13,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 1020,
+      "text": "      const auth = await requireAdmin(base44, body?.session_token);"
+    },
+    {
+      "path": "base44/functions/notificationAction/entry.ts",
+      "line": 135,
+      "text": "    const user = await authenticateSignShopSession(base44, body?.session_token);"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 128
+}

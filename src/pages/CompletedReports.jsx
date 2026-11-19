@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/components/auth/EmailGate";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -9,7 +10,6 @@ import {
   Lightbulb,
   TrendingUp,
   CheckCircle2,
-  Loader2,
   Trash2,
   RotateCcw,
   ChevronLeft
@@ -134,9 +134,7 @@ export default function CompletedReports() {
 
         {/* Reports List */}
         {isLoading ? (
-          <div className="clay-card p-12 text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto" />
-          </div>
+          <ListSkeleton rows={6} />
         ) : readError ? (
           <div className="clay-card p-8 text-center">
             <div className="text-sm font-bold text-red-700">Completed reports could not be verified completely.</div>

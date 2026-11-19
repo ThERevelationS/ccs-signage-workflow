@@ -1,0 +1,49 @@
+{
+  "inputs": [
+    "frozen:/app/src/components/estimator/paint/paintCalc.js",
+    "frozen:/app/src/components/estimator/paint/paintPricingAvailability.js",
+    "frozen:/app/src/pages/PaintingEstimator.jsx",
+    "frozen:/app/src/pages/PaintingSettings.jsx",
+    "frozen:/app/consumer-entry.js"
+  ],
+  "loaded": {
+    "/app/consumer-entry.js": "313deb27d13b0cb3610cda75d66a8dd45b0195b8b97d88a01e1dd5914d6f5fe9",
+    "/app/src/components/estimator/paint/paintPricingAvailability.js": "da5a648bfe4bbda3e7ee1f3de798afe1bf6dc4f2b024314167083e46b6e384fc",
+    "/app/src/pages/PaintingSettings.jsx": "fb939d57ee7631e3c68f2a1310adc676d100b5323d8d17f23b3354717df846c8",
+    "/app/src/pages/PaintingEstimator.jsx": "96e45eb0954746cbbaadf0af67085b0997131b15dfb4252053f72b055e34ffcc",
+    "/app/src/components/estimator/paint/paintCalc.js": "49fc1502d9072e6adf96bad1360bc448e7e50928d96fd7a6bc249a43a1178dde"
+  },
+  "candidateHashes": {
+    "paintCalc.js": "49fc1502d9072e6adf96bad1360bc448e7e50928d96fd7a6bc249a43a1178dde",
+    "paintPricingAvailability.js": "da5a648bfe4bbda3e7ee1f3de798afe1bf6dc4f2b024314167083e46b6e384fc",
+    "PaintingEstimator.jsx": "96e45eb0954746cbbaadf0af67085b0997131b15dfb4252053f72b055e34ffcc"
+  },
+  "externals": [
+    "react",
+    "@/api/gatedEntities",
+    "react-router-dom",
+    "lucide-react",
+    "@/components/ui/button",
+    "@/components/ui/input",
+    "@/components/ui/textarea",
+    "@/components/ui/select",
+    "@/components/estimator/builder/builderService",
+    "@/components/estimator/loadAllEntityRows",
+    "@/components/estimator/builder/sourceProjectPersistence",
+    "@/components/estimator/idempotentEntityCreate",
+    "@/components/estimator/moduleShared/ModuleActionBar",
+    "@/components/estimator/moduleShared/ModuleTemplateDialog",
+    "@/components/estimator/moduleShared/moduleProjectActions",
+    "@/components/markup/CustomerPricingTab",
+    "@/components/markup/projectCategorizer",
+    "@/components/markup/savedCustomerPricing",
+    "@/components/estimator/builder/itemIdentity",
+    "@/components/estimator/paint/paintCalc",
+    "@/components/estimator/paint/paintPricingAvailability",
+    "@/components/staff/staffEntities",
+    "react/jsx-runtime",
+    "@/components/estimator/settings/settingsSaveGuard",
+    "@/components/estimator/settings/SettingsTransferBar",
+    "@/components/estimator/settings/moduleSettingDefaults"
+  ]
+}

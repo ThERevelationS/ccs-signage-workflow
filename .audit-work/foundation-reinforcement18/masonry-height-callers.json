@@ -1,0 +1,16 @@
+{
+  "matches": [
+    {
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "line": 7,
+      "text": "export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial, includeInternalWall, wallHeightInches, internalWallHeightInches, mortarGapInches, internalMortarGapInches, settings }) {"
+    },
+    {
+      "path": "src/components/estimator/foundation/wallCalculator.js",
+      "line": 250,
+      "text": "      calcWallCosts({"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 2
+}

@@ -1,0 +1,12 @@
+{
+  "kind": [
+    "sandbox",
+    "edit",
+    "src/components/estimator/cnc/cncPricingAvailability.js"
+  ],
+  "exit": 1,
+  "data": {
+    "error": "Invalid edits: expected a non-empty array of { old_text (non-empty string), new_text (string), replace_all? (boolean) }.",
+    "code": "INVALID_INPUT"
+  }
+}

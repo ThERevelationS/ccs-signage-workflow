@@ -1,0 +1,39 @@
+{
+ "jurisdiction_id": "6ae0402b8952f4ea17fa5baf",
+ "jurisdiction_name": "Bethel",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "Application for a Zoning Certificate rev. 2026-08-01 Page 1 of 2 BETHEL TOWNSHIP TRUSTEES BETHEL TOWNSHIP ZONING DEPARTMENT 8735 SOUTH SECOND STREET – BRANDT, TIPP CITY, OHIO 45371 PHONE: 937.845.8472 FAX: 937.845.7316 APPLICATION FOR A ZONING CERTIFICATE App. No.: ZC - - SECTION I: PROPERTY INFORMATION Property Address: Acreage: Section: Town: 2 Range: 9 Parcel: A01 - Subdivision Name and Lot No.: Zoning District: SECTION II: APPLICANT INFORMATION Name Address, City, State, Zip Code Phone & Email Applicant: Property Owner: Contractor: SECTION III: PROJECT INFORMATION (CHECK ALL THAT APPLY) RESIDENTIAL / AGRICULTURAL □ NEW CONSTRUCTION □ SINGLE FAMILY DWELLING □ MULTI-FAMILY DWELLING □ BASEMENT FINISHING □ ADDITION □ SHED / GARAGE □ DECK □ POOL □ FENCE □ DEMOLITION □ HOME OCCUPATION □ TEMPORARY USE □ FREE STANDING SIGN □ TEMPORARY SIGN □ OTHER □ ACCESSORY STRUCTURE CHANGE of USE from to ",
+   "tags": [
+    "sign",
+    "temporary",
+    "type",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "71d9b7f369cf50fde6b402a229e0ce14b537a41f0675ffe0a64324d3af899ffb",
+   "source_document_id": null,
+   "source_title": "71d9b7f369cf50fde6b402a229e0ce14b537a41f0675ffe0a64324d3af899ffb.pdf",
+   "official_url": "http://www.betheltownship.org/Documents/Zoning/Application%20for%20a%20Zoning%20Certificate.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Application for a Zoning Certificate rev. 2026-08-01 Page 2 of 2 SECTION V: ATTACH SKECTCH OF PROPERTY/PROJECT Attach a plan, to scale, for the proposed use showing the location of building, parking and loading areas, traffic access and circulation drives, open space, landscaping, utilities, drainage, signs, yards, refuse and service areas, and other pertinent details. Please note that the Zoning Administrator may request additional information as needed on a case by case basis. SECTION VI: PROJECT DIMENSIONS & MISCELLANEOUS INFORMATION Primary road frontage: Secondary road frontage: Lot size: Lot width: Lot depth: Right-of-way depth: Front yard setback: Rear yard setback: Side yard setback: Building stories: Building height: Building width: First floor area (sq ft) : Second floor area (sq ft) : Total floor area (sq ft): Finished Basement? YES or NO Finished basement floor area: Fence le",
+   "tags": [
+    "sign",
+    "area",
+    "dimension",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "71d9b7f369cf50fde6b402a229e0ce14b537a41f0675ffe0a64324d3af899ffb",
+   "source_document_id": null,
+   "source_title": "71d9b7f369cf50fde6b402a229e0ce14b537a41f0675ffe0a64324d3af899ffb.pdf",
+   "official_url": "http://www.betheltownship.org/Documents/Zoning/Application%20for%20a%20Zoning%20Certificate.pdf"
+  }
+ ]
+}

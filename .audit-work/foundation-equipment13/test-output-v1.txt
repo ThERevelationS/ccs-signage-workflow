@@ -1,0 +1,29 @@
+=== UNIT ===
+ok render purity: empty counts + legacy ids -> no mutation, total $100.00
+ok unknown/orphan row visible with empty inventory
+ok normalized qty2 -> 130; input 3 -> one update + 145; remove -> 100
+ok normalized qty0 -> effective 1 charged 115; legacy dup ids x2 -> 130 -> input 3 -> 145
+ok custom rate0/qty2/delivery0 -> 0; clear rate -> 200
+ok missing parent -> Saved 600; unknown -> Not saved; explicit0 -> $0.00; missing child keeps whole
+ok counts qty0 missing does NOT block; normalized qty0 missing DOES block
+ok normalized dup rows visible, qty edit disabled, Remove all clears shadows; corrupt input -> inline error
+PASS equipment-ui passed=8 failed=0
+=== BROWSER ===
+ok S1: missing rental parent -> global alert, Saved 600, all save paths blocked
+ok S2: reload restores catalog, save CAS v1 writes real body; qty2->3 costs 145
+ok S3: mobile 390 unavailable card stays visible with Saved 600
+catalog-integrity-browser scenarios=3 failed=0
+=== ESLINT ===
+
+C:\Users\BrettHeinlein\Documents\DevinProjects\ccs-signage-workflow-clean\src\components\estimator\foundation\FoundationEquipmentTab.jsx
+   8:10  error    'Plus' is defined but never used                                                unused-imports/no-unused-imports
+  15:7   warning  'amt' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+  71:67  warning  'arr' is defined but never used. Allowed unused args must match /^_/u           unused-imports/no-unused-vars
+
+✖ 3 problems (1 error, 2 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+
+eslint_exit=1
+=== BUNDLE ===
+
+Done in 73ms

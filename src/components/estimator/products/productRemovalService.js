@@ -5,6 +5,7 @@ import { assertEstimateProductMutationAllowed } from "@/components/estimator/est
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const nowIso = () => new Date().toISOString();
 
@@ -60,9 +61,9 @@ async function loadRemovalPlan(line) {
   let revisions = [];
   if (builderProductId) {
     [builder, parts, groups, revisions] = await Promise.all([
-      base44.entities.BuilderProduct.get(builderProductId),
-      loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Builder Parts" }),
-      loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Part Groups" }),
+      staffEntities.BuilderProduct.get(builderProductId),
+      loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Builder Parts" }),
+      loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Part Groups" }),
       loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Product removal price revisions" }),
     ]);
     if (![parts, groups, revisions].every(Array.isArray)) {
@@ -105,8 +106,8 @@ function assertExpectedRecord(record, step, label, builderProductId = "") {
 async function preflightChildren(plan, builderProductId) {
   if (!builderProductId) return;
   const [parts, groups, revisions] = await Promise.all([
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Builder Parts" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Part Groups" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Builder Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Part Groups" }),
     loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Product removal price revisions" }),
   ]);
   if (![parts, groups, revisions].every(Array.isArray)) throw new Error("Builder child records could not be verified while Product removal was pending.");
@@ -134,7 +135,7 @@ async function verifyRemovalPlan(plan) {
 
   const builderProductId = plan.builder?.id || "";
   if (builderProductId) {
-    const builder = await base44.entities.BuilderProduct.get(builderProductId);
+    const builder = await staffEntities.BuilderProduct.get(builderProductId);
     assertExpectedRecord(builder, plan.builder, "Builder Product");
     await preflightChildren(plan, builderProductId);
   }
@@ -162,21 +163,21 @@ async function applyRemovalPlan(plan) {
   }
 
   const builderProductId = plan.builder?.id || "";
-  for (const step of plan.parts || []) await deleteVerified(base44.entities.BuilderPart, step, "Builder Part", builderProductId);
-  for (const step of plan.groups || []) await deleteVerified(base44.entities.BuilderPartGroup, step, "Part Group", builderProductId);
+  for (const step of plan.parts || []) await deleteVerified(staffEntities.BuilderPart, step, "Builder Part", builderProductId);
+  for (const step of plan.groups || []) await deleteVerified(staffEntities.BuilderPartGroup, step, "Part Group", builderProductId);
   for (const step of plan.revisions || []) await deleteVerified(base44.entities.BuilderPriceRevision, step, "pricing revision", builderProductId);
 
   if (builderProductId) {
     // Catch a child record created after the initial full preflight before the
     // parent Builder Product is removed.
     await preflightChildren(plan, builderProductId);
-    await deleteVerified(base44.entities.BuilderProduct, plan.builder, "Builder Product");
+    await deleteVerified(staffEntities.BuilderProduct, plan.builder, "Builder Product");
   }
 }
 
 export async function resumeProductRemoval({ estimateId, lineId = "" }) {
   if (!estimateId) throw new Error("Estimate is required to resume Product removal.");
-  let estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  let estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   let line = lineId
     ? (estimate.line_items || []).find((item) => item.line_id === lineId) || null
@@ -194,7 +195,7 @@ export async function resumeProductRemoval({ estimateId, lineId = "" }) {
   await assertEstimateProductMutationAllowed(estimate, { allowPriceAcceptanceKey: pending.key });
   await applyRemovalPlan(pending.delete_plan || {});
 
-  estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be verified while completing Product removal.");
   line = (estimate.line_items || []).find((item) => item.line_id === pending.estimate_line_id) || null;
   if (!line) {
@@ -215,7 +216,7 @@ export async function resumeProductRemoval({ estimateId, lineId = "" }) {
     last_product_removal_at: nowIso(),
   };
   await replaceEstimateFieldsIfUnchanged({
-    entity: base44.entities.AllInOneEstimate,
+    entity: staffEntities.AllInOneEstimate,
     estimateId,
     expectedFields: expectedEstimateFields(estimate, nextFields),
     nextFields,
@@ -226,7 +227,7 @@ export async function resumeProductRemoval({ estimateId, lineId = "" }) {
 
 export async function removeProductFromEstimate({ estimateId, line, expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line) throw new Error("Estimate and Product are required for removal.");
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   const currentLine = findMatchingLine(estimate, line);
   const identityLine = currentLine || line;
@@ -264,7 +265,7 @@ export async function removeProductFromEstimate({ estimateId, line, expectedEsti
 
   // Re-read immediately before the marker so preflight reads cannot hide a
   // concurrent Estimate edit behind the deletion plan.
-  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const latestEstimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!latestEstimate) throw new Error("Estimate could not be verified before starting Product removal.");
   if (estimate.updated_date && latestEstimate.updated_date && estimate.updated_date !== latestEstimate.updated_date) {
     throw new Error("This estimate changed while Product removal was being prepared. No source, Builder, Part, or Product line was deleted.");
@@ -277,7 +278,7 @@ export async function removeProductFromEstimate({ estimateId, line, expectedEsti
     ? { ...item, line_id: effectiveLineId, price_acceptance_pending: pending }
     : item);
   await replaceEstimateFieldsIfUnchanged({
-    entity: base44.entities.AllInOneEstimate,
+    entity: staffEntities.AllInOneEstimate,
     estimateId,
     expectedFields: expectedEstimateFields(latestEstimate, { line_items: lineItems }),
     nextFields: { line_items: lineItems },

@@ -1,0 +1,18 @@
+{
+ "suite": "metal-page",
+ "scenarios": 11,
+ "result": "PASS",
+ "checks": [
+  "S1 clean project: no banner, finite totals persisted, one saveSource write, no estimate handoff",
+  "S1b clean new project: preflight + idempotent create write",
+  "S2 malformed fabrication_hours: banner + aria-invalid + saved-fallback; Save disabled and Save-As-Copy each zero writes",
+  "S3 held without acknowledged totals: 'Not saved' shown, no NaN/fabricated totals",
+  "S4 malformed settings row: project-level hold, 'Metal Settings' save message, zero writes",
+  "S5 explicit-zero rates/hours/supplies honored: no banner, save proceeds",
+  "S6 quantity=0 flagged and blocked",
+  "S7 blank hours input preserved mid-edit, field flagged, zero writes",
+  "S8 dropped inventory link: catalog flag + blocked",
+  "S9 missing cost_per_unit on linked material: catalog flag + blocked",
+  "S10 fixing the flagged value clears diagnostics and saves"
+ ]
+}

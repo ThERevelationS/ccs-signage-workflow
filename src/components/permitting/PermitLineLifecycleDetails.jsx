@@ -5,6 +5,7 @@ import { AlertTriangle, BadgeCheck, ChevronDown, ChevronRight, FileKey2 } from "
 import { differenceInCalendarDays, format, isValid } from "date-fns";
 import { getPermitLineHandoffReadiness, getPermitLineLifecycleSummary, isPermitLineEffectivelyComplete } from "./permitQueue";
 import PermitLineHistory from "./PermitLineHistory";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 function parseLocalDate(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || "").trim());
@@ -128,8 +129,7 @@ function DateField({ label, value, disabled, onCommit, today = "", showTodayShor
           </button>
         )}
       </div>
-      <Input
-        type="date"
+      <CcsDateField
         aria-label={label}
         value={value || ""}
         onChange={(event) => onCommit(event.target.value || null)}
@@ -140,9 +140,10 @@ function DateField({ label, value, disabled, onCommit, today = "", showTodayShor
   );
 }
 
-export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, isRegistered, today }) {
+export default function PermitLineLifecycleDetails({ lineItem, locality = null, onUpdateField, isRegistered, today }) {
   const lifecycleSummary = useMemo(() => getPermitLineLifecycleSummary(lineItem), [lineItem]);
   const handoffReadiness = useMemo(() => getPermitLineHandoffReadiness(lineItem, today), [lineItem, today]);
+  const lineOffice = locality?.offices?.find(o => o.id === lineItem.locality_office_id);
   const correctionStatus = String(lineItem?.correction_status || "").toLowerCase();
   const hasActiveCorrections = ["corrections_received", "working_corrections"].includes(correctionStatus);
   const storedCompletionNeedsRepair = lineItem?.status === "completed" && !isPermitLineEffectivelyComplete(lineItem);
@@ -160,12 +161,38 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
     lineItem?.jurisdiction_fee_amount,
     lineItem?.jurisdiction_fee_status,
     lineItem?.jurisdiction_fee_paid_date,
-  ].some((value) => value !== null && value !== undefined && value !== ""), [lineItem]);
-  const [showAdditionalDetails, setShowAdditionalDetails] = useState(hasAdditionalDetails || handoffReadiness.hasIssues);
+    lineItem?.application_reference_number,
+    lineItem?.permit_number,
+    lineItem?.permit_document_url,
+    lineItem?.application_document_url,
+    lineItem?.site_photo_url,
+    lineItem?.note_attachment_url,
+    lineItem?.submission_method,
+    lineItem?.confirmation_number,
+    lineItem?.urgent,
+    lineItem?.application_revision,
+    lineItem?.denial_date,
+    lineItem?.denial_reason,
+    lineItem?.appeal_deadline,
+    lineItem?.fee_payment_link,
+    lineItem?.expected_response_date,
+    lineItem?.variance_required,
+    lineItem?.variance_status,
+    lineItem?.variance_hearing_date,
+    lineItem?.correction_required,
+    lineItem?.correction_deadline,
+    lineItem?.correction_resolved_date,
+    lineItem?.office_contacted_date,
+    lineItem?.office_responded_date,
+    lineItem?.inspector_contact,
+    lineItem?.approval_date,
+    lineItem?.expiration_date,
+  ].some((value) => value !== null && value !== undefined && value !== "" && value !== false), [lineItem]);
+  const [showAdditionalDetails, setShowAdditionalDetails] = useState(handoffReadiness.hasIssues);
 
   useEffect(() => {
-    if (hasAdditionalDetails || handoffReadiness.hasIssues) setShowAdditionalDetails(true);
-  }, [hasAdditionalDetails, handoffReadiness.hasIssues]);
+    if (handoffReadiness.hasIssues) setShowAdditionalDetails(true);
+  }, [handoffReadiness.hasIssues]);
 
   const expirationState = useMemo(() => {
     const expiration = parseLocalDate(lineItem?.expiration_date);
@@ -215,6 +242,17 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
         </div>
       </div>
 
+      {lineOffice && (
+        <div className="mb-2 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1.5 text-[11px] text-indigo-900">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span className="font-semibold">{lineOffice.name || "Office"}</span>
+            {lineOffice.contact_phone && <><span>·</span><a className="font-medium underline" href={`tel:${String(lineOffice.contact_phone).replace(/[^+\d]/g, "")}`}>Call {lineOffice.contact_phone}</a></>}
+            {lineOffice.contact_website && <><span>·</span><a className="font-medium underline" href={lineOffice.contact_website} target="_blank" rel="noopener noreferrer">Permit site ↗</a></>}
+            {lineOffice.contact_address && <><span>·</span><a className="font-medium underline" href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(lineOffice.contact_address)} target="_blank" rel="noopener noreferrer">Directions ↗</a></>}
+          </div>
+        </div>
+      )}
+
       {(lineItem.submitted_date || lineItem.permit_received_date) && (
         <div className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-600">
           {lineItem.submitted_date && (
@@ -226,7 +264,45 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <CommitTextField
+          label="Next action"
+          value={lineItem.next_action}
+          placeholder="What happens next? (e.g. Call the office Friday)"
+          disabled={!isRegistered}
+          onCommit={(value) => update("next_action", value)}
+        />
+        <DateField
+          label="Check back on"
+          value={lineItem.follow_up_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("follow_up_date", value)}
+        />
+        <CommitTextField
+          label="Call / chase notes"
+          value={lineItem.notes}
+          placeholder="e.g. 10/22 — called office, resubmit Friday"
+          disabled={!isRegistered}
+          onCommit={(value) => update("notes", value)}
+        />
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setShowAdditionalDetails((open) => !open)}
+        className="mt-2 inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-[11px] font-semibold text-slate-600 hover:bg-white hover:text-slate-900"
+        aria-expanded={showAdditionalDetails}
+      >
+        {showAdditionalDetails ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        {showAdditionalDetails ? "Hide application fields, corrections & fees" : "Show all application fields, corrections & fees"}
+        {hasAdditionalDetails && !showAdditionalDetails && (
+          <span className="ml-1 rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[9px] text-blue-700">Recorded info</span>
+        )}
+      </button>
+
+      {showAdditionalDetails && (
+        <>
+      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
         <CommitTextField
           label="Application / Reference #"
           value={lineItem.application_reference_number}
@@ -240,6 +316,173 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           placeholder="Issued permit #"
           disabled={!isRegistered}
           onCommit={(value) => update("permit_number", value)}
+        />
+        <CommitTextField
+          label="Permit document"
+          value={lineItem.permit_document_url}
+          placeholder="Paste the permit file or portal link"
+          disabled={!isRegistered}
+          onCommit={(value) => update("permit_document_url", value)}
+        />
+        <CommitTextField
+          label="Application packet"
+          value={lineItem.application_document_url}
+          placeholder="The filed/drafted application PDF"
+          disabled={!isRegistered}
+          onCommit={(value) => update("application_document_url", value)}
+        />
+        <CommitTextField
+          label="Site photo"
+          value={lineItem.site_photo_url}
+          placeholder="Photo of the posted sign"
+          disabled={!isRegistered}
+          onCommit={(value) => update("site_photo_url", value)}
+        />
+        <CommitTextField
+          label="Note attachment"
+          value={lineItem.note_attachment_url}
+          placeholder="Photo/scan for the notes"
+          disabled={!isRegistered}
+          onCommit={(value) => update("note_attachment_url", value)}
+        />
+        <CommitTextField
+          label="How it was submitted"
+          value={lineItem.submission_method}
+          placeholder="portal / email / fax / in-person / mail"
+          disabled={!isRegistered}
+          onCommit={(value) => update("submission_method", value)}
+        />
+        <CommitTextField
+          label="Confirmation #"
+          value={lineItem.confirmation_number}
+          placeholder="Office's submission reference"
+          disabled={!isRegistered}
+          onCommit={(value) => update("confirmation_number", value)}
+        />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={!isRegistered}
+            onClick={() => update("urgent", !lineItem.urgent)}
+            className={`min-h-11 rounded-full border px-3 text-[11px] font-semibold ${lineItem.urgent ? "border-red-400 bg-red-50 text-red-800" : "border-gray-300 bg-white text-gray-600"}`}
+          >
+            {lineItem.urgent ? "⚠ URGENT" : "Mark urgent"}
+          </button>
+        </div>
+        <CommitTextField
+          label="Revision #"
+          value={lineItem.application_revision}
+          placeholder="1"
+          disabled={!isRegistered}
+          onCommit={(value) => update("application_revision", value === "" ? null : Number(value) || null)}
+        />
+        <DateField
+          label="Denied on"
+          value={lineItem.denial_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("denial_date", value)}
+        />
+        <CommitTextField
+          label="Denial reason"
+          value={lineItem.denial_reason}
+          placeholder="Why the office denied it"
+          disabled={!isRegistered}
+          onCommit={(value) => update("denial_reason", value)}
+        />
+        <DateField
+          label="Appeal deadline"
+          value={lineItem.appeal_deadline}
+          disabled={!isRegistered}
+          onCommit={(value) => update("appeal_deadline", value)}
+        />
+        <CommitTextField
+          label="Fee payment link"
+          value={lineItem.fee_payment_link}
+          placeholder="Office's online-pay URL"
+          disabled={!isRegistered}
+          onCommit={(value) => update("fee_payment_link", value)}
+        />
+        <DateField
+          label="Office reply expected"
+          value={lineItem.expected_response_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("expected_response_date", value)}
+        />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={!isRegistered}
+            onClick={() => update("variance_required", !lineItem.variance_required)}
+            className={`min-h-11 rounded-full border px-3 text-[11px] font-semibold ${lineItem.variance_required ? "border-purple-400 bg-purple-50 text-purple-800" : "border-gray-300 bg-white text-gray-600"}`}
+          >
+            {lineItem.variance_required ? "Variance required" : "Variance"}
+          </button>
+        </div>
+        <CommitTextField
+          label="Variance status"
+          value={lineItem.variance_status}
+          placeholder="applied / hearing / approved / denied"
+          disabled={!isRegistered}
+          onCommit={(value) => update("variance_status", value)}
+        />
+        <DateField
+          label="Hearing date"
+          value={lineItem.variance_hearing_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("variance_hearing_date", value)}
+        />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={!isRegistered}
+            onClick={() => update("correction_required", !lineItem.correction_required)}
+            className={`min-h-11 rounded-full border px-3 text-[11px] font-semibold ${lineItem.correction_required ? "border-orange-400 bg-orange-50 text-orange-800" : "border-gray-300 bg-white text-gray-600"}`}
+          >
+            {lineItem.correction_required ? "Correction needed" : "Correction notice"}
+          </button>
+        </div>
+        <DateField
+          label="Fix by"
+          value={lineItem.correction_deadline}
+          disabled={!isRegistered}
+          onCommit={(value) => update("correction_deadline", value)}
+        />
+        <DateField
+          label="Fixed on"
+          value={lineItem.correction_resolved_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("correction_resolved_date", value)}
+        />
+        <DateField
+          label="Office contacted"
+          value={lineItem.office_contacted_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("office_contacted_date", value)}
+        />
+        <DateField
+          label="Office replied"
+          value={lineItem.office_responded_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("office_responded_date", value)}
+        />
+        {isRegistered && (
+          <button
+            type="button"
+            className="self-center rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100"
+            title="Copy a follow-up email you can paste to the office"
+            onClick={async () => {
+              const ref = lineItem.permit_number || lineItem.application_reference_number || lineItem.row_name || "our application";
+              const text = `Hi,\n\nFollowing up on ${ref} for ${lineItem.work_order_title || "our job"} in ${lineItem.locality_name || "your jurisdiction"} — could you share an update on its status?${lineItem.expected_response_date ? ` We were hoping to hear back by ${lineItem.expected_response_date}.` : ""}\n\nThank you!`;
+              try { await navigator.clipboard.writeText(text); } catch {}
+            }}
+          >Copy follow-up email</button>
+        )}
+        <CommitTextField
+          label="Inspector contact"
+          value={lineItem.inspector_contact}
+          placeholder="Inspector name or phone"
+          disabled={!isRegistered}
+          onCommit={(value) => update("inspector_contact", value)}
         />
         <DateField
           label="Approval date"
@@ -255,29 +498,14 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
         />
       </div>
 
-      <button
-        type="button"
-        onClick={() => setShowAdditionalDetails((open) => !open)}
-        className="mt-2 inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-[11px] font-semibold text-slate-600 hover:bg-white hover:text-slate-900"
-        aria-expanded={showAdditionalDetails}
-      >
-        {showAdditionalDetails ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-        {showAdditionalDetails ? "Hide additional details" : "Show corrections, inspections & fees"}
-        {hasAdditionalDetails && !showAdditionalDetails && (
-          <span className="ml-1 rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[9px] text-blue-700">Recorded info</span>
-        )}
-      </button>
-
-      {showAdditionalDetails && (
-        <>
       <div className="mt-3 border-t border-slate-200 pt-2">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Corrections / resubmission</span>
-          <span className="text-[10px] text-slate-500">Track the current correction cycle for this office line.</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Fixes the office asked for</span>
+          <span className="text-[10px] text-slate-500">The office wants something changed — track it here.</span>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <label className="min-w-0">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">Correction state</span>
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">Fix status</span>
             <Select
               value={lineItem.correction_status || "__none__"}
               onValueChange={(value) => update("correction_status", value === "__none__" ? null : value)}
@@ -315,12 +543,12 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
 
       <div className="mt-3 border-t border-slate-200 pt-2">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Inspection / closeout</span>
-          <span className="text-[10px] text-slate-500">Optional — record only when this permit line has a required post-issuance inspection or closeout step.</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Inspection + wrap-up</span>
+          <span className="text-[10px] text-slate-500">Only fill this in if the office requires an inspection after the permit is issued.</span>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <label className="min-w-0">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">Closeout state</span>
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">Wrap-up status</span>
             <Select
               value={lineItem.closeout_status || "__none__"}
               onValueChange={(value) => update("closeout_status", value === "__none__" ? null : value)}
@@ -347,6 +575,14 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
             today={today}
             showTodayShortcut={["inspection_scheduled", "inspection_failed", "inspection_passed"].includes(String(lineItem.closeout_status || "").toLowerCase())}
           />
+          {lineItem.inspection_date && (
+            <a
+              className="self-center text-[10px] font-semibold text-indigo-700 underline"
+              href={`data:text/calendar;charset=utf8,${encodeURIComponent(`BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART;VALUE=DATE:${String(lineItem.inspection_date).replace(/-/g, "")}\nSUMMARY:${(lineItem.row_name || "Permit")} inspection — ${lineItem.locality_name || ""}\nEND:VEVENT\nEND:VCALENDAR`)}`}
+              download={`inspection-${lineItem.inspection_date}.ics`}
+              title="Add this inspection to your calendar"
+            >+ calendar</a>
+          )}
           <DateField
             label="Closeout date"
             value={lineItem.closeout_date}
@@ -361,7 +597,7 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
       <div className="mt-3 border-t border-slate-200 pt-2">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Jurisdiction fee</span>
-          <span className="text-[10px] text-slate-500">Record the actual office fee only; do not copy estimator or repository estimates.</span>
+          <span className="text-[10px] text-slate-500">Type the real fee the office charged — don't copy the estimate.</span>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <CommitMoneyField

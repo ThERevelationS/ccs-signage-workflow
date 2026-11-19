@@ -1,0 +1,28 @@
+FAIL .audit-work/foundation-catalog-pricing11/verify-preservation.mjs  | AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal: ||   code: 'ERR_ASSERTION',
+FAIL .audit-work/foundation-equipment13/verify-engine.mjs  | AssertionError [ERR_ASSERTION]: legacy-duration-zero-fallback ||   code: 'ERR_ASSERTION',
+FAIL .audit-work/foundation-materials14/verify-financial.mjs  | FAILED foundation material financial cases=39 failed=25 || FAIL exact original whole-model parity: bag spread AssertionError [ERR_ASSERTION]
+FAIL .audit-work/foundation-o113-rules/verify-o113.mjs  | AssertionError [ERR_ASSERTION]: zero invalid seeds ||   code: 'ERR_ASSERTION',
+FAIL .audit-work/foundation-phaseb3/verify-phaseb3.mjs  | ok O-022 invalid mode errors instead of guessing || ok O-023 mat resting directly on base warns 'unneeded', supports on it error
+FAIL .audit-work/foundation-reinforcement16/verify-basic-inputs.mjs  | Basic input verification: 58/83 passed; failed=25 || FAIL frozen complete-model parity: bag spread AssertionError [ERR_ASSERTION]: totals
+FAIL .audit-work/foundation-reinforcement17/verify-reinforcement-inputs.mjs  | Reinforcement input verification: 86/111 passed; failed=25 || FAIL complete frozen model unchanged: bag spread totals
+FAIL .audit-work/foundation-reinforcement18/verify-catalog-metadata-ui.mjs  | AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value: ||   assert.ok(inputs.includes("src/components/estimator/foundat
+FAIL .audit-work/foundation-reinforcement18/verify-catalog-update-readback.mjs  | ok lost reply plus dropped metadata retains the original error and never claims recovery || FAIL server dropping declared-looking diameter/w
+FAIL .audit-work/foundation-reinforcement18/verify-conversion-cost-print.mjs  | FAIL saved Work Order with unknown Product costs never prints zero cost or 100 percent margin Reinforcement Work Order handoff is invalid: t
+FAIL .audit-work/foundation-reinforcement18/verify-cost.mjs  | AssertionError [ERR_ASSERTION]: Model source changed without a verified compatibility seam. ||   code: 'ERR_ASSERTION',
+FAIL .audit-work/foundation-reinforcement18/verify-coupled-builder-recovery.mjs  | AssertionError [ERR_ASSERTION]: Frozen code drift: .audit-work/foundation-reinforcement18/coupled-builder-pilot-bundle.mjs ||   code: 'ERR_
+FAIL .audit-work/foundation-reinforcement18/verify-coupled-page-recovery-safety.mjs  |   throw Error('Dynamic require of "' + x + '" is not supported'); || Error: Dynamic require of "react" is not supported
+FAIL .audit-work/foundation-reinforcement18/verify-coupled-page.mjs  |   throw Error('Dynamic require of "' + x + '" is not supported'); || Error: Dynamic require of "react" is not supported
+FAIL .audit-work/foundation-reinforcement18/verify-coupled-work-order.mjs  | ok material-read-failure || FAIL saved-page Do not recompute settled conversion inputs; use frozen output
+PASS .audit-work/foundation-reinforcement18/verify-material-pagination.mjs  | Real material pagination: 4/4; failed=0
+FAIL .audit-work/foundation-reinforcement18/verify-page-reinforcement.mjs  | X [ERROR] No matching export in "offline:lucide-react" for import "AlertTriangle" || X [ERROR] No matching export in "offline:lucide-react" 
+FAIL .audit-work/foundation-reinforcement18/verify-reinforcement-3d-ui.mjs  | Reinforcement 3D widget: 0/20; failed=20 || FAIL actual overview mounts eight physical bars under their concrete and leaves all pricing/prop
+FAIL .audit-work/foundation-reinforcement18/verify-reinforcement-bom-rows.mjs  | Reinforcement BOM rows: 6/8; failed=2 || FAIL unknown source quantities, weights, hours and costs are not relabeled as zero Expected values 
+FAIL .audit-work/foundation-reinforcement18/verify-reinforcement-preview-3d.mjs  | ok nonfinite or partial authored transforms fail visibly; large finite rotation is safely normalized || Reinforcement preview model: 15/16; 
+FAIL .audit-work/foundation-reinforcement18/verify-reinforcement-three-preview.mjs  | Reinforcement Three primitives: 7/8; failed=1 || FAIL role colors and labels cover only modeled steel; unknown roles or kinds fail closed Ex
+FAIL .audit-work/foundation-reinforcement18/verify-ui-lead.mjs  | ok object/array JSON reference values render repairable errors without crashing || ok failed catalog read is visible without substituting me
+FAIL .audit-work/foundation-reinforcement18/verify-validation-seam.mjs  | AssertionError [ERR_ASSERTION]: basic: FAIL frozen complete-model parity: bag spread AssertionError [ERR_ASSERTION]: totals ||   code: 'ERR
+FAIL .audit-work/foundation-reinforcement18/verify-versioned-persistence.mjs  | ok a backend dropping undeclared versioned metadata fails client readback instead of acknowledging partial data || Versioned persistence: 8/
+FAIL .audit-work/foundation-reinforcement18/verify-wall-cap-ack-page.mjs  | X [ERROR] No matching export in "s:s://@/components/estimator/builder/builderService" for import "foundationRecordSavedTotal" ||   let error
+FAIL .audit-work/foundation-reinforcement18/verify-wall-cap-geometry-ui.mjs  | FAIL shorter stock does not silently shorten a requested cut Expected 1 but found 10 instances with node type: "input" || FAIL clearing a cu
+FAIL .audit-work/foundation-reinforcement18/verify-wall-cap-transport-state.mjs  | AssertionError [ERR_ASSERTION]: wall-cap-geometry-ui-verification.json ||   code: 'ERR_ASSERTION',
+FAIL .audit-work/foundation-reinforcement18/verify-work-order-part.mjs  | ok unresolved removal, unsupported source versions and missing linked state fail closed || ok persisted future versions, malformed provenanc

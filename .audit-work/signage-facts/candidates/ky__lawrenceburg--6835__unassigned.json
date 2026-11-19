@@ -1,0 +1,41 @@
+{
+ "jurisdiction_id": "6adefbdfcef15067fb9a6835",
+ "jurisdiction_name": "Lawrenceburg",
+ "state": "KY",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "5. Sign Specifications • Sign Type: ¨Pole/Pylon ¨Building Fascia ¨Ground/Monument ¨Directional ¨Special Purpose ¨Projecting ¨ Temporary • # of Existing Signs ______Dimensions of each: ______________________________ • # of Proposed Signs _______ Dimensions of each: ____________________________ • Total Existing Square Footage of signs:____________(not required for PC,PR,or PM) • Total Proposed Square Footage of signs:_____________ • Clearance below proposed sign:_________ Height of proposed sign________ • Are any of the existing signs non-conforming? ¨ Yes ¨ No ¨ not known SIGN PERMIT REQUIRED ATTACHMENTS The following information must be provided along with this application: ¨ A sketch of proposed sign showing sign message and dimensions; ¨ A Sketch showing sign placement on building façade ¨ A sketch of site showing sign location on property, with setback distances from property lines in",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "temporary",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "5b3c80d36686aba868dc993444d6185e3934289eaf5312c4efab1683b609f4c4",
+   "source_document_id": null,
+   "source_title": "5b3c80d36686aba868dc993444d6185e3934289eaf5312c4efab1683b609f4c4.pdf",
+   "official_url": "https://lawrenceburgky.org/wp-content/uploads/723434-SIGN_PERMIT_APPLICATION.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "City of Lawrenceburg Code Enforcement Office 100 North Main Street Lawrenceburg, Kentucky 40342 Telephone: (502) 839-5372 FAX: (502) 839- www.lawrenceburgky.org APPLICATION FOR PERMIT TO INSTALL PERMANENT SIGNAGE 1. Physical Address of property where sign is to be located : ______________________________________________________________________________ 2. Applicant Information: • Business Name: _________________________________________________________ • Mailing Address:________________________________________________________ • Phone :_____________________ Fax:______________________ • E-mail Address: _________________________________________________________ • City of Lawrenceburg Business License ¨ Yes ~ License #________________ ¨ No (A City Business License is required for Applicant prior to installation of sign) 3. Sign Contractor Information: • Name:____________________________________",
+   "tags": [
+    "sign",
+    "dimension",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "5b3c80d36686aba868dc993444d6185e3934289eaf5312c4efab1683b609f4c4",
+   "source_document_id": null,
+   "source_title": "5b3c80d36686aba868dc993444d6185e3934289eaf5312c4efab1683b609f4c4.pdf",
+   "official_url": "https://lawrenceburgky.org/wp-content/uploads/723434-SIGN_PERMIT_APPLICATION.pdf"
+  }
+ ]
+}

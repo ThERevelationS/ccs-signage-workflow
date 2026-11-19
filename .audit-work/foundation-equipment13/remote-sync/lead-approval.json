@@ -1,0 +1,21 @@
+{
+  "at": "2026-11-05T19:32:06.306Z",
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "verdict": "accepted",
+  "files": {
+    "src/pages/FoundationEstimator.jsx": "efc0afde27ed7e81ff3fb5477f6f45347ccc9b0c18283b35b19758d530aae824",
+    "src/components/estimator/foundation/FoundationEquipmentTab.jsx": "8b1683060c3c0093c4014acf38d8fa86863c85612544c652a06ac487cb9bb520",
+    "src/components/estimator/foundation/foundationEquipmentBindings.js": "df7c4479c79cbaa589e6d7f1db3639ad6c85b8488d9ddba0eb04ef206f03952b",
+    "src/components/estimator/foundation/foundationCalc.js": "f11837e37d57f3ce7ce9d70ad263a5cc03c20ff3d5b2d6476136c7135f714468",
+    "src/components/estimator/foundation/foundationCatalogIntegrity.js": "f9481fa01132908822a5b909fe21ec2bd61ae219f14ecf6937f753abeb209998"
+  },
+  "tests": {
+    "critical": "engine-verification.json46PASS/29originalrows",
+    "ui": "node-v6.txt13PASS",
+    "browser": "browser-results-v6.json3PASS,clean telemetry,actualgraph verified",
+    "lint": "v3/v5 unchanged-source +v6 UI/scripts0",
+    "bundle": "page-real-metafile-v6.json exit0",
+    "prior": "save58/catalognode7/catalogbrowser4; unchanged shared source hashes"
+  }
+}

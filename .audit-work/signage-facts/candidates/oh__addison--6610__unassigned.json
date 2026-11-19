@@ -1,0 +1,51 @@
+{
+ "jurisdiction_id": "6adf8dfd954b60ed1b3d6610",
+ "jurisdiction_name": "Addison",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "Page 2 of 4 ADDISON TOWNSHIP ZONING COMPLIANCE PERMIT - Application # _______________________________________________ (assign when application is returned) Official Use Only – Application received by: _____________________________________________________ Date Received ___________________________ Fee Paid _____________________________________ Receipt #______________________________ Check #________________________________ Application Routed to: _______ Clerk _______ Building Inspector _______ Planner _______ Other (indicate others to whom the application was routed)_____________________________________ Date of Approval - _____________ Permit #______________Indicate activity(ies) for which the zoning compliance permit has been issued – if plans or attachments pertain please indicate date of such plans/drawings (and attach a copy of each) _____________________________________________________",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "97398784148883961e4fdbd528c9fbffec3ee4559e793510cb69bcaa51806400",
+   "source_document_id": null,
+   "source_title": "97398784148883961e4fdbd528c9fbffec3ee4559e793510cb69bcaa51806400.pdf",
+   "official_url": "https://addisontwp.org/wp-content/uploads/2022/03/ZONING-COMPLIANCE-PERMIT-APP.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Page 4 of 4 APPENDIX A----ZONING (EXCERPT) Section 27.05. - Zoning compliance permits. It shall be unlawful to begin excavating, constructing (building), moving, altering or repairing any structure, including accessory buildings, until the building inspector has issued a zoning compliance permit for such work, said permit including a certification of his opinion that the plans, specifications and intended use of such structure conforms in all respects to the provisions of this ordinance and the township building code. The term \"altered\" and the term \"repaired\" shall include any changes in structural parts, stairways, type of construction, type, class or kind of occupancy, light or ventilation, means of egress and ingress, or other changes affecting or regulated by the township building code, Housing Law of Michigan [Public Act No. 167 of 1917 (MCL 125.401 et seq.)], or this ordinance, ex",
+   "tags": [
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 6,
+   "source_sha256": "97398784148883961e4fdbd528c9fbffec3ee4559e793510cb69bcaa51806400",
+   "source_document_id": null,
+   "source_title": "97398784148883961e4fdbd528c9fbffec3ee4559e793510cb69bcaa51806400.pdf",
+   "official_url": "https://addisontwp.org/wp-content/uploads/2022/03/ZONING-COMPLIANCE-PERMIT-APP.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Page 3 of 4 ADDISON TOWNSHIP ZONING COMPLIANCE PERMIT APPLICATION – X. AFFIDAVIT and permission for the township, county and state officials (and those acting on behalf of those officials) to enter property in conjunction with a review of this application: I (We) swear that the information contained in this application are true at the date of this application and if found to be untrue will void any approval of this application. Approval of this application does not imply compliance with any township, county or state regulation pertaining to future use of the property that is the subject of this application and only conveys to the applicant, a confirmation (if application is approved) that the state use(s) of the subject property as proposed is (are) in permitted activities in the zoning district wherein the proposed use is located. Any permit issued following approval of this application",
+   "tags": [
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 4,
+   "source_sha256": "97398784148883961e4fdbd528c9fbffec3ee4559e793510cb69bcaa51806400",
+   "source_document_id": null,
+   "source_title": "97398784148883961e4fdbd528c9fbffec3ee4559e793510cb69bcaa51806400.pdf",
+   "official_url": "https://addisontwp.org/wp-content/uploads/2022/03/ZONING-COMPLIANCE-PERMIT-APP.pdf"
+  }
+ ]
+}

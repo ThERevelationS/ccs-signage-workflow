@@ -1,0 +1,12 @@
+{
+  "status": "merged",
+  "keep": "6a958582ba45a19e934400bf",
+  "lose": "6a958582ba45a19e93440201",
+  "audit_id": "6afdbf6632d9d6dbf157cad9",
+  "linked_estimates": 0,
+  "linked_workorders": 0,
+  "missing_schemas": [
+    "CrmSuggestion"
+  ],
+  "initial_readback_error": "Pilot tombstone readback failed; subsequent read matched."
+}

@@ -414,7 +414,7 @@ function ChipGroup({ options, selected = [], onToggle, disabled, activeColor = "
       {options.map(s => {
         const on = selected.includes(s);
         return (
-          <button
+          <button type="button"
             key={s}
             type="button"
             disabled={disabled}

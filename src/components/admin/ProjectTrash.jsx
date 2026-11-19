@@ -17,15 +17,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash2, RotateCcw, Loader2, AlertTriangle, Lock } from "lucide-react";
 import { format } from "date-fns";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { restoreWorkOrderFromLoadedTrashSnapshot } from "@/components/workflow/workOrderPersistence";
 import {
   assertSystemResetCatalogStable,
   permanentlyDeleteTrashWorkOrderFromLoadedSnapshot,
   permanentlyDeleteWorkOrderFromLoadedSnapshot,
 } from "@/components/admin/projectTrashPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const SYSTEM_RESET_CONFIRMATION = "DELETE ALL CLIENTS";
 
 async function requireCurrentAdmin(label) {

@@ -1,0 +1,28 @@
+{
+ "jurisdiction_id": "6adc436c984b9076829613eb",
+ "jurisdiction_name": "Lexington",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "APPLICATION FOR SIGN PERMIT (Please Print) Permit No.__________ APPLICANT_______________________________________________________________________________________________ (Name of property owner or business representative) ADDRESS________________________________________ CITY___________________________________ ZIP______________ NAME OF BUSINESS WHERE SIGN ERECTED__________________________________________ PHONE___________________ LOCATION OF SIGN Street Name & Number_____________________________________________________________________________ ZONING DISTRICT_________________________ TYPE OF PERMIT: PERMANENT TEMPORARY * (Maximum 7 Days) If temporary permit, indicate first day of use_________________________ final day of use____________________ TYPE OF SIGN: WALL SIGN(S) Building Frontage_____________ft. SIGN (1) Area____________Sq. Ft. Height to bottom of sign____________ft. SIGN (2) Area___",
+   "tags": [
+    "sign",
+    "permit_required",
+    "area",
+    "dimension",
+    "illumination",
+    "temporary",
+    "type",
+    "process"
+   ],
+   "weight": 15,
+   "source_sha256": "dfb48dc7e6ae5e475164a6ffa9ccf03b55a750abaa15f9b6208405497ee5191f",
+   "source_document_id": null,
+   "source_title": "dfb48dc7e6ae5e475164a6ffa9ccf03b55a750abaa15f9b6208405497ee5191f.pdf",
+   "official_url": "https://lexingtonohio.us/vertical/sites/%7BCAFC80B8-4CA0-4F86-9853-0A22A9802928%7D/uploads/APPLICATION_FOR_SIGN_PERMIT.pdf"
+  }
+ ]
+}

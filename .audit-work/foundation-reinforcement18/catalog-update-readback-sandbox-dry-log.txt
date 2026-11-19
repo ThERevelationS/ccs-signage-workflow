@@ -1,0 +1,2 @@
+One-file, three-added-line dry-run verified without mutation.
+exit=0

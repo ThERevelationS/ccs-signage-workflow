@@ -1,0 +1,26 @@
+{
+ "jurisdiction_id": "6adf79561b16b328f126828e",
+ "jurisdiction_name": "Spring Valley",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 1,
+   "snippet": "BOARD OF ZONING APPEALS A p pe al $500 Bounda ry Detennination $200 Conditional Use $500 Similar Use Determination $200 Variance $500 PUD Rezon ing - A dministrative $500 PUD Rezon ing - L ea islative $500 PUD Rezoni ng - L eg is l ative & Admin $500 PUD Rezoni ng - M odification $500 PUD Rezon ing - Pre App lication Meeti ng $500 R ezoning $500 Text amendment $250 Accesso ry Structures - Non-Residential $75 Accesso ry Structures - Residential $50 Additions - Non-Residential Under 1000 sq ft ( +$5 per 1000 sf over 1000 s f ) $75 Additions - Residential $75 Conditional Use Permit $100 Deck Permit - Uncovered Res i dential $30 Driveway Permit $40 Fence Permit $30 Home Occupa tion Pennit $30 Mobile Home Placement $30 No n -Ag Excavation/Fill/Grading $30 Open Space Development Pe rm i t ( ex : cem etery , airport, parking lot, nurseries ) $50 Princi p a l Structures - Multi Fam il y Residenc",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "process",
+    "temporary",
+    "authority"
+   ],
+   "weight": 10,
+   "source_sha256": "92fdeb452c185df6adf8b6a7972cfaaedfa11f0ee5d1234cf3cdd2a3e0b0d6e6",
+   "source_document_id": null,
+   "source_title": "92fdeb452c185df6adf8b6a7972cfaaedfa11f0ee5d1234cf3cdd2a3e0b0d6e6.pdf",
+   "official_url": "https://www.svtwp.org/sites/g/files/vyhlif9661/files/media/zoning/file/291/fees_0.pdf"
+  }
+ ]
+}

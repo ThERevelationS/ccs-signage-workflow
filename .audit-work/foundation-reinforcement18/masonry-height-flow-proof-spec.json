@@ -1,0 +1,143 @@
+{
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "sourceHead": "77101a44e4b449a2d1d74b59efa24e1e30849d1b",
+  "sourceArtifact": "masonry-rates-sandbox-final-scope.json",
+  "fixtureArtifact": "masonry-pricing-baseline-probe.json",
+  "innerFixtureArtifact": "masonry-material-valid-basis.json",
+  "innerFixtureRowName": "closed outline with internal brick",
+  "candidateCalculator": "masonry-height-candidate-wallCalculator.js",
+  "candidatePanel": "masonry-height-candidate-FoundationWallsPanel.jsx",
+  "sourceId": "synthetic-masonry-project",
+  "estimateId": "synthetic-masonry-estimate",
+  "sourceVersion": "synthetic-v1",
+  "savedVersion": "synthetic-v2",
+  "baselineSnapshot": { "totalBricks": 6, "materialCost": 321, "mortarCost": 17, "laborCost": 70, "totalCost": 408 },
+  "validCurrentSnapshotFields": { "totalBricks": 6, "materialCost": 12, "mortarCost": 0, "laborCost": 45, "totalCost": 57 },
+  "pageCases": [
+    {
+      "id": "blank-height-holds-acknowledged-not-preview",
+      "setup": "Mount valid positive seed source and catalog with baseline acknowledged snapshot. Assert current preview fields equal validCurrentSnapshotFields. Clear the actual Wall height (in) input through its onChange.",
+      "expectRawHeight": "",
+      "expectSnapshot": "baselineSnapshot",
+      "issueCode": "wall_height_unavailable",
+      "pricingUnavailable": true,
+      "saveStatus": "failed",
+      "sourceWrites": 0,
+      "builderWrites": 0
+    },
+    {
+      "id": "zero-height-is-not-twenty-four",
+      "setup": "Mount valid positive seed source. Set actual Wall height (in) input to string 0 through its onChange, then attempt Save.",
+      "expectRawHeight": 0,
+      "expectSnapshot": "baselineSnapshot",
+      "issueCode": "wall_height_unavailable",
+      "pricingUnavailable": true,
+      "saveStatus": "failed",
+      "sourceWrites": 0,
+      "builderWrites": 0
+    },
+    {
+      "id": "blank-fill-height-is-not-outer-height",
+      "setup": "Use the frozen closed-outline/internal-brick fixture row and its catalog/settings, with baseline acknowledged snapshot. Clear the actual Internal wall height (in) input through its onChange, then Save.",
+      "expectRawInternalHeight": "",
+      "expectSnapshot": "baselineSnapshot",
+      "issueCode": "internal_wall_height_unavailable",
+      "pricingUnavailable": true,
+      "saveStatus": "failed",
+      "sourceWrites": 0,
+      "builderWrites": 0
+    },
+    {
+      "id": "new-invalid-height-cannot-adopt-rendered-history",
+      "setup": "Mount an acknowledged source with no walls. Through the real FoundationWallsPanel onChange add a new component with valid seed catalog/material and heightInches empty string; include validCurrentSnapshotFields as raw calculatedCosts.",
+      "expectSnapshot": {},
+      "expectGrandTotal": null,
+      "expectTotalWallCost": null,
+      "expectTotalBrickCost": null,
+      "pricingUnavailable": true,
+      "saveStatus": "failed",
+      "sourceWrites": 0,
+      "builderWrites": 0
+    },
+    {
+      "id": "valid-repair-saves-and-updates-acknowledged-height-basis",
+      "setup": "Mount seed source with blank height and baseline acknowledged snapshot. Fill actual Wall height (in) with string 9. Verify raw value is numeric 9, current calculated fields equal validCurrentSnapshotFields, then Save. Clear height again afterward and attempt a fresh Save.",
+      "expectSavedHeight": 9,
+      "expectSavedSnapshotFields": "validCurrentSnapshotFields",
+      "expectNextHeldSnapshotFields": "validCurrentSnapshotFields",
+      "sourceWrites": 1,
+      "builderWrites": 1,
+      "expectedUpdatedAt": "synthetic-v1",
+      "savedVersion": "synthetic-v2",
+      "nextSaveStatus": "failed"
+    }
+  ],
+  "browserModes": [
+    {
+      "id": "valid",
+      "setup": "Seed current positive height, unchanged acknowledged seed snapshot, valid catalog/settings.",
+      "wallAmount": "$57.00",
+      "pricingUnavailable": false,
+      "bomRows": [["Wall 1 — Synthetic wall units", "6 units", "$12.00"]],
+      "heightValue": "9"
+    },
+    {
+      "id": "blank",
+      "setup": "Current seed wall height is empty string, savedProject retains original valid height and acknowledged snapshot.",
+      "wallAmount": "$408.00",
+      "pricingUnavailable": true,
+      "bomRows": [["Wall 1 — saved outer material", "6 units", "$321.00"], ["Wall 1 — saved mortar", "—", "$17.00"]],
+      "heightValue": "",
+      "invalidInput": "Wall height (in)",
+      "diagnosticPrefix": "Wall 1:"
+    },
+    {
+      "id": "zero",
+      "setup": "Current seed wall height is numeric zero, savedProject retains original valid height and acknowledged snapshot.",
+      "wallAmount": "$408.00",
+      "pricingUnavailable": true,
+      "bomRows": [["Wall 1 — saved outer material", "6 units", "$321.00"], ["Wall 1 — saved mortar", "—", "$17.00"]],
+      "heightValue": "0",
+      "invalidInput": "Wall height (in)",
+      "diagnosticPrefix": "Wall 1:"
+    },
+    {
+      "id": "inner-blank",
+      "setup": "Current frozen closed-outline/internal-brick fixture has internalWallHeightInches empty string. SavedProject retains its valid prior height and baselineSnapshot; preserve the same component identity.",
+      "wallAmount": "$408.00",
+      "pricingUnavailable": true,
+      "bomRows": [["Wall 1 — saved outer material", "6 units", "$321.00"], ["Wall 1 — saved mortar", "—", "$17.00"], ["Wall 1 — saved internal material", "Not saved", "Not saved"]],
+      "internalHeightValue": "",
+      "invalidInput": "Internal wall height (in)",
+      "diagnosticPrefix": "Internal wall 1:"
+    },
+    {
+      "id": "new",
+      "setup": "Acknowledged source has no walls. Current new component has empty height and raw validCurrentSnapshotFields; catalog/material are valid. No matching saved component exists.",
+      "wallAmount": "Not saved",
+      "pricingUnavailable": true,
+      "bomRows": [["Wall 1 — saved outer material", "Not saved", "Not saved"]],
+      "heightValue": "",
+      "invalidInput": "Wall height (in)",
+      "diagnosticPrefix": "Wall 1:",
+      "forbiddenAmount": "$0.00"
+    }
+  ],
+  "viewports": [{ "width": 1280, "height": 1100 }, { "width": 390, "height": 1100 }],
+  "pageCaseCount": 5,
+  "browserCaseCount": 10,
+  "constraints": [
+    "Load exact source at the specified HEAD last so older dependency artifacts cannot shadow current applied modules.",
+    "Override only the new wallCalculator and FoundationWallsPanel candidates; preserve all other source hashes.",
+    "Use real page settings mapping, save-session, acknowledged snapshot state, CAS transport helper, wall/BOM projection and money. Only boundary/closed visual stubs are permitted.",
+    "Page tests must invoke real height inputs, prove blanks remain empty rather than zero, and prove valid input persists as numeric 9.",
+    "For every blocked save path assert zero synthetic source/Builder/pricing/create writes. Use fresh callbacks after edits and saves.",
+    "Compare complete authored shapes before/after; no geometry, pricing snapshot or quantities may be rewritten by validation.",
+    "Browser uses real styled primitives, real lucide and actual controlled FoundationWallsPanel plus actual BOM. State changes must flow through actual candidate calcProject.",
+    "In browser blank mode, repair height to 9 then clear it again without saving: current header must briefly become 57 then return to acknowledged 408, not the unsaved preview.",
+    "Assert scoped exact BOM cell triplets, actual input values and aria-invalid plus visible linked diagnostic, no page overflow, and unchanged final financial/input capture around screenshots.",
+    "Persist full before/after raw project, savedProject, inventory, settings and calculations; trap fetch/XHR/SDK, block nonfixture origins, and assert all counters/errors/duplicate warnings zero.",
+    "No production records, real model calls, app source writes, schema/metadata/v2 activation, publishing or deployment."
+  ]
+}

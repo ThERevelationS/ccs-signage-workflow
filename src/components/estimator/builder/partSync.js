@@ -9,6 +9,12 @@ import { assertEstimateProductMutationAllowed } from "@/components/estimator/est
 import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, resumeBuilderMutation } from "./builderMutationRecovery";
 import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
 import { createBuilderPartWithRecovery } from "./builderPartPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
+import { calcSignageCabinetPricing } from "../foundation/foundationCalc";
+import { landscapeSummary } from "../foundation/landscapeMaterials";
+import { foundationReinforcementPartDescriptors } from "../foundation/foundationReinforcementPartDescriptors";
+import { resolveFoundationReinforcementBasis } from "../foundation/foundationReinforcementBasis";
+import { captureFoundationReinforcementFrozenPricing, preserveFoundationReinforcementFrozenPricing } from "../foundation/foundationReinforcementFrozenPricing";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -178,7 +184,7 @@ function independentPartUnitCost(part, row) {
 async function loadCatalog(entity, sort = null, { strict = false } = {}) {
   try {
     return await loadAllEntityRows({
-      entity: base44.entities[entity],
+      entity: staffEntities[entity],
       sort: sort || "created_date",
       label: `${entity} catalog`,
     });
@@ -249,7 +255,7 @@ export async function loadVerifiedBuilderPartSyncInputs({ builderProduct = null,
   const [catalogs, existingParts] = await Promise.all([
     loadBuilderCatalogs(moduleKey || builderProduct?.module_key || "", { strict: true }),
     builderProduct?.id
-      ? loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProduct.id }, sort: "sort_order", label: "Builder Parts" })
+      ? loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProduct.id }, sort: "sort_order", label: "Builder Parts" })
       : Promise.resolve([]),
   ]);
   const inventoryRowsOverride = new Map();
@@ -257,7 +263,7 @@ export async function loadVerifiedBuilderPartSyncInputs({ builderProduct = null,
     if (part.builder_sync_state !== "manual_addon" || !part.inventory_entity || !part.inventory_item_id || part.manual_cost_override) continue;
     let row;
     try {
-      row = await base44.entities[part.inventory_entity].get(part.inventory_item_id);
+      row = await staffEntities[part.inventory_entity].get(part.inventory_item_id);
     } catch (error) {
       throw new Error(`${part.inventory_entity} inventory could not be verified for Part “${part.part_name || "Part"}”: ${error?.message || "read failed"}`);
     }
@@ -321,7 +327,7 @@ function makePart({
   };
 }
 
-function extractChannel(project, catalogs = {}) {
+function extractChannel(project) {
   const parts = [];
   const hasNumber = (value) => value !== null && value !== undefined && Number.isFinite(Number(value));
   const itemLabel = (item, fallback) => item?.description?.trim() || fallback;
@@ -1945,6 +1951,18 @@ function manualCostPart({ key, name, type = "labor", subtype = "", sourcePath = 
   });
 }
 
+// The acknowledged page-level extra total (signage cabinets, landscape) from
+// the most recent capture first: builder_calculation carries the value frozen
+// at save time; the bare project field is the same acknowledged number on
+// older saves. Only finite recorded numbers count — a missing or held total
+// is null, never a guessed $0 (hasFoundationCostSnapshot's contract).
+function foundationSavedSectionTotal(...candidates) {
+  for (const value of candidates) {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+  }
+  return null;
+}
+
 function foundationEquipmentBreakdown(entry, catalogs) {
   const equipmentRow = catalogs.FoundationInventory?.byId.get(entry.equipment_id);
   if (!equipmentRow) return { baseRental: num(entry.equipment_cost), delivery: 0, attachmentCosts: [], subAttachmentCosts: [], total: num(entry.equipment_cost) };
@@ -1997,6 +2015,25 @@ function foundationEquipmentBreakdown(entry, catalogs) {
 
 function extractFoundation(project, catalogs) {
   const parts = [];
+  // Estimate-side reconciliation feeds this extractor the raw persisted
+  // record — the Foundation editor normalizes these arrays at load, but
+  // stored legacy rows can carry malformed non-array subsections (the same
+  // class cloneFoundationComponents defends against on the copy path).
+  // Coerce once so a malformed subsection degrades to "no rows" instead of
+  // crashing the Builder handoff.
+  const rows = (v) => (Array.isArray(v) ? v.filter((r) => r && typeof r === "object") : []);
+  project = {
+    ...(project || {}),
+    items: rows(project?.items),
+    walls: rows(project?.walls),
+    poles: rows(project?.poles),
+    wall_caps: rows(project?.wall_caps),
+    selected_equipment: rows(project?.selected_equipment),
+    signage_cabinets: rows(project?.signage_cabinets),
+    project_concrete_admixtures: Array.isArray(project?.project_concrete_admixtures)
+      ? project.project_concrete_admixtures
+      : [],
+  };
   (project.items || []).forEach((item, index) => {
     const concreteId = item.selected_concrete_id || project.selected_concrete_id || "";
     if (concreteId) {
@@ -2026,6 +2063,17 @@ function extractFoundation(project, catalogs) {
     }
 
     if (item.include_rebar) {
+      if (item.reinforcement_calculation_version === 2) {
+        // Versioned reinforcement hands off ONLY from the already-fresh
+        // validated snapshot — supports included — never a guessed descriptor.
+        parts.push(...foundationReinforcementPartDescriptors({ item, itemIndex: index }));
+      } else {
+        const selector = item.reinforcement_calculation_version;
+        if (selector !== undefined && selector !== null && selector !== 1) {
+          const err = new Error("Foundation reinforcement version is unsupported.");
+          err.code = "FOUNDATION_REINFORCEMENT_VERSION_UNSUPPORTED";
+          throw err;
+        }
       const size = item.foundation_type === "pillar" ? (item.pillar_rebar_size || "#4") : (item.rebar_size || "#4");
       const rebarRow = catalogs.FoundationInventory?.rows.find(
         (row) => row.material_type === "rebar" && row.rebar_size === size
@@ -2063,6 +2111,7 @@ function extractFoundation(project, catalogs) {
           builderData: item,
           calculation: { total_rebar_cost: totalRebarCost, material_cost: rebarMaterialCost, labor_cost: rebarLaborCost },
         }));
+      }
       }
     }
 
@@ -2326,7 +2375,10 @@ function extractFoundation(project, catalogs) {
         entity: "FoundationInventory",
         inventoryId: wall.materialId,
         quantity: wall.calculatedCosts?.totalBricks || 1,
-        unit: "unit",
+        // CMP-D03: poured-concrete snapshots carry materialQuantityUnit "cy"
+        // — the part unit mirrors the recorded basis instead of always
+        // claiming a unit count.
+        unit: wall.calculatedCosts?.materialQuantityUnit === "cy" ? "cy" : "unit",
         extendedCost: wall.calculatedCosts?.materialCost,
         builderData: wall,
         calculation: wall.calculatedCosts || {},
@@ -2342,7 +2394,7 @@ function extractFoundation(project, catalogs) {
         entity: "FoundationInventory",
         inventoryId: wall.internalMaterialId,
         quantity: wall.calculatedCosts?.internalTotalBricks || 1,
-        unit: "unit",
+        unit: wall.calculatedCosts?.internalMaterialQuantityUnit === "cy" ? "cy" : "unit",
         extendedCost: wall.calculatedCosts?.internalMaterialCost,
         builderData: wall,
         calculation: wall.calculatedCosts || {},
@@ -2505,7 +2557,7 @@ function extractFoundation(project, catalogs) {
         pricingBasis: { pricing_mode: "pickup_delivery" },
       }));
     }
-    breakdown.attachmentCosts.forEach((entry, attachmentIndex) => {
+    breakdown.attachmentCosts.forEach((entry) => {
       if (!entry.id) return;
       parts.push(makePart({
         key: `foundation:equipment:${index}:attachment:${entry.id}`,
@@ -2558,31 +2610,95 @@ function extractFoundation(project, catalogs) {
     }
   });
 
-  (project.signage_cabinets || []).forEach((cabinet, index) => {
+  // Signage cabinets — the authored rows are raw; the acknowledged per-row and
+  // section amounts come from the same hardened pricing check the calc runs at
+  // save time (calcSignageCabinetPricing). Rows the check can price mint their
+  // own part at the acknowledged unit_cost × quantity; a held row never mints
+  // a $0 line — the gap between the priced rows and the acknowledged section
+  // total is preserved as one saved-aggregate part, the same contract as the
+  // equipment saved-adjustment and the legacy delivery aggregate above.
+  const cabinetSavedTotal = foundationSavedSectionTotal(
+    project.builder_calculation?.cabinet_cost,
+    project.builder_calculation?.totals?.total_signage_cabinet_cost,
+    project.total_signage_cabinet_cost,
+  );
+  let representedCabinets = 0;
+  calcSignageCabinetPricing(project.signage_cabinets).forEach((row, index) => {
+    if (!row.available) return;
+    const cabinet = row.pricedEntry;
+    const quantity = cabinet.quantity === undefined || cabinet.quantity === null || cabinet.quantity === ""
+      ? 1
+      : num(cabinet.quantity, 1);
     parts.push(makePart({
       key: `foundation:cabinet:${cabinet.id || index}`,
       name: cabinet.description || "Signage Cabinet",
       type: "fabrication",
       subtype: "signage_cabinet",
       sourcePath: `signage_cabinets[${index}]`,
-      quantity: cabinet.quantity || 1,
+      quantity,
       unit: "each",
       unitCost: cabinet.unit_cost,
-      extendedCost: num(cabinet.unit_cost) * num(cabinet.quantity, 1),
+      extendedCost: row.cost,
       builderData: cabinet,
-      calculation: cabinet,
+      calculation: { ...cabinet, pricing_available: true, line_cost: row.cost },
+      pricingBasis: { pricing_mode: "cabinet_unit_cost" },
     }));
+    representedCabinets += num(row.cost);
   });
-  if (num(project.builder_calculation?.landscape_cost) > 0.005) {
+  if (cabinetSavedTotal !== null && Math.abs(cabinetSavedTotal - representedCabinets) > 0.005) {
     parts.push(manualCostPart({
-      key: "foundation:landscape",
-      name: "Landscape Materials",
+      key: "foundation:cabinet:saved-adjustment",
+      name: "Signage Cabinets — Saved Cost Adjustment",
+      type: "fabrication",
+      subtype: "signage_cabinet_adjustment",
+      sourcePath: "total_signage_cabinet_cost",
+      cost: cabinetSavedTotal - representedCabinets,
+      builderData: { signage_cabinets: project.signage_cabinets || [] },
+      calculation: { authoritative_total: cabinetSavedTotal, reconstructed_total: representedCabinets },
+    }));
+  }
+
+  // Landscape / site materials — the recorded grid is raw; landscapeSummary is
+  // the same hardened rollup the calc runs at save time. Every line it can
+  // price mints a per-material part at the acknowledged sq ft rate; lines it
+  // cannot (a held grid) never mint $0 — the gap to the acknowledged section
+  // total is preserved as a single saved-aggregate part, the same contract the
+  // old `foundation:landscape` aggregate provided for detail-less saves.
+  const landscapeSavedTotal = foundationSavedSectionTotal(
+    project.builder_calculation?.landscape_cost,
+    project.builder_calculation?.totals?.total_landscape_cost,
+    project.total_landscape_cost,
+  );
+  const landscapeCalc = landscapeSummary(project.landscape);
+  let representedLandscape = 0;
+  landscapeCalc.lines.forEach((line) => {
+    if (line.cost === null || line.sqft === null) return;
+    parts.push(makePart({
+      key: `foundation:landscape:${line.key}`,
+      name: `Site Material — ${line.label}`,
       type: "material",
       subtype: "landscape",
-      sourcePath: "builder_calculation.landscape_cost",
-      cost: project.builder_calculation.landscape_cost,
+      sourcePath: "landscape.cells",
+      quantity: line.sqft,
+      unit: "sq_ft",
+      unitCost: line.cost / line.sqft,
+      extendedCost: line.cost,
+      builderData: { material_key: line.key, cells: line.cells, cell_size_inches: project.landscape?.cell_size_inches },
+      calculation: { cells: line.cells, sqft: line.sqft, cost: line.cost },
+      pricingBasis: { pricing_mode: "landscape_material_sqft" },
+    }));
+    representedLandscape += line.cost;
+  });
+  if (landscapeSavedTotal !== null && Math.abs(landscapeSavedTotal - representedLandscape) > 0.005) {
+    parts.push(manualCostPart({
+      key: "foundation:landscape:saved-adjustment",
+      name: "Landscape Materials — Saved Cost Adjustment",
+      type: "material",
+      subtype: "landscape_adjustment",
+      sourcePath: "total_landscape_cost",
+      cost: landscapeSavedTotal - representedLandscape,
       builderData: project.landscape || {},
-      calculation: { total_cost: project.builder_calculation.landscape_cost },
+      calculation: { authoritative_total: landscapeSavedTotal, reconstructed_total: representedLandscape },
     }));
   }
   return parts;
@@ -2890,8 +3006,25 @@ function extractManualItems(project, moduleKey) {
   }));
 }
 
+// Extraction memo (#413): keyed on the project object identity + module/
+// options + catalogs identity. The same project re-rendered through sync
+// paths skips re-extraction; any payload or catalog change recomputes.
+const _extractCache = new WeakMap();
+
 export function extractBuilderParts(moduleKey, project, catalogs = {}, options = {}) {
   if (!project) return [];
+  if (typeof project !== "object") return _extractBuilderPartsComputed(moduleKey, project, catalogs, options);
+  const key = `${moduleKey}|${options?.legacyMode ? 1 : 0}`;
+  let byKey = _extractCache.get(project);
+  const hit = byKey?.get(key);
+  if (hit && hit.catalogs === catalogs) return hit.out;
+  const out = _extractBuilderPartsComputed(moduleKey, project, catalogs, options);
+  if (!byKey) { byKey = new Map(); _extractCache.set(project, byKey); }
+  byKey.set(key, { catalogs, out });
+  return out;
+}
+
+function _extractBuilderPartsComputed(moduleKey, project, catalogs = {}, options = {}) {
   switch (moduleKey) {
     case "foundation": return extractFoundation(project, catalogs);
     case "channel_letters": return extractChannel(project, catalogs);
@@ -2906,7 +3039,51 @@ export function extractBuilderParts(moduleKey, project, catalogs = {}, options =
   }
 }
 
+const FOUNDATION_REINFORCEMENT_FROZEN_UNKNOWN = { version: 1, state: "unrecorded" };
+
+const isPendingFoundationReinforcementRemoval = (part) =>
+  isFoundationReinforcementV2Descriptor(part) &&
+  part.builder_sync_state === "linked" &&
+  part.builder_data?.[PENDING_REMOVAL_KEY] === true &&
+  part.current_unit_cost === 0 &&
+  part.current_extended_cost === 0;
+
+const isFoundationReinforcementV2Descriptor = (d) =>
+  d?.pricing_basis_snapshot?.pricing_mode === "foundation_reinforcement_v2" &&
+  d?.pricing_basis_snapshot?.reinforcement?.version === 1 &&
+  d?.pricing_basis_snapshot?.reinforcement?.calculation_version === 2;
+
+// Check the selected catalog basis only; this is not geometry or settings validation.
+function foundationReinforcementCatalogBasisIsCurrent(descriptor, row) {
+  const saved = descriptor.pricing_basis_snapshot?.reinforcement?.material;
+  if (!saved || saved.kind !== "catalog" ||
+      typeof saved.inventory_updated_date !== "string" || !saved.inventory_updated_date.trim() ||
+      !row || row.id !== descriptor.inventory_item_id) return false;
+  const resolution = resolveFoundationReinforcementBasis({
+    material: descriptor.builder_data?.reinforcement_material,
+    inventory: [row],
+    settings: {},
+    quantityOverride: descriptor.builder_data?.custom_rebar_qty ?? null,
+    rateOverride: descriptor.builder_data?.custom_rebar_cost_per_ft ?? null,
+  });
+  if (resolution.issues.length) return false;
+  const current = resolution.materialSnapshot;
+  return [
+    "kind", "inventory_id", "inventory_updated_date", "pricing_unit", "original_unit",
+    "bar_diameter_inches", "weight_lb_per_ft", "cost_per_ft", "rate_source",
+  ].every(field => saved[field] === current[field]);
+}
+
 function effectiveCurrentUnitCost(descriptor, row) {
+  if (isFoundationReinforcementV2Descriptor(descriptor)) {
+    const value = descriptor.unit_cost;
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+      const err = new Error("Reinforcement v2 unit cost must be a finite non-negative number.");
+      err.code = "FOUNDATION_REINFORCEMENT_HANDOFF_INVALID";
+      throw err;
+    }
+    return value;
+  }
   if (Number.isFinite(Number(descriptor.unit_cost)) && Number(descriptor.unit_cost) !== 0) {
     return Number(descriptor.unit_cost);
   }
@@ -2938,7 +3115,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
 
   const catalogs = catalogsOverride || await loadBuilderCatalogs(builderProduct.module_key, { strict: strictCatalogs });
   const descriptors = extractBuilderParts(builderProduct.module_key, sourceProject, catalogs, { legacyMode });
-  const existing = existingPartsOverride || await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProduct.id }, sort: "sort_order", label: "Builder Parts" });
+  const existing = existingPartsOverride || await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProduct.id }, sort: "sort_order", label: "Builder Parts" });
   const byKey = new Map((existing || []).map((part) => [part.part_key, part]));
   const seen = new Set();
   const synced = [];
@@ -2948,6 +3125,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
   let removedPartCount = 0;
   let writesPerformed = 0;
   let recalcRequired = false;
+  let staleV2CatalogSeen = false;
   const recalcPartNames = [];
   const partWritePlan = [];
   const syncNow = () => planTimestamp || nowIso();
@@ -2964,7 +3142,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     partWritePlan.push(step);
     if (planOnly) return { ...old, ...patch };
     const saved = await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderPart,
+      entity: staffEntities.BuilderPart,
       id: old.id,
       expectedUpdatedAt: old.updated_date || "",
       expectedFields: expectedBuilderEntityFields(old, patch),
@@ -2985,7 +3163,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     partWritePlan.push(step);
     if (planOnly) return { ...data, id: `planned:${data.part_key}`, updated_date: "" };
     const { record: created, status } = await createBuilderPartWithRecovery({
-      entity: base44.entities.BuilderPart,
+      entity: staffEntities.BuilderPart,
       data,
       label: `Builder Part “${data.part_name || data.part_key || "Part"}” synchronization`,
     });
@@ -2993,9 +3171,25 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     return created;
   };
 
+  // (#419) Writes keep their per-row CAS guards — updateMany can't express a
+  // different expected-state/patch per row — but they now run in a bounded
+  // pool so a large sync doesn't spend N serial round-trips on the wire.
+  // `synced` slots are reserved at queue time so result order stays
+  // deterministic and matches descriptor order.
+  const WRITE_CONCURRENCY = 4;
+  const writeJobs = [];
+  const queueWrite = (work) => {
+    const slot = synced.length;
+    synced.push(null);
+    writeJobs.push(async () => {
+      synced[slot] = await work();
+    });
+  };
+
   for (let index = 0; index < descriptors.length; index += 1) {
     const descriptor = descriptors[index];
     seen.add(descriptor.part_key);
+    const isV2 = isFoundationReinforcementV2Descriptor(descriptor);
     const old = byKey.get(descriptor.part_key);
     const resolvedEntity = findEntity(catalogs, descriptor.inventory_item_id, descriptor.inventory_entity);
 
@@ -3016,7 +3210,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       };
       if (!skipUnchangedWrites || patchDiffers(old, corePatch)) {
         const patch = { ...corePatch, last_price_check_at: syncNow() };
-        synced.push(await writePartUpdate(old, patch));
+        queueWrite(() => writePartUpdate(old, patch));
       } else {
         synced.push(old);
       }
@@ -3026,23 +3220,45 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     const currentRow = findRow(catalogs, resolvedEntity, descriptor.inventory_item_id);
     const currentName = rowName(resolvedEntity, currentRow) || descriptor.part_name;
     const oldFrozenName = old?.inventory_item_name || rowName(old?.inventory_entity, old?.frozen_inventory_snapshot) || descriptor.part_name;
-    const candidate = !currentRow && oldFrozenName
+    const candidate = isV2 && !descriptor.inventory_item_id
+      ? null
+      : !currentRow && oldFrozenName
       ? findNameCandidate(catalogs, old?.inventory_entity || resolvedEntity, oldFrozenName)
       : null;
-    const hasInventoryLink = !!descriptor.inventory_item_id || !!old?.inventory_item_id || !!old?.original_inventory_item_id;
+    const hasInventoryLink = isV2
+      ? !!descriptor.inventory_item_id
+      : !!descriptor.inventory_item_id || !!old?.inventory_item_id || !!old?.original_inventory_item_id;
     const detached = hasInventoryLink && !currentRow;
     const currentPricing = pricingSnapshot(currentRow);
     const frozenPricing = pricingSnapshot(old?.frozen_inventory_snapshot);
-    const linkChanged = !!old && !!descriptor.inventory_item_id && descriptor.inventory_item_id !== (old.inventory_item_id || old.original_inventory_item_id);
+    const linkChanged = isV2
+      ? !!old && (descriptor.inventory_item_id !== (old.inventory_item_id || "") || descriptor.inventory_entity !== (old.inventory_entity || ""))
+      : !!old && !!descriptor.inventory_item_id && descriptor.inventory_item_id !== (old.inventory_item_id || old.original_inventory_item_id);
+    const catalogBasisCurrent = isV2
+      ? (!hasInventoryLink || (!!currentRow && foundationReinforcementCatalogBasisIsCurrent(descriptor, currentRow)))
+      : null;
+    const staleV2Catalog = isV2 && hasInventoryLink && !!currentRow && !catalogBasisCurrent;
     const pricingChanged = !!old && !!currentRow && !same(currentPricing, frozenPricing);
     const changed = linkChanged || pricingChanged;
     const currentUnitCost = effectiveCurrentUnitCost(descriptor, currentRow);
     const currentExtended = num(descriptor.extended_cost);
     const timestamp = syncNow();
 
+    if (staleV2Catalog && (acceptPrices || builderProduct.price_state === "unchecked")) {
+      const err = new Error("Current reinforcement catalog basis could not be verified. Reopen and save Foundation before accepting Update Price.");
+      err.code = "FOUNDATION_REINFORCEMENT_RECALC_REQUIRED";
+      throw err;
+    }
+
     const lastBuilderCalculatedPricing = old?.pricing_basis_snapshot?.builder_calculated_inventory_pricing || {};
     const builderAlreadyCalculatedCurrentPricing = !!old && same(currentPricing, lastBuilderCalculatedPricing);
-    if (
+    if (isV2) {
+      if (staleV2Catalog) {
+        recalcRequired = true;
+        staleV2CatalogSeen = true;
+        recalcPartNames.push(currentName || descriptor.part_name);
+      }
+    } else if (
       pricingChanged &&
       !legacyMode &&
       builderProduct.price_state !== "unchecked" &&
@@ -3076,7 +3292,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         changedCount += 1;
         newPartCount += 1;
       }
-      const created = await writePartCreate({
+      queueWrite(() => writePartCreate({
         builder_product_id: builderProduct.id,
         part_key: descriptor.part_key,
         sort_order: index,
@@ -3100,7 +3316,15 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         pricing_basis_snapshot: {
           ...descriptor.pricing_basis_snapshot,
           inventory_pricing: currentPricing,
-          ...(builderRecalculated ? { builder_calculated_inventory_pricing: currentPricing } : {}),
+          ...(isV2
+            ? {
+                reinforcement_catalog_basis_current: catalogBasisCurrent,
+                builder_calculated_inventory_pricing: catalogBasisCurrent ? currentPricing : {},
+                reinforcement_frozen_pricing: (acceptPrices || (establishBaseline && !legacyMode))
+                  ? captureFoundationReinforcementFrozenPricing({ ...descriptor, current_unit_cost: currentUnitCost, current_extended_cost: currentExtended })
+                  : { ...FOUNDATION_REINFORCEMENT_FROZEN_UNKNOWN },
+              }
+            : (builderRecalculated ? { builder_calculated_inventory_pricing: currentPricing } : {})),
         },
         quantity: descriptor.quantity,
         unit: descriptor.unit,
@@ -3121,15 +3345,14 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         last_price_check_at: timestamp,
         last_price_update_at: acceptPrices ? timestamp : "",
         manual_cost_override: !hasInventoryLink,
-        manual_cost: !hasInventoryLink ? descriptor.extended_cost : undefined,
+        manual_cost: !hasInventoryLink ? (isV2 ? descriptor.unit_cost : descriptor.extended_cost) : undefined,
         is_active: true,
         notes: legacyMode
           ? "Backfilled from an existing Builder Product. Saved estimator costs remain authoritative; catalog snapshot is compatibility context."
           : establishBaseline
             ? ""
             : "New Builder Part added after the Product price was frozen. Frozen cost remains $0 until Update Price is explicitly accepted.",
-      });
-      synced.push(created);
+      }));
       continue;
     }
 
@@ -3151,7 +3374,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       part_subtype: descriptor.part_subtype,
       source_module_key: builderProduct.module_key,
       source_path: descriptor.source_path,
-      inventory_entity: resolvedEntity || old.inventory_entity,
+      inventory_entity: isV2 ? descriptor.inventory_entity : resolvedEntity || old.inventory_entity,
       inventory_item_id: descriptor.inventory_item_id,
       inventory_item_name: currentName || old.inventory_item_name,
       inventory_link_state: linkState,
@@ -3163,9 +3386,17 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       pricing_basis_snapshot: {
         ...descriptor.pricing_basis_snapshot,
         inventory_pricing: currentPricing,
-        builder_calculated_inventory_pricing: builderRecalculated
-          ? currentPricing
-          : old.pricing_basis_snapshot?.builder_calculated_inventory_pricing || {},
+        ...(isV2
+          ? {
+              reinforcement_catalog_basis_current: catalogBasisCurrent,
+              builder_calculated_inventory_pricing: catalogBasisCurrent ? currentPricing : {},
+              reinforcement_frozen_pricing: shouldAccept
+                ? captureFoundationReinforcementFrozenPricing({ ...descriptor, current_unit_cost: currentUnitCost, current_extended_cost: currentExtended })
+                : preserveFoundationReinforcementFrozenPricing(old),
+            }
+          : { builder_calculated_inventory_pricing: builderRecalculated
+              ? currentPricing
+              : old.pricing_basis_snapshot?.builder_calculated_inventory_pricing || {} }),
       },
       quantity: descriptor.quantity,
       unit: descriptor.unit,
@@ -3175,22 +3406,48 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       price_delta: currentExtended - frozenExtended,
       price_delta_percent: frozenExtended ? ((currentExtended - frozenExtended) / frozenExtended) * 100 : 0,
       is_active: true,
+      ...(isV2 ? { manual_cost_override: !hasInventoryLink, ...(!hasInventoryLink ? { manual_cost: descriptor.unit_cost } : {}) } : {}),
     };
 
     if (shouldAccept) {
-      patch.frozen_inventory_snapshot = currentRow || old.frozen_inventory_snapshot || {};
+      patch.frozen_inventory_snapshot = isV2 && !hasInventoryLink ? {} : currentRow || old.frozen_inventory_snapshot || {};
       patch.frozen_unit_cost = frozenUnit;
       patch.frozen_extended_cost = frozenExtended;
-      patch.inventory_updated_date_snapshot = currentRow?.updated_date || old.inventory_updated_date_snapshot || "";
+      patch.inventory_updated_date_snapshot = isV2 && !hasInventoryLink ? "" : currentRow?.updated_date || old.inventory_updated_date_snapshot || "";
       patch.last_price_update_at = timestamp;
     }
 
     if (!skipUnchangedWrites || patchDiffers(old, patch)) {
       const writePatch = { ...patch, last_price_check_at: timestamp };
-      synced.push(await writePartUpdate(old, writePatch));
+      queueWrite(() => writePartUpdate(old, writePatch));
     } else {
       synced.push(old);
     }
+  }
+
+  // (#419) Manual add-ons each used to pay a serial inventory row read; fetch
+  // the needed rows in one bounded parallel pre-pass before the update loop.
+  const addonRowKeys = new Map();
+  for (const old of existing || []) {
+    if (seen.has(old.part_key) || old.is_active === false) continue;
+    if (old.builder_sync_state !== "manual_addon") continue;
+    if (!old.inventory_entity || !old.inventory_item_id || old.manual_cost_override) continue;
+    const key = `${old.inventory_entity}:${old.inventory_item_id}`;
+    if (!inventoryRowsOverride?.has(key) && !addonRowKeys.has(key)) addonRowKeys.set(key, old);
+  }
+  const addonRows = new Map();
+  const addonKeys = [...addonRowKeys.keys()];
+  for (let i = 0; i < addonKeys.length; i += WRITE_CONCURRENCY) {
+    await Promise.all(addonKeys.slice(i, i + WRITE_CONCURRENCY).map(async (key) => {
+      const part = addonRowKeys.get(key);
+      try {
+        addonRows.set(key, await staffEntities[part.inventory_entity].get(part.inventory_item_id));
+      } catch (error) {
+        if (strictCatalogs) {
+          throw new Error(`${part.inventory_entity} inventory could not be verified for Part “${part.part_name || "Part"}”: ${error?.message || "read failed"}`);
+        }
+      }
+    }));
   }
 
   for (const old of existing || []) {
@@ -3204,20 +3461,16 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       // Intentional independent add-ons are not produced by the Builder, but
       // they still track their own Master Inventory record for current-price
       // comparison and remain part of the Product economics on every Builder save.
-      let refreshed = old;
+      // Reserve the synced slot now; a queued refresh write overwrites it.
+      const syncedSlot = synced.length;
+      synced.push(old);
       if (old.inventory_entity && old.inventory_item_id && !old.manual_cost_override) {
         let currentRow = null;
         const inventoryKey = `${old.inventory_entity}:${old.inventory_item_id}`;
         if (inventoryRowsOverride?.has(inventoryKey)) {
           currentRow = inventoryRowsOverride.get(inventoryKey);
         } else {
-          try {
-            currentRow = await base44.entities[old.inventory_entity].get(old.inventory_item_id);
-          } catch (error) {
-            if (strictCatalogs) {
-              throw new Error(`${old.inventory_entity} inventory could not be verified for Part “${old.part_name || "Part"}”: ${error?.message || "read failed"}`);
-            }
-          }
+          currentRow = addonRows.get(inventoryKey) || null;
         }
         if (currentRow) {
           const currentUnit = independentPartUnitCost(old, currentRow);
@@ -3237,7 +3490,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
           if (changed) changedCount += 1;
           if (!skipUnchangedWrites || patchDiffers(old, patch)) {
             const writePatch = { ...patch, last_price_check_at: syncNow() };
-            refreshed = await writePartUpdate(old, writePatch);
+            writeJobs.push(async () => { synced[syncedSlot] = await writePartUpdate(old, writePatch); });
           }
         } else {
           const patch = {
@@ -3250,16 +3503,15 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
           // user uses Switch Part, but do not trigger the Builder reattach modal.
           if (!skipUnchangedWrites || patchDiffers(old, patch)) {
             const writePatch = { ...patch, last_price_check_at: syncNow() };
-            refreshed = await writePartUpdate(old, writePatch);
+            writeJobs.push(async () => { synced[syncedSlot] = await writePartUpdate(old, writePatch); });
           }
         }
       }
-      synced.push(refreshed);
       continue;
     }
     const frozenRemovedCost = num(old.frozen_extended_cost);
     if (Math.abs(frozenRemovedCost) <= 0.005) {
-      await writePartUpdate(old, {
+      writeJobs.push(() => writePartUpdate(old, {
         is_active: false,
         current_unit_cost: 0,
         current_extended_cost: 0,
@@ -3268,7 +3520,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         price_delta_percent: 0,
         last_price_check_at: syncNow(),
         notes: `${old.notes ? `${old.notes}\n` : ""}Part removed from Builder before it carried a frozen cost; historical row retained inactive.`,
-      });
+      }));
       continue;
     }
 
@@ -3288,12 +3540,19 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     };
     if (!skipUnchangedWrites || patchDiffers(old, pendingRemoval)) {
       const writePatch = { ...pendingRemoval, last_price_check_at: syncNow() };
-      synced.push(await writePartUpdate(old, writePatch));
+      queueWrite(() => writePartUpdate(old, writePatch));
     } else {
       synced.push(old);
     }
     changedCount += 1;
     removedPartCount += 1;
+  }
+
+  // (#419) Drain the write queue through a bounded pool. Jobs start in
+  // descriptor order (Promise.all invokes each chunk in order), so
+  // partWritePlan keeps its deterministic order; per-row CAS is unchanged.
+  for (let i = 0; i < writeJobs.length; i += WRITE_CONCURRENCY) {
+    await Promise.all(writeJobs.slice(i, i + WRITE_CONCURRENCY).map((run) => run()));
   }
 
   const activeEconomicParts = synced.filter((part) => part.is_active !== false);
@@ -3325,7 +3584,9 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     writesPerformed,
     recalcRequired,
     recalcReason: recalcRequired
-      ? `Master Inventory changed after this ${builderProduct.builder_name || "Builder"} was last calculated${uniqueRecalcNames.length ? `: ${uniqueRecalcNames.slice(0, 4).join(", ")}${uniqueRecalcNames.length > 4 ? "…" : ""}` : ""}. Reopen and save the Builder before accepting Update Price.`
+      ? staleV2CatalogSeen
+        ? "Current reinforcement catalog basis could not be verified. Reopen and save Foundation before accepting Update Price."
+        : `Master Inventory changed after this ${builderProduct.builder_name || "Builder"} was last calculated${uniqueRecalcNames.length ? `: ${uniqueRecalcNames.slice(0, 4).join(", ")}${uniqueRecalcNames.length > 4 ? "…" : ""}` : ""}. Reopen and save the Builder before accepting Update Price.`
       : "",
     usesDirectLiveReprice: directLiveReprice && !legacyMode,
     currentPartsTotal,
@@ -3359,7 +3620,7 @@ function assertUniqueBuilderPartKeys(parts, builderProductId, label = "Builder P
 export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan, { partsOverride = undefined } = {}) {
   const parts = partsOverride !== undefined
     ? partsOverride
-    : await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" });
+    : await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" });
   assertUniqueBuilderPartKeys(parts, builderProductId);
   const byId = new Map(parts.map((part) => [part.id, part]));
   const byKey = new Map(parts.map((part) => [part.part_key, part]));
@@ -3380,7 +3641,7 @@ export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan
         continue;
       }
       const { record: created, status } = await createBuilderPartWithRecovery({
-        entity: base44.entities.BuilderPart,
+        entity: staffEntities.BuilderPart,
         data,
         label: `Builder Part “${data.part_name || data.part_key || "Part"}” recovery create`,
       });
@@ -3405,7 +3666,7 @@ export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan
       throw new Error(`Part “${part.part_name || "Part"}” changed while a Builder mutation was pending. No unrelated Part edit was overwritten.`);
     }
     await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderPart,
+      entity: staffEntities.BuilderPart,
       id: part.id,
       expectedUpdatedAt: part.updated_date || "",
       expectedFields: expectedBuilderEntityFields(part, targetPatch),
@@ -3418,7 +3679,7 @@ export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan
 
   if (createdAny) {
     const verifiedParts = await loadAllEntityRows({
-      entity: base44.entities.BuilderPart,
+      entity: staffEntities.BuilderPart,
       query: { builder_product_id: builderProductId },
       sort: "sort_order",
       label: "Builder Parts post-create verification",
@@ -3438,10 +3699,10 @@ export async function acceptBuilderPartPrices(builderProductId, {
   const [parts, builder] = await Promise.all([
     partsOverride !== undefined
       ? Promise.resolve(partsOverride)
-      : loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
+      : loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
     builderOverride !== undefined
       ? Promise.resolve(builderOverride)
-      : base44.entities.BuilderProduct.get(builderProductId),
+      : staffEntities.BuilderProduct.get(builderProductId),
   ]);
   if (!builder?.id || builder.id !== builderProductId) {
     throw new Error("Builder Product could not be verified before accepting Part prices.");
@@ -3454,8 +3715,9 @@ export async function acceptBuilderPartPrices(builderProductId, {
   }
   const activeParts = parts.filter((row) => row.is_active !== false);
   const detachedParts = activeParts.filter((part) =>
-    part.builder_sync_state === "detached_override" ||
-    ["detached", "reattach_available"].includes(part.inventory_link_state)
+    !isPendingFoundationReinforcementRemoval(part) &&
+    (part.builder_sync_state === "detached_override" ||
+    ["detached", "reattach_available"].includes(part.inventory_link_state))
   );
 
   // All-or-nothing guard: do not mutate even one Part while any linked Part is
@@ -3475,10 +3737,13 @@ export async function acceptBuilderPartPrices(builderProductId, {
     };
   }
 
-  const staleCatalogParts = !builder || DIRECT_LIVE_REPRICE_MODULES.has(builder.module_key) || builder.price_state === "unchecked"
+  const staleCatalogParts = !builder || DIRECT_LIVE_REPRICE_MODULES.has(builder.module_key)
     ? []
     : activeParts.filter((part) => {
         if (["manual", "manual_addon", "detached_override"].includes(part.builder_sync_state)) return false;
+        if (isPendingFoundationReinforcementRemoval(part)) return false;
+        if (isFoundationReinforcementV2Descriptor(part) && part.inventory_item_id && part.pricing_basis_snapshot?.reinforcement_catalog_basis_current !== true) return true;
+        if (builder.price_state === "unchecked") return false;
         const currentPricing = pricingSnapshot(part.current_inventory_snapshot);
         const frozenPricing = pricingSnapshot(part.frozen_inventory_snapshot);
         if (same(currentPricing, frozenPricing)) return false;
@@ -3511,10 +3776,17 @@ export async function acceptBuilderPartPrices(builderProductId, {
   let activePartCount = 0;
 
   for (const part of activeParts) {
+    const pendingRemoval = !!part.builder_data?.[PENDING_REMOVAL_KEY];
+    const linkedV2 = isFoundationReinforcementV2Descriptor(part) && part.builder_sync_state === "linked";
+    const nextV2Context = linkedV2
+      ? (pendingRemoval ? { ...FOUNDATION_REINFORCEMENT_FROZEN_UNKNOWN } : captureFoundationReinforcementFrozenPricing(part))
+      : null;
+    const contextChanged = linkedV2 &&
+      !same(part.pricing_basis_snapshot?.reinforcement_frozen_pricing ?? { ...FOUNDATION_REINFORCEMENT_FROZEN_UNKNOWN }, nextV2Context);
     const wasChanged = part.price_state === "changed" ||
+      contextChanged ||
       Math.abs(num(part.current_extended_cost) - num(part.frozen_extended_cost)) > 0.005 ||
       !same(pricingSnapshot(part.current_inventory_snapshot), pricingSnapshot(part.frozen_inventory_snapshot));
-    const pendingRemoval = !!part.builder_data?.[PENDING_REMOVAL_KEY];
     if (wasChanged) {
       changedParts.push({
         part_id: part.id,
@@ -3528,6 +3800,10 @@ export async function acceptBuilderPartPrices(builderProductId, {
         new_extended_cost: num(part.current_extended_cost),
         previous_inventory_snapshot: part.frozen_inventory_snapshot || {},
         new_inventory_snapshot: part.current_inventory_snapshot || {},
+        ...(linkedV2 ? {
+          previous_reinforcement_frozen_pricing: structuredClone(part.pricing_basis_snapshot?.reinforcement_frozen_pricing ?? { ...FOUNDATION_REINFORCEMENT_FROZEN_UNKNOWN }),
+          new_reinforcement_frozen_pricing: structuredClone(nextV2Context),
+        } : {}),
         action: pendingRemoval
           ? "remove"
           : Math.abs(num(part.frozen_extended_cost)) <= 0.005 && Math.abs(num(part.current_extended_cost)) > 0.005
@@ -3551,6 +3827,7 @@ export async function acceptBuilderPartPrices(builderProductId, {
         builder_data: acceptedBuilderData,
         is_active: !pendingRemoval,
         last_price_update_at: timestamp,
+        ...(linkedV2 ? { pricing_basis_snapshot: { ...(part.pricing_basis_snapshot || {}), reinforcement_frozen_pricing: nextV2Context } } : {}),
       },
     });
     if (!pendingRemoval) activePartCount += 1;
@@ -3580,7 +3857,7 @@ export async function acceptBuilderPartPrices(builderProductId, {
 
 export async function getDetachedBuilderParts(builderProductId) {
   if (!builderProductId) return [];
-  const parts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" });
+  const parts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" });
   return (parts || [])
     .filter(requiresBuilderReattach)
     .sort((a, b) => num(a.sort_order) - num(b.sort_order))
@@ -3603,11 +3880,11 @@ function estimateBuilderLine(estimate, builderProductId) {
 }
 
 async function loadPendingAwarePartMutationContext(partId, options = {}, allowedKinds = []) {
-  const part = await base44.entities.BuilderPart.get(partId);
+  const part = await staffEntities.BuilderPart.get(partId);
   if (!part?.id) throw new Error("The Part could not be loaded.");
-  const builder = await base44.entities.BuilderProduct.get(part.builder_product_id);
+  const builder = await staffEntities.BuilderProduct.get(part.builder_product_id);
   if (!builder?.id || !builder.estimate_id) throw new Error("The Builder Product could not be verified against an estimate.");
-  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  const estimate = await staffEntities.AllInOneEstimate.get(builder.estimate_id);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   const line = estimateBuilderLine(estimate, builder.id);
   if (!line) throw new Error("This Product is no longer part of the estimate. Reload before changing its Parts.");
@@ -3643,7 +3920,7 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
   const { part, builder, estimate, line, pending, alreadyComplete } = context;
 
   if (pending) {
-    const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+    const allParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
     await resumeBuilderMutation({
       estimateId: estimate.id,
       estimate,
@@ -3661,7 +3938,7 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
     throw new Error("Independent manual Parts do not need to be detached from a Builder.");
   }
 
-  const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+  const allParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
   if (!Array.isArray(allParts) || allParts.some((row) => row?.builder_product_id !== builder.id)) {
     throw new Error("Builder Parts could not be verified before detaching this Part.");
   }
@@ -3697,6 +3974,7 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
     reattach_candidate_name: part.inventory_item_name || part.part_name || "",
     price_state: "detached",
     last_price_check_at: timestamp,
+    ...(isFoundationReinforcementV2Descriptor(part) ? { pricing_basis_snapshot: { ...(part.pricing_basis_snapshot || {}), reinforcement_frozen_pricing: { ...FOUNDATION_REINFORCEMENT_FROZEN_UNKNOWN } } } : {}),
     notes: `${part.notes ? `${part.notes}\n` : ""}Detached from Builder for independent override. Frozen pricing retained.`,
   };
   const changedParts = [{
@@ -3802,7 +4080,7 @@ export async function updateDetachedPartOverride(partId, changes = {}, options =
   const { part, builder, estimate, line, pending, alreadyComplete } = context;
 
   if (pending) {
-    const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+    const allParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
     await resumeBuilderMutation({
       estimateId: estimate.id,
       estimate,
@@ -3820,7 +4098,7 @@ export async function updateDetachedPartOverride(partId, changes = {}, options =
     throw new Error("This Part must be detached from its Builder before it can be overridden independently.");
   }
 
-  const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+  const allParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
   if (!Array.isArray(allParts) || allParts.some((row) => row?.builder_product_id !== builder.id)) {
     throw new Error("Builder Parts could not be verified before updating this detached override.");
   }
@@ -3989,9 +4267,9 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     return { reattached: [], remainingDetached: await getDetachedBuilderParts(builderProductId) };
   }
 
-  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  const builder = await staffEntities.BuilderProduct.get(builderProductId);
   if (!builder?.id || !builder.estimate_id) throw new Error("The Builder Product could not be verified against an estimate.");
-  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  const estimate = await staffEntities.AllInOneEstimate.get(builder.estimate_id);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   const line = estimateBuilderLine(estimate, builder.id);
   if (!line) throw new Error("This Product is no longer part of the estimate. Reload before reattaching Parts.");
@@ -4001,7 +4279,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     if (existingPending.kind !== "builder_reattach_parts" || String(existingPending.builder_product_id || "") !== String(builder.id)) {
       throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before reattaching Parts.");
     }
-    const currentParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+    const currentParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
     await resumeBuilderMutation({
       estimateId: estimate.id,
       estimate,
@@ -4019,7 +4297,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     };
   }
 
-  const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+  const allParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
   if (!Array.isArray(allParts) || allParts.some((part) => part?.builder_product_id !== builder.id)) {
     throw new Error("Builder Parts could not be verified before reattachment.");
   }
@@ -4037,7 +4315,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
       reattached: requestedParts.map((part) => ({ part_id: part.id, part_key: part.part_key, part_name: part.part_name })),
       remainingDetached: await getDetachedBuilderParts(builder.id),
       builderProject: builder.source_entity && builder.source_project_id
-        ? await base44.entities[builder.source_entity].get(builder.source_project_id).catch(() => null)
+        ? await staffEntities[builder.source_entity].get(builder.source_project_id).catch(() => null)
         : null,
       alreadyCompleted: true,
     };
@@ -4051,7 +4329,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
   }
 
   const [source, catalogs] = await Promise.all([
-    base44.entities[builder.source_entity].get(builder.source_project_id),
+    staffEntities[builder.source_entity].get(builder.source_project_id),
     loadBuilderCatalogs(builder.module_key, { strict: true }),
   ]);
   if (!source) throw new Error("The Builder source project could not be loaded.");
@@ -4117,7 +4395,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
   const inventoryRowsOverride = new Map();
   for (const part of allParts) {
     if (part.builder_sync_state !== "manual_addon" || !part.inventory_entity || !part.inventory_item_id || part.manual_cost_override) continue;
-    const row = await base44.entities[part.inventory_entity].get(part.inventory_item_id);
+    const row = await staffEntities[part.inventory_entity].get(part.inventory_item_id);
     if (!row) throw new Error(`${part.inventory_entity} inventory could not be verified for Part “${part.part_name || "Part"}”.`);
     inventoryRowsOverride.set(`${part.inventory_entity}:${part.inventory_item_id}`, row);
   }
@@ -4218,7 +4496,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
 
   // Re-read the source immediately before taking the durable Estimate marker so
   // a pre-existing concurrent source edit aborts before any recovery state exists.
-  const latestSource = await base44.entities[builder.source_entity].get(builder.source_project_id);
+  const latestSource = await staffEntities[builder.source_entity].get(builder.source_project_id);
   if (!latestSource) throw new Error("The Builder source project could not be verified before starting reattachment.");
   if (source.updated_date && latestSource.updated_date && source.updated_date !== latestSource.updated_date) {
     throw new Error("The Builder source project changed in another session before reattachment started. No source or Part changes were written.");

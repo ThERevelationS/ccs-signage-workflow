@@ -1,0 +1,6 @@
+{
+  "src/components/estimator/foundation/foundationCalc.js": "e7bef91ae53f4ab71b145b90c280dd45984c976f524357c2d876482ff2b03f14",
+  "src/components/estimator/foundation/foundationCatalogIntegrity.js": "834a52586967c50b596f2755482003efb729e35dc9f2963db5873e12396cc426",
+  "src/pages/FoundationEstimator.jsx": "3d501d8ab4ce195c7b12071e202c3331e81ccced9df0d432d51defd927f2b4da",
+  "base44/entities/FoundationProject.jsonc": "7afc8fe90d0cb81047a4465488e9882a890ffe7905a25373fd711ec35956dc83"
+}

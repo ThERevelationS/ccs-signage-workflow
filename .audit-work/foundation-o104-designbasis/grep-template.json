@@ -1,0 +1,16 @@
+{
+  "matches": [
+    {
+      "path": "src/components/estimator/foundation/FoundationTemplateDialog.jsx",
+      "line": 6,
+      "text": "import { createFoundationTemplateSnapshot } from \"./foundationTemplateModel\";"
+    },
+    {
+      "path": "src/pages/FoundationEstimator.jsx",
+      "line": 52,
+      "text": "import { prepareFoundationTemplatePatch } from \"@/components/estimator/foundation/foundationTemplateModel\";"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 2
+}

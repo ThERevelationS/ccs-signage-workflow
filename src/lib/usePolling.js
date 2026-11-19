@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { jitteredDelay, shouldRunFocusRefresh } from "@/lib/pollingSchedule.mjs";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 export function usePolling(
   fn,
@@ -11,6 +12,7 @@ export function usePolling(
     runOnMount = true,
     refreshOnFocus = true,
     minFocusGapMs = 15000,
+    initialDelayMs = 0,
   } = {},
 ) {
   const fnRef = useRef(fn);
@@ -53,7 +55,9 @@ export function usePolling(
     const schedule = () => {
       clearTimer();
       timerRef.current = setTimeout(async () => {
-        if (isHidden()) {
+        // Hidden tabs and an open 429 circuit breaker both skip the call —
+        // the schedule itself keeps running on its normal cadence.
+        if (isHidden() || isFleetCoolingDown()) {
           schedule();
           return;
         }
@@ -63,8 +67,11 @@ export function usePolling(
     };
 
     const refreshIfDue = () => {
-      if (isHidden()) return;
-      if (shouldRunFocusRefresh(lastRunAtRef.current, Date.now(), minFocusGapMs)) {
+      if (isHidden() || isFleetCoolingDown()) return;
+      // Only refresh on focus/visibility when the scheduled tick was already
+      // due (>= interval since the last run) — anything sooner adds calls
+      // between ticks for no new data.
+      if (shouldRunFocusRefresh(lastRunAtRef.current, Date.now(), Math.max(minFocusGapMs, intervalMs))) {
         run();
       }
     };
@@ -73,7 +80,20 @@ export function usePolling(
       if (document.visibilityState === "visible") refreshIfDue();
     };
 
-    if (runOnMount) run();
+    let initialTimer = null;
+    if (runOnMount) {
+      // Chrome widgets (bells, banners, badges) pass initialDelayMs so their
+      // first call yields the request pool to the page's own data on load.
+      if (initialDelayMs > 0) {
+        initialTimer = setTimeout(() => {
+          initialTimer = null;
+          if (isHidden() || isFleetCoolingDown()) return;
+          run();
+        }, jitteredDelay(initialDelayMs, jitter));
+      } else {
+        run();
+      }
+    }
     schedule();
 
     if (refreshOnFocus) {
@@ -84,13 +104,14 @@ export function usePolling(
 
     return () => {
       clearTimer();
+      if (initialTimer !== null) clearTimeout(initialTimer);
       if (refreshOnFocus) {
         document.removeEventListener("visibilitychange", onVisibilityChange);
         window.removeEventListener("focus", refreshIfDue);
         window.removeEventListener("online", refreshIfDue);
       }
     };
-  }, [enabled, intervalMs, pauseWhenHidden, jitter, runOnMount, refreshOnFocus, minFocusGapMs, run]);
+  }, [enabled, intervalMs, pauseWhenHidden, jitter, runOnMount, refreshOnFocus, minFocusGapMs, initialDelayMs, run]);
 
   return { runNow };
 }

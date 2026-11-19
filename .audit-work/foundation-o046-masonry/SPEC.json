@@ -1,0 +1,96 @@
+{
+  "workstream": "WS-O",
+  "item": "O-046",
+  "ticket": "CMP-D03",
+  "title": "Normalize brick/CMU/stone dims; poured concrete != unit masonry",
+  "appId": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "remoteBaseline": "main sandbox pull 2026-11-08 (no remote writes; baseline = remote-src/ verbatim snapshot)",
+  "deliverableMode": "candidates-only",
+  "remoteWrites": 0,
+  "generated": "2026-11-08",
+
+  "summary": "Poured/cast concrete walls were never actually priceable, and off-enum subtype spellings silently priced as mortared unit masonry. Remote check() required positive wall_unit_length/width/height on every wall material and isConcrete was a strict === 'concrete' string test: a UI-authored concrete row (the catalog preset wrote 0 length/height) was always held 'unavailable', a concrete row with positive unit dims priced a fictional brick count, and a row authored 'poured_concrete' or 'cmu' was silently classified unit masonry (mortar bags and courses billed on poured concrete). The candidate adds a canonical wall-material subtype classifier at the inventory boundary, makes the subtype pick the quantity method in the wall check, and gives poured concrete a distinct quantity basis: placed volume in cubic yards (outline perimeter x wall height x cataloged wall thickness), with no courses, mortar joints, or per-unit production hours. Catalog surfaces declare the basis honestly: the concrete preset clears (not zeroes) unit length/height and writes unit 'cy', cost labels read $/CY, the BOM and Builder part units follow the snapshot's recorded materialQuantityUnit, and the walls panel labels poured quantity as CY instead of 'Units'. Unit masonry (brick / cinderblock / stone / absent subtype — the legacy default for brick_stone rows) is byte-identical to remote under a 30+ scenario remote-parity control.",
+
+  "subtypeContract": {
+    "canonicalEnum": "WALL_MATERIAL_SUBTYPES = [brick, cinderblock, stone, concrete] — matches the FoundationInventory entity jsonc wall_material_subtype enum exactly. brick/cinderblock/stone = unit masonry (unit-count method); concrete = poured (CY volume method).",
+    "canonicalWallMaterialSubtype(value)": "trim/lowercase/separator-collapse then FOUNDATION_WALL_MATERIAL_SUBTYPE_ALIASES lookup. Returns enum value, or null when absent/blank (not recorded -> legacy unit-masonry default) or recorded-but-unrecognized (hold, never guessed).",
+    "wallMaterialSubtypeRecorded(value)": "undefined/null/blank-string = not recorded; anything else (including non-string values) is a recorded classification that must classify or hold.",
+    "aliases": "cmu/concrete block/cinder block/block -> cinderblock; natural stone/cut stone/limestone/sandstone/stone veneer -> stone; poured_concrete/poured/poured in place/cast_in_place/cast-in-place/monolithic concrete -> concrete; clay/face/veneer brick -> brick.",
+    "normalization": "normalizeFoundationInventoryRow rewrites a resolved subtype to canonical on the calculation copy (idempotent); absent stays absent (no key minted); unrecognized passes through VERBATIM so the wall check holds on the authored value. Authored entity rows are never mutated. Existing field-alias fills (brick_* -> wall_unit_*) unchanged: only absent canonical keys fill, an explicit canonical null still beats the legacy alias."
+  },
+
+  "quantityMethodContract": {
+    "unitMasonry": "Unchanged ported math: ceil(height / (unitH + gap)) courses x ceil(segLen / (unitL + gap)) units; mortar bags ceil(sqft*2/30) x setting rate; production hours = units / setting bricks-per-hour.",
+    "pouredConcrete": "materialQuantity = (outlineLinearInches x wallHeightInches x wallThicknessInches) / 46656 in3-per-CY. No courses (numCourses 0), no mortar (mortarCost/bags 0), no production hours (laborHours 0 — there is no per-unit basis to divide by). Labor remains wall-face-area x $/sqft with the minimum charge. Internal fill: same CY method on the reduced inner run (closed outlines still subtract outer+inner thickness per corner).",
+    "dimensionContract": "Poured rows require exactly ONE cataloged dimension: wall_unit_width_inches read as wall thickness. Length/height are not consumed (noise/0s/malformed values there never hold a poured wall). Malformed/0/negative/missing thickness -> wall_unit_width_inches_unavailable hold.",
+    "unitBasisContract": "cost_per_unit on a poured row is $/CY. A blank/absent unit field keeps the implicit CY basis; recorded spellings cy/cyd/cy.d/yd/yd3/cu_yd/cubic yard(s)/yard(s) are accepted; ANY other recorded unit (each, sqft, bag, lf, ton, non-string) -> wall_material_unit_mismatch hold — never multiply cubic yards by a per-each price.",
+    "subtypeUnavailable": "A recorded subtype the alias table cannot resolve (glass_block, precast, adobe, 5, {}) -> wall_material_subtype_unavailable hold. Unknown families are never laundered to masonry and never guessed concrete.",
+    "subtypePrecedence": "The declared subtype picks the method over material_type — a legacy brick_stone row marked 'concrete' is poured (priced per CY on its thickness).",
+    "consumedSettings": "wall_labor_rate + wall_minimum_charge still consumed (area labor). wall_labor_bricks_per_hour is only validated when a unit-masonry path consumes it (masonry outer, or masonry fill under a poured outer). wall_mortar_cost_per_bag + mortar-gap drafts/overrides are only validated when a masonry side consumes them — malformed mortar settings no longer hold a fully-poured wall they cannot affect.",
+    "overrides": "custom_outer_material_qty on a poured row is a CY override (2 -> material cost = 2 x $/CY); explicit 0 stays a legitimate free/zero-material override; malformed -> held. Mortar qty/rate overrides are only checked on masonry sides.",
+    "snapshot": "calcWalls writes materialQuantityUnit: 'cy' (and internalMaterialQuantityUnit) onto calculatedCosts ONLY for poured rows — no new keys on masonry snapshots, so byte-level snapshot parity is preserved and the recorded basis rides acknowledged saves through holds untouched."
+  },
+
+  "candidateFiles": {
+    "modified": [
+      "src/components/masterInventory/inventoryNormalization.js",
+      "src/components/estimator/foundation/wallCalculator.js",
+      "src/pages/FoundationInventory.jsx",
+      "src/components/masterInventory/foundationFieldSchema.js",
+      "src/components/estimator/foundation/FoundationWallsPanel.jsx",
+      "src/components/estimator/builder/partSync.js"
+    ],
+    "protected_untouched": [
+      "src/pages/FoundationEstimator.jsx",
+      "src/components/estimator/foundation/foundationCalc.js",
+      "src/components/estimator/foundation/foundationReinforcement*"
+    ]
+  },
+
+  "surfaceChanges": {
+    "inventoryNormalization.js": "WALL_MATERIAL_SUBTYPES / WALL_MATERIAL_UNIT_MASONRY_SUBTYPES / FOUNDATION_WALL_MATERIAL_SUBTYPE_ALIASES exports; wallMaterialSubtypeKey/wallMaterialSubtypeRecorded/canonicalWallMaterialSubtype classifiers; normalizeFoundationInventoryRow canonicalizes resolved subtypes on the calculation copy (verbatim passthrough for unrecognized; absent stays absent).",
+    "wallCalculator.js": "check(): subtype classification + wall_material_subtype_unavailable hold + wall_material_unit_mismatch hold + concrete-only-thickness dim check + canonical subtype rides the normalized copy. calcWallCosts(): CY volume method for poured rows (courses/mortar/production-hours zeroed), same for internal fill. wallPricing(): production-rate and mortar-setting checks gated to consuming sides. calcWalls(): materialQuantityUnit/internalMaterialQuantityUnit 'cy' on poured snapshots. foundationWallBomRows(): quantity labeled 'CY' vs 'units' from the snapshot's recorded basis (pre-flag snapshots keep 'units').",
+    "FoundationInventory.jsx": "isConcrete via canonicalWallMaterialSubtype (alias-spelled stored rows display/edit correctly); subtype Select displays canonical value while preserving authored verbatim in form state; masonry presets declare unit 'each'; concrete preset clears L/H to null, keeps width 8 (wall thickness), sets unit 'cy'; save coerces unit 'cy' on poured rows so a saved row never carries a contradicting unit; cost label 'Cost Per Cubic Yard' vs 'Cost Per Unit'; list display 'CY' vs 'unit' cost suffix and 'Wall depth' vs 'Size' block both use canonical classification.",
+    "foundationFieldSchema.js": "wall_material_subtype added to wall_material fields (text type, enum spelled in label — matches pole_shape/pole_pricing_mode convention); wall_unit_width_inches label notes it is the wall thickness for poured concrete.",
+    "FoundationWallsPanel.jsx": "Quantity cell reads 'CY: x.xx' when the snapshot's materialQuantityUnit is 'cy', else legacy 'Units: round'. Held rows keep whatever basis the acknowledged snapshot recorded.",
+    "partSync.js": "Wall Builder parts mirror the snapshot basis: unit 'cy' vs 'unit' from calculatedCosts.materialQuantityUnit / internalMaterialQuantityUnit."
+  },
+
+  "verification": {
+    "harness": ".audit-work/foundation-o046-masonry/test-o046-masonry.mjs — esbuild-bundles the candidate tree (testtree/ = remote deps + candidate overlay) AND the verbatim remote tree (remotetree/) under Node",
+    "result": "PASS o046-masonry — 227 passed, 0 failed",
+    "remoteParityControl": "26 calcWalls scenarios x2 (walls+pricing JSON) + 2 wallPricingIssues + 1 foundationWallBomRows + 1 calcWallCosts comparison — verbatim-remote vs candidate bundles asserting byte-identical output: brick/cmu/stone/absent-subtype basics, open+closed outlines, internal masonry walls, qty+rate+mortar overrides, explicit-0 overrides and prices, malformed/zero/negative dims, missing price, bad mortar gap (malformed + explicit-0 stack bond), bad labor/production/mortar settings, missing/ambiguous/type-mismatched/unassigned materials, missing outline, missing height, saved-wall acknowledged holds, BOM strings. Unit masonry is parity-proven; concrete is the deliberate divergence.",
+    "subtypeMatrix": "35 recorded spellings canonicalize; absent/null/blank = unrecorded; 9 unrecognized values (glass_block/precast/adobe/5/{}/true/...) recorded-but-unresolved -> null + held",
+    "boundaryFixtures": "alias canonicalization on calc copies; authored rows untouched; idempotent double-normalization; unrecognized subtype verbatim passthrough; explicit canonical null beats legacy brick_* alias (calcProject-level)",
+    "concreteFixtures": "UI-preset-shaped row (0 L/H, 8in thickness, $150) -> priced at 0.39506 CY x $150 = $59.26 material + area labor (remote: held) — the audit discrepancy reproduced and resolved; CY volume method asserted on outer + internal-fill paths incl. closed-outline corner reduction; mortar/courses/production-hours zeroed; area labor still enforced (bad wall_labor_rate/minimum settings still hold); bad bricks-per-hour/mortar settings do NOT hold fully-poured walls but DO hold masonry-fill walls; unit field accepts cy spellings, holds each/sqft/bag/lf/ton/3; CY qty overrides incl. explicit-0; brick_stone+concrete subtype precedence; acknowledged saved snapshot rides the subtype hold untouched; 'poured concrete'/'cast-in-place'/'cmu' raw aliases classify correctly pre-ingress; BOM 'CY' vs 'units' labels; calcProject ingress end-to-end (raw 'poured concrete' row -> normalized -> priced, totals.total_wall_cost/grand_total flow, zero wall-kind catalogIssues)",
+    "syntax": "esbuild parse check: all 6 candidate files OK"
+  },
+
+  "deliberateNonChanges": [
+    "calcWallCosts internal math for unit masonry is untouched — the ported course/pitch/mortar/labor formulas are identical; the only additions are isConcrete branches that bypass them.",
+    "calcWallCosts return shape unchanged — no new keys on its return object; the CY basis is written only in calcWalls' calculatedCosts snapshot layer so direct-call output parity holds.",
+    "foundationInputValidation.js untouched — it validates non-wall cost inputs (concrete overrides, cabinet prices); no wall/subtype logic lives there.",
+    "Held-wall architecture untouched — held() still preserves acknowledged calculatedCosts verbatim; available/issues contract and issue-object shape unchanged (new codes reuse the same add() shape so foundationWallCatalogIssues/calcProject catalogIssues flow works unmodified).",
+    "Entity schema untouched — FoundationInventory.jsonc already declares wall_material_subtype (brick/cinderblock/stone/concrete enum) and unit.",
+    "FoundationWallsPanel still renders the wall-level 'Mortar gap' input for concrete-material walls — cosmetic input, not consumed by the poured path; left as-is to keep the panel change minimal.",
+    "brick_stone rows keep legacy behavior: absent subtype = unit masonry; brick_* dims fill wall_unit_* at ingress exactly as O-008 established.",
+    "partSync's quantity fallback (|| 1) and all other part fields unchanged — only the unit label reads the recorded basis."
+  ],
+
+  "behaviorDeltas": [
+    "Poured-concrete catalog rows become priceable: previously always held (UI preset wrote 0 unit length/height which failed the positive-dim check) or, with positive dims, priced a fictional unit count with mortar. Now they price placed volume in CY.",
+    "Recorded unrecognized subtype spellings now hold with wall_material_subtype_unavailable instead of silently pricing as unit masonry.",
+    "Poured rows with a recorded non-CY unit now hold with wall_material_unit_mismatch instead of multiplying CY by a per-each price.",
+    "Malformed bricks-per-hour/mortar settings no longer hold fully-poured walls that cannot consume them (still hold any masonry side).",
+    "calculatedCosts snapshots on poured walls carry materialQuantityUnit: 'cy' — consumed by BOM labels, panel display, and Builder part units.",
+    "Catalog writes: concrete preset saves unit 'cy' + null L/H; save coerces unit 'cy' on poured rows; masonry presets declare unit 'each'."
+  ],
+
+  "knownRemainders": {
+    "savedSnapshotRepricing": "Walls held under the OLD remote contract (0-dim concrete holds) retain their acknowledged saved costs until repriced — by design; the first successful price writes the CY snapshot.",
+    "concreteForming": "This scope covers wall-material catalog classification only; forming_material/rebar/ready-mix delivery surfaces are Phase B-2 concerns and untouched.",
+    "panelMortarGapInput": "The wall-level mortar-gap draft input still displays on poured-material walls (unconsumed, cosmetic) — a FoundationWallsPanel UX follow-up if product wants it hidden per selected subtype.",
+    "offEnumAuthoredRows": "Entity enum restricts subtype to the canonical four at the platform layer; off-enum rows can only arrive via direct entity writes/imports — the boundary holds them rather than guessing, which is the intended fail-closed posture."
+  }
+}

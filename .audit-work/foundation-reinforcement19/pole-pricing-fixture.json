@@ -1,0 +1,78 @@
+{
+  "fixture": {
+    "project": {
+      "id": "synthetic-pole-project",
+      "updated_date": "synthetic-v1",
+      "project_name": "Pole proof project",
+      "items": [],
+      "walls": [],
+      "wall_caps": [],
+      "selected_equipment": [],
+      "signage_cabinets": [],
+      "poles": [
+        {
+          "component_id": "synthetic-pole-stock",
+          "pole_id": "synthetic-pole-stock",
+          "height_inches": 120,
+          "y_offset_inches": 36,
+          "include_pole_painting": false,
+          "pole_name": "Stock pole 20ft",
+          "pole_cost": 999,
+          "pole_painting_cost": 0,
+          "total_cost": 999
+        },
+        {
+          "component_id": "synthetic-pole-lf",
+          "pole_id": "synthetic-pole-lf",
+          "height_inches": 96,
+          "y_offset_inches": 24,
+          "include_pole_painting": true,
+          "pole_name": "LF pole",
+          "pole_cost": 888,
+          "pole_painting_cost": 111,
+          "total_cost": 999
+        }
+      ],
+      "total_pole_cost": 1887,
+      "total_pole_painting_cost": 111,
+      "customer_pricing": { "applied": false }
+    },
+    "inventory": [
+      {
+        "id": "synthetic-pole-stock",
+        "material_type": "pole",
+        "material_name": "Stock pole 20ft",
+        "pole_pricing_mode": "stock_price",
+        "pole_stock_price": 250,
+        "pole_stock_length_ft": 20,
+        "pole_width_inches": 8
+      },
+      {
+        "id": "synthetic-pole-lf",
+        "material_type": "pole",
+        "material_name": "LF pole",
+        "cost_per_unit": 12,
+        "pole_width_inches": 6
+      },
+      {
+        "id": "synthetic-wall-material",
+        "material_type": "wall_material",
+        "material_name": "Synthetic wall units",
+        "cost_per_unit": 2
+      }
+    ],
+    "settings": {
+      "pole_paint_cost_per_lf": "3.5",
+      "pole_paint_labor_per_lf": "2.5",
+      "pole_paint_size_multiplier_4in": "1",
+      "pole_paint_size_multiplier_6in": "1.25",
+      "pole_paint_size_multiplier_8in": "1.5",
+      "pole_paint_size_multiplier_10in": "1.75",
+      "pole_paint_size_multiplier_12in": "2"
+    },
+    "expectedValid": {
+      "stock": { "pole_cost": 250, "pole_painting_cost": 0, "total_cost": 250, "pole_name": "Stock pole 20ft" },
+      "lf": { "pole_cost": 120, "pole_painting_cost": 75, "total_cost": 195, "pole_name": "LF pole" }
+    }
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "name": "UserWorkspacePreferences",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Employee email these workspace preferences belong to"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Employee display name snapshot"
+    },
+    "schema_version": {
+      "type": "number",
+      "default": 1,
+      "description": "Preference blob schema version for client-side migration"
+    },
+    "preferences": {
+      "type": "object",
+      "description": "Consolidated workspace preference blob: appearance, density, navigation/taskbar, landing page, page views, accessibility. Shape defined by src/components/layout/workspacePrefs.js"
+    },
+    "profiles": {
+      "type": "array",
+      "description": "Named saved preference snapshots the employee can switch between",
+      "items": {
+        "type": "object"
+      }
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Deterministic first-create key so concurrent first writes dedupe"
+    },
+    "last_request_id": {
+      "type": "string",
+      "description": "Idempotency request id of the most recent preference update"
+    }
+  },
+  "required": [
+    "user_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
+  }
+}

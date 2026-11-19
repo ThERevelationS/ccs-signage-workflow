@@ -5,7 +5,6 @@ import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +21,7 @@ import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunity
 import { appendSalesOpportunityHistoryPages } from "../../../base44/shared/salesOpportunityHistory.mjs";
 import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue, salesStageDisplayLabel } from "@/components/sales/salesStageTrust.mjs";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const FIELD_LABELS = {
   sales_status: "Sales status",
@@ -103,6 +103,7 @@ export default function SalesOpportunityDialog({
   queueNavigation = null,
 }) {
   const [history, setHistory] = useState([]);
+  const [statusTimeline, setStatusTimeline] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
   const [historyPagination, setHistoryPagination] = useState(null);
@@ -178,6 +179,19 @@ export default function SalesOpportunityDialog({
       });
     return () => { historyRevisionRef.current += 1; };
   }, [workOrder?.id, workOrder?.updated_date, historyReloadNonce]);
+
+  useEffect(() => {
+    if (!workOrder?.id) { setStatusTimeline([]); return; }
+    let cancelled = false;
+    base44.functions.invoke("opportunityWorkspaceAction", {
+      action: "status_timeline",
+      session_token: localStorage.getItem("sss_session_token") || "",
+      opportunity_id: workOrder.id,
+    }).then((r) => {
+      if (!cancelled) setStatusTimeline(r?.data?.timeline || []);
+    }).catch(() => { if (!cancelled) setStatusTimeline([]); });
+    return () => { cancelled = true; };
+  }, [workOrder?.id]);
 
   const loadMoreSalesHistory = async () => {
     if (!workOrder?.id || !historyPagination?.has_more || historyLoading ||
@@ -517,14 +531,14 @@ export default function SalesOpportunityDialog({
             <div className={`rounded-xl border bg-white p-4 ${attentionKeys.has("next_action") ? "border-amber-300 bg-amber-50/20" : ""}`}>
               <div className="flex items-center gap-2 font-semibold text-gray-800"><CalendarClock className="h-4 w-4 text-orange-600" />Next Action</div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div><Label className="text-xs text-gray-500">Follow-up date</Label><Input type="date" value={workOrder.follow_up_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ follow_up_date: event.target.value })} className="mt-1 h-11 sm:h-9" /></div>
+                <div><Label className="text-xs text-gray-500">Follow-up date</Label><CcsDateField value={workOrder.follow_up_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ follow_up_date: event.target.value })} className="mt-1 h-11 sm:h-9" /></div>
                 <div>
                   <Label className="text-xs text-gray-500">{closeout ? "Expected close (planned)" : "Expected close"}</Label>
-                  <Input type="date" value={workOrder.expected_close_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ expected_close_date: event.target.value })} className={`mt-1 h-11 sm:h-9 ${expectedCloseOverdue ? "border-rose-300 focus-visible:ring-rose-200" : expectedCloseNear ? "border-cyan-300 focus-visible:ring-cyan-200" : ""}`} />
+                  <CcsDateField value={workOrder.expected_close_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ expected_close_date: event.target.value })} className={`mt-1 h-11 sm:h-9 ${expectedCloseOverdue ? "border-rose-300 focus-visible:ring-rose-200" : expectedCloseNear ? "border-cyan-300 focus-visible:ring-cyan-200" : ""}`} />
                   {expectedCloseOverdue && <div className="mt-1 text-[11px] font-semibold text-rose-700">Expected close is overdue — confirm the forecast or resolve the opportunity.</div>}
                   {expectedCloseNear && <div className="mt-1 text-[11px] font-medium text-cyan-700">Expected close is within the next 14 days.</div>}
                 </div>
-                <div><Label className="text-xs text-gray-500">Task deadline</Label><Input type="date" value={workOrder.current_task_deadline || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_deadline: event.target.value })} className="mt-1 h-11 sm:h-9" /></div>
+                <div><Label className="text-xs text-gray-500">Task deadline</Label><CcsDateField value={workOrder.current_task_deadline || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_deadline: event.target.value })} className="mt-1 h-11 sm:h-9" /></div>
                 <div>
                   <Label className="text-xs text-gray-500">Task owner</Label>
                   <TaskAssigneeSelect key={workOrder.id} value={workOrder.current_task_assigned_to || ""} users={users} disabled={!isRegistered || closeout} onChange={(name) => update({ current_task_assigned_to: name })} className="mt-1 h-11 sm:h-9" context={opportunityDisplayName} />
@@ -582,7 +596,7 @@ export default function SalesOpportunityDialog({
                 <div className="flex items-center gap-2 font-semibold text-gray-800"><Contact className="h-4 w-4 text-blue-600" />Customer & Contact</div>
                 {workOrder.customer_id && (
                   <Button variant="outline" size="sm" className="h-11 justify-center sm:h-8" asChild>
-                    <a href={`/EstimatorCustomers?customer=${encodeURIComponent(workOrder.customer_id)}`} target="_blank" rel="noreferrer">Open Customer<ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a>
+                    <a href={`/Customer360?id=${encodeURIComponent(workOrder.customer_id)}`} target="_blank" rel="noreferrer">Open Customer<ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a>
                   </Button>
                 )}
               </div>
@@ -614,7 +628,7 @@ export default function SalesOpportunityDialog({
                 <div>
                   <div className="text-xs text-gray-400">Quote sent date</div>
                   <div className="mt-1 flex items-center gap-2">
-                    <Input type="date" max={todayStamp} value={workOrder.date_estimate_sent || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ date_estimate_sent: event.target.value })} className="h-11 sm:h-9" />
+                    <CcsDateField max={todayStamp} value={workOrder.date_estimate_sent || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ date_estimate_sent: event.target.value })} className="h-11 sm:h-9" />
                     {!workOrder.date_estimate_sent && quoteAging.awaitingResponse && isRegistered && !closeout && <Button type="button" size="sm" variant="outline" className="h-11 px-3 text-xs sm:h-9" onClick={() => update({ date_estimate_sent: todayStamp })}>Today</Button>}
                   </div>
                   {quoteAging.awaitingResponse ? (
@@ -678,7 +692,7 @@ export default function SalesOpportunityDialog({
                     const fileUrl = safeExternalHttpUrl(file?.url);
                     const meta = fileMeta(file);
                     return (
-                      <button
+                      <button type="button"
                         key={file?.id || `${file?.name || "file"}-${index}`}
                         type="button"
                         disabled={!fileUrl}
@@ -714,6 +728,19 @@ export default function SalesOpportunityDialog({
             <div className="flex items-center gap-2 font-semibold text-gray-800"><FileClock className="h-4 w-4 text-slate-600" />Sales Activity</div>
             <p className="mt-1 text-xs text-gray-500">Committed Sales field history and older CellHistory. Legacy records may have incomplete coverage.</p>
             <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+              {statusTimeline.length > 0 && (
+                <div className="mb-3 rounded-lg border border-indigo-100 bg-indigo-50/50 p-2" aria-label="Status timeline">
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-indigo-500">Status timeline</p>
+                  <ul className="space-y-1">
+                    {statusTimeline.slice(0, 8).map((a) => (
+                      <li key={a.id} className="flex items-center justify-between gap-2 text-[11px]">
+                        <span className="text-gray-700">{String(a.event_type || "").replace(/_/g, " ")}</span>
+                        <span className="shrink-0 text-gray-400">{a.created_date ? format(new Date(a.created_date), "MMM d") : ""}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {historyLoading ? <div className="flex items-center justify-center py-8 text-sm text-gray-400"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading history…</div> : historyError ? <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{historyError}</div> : history.length === 0 ? <div className="py-6 text-center text-sm text-gray-400">No captured sales changes yet.</div> : history.map((entry) => (
                 <div key={entry.id} className="flex gap-3 rounded-lg border border-gray-100 px-3 py-2">
                   <UserRound className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />

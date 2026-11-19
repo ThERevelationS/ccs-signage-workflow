@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { estimateAuditNumber, estimateAuditSnapshot, estimateQuoteIssueKey, summarizeEstimateAuditChanges } from '../../shared/estimateRevisionAudit.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
@@ -93,9 +94,14 @@ async function settleCreatedRevisionNumber(RevisionService: any, estimateId: str
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
-    await authenticateSignShopSession(base44, body?.session_token);
+    // Fall back to auth.me() when no sign-shop session token is supplied so
+    // plain request-context auth can write audit rows too.
+    let actor = null;
+    try { actor = await authenticateSignShopSession(base44, body?.session_token); }
+    catch { actor = await base44.auth.me().catch(() => null); }
+    if (!actor?.id && !actor?.email) return Response.json({ error: 'Authentication required.' }, { status: 401 });
     const idempotencyKey = String(body?.idempotency_key || '').trim();
     const revision = body?.revision && typeof body.revision === 'object' ? body.revision : {};
     const estimateId = String(revision?.estimate_id || '').trim();
@@ -223,7 +229,7 @@ Deno.serve(async (req) => {
     return Response.json({ revision: settled, reused: false });
   } catch (error) {
     const status = Number(error?.status || error?.statusCode || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('ensureEstimateLifecycleRevision error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Estimate lifecycle revision could not be recorded safely.' : error.message,

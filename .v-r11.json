@@ -1,0 +1,425 @@
+{
+  "summary": {
+    "total": 26,
+    "resolved": 26,
+    "rate": "100.0%",
+    "failure_stages": {},
+    "geocode_misses": 0,
+    "boundary_errors": 0,
+    "city_conflicts": 0,
+    "unresolved": 0
+  },
+  "results": [
+    {
+      "address": "2835 Old State Rt. 73, Bldg #4, Wilmington, OH 45177",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "census",
+      "point": {
+        "lat": 39.429126141434,
+        "lng": -83.785691979535
+      },
+      "matched": "2835 OLD STATE RTE 73, WILMINGTON, OH, 45177",
+      "target": {
+        "type": "township",
+        "name": "Union township",
+        "county": "Clinton County"
+      },
+      "county": "Clinton County",
+      "ms": 1226,
+      "worker": 1
+    },
+    {
+      "address": "3700 L and North Turnpike Road, at Exit 58, I-65, Horse Cave, KY 42749",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.204718302358,
+        "lng": -85.934063541123
+      },
+      "matched": "3700 L AND N TURNPIKE RD, HORSE CAVE, KY, 42749",
+      "target": {
+        "type": "municipality",
+        "name": "Horse Cave city"
+      },
+      "county": "Hart County",
+      "ms": 1639,
+      "worker": 2
+    },
+    {
+      "address": "204 Courthouse Sq, Burkesville, KY 42717",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: burkesville -> burkesville",
+      "target": {
+        "type": "municipality",
+        "name": "burkesville"
+      },
+      "county": "",
+      "ms": 939,
+      "worker": 1
+    },
+    {
+      "address": "1000, 1010 Cumberland Falls Hwy, Corbin, KY 40701",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "geocoder": "census",
+      "point": {
+        "lat": 36.930074023364,
+        "lng": -84.102744631899
+      },
+      "matched": "1010 CUMBERLAND FALLS HWY, CORBIN, KY, 40701",
+      "target": {
+        "type": "municipality",
+        "name": "Corbin city"
+      },
+      "county": "Whitley County",
+      "ms": 729,
+      "worker": 2
+    },
+    {
+      "address": "200 W 2nd St-Corner, S Lock St, Waverly, OH 45690",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 39.125308502525,
+        "lng": -82.985676438575
+      },
+      "matched": "200 W 2ND ST, WAVERLY, OH, 45690",
+      "target": {
+        "type": "municipality",
+        "name": "Waverly village"
+      },
+      "county": "Pike County",
+      "ms": 2149,
+      "worker": 1
+    },
+    {
+      "address": "11029 State Route 132 E, KY-132, Sebree, KY 42455",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.599430328198,
+        "lng": -87.548062048764
+      },
+      "matched": "11029 STATE HWY 132 E, SEBREE, KY, 42455",
+      "target": {
+        "type": "township",
+        "name": "Sebree CCD",
+        "county": "Webster County"
+      },
+      "county": "Webster County",
+      "ms": 1837,
+      "worker": 2
+    },
+    {
+      "address": "1561 Hwy 55, South Road, Columbia, KY 42728",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.082937805911,
+        "lng": -85.29942448049
+      },
+      "matched": "1561 KY 55 S, COLUMBIA, KY, 42728",
+      "target": {
+        "type": "township",
+        "name": "Columbia CCD",
+        "county": "Adair County"
+      },
+      "county": "Adair County",
+      "ms": 1728,
+      "worker": 2
+    },
+    {
+      "address": "1584 US-41 ALT, Dixon, KY 42409",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 37.503614982338,
+        "lng": -87.710452457766
+      },
+      "matched": "1584 US HWY 41 ALTERNATE RTE S, DIXON, KY, 42409",
+      "target": {
+        "type": "municipality",
+        "name": "Dixon city"
+      },
+      "county": "Webster County",
+      "ms": 2529,
+      "worker": 1
+    },
+    {
+      "address": "8139 Old Troy Pike, OH-202, Huber Heights, OH 45424",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "",
+      "nominatim_error": "nominatim HTTP 429",
+      "geocoder": "census",
+      "point": {
+        "lat": 39.871204979008,
+        "lng": -84.137521437666
+      },
+      "matched": "8139 OLD TROY PIKE, HUBER HEIGHTS, OH, 45424",
+      "target": {
+        "type": "municipality",
+        "name": "Huber Heights city"
+      },
+      "county": "Montgomery County",
+      "ms": 1595,
+      "worker": 2
+    },
+    {
+      "address": "9470 OH-14, Streetsboro, OH 44241",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: streetsboro -> streetsboro",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "streetsboro"
+      },
+      "county": "",
+      "ms": 1623,
+      "worker": 1
+    },
+    {
+      "address": "9086 OH-14, Streetsboro, OH 44241",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: streetsboro -> streetsboro",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "streetsboro"
+      },
+      "county": "",
+      "ms": 1603,
+      "worker": 2
+    },
+    {
+      "address": "37063 Colorado Ave #2, Avon, OH 44011",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: avon -> avon",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "avon"
+      },
+      "county": "",
+      "ms": 1721,
+      "worker": 1
+    },
+    {
+      "address": "6301 Moonseed St, Prospect, KY 40059",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: prospect -> prospect",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "prospect"
+      },
+      "county": "",
+      "ms": 2902,
+      "worker": 2
+    },
+    {
+      "address": "211 Parkway Plaza, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 2675,
+      "worker": 1
+    },
+    {
+      "address": "115 Union St, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 1479,
+      "worker": 2
+    },
+    {
+      "address": "6474 Beechwood Dr, Avon Lake, OH 44012",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: avon lake -> avon lake",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "avon lake"
+      },
+      "county": "",
+      "ms": 1653,
+      "worker": 1
+    },
+    {
+      "address": "193 Parkway Plaza, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 1700,
+      "worker": 2
+    },
+    {
+      "address": "117 Union St, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 1712,
+      "worker": 1
+    },
+    {
+      "address": "115 1/2 Union St, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 1663,
+      "worker": 2
+    },
+    {
+      "address": "1033 Port Rd, Wurtland, KY 41144",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: wurtland -> wurtland",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "wurtland"
+      },
+      "county": "",
+      "ms": 1737,
+      "worker": 1
+    },
+    {
+      "address": "247 Parkway Plaza, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 2659,
+      "worker": 2
+    },
+    {
+      "address": "385 Parkway Plaza, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 2649,
+      "worker": 1
+    },
+    {
+      "address": "137 Cr-1648, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 1678,
+      "worker": 2
+    },
+    {
+      "address": "221 Kentucky Home Square, Bardstown, KY 40004",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bardstown -> bardstown",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bardstown"
+      },
+      "county": "",
+      "ms": 1672,
+      "worker": 1
+    },
+    {
+      "address": "1010 Granite Dr Ste 1, Bardstown, KY 40004",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: bardstown -> bardstown",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "bardstown"
+      },
+      "county": "",
+      "ms": 1684,
+      "worker": 2
+    },
+    {
+      "address": "700 Pitzer St #1, Barbourville, KY 40906",
+      "ok": true,
+      "stage": "resolved",
+      "detail": "postal rule: barbourville -> barbourville",
+      "nominatim_error": "nominatim HTTP 429",
+      "target": {
+        "type": "municipality",
+        "name": "barbourville"
+      },
+      "county": "",
+      "ms": 1688,
+      "worker": 1
+    }
+  ]
+}

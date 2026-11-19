@@ -1,0 +1,357 @@
+# SCALE MASTERPLAN — many concurrent users, zero loading stalls
+
+Goal: 25-50 staff online at once (CONFIRMED target) — kiosk + office + managers + cron + fleet, no
+user-visible 429s, no "app is busy" banners, and page loads that stay fast under
+concurrency — not just fast for one user.
+
+## Root cause (measured, not guessed)
+
+ALL entity traffic in this app converges on ONE bucket:
+
+- Every frontend read goes `staffDataRead` → `asServiceRole` → **the app's single
+  service-token caller budget** (140 entity calls / 60s).
+- Every frontend write goes `staffEntityWrite` → same bucket.
+- Every backend function action (`timeClockAction`, `smartsheetSyncAction`,
+  `queueFeed`, `notificationAction`, etc.) → same bucket.
+- Every cron → same bucket. The local permitting fleet (~16 workers, running on
+  Brett's own session token) → same bucket.
+
+**Per-user capacity does not scale today: N users do not multiply the budget —
+they divide it.** 20 staff polling status + opening pages while a cron and the
+fleet run = guaranteed saturation → retry waves → "loading issues."
+
+The fix is not one thing; it is reducing service-bucket spend per user until
+50 concurrent sessions fit inside ~60% of the ceiling.
+
+## Budget math (targets)
+
+| Source | Today (est.) | Target |
+|---|---|---|
+| Page mount burst | 16-24 calls | ≤10 (batch + bootstrap feed) |
+| Ambient polls / tab / min | ~8-12 | ≤4 (leader election + longer TTLs) |
+| `status`/`status_lite` call | 3-12 entity reads | 0-1 (memo layer) |
+| Fleet (all workers) | saturates pool for stretches | ≤30 calls/60s hard cap during work hours (DECIDED) |
+| Cron fire-minutes | wave (100+ inside 60s) | paced ≤40/min each |
+
+Sustained interactive budget available for staff: ≥100 calls/60s at all times.
+
+---
+
+## WS-0 — Instrumentation & load harness (do first; everything else is measured against it)
+
+- [x] Server-side per-invocation entity-call counter: `entityCallIsolateStats()`
+      added to `withEntityRateLimitRetry`; `entity_calls` delta now returned in
+      `staffDataRead` (batch + single) and `timeClockAction` (`status_lite`,
+      `status` clocked_in/clocked_out) responses. **Visible after next publish
+      only** — the app URL serves the last published function build.
+- [x] `window.__ccsRequestStats` reports logical calls/retries/gaveUp AND
+      `window.__ccsRequestReport()` dumps the per-action breakdown —
+      `stats.detail[label]` holds count/errors/avg/max per `fn:<name>` or
+      `<entity>.<op>` plus a `slow[]` tail of the last N slow calls.
+- [x] Load harness: `scripts/load-sim.mjs` — N concurrent sessions
+      (roster → status_lite → status → corrections, 4s think time), reports
+      p50/p95/p99, HTTP status mix, entity_calls where visible.
+- [x] Baseline recorded 2026-11-07: **N=10 → 78/120 calls 429'd, p50 1.7s,
+      p95 3.9s, p99 5.2s** — the shared bucket saturates even at 10 sessions
+      (fleet night-budget 80/min was also spending during the run).
+- [x] Post-memo re-run 2026-11-09: **429s 78→18, p50 1.7s→239ms, p95 3.9s→1.76s.
+      Live-verified: 12 concurrent status_lite → 2 entity reads.**
+      NOTE: the api/apps/functions route serves the DEPLOYED build (not just
+      published) — all function-side memos are live for real users already.
+
+## WS-1 — In-function memo layer (biggest single win for read scale)
+
+Deno function isolates persist module state across warm invocations. A short-TTL
+in-memory response memo absorbs concurrent bursts for ADVISORY reads at near-zero
+entity cost.
+
+- [x] `base44/shared/invokeMemo.ts`: per-key memo (scope+key), TTL per action,
+      `bust(scope)` on write paths, `bypass: true` flag honored.
+- [x] Applied to: `status_lite` (5s TTL), `list_correction_requests` (10s),
+      `who_is_in` (8s). `staffDataRead` already had a 45s in-isolate cache —
+      covered.
+- [x] Write bust: pre-dispatch bust for every action not on the read allowlist
+      (`TIME_CLOCK_READS`); frontend `timeClockReadCache` sends `bypass: true`
+      on reads within 10s of a write so post-write reads always refetch —
+      closes the mid-mutation re-cache race.
+- [x] Extended (2026-11-09): `status` ensureState+recovery chain memoized 3s
+      (`tcstate`, read-only + non-bypass only — mutations get fresh state);
+      status advisory summaries memoized 15s (`tcreview`: unresolved punch
+      review, corrected shift review, work-day prompt); `manageTraining`
+      bootstrap reads memoized (mine 10s, items/assignments 15s, roster 60s,
+      settings 60s). **Remaining spend: `status` full payload ~9 reads —
+      mutable punch state, bounded by WS-2.**
+- [x] Guard VERIFIED 2026-11-13: audited every memo() call site across
+      timeClockAction/manageTraining/manageSops/notificationAction — all are
+      per-caller keyed (email/id in key), role-gated to a uniform audience
+      (admin 403 before memo), or shared datasets filtered post-memo
+      (soplist/staff_roster/items). No caller-varying response shares a key.
+- [x] Honest limit: cold isolates still read; burst absorption only. This is
+      why WS-2 exists for the truly hot shared datasets.
+
+## WS-2 — Server read-through snapshots for shared datasets
+
+The expensive surfaces are per-user status and shared collections. Replace
+N-table reads-per-invoke with a single maintained snapshot read.
+
+- [x] `status_lite` read-model on `TimeClockEmployeeState.lite_snapshot`
+      (DEPLOYED 2026-11-13, activates when the schema field publishes):
+      steady lite responses are stored back on the state row (CAS-guarded
+      updateMany) with `fp_state` = hash of every state field except
+      `updated_date`/`lite_snapshot` and `fp_entry` = active entry's
+      `updated_date`. Readers: 1 call clocked-out, 2 calls clocked-in
+      (was 4-6). Break/pause rows covered by fp_state — their only write
+      sites sit inside state-bracketed transitions. The time-dependent
+      missed-punch gate is re-evaluated at serve time with a fresh clock,
+      so no expiry math and no staleness. FULL/transitional results are
+      never cached. Until the `lite_snapshot` field provisions, the store
+      is a silent no-op and the path behaves exactly as the old build —
+      verified `updated_date` unchanged, zero CAS risk.
+- [x] `who_is_in` live-status tile: already 1 filtered read + 8s memo —
+      no snapshot needed.
+- [x] `staffDataRead` hot entities — **ASSESSED & DECLINED 2026-11-14.**
+      Roster/GlobalSettings are small tables: a cold read is already 1 paged
+      filter call, so an entity snapshot saves ~0 calls (1 snapshot get = 1
+      filter). The 45s in-isolate cache + the WS-1 memo layer already absorb
+      the repeat-read bursts. Write-through invalidation adds complexity for
+      no measurable spend cut. The snapshot pattern's value is N→1 read
+      collapse, which doesn't apply at 1 call already.
+- [x] Snapshot staleness contract implemented: version-pinned fingerprints,
+      mutable inputs verified per-read (entry.updated_date), fresh-time
+      re-evaluation of time gates, any doubt → live build path.
+
+## WS-3 — Frontend concurrency multipliers
+
+- [x] Cross-tab leader election for ambient polls: `src/lib/pollLeader.js`
+      (BroadcastChannel `ccs-poll-leader` + localStorage lease ~1.5×interval,
+      crash-safe) wired into `TimeClockStatusContext` — the 180s status poll
+      now runs in one tab and broadcasts; followers apply the result.
+      Leader releases on hide/unmount for fast handoff. Kills the N-tabs
+      multiplier on the hottest ambient poll.
+- [~] Mount bootstrap: consolidate the 16-24 mount calls into the existing
+      `entities:` batch + a single "app bootstrap" payload (session verify +
+      prefs + counts + feed head) — one invoke instead of a burst.
+      **v1 shipped 2026-11-09:** new `appBootstrap` function returns session
+      identity + workspace prefs/profiles + notification unread in ONE
+      invoke; `primeReadResponse(fn,payload,data)` seeds the read-lane TTL
+      cache so `prefs_get` and `unread_count` callers resolve client-side.
+      WorkspacePreferencesProvider consumes it at ~3-5s with a prefs_get
+      fallback. Remaining v2 candidates: announcements active_feed (70s gate
+      outlives TTL — needs longer TTL or event-driven invalidate), roster
+      head for kiosks, attention_feed head for AttentionBell's 15s gate.
+- [x] Read-lane audit 2026-11-09 (PUBLISHED): every frontend-invoked gateway
+      classified. `queueFeed` (pure feed, no actions) added to unconditional
+      reads; `manageSops` (bootstrap/list/get/ack_report) and `manageTraining`
+      (bootstrap/report) added per-action — all three previously rode the
+      unthrottled write lane (no pool, no dedupe, no 429 retry) and were the
+      top 429s in the observed mount wave. Bootstrap TTLs 15s added. Remaining
+      unclassified fns are write/admin surfaces or low-frequency page calls.
+- [~] Confirm every ambient poll sits behind the ~75s `enabled` gate
+      (AttentionBell, SyncConflictAlert done — sweep for stragglers).
+      Partial: `TrainingSection` bootstrap and `SmartsheetSyncWidget` first
+      read now defer ~4-7s w/ jitter past the mount burst (invoke-cap wave
+      observed on preview mount: boardFeed/staffDataRead/timeClockAction/
+      manageTraining/notificationAction/opportunityWorkspaceAction all at
+      t=0). Mount-time page reads (queueFeed/staffDataRead/boardFeed) still
+      fire at t=0 — those ARE the page data, only consolidation fixes them.
+- [x] Idle-tab full suspension: tabs hidden >10min stop ALL ambient work
+      (partial coverage exists via `pauseWhenHidden` — extend to everything
+      that isn't user-visible). **Verified done 2026-11-09: `usePolling`'s
+      `isHidden()` check skips every network tick in hidden tabs (default
+      `pauseWhenHidden: true`), and the only raw `setInterval` that touches
+      the network (SmartsheetSyncWidget) also guards `document.hidden`.
+      Remaining unguarded intervals are UI-only ticks (timers, progress
+      bars, countdowns) — zero entity spend.**
+
+## WS-4 — Fleet isolation & budget ceiling (storm source)
+
+The fleet is the single largest discretionary spender and it shares the same
+bucket as every user.
+
+- [x] Hard fleet ceiling (DECIDED: 30 calls/60s): **already implemented** —
+      `scripts/lib/read-ledger.mjs` `paceCall()` is a fleet-wide cooperative
+      token bucket (`.audit-work/.call-ledger.jsonl`) called before every
+      gateway invoke in all 13 workers. Business-hours budget lowered
+      40→30 (`PERMIT_CALL_BUDGET_DAY`), night stays 80. NOTE: only NEW worker
+      spawns pick up the change — running processes hold the old constant.
+- [x] Fleet "business hours quiet mode" (2026-11-14, `permitting-fleet-supervisor`):
+      during the DAY_BUDGET window (local Sun-off 07:00-19:00) the supervisor
+      culls continuous heavy spenders — QUIET_ONCE (--once-capable) get a
+      deterministic-staggered hourly single pass (hash-spread over the hour,
+      spawn-registry tracked so a running pass is never double-fired), and
+      QUIET_PAUSE (no --once support: local-resolver + the research class)
+      pauses entirely until 19:00. Keepers (mirror-sync, feeder,
+      write-flusher, doc lanes, forever-runner, watchdog) stay continuous and
+      now own the full 30-call/min ledger. `FLEET_QUIET=0` disables.
+      **Activates on next supervisor restart** — the running process holds
+      the old code like every other fleet change.
+- [x] ~~Second service-token/identity for the fleet~~ — **CLOSED 2026-11-07:
+      impossible.** Secrets inventory shows one service identity (the app's
+      implicit service role) — `secrets list` holds only env vars
+      (SMARTSHEET_API_TOKEN, FILEBRIDGE_HMAC_KEY, etc.), no second caller
+      token. All entities are backend-only RLS, so NO non-service caller can
+      even read them — a "fleet identity" could not bypass the bucket even if
+      it existed. The 30-call cap + business-hours quiet mode IS the isolation.
+
+## WS-5 — Hot-path latency (continue the status parallelization)
+
+- [x] `clock_in`/`clock_out`/break/labor actions: **AUDITED 2026-11-14 —
+      already tight.** Punch paths were parallelized previously (Promise.all
+      waves + version-stamped memos; the status prompt correctly stays
+      sequential since it depends on the loaded entry). Rejected the
+      finalized-period scan memo — 1 call saved wasn't worth a freshness
+      window on a mutable payroll-admission gate.
+- [x] `boardFeed`/`queueFeed`/`staffDataRead` internals — **DONE 2026-11-14:**
+      `queueFeed`'s items scan + up to 7 include extras ran serially
+      (~8×200ms on cold mount). Now thunks under one `Promise.all` — distinct
+      payload keys, per-extra try/catch preserved, fail-open semantics kept.
+      `boardFeed` already single-filter; `staffDataRead` is one gateway read.
+- [x] `monitor_stale_shifts` (Time Clock cron): reads only clocked-in
+      entries/states — confirmed. Also bounded the `missed_clock_out`
+      exception read to `$in` on the stale entries' case_keys (was an
+      unbounded full-table page every run, growing forever; dedupe
+      semantics identical — any-status cases still suppress re-creation
+      and duplicates still surface as conflicts). Deployed 2026-11-13.
+
+## WS-6 — Payload diet
+
+- [x] **ASSESSMENT CLOSED 2026-11-14 — wins already taken.** `face_descriptors`
+      is FIELD_DENYLIST'd in `staffDataRead` (roster never carries embeddings;
+      face matching has its own channel). `my_history` projects server-side.
+      All hot board paths (ProductQueues, MyWorkflow, EstimatorQueues,
+      SalesPipeline) route through `queueFeed`/`boardFeed` which project
+      server-side (QUEUE_WO_FIELDS/CRM_ACTIVITY_FIELDS/GENERAL_TASK_FIELDS/
+      MY_WORKFLOW_USER_FIELDS). Remaining direct full-row reads are scoped
+      admin/estimator edit surfaces that legitimately need the whole record.
+      No further diet available without breaking edit surfaces.
+
+## WS-7 — Data hygiene (the "one bad row breaks a batch" class)
+
+- [x] Validation sweep — **DONE 2026-11-14** (`scripts/validate-entity-values.mjs`,
+      paced through the fleet ledger, fix list → `.audit-work/schema-violations.json`):
+      **233 entities, 90,287 rows → 53 violations, one class** —
+      `WorkOrder.estimate_amount` held numeric strings ("1875.33") in a declared
+      `number` field. Repaired via `scripts/repair-schema-violations.mjs` — each
+      fix CAS-anchored on a fresh `updated_date` re-read (53/53 fixed, 0 failed,
+      re-sweep 0/3,189). The historical `assigned_to:["name"]` bug has zero
+      live instances.
+- [x] Write-time coercion guard — **DEPLOYED 2026-11-14**
+      (`base44/shared/entityWriteTypeGuard.ts` + generated
+      `entityScalarWritePaths.ts`, wired into `staffEntityWrite` on create/
+      update/updateMany paths): declared-scalar fields receiving arrays unwrap
+      single-element, drop empty, and **400-reject multi-element** (loud, no
+      silent truncation); numeric strings coerce to number/integer, numbers
+      coerce to string. Regenerate the map after entity changes:
+      `node scripts/gen-write-scalar-paths.mjs`. Verified live: probe returns
+      the guard's 400 message; unit tests 14/14. NOTE: `functions deploy`
+      propagation runs ~20-60min behind (isolate cache) — probes can read as
+      old-bundle for a while. `functions pull` corrupts `function.jsonc`
+      (entry path) — fix to `"entry": "entry.ts"` before re-deploying.
+
+## WS-8 — Verification gates
+
+- [~] `scripts/load-sim.mjs` at N=10, N=25: **0 gaveUp, 0 user-visible errors,
+      p95 hot-action <800ms, sustained spend <70% of bucket**.
+      **N=10 PASSED post-publish 2026-11-09: 120/120 HTTP 200, 0×429, 0×5xx,
+      p50 255ms, p95 740ms, p99 1041ms; status 11.3→2.4 avg entity calls,
+      status_lite 0.9, ~280/min est. spend (~50% of 140 bucket under burst
+      replay — real steady-state is far lower).**
+      **N=25 post-publish 2026-11-09: 300 calls → 206×200, 94×429, 0×5xx,
+      p50 250ms, p95 1793ms; entity spend ~166/min (memo holds: 0.1-2.0 avg
+      calls). The remaining 429s are the platform INVOKE cap (POST count),
+      not the entity bucket — WS-3 mount consolidation is the fix.**
+      **N=25 re-run 2026-11-14 (flows added `--flow=kiosk|mount|poll`):**
+      kiosk replay 300 calls → 134×200, 166×429, 0×5xx, entity ~106/min
+      (-36% vs Nov-9 — memos + lite snapshot biting: roster 0.3, status_lite
+      2.5→1.6 avg). mount flow 225 calls → 152×200, **56×429 (-66% vs kiosk
+      replay — the bootstrap consolidation cutting mount POSTs)**, 17×5xx —
+      traced to appBootstrap's session-verify read exhausting maxRetries:1
+      under the synthetic saturation wave; raised to 3 + redeployed. Sim's
+      invoke-cap pressure is ~5.7 POSTs/sec synthetic vs real mounts spread
+      over minutes — treats 429s as the ceiling marker, not a regression.
+      **N=25 staggered mount flow 2026-11-14 (`--stagger=2000`, sessions
+      arriving over ~50s, overlapping the 23:00Z File Bridge Maintenance fire):**
+      225 calls → 187×200, 34×429 (15% vs 25% unstaggered), 4×5xx, p50 259ms,
+      p95 9296ms (retry waits), entity ~113/min + the cron job's own reads
+      sharing the bucket. Interpretation: real-world mounts degrade to slower
+      loads with transient 429s that the client retry layer absorbs — the
+      residual fire-minute saturation is cron reads colliding with browser
+      bursts, the one remaining spend class not yet self-paced.
+- [ ] Real-world check: all kiosks + 5 office sessions during a cron
+      fire-minute → no banners. (Needs Brett's live traffic window — the
+      staggered sim above is the closest solo approximation.)
+      **N=25 sustained ambient 2026-11-14 (`--flow=poll --stagger=15000
+      --think=80000`, models the real ~65s status_lite poll cadence):**
+      10.7min run → **75/75 HTTP 200, 0×429, 0×5xx, p50 416ms, p95 897ms,
+      entity spend ~21/min = ~15% of the 140 ceiling.** status_lite avg 3.1
+      calls (live-build path; drops to ~2 when lite_snapshot provisions on
+      publish). At N=50 this extrapolates to ~43/min ≈ 30% — comfortable
+      steady-state headroom; bursts remain the only pressure class and the
+      mount work addressed those.
+      **N=50 sustained ambient 2026-11-14 (same real cadence):** 16.2min run
+      → **150/150 HTTP 200, 0×429, 0×5xx, p50 413ms, p95 715ms, entity spend
+      ~26/min = ~19% of ceiling** — below the linear extrapolation (shared
+      memo slots amortize across more callers). The 25-50 user ambient
+      target is proven, not projected.
+- [~] Remaining lever if fire-minute 429s persist in production: pace the
+      scheduled-job readers so cron yields to browser bursts. **STATUS: infra
+      exists — `withEntityRateLimitRetry` `paceMs` serializes calls within an
+      isolate (fileBridgeMaintenance runs `paceMs: 200` = ≤5 reads/s + 15s
+      yield on 429). The residual is INTER-function coordination — no shared
+      budget across isolates (the fleet ledger is local-only). A real fix is
+      a pacer entity row or cron cadence changes (File Bridge every-5min →
+      10min), not a code patch. Revisit only if production shows the staggered
+      15% pattern hurting real users.**
+- [x] Published 2026-11-09T09:15Z checkpoint `6af182a3` (user-authorized
+      "ship it"): memo layer all gateways live, mount gates, leader election,
+      lazy face-api, instrumentation visible on published route.
+
+---
+
+## Execution order
+
+1. **WS-0** — numbers first (a day of instrumentation pays for itself).
+2. **WS-1 + WS-4** — the two biggest, cheapest wins: memo absorbs bursts,
+      fleet cap stops the storms at the source.
+3. **WS-3** — kills the per-tab multiplier (easy, high ratio).
+4. **WS-2** — structural work for the datasets that outgrow memo.
+5. **WS-5/6/7** — latency polish + hygiene.
+6. **WS-8** — prove it, then publish with the gates green.
+
+## Decisions (answered 2026-11-07)
+
+- Fleet business-hours ceiling: **30 calls/60s** during 07:00-19:00 ET.
+- Second service identity for fleet: **does not exist** — one app service role
+  only; RLS requires it for all entities. Fleet isolation = the 30-call cap.
+- Target concurrency: **25-50 confirmed**.
+
+## Non-negotiables
+
+- No publishes without explicit approval (checkpoints only).
+- Never weaken freshness for mutable operational data — staleness is only for
+  advisory/config reads.
+- CAS contracts (`expected_updated_date`, creation_request_key, markers) are
+  load-bearing — every optimization preserves them verbatim.
+
+## Incident log — 2026-11-10/11 Smartsheet freeze + recurring-restock fix
+
+- ~86h of zero scheduled runs traced to `insufficient_credits` — every
+  `workflows/runs` entry `cancelled` (Order sync, Sales sync, stale-shift,
+  fleet queue, File Bridge). Interactive invokes unaffected. Credits restored
+  → jobs resumed same hour.
+- Held row `2030447462973316` (CCS / Vinyl / 54" 8519 Luster Lam, needed
+  11/11): a real restock entered in the sheet, held by
+  `duplicate_looking_historical` because a *received* Sept order matched.
+  Recurring supply reorders would hold forever.
+- Fix: `smartsheetOrderLinkIntegrity.mjs` excludes `isFulfilledOrder` rows
+  from duplicate candidates — fulfilled = delivered, a same-text row is a
+  restock. Open-order duplicates still hold. Verified live: pull auto-created
+  Order `6af3bb38` (linked, received) at 00:47Z; banner cleared.
+- Deploy lesson: `functions deploy` fails on `../../shared/` refs missing from
+  the local tree — shared modules ship via checkpoint builds (or take effect
+  via file-tree resolution on cold isolates). See AGENTS.md.
+- Order classifier hold kinds: `duplicate_looking_historical` (normalized
+  customer+description match to an open linked order — resolved above),
+  `create_attempts_unresolved`, `row_id_already_claimed`, `create_cap_reached`.
+  Held rows have no approve-create API — resolution = fix/relocate the row or
+  let a corrected pull create it.

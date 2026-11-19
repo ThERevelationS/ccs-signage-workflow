@@ -1,0 +1,24 @@
+{
+ "inputs": [
+  "node_modules/react/cjs/react.development.js",
+  "node_modules/react/index.js",
+  "node_modules/scheduler/cjs/scheduler.development.js",
+  "node_modules/scheduler/index.js",
+  "node_modules/react-dom/cjs/react-dom.development.js",
+  "node_modules/react-dom/index.js",
+  "node_modules/react-dom/client.js",
+  "s:C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\s-__components_ui_button",
+  "s:C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\s-__components_ui_input",
+  "s:C:\\Users\\BrettHeinlein\\Documents\\DevinProjects\\ccs-signage-workflow-clean\\s-lucide_react",
+  "src/components/estimator/foundation/legacyFoundationCalc.js",
+  "src/components/estimator/foundation/wallCalculator.js",
+  "src/components/estimator/foundation/poleCalculator.js",
+  "src/components/estimator/foundation/wallCapCalculator.js",
+  "src/components/estimator/foundation/foundationCalc.js",
+  "node_modules/react/cjs/react-jsx-runtime.development.js",
+  "node_modules/react/jsx-runtime.js",
+  "src/components/estimator/foundation/FoundationPolesPanel.jsx",
+  "src/components/estimator/foundation/FoundationWallCapsPanel.jsx",
+  "h:harness"
+ ]
+}

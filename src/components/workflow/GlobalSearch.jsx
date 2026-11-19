@@ -16,12 +16,11 @@ import {
 import { Search, Filter, X, Loader2, ChevronDown, GitBranch, Receipt, Package, FileDiff, Calculator } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import WorkOrderDetailsDialog from "./WorkOrderDetailsDialog";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { useAuth } from "@/components/auth/EmailGate";
-import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
-const WorkOrder = base44.entities.WorkOrder;
 
 const stageOrder = ['permitting', 'design', 'production', 'fabrication', 'installation'];
 
@@ -65,12 +64,9 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
   const performSearch = async () => {
     setIsSearching(true);
     try {
-      const allWorkOrders = await loadAllEntityRows({
-        entity: WorkOrder,
-        query: { completed: false },
-        sort: "created_date",
-        label: "Global Search Work Orders",
-      });
+      const allWorkOrders = (await fetchAllWorkOrders({ preferSnapshot: true }))
+        .filter((wo) => wo.completed !== true)
+        .sort((a, b) => String(a.created_date || "").localeCompare(String(b.created_date || "")));
       
       let filtered = allWorkOrders;
 
@@ -243,7 +239,7 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
                     <Label className="text-xs mb-2 block">Stages</Label>
                     <div className="flex flex-wrap gap-1">
                       {stageOrder.map(stage => (
-                        <button
+                        <button type="button"
                           key={stage}
                           onClick={() => toggleStageFilter(stage)}
                           className={`px-2 py-1 text-xs rounded-lg transition-all ${
@@ -262,8 +258,7 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <Label className="text-xs mb-1 block">From Date</Label>
-                      <Input
-                        type="date"
+                      <CcsDateField
                         value={dateFrom}
                         onChange={(e) => setDateFrom(e.target.value)}
                         className="h-8 text-xs"
@@ -271,8 +266,7 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
                     </div>
                     <div>
                       <Label className="text-xs mb-1 block">To Date</Label>
-                      <Input
-                        type="date"
+                      <CcsDateField
                         value={dateTo}
                         onChange={(e) => setDateTo(e.target.value)}
                         className="h-8 text-xs"
@@ -321,7 +315,7 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
                         <h4 className="font-semibold text-sm text-gray-800 truncate">
                           {r.title || r.project_name || r.invoice_number || r.po_number || r.change_order_number}
                         </h4>
-                        <p className="text-xs text-gray-500 mt-0.5">{subline(r)}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{subline(r)}{r.legacy_source_id ? ` · CB #${r.legacy_source_id}` : ""}</p>
                       </div>
                     ))}
                   </div>

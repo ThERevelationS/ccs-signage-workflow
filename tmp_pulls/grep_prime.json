@@ -1,0 +1,21 @@
+{
+  "matches": [
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 28,
+      "text": "import { primeEntityRowsCache } from \"@/components/estimator/loadAllEntityRows\";"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 30,
+      "text": "const primeAndReturn = (label, query, sort, rows) => { primeEntityRowsCache(label, query, sort, rows); return rows; };"
+    },
+    {
+      "path": "src/components/estimator/loadAllEntityRows.js",
+      "line": 74,
+      "text": "export const primeEntityRowsCache = (label, query, sort, rows) => {"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 3
+}

@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "base44/entities/TimeClockWorkPause.jsonc",
+      "content": "{\n  \"name\": \"TimeClockWorkPause\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"user_email\": {\n      \"type\": \"string\",\n      \"description\": \"Employee email for this Work Pause\"\n    },\n    \"user_name\": {\n      \"type\": \"string\",\n      \"description\": \"Employee display name snapshot\"\n    },\n    \"time_entry_id\": {\n      \"type\": \"string\",\n      \"description\": \"Active TimeEntry this Work Pause belongs to\"\n    },\n    \"started_at\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\",\n      \"description\": \"Trusted backend Work Pause start timestamp\"\n    },\n    \"resumed_at\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\",\n      \"description\": \"Trusted backend resume timestamp\"\n    },\n    \"duration_minutes\": {\n      \"type\": \"number\",\n      \"description\": \"Completed Work Pause duration in whole minutes\"\n    },\n    \"status\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"active\",\n        \"completed\"\n      ],\n      \"default\": \"active\"\n    },\n    \"start_request_id\": {\n      \"type\": \"string\",",
+      "startLine": 1,
+      "endLine": 40,
+      "totalLines": 92,
+      "truncated": false
+    }
+  ]
+}

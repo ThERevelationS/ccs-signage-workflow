@@ -1,0 +1,17 @@
+{
+  "kind": [
+    "sandbox",
+    "read",
+    "src/components/estimator/foundation/WallShapeEditor.jsx"
+  ],
+  "exit": 1,
+  "data": {
+    "error": "Error reading file: fetch failed",
+    "code": "API_ERROR",
+    "hints": [
+      {
+        "message": "Check your network connection and try again"
+      }
+    ]
+  }
+}

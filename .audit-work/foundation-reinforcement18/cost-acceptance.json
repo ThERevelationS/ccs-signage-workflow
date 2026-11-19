@@ -1,0 +1,22 @@
+{
+  "localOnly": true,
+  "integrated": false,
+  "remoteWrites": false,
+  "cases": 74,
+  "baseline": {
+    "passed": 71,
+    "failed": 3
+  },
+  "leadChecked": true,
+  "lintExit": 0,
+  "syntaxExit": 0,
+  "standaloneBuild": true,
+  "currentPageBuild": true,
+  "currentPageImportsCost": false,
+  "currentPageImportsModel": false,
+  "costSourceSha256": "bf57225c26825530fba72edf758f6b6dba66ecba47a0d28c4ce6ba969dfe786d",
+  "fixtureSha256": "12b06a21b2cd557a4a8634ea5368c517bbe472263fba76bbf72f9bad17aab15a",
+  "modelSourceSha256": "439dd9dd3873bf632af505884547b86372b04334d0911059abb9ba714ef63041",
+  "checkedAt": "2026-11-06T10:17:17.987Z",
+  "note": "Frozen independent synthetic costs;3failcloseddiagnostic/role guards fixed. No real record/pricing/model-provider tests."
+}

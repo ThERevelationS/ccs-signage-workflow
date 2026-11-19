@@ -1,0 +1,70 @@
+PASS scripts/test-aio-pricing.mjs
+FAIL scripts/test-automation-builder-browser.mjs :: Node.js v26.13.0
+PASS scripts/test-brick-pricing-wire.mjs
+PASS scripts/test-builder-part-identity.mjs
+PASS scripts/test-builder-persistence.mjs
+PASS scripts/test-builder-product.mjs
+PASS scripts/test-builder-recovery.mjs
+PASS scripts/test-builder-service.mjs
+PASS scripts/test-channel-cost-ownership.mjs
+PASS scripts/test-channel-pricing-wire.mjs
+PASS scripts/test-cnc-pricing-wire.mjs
+PASS scripts/test-custom-items-pricing-wire.mjs
+PASS scripts/test-customer-pricing-config.mjs
+PASS scripts/test-customer-pricing.mjs
+PASS scripts/test-customer-quote.mjs
+PASS scripts/test-duplicate-estimate.mjs
+PASS scripts/test-estimate-card-customer-note.mjs
+PASS scripts/test-estimate-cas.mjs
+PASS scripts/test-estimate-import-export.mjs
+PASS scripts/test-estimate-lifecycle.mjs
+PASS scripts/test-estimate-reports.mjs
+PASS scripts/test-estimate-save-recovery.mjs
+FAIL scripts/test-fleet-maintenance-load-race.mjs :: ℹ duration_ms 7.6294
+FAIL scripts/test-fleet-mechanic-estimate-handoff-race.mjs :: ℹ duration_ms 13.4152
+FAIL scripts/test-fleet-mechanic-estimate-response-race.mjs :: ℹ duration_ms 504.679
+FAIL scripts/test-fleet-mechanic-repair-estimate-browser.mjs :: Node.js v26.13.0
+FAIL scripts/test-fleet-repair-estimate-browser.mjs :: Node.js v26.13.0
+FAIL scripts/test-fleet-repair-estimate-create-race.mjs :: ℹ duration_ms 296.95
+FAIL scripts/test-fleet-repair-estimate-refresh.mjs :: ℹ duration_ms 19.453
+FAIL scripts/test-foundation-assembly.mjs :: assembly passed=27 failed=1
+PASS scripts/test-foundation-catalog-integrity.mjs
+PASS scripts/test-foundation-catalog-visibility.mjs
+PASS scripts/test-foundation-design-basis.mjs
+PASS scripts/test-foundation-draft-recovery.mjs
+PASS scripts/test-foundation-equipment.mjs
+PASS scripts/test-foundation-layout.mjs
+PASS scripts/test-foundation-material-ui.mjs
+PASS scripts/test-foundation-pricing-wire.mjs
+PASS scripts/test-foundation-reorder.mjs
+PASS scripts/test-foundation-save-handler.mjs
+PASS scripts/test-foundation-save-session.mjs
+PASS scripts/test-foundation-schema.mjs
+PASS scripts/test-foundation-sync-recovery.mjs
+PASS scripts/test-foundation-template.mjs
+PASS scripts/test-foundation-write-gateway.mjs
+PASS scripts/test-invoice-customer-display.mjs
+PASS scripts/test-laser-pricing-wire.mjs
+PASS scripts/test-maintenance-pricing-wire.mjs
+PASS scripts/test-metal-pricing-wire.mjs
+PASS scripts/test-modifier-pricing.mjs
+PASS scripts/test-module-registry.mjs
+PASS scripts/test-module-wire-ownership.mjs
+PASS scripts/test-paint-pricing-wire.mjs
+PASS scripts/test-pricing-admin.mjs
+PASS scripts/test-pricing-engine.mjs
+PASS scripts/test-pricing-matrix.mjs
+PASS scripts/test-pricing-regression.mjs
+PASS scripts/test-pricing-template.mjs
+PASS scripts/test-pricing-variables.mjs
+PASS scripts/test-quote-defaults.mjs
+PASS scripts/test-quote-lifecycle.mjs
+PASS scripts/test-quote-recipient-contact.mjs
+PASS scripts/test-schema-invoice-fields.mjs
+PASS scripts/test-schema-pricing-entities.mjs
+FAIL scripts/test-sop-module.mjs :: Node.js v26.13.0
+FAIL scripts/test-training-module.mjs :: Node.js v26.13.0
+PASS scripts/test-vinyl-helpers.mjs
+PASS scripts/test-vinyl-persistence.mjs
+PASS scripts/test-vinyl-pricing-wire.mjs
+PASS scripts/test-walk-in.mjs

@@ -1,0 +1,10 @@
+channel=chrome assertions=39
+PASS poles
+PASS embed-legacy
+PASS walls
+PASS caps
+PASS cabinets
+PASS shape
+PASS landscape
+PASS field-matrix
+PASS o093-browser

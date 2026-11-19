@@ -1,0 +1,14 @@
+ok zero-mixed 1280
+ok zero-mixed 390
+ok blocked-unrecorded-split 1280
+ok blocked-unrecorded-split 390
+ok blocked-removal 1280
+ok blocked-removal 390
+ok unknown-basis 1280
+ok unknown-basis 390
+ok inconsistent-split 1280
+ok inconsistent-split 390
+ok ordinary 1280
+ok ordinary 390
+Reinforcement BOM browser: 12/12; failed=0
+exit=0

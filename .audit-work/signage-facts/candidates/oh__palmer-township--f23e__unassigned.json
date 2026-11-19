@@ -1,0 +1,942 @@
+{
+ "jurisdiction_id": "6aea6ebdff4b95d09160f23e",
+ "jurisdiction_name": "Palmer Township",
+ "state": "OH",
+ "office_id": null,
+ "office_name": "unassigned",
+ "snippets": [
+  {
+   "page": 2,
+   "snippet": "Commercial (new and resurfacing) $100.00 *Over 3,000 sq. ft. requires stormwater review Plumbing permit $75.00 Pool permit* Above-ground $150.00 Temporary $60.00 Inground $250.00 Spa/hot tub $100.00 *All pools also require an electrical permit Reinspection fee - all permit types (beyond 2) $100.00 Residential plan review fee New construction, additions up to 999 sq. ft. $60.00 New construction, additions 1000 sq. ft. and over $100.00 Road opening permit Inspection fee $60.00 Roofing permit Under 10 square $60.00 10 square and over $75.00 Sanitary sewer tapping fee Reference Resolution 2023-15 Septic system permit New/replacement installation $1,200.00 Repairs $600.00 Cleaning and pumping $20.00 Sewer connection permit Customer facilities fee $115.00 Repairs $50.00 Sewer lateral inspection fee $500.00 Sign permit New sign $100.00 per sign Replacement sign (same size or lettering) $60.00 p",
+   "tags": [
+    "sign",
+    "permit_required",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "billboard",
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 17,
+   "source_sha256": "489c1ac93bc7102ff72ce64b7bc67ee63a052c4d81a800673b2a13340fe60f2f",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\489c1ac93bc7102ff72ce64b7bc67ee63a052c4d81a800673b2a13340fe60f2f.pdf",
+   "official_url": "https://palmertwp.com/forms/2026_Fee_Schedule.pdf"
+  },
+  {
+   "page": 34,
+   "snippet": "Palmer Township Standard Construction Specification Page 34 Cutting of pipe for closure pieces, or other reasons, shall be done in a neat and workmanlike manner by a method which will not damage the pipe. All such cutting of pipe shall be done in conformance with the manufacturer's recommendations. The Engineer/Township may inspect all pipe before it is laid, and reject any section that is damaged by handling or is found to be defective to a degree which will materially affect the function and service of the pipe. Pipe shall not be laid on frozen ground. Pipe which is not true in alignment, or which shows any settlement after laying, shall be taken up and relaid. The Contractor shall provide, as may be necessary, for the temporary diversion of stream flow in order to permit the installation of the pipe under dry conditions. DEWATERING: Any water which collects in any excavation shall be ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 12,
+   "source_sha256": "5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee.pdf",
+   "official_url": "https://palmertwp.com/forms/2026_stand_const.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "Palmer Township Building Department • 3 Weller Place • Palmer, PA 18045 • Phone 610.253.7191 P a g e | 6 Residential Finished Basement Details – 20 21 IRC Emergency Escape/Rescue Openings Basements and every sleeping room shall have not less than one operable emergency escape and rescue opening which shall open directly into a public way or to a yard or court that opens into a public way. [R310.1/Ord. §55 - 27 ] Grade Floor Openings: ▪ Minimum 5 - square feet of net clear opening. [R310.2.1] ▪ Net clear opening height: 24 - inches. [R310.2. 2 ] ▪ Net clearing opening width: 20 - inches. [R310.2. 2 ] ▪ Height above floor : 44 - inches maximum from finished floor to clear opening . [R310.2. 3 ] ▪ Emergency escape and rescue openings under decks are permitted if such can be fully opened and is provided with a path not less than 36 - inches in height to a yard or court. [R310.2.4] Window Wel",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "authority",
+    "process"
+   ],
+   "weight": 12,
+   "source_sha256": "febc28147949bc8fb84b194d9253eee421f84a0d01b9a5ffcec4796443e97dfa",
+   "source_document_id": null,
+   "source_title": "febc28147949bc8fb84b194d9253eee421f84a0d01b9a5ffcec4796443e97dfa.pdf",
+   "official_url": "https://palmertwp.com/forms/fin_bsmt_det_2026.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Will there be any storage of Hazardous Materials? Yes ___ No ___ -If Yes provide MSDS with application. Does the use create dust, smoke, noise or light that would impact neighboring properties? If yes explain how neighboring properties would be affected: _ _______________________________ ____________________________________________________________________________________ ____________________________________________________________________________________ Provide a brief description of the new business and/or services provided: _____________________ _____________________________________________________________________________________ _____________________________________________________________________________________ Will there be any OUTSIDE storage of materials or goods? If so, please provide a description of the materials being stored and a sketch showing the storage area: _ _________",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "type",
+    "authority",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "27a8314f2ee75c7e95fd0c79f0a2e769213ea4bd88ec5e67b3d6e06bcd0cf9ca",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\27a8314f2ee75c7e95fd0c79f0a2e769213ea4bd88ec5e67b3d6e06bcd0cf9ca.pdf",
+   "official_url": "https://palmertwp.com/forms/change_use_form.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Palmer Township Building Department • 3 Weller Place • Palmer, PA 18045 • Phone 610.253.7191 P a g e | 2 Residential Swimming Pool & Barrier Details – 20 21 IRC and 20 21 ISPSC General Information 1. Definition: Barrier – A permanent fence, wall, building wall, or combination thereof that completely surrounds the pool or spa and obstructs the access to the pool or spa. The term \"permanent\" shall mean not being able to be removed, lifted, or relocated without the use of a to ol. 2. The construction sites for in - ground swimming pools and spas shall be provided with construction fencing to surround the site from the time that any excavation occurs up to the time that the permanent barrier is completed. The fencing shall be not less tha n 4 feet (1219 mm) in height. [305.1.1] 3. Pools may not be filled with water until the permanent barrier s are installed. 4. The following inspections are",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "penalties",
+    "process"
+   ],
+   "weight": 11,
+   "source_sha256": "58ee08d1948391f7f1bfb0c6791407478afdfdb9ae3962ced6d5289619d22548",
+   "source_document_id": null,
+   "source_title": "58ee08d1948391f7f1bfb0c6791407478afdfdb9ae3962ced6d5289619d22548.pdf",
+   "official_url": "https://palmertwp.com/forms/swpool_barr_details_2026.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "2 GENERAL ZONING INFORMATION RESIDENTIAL ACCESSORY BUILDING, STRUCTURE OR USE — A use or structure that is clearly accessory, customary and incidental to a principal residential use on a lot, including the following uses and uses that are very similar in nature: garage (household), carport, tennis court, garage sale, basketball backboard, household swimming pool, volleyball court, gazebo, storage shed, greenhouse, children's playhouse, and children's play equipment. ACCESSORY STRUCTURE — A structure, such as a private garage, storage shed, gazebo, or greenhouse, serving a purpose customarily incidental to the use of the principal building and located on the same lot as the principal building. Residential accessory building, structure or use. The following, and closely related uses, are permitted residential accessory buildings, structures or uses in all districts, provided that all of th",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "48f84ba8af5159e9907bed98382ec8e0334cbb95b143b25e58f9773a239f7fa2",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\48f84ba8af5159e9907bed98382ec8e0334cbb95b143b25e58f9773a239f7fa2.pdf",
+   "official_url": "https://palmertwp.com/forms/acc_struc_2026.pdf"
+  },
+  {
+   "page": 40,
+   "snippet": "SUBDIVISION AND LAND DEVELOPMENT 165:A29 08 - 07 - 2002 Submitted Not Submitted* _____ _____ 3. Predevelopment and postdevelopment watershed areas for each detention basin or major drainage channel or point of concentration. _____ _____ 4. Locations of any proposed or existing stormwater easements. _____ _____ 5. Intended design-year standards for culverts, bridge structures and/or other stormwater facilities. _____ _____ 6. Schematic location of all underground utilities. _____ _____ 7. Entity responsible to maintain/own any detention basin. _____ _____ 8. Any additional information needed under § 165-63. _____ _____ 9. Existing and proposed contour lines. See description under \"Natural Features.\") See also stormwater basins under \"Construction Details.\" J. FOR USES OTHER THAN SINGLE-FAMILY DETACHED OR TWIN DWELLINGS: _____ _____ 1. For townhouses or apartments, evidence that the projec",
+   "tags": [
+    "sign",
+    "permit_required",
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 10,
+   "source_sha256": "559c287987b282827244d63a4c3d6512e581337be7cc8df7f33558ef10b711c5",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\559c287987b282827244d63a4c3d6512e581337be7cc8df7f33558ef10b711c5.pdf",
+   "official_url": "https://palmertwp.com/forms/app_sub_landdev2026.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "Palmer Township Building Department • 3 Weller Place • Palmer, PA 18045 • Phone 610.253.7191 P a g e | 7 Residential Swimming Pool & Barrier Details – 20 21 IRC and 20 21 ISPSC Ladders and Stairs [702]: Ladders shall have a physical barrier which prevents children from swimming behind or through the ladder riser opening unless the manufacturer provides a certification statement that such ladder complies with the entrapment test requirements of APSP - 4. [70 2.2.1] Decks [703]: Decks provided by the pool manufacturer shall be installed in accordance with the manufacturer’s installation instructions. Any deck fabricated on - site shall meet the requirements of the 201 8 International Residential Code (IRC). [703.1] The top surface of cantilevered decks shall not be located more than 1 - inch higher than the top of the pool wall . The top surface of non - cantilevered decks shall not be hig",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "58ee08d1948391f7f1bfb0c6791407478afdfdb9ae3962ced6d5289619d22548",
+   "source_document_id": null,
+   "source_title": "58ee08d1948391f7f1bfb0c6791407478afdfdb9ae3962ced6d5289619d22548.pdf",
+   "official_url": "https://palmertwp.com/forms/swpool_barr_details_2026.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Form W-9 (Rev. 10-2018) Page 4 The following chart shows types of payments that may be exempt from backup withholding. The chart applies to the exempt payees listed above, 1 through 13. IF the payment is for . . . THEN the payment is exempt for . . . Interest and dividend payments All exempt payees except for 7 Broker transactions Exempt payees 1 through 4 and 6 through 11 and all C corporations. S corporations must not enter an exempt payee code because they are exempt only for sales of noncovered securities acquired prior to 2012. Barter exchange transactions and patronage dividends Exempt payees 1 through 4 Payments over $600 required to be reported and direct sales over $5,000 1 Generally, exempt payees 1 through 5 2 Payments made in settlement of payment card or third party network transactions Exempt payees 1 through 4 1 See Form 1099-MISC, Miscellaneous Income, and its instruction",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "temporary",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 9,
+   "source_sha256": "78366390cd4e3db89e06009fce54df272bee0d3b34003f3a786c4835239bfdff",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\78366390cd4e3db89e06009fce54df272bee0d3b34003f3a786c4835239bfdff.pdf",
+   "official_url": "https://palmertwp.com/forms/w9_form.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Palmer Township Stormwater Management Program Credit Policy Manual – Nov. 2024 4 4.0 CREDITS AND CREDIT POLICIES Detailed Information about applying for credit can be found in Section 6.0 Applying for Credit. 4.1 GENERAL POLICIES 1. It is the Property Owner’s responsibility to apply for credits and supply all the required information (Attachments). 2. Specified credits are available to all property Owners. 3. A property owner must be approved for multiple credits to achieve the maximum number of credits. Maximum credits shall not exceed 20% per property , unless a property is granted a larger credit under the Stormwater Partnership Credit or Low Impact Parcel Credit. 4. Accounts must be current to receive credit(s). Credits will be revoked if an account is overdue more than 90 days. Upon becoming current, property owner may reapply to reinstate the revoked credits (Section 6.0). 5. Credi",
+   "tags": [
+    "fee",
+    "illumination",
+    "prohibited",
+    "process",
+    "authority"
+   ],
+   "weight": 9,
+   "source_sha256": "ec22936b404af14c3e71f0479de3eaf31db131a45f9c3e04cec65a5a6acdd3a5",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\ec22936b404af14c3e71f0479de3eaf31db131a45f9c3e04cec65a5a6acdd3a5.pdf",
+   "official_url": "https://palmertwp.com/forms/sw-credit-appeals-manual.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "FEE SCHEDULE Effective: 01/01/2026 Construction Code/Permit Fees 2026 Fees Accessory structure permit (sheds, detached garages, etc) 0 to 100 sq. ft. $60.00 101 to 1,000 sq. ft. $100.00 Blasting permit* $250.00 * Must provide copy of State permit Building permit (residential) New construction, additions, and decks over 30” high $0.35 per sq. ft. Unfinished basements, attached garages $0.30 per sq. ft. Certificate of Occupancy New principal use $60.00 Additions or renovations to principal use $10.00 Pennsylvania UCC surcharge $4.50 Commercial plan review fee Third Party Agency Construction trailer permit $200.00 Curb construction permit $60.00 Engineering fee $5.00 per linear ft. Demolition permit $250.00 Digital sign inspection fee $1,000.00 per year Earth moving permit* $250.00 *Must provide Conservation District documentation Electrical permit $60.00 Fence permit Under 32 linear ft. $6",
+   "tags": [
+    "sign",
+    "fee",
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "489c1ac93bc7102ff72ce64b7bc67ee63a052c4d81a800673b2a13340fe60f2f",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\489c1ac93bc7102ff72ce64b7bc67ee63a052c4d81a800673b2a13340fe60f2f.pdf",
+   "official_url": "https://palmertwp.com/forms/2026_Fee_Schedule.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "Planning & Development Fees Fee Building Code Board of Appeals application fee $1,500.00 Zoning Hearing Board application fees Special exception – single-family residential $1,500.00 Special exception – all other $2,000.00 Variance – single-family residential $1,500.00 Variance – all other $2,000.00 Hearing continuance fee Single-family residential $500.00 All others $1,500.00 Interpretation of ordinance $2,000.00 Enforcement notice appeal $2,000.00 Curative amendment/validity challenge $5,000.00 Transcription of hearing Actual Cost Zoning certification letter $100.00 Zoning consultation fee $100.00 Subdivision/land development application fees Lot line adjustment/consolidation plan $500.00 Sketch plan $500.00 Minor subdivision plan $1,000.00 Preliminary major subdivision plan $1,500.00 Final major subdivision plan $1,250.00 Minor land development plan $1,250.00 Preliminary land developm",
+   "tags": [
+    "fee",
+    "dimension",
+    "illumination",
+    "process",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "489c1ac93bc7102ff72ce64b7bc67ee63a052c4d81a800673b2a13340fe60f2f",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\489c1ac93bc7102ff72ce64b7bc67ee63a052c4d81a800673b2a13340fe60f2f.pdf",
+   "official_url": "https://palmertwp.com/forms/2026_Fee_Schedule.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "Non-Residents $120.00 per hour Gymnasium Gymnasium Rental $55.00 per hour Special events Variable Kitchen/dining room $15.00 per hour Turf field $150.00 per hour Athletic Fields $50.00 per hour Parking Fines Fee Prohibited parking $20.00 Fire Zone $25.00 15’ of fire hydrant $20.00 15’ of intersection $20.00 30’ of stop or yield signs $20.00 On sidewalk $25.00 On a crosswalk $20.00 Blocking a driveway $50.00 Blocking a fire house $50.00 Facing against traffic $20.00 Blocking snow removal equipment $20.00 Parked on school property $20.00 Handicapped zone $75.00 Not inspected $25.00 Not registered $25.00 Posted no parking $20.00 Private property $50.00 Unhitched trailer $20.00 For sale or repair $20.00 Double parking $20.00 Parked over 72 hours $20.00 Snow emergency route $25.00 Fire Recovery Fee Schedule Fee Apparatus Charges Engine $350.00 per hour Rescue $300.00 per hour Ariel/ladder $40",
+   "tags": [
+    "sign",
+    "fee",
+    "dimension",
+    "prohibited",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 8,
+   "source_sha256": "489c1ac93bc7102ff72ce64b7bc67ee63a052c4d81a800673b2a13340fe60f2f",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\489c1ac93bc7102ff72ce64b7bc67ee63a052c4d81a800673b2a13340fe60f2f.pdf",
+   "official_url": "https://palmertwp.com/forms/2026_Fee_Schedule.pdf"
+  },
+  {
+   "page": 11,
+   "snippet": "Standard Construction Specification Page 11 traffic signage destroyed, temporarily removed or obscured as a result of the Work. The Contractor shall maintain traffic and protect the public from all damage to persons and property within the limits of the Work and for the duration of the Contract Period and as a minimum in accordance with the Plans. The Contractor shall furnish and erect all necessary signs, barricades, and bridging, and provide for the adequate lighting of all signs, barricades, and points of special hazard. The Contractor shall be responsible for settling all claims arising from failure on its part to adequately protect vehicular and pedestrian traffic. The Contractor shall provide temporary bridging and plating in the event the traffic lanes are damaged or altered only as reviewed by the Township on a case-by-case basis. Permanent construction of the traffic lanes shall",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "temporary",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee.pdf",
+   "official_url": "https://palmertwp.com/forms/2026_stand_const.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Township of Palmer, Pennsylvania Typical Deck Details Based on the 20 21 International Residential Code and Pennsylvania Uniform Construction Code Amendments (Designed and Printed January 2026 ) CONTENTS General Information...……………………… … 2 Lateral Load Connection…………………… …... 9 Footings ……………………………………... . 3 Framing at Cantilevered Floor System…… ……... 10 Joist Sizing and Span……………………… ….. 4 Lateral Restraints at Supports…..………… …….. 1 1 Beam Sizing and Spans………………..… ……. 5 Guard Requirements……….......................... ............ 1 1 Deck Post Allowable Heights……………… …. 7 Guard Post Installation………….…………… …. 1 2 Deck Post - to - Beam Connections………… …… 7 Stair Handrail Requirements....……………… …... 1 2 Deck Post - to - Footing Connections………… …. 8 Stairway Requirements…………………………... 12 Bracing………..………………………………. . 8 Glazing in Hazardous Locations…………… …… 1 3 Ledger Attachment…………………………..",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "dd22588419a0df81f9c0709ed7ed7b8c4f3355c2e4d1c66dbb53d3a8d4fa42ca",
+   "source_document_id": null,
+   "source_title": "dd22588419a0df81f9c0709ed7ed7b8c4f3355c2e4d1c66dbb53d3a8d4fa42ca.pdf",
+   "official_url": "https://palmertwp.com/forms/deck_details_2026.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "4 TABLE 1 Live Load (psf) Tributary Area (sq.ft.) Load - bearing Value of Soils = 1,500 psf Side of square footing (inches) Diameter of round footing (inches) Thickness (inches) 40 5 7 8 6 20 10 12 6 40 14 16 6 60 17 19 6 80 20 22 7 100 22 25 8 120 24 27 9 140 26 29 10 160 28 31 11 a. Interpolation permitted. Extrapolation not permitted . c. Footing dimension shall allow complete bearing of the post. d. If the support is a brick or CMU pier, the footing shall have a minimum 2 - inch projection on all sides. JOIST SIZING AND SPAN Maximum allowable spans for wood deck joists shall be in accordance with Table 2 and the Figure 2 below. Deck joists are permitted to cantilever not greater than one - fourth of the actual, adjacent span or the maximum cantilever length specified in Table 2 . [R507. 6 ] Joist framing into the side of a ledger board or beam shall be supported by approved joist han",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 8,
+   "source_sha256": "dd22588419a0df81f9c0709ed7ed7b8c4f3355c2e4d1c66dbb53d3a8d4fa42ca",
+   "source_document_id": null,
+   "source_title": "dd22588419a0df81f9c0709ed7ed7b8c4f3355c2e4d1c66dbb53d3a8d4fa42ca.pdf",
+   "official_url": "https://palmertwp.com/forms/deck_details_2026.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Palmer Township Stormwater Management Program Credit Policy Manual – Nov. 2024 3 1.0 INTRODUCTION This Manual provides Palmer Township Stormwater Management Program (SMP) customers with details on the credits available to reduce their quarterly SMP Fee. Credits are provided as a means for customers to reduce the amount of their fee by implementing a creditable Best Management Practice (BMP) to reduce the contribution of stormwater and pollutants to the Stormwater Management system and/or to aid in meeting Municipal Separate Storm Sewer System (MS4) Permit obligations. Stormwater management is important to our community. It is necessary to manage stormwater runoff generated by impervious surfaces because it carries pollutants that can degrade the quality of natural waterways. In addition, impervious surfaces generate more runoff than pervious surfaces, which can increase the potential of ",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "ec22936b404af14c3e71f0479de3eaf31db131a45f9c3e04cec65a5a6acdd3a5",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\ec22936b404af14c3e71f0479de3eaf31db131a45f9c3e04cec65a5a6acdd3a5.pdf",
+   "official_url": "https://palmertwp.com/forms/sw-credit-appeals-manual.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Palmer Township Building Department • 3 Weller Place • Palmer, PA 18045 • Phone 610.253.7191 P a g e | 2 Residential Finished Basement Details – 20 21 IRC General Information 1. A building permit is required to finish a basement (or portion thereof). Work shall not commence until the permit has been approved and issued. 2. The following inspections are mandatory : ▪ Framing ▪ Rough/In - ground Plumbing (as applicable) ▪ Rough Sprinklers/Fire - Suppression System (as applicable) ▪ Shower Liner Test (as applicable) ▪ Rough Electrical ▪ Rough Mechanical (as applicable) ▪ Insulation ▪ Drywall ▪ Final (Building/Plumbing/Electrical/Mechanical) 3. It shall be the duty of the permit holder or their agent to notify the building official that such work is ready for inspection. It shall be the duty of the person requesting any inspections required by this code to provide access and means for inspec",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 8,
+   "source_sha256": "febc28147949bc8fb84b194d9253eee421f84a0d01b9a5ffcec4796443e97dfa",
+   "source_document_id": null,
+   "source_title": "febc28147949bc8fb84b194d9253eee421f84a0d01b9a5ffcec4796443e97dfa.pdf",
+   "official_url": "https://palmertwp.com/forms/fin_bsmt_det_2026.pdf"
+  },
+  {
+   "page": 6,
+   "snippet": "Page 6 of 7 WHERE DOES THE MONEY COLLECTED FROM THE STORMWATER UTILITY FEE GO? All stormwater revenue will be placed into a dedicated fund used only for the PTSA’s stormwater program and program related projects . CAN I APPEAL HOW MUCH I’M BEING CHARGED? If you believe you are being incorrectly charged , you may submit an appeal to have this information reviewed. The Credit and Appeals Manual provides information on how to submit an appeal. F urther information and applications can be found on the PTSA page of the Township website. IS THERE A WAY TO REDUCE MY FEE? Yes. The stormwater utility fee will allow for credits. Credits are a percent reduction in the s tormwater utility f ee for offsetting utility program costs. The Credit and Appeals Manual provides further information . The credits include: ◼ Peak Rate Control / Volume Control Structural BMP Credit ◼ Education Credit ◼ Stormwate",
+   "tags": [
+    "area",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "014290ee2d011df44274a7c58232b9fef57fde735d52365ed0d40dd00d751011",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\014290ee2d011df44274a7c58232b9fef57fde735d52365ed0d40dd00d751011.pdf",
+   "official_url": "https://palmertwp.com/forms/ptsa-faqs.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "2 FENCE — A man - made barrier placed or arranged as a line of demarcation, an enclosure or a visual barrier that is constructed of wood, chain - link metal, vinyl or aluminum and/or plastic inserts. Man - made barriers constructed principally of masonry, concrete, cinder block or other materials shall be considered a wall. The terms \"fence\" and \"wall\" do not include hedges, trees or shrubs. The term \"wall\" does not include engineered retaining walls, which are permitted uses as needed in all districts. [ § 190 - 202] FENCES, WALLS, HEDGES A. General provisions for all zoning districts. 1. No fence, wall, or continuous hedge shall be located within the existing right - of - way of a public street nor shall be constructed at a height greater than nine feet. 2. No fence, wall, or continuous hedge shall be erected at such a location as to interfere with minimum sight distance specifications",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "048766a2a3f9bb460745c89bed9d9a6fcfebb5ffcfd4ec480acdb5b22ee20d26",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\048766a2a3f9bb460745c89bed9d9a6fcfebb5ffcfd4ec480acdb5b22ee20d26.pdf",
+   "official_url": "https://palmertwp.com/forms/fence_detail_2026.pdf"
+  },
+  {
+   "page": 3,
+   "snippet": "3 3. Rear and side yard fences. Property line fences may be installed along the rear lot line and along the side lot lines between the rear lot line and the front building setback line to a height not exceeding six feet, provided that: a. If the fence is wood cover or wood frame, the framework must face onto the interior of the lot, unless the fence is so designed as to provide equal frame and cover area. b. If the fence is open metal mesh, supported by posts and frames of either pipe or wood, the posts and frames must be on the interior side of the mesh. c. If the fence is of masonry construction, a finished mortar or paint surface must be provided on the exterior side. If a property is located on a corner lot, front yard setbacks apply to any property line that abuts a street, in accordance with sight triangle requirements of § 190 - 804 (below): C. Sight distance (or triangle). – An a",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "048766a2a3f9bb460745c89bed9d9a6fcfebb5ffcfd4ec480acdb5b22ee20d26",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\048766a2a3f9bb460745c89bed9d9a6fcfebb5ffcfd4ec480acdb5b22ee20d26.pdf",
+   "official_url": "https://palmertwp.com/forms/fence_detail_2026.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "NOTICE OF APPEAL INSTRUCTIONS. Please read this instruction form carefully to make sure that your application is processed expeditiously. 1. Complete and sign the Zoning Hearing Application form as completely as possible. If you need help, contact the zoning administrator as soon as possible. Deadline for submittals is no later than 3 weeks prior to the hearing date. Late applications will be scheduled for the next month’s hearing agenda. 2. Remit hearing fee of (a) $ 1500.00 …. Special Exception- Single Family Residential (b) $ 1500.00 ….Variance-Single Family Residential (c) $ 2000.00 …. For all other Special Exception/Variance requests. (d) $ 2000.00 …. Interpretation of ordinance. (e) $5,000.00…. Curative amendment/validity challenge. 3. A continuance fee for any reason other than error by the township, whether requested by applicant or required by the board, will be charged as follo",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "53bbb722f9aa9cb89f987e6a4dd7c2f891aaacf9a30b8763491baad977c9d8ae",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\53bbb722f9aa9cb89f987e6a4dd7c2f891aaacf9a30b8763491baad977c9d8ae.pdf",
+   "official_url": "https://palmertwp.com/forms/zhb.app_26.pdf"
+  },
+  {
+   "page": 31,
+   "snippet": "PALMER CODE 165:A46 08 - 07 - 2002 Submitted Not Submitted* highway occupancy permit has been secured and filed with the township. Township shall not be held liable for damages to persons or property arising out of issuance or denial of a highway occupancy permit by the Pennsylvania Department of Transportation, pursuant to Section 508 of the Pennsylvania Municipalities Planning Code.\" 3 _____ _____ b. If wells and/or septic systems are used: \"Well and sewage disposal systems shall be constructed in accordance with standards of the Pennsylvania Department of Environmental Protection .\" _____ _____ c. If septic systems are used: \"Individual owners of lots must receive approval from the Township Sewage Enforcement Officer for a sewage permit prior to undertaking the construction of an on-lot sewage disposal system or building that will need to be served by such a system.\" _____ _____ 4. Wa",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "559c287987b282827244d63a4c3d6512e581337be7cc8df7f33558ef10b711c5",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\559c287987b282827244d63a4c3d6512e581337be7cc8df7f33558ef10b711c5.pdf",
+   "official_url": "https://palmertwp.com/forms/app_sub_landdev2026.pdf"
+  },
+  {
+   "page": 35,
+   "snippet": "PALMER CODE 165:A24 08 - 07 - 2002 Submitted Not Submitted* _____ _____ _____ _____ _____ _____ _____ _____ _____ _____ _____ _____ _____ _____ _____ _____ _____ _____ 4. Wetlands. Detailed delineations are required by a qualified professional of any wetlands within areas that could reasonably be suspected of being wetlands, if such areas are proposed to be altered in any way. Such delineations by the applicant's professional shall be completed prior to preliminary plan approval. However, the applicant is not required to have received all such permits at the preliminary plan stage. Instead, any such needed permits shall be a condition of final plan approval. 5. Rock outcrops, stone fields and sinkholes. 6. Location of any areas within the 100-year floodplain (with differentiation between floodway and flood-fringe, if available from official federal floodplain maps or if such differentiat",
+   "tags": [
+    "dimension",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "559c287987b282827244d63a4c3d6512e581337be7cc8df7f33558ef10b711c5",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\559c287987b282827244d63a4c3d6512e581337be7cc8df7f33558ef10b711c5.pdf",
+   "official_url": "https://palmertwp.com/forms/app_sub_landdev2026.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "Palmer Township Building Department • 3 Weller Place • Palmer, PA 18045 • Phone 610.253.7191 P a g e | 10 Residential Swimming Pool & Barrier Details – 20 21 IRC and 20 21 ISPSC Permit Application Submittals Site plan and barrier details are required to be submitted when applying for a pool and fence permit. The site plan must include the fence and pool in reference to the house and property lines (see example on next page ). This shall indicate the setbacks of the fence, if any, and pool from the property lines. Any misrepresentation will be handled by our Zoning and Building Department and may impose violations, fines and the removal of such installed structures. Fence details including the size, measurements and materials of the fence or barrier shall be included when applying for a permit. If fence has not been purchased or selected at time of permit, processing may be delayed or rej",
+   "tags": [
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "58ee08d1948391f7f1bfb0c6791407478afdfdb9ae3962ced6d5289619d22548",
+   "source_document_id": null,
+   "source_title": "58ee08d1948391f7f1bfb0c6791407478afdfdb9ae3962ced6d5289619d22548.pdf",
+   "official_url": "https://palmertwp.com/forms/swpool_barr_details_2026.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "Standard Construction Specification Page 10 Art. 9 SAFETY AND PROTECTION: A. Solely the Developer and Contractor shall be responsible for initiating, maintaining, and supervising all safety precautions and programs in connection with the Work. The Contractor shall take all necessary precautions for the safety of, and shall provide necessary protection to prevent damage, injury or loss to: 1. All persons on the Site or who may be affected by the Work. 2. All the Work and materials and equipment to be incorporated therein, whether in storage on or off the site. 3. Other property at the site or adjacent thereto, including trees, shrubs, lawns, walks, pavements, roadways, structures, utilities, and underground facilities not designated for removal, relocation, or replacement in the course of construction. B. The Contractor shall comply with all applicable laws and regulations relating to the",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee.pdf",
+   "official_url": "https://palmertwp.com/forms/2026_stand_const.pdf"
+  },
+  {
+   "page": 29,
+   "snippet": "Palmer Township Standard Construction Specification Page 29 Detection. Detector Lead-In cable shall be IMSA Spec No. 50-2, 14 AWG. Detector Loop wires shall be IMSA Spec. No. 51-5, 14 AWG. Loop Amplifiers shall be rack mounted Oracle Enhanced 2E or 2EC, as manufactured by EDI. All intersections will be equipped with Optical Preemption for all approaches to the intersection. Detectors will be positioned to achieve the proper distance for activation and control of the intersection. Optical preemption equipment will be Strobecom II as manufactured by Tomar. The Contractor shall coordinate with the Township Fire Commissioner to ensure adequate advance detection of approaching emergency vehicles and shall adjust the system as necessary, including advance detection, to achieve desirable operation. TRAFFIC SIGNAL SIGNS: All signalized intersections shall be signed with street name signs of the ",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee.pdf",
+   "official_url": "https://palmertwp.com/forms/2026_stand_const.pdf"
+  },
+  {
+   "page": 32,
+   "snippet": "Palmer Township Standard Construction Specification Page 32 When rock or noncushioning material is encountered in trench excavation, a cushion at least eight inches thick shall be placed between the rock and the bottom of the pipe bedding. The cushion shall consist of clean sand or equivalent granular material meeting the requirements of AASHTO No. 10 aggregate or PENNDOT No. 2A stone. The bottom of the trench shall be excavated to a horizontal section as far as practicable. Blasting may be considered only when proper precautions are taken for the safety of all persons, the work, and the property. All damage done to the work or property shall be repaired at the Developer's expense. All operations of the Developer in connection with the transportation, storage, security, and use of explosives shall conform to all federal, state and local regulations, explosive manufacturers' instructions,",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee.pdf",
+   "official_url": "https://palmertwp.com/forms/2026_stand_const.pdf"
+  },
+  {
+   "page": 36,
+   "snippet": "Palmer Township Standard Construction Specification Page 36 f. When excavation of an existing Township street is necessary, it shall be done in accordance with requirements of the Township. 3. In all other areas (including but not limited to proposed streets) the backfill shall consist of: a. A proper bedding of granular material properly formed to fully support the entire length of pipe; b. Clean clay-like material or PENNDOT No. 2A stone for initial backfill of the sides and for 12 inches above the pipe. For HDPE pipe, only PENNDOT No. 2A stone shall be used to 12 inches above the pipe, which envelope shall be maintained throughout the construction period and shall not extend into subbase materials for roadways; c. Approved material free from organic matter, large or frozen lumps or stones over ten inches in their largest dimensions. Stones which are used in backfilling shall be so dis",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee.pdf",
+   "official_url": "https://palmertwp.com/forms/2026_stand_const.pdf"
+  },
+  {
+   "page": 38,
+   "snippet": "Palmer Township Standard Construction Specification Page 38 Typical step configuration shall be in accordance with PENNDOT Standards for Roadway Construction, detail for STANDARD MANHOLES, PRECAST MANHOLES & MANHOLE STEPS, RC-39M. BACKFILLING OF STRUCTURES: 1. After a structure has been completed, the area around it shall be filled with approved material, in horizontal layers not to exceed eight inches in loose depth, and compacted to the density specified. The fill shall be made to the elevation shown on the Plans, or as directed by the Engineer/Township; 2. Backfill shall not be placed against any structure until concrete is given the necessary time to cure; 3. Fill shall be deposited uniformly around the structure while backfilling to prevent unequal lateral pressure. Special care shall be taken to prevent any wedging action against the structure. UNDERDRAIN: Pipe underdrain shall mee",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee.pdf",
+   "official_url": "https://palmertwp.com/forms/2026_stand_const.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Form W-9 (Rev. 10-2018) Page 2 By signing the filled-out form, you: 1. Certify that the TIN you are giving is correct (or you are waiting for a number to be issued), 2. Certify that you are not subject to backup withholding, or 3. Claim exemption from backup withholding if you are a U.S. exempt payee. If applicable, you are also certifying that as a U.S. person, your allocable share of any partnership income from a U.S. trade or business is not subject to the withholding tax on foreign partners' share of effectively connected income, and 4. Certify that FATCA code(s) entered on this form (if any) indicating that you are exempt from the FATCA reporting, is correct. See What is FATCA reporting, later, for further information. Note: If you are a U.S. person and a requester gives you a form other than Form W-9 to request your TIN, you must use the requester’s form if it is substantially simi",
+   "tags": [
+    "fee",
+    "illumination",
+    "temporary",
+    "authority",
+    "penalties"
+   ],
+   "weight": 7,
+   "source_sha256": "78366390cd4e3db89e06009fce54df272bee0d3b34003f3a786c4835239bfdff",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\78366390cd4e3db89e06009fce54df272bee0d3b34003f3a786c4835239bfdff.pdf",
+   "official_url": "https://palmertwp.com/forms/w9_form.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "James Raudenbush/BCO Commercial Building / Zoning Permit & Inspection Procedure  Apply for the zoning and/or sign permit(s) and business license(s) at the Palmer Township Municipal Building . A business license is required for each contractor/subcontractor working within jurisdi ctional limits.  Apply for the building permit at Base Engineering. You will be required to submit the zoning permit number (by Palmer Township) a t the time of application. Submit plans to: Base Engineering Tino Nocchi / Building Codes Director 1010 North Quebec Street Allentown, PA 18109 (610) 437 - 0978  Existing food establishments, food courts or other grease discharge generator/facility - Obtain inspection, by Base Engineering, pursuant to Palmer Township’s ordinance 2017 - 450 - Fats, Oils and Greases Co ntrol Program (aka FOG Program).  Palmer Township will issue the zoning permit and Base Engineering",
+   "tags": [
+    "sign",
+    "permit_required",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "8174e51856ce63226ee8e670d548483b4e5cb59edd2185a08e942f3dede2feb8",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\8174e51856ce63226ee8e670d548483b4e5cb59edd2185a08e942f3dede2feb8.pdf",
+   "official_url": "https://palmertwp.com/forms/comm_build_pro.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Palmer Township Building Department • 3 Weller Place • Palmer, PA 18045 • Phone 610.253.7191 P a g e | 1 Residential Finished Basement Details – 20 21 IRC FINISHED BASEMENT APPLICATION CHECKLIST Municipality: Palmer Township Date: Site Address: Applicant Name: Phone: ______ Contractor Name: Phone: ______ Total Square Feet of Proposed Finished Basement:____________ Floor Plan : Provide 2 Sets of Plan s Floor Plan - Indicate Use of Room(s) Construction Details Provided Ceiling Height:_________ Pressure - Treated Sole Plates Type of Ceiling: Drywall / Drop Ceiling / Other Smoke Detector(s) Noted Indicate/Describe any Structural Alterations Window/Door Locations Shown Emergency Escape/Rescue Opening(s) Identified Plumbing : Will Plumbing Work Take Place? If bathroom proposed, submit layout plan/clearances Mechanical : Will Mechanical Work Take Place? Proposed Heating Method for Space:_______",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "8ca4da3e132d74f71dab84e0ca9a9bfe2885090786863bbf0e9bf86cb548a158",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\8ca4da3e132d74f71dab84e0ca9a9bfe2885090786863bbf0e9bf86cb548a158.pdf",
+   "official_url": "https://palmertwp.com/forms/fin_bsmt_app_2026.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Page | 3 INTRODUCTION In Pennsylvania, the Pennsylvania Municipalities Planning Code (MPC), Act 247 of 1968, P.L. 805, as reenacted and amended, 53 P.S. § 10101, et seq., is the uniform planning and land use enabling law for all municipalities and counties, including those under home rule, with the exceptions of the cities of Philadelphia and Pittsburgh. The MPC sets the ground rules that a municipality must follow. Section 201 of the MPC provides the municipal governing body with the legal authority to establish a planning commission. Section 207 of the Pennsylvania Municipal Planning Code requires the planning commission to keep a complete record of its proceedings and activities and annually submit a report of its activities to the governing body. Membership Structure The Palmer Township Planning Commission was established in 1954 and consists of a seven- member body comprised of Town",
+   "tags": [
+    "dimension",
+    "illumination",
+    "process",
+    "authority"
+   ],
+   "weight": 7,
+   "source_sha256": "94bf92fda38a2c1d846bc98171e66cc3d2b24433ea85056eb8622ec8e4fc3517",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\94bf92fda38a2c1d846bc98171e66cc3d2b24433ea85056eb8622ec8e4fc3517.pdf",
+   "official_url": "https://palmertwp.com/forms/2025_annual_report.pdf"
+  },
+  {
+   "page": 145,
+   "snippet": "143 Summary of Survey Findings and Recommendations • A paved route is needed through the park and for access to all play areas and sports activities. The current route to the pla yground is inaccessible due to a significant slope. AccessCheck recommends alternate route through more level terrain. A direct route to the bathroom from the parking area on Fairview Ave should be created. ▪ Surface Recommendation - Hardened materials such as concrete, asphalt, tile, and wood are sufficiently firm and stable for accessibility. Most loose materials, including gravel, will not meet these requirements unless properly treated to provide sufficient surface integrity and resilience. Binders, consolidants, compaction, and grid forms may enable some of these materials to perform satisfactorily but require repeated maintenance. ▪ Information for ADA & ABA Access Mats for temporary/readily achievable sol",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "temporary"
+   ],
+   "weight": 7,
+   "source_sha256": "b961d3b5105a333fa468d3fff363ffb13b2704bd1214ec36cce4d5150487d38d",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\b961d3b5105a333fa468d3fff363ffb13b2704bd1214ec36cce4d5150487d38d.pdf",
+   "official_url": "https://palmertwp.com/forms/park_access_report2024.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "12 GUARD POST INSTALLATION Guards supported by side of the deck framing: When guard posts are attached to the inside or outside face of a deck joist or beam, that joist or beam must be secured to adjacent joists to prevent rotation. Connections that rely solely on fasteners withdrawn from end grain are not allowed. [R507.10.1.1] Guards supported on top of deck framing: Guards mounted on top of decking shall be attached to the deck framing or approved blocking and installed in accordance with the manufacturer’s instructions to ensure transfer of guard loads to adjacent joists. [R507.10.1.2] Guard posts shall not be notched at the connection to the deck structure. [R507.10.2] STAIR HANDRAIL REQUIREMENTS Handrails shall be provided on at least one side of each continuous run of treads or flight with four or more risers. Handrails shall be located between 34” and 38” measured vertically from",
+   "tags": [
+    "dimension",
+    "illumination",
+    "prohibited"
+   ],
+   "weight": 7,
+   "source_sha256": "dd22588419a0df81f9c0709ed7ed7b8c4f3355c2e4d1c66dbb53d3a8d4fa42ca",
+   "source_document_id": null,
+   "source_title": "dd22588419a0df81f9c0709ed7ed7b8c4f3355c2e4d1c66dbb53d3a8d4fa42ca.pdf",
+   "official_url": "https://palmertwp.com/forms/deck_details_2026.pdf"
+  },
+  {
+   "page": 14,
+   "snippet": "14 APPLICATION AND PROCESS FOR PERMIT Any owner or authorized agent, who intends to construct a deck, or any other work regulated by the International Residential Code or Township ordinances , shall first make application to the building official and obtain the required permit. Applications are handled by Palmer Township’s Permit Clerk at the Municipal Building between the hours 8:30a.m. and 4:30p.m. Monday thru F riday, unless otherwise posted. A total square footage of the proposed deck and the contractor’s name (if any) , address, and phone number will be required. Submittals at the time of application shall include a footing /f raming plan and a site plan. The site plan must include the deck in reference to the house and property lines . Any misrepresentation will be handled by our Zoning and Building Department and may impose violations, fines and the remov al of such installed stru",
+   "tags": [
+    "fee",
+    "area",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "dd22588419a0df81f9c0709ed7ed7b8c4f3355c2e4d1c66dbb53d3a8d4fa42ca",
+   "source_document_id": null,
+   "source_title": "dd22588419a0df81f9c0709ed7ed7b8c4f3355c2e4d1c66dbb53d3a8d4fa42ca.pdf",
+   "official_url": "https://palmertwp.com/forms/deck_details_2026.pdf"
+  },
+  {
+   "page": 9,
+   "snippet": "Palmer Township Building Department • 3 Weller Place • Palmer, PA 18045 • Phone 610.253.7191 P a g e | 9 Residential Finished Basement Details – 20 21 IRC FINISHED BASEMENT APPLICATION CHECKLIST Municipality: Palmer Township Date: Site Address: Applicant Name: Phone: ______ Contractor Name: Phone: ______ Total Square Feet of Proposed Finished Basement:____________ Floor Plan : Provide 2 Sets of Plan s Floor Plan - Indicate Use of Room(s) Construction Details Provided Ceiling Height:_________ Pressure - Treated Sole Plates Type of Ceiling: Drywall / Drop Ceiling / Other Smoke Detector(s) Noted Indicate/Describe any Structural Alterations Window/Door Locations Shown Emergency Escape/Rescue Opening(s) Identified Plumbing : Will Plumbing Work Take Place? If bathroom proposed, submit layout plan/clearances Mechanical : Will Mechanical Work Take Place? Proposed Heating Method for Space:_______",
+   "tags": [
+    "area",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 7,
+   "source_sha256": "febc28147949bc8fb84b194d9253eee421f84a0d01b9a5ffcec4796443e97dfa",
+   "source_document_id": null,
+   "source_title": "febc28147949bc8fb84b194d9253eee421f84a0d01b9a5ffcec4796443e97dfa.pdf",
+   "official_url": "https://palmertwp.com/forms/fin_bsmt_det_2026.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "5 PERMIT APPLICATION SUBMITTALS Site plan and fence /wall details are required to be submitted when applying for a fence permit. The site plan must include the fence in reference to the house and property lines (see example below ). This shall indicate the setbacks of the fence / wall , if any, from the property lines. Any misrepresentation will be handled by our Zoning and Building Department and may impose violations, fines and the removal of such installed structures. Fence details including the size, measurements and cost of the materials of the fence or barrier shall be included when applying for a permit. If a contractor is installing a fence, please supply contractor’s name, address and phone number. Once one has applied and paid for the permit, it will undergo the approval process. The zoning and building departments shall have 30 business days to review each application and cont",
+   "tags": [
+    "dimension",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "048766a2a3f9bb460745c89bed9d9a6fcfebb5ffcfd4ec480acdb5b22ee20d26",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\048766a2a3f9bb460745c89bed9d9a6fcfebb5ffcfd4ec480acdb5b22ee20d26.pdf",
+   "official_url": "https://palmertwp.com/forms/fence_detail_2026.pdf"
+  },
+  {
+   "page": 12,
+   "snippet": "Form W-9 (Rev. October 2018) Department of the Treasury Internal Revenue Service Request for Taxpayer Identification Number and Certification ▶ Go to www.irs.gov/FormW9 for instructions and the latest information. Give Form to the requester. Do not send to the IRS. Print or type. See Specific Instructions on page 3. 1 Name (as shown on your income tax return). Name is required on this line; do not leave this line blank. 2 Business name/disregarded entity name, if different from above 3 Check appropriate box for federal tax classification of the person whose name is entered on line 1. Check only one of the following seven boxes. Individual/sole proprietor or single-member LLC C Corporation S Corporation Partnership Trust/estate Limited liability company. Enter the tax classification (C=C corporation, S=S corporation, P=Partnership) ▶ Note: Check the appropriate box in the line above for t",
+   "tags": [
+    "sign",
+    "illumination",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "0c0f688c174a3668602de894f3a1dc6a528b0f7317d4eb629963a5c0982648cd",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\0c0f688c174a3668602de894f3a1dc6a528b0f7317d4eb629963a5c0982648cd.pdf",
+   "official_url": "https://palmertwp.com/forms/zon_amend_req2026.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "Page 3 a. Safety: Eliminate all road fatalities, significantly reduce crash severity and injury, and improve personal safety through increasing the number of people walking and bicycling. b. Environment: Improve air quality and mitigate traffic congestion. c. Economy: Stimulate economic prosperity. d. Health: Increase physical activity and social connectivity with the goals of lowering the risk of obesity, reducing chronic disease, and promoting wellness. e. Fairness: Implement policies and distribute funding and other resources as fairly and responsibly as possible in all neighborhoods, with priority given to underinvested/underserved communities, and to improve non- motor vehicle transportation systems. 3. This Complete Streets Policy shall apply to all public and/or private transportation projects. For transportation projects using funds awarded by federal, state, regional, county, mu",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "4844bc8d048da3c7929de464258ed6b18cc728846329c8bccb38b569172ca447",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\4844bc8d048da3c7929de464258ed6b18cc728846329c8bccb38b569172ca447.pdf",
+   "official_url": "https://palmertwp.com/forms/completest_policy080625.pdf"
+  },
+  {
+   "page": 19,
+   "snippet": "e. Fairness: Implement policies and distribute funding and other resources as fairly and responsibly as possible in all neighborhoods, with priority given to underinvested/ underserved communities, and to improve non- motor vehicle transportation systems. 3. This Complete Streets Policy shall apply to all public and/ or private transportation projects. For transportation projects using funds awarded by federal, state, regional, county, municipal, or any other public agency where the Township does not have regulatory involvement,, the Township will advocate for Complete Street elements. 4. Transportation projects may include, where identified as appropriate by the Township, pedestrian and bicycle design elements, traffic calming, and/ or transit amenities, including but not limited to: curb extensions, sidewalks, radar feedback signs, pedestrian countdown signals, pedestrian refuge island",
+   "tags": [
+    "sign",
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "4844bc8d048da3c7929de464258ed6b18cc728846329c8bccb38b569172ca447",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\4844bc8d048da3c7929de464258ed6b18cc728846329c8bccb38b569172ca447.pdf",
+   "official_url": "https://palmertwp.com/forms/completest_policy080625.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Light Home/No Impact Occupation Application Please read and fill in this application for a light home/no impact business. You must procure a Palmer Township Business license to operate your business. -The business activity shall be compatible with the residential use of the property and surrounding residential uses. -The business shall employ no employees other than members residing in the dwelling. -There shall be no display or sale of retail goods and no stockpiling or inventory of a substantial nature. -There shall be no outside appearance of a business use, including, but not limited to, parking, signs, or lights. -No on-site parking of commercially identified vehicles shall be permitted. -The business activity may not use any equipment or process which creates noise, vibration, glare, fumes, odors, or electrical or electronic interference, including interference with radio or televi",
+   "tags": [
+    "sign",
+    "fee",
+    "illumination",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "4ac0f2a9f402d628b5e1154a544d06136bce4167b6799cd8669205ae8ef21d9c",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\4ac0f2a9f402d628b5e1154a544d06136bce4167b6799cd8669205ae8ef21d9c.pdf",
+   "official_url": "https://palmertwp.com/forms/light_home_occupation_application.pdf"
+  },
+  {
+   "page": 15,
+   "snippet": "Form W-9 (Rev. October 2018) Department of the Treasury Internal Revenue Service Request for Taxpayer Identification Number and Certification ▶ Go to www.irs.gov/FormW9 for instructions and the latest information. Give Form to the requester. Do not send to the IRS. Print or type. See Specific Instructions on page 3. 1 Name (as shown on your income tax return). Name is required on this line; do not leave this line blank. 2 Business name/disregarded entity name, if different from above 3 Check appropriate box for federal tax classification of the person whose name is entered on line 1. Check only one of the following seven boxes. Individual/sole proprietor or single-member LLC C Corporation S Corporation Partnership Trust/estate Limited liability company. Enter the tax classification (C=C corporation, S=S corporation, P=Partnership) ▶ Note: Check the appropriate box in the line above for t",
+   "tags": [
+    "sign",
+    "illumination",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "559c287987b282827244d63a4c3d6512e581337be7cc8df7f33558ef10b711c5",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\559c287987b282827244d63a4c3d6512e581337be7cc8df7f33558ef10b711c5.pdf",
+   "official_url": "https://palmertwp.com/forms/app_sub_landdev2026.pdf"
+  },
+  {
+   "page": 41,
+   "snippet": "PALMER CODE 165:A30 08 - 07 - 2002 Submitted Not Submitted* _____ _____ 9. Note stating total square feet of paved area, including gravel areas. K. LANDSCAPE PLAN (see also \"Natural Features\" in Part D of this section): _____ _____ 1. Any proposed evergreen screening, buffer yards or earthen berming (if required by Zoning Ordinance). _____ _____ 2. General types, sizes and locations of any required street trees (see § 165-73), paved area landscaping (see Township Zoning Ordinance) and any other major proposed landscaping. _____ _____ 3. Any proposed fencing (including height and type) and/or landscaping around stormwater basins. (See § 165-63.) L. EROSION AND SEDIMENTATION PLAN (may be submitted at the final plan stage if the applicant provides a written and signed statement that earth will not be disturbed until after final plan approval): _____ _____ 1. Drawings showing locations and t",
+   "tags": [
+    "area",
+    "dimension",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "559c287987b282827244d63a4c3d6512e581337be7cc8df7f33558ef10b711c5",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\559c287987b282827244d63a4c3d6512e581337be7cc8df7f33558ef10b711c5.pdf",
+   "official_url": "https://palmertwp.com/forms/app_sub_landdev2026.pdf"
+  },
+  {
+   "page": 48,
+   "snippet": "SUBDIVISION AND LAND DEVELOPMENT 165:A37 08 - 07 - 2002 Submitted Not Submitted* highway occupancy permit. No building permits, zoning permits or certificates of occupancy shall be issued for said lot until such time as a PennDOT highway occupancy permit has been secured and filed with the township. Township shall not be held liable for damages to persons or property arising out of issuance or denial of a highway occupancy permit by the Pennsylvania Department of Transportation, pursuant to Section 508 of the Pennsylvania Municipalities Planning Code.\" 1 _____ _____ b. \"Well and sewage disposal systems shall be constructed in accordance with standards of the Pennsylvania Department of Environmental Protection.\" _____ _____ c. \"Individual owners of lots must receive approval from the Township Sewage Enforcement Officer for a sewage permit prior to undertaking the construction of an on-lot",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "559c287987b282827244d63a4c3d6512e581337be7cc8df7f33558ef10b711c5",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\559c287987b282827244d63a4c3d6512e581337be7cc8df7f33558ef10b711c5.pdf",
+   "official_url": "https://palmertwp.com/forms/app_sub_landdev2026.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "PALMER TOWNSHIP SEWER EXTENSION AGREEMENT APPLICATION Date of Application: ____________________ Name of Subdivision/Development: ______________________________ Location: _________________________ Tax Map Parcel #: ____________________ Property Owner Name: ______________________________ Address: ____________________________ Phone #: ____________________ Fax #: ____________________ E-mail: ______________________________ Applicant (if different than owner) Name: ______________________________ Address: ____________________________ Phone #: ____________________ Fax #: ____________________ E-mail: ______________________________ Engineer Name: ______________________________ Firm: ____________________________ Address: ____________________________ Phone #: ____________________ Fax #: ____________________ E-mail: ______________________________ Attorney Name: ______________________________ Firm: __",
+   "tags": [
+    "area",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "577472941bc6721eb18e7e1514938971d8ab4c8ac6e732c5d3c85323fa28bcf9",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\577472941bc6721eb18e7e1514938971d8ab4c8ac6e732c5d3c85323fa28bcf9.pdf",
+   "official_url": "https://palmertwp.com/forms/Sewer_extension_agreement_application.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "Palmer Township Building Department • 3 Weller Place • Palmer, PA 18045 • Phone 610.253.7191 P a g e | 13 Residential Swimming Pool & Barrier Details – 20 21 IRC and 20 21 ISPSC SWIMMING POOL AND SPA APPLICATION CHECKLIST Municipality: Palmer Township Date: Site Address: Applicant Name: Phone: ______ Contractor Name: Phone: Type of P ool: Above - ground In - ground Temporary / Seasonal Spa Residential Commercial If above ground pool will be constructed into the slope of the property, manufacturer’s specifications must be submitted to show that the pool can be partially buried. Barrier: Pool wall 48 inches or higher Installing fence 48 inches or higher Fence Gates: Self closing & latching & locking Swing in direction of egress Include Fence and Gate details on plans Pool is separated from house with fence full around. No access from house to pool area. Ladders: Secured, lockable or remova",
+   "tags": [
+    "dimension",
+    "temporary",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "58ee08d1948391f7f1bfb0c6791407478afdfdb9ae3962ced6d5289619d22548",
+   "source_document_id": null,
+   "source_title": "58ee08d1948391f7f1bfb0c6791407478afdfdb9ae3962ced6d5289619d22548.pdf",
+   "official_url": "https://palmertwp.com/forms/swpool_barr_details_2026.pdf"
+  },
+  {
+   "page": 16,
+   "snippet": "Standard Construction Specification Page 16 b. Detention/Retention Basins: Outlet control structures (orifices, weirs, etc.), riprap aprons or other energy dissipation structures (widths, lengths, type/size of material), low flow channels, emergency spillways (width, elevation, etc.), top of berm elevations, underdrains. 3. Traffic Improvements: Signal equipment, pull boxes, conduits, loops, signs, striping and other pavement markings, depressed curbs, street light poles, etc. shall be noted on the plan. 4. Other Underground Utilities: Location and depth of water, sanitary sewerage system, electric, telephone, cable TV, and gas lines, including wiring between street light poles and transformer where power is supplied within the rights-of-way. Any fiber optic lines should be specifically noted. Any encasement of the above utilities should be identified and the utility location and depth s",
+   "tags": [
+    "sign",
+    "dimension",
+    "illumination",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\5d143278eb0a1dd1a691d2e178cd58cf0e663dae1b76ffad0c619935d39a1bee.pdf",
+   "official_url": "https://palmertwp.com/forms/2026_stand_const.pdf"
+  },
+  {
+   "page": 1,
+   "snippet": "Form W-9 (Rev. October 2018) Department of the Treasury Internal Revenue Service Request for Taxpayer Identification Number and Certification ▶ Go to www.irs.gov/FormW9 for instructions and the latest information. Give Form to the requester. Do not send to the IRS. Print or type. See Specific Instructions on page 3. 1 Name (as shown on your income tax return). Name is required on this line; do not leave this line blank. 2 Business name/disregarded entity name, if different from above 3 Check appropriate box for federal tax classification of the person whose name is entered on line 1. Check only one of the following seven boxes. Individual/sole proprietor or single-member LLC C Corporation S Corporation Partnership Trust/estate Limited liability company. Enter the tax classification (C=C corporation, S=S corporation, P=Partnership) ▶ Note: Check the appropriate box in the line above for t",
+   "tags": [
+    "sign",
+    "illumination",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "78366390cd4e3db89e06009fce54df272bee0d3b34003f3a786c4835239bfdff",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\78366390cd4e3db89e06009fce54df272bee0d3b34003f3a786c4835239bfdff.pdf",
+   "official_url": "https://palmertwp.com/forms/w9_form.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Rev 7/25 Page 3 of 4 Explain what fire, explosive, public health, toxic or other public safety hazards might be cause by the proposed use: ____________________________________________________________________________________ ____________________________________________________________________________________ ____________________________________________________________________________________ ____________________________________________________________________________________ Explain how the proposed use meets any specific standards for that use listed in Article IX of the Zoning Ordinance. ____________________________________________________________________________________ ____________________________________________________________________________________ ____________________________________________________________________________________ _________________________________________________",
+   "tags": [
+    "area",
+    "illumination",
+    "authority",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "b7a185077636d90d64d1d8747b01e21f5c7b46ae947dfd0ddf25ddc9223bc10f",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\b7a185077636d90d64d1d8747b01e21f5c7b46ae947dfd0ddf25ddc9223bc10f.pdf",
+   "official_url": "https://palmertwp.com/forms/app_cond_use2026.pdf"
+  },
+  {
+   "page": 13,
+   "snippet": "Form W-9 (Rev. October 2018) Department of the Treasury Internal Revenue Service Request for Taxpayer Identification Number and Certification ▶ Go to www.irs.gov/FormW9 for instructions and the latest information. Give Form to the requester. Do not send to the IRS. Print or type. See Specific Instructions on page 3. 1 Name (as shown on your income tax return). Name is required on this line; do not leave this line blank. 2 Business name/disregarded entity name, if different from above 3 Check appropriate box for federal tax classification of the person whose name is entered on line 1. Check only one of the following seven boxes. Individual/sole proprietor or single-member LLC C Corporation S Corporation Partnership Trust/estate Limited liability company. Enter the tax classification (C=C corporation, S=S corporation, P=Partnership) ▶ Note: Check the appropriate box in the line above for t",
+   "tags": [
+    "sign",
+    "illumination",
+    "temporary",
+    "penalties"
+   ],
+   "weight": 6,
+   "source_sha256": "b7a185077636d90d64d1d8747b01e21f5c7b46ae947dfd0ddf25ddc9223bc10f",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\b7a185077636d90d64d1d8747b01e21f5c7b46ae947dfd0ddf25ddc9223bc10f.pdf",
+   "official_url": "https://palmertwp.com/forms/app_cond_use2026.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "2 GENERAL INFORMATION 1. Definition: Deck – An exterior floor system supported on at least two opposing sides by an adjoining structure and/or posts, piers, or other independent supports. 2. All wood in contact with the ground, embedded in concrete in direct contact with the ground or embedded in concrete exposed to the weather that supports permanent structures intended for human occupancy shall be approved pressure - preservative treated wood suitable for ground contact use. [R317.1.2] Wood materials shall be No. 2 grade or better. [R507.2.1] Cuts, notches and drilled holes shall be treated in accordance with R317.1.1 . [R507.2.1] 3. Wood/plastic composites used in deck boards, stair treads, handrails and guardrail systems shall comply with the provisions of ASTM D 7032 and shall be installed per the manufacturer’s instructions . [R507. 2.2 ] 4. Metal fasteners and connectors shall be ",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "penalties",
+    "process"
+   ],
+   "weight": 6,
+   "source_sha256": "dd22588419a0df81f9c0709ed7ed7b8c4f3355c2e4d1c66dbb53d3a8d4fa42ca",
+   "source_document_id": null,
+   "source_title": "dd22588419a0df81f9c0709ed7ed7b8c4f3355c2e4d1c66dbb53d3a8d4fa42ca.pdf",
+   "official_url": "https://palmertwp.com/forms/deck_details_2026.pdf"
+  },
+  {
+   "page": 7,
+   "snippet": "7 DECK POST ALLOWABLE HEIGHTS For single - level wood - framed decks, the deck post size shall be in accordance with Table 4 below. [R507. 4 ] TABLE 4 DECK POST HEIGHT — 40 PSF LIVE LOAD POST SPECIES POST SIZE a TRIBUTARY AREA (feet) g,h 20 40 60 80 100 120 140 160 MAXIMUM DECK POST HEIGHT (feet - inches) Southern Pine 4 x 4 4 - 7 4 - 0 3 - 7 3 - 3 3 - 0 2 - 10 2 - 8 2 - 8 4 x 6 5 - 11 5 - 1 4 - 7 4 - 2 3 - 10 3 - 7 3 - 5 3 - 5 6 x 6 7 - 0 6 - 0 5 - 5 4 - 11 4 - 7 4 - 3 4 - 0 4 - 0 8 x 8 8 - 3 7 - 1 6 - 4 5 - 10 5 - 5 5 - 0 4 - 9 4 - 9 Douglas fir - larch Hem - fir Spruce - pine - fir 4 x 4 4 - 1 3 - 6 3 - 0 2 - 8 2 - 5 2 - 3 2 - 1 2 - 1 4 x 6 5 - 6 4 - 8 4 - 0 3 - 6 3 - 2 2 - 11 2 - 9 2 - 9 6 x 6 6 - 8 5 - 10 5 - 1 4 - 6 4 - 1 3 - 9 3 - 6 3 - 6 8 x 8 7 - 9 6 - 9 6 - 0 5 - 6 5 - 0 3 - 9 3 - 6 3 - 6 Redwood Western cedars Ponderosa pine Red pine 4 x 4 6 - 1 5 - 3 4 - 9 4 - 4 3 - 11 3 - 7 ",
+   "tags": [
+    "area",
+    "dimension",
+    "prohibited"
+   ],
+   "weight": 6,
+   "source_sha256": "dd22588419a0df81f9c0709ed7ed7b8c4f3355c2e4d1c66dbb53d3a8d4fa42ca",
+   "source_document_id": null,
+   "source_title": "dd22588419a0df81f9c0709ed7ed7b8c4f3355c2e4d1c66dbb53d3a8d4fa42ca.pdf",
+   "official_url": "https://palmertwp.com/forms/deck_details_2026.pdf"
+  },
+  {
+   "page": 4,
+   "snippet": "4 two points, one of which is at each end of the center line of each street, accessway or driveway 30 feet from the intersection of such center lines. (d) No sign shall be placed or vehicle parking located in such locations that would obstruct clear sight lines necessary for the safe movement of traffic out of any driveway or accessway onto a street. Figure 2 RETAINING WALLS Retaining walls that are not laterally supported at the top and that retain in excess of 24 inches of unbalanced fill shall be designed to ensure stability against overturning, sliding, excessive foundation pressure and water uplift. Retaining walls shall be designed for a safety factor of 1.5 against later sliding and overturning. Engineering retaining walls to hold back slopes of earth shall be permitted upon approval of a zoning permit containing a complete set of c onstruction plans . Guards may be required (chec",
+   "tags": [
+    "sign",
+    "dimension",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "048766a2a3f9bb460745c89bed9d9a6fcfebb5ffcfd4ec480acdb5b22ee20d26",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\048766a2a3f9bb460745c89bed9d9a6fcfebb5ffcfd4ec480acdb5b22ee20d26.pdf",
+   "official_url": "https://palmertwp.com/forms/fence_detail_2026.pdf"
+  },
+  {
+   "page": 2,
+   "snippet": "Zoning Amendment Request Administrative Procedures - Page 2 7. Planning Commission Reviews Application . At the next regular Township Planning Commission meeting, the applicant will present the application to the Commission (see note below about electronic presentations). The purpose of this review is to discuss in detail how the proposed zoning amendment will meet the criteria outlined in the Zoning Ordinance, as well as align with the goals of the Palmer Township Comprehensive Plan and Lehigh Valley Planning Commission Comprehensive Plan. The applicant should be prepared to address major aspects of the project: • Amendments proposed • Surrounding properties/uses • Impacts of proposed amendments • Community benefits of proposed amendments 8. Planning Commission Makes a Recommendation to the Board of Supervisors . Once all Planning Commission comments and professional review comments hav",
+   "tags": [
+    "illumination",
+    "authority",
+    "penalties",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "0c0f688c174a3668602de894f3a1dc6a528b0f7317d4eb629963a5c0982648cd",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\0c0f688c174a3668602de894f3a1dc6a528b0f7317d4eb629963a5c0982648cd.pdf",
+   "official_url": "https://palmertwp.com/forms/zon_amend_req2026.pdf"
+  },
+  {
+   "page": 10,
+   "snippet": "- 5 - provisions of the MPC shall be extended thirty (30) days beyond the current deadline. The Township reserves the right to deny approval of the Developer ’s application for failure to pay the required funds into escrow as called for in the Township ’s ordinances and this Agreement. This provision shall not in any way limit the Township ’s rights and remedies afforded to it through the applicable ordinances of Palmer Township, the Second Class Township Code, the MPC, the laws of this Commonwealth, and the common law. 8. The Developer further agrees and acknowledges that if and/or when the escrow account maintained by the Township is reduced to a negative balance, the escrow replenishment request by the Township shall include replenishment of funds to bring the account current and an additional escrow retainer, in an amount to be determined by the Township . The Developer further agree",
+   "tags": [
+    "illumination",
+    "prohibited",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "0c0f688c174a3668602de894f3a1dc6a528b0f7317d4eb629963a5c0982648cd",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\0c0f688c174a3668602de894f3a1dc6a528b0f7317d4eb629963a5c0982648cd.pdf",
+   "official_url": "https://palmertwp.com/forms/zon_amend_req2026.pdf"
+  },
+  {
+   "page": 36,
+   "snippet": "Tomorrow’s Palmer: Actively Moving Towards Our Future Page 34 Roadway Network The existing roadway network within Palmer Township is made up of a combination of state and locally-owned public roadways currently totaling approximately 165 miles. Of those, the township is responsible for maintenance of around 140 miles. The township is bisected by two highways: US Route 22 (east/west) and PA 33 (north/south), as well as three major state- owned arterial roadways (Nazareth Road /25 th Street, William Penn Highway, and Freemansburg Avenue). Although these roadways provide important vehicular access, they also act as significant barriers for walking, biking, and wheeling within the active transportation network. Roadway ownership also influences the planning and design of pedestrian and bicycle facilities since facilities can be within the public right-of-way and may also cross or intersect w",
+   "tags": [
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "330ac05a081e3ea46e07e0f0affde3ac01adb65d0ac0df0267f6cc8466d74ab0",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\330ac05a081e3ea46e07e0f0affde3ac01adb65d0ac0df0267f6cc8466d74ab0.pdf",
+   "official_url": "https://palmertwp.com/forms/ptatp_web.pdf"
+  },
+  {
+   "page": 103,
+   "snippet": "Plan, Policy, and Study Review for ATP Page 7 of 9 LEHIGH AND NORTHAMPTON TRANSPORTATION AUTHORITY (LANTA) Plans, Studies, Tool Description Existing Service Bus All LANTA buses are equipped with bicycle racks that can hold two bicycles • Routes 106, 200, 216, and 217 operate within the Township • Flex route 502 services the North End of the Township EBS (Bus Rapid Transit) All LANTA EBS buses are equipped with bicycle racks that can hold two bicycles • Blue Line operates along William Penn Highway. Stations at Stones Crossing, Greenwood, and 25 th Street. Enhanced Bus Service LANTA EBS Study • Improved running ways, including off-board fare collection, transit signal priority, and queue jumps • Project #14 recommends relocation and improvements to 25 th Street and Butler Street bus stop including o Relocating bus stop o Installing bus bulb outs o Installing full sized shelter with real-t",
+   "tags": [
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "330ac05a081e3ea46e07e0f0affde3ac01adb65d0ac0df0267f6cc8466d74ab0",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\330ac05a081e3ea46e07e0f0affde3ac01adb65d0ac0df0267f6cc8466d74ab0.pdf",
+   "official_url": "https://palmertwp.com/forms/ptatp_web.pdf"
+  },
+  {
+   "page": 5,
+   "snippet": "Page 4 c. There is a demonstrated absence of both a current and future need to accommodate the category of user, shown via demographic, school, employment, or public transportation route data; or d. Accommodation is not practically feasible because of severe topographic constraints or significant adverse impacts to the natural environment, historic or cultural resources, or neighboring land uses; or e. Performing routine maintenance of the transportation network that does not change the roadway geometry or operations, such as mowing, sweeping, or spot repair or when interim measures are implemented including temporary detour or haul routes. 2. Exceptions for complete streets accommodations for subdivision and land development applications shall follow the Township’s existing waiver process, but shall consider the aforementioned items, before any waiver is considered and approved by the B",
+   "tags": [
+    "illumination",
+    "temporary",
+    "process"
+   ],
+   "weight": 5,
+   "source_sha256": "4844bc8d048da3c7929de464258ed6b18cc728846329c8bccb38b569172ca447",
+   "source_document_id": null,
+   "source_title": ".audit-work\\office-files\\oh\\palmer-township--f23e\\unassigned\\sources\\4844bc8d048da3c7929de464258ed6b18cc728846329c8bccb38b569172ca447.pdf",
+   "official_url": "https://palmertwp.com/forms/completest_policy080625.pdf"
+  }
+ ]
+}

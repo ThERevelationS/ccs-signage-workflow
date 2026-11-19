@@ -1,0 +1,12 @@
+import { resolveTopLevel, movePageToFolder, movePageToTop, deleteFolder, createFolder, entriesToOrder, folderToken, navButtonStyle } from '../src/components/layout/navCustomization.js';
+const pages = new Set(['/A','/B','/C','/D']);
+const folders = [{id:'f1',name:'F1',color:'#fff',style:'glass',icon:'Folder',items:['/D']}];
+let e = resolveTopLevel(['/B','/A',folderToken('f1'),'/C'], folders, pages);
+console.log('entries:', entriesToOrder(e).join(','));
+let s = {order:['/A','/B',folderToken('f1'),'/C'], folders};
+s = movePageToFolder(s,'/B','f1'); console.log('B->f1:', s.order.join(','),'|',s.folders[0].items.join(','));
+s = movePageToFolder(s,'/C','f1',0); console.log('C->f1@0:', s.folders[0].items.join(','));
+s = movePageToTop(s,'/B',1); console.log('B->bar@1:', s.order.join(','),'|',s.folders[0].items.join(','));
+s = deleteFolder(s,'f1'); console.log('del f1:', s.order.join(','), '| folders:', s.folders.length);
+s = createFolder(s,{id:'f2',name:'X',color:'#000',style:'solid',icon:'Star',items:[]}); console.log('new f2:', s.order.join(','));
+console.log('PASS nav-model');

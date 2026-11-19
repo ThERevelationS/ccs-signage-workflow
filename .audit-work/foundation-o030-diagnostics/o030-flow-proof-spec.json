@@ -1,0 +1,27 @@
+{
+ "appId": "68dfcc5e57bbbc35387da97c",
+ "branch": "main",
+ "sourceHead": "3258e9b244991711e965b65f566d420b204f3144",
+ "sourceArtifact": "o030-baseline.json",
+ "fixtureArtifact": "o030-fixture.json",
+ "sourceId": "synthetic-o030-project",
+ "estimateId": "synthetic-o030-estimate",
+ "sourceVersion": "synthetic-v1",
+ "savedVersion": "synthetic-v2",
+ "candidates": {
+  "foundationConstructionChecks.js": "o030-candidate-foundationConstructionChecks.js",
+  "foundationCalc.js": "o030-candidate-foundationCalc.js",
+  "FoundationEstimator.jsx": "o030-candidate-FoundationEstimator.jsx"
+ },
+ "candidateHashes": {
+  "foundationConstructionChecks.js": "148cec3163665cd6ea24941560263ebda8fedc6d40c3aa0e6ddfc28272cf9c80",
+  "foundationCalc.js": "de9e1990aeaed3c0aff3d0a47780e6af649a455c2b21846e79496279928fa1ed",
+  "FoundationEstimator.jsx": "916ade2203f927b694b24b59d58fabdbbfac16fe6fcdeb3ec0056b42f0e8db79"
+ },
+ "blockedSaveMessage": "Save paused: fix highlighted design inputs or catalog selections.",
+ "pageCaseCount": 6,
+ "modelCaseCount": 24,
+ "browserCaseCount": 8,
+ "browserFixture": "o030-browser-fixture.jsx",
+ "browserVerify": "verify-o030-browser.mjs"
+}

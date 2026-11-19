@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "test-estimator-dead-code                    PASS estimator dead-code sweep (175 files scanned, 0 no-op marker files, 0 dead — all documented)\ntest-work-order-transition                  PASS work order transition + field CAS (23 cases)\ntest-work-order-create                      PASS work order create recovery + duplicate delete (16 cases)\ntest-customer-sync-pipeline                 PASS customer sync pipeline (30 cases)\ntest-inventory-delete-guard                 PASS inventory delete guard (11 cases)\ntest-estimate-acceptance                    PASS estimate acceptance function (16 cases)\ntest-quote-delivery-safeurl                 PASS quote delivery safeUrl sanitizers (10 cases)\ntest-revision-functions                     PASS revision + workspace function guards (17 cases)\ntest-mutation-guard                         PASS estimate mutation guard (16 cases)\ntest-revision-service                       PASS revision service (38 cases)\ntest-preflight-source-mutation              PASS preflight source mutation (26 cases)\ntest-customer-persistence                   PASS customer persistence (13 cases)\ntest-entity-persistence                     PASS entity persistence (23 cases)\ntest-work-order-persistence                 PASS work order persistence (24 cases)\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 10908
+}

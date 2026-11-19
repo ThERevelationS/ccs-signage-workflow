@@ -1,0 +1,51 @@
+{
+  "matches": [
+    {
+      "path": "base44/shared/timeClockPayrollMembershipEvidence.mjs",
+      "line": 1,
+      "text": "export const TIME_CLOCK_COMPANY_TIME_ZONE = 'America/New_York';"
+    },
+    {
+      "path": "base44/shared/timeClockPayrollMembershipEvidence.mjs",
+      "line": 55,
+      "text": "    timeZone: TIME_CLOCK_COMPANY_TIME_ZONE,"
+    },
+    {
+      "path": "base44/shared/timeClockPayrollMembershipEvidence.mjs",
+      "line": 76,
+      "text": "  if (!envelope || Number(envelope.version || 0) !== 1 || String(envelope.time_zone || '') !== TIME_CLOCK_COMPANY_TIME_ZONE) return null;"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 302,
+      "text": "const COMPANY_TIME_ZONE = 'America/New_York';\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 316,
+      "text": "    timeZone: COMPANY_TIME_ZONE,\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 327,
+      "text": "  return { clock_in: normalizedClockIn, company_date: companyDate, time_zone: COMPANY_TIME_ZONE, version: 1 };\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 334,
+      "text": "    timeZone: COMPANY_TIME_ZONE,\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 1422,
+      "text": "  const weekday = new Intl.DateTimeFormat('en-US', { timeZone: COMPANY_TIME_ZONE, weekday: 'short' }).format(new Date(nowIso));\r"
+    },
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 11312,
+      "text": "      const companyHour = new Intl.DateTimeFormat('en-US', { timeZone: COMPANY_TIME_ZONE, hourCycle: 'h23', hour: '2-digit' });\r"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 9
+}
